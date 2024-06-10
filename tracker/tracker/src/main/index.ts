@@ -29,7 +29,7 @@ import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 
-import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
+import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
 import type { Options as AppOptions } from './app/index.js'
 import type { Options as ConsoleOptions } from './modules/console.js'
@@ -99,6 +99,7 @@ export default class API {
   public featureFlags: FeatureFlags
 
   private readonly app: App | null = null
+  private readonly insideIframe = inIframe()
 
   constructor(private readonly options: Options) {
     if (!IN_BROWSER || !processOptions(options)) {
@@ -160,23 +161,25 @@ export default class API {
 
     const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
     this.app = app
-    Viewport(app)
+    if (!this.insideIframe) {
+      Viewport(app)
+      Connection(app)
+      Mouse(app, options.mouse)
+      Performance(app, options)
+      Tabs(app)
+    }
     CSSRules(app)
     ConstructedStyleSheets(app)
-    Connection(app)
     Console(app, options)
     Exception(app, options)
     Img(app)
     Input(app, options)
-    Mouse(app, options.mouse)
     Timing(app, options)
-    Performance(app, options)
     Scroll(app)
     Focus(app)
     Fonts(app)
     Network(app, options.network)
     Selection(app)
-    Tabs(app)
     ;(window as any).__OPENREPLAY__ = this
 
     if (options.flags && options.flags.onFlagsLoad) {

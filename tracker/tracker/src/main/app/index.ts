@@ -64,7 +64,7 @@ interface OnStartInfo {
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
-const START_ERROR = ':(' as const
+
 type SuccessfulStart = OnStartInfo & {
   success: true
 }
@@ -87,6 +87,15 @@ type RickRoll = {
   | {
       line: 'never-gonna-run-around-and-desert-you'
       token: string
+    }
+  | {
+      line: 'never-gonna-make-you-cry'
+      domain: string
+    }
+  | {
+      line: 'never-gonna-say-goodbye'
+      domain: string
+      id: number
     }
 )
 
@@ -149,8 +158,6 @@ type AppOptions = {
     fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
   }
 
-  /** @deprecated */
-  onStart?: StartCallback
   network?: NetworkOptions
 } & WebworkerOptions &
   SessOptions
@@ -195,13 +202,12 @@ export default class App {
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
-  private readonly worker?: TypedWorker
+  private worker?: TypedWorker
 
   public attributeSender: AttributeSender
   public featureFlags: FeatureFlags
   public socketMode = false
   private compressionThreshold = 24 * 1000
-  private restartAttempts = 0
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId
   private canvasRecorder: CanvasRecorder | null = null
@@ -209,12 +215,19 @@ export default class App {
   private conditionsManager: ConditionsManager | null = null
   private readonly tagWatcher: TagWatcher
 
+  private canStart = false
+  private rootId: number | null = null
+  private readonly insideIframe = inIframe()
+
   constructor(
     projectKey: string,
     sessionToken: string | undefined,
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
   ) {
+    this.contextId = Math.random().toString(36).slice(2)
+    this.projectKey = projectKey
+
     if (
       Object.keys(options).findIndex((k) => ['fixedCanvasScaling', 'disableCanvas'].includes(k)) !==
       -1
@@ -232,8 +245,6 @@ export default class App {
       }
     }
 
-    this.contextId = Math.random().toString(36).slice(2)
-    this.projectKey = projectKey
     this.networkOptions = options.network
     this.options = Object.assign(
       {
@@ -270,7 +281,7 @@ export default class App {
 
     if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
       const host = location.hostname.split('.').slice(-2).join('_')
-      this.bc = inIframe() ? null : new BroadcastChannel(`rick_${host}`)
+      this.bc = new BroadcastChannel(`rick_${host}`)
     }
 
     this.revID = this.options.revID
@@ -303,75 +314,61 @@ export default class App {
       this.session.applySessionHash(sessionToken)
     }
 
-    try {
-      this.worker = new Worker(
-        URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
-      )
-      this.worker.onerror = (e) => {
-        this._debug('webworker_error', e)
-      }
-      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
-        // handling 401 auth restart (new token assignment)
-        if (data === 'a_stop') {
-          this.stop(false)
-        } else if (data === 'a_start') {
-          void this.start({}, true)
-        } else if (data === 'not_init') {
-          this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
-        } else if (data.type === 'failure') {
-          this.stop(false)
-          this.debug.error('worker_failed', data.reason)
-          this._debug('worker_failed', data.reason)
-        } else if (data.type === 'compress') {
-          const batch = data.batch
-          const batchSize = batch.byteLength
-          if (batchSize > this.compressionThreshold) {
-            gzip(data.batch, { mtime: 0 }, (err, result) => {
-              if (err) {
-                this.debug.error('Openreplay compression error:', err)
-                this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-              } else {
-                this.worker?.postMessage({ type: 'compressed', batch: result })
-              }
-            })
-          } else {
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
-          }
-        } else if (data.type === 'queue_empty') {
-          this.onSessionSent()
-        }
-      }
-      const alertWorker = () => {
-        if (this.worker) {
-          this.worker.postMessage(null)
-        }
-      }
-      // keep better tactics, discard others?
-      this.attachEventListener(window, 'beforeunload', alertWorker, false)
-      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
-      // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', alertWorker, false)
-    } catch (e) {
-      this._debug('worker_start', e)
-    }
+    this.initWorker()
 
     const thisTab = this.session.getTabId()
 
     const proto = {
       // ask if there are any tabs alive
       ask: 'never-gonna-give-you-up',
-      // yes, there are someone out there
+      // response from another tab
       resp: 'never-gonna-let-you-down',
-      // you stole someone's identity
+      // regenerating id (copied other tab)
       reg: 'never-gonna-run-around-and-desert-you',
+      // tracker inside a child iframe
+      iframeSignal: 'never-gonna-make-you-cry',
+      // getting node id for child iframe
+      iframeId: 'never-gonna-say-goodbye',
     } as const
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
     if (this.bc) {
-      this.bc.postMessage({
-        line: proto.ask,
-        source: thisTab,
-        context: this.contextId,
-      })
+      if (!this.insideIframe) {
+        this.bc.postMessage({
+          line: proto.ask,
+          source: thisTab,
+          context: this.contextId,
+        })
+        timeoutId = setTimeout(() => {
+          allowStart()
+        }, 500)
+      } else {
+        this.bc.postMessage({
+          line: proto.iframeSignal,
+          source: thisTab,
+          context: this.contextId,
+          domain: location.hostname,
+        })
+      }
+    }
+
+    const allowStart = () => {
+      this.canStart = true
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+    const checkId = (iframes: HTMLIFrameElement[], domain: string) => {
+      for (const iframe of iframes) {
+        if (iframe.contentWindow && iframe.contentWindow.location.hostname === domain) {
+          // @ts-ignore
+          return iframe[this.options.node_id] as number | undefined
+        }
+      }
+      return null
+    }
+    const delay = async (ms: number) => {
+      return new Promise((res) => setTimeout(res, ms))
     }
 
     if (this.bc !== null) {
@@ -379,14 +376,47 @@ export default class App {
         if (ev.data.context === this.contextId) {
           return
         }
+        /**
+         * if we get a signal from child iframes, we check for their node_id and send it back,
+         * so they can act as if it was just a same-domain iframe
+         * */
+        if (ev.data.line === proto.iframeSignal && !this.insideIframe) {
+          const childIframeDomain = ev.data.domain
+          const pageIframes = Array.from(document.querySelectorAll('iframe'))
+          const signalId = async () => {
+            let tries = 0
+            while (tries < 10) {
+              const id = checkId(pageIframes, childIframeDomain)
+              if (id) {
+                this.bc?.postMessage({
+                  line: proto.iframeId,
+                  source: thisTab,
+                  context: this.contextId,
+                  domain: childIframeDomain,
+                  id,
+                })
+                tries = 10
+                break
+              }
+              tries++
+              await delay(100)
+            }
+          }
+          void signalId()
+        }
+        if (ev.data.line === proto.iframeId) {
+          this.rootId = ev.data.id
+        }
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
+          allowStart()
         }
         if (ev.data.line === proto.reg) {
           const sessionToken = ev.data.token
           this.session.regenerateTabId()
           this.session.setSessionToken(sessionToken)
+          allowStart()
         }
         if (ev.data.line === proto.ask) {
           const token = this.session.getSessionToken()
@@ -400,6 +430,65 @@ export default class App {
           }
         }
       }
+    }
+  }
+
+  private initWorker() {
+    try {
+      this.worker = new Worker(
+        URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
+      )
+      this.worker.onerror = (e) => {
+        this._debug('webworker_error', e)
+      }
+      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
+        this.handleWorkerMsg(data)
+      }
+
+      const alertWorker = () => {
+        if (this.worker) {
+          this.worker.postMessage(null)
+        }
+      }
+      // keep better tactics, discard others?
+      this.attachEventListener(window, 'beforeunload', alertWorker, false)
+      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
+      // TODO: stop session after inactivity timeout (make configurable)
+      this.attachEventListener(document, 'visibilitychange', alertWorker, false)
+    } catch (e) {
+      this._debug('worker_start', e)
+    }
+  }
+
+  private handleWorkerMsg(data: FromWorkerData) {
+    // handling 401 auth restart (new token assignment)
+    if (data === 'a_stop') {
+      this.stop(false)
+    } else if (data === 'a_start') {
+      void this.start({}, true)
+    } else if (data === 'not_init') {
+      this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
+    } else if (data.type === 'failure') {
+      this.stop(false)
+      this.debug.error('worker_failed', data.reason)
+      this._debug('worker_failed', data.reason)
+    } else if (data.type === 'compress') {
+      const batch = data.batch
+      const batchSize = batch.byteLength
+      if (batchSize > this.compressionThreshold) {
+        gzip(data.batch, { mtime: 0 }, (err, result) => {
+          if (err) {
+            this.debug.error('Openreplay compression error:', err)
+            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+          } else {
+            this.worker?.postMessage({ type: 'compressed', batch: result })
+          }
+        })
+      } else {
+        this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+      }
+    } else if (data.type === 'queue_empty') {
+      this.onSessionSent()
     }
   }
 
@@ -569,14 +658,14 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(
-      () => (target ? createEventListener(target, type, listener, useCapture) : null),
-      useSafe,
-    )
-    this.attachStopCallback(
-      () => (target ? deleteEventListener(target, type, listener, useCapture) : null),
-      useSafe,
-    )
+
+    const createListener = () =>
+      target ? createEventListener(target, type, listener, useCapture) : null
+    const deleteListener = () =>
+      target ? deleteEventListener(target, type, listener, useCapture) : null
+
+    this.attachStartCallback(createListener, useSafe)
+    this.attachStopCallback(deleteListener, useSafe)
   }
 
   // TODO: full correct semantic
@@ -705,63 +794,15 @@ export default class App {
 
   /**
    * start buffering messages without starting the actual session, which gives
-   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger
+   * user 30 seconds to "activate" and record session by calling `start()` on conditional trigger,
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
     this.singleBuffer = false
     const second = 1000
-    if (conditional) {
-      this.conditionsManager = new ConditionsManager(this, startOpts)
-    }
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
     if (conditional) {
-      const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...this.getTrackerInfo(),
-          timestamp: now(),
-          doNotRecord: true,
-          bufferDiff: 0,
-          userID: this.session.getInfo().userID,
-          token: undefined,
-          deviceMemory,
-          jsHeapSizeLimit,
-          timezone: getTimezone(),
-          width: window.innerWidth,
-          height: window.innerHeight,
-        }),
-      })
-      const {
-        // this token is needed to fetch conditions and flags,
-        // but it can't be used to record a session
-        token,
-        userBrowser,
-        userCity,
-        userCountry,
-        userDevice,
-        userOS,
-        userState,
-        projectID,
-      } = await r.json()
-      this.session.assign({ projectID })
-      this.session.setUserInfo({
-        userBrowser,
-        userCity,
-        userCountry,
-        userDevice,
-        userOS,
-        userState,
-      })
-      const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
-      this.startCallbacks.forEach((cb) => cb(onStartInfo))
-      await this.conditionsManager?.fetchConditions(projectID as string, token as string)
-      await this.featureFlags.reloadFlags(token as string)
-      await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
-      this.conditionsManager?.processFlags(this.featureFlags.flags)
+      await this.setupConditionalStart(startOpts)
     }
     const cycle = () => {
       this.orderNumber += 1
@@ -800,6 +841,56 @@ export default class App {
       cycle()
     }, 30 * second)
     cycle()
+  }
+
+  private async setupConditionalStart(startOpts: StartOptions) {
+    this.conditionsManager = new ConditionsManager(this, startOpts)
+    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...this.getTrackerInfo(),
+        timestamp: now(),
+        doNotRecord: true,
+        bufferDiff: 0,
+        userID: this.session.getInfo().userID,
+        token: undefined,
+        deviceMemory,
+        jsHeapSizeLimit,
+        timezone: getTimezone(),
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }),
+    })
+    const {
+      // this token is needed to fetch conditions and flags,
+      // but it can't be used to record a session
+      token,
+      userBrowser,
+      userCity,
+      userCountry,
+      userDevice,
+      userOS,
+      userState,
+      projectID,
+    } = await r.json()
+    this.session.assign({ projectID })
+    this.session.setUserInfo({
+      userBrowser,
+      userCity,
+      userCountry,
+      userDevice,
+      userOS,
+      userState,
+    })
+    const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
+    this.startCallbacks.forEach((cb) => cb(onStartInfo))
+    await this.conditionsManager?.fetchConditions(projectID as string, token as string)
+    await this.featureFlags.reloadFlags(token as string)
+    await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
+    this.conditionsManager?.processFlags(this.featureFlags.flags)
   }
 
   onSessionSent = () => {
@@ -855,7 +946,7 @@ export default class App {
   /**
    * Saves the captured messages in localStorage (or whatever is used in its place)
    *
-   * Then when this.offlineRecording is called, it will preload this messages and clear the storage item
+   * Then, when this.offlineRecording is called, it will preload this messages and clear the storage item
    *
    * Keeping the size of local storage reasonable is up to the end users of this library
    * */
@@ -946,7 +1037,7 @@ export default class App {
     this.clearBuffers()
   }
 
-  private _start(
+  private async _start(
     startOpts: StartOptions = {},
     resetByWorker = false,
     conditionName?: string,
@@ -1008,8 +1099,8 @@ export default class App {
       'session token: ',
       sessionToken,
     )
-    return window
-      .fetch(this.options.ingestPoint + '/v1/web/start', {
+    try {
+      const r = await window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1028,190 +1119,173 @@ export default class App {
           assistOnly: startOpts.assistOnly ?? this.socketMode,
         }),
       })
-      .then((r) => {
-        if (r.status === 200) {
-          return r.json()
-        } else {
-          return r
-            .text()
-            .then((text) =>
-              text === CANCELED
-                ? Promise.reject(CANCELED)
-                : Promise.reject(`Server error: ${r.status}. ${text}`),
-            )
-        }
+      if (r.status !== 200) {
+        const error = await r.text()
+        const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
+        return Promise.reject(reason)
+      }
+      if (!this.worker) {
+        const reason = 'no worker found after start request (this might not happen)'
+        this.signalError(reason, [])
+        return Promise.reject(reason)
+      }
+      const {
+        token,
+        userUUID,
+        projectID,
+        beaconSizeLimit,
+        compressionThreshold, // how big the batch should be before we decide to compress it
+        delay, //  derived from token
+        sessionID, //  derived from token
+        startTimestamp, // real startTS (server time), derived from sessionID
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
+        canvasEnabled,
+        canvasQuality,
+        canvasFPS,
+        assistOnly: socketOnly,
+      } = await r.json()
+
+      if (
+        typeof token !== 'string' ||
+        typeof userUUID !== 'string' ||
+        (typeof startTimestamp !== 'number' && typeof startTimestamp !== 'undefined') ||
+        typeof sessionID !== 'string' ||
+        typeof delay !== 'number' ||
+        (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
+      ) {
+        const reason = `Incorrect server response: ${JSON.stringify(r)}`
+        this.signalError(reason, [])
+        return Promise.reject(reason)
+      }
+
+      this.delay = delay
+      this.session.setSessionToken(token)
+      this.session.setUserInfo({
+        userBrowser,
+        userCity,
+        userCountry,
+        userDevice,
+        userOS,
+        userState,
       })
-      .then(async (r) => {
-        if (!this.worker) {
-          const reason = 'no worker found after start request (this might not happen)'
-          this.signalError(reason, [])
-          return Promise.reject(reason)
-        }
-        if (this.activityState === ActivityState.NotActive) {
-          const reason = 'Tracker stopped during authorization'
-          this.signalError(reason, [])
-          return Promise.reject(reason)
-        }
-        const {
+      this.session.assign({
+        sessionID,
+        timestamp: startTimestamp || timestamp,
+        projectID,
+      })
+
+      if (socketOnly) {
+        this.socketMode = true
+        this.worker.postMessage('stop')
+      } else {
+        this.worker.postMessage({
+          type: 'auth',
           token,
-          userUUID,
-          projectID,
           beaconSizeLimit,
-          compressionThreshold, // how big the batch should be before we decide to compress it
-          delay, //  derived from token
-          sessionID, //  derived from token
-          startTimestamp, // real startTS (server time), derived from sessionID
-          userBrowser,
-          userCity,
-          userCountry,
-          userDevice,
-          userOS,
-          userState,
-          canvasEnabled,
-          canvasQuality,
-          canvasFPS,
-          assistOnly: socketOnly,
-        } = r
-        if (
-          typeof token !== 'string' ||
-          typeof userUUID !== 'string' ||
-          (typeof startTimestamp !== 'number' && typeof startTimestamp !== 'undefined') ||
-          typeof sessionID !== 'string' ||
-          typeof delay !== 'number' ||
-          (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
-        ) {
-          const reason = `Incorrect server response: ${JSON.stringify(r)}`
-          this.signalError(reason, [])
-          return Promise.reject(reason)
-        }
-        this.delay = delay
-        this.session.setSessionToken(token)
-        this.session.setUserInfo({
-          userBrowser,
-          userCity,
-          userCountry,
-          userDevice,
-          userOS,
-          userState,
         })
-        this.session.assign({
-          sessionID,
-          timestamp: startTimestamp || timestamp,
-          projectID,
-        })
+      }
 
-        if (socketOnly) {
-          this.socketMode = true
-          this.worker.postMessage('stop')
-        } else {
-          this.worker.postMessage({
-            type: 'auth',
-            token,
-            beaconSizeLimit,
+      if (!isNewSession && token === sessionToken) {
+        this.debug.log('continuing session on new tab', this.session.getTabId())
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        this.send(TabChange(this.session.getTabId()))
+      }
+      // (Re)send Metadata for the case of a new session
+      Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
+        this.send(Metadata(key, value)),
+      )
+      this.localStorage.setItem(this.options.local_uuid_key, userUUID)
+
+      this.compressionThreshold = compressionThreshold
+      const onStartInfo = { sessionToken: token, userUUID, sessionID }
+      // TODO: start as early as possible (before receiving the token)
+      /** after start */
+      this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
+      void this.featureFlags.reloadFlags()
+      await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
+      this.activityState = ActivityState.Active
+
+      if (canvasEnabled && !this.options.canvas.disableCanvas) {
+        this.canvasRecorder =
+          this.canvasRecorder ??
+          new CanvasRecorder(this, {
+            fps: canvasFPS,
+            quality: canvasQuality,
+            isDebug: this.options.canvas.__save_canvas_locally,
+            fixedScaling: this.options.canvas.fixedCanvasScaling,
+            useAnimationFrame: this.options.canvas.useAnimationFrame,
           })
+        this.canvasRecorder.startTracking()
+      }
+
+      /** --------------- COLD START BUFFER ------------------*/
+      if (isColdStart) {
+        const biggestBuffer =
+          this.bufferedMessages1.length > this.bufferedMessages2.length
+            ? this.bufferedMessages1
+            : this.bufferedMessages2
+        while (biggestBuffer.length > 0) {
+          await this.flushBuffer(biggestBuffer)
         }
-
-        if (!isNewSession && token === sessionToken) {
-          this.debug.log('continuing session on new tab', this.session.getTabId())
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          this.send(TabChange(this.session.getTabId()))
-        }
-        // (Re)send Metadata for the case of a new session
-        Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
-          this.send(Metadata(key, value)),
-        )
-        this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-
-        this.compressionThreshold = compressionThreshold
-        const onStartInfo = { sessionToken: token, userUUID, sessionID }
-        // TODO: start as early as possible (before receiving the token)
-        /** after start */
-        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-        void this.featureFlags.reloadFlags()
-        await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
-        this.activityState = ActivityState.Active
-
-        if (canvasEnabled && !this.options.canvas.disableCanvas) {
-          this.canvasRecorder =
-            this.canvasRecorder ??
-            new CanvasRecorder(this, {
-              fps: canvasFPS,
-              quality: canvasQuality,
-              isDebug: this.options.canvas.__save_canvas_locally,
-              fixedScaling: this.options.canvas.fixedCanvasScaling,
-              useAnimationFrame: this.options.canvas.useAnimationFrame,
-            })
-          this.canvasRecorder.startTracking()
-        }
-
+        this.clearBuffers()
+        this.commit()
         /** --------------- COLD START BUFFER ------------------*/
-        if (isColdStart) {
-          const biggestBuffer =
-            this.bufferedMessages1.length > this.bufferedMessages2.length
-              ? this.bufferedMessages1
-              : this.bufferedMessages2
-          while (biggestBuffer.length > 0) {
-            await this.flushBuffer(biggestBuffer)
-          }
-          this.clearBuffers()
-          this.commit()
-          /** --------------- COLD START BUFFER ------------------*/
+      } else {
+        if (this.insideIframe && this.rootId) {
+          this.observer.crossdomainObserve(this.rootId)
         } else {
           this.observer.observe()
-          this.ticker.start()
         }
+        this.ticker.start()
+      }
 
-        // get rid of onStart ?
-        if (typeof this.options.onStart === 'function') {
-          this.options.onStart(onStartInfo)
+      this.uxtManager = this.uxtManager ? this.uxtManager : new UserTestManager(this, uxtStorageKey)
+      let uxtId: number | undefined
+      const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
+      if (savedUxtTag) {
+        uxtId = parseInt(savedUxtTag, 10)
+      }
+      if (location?.search) {
+        const query = new URLSearchParams(location.search)
+        if (query.has('oruxt')) {
+          const qId = query.get('oruxt')
+          uxtId = qId ? parseInt(qId, 10) : undefined
         }
-        this.restartAttempts = 0
+      }
 
-        this.uxtManager = this.uxtManager
-          ? this.uxtManager
-          : new UserTestManager(this, uxtStorageKey)
-        let uxtId: number | undefined
-        const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
-        if (savedUxtTag) {
-          uxtId = parseInt(savedUxtTag, 10)
+      if (uxtId) {
+        if (!this.uxtManager.isActive) {
+          // eslint-disable-next-line
+          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
+            if (id) {
+              this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
+            }
+          })
+        } else {
+          // @ts-ignore
+          this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
         }
-        if (location?.search) {
-          const query = new URLSearchParams(location.search)
-          if (query.has('oruxt')) {
-            const qId = query.get('oruxt')
-            uxtId = qId ? parseInt(qId, 10) : undefined
-          }
-        }
+      }
 
-        if (uxtId) {
-          if (!this.uxtManager.isActive) {
-            // eslint-disable-next-line
-            this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
-              if (id) {
-                this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
-              }
-            })
-          } else {
-            // @ts-ignore
-            this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
-          }
-        }
+      return SuccessfulStart(onStartInfo)
+    } catch (reason) {
+      this.stop()
+      this.session.reset()
+      if (reason === CANCELED) {
+        this.signalError(CANCELED, [])
+        return UnsuccessfulStart(CANCELED)
+      }
 
-        return SuccessfulStart(onStartInfo)
-      })
-      .catch((reason) => {
-        this.stop()
-        this.session.reset()
-        if (reason === CANCELED) {
-          this.signalError(CANCELED, [])
-          return UnsuccessfulStart(CANCELED)
-        }
-
-        this._debug('session_start', reason)
-        const errorMessage = reason instanceof Error ? reason.message : reason.toString()
-        this.signalError(errorMessage, [])
-        return UnsuccessfulStart(errorMessage)
-      })
+      this._debug('session_start', reason)
+      const errorMessage = reason instanceof Error ? reason.message : reason.toString()
+      this.signalError(errorMessage, [])
+      return UnsuccessfulStart(errorMessage)
+    }
   }
 
   restartCanvasTracking = () => {
@@ -1246,11 +1320,24 @@ export default class App {
     return this.uxtManager?.getTestId()
   }
 
+  async waitStart() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (this.canStart) {
+          resolve(true)
+        } else {
+          setTimeout(check, 25)
+        }
+      }
+      check()
+    })
+  }
+
   /**
    * basically we ask other tabs during constructor
    * and here we just apply 10ms delay just in case
    * */
-  start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
+  async start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
     if (
       this.activityState === ActivityState.Active ||
       this.activityState === ActivityState.Starting
@@ -1261,21 +1348,19 @@ export default class App {
     }
 
     if (!document.hidden) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(this._start(...args))
-        }, 25)
-      })
+      await this.waitStart()
+      return this._start(...args)
     } else {
       return new Promise((resolve) => {
-        const onVisibilityChange = () => {
+        const onVisibilityChange = async () => {
           if (!document.hidden) {
+            await this.waitStart()
+            // eslint-disable-next-line
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            setTimeout(() => {
-              resolve(this._start(...args))
-            }, 25)
+            resolve(this._start(...args))
           }
         }
+        // eslint-disable-next-line
         document.addEventListener('visibilitychange', onVisibilityChange)
       })
     }
