@@ -3,148 +3,150 @@ import {
   ControlOutlined,
   MutedOutlined,
   SoundOutlined,
-} from '@ant-design/icons'
-import { Button, InputNumber, Popover } from 'antd'
-import { Slider } from 'antd'
-import { observer } from 'mobx-react-lite'
-import React, { useContext, useEffect, useRef, useState } from 'react'
+} from '@ant-design/icons';
+import { Button, InputNumber, Popover } from 'antd';
+import { Slider } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
-import { PlayerContext } from '../../playerContext'
+import { PlayerContext } from 'App/components/Session/playerContext';
 
-function DropdownAudioPlayer({ events }: { events: any[] }) {
-  const { store } = useContext(PlayerContext)
-  const [playingFiles, setPlayingFiles] = useState<Record<string, boolean>>({})
-  const [isVisible, setIsVisible] = useState(false)
-  const [volume, setVolume] = useState(0)
-  const [delta, setDelta] = useState(0)
-  const [deltaInputValue, setDeltaInputValue] = useState(0)
-  const [isMuted, setIsMuted] = useState(true)
-  const lastPlayerTime = useRef(0)
-  const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({}) // START GEN
+function DropdownAudioPlayer({
+  audioEvents,
+}: {
+  audioEvents: { payload: Record<any, any>; timestamp: number }[];
+}) {
+  const { store } = useContext(PlayerContext);
+  const [isVisible, setIsVisible] = useState(false);
+  const [volume, setVolume] = useState(35);
+  const [delta, setDelta] = useState(0);
+  const [deltaInputValue, setDeltaInputValue] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const lastPlayerTime = useRef(0);
+  const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
 
-  const possibleAudio = events.filter((e) => e.name.includes('media/audio'))
+  const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {};
 
-  if (possibleAudio.length === 0) {
-    return null
-  }
-
-  const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {}
-
-  const files = possibleAudio.map((pa) => {
-    const data = JSON.parse(pa.payload)
-    return { url: data.url, timestamp: data.timestamp, start: pa.timestamp - sessionStart }
-  })
+  const files = audioEvents.map((pa) => {
+    const data = pa.payload;
+    return {
+      url: data.url,
+      timestamp: data.timestamp,
+      start: pa.timestamp - sessionStart,
+    };
+  });
 
   const toggleMute = () => {
     Object.values(audioRefs.current).forEach((audio) => {
       if (audio) {
-        audio.muted = !audio.muted
+        audio.muted = !audio.muted;
       }
-    })
-    setIsMuted(!isMuted)
+    });
+    setIsMuted(!isMuted);
     if (!isMuted) {
-      onVolumeChange(0)
+      onVolumeChange(0);
     } else {
-      onVolumeChange(35)
+      onVolumeChange(35);
     }
-  }
+  };
 
   const toggleVisible = () => {
-    setIsVisible(!isVisible)
-  }
+    setIsVisible(!isVisible);
+  };
 
   const handleDelta = (value: any) => {
-    setDeltaInputValue(parseFloat(value))
-  }
+    setDeltaInputValue(parseFloat(value));
+  };
 
   const onSync = () => {
-    setDelta(deltaInputValue)
-    handleSeek(time + deltaInputValue * 1000)
-  }
+    setDelta(deltaInputValue);
+    handleSeek(time + deltaInputValue * 1000);
+  };
 
   const onCancel = () => {
-    setDeltaInputValue(0)
-    setIsVisible(false)
-  }
+    setDeltaInputValue(0);
+    setIsVisible(false);
+  };
 
   const onReset = () => {
-    setDelta(0)
-    setDeltaInputValue(0)
-    handleSeek(time)
-  }
+    setDelta(0);
+    setDeltaInputValue(0);
+    handleSeek(time);
+  };
 
   const onVolumeChange = (value: number) => {
     Object.values(audioRefs.current).forEach((audio) => {
       if (audio) {
-        audio.volume = value / 100
+        audio.volume = value / 100;
       }
-    })
-    setVolume(value)
-    setIsMuted(value === 0)
-  }
+    });
+    setVolume(value);
+    setIsMuted(value === 0);
+  };
 
   const handleSeek = (timeMs: number) => {
     Object.entries(audioRefs.current).forEach(([key, audio]) => {
       if (audio) {
-        const file = files.find((f) => f.url === key)
+        const file = files.find((f) => f.url === key);
         if (file) {
           audio.currentTime = Math.max(
             (timeMs + delta * 1000 - file.start) / 1000,
             0
-          )
+          );
         }
       }
-    })
-  }
+    });
+  };
 
   const changePlaybackSpeed = (speed: number) => {
     Object.values(audioRefs.current).forEach((audio) => {
       if (audio) {
-        audio.playbackRate = speed
+        audio.playbackRate = speed;
       }
-    })
-  }
+    });
+  };
 
   useEffect(() => {
-    const deltaMs = delta * 1000
+    const deltaMs = delta * 1000;
     if (Math.abs(lastPlayerTime.current - time - deltaMs) >= 250) {
-      handleSeek(time)
+      handleSeek(time);
     }
-    Object.values(audioRefs.current).forEach((audio) => {
+    Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
-        const file = files.find((f) => f.url === audio.src) // START GEN
-        if (file && time >= file.start) { // START GEN
+        const file = files.find((f) => f.url === url);
+        if (file && time >= file.start) {
           if (audio.paused && playing) {
-            audio.play()
+            audio.play();
           }
         } else {
-          audio.pause()
+          audio.pause();
         }
         if (audio.muted !== isMuted) {
-          audio.muted = isMuted
+          console.log(isMuted, audio.muted);
+          audio.muted = isMuted;
         }
       }
-    })
-    lastPlayerTime.current = time + deltaMs
-  }, [time, delta])
+    });
+    lastPlayerTime.current = time + deltaMs;
+  }, [time, delta]);
 
   useEffect(() => {
-    changePlaybackSpeed(speed)
-  }, [speed])
+    changePlaybackSpeed(speed);
+  }, [speed]);
 
   useEffect(() => {
-    Object.values(audioRefs.current).forEach((audio) => {
+    Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
-        const file = files.find((f) => f.url === audio.src) // START GEN
-        if (file && playing && time >= file.start) { // START GEN
-          audio.play()
+        const file = files.find((f) => f.url === url);
+        if (file && playing && time >= file.start) {
+          audio.play();
         } else {
-          audio.pause()
+          audio.pause();
         }
       }
-    })
-    setVolume(isMuted ? 0 : volume)
-  }, [playing])
+    });
+    setVolume(isMuted ? 0 : volume);
+  }, [playing]);
 
   return (
     <div className={'relative'}>
@@ -248,7 +250,7 @@ function DropdownAudioPlayer({ events }: { events: any[] }) {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
-export default observer(DropdownAudioPlayer)
+export default observer(DropdownAudioPlayer);

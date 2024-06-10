@@ -5,42 +5,26 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
 
+
+
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
-import {
-  LaunchConsoleShortcut,
-  LaunchEventsShortcut,
-  LaunchNetworkShortcut,
-  LaunchPerformanceShortcut,
-  LaunchStateShortcut,
-  LaunchXRaShortcut,
-} from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import {
-  CONSOLE,
-  GRAPHQL,
-  INSPECTOR,
-  NETWORK,
-  OVERVIEW,
-  PERFORMANCE,
-  PROFILER,
-  STACKEVENTS,
-  STORAGE,
-  changeSkipInterval,
-  fullscreenOff,
-  fullscreenOn,
-  toggleBottomBlock,
-} from 'Duck/components/player';
+import { LaunchConsoleShortcut, LaunchEventsShortcut, LaunchNetworkShortcut, LaunchPerformanceShortcut, LaunchStateShortcut, LaunchXRaShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { CONSOLE, GRAPHQL, INSPECTOR, NETWORK, OVERVIEW, PERFORMANCE, PROFILER, STACKEVENTS, STORAGE, changeSkipInterval, fullscreenOff, fullscreenOn, toggleBottomBlock } from 'Duck/components/player';
 import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
+
+
 
 import DropdownAudioPlayer from '../../../Session/Player/ReplayPlayer/AudioPlayer';
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
+
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -251,6 +235,8 @@ const DevtoolsButtons = observer(
       }
       aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
     };
+
+    const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
@@ -351,7 +337,7 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
-        <DropdownAudioPlayer events={events} />
+        {possibleAudio.length ? <DropdownAudioPlayer audioEvents={possibleAudio} /> : null}
       </>
     );
   }
