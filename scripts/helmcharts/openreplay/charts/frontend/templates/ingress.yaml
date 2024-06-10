@@ -70,7 +70,7 @@ metadata:
       proxy_ssl_name static.openreplay.com;
       proxy_ssl_server_name on;
 spec:
-  ingressClassName: openreplay
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   tls:
     - hosts:
         - {{ .Values.global.domainName }}
