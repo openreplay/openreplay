@@ -528,12 +528,6 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
     return {'data': data}
 
 
-@app.post('/{projectId}/click_maps/search', tags=["click maps"])
-def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
-
-
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"])
 def search_feature_flags(project_id: int,
                          data: schemas.SearchFlagsSchema = Body(...),

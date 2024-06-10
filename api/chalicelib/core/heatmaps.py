@@ -1,6 +1,10 @@
-from chalicelib.utils import sql_helper as sh
+import logging
+
 import schemas
 from chalicelib.utils import helper, pg_client
+from chalicelib.utils import sql_helper as sh
+
+logger = logging.getLogger(__name__)
 
 
 def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
@@ -12,7 +16,8 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
                    "clicks.timestamp <= %(endDate)s",
                    "start_ts >= %(startDate)s",
                    "start_ts <= %(endDate)s",
-                   "duration IS NOT NULL"]
+                   "duration IS NOT NULL",
+                   "normalized_x IS NOT NULL"]
     query_from = "events.clicks INNER JOIN sessions USING (session_id)"
     q_count = "count(1) AS count"
     has_click_rage_filter = False
@@ -53,22 +58,22 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
                        LEFT JOIN issues AS mis USING (issue_id)"""
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT selector, {q_count}
+        query = cur.mogrify(f"""SELECT normalized_x, normalized_y
                                 FROM {query_from}
                                 WHERE {" AND ".join(constraints)}
-                                GROUP BY selector
                                 LIMIT 500;""", args)
-        # print("---------")
-        # print(query.decode('UTF-8'))
-        # print("---------")
+        logger.debug("---------")
+        logger.debug(query.decode('UTF-8'))
+        logger.debug("---------")
         try:
             cur.execute(query)
         except Exception as err:
-            print("--------- HEATMAP SEARCH QUERY EXCEPTION -----------")
-            print(query.decode('UTF-8'))
-            print("--------- PAYLOAD -----------")
-            print(data)
-            print("--------------------")
+            logger.warning("--------- HEATMAP 2 SEARCH QUERY EXCEPTION -----------")
+            logger.warning(query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(data)
+            logger.warning("--------------------")
             raise err
         rows = cur.fetchall()
+
     return helper.list_to_camel_case(rows)
