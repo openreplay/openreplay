@@ -132,9 +132,16 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 	}
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
-	if err := conn.bulks.Get("webClickEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
-		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
-		conn.log.Error(sessCtx, "insert web click event in bulk err: %s", err)
+	if e.NormalizedX <= 100 && e.NormalizedY <= 100 {
+		if err := conn.bulks.Get("webClickXYEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime, e.NormalizedX, e.NormalizedY); err != nil {
+			sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+			conn.log.Error(sessCtx, "insert web click event in bulk err: %s", err)
+		}
+	} else {
+		if err := conn.bulks.Get("webClickEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
+			sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
+			conn.log.Error(sessCtx, "insert web click event in bulk err: %s", err)
+		}
 	}
 	// Add new value set to autocomplete bulk
 	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK", e.Label)

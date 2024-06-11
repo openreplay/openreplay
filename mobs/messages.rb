@@ -362,8 +362,17 @@ message 67, 'CSSInsertRuleURLBased' do
   uint 'Index'
   string 'BaseURL'
 end
-## 68
-message 69, 'MouseClick' do
+
+message 68, 'MouseClick' do
+  uint 'ID'
+  uint 'HesitationTime'
+  string 'Label'
+  string 'Selector'
+  uint 'NormalizedX'
+  uint 'NormalizedY'
+end
+
+message 69, 'MouseClickDeprecated' do
   uint 'ID'
   uint 'HesitationTime'
   string 'Label'

@@ -585,6 +585,18 @@ class CSSInsertRuleURLBased(Message):
 
 
 class MouseClick(Message):
+    __id__ = 68
+
+    def __init__(self, id, hesitation_time, label, selector, normalized_x, normalized_y):
+        self.id = id
+        self.hesitation_time = hesitation_time
+        self.label = label
+        self.selector = selector
+        self.normalized_x = normalized_x
+        self.normalized_y = normalized_y
+
+
+class MouseClickDeprecated(Message):
     __id__ = 69
 
     def __init__(self, id, hesitation_time, label, selector):

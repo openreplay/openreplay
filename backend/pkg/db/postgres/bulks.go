@@ -12,7 +12,7 @@ type bulksTask struct {
 }
 
 func NewBulksTask() *bulksTask {
-	return &bulksTask{bulks: make([]Bulk, 0, 15)}
+	return &bulksTask{bulks: make([]Bulk, 0, 16)}
 }
 
 type BulkSet struct {
@@ -32,6 +32,7 @@ type BulkSet struct {
 	webIssueEvents    Bulk
 	webCustomEvents   Bulk
 	webClickEvents    Bulk
+	webClickXYEvents  Bulk
 	webNetworkRequest Bulk
 	webCanvasNodes    Bulk
 	webTagTriggers    Bulk
@@ -82,6 +83,8 @@ func (conn *BulkSet) Get(name string) Bulk {
 		return conn.webCustomEvents
 	case "webClickEvents":
 		return conn.webClickEvents
+	case "webClickXYEvents":
+		return conn.webClickXYEvents
 	case "webNetworkRequest":
 		return conn.webNetworkRequest
 	case "canvasNodes":
@@ -203,6 +206,14 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webClickEvents bulk: %s", err)
 	}
+	conn.webClickXYEvents, err = NewBulk(conn.c,
+		"events.clicks",
+		"(session_id, message_id, timestamp, label, selector, url, path, hesitation, normalized_x, normalized_y)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d, $%d, $%d)",
+		10, 200)
+	if err != nil {
+		conn.log.Fatal(conn.ctx, "can't create webClickEvents bulk: %s", err)
+	}
 	conn.webNetworkRequest, err = NewBulk(conn.c,
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, transfer_size)",
@@ -246,6 +257,7 @@ func (conn *BulkSet) Send() {
 	newTask.bulks = append(newTask.bulks, conn.webIssueEvents)
 	newTask.bulks = append(newTask.bulks, conn.webCustomEvents)
 	newTask.bulks = append(newTask.bulks, conn.webClickEvents)
+	newTask.bulks = append(newTask.bulks, conn.webClickXYEvents)
 	newTask.bulks = append(newTask.bulks, conn.webNetworkRequest)
 	newTask.bulks = append(newTask.bulks, conn.webCanvasNodes)
 	newTask.bulks = append(newTask.bulks, conn.webTagTriggers)

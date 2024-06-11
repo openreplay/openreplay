@@ -34,7 +34,6 @@ class TrackingCodeModal extends React.PureComponent {
   render() {
     const { title = '', subTitle, site } = this.props;
     const { activeTab } = this.state;
-    console.log(this.props.site);
     return (
       <div
         className="bg-white h-screen overflow-y-auto"
