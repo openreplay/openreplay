@@ -37,10 +37,15 @@ function migration() {
     # We need to remove version dots
     function normalise_version {
         version=$1
-        echo $(echo ${version:1} | tr -d '.')
+        version=${version#v} # Remove leading 'v' if it exists
+        echo ${version} | tr -d '.'
     }
     all_versions=($(ls -l db/init_dbs/$db | grep -E ^d | grep -v create | awk '{print $NF}'))
-    migration_versions=($(for ver in ${all_versions[*]}; do if [[ $(normalise_version $ver) > $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then echo $ver; fi; done | sort -V))
+    migration_versions=($(for ver in ${all_versions[*]}; do
+        if [[ $(normalise_version $ver) -gt $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then
+            echo $ver
+        fi
+    done | sort -V))
     echo "Migration version: ${migration_versions[*]}"
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
     joined_migration_versions=$(
