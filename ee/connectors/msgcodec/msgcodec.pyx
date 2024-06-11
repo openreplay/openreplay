@@ -649,8 +649,18 @@ cdef class MessageCodec:
                 base_url=self.read_string(reader)
             )
 
-        if message_id == 69:
+        if message_id == 68:
             return MouseClick(
+                id=self.read_uint(reader),
+                hesitation_time=self.read_uint(reader),
+                label=self.read_string(reader),
+                selector=self.read_string(reader),
+                normalized_x=self.read_uint(reader),
+                normalized_y=self.read_uint(reader)
+            )
+
+        if message_id == 69:
+            return MouseClickDeprecated(
                 id=self.read_uint(reader),
                 hesitation_time=self.read_uint(reader),
                 label=self.read_string(reader),

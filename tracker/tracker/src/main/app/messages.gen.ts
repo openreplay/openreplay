@@ -656,9 +656,28 @@ export function MouseClick(
   hesitationTime: number,
   label: string,
   selector: string,
+  normalizedX: number,
+  normalizedY: number,
 ): Messages.MouseClick {
   return [
     Messages.Type.MouseClick,
+    id,
+    hesitationTime,
+    label,
+    selector,
+    normalizedX,
+    normalizedY,
+  ]
+}
+
+export function MouseClickDeprecated(
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
+): Messages.MouseClickDeprecated {
+  return [
+    Messages.Type.MouseClickDeprecated,
     id,
     hesitationTime,
     label,

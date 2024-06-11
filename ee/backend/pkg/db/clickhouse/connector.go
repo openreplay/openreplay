@@ -119,7 +119,7 @@ var batches = map[string]string{
 	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success, url_path) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000))",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, url_path, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?)",
-	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type, selector) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type, selector, normalized_x, normalized_y) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -398,6 +398,14 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	if msg.Label == "" {
 		return nil
 	}
+	var nX *uint32 = nil
+	var nY *uint32 = nil
+	if msg.NormalizedX <= 100 && msg.NormalizedY <= 100 {
+		nXVal := uint32(msg.NormalizedX)
+		nX = &nXVal
+		nYVal := uint32(msg.NormalizedY)
+		nY = &nYVal
+	}
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -407,6 +415,8 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		nullableUint32(uint32(msg.HesitationTime)),
 		"CLICK",
 		msg.Selector,
+		nX,
+		nY,
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)

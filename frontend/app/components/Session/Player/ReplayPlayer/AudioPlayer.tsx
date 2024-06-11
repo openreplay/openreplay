@@ -122,7 +122,6 @@ function DropdownAudioPlayer({
           audio.pause();
         }
         if (audio.muted !== isMuted) {
-          console.log(isMuted, audio.muted);
           audio.muted = isMuted;
         }
       }

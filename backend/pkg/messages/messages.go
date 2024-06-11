@@ -62,7 +62,8 @@ const (
 	MsgCustomIssue                 = 64
 	MsgAssetCache                  = 66
 	MsgCSSInsertRuleURLBased       = 67
-	MsgMouseClick                  = 69
+	MsgMouseClick                  = 68
+	MsgMouseClickDeprecated        = 69
 	MsgCreateIFrameDocument        = 70
 	MsgAdoptedSSReplaceURLBased    = 71
 	MsgAdoptedSSReplace            = 72
@@ -1694,9 +1695,40 @@ type MouseClick struct {
 	HesitationTime uint64
 	Label          string
 	Selector       string
+	NormalizedX    uint64
+	NormalizedY    uint64
 }
 
 func (msg *MouseClick) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Label)+len(msg.Selector))
+	buf[0] = 68
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteUint(msg.HesitationTime, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteString(msg.Selector, buf, p)
+	p = WriteUint(msg.NormalizedX, buf, p)
+	p = WriteUint(msg.NormalizedY, buf, p)
+	return buf[:p]
+}
+
+func (msg *MouseClick) Decode() Message {
+	return msg
+}
+
+func (msg *MouseClick) TypeID() int {
+	return 68
+}
+
+type MouseClickDeprecated struct {
+	message
+	ID             uint64
+	HesitationTime uint64
+	Label          string
+	Selector       string
+}
+
+func (msg *MouseClickDeprecated) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Label)+len(msg.Selector))
 	buf[0] = 69
 	p := 1
@@ -1707,11 +1739,11 @@ func (msg *MouseClick) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *MouseClick) Decode() Message {
+func (msg *MouseClickDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *MouseClick) TypeID() int {
+func (msg *MouseClickDeprecated) TypeID() int {
 	return 69
 }
 

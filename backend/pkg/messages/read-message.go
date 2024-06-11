@@ -1032,6 +1032,30 @@ func DecodeMouseClick(reader BytesReader) (Message, error) {
 	if msg.Selector, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	if msg.NormalizedX, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.NormalizedY, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeMouseClickDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MouseClickDeprecated{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.HesitationTime, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Selector, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
 	return msg, err
 }
 
@@ -2030,8 +2054,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeAssetCache(reader)
 	case 67:
 		return DecodeCSSInsertRuleURLBased(reader)
-	case 69:
+	case 68:
 		return DecodeMouseClick(reader)
+	case 69:
+		return DecodeMouseClickDeprecated(reader)
 	case 70:
 		return DecodeCreateIFrameDocument(reader)
 	case 71:

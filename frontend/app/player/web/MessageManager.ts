@@ -201,7 +201,7 @@ export default class MessageManager {
         lastMsgArr.push([tabId, lastMessageTs])
         namesObj[tabId] = ''
       }
-    })
+    }
     lastMsgArr.sort((a, b) => a[1] - b[1])
     lastMsgArr.forEach(([tabId, lastMessageTs]) => {
       this.tabCloseManager.append({ tabId, time: lastMessageTs })
@@ -340,6 +340,7 @@ export default class MessageManager {
       case MType.MouseMove:
         this.mouseMoveManager.append(msg);
         break;
+      case MType.MouseClickDeprecated:
       case MType.MouseClick:
         this.clickManager.append(msg);
         break;
