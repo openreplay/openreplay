@@ -46,6 +46,7 @@ import type {
   RawSetCssDataURLBased,
   RawCssInsertRuleURLBased,
   RawMouseClick,
+  RawMouseClickDeprecated,
   RawCreateIFrameDocument,
   RawAdoptedSsReplaceURLBased,
   RawAdoptedSsReplace,
@@ -164,6 +165,8 @@ export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 
 export type MouseClick = RawMouseClick & Timed
+
+export type MouseClickDeprecated = RawMouseClickDeprecated & Timed
 
 export type CreateIFrameDocument = RawCreateIFrameDocument & Timed
 
