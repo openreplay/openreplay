@@ -1,6 +1,7 @@
 # 14.0.0
 
 - titles for tabs
+- new `MouseClick` message to introduce heatmaps instead of clickmaps
 
 # 13.0.2
 
