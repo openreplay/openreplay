@@ -98,3 +98,72 @@ async def create_tenant(data: schemas.UserSignupSchema):
             "user": r
         }
     }
+
+
+async def create_oauth_tenant(fullname: str, email: str):
+    logger.info(f"==== Signup oauth started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
+    errors = []
+    if not config("MULTI_TENANTS", cast=bool, default=False) and await tenants.tenants_exists():
+        return {"errors": ["tenants already registered"]}
+
+    logger.debug(f"email: {email}")
+
+    if email is None or len(email) < 5:
+        errors.append("Invalid email address.")
+    else:
+        if users.email_exists(email):
+            errors.append("Email address already in use.")
+        if users.get_deleted_user_by_email(email) is not None:
+            errors.append("Email address previously deleted.")
+
+    if fullname is None or len(fullname) < 1 or not helper.is_alphabet_space_dash(fullname):
+        errors.append("Invalid full name.")
+
+    if len(errors) > 0:
+        logger.warning(
+            f"==> signup error for:\n email:{email}, fullname:{fullname}")
+        logger.warning(errors)
+        return {"errors": errors}
+
+    project_name = "my first project"
+    params = {
+        "email": email, "fullname": fullname, "projectName": project_name,
+        "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+        "permissions": [p.value for p in schemas.Permissions]
+    }
+    query = """WITH t AS (
+                INSERT INTO public.tenants (name, plan)
+                    VALUES (%(organizationName)s, %(plan)s::jsonb)
+                    RETURNING tenant_id, api_key
+            ),
+                 r AS (
+                     INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', %(permissions)s::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'Member', %(permissions)s::text[], FALSE)
+                        RETURNING *
+                 ),
+                 u AS (
+                     INSERT INTO public.users (tenant_id, email, role, name, verified_email, data, role_id)
+                         VALUES ((SELECT tenant_id FROM t), %(email)s, 'owner', %(fullname)s, TRUE,%(data)s, (SELECT role_id FROM r WHERE name ='Owner'))
+                         RETURNING user_id,email,role,name,role_id
+                 )
+                 INSERT INTO public.projects (tenant_id, name, active)
+                 VALUES ((SELECT t.tenant_id FROM t), %(projectName)s, TRUE)
+                 RETURNING tenant_id,project_id, (SELECT api_key FROM t) AS api_key;"""
+
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify(query, params))
+        t = cur.fetchone()
+
+    telemetry.new_client(tenant_id=t["tenant_id"])
+    r = users.authenticate(email, "password")
+    r["smtp"] = smtp.has_smtp()
+
+    return {
+        'jwt': r.pop('jwt'),
+        'refreshToken': r.pop('refreshToken'),
+        'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
+        'data': {
+            "user": r
+        }
+    }

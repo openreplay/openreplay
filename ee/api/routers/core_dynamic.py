@@ -2,9 +2,11 @@ import logging
 from typing import Optional, Union
 
 from decouple import config
-from fastapi import Body, Depends, BackgroundTasks, Request
+from fastapi import Body, Depends, BackgroundTasks, Request, RedirectResponse
 from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
+import httpx
+import os
 
 import schemas
 from chalicelib.core import scope
@@ -53,6 +55,71 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
         response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
                             max_age=refresh_token_max_age, secure=True, httponly=True)
         return content
+
+
+# Environment variables (ensure these are set)
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+
+
+if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
+    @public_app.get('/signup-oauth', tags=['signup'])
+    async def signup_oauth_handler():
+        google_authorization_url = (
+            "https://accounts.google.com/o/oauth2/auth"
+            f"?client_id={GOOGLE_CLIENT_ID}"
+            f"&response_type=code"
+            f"&redirect_uri={GOOGLE_REDIRECT_URI}"
+            f"&scope=email%20profile"
+        )
+        return RedirectResponse(url=google_authorization_url)
+
+
+if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
+    @public_app.get('/signup-oauth-callback', tags=['signup'])
+    async def signup_oauth_callback_handler(code: str):
+        # Exchange code for token
+        token_response = httpx.post(
+            url="https://oauth2.googleapis.com/token",
+            data={
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": GOOGLE_REDIRECT_URI,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        token_response_data = token_response.json()
+        access_token = token_response_data.get("access_token")
+
+        if not access_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not retrieve access token")
+
+        # Retrieve user info
+        user_info_response = httpx.get(
+            url="https://www.googleapis.com/oauth2/v1/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        user_info = user_info_response.json()
+        name = user_info.get("name")
+        email = user_info.get("email")
+
+        if not email:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not retrieve user email")
+        if not name:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not retrieve user name")
+
+        content = await signup.create_oauth_tenant(name, email)
+        if "errors" in content:
+            return content
+        refresh_token = content.pop("refreshToken")
+        refresh_token_max_age = content.pop("refreshTokenMaxAge")
+        response = JSONResponse(content=content)
+        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        return response
 
 
 @public_app.post('/login', tags=["authentication"])
