@@ -11,27 +11,42 @@ import { toast } from 'react-toastify'
 function WebPlayer(props: any) {
   const {
     session,
-    customSession,
     insights,
     jumpTimestamp,
   } = props;
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+  const playerRef = React.useRef<any>(null);
 
   useEffect(() => {
-    const [WebPlayerInst, PlayerStore] = createClickMapPlayer(
-      customSession,
-      (state) => makeAutoObservable(state),
-      toast,
-    );
-    setContextValue({ player: WebPlayerInst, store: PlayerStore });
+    const init = () => {
+      const [WebPlayerInst, PlayerStore] = createClickMapPlayer(
+        session,
+        (state) => makeAutoObservable(state),
+        toast,
+      );
+      playerRef.current = WebPlayerInst;
+      setContextValue({ player: WebPlayerInst, store: PlayerStore });
+    }
 
+    if (!playerRef.current) {
+      init()
+    } else {
+      playerRef.current.clean()
+      playerRef.current = null;
+      setContextValue(defaultContextValue);
+      init();
+    }
+  }, [session.sessionId]);
+
+  React.useEffect(() => {
     return () => {
-      WebPlayerInst.clean();
+      playerRef.current && playerRef.current.clean();
+      playerRef.current = null;
       // @ts-ignore
       setContextValue(defaultContextValue);
     }
-  }, [session.sessionId]);
+  }, [])
 
   const isPlayerReady = contextValue.store?.get().ready
 
@@ -42,9 +57,8 @@ function WebPlayer(props: any) {
         contextValue.player.pause()
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.scale()
-        const demoData: { normalizedX: number, normalizedY: number }[] = generateNormalizedCoordinatesArray(100)
 
-        setTimeout(() => { contextValue.player.showClickmap(demoData) }, 250)
+        setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
       }, 500)
     }
     return () => {
@@ -63,28 +77,7 @@ function WebPlayer(props: any) {
 
 export default connect(
   (state: any) => ({
-    session: state.getIn(['sessions', 'current']),
     insights: state.getIn(['sessions', 'insights']),
     jwt: state.getIn(['user', 'jwt']),
   })
 )(withLocationHandlers()(observer(WebPlayer)));
-
-function getRandomNormalizedValue() {
-  return Math.random();
-}
-
-function generateNormalizedCoordinatesArray(num: number) {
-  const normalizedCoordinatesArray = [];
-
-  for (let i = 0; i < num; i++) {
-    const normalizedX = getRandomNormalizedValue();
-    const normalizedY = getRandomNormalizedValue();
-
-    normalizedCoordinatesArray.push({
-      normalizedX: normalizedX,
-      normalizedY: normalizedY
-    });
-  }
-
-  return normalizedCoordinatesArray;
-}

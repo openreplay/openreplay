@@ -3,19 +3,15 @@ import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
 import { connect } from 'react-redux'
-import { setCustomSession, clearCurrentSession, fetchInsights } from 'App/duck/sessions'
+import { fetchInsights } from 'App/duck/sessions'
 import { NoContent, Icon } from 'App/components/ui'
-import Session from 'Types/session'
 
 function ClickMapCard({
-    setCustomSession,
-    visitedEvents,
     insights,
     fetchInsights,
     insightsFilters,
-    host,
-    clearCurrentSession,
 }: any) {
+    const [customSession, setCustomSession] = React.useState<any>(null)
     const { metricStore, dashboardStore } = useStore();
     const onMarkerClick = (s: string, innerText: string) => {
         metricStore.changeClickMapSearch(s, innerText)
@@ -23,23 +19,24 @@ function ClickMapCard({
     const mapUrl = metricStore.instance.series[0].filter.filters[0].value[0]
 
     React.useEffect(() => {
-        return () => clearCurrentSession()
+        return () => setCustomSession(null)
     }, [])
+
     React.useEffect(() => {
         if (metricStore.instance.data.domURL) {
-            setCustomSession(metricStore.instance.data)
+            setCustomSession(null)
+            setTimeout(() => {
+                setCustomSession(metricStore.instance.data)
+            }, 100)
         }
     }, [metricStore.instance])
 
     React.useEffect(() => {
-        console.log(visitedEvents.length)
-        if (visitedEvents.length) {
-            const rangeValue = dashboardStore.drillDownPeriod.rangeValue
-            const startDate = dashboardStore.drillDownPeriod.start
-            const endDate = dashboardStore.drillDownPeriod.end
-            fetchInsights({ ...insightsFilters, url: mapUrl || '/', startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
-        }
-    }, [visitedEvents, metricStore.clickMapFilter])
+        const rangeValue = dashboardStore.drillDownPeriod.rangeValue
+        const startDate = dashboardStore.drillDownPeriod.start
+        const endDate = dashboardStore.drillDownPeriod.end
+        fetchInsights({ ...insightsFilters, url: mapUrl || '/', startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
+    }, [dashboardStore.drillDownPeriod.start, dashboardStore.drillDownPeriod.end, dashboardStore.drillDownPeriod.rangeValue, metricStore.clickMapFilter])
 
     if (!metricStore.instance.data.domURL || insights.size === 0) {
         return (
@@ -58,7 +55,8 @@ function ClickMapCard({
             />
         )
     }
-    if (!visitedEvents || !visitedEvents.length) {
+
+    if (!metricStore.instance.data || !customSession) {
         return <div className="py-2">Loading session</div>
     }
 
@@ -72,7 +70,7 @@ function ClickMapCard({
     return (
         <div id="clickmap-render">
             <ClickMapRenderer
-                customSession={metricStore.instance.data}
+                session={customSession}
                 jumpTimestamp={jumpTimestamp}
                 onMarkerClick={onMarkerClick}
             />
@@ -87,6 +85,6 @@ export default connect(
         insights: state.getIn(['sessions', 'insights']),
         host: state.getIn(['sessions', 'host']),
     }),
-    { setCustomSession, fetchInsights, clearCurrentSession }
+    { fetchInsights, }
 )
 (observer(ClickMapCard))

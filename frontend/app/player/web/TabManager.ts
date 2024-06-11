@@ -176,7 +176,7 @@ export default class TabSessionManager {
     switch (msg.tp) {
       case MType.CanvasNode:
         const managerId = `${msg.timestamp}_${msg.nodeId}`;
-        if (!this.canvasManagers[managerId]) {
+        if (!this.canvasManagers[managerId] && this.session.canvasURL?.length) {
           const fileId = managerId;
           const delta = msg.timestamp - this.sessionStart;
 
