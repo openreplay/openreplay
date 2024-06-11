@@ -4,16 +4,6 @@ import type { Point } from '../Screen/types';
 import { clickmapStyles } from './clickmapStyles';
 import heatmapRenderer from './simpleHeatmap';
 
-const zIndexMap = {
-  400: 3,
-  200: 4,
-  100: 5,
-  50: 6,
-};
-const widths = Object.keys(zIndexMap)
-  .map((s) => parseInt(s, 10))
-  .sort((a, b) => b - a) as [400, 200, 100, 50];
-
 function getOffset(el: Element, innerWindow: Window) {
   const rect = el.getBoundingClientRect();
   return {
@@ -47,8 +37,6 @@ export interface State {
 
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
-  private clickContainers: HTMLDivElement[] = [];
-  private smallClicks: HTMLDivElement[] = [];
   static INITIAL_STATE: State = {
     markedTargets: null,
     activeTargetIndex: 0,
@@ -200,8 +188,6 @@ export default class TargetMarker {
       this.store.update({ markedTargets: null });
       this.clickMapOverlay?.remove();
       this.clickMapOverlay = null;
-      this.smallClicks = [];
-      this.clickContainers = [];
     }
   }
 }
