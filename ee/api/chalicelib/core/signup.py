@@ -10,6 +10,9 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+from api.chalicelib.core import authorizers
+from ee.api.chalicelib.core.users import change_jwt_iat_jti
+
 logger = logging.getLogger(__name__)
 
 
@@ -153,17 +156,20 @@ async def create_oauth_tenant(fullname: str, email: str):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
-        t = cur.fetchone()
+        r = cur.fetchone()
 
-    telemetry.new_client(tenant_id=t["tenant_id"])
-    r = users.authenticate(email, "password")
+    telemetry.new_client(tenant_id=r["tenant_id"])
     r["smtp"] = smtp.has_smtp()
 
+    jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
     return {
-        'jwt': r.pop('jwt'),
-        'refreshToken': r.pop('refreshToken'),
-        'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
-        'data': {
+        "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+                                        aud=f"front:{helper.get_stage_name()}"),
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                         jwt_jti=jwt_r_jti),
+        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+        "data": {
             "user": r
         }
     }
