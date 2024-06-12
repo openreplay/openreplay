@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Union
 
 from decouple import config
-from fastapi import Body, Depends, BackgroundTasks, Request, RedirectResponse
+from fastapi import Body, Depends, BackgroundTasks, Request
 from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 import httpx
