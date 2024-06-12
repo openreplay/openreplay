@@ -1,7 +1,10 @@
+import logging
+
 import schemas
 from chalicelib.core import sessions_mobs, sessions_legacy as sessions_search, events
 from chalicelib.utils import pg_client, helper
 
+logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
 s.user_uuid,
@@ -53,17 +56,17 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                                      {query_part}
                                      ORDER BY {data.sort} {data.order.value}
                                      LIMIT 1;""", full_args)
-        # print("--------------------")
-        # print(main_query)
-        # print("--------------------")
+        logger.debug("--------------------")
+        logger.debug(main_query)
+        logger.debug("--------------------")
         try:
             cur.execute(main_query)
         except Exception as err:
-            print("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION -----------")
-            print(main_query.decode('UTF-8'))
-            print("--------- PAYLOAD -----------")
-            print(data.model_dump_json())
-            print("--------------------")
+            logger.warning("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION -----------")
+            logger.warning(main_query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(data.model_dump_json())
+            logger.warning("--------------------")
             raise err
 
         session = cur.fetchone()
