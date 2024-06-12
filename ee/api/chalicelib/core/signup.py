@@ -4,14 +4,11 @@ import logging
 from decouple import config
 
 import schemas
-from chalicelib.core import users, telemetry, tenants
+from chalicelib.core import users, telemetry, tenants, authorizers
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-
-from api.chalicelib.core import authorizers
-from ee.api.chalicelib.core.users import change_jwt_iat_jti
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +158,7 @@ async def create_oauth_tenant(fullname: str, email: str):
     telemetry.new_client(tenant_id=r["tenant_id"])
     r["smtp"] = smtp.has_smtp()
 
-    jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
+    jwt_iat, jwt_r_jti, jwt_r_iat = users.change_jwt_iat_jti(user_id=r['userId'])
     return {
         "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
                                         aud=f"front:{helper.get_stage_name()}"),
