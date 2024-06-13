@@ -801,7 +801,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                 continue
             j = i + 1
             while j < len(values):
-                if values[i].type == values[j].type:
+                if values[i].type == values[j].type \
+                        and values[i].operator == values[j].operator \
+                        and (values[i].type != FilterType.metadata or values[i].source == values[j].source):
                     values[i].value += values[j].value
                     del values[j]
                 else:
