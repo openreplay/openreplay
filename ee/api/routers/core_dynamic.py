@@ -112,10 +112,10 @@ if True or config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tena
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not retrieve user name")
 
         content = await signup.create_oauth_tenant(name, email)
-        if "errors" in content:
-            return content
         if content is None:
             return {"errors": ["null JWT"]}
+        if "errors" in content:
+            return content
 
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
