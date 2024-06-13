@@ -110,7 +110,7 @@ async def create_oauth_tenant(fullname: str, email: str):
         errors.append("Invalid email address.")
     else:
         if users.email_exists(email):
-            errors.append("Email address already in use.")
+            return users.authenticate_sso(email, email)
         if users.get_deleted_user_by_email(email) is not None:
             errors.append("Email address previously deleted.")
 
@@ -131,7 +131,7 @@ async def create_oauth_tenant(fullname: str, email: str):
     }
     query = """WITH t AS (
                 INSERT INTO public.tenants (name, plan)
-                    VALUES (%(organizationName)s, %(plan)s::jsonb)
+                    VALUES ('my organisation', %(plan)s::jsonb)
                     RETURNING tenant_id, api_key
             ),
                  r AS (
@@ -141,8 +141,8 @@ async def create_oauth_tenant(fullname: str, email: str):
                         RETURNING *
                  ),
                  u AS (
-                     INSERT INTO public.users (tenant_id, email, role, name, verified_email, data, role_id)
-                         VALUES ((SELECT tenant_id FROM t), %(email)s, 'owner', %(fullname)s, TRUE,%(data)s, (SELECT role_id FROM r WHERE name ='Owner'))
+                     INSERT INTO public.users (tenant_id, email, role, name, verified_email, data, role_id, origin, internal_id)
+                         VALUES ((SELECT tenant_id FROM t), %(email)s, 'owner', %(fullname)s, TRUE,%(data)s, (SELECT role_id FROM r WHERE name ='Owner'), 'google', %(email)s)
                          RETURNING user_id,email,role,name,role_id
                  )
                  INSERT INTO public.projects (tenant_id, name, active)
@@ -153,18 +153,4 @@ async def create_oauth_tenant(fullname: str, email: str):
         cur.execute(cur.mogrify(query, params))
         r = cur.fetchone()
 
-    telemetry.new_client(tenant_id=r["tenant_id"])
-    r["smtp"] = smtp.has_smtp()
-
-    jwt_iat, jwt_r_jti, jwt_r_iat = users.change_jwt_iat_jti(user_id=r['userId'])
-    return {
-        "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                        aud=f"front:{helper.get_stage_name()}"),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                         jwt_jti=jwt_r_jti),
-        "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
-        "data": {
-            "user": r
-        }
-    }
+    return users.authenticate_sso(email, email)
