@@ -162,14 +162,17 @@ export default class API {
     const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
     this.app = app
     if (!this.insideIframe) {
-      // we need to remove nodes
+      // no need to send iframe viewport data since its a node for us
       Viewport(app)
+      // calculated in main window
       Connection(app)
+      // while we can calculate it here, trying to compute it for all parts is hard
       Performance(app, options)
+      // no tabs in iframes yet
       Tabs(app)
     }
     Mouse(app, options.mouse)
-    // inside iframe, window scroll -> iframe scroll
+    // inside iframe, we ignore viewport scroll
     Scroll(app, this.insideIframe)
     CSSRules(app)
     ConstructedStyleSheets(app)
