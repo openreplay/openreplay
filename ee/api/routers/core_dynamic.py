@@ -114,9 +114,14 @@ if True or config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tena
         content = await signup.create_oauth_tenant(name, email)
         if "errors" in content:
             return content
+        if content is None:
+            return {"errors": ["null JWT"]}
+
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
-        response = JSONResponse(content=content)
+        response = Response(
+            status_code=status.HTTP_302_FOUND,
+            headers={'Location': config("SITE_URL") + "/login?jwt=" + content})
         response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                             max_age=refresh_token_max_age, secure=True, httponly=True)
         return response
