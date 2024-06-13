@@ -12,8 +12,16 @@ export default class Nodes {
 
   constructor(private readonly node_id: string) {}
 
-  syntheticMode() {
-    this.nextNodeId = 9999999
+  syntheticMode(frameOrder: number) {
+    const maxSafeNumber = 9007199254740900
+    const placeholderSize = 99999999
+    const nextFrameId = placeholderSize * frameOrder
+    // I highly doubt that this will ever happen,
+    // but it will be easier to debug if it does
+    if (nextFrameId > maxSafeNumber) {
+      throw new Error('Placeholder id overflow')
+    }
+    this.nextNodeId = nextFrameId
   }
 
   // Attached once per Tracker instance

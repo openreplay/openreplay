@@ -226,6 +226,8 @@ export default class App {
   private rootId: number | null = null
   private readonly insideIframe = inIframe()
   private pageFrames: HTMLIFrameElement[] = []
+  private frameOderNumber = 0
+
   constructor(
     projectKey: string,
     sessionToken: string | undefined,
@@ -335,6 +337,7 @@ export default class App {
        * if we get a signal from child iframes, we check for their node_id and send it back,
        * so they can act as if it was just a same-domain iframe
        * */
+      let crossdomainFrameCount = 0
       const catchIframeMessage = (event: MessageEvent) => {
         const { data } = event
         if (data.line === proto.iframeSignal) {
@@ -348,14 +351,15 @@ export default class App {
               if (id) {
                 this.waitStarted()
                   .then(() => {
+                    crossdomainFrameCount++
                     const token = this.session.getSessionToken()
                     const iframeData = {
                       line: proto.iframeId,
-                      source: this.session.getTabId(),
                       context: this.contextId,
                       domain: childIframeDomain,
                       id,
                       token,
+                      frameOrderNumber: this.frameOderNumber++,
                     }
                     this.debug.log('iframe_data', iframeData)
                     // @ts-ignore
@@ -402,7 +406,8 @@ export default class App {
           return
         }
         this.rootId = data.id
-        this.session.setSessionToken(data.token)
+        this.session.setSessionToken(data.token as string)
+        this.frameOderNumber = data.frameOrderNumber
         this.debug.log('starting iframe tracking', data)
         this.allowAppStart()
       }
@@ -1288,7 +1293,7 @@ export default class App {
         /** --------------- COLD START BUFFER ------------------*/
       } else {
         if (this.insideIframe && this.rootId) {
-          this.observer.crossdomainObserve(this.rootId)
+          this.observer.crossdomainObserve(this.rootId, this.frameOderNumber)
         } else {
           this.observer.observe()
         }
