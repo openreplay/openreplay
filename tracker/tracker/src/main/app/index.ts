@@ -376,6 +376,10 @@ export default class App {
           }
           void signalId()
         }
+        /**
+         * proxying messages from iframe to main body, so they can be in one batch (same indexes etc)
+         * plus we rewrite some of the messages to be relative to the main context/window
+         * */
         if (data.line === proto.iframeBatch) {
           const msgBatch = data.messages
           const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
