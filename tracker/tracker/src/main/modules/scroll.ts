@@ -16,7 +16,7 @@ function getDocumentScroll(doc: Document): [number, number] {
   ]
 }
 
-export default function (app: App, insideIframe?: boolean): void {
+export default function (app: App, insideIframe: boolean | null): void {
   let documentScroll = false
   const nodeScroll: Map<Node, [number, number]> = new Map()
 

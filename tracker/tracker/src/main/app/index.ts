@@ -227,6 +227,7 @@ export default class App {
   private readonly insideIframe = inIframe()
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
+  private readonly initialHostName = location.hostname
 
   constructor(
     projectKey: string,
@@ -359,7 +360,7 @@ export default class App {
                       domain: childIframeDomain,
                       id,
                       token,
-                      frameOrderNumber: this.frameOderNumber++,
+                      frameOrderNumber: crossdomainFrameCount,
                     }
                     this.debug.log('iframe_data', iframeData)
                     // @ts-ignore
@@ -379,12 +380,40 @@ export default class App {
           const msgBatch = data.messages
           const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
             if (msg[0] === MType.MouseMove) {
-              const [type, x, y] = msg
               let fixedMessage = msg
               this.pageFrames.forEach((frame) => {
                 if (frame.dataset.domain === event.data.domain) {
+                  const [type, x, y] = msg
                   const { left, top } = frame.getBoundingClientRect()
                   fixedMessage = [type, x + left, y + top]
+                }
+              })
+              return fixedMessage
+            }
+            if (msg[0] === MType.MouseClick) {
+              let fixedMessage = msg
+              this.pageFrames.forEach((frame) => {
+                if (frame.dataset.domain === event.data.domain) {
+                  const [type, id, hesitationTime, label, selector, normX, normY] = msg
+                  const { left, top, width, height } = frame.getBoundingClientRect()
+
+                  const contentWidth = document.documentElement.scrollWidth
+                  const contentHeight = document.documentElement.scrollHeight
+                  // (normalizedX * frameWidth + frameLeftOffset)/docSize
+                  const fullX = (normX / 100) * width + left
+                  const fullY = (normY / 100) * height + top
+                  const fixedX = fullX / contentWidth
+                  const fixedY = fullY / contentHeight
+
+                  fixedMessage = [
+                    type,
+                    id,
+                    hesitationTime,
+                    label,
+                    selector,
+                    Math.round(fixedX * 1e3) / 1e1,
+                    Math.round(fixedY * 1e3) / 1e1,
+                  ]
                 }
               })
               return fixedMessage
@@ -417,7 +446,7 @@ export default class App {
       })
       // communicating with parent window,
       // even if its crossdomain is possible via postMessage api
-      const domain = window.location.hostname
+      const domain = this.initialHostName
       window.parent.postMessage(
         {
           line: proto.iframeSignal,
@@ -605,7 +634,7 @@ export default class App {
         {
           line: proto.iframeBatch,
           messages: this.messages,
-          domain: window.location.hostname,
+          domain: this.initialHostName,
         },
         '*',
       )
