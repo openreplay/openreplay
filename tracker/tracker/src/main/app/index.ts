@@ -19,6 +19,7 @@ import {
   inIframe,
   now,
   requestIdleCb,
+  simpleMerge,
 } from '../utils.js'
 import CanvasRecorder from './canvas.js'
 import Logger, { ILogLevel, LogLevel } from './logger.js'
@@ -147,6 +148,14 @@ type AppOptions = {
      * */
     fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
   }
+  crossdomain?: {
+    /**
+     * used to send message up, will be '*' by default
+     * (check your CSP settings)
+     * @default '*'
+     * */
+    parentDomain?: string
+  }
 
   network?: NetworkOptions
 } & WebworkerOptions &
@@ -256,38 +265,42 @@ export default class App {
     }
 
     this.networkOptions = options.network
-    this.options = Object.assign(
-      {
-        revID: '',
-        node_id: '__openreplay_id',
-        session_token_key: '__openreplay_token',
-        session_pageno_key: '__openreplay_pageno',
-        session_reset_key: '__openreplay_reset',
-        session_tabid_key: '__openreplay_tabid',
-        local_uuid_key: '__openreplay_uuid',
-        ingestPoint: DEFAULT_INGEST_POINT,
-        resourceBaseHref: null,
-        __is_snippet: false,
-        __debug_report_edp: null,
-        __debug__: LogLevel.Silent,
-        __save_canvas_locally: false,
-        localStorage: null,
-        sessionStorage: null,
-        disableStringDict: false,
-        forceSingleTab: false,
-        assistSocketHost: '',
-        fixedCanvasScaling: false,
-        disableCanvas: false,
-        assistOnly: false,
-        canvas: {
-          disableCanvas: false,
-          fixedCanvasScaling: false,
-          __save_canvas_locally: false,
-          useAnimationFrame: false,
-        },
+
+    const defaultOptions: Options = {
+      revID: '',
+      node_id: '__openreplay_id',
+      session_token_key: '__openreplay_token',
+      session_pageno_key: '__openreplay_pageno',
+      session_reset_key: '__openreplay_reset',
+      session_tabid_key: '__openreplay_tabid',
+      local_uuid_key: '__openreplay_uuid',
+      ingestPoint: DEFAULT_INGEST_POINT,
+      resourceBaseHref: null,
+      __is_snippet: false,
+      __debug_report_edp: null,
+      __debug__: LogLevel.Silent,
+      __save_canvas_locally: false,
+      localStorage: null,
+      sessionStorage: null,
+      disableStringDict: false,
+      forceSingleTab: false,
+      assistSocketHost: '',
+      fixedCanvasScaling: false,
+      disableCanvas: false,
+      captureIFrames: true,
+      obscureTextEmails: true,
+      obscureTextNumbers: false,
+      crossdomain: {
+        parentDomain: '*',
       },
-      options,
-    )
+      canvas: {
+        disableCanvas: false,
+        fixedCanvasScaling: false,
+        __save_canvas_locally: false,
+        useAnimationFrame: false,
+      },
+    }
+    this.options = simpleMerge(defaultOptions, options)
 
     if (
       !this.insideIframe &&
@@ -377,7 +390,7 @@ export default class App {
           void signalId()
         }
         /**
-         * proxying messages from iframe to main body, so they can be in one batch (same indexes etc)
+         * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
          * plus we rewrite some of the messages to be relative to the main context/window
          * */
         if (data.line === proto.iframeBatch) {
