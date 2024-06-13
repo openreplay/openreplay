@@ -9,7 +9,6 @@ from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.static_definitions import plans_definiton
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +100,30 @@ async def create_tenant(data: schemas.UserSignupSchema):
     }
 
 
+def __plan_generator(type_name, trial_period, users_limit, data_retention, projects_limit, sessions_limits):
+    return {
+        "type": type_name,
+        "trial": trial_period,
+        "users": users_limit,
+        "dataRetention": data_retention,
+        "projects": projects_limit,
+        "sessions": sessions_limits,
+        # The following params can be overwritten in each plan change
+        "stripeCustomerId": None,
+        "stripeSubscriptionId": None,
+        "endAt": None,
+        "billingStartsAt": None
+    }
+
+
+FREE_PLAN = __plan_generator(type_name=schemas.PlanTypes.free,
+                             trial_period=0,
+                             users_limit=2,
+                             data_retention=7,
+                             projects_limit=1,
+                             sessions_limits=1000)
+
+
 async def create_oauth_tenant(fullname: str, email: str):
     logger.info(f"==== Signup oauth started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
@@ -129,7 +152,7 @@ async def create_oauth_tenant(fullname: str, email: str):
         "email": email, "fullname": fullname, "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
         "permissions": [p.value for p in schemas.Permissions],
-        "plan": json.dumps(plans_definiton.FREE_PLAN)
+        "plan": json.dumps(FREE_PLAN)
     }
     query = """WITH t AS (
                 INSERT INTO public.tenants (name, plan)
