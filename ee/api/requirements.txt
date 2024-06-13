@@ -15,7 +15,7 @@ uvicorn[standard]==0.30.3
 gunicorn==22.0.0
 python-decouple==3.8
 pydantic[email]==2.3.0
-apscheduler==3.10.4
+apscheduler==4.0.0a5
 
 clickhouse-driver[lz4]==0.2.8
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
