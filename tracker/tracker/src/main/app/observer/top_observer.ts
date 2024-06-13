@@ -149,6 +149,7 @@ export default class TopObserver extends Observer {
       return shadow
     }
     this.app.nodes.clear()
+    this.app.nodes.syntheticMode()
     const iframeObserver = new IFrameObserver(this.app)
     this.iframeObservers.push(iframeObserver)
     iframeObserver.syntheticObserve(selfId, window.document)

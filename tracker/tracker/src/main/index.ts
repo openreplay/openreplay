@@ -162,12 +162,14 @@ export default class API {
     const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
     this.app = app
     if (!this.insideIframe) {
+      // we need to remove nodes
       Viewport(app)
       Connection(app)
-      Mouse(app, options.mouse)
       Performance(app, options)
       Tabs(app)
     }
+    // inside iframe discard mouse move, keep click
+    Mouse(app, options.mouse, this.insideIframe)
     CSSRules(app)
     ConstructedStyleSheets(app)
     Console(app, options)
@@ -175,6 +177,7 @@ export default class API {
     Img(app)
     Input(app, options)
     Timing(app, options)
+    // inside iframe, window scroll -> iframe scroll
     Scroll(app)
     Focus(app)
     Fonts(app)

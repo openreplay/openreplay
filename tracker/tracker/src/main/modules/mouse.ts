@@ -103,7 +103,7 @@ export interface MouseHandlerOptions {
   trackingOffset?: number
 }
 
-export default function (app: App, options?: MouseHandlerOptions): void {
+export default function (app: App, options?: MouseHandlerOptions, insideIframe?: boolean): void {
   const { disableClickmaps = false } = options || {}
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
@@ -200,6 +200,9 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       'mousemove',
       (e: MouseEvent): void => {
         const [left, top] = app.observer.getDocumentOffset(document) // MBTODO?: document-id related message
+        if (insideIframe) {
+          console.log(insideIframe, e, left, top)
+        }
         mousePositionX = e.clientX + left
         mousePositionY = e.clientY + top
         mousePositionChanged = true

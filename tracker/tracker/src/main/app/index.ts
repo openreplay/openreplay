@@ -88,15 +88,6 @@ type RickRoll = {
       line: 'never-gonna-run-around-and-desert-you'
       token: string
     }
-  | {
-      line: 'never-gonna-make-you-cry'
-      domain: string
-    }
-  | {
-      line: 'never-gonna-say-goodbye'
-      domain: string
-      id: number
-    }
 )
 
 const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason, success: false })
@@ -174,6 +165,20 @@ function getTimezone() {
   const minutes = Math.abs(offset) % 60
   return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
+
+const proto = {
+  // ask if there are any tabs alive
+  ask: 'never-gonna-give-you-up',
+  // response from another tab
+  resp: 'never-gonna-let-you-down',
+  // regenerating id (copied other tab)
+  reg: 'never-gonna-run-around-and-desert-you',
+  // tracker inside a child iframe
+  iframeSignal: 'never-gonna-make-you-cry',
+  // getting node id for child iframe
+  iframeId: 'never-gonna-say-goodbye',
+  iframeBatch: 'never-gonna-tell-a-lie-and-hurt-you',
+} as const
 
 export default class App {
   readonly nodes: Nodes
@@ -279,7 +284,12 @@ export default class App {
       options,
     )
 
-    if (!this.options.forceSingleTab && globalThis && 'BroadcastChannel' in globalThis) {
+    if (
+      !this.insideIframe &&
+      !this.options.forceSingleTab &&
+      globalThis &&
+      'BroadcastChannel' in globalThis
+    ) {
       const host = location.hostname.split('.').slice(-2).join('_')
       this.bc = new BroadcastChannel(`rick_${host}`)
     }
@@ -318,40 +328,6 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    const proto = {
-      // ask if there are any tabs alive
-      ask: 'never-gonna-give-you-up',
-      // response from another tab
-      resp: 'never-gonna-let-you-down',
-      // regenerating id (copied other tab)
-      reg: 'never-gonna-run-around-and-desert-you',
-      // tracker inside a child iframe
-      iframeSignal: 'never-gonna-make-you-cry',
-      // getting node id for child iframe
-      iframeId: 'never-gonna-say-goodbye',
-    } as const
-
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-    if (this.bc) {
-      if (!this.insideIframe) {
-        this.bc.postMessage({
-          line: proto.ask,
-          source: thisTab,
-          context: this.contextId,
-        })
-        timeoutId = setTimeout(() => {
-          allowStart()
-        }, 500)
-      } else {
-        this.bc.postMessage({
-          line: proto.iframeSignal,
-          source: thisTab,
-          context: this.contextId,
-          domain: location.hostname,
-        })
-      }
-    }
-
     const allowStart = () => {
       this.canStart = true
       if (timeoutId) {
@@ -360,7 +336,7 @@ export default class App {
     }
     const checkId = (iframes: HTMLIFrameElement[], domain: string) => {
       for (const iframe of iframes) {
-        if (iframe.contentWindow && iframe.contentWindow.location.hostname === domain) {
+        if (iframe.dataset.domain === domain) {
           // @ts-ignore
           return iframe[this.options.node_id] as number | undefined
         }
@@ -371,30 +347,38 @@ export default class App {
       return new Promise((res) => setTimeout(res, ms))
     }
 
-    if (this.bc !== null) {
-      this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
-        if (ev.data.context === this.contextId) {
-          return
-        }
-        /**
-         * if we get a signal from child iframes, we check for their node_id and send it back,
-         * so they can act as if it was just a same-domain iframe
-         * */
-        if (ev.data.line === proto.iframeSignal && !this.insideIframe) {
-          const childIframeDomain = ev.data.domain
+    if (!this.insideIframe) {
+      /**
+       * if we get a signal from child iframes, we check for their node_id and send it back,
+       * so they can act as if it was just a same-domain iframe
+       * */
+      window.addEventListener('message', (event) => {
+        const { data } = event
+        if (data.line === proto.iframeSignal) {
+          const childIframeDomain = data.domain
+          console.log('data from iframe', data, childIframeDomain)
           const pageIframes = Array.from(document.querySelectorAll('iframe'))
           const signalId = async () => {
             let tries = 0
             while (tries < 10) {
               const id = checkId(pageIframes, childIframeDomain)
               if (id) {
-                this.bc?.postMessage({
-                  line: proto.iframeId,
-                  source: thisTab,
-                  context: this.contextId,
-                  domain: childIframeDomain,
-                  id,
-                })
+                this.waitStarted()
+                  .then(() => {
+                    const token = this.session.getSessionToken()
+                    const iframeData = {
+                      line: proto.iframeId,
+                      source: thisTab,
+                      context: this.contextId,
+                      domain: childIframeDomain,
+                      id,
+                      token,
+                    }
+                    console.log('sending to', iframeData)
+                    // @ts-ignore
+                    event.source?.postMessage(iframeData, '*')
+                  })
+                  .catch(console.error)
                 tries = 10
                 break
               }
@@ -404,8 +388,49 @@ export default class App {
           }
           void signalId()
         }
-        if (ev.data.line === proto.iframeId) {
-          this.rootId = ev.data.id
+        if (data.line === proto.iframeBatch) {
+          console.log('messages', data)
+          this.messages.push(...data.messages)
+        }
+      })
+    } else {
+      window.addEventListener('message', ({ data }) => {
+        if (data.line !== proto.iframeId) {
+          return
+        }
+        this.rootId = data.id
+        this.session.setSessionToken(data.token)
+        console.log('data received', data)
+        allowStart()
+      })
+      // communicating with parent window,
+      // even if its crossdomain is possible via postMessage api
+      const domain = window.location.hostname
+      window.parent.postMessage(
+        {
+          line: proto.iframeSignal,
+          source: thisTab,
+          context: this.contextId,
+          domain,
+        },
+        '*',
+      )
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+    if (this.bc !== null) {
+      this.bc.postMessage({
+        line: proto.ask,
+        source: thisTab,
+        context: this.contextId,
+      })
+      timeoutId = setTimeout(() => {
+        allowStart()
+      }, 500)
+      this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+        if (ev.data.context === this.contextId) {
+          return
         }
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
@@ -507,22 +532,10 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
-  private _usingOldFetchPlugin = false
-
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
-    // === Back compatibility with Fetch/Axios plugins ===
-    if (message[0] === MType.Fetch) {
-      this._usingOldFetchPlugin = true
-      deprecationWarn('Fetch plugin', "'network' init option", '/installation/network-options')
-      deprecationWarn('Axios plugin', "'network' init option", '/installation/network-options')
-    }
-    if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
-      return
-    }
-
     // ====================================================
     if (this.activityState === ActivityState.ColdStart) {
       this.bufferedMessages1.push(message)
@@ -555,23 +568,37 @@ export default class App {
       this.messages.length = 0
       return
     }
-    if (this.worker !== undefined && this.messages.length) {
-      try {
-        requestIdleCb(() => {
-          this.messages.unshift(TabData(this.session.getTabId()))
-          this.messages.unshift(Timestamp(this.timestamp()))
-          // why I need to add opt chaining?
-          this.worker?.postMessage(this.messages)
-          this.commitCallbacks.forEach((cb) => cb(this.messages))
-          this.messages.length = 0
-        })
-      } catch (e) {
-        this._debug('worker_commit', e)
-        this.stop(true)
-        setTimeout(() => {
-          void this.start()
-        }, 500)
-      }
+    if (this.worker === undefined || !this.messages.length) {
+      return
+    }
+
+    if (this.insideIframe) {
+      window.parent.postMessage(
+        {
+          line: proto.iframeBatch,
+          messages: this.messages,
+        },
+        '*',
+      )
+      this.commitCallbacks.forEach((cb) => cb(this.messages))
+      this.messages.length = 0
+      return
+    }
+    try {
+      requestIdleCb(() => {
+        this.messages.unshift(TabData(this.session.getTabId()))
+        this.messages.unshift(Timestamp(this.timestamp()))
+        // why I need to add opt chaining?
+        this.worker?.postMessage(this.messages)
+        this.commitCallbacks.forEach((cb) => cb(this.messages))
+        this.messages.length = 0
+      })
+    } catch (e) {
+      this._debug('worker_commit', e)
+      this.stop(true)
+      setTimeout(() => {
+        void this.start()
+      }, 500)
     }
   }
 
@@ -1324,6 +1351,19 @@ export default class App {
     return new Promise((resolve) => {
       const check = () => {
         if (this.canStart) {
+          resolve(true)
+        } else {
+          setTimeout(check, 25)
+        }
+      }
+      check()
+    })
+  }
+
+  async waitStarted() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (this.activityState === ActivityState.Active) {
           resolve(true)
         } else {
           setTimeout(check, 25)

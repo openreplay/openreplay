@@ -8,8 +8,13 @@ export default class Nodes {
   private totalNodeAmount = 0
   private readonly nodeCallbacks: Array<NodeCallback> = []
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
+  private nextNodeId = 0
 
   constructor(private readonly node_id: string) {}
+
+  syntheticMode() {
+    this.nextNodeId = 9999999
+  }
 
   // Attached once per Tracker instance
   attachNodeCallback(nodeCallback: NodeCallback): void {
@@ -38,8 +43,9 @@ export default class Nodes {
     let id: number = (node as any)[this.node_id]
     const isNew = id === undefined
     if (isNew) {
+      id = this.nextNodeId
       this.totalNodeAmount++
-      id = this.nodes.length
+      this.nextNodeId++
       this.nodes[id] = node
       ;(node as any)[this.node_id] = id
     }
@@ -102,6 +108,7 @@ export default class Nodes {
       }
       this.unregisterNode(node)
     }
+    this.nextNodeId = 0
     this.nodes.length = 0
   }
 }
