@@ -116,7 +116,7 @@ def __plan_generator(type_name, trial_period, users_limit, data_retention, proje
     }
 
 
-FREE_PLAN = __plan_generator(type_name=schemas.PlanTypes.free,
+FREE_PLAN = __plan_generator(type_name="free",
                              trial_period=0,
                              users_limit=2,
                              data_retention=7,
