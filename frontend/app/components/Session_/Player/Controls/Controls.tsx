@@ -4,27 +4,44 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
-
-
+import { useHistory } from 'react-router-dom';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
-import { LaunchConsoleShortcut, LaunchEventsShortcut, LaunchNetworkShortcut, LaunchPerformanceShortcut, LaunchStateShortcut, LaunchXRaShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import { CONSOLE, GRAPHQL, INSPECTOR, NETWORK, OVERVIEW, PERFORMANCE, PROFILER, STACKEVENTS, STORAGE, changeSkipInterval, fullscreenOff, fullscreenOn, toggleBottomBlock } from 'Duck/components/player';
+import {
+  LaunchConsoleShortcut,
+  LaunchEventsShortcut,
+  LaunchNetworkShortcut,
+  LaunchPerformanceShortcut,
+  LaunchStateShortcut,
+  LaunchXRaShortcut,
+} from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import {
+  CONSOLE,
+  GRAPHQL,
+  INSPECTOR,
+  NETWORK,
+  OVERVIEW,
+  PERFORMANCE,
+  PROFILER,
+  STACKEVENTS,
+  STORAGE,
+  changeSkipInterval,
+  fullscreenOff,
+  fullscreenOn,
+  toggleBottomBlock,
+} from 'Duck/components/player';
 import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
-
-
 
 import DropdownAudioPlayer from '../../../Session/Player/ReplayPlayer/AudioPlayer';
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
-
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -58,7 +75,7 @@ function getStorageName(type: any) {
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
   const { uxtestingStore } = useStore();
-
+  const history = useHistory();
   const {
     playing,
     completed,
@@ -89,11 +106,11 @@ function Controls(props: any) {
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
-    props.history.push(withSiteId(sessionRoute(nextSessionId), siteId));
+    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
   const prevHandler = () => {
-    props.history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
   };
 
   useShortcuts({
@@ -337,7 +354,9 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
-        {possibleAudio.length ? <DropdownAudioPlayer audioEvents={possibleAudio} /> : null}
+        {possibleAudio.length ? (
+          <DropdownAudioPlayer audioEvents={possibleAudio} />
+        ) : null}
       </>
     );
   }
