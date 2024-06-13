@@ -1,46 +1,45 @@
-import ConditionsManager from '../modules/conditionsManager.js'
-import FeatureFlags from '../modules/featureFlags.js'
-import Message, { TagTrigger } from './messages.gen.js'
-import {
-  Timestamp,
-  Metadata,
-  UserID,
-  Type as MType,
-  TabChange,
-  TabData,
-  WSChannel,
-} from './messages.gen.js'
-import {
-  now,
-  adjustTimeOrigin,
-  deprecationWarn,
-  inIframe,
-  createEventListener,
-  deleteEventListener,
-  requestIdleCb,
-} from '../utils.js'
-import Nodes from './nodes.js'
-import Observer from './observer/top_observer.js'
-import Sanitizer from './sanitizer.js'
-import Ticker from './ticker.js'
-import Logger, { LogLevel, ILogLevel } from './logger.js'
-import Session from './session.js'
 import { gzip } from 'fflate'
-import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
-import AttributeSender from '../modules/attributeSender.js'
-import type { Options as ObserverOptions } from './observer/top_observer.js'
-import type { Options as SanitizerOptions } from './sanitizer.js'
-import type { Options as SessOptions } from './session.js'
-import type { Options as NetworkOptions } from '../modules/network.js'
-import CanvasRecorder from './canvas.js'
-import UserTestManager from '../modules/userTesting/index.js'
-import TagWatcher from '../modules/tagWatcher.js'
 
 import type {
+  FromWorkerData,
   Options as WebworkerOptions,
   ToWorkerData,
-  FromWorkerData,
 } from '../../common/interaction.js'
+import AttributeSender from '../modules/attributeSender.js'
+import ConditionsManager from '../modules/conditionsManager.js'
+import FeatureFlags from '../modules/featureFlags.js'
+import type { Options as NetworkOptions } from '../modules/network.js'
+import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
+import TagWatcher from '../modules/tagWatcher.js'
+import UserTestManager from '../modules/userTesting/index.js'
+import {
+  adjustTimeOrigin,
+  createEventListener,
+  deleteEventListener,
+  inIframe,
+  now,
+  requestIdleCb,
+} from '../utils.js'
+import CanvasRecorder from './canvas.js'
+import Logger, { ILogLevel, LogLevel } from './logger.js'
+import Message, {
+  Metadata,
+  TabChange,
+  TabData,
+  TagTrigger,
+  Timestamp,
+  Type as MType,
+  UserID,
+  WSChannel,
+} from './messages.gen.js'
+import Nodes from './nodes.js'
+import type { Options as ObserverOptions } from './observer/top_observer.js'
+import Observer from './observer/top_observer.js'
+import type { Options as SanitizerOptions } from './sanitizer.js'
+import Sanitizer from './sanitizer.js'
+import type { Options as SessOptions } from './session.js'
+import Session from './session.js'
+import Ticker from './ticker.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
@@ -165,6 +164,9 @@ function getTimezone() {
   const minutes = Math.abs(offset) % 60
   return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
+const delay = async (ms: number) => {
+  return new Promise((res) => setTimeout(res, ms))
+}
 
 const proto = {
   // ask if there are any tabs alive
@@ -223,7 +225,7 @@ export default class App {
   private canStart = false
   private rootId: number | null = null
   private readonly insideIframe = inIframe()
-
+  private pageFrames: HTMLIFrameElement[] = []
   constructor(
     projectKey: string,
     sessionToken: string | undefined,
@@ -328,53 +330,34 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    const allowStart = () => {
-      this.canStart = true
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
-    const checkId = (iframes: HTMLIFrameElement[], domain: string) => {
-      for (const iframe of iframes) {
-        if (iframe.dataset.domain === domain) {
-          // @ts-ignore
-          return iframe[this.options.node_id] as number | undefined
-        }
-      }
-      return null
-    }
-    const delay = async (ms: number) => {
-      return new Promise((res) => setTimeout(res, ms))
-    }
-
     if (!this.insideIframe) {
       /**
        * if we get a signal from child iframes, we check for their node_id and send it back,
        * so they can act as if it was just a same-domain iframe
        * */
-      window.addEventListener('message', (event) => {
+      const catchIframeMessage = (event: MessageEvent) => {
         const { data } = event
         if (data.line === proto.iframeSignal) {
           const childIframeDomain = data.domain
-          console.log('data from iframe', data, childIframeDomain)
           const pageIframes = Array.from(document.querySelectorAll('iframe'))
+          this.pageFrames = pageIframes
           const signalId = async () => {
             let tries = 0
             while (tries < 10) {
-              const id = checkId(pageIframes, childIframeDomain)
+              const id = this.checkNodeId(pageIframes, childIframeDomain)
               if (id) {
                 this.waitStarted()
                   .then(() => {
                     const token = this.session.getSessionToken()
                     const iframeData = {
                       line: proto.iframeId,
-                      source: thisTab,
+                      source: this.session.getTabId(),
                       context: this.contextId,
                       domain: childIframeDomain,
                       id,
                       token,
                     }
-                    console.log('sending to', iframeData)
+                    this.debug.log('iframe_data', iframeData)
                     // @ts-ignore
                     event.source?.postMessage(iframeData, '*')
                   })
@@ -389,19 +372,43 @@ export default class App {
           void signalId()
         }
         if (data.line === proto.iframeBatch) {
-          console.log('messages', data)
-          this.messages.push(...data.messages)
+          const msgBatch = data.messages
+          const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
+            if (msg[0] === MType.MouseMove) {
+              const [type, x, y] = msg
+              let fixedMessage = msg
+              this.pageFrames.forEach((frame) => {
+                if (frame.dataset.domain === event.data.domain) {
+                  const { left, top } = frame.getBoundingClientRect()
+                  fixedMessage = [type, x + left, y + top]
+                }
+              })
+              return fixedMessage
+            }
+            return msg
+          })
+          this.debug.log('iframe_batch', mappedMessages)
+          this.messages.push(...mappedMessages)
         }
+      }
+      window.addEventListener('message', catchIframeMessage)
+      this.attachStopCallback(() => {
+        window.removeEventListener('message', catchIframeMessage)
       })
     } else {
-      window.addEventListener('message', ({ data }) => {
+      const catchParentMessage = (event: MessageEvent) => {
+        const { data } = event
         if (data.line !== proto.iframeId) {
           return
         }
         this.rootId = data.id
         this.session.setSessionToken(data.token)
-        console.log('data received', data)
-        allowStart()
+        this.debug.log('starting iframe tracking', data)
+        this.allowAppStart()
+      }
+      window.addEventListener('message', catchParentMessage)
+      this.attachStopCallback(() => {
+        window.removeEventListener('message', catchParentMessage)
       })
       // communicating with parent window,
       // even if its crossdomain is possible via postMessage api
@@ -417,16 +424,14 @@ export default class App {
       )
     }
 
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-
     if (this.bc !== null) {
       this.bc.postMessage({
         line: proto.ask,
         source: thisTab,
         context: this.contextId,
       })
-      timeoutId = setTimeout(() => {
-        allowStart()
+      this.startTimeout = setTimeout(() => {
+        this.allowAppStart()
       }, 500)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
         if (ev.data.context === this.contextId) {
@@ -435,13 +440,13 @@ export default class App {
         if (ev.data.line === proto.resp) {
           const sessionToken = ev.data.token
           this.session.setSessionToken(sessionToken)
-          allowStart()
+          this.allowAppStart()
         }
         if (ev.data.line === proto.reg) {
           const sessionToken = ev.data.token
           this.session.regenerateTabId()
           this.session.setSessionToken(sessionToken)
-          allowStart()
+          this.allowAppStart()
         }
         if (ev.data.line === proto.ask) {
           const token = this.session.getSessionToken()
@@ -458,6 +463,24 @@ export default class App {
     }
   }
 
+  startTimeout: ReturnType<typeof setTimeout> | null = null
+  private allowAppStart() {
+    this.canStart = true
+    if (this.startTimeout) {
+      clearTimeout(this.startTimeout)
+      this.startTimeout = null
+    }
+  }
+
+  private checkNodeId(iframes: HTMLIFrameElement[], domain: string) {
+    for (const iframe of iframes) {
+      if (iframe.dataset.domain === domain) {
+        // @ts-ignore
+        return iframe[this.options.node_id] as number | undefined
+      }
+    }
+    return null
+  }
   private initWorker() {
     try {
       this.worker = new Worker(
@@ -577,6 +600,7 @@ export default class App {
         {
           line: proto.iframeBatch,
           messages: this.messages,
+          domain: window.location.hostname,
         },
         '*',
       )

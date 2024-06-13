@@ -168,8 +168,9 @@ export default class API {
       Performance(app, options)
       Tabs(app)
     }
-    // inside iframe discard mouse move, keep click
-    Mouse(app, options.mouse, this.insideIframe)
+    Mouse(app, options.mouse)
+    // inside iframe, window scroll -> iframe scroll
+    Scroll(app, this.insideIframe)
     CSSRules(app)
     ConstructedStyleSheets(app)
     Console(app, options)
@@ -177,8 +178,6 @@ export default class API {
     Img(app)
     Input(app, options)
     Timing(app, options)
-    // inside iframe, window scroll -> iframe scroll
-    Scroll(app)
     Focus(app)
     Fonts(app)
     Network(app, options.network)

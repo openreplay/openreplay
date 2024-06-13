@@ -5,18 +5,18 @@ import { isNode, isElementNode, isRootNode, isDocument } from '../app/guards.js'
 function getDocumentScroll(doc: Document): [number, number] {
   const win = doc.defaultView
   return [
-    (win && win.pageXOffset) ||
+    (win && win.scrollX) ||
       (doc.documentElement && doc.documentElement.scrollLeft) ||
       (doc.body && doc.body.scrollLeft) ||
       0,
-    (win && win.pageYOffset) ||
+    (win && win.scrollY) ||
       (doc.documentElement && doc.documentElement.scrollTop) ||
       (doc.body && doc.body.scrollTop) ||
       0,
   ]
 }
 
-export default function (app: App): void {
+export default function (app: App, insideIframe?: boolean): void {
   let documentScroll = false
   const nodeScroll: Map<Node, [number, number]> = new Map()
 
@@ -32,9 +32,12 @@ export default function (app: App): void {
     }
   }
 
-  const sendSetViewportScroll = app.safe((): void =>
-    app.send(SetViewportScroll(...getDocumentScroll(document))),
-  )
+  const sendSetViewportScroll = app.safe((): void => {
+    if (insideIframe) {
+      return
+    }
+    app.send(SetViewportScroll(...getDocumentScroll(document)))
+  })
 
   const sendSetNodeScroll = app.safe((s: [number, number], node: Node): void => {
     const id = app.nodes.getID(node)
