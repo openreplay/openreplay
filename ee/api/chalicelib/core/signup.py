@@ -9,6 +9,7 @@ from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.static_definitions import plans_definiton
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,8 @@ async def create_oauth_tenant(fullname: str, email: str):
     params = {
         "email": email, "fullname": fullname, "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-        "permissions": [p.value for p in schemas.Permissions]
+        "permissions": [p.value for p in schemas.Permissions],
+        "plan": json.dumps(plans_definiton.FREE_PLAN)
     }
     query = """WITH t AS (
                 INSERT INTO public.tenants (name, plan)
