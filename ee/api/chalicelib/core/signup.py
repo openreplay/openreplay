@@ -103,8 +103,6 @@ async def create_tenant(data: schemas.UserSignupSchema):
 async def create_oauth_tenant(fullname: str, email: str):
     logger.info(f"==== Signup oauth started at {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
-    if not config("MULTI_TENANTS", cast=bool, default=False) and await tenants.tenants_exists():
-        return {"errors": ["tenants already registered"]}
 
     logger.debug(f"email: {email}")
 

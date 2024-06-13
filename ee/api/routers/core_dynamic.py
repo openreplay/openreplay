@@ -58,12 +58,12 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
 
 
 # Environment variables (ensure these are set)
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI")
 
 
-if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
+if True or config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.get('/signup-oauth', tags=['signup'])
     async def signup_oauth_handler():
         google_authorization_url = (
@@ -76,7 +76,7 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
         return RedirectResponse(url=google_authorization_url)
 
 
-if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
+if True or config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.get('/signup-oauth-callback', tags=['signup'])
     async def signup_oauth_callback_handler(code: str):
         # Exchange code for token
