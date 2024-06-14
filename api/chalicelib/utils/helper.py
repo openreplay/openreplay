@@ -176,6 +176,11 @@ def is_alphabet_space_dash(word):
     return r.match(word) is not None
 
 
+def remove_non_alphabet_space_dash(word):
+    r = re.compile("[^a-zA-Z -]")
+    return r.sub('', word)
+
+
 def merge_lists_by_key(l1, l2, key):
     merged = {}
     for item in l1 + l2:

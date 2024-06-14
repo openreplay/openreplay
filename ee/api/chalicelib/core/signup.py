@@ -140,7 +140,10 @@ async def create_oauth_tenant(fullname: str, email: str):
             errors.append("Email address previously deleted.")
 
     if fullname is None or len(fullname) < 1 or not helper.is_alphabet_space_dash(fullname):
-        errors.append("Invalid full name.")
+        edited_fullname = helper.remove_non_alphabet_space_dash(fullname)
+        if len(edited_fullname) < 1:
+            errors.append("Invalid full name.")
+        fullname = edited_fullname
 
     if len(errors) > 0:
         logger.warning(
