@@ -99,9 +99,10 @@ export default class API {
   public featureFlags: FeatureFlags
 
   private readonly app: App | null = null
-  private readonly insideIframe = inIframe()
+  private readonly crossdomainMode: boolean = false
 
   constructor(private readonly options: Options) {
+    this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
@@ -159,9 +160,15 @@ export default class API {
       return
     }
 
-    const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
+    const app = new App(
+      options.projectKey,
+      options.sessionToken,
+      options,
+      this.signalStartIssue,
+      this.crossdomainMode,
+    )
     this.app = app
-    if (!this.insideIframe) {
+    if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
       Viewport(app)
       // calculated in main window
@@ -173,7 +180,7 @@ export default class API {
     }
     Mouse(app, options.mouse)
     // inside iframe, we ignore viewport scroll
-    Scroll(app, this.insideIframe)
+    Scroll(app, this.crossdomainMode)
     CSSRules(app)
     ConstructedStyleSheets(app)
     Console(app, options)

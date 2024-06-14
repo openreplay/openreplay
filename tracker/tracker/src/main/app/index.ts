@@ -16,7 +16,6 @@ import {
   adjustTimeOrigin,
   createEventListener,
   deleteEventListener,
-  inIframe,
   now,
   requestIdleCb,
   simpleMerge,
@@ -150,6 +149,10 @@ type AppOptions = {
   }
   crossdomain?: {
     /**
+     * @default false
+     * */
+    enabled?: boolean
+    /**
      * used to send message up, will be '*' by default
      * (check your CSP settings)
      * @default '*'
@@ -233,7 +236,6 @@ export default class App {
 
   private canStart = false
   private rootId: number | null = null
-  private readonly insideIframe = inIframe()
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
   private readonly initialHostName = location.hostname
@@ -243,6 +245,7 @@ export default class App {
     sessionToken: string | undefined,
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
+    private readonly insideIframe: boolean,
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
@@ -437,7 +440,6 @@ export default class App {
             }
             return msg
           })
-          this.debug.log('iframe_batch', mappedMessages)
           this.messages.push(...mappedMessages)
         }
       }

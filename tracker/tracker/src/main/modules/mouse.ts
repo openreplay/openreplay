@@ -216,7 +216,6 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     )
     attachListener(document, 'click', (e: MouseEvent): void => {
       const target = getTarget(e.target, document)
-      console.log(e, target)
       if ((!e.clientX && !e.clientY) || target === null) {
         return
       }
