@@ -1032,4 +1032,3 @@ def update_user_internal_id(email, internal_id):
                             AND deleted_at IS NULL;""",
                 {"email": email, "internal_id": internal_id})
         )
-        return helper.dict_to_camel_case(cur.fetchone())
