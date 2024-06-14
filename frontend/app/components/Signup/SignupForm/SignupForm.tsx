@@ -10,6 +10,7 @@ import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
 import { Alert, Space } from 'antd';
 import { toast } from 'react-toastify';
+import GoogleLogin from "../../Login/GoogleLogin";
 
 const LOGIN_ROUTE = login();
 
@@ -113,6 +114,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
             />
           )}
           <div className='px-8'>
+            <GoogleLogin isLogin={false} />
+            <div className={'my-4 text-disabled-text w-full text-center'}>Or continue with</div>
+
             {tenants.length > 0 && (
               <Form.Field>
                 <label>Existing Accounts</label>
