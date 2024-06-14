@@ -134,6 +134,7 @@ async def create_oauth_tenant(fullname: str, email: str):
         errors.append("Invalid email address.")
     else:
         if users.email_exists(email):
+            users.update_user_internal_id(email, email)
             return users.authenticate_sso(email, email)
         if users.get_deleted_user_by_email(email) is not None:
             errors.append("Email address previously deleted.")
