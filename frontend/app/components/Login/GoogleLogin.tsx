@@ -1,9 +1,12 @@
 import React from 'react';
 
 function GoogleLogin({ isLogin }: { isLogin?: boolean }) {
+  console.log(window.env, window.env.API_EDP)
+
+  const rootUrl = window.env.API_EDP ?? 'https://ee.openreplay.tools/api'
   return (
     <div className={'w-full'}>
-      <a href={window.env.API_EDP + '/signup-oauth'} role={'button'}>
+      <a href={rootUrl + '/signup-oauth'} role={'button'}>
         <div className="w-full flex justify-center items-center bg-white border border-gray-300 rounded px-6 py-2 font-medium text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
           <svg
             className="h-5 w-5 mr-2"
