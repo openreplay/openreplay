@@ -3,7 +3,7 @@ import React from 'react';
 function GoogleLogin({ isLogin }: { isLogin?: boolean }) {
   console.log(window.env, window.env.API_EDP)
 
-  const rootUrl = window.env.API_EDP ?? 'https://ee.openreplay.tools/api'
+  const rootUrl = window.env.API_EDP || 'https://ee.openreplay.tools/api'
   return (
     <div className={'w-full'}>
       <a href={rootUrl + '/signup-oauth'} role={'button'}>
