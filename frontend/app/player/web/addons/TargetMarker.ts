@@ -57,6 +57,10 @@ export default class TargetMarker {
         })),
       });
     }
+
+    if (heatmapRenderer.checkReady()) {
+      heatmapRenderer.resize().draw();
+    }
   }
 
   private calculateRelativeBoundingRect(el: Element): BoundingRect {
@@ -143,6 +147,8 @@ export default class TargetMarker {
       this.clickMapOverlay?.remove();
       const overlay = document.createElement('canvas');
       const iframeSize = this.screen.iframeStylesRef;
+      const scrollHeight = this.screen.document?.documentElement.scrollHeight || 0;
+      const scrollWidth = this.screen.document?.documentElement.scrollWidth || 0;
       const scaleRatio = this.screen.getScale();
       Object.assign(
         overlay.style,
@@ -156,17 +162,25 @@ export default class TargetMarker {
       this.clickMapOverlay = overlay;
       this.screen.getParentElement()?.appendChild(overlay);
 
-      const pointMap: Record<string, { times: number; data: number[] }> = {};
+      const pointMap: Record<string, { times: number; data: number[], original: any }> = {};
+      const ovWidth = parseInt(iframeSize.width);
+      const ovHeight = parseInt(iframeSize.height);
+      overlay.width = ovWidth;
+      overlay.height = ovHeight;
+      let maxIntensity = 0;
+
       clicks.forEach((point) => {
         const key = `${point.normalizedY}-${point.normalizedX}`;
         if (pointMap[key]) {
-          pointMap[key].times++;
+          const times = pointMap[key].times + 1;
+          maxIntensity = Math.max(maxIntensity, times);
+          pointMap[key].times = times;
         } else {
           const clickData = [
-            (point.normalizedX / 100) * overlay.width,
-            (point.normalizedY / 100) * overlay.height,
+            (point.normalizedX / 100) * scrollWidth,
+            (point.normalizedY / 100) * scrollHeight,
           ];
-          pointMap[key] = { times: 1, data: clickData };
+          pointMap[key] = { times: 1, data: clickData, original: point };
         }
       });
 
@@ -176,13 +190,12 @@ export default class TargetMarker {
         heatmapData.push([...data, times]);
       }
 
-      const maxIntensity = Math.max(...heatmapData.map((p) => p[2]));
-
       heatmapRenderer
         .setCanvas(overlay)
         .setData(heatmapData)
-        .setRadius(5, 5)
+        .setRadius(15, 10)
         .setMax(maxIntensity)
+        .resize()
         .draw();
     } else {
       this.store.update({ markedTargets: null });

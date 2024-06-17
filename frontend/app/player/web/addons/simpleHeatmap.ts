@@ -22,7 +22,7 @@ class SimpleHeatmap {
     0.6: 'cyan',
     0.7: 'lime',
     0.8: 'yellow',
-    1.0: 'red'
+    1.0: 'red',
   };
 
   setCanvas(canvas: HTMLCanvasElement): this {
@@ -80,9 +80,15 @@ class SimpleHeatmap {
     return this;
   }
 
-  resize(): void {
+  checkReady(): boolean {
+    return !!(this.canvas && this.ctx);
+  }
+
+  resize(): this {
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+
+    return this;
   }
 
   setGradient(grad: Record<string, string>): this {
@@ -119,7 +125,7 @@ class SimpleHeatmap {
 
     ctx.clearRect(0, 0, this.width, this.height);
 
-    this.data.forEach(p => {
+    this.data.forEach((p) => {
       ctx.globalAlpha = Math.min(Math.max(p[2] / this.max, minOpacity), 1);
       ctx.drawImage(this.circle, p[0] - this.r, p[1] - this.r);
     });
@@ -131,7 +137,10 @@ class SimpleHeatmap {
     return this;
   }
 
-  private colorize(pixels: Uint8ClampedArray, gradient: Uint8ClampedArray): void {
+  private colorize(
+    pixels: Uint8ClampedArray,
+    gradient: Uint8ClampedArray
+  ): void {
     for (let i = 0, len = pixels.length; i < len; i += 4) {
       const j = pixels[i + 3] * 4;
 
