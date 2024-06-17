@@ -189,9 +189,15 @@ interface RouteParams {
     metricId: string;
 }
 
-const CardBuilder = observer(() => {
+interface CardBuilderProps {
+    siteId: string;
+    dashboardId?: string;
+    metricId?: string;
+}
+
+const CardBuilder = observer((props: CardBuilderProps) => {
     const history = useHistory();
-    const {siteId, dashboardId} = useParams<RouteParams>();
+    const {siteId, dashboardId, metricId} = props;
     console.log('siteId', siteId);
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const [aiQuery, setAiQuery] = useState('');
@@ -253,10 +259,10 @@ const CardBuilder = observer(() => {
         }
     }, [metric, metricStore]);
 
-    const undoChanges = useCallback(() => {
-        const w = new Widget();
-        metricStore.merge(w.fromJson(initialInstance), false);
-    }, [initialInstance, metricStore]);
+    // const undoChanges = useCallback(() => {
+    //     const w = new Widget();
+    //     metricStore.merge(w.fromJson(initialInstance), false);
+    // }, [initialInstance, metricStore]);
 
     const fetchResults = useCallback(() => aiFiltersStore.getCardFilters(aiQuery, metric.metricType)
         .then(f => metric.createSeries(f.filters)), [aiFiltersStore, aiQuery, metric]);
@@ -265,11 +271,11 @@ const CardBuilder = observer(() => {
         [aiAskChart, aiFiltersStore, metric]);
 
     return (
-        <div>
-            <MetricOptions
-                metric={metric}
-                writeOption={writeOption}
-            />
+        <div className="flex gap-6 flex-col">
+            {/*<MetricOptions*/}
+            {/*    metric={metric}*/}
+            {/*    writeOption={writeOption}*/}
+            {/*/>*/}
             {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric}/>}
             {isPredefined && <PredefinedMessage/>}
             {testingKey && (
