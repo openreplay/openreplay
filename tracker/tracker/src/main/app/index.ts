@@ -176,9 +176,7 @@ function getTimezone() {
   const minutes = Math.abs(offset) % 60
   return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
-const delay = async (ms: number) => {
-  return new Promise((res) => setTimeout(res, ms))
-}
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 
 const proto = {
   // ask if there are any tabs alive
@@ -191,6 +189,7 @@ const proto = {
   iframeSignal: 'never-gonna-make-you-cry',
   // getting node id for child iframe
   iframeId: 'never-gonna-say-goodbye',
+  // batch of messages from an iframe window
   iframeBatch: 'never-gonna-tell-a-lie-and-hurt-you',
 } as const
 
