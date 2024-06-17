@@ -5,7 +5,7 @@ import { Icon } from 'UI';
 import ExCard from '../ExCard';
 import ByComponent from './Component';
 
-function ByBrowser({ onCard }: { onCard: (card: string) => void }) {
+function ByBrowser(props: any) {
   const rows = [
     {
       label: 'Chrome',
@@ -42,9 +42,7 @@ function ByBrowser({ onCard }: { onCard: (card: string) => void }) {
   const lineWidth = 200;
   return (
     <ByComponent
-      onCard={onCard}
-      type={'sessions-by-browser'}
-      title={'Sessions by Browser'}
+      {...props}
       rows={rows}
       lineWidth={lineWidth}
     />

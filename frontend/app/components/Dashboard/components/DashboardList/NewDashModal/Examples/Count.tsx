@@ -16,7 +16,7 @@ const TYPES = {
   Users: 'users',
 };
 
-function ExampleCount({ onCard }: { onCard: (card: string) => void }) {
+function ExampleCount(props: any) {
   const [type, setType] = React.useState(TYPES.Frustrations);
 
   const el = {
@@ -26,11 +26,10 @@ function ExampleCount({ onCard }: { onCard: (card: string) => void }) {
   };
   return (
     <ExCard
-      onCard={onCard}
-      type={'count' + `-${type}`}
+        {...props}
       title={
         <div className={'flex items-center gap-2'}>
-          <div>Sessions by</div>
+          <div>{props.title}</div>
           <div className={'font-normal'}>
             <Segmented
               options={[

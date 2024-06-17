@@ -5,7 +5,7 @@ import React from 'react';
 import { Circle } from '../Count';
 import ExCard from '../ExCard';
 
-function ByUrl({ onCard }: { onCard: (card: string) => void }) {
+function ByUrl(props: any) {
   const [mode, setMode] = React.useState(0);
   const rows = [
     {
@@ -48,11 +48,10 @@ function ByUrl({ onCard }: { onCard: (card: string) => void }) {
   const lineWidth = 240;
   return (
     <ExCard
-      onCard={onCard}
-      type={'sessions-by-url'}
+        {...props}
       title={
         <div className={'flex gap-2 items-center'}>
-          <div>Sessions by</div>
+          <div>{props.title}</div>
           <div className={'font-normal'}><Segmented
             options={[
               { label: 'URL', value: '0' },

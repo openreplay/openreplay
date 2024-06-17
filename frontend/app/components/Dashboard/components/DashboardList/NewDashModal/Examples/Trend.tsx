@@ -3,18 +3,19 @@ import React from 'react';
 
 import ExCard from './ExCard';
 
-function ExampleTrend({ onCard }: { onCard: (card: string) => void }) {
+function ExampleTrend(props: any) {
   const rows = [50, 40, 30, 20, 10];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
 
   const [isMulti, setIsMulti] = React.useState(false);
   return (
     <ExCard
-      onCard={onCard}
-      type={'trend' + (isMulti ? '-multi' : '-single')}
+        {...props}
+      // onCard={onCard}
+      // type={'trend' + (isMulti ? '-multi' : '-single')}
       title={
         <div className={'flex items-center gap-2'}>
-          <div>Trend</div>
+          <div>{props.title}</div>
           <div className={'font-normal'}>
           <Segmented
             options={[

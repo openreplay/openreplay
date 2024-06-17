@@ -2,8 +2,9 @@ import { ArrowRight } from 'lucide-react';
 import React from 'react';
 
 import ExCard from './ExCard';
+import {FUNNEL} from "App/constants/card";
 
-function ExampleFunnel({ onCard }: { onCard: (card: string) => void }) {
+function ExampleFunnel(props: any) {
   const steps = [
     {
       progress: 500,
@@ -17,9 +18,7 @@ function ExampleFunnel({ onCard }: { onCard: (card: string) => void }) {
   ];
   return (
     <ExCard
-      title={'Funnel'}
-      onCard={onCard}
-      type={'funnel'}
+      {...props}
     >
       <>
         {steps.map((step, index) => (

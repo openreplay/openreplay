@@ -4,7 +4,7 @@ import { Icon } from 'UI';
 
 import ByComponent from './Component';
 
-function BySystem({ onCard }: { onCard: (card: string) => void }) {
+function BySystem(props: any) {
   const rows = [
     {
       label: 'Windows',
@@ -41,9 +41,7 @@ function BySystem({ onCard }: { onCard: (card: string) => void }) {
   const lineWidth = 200;
   return (
     <ByComponent
-      onCard={onCard}
-      type={'sessions-by-system'}
-      title={'Sessions by Operating System'}
+        {...props}
       rows={rows}
       lineWidth={lineWidth}
     />

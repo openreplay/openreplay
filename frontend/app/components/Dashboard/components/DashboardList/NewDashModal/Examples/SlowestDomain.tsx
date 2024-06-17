@@ -4,7 +4,7 @@ import React from 'react';
 import { Circle } from './Count';
 import ExCard from './ExCard';
 
-function SlowestDomain({ onCard }: { onCard: (card: string) => void }) {
+function SlowestDomain(props: any) {
   const rows = [
     {
       label: 'kroger.com',
@@ -42,9 +42,7 @@ function SlowestDomain({ onCard }: { onCard: (card: string) => void }) {
 
   return (
     <ExCard
-      type={'slowest'}
-      onCard={onCard}
-      title={'Slowest Domain'}
+      {...props}
     >
       <div className={'flex gap-1 flex-col'}>
         {rows.map((r) => (

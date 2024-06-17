@@ -2,8 +2,9 @@ import { GitCommitHorizontal } from 'lucide-react';
 import React from 'react';
 
 import ExCard from './ExCard';
+import {PERFORMANCE} from "App/constants/card";
 
-function PerfBreakdown({ onCard }: { onCard: (card: string) => void }) {
+function PerfBreakdown(props: any) {
   const rows = [
     ['5K', '1K'],
     ['4K', '750'],
@@ -22,9 +23,7 @@ function PerfBreakdown({ onCard }: { onCard: (card: string) => void }) {
   const bgs = ['#E2E4F6', '#A7BFFF', '#394EFF'];
   return (
     <ExCard
-      title={'Breakdown'}
-      onCard={onCard}
-      type={'perf-breakdown'}
+        {...props}
     >
       <div className={'relative'}>
         <div className={'flex flex-col gap-4'}>

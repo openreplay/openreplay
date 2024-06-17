@@ -4,7 +4,7 @@ import { Icon } from 'UI';
 
 import ByComponent from './Component';
 
-function ByCountry({ onCard }: { onCard: (card: string) => void }) {
+function ByCountry(props: any) {
   const rows = [
     {
       label: 'United States',
@@ -41,10 +41,8 @@ function ByCountry({ onCard }: { onCard: (card: string) => void }) {
   return (
     <ByComponent
       rows={rows}
-      title={'Sessions by Country'}
       lineWidth={180}
-      onCard={onCard}
-      type={'sessions-by-country'}
+      {...props}
     />
   );
 }

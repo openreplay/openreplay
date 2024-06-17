@@ -2,12 +2,10 @@ import React from 'react'
 import ExCard from "./ExCard";
 import { Errors } from "./Count";
 
-function SessionsByErrors({ onCard }: { onCard: (card: string) => void }) {
+function SessionsByErrors(props: any) {
   return (
     <ExCard
-      onCard={onCard}
-      type={'sessions-by-errors'}
-      title={'Sessions by Errors'}
+        {...props}
     >
       <Errors />
     </ExCard>

@@ -2,12 +2,10 @@ import React from 'react'
 import ExCard from "./ExCard";
 import { Frustrations } from "./Count";
 
-function SessionsByIssues({ onCard }: { onCard: (card: string) => void }) {
+function SessionsByIssues(props: any) {
   return (
     <ExCard
-      onCard={onCard}
-      type={'sessions-by-issues'}
-      title={'Sessions by Issues'}
+        {...props}
     >
       <Frustrations />
     </ExCard>
