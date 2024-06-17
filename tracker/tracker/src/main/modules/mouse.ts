@@ -105,6 +105,7 @@ export interface MouseHandlerOptions {
 
 export default function (app: App, options?: MouseHandlerOptions): void {
   const { disableClickmaps = false } = options || {}
+
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
     if (dl !== null) {
@@ -203,7 +204,6 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         mousePositionX = e.clientX + left
         mousePositionY = e.clientY + top
         mousePositionChanged = true
-
         const nextDirection = Math.sign(e.movementX)
         distance += Math.abs(e.movementX) + Math.abs(e.movementY)
 

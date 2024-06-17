@@ -241,3 +241,27 @@ export function requestIdleCb(callback: () => void) {
   //   })
   // }
 }
+
+export function simpleMerge<T>(defaultObj: T, givenObj: Partial<T>): T {
+  const result = { ...defaultObj }
+
+  for (const key in givenObj) {
+    // eslint-disable-next-line no-prototype-builtins
+    if (givenObj.hasOwnProperty(key)) {
+      const userOptionValue = givenObj[key]
+      const defaultOptionValue = defaultObj[key]
+
+      if (
+        typeof userOptionValue === 'object' &&
+        !Array.isArray(userOptionValue) &&
+        userOptionValue !== null
+      ) {
+        result[key] = simpleMerge(defaultOptionValue || {}, userOptionValue) as any
+      } else {
+        result[key] = userOptionValue as any
+      }
+    }
+  }
+
+  return result
+}

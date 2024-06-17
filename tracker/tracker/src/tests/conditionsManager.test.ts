@@ -5,7 +5,7 @@ import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globa
 const Type = {
   JSException: 78,
   CustomEvent: 27,
-  MouseClick: 69,
+  MouseClick: 68,
   SetPageLocation: 122,
   NetworkRequest: 83,
 }

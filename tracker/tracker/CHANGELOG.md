@@ -2,6 +2,7 @@
 
 - titles for tabs
 - new `MouseClick` message to introduce heatmaps instead of clickmaps
+- crossdomain iframe tracking functionality
 
 # 13.0.2
 
