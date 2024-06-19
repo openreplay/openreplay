@@ -11,7 +11,6 @@ rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
 rm -rf ./chalicelib/core/autocomplete.py
-rm -rf ./chalicelib/core/click_maps.py
 rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
@@ -22,7 +21,6 @@ rm -rf ./chalicelib/core/errors_favorite.py
 rm -rf ./chalicelib/core/events_mobile.py
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/funnels.py
-rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./chalicelib/core/integration_base.py
 rm -rf ./chalicelib/core/integration_base_issue.py
 rm -rf ./chalicelib/core/integration_github.py

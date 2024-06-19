@@ -934,6 +934,8 @@ class MetricType(str, Enum):
     retention = "retention"
     stickiness = "stickiness"
     click_map = "clickMap"
+    # click_map and heat_map are the same
+    heat_map = "heatMap"
     insights = "insights"
 
 

@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite, sessions_notes, click_maps, sessions_replay, signup, feature_flags
+    errors_favorite, sessions_notes, sessions_replay, signup, feature_flags
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -569,7 +569,7 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
 @app.post('/{projectId}/click_maps/search', tags=["click maps"], dependencies=[OR_scope(Permissions.session_replay)])
 def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
+    return {"data": heatmaps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"],

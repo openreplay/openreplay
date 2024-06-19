@@ -190,7 +190,6 @@ Pipfile.lock
 /chalicelib/core/authorizers.py
 /chalicelib/core/autocomplete.py
 /chalicelib/core/canvas.py
-/chalicelib/core/click_maps.py
 /chalicelib/core/collaboration_base.py
 /chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py
@@ -201,7 +200,6 @@ Pipfile.lock
 /chalicelib/core/events_mobile.py
 /chalicelib/core/feature_flags.py
 /chalicelib/core/funnels.py
-/chalicelib/core/heatmaps.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py
