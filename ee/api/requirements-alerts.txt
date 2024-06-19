@@ -14,7 +14,7 @@ fastapi==0.111.0
 uvicorn[standard]==0.30.1
 python-decouple==3.8
 pydantic[email]==2.3.0
-apscheduler==4.0.0a5
+apscheduler==3.10.4
 
 clickhouse-driver[lz4]==0.2.8
 azure-storage-blob==12.21.0b1
