@@ -13,7 +13,7 @@ jira==3.8.0
 fastapi==0.111.0
 python-decouple==3.8
 pydantic[email]==2.3.0
-apscheduler==4.0.0a5
+apscheduler==3.10.4
 
 clickhouse-driver[lz4]==0.2.8
 redis==5.1.0b6
