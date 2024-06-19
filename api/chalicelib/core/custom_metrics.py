@@ -5,7 +5,7 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import sessions, funnels, errors, issues, click_maps, sessions_mobs, product_analytics, \
+from chalicelib.core import sessions, funnels, errors, issues, heatmaps, sessions_mobs, product_analytics, \
     custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -90,7 +90,7 @@ def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, inclu
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
-    return click_maps.search_short_session(project_id=project_id, user_id=user_id,
+    return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
                                            data=schemas.ClickMapSessionsSearch(
                                                **data.series[0].filter.model_dump()),
                                            include_mobs=include_mobs)
@@ -178,6 +178,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.timeseries: __get_timeseries_chart,
         schemas.MetricType.table: __get_table_chart,
         schemas.MetricType.click_map: __get_click_map_chart,
+        schemas.MetricType.heat_map: __get_click_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_chart

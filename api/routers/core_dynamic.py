@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
-    sessions_favorite, assist, sessions_notes, click_maps, sessions_replay, signup, feature_flags
+    sessions_favorite, assist, sessions_notes, sessions_replay, signup, feature_flags
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
