@@ -269,15 +269,30 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(processed_sessions.session_id) AS count
-                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id AS session_id,
-                                        s.datetime AS datetime
-                                    {query_part}) AS processed_sessions
-                            GROUP BY timestamp
-                            ORDER BY timestamp;"""
+                if metric_of == schemas.MetricOfTimeseries.session_count:
+                    query = f"""SELECT toUnixTimestamp(
+                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                        ) * 1000 AS timestamp,
+                                    COUNT(processed_sessions.session_id) AS count
+                                FROM (SELECT s.session_id AS session_id,
+                                            s.datetime AS datetime
+                                        {query_part}) AS processed_sessions
+                                GROUP BY timestamp
+                                ORDER BY timestamp;"""
+                elif metric_of == schemas.MetricOfTimeseries.user_count:
+                    query = f"""SELECT toUnixTimestamp(
+                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                        ) * 1000 AS timestamp,
+                                    COUNT(DISTINCT processed_sessions.user_id) AS count
+                                FROM (SELECT s.user_id AS user_id,
+                                            s.datetime AS datetime
+                                        {query_part}
+                                      WHERE isNotNull(s.user_id)
+                                        AND s.user_id != '') AS processed_sessions
+                                GROUP BY timestamp
+                                ORDER BY timestamp;"""
+                else:
+                    raise Exception(f"Unsupported metricOf:{metric_of}")
                 main_query = cur.format(query, full_args)
             else:
                 main_query = cur.format(f"""SELECT count(DISTINCT s.session_id) AS count

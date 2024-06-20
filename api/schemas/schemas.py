@@ -1013,6 +1013,7 @@ class MetricOfTable(str, Enum):
 
 class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
+    user_count = "userCount"
 
 
 class MetricOfFunnels(str, Enum):
