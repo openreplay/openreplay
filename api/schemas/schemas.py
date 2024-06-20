@@ -994,6 +994,7 @@ class MetricOfWebVitals(str, Enum):
     avg_visited_pages = "avgVisitedPages"
     count_requests = "countRequests"
     count_sessions = "countSessions"
+    count_users = "countUsers"
 
 
 class MetricOfTable(str, Enum):
