@@ -67,21 +67,6 @@ const ORSanitizedView =
         throw new Error('RnSanitizedView; ' + LINKING_ERROR);
       };
 
-export function start(): void {
-  return ORTrackerConnector.startSession(
-    '34LtpOwyUI2ELFUNVkMn',
-    {
-      analytics: true,
-      crashes: true,
-      debugLogs: true,
-      logs: true,
-      performances: true,
-      screen: true,
-    },
-    'https://foss.openreplay.com/ingest'
-  );
-}
-
 export function setMetadata(key: string, value: string) {
   ORTrackerConnector.setMetadata(key, value);
 }
