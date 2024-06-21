@@ -1,12 +1,11 @@
 import {
-  requireNativeComponent,
-  UIManager,
-  Platform,
   NativeModules,
-  View,
-  TextInput,
+  Platform,
+  requireNativeComponent,
+  type TextInputProps,
+  UIManager,
+  type ViewProps,
 } from 'react-native';
-import type { ViewProps, TextInputProps } from 'react-native';
 import network from './network';
 import type { Options as NetworkOptions } from './network';
 
@@ -17,40 +16,6 @@ const LINKING_ERROR =
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
-
-type RntrackerProps = ViewProps & {
-  viewName: string;
-  screenName: string;
-  children: any;
-};
-
-const RntrackerSanitizedView =
-  UIManager.getViewManagerConfig('RntrackerSanitizedView') != null
-    ? requireNativeComponent<ViewProps>('RntrackerSanitizedView')
-    : () => {
-        throw new Error('RntrackerSanitizedView; ' + LINKING_ERROR);
-      };
-
-const RntrackerInput =
-  UIManager.getViewManagerConfig('RntrackerInput') != null
-    ? requireNativeComponent<TextInputProps>('RntrackerInput')
-    : () => {
-        throw new Error('RntrackerInput; ' + LINKING_ERROR);
-      };
-
-const RntrackerView =
-  UIManager.getViewManagerConfig('RntrackerView') != null
-    ? requireNativeComponent<RntrackerProps>('RntrackerView')
-    : () => {
-        throw new Error('RntrackerView; ' + LINKING_ERROR);
-      };
-
-const RntrackerTouchTrackingView =
-  UIManager.getViewManagerConfig('RntrackerTouch') != null
-    ? requireNativeComponent<ViewProps>('RntrackerTouch')
-    : () => {
-        throw new Error('RntrackerTouchTrackingView; ' + LINKING_ERROR);
-      };
 
 interface Options {
   crashes?: boolean;
@@ -81,15 +46,49 @@ interface IORTrackerConnector {
   ) => void;
 }
 
-const emptyShell = {
-  startSession: () =>
-    console.log('Openreplay: SDK only supports iOS at the moment'),
-  setMetadata: () => null,
-  event: () => null,
-  setUserID: () => null,
-  userAnonymousID: () => null,
-  networkRequest: () => null,
-};
+const RnTrackerTouchTrackingView =
+  UIManager.getViewManagerConfig('RnTrackerTouchView') != null
+    ? requireNativeComponent<ViewProps>('RnTrackerTouchView')
+    : () => {
+        throw new Error('RnTrackerTouchView; ' + LINKING_ERROR);
+      };
+
+const ORTrackedInput =
+  UIManager.getViewManagerConfig('RnTrackedInput') != null
+    ? requireNativeComponent<TextInputProps>('RnTrackedInput')
+    : () => {
+        throw new Error('RnTrackedInput; ' + LINKING_ERROR);
+      };
+
+const ORSanitizedView =
+  UIManager.getViewManagerConfig('RnSanitizedView') != null
+    ? requireNativeComponent<ViewProps>('RnSanitizedView')
+    : () => {
+        throw new Error('RnSanitizedView; ' + LINKING_ERROR);
+      };
+
+export function start(): void {
+  return ORTrackerConnector.startSession(
+    '34LtpOwyUI2ELFUNVkMn',
+    {
+      analytics: true,
+      crashes: true,
+      debugLogs: true,
+      logs: true,
+      performances: true,
+      screen: true,
+    },
+    'https://foss.openreplay.com/ingest'
+  );
+}
+
+export function setMetadata(key: string, value: string) {
+  ORTrackerConnector.setMetadata(key, value);
+}
+
+export function setUserID(userID: string) {
+  ORTrackerConnector.setUserID(userID);
+}
 
 let patched = false;
 const patchNetwork = (
@@ -104,14 +103,9 @@ const patchNetwork = (
 };
 
 export default {
-  tracker:
-    Platform.OS === 'ios'
-      ? (ORTrackerConnector as IORTrackerConnector)
-      : emptyShell,
-  patchNetwork: Platform.OS === 'ios' ? patchNetwork : () => null,
-  ORTouchTrackingView:
-    Platform.OS === 'ios' ? RntrackerTouchTrackingView : View,
-  ORSanitizedView: Platform.OS === 'ios' ? RntrackerSanitizedView : View,
-  ORTrackedInput: Platform.OS === 'ios' ? RntrackerInput : TextInput,
-  ORAnalyticsView: Platform.OS === 'ios' ? RntrackerView : View,
+  tracker: ORTrackerConnector as IORTrackerConnector,
+  patchNetwork: patchNetwork,
+  ORTouchTrackingView: RnTrackerTouchTrackingView,
+  ORTrackedInput: ORTrackedInput,
+  ORSanitizedView: ORSanitizedView,
 };

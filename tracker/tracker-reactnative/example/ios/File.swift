@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  RntrackerExample
+//  ReactNativeExample
 //
 
 import Foundation
