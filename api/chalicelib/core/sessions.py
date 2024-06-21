@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, sessions_favorite
@@ -296,7 +296,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                  metric_of: schemas.MetricOfTable, metric_value: List):
+                  metric_of: schemas.MetricOfTable, metric_value: List,
+                  metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
@@ -331,7 +332,6 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             main_col = "user_id"
             extra_col = ""
             extra_where = ""
-            pre_query = ""
             distinct_on = "s.session_id"
             if metric_of == schemas.MetricOfTable.user_country:
                 main_col = "user_country"
@@ -353,25 +353,46 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_col = "path"
                 extra_col = ", path"
                 distinct_on += ",path"
-            main_query = cur.mogrify(f"""{pre_query}
-                                         SELECT COUNT(*) AS count,
-                                                COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
-                                                COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
-                                                    FROM (SELECT {main_col} AS name,
-                                                             count(DISTINCT session_id)                                   AS session_count,
-                                                             ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
-                                                        FROM (SELECT *
-                                                        FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
-                                                                    s.user_id, s.user_os, 
-                                                                    s.user_browser, s.user_device, 
-                                                                    s.user_device_type, s.user_country, s.issue_types{extra_col}
-                                                        {query_part}
-                                                        ORDER BY s.session_id desc) AS filtred_sessions
-                                                        ) AS full_sessions
-                                                        {extra_where}
-                                                        GROUP BY {main_col}
-                                                        ORDER BY session_count DESC) AS users_sessions;""",
-                                     full_args)
+            if metric_format == schemas.MetricExtendedFormatType.session_count:
+                main_query = f"""SELECT COUNT(*) AS count,
+                                    COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
+                                    COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                 FROM (SELECT {main_col} AS name,
+                                     count(DISTINCT session_id)                                   AS session_count,
+                                     ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                       FROM (SELECT *
+                                             FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
+                                                    s.user_id, s.user_os, 
+                                                    s.user_browser, s.user_device, 
+                                                    s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            ) AS full_sessions
+                                 {extra_where}
+                                 GROUP BY {main_col}
+                                 ORDER BY session_count DESC) AS users_sessions;"""
+            else:
+                main_query = f"""SELECT COUNT(*) AS count,
+                                    COALESCE(SUM(users_sessions.user_count),0) AS total_users,
+                                    COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                 FROM (SELECT {main_col} AS name,
+                                         count(DISTINCT user_id)                                AS user_count,
+                                         ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                       FROM (SELECT *
+                                             FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
+                                                        s.user_id, s.user_os, 
+                                                        s.user_browser, s.user_device, 
+                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                             {query_part}
+                                             AND s.user_id IS NOT NULL
+                                             AND s.user_id !=''
+                                             ORDER BY s.session_id desc) AS filtred_sessions
+                                        ) AS full_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY user_count DESC) AS users_sessions;"""
+
+            main_query = cur.mogrify(main_query, full_args)
         logging.debug("--------------------")
         logging.debug(main_query)
         logging.debug("--------------------")
