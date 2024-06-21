@@ -25,14 +25,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // not required if you're using our SaaS version
-        OpenReplay.shared.serverURL = "https://your.instance.com/ingest"
+        OpenReplay.shared.serverURL = "INGEST_POINT"
         OpenReplay.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
         
         // ...
         return true
     }
 // ...`;
-const configuration = `let crashs: Bool
+const configuration = `let crashes: Bool
 let analytics: Bool
 let performances: Bool
 let logs: Bool
@@ -72,8 +72,8 @@ TextField("Input", text: $text)
 // UIKit will use placeholder as label and sender.isSecureTextEntry to mask the input
 Analytics.shared.addObservedInput(inputEl)`
 
-function MobileInstallDocs({ site }: any) {
-  const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey);
+function MobileInstallDocs({ site, ingestPoint }: any) {
+  const _usageCode = usageCode.replace('INGEST_POINT', ingestPoint).replace('PROJECT_KEY', site.projectKey);
 
   return (
     <div>
