@@ -22,7 +22,7 @@ public class ORTrackerConnector: NSObject {
           debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
           debugImages: false
         )
-        Openreplay.shared.serverURL = projectUrl ?? "https://app.openreplay.com/ingest"
+        Openreplay.shared.serverURL = projectUrl ?? "https://api.openreplay.com/ingest"
         Openreplay.shared.start(projectKey: projectKey, options: options)
         print("Starting for \(options) \(projectKey) \(projectUrl ?? "no url")")
     }
@@ -43,7 +43,7 @@ public class ORTrackerConnector: NSObject {
           debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
           debugImages: false
         )
-        Openreplay.shared.serverURL = projectUrl ?? "https://app.openreplay.com/ingest"
+        Openreplay.shared.serverURL = projectUrl ?? "https://api.openreplay.com/ingest"
         Openreplay.shared.startSession(projectKey: projectKey, options: options)
         print("Starting for \(options) \(projectKey) \(projectUrl ?? "no url")")
     }
@@ -68,7 +68,7 @@ public class ORTrackerConnector: NSObject {
     open func userAnonymousID(_ userID: String) {
         Openreplay.shared.userAnonymousID(userID)
     }
-    
+
     @objc(networkRequest:method:requestJSON:responseJSON:status:duration:)
     open func networkRequest(_ url: String, method: String, requestJSON: String, responseJSON: String, status: NSNumber, duration: NSNumber) {
         Openreplay.shared.networkRequest(url: url, method: method, requestJSON: requestJSON, responseJSON: responseJSON, status: Int(truncating: status), duration: UInt64(truncating: duration))
