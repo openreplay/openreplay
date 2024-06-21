@@ -7,6 +7,7 @@ import {useStore} from "App/mstore";
 import {CLICKMAP} from "App/constants/card";
 import {renderClickmapThumbnail} from "Components/Dashboard/components/WidgetForm/renderMap";
 import WidgetPreview from "Components/Dashboard/components/WidgetPreview/WidgetPreview";
+import {number} from "Player/player/localStorage";
 
 const getTitleByType = (type: string) => {
     switch (type) {
@@ -26,9 +27,9 @@ function CreateCard(props: Props) {
     const history = useHistory();
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const metric = metricStore.instance;
-    const siteId = history.location.pathname.split('/')[1];
+    const siteId: string = history.location.pathname.split('/')[1];
+    const dashboardId: string = history.location.pathname.split('/')[4];
     // const title = getTitleByType(metric.metricType)
-
 
     const createNewDashboard = async () => {
         dashboardStore.initDashboard();

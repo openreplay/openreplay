@@ -359,34 +359,33 @@ export default class DashboardStore {
     });
   }
 
-  deleteDashboardWidget(dashboardId: string, widgetId: string) {
+  async deleteDashboardWidget(dashboardId: string, widgetId: string) {
     this.isDeleting = true;
-    return dashboardService
-      .deleteWidget(dashboardId, widgetId)
-      .then(() => {
-        toast.success('Dashboard updated successfully');
-        runInAction(() => {
-          this.selectedDashboard?.removeWidget(widgetId);
-        });
-      })
-      .finally(() => {
-        this.isDeleting = false;
+    try {
+      await dashboardService
+          .deleteWidget(dashboardId, widgetId);
+      toast.success('Dashboard updated successfully');
+      runInAction(() => {
+        this.selectedDashboard?.removeWidget(widgetId);
       });
+    } finally {
+      this.isDeleting = false;
+    }
   }
 
-  addWidgetToDashboard(dashboard: Dashboard, metricIds: any): Promise<any> {
+  async addWidgetToDashboard(dashboard: Dashboard, metricIds: any): Promise<any> {
     this.isSaving = true;
-    return dashboardService
-      .addWidget(dashboard, metricIds)
-      .then((response) => {
+    try {
+      try {
+        const response = await dashboardService
+            .addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
-      })
-      .catch(() => {
+      } catch {
         toast.error('Card could not be added.');
-      })
-      .finally(() => {
-        this.isSaving = false;
-      });
+      }
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   setPeriod(period: any) {

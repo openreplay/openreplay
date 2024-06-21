@@ -5,7 +5,7 @@ import {metricOf, issueOptions, issueCategories} from 'App/constants/filterOptio
 import {FilterKey} from 'Types/filter/filterType';
 import {withSiteId, dashboardMetricDetails, metricDetails} from 'App/routes';
 import {Icon, confirm} from 'UI';
-import {Card, Input, Space, Button} from 'antd';
+import {Card, Input, Space, Button, Segmented} from 'antd';
 import {AudioWaveform} from "lucide-react";
 import FilterSeries from '../FilterSeries';
 import Select from 'Shared/Select';
@@ -20,6 +20,8 @@ import {
 } from 'App/constants/card';
 import {useParams} from 'react-router-dom';
 import {useHistory} from "react-router";
+
+const tableOptions = metricOf.filter((i) => i.type === 'table');
 
 const AIInput = ({value, setValue, placeholder, onEnter}) => (
     <Input
@@ -38,7 +40,24 @@ const PredefinedMessage = () => (
     </div>
 );
 
-const MetricOptions = ({metric, writeOption}) => {
+const MetricTabs = ({metric, writeOption}: any) => {
+    if (![TABLE].includes(metric.metricType)) return null;
+
+    const onChange = (value: string) => {
+        console.log('value', value);
+        writeOption({
+            value: {
+                value
+            }, name: 'metricOf'
+        });
+    }
+
+    return (
+        <Segmented options={tableOptions} onChange={onChange} selected={metric.metricOf} />
+    )
+}
+
+const MetricOptions = ({metric, writeOption}: any) => {
     const isUserPath = metric.metricType === USER_PATH;
 
     return (
@@ -198,7 +217,6 @@ interface CardBuilderProps {
 const CardBuilder = observer((props: CardBuilderProps) => {
     const history = useHistory();
     const {siteId, dashboardId, metricId} = props;
-    console.log('siteId', siteId);
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const [aiQuery, setAiQuery] = useState('');
     const [aiAskChart, setAiAskChart] = useState('');
@@ -208,6 +226,8 @@ const CardBuilder = observer((props: CardBuilderProps) => {
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
     const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
+
+    console.log('metric', metric);
 
 
     useEffect(() => {
@@ -276,6 +296,8 @@ const CardBuilder = observer((props: CardBuilderProps) => {
             {/*    metric={metric}*/}
             {/*    writeOption={writeOption}*/}
             {/*/>*/}
+            <MetricTabs metric={metric}
+                        writeOption={writeOption}/>
             {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric}/>}
             {isPredefined && <PredefinedMessage/>}
             {testingKey && (
