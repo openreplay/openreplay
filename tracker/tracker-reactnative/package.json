@@ -1,6 +1,6 @@
 {
   "name": "@openreplay/react-native",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Openreplay React-native connector for iOS applications",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -41,14 +41,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shekarsiri/openreplay-react-native.git"
+    "url": "https://github.com/openreplay/openreplay/tree/main/tracker/tracker-reactnative"
   },
-  "author": "Shekar Siri <shekar@openreplay.com> (https://github.com/shekarsiri)",
+  "author": "nick-delirium <nikita@openreplay.com> (https://github.com/nick-delirium)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shekarsiri/openreplay-react-native/issues"
+    "url": "https://github.com/openreplay/openreplay/issues"
   },
-  "homepage": "https://github.com/shekarsiri/openreplay-react-native#readme",
+  "homepage": "https://github.com/openreplay/openreplay/tree/main/tracker/tracker-reactnative#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
