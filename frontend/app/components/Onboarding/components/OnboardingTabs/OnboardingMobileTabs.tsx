@@ -21,6 +21,7 @@ const MobileTrackingCodeModal = (props: Props) => {
   const { site } = props;
   const [activeTab, setActiveTab] = useState(iOS);
   const { showModal } = useModal();
+  const ingestPoint = `https://${window.location.hostname}/ingest`;
 
   const showUserModal = () => {
     showModal(<UserForm />, { right: true });
@@ -32,7 +33,7 @@ const MobileTrackingCodeModal = (props: Props) => {
         return (
           <div className="grid grid-cols-6 gap-4">
             <div className="col-span-4">
-              <MobileInstallDocs site={site} />
+              <MobileInstallDocs site={site} ingestPoint={ingestPoint} />
             </div>
 
             <div className="col-span-2">
@@ -55,7 +56,7 @@ const MobileTrackingCodeModal = (props: Props) => {
         return (
           <div className="grid grid-cols-6 gap-4">
             <div className="col-span-4">
-              <AndroidInstallDocs site={site} />
+              <AndroidInstallDocs site={site} ingestPoint={ingestPoint} />
             </div>
 
             <div className="col-span-2">
