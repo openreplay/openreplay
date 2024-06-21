@@ -7,12 +7,12 @@ import stl from './InstallDocs/installDocs.module.css'
 import { usageCode as iosUsageCode, installationCommand as iosInstallCommand } from "../../Onboarding/components/OnboardingTabs/InstallDocs/MobileInstallDocs";
 import { usageCode as androidUsageCode, installationCommand as androidInstallCommand } from "../../Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs";
 
-function InstallMobileDocs({ site }) {
+function InstallMobileDocs({ site, ingestPoint }: any) {
   const [isIos, setIsIos] = React.useState(true)
 
   const usageCode = isIos ? iosUsageCode : androidUsageCode
   const installationCommand = isIos ? iosInstallCommand : androidInstallCommand
-  const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
+  const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey).replace('INGEST_POINT', ingestPoint)
 
   const docLink = `https://docs.openreplay.com/en/${isIos ? 'ios-' : 'android-'}sdk/`
   return (
