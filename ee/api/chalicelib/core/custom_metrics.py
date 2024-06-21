@@ -63,7 +63,8 @@ def __get_table_of_series(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
         results.append(sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
-                                              metric_of=data.metric_of, metric_value=data.metric_value))
+                                              metric_of=data.metric_of, metric_value=data.metric_value,
+                                              metric_format=data.metric_format))
 
     return results
 

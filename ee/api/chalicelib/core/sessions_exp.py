@@ -366,7 +366,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                  metric_of: schemas.MetricOfTable, metric_value: List):
+                  metric_of: schemas.MetricOfTable, metric_value: List,
+                  metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density))
     extra_event = None
@@ -413,7 +414,6 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             main_col = "user_id"
             extra_col = "s.user_id"
             extra_where = ""
-            pre_query = ""
             if metric_of == schemas.MetricOfTable.user_country:
                 main_col = "user_country"
                 extra_col = "s.user_country"
@@ -436,19 +436,33 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             elif metric_of == schemas.MetricOfTable.visited_url:
                 main_col = "url_path"
                 extra_col = "s.url_path"
-            main_query = cur.format(f"""{pre_query}
-                                        SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
-                                             {main_col} AS name,
-                                             count(DISTINCT session_id) AS session_count
-                                        FROM (SELECT s.session_id AS session_id, 
-                                                    {extra_col}
-                                        {query_part}
-                                        ORDER BY s.session_id desc) AS filtred_sessions
-                                        {extra_where}
-                                        GROUP BY {main_col}
-                                        ORDER BY session_count DESC
-                                        LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
-                                    full_args)
+
+            if metric_format == schemas.MetricExtendedFormatType.session_count:
+                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                     {main_col} AS name,
+                                     count(DISTINCT session_id) AS session_count
+                                FROM (SELECT s.session_id AS session_id, 
+                                            {extra_col}
+                                {query_part}) AS filtred_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY session_count DESC
+                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+            else:
+                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                     {main_col} AS name,
+                                     count(DISTINCT user_id) AS user_count
+                                FROM (SELECT s.user_id AS user_id, 
+                                            {extra_col}
+                                {query_part}
+                                WHERE isNotNull(user_id)
+                                    AND user_id != '') AS filtred_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY user_count DESC
+                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+
+            main_query = cur.format(main_query, full_args)
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")

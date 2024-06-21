@@ -578,6 +578,11 @@ class MetricFormatType(str, Enum):
     session_count = 'sessionCount'
 
 
+class MetricExtendedFormatType(str, Enum):
+    session_count = 'sessionCount'
+    user_count = 'userCount'
+
+
 class HttpMethod(str, Enum):
     _get = 'GET'
     _head = 'HEAD'
@@ -1131,6 +1136,7 @@ class CardTable(__CardSchema):
     metric_type: Literal[MetricType.table]
     metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
     view_type: MetricTableViewType = Field(...)
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.session_count)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
@@ -1141,6 +1147,13 @@ class CardTable(__CardSchema):
     @model_validator(mode="after")
     def __transform(cls, values):
         values.metric_of = MetricOfTable(values.metric_of)
+        return values
+
+    @model_validator(mode="after")
+    def __validator(cls, values):
+        if values.metric_of != MetricOfTable.issues:
+            assert values.metric_format == MetricExtendedFormatType.session_count, \
+                f'{MetricExtendedFormatType.user_count} is only supported for metricOf:{MetricOfTable.issues}'
         return values
 
 

@@ -52,7 +52,8 @@ def __get_table_of_series(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
         results.append(sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
-                                              metric_of=data.metric_of, metric_value=data.metric_value))
+                                              metric_of=data.metric_of, metric_value=data.metric_value,
+                                              metric_format=data.metric_format))
 
     return results
 
@@ -91,9 +92,9 @@ def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, inclu
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
     return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
-                                           data=schemas.ClickMapSessionsSearch(
-                                               **data.series[0].filter.model_dump()),
-                                           include_mobs=include_mobs)
+                                         data=schemas.ClickMapSessionsSearch(
+                                             **data.series[0].filter.model_dump()),
+                                         include_mobs=include_mobs)
 
 
 def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
