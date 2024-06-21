@@ -2798,3 +2798,54 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
                                                                               neutral={"value": 0}))
     helper.__time_value(results)
     return helper.dict_to_camel_case(results)
+
+
+def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                           endTimestamp=TimeUTC.now(),
+                           density=7, **args):
+    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
+    ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query_chart += meta_condition
+    ch_sub_query_chart.append("isNotNull(sessions.user_id)")
+    ch_sub_query_chart.append("sessions.user_id!=''")
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""\
+                SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                       COUNT(DISTINCT sessions.user_id) AS value
+                FROM {exp_ch_helper.get_main_sessions_table(startTimestamp)} AS sessions
+                WHERE {" AND ".join(ch_sub_query_chart)}
+                GROUP BY timestamp
+                ORDER BY timestamp;\
+        """
+        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+
+        rows = ch.execute(query=ch_query, params=params)
+
+        results = {
+            "value": sum([r["value"] for r in rows]),
+            "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp, end_time=endTimestamp,
+                                              density=density,
+                                              neutral={"value": 0})
+        }
+
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+
+        ch_query = f""" SELECT COUNT(DISTINCT user_id) AS count
+                        FROM {exp_ch_helper.get_main_sessions_table(startTimestamp)} AS sessions
+                        WHERE {" AND ".join(ch_sub_query)};"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+                  **__get_constraint_values(args)}
+
+        count = ch.execute(query=ch_query, params=params)
+
+        count = count[0]["count"]
+
+        results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.count
+    return results

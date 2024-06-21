@@ -2913,3 +2913,52 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
         row["chart"] = rows
     row["unit"] = schemas.TemplatePredefinedUnits.count
     return helper.dict_to_camel_case(row)
+
+
+def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                     endTimestamp=TimeUTC.now(),
+                     density=7, **args):
+    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+                                           chart=True, data=args)
+    pg_sub_query.append("user_id IS NOT NULL")
+    pg_sub_query.append("user_id != ''")
+    pg_sub_query_chart.append("user_id IS NOT NULL")
+    pg_sub_query_chart.append("user_id != ''")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT generated_timestamp AS timestamp,
+                               COALESCE(COUNT(sessions), 0) AS value
+                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                             LEFT JOIN LATERAL ( SELECT DISTINCT user_id
+                                                 FROM public.sessions
+                                                 WHERE {" AND ".join(pg_sub_query_chart)}
+                             ) AS sessions ON (TRUE)
+                        GROUP BY generated_timestamp
+                        ORDER BY generated_timestamp;"""
+        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+        results = {
+            "value": sum([r["value"] for r in rows]),
+            "chart": rows
+        }
+
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+
+        pg_query = f"""SELECT COUNT(DISTINCT sessions.user_id) AS count
+                        FROM public.sessions
+                        WHERE {" AND ".join(pg_sub_query)};"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+                  **__get_constraint_values(args)}
+
+        cur.execute(cur.mogrify(pg_query, params))
+
+        count = cur.fetchone()["count"]
+
+        results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.count
+    return results

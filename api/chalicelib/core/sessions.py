@@ -189,17 +189,35 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with pg_client.PostgresClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                                {query_part})
-                                            SELECT generated_timestamp AS timestamp,
-                                                   COUNT(s)            AS count
-                                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                         FROM full_sessions
-                                                                         WHERE start_ts >= generated_timestamp
-                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                            GROUP BY generated_timestamp
-                                            ORDER BY generated_timestamp;""", full_args)
+                if metric_of == schemas.MetricOfTimeseries.session_count:
+                    # main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                    main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT s.session_id, s.start_ts
+                                                                    {query_part})
+                                                SELECT generated_timestamp AS timestamp,
+                                                       COUNT(s)            AS count
+                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                         LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                             FROM full_sessions
+                                                                             WHERE start_ts >= generated_timestamp
+                                                                               AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                GROUP BY generated_timestamp
+                                                ORDER BY generated_timestamp;""", full_args)
+                elif metric_of == schemas.MetricOfTimeseries.user_count:
+                    main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT s.user_id, s.start_ts
+                                                                    {query_part}
+                                                                    AND s.user_id IS NOT NULL
+                                                                    AND s.user_id != '')
+                                                SELECT generated_timestamp AS timestamp,
+                                                       COUNT(s)            AS count
+                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                         LEFT JOIN LATERAL ( SELECT DISTINCT user_id AS s
+                                                                             FROM full_sessions
+                                                                             WHERE start_ts >= generated_timestamp
+                                                                               AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                GROUP BY generated_timestamp
+                                                ORDER BY generated_timestamp;""", full_args)
+                else:
+                    raise Exception(f"Unsupported metricOf:{metric_of}")
             else:
                 main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
@@ -726,7 +744,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_from = event_from % f"{events.EventType.CLICK_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s",
+                                                event.value,
                                                 value_key=e_k))
 
             elif event_type == events.EventType.TAG.ui_type:
@@ -750,7 +769,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_from = event_from % f"{events.EventType.INPUT_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s",
+                                                event.value,
                                                 value_key=e_k))
 
 
