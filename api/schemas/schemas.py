@@ -1173,7 +1173,7 @@ class CardTable(__CardSchema):
 
     @model_validator(mode="after")
     def __validator(cls, values):
-        if values.metric_of not in (MetricOfTable.issues, MetricOfTable.user_browser):
+        if values.metric_of not in (MetricOfTable.issues, MetricOfTable.user_browser, MetricOfTable.user_device):
             assert values.metric_format == MetricExtendedFormatType.session_count, \
                 f'metricFormat:{MetricExtendedFormatType.user_count.value} is not supported for this metricOf'
         return values
