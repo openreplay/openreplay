@@ -143,7 +143,7 @@ export default class TargetMarker {
   }
 
   injectTargets(clicks: { normalizedX: number; normalizedY: number }[] | null) {
-    if (clicks) {
+    if (clicks && this.screen.document) {
       this.clickMapOverlay?.remove();
       const overlay = document.createElement('canvas');
       const iframeSize = this.screen.iframeStylesRef;
