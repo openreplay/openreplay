@@ -1023,6 +1023,7 @@ class MetricOfTimeseries(str, Enum):
 
 class MetricOfFunnels(str, Enum):
     session_count = MetricOfTimeseries.session_count.value
+    user_count = MetricOfTimeseries.user_count.value
 
 
 class MetricOfClickMap(str, Enum):
@@ -1166,7 +1167,8 @@ class CardFunnel(__CardSchema):
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        values["metricOf"] = MetricOfFunnels.session_count
+        if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
+            values["metricOf"] = MetricOfFunnels.session_count
         values["viewType"] = MetricOtherViewType.other_chart
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
