@@ -56,10 +56,10 @@ def send_html(BODY_HTML, SUBJECT, recipient):
     msg.attach(body)
     for m in mime_img:
         msg.attach(m)
-
+    msg["To"] = ''
     with smtp.SMTPClient() as s:
         for r in recipient:
-            msg["To"] = r
+            msg.replace_header('To', r)
             try:
                 logging.info(f"Email sending to: {r}")
                 s.send_message(msg)
