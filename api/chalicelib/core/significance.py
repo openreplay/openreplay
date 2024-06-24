@@ -34,10 +34,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     stages: [dict] = filter_d.events
     filters: [dict] = filter_d.filters
     filter_issues = []
-    # TODO: enable this if needed by an endpoint
-    # filter_issues = filter_d.get("issueTypes")
-    # if filter_issues is None or len(filter_issues) == 0:
-    #     filter_issues = []
+
     stage_constraints = ["main.timestamp <= %(endTimestamp)s"]
     first_stage_extra_constraints = ["s.project_id=%(project_id)s", "s.start_ts >= %(startTimestamp)s",
                                      "s.start_ts <= %(endTimestamp)s"]
@@ -50,7 +47,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             if len(f.value) == 0:
                 continue
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
-            # filter_args = _multiple_values(f["value"])
+
             op = sh.get_sql_operator(f.operator)
 
             filter_type = f.type
@@ -195,7 +192,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     n_stages_query += ") AS stages_t"
 
     n_stages_query = f"""
-    SELECT stages_and_issues_t.*, sessions.user_uuid
+    SELECT stages_and_issues_t.*, sessions.user_uuid, sessions.user_id
     FROM (
         SELECT * FROM (
              SELECT T1.session_id, {",".join([f"stage{i + 1}_timestamp" for i in range(n_stages)])}
@@ -217,7 +214,6 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """
 
-    #  LIMIT 10000
     params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
               "endTimestamp": filter_d.endTimestamp,
               "issueTypes": tuple(filter_issues), **values}
@@ -236,6 +232,9 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             logging.warning(filter_d.model_dump_json())
             logging.warning("--------------------")
             raise err
+    for r in rows:
+        if r["user_id"] == "":
+            r["user_id"] = None
     return rows
 
 
@@ -421,42 +420,47 @@ def count_sessions(rows, n_stages):
     return session_counts
 
 
-def count_users(rows, n_stages):
+def count_users(rows, n_stages, user_key="user_uuid"):
     users_in_stages = {i: set() for i in range(1, n_stages + 1)}
     for row in rows:
         for i in range(1, n_stages + 1):
-            if row[f"stage{i}_timestamp"] is not None:
-                users_in_stages[i].add(row["user_uuid"])
+            if row[f"stage{i}_timestamp"] is not None and row[user_key] is not None:
+                users_in_stages[i].add(row[user_key])
 
     users_count = {i: len(users_in_stages[i]) for i in range(1, n_stages + 1)}
     return users_count
 
 
-def get_stages(stages, rows):
+def get_stages(stages, rows, metric_of=schemas.MetricOfFunnels.session_count):
     n_stages = len(stages)
-    session_counts = count_sessions(rows, n_stages)
-    users_counts = count_users(rows, n_stages)
+    if metric_of == "sessionCount":
+        base_counts = count_sessions(rows, n_stages)
+    else:
+        base_counts = count_users(rows, n_stages, user_key="user_id")
 
     stages_list = []
     for i, stage in enumerate(stages):
 
         drop = None
         if i != 0:
-            if session_counts[i] == 0:
+            if base_counts[i] == 0:
                 drop = 0
-            elif session_counts[i] > 0:
-                drop = int(100 * (session_counts[i] - session_counts[i + 1]) / session_counts[i])
+            elif base_counts[i] > 0:
+                drop = int(100 * (base_counts[i] - base_counts[i + 1]) / base_counts[i])
 
         stages_list.append(
             {"value": stage.value,
              "type": stage.type,
              "operator": stage.operator,
-             "sessionsCount": session_counts[i + 1],
              "drop_pct": drop,
-             "usersCount": users_counts[i + 1],
              "dropDueToIssues": 0
              }
         )
+        if metric_of == "sessionCount":
+            stages_list[-1]["sessionsCount"] = base_counts[i + 1]
+        else:
+            stages_list[-1]["usersCount"] = base_counts[i + 1]
+
     return stages_list
 
 
@@ -539,7 +543,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
+def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id, metric_of: schemas.MetricOfFunnels):
     output = []
     stages = filter_d.events
 
@@ -549,10 +553,11 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id):
 
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
-    if len(rows) == 0:
-        return get_stages(stages, []), 0
     # Obtain the first part of the output
-    stages_list = get_stages(stages, rows)
+    stages_list = get_stages(stages, rows, metric_of=metric_of)
+    if len(rows) == 0:
+        return stages_list, 0
+
     # Obtain the second part of the output
     total_drop_due_to_issues = get_issues(stages, rows,
                                           first_stage=1,
