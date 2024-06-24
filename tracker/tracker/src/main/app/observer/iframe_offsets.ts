@@ -1,5 +1,3 @@
-// Le truc - for defining an absolute offset for (nested) iframe documents. (To track mouse movments)
-
 export type Offset = [/*left:*/ number, /*top: */ number]
 
 type OffsetState = {

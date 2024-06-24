@@ -32,7 +32,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const referrer = this.readString(); if (referrer === null) { return resetPointer() }
       const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
       return {
-        tp: MType.SetPageLocation,
+        tp: MType.SetPageLocationDeprecated,
         url,
         referrer,
         navigationStart,
@@ -515,13 +515,31 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 68: {
+      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { return resetPointer() }
+      const selector = this.readString(); if (selector === null) { return resetPointer() }
+      const normalizedX = this.readUint(); if (normalizedX === null) { return resetPointer() }
+      const normalizedY = this.readUint(); if (normalizedY === null) { return resetPointer() }
+      return {
+        tp: MType.MouseClick,
+        id,
+        hesitationTime,
+        label,
+        selector,
+        normalizedX,
+        normalizedY,
+      };
+    }
+
     case 69: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
       const label = this.readString(); if (label === null) { return resetPointer() }
       const selector = this.readString(); if (selector === null) { return resetPointer() }
       return {
-        tp: MType.MouseClick,
+        tp: MType.MouseClickDeprecated,
         id,
         hesitationTime,
         label,
@@ -763,13 +781,27 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 122: {
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const referrer = this.readString(); if (referrer === null) { return resetPointer() }
+      const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
+      const documentTitle = this.readString(); if (documentTitle === null) { return resetPointer() }
+      return {
+        tp: MType.SetPageLocation,
+        url,
+        referrer,
+        navigationStart,
+        documentTitle,
+      };
+    }
+
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }
       const name = this.readString(); if (name === null) { return resetPointer() }
       const payload = this.readString(); if (payload === null) { return resetPointer() }
       return {
-        tp: MType.IosEvent,
+        tp: MType.MobileEvent,
         timestamp,
         length,
         name,
@@ -785,7 +817,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const width = this.readUint(); if (width === null) { return resetPointer() }
       const height = this.readUint(); if (height === null) { return resetPointer() }
       return {
-        tp: MType.IosScreenChanges,
+        tp: MType.MobileScreenChanges,
         timestamp,
         length,
         x,
@@ -802,7 +834,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const x = this.readUint(); if (x === null) { return resetPointer() }
       const y = this.readUint(); if (y === null) { return resetPointer() }
       return {
-        tp: MType.IosClickEvent,
+        tp: MType.MobileClickEvent,
         timestamp,
         length,
         label,
@@ -818,7 +850,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const valueMasked = this.readBoolean(); if (valueMasked === null) { return resetPointer() }
       const label = this.readString(); if (label === null) { return resetPointer() }
       return {
-        tp: MType.IosInputEvent,
+        tp: MType.MobileInputEvent,
         timestamp,
         length,
         value,
@@ -833,7 +865,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const value = this.readUint(); if (value === null) { return resetPointer() }
       return {
-        tp: MType.IosPerformanceEvent,
+        tp: MType.MobilePerformanceEvent,
         timestamp,
         length,
         name,
@@ -847,7 +879,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const severity = this.readString(); if (severity === null) { return resetPointer() }
       const content = this.readString(); if (content === null) { return resetPointer() }
       return {
-        tp: MType.IosLog,
+        tp: MType.MobileLog,
         timestamp,
         length,
         severity,
@@ -860,7 +892,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const length = this.readUint(); if (length === null) { return resetPointer() }
       const content = this.readString(); if (content === null) { return resetPointer() }
       return {
-        tp: MType.IosInternalError,
+        tp: MType.MobileInternalError,
         timestamp,
         length,
         content,
@@ -878,7 +910,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const status = this.readUint(); if (status === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: MType.IosNetworkCall,
+        tp: MType.MobileNetworkCall,
         timestamp,
         length,
         type,
@@ -899,7 +931,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const y = this.readUint(); if (y === null) { return resetPointer() }
       const direction = this.readString(); if (direction === null) { return resetPointer() }
       return {
-        tp: MType.IosSwipeEvent,
+        tp: MType.MobileSwipeEvent,
         timestamp,
         length,
         label,
@@ -916,7 +948,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const context = this.readString(); if (context === null) { return resetPointer() }
       const payload = this.readString(); if (payload === null) { return resetPointer() }
       return {
-        tp: MType.IosIssueEvent,
+        tp: MType.MobileIssueEvent,
         timestamp,
         type,
         contextString,

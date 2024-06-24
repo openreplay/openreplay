@@ -43,6 +43,15 @@ func transformDeprecated(msg Message) Message {
 			TransferredSize: 0,
 			Cached:          false,
 		}
+	case *MouseClickDeprecated:
+		return &MouseClick{
+			ID:             m.ID,
+			HesitationTime: m.HesitationTime,
+			Label:          m.Label,
+			Selector:       m.Selector,
+			NormalizedX:    101, // 101 is a magic number to signal that the value is not present
+			NormalizedY:    101, // 101 is a magic number to signal that the value is not present
+		}
 	}
 	return msg
 }

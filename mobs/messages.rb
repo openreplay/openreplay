@@ -28,7 +28,9 @@ end
 message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
-message 4, 'SetPageLocation' do
+
+# DEPRECATED since 14.0.0 -> goto 122
+message 4, 'SetPageLocationDeprecated' do
   string 'URL'
   string 'Referrer'
   uint 'NavigationStart'
@@ -360,8 +362,17 @@ message 67, 'CSSInsertRuleURLBased' do
   uint 'Index'
   string 'BaseURL'
 end
-## 68
-message 69, 'MouseClick' do
+
+message 68, 'MouseClick' do
+  uint 'ID'
+  uint 'HesitationTime'
+  string 'Label'
+  string 'Selector'
+  uint 'NormalizedX'
+  uint 'NormalizedY'
+end
+
+message 69, 'MouseClickDeprecated' do
   uint 'ID'
   uint 'HesitationTime'
   string 'Label'
@@ -527,6 +538,13 @@ message 121, 'Redux', :replayer => :devtools do
   string 'State'
   uint 'Duration'
   uint 'ActionTime'
+end
+
+message 122, 'SetPageLocation' do
+  string 'URL'
+  string 'Referrer'
+  uint 'NavigationStart'
+  string 'DocumentTitle'
 end
 
 ## Backend-only

@@ -10,7 +10,6 @@ import PlayerBlock from './PlayerBlock';
 
 const TABS = {
   EVENTS: 'Activity',
-  HEATMAPS: 'Click map',
 };
 
 interface IProps {

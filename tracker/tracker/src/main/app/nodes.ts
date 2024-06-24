@@ -8,8 +8,21 @@ export default class Nodes {
   private totalNodeAmount = 0
   private readonly nodeCallbacks: Array<NodeCallback> = []
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
+  private nextNodeId = 0
 
   constructor(private readonly node_id: string) {}
+
+  syntheticMode(frameOrder: number) {
+    const maxSafeNumber = 9007199254740900
+    const placeholderSize = 99999999
+    const nextFrameId = placeholderSize * frameOrder
+    // I highly doubt that this will ever happen,
+    // but it will be easier to debug if it does
+    if (nextFrameId > maxSafeNumber) {
+      throw new Error('Placeholder id overflow')
+    }
+    this.nextNodeId = nextFrameId
+  }
 
   // Attached once per Tracker instance
   attachNodeCallback(nodeCallback: NodeCallback): void {
@@ -38,8 +51,9 @@ export default class Nodes {
     let id: number = (node as any)[this.node_id]
     const isNew = id === undefined
     if (isNew) {
+      id = this.nextNodeId
       this.totalNodeAmount++
-      id = this.nodes.length
+      this.nextNodeId++
       this.nodes[id] = node
       ;(node as any)[this.node_id] = id
     }
@@ -102,6 +116,7 @@ export default class Nodes {
       }
       this.unregisterNode(node)
     }
+    this.nextNodeId = 0
     this.nodes.length = 0
   }
 }

@@ -161,9 +161,6 @@ export default class MessageLoader {
       this.messageManager.distributeMessage(msg);
     });
     logger.info('Messages count: ', msgs.length, msgs, file);
-    if (file === 'd:dom 2' && 'createTabCloseEvents' in this.messageManager) {
-      this.messageManager.createTabCloseEvents();
-    }
     this.messageManager.sortDomRemoveMessages(msgs);
     this.messageManager.setMessagesLoading(false);
   };
@@ -177,6 +174,12 @@ export default class MessageLoader {
       }
     } catch (e) {
       throw e;
+    }
+  }
+
+  createTabCloseEvents() {
+    if ('createTabCloseEvents' in this.messageManager) {
+      this.messageManager.createTabCloseEvents();
     }
   }
 
@@ -242,6 +245,7 @@ export default class MessageLoader {
         );
       }
     } finally {
+      this.createTabCloseEvents()
       this.store.update({ domLoading: false, devtoolsLoading: false });
     }
   }

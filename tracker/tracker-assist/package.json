@@ -31,7 +31,7 @@
   "dependencies": {
     "csstype": "^3.0.10",
     "fflate": "^0.8.2",
-    "peerjs": "1.5.1",
+    "peerjs": "1.5.4",
     "socket.io-client": "^4.7.2"
   },
   "peerDependencies": {

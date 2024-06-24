@@ -14,13 +14,13 @@ export function Timestamp(
   ]
 }
 
-export function SetPageLocation(
+export function SetPageLocationDeprecated(
   url: string,
   referrer: string,
   navigationStart: number,
-): Messages.SetPageLocation {
+): Messages.SetPageLocationDeprecated {
   return [
-    Messages.Type.SetPageLocation,
+    Messages.Type.SetPageLocationDeprecated,
     url,
     referrer,
     navigationStart,
@@ -656,9 +656,28 @@ export function MouseClick(
   hesitationTime: number,
   label: string,
   selector: string,
+  normalizedX: number,
+  normalizedY: number,
 ): Messages.MouseClick {
   return [
     Messages.Type.MouseClick,
+    id,
+    hesitationTime,
+    label,
+    selector,
+    normalizedX,
+    normalizedY,
+  ]
+}
+
+export function MouseClickDeprecated(
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
+): Messages.MouseClickDeprecated {
+  return [
+    Messages.Type.MouseClickDeprecated,
     id,
     hesitationTime,
     label,
@@ -963,6 +982,21 @@ export function Redux(
     state,
     duration,
     actionTime,
+  ]
+}
+
+export function SetPageLocation(
+  url: string,
+  referrer: string,
+  navigationStart: number,
+  documentTitle: string,
+): Messages.SetPageLocation {
+  return [
+    Messages.Type.SetPageLocation,
+    url,
+    referrer,
+    navigationStart,
+    documentTitle,
   ]
 }
 

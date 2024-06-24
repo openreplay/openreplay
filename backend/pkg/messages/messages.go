@@ -5,7 +5,7 @@ const (
 	MsgTimestamp                   = 0
 	MsgSessionStart                = 1
 	MsgSessionEndDeprecated        = 3
-	MsgSetPageLocation             = 4
+	MsgSetPageLocationDeprecated   = 4
 	MsgSetViewportSize             = 5
 	MsgSetViewportScroll           = 6
 	MsgCreateDocument              = 7
@@ -62,7 +62,8 @@ const (
 	MsgCustomIssue                 = 64
 	MsgAssetCache                  = 66
 	MsgCSSInsertRuleURLBased       = 67
-	MsgMouseClick                  = 69
+	MsgMouseClick                  = 68
+	MsgMouseClickDeprecated        = 69
 	MsgCreateIFrameDocument        = 70
 	MsgAdoptedSSReplaceURLBased    = 71
 	MsgAdoptedSSReplace            = 72
@@ -88,6 +89,7 @@ const (
 	MsgCanvasNode                  = 119
 	MsgTagTrigger                  = 120
 	MsgRedux                       = 121
+	MsgSetPageLocation             = 122
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -205,14 +207,14 @@ func (msg *SessionEndDeprecated) TypeID() int {
 	return 3
 }
 
-type SetPageLocation struct {
+type SetPageLocationDeprecated struct {
 	message
 	URL             string
 	Referrer        string
 	NavigationStart uint64
 }
 
-func (msg *SetPageLocation) Encode() []byte {
+func (msg *SetPageLocationDeprecated) Encode() []byte {
 	buf := make([]byte, 31+len(msg.URL)+len(msg.Referrer))
 	buf[0] = 4
 	p := 1
@@ -222,11 +224,11 @@ func (msg *SetPageLocation) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *SetPageLocation) Decode() Message {
+func (msg *SetPageLocationDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *SetPageLocation) TypeID() int {
+func (msg *SetPageLocationDeprecated) TypeID() int {
 	return 4
 }
 
@@ -1693,9 +1695,40 @@ type MouseClick struct {
 	HesitationTime uint64
 	Label          string
 	Selector       string
+	NormalizedX    uint64
+	NormalizedY    uint64
 }
 
 func (msg *MouseClick) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Label)+len(msg.Selector))
+	buf[0] = 68
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteUint(msg.HesitationTime, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteString(msg.Selector, buf, p)
+	p = WriteUint(msg.NormalizedX, buf, p)
+	p = WriteUint(msg.NormalizedY, buf, p)
+	return buf[:p]
+}
+
+func (msg *MouseClick) Decode() Message {
+	return msg
+}
+
+func (msg *MouseClick) TypeID() int {
+	return 68
+}
+
+type MouseClickDeprecated struct {
+	message
+	ID             uint64
+	HesitationTime uint64
+	Label          string
+	Selector       string
+}
+
+func (msg *MouseClickDeprecated) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Label)+len(msg.Selector))
 	buf[0] = 69
 	p := 1
@@ -1706,11 +1739,11 @@ func (msg *MouseClick) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *MouseClick) Decode() Message {
+func (msg *MouseClickDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *MouseClick) TypeID() int {
+func (msg *MouseClickDeprecated) TypeID() int {
 	return 69
 }
 
@@ -2349,6 +2382,33 @@ func (msg *Redux) Decode() Message {
 
 func (msg *Redux) TypeID() int {
 	return 121
+}
+
+type SetPageLocation struct {
+	message
+	URL             string
+	Referrer        string
+	NavigationStart uint64
+	DocumentTitle   string
+}
+
+func (msg *SetPageLocation) Encode() []byte {
+	buf := make([]byte, 41+len(msg.URL)+len(msg.Referrer)+len(msg.DocumentTitle))
+	buf[0] = 122
+	p := 1
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Referrer, buf, p)
+	p = WriteUint(msg.NavigationStart, buf, p)
+	p = WriteString(msg.DocumentTitle, buf, p)
+	return buf[:p]
+}
+
+func (msg *SetPageLocation) Decode() Message {
+	return msg
+}
+
+func (msg *SetPageLocation) TypeID() int {
+	return 122
 }
 
 type IssueEvent struct {

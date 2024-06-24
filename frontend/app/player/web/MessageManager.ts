@@ -50,6 +50,9 @@ export interface State extends ScreenState {
   tabStates: {
     [tabId: string]: TabState;
   };
+  tabNames: {
+    [tabId: string]: string;
+  }
 
   domContentLoadedTime?: { time: number; value: number };
   domBuildingTime?: number;
@@ -95,6 +98,7 @@ export default class MessageManager {
     tabChangeEvents: [],
     closedTabs: [],
     sessionStart: 0,
+    tabNames: {},
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
@@ -190,15 +194,20 @@ export default class MessageManager {
 
   public createTabCloseEvents = () => {
     const lastMsgArr: [string, number][] = []
-    Object.entries(this.tabs).forEach((entry, i) => {
-      const [tabId, tab] = entry
+    const namesObj: Record<string, string> = {}
+    for (const [tabId, tab] of Object.entries(this.tabs)) {
       const { lastMessageTs } = tab
-      if (lastMessageTs && tabId) lastMsgArr.push([tabId, lastMessageTs])
-    })
+      if (lastMessageTs && tabId) {
+        lastMsgArr.push([tabId, lastMessageTs])
+        namesObj[tabId] = ''
+      }
+    }
     lastMsgArr.sort((a, b) => a[1] - b[1])
     lastMsgArr.forEach(([tabId, lastMessageTs]) => {
       this.tabCloseManager.append({ tabId, time: lastMessageTs })
     })
+
+    this.state.update({ tabNames: namesObj })
   }
 
   public startLoading = () => {
@@ -331,6 +340,7 @@ export default class MessageManager {
       case MType.MouseMove:
         this.mouseMoveManager.append(msg);
         break;
+      case MType.MouseClickDeprecated:
       case MType.MouseClick:
         this.clickManager.append(msg);
         break;

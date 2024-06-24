@@ -105,6 +105,7 @@ export interface MouseHandlerOptions {
 
 export default function (app: App, options?: MouseHandlerOptions): void {
   const { disableClickmaps = false } = options || {}
+
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
     if (dl !== null) {
@@ -203,7 +204,6 @@ export default function (app: App, options?: MouseHandlerOptions): void {
         mousePositionX = e.clientX + left
         mousePositionY = e.clientY + top
         mousePositionChanged = true
-
         const nextDirection = Math.sign(e.movementX)
         distance += Math.abs(e.movementX) + Math.abs(e.movementY)
 
@@ -221,6 +221,15 @@ export default function (app: App, options?: MouseHandlerOptions): void {
       }
       const id = app.nodes.getID(target)
       if (id !== undefined) {
+        const clickX = e.pageX
+        const clickY = e.pageY
+
+        const contentWidth = document.documentElement.scrollWidth
+        const contentHeight = document.documentElement.scrollHeight
+
+        const normalizedX = roundNumber(clickX / contentWidth)
+        const normalizedY = roundNumber(clickY / contentHeight)
+
         sendMouseMove()
         app.send(
           MouseClick(
@@ -228,6 +237,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
             isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
+            normalizedX,
+            normalizedY,
           ),
           true,
         )
@@ -244,4 +255,12 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   patchDocument(document, true)
 
   app.ticker.attach(sendMouseMove, options?.trackingOffset || 7)
+}
+
+/**
+ * we get 0 to 1 decimal number, convert and round it, then turn to %
+ * 0.39643 => 396.43 => 396 => 39.6%
+ * */
+function roundNumber(num: number) {
+  return Math.round(num * 1e3) / 1e1
 }

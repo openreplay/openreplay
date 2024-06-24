@@ -10,7 +10,7 @@ type TrTimestamp = [
   timestamp: number,
 ]
 
-type TrSetPageLocation = [
+type TrSetPageLocationDeprecated = [
   type: 4,
   url: string,
   referrer: string,
@@ -354,6 +354,16 @@ type TrCSSInsertRuleURLBased = [
 ]
 
 type TrMouseClick = [
+  type: 68,
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
+  normalizedX: number,
+  normalizedY: number,
+]
+
+type TrMouseClickDeprecated = [
   type: 69,
   id: number,
   hesitationTime: number,
@@ -522,8 +532,16 @@ type TrRedux = [
   actionTime: number,
 ]
 
+type TrSetPageLocation = [
+  type: 122,
+  url: string,
+  referrer: string,
+  navigationStart: number,
+  documentTitle: string,
+]
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux
+
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -537,7 +555,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 4: {
       return {
-        tp: MType.SetPageLocation,
+        tp: MType.SetPageLocationDeprecated,
         url: tMsg[1],
         referrer: tMsg[2],
         navigationStart: tMsg[3],
@@ -891,9 +909,21 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 69: {
+    case 68: {
       return {
         tp: MType.MouseClick,
+        id: tMsg[1],
+        hesitationTime: tMsg[2],
+        label: tMsg[3],
+        selector: tMsg[4],
+        normalizedX: tMsg[5],
+        normalizedY: tMsg[6],
+      }
+    }
+    
+    case 69: {
+      return {
+        tp: MType.MouseClickDeprecated,
         id: tMsg[1],
         hesitationTime: tMsg[2],
         label: tMsg[3],
@@ -1055,6 +1085,16 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
         duration: tMsg[3],
         actionTime: tMsg[4],
+      }
+    }
+    
+    case 122: {
+      return {
+        tp: MType.SetPageLocation,
+        url: tMsg[1],
+        referrer: tMsg[2],
+        navigationStart: tMsg[3],
+        documentTitle: tMsg[4],
       }
     }
     
