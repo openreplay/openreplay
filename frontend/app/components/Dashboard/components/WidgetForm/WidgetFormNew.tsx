@@ -1,29 +1,24 @@
 import React from 'react';
 import {Card, Space, Typography, Button} from "antd";
 import {useStore} from "App/mstore";
-import FilterSelection from "Shared/Filters/FilterSelection/FilterSelection";
 import {eventKeys} from "Types/filter/newFilter";
 import {CLICKMAP, FUNNEL, INSIGHTS, RETENTION, TABLE, USER_PATH} from "App/constants/card";
 import FilterSeries from "Components/Dashboard/components/FilterSeries/FilterSeries";
 import {metricOf} from "App/constants/filterOptions";
-import {AudioWaveform, PlusIcon} from "lucide-react";
+import {AudioWaveform, ChevronDown, ChevronUp, PlusIcon} from "lucide-react";
 import {observer} from "mobx-react-lite";
 import AddStepButton from "Components/Dashboard/components/FilterSeries/AddStepButton";
 
-
-interface Props {
-}
-
-function WidgetFormNew(props: Props) {
-    const [expanded, setExpanded] = React.useState(true);
+function WidgetFormNew() {
+    // const [expanded, setExpanded] = React.useState(true);
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const metric: any = metricStore.instance;
 
     const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
     const filtersLength = metric.series[0].filter.filters.filter((i: any) => i && !i.isEvent).length;
-    const isClickmap = metric.metricType === CLICKMAP;
+    const isClickMap = metric.metricType === CLICKMAP;
     const isPathAnalysis = metric.metricType === USER_PATH;
-    const excludeFilterKeys = isClickmap || isPathAnalysis ? eventKeys : [];
+    const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
     const hasFilters = filtersLength > 0 || eventsLength > 0;
 
     return (
@@ -39,11 +34,7 @@ function WidgetFormNew(props: Props) {
                 )}
             </Card>
 
-            {/*{eventsLength > 0 && !expanded && (*/}
-
-            {/*)}*/}
-
-            {hasFilters && expanded && (
+            {hasFilters && (
                 <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys}/>
             )}
         </>
@@ -105,6 +96,7 @@ const FilterSection = observer(({metric, excludeFilterKeys}: any) => {
                                         ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
                                         : 'Add user event or filter to define the series by clicking Add Step.'
                                 }
+                                expandable={isSingleSeries}
                             />
                         </div>
                     ))
@@ -114,7 +106,10 @@ const FilterSection = observer(({metric, excludeFilterKeys}: any) => {
                 <Card styles={{body: {padding: '4px'}}}>
                     <Button
                         type='link'
-                        onClick={() => metric.addSeries()}
+                        onClick={() => {
+                            metric.addSeries();
+
+                        }}
                         disabled={!canAddSeries}
                         size="small"
                     >

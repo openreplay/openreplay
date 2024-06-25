@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import FilterList from 'Shared/Filters/FilterList';
-import {Icon} from 'UI';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
 import {observer} from 'mobx-react-lite';
@@ -8,6 +7,63 @@ import ExcludeFilters from './ExcludeFilters';
 import AddStepButton from "Components/Dashboard/components/FilterSeries/AddStepButton";
 import {Button, Space} from "antd";
 import {ChevronDown, ChevronUp, Trash} from "lucide-react";
+
+
+const FilterCountLabels = observer((props: { filters: any, toggleExpand: any }) => {
+    const events = props.filters.filter((i: any) => i && i.isEvent).length;
+    const filters = props.filters.filter((i: any) => i && !i.isEvent).length;
+    return <div className="flex items-center">
+        <Space>
+            {events > 0 && (
+                <Button type="primary" ghost size="small" onClick={props.toggleExpand}>
+                    {`${events} Event${events > 1 ? 's' : ''}`}
+                </Button>
+            )}
+
+            {filters > 0 && (
+                <Button type="primary" ghost size="small" onClick={props.toggleExpand}>
+                    {`${filters} Filter${filters > 1 ? 's' : ''}`}
+                </Button>
+            )}
+        </Space>
+    </div>;
+});
+
+const FilterSeriesHeader = observer((props: {
+    expanded: boolean,
+    hidden: boolean,
+    seriesIndex: number,
+    series: any,
+    onRemove: (seriesIndex: any) => void,
+    canDelete: boolean | undefined,
+    toggleExpand: () => void
+}) => {
+
+    const onUpdate = (name: any) => {
+        props.series.update('name', name)
+    }
+    return <div className={cn("border-b px-5 h-12 flex items-center relative", {hidden: props.hidden})}>
+        <Space className="mr-auto" size={30}>
+            <SeriesName
+                seriesIndex={props.seriesIndex}
+                name={props.series.name}
+                onUpdate={onUpdate}
+            />
+            {!props.expanded &&
+                <FilterCountLabels filters={props.series.filter.filters} toggleExpand={props.toggleExpand}/>}
+        </Space>
+
+        <Space>
+            <Button onClick={props.onRemove}
+                    size="small"
+                    disabled={!props.canDelete}
+                    icon={<Trash size={14}/>}/>
+            <Button onClick={props.toggleExpand}
+                    size="small"
+                    icon={props.expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
+        </Space>
+    </div>;
+})
 
 interface Props {
     seriesIndex: number;
@@ -20,61 +76,8 @@ interface Props {
     observeChanges?: () => void;
     excludeFilterKeys?: Array<string>;
     canExclude?: boolean;
+    expandable?: boolean;
 }
-
-const FilterSeriesHeader = observer((props: {
-    expanded: boolean,
-    hidden: boolean,
-    seriesIndex: number,
-    series: any,
-    onRemove: (seriesIndex: any) => void,
-    canDelete: boolean | undefined,
-    toggleExpand: () => void
-}) => {
-    const events = props.series.filter.filters.filter((i: any) => i && i.isEvent).length;
-    const filters = props.series.filter.filters.filter((i: any) => i && !i.isEvent).length;
-    const onUpdate = (name: any) => {
-        props.series.update('name', name)
-    }
-    return <div className={cn("border-b px-5 h-12 flex items-center relative", {hidden: props.hidden})}>
-        <Space className="mr-auto" size={30}>
-            <SeriesName
-                seriesIndex={props.seriesIndex}
-                name={props.series.name}
-                onUpdate={onUpdate}
-            />
-            {!props.expanded && (
-                <Space>
-                    {events > 0 && (
-                        <Button type="primary" ghost size="small" onClick={props.toggleExpand}>
-                            {`${events} Event${events > 1 ? 's' : ''}`}
-                        </Button>
-                    )}
-
-                    {filters > 0 && (
-                        <Button type="primary" ghost size="small" onClick={props.toggleExpand}>
-                            {`${filters} Filter${filters > 1 ? 's' : ''}`}
-                        </Button>
-                    )}
-                </Space>
-            )}
-
-            {/*{events === 0 && filters === 0 && !props.expanded && (*/}
-            {/*    <AddStepButton series={props.series} excludeFilterKeys={[]}/>*/}
-            {/*)}*/}
-        </Space>
-
-        <Space>
-            <Button onClick={props.onRemove}
-                    size="small"
-                    disabled={!props.canDelete}
-                    icon={<Trash size={16}/>}/>
-            <Button onClick={props.toggleExpand}
-                    size="small"
-                    icon={props.expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
-        </Space>
-    </div>;
-})
 
 function FilterSeries(props: Props) {
     const {
@@ -86,8 +89,9 @@ function FilterSeries(props: Props) {
         supportsEmpty = true,
         excludeFilterKeys = [],
         canExclude = false,
+        expandable = false
     } = props;
-    const [expanded, setExpanded] = useState(true);
+    const [expanded, setExpanded] = useState(false);
     const {series, seriesIndex} = props;
 
     const onUpdateFilter = (filterIndex: any, filter: any) => {
@@ -124,6 +128,15 @@ function FilterSeries(props: Props) {
                                     toggleExpand={() => setExpanded(!expanded)}/>
             )}
 
+            {expandable && !expanded && (
+                <Space className="justify-between w-full px-6 py-2">
+                    <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>
+                    <Button onClick={() => setExpanded(!expanded)}
+                            size="small"
+                            icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
+                </Space>
+            )}
+
             {expanded && (
                 <>
                     <div className="p-5">
@@ -136,6 +149,13 @@ function FilterSeries(props: Props) {
                                 supportsEmpty={supportsEmpty}
                                 onFilterMove={onFilterMove}
                                 excludeFilterKeys={excludeFilterKeys}
+                                actions={[
+                                    expandable && (
+                                        <Button onClick={() => setExpanded(!expanded)}
+                                                size="small"
+                                                icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
+                                    )
+                                ]}
                             />
                         ) : (
                             <div className="color-gray-medium">{emptyMessage}</div>
