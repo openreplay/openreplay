@@ -47,7 +47,7 @@ func (a *authImpl) IsAuthorized(r *http.Request) bool {
 	// Extract the token from the Authorization header
 	user, err := a.authorizeUser(r.Header.Get("Authorization"))
 	if err != nil {
-		a.log.Error(context.Background(), "Authorization failed")
+		a.log.Error(context.Background(), "Authorization failed, err: %s", err)
 		return false
 	}
 	r = r.WithContext(context.WithValue(r.Context(), "userData", user))
