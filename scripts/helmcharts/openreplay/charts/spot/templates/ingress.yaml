@@ -1,0 +1,64 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "spot.fullname" . -}}
+{{- $svcPort := .Values.service.ports.http -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spot.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+            path: /ingest/(.*)
+{{- end }}
+
+{{- if contains "minio" .Values.global.s3.endpoint }}
+## TODO:
+## Frontend service from minio will be migrated to nginx atomic container.
+## This ingress is just a workaround.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records|uxtesting-records)/
+  tls:
+    - hosts:
+      - {{ .Values.global.domainName }}
+{{- end }}
