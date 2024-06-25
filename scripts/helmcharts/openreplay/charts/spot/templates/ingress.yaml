@@ -32,7 +32,7 @@ spec:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-            path: /ingest/(.*)
+            path: /spot/(.*)
 {{- end }}
 
 {{- if contains "minio" .Values.global.s3.endpoint }}
