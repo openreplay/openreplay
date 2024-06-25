@@ -1,9 +1,7 @@
 package spot
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"strings"
 
@@ -13,7 +11,7 @@ import (
 )
 
 type Auth interface {
-	IsAuthorized(r *http.Request) bool
+	IsAuthorized(authHeader string) (*User, error)
 }
 
 type authImpl struct {
@@ -43,18 +41,7 @@ type User struct {
 	JwtIat   int    `json:"jwtIat"`
 }
 
-func (a *authImpl) IsAuthorized(r *http.Request) bool {
-	// Extract the token from the Authorization header
-	user, err := a.authorizeUser(r.Header.Get("Authorization"))
-	if err != nil {
-		a.log.Error(context.Background(), "Authorization failed, err: %s", err)
-		return false
-	}
-	r = r.WithContext(context.WithValue(r.Context(), "userData", user))
-	return true
-}
-
-func (a *authImpl) authorizeUser(authHeader string) (*User, error) {
+func (a *authImpl) IsAuthorized(authHeader string) (*User, error) {
 	if authHeader == "" {
 		return nil, fmt.Errorf("authorization header missing")
 	}

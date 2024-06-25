@@ -88,12 +88,14 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Check if the request is authorized
-		if !e.services.Auth.IsAuthorized(r) {
+		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"))
+		if err != nil {
 			e.log.Warn(r.Context(), "Unauthorized request")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
+		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"userData": user}))
 		next.ServeHTTP(w, r)
 	})
 }
