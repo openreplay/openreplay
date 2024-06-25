@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"github.com/docker/distribution/context"
 	"github.com/gorilla/mux"
-	"github.com/tomasen/realip"
-	"net"
 	"net/http"
 	spotConfig "openreplay/backend/internal/config/spot"
-	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/logger"
 	"sync"
@@ -39,15 +36,6 @@ func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *ServicesBuil
 	}
 	e.init()
 	return e, nil
-}
-
-func (e *Router) ExtractGeoData(r *http.Request) *geoip.GeoRecord {
-	ip := net.ParseIP(realip.FromRequest(r))
-	geoRec, err := e.services.GeoIP.Parse(ip)
-	if err != nil {
-		e.log.Warn(r.Context(), "failed to parse geo data: %v", err)
-	}
-	return geoRec
 }
 
 func (e *Router) init() {
