@@ -373,7 +373,7 @@ const NetworkPanelComp = observer(
     }, [showOnlyErrors, list]);
     filteredList = useRegExListFilterMemo(
       filteredList,
-      (it) => [it.status, it.name, it.type],
+      (it) => [it.status, it.name, it.type, it.method],
       filter
     );
     filteredList = useTabListFilterMemo(filteredList, (it) => TYPE_TO_TAB[it.type], ALL, activeTab);
@@ -484,12 +484,12 @@ const NetworkPanelComp = observer(
             </div>
             <Input
               className="input-small"
-              placeholder="Filter by name, type or value"
+              placeholder="Filter by name, type, method or value"
               icon="search"
               name="filter"
               onChange={onFilterChange}
               height={28}
-              width={230}
+              width={240}
               value={filter}
             />
           </BottomBlock.Header>
@@ -498,7 +498,7 @@ const NetworkPanelComp = observer(
               <div>
                 <Toggler
                   checked={showOnlyErrors}
-                  name="test"
+                  name="show-errors-only"
                   onChange={() => setShowOnlyErrors(!showOnlyErrors)}
                   label="4xx-5xx Only"
                 />
@@ -576,6 +576,11 @@ const NetworkPanelComp = observer(
                     dataKey: 'type',
                     width: 90,
                     render: renderType,
+                  },
+                  {
+                    label: 'Method',
+                    width: 80,
+                    dataKey: 'method',
                   },
                   {
                     label: 'Name',
