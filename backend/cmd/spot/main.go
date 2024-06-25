@@ -20,6 +20,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := spotConfig.New(log)
+	cfg.JsonSizeLimit = 128 * 1024 // 128KB
 	metrics.New(log, append(spotMetrics.List(), databaseMetrics.List()...))
 
 	pgConn, err := pool.New(cfg.Postgres.String())
