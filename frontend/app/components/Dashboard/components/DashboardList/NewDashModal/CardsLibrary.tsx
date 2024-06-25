@@ -23,11 +23,11 @@ function CardsLibrary(props: Props) {
     const {selectedList} = props;
     const {metricStore, dashboardStore} = useStore();
 
-    const cards = useMemo(() => {
-        return metricStore.filteredCards.filter((card: any) => {
-            return CARD_TYPES_MAP[props.category || 'default'].includes(card.metricType);
-        });
-    }, [metricStore.filteredCards, props.category]);
+    // const cards = useMemo(() => {
+    //     return metricStore.filteredCards.filter((card: any) => {
+    //         return CARD_TYPES_MAP[props.category || 'default'].includes(card.metricType);
+    //     });
+    // }, [metricStore.filteredCards, props.category]);
 
     useEffect(() => {
         metricStore.fetchList();
@@ -40,7 +40,7 @@ function CardsLibrary(props: Props) {
     return (
         <Loader loading={metricStore.isLoading}>
             <div className="grid grid-cols-4 gap-4 items-start">
-                {cards.map((metric: any) => (
+                {metricStore.filteredCards.map((metric: any) => (
                     <React.Fragment key={metric.metricId}>
                         <div className={'col-span-' + metric.config.col}
                              onClick={() => onItemClick(metric.metricId)}>

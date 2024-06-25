@@ -5,6 +5,7 @@ import { NoContent, Loader, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import Widget from 'App/mstore/types/widget';
 import MetricTypeList from '../MetricTypeList';
+import WidgetWrapperNew from "Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew";
 
 interface Props {
   siteId: string;
@@ -63,7 +64,7 @@ function DashboardWidgetGrid(props: Props) {
               {smallWidgets &&
                 smallWidgets.map((item: any, index: any) => (
                   <React.Fragment key={item.widgetId}>
-                    <WidgetWrapper
+                    <WidgetWrapperNew
                       index={index}
                       widget={item}
                       moveListItem={(dragIndex: any, hoverIndex: any) =>
@@ -90,7 +91,7 @@ function DashboardWidgetGrid(props: Props) {
           {regularWidgets &&
             regularWidgets.map((item: any, index: any) => (
               <React.Fragment key={item.widgetId}>
-                <WidgetWrapper
+                <WidgetWrapperNew
                   index={smallWidgetsLen + index}
                   widget={item}
                   moveListItem={(dragIndex: any, hoverIndex: any) =>

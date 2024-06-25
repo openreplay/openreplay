@@ -10,8 +10,9 @@ import DashboardOptions from '../DashboardOptions';
 import withModal from 'App/components/Modal/withModal';
 import {observer} from 'mobx-react-lite';
 import DashboardEditModal from '../DashboardEditModal';
-import AddCardModal from '../AddCardModal';
-import AddCardSelectionModal from "Components/Dashboard/components/AddCardSelectionModal";
+import CreateDashboardButton from "Components/Dashboard/components/CreateDashboardButton";
+import CreateCard from "Components/Dashboard/components/DashboardList/NewDashModal/CreateCard";
+import CreateCardButton from "Components/Dashboard/components/CreateCardButton";
 
 interface IProps {
     dashboardId: string;
@@ -21,27 +22,6 @@ interface IProps {
 
 type Props = IProps & RouteComponentProps;
 const MAX_CARDS = 29;
-
-function AddCard(props: { disabled: boolean }) {
-    const [open, setOpen] = React.useState(false);
-
-    // showModal(<AddCardModal dashboardId={dashboardId} siteId={siteId}/>, {right: true})
-    return <>
-        <Tooltip delay={0} disabled={props.disabled}
-                 title="The number of cards in one dashboard is limited to 30.">
-            <Button
-                disabled={!props.disabled}
-                variant="primary"
-                onClick={() => setOpen(true)}
-                icon="plus"
-                iconSize={24}
-            >
-                Add Card
-            </Button>
-        </Tooltip>
-        <AddCardSelectionModal open={open} onClose={() => setOpen(false)}/>
-    </>;
-}
 
 function DashboardHeader(props: Props) {
     const {siteId, dashboardId} = props;
@@ -103,7 +83,7 @@ function DashboardHeader(props: Props) {
                     />
                 </div>
                 <div className="flex items-center" style={{flex: 1, justifyContent: 'end'}}>
-                    <AddCard disabled={canAddMore}/>
+                    <CreateCardButton disabled={canAddMore} />
                     <div className="mx-4"></div>
                     <div
                         className="flex items-center flex-shrink-0 justify-end"

@@ -116,8 +116,45 @@ import {
   Collection_play,
   Collection,
   Color_apple,
+  Color_browser_tor,
+  Color_browser_applebot,
+  Color_browser_chrome,
+  Color_browser_chrome_mobile,
+  Color_browser_chrome_mobile_ios,
+  Color_browser_duck_duck_go,
+  Color_browser_duckduckgo_mobile,
+  Color_browser_edge,
+  Color_browser_edge_mobile,
+  Color_browser_facebook,
+  Color_browser_firefox,
+  Color_browser_firefox_ios,
+  Color_browser_firefox_mobile,
+  Color_browser_google,
+  Color_browser_googlebot,
+  Color_browser_huawei_browser,
+  Color_browser_internet_explorer,
+  Color_browser_miui_browser,
+  Color_browser_mobile_safari,
+  Color_browser_mobile_safari_ui,
+  Color_browser_opera,
+  Color_browser_safari,
+  Color_browser_samsung_internet,
+  Color_browser_uc_browser,
+  Color_browser_unknown,
+  Color_browser_whale,
+  Color_browser_yandex_browser,
   Color_chrome,
+  Color_country_de,
+  Color_country_fr,
+  Color_country_gb,
+  Color_country_in,
+  Color_country_us,
   Color_de,
+  Color_device_desktop,
+  Color_device_mobile,
+  Color_device_other_phone,
+  Color_device_tablet,
+  Color_device_unkown,
   Color_edge,
   Color_fedora,
   Color_firefox,
@@ -126,6 +163,21 @@ import {
   Color_in,
   Color_microsoft,
   Color_opera,
+  Color_os_android,
+  Color_os_apple,
+  Color_os_blackberry,
+  Color_os_chrome_os,
+  Color_os_elementary,
+  Color_os_fedora,
+  Color_os_freebsd,
+  Color_os_gnome,
+  Color_os_ios,
+  Color_os_linux,
+  Color_os_linux_mint,
+  Color_os_macos,
+  Color_os_microsoft,
+  Color_os_ubuntu,
+  Color_os_unkown,
   Color_safari,
   Color_ubuntu,
   Color_us,
@@ -490,7 +542,7 @@ import {
   Zoom_in
 } from './Icons'
 
-export type IconNames = 'activity' | 'alarm-clock' | 'alarm-plus' | 'all-sessions' | 'analytics' | 'anchor' | 'arrow-alt-square-right' | 'arrow-bar-left' | 'arrow-clockwise' | 'arrow-counterclockwise' | 'arrow-down-short' | 'arrow-down-up' | 'arrow-down' | 'arrow-repeat' | 'arrow-right-short' | 'arrow-square-left' | 'arrow-square-right' | 'arrow-up-short' | 'arrow-up' | 'arrows-angle-extend' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar-chart-line' | 'bar-pencil' | 'battery-charging' | 'battery' | 'bell-fill' | 'bell-plus' | 'bell-slash' | 'bell' | 'binoculars' | 'book-doc' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'business-time' | 'calendar-alt' | 'calendar-check' | 'calendar-day' | 'calendar' | 'call' | 'camera-alt' | 'camera-video-off' | 'camera-video' | 'camera' | 'card-checklist' | 'card-list' | 'card-text' | 'caret-down-fill' | 'caret-left-fill' | 'caret-right-fill' | 'caret-up-fill' | 'chat-dots' | 'chat-left-text' | 'chat-right-text' | 'chat-square-quote' | 'check-circle-fill' | 'check-circle' | 'check' | 'chevron-double-left' | 'chevron-double-right' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'circle-fill' | 'circle' | 'click-hesitation' | 'click-rage' | 'clipboard-check' | 'clipboard-list-check' | 'clock-history' | 'clock' | 'close' | 'cloud-fog2-fill' | 'code' | 'cog' | 'cogs' | 'collection-play' | 'collection' | 'color/apple' | 'color/chrome' | 'color/de' | 'color/edge' | 'color/fedora' | 'color/firefox' | 'color/fr' | 'color/gb' | 'color/in' | 'color/microsoft' | 'color/opera' | 'color/safari' | 'color/ubuntu' | 'color/us' | 'columns-gap-filled' | 'columns-gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit-card-2-back' | 'credit-card-front' | 'cross' | 'cubes' | 'cursor-trash' | 'dash' | 'dashboard-icn' | 'db-icons/icn-card-clickMap' | 'db-icons/icn-card-errors' | 'db-icons/icn-card-funnel' | 'db-icons/icn-card-funnels' | 'db-icons/icn-card-insights' | 'db-icons/icn-card-library' | 'db-icons/icn-card-mapchart' | 'db-icons/icn-card-pathAnalysis' | 'db-icons/icn-card-performance' | 'db-icons/icn-card-resources' | 'db-icons/icn-card-table' | 'db-icons/icn-card-timeseries' | 'db-icons/icn-card-webVitals' | 'desktop' | 'device' | 'diagram-3' | 'dice-3' | 'dizzy' | 'door-closed' | 'doublecheck' | 'download' | 'drag' | 'edit' | 'ellipsis-v' | 'emoji-dizzy' | 'enter' | 'envelope-check' | 'envelope-paper' | 'envelope-x' | 'envelope' | 'errors-icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i-cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation-circle-fill' | 'exclamation-circle' | 'exclamation-triangle' | 'expand-wide' | 'explosion' | 'external-link-alt' | 'eye-slash-fill' | 'eye-slash' | 'eye' | 'fetch' | 'fflag-multi' | 'fflag-single' | 'file-bar-graph' | 'file-code' | 'file-medical-alt' | 'file-pdf' | 'file' | 'files' | 'filetype-js' | 'filetype-pdf' | 'filter' | 'filters/arrow-return-right' | 'filters/browser' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu-load' | 'filters/custom' | 'filters/device' | 'filters/dom-complete' | 'filters/duration' | 'filters/error' | 'filters/fetch-failed' | 'filters/fetch' | 'filters/file-code' | 'filters/graphql' | 'filters/i-cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory-load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance-network-request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev-id' | 'filters/state-action' | 'filters/tag-element' | 'filters/ttfb' | 'filters/user-alt' | 'filters/userid' | 'filters/view' | 'flag-na' | 'folder-plus' | 'folder2' | 'fullscreen' | 'funnel/cpu-fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji-angry-fill' | 'funnel/emoji-angry' | 'funnel/emoji-dizzy-fill' | 'funnel/exclamation-circle-fill' | 'funnel/exclamation-circle' | 'funnel/file-earmark-break-fill' | 'funnel/file-earmark-break' | 'funnel/file-earmark-minus-fill' | 'funnel/file-earmark-minus' | 'funnel/file-medical-alt' | 'funnel/file-x' | 'funnel/hdd-fill' | 'funnel/hourglass-top' | 'funnel/image-fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch-exclamation-fill' | 'funnel/sd-card' | 'funnel-fill' | 'funnel-new' | 'funnel' | 'gear-fill' | 'gear' | 'geo-alt-fill-custom' | 'github' | 'graph-up-arrow' | 'graph-up' | 'grid-1x2' | 'grid-3x3' | 'grid-check' | 'grid-horizontal' | 'grid' | 'grip-horizontal' | 'hash' | 'hdd-stack' | 'headset' | 'heart-rate' | 'high-engagement' | 'history' | 'hourglass-start' | 'ic-errors' | 'ic-network' | 'ic-rage' | 'ic-resources' | 'id-card' | 'image' | 'info-circle-fill' | 'info-circle' | 'info-square' | 'info' | 'input-hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag-text' | 'integrations/bugsnag' | 'integrations/cloudwatch-text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch-text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira-text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic-text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay-text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar-text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry-text' | 'integrations/sentry' | 'integrations/slack-bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic-text' | 'integrations/sumologic' | 'integrations/teams-white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal-code' | 'key' | 'keyboard' | 'layer-group' | 'layers-half' | 'lightbulb-on' | 'lightbulb' | 'link-45deg' | 'list-alt' | 'list-arrow' | 'list-ul' | 'list' | 'lock-alt' | 'low-disc-space' | 'magic' | 'map-marker-alt' | 'memory-ios' | 'memory' | 'mic-mute' | 'mic' | 'minus' | 'mobile' | 'mouse-alt' | 'mouse-pointer-click' | 'network' | 'next1' | 'no-dashboard' | 'no-metrics-chart' | 'no-metrics' | 'no-recordings' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause-circle-fill' | 'pause-fill' | 'pause' | 'pdf-download' | 'pencil-stop' | 'pencil' | 'people' | 'percent' | 'performance-icon' | 'person-border' | 'person-fill' | 'person' | 'pie-chart-fill' | 'pin-fill' | 'play-circle-bold' | 'play-circle-light' | 'play-circle' | 'play-fill-new' | 'play-fill' | 'play-hover' | 'play' | 'plug' | 'plus-circle' | 'plus-lg' | 'plus' | 'pointer-sessions-search' | 'prev1' | 'pulse' | 'puzzle-piece' | 'puzzle' | 'question-circle' | 'question-lg' | 'quote-left' | 'quote-right' | 'quotes' | 'record-btn' | 'record-circle-fill' | 'record-circle' | 'record2' | 'redo-back' | 'redo' | 'redux' | 'remote-control' | 'replay-10' | 'resources-icon' | 'safe-fill' | 'safe' | 'sandglass' | 'search' | 'search_notification' | 'server' | 'share-alt' | 'shield-lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost-split' | 'signup' | 'skip-forward-fill' | 'skip-forward' | 'slack' | 'slash-circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'sparkles' | 'speedometer2' | 'spinner' | 'star-solid' | 'star' | 'step-forward' | 'stickies' | 'stop-record-circle' | 'stopwatch' | 'store' | 'sync-alt' | 'table-new' | 'table' | 'tablet-android' | 'tachometer-slow' | 'tachometer-slowest' | 'tags' | 'team-funnel' | 'telephone-fill' | 'telephone' | 'terminal' | 'text-paragraph' | 'thermometer-sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user-alt' | 'user-circle' | 'user-friends' | 'user-switch' | 'users' | 'vendors/graphql' | 'vendors/mobx' | 'vendors/ngrx' | 'vendors/redux' | 'vendors/vuex' | 'web-vitals' | 'wifi' | 'window-alt' | 'window-restore' | 'window-x' | 'window' | 'zoom-in';
+export type IconNames = 'activity' | 'alarm-clock' | 'alarm-plus' | 'all-sessions' | 'analytics' | 'anchor' | 'arrow-alt-square-right' | 'arrow-bar-left' | 'arrow-clockwise' | 'arrow-counterclockwise' | 'arrow-down-short' | 'arrow-down-up' | 'arrow-down' | 'arrow-repeat' | 'arrow-right-short' | 'arrow-square-left' | 'arrow-square-right' | 'arrow-up-short' | 'arrow-up' | 'arrows-angle-extend' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar-chart-line' | 'bar-pencil' | 'battery-charging' | 'battery' | 'bell-fill' | 'bell-plus' | 'bell-slash' | 'bell' | 'binoculars' | 'book-doc' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'business-time' | 'calendar-alt' | 'calendar-check' | 'calendar-day' | 'calendar' | 'call' | 'camera-alt' | 'camera-video-off' | 'camera-video' | 'camera' | 'card-checklist' | 'card-list' | 'card-text' | 'caret-down-fill' | 'caret-left-fill' | 'caret-right-fill' | 'caret-up-fill' | 'chat-dots' | 'chat-left-text' | 'chat-right-text' | 'chat-square-quote' | 'check-circle-fill' | 'check-circle' | 'check' | 'chevron-double-left' | 'chevron-double-right' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'circle-fill' | 'circle' | 'click-hesitation' | 'click-rage' | 'clipboard-check' | 'clipboard-list-check' | 'clock-history' | 'clock' | 'close' | 'cloud-fog2-fill' | 'code' | 'cog' | 'cogs' | 'collection-play' | 'collection' | 'color/apple' | 'color/browser/Tor' | 'color/browser/applebot' | 'color/browser/chrome' | 'color/browser/chrome_mobile' | 'color/browser/chrome_mobile_ios' | 'color/browser/duck_duck_go' | 'color/browser/duckduckgo_mobile' | 'color/browser/edge' | 'color/browser/edge_mobile' | 'color/browser/facebook' | 'color/browser/firefox' | 'color/browser/firefox_ios' | 'color/browser/firefox_mobile' | 'color/browser/google' | 'color/browser/googlebot' | 'color/browser/huawei_browser' | 'color/browser/internet_explorer' | 'color/browser/miui_browser' | 'color/browser/mobile_safari' | 'color/browser/mobile_safari_ui' | 'color/browser/opera' | 'color/browser/safari' | 'color/browser/samsung_internet' | 'color/browser/uc_browser' | 'color/browser/unknown' | 'color/browser/whale' | 'color/browser/yandex_browser' | 'color/chrome' | 'color/country/de' | 'color/country/fr' | 'color/country/gb' | 'color/country/in' | 'color/country/us' | 'color/de' | 'color/device/desktop' | 'color/device/mobile' | 'color/device/other_phone' | 'color/device/tablet' | 'color/device/unkown' | 'color/edge' | 'color/fedora' | 'color/firefox' | 'color/fr' | 'color/gb' | 'color/in' | 'color/microsoft' | 'color/opera' | 'color/os/android' | 'color/os/apple' | 'color/os/blackberry' | 'color/os/chrome_os' | 'color/os/elementary' | 'color/os/fedora' | 'color/os/freebsd' | 'color/os/gnome' | 'color/os/ios' | 'color/os/linux' | 'color/os/linux_mint' | 'color/os/macos' | 'color/os/microsoft' | 'color/os/ubuntu' | 'color/os/unkown' | 'color/safari' | 'color/ubuntu' | 'color/us' | 'columns-gap-filled' | 'columns-gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit-card-2-back' | 'credit-card-front' | 'cross' | 'cubes' | 'cursor-trash' | 'dash' | 'dashboard-icn' | 'db-icons/icn-card-clickMap' | 'db-icons/icn-card-errors' | 'db-icons/icn-card-funnel' | 'db-icons/icn-card-funnels' | 'db-icons/icn-card-insights' | 'db-icons/icn-card-library' | 'db-icons/icn-card-mapchart' | 'db-icons/icn-card-pathAnalysis' | 'db-icons/icn-card-performance' | 'db-icons/icn-card-resources' | 'db-icons/icn-card-table' | 'db-icons/icn-card-timeseries' | 'db-icons/icn-card-webVitals' | 'desktop' | 'device' | 'diagram-3' | 'dice-3' | 'dizzy' | 'door-closed' | 'doublecheck' | 'download' | 'drag' | 'edit' | 'ellipsis-v' | 'emoji-dizzy' | 'enter' | 'envelope-check' | 'envelope-paper' | 'envelope-x' | 'envelope' | 'errors-icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i-cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation-circle-fill' | 'exclamation-circle' | 'exclamation-triangle' | 'expand-wide' | 'explosion' | 'external-link-alt' | 'eye-slash-fill' | 'eye-slash' | 'eye' | 'fetch' | 'fflag-multi' | 'fflag-single' | 'file-bar-graph' | 'file-code' | 'file-medical-alt' | 'file-pdf' | 'file' | 'files' | 'filetype-js' | 'filetype-pdf' | 'filter' | 'filters/arrow-return-right' | 'filters/browser' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu-load' | 'filters/custom' | 'filters/device' | 'filters/dom-complete' | 'filters/duration' | 'filters/error' | 'filters/fetch-failed' | 'filters/fetch' | 'filters/file-code' | 'filters/graphql' | 'filters/i-cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory-load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance-network-request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev-id' | 'filters/state-action' | 'filters/tag-element' | 'filters/ttfb' | 'filters/user-alt' | 'filters/userid' | 'filters/view' | 'flag-na' | 'folder-plus' | 'folder2' | 'fullscreen' | 'funnel/cpu-fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji-angry-fill' | 'funnel/emoji-angry' | 'funnel/emoji-dizzy-fill' | 'funnel/exclamation-circle-fill' | 'funnel/exclamation-circle' | 'funnel/file-earmark-break-fill' | 'funnel/file-earmark-break' | 'funnel/file-earmark-minus-fill' | 'funnel/file-earmark-minus' | 'funnel/file-medical-alt' | 'funnel/file-x' | 'funnel/hdd-fill' | 'funnel/hourglass-top' | 'funnel/image-fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch-exclamation-fill' | 'funnel/sd-card' | 'funnel-fill' | 'funnel-new' | 'funnel' | 'gear-fill' | 'gear' | 'geo-alt-fill-custom' | 'github' | 'graph-up-arrow' | 'graph-up' | 'grid-1x2' | 'grid-3x3' | 'grid-check' | 'grid-horizontal' | 'grid' | 'grip-horizontal' | 'hash' | 'hdd-stack' | 'headset' | 'heart-rate' | 'high-engagement' | 'history' | 'hourglass-start' | 'ic-errors' | 'ic-network' | 'ic-rage' | 'ic-resources' | 'id-card' | 'image' | 'info-circle-fill' | 'info-circle' | 'info-square' | 'info' | 'input-hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag-text' | 'integrations/bugsnag' | 'integrations/cloudwatch-text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch-text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira-text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic-text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay-text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar-text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry-text' | 'integrations/sentry' | 'integrations/slack-bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic-text' | 'integrations/sumologic' | 'integrations/teams-white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal-code' | 'key' | 'keyboard' | 'layer-group' | 'layers-half' | 'lightbulb-on' | 'lightbulb' | 'link-45deg' | 'list-alt' | 'list-arrow' | 'list-ul' | 'list' | 'lock-alt' | 'low-disc-space' | 'magic' | 'map-marker-alt' | 'memory-ios' | 'memory' | 'mic-mute' | 'mic' | 'minus' | 'mobile' | 'mouse-alt' | 'mouse-pointer-click' | 'network' | 'next1' | 'no-dashboard' | 'no-metrics-chart' | 'no-metrics' | 'no-recordings' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause-circle-fill' | 'pause-fill' | 'pause' | 'pdf-download' | 'pencil-stop' | 'pencil' | 'people' | 'percent' | 'performance-icon' | 'person-border' | 'person-fill' | 'person' | 'pie-chart-fill' | 'pin-fill' | 'play-circle-bold' | 'play-circle-light' | 'play-circle' | 'play-fill-new' | 'play-fill' | 'play-hover' | 'play' | 'plug' | 'plus-circle' | 'plus-lg' | 'plus' | 'pointer-sessions-search' | 'prev1' | 'pulse' | 'puzzle-piece' | 'puzzle' | 'question-circle' | 'question-lg' | 'quote-left' | 'quote-right' | 'quotes' | 'record-btn' | 'record-circle-fill' | 'record-circle' | 'record2' | 'redo-back' | 'redo' | 'redux' | 'remote-control' | 'replay-10' | 'resources-icon' | 'safe-fill' | 'safe' | 'sandglass' | 'search' | 'search_notification' | 'server' | 'share-alt' | 'shield-lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost-split' | 'signup' | 'skip-forward-fill' | 'skip-forward' | 'slack' | 'slash-circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'sparkles' | 'speedometer2' | 'spinner' | 'star-solid' | 'star' | 'step-forward' | 'stickies' | 'stop-record-circle' | 'stopwatch' | 'store' | 'sync-alt' | 'table-new' | 'table' | 'tablet-android' | 'tachometer-slow' | 'tachometer-slowest' | 'tags' | 'team-funnel' | 'telephone-fill' | 'telephone' | 'terminal' | 'text-paragraph' | 'thermometer-sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user-alt' | 'user-circle' | 'user-friends' | 'user-switch' | 'users' | 'vendors/graphql' | 'vendors/mobx' | 'vendors/ngrx' | 'vendors/redux' | 'vendors/vuex' | 'web-vitals' | 'wifi' | 'window-alt' | 'window-restore' | 'window-x' | 'window' | 'zoom-in';
 
 interface Props {
     name: IconNames;
@@ -847,11 +899,122 @@ const SVG = (props: Props) => {
     // case 'color/apple':
     case 'color/apple': return <Color_apple width={ width } height={ height } fill={ fill } />;
   
+    // case 'color/browser/Tor':
+    case 'color/browser/Tor': return <Color_browser_tor width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/applebot':
+    case 'color/browser/applebot': return <Color_browser_applebot width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/chrome':
+    case 'color/browser/chrome': return <Color_browser_chrome width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/chrome_mobile':
+    case 'color/browser/chrome_mobile': return <Color_browser_chrome_mobile width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/chrome_mobile_ios':
+    case 'color/browser/chrome_mobile_ios': return <Color_browser_chrome_mobile_ios width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/duck_duck_go':
+    case 'color/browser/duck_duck_go': return <Color_browser_duck_duck_go width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/duckduckgo_mobile':
+    case 'color/browser/duckduckgo_mobile': return <Color_browser_duckduckgo_mobile width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/edge':
+    case 'color/browser/edge': return <Color_browser_edge width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/edge_mobile':
+    case 'color/browser/edge_mobile': return <Color_browser_edge_mobile width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/facebook':
+    case 'color/browser/facebook': return <Color_browser_facebook width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/firefox':
+    case 'color/browser/firefox': return <Color_browser_firefox width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/firefox_ios':
+    case 'color/browser/firefox_ios': return <Color_browser_firefox_ios width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/firefox_mobile':
+    case 'color/browser/firefox_mobile': return <Color_browser_firefox_mobile width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/google':
+    case 'color/browser/google': return <Color_browser_google width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/googlebot':
+    case 'color/browser/googlebot': return <Color_browser_googlebot width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/huawei_browser':
+    case 'color/browser/huawei_browser': return <Color_browser_huawei_browser width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/internet_explorer':
+    case 'color/browser/internet_explorer': return <Color_browser_internet_explorer width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/miui_browser':
+    case 'color/browser/miui_browser': return <Color_browser_miui_browser width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/mobile_safari':
+    case 'color/browser/mobile_safari': return <Color_browser_mobile_safari width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/mobile_safari_ui':
+    case 'color/browser/mobile_safari_ui': return <Color_browser_mobile_safari_ui width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/opera':
+    case 'color/browser/opera': return <Color_browser_opera width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/safari':
+    case 'color/browser/safari': return <Color_browser_safari width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/samsung_internet':
+    case 'color/browser/samsung_internet': return <Color_browser_samsung_internet width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/uc_browser':
+    case 'color/browser/uc_browser': return <Color_browser_uc_browser width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/unknown':
+    case 'color/browser/unknown': return <Color_browser_unknown width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/whale':
+    case 'color/browser/whale': return <Color_browser_whale width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/browser/yandex_browser':
+    case 'color/browser/yandex_browser': return <Color_browser_yandex_browser width={ width } height={ height } fill={ fill } />;
+  
     // case 'color/chrome':
     case 'color/chrome': return <Color_chrome width={ width } height={ height } fill={ fill } />;
   
+    // case 'color/country/de':
+    case 'color/country/de': return <Color_country_de width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/country/fr':
+    case 'color/country/fr': return <Color_country_fr width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/country/gb':
+    case 'color/country/gb': return <Color_country_gb width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/country/in':
+    case 'color/country/in': return <Color_country_in width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/country/us':
+    case 'color/country/us': return <Color_country_us width={ width } height={ height } fill={ fill } />;
+  
     // case 'color/de':
     case 'color/de': return <Color_de width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/device/desktop':
+    case 'color/device/desktop': return <Color_device_desktop width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/device/mobile':
+    case 'color/device/mobile': return <Color_device_mobile width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/device/other_phone':
+    case 'color/device/other_phone': return <Color_device_other_phone width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/device/tablet':
+    case 'color/device/tablet': return <Color_device_tablet width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/device/unkown':
+    case 'color/device/unkown': return <Color_device_unkown width={ width } height={ height } fill={ fill } />;
   
     // case 'color/edge':
     case 'color/edge': return <Color_edge width={ width } height={ height } fill={ fill } />;
@@ -876,6 +1039,51 @@ const SVG = (props: Props) => {
   
     // case 'color/opera':
     case 'color/opera': return <Color_opera width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/android':
+    case 'color/os/android': return <Color_os_android width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/apple':
+    case 'color/os/apple': return <Color_os_apple width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/blackberry':
+    case 'color/os/blackberry': return <Color_os_blackberry width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/chrome_os':
+    case 'color/os/chrome_os': return <Color_os_chrome_os width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/elementary':
+    case 'color/os/elementary': return <Color_os_elementary width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/fedora':
+    case 'color/os/fedora': return <Color_os_fedora width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/freebsd':
+    case 'color/os/freebsd': return <Color_os_freebsd width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/gnome':
+    case 'color/os/gnome': return <Color_os_gnome width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/ios':
+    case 'color/os/ios': return <Color_os_ios width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/linux':
+    case 'color/os/linux': return <Color_os_linux width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/linux_mint':
+    case 'color/os/linux_mint': return <Color_os_linux_mint width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/macos':
+    case 'color/os/macos': return <Color_os_macos width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/microsoft':
+    case 'color/os/microsoft': return <Color_os_microsoft width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/ubuntu':
+    case 'color/os/ubuntu': return <Color_os_ubuntu width={ width } height={ height } fill={ fill } />;
+  
+    // case 'color/os/unkown':
+    case 'color/os/unkown': return <Color_os_unkown width={ width } height={ height } fill={ fill } />;
   
     // case 'color/safari':
     case 'color/safari': return <Color_safari width={ width } height={ height } fill={ fill } />;

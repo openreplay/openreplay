@@ -4,7 +4,7 @@ import { useStore } from 'App/mstore';
 
 interface Props {
     seriesId: string;
-    initAlert: Function;
+    initAlert?: Function;
 }
 function AlertButton(props: Props) {
     const { seriesId } = props;

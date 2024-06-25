@@ -6,16 +6,17 @@ import Option from './Option';
 import CardsLibrary from "Components/Dashboard/components/DashboardList/NewDashModal/CardsLibrary";
 
 interface SelectCardProps {
-    onClose: () => void;
+    onClose: (refresh?: boolean) => void;
     onCard: () => void;
     isLibrary?: boolean;
 }
 
-const SelectCard: React.FC<SelectCardProps> = ({onCard, isLibrary = false}) => {
+const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
+    const {onCard, isLibrary = false} = props;
     const [selected, setSelected] = React.useState<string>('product-analytics');
     const [selectedCards, setSelectedCards] = React.useState<number[]>([]);
     const {metricStore, dashboardStore} = useStore();
-    const dashboardId = window.location.pathname.split('/')[4];
+    const dashboardId = window.location.pathname.split('/')[3];
 
 
     const handleCardSelection = (card: string) => {
@@ -45,14 +46,17 @@ const SelectCard: React.FC<SelectCardProps> = ({onCard, isLibrary = false}) => {
     }
 
     const onAddSelected = () => {
-        console.log(selectedCards);
-        dashboardStore.addWidgetToDashboard(dashboardId, selectedCards);
+        const dashboard = dashboardStore.getDashboard(dashboardId);
+        dashboardStore.addWidgetToDashboard(dashboard!, selectedCards).finally(() => {
+            dashboardStore.fetch(dashboardId);
+            props.onClose(true);
+        });
     }
 
     return (
         <>
             <Header selectedCount={selectedCards.length} onAdd={onAddSelected}/>
-            <CategorySelector setSelected={setSelected}/>
+            {!isLibrary && <CategorySelector setSelected={setSelected}/>}
             {isLibrary ? <CardsLibrary selectedList={selectedCards} category={selected} onCard={onCardClick}/> :
                 <ExampleCardsGrid items={cardItems}/>}
         </>

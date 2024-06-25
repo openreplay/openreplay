@@ -162,18 +162,17 @@ export default class DashboardStore {
       });
   }
 
-  fetch(dashboardId: string): Promise<any> {
+  async fetch(dashboardId: string): Promise<any> {
     this.setFetchingDashboard(true);
-    return dashboardService
-      .getDashboard(dashboardId)
-      .then((response) => {
-        this.selectedDashboard?.update({
-          widgets: new Dashboard().fromJson(response).widgets,
-        });
-      })
-      .finally(() => {
-        this.setFetchingDashboard(false);
+    try {
+      const response = await dashboardService
+          .getDashboard(dashboardId);
+      this.selectedDashboard?.update({
+        widgets: new Dashboard().fromJson(response).widgets,
       });
+    } finally {
+      this.setFetchingDashboard(false);
+    }
   }
 
   setFetchingDashboard(value: boolean) {

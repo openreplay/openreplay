@@ -33,6 +33,7 @@ import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
 import SankeyChart from 'Shared/Insights/SankeyChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
+import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy";
 
 interface Props {
     metric: any;
@@ -96,6 +97,7 @@ function WidgetChart(props: Props) {
         if (!isMounted()) return;
         setLoading(true);
         dashboardStore.fetchMetricChartData(metric, payload, isWidget, period).then((res: any) => {
+            console.log('res', res)
             if (isMounted()) setData(res);
         }).finally(() => {
             setLoading(false);
@@ -181,11 +183,17 @@ function WidgetChart(props: Props) {
             }
             if (viewType === TABLE) {
                 return (
-                    <CustomMetricTable
-                        metric={metric} data={data[0]}
+                    <SessionsBy
+                        metric={metric}
+                        data={data[0]}
                         onClick={onChartClick}
                         isTemplate={isTemplate}
                     />
+                    // <CustomMetricTable
+                    //     metric={metric} data={data[0]}
+                    //     onClick={onChartClick}
+                    //     isTemplate={isTemplate}
+                    // />
                 );
             } else if (viewType === 'pieChart') {
                 return (

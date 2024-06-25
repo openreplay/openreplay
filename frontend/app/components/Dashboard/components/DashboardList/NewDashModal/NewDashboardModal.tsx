@@ -34,7 +34,7 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                 <div>
                     <div className="flex flex-col gap-4">
                         {step === 0 && <SelectCard onClose={onClose} onCard={onCard} isLibrary={isAddingFromLibrary}/>}
-                        {step === 1 && <CreateCard onBack={() => setStep(0)}/>}
+                        {step === 1 && <CreateCard onBack={() => setStep(0)} />}
                     </div>
                 </div>
             </Modal>

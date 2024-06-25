@@ -7,7 +7,6 @@ import {useStore} from "App/mstore";
 import {CLICKMAP} from "App/constants/card";
 import {renderClickmapThumbnail} from "Components/Dashboard/components/WidgetForm/renderMap";
 import WidgetPreview from "Components/Dashboard/components/WidgetPreview/WidgetPreview";
-import {number} from "Player/player/localStorage";
 
 const getTitleByType = (type: string) => {
     switch (type) {
@@ -28,7 +27,8 @@ function CreateCard(props: Props) {
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const metric = metricStore.instance;
     const siteId: string = history.location.pathname.split('/')[1];
-    const dashboardId: string = history.location.pathname.split('/')[4];
+    const dashboardId: string = history.location.pathname.split('/')[3];
+    const isItDashboard = history.location.pathname.includes('dashboard')
     // const title = getTitleByType(metric.metricType)
 
     const createNewDashboard = async () => {
@@ -48,8 +48,8 @@ function CreateCard(props: Props) {
     }
 
     const createCard = async () => {
-        const isClickmap = metric.metricType === CLICKMAP;
-        if (isClickmap) {
+        const isClickMap = metric.metricType === CLICKMAP;
+        if (isClickMap) {
             try {
                 metric.thumbnail = await renderClickmapThumbnail();
             } catch (e) {
@@ -62,11 +62,18 @@ function CreateCard(props: Props) {
     }
 
     const createDashboardAndAddCard = async () => {
-        const dashboardId = await createNewDashboard();
         const cardId = await createCard();
-        await addCardToDashboard(dashboardId, cardId);
 
-        history.replace(`${history.location.pathname}/${dashboardId}`);
+        if (dashboardId) {
+            await addCardToDashboard(dashboardId, cardId);
+            dashboardStore.fetch(dashboardId);
+        } else if (isItDashboard) {
+            const dashboardId = await createNewDashboard();
+            await addCardToDashboard(dashboardId, cardId);
+            history.replace(`${history.location.pathname}/${dashboardId}`);
+        } else {
+            history.replace(`${history.location.pathname}/${cardId}`);
+        }
     }
 
     return (

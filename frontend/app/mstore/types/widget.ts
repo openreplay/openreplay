@@ -15,6 +15,9 @@ import FilterItem from './filterItem';
 import {filtersMap} from 'Types/filter/newFilter';
 import Issue from '../types/issue';
 import {durationFormatted} from 'App/date';
+import React from "react";
+import {countries} from "App/constants/countries";
+import {SessionsByRow} from "./sessionsCardData";
 
 export class InsightIssue {
     icon: string;
@@ -273,38 +276,11 @@ export default class Widget {
         const _data: any = {...data};
 
         if (this.metricType === USER_PATH) {
-            // Ensure nodes have unique IDs
             const _data = processData(data);
-
-            // const nodes = data.nodes.map(node => ({
-            //   ...node,
-            //   avgTimeFromPrevious: node.avgTimeFromPrevious ? durationFormatted(node.avgTimeFromPrevious) : null,
-            //   idd: node.idd || Math.random().toString(36).substring(7),
-            // }));
-            //
-            // // Ensure links have unique IDs and use node IDs
-            // const links = data.links.map(link => ({
-            //   ...link,
-            //   value: Math.round(link.value),
-            //   id: link.id || Math.random().toString(36).substring(7),
-            // }));
-            //
-            // const _data = { nodes, links };
-
-            // _data['nodes'] = data.nodes.map((s: any) => ({
-            //   ...s,
-            //   avgTimeFromPrevious: s.avgTimeFromPrevious ? durationFormatted(s.avgTimeFromPrevious) : null,
-            //   idd: Math.random().toString(36).substring(7),
-            // }));
-            // _data['links'] = data.links.map((s: any) => ({
-            //   ...s,
-            //   value: Math.round(s.value),
-            //   id: Math.random().toString(36).substring(7),
-            // }));
-
             Object.assign(this.data, _data);
             return _data;
         }
+
         if (this.metricOf === FilterKey.ERRORS) {
             _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
         } else if (this.metricType === INSIGHTS) {
@@ -316,6 +292,11 @@ export default class Widget {
                 );
         } else if (this.metricType === FUNNEL) {
             _data.funnel = new Funnel().fromJSON(_data);
+        } else if (this.metricType === TABLE) {
+            const totalSessions = data[0]['totalSessions'];
+            _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, totalSessions, this.metricOf));
+
+            console.log('_data[\'values\']', _data['values'])
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;
@@ -450,7 +431,10 @@ interface Data {
 
 const generateUniqueId = (): string => Math.random().toString(36).substring(2, 15);
 
-const processData = (data: Data): { nodes: Node[], links: { source: number, target: number, value: number, id: string }[] } => {
+const processData = (data: Data): {
+    nodes: Node[],
+    links: { source: number, target: number, value: number, id: string }[]
+} => {
     // Ensure nodes have unique IDs
     const nodes = data.nodes.map(node => ({
         ...node,
@@ -479,5 +463,5 @@ const processData = (data: Data): { nodes: Node[], links: { source: number, targ
         return aIndex - bIndex;
     });
 
-    return { nodes: sortedNodes, links };
+    return {nodes: sortedNodes, links};
 };
