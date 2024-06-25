@@ -34,31 +34,3 @@ spec:
                   number: {{ $svcPort }}
             path: /spot/(.*)
 {{- end }}
-
-{{- if contains "minio" .Values.global.s3.endpoint }}
-## TODO:
-## Frontend service from minio will be migrated to nginx atomic container.
-## This ingress is just a workaround.
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: minio
-  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
-spec:
-  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
-  rules:
-    - host: {{ .Values.global.domainName }} 
-      http:
-        paths:
-          - pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9000
-            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records|uxtesting-records)/
-  tls:
-    - hosts:
-      - {{ .Values.global.domainName }}
-{{- end }}

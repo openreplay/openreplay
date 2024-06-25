@@ -3,7 +3,6 @@ package spot
 type CreateSpotRequest struct {
 	Name     string `json:"name"`
 	Comment  string `json:"comment"`
-	IsShared bool   `json:"isShared"`
 	Duration int    `json:"duration"`
 	Preview  string `json:"preview"`
 }

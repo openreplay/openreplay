@@ -104,7 +104,8 @@ ENV TZ=UTC \
     # Set Access-Control-* headers for tracker requests if true
     USE_CORS=false \
     RECORD_CANVAS=true \
-    JWT_SECRET="my_secret"
+    JWT_SECRET="my_secret" \
+    BUCKET_NAME="spots"
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
