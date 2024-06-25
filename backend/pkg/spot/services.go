@@ -5,7 +5,6 @@ import (
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
@@ -21,7 +20,7 @@ type ServicesBuilder struct {
 	Spots      Spots
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*ServicesBuilder, error) {
 	// ObjectStorage client to generate pre-signed upload urls
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {

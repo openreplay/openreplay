@@ -9,7 +9,6 @@ import (
 	spotConfig "openreplay/backend/internal/config/spot"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
@@ -29,13 +28,10 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	redisClient, err := redis.New(&cfg.Redis)
+	services, err := spot.NewServiceBuilder(log, cfg, pgConn)
 	if err != nil {
-		log.Warn(ctx, "can't init redis connection: %s", err)
+		log.Fatal(ctx, "can't init services: %s", err)
 	}
-	defer redisClient.Close()
-
-	services, err := spot.NewServiceBuilder(log, cfg, pgConn, redisClient)
 
 	router, err := spot.NewRouter(cfg, log, services)
 	if err != nil {
