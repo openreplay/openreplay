@@ -489,7 +489,7 @@ const NetworkPanelComp = observer(
               name="filter"
               onChange={onFilterChange}
               height={28}
-              width={240}
+              width={280}
               value={filter}
             />
           </BottomBlock.Header>
