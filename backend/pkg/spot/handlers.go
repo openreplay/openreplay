@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
@@ -50,7 +51,8 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 
 	previewName := fmt.Sprintf("%d/preview.jpeg", newSpot.ID)
 	if err = e.services.ObjStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.log.Error(r.Context(), "can't upload preview image: %s", err)
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't upload preview image"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
