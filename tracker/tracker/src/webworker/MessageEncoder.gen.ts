@@ -150,8 +150,8 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
-    case Messages.Type.GraphQL:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4])
+    case Messages.Type.GraphQLDeprecated:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.int(msg[5])
     break
 
     case Messages.Type.PerformanceTrack:
@@ -308,6 +308,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.SetPageLocation:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.string(msg[4])
+    break
+
+    case Messages.Type.GraphQL:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5])
     break
 
     }

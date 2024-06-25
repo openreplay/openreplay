@@ -44,7 +44,7 @@ const (
 	MsgVuex                        = 45
 	MsgMobX                        = 46
 	MsgNgRx                        = 47
-	MsgGraphQL                     = 48
+	MsgGraphQLDeprecated           = 48
 	MsgPerformanceTrack            = 49
 	MsgStringDict                  = 50
 	MsgSetNodeAttributeDict        = 51
@@ -90,6 +90,7 @@ const (
 	MsgTagTrigger                  = 120
 	MsgRedux                       = 121
 	MsgSetPageLocation             = 122
+	MsgGraphQL                     = 123
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -1203,30 +1204,32 @@ func (msg *NgRx) TypeID() int {
 	return 47
 }
 
-type GraphQL struct {
+type GraphQLDeprecated struct {
 	message
 	OperationKind string
 	OperationName string
 	Variables     string
 	Response      string
+	Duration      int64
 }
 
-func (msg *GraphQL) Encode() []byte {
-	buf := make([]byte, 41+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+func (msg *GraphQLDeprecated) Encode() []byte {
+	buf := make([]byte, 51+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
 	buf[0] = 48
 	p := 1
 	p = WriteString(msg.OperationKind, buf, p)
 	p = WriteString(msg.OperationName, buf, p)
 	p = WriteString(msg.Variables, buf, p)
 	p = WriteString(msg.Response, buf, p)
+	p = WriteInt(msg.Duration, buf, p)
 	return buf[:p]
 }
 
-func (msg *GraphQL) Decode() Message {
+func (msg *GraphQLDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *GraphQL) TypeID() int {
+func (msg *GraphQLDeprecated) TypeID() int {
 	return 48
 }
 
@@ -2409,6 +2412,35 @@ func (msg *SetPageLocation) Decode() Message {
 
 func (msg *SetPageLocation) TypeID() int {
 	return 122
+}
+
+type GraphQL struct {
+	message
+	OperationKind string
+	OperationName string
+	Variables     string
+	Response      string
+	Duration      uint64
+}
+
+func (msg *GraphQL) Encode() []byte {
+	buf := make([]byte, 51+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+	buf[0] = 123
+	p := 1
+	p = WriteString(msg.OperationKind, buf, p)
+	p = WriteString(msg.OperationName, buf, p)
+	p = WriteString(msg.Variables, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *GraphQL) Decode() Message {
+	return msg
+}
+
+func (msg *GraphQL) TypeID() int {
+	return 123
 }
 
 type IssueEvent struct {

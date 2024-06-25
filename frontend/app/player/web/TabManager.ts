@@ -263,6 +263,7 @@ export default class TabSessionManager {
       case MType.MobX:
         this.lists.lists.mobx.append(msg);
         break;
+      case MType.GraphQlDeprecated:
       case MType.GraphQl:
         this.lists.lists.graphql.append(msg);
         break;

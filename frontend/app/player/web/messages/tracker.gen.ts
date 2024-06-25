@@ -242,12 +242,13 @@ type TrNgRx = [
   duration: number,
 ]
 
-type TrGraphQL = [
+type TrGraphQLDeprecated = [
   type: 48,
   operationKind: string,
   operationName: string,
   variables: string,
   response: string,
+  duration: number,
 ]
 
 type TrPerformanceTrack = [
@@ -540,8 +541,17 @@ type TrSetPageLocation = [
   documentTitle: string,
 ]
 
+type TrGraphQL = [
+  type: 123,
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+  duration: number,
+]
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation
+
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -786,11 +796,12 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 48: {
       return {
-        tp: MType.GraphQl,
+        tp: MType.GraphQlDeprecated,
         operationKind: tMsg[1],
         operationName: tMsg[2],
         variables: tMsg[3],
         response: tMsg[4],
+        duration: tMsg[5],
       }
     }
     
@@ -1095,6 +1106,17 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         referrer: tMsg[2],
         navigationStart: tMsg[3],
         documentTitle: tMsg[4],
+      }
+    }
+    
+    case 123: {
+      return {
+        tp: MType.GraphQl,
+        operationKind: tMsg[1],
+        operationName: tMsg[2],
+        variables: tMsg[3],
+        response: tMsg[4],
+        duration: tMsg[5],
       }
     }
     

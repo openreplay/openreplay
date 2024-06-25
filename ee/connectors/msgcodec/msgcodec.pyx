@@ -506,11 +506,12 @@ cdef class MessageCodec:
             )
 
         if message_id == 48:
-            return GraphQL(
+            return GraphQLDeprecated(
                 operation_kind=self.read_string(reader),
                 operation_name=self.read_string(reader),
                 variables=self.read_string(reader),
-                response=self.read_string(reader)
+                response=self.read_string(reader),
+                duration=self.read_int(reader)
             )
 
         if message_id == 49:
@@ -854,6 +855,15 @@ cdef class MessageCodec:
                 referrer=self.read_string(reader),
                 navigation_start=self.read_uint(reader),
                 document_title=self.read_string(reader)
+            )
+
+        if message_id == 123:
+            return GraphQL(
+                operation_kind=self.read_string(reader),
+                operation_name=self.read_string(reader),
+                variables=self.read_string(reader),
+                response=self.read_string(reader),
+                duration=self.read_uint(reader)
             )
 
         if message_id == 125:

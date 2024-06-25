@@ -404,14 +404,15 @@ class NgRx(Message):
         self.duration = duration
 
 
-class GraphQL(Message):
+class GraphQLDeprecated(Message):
     __id__ = 48
 
-    def __init__(self, operation_kind, operation_name, variables, response):
+    def __init__(self, operation_kind, operation_name, variables, response, duration):
         self.operation_kind = operation_kind
         self.operation_name = operation_name
         self.variables = variables
         self.response = response
+        self.duration = duration
 
 
 class PerformanceTrack(Message):
@@ -845,6 +846,17 @@ class SetPageLocation(Message):
         self.referrer = referrer
         self.navigation_start = navigation_start
         self.document_title = document_title
+
+
+class GraphQL(Message):
+    __id__ = 123
+
+    def __init__(self, operation_kind, operation_name, variables, response, duration):
+        self.operation_kind = operation_kind
+        self.operation_name = operation_name
+        self.variables = variables
+        self.response = response
+        self.duration = duration
 
 
 class IssueEvent(Message):

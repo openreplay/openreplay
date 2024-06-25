@@ -444,18 +444,20 @@ export function NgRx(
   ]
 }
 
-export function GraphQL(
+export function GraphQLDeprecated(
   operationKind: string,
   operationName: string,
   variables: string,
   response: string,
-): Messages.GraphQL {
+  duration: number,
+): Messages.GraphQLDeprecated {
   return [
-    Messages.Type.GraphQL,
+    Messages.Type.GraphQLDeprecated,
     operationKind,
     operationName,
     variables,
     response,
+    duration,
   ]
 }
 
@@ -997,6 +999,23 @@ export function SetPageLocation(
     referrer,
     navigationStart,
     documentTitle,
+  ]
+}
+
+export function GraphQL(
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+  duration: number,
+): Messages.GraphQL {
+  return [
+    Messages.Type.GraphQL,
+    operationKind,
+    operationName,
+    variables,
+    response,
+    duration,
   ]
 }
 
