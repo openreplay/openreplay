@@ -30,7 +30,7 @@ export const enum MType {
   Vuex = 45,
   MobX = 46,
   NgRx = 47,
-  GraphQl = 48,
+  GraphQlDeprecated = 48,
   PerformanceTrack = 49,
   StringDict = 50,
   SetNodeAttributeDict = 51,
@@ -65,6 +65,7 @@ export const enum MType {
   TagTrigger = 120,
   Redux = 121,
   SetPageLocation = 122,
+  GraphQl = 123,
   MobileEvent = 93,
   MobileScreenChanges = 96,
   MobileClickEvent = 100,
@@ -268,8 +269,8 @@ export interface RawNgRx {
   duration: number,
 }
 
-export interface RawGraphQl {
-  tp: MType.GraphQl,
+export interface RawGraphQlDeprecated {
+  tp: MType.GraphQlDeprecated,
   operationKind: string,
   operationName: string,
   variables: string,
@@ -530,6 +531,15 @@ export interface RawSetPageLocation {
   documentTitle: string,
 }
 
+export interface RawGraphQl {
+  tp: MType.GraphQl,
+  operationKind: string,
+  operationName: string,
+  variables: string,
+  response: string,
+  duration: number,
+}
+
 export interface RawMobileEvent {
   tp: MType.MobileEvent,
   timestamp: number,
@@ -622,4 +632,4 @@ export interface RawMobileIssueEvent {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileIssueEvent;
+export type RawMessage = RawTimestamp | RawSetPageLocationDeprecated | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequestDeprecated | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawReduxDeprecated | RawVuex | RawMobX | RawNgRx | RawGraphQlDeprecated | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawMouseClickDeprecated | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawNetworkRequest | RawWsChannel | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawTabChange | RawTabData | RawCanvasNode | RawTagTrigger | RawRedux | RawSetPageLocation | RawGraphQl | RawMobileEvent | RawMobileScreenChanges | RawMobileClickEvent | RawMobileInputEvent | RawMobilePerformanceEvent | RawMobileLog | RawMobileInternalError | RawMobileNetworkCall | RawMobileSwipeEvent | RawMobileIssueEvent;

@@ -32,7 +32,7 @@ import type {
   RawVuex,
   RawMobX,
   RawNgRx,
-  RawGraphQl,
+  RawGraphQlDeprecated,
   RawPerformanceTrack,
   RawStringDict,
   RawSetNodeAttributeDict,
@@ -67,6 +67,7 @@ import type {
   RawTagTrigger,
   RawRedux,
   RawSetPageLocation,
+  RawGraphQl,
   RawMobileEvent,
   RawMobileScreenChanges,
   RawMobileClickEvent,
@@ -138,7 +139,7 @@ export type MobX = RawMobX & Timed
 
 export type NgRx = RawNgRx & Timed
 
-export type GraphQl = RawGraphQl & Timed
+export type GraphQlDeprecated = RawGraphQlDeprecated & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
 
@@ -207,6 +208,8 @@ export type TagTrigger = RawTagTrigger & Timed
 export type Redux = RawRedux & Timed
 
 export type SetPageLocation = RawSetPageLocation & Timed
+
+export type GraphQl = RawGraphQl & Timed
 
 export type MobileEvent = RawMobileEvent & Timed
 

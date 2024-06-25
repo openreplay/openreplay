@@ -596,7 +596,7 @@ cdef class NgRx(PyMessage):
         self.duration = duration
 
 
-cdef class GraphQL(PyMessage):
+cdef class GraphQLDeprecated(PyMessage):
     cdef public int __id__
     cdef public str operation_kind
     cdef public str operation_name
@@ -1252,6 +1252,23 @@ cdef class SetPageLocation(PyMessage):
         self.referrer = referrer
         self.navigation_start = navigation_start
         self.document_title = document_title
+
+
+cdef class GraphQL(PyMessage):
+    cdef public int __id__
+    cdef public str operation_kind
+    cdef public str operation_name
+    cdef public str variables
+    cdef public str response
+    cdef public unsigned long duration
+
+    def __init__(self, str operation_kind, str operation_name, str variables, str response, unsigned long duration):
+        self.__id__ = 123
+        self.operation_kind = operation_kind
+        self.operation_name = operation_name
+        self.variables = variables
+        self.response = response
+        self.duration = duration
 
 
 cdef class IssueEvent(PyMessage):
