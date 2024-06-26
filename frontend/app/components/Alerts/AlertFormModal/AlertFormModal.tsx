@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { SlideModal } from 'UI';
-import { useStore } from 'App/mstore'
-import { observer } from 'mobx-react-lite'
+import React, {useEffect, useState} from 'react';
+import {SlideModal} from 'UI';
+import {useStore} from 'App/mstore'
+import {observer} from 'mobx-react-lite'
 import AlertForm from '../AlertForm';
-import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
-import { confirm } from 'UI';
+import {SLACK, TEAMS, WEBHOOK} from 'App/constants/schedule';
+import {confirm} from 'UI';
 
 interface Select {
     label: string;
@@ -17,9 +17,10 @@ interface Props {
     metricId?: number;
     onClose?: () => void;
 }
+
 function AlertFormModal(props: Props) {
-    const { alertsStore, settingsStore } = useStore()
-    const { metricId = null, showModal = false } = props;
+    const {alertsStore, settingsStore} = useStore()
+    const {metricId = null, showModal = false} = props;
     const [showForm, setShowForm] = useState(false);
     const webhooks = settingsStore.webhooks
     useEffect(() => {
@@ -32,7 +33,7 @@ function AlertFormModal(props: Props) {
     const msTeamsChannels: Select[] = []
 
     webhooks.forEach((hook) => {
-        const option = { value: hook.webhookId, label: hook.name }
+        const option = {value: hook.webhookId, label: hook.name}
         if (hook.type === SLACK) {
             slackChannels.push(option)
         }

@@ -5,10 +5,8 @@ import {useStore} from "App/mstore";
 import {useObserver} from "mobx-react-lite";
 import AddToDashboardButton from "Components/Dashboard/components/AddToDashboardButton";
 import WidgetDateRange from "Components/Dashboard/components/WidgetDateRange/WidgetDateRange";
-import {Button, Dropdown, MenuProps, Space, message, Modal} from "antd";
-import {BellIcon, EllipsisVertical, TrashIcon} from "lucide-react";
-import {useHistory} from "react-router";
-import {toast} from "react-toastify";
+import {Button, Space} from "antd";
+import CardViewMenu from "Components/Dashboard/components/WidgetView/CardViewMenu";
 
 interface Props {
     onClick?: () => void;
@@ -48,55 +46,3 @@ function WidgetViewHeader({onClick, onSave, undoChanges}: Props) {
 }
 
 export default WidgetViewHeader;
-
-const CardViewMenu = () => {
-    const history = useHistory();
-    const {dashboardStore, metricStore} = useStore();
-    const widget = useObserver(() => metricStore.instance);
-    const items: MenuProps['items'] = [
-        {
-            key: 'alert',
-            label: "Set Alerts",
-            icon: <BellIcon size={16}/>,
-        },
-        {
-            key: 'remove',
-            danger: true,
-            label: 'Remove',
-            icon: <TrashIcon size={16}/>,
-        },
-    ];
-
-    const onClick: MenuProps['onClick'] = ({key}) => {
-        if (key === 'alert') {
-            message.info('Set Alerts');
-        } else if (key === 'remove') {
-            Modal.confirm({
-                title: 'Are you sure you want to remove this card?',
-                icon: null,
-                // content: 'Bla bla ...',
-                footer: (_, {OkBtn, CancelBtn}) => (
-                    <>
-                        <CancelBtn/>
-                        <OkBtn/>
-                    </>
-                ),
-                onOk: () => {
-                    metricStore.delete(widget).then(r => {
-                        history.goBack();
-                    }).catch(() => {
-                        toast.error('Failed to remove card');
-                    });
-                },
-            })
-        }
-    };
-
-    return (
-        <div className="flex items-center justify-between">
-            <Dropdown menu={{items, onClick}}>
-                <Button icon={<EllipsisVertical size={16}/>}/>
-            </Dropdown>
-        </div>
-    );
-};
