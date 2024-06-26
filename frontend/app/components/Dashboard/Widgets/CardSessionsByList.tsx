@@ -1,5 +1,5 @@
 import React from 'react';
-import {List, Progress, Typography} from "antd";
+import { List, Progress, Typography } from "antd";
 import cn from "classnames";
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
     onClickHandler: (event: any, data: any) => void;
 }
 
-function CardSessionsByList({list, selected, onClickHandler}: Props) {
+function CardSessionsByList({ list, selected, onClickHandler }: Props) {
     return (
         <List
             dataSource={list}
@@ -16,13 +16,13 @@ function CardSessionsByList({list, selected, onClickHandler}: Props) {
             renderItem={(row: any) => (
                 <List.Item
                     key={row.name}
-                    onClick={(e) => onClickHandler(e, row)}
+                    onClick={(e) => onClickHandler(e, row)} // Remove onClick handler to disable click interaction
                     style={{
                         borderBottom: '1px dotted rgba(0, 0, 0, 0.05)',
                         padding: '4px 10px',
                         lineHeight: '1px'
                     }}
-                    className={cn('rounded hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-active-blue' : '')}
+                    className={cn('rounded', selected === row.name ? 'bg-active-blue' : '')} // Remove hover:bg-active-blue and cursor-pointer
                 >
                     <List.Item.Meta
                         className="m-0"
@@ -30,7 +30,7 @@ function CardSessionsByList({list, selected, onClickHandler}: Props) {
                         title={(
                             <div className="m-0">
                                 <div className="flex justify-between m-0 p-0">
-                                    <Typography.Text strong>{row.name}</Typography.Text>
+                                    <Typography.Text>{row.name}</Typography.Text>
                                     <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
                                 </div>
 

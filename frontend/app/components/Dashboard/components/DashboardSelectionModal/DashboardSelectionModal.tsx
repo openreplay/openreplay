@@ -1,6 +1,7 @@
 import {useObserver} from 'mobx-react-lite';
 import React from 'react';
 import {Button, Modal, Form, Icon} from 'UI';
+
 import {useStore} from 'App/mstore'
 import Select from 'Shared/Select';
 
@@ -44,7 +45,7 @@ function DashboardSelectionModal(props: Props) {
     return useObserver(() => (
         <Modal size="small" open={show} onClose={closeHandler}>
             <Modal.Header className="flex items-center justify-between">
-                <div>{'Add to selected dashboard'}</div>
+                <div className='text-xl font-medium'>{'Add to selected dashboard'}</div>
                 <Icon
                     role="button"
                     tabIndex="-1"
@@ -69,7 +70,7 @@ function DashboardSelectionModal(props: Props) {
                 <Button
                     variant="primary"
                     onClick={onSave}
-                    className="float-left mr-2"
+                    className="float-left mr-2 "
                 >
                     Add
                 </Button>

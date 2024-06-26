@@ -46,7 +46,7 @@ function Modules(props: Props) {
 
   return (
     <div>
-      <div className='bg-white rounded-lg border p-4'>
+      <div className='bg-white rounded-lg border shadow-sm p-4'>
         <h3 className='text-2xl'>Modules</h3>
         <ul className='mt-3 ml-4 list-disc'>
           <li>OpenReplay's modules are a collection of advanced features that provide enhanced functionality.</li>
@@ -54,7 +54,7 @@ function Modules(props: Props) {
         </ul>
       </div>
 
-      <div className='mt-4 grid grid-cols-3 gap-3'>
+      <div className='mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
         {modulesState.map((module) => (
           <div key={module.key} className='flex flex-col h-full'>
             <ModuleCard module={module} onToggle={onToggle} />

@@ -83,7 +83,7 @@ function CreateCard(props: Props) {
                     <Button type="text" onClick={props.onBack}>
                         <ArrowLeft size={16}/>
                     </Button>
-                    <div className="text-2xl leading-4 font-semibold">
+                    <div className="text-xl leading-4 font-medium">
                         {metric.name}
                     </div>
                 </Space>
@@ -94,7 +94,7 @@ function CreateCard(props: Props) {
                 </Button>
             </div>
             <CardBuilder siteId={siteId}/>
-            <WidgetPreview className="mt-8" name={metric.name} isEditing={true}/>
+            <WidgetPreview className="" name={metric.name} isEditing={true}/>
         </div>
     );
 }

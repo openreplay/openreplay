@@ -64,7 +64,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
             {/*/>*/}
 
             <Space className="items-center justify-between">
-                <div className="text-lg leading-4 font-semibold">
+                <div className="text-xl leading-4 font-medium">
                     {dashboardId ? (isLibrary ? "Add Card" : "Create Card") : "Select a template to create a card"}
                 </div>
                 {isLibrary && (
@@ -125,6 +125,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({setSelected, selecte
         }))}
         value={selected}
         onChange={setSelected}
+        className='w-fit'
     />
 );
 
@@ -135,7 +136,7 @@ interface ExampleCardsGridProps {
 const ExampleCardsGrid: React.FC<ExampleCardsGridProps> = ({items}) => (
     <div
         className="w-full grid grid-cols-4 gap-4 overflow-scroll"
-        style={{maxHeight: 'calc(100vh - 210px)'}}
+        style={{maxHeight: 'calc(100vh - 100px)'}}
     >
         {items}
     </div>

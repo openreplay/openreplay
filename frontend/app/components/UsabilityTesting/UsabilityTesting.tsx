@@ -104,11 +104,11 @@ function TestsTable() {
         />
       </Modal>
 
-      <div className={'rounded bg-white border'}>
+      <div className={'bg-white rounded-lg shadow-sm border'}>
         <div className={'flex items-center p-4 gap-2'}>
-          <Typography.Title level={4} style={{ marginBottom: 0 }}>
+          <h1 style={{ marginBottom: 0 }} className='text-2xl capitalize-first'>
             Usability Tests
-          </Typography.Title>
+          </h1>
           <div className={'ml-auto'} />
           <Button type="primary" onClick={openModal}>
             Create Usability Test

@@ -108,7 +108,7 @@ function Integrations(props: Props) {
 
   return (
     <>
-      <div className='mb-4 p-5 bg-white rounded-lg border'>
+      <div className='bg-white rounded-lg border shadow-sm p-5 mb-4'>
         {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
 
         <IntegrationFilters onChange={onChange} activeItem={activeFilter} filters={filters} />
@@ -117,15 +117,7 @@ function Integrations(props: Props) {
       <div className='mb-4' />
 
       <div className={cn(`
-    grid 
-    gap-3 
-    auto-cols-max 
-    ${allIntegrations.length > 0 ? 'p-2' : ''}
-    grid-cols-1    // default to 1 column
-    sm:grid-cols-1 // 1 column on small screens and up
-    md:grid-cols-2 // 2 columns on medium screens and up
-    lg:grid-cols-3 // 3 columns on large screens and up
-    xl:grid-cols-3 // 3 columns on extra-large screens
+    mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
 `)}>
         {allIntegrations.map((integration: any) => (
           <IntegrationItem

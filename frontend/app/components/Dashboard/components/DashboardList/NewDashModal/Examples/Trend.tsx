@@ -23,6 +23,7 @@ function ExampleTrend(props: any) {
               { label: 'Multi-Series', value: 'multi' },
             ]}
             onChange={(v) => setIsMulti(v === 'multi')}
+            size='small'
           />
           </div>
         </div>
@@ -78,14 +79,14 @@ function ExampleTrend(props: any) {
           </div>
         ) : null}
       </div>
-      <div className={'flex gap-4 justify-center'}>
+      <div className={'flex gap-4 justify-center hidden'}>
         <div className={'flex gap-2 items-center'}>
           <div className={'w-4 h-4 rounded-full bg-main'} />
-          <div>CTA 1</div>
+          <div>Series 1</div>
         </div>
         <div className={'flex gap-2 items-center'}>
           <div className={'w-4 h-4 rounded-full bg-tealx'} />
-          <div>CTA 2</div>
+          <div>Series 2</div>
         </div>
       </div>
     </ExCard>

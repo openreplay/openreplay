@@ -65,7 +65,7 @@ function Roles(props: Props) {
     return (
         <React.Fragment>
             <Loader loading={loading}>
-                <div className="bg-white rounded-lg">
+                <div className="bg-white rounded-lg shadow-sm border">
                     <div className={cn(stl.tabHeader, 'flex items-center')}>
                         <div className="flex items-center mr-auto px-5 pt-5">
                             <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>

@@ -58,6 +58,7 @@ function ByUrl(props: any) {
               { label: 'Page Title', value: '1' },
             ]}
             onChange={(v) => setMode(Number(v))}
+            size='small'
           />
           </div>
         </div>
