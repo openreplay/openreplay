@@ -33,17 +33,17 @@ function AddCardSelectionModal(props: Props) {
                     <Col span={12}>
                         <Card hoverable onClick={() => onClick(true)}>
                             <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
-                                <Grid2x2CheckIcon style={{fontSize: '24px', color: '#1890ff'}}/>
+                                <Grid2x2CheckIcon style={{fontSize: '24px', color: '#394EFF'}}/>
                                 <Typography.Text strong>Add from library</Typography.Text>
-                                <p>Select from 12 available</p>
+                                {/*<p>Select from 12 available</p>*/}
                             </div>
                         </Card>
                     </Col>
                     <Col span={12}>
                         <Card hoverable onClick={() => onClick(false)}>
                             <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
-                                <Plus style={{fontSize: '24px', color: '#1890ff'}}/>
-                                <p>Create New Card</p>
+                                <Plus style={{fontSize: '24px', color: '#394EFF'}}/>
+                                <Typography.Text strong>Create New Card</Typography.Text>
                             </div>
                         </Card>
                     </Col>

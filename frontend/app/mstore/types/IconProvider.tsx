@@ -46,17 +46,20 @@ class CountryIconProvider implements IconProvider {
 class IssueIconProvider implements IconProvider {
     getIcon(name: string): React.ReactNode {
         const s = name.toLowerCase();
-        // let icon = 'event/' + s;  // TODO use this line
-        let icon = 'event/clickrage';
+        let icon = 'color/issues/' + s;  // TODO use this line
 
 
-        if (s.includes('dead_click')) {
-            icon = 'event/clickrage';
-        } else if (s.includes('click_rage')) {
-            icon = 'event/clickrage';
-        } else if (s.includes('mouse_thrashing')) {
-            icon = 'event/clickrage';
-        }
+        // if (s.includes('dead_click')) {
+        //     icon = 'color/issues/dead_click';
+        // } else if (s.includes('click_rage')) {
+        //     icon = 'color/issues/click_rage';
+        // } else if (s.includes('mouse_thrashing')) {
+        //     icon = 'color/issues/mouse_thrashing';
+        // } else if (s.includes('bad_request')) {
+        //     icon = 'color/issues/bad_request';
+        // } else if (s.includes('crash')) {
+        //     icon = 'color/issues/crash';
+        // }
         return <Icon name={icon} size={24}/>
     }
 }
