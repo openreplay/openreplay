@@ -53,6 +53,7 @@ function SessionsBy(props: Props) {
         <div>
             {data.values && data.values.length === 0 ? (
                 <Empty
+                    image={null}
                     style={{minHeight: 220}}
                     className="flex flex-col items-center justify-center"
                     imageStyle={{height: 60}}

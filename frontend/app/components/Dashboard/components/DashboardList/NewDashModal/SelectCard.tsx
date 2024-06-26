@@ -22,6 +22,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 
 
     const handleCardSelection = (card: string) => {
+        console.log('card', card);
         const selectedCard = CARD_LIST.find((c) => c.key === card) as CardType;
         metricStore.merge({
             metricType: selectedCard.cardType,
@@ -33,8 +34,8 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 
     const cardItems = useMemo(() => {
         return CARD_LIST.filter((card) => card.category === selected).map((card) => (
-            <div key={card.key}>
-                <card.example onCard={handleCardSelection} type={card.key} title={card.title}/>
+            <div key={card.key} className={card.width ? `col-span-${card.width}` : 'col-span-2'}>
+                <card.example onCard={handleCardSelection} type={card.key} title={card.title} data={card.data} height={card.height}/>
             </div>
         ));
     }, [selected]);
@@ -133,7 +134,7 @@ interface ExampleCardsGridProps {
 
 const ExampleCardsGrid: React.FC<ExampleCardsGridProps> = ({items}) => (
     <div
-        className="w-full grid grid-cols-2 gap-4 overflow-scroll"
+        className="w-full grid grid-cols-4 gap-4 overflow-scroll"
         style={{maxHeight: 'calc(100vh - 210px)'}}
     >
         {items}

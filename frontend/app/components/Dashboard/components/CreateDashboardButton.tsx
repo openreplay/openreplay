@@ -8,7 +8,7 @@ interface Props {
 }
 
 function CreateDashboardButton({disabled = false}: Props) {
-    const [showModal, setShowModal] = React.useState(false);
+    const [showModal, setShowModal] = React.useState(true);
 
     return <>
         <Button
