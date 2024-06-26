@@ -64,7 +64,7 @@ export default function <Value extends ValueObject>({
     menu: (provided: any, state: any) => ({
       ...provided,
       top: 31,
-      borderRadius: '3px',
+      borderRadius: '.5rem',
       right: right ? 0 : undefined,
       border: `1px solid ${colors['gray-light']}`,
       // borderRadius: '3px',

@@ -1,3 +1,15 @@
+:root{
+  --bg-teal: #394dfe;
+}
+
+.ant-btn{
+  border-radius: .5rem;
+}
+
+.ant-btn-primary{
+  background-color: var(--bg-teal);
+}
+
 .ml-15 { margin-left: 15px; }
 
 .ph-10 { padding-left: 10px; padding-right: 10px; }
@@ -386,4 +398,10 @@ p {
 
 .ant-menu-light .ant-menu-item-selected, :where(.css-dev-only-do-not-override).ant-menu-light>.ant-menu .ant-menu-item-selected{
   background-color: #E6E9FA;
+}
+
+
+.chooseDashboardCards .ant-modal-content{
+  background-color: #efefef;
+  border-radius: 0.75rem;
 }

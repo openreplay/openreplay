@@ -78,7 +78,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
         <div className="m-10 ">
           <img src="/assets/logo.svg" width={200}/>
         </div>
-        <div className="border rounded bg-white">
+        <div className="border rounded-lg bg-white shadow-sm">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             Login to your account
           </h2>

@@ -184,12 +184,13 @@ const SeriesList = observer(() => {
                     </div>
                 ))}
             {hasSeries && (
-                <Card styles={{body: {padding: '4px'}}}>
+                <Card styles={{body: {padding: '4px'}}} className='rounded-full shadow-sm'>
                     <Button
                         type='link'
                         onClick={() => metric.addSeries()}
                         disabled={!canAddSeries}
                         size="small"
+                        className='block w-full'
                     >
                         <Space>
                             <AudioWaveform size={16}/>

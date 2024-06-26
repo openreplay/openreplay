@@ -13,6 +13,7 @@ import ByUrl from "./Examples/SessionsBy/ByUrl";
 import {ERRORS, FUNNEL, PERFORMANCE, TABLE, TIMESERIES, USER_PATH, WEB_VITALS} from "App/constants/card";
 import {FilterKey} from "Types/filter/filterType";
 import {Activity, BarChart, TableCellsMerge, TrendingUp} from "lucide-react";
+import { size } from "@floating-ui/react-dom-interactions";
 
 const TYPE = {
     FUNNEL: 'funnel',
@@ -31,7 +32,7 @@ const TYPE = {
 
 export const CARD_CATEGORIES = [
     {
-        key: 'product-analytics', label: 'Product Analytics', icon: TrendingUp, types: [USER_PATH, ERRORS]
+        key: 'product-analytics', label: 'Product Analytics', icon: TrendingUp, size:32, types: [USER_PATH, ERRORS]
     },
     {key: 'performance-monitoring', label: 'Performance Monitoring', icon: Activity, types: [TIMESERIES]},
     {key: 'web-analytics', label: 'Web Analytics', icon: BarChart, types: [TABLE]},

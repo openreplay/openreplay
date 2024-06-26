@@ -34,7 +34,7 @@ function WidgetPreview(props: Props) {
 
     return (
         <>
-            <div className={cn(className, 'bg-white rounded border')}>
+            <div className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}>
                 <div className="flex items-center justify-between px-4 pt-2">
                     <h2 className="text-xl">
                         {props.name}

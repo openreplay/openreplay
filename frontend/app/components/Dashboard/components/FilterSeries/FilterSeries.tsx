@@ -115,7 +115,7 @@ function FilterSeries(props: Props) {
     };
 
     return (
-        <div className="border rounded bg-white">
+        <div className="border rounded-lg shadow-sm bg-white ">
             {canExclude && <ExcludeFilters filter={series.filter}/>}
 
             {!hideHeader && (

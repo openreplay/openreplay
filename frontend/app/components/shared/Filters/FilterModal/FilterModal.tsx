@@ -185,7 +185,7 @@ function FilterModal(props: Props) {
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto' }}
+      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto', borderRadius:'.5rem', }}
     >
       <div
         className={searchQuery && !isResultEmpty ? 'mb-6' : ''}
@@ -207,7 +207,7 @@ function FilterModal(props: Props) {
                       key={filter.label}
                       className={cn(
                         stl.optionItem,
-                        'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2'
+                        'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2 rounded-lg hover:shadow-sm'
                       )}
                       onClick={() => onFilterClick({ ...filter, value: [''] })}
                     >

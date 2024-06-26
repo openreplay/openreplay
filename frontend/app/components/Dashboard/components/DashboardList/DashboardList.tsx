@@ -74,46 +74,22 @@ function DashboardList({siteId}: { siteId: string }) {
     return (
         list.length === 0 && !dashboardStore.filter.showMine ? (
             <Empty
-                image={<AnimatedSVG name={ICONS.NO_DASHBOARDS} size={400}/>}
+                image={<AnimatedSVG name={dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS} size={600}/>}
+
                 imageStyle={{height: 300}}
                 description={(
                     <div className="text-center">
-                        {dashboardsSearch !== ''
-                            ? <Typography.Text className="my-2 text-lg">
-                                No matching results
+                        <div>
+                            <Typography.Text className="my-2 text-xl font-medium">
+                                Create your first dashboard.
                             </Typography.Text>
-                            : (
-                                <div>
-                                    <Typography.Text className="mb-2 text-xl font-medium">
-                                        Create your first dashboard.
-                                    </Typography.Text>
-                                    {/* <div className="text-base text-gray-500">
-                                        A Dashboard is a collection of{' '}
-                                        <Tooltip
-                                            title={
-                                                <div className="text-center">
-                                                    Utilize cards to visualize key user interactions or product
-                                                    performance metrics.
-                                                </div>
-                                            }
-                                            className="text-center"
-                                        >
-                                            <span className="underline decoration-dotted">cards</span>
-                                        </Tooltip>{' '}
-                                        that can be shared across teams.
-                                    </div> */}
-
-                                    <div>
-                                    <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
-                                        Organize your product and technical insights as cards in dashboards to see the bigger picture, <br/>take action and improve user experience.
-                                    </div>
-                                    </div>
-
-                                    <div className="my-4">
-                                        <CreateDashboardButton/>
-                                    </div>
-                                </div>
-                            )}
+                            <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
+                                Organize your product and technical insights as cards in dashboards to see the bigger picture, <br/>take action and improve user experience.
+                            </div>
+                            <div className="my-4">
+                                <CreateDashboardButton/>
+                            </div>
+                        </div>
                     </div>
                 )}
             />
@@ -138,6 +114,7 @@ function DashboardList({siteId}: { siteId: string }) {
                 })}
             />)
     );
+    
 }
 
 export default connect((state: any) => ({

@@ -46,7 +46,7 @@ export default observer(WidgetFormNew);
 
 function DefineSteps({metric, excludeFilterKeys}: any) {
     return (
-        <Space className="px-4 py-2">
+        <Space className="px-4 py-2 rounded-lg shadow-sm">
             <Typography.Text strong>Define Steps</Typography.Text>
             <AddStepButton excludeFilterKeys={excludeFilterKeys} series={metric.series[0]}/>
         </Space>

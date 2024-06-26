@@ -25,7 +25,15 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
 
     return (
         <>
-            <Modal open={open} onCancel={onClose} width={900} destroyOnClose={true} footer={null} closeIcon={false}>
+            <Modal 
+            open={open} 
+            onCancel={onClose} 
+            width={900} 
+            destroyOnClose={true} 
+            footer={null} 
+            closeIcon={false} 
+            className='chooseDashboardCards'
+            centered>
                 <div>
                     <div className="flex flex-col gap-4">
                         {step === 0 && <SelectCard onClose={onClose}
