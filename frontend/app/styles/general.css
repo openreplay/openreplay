@@ -383,3 +383,7 @@ p {
   resize: none;
   background-color: #ffff;
 }
+
+.ant-menu-light .ant-menu-item-selected, :where(.css-dev-only-do-not-override).ant-menu-light>.ant-menu .ant-menu-item-selected{
+  background-color: #E6E9FA;
+}

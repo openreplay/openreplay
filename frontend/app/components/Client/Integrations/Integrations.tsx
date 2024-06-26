@@ -108,7 +108,7 @@ function Integrations(props: Props) {
 
   return (
     <>
-      <div className='mb-4 p-5 bg-white rounded-lg border'>
+      <div className='bg-white rounded-lg border shadow-sm p-5 mb-4'>
         {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
 
         <IntegrationFilters onChange={onChange} activeItem={activeFilter} filters={filters} />

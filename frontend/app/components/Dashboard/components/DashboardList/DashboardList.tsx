@@ -84,10 +84,10 @@ function DashboardList({siteId}: { siteId: string }) {
                             </Typography.Text>
                             : (
                                 <div>
-                                    <Typography.Text className="mb-2 text-lg">
-                                        You haven't created any dashboards yet
+                                    <Typography.Text className="mb-2 text-xl font-medium">
+                                        Create your first dashboard.
                                     </Typography.Text>
-                                    <div className="text-sm text-gray-500 mt-2">
+                                    {/* <div className="text-base text-gray-500">
                                         A Dashboard is a collection of{' '}
                                         <Tooltip
                                             title={
@@ -98,9 +98,15 @@ function DashboardList({siteId}: { siteId: string }) {
                                             }
                                             className="text-center"
                                         >
-                                            <span className="underline decoration-dotted">Cards</span>
+                                            <span className="underline decoration-dotted">cards</span>
                                         </Tooltip>{' '}
                                         that can be shared across teams.
+                                    </div> */}
+
+                                    <div>
+                                    <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
+                                        Organize your product and technical insights as cards in dashboards to see the bigger picture, <br/>take action and improve user experience.
+                                    </div>
                                     </div>
 
                                     <div className="my-4">

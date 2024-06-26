@@ -29,7 +29,7 @@ function AuditView() {
     }
 
     return useObserver(() => (
-        <div className="bg-white rounded-lg">
+        <div className="bg-white rounded-lg shadow-sm border">
             <div className="flex items-center mb-4 px-5 pt-5">
                 <PageTitle title={
                     <div className="flex items-center">
