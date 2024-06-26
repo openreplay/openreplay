@@ -296,8 +296,10 @@ const CardBuilder = observer((props: CardBuilderProps) => {
             {/*    metric={metric}*/}
             {/*    writeOption={writeOption}*/}
             {/*/>*/}
-            <MetricTabs metric={metric}
-                        writeOption={writeOption}/>
+
+            {/*<MetricTabs metric={metric}*/}
+            {/*            writeOption={writeOption}/>*/}
+
             {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric}/>}
             {isPredefined && <PredefinedMessage/>}
             {testingKey && (

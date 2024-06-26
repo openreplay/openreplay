@@ -1,9 +1,11 @@
 import React from 'react';
-import {List, Typography} from 'antd';
+import {Button, Space} from 'antd';
 import {filtersMap} from 'Types/filter/newFilter';
 import {Icon} from 'UI';
-import {Progress, Empty} from 'antd';
-import cn from "classnames";
+import {Empty} from 'antd';
+import {ArrowRight} from "lucide-react";
+import CardSessionsByList from "Components/Dashboard/Widgets/CardSessionsByList";
+import {useModal} from "Components/ModalContext";
 
 interface Props {
     metric?: any;
@@ -15,6 +17,8 @@ interface Props {
 function SessionsBy(props: Props) {
     const {metric = {}, data = {values: []}, onClick = () => null, isTemplate} = props;
     const [selected, setSelected] = React.useState<any>(null);
+    const total = data.values.length
+    const {openModal, closeModal} = useModal();
 
     const onClickHandler = (event: any, data: any) => {
         const filters = Array<any>();
@@ -34,8 +38,19 @@ function SessionsBy(props: Props) {
         onClick(filters);
     }
 
+    const showMore = () => {
+        openModal(
+            <CardSessionsByList list={data.values} onClickHandler={(e, item) => {
+                closeModal();
+                onClickHandler(null, item)
+            }} selected={selected}/>, {
+                title: metric.name,
+                width: 600,
+            })
+    }
+
     return (
-        <div style={{height: 240, overflowY: 'scroll', margin: '0 -16px', padding: '0 16px'}}>
+        <div>
             {data.values && data.values.length === 0 ? (
                 <Empty
                     style={{minHeight: 220}}
@@ -49,45 +64,21 @@ function SessionsBy(props: Props) {
                     }
                 />
             ) : (
-                <List
-                    dataSource={data.values}
-                    split={false}
-                    renderItem={(row: any) => (
-                        <List.Item
-                            key={row.name}
-                            onClick={(e) => onClickHandler(e, row)}
-                            // actions={[row.sessionCount]}
-                            style={{borderBottom: '1px dotted rgba(0, 0, 0, 0.05)', padding: '6px 0'}}
-                            className={cn('hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-gray-100' : '')}
-                        >
-                            <List.Item.Meta
-                                avatar={row.icon ? row.icon : null}
-                                title={(
-                                    <div className="flex justify-between">
-                                        <Typography.Text strong>{row.name}</Typography.Text>
-                                        <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
-                                    </div>
-                                )}
-                                description={
-                                    <Progress
-                                        percent={row.progress}
-                                        showInfo={false}
-                                        strokeColor={{
-                                            '0%': '#394EFF',
-                                            '100%': '#394EFF',
-                                        }}
-                                        size={['small', 2]}
-                                        style={{
-                                            padding: '0 0px',
-                                            margin: '0 0px',
-                                        }}
-                                    />
-                                }
-                            />
-                            {/*<div className="min-w-8">{row.value}</div>*/}
-                        </List.Item>
+                <div className="flex flex-col justify-between w-full" style={{height: 220}}>
+                    <CardSessionsByList list={data.values.slice(0, 3)}
+                                        selected={selected}
+                                        onClickHandler={onClickHandler}/>
+                    {total > 3 && (
+                        <div className="flex">
+                            <Button type="link" onClick={showMore}>
+                                <Space>
+                                    {total - 3} more
+                                    <ArrowRight size={16}/>
+                                </Space>
+                            </Button>
+                        </div>
                     )}
-                />
+                </div>
             )}
         </div>
     );

@@ -126,7 +126,7 @@ function WidgetPreview(props: Props) {
                         {/*)}*/}
                     </div>
                 </div>
-                <div className="p-4 pt-0">
+                <div className="pt-0">
                     <WidgetWrapper widget={metric} isPreview={true} isWidget={false} hideName/>
                 </div>
             </div>
