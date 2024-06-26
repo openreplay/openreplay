@@ -15,6 +15,7 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                                                                  isAddingFromLibrary = false,
                                                              }) => {
     const [step, setStep] = React.useState<number>(0);
+    const [selectedCategory, setSelectedCategory] = React.useState<string>('product-analytics');
 
     useEffect(() => {
         return () => {
@@ -28,6 +29,8 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                 <div>
                     <div className="flex flex-col gap-4">
                         {step === 0 && <SelectCard onClose={onClose}
+                                                   selected={selectedCategory}
+                                                   setSelectedCategory={setSelectedCategory}
                                                    onCard={() => setStep(step + 1)}
                                                    isLibrary={isAddingFromLibrary}/>}
                         {step === 1 && <CreateCard onBack={() => setStep(0)}/>}

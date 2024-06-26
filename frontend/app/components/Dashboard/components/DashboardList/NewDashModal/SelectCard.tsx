@@ -9,11 +9,12 @@ interface SelectCardProps {
     onClose: (refresh?: boolean) => void;
     onCard: () => void;
     isLibrary?: boolean;
+    selected?: string;
+    setSelectedCategory?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
-    const {onCard, isLibrary = false} = props;
-    const [selected, setSelected] = React.useState<string>('product-analytics');
+    const {onCard, isLibrary = false, selected, setSelectedCategory} = props;
     const [selectedCards, setSelectedCards] = React.useState<number[]>([]);
     const {metricStore, dashboardStore} = useStore();
     const dashboardId = window.location.pathname.split('/')[3];
@@ -83,7 +84,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
                 )}
             </Space>
 
-            {!isLibrary && <CategorySelector setSelected={setSelected}/>}
+            {!isLibrary && <CategorySelector setSelected={setSelectedCategory} selected={selected}/>}
             {isLibrary ? <CardsLibrary query={libraryQuery} selectedList={selectedCards} category={selected}
                                        onCard={onCardClick}/> :
                 <ExampleCardsGrid items={cardItems}/>}
@@ -111,15 +112,17 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 // );
 
 interface CategorySelectorProps {
-    setSelected: React.Dispatch<React.SetStateAction<string>>;
+    setSelected?: React.Dispatch<React.SetStateAction<string>>;
+    selected?: string;
 }
 
-const CategorySelector: React.FC<CategorySelectorProps> = ({setSelected}) => (
+const CategorySelector: React.FC<CategorySelectorProps> = ({setSelected, selected}) => (
     <Segmented
         options={CARD_CATEGORIES.map(({key, label, icon}) => ({
             label: <Option key={key} label={label} Icon={icon}/>,
             value: key,
         }))}
+        value={selected}
         onChange={setSelected}
     />
 );
