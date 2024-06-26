@@ -51,6 +51,7 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/spots", e.getSpots).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots", e.deleteSpots).Methods("DELETE", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/comment", e.addComment).Methods("POST", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/{id}/uploaded", e.uploadedSpot).Methods("POST", "OPTIONS")
 
 	// CORS middleware
 	e.router.Use(e.corsMiddleware)

@@ -253,6 +253,23 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
+func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	user := r.Context().Value("userData").(*User)
+	// TODO: add a new transcoding task to the queue
+	e.log.Info(r.Context(), "uploaded spot %d, from user: %+v", id, user)
+
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
+}
+
 func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
 	if bodySize > 0 {
 		metrics.RecordRequestSize(float64(bodySize), url, code)
