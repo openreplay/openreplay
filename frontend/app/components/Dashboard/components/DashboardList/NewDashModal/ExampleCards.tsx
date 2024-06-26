@@ -19,15 +19,11 @@ import {
 } from "App/constants/card";
 import {FilterKey} from "Types/filter/filterType";
 import {Activity, BarChart, TableCellsMerge, TrendingUp} from "lucide-react";
-<<<<<<< HEAD
-import { size } from "@floating-ui/react-dom-interactions";
-=======
 import WebVital from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/WebVital";
 import Trend from "./Examples/Trend";
 import Bars from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/Bars";
 import ByIssues from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues";
 import InsightsExample from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample";
->>>>>>> 716e83d819dd66c68d9bb2079e6a57f943bdb9d6
 
 // const TYPE = {
 //     FUNNEL: 'funnel',
@@ -62,20 +58,11 @@ export const CARD_CATEGORY = {
 }
 
 export const CARD_CATEGORIES = [
-<<<<<<< HEAD
-    {
-        key: 'product-analytics', label: 'Product Analytics', icon: TrendingUp, size:32, types: [USER_PATH, ERRORS]
-    },
-    {key: 'performance-monitoring', label: 'Performance Monitoring', icon: Activity, types: [TIMESERIES]},
-    {key: 'web-analytics', label: 'Web Analytics', icon: BarChart, types: [TABLE]},
-    {key: 'core-web-vitals', label: 'Core Web Vitals', icon: TableCellsMerge, types: [WEB_VITALS]}
-=======
     {key: CARD_CATEGORY.PRODUCT_ANALYTICS, label: 'Product Analytics', icon: TrendingUp, types: [USER_PATH, ERRORS]},
     {key: CARD_CATEGORY.PERFORMANCE_MONITORING, label: 'Performance Monitoring', icon: Activity, types: [TIMESERIES]},
     {key: CARD_CATEGORY.WEB_ANALYTICS, label: 'Web Analytics', icon: BarChart, types: [TABLE]},
     {key: CARD_CATEGORY.ERROR_TRACKING, label: 'Errors Tracking', icon: TableCellsMerge, types: [WEB_VITALS]},
     {key: CARD_CATEGORY.WEB_VITALS, label: 'Web Vitals', icon: TableCellsMerge, types: [WEB_VITALS]}
->>>>>>> 716e83d819dd66c68d9bb2079e6a57f943bdb9d6
 ];
 
 export interface CardType {
