@@ -15,8 +15,6 @@ import FilterItem from './filterItem';
 import {filtersMap} from 'Types/filter/newFilter';
 import Issue from '../types/issue';
 import {durationFormatted} from 'App/date';
-import React from "react";
-import {countries} from "App/constants/countries";
 import {SessionsByRow} from "./sessionsCardData";
 
 export class InsightIssue {
