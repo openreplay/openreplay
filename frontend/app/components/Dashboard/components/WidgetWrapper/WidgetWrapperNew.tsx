@@ -1,7 +1,6 @@
 import React, {useRef} from 'react';
 import cn from 'classnames';
 import {Card, Tooltip, Button} from 'antd';
-import {ItemMenu, TextEllipsis} from 'UI';
 import {useDrag, useDrop} from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import {observer} from 'mobx-react-lite';
@@ -9,11 +8,12 @@ import {useStore} from 'App/mstore';
 import {withRouter, RouteComponentProps} from 'react-router-dom';
 import {withSiteId, dashboardMetricDetails} from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
-import AlertButton from './AlertButton';
 import stl from './widgetWrapper.module.css';
 import {FilterKey} from 'App/types/filter/filterType';
 import LazyLoad from 'react-lazyload';
 import {TIMESERIES} from "App/constants/card";
+import CardMenu from "Components/Dashboard/components/WidgetWrapper/CardMenu";
+import AlertButton from "Components/Dashboard/components/WidgetWrapper/AlertButton";
 
 interface Props {
     className?: string;
@@ -74,10 +74,6 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
         }),
     });
 
-    const onDelete = async () => {
-        dashboardStore.deleteDashboardWidget(dashboard?.dashboardId!, widget.widgetId);
-    };
-
     const onChartClick = () => {
         if (!isWidget || isPredefined) return;
         props.history.push(
@@ -114,29 +110,11 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
             extra={isWidget ? [
                 <div className="flex items-center" id="no-print">
                     {!isPredefined && isTimeSeries && !isGridView && (
-                        <>
-                            <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId}/>
-                            <div className="mx-2"/>
-                        </>
+                        <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId}/>
                     )}
 
                     {!isTemplate && !isGridView && (
-                        <ItemMenu
-                            items={[
-                                {
-                                    text:
-                                        widget.metricType === 'predefined'
-                                            ? 'Cannot edit system generated metrics'
-                                            : 'Edit',
-                                    onClick: onChartClick,
-                                    disabled: widget.metricType === 'predefined',
-                                },
-                                {
-                                    text: 'Hide',
-                                    onClick: onDelete,
-                                },
-                            ]}
-                        />
+                        <CardMenu card={widget} key="card-menu"/>
                     )}
                 </div>
             ] : []}

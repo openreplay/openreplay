@@ -57,7 +57,7 @@ function WidgetView(props: Props) {
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
             metricStore.fetch(metricId, dashboardStore.period).catch((e) => {
-                if (e.status === 404 || e.status === 422) {
+                if (e.response.status === 404 || e.response.status === 422) {
                     setMetricNotFound(true);
                 }
             });

@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {Button, Segmented} from 'antd';
+import {Button, Input, Segmented, Space} from 'antd';
 import {CARD_LIST, CARD_CATEGORIES, CardType} from './ExampleCards';
 import {useStore} from 'App/mstore';
 import Option from './Option';
@@ -17,6 +17,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
     const [selectedCards, setSelectedCards] = React.useState<number[]>([]);
     const {metricStore, dashboardStore} = useStore();
     const dashboardId = window.location.pathname.split('/')[3];
+    const [libraryQuery, setLibraryQuery] = React.useState<string>('');
 
 
     const handleCardSelection = (card: string) => {
@@ -55,33 +56,59 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 
     return (
         <>
-            <Header selectedCount={selectedCards.length} onAdd={onAddSelected}/>
+            {/*<Header selectedCount={selectedCards.length}*/}
+            {/*        onAdd={onAddSelected}*/}
+            {/*        title={dashboardId ? (isLibrary ? "Add Card" : "Create Card") : "Select a template to create a card"}*/}
+            {/*/>*/}
+
+            <Space className="items-center justify-between">
+                <div className="text-lg leading-4 font-semibold">
+                    {dashboardId ? (isLibrary ? "Add Card" : "Create Card") : "Select a template to create a card"}
+                </div>
+                {isLibrary && (
+                    <Space>
+                        {selectedCards.length > 0 ? (
+                            <Button type="primary" onClick={onAddSelected}>
+                                Add {selectedCards.length} Selected
+                            </Button>
+                        ) : ''}
+
+                        <Input.Search
+                            placeholder="Search"
+                            // onSearch={(value) => setLibraryQuery(value)}
+                            onChange={(value) => setLibraryQuery(value.target.value)}
+                            style={{width: 200}}
+                        />
+                    </Space>
+                )}
+            </Space>
+
             {!isLibrary && <CategorySelector setSelected={setSelected}/>}
-            {isLibrary ? <CardsLibrary selectedList={selectedCards} category={selected} onCard={onCardClick}/> :
+            {isLibrary ? <CardsLibrary query={libraryQuery} selectedList={selectedCards} category={selected}
+                                       onCard={onCardClick}/> :
                 <ExampleCardsGrid items={cardItems}/>}
         </>
     );
 };
 
-interface HeaderProps {
-    selectedCount?: number,
-    onAdd?: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({selectedCount = 0, onAdd = () => null}) => (
-    <div className="flex items-center justify-between">
-        <div className="text-2xl leading-4 font-semibold">
-            Select your first card type to add to the dashboard
-        </div>
-        <div className="text-sm text-gray-500">
-            {selectedCount > 0 ? (
-                <Button type="link" onClick={onAdd}>
-                    Add {selectedCount} Selected
-                </Button>
-            ) : ''}
-        </div>
-    </div>
-);
+// interface HeaderProps {
+//     selectedCount?: number,
+//     onAdd?: () => void;
+//     title?: string;
+// }
+//
+// const Header: React.FC<HeaderProps> = ({title = '', selectedCount = 0, onAdd = () => null}) => (
+//     <div className="flex items-center justify-between">
+//         <div className="text-lg leading-4 font-semibold">{title}</div>
+//         <div className="text-sm text-gray-500">
+//             {selectedCount > 0 ? (
+//                 <Button type="link" onClick={onAdd}>
+//                     Add {selectedCount} Selected
+//                 </Button>
+//             ) : ''}
+//         </div>
+//     </div>
+// );
 
 interface CategorySelectorProps {
     setSelected: React.Dispatch<React.SetStateAction<string>>;

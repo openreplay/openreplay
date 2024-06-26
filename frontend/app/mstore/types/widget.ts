@@ -295,8 +295,6 @@ export default class Widget {
         } else if (this.metricType === TABLE) {
             const totalSessions = data[0]['totalSessions'];
             _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, totalSessions, this.metricOf));
-
-            console.log('_data[\'values\']', _data['values'])
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;

@@ -91,7 +91,7 @@ function FilterSeries(props: Props) {
         canExclude = false,
         expandable = false
     } = props;
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(!expandable);
     const {series, seriesIndex} = props;
 
     const onUpdateFilter = (filterIndex: any, filter: any) => {

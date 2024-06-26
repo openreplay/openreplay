@@ -1,6 +1,6 @@
 import React from 'react';
 import {Card, Col, Modal, Row, Typography} from "antd";
-import {Grid2X2, Plus} from "lucide-react";
+import {Grid2x2CheckIcon, Plus} from "lucide-react";
 import NewDashboardModal from "Components/Dashboard/components/DashboardList/NewDashModal";
 
 interface Props {
@@ -32,8 +32,8 @@ function AddCardSelectionModal(props: Props) {
                 <Row gutter={16} justify="center">
                     <Col span={12}>
                         <Card hoverable onClick={() => onClick(true)}>
-                            <div className="flex flex-col items-center justify-center">
-                                <Grid2X2 style={{fontSize: '24px', color: '#1890ff'}}/>
+                            <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
+                                <Grid2x2CheckIcon style={{fontSize: '24px', color: '#1890ff'}}/>
                                 <Typography.Text strong>Add from library</Typography.Text>
                                 <p>Select from 12 available</p>
                             </div>
@@ -41,7 +41,7 @@ function AddCardSelectionModal(props: Props) {
                     </Col>
                     <Col span={12}>
                         <Card hoverable onClick={() => onClick(false)}>
-                            <div className="flex flex-col items-center justify-center">
+                            <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
                                 <Plus style={{fontSize: '24px', color: '#1890ff'}}/>
                                 <p>Create New Card</p>
                             </div>

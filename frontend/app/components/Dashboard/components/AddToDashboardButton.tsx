@@ -1,32 +1,63 @@
 import React from 'react';
-import DashboardSelectionModal from "Components/Dashboard/components/DashboardSelectionModal/DashboardSelectionModal";
 import {Grid2x2Check} from "lucide-react"
-import {Button} from "antd";
+import {Button, Modal} from "antd";
+import Select from "Shared/Select/Select";
+import {Form} from "UI";
+import {useStore} from "App/mstore";
 
 interface Props {
     metricId: string;
 }
 
 function AddToDashboardButton({metricId}: Props) {
-    const [show, setShow] = React.useState(false);
+    const {dashboardStore} = useStore();
+    const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
+        key: i.id,
+        label: i.name,
+        value: i.dashboardId,
+    }));
+    const [selectedId, setSelectedId] = React.useState(dashboardOptions[0].value);
+
+    const onSave = (close: any) => {
+        const dashboard = dashboardStore.getDashboard(selectedId)
+        if (dashboard) {
+            dashboardStore.addWidgetToDashboard(dashboard, [metricId]).then(close)
+        }
+    }
+
+    const onClick = () => {
+        Modal.confirm({
+            title: 'Add to selected dashboard',
+            icon: null,
+            content: (
+                <Form.Field>
+                    <Select
+                        options={dashboardOptions}
+                        defaultValue={dashboardOptions[0].value}
+                        onChange={({value}: any) => setSelectedId(value.value)}
+                    />
+                </Form.Field>
+            ),
+            cancelText: 'Cancel',
+            onOk: onSave,
+            okText: 'Add',
+            footer: (_, {OkBtn, CancelBtn}) => (
+                <>
+                    <CancelBtn/>
+                    <OkBtn/>
+                </>
+            ),
+        })
+    }
+
     return (
-        <>
-            <Button
-                type="default"
-                // className="ml-2 p-0"
-                onClick={() => setShow(true)}
-                icon={<Grid2x2Check size={18}/>}
-            >
-                Add to Dashboard
-            </Button>
-            {show && (
-                <DashboardSelectionModal
-                    metricId={metricId}
-                    show={show}
-                    closeHandler={() => setShow(false)}
-                />
-            )}
-        </>
+        <Button
+            type="default"
+            onClick={onClick}
+            icon={<Grid2x2Check size={18}/>}
+        >
+            Add to Dashboard
+        </Button>
     );
 }
 

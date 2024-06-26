@@ -17,10 +17,11 @@ interface Props {
     category?: string;
     selectedList: any;
     onCard: (metricId: number) => void;
+    query?: string;
 }
 
 function CardsLibrary(props: Props) {
-    const {selectedList} = props;
+    const {selectedList, query = ''} = props;
     const {metricStore, dashboardStore} = useStore();
 
     // const cards = useMemo(() => {
@@ -28,6 +29,12 @@ function CardsLibrary(props: Props) {
     //         return CARD_TYPES_MAP[props.category || 'default'].includes(card.metricType);
     //     });
     // }, [metricStore.filteredCards, props.category]);
+
+    const cards = useMemo(() => {
+        return metricStore.filteredCards.filter((card: any) => {
+            return card.name.toLowerCase().includes(query.toLowerCase());
+        });
+    }, [query, metricStore.filteredCards]);
 
     useEffect(() => {
         metricStore.fetchList();
@@ -40,7 +47,7 @@ function CardsLibrary(props: Props) {
     return (
         <Loader loading={metricStore.isLoading}>
             <div className="grid grid-cols-4 gap-4 items-start">
-                {metricStore.filteredCards.map((metric: any) => (
+                {cards.map((metric: any) => (
                     <React.Fragment key={metric.metricId}>
                         <div className={'col-span-' + metric.config.col}
                              onClick={() => onItemClick(metric.metricId)}>
@@ -50,7 +57,12 @@ function CardsLibrary(props: Props) {
                                           border: selectedList.includes(metric.metricId) ? '1px solid #1890ff' : '1px solid #f0f0f0',
                                       }}
                                       styles={{
-                                          header: {padding: '4px 14px', minHeight: '36px', fontSize: '14px'},
+                                          header: {
+                                              padding: '4px 14px',
+                                              minHeight: '36px',
+                                              fontSize: '14px',
+                                              borderBottom: 'none'
+                                          },
                                           body: {padding: '14px'},
                                           cover: {
                                               border: '2px solid #1890ff',
@@ -60,8 +72,8 @@ function CardsLibrary(props: Props) {
                                     <WidgetChart
                                         // isPreview={true}
                                         metric={metric}
-                                        // isTemplate={true}
-                                        // isWidget={false}
+                                        isTemplate={true}
+                                        isWidget={true}
                                     />
                                 </Card>
                             </LazyLoad>

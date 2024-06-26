@@ -97,7 +97,6 @@ function WidgetChart(props: Props) {
         if (!isMounted()) return;
         setLoading(true);
         dashboardStore.fetchMetricChartData(metric, payload, isWidget, period).then((res: any) => {
-            console.log('res', res)
             if (isMounted()) setData(res);
         }).finally(() => {
             setLoading(false);
