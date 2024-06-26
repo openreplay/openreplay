@@ -13,7 +13,16 @@ interface Props {
 function Bars(props: Props) {
     const _data = props.data || {
         total: 90,
-        values: []
+        values: [
+            {
+                "label": "company.domain.com",
+                "value": 89
+            },
+            {
+                "label": "openreplay.com",
+                "value": 15
+            }
+        ]
     }
     return (
         <ExCard
