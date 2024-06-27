@@ -53,6 +53,7 @@ export const setQueryParams = (location: Location, params: Record<string, any>):
 };
 
 export const login = (): string => '/login';
+export const spotLogin = (): string => '/spot-login';
 export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
