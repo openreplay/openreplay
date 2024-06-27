@@ -16,7 +16,7 @@ function ExCard({
     console.log(type)
     return (
         <div
-            className={'rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:border-blue hover:shadow-sm'}
+            className={'rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:border-blue hover:shadow-sm relative'}
             style={{width: '100%', height: height || 286}}
         >
             <div className={'font-medium text-lg'}>{title}</div>
