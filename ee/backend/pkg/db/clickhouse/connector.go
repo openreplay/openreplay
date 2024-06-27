@@ -334,7 +334,11 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 	fullPath := ""
 	_, path, query, err := url.GetURLParts(msg.URL)
 	if err == nil {
-		fullPath = strings.ToLower(path + "?" + query)
+		pathQuery := path
+		if query != "" {
+			pathQuery += "?" + query
+		}
+		fullPath = strings.ToLower(pathQuery)
 	} else {
 		log.Printf("can't parse url: %s", err)
 	}
@@ -363,7 +367,11 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 	fullPath := ""
 	_, path, query, err := url.GetURLParts(msg.URL)
 	if err == nil {
-		fullPath = strings.ToLower(path + "?" + query)
+		pathQuery := path
+		if query != "" {
+			pathQuery += "?" + query
+		}
+		fullPath = strings.ToLower(pathQuery)
 	} else {
 		log.Printf("can't parse url: %s", err)
 	}
