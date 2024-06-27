@@ -63,7 +63,7 @@ function Row({ msg }) {
           >
             {msg.data}
           </span>
-          {msg.data.length > 100 ? (
+          {msg.data.length > 40 ? (
             <div
               className={
                 'rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center'
