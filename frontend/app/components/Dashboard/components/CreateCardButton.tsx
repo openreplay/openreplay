@@ -1,5 +1,7 @@
 import React from "react";
-import {Button, Tooltip} from "UI";
+import {Tooltip} from "UI";
+import {Button} from "antd";
+import { PlusOutlined } from '@ant-design/icons';
 import AddCardSelectionModal from "Components/Dashboard/components/AddCardSelectionModal";
 import {useStore} from "App/mstore";
 
@@ -15,11 +17,10 @@ function CreateCardButton() {
         <Tooltip delay={0} disabled={canAddMore}
                  title="The number of cards in one dashboard is limited to 30.">
             <Button
+                type="primary"
                 disabled={!canAddMore}
-                variant="primary"
                 onClick={() => setOpen(true)}
-                icon="plus"
-                iconSize={24}
+                icon={<PlusOutlined />}
             >
                 Add Card
             </Button>

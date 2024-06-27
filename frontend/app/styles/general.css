@@ -404,4 +404,10 @@ p {
 .chooseDashboardCards .ant-modal-content{
   background-color: #efefef;
   border-radius: 0.75rem;
+  max-height: 700px;
+  overflow: hidden;
+}
+
+.dashboardDataPeriodSelector .dashboardMoreOptionsLabel{
+  display: none;
 }
