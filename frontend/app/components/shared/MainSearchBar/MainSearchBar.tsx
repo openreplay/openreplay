@@ -2,7 +2,8 @@ import React from 'react';
 import SessionSearchField from 'Shared/SessionSearchField';
 import AiSessionSearchField from 'Shared/SessionSearchField/AiSessionSearchField';
 import SavedSearch from 'Shared/SavedSearch';
-import { Button } from 'UI';
+// import { Button } from 'UI';
+import { Button } from 'antd';
 import { connect } from 'react-redux';
 import { clearSearch } from 'Duck/search';
 import TagList from './components/TagList';
@@ -41,10 +42,12 @@ const MainSearchBar = (props: Props) => {
         <TagList />
         <SavedSearch />
         <Button
-          variant={hasSearch ? 'text-primary' : 'text'}
-          className="ml-auto font-medium"
+          // variant={hasSearch ? 'text-primary' : 'text'}
+          // className="ml-auto font-medium"
+          type='link'
           disabled={!hasSearch}
           onClick={() => props.clearSearch()}
+          className='ml-auto font-medium'
         >
           Clear Search
         </Button>

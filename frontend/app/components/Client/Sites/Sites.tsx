@@ -111,7 +111,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
 
   return (
     <Loader loading={loading}>
-      <div className="bg-white rounded-lg">
+      <div className="bg-white rounded-lg shadow-sm border">
         <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
           <PageTitle
             title={<div className="mr-4">Projects</div>}

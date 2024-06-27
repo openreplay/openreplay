@@ -1,13 +1,13 @@
 import React from 'react';
 import SelectDateRange from 'Shared/SelectDateRange';
-import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import {useStore} from 'App/mstore';
+import {useObserver} from 'mobx-react-lite';
+import {Space} from "antd";
 
-interface Props {
-
-}
-function WidgetDateRange(props: Props) {
-    const { dashboardStore } = useStore();
+function WidgetDateRange({
+                             label = 'Time Range',
+                         }: any) {
+    const {dashboardStore} = useStore();
     const period = useObserver(() => dashboardStore.drillDownPeriod);
     const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
 
@@ -21,15 +21,14 @@ function WidgetDateRange(props: Props) {
     }
 
     return (
-        <>
-            <span className="mr-1 color-gray-medium">Time Range</span>
+        <Space>
+            {label && <span className="mr-1 color-gray-medium">{label}</span>}
             <SelectDateRange
                 period={period}
-                // onChange={(period: any) => metric.setPeriod(period)}
                 onChange={onChangePeriod}
                 right={true}
-            />  
-        </>
+            />
+        </Space>
     );
 }
 

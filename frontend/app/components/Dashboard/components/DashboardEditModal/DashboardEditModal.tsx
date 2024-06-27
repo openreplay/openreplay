@@ -57,7 +57,7 @@ function DashboardEditModal(props: Props) {
                     />
                 </Form.Field>
 
-                <Form.Field>
+                {/* <Form.Field>
                     <label>{'Description:'}</label>
                     <Input
                         className=""
@@ -69,7 +69,7 @@ function DashboardEditModal(props: Props) {
                         maxLength={300}
                         autoFocus={!focusTitle}
                     />
-                </Form.Field>
+                </Form.Field> */}
 
                 <Form.Field>
                     <div className="flex items-center">

@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react';
-import CustomMetriLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetriLineChart';
+import CustomMetricLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricLineChart';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
@@ -33,6 +33,7 @@ import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
 import SankeyChart from 'Shared/Insights/SankeyChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
+import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy";
 
 interface Props {
     metric: any;
@@ -140,7 +141,7 @@ function WidgetChart(props: Props) {
         if (metricType === TIMESERIES) {
             if (viewType === 'lineChart') {
                 return (
-                    <CustomMetriLineChart
+                    <CustomMetricLineChart
                         data={data}
                         colors={colors}
                         params={params}
@@ -181,11 +182,17 @@ function WidgetChart(props: Props) {
             }
             if (viewType === TABLE) {
                 return (
-                    <CustomMetricTable
-                        metric={metric} data={data[0]}
+                    <SessionsBy
+                        metric={metric}
+                        data={data[0]}
                         onClick={onChartClick}
                         isTemplate={isTemplate}
                     />
+                    // <CustomMetricTable
+                    //     metric={metric} data={data[0]}
+                    //     onClick={onChartClick}
+                    //     isTemplate={isTemplate}
+                    // />
                 );
             } else if (viewType === 'pieChart') {
                 return (
@@ -229,7 +236,7 @@ function WidgetChart(props: Props) {
         if (metricType === RETENTION) {
             if (viewType === 'trend') {
                 return (
-                    <CustomMetriLineChart
+                    <CustomMetricLineChart
                         data={data}
                         colors={colors}
                         params={params}

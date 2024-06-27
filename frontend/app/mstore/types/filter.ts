@@ -1,9 +1,13 @@
-import { makeAutoObservable, runInAction, observable, action } from "mobx"
+import {makeAutoObservable, runInAction, observable, action} from "mobx"
 import FilterItem from "./filterItem"
-import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
+import {filtersMap, conditionalFiltersMap} from 'Types/filter/newFilter';
+import {FilterKey} from "Types/filter/filterType";
 
 export default class Filter {
-    public static get ID_KEY():string { return "filterId" }
+    public static get ID_KEY(): string {
+        return "filterId"
+    }
+
     filterId: string = ''
     name: string = ''
     filters: FilterItem[] = []
@@ -70,7 +74,7 @@ export default class Filter {
     fromJson(json: any) {
         this.name = json.name
         this.filters = json.filters.map((i: Record<string, any>) =>
-          new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i)
+            new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i)
         );
         this.eventsOrder = json.eventsOrder
         return this
@@ -79,7 +83,7 @@ export default class Filter {
     fromData(data) {
         this.name = data.name
         this.filters = data.filters.map((i: Record<string, any>) =>
-          new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
+            new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
         )
         this.eventsOrder = data.eventsOrder
         return this
@@ -120,5 +124,11 @@ export default class Filter {
 
     removeExcludeFilter(index: number) {
         this.excludes.splice(index, 1)
+    }
+
+    addFunnelDefaultFilters() {
+        this.filters = []
+        this.addFilter({...filtersMap[FilterKey.LOCATION], value: [''], operator: 'isAny'})
+        this.addFilter({...filtersMap[FilterKey.CLICK], value: [''], operator: 'onAny'})
     }
 }

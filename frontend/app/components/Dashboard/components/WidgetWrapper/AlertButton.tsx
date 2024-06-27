@@ -1,26 +1,33 @@
 import React from 'react';
 import WidgetIcon from './WidgetIcon';
-import { useStore } from 'App/mstore';
+import {useStore} from 'App/mstore';
+import {Button} from "antd";
+import {BellIcon} from "lucide-react";
+import {useModal} from "Components/ModalContext";
+import AlertFormModal from "Components/Alerts/AlertFormModal/AlertFormModal";
 
 interface Props {
     seriesId: string;
-    initAlert: Function;
+    initAlert?: Function;
 }
+
 function AlertButton(props: Props) {
-    const { seriesId } = props;
-    const { dashboardStore, alertsStore } = useStore();
+    const {seriesId} = props;
+    const {dashboardStore, alertsStore} = useStore();
+    const {openModal, closeModal} = useModal();
     const onClick = () => {
-        dashboardStore.toggleAlertModal(true);
-        alertsStore.init({ query: { left: seriesId }})
+        // dashboardStore.toggleAlertModal(true);
+        alertsStore.init({query: {left: seriesId}})
+        openModal(<AlertFormModal
+            onClose={closeModal}
+        />, {
+            // title: 'Set Alerts',
+            placement: 'right',
+            width: 620,
+        });
     }
     return (
-      <div onClick={onClick}>
-        <WidgetIcon
-            className="cursor-pointer"
-            icon="bell-plus"
-            tooltip="Set Alert"
-        />
-      </div>
+        <Button onClick={onClick} type="text" icon={<BellIcon size={16}/>}/>
     );
 }
 

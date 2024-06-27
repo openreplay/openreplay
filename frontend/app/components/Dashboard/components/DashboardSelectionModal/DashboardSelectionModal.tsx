@@ -1,7 +1,8 @@
-import { useObserver } from 'mobx-react-lite';
+import {useObserver} from 'mobx-react-lite';
 import React from 'react';
-import { Button, Modal, Form, Icon } from 'UI';
-import { useStore } from 'App/mstore'
+import {Button, Modal, Form, Icon} from 'UI';
+
+import {useStore} from 'App/mstore'
 import Select from 'Shared/Select';
 
 interface Props {
@@ -9,9 +10,10 @@ interface Props {
     show: boolean;
     closeHandler?: () => void;
 }
+
 function DashboardSelectionModal(props: Props) {
-    const { show, metricId, closeHandler } = props;
-    const { dashboardStore } = useStore();
+    const {show, metricId, closeHandler} = props;
+    const {dashboardStore} = useStore();
     const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
         key: i.id,
         label: i.name,
@@ -41,16 +43,16 @@ function DashboardSelectionModal(props: Props) {
     }, [])
 
     return useObserver(() => (
-        <Modal size="small" open={ show } onClose={closeHandler}>
+        <Modal size="small" open={show} onClose={closeHandler}>
             <Modal.Header className="flex items-center justify-between">
-                <div>{ 'Add to selected dashboard' }</div>
-                <Icon 
+                <div className='text-xl font-medium'>{'Add to selected dashboard'}</div>
+                <Icon
                     role="button"
                     tabIndex="-1"
                     color="gray-dark"
                     size="14"
                     name="close"
-                    onClick={ closeHandler }
+                    onClick={closeHandler}
                 />
             </Modal.Header>
 
@@ -60,21 +62,21 @@ function DashboardSelectionModal(props: Props) {
                     <Select
                         options={dashboardOptions}
                         defaultValue={dashboardOptions[0].value}
-                        onChange={({ value }: any) => setSelectedId(value.value)}
+                        onChange={({value}: any) => setSelectedId(value.value)}
                     />
                 </Form.Field>
             </Modal.Content>
             <Modal.Footer>
                 <Button
                     variant="primary"
-                    onClick={ onSave }
-                    className="float-left mr-2"
+                    onClick={onSave}
+                    className="float-left mr-2 "
                 >
                     Add
                 </Button>
-                <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
+                <Button className="mr-2" onClick={closeHandler}>{'Cancel'}</Button>
             </Modal.Footer>
-      </Modal>
+        </Modal>
     ));
 }
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
 import { debounce } from 'App/utils';
+import { Input } from 'antd';
 
 let debounceUpdate: any = () => {};
 
@@ -24,16 +24,15 @@ function DashboardSearch() {
   };
 
   return (
-    <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
-      <input
-        value={query}
-        name="dashboardsSearch"
-        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
-        placeholder="Filter by title or description"
-        onChange={write}
-      />
-    </div>
+    <Input.Search
+      value={query}
+      allowClear
+      name="dashboardsSearch"
+      className="w-full"
+      placeholder="Filter by title or description"
+      onChange={write}
+      onSearch={(value) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value })}
+    />
   );
 }
 

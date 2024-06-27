@@ -12,7 +12,7 @@ const dropdownStyles = {
       cursor: 'pointer',
       height: '26px',
       minHeight: '26px',
-      borderRadius: '3px',
+      borderRadius: '.5rem',
       boxShadow: 'none !important',
     };
     return obj;

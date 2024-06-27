@@ -41,7 +41,7 @@ export function sortEvents(a: Record<string, any>, b: Record<string, any>) {
   return aTs - bTs;
 }
 
-function hashString(s: string): number {
+export function hashString(s: string): number {
   let mul = 1;
   let hash = 0;
   for (let i = 0; i < s.length; i++) {

@@ -23,7 +23,7 @@ function ForgotPassword(props: Props) {
         <div className="m-10 ">
           <img src="/assets/logo.svg" width={200} />
         </div>
-        <div className="border rounded bg-white" style={{ width: '350px' }}>
+        <div className="border rounded-lg bg-white shadow-sm" style={{ width: '350px' }}>
           {creatingNewPassword ? (
             <h2 className="text-center text-lg font-medium mb-6 border-b p-5 w-full">
               Welcome, join your organization by creating a new password

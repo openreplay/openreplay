@@ -34,9 +34,11 @@ const CustomLink: React.FC<CustomLinkProps> = (props) => {
     targetControlX,
     linkWidth,
     index,
-  } = props;
-  const isActive = activeLinks.length > 0 && activeLinks.includes(payload.id);
-  const isHover = hoveredLinks.length > 0 && hoveredLinks.includes(payload.id);
+    activeLink
+  } =
+    props;
+  const isActive = activeLinks?.length > 0 && activeLinks.includes(payload.id);
+  const isHover = hoveredLinks?.length > 0 && hoveredLinks.includes(payload.id);
 
   const onClick = () => {
     if (props.onClick) {

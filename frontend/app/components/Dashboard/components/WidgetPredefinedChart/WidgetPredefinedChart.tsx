@@ -42,7 +42,7 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.ERRORS_PER_TYPE:
                 return <ErrorsByType data={data} metric={metric} />
             case FilterKey.ERRORS_PER_DOMAINS:
-                return <ErrorsPerDomain data={data} metric={metric} />
+                return <ErrorsPerDomain data={metric.data} />
             case FilterKey.RESOURCES_BY_PARTY:
                 return <ErrorsByOrigin data={data} metric={metric} />
             case FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS:
@@ -52,7 +52,7 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.DOMAINS_ERRORS_5XX:
                 return <CallsErrors5xx data={data} metric={metric} />
             case FilterKey.CALLS_ERRORS:
-                return <CallWithErrors isTemplate={isTemplate} data={data} metric={metric} />
+                return <CallWithErrors isTemplate={isTemplate} data={data} />
 
             // PERFORMANCE
             case FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES:

@@ -58,7 +58,7 @@ function SessionSearchField(props: Props) {
       />
 
       {showModal && (
-        <div className="absolute left-0 border shadow rounded bg-white z-50">
+        <div className="absolute left-0 shadow-sm rounded-lg bg-white z-50">
           <FilterModal
             searchQuery={searchQuery}
             isMainSearch={true}

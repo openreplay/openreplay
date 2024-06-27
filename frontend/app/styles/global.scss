@@ -14,7 +14,7 @@ input.no-focus:focus {
 }
 
 .widget-wrapper {
-    @apply rounded border bg-white;
+    @apply rounded-lg shadow-sm border bg-white;
 }
 
 @layer base {

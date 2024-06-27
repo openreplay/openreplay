@@ -43,7 +43,15 @@ export const getUniqueFilter = (keys) => (item, i, list) =>
 
 export const numberWithCommas = (x) => (x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0);
 
-export const numberCompact = (x) => (x >= 1000 ? x / 1000 + 'k' : x);
+export const numberCompact = (x) => {
+  if (x < 1000) {
+    return x;
+  }
+  if (x < 1000000) {
+    return `${Math.floor(x / 1000)}K`;
+  }
+  return `${Math.floor(x / 1000000)}M`;
+}
 
 export const cutURL = (url, prefix = '.../') => `${prefix + url.split('/').slice(3).join('/')}`;
 

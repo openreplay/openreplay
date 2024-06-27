@@ -12,7 +12,7 @@ function sortObjectValuesAlphabetically(obj) {
   return sortedObj;
 }
 
-const countries = {
+export const countries = {
   AC: 'Ascension Island',
   AD: 'Andorra',
   AE: 'United Arab Emirates',

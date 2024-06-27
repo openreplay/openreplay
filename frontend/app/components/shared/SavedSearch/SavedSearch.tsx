@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Button, Icon } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import { connect } from 'react-redux';
 import { fetchList as fetchListSavedSearch } from 'Duck/search';
 import cn from 'classnames';
@@ -27,11 +28,14 @@ function SavedSearch(props: Props) {
   return (
     <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
       <Button
-        variant="outline"
+        // variant="outline"
+        type='primary'
+        ghost
         onClick={() => showModal(<SavedSearchModal />, { right: true, width: 450 })}
+        className='flex gap-1'
       >
         <span className="mr-1">Saved Search</span>
-        <span className="font-bold mr-2">{list.size}</span>
+        <span className="font-meidum">{list.size}</span>
         <Icon name="ellipsis-v" color="teal" size="14" />
       </Button>
       { savedSearch.exists() && (

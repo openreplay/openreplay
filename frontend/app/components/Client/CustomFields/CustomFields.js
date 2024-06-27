@@ -68,7 +68,7 @@ function CustomFields(props) {
 
     const { fields, loading } = props;
     return (
-        <div className="p-5 bg-white rounded-lg">
+        <div className="bg-white rounded-lg shadow-sm border p-5 ">
             <div className={cn(styles.tabHeader)}>
                 <h3 className={cn(styles.tabTitle, 'text-2xl')}>{'Metadata'}</h3>
                 <div style={{ marginRight: '15px' }}>

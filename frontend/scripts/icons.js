@@ -64,10 +64,8 @@ icons.forEach((icon) => {
   iconPaths.push({ path: `./Icons/${name}`, name, oldName: icon.slice(0, -4), fileName });
   const svg = fs.readFileSync(`${ICONS_DIRNAME}/${icon}`, 'utf-8');
   const canOptimize = !icon.includes('integrations');
-  const { data } = optimize(svg, plugins(canOptimize));
-  if (titleCase(fileName) === 'Integrations_slack_bw') {
-    console.log(data, svg)
-  }
+  const keepOriginal = icon.includes('color')
+  const { data } = keepOriginal ? { data: svg } : optimize(svg, plugins(canOptimize));
   fs.writeFileSync(path, `
 /* Auto-generated, do not edit */
 import React from 'react';

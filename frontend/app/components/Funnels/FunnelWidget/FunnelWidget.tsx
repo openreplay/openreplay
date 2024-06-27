@@ -8,7 +8,7 @@ import { NoContent, Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
 
 interface Props {
-    metric: Widget;
+    metric?: Widget;
     isWidget?: boolean;
     data: any;
 }
