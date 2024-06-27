@@ -190,31 +190,34 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
-def __merge_metric_with_data(metric: schemas.CardSchema,
-                             data: schemas.CardSessionsSchema) -> schemas.CardSchema:
-    metric.startTimestamp = data.startTimestamp
-    metric.endTimestamp = data.endTimestamp
-    metric.page = data.page
-    metric.limit = data.limit
-    metric.density = data.density
-    if data.series is not None and len(data.series) > 0:
-        metric.series = data.series
-
-    # if len(data.filters) > 0:
-    #     for s in metric.series:
-    #         s.filter.filters += data.filters
-    # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
-    return metric
+# def __merge_metric_with_data(metric: schemas.CardSchema,
+#                              data: schemas.CardSessionsSchema) -> schemas.CardSchema:
+#     metric.startTimestamp = data.startTimestamp
+#     metric.endTimestamp = data.endTimestamp
+#     metric.page = data.page
+#     metric.limit = data.limit
+#     metric.density = data.density
+#     if data.series is not None and len(data.series) > 0:
+#         metric.series = data.series
+#
+#     # if len(data.filters) > 0:
+#     #     for s in metric.series:
+#     #         s.filter.filters += data.filters
+#     # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
+#     return metric
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if card is None:
+    # No need for this because UI is sending the full payload
+    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if card is None:
+    #    return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**card)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**card)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     results = []
-    for s in metric.series:
+    for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -222,27 +225,33 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
 
 
 def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if raw_metric is None:
+    # No need for this because UI is sending the full payload
+    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if raw_metric is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if raw_metric is None:
+    # No need for this because UI is sending the full payload
+    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if raw_metric is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
@@ -626,14 +635,17 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if card is None:
+    # No need for this because UI is sending the full payload
+    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if card is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**card)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**card)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         s.filter.startTimestamp = data.startTimestamp
         s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
@@ -693,3 +705,33 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
                 return raw_metric["data"]
 
     return get_chart(project_id=project_id, data=metric, user_id=user_id)
+
+
+def card_exists(metric_id, project_id, user_id) -> bool:
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""SELECT 1
+                FROM metrics
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))
+                                                    AND metric_id = %(metric_id)s) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                            AND users.user_id = metrics.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE metrics.project_id = %(project_id)s
+                  AND metrics.deleted_at ISNULL
+                  AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                  AND metrics.metric_id = %(metric_id)s
+                ORDER BY created_at;""",
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
+        )
+        cur.execute(query)
+        row = cur.fetchone()
+        return row is not None
