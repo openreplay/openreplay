@@ -15,6 +15,8 @@ interface Props {
   socketMsgList: Array<SocketMsg>;
 }
 
+const lineLength = 40
+
 function WSModal({ socketMsgList }: Props) {
   return (
     <div className={'h-screen w-full bg-white shadow'}>
@@ -49,9 +51,9 @@ function Row({ msg }) {
     <>
       <div
         className={`border-b grid grid-cols-12 ${
-          msg.data.length > 100 ? 'hover:bg-active-blue cursor-pointer' : ''
+          msg.data.length > lineLength ? 'hover:bg-active-blue cursor-pointer' : ''
         }`}
-        onClick={() => (msg.data.length > 100 ? setIsOpen(!isOpen) : null)}
+        onClick={() => (msg.data.length > lineLength ? setIsOpen(!isOpen) : null)}
         style={{ width: 700 }}
       >
         <div className={'col-span-9 flex items-center gap-2 p-2'}>
@@ -63,7 +65,7 @@ function Row({ msg }) {
           >
             {msg.data}
           </span>
-          {msg.data.length > 40 ? (
+          {msg.data.length > lineLength ? (
             <div
               className={
                 'rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center'
