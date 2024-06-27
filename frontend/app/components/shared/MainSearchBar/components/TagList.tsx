@@ -7,8 +7,8 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { FilterKey } from 'Types/filter/filterType';
 import { addOptionsToFilter } from 'Types/filter/newFilter';
-import { Button, Icon, confirm } from 'UI';
-import { Typography } from 'antd';
+import { Icon, confirm } from 'UI';
+import { Button, Typography } from 'antd';
 import { toast } from 'react-toastify';
 
 function TagList(props: {
@@ -44,9 +44,15 @@ function TagList(props: {
     });
   };
   return (
-    <Button variant={'outline'} disabled={!tagWatchStore.tags.length} onClick={openModal}>
+    <Button 
+      // variant={'outline'} 
+      type='primary'
+      ghost
+      className='gap-1'
+      disabled={!tagWatchStore.tags.length} 
+      onClick={openModal}>
       <span>Tags</span>
-      <span className={'font-bold ml-1'}>{tagWatchStore.tags.length}</span>
+      <span className={'font-medium ml-1'}>{tagWatchStore.tags.length}</span>
     </Button>
   );
 }

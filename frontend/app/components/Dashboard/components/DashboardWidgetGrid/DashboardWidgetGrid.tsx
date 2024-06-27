@@ -42,7 +42,7 @@ function DashboardWidgetGrid(props: Props) {
                     show={list?.length === 0}
                     icon="no-metrics-chart"
                     title={
-                        <div className="bg-white rounded">
+                        <div className="bg-white rounded-lg">
                             <div className="border-b p-5">
                                 <div className="text-2xl font-normal">
                                     There are no cards in this dashboard

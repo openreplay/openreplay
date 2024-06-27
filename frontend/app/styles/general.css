@@ -10,6 +10,18 @@
   background-color: var(--bg-teal);
 }
 
+:root{
+  --bg-teal: #394dfe;
+}
+
+.ant-btn{
+  border-radius: .5rem;
+}
+
+.ant-btn-primary{
+  background-color: var(--bg-teal);
+}
+
 .ml-15 { margin-left: 15px; }
 
 .ph-10 { padding-left: 10px; padding-right: 10px; }
@@ -404,4 +416,10 @@ p {
 .chooseDashboardCards .ant-modal-content{
   background-color: #efefef;
   border-radius: 0.75rem;
+  max-height: 700px;
+  overflow: hidden;
+}
+
+.dashboardDataPeriodSelector .dashboardMoreOptionsLabel{
+  display: none;
 }

@@ -20,6 +20,7 @@ interface IProps {
     renderReport?: any;
 }
 
+
 type Props = IProps & RouteComponentProps;
 const MAX_CARDS = 29;
 
@@ -43,7 +44,7 @@ function DashboardHeader(props: Props) {
     const onDelete = async () => {
         if (
             await confirm({
-                header: 'Confirm',
+                header: 'Delete Dashboard',
                 confirmButton: 'Yes, delete',
                 confirmation: `Are you sure you want to permanently delete this Dashboard?`,
             })
@@ -82,11 +83,11 @@ function DashboardHeader(props: Props) {
                         className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                     />
                 </div>
-                <div className="flex items-center" style={{flex: 1, justifyContent: 'end'}}>
+                <div className="flex items-center gap-2" style={{flex: 1, justifyContent: 'end'}}>
                     <CreateCardButton disabled={canAddMore} />
-                    <div className="mx-4"></div>
+                    
                     <div
-                        className="flex items-center flex-shrink-0 justify-end"
+                        className="flex items-center flex-shrink-0 justify-end dashboardDataPeriodSelector"
                         style={{width: 'fit-content'}}
                     >
                         <SelectDateRange
@@ -94,9 +95,11 @@ function DashboardHeader(props: Props) {
                             period={period}
                             onChange={(period: any) => dashboardStore.setPeriod(period)}
                             right={true}
+                            isAnt={true}
+                            useButtonStyle={true}
                         />
                     </div>
-                    <div className="mx-4"/>
+                    
                     <div className="flex items-center flex-shrink-0">
                         <DashboardOptions
                             editHandler={onEdit}
@@ -114,7 +117,7 @@ function DashboardHeader(props: Props) {
                         className="my-2 font-normal w-fit text-disabled-text border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                         onDoubleClick={() => onEdit(false)}
                     >
-                        {dashboard?.description || 'Describe the purpose of this dashboard'}
+                        {/* {dashboard?.description || 'Describe the purpose of this dashboard'} */}
                     </h2>
                 </Tooltip>
             </div>

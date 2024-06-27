@@ -1,6 +1,6 @@
 import { DownOutlined } from '@ant-design/icons';
 import Period from 'Types/app/period';
-import { Dropdown, DatePicker } from 'antd';
+import { Dropdown, Button } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -20,14 +20,14 @@ interface Props {
   timezone?: string;
   isAnt?: boolean;
   small?: boolean;
+  useButtonStyle?: boolean;  // New prop to control button style
 
   [x: string]: any;
 }
 
 function SelectDateRange(props: Props) {
   const [isCustom, setIsCustom] = React.useState(false);
-  const [isCustomOpen, setIsCustomOpen] = React.useState(false);
-  const { right = false, period, disableCustom = false, timezone } = props;
+  const { right = false, period, disableCustom = false, timezone, useButtonStyle = false } = props;
   let selectedValue = DATE_RANGE_OPTIONS.find(
     (obj: any) => obj.value === period.rangeName
   );
@@ -41,13 +41,11 @@ function SelectDateRange(props: Props) {
         setIsCustom(true);
       }, 1);
     } else {
-      // @ts-ignore
       props.onChange(new Period({ rangeName: value }));
     }
   };
 
   const onApplyDateRange = (value: any) => {
-    // @ts-ignore
     const range = new Period({
       rangeName: CUSTOM_RANGE,
       start: value.start,
@@ -61,34 +59,31 @@ function SelectDateRange(props: Props) {
   const customRange = isCustomRange ? period.rangeFormatted() : '';
 
   if (props.isAnt) {
-    const onAntUpdate = (val: any) => {
-      onChange(val);
+    const menuProps = {
+      items: options.map((opt) => ({
+        label: opt.label,
+        key: opt.value,
+      })),
+      defaultSelectedKeys: selectedValue?.value ? [selectedValue.value] : undefined,
+      onClick: (e: any) => {
+        onChange(e.key);
+      },
     };
+
     return (
       <div className={'relative'}>
-        <Dropdown
-          menu={{
-            items: options.map((opt) => ({
-              label: opt.label,
-              key: opt.value,
-            })),
-            defaultSelectedKeys: selectedValue?.value
-              ? [selectedValue.value]
-              : undefined,
-            onClick: (e: any) => {
-              onChange(e.key);
-            },
-          }}
-          onChange={onAntUpdate}
-          style={{ width: 170 }}
-          defaultValue={selectedValue?.value ?? undefined}
-        >
-          <div
-            className={'cursor-pointer flex items-center gap-2'}
-          >
-            <div>{isCustomRange ? customRange : selectedValue?.label}</div>
-            <DownOutlined />
-          </div>
+        <Dropdown menu={menuProps}>
+          {useButtonStyle ? (
+            <Button>
+              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
+              <DownOutlined />
+            </Button>
+          ) : (
+            <div className={'cursor-pointer flex items-center gap-2'}>
+              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
+              <DownOutlined />
+            </div>
+          )}
         </Dropdown>
         {isCustom && (
           <OutsideClickDetectingDiv
@@ -99,10 +94,8 @@ function SelectDateRange(props: Props) {
                 ) ||
                 e.target.parentElement.parentElement.classList[0]?.includes(
                   '-menu'
-                )
-                || e.target.className.includes(
-                  'ant-picker'
-                )
+                ) ||
+                e.target.className.includes('ant-picker')
               ) {
                 return false;
               }
@@ -110,10 +103,7 @@ function SelectDateRange(props: Props) {
             }}
           >
             <div
-              className={cn(
-                'absolute top-0 mt-10 z-40',
-                { 'right-0': right }
-              )}
+              className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
               style={{
                 width: '770px',
                 fontSize: '14px',
@@ -132,6 +122,7 @@ function SelectDateRange(props: Props) {
       </div>
     );
   }
+
   return (
     <div className="relative">
       <Select

@@ -14,7 +14,7 @@ function DashboardOptions(props: Props) {
     const { editHandler, deleteHandler, renderReport, isEnterprise, isTitlePresent } = props;
     const menuItems = [
         { icon: 'pencil', text: 'Rename', onClick: () => editHandler(true) },
-        { icon: 'text-paragraph', text: `${!isTitlePresent ? 'Add' : 'Edit'} Description`, onClick: () => editHandler(false) },
+        // { icon: 'text-paragraph', text: `${!isTitlePresent ? 'Add' : 'Edit'} Description`, onClick: () => editHandler(false) },
         { icon: 'users', text: 'Visibility & Access', onClick: editHandler },
         { icon: 'trash', text: 'Delete', onClick: deleteHandler },
         { icon: 'pdf-download', text: 'Download Report', onClick: renderReport, disabled: !isEnterprise, tooltipTitle: ENTERPRISE_REQUEIRED }
@@ -23,7 +23,6 @@ function DashboardOptions(props: Props) {
     return (
         <ItemMenu
             bold
-            label="More Options"
             items={menuItems}
         />
     );
