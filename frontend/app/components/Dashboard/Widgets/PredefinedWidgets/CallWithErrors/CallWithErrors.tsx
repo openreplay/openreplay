@@ -46,30 +46,28 @@ const cols = [
 
 interface Props {
     data: any
-    metric?: any
     isTemplate?: boolean
 }
 function CallWithErrors(props: Props) {
-    const { data, metric } = props;
+    const { data } = props;
     const [search, setSearch] = React.useState('')
     const test = (value = '', serach: any) => getRE(serach, 'i').test(value);
-    const _data = search ? metric.data.chart.filter((i: any) => test(i.urlHostpath, search)) : metric.data.chart;
+    const _data = search ? data.chart.filter((i: any) => test(i.urlHostpath, search)) : data.chart;
 
     const write = ({ target: { name, value } }: any) => {
       setSearch(value)
     };
 
     return (
-
         <NoContent
           size="small"
           title={NO_METRIC_DATA}
-          show={ metric.data.chart.length === 0 }
+          show={ data.chart.length === 0 }
           style={{ height: '240px'}}
         >
           <div style={{ height: '240px'}}>
             <div className={ cn(stl.topActions, 'py-3 flex text-right')}>
-              <input disabled={metric.data.chart.length === 0} className={stl.searchField} name="search" placeholder="Filter by Path" onChange={write} />
+              <input disabled={data.chart.length === 0} className={stl.searchField} name="search" placeholder="Filter by Path" onChange={write} />
             </div>
             <Table
               small

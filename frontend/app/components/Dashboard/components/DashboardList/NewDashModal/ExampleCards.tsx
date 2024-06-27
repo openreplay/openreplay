@@ -1,54 +1,24 @@
 import ExampleFunnel from "./Examples/Funnel";
 import ExamplePath from "./Examples/Path";
 import ExampleTrend from "./Examples/Trend";
+import Trend from "./Examples/Trend";
 import PerfBreakdown from "./Examples/PerfBreakdown";
-import BarChartCard from "./Examples/BarChart";
-import SlowestDomain from "./Examples/SlowestDomain";
 import ByBrowser from "./Examples/SessionsBy/ByBrowser";
 import BySystem from "./Examples/SessionsBy/BySystem";
 import ByCountry from "./Examples/SessionsBy/ByCountry";
 import ByUrl from "./Examples/SessionsBy/ByUrl";
-import {
-    ERRORS,
-    FUNNEL, INSIGHTS,
-    PERFORMANCE,
-    RESOURCE_MONITORING,
-    TABLE,
-    TIMESERIES,
-    USER_PATH,
-    WEB_VITALS
-} from "App/constants/card";
+import {ERRORS, FUNNEL, INSIGHTS, PERFORMANCE, TABLE, TIMESERIES, USER_PATH, WEB_VITALS} from "App/constants/card";
 import {FilterKey} from "Types/filter/filterType";
 import {Activity, BarChart, TableCellsMerge, TrendingUp} from "lucide-react";
 import WebVital from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/WebVital";
-import Trend from "./Examples/Trend";
 import Bars from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/Bars";
 import ByIssues from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues";
 import InsightsExample from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample";
-
-// const TYPE = {
-//     FUNNEL: 'funnel',
-//     PATH_FINDER: 'path-finder',
-//     TREND: 'trend',
-//     SESSIONS_BY: 'sessions-by',
-//     BREAKDOWN: 'breakdown',
-//     SLOWEST_DOMAIN: 'slowest-domain',
-//     SESSIONS_BY_ERRORS: 'sessions-by-errors',
-//     SESSIONS_BY_ISSUES: 'sessions-by-issues',
-//     SESSIONS_BY_BROWSER: 'sessions-by-browser',
-//     SESSIONS_BY_SYSTEM: 'sessions-by-system',
-//     SESSIONS_BY_COUNTRY: 'sessions-by-country',
-//     SESSIONS_BY_URL: 'sessions-by-url',
-//
-//
-//     ERRORS_JS: 'js-errors',
-//     ERRORS_BY_ORIGIN: 'errors-by-origin',
-//     ERRORS_BY_DOMAIN: 'errors-by-domain',
-//     ERRORS_BY_TYPE: 'errors-by-type',
-//     CALLS_WITH_ERRORS: 'calls-with-errors',
-//     ERRORS_4XX: '4xx-errors',
-//     ERRORS_5XX: '5xx-errors',
-// }
+import ByUser from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByUser";
+import BarChartCard from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/BarChart";
+import AreaChartCard from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/AreaChartCard";
+import CallsWithErrorsExample
+    from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/CallsWithErrorsExample";
 
 export const CARD_CATEGORY = {
     PRODUCT_ANALYTICS: 'product-analytics',
@@ -85,6 +55,33 @@ export const CARD_LIST: CardType[] = [
         cardType: FUNNEL,
         category: CARD_CATEGORIES[0].key,
         example: ExampleFunnel,
+        width: 4,
+        height: 356,
+        data: {
+            stages: [
+                {
+                    "value": [
+                        "/sessions"
+                    ],
+                    "type": "location",
+                    "operator": "contains",
+                    "sessionsCount": 1586,
+                    "dropPct": null,
+                    "usersCount": 470,
+                    "dropDueToIssues": 0
+                },
+                {
+                    "value": [],
+                    "type": "click",
+                    "operator": "onAny",
+                    "sessionsCount": 1292,
+                    "dropPct": 18,
+                    "usersCount": 450,
+                    "dropDueToIssues": 294
+                }
+            ],
+            totalDropDueToIssues: 294
+        }
     },
     {
         title: 'Path Finder',
@@ -94,11 +91,18 @@ export const CARD_LIST: CardType[] = [
         example: ExamplePath,
     },
     {
-        title: 'Trend',
+        title: 'Sessions Trend',
         key: TIMESERIES,
         cardType: TIMESERIES,
         metricOf: 'sessionCount',
         category: CARD_CATEGORIES[0].key,
+        data: {
+            chart: generateTimeSeriesData(),
+            label: "Number of Sessions",
+            namesMap: [
+                "Series 1"
+            ]
+        },
         example: ExampleTrend,
     },
 
@@ -128,7 +132,14 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.CPU,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "CPU Load (%)",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -137,7 +148,13 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.CRASHES,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -146,7 +163,14 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.FPS,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "Frames Per Second",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -155,7 +179,14 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.PAGES_DOM_BUILD_TIME,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "DOM Build Time (ms)",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -164,7 +195,15 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.MEMORY_CONSUMPTION,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "JS Heap Size (MB)",
+            unit: 'mb',
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -173,7 +212,14 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.PAGES_RESPONSE_TIME,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "Page Response Time (ms)",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -182,7 +228,14 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            label: "Number of Calls",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -191,7 +244,13 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateBarChartDate(),
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: BarChartCard,
     },
 
     {
@@ -200,6 +259,7 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.SESSIONS_PER_BROWSER,
         category: CARD_CATEGORIES[1].key,
+        data: generateRandomBarsData(),
         example: Bars,
     },
 
@@ -209,6 +269,7 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.SLOWEST_DOMAINS,
         category: CARD_CATEGORIES[1].key,
+        data: generateRandomBarsData(),
         example: Bars,
     },
 
@@ -218,7 +279,13 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.SPEED_LOCATION,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -227,7 +294,13 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.TIME_TO_RENDER,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
     {
@@ -236,7 +309,13 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES,
         category: CARD_CATEGORIES[1].key,
-        example: Trend,
+        data: {
+            chart: generateAreaData(),
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: AreaChartCard,
     },
 
 
@@ -247,7 +326,7 @@ export const CARD_LIST: CardType[] = [
         cardType: TABLE,
         metricOf: FilterKey.USERID,
         category: CARD_CATEGORIES[2].key,
-        example: ByBrowser,
+        example: ByUser,
     },
 
     {
@@ -299,7 +378,10 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
         category: CARD_CATEGORIES[3].key,
-        example: PerfBreakdown,
+        data: {
+            chart: generateBarChartDate(),
+        },
+        example: BarChartCard,
     },
     {
         title: 'Errors by Origin',
@@ -307,7 +389,10 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.RESOURCES_BY_PARTY,
         category: CARD_CATEGORIES[3].key,
-        example: PerfBreakdown,
+        data: {
+            chart: generateBarChartDate(),
+        },
+        example: BarChartCard,
     },
     {
         title: 'Errors by Domain',
@@ -324,7 +409,10 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.ERRORS_PER_TYPE,
         category: CARD_CATEGORIES[3].key,
-        example: PerfBreakdown,
+        data: {
+            chart: generateBarChartDate(),
+        },
+        example: BarChartCard,
     },
     {
         title: 'Calls with Errors',
@@ -332,7 +420,33 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.CALLS_ERRORS,
         category: CARD_CATEGORIES[3].key,
-        example: PerfBreakdown,
+        width: 4,
+        data: {
+            chart: [
+                {
+                    "method": "GET",
+                    "urlHostpath": 'https://openreplay.com',
+                    "allRequests": 1333,
+                    "4xx": 1333,
+                    "5xx": 0
+                },
+                {
+                    "method": "POST",
+                    "urlHostpath": 'https://company.domain.com',
+                    "allRequests": 10,
+                    "4xx": 10,
+                    "5xx": 0
+                },
+                {
+                    "method": "PUT",
+                    "urlHostpath": 'https://example.com',
+                    "allRequests": 3,
+                    "4xx": 3,
+                    "5xx": 0
+                }
+            ],
+        },
+        example: CallsWithErrorsExample,
     },
 
     {
@@ -341,7 +455,14 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.DOMAINS_ERRORS_4XX,
         category: CARD_CATEGORIES[3].key,
-        example: Trend,
+        data: {
+            chart: generateTimeSeriesData(),
+            label: "Number of Errors",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: ExampleTrend,
     },
 
     {
@@ -350,7 +471,14 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.DOMAINS_ERRORS_5XX,
         category: CARD_CATEGORIES[3].key,
-        example: Trend,
+        data: {
+            chart: generateTimeSeriesData(),
+            label: "Number of Errors",
+            namesMap: [
+                "Series 1"
+            ]
+        },
+        example: ExampleTrend,
     },
 
 
@@ -587,4 +715,47 @@ function generateWebVitalData(): { value: number, chart: { timestamp: number, va
         chart,
         unit: "%"
     };
+}
+
+
+function generateTimeSeriesData(): any[] {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+    const pointsPerMonth = 3; // Number of points for each month
+
+    const data = months.flatMap((month, monthIndex) =>
+        Array.from({length: pointsPerMonth}, (_, pointIndex) => ({
+            time: month,
+            "Series 1": Math.floor(Math.random() * 90),
+            timestamp: Date.now() + (monthIndex * pointsPerMonth + pointIndex) * 86400000
+        }))
+    );
+
+    return data;
+}
+
+function generateAreaData(): any[] {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+    const pointsPerMonth = 3; // Number of points for each month
+
+    const data = months.flatMap((month, monthIndex) =>
+        Array.from({length: pointsPerMonth}, (_, pointIndex) => ({
+            time: month,
+            "value": Math.floor(Math.random() * 90),
+            timestamp: Date.now() + (monthIndex * pointsPerMonth + pointIndex) * 86400000
+        }))
+    );
+
+    return data;
+}
+
+function generateRandomValue(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateBarChartDate(): any[] {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    return months.map(month => ({
+        time: month,
+        value: generateRandomValue(1000, 5000),
+    }));
 }

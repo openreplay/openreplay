@@ -22,6 +22,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
     const [libraryQuery, setLibraryQuery] = React.useState<string>('');
 
     const handleCardSelection = (card: string) => {
+        metricStore.init();
         const selectedCard = CARD_LIST.find((c) => c.key === card) as CardType;
 
         const cardData: any = {

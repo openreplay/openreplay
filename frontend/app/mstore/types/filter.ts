@@ -128,7 +128,7 @@ export default class Filter {
 
     addFunnelDefaultFilters() {
         this.filters = []
-        this.addFilter({...filtersMap[FilterKey.CLICK], value: [''], operator: 'onAny'})
+        this.addFilter({...filtersMap[FilterKey.LOCATION], value: [''], operator: 'isAny'})
         this.addFilter({...filtersMap[FilterKey.CLICK], value: [''], operator: 'onAny'})
     }
 }

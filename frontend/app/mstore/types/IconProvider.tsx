@@ -1,6 +1,7 @@
-import {Icon} from "UI";
+import {Avatar, Icon} from "UI";
 import React from "react";
 import * as Flags from "country-flag-icons/react/3x2";
+import {hashString} from "Types/session/session";
 
 interface IconProvider {
     getIcon(name: string): React.ReactNode;
@@ -106,13 +107,20 @@ class OsIconProvider implements IconProvider {
     }
 }
 
+class UserIconProvider implements IconProvider {
+    getIcon(name: string): React.ReactNode {
+        return <Avatar seed={hashString(name)}/>
+    }
+}
+
 export {
     BrowserIconProvider,
     CountryIconProvider,
     IssueIconProvider,
     UrlIconProvider,
     DeviceIconProvider,
-    OsIconProvider
+    OsIconProvider,
+    UserIconProvider
 };
 export type {IconProvider};
 

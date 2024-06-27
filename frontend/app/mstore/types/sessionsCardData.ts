@@ -5,7 +5,7 @@ import {
     CountryIconProvider, DeviceIconProvider,
     IconProvider,
     IssueIconProvider, OsIconProvider,
-    UrlIconProvider
+    UrlIconProvider, UserIconProvider
 } from "./IconProvider";
 
 interface NameFormatter {
@@ -68,6 +68,8 @@ export class SessionsByRow {
                 return {nameFormatter: new BaseFormatter(), iconProvider: new DeviceIconProvider()};
             case 'platform':
                 return {nameFormatter: new BaseFormatter(), iconProvider: new OsIconProvider()};
+            case 'userId':
+                return {nameFormatter: new BaseFormatter(), iconProvider: new UserIconProvider()};
             default:
                 return {nameFormatter: new BaseFormatter(), iconProvider: new DefaultIconProvider()};
         }

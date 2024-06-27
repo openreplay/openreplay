@@ -53,7 +53,7 @@ const MetricTabs = ({metric, writeOption}: any) => {
     }
 
     return (
-        <Segmented options={tableOptions} onChange={onChange} selected={metric.metricOf} />
+        <Segmented options={tableOptions} onChange={onChange} selected={metric.metricOf}/>
     )
 }
 
@@ -138,19 +138,26 @@ const MetricOptions = ({metric, writeOption}: any) => {
     );
 };
 
-const PathAnalysisFilter = ({metric}) => (
-    <div className='form-group flex flex-col'>
-        {metric.startType === 'start' ? 'Start Point' : 'End Point'}
-        <FilterItem
-            hideDelete
-            filter={metric.startPoint}
-            allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
-            onUpdate={val => metric.updateStartPoint(val)}
-            onRemoveFilter={() => {
-            }}
-        />
-    </div>
-);
+const PathAnalysisFilter = observer(({metric}: any) => (
+    <Card styles={{
+        body: {padding: '4px 20px'},
+        header: {padding: '4px 20px', fontSize: '14px', fontWeight: 'bold', borderBottom: 'none'},
+    }}
+          title={metric.startType === 'start' ? 'Start Point' : 'End Point'}
+    >
+        <div className='form-group flex flex-col'>
+            {/*{metric.startType === 'start' ? 'Start Point' : 'End Point'}*/}
+            <FilterItem
+                hideDelete
+                filter={metric.startPoint}
+                allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
+                onUpdate={val => metric.updateStartPoint(val)}
+                onRemoveFilter={() => {
+                }}
+            />
+        </div>
+    </Card>
+));
 
 const SeriesList = observer(() => {
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
