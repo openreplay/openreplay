@@ -1128,6 +1128,8 @@ class __CardSchema(CardSessionsSchema):
     metric_type: MetricType = Field(...)
     metric_of: Any
     metric_value: List[IssueType] = Field(default=[])
+    # This is used to save the selected session for heatmaps
+    session_id: Optional[int] = Field(default=None)
 
     @computed_field
     @property
