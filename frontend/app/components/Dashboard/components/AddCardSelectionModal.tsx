@@ -1,6 +1,6 @@
 import React from 'react';
 import {Card, Col, Modal, Row, Typography} from "antd";
-import {Grid2x2CheckIcon, Plus} from "lucide-react";
+import {GalleryVertical, Plus} from "lucide-react";
 import NewDashboardModal from "Components/Dashboard/components/DashboardList/NewDashModal";
 import {useStore} from "App/mstore";
 
@@ -33,24 +33,22 @@ function AddCardSelectionModal(props: Props) {
                 open={props.open}
                 footer={null}
                 onCancel={props.onClose}
+                className='addCard'
             >
                 <Row gutter={16} justify="center">
                     <Col span={12}>
-                        <Card hoverable onClick={() => onClick(true)}>
-                            <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
-                                <Grid2x2CheckIcon style={{fontSize: '24px', color: '#394EFF'}}/>
-                                <Typography.Text strong>Add from library</Typography.Text>
-                                {/*<p>Select from 12 available</p>*/}
-                            </div>
-                        </Card>
+                        <div className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3" style={{height: '80px'}} onClick={() => onClick(true)}>
+                            <GalleryVertical style={{fontSize: '24px', color: '#394EFF'}}/>
+                            <Typography.Text strong>Add from library</Typography.Text>
+                            {/*<p>Select from 12 available</p>*/}
+                        </div>
+                        
                     </Col>
                     <Col span={12}>
-                        <Card hoverable onClick={() => onClick(false)}>
-                            <div className="flex flex-col items-center justify-center" style={{height: '80px'}}>
-                                <Plus style={{fontSize: '24px', color: '#394EFF'}}/>
-                                <Typography.Text strong>Create New Card</Typography.Text>
-                            </div>
-                        </Card>
+                        <div className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3" style={{height: '80px'}} onClick={() => onClick(false)}>
+                            <Plus style={{fontSize: '24px', color: '#394EFF'}}/>
+                            <Typography.Text strong>Create New Card</Typography.Text>
+                        </div>
                     </Col>
                 </Row>
             </Modal>

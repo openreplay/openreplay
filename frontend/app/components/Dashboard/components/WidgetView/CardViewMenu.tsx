@@ -1,7 +1,7 @@
 import {useHistory} from "react-router";
 import {useStore} from "App/mstore";
 import {useObserver} from "mobx-react-lite";
-import {Button, Drawer, Dropdown, MenuProps, message, Modal} from "antd";
+import {Button, Dropdown, MenuProps, message, Modal} from "antd";
 import {BellIcon, EllipsisVertical, TrashIcon} from "lucide-react";
 import {toast} from "react-toastify";
 import React from "react";
@@ -36,8 +36,7 @@ const CardViewMenu = () => {
         },
         {
             key: 'remove',
-            danger: true,
-            label: 'Remove',
+            label: 'Delete',
             icon: <TrashIcon size={16}/>,
             onClick: () => {
                 Modal.confirm({

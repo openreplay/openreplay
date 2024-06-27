@@ -89,7 +89,7 @@ function CardIssues() {
     };
 
   return useObserver(() => (
-    <div className='my-8 bg-white rounded p-4 border'>
+    <div className='bg-white rounded p-4 border'>
       <div className='flex justify-between'>
         <div className='flex items-center'>
           <h1 className='font-medium text-2xl'>Issues</h1>

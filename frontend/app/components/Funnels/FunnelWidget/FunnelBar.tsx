@@ -54,7 +54,7 @@ function FunnelBar(props: Props) {
                         cursor: 'pointer',
                     }}
                     onClick={() => focusStage?.(index! - 1, filter.isActive)}
-                    className={'hover:border border-red-lightest'}
+                    className={'hover:opacity-75'}
                 />
             </div>
             <div className="flex justify-between py-2">
