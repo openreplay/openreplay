@@ -35,7 +35,7 @@ function FunnelBar(props: Props) {
             top: 0,
             left: 0,
             bottom: 0,
-            backgroundColor: '#00b5ad',
+            backgroundColor: '#394EFF',
           }}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
