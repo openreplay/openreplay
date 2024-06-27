@@ -80,6 +80,34 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
     return helper.list_to_camel_case(rows)
 
 
+def get_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapBasePayloadSchema):
+    args = {"session_id": session_id, "url": data.url}
+    constraints = ["session_id = %(session_id)s",
+                   "(url = %(url)s OR path= %(url)s)",
+                   "normalized_x IS NOT NULL"]
+    query_from = "events.clicks"
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT normalized_x, normalized_y
+                                FROM {query_from}
+                                WHERE {" AND ".join(constraints)};""", args)
+        logger.debug("---------")
+        logger.debug(query.decode('UTF-8'))
+        logger.debug("---------")
+        try:
+            cur.execute(query)
+        except Exception as err:
+            logger.warning("--------- HEATMAP-session_id SEARCH QUERY EXCEPTION -----------")
+            logger.warning(query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(data)
+            logger.warning("--------------------")
+            raise err
+        rows = cur.fetchall()
+
+    return helper.list_to_camel_case(rows)
+
+
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
 s.user_uuid,

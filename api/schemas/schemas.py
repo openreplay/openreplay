@@ -1560,6 +1560,10 @@ class GetHeatmapPayloadSchema(_TimedSchema):
     click_rage: bool = Field(default=False)
 
 
+class GetHeatmapBasePayloadSchema(BaseModel):
+    url: str = Field(...)
+
+
 class FeatureFlagVariant(BaseModel):
     variant_id: Optional[int] = Field(default=None)
     value: str = Field(...)
