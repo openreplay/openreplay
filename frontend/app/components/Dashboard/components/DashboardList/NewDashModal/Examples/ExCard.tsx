@@ -19,7 +19,9 @@ function ExCard({
       style={{width: '100%', height: height || 286}}
     >
       <div className={'font-medium text-lg'}>{title}</div>
-      <div className={'flex flex-col gap-2 mt-2 cursor-pointer'} onClick={() => onCard(type)}>{children}</div>
+      <div className={'flex flex-col gap-2 mt-2 cursor-pointer'} style={{
+        height: height ? height - 50 : 236,
+      }} onClick={() => onCard(type)}>{children}</div>
     </div>
   );
 }
