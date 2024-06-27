@@ -63,7 +63,7 @@ function MetricListItem(props: Props) {
         confirmation: `Are you sure you want to permanently delete this card?`
       })) {
         await metricStore.delete(metric)
-        toast.success('Card deleted');
+        // toast.success('Card deleted');
       }
     }
     if (key === 'rename') {
