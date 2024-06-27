@@ -200,9 +200,12 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
         with pg_client.PostgresClient() as cur:
             data.order = schemas.SortOrderType.desc
             data.sort = 'duration'
-            main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_COLS}
-                                         {query_part}
-                                         ORDER BY {data.sort} {data.order.value}
+            main_query = cur.mogrify(f"""SELECT *
+                                         FROM (SELECT {SESSION_PROJECTION_COLS}
+                                               {query_part}
+                                               ORDER BY {data.sort} {data.order.value}
+                                               LIMIT 20) AS raw
+                                         ORDER BY random()
                                          LIMIT 1;""", full_args)
             logger.debug("--------------------")
             logger.debug(main_query)
@@ -282,10 +285,13 @@ else:
         with ch_client.ClickHouseClient() as cur:
             data.order = schemas.SortOrderType.desc
             data.sort = 'duration'
-            main_query = cur.format(f"""SELECT {SESSION_PROJECTION_COLS}
-                                         {query_part}
-                                         ORDER BY {data.sort} {data.order.value}
-                                         LIMIT 1;""", full_args)
+            main_query = cur.format(f"""SELECT * 
+                                               FROM (SELECT {SESSION_PROJECTION_COLS}
+                                               {query_part}
+                                               ORDER BY {data.sort} {data.order.value}
+                                               LIMIT 20) AS raw
+                                               ORDER BY rand()
+                                               LIMIT 1;""", full_args)
             logger.debug("--------------------")
             logger.debug(main_query)
             logger.debug("--------------------")
