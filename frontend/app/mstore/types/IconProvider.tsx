@@ -106,13 +106,20 @@ class OsIconProvider implements IconProvider {
     }
 }
 
+class UserIconProvider implements IconProvider {
+    getIcon(name: string): React.ReactNode {
+        return <Icon name="user" size={24}/>
+    }
+}
+
 export {
     BrowserIconProvider,
     CountryIconProvider,
     IssueIconProvider,
     UrlIconProvider,
     DeviceIconProvider,
-    OsIconProvider
+    OsIconProvider,
+    UserIconProvider
 };
 export type {IconProvider};
 

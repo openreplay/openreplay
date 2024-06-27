@@ -25,6 +25,7 @@ import Trend from "./Examples/Trend";
 import Bars from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/Bars";
 import ByIssues from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues";
 import InsightsExample from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample";
+import ByUser from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByUser";
 
 // const TYPE = {
 //     FUNNEL: 'funnel',
@@ -247,7 +248,7 @@ export const CARD_LIST: CardType[] = [
         cardType: TABLE,
         metricOf: FilterKey.USERID,
         category: CARD_CATEGORIES[2].key,
-        example: ByBrowser,
+        example: ByUser,
     },
 
     {
