@@ -35,7 +35,7 @@ function WidgetFormNew() {
     const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
 
     return isPredefined ? <PredefinedMessage/> : (
-        <>
+        <Space direction="vertical" className="w-full">
             <AdditionalFilters/>
             <Card
                 styles={{
@@ -51,7 +51,7 @@ function WidgetFormNew() {
             {hasFilters && (
                 <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys}/>
             )}
-        </>
+        </Space>
     );
 }
 
@@ -140,17 +140,23 @@ const FilterSection = observer(({metric, excludeFilterKeys}: any) => {
 
 
 const PathAnalysisFilter = observer(({metric}: any) => (
-    <div className='form-group flex flex-col'>
-        {metric.startType === 'start' ? 'Start Point' : 'End Point'}
-        <FilterItem
-            hideDelete
-            filter={metric.startPoint}
-            allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
-            onUpdate={val => metric.updateStartPoint(val)}
-            onRemoveFilter={() => {
-            }}
-        />
-    </div>
+    <Card styles={{
+        body: {padding: '4px 20px'},
+        header: {padding: '4px 20px', fontSize: '14px', fontWeight: 'bold', borderBottom: 'none'},
+    }}
+          title={metric.startType === 'start' ? 'Start Point' : 'End Point'}
+    >
+        <div className='form-group flex flex-col'>
+            <FilterItem
+                hideDelete
+                filter={metric.startPoint}
+                allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
+                onUpdate={val => metric.updateStartPoint(val)}
+                onRemoveFilter={() => {
+                }}
+            />
+        </div>
+    </Card>
 ));
 
 const AdditionalFilters = observer(() => {
@@ -158,9 +164,9 @@ const AdditionalFilters = observer(() => {
     const metric: any = metricStore.instance;
 
     return (
-        <>
+        <Space direction="vertical" className="w-full">
             {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric}/>}
-        </>
+        </Space>
     )
 });
 
