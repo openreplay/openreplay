@@ -105,6 +105,7 @@ function FilterSeries(props: Props) {
     }
 
     const onChangeEventsOrder = (_: any, {name, value}: any) => {
+        console.log(name, value)
         series.filter.updateKey(name, value);
         observeChanges();
     };
@@ -129,7 +130,7 @@ function FilterSeries(props: Props) {
             )}
 
             {expandable && !expanded && (
-                <Space className="justify-between w-full px-6 py-2">
+                <Space className="justify-between w-full px-5 py-2">
                     <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>
                     <Button onClick={() => setExpanded(!expanded)}
                             size="small"
@@ -162,7 +163,7 @@ function FilterSeries(props: Props) {
                         )}
                     </div>
                     <div className="border-t h-12 flex items-center">
-                        <div className="-mx-4 px-6">
+                        <div className="-mx-4 px-5">
                             <AddStepButton excludeFilterKeys={excludeFilterKeys} series={series}/>
                         </div>
                     </div>
