@@ -184,9 +184,12 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
     with pg_client.PostgresClient() as cur:
         data.order = schemas.SortOrderType.desc
         data.sort = 'duration'
-        main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_COLS}
-                                     {query_part}
-                                     ORDER BY {data.sort} {data.order.value}
+        main_query = cur.mogrify(f"""SELECT *
+                                     FROM (SELECT {SESSION_PROJECTION_COLS}
+                                           {query_part}
+                                           ORDER BY {data.sort} {data.order.value}
+                                           LIMIT 20) AS raw
+                                     ORDER BY random()
                                      LIMIT 1;""", full_args)
         logger.debug("--------------------")
         logger.debug(main_query)
