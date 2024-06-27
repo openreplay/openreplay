@@ -417,6 +417,13 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
 
 
+@app.post('/{projectId}/sessions/{sessionId}/heatmaps/url', tags=["heatmaps"])
+def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
+                                   data: schemas.GetHeatmapBasePayloadSchema = Body(...),
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": heatmaps.get_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
+
+
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):

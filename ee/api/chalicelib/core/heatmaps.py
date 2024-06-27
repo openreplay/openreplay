@@ -90,6 +90,36 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         return helper.list_to_camel_case(rows)
 
 
+def get_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapBasePayloadSchema):
+    args = {"project_id": project_id, "session_id": session_id, "url": data.url}
+    constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
+                   "main_events.session_id = %(session_id)s",
+                   "(main_events.url_hostpath = %(url)s OR main_events.url_path = %(url)s)",
+                   "main_events.event_type='CLICK'",
+                   "isNotNull(main_events.normalized_x)"]
+    query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
+
+    with ch_client.ClickHouseClient() as cur:
+        query = cur.format(f"""SELECT main_events.normalized_x AS normalized_x, 
+                                                main_events.normalized_y AS normalized_y
+                                    FROM {query_from}
+                                    WHERE {" AND ".join(constraints)};""", args)
+        logger.debug("---------")
+        logger.debug(query)
+        logger.debug("---------")
+        try:
+            rows = cur.execute(query)
+        except Exception as err:
+            logger.warning("--------- HEATMAP-session_id SEARCH QUERY EXCEPTION CH -----------")
+            logger.warning(query)
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(data)
+            logger.warning("--------------------")
+            raise err
+
+        return helper.list_to_camel_case(rows)
+
+
 if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     # this part is identical to FOSS
     SESSION_PROJECTION_COLS = """s.project_id,
