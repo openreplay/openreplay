@@ -2,6 +2,7 @@ import ExampleFunnel from "./Examples/Funnel";
 import ExamplePath from "./Examples/Path";
 import ExampleTrend from "./Examples/Trend";
 import PerfBreakdown from "./Examples/PerfBreakdown";
+import BarChartCard from "./Examples/BarChart";
 import SlowestDomain from "./Examples/SlowestDomain";
 import ByBrowser from "./Examples/SessionsBy/ByBrowser";
 import BySystem from "./Examples/SessionsBy/BySystem";
@@ -315,21 +316,8 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.ERRORS_PER_DOMAINS,
         category: CARD_CATEGORIES[3].key,
         example: Bars,
-        data: {
-            total: 90,
-            values: [
-                {
-                    "label": "company.domain.com",
-                    "value": 89
-                },
-                {
-                    "label": "openreplay.com",
-                    "value": 15
-                }
-            ]
-        }
+        data: generateRandomBarsData(),
     },
-
     {
         title: 'Errors by Type',
         key: FilterKey.ERRORS_PER_TYPE,
@@ -375,6 +363,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
     {
@@ -385,6 +374,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -396,6 +386,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -407,6 +398,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -418,6 +410,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -429,6 +422,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -440,6 +434,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -451,6 +446,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -462,6 +458,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -473,6 +470,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -484,6 +482,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
     {
@@ -494,6 +493,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -505,6 +505,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -516,6 +517,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -527,6 +529,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -538,6 +541,7 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 
@@ -549,6 +553,38 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[4].key,
         width: 1,
         height: 148,
+        data: generateWebVitalData(),
         example: WebVital,
     },
 ]
+
+
+function generateRandomBarsData(): { total: number, values: { label: string, value: number }[] } {
+    const labels = ["company.domain.com", "openreplay.com"];
+    const values = labels.map(label => ({
+        label,
+        value: Math.floor(Math.random() * 100)
+    }));
+    const total = values.reduce((acc, curr) => acc + curr.value, 0);
+
+    return {
+        total,
+        values: values.sort((a, b) => b.value - a.value)
+    };
+}
+
+
+function generateWebVitalData(): { value: number, chart: { timestamp: number, value: number }[], unit: string } {
+    const chart = Array.from({length: 7}, (_, i) => ({
+        timestamp: Date.now() + i * 86400000,
+        value: parseFloat((Math.random() * 10).toFixed(15))
+    }));
+
+    const value = chart.reduce((acc, curr) => acc + curr.value, 0) / chart.length;
+
+    return {
+        value,
+        chart,
+        unit: "%"
+    };
+}

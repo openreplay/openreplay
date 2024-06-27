@@ -2,6 +2,7 @@ import React from 'react';
 import {Card, Col, Modal, Row, Typography} from "antd";
 import {Grid2x2CheckIcon, Plus} from "lucide-react";
 import NewDashboardModal from "Components/Dashboard/components/DashboardList/NewDashModal";
+import {useStore} from "App/mstore";
 
 interface Props {
     open: boolean;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 function AddCardSelectionModal(props: Props) {
+    const {metricStore} = useStore();
     const [open, setOpen] = React.useState(false);
     const [isLibrary, setIsLibrary] = React.useState(false);
 
@@ -18,6 +20,9 @@ function AddCardSelectionModal(props: Props) {
     }
 
     const onClick = (isLibrary: boolean) => {
+        if (!isLibrary) {
+            metricStore.init();
+        }
         setIsLibrary(isLibrary);
         setOpen(true);
     }

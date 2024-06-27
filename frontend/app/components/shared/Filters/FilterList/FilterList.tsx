@@ -1,12 +1,11 @@
-import {Segmented} from 'antd';
+import {Space} from 'antd';
 import {List} from 'immutable';
 import {GripHorizontal} from 'lucide-react';
 import {observer} from 'mobx-react-lite';
 import React, {useEffect} from 'react';
 
-import {Tooltip} from 'UI';
-
 import FilterItem from '../FilterItem';
+import EventsOrder from "Shared/Filters/FilterList/EventsOrder";
 
 interface Props {
     filter?: any; // event/filter
@@ -38,7 +37,6 @@ function FilterList(props: Props) {
     } = props;
 
     const filters = List(filter.filters);
-    const eventsOrderSupport = filter.eventsOrderSupport;
     const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
     const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
 
@@ -111,25 +109,6 @@ function FilterList(props: Props) {
         [draggedInd, hoveredItem, filters, props.onFilterMove]
     );
 
-    const eventOrderItems = [
-        {
-            label: 'THEN',
-            value: 'then',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
-
-        },
-        {
-            label: 'AND',
-            value: 'and',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
-        },
-        {
-            label: 'OR',
-            value: 'or',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
-        },
-    ];
-
     const eventsNum = filters.filter((i: any) => i.isEvent).size
     return (
         <div className="flex flex-col">
@@ -137,37 +116,16 @@ function FilterList(props: Props) {
                 <>
                     <div className="flex items-center mb-2">
                         <div className="text-sm color-gray-medium mr-auto">
-                            {filter.eventsHeader}
+                            {filter.eventsHeader || 'EVENTS'}
                         </div>
-                        {!hideEventsOrder && (
-                            <div className="flex items-center gap-2">
-                                <div
-                                    className="color-gray-medium text-sm"
-                                    style={{textDecoration: 'underline dotted'}}
-                                >
-                                    <Tooltip
-                                        title={`Select the operator to be applied between events in your search.`}
-                                    >
-                                        <div>Events Order</div>
-                                    </Tooltip>
-                                </div>
 
-                                <Segmented
-                                    size={'small'}
-                                    onChange={(v) =>
-                                        props.onChangeEventsOrder(
-                                            null,
-                                            eventOrderItems.find((i) => i.value === v)
-                                        )
-                                    }
-                                    value={filter.eventsOrder}
-                                    options={eventOrderItems}
-                                />
-                                {actions && actions.map((action, index) => (
-                                    <div key={index}>{action}</div>
-                                ))}
-                            </div>
-                        )}
+                        <Space>
+                            {!hideEventsOrder && <EventsOrder filter={filter}
+                                                              onChange={props.onChangeEventsOrder}/>}
+                            {actions && actions.map((action, index) => (
+                                <div key={index}>{action}</div>
+                            ))}
+                        </Space>
                     </div>
                     <div className={'flex flex-col'}>
                         {filters.map((filter: any, filterIndex: number) =>
@@ -263,50 +221,3 @@ function FilterList(props: Props) {
 }
 
 export default observer(FilterList);
-
-
-function EventsOrder(props: {
-    onChange: (e: any, v: any) => void,
-    filter: any,
-    eventsOrderSupport: any
-}) {
-    const {filter, eventsOrderSupport, onChange} = props;
-    const options = [
-        {
-            label: 'THEN',
-            value: 'then',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
-        },
-        {
-            label: 'AND',
-            value: 'and',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
-        },
-        {
-            label: 'OR',
-            value: 'or',
-            disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
-        },
-    ];
-
-    return <div className="flex items-center gap-2">
-        <div
-            className="color-gray-medium text-sm"
-            style={{textDecoration: "underline dotted"}}
-        >
-            <Tooltip
-                title={`Select the operator to be applied between events in your search.`}
-            >
-                <div>Events Order</div>
-            </Tooltip>
-        </div>
-
-        <Segmented
-            size={"small"}
-            // onChange={props.onChange}
-            onChange={(v) => onChange(null, options.find((i) => i.value === v))}
-            value={filter.eventsOrder}
-            options={options}
-        />
-    </div>;
-}

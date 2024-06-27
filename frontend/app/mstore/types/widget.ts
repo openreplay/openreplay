@@ -265,6 +265,16 @@ export default class Widget {
         });
     }
 
+    resetDefaults() {
+        if (this.metricType === FUNNEL) {
+            this.series = [];
+            this.series.push(new FilterSeries());
+            this.series[0].filter.addFunnelDefaultFilters();
+            this.series[0].filter.eventsOrder = 'then';
+            this.series[0].filter.eventsOrderSupport = ['then'];
+        }
+    }
+
     exists() {
         return this.metricId !== undefined;
     }

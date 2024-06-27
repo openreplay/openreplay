@@ -2,15 +2,27 @@ import React from 'react';
 import {Card, Space, Typography, Button} from "antd";
 import {useStore} from "App/mstore";
 import {eventKeys} from "Types/filter/newFilter";
-import {CLICKMAP, FUNNEL, INSIGHTS, RETENTION, TABLE, USER_PATH} from "App/constants/card";
+import {
+    CLICKMAP,
+    ERRORS,
+    FUNNEL,
+    INSIGHTS,
+    PERFORMANCE,
+    RESOURCE_MONITORING,
+    RETENTION,
+    TABLE,
+    USER_PATH, WEB_VITALS
+} from "App/constants/card";
 import FilterSeries from "Components/Dashboard/components/FilterSeries/FilterSeries";
 import {metricOf} from "App/constants/filterOptions";
 import {AudioWaveform, ChevronDown, ChevronUp, PlusIcon} from "lucide-react";
 import {observer} from "mobx-react-lite";
 import AddStepButton from "Components/Dashboard/components/FilterSeries/AddStepButton";
+import {Icon} from "UI";
+import FilterItem from "Shared/Filters/FilterItem";
+import {FilterKey} from "Types/filter/filterType";
 
 function WidgetFormNew() {
-    // const [expanded, setExpanded] = React.useState(true);
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const metric: any = metricStore.instance;
 
@@ -20,9 +32,11 @@ function WidgetFormNew() {
     const isPathAnalysis = metric.metricType === USER_PATH;
     const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
     const hasFilters = filtersLength > 0 || eventsLength > 0;
+    const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
 
-    return (
+    return isPredefined ? <PredefinedMessage/> : (
         <>
+            <AdditionalFilters/>
             <Card
                 styles={{
                     body: {padding: '0'},
@@ -123,3 +137,37 @@ const FilterSection = observer(({metric, excludeFilterKeys}: any) => {
         </>
     );
 })
+
+
+const PathAnalysisFilter = observer(({metric}: any) => (
+    <div className='form-group flex flex-col'>
+        {metric.startType === 'start' ? 'Start Point' : 'End Point'}
+        <FilterItem
+            hideDelete
+            filter={metric.startPoint}
+            allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
+            onUpdate={val => metric.updateStartPoint(val)}
+            onRemoveFilter={() => {
+            }}
+        />
+    </div>
+));
+
+const AdditionalFilters = observer(() => {
+    const {metricStore, dashboardStore, aiFiltersStore} = useStore();
+    const metric: any = metricStore.instance;
+
+    return (
+        <>
+            {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric}/>}
+        </>
+    )
+});
+
+
+const PredefinedMessage = () => (
+    <div className='flex items-center my-6 justify-center'>
+        <Icon name='info-circle' size='18' color='gray-medium'/>
+        <div className='ml-2'>Filtering and drill-downs will be supported soon for this card type.</div>
+    </div>
+);

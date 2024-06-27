@@ -6,10 +6,11 @@ interface Props {
     title: string;
     type: string;
     onCard: (card: string) => void;
+    data?: any,
 }
 
 function WebVital(props: Props) {
-    const data = {
+    const data = props.data || {
         "value": 8.33316146432396,
         "chart": [
             {
