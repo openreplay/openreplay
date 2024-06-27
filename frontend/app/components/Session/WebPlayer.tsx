@@ -24,6 +24,7 @@ import {
 
 const TABS = {
   EVENTS: 'Activity',
+  CLICKMAP: 'Click map',
   INSPECTOR: 'Tag',
 };
 
