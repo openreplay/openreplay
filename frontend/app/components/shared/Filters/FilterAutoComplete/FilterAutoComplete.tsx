@@ -146,12 +146,21 @@ function FilterAutoComplete(props: Props) {
     }, [value])
 
     const loadOptions = (inputValue: string, callback: (options: []) => void) => {
-        // remove underscore from params
-        const _params: Record<string, string> = {}
-        const keys = Object.keys(params);
-        keys.forEach((key) => {
-            _params[key.replace('_', '')] = params[key];
-        })
+        const _params = Object.keys(params).reduce((acc: any, key: string) => {
+            // all metadata keys start with underscore to avoid conflicts with predefined filter keys
+            // they should be removed before sending to the server
+            if (key === 'type' && params[key] === 'metadata') {
+                acc['key'] = params['key'].replace(/^_/, '');
+                acc['type'] = 'metadata';
+            }
+            return acc;
+        }, {});
+
+        // const _params: Record<string, string> = {}
+        // const keys = Object.keys(params);
+        // keys.forEach((key) => {
+        //     _params[key.replace('_', '')] = params[key];
+        // })
 
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
