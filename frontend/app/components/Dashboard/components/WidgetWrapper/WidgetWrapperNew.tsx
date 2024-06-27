@@ -93,9 +93,9 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     return (
         <Card
             className={cn(
-                'relative group',
+                'relative group rounded-lg',
                 'col-span-' + widget.config.col,
-                {'hover:shadow': !isTemplate && isWidget},
+                {'hover:shadow-sm': !isTemplate && isWidget},
             )}
             style={{
                 userSelect: 'none',

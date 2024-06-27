@@ -1,6 +1,7 @@
 import Copyright from 'Shared/Copyright';
 import React from 'react';
-import { Form, Input, Loader, Button, Link, Icon, Message } from 'UI';
+import { Form, Input, Loader, Link, Icon, Message } from 'UI';
+import {Button} from 'antd';
 import { login as loginRoute } from 'App/routes';
 import { connect } from 'react-redux';
 import ResetPassword from './ResetPasswordRequest';
@@ -41,7 +42,7 @@ function ForgotPassword(props: Props) {
           <div className="flex flex-col items-center justify-center">
             <div className="my-8">
               <Link to={LOGIN}>
-                <div className="link">{'Back to Login'}</div>
+                <Button type="link" >{'Back to Login'}</Button>
               </Link>
             </div>
           </div>

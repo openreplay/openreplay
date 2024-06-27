@@ -141,7 +141,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
               <div className="px-8 w-full">
                 <Button
                   data-test-id={'log-button'}
-                  className="mt-2 w-full text-center"
+                  className="mt-2 w-full text-center rounded-lg"
                   type="submit"
                   variant="primary"
                 >

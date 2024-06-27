@@ -75,7 +75,7 @@ function ResetPasswordRequest(props: Props) {
                 required
               />
             </Form.Field>
-            <Button type="submit" variant="primary" className="mt-4" loading={loading} disabled={loading}>
+            <Button type="submit" variant="primary" className="mt-4 rounded-lg" loading={loading} disabled={loading}>
               Email password reset link
             </Button>
           </>
