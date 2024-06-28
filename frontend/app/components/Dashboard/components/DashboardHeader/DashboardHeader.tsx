@@ -1,5 +1,6 @@
 import React from 'react';
-import Breadcrumb from 'Shared/Breadcrumb';
+//import {Breadcrumb} from 'Shared/Breadcrumb';
+import BackButton from '../../../shared/Breadcrumb/BackButton';
 import {withSiteId} from 'App/routes';
 import {withRouter, RouteComponentProps} from 'react-router-dom';
 import {Button, PageTitle, confirm, Tooltip} from 'UI';
@@ -61,17 +62,24 @@ function DashboardHeader(props: Props) {
                 closeHandler={() => setShowEditModal(false)}
                 focusTitle={focusTitle}
             />
-            {/* <Breadcrumb
-                items={[
-                    {
-                        label: 'Dashboards',
-                        to: withSiteId('/dashboard', siteId),
-                    },
-                    {label: (dashboard && dashboard.name) || ''},
-                ]}
-            /> */}
+            
             <div className="flex items-center mb-2 justify-between">
                 <div className="flex items-center" style={{flex: 3}}>
+
+                    <BackButton siteId={siteId} />
+                    
+                    {/* <Breadcrumb
+                    items={[
+                            {
+                                label: 'Back',
+                                to: withSiteId('/dashboard', siteId),
+                            },
+                            {label: (dashboard && dashboard.name) || ''},
+                        ]}
+                    /> */}
+
+
+
                     <PageTitle
                         title={
                             // @ts-ignore

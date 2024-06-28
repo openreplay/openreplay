@@ -23,7 +23,7 @@ function AddStepButton({series, excludeFilterKeys}: Props) {
             onFilterClick={onAddFilter}
             excludeFilterKeys={excludeFilterKeys}
         >
-            <Button type="text" className='border-none text-indigo-600 hover:text-indigo-600 align-bottom' icon={<PlusIcon size={16}/>} size="small">
+            <Button type="text" className='border-none text-indigo-600 hover:text-indigo-600 align-bottom ms-2' icon={<PlusIcon size={16}/>} size="small">
                 <span className='font-medium'>Add Step</span>
             </Button>
         </FilterSelection>

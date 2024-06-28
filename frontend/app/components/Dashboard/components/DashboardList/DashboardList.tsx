@@ -13,12 +13,17 @@ import { dashboardSelected, withSiteId } from 'App/routes';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import CreateDashboardButton from "Components/Dashboard/components/CreateDashboardButton";
 import { useHistory } from "react-router";
+import classNames from 'classnames';
 
 function DashboardList({ siteId }: { siteId: string }) {
     const { dashboardStore } = useStore();
     const list = dashboardStore.filteredList;
     const dashboardsSearch = dashboardStore.filter.query;
     const history = useHistory();
+
+    // Define custom width and height for each scenario
+    const searchImageDimensions = { width: 200, height: 'auto' };
+    const defaultImageDimensions = { width: 600, height: 'auto' };
 
     const tableConfig: TableColumnsType<Dashboard> = [
         {
@@ -93,14 +98,22 @@ function DashboardList({ siteId }: { siteId: string }) {
     );
 
     const emptyImage = dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS;
+    const imageDimensions = dashboardsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
 
     return (
         list.length === 0 && !dashboardStore.filter.showMine ? (
+            <div className='flex justify-center text-center'>
             <Empty
-                image={<AnimatedSVG name={emptyImage} size={600} />}
-                imageStyle={{ height: 300 }}
+                image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />} 
+                imageStyle={{ 
+                    width: imageDimensions.width, 
+                    height: imageDimensions.height,
+                    margin: 'auto',
+                    padding: '2rem 0'
+                }} 
                 description={emptyDescription}
             />
+            </div>
         ) : (
             <Table
                 dataSource={list}
