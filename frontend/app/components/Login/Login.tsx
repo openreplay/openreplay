@@ -110,6 +110,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       icon="envelope"
+                      
                     />
                   </Form.Field>
                   <Form.Field>

@@ -115,7 +115,7 @@ function WidgetSessions(props: Props) {
   };
 
   return (
-    <div className={cn(className, 'bg-white p-3 pb-0 rounded border')}>
+    <div className={cn(className, 'bg-white p-3 pb-0 rounded-lg shadow-sm border mt-3')}>
       <div className='flex items-center justify-between'>
         <div className='flex items-baseline'>
           <h2 className='text-xl'>{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>

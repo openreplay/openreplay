@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon, Tooltip } from 'UI';
+import { Input } from 'antd';
 import cn from 'classnames';
 
 interface Props {
@@ -53,10 +54,9 @@ function WidgetName(props: Props) {
   return (
     <div className="flex items-center">
       { editing ? (
-        <input
+        <Input
           ref={ ref }
           name="name"
-          className="rounded fluid border-0 -mx-2 px-2 h-8"
           value={name}
           onChange={write}
           onBlur={() => onBlur()}

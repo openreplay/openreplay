@@ -59,7 +59,7 @@ function DashboardWidgetGrid(props: Props) {
                 >
                     <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>{smallWidgets.length > 0 ? (
                         <>
-                            <div className="font-semibold text-xl pt-4 flex items-center gap-2 col-span-4">
+                            <div className="font-medium text-xl pt-4 flex items-center gap-2 col-span-4">
                                 <Icon name="grid-horizontal" size={26}/>
                                 Web Vitals
                             </div>
@@ -85,7 +85,7 @@ function DashboardWidgetGrid(props: Props) {
                     ) : null}
 
                         {smallWidgets.length > 0 && regularWidgets.length > 0 ? (
-                            <div className="font-semibold text-xl pt-4 flex items-center gap-2 col-span-4">
+                            <div className="font-medium text-xl pt-4 flex items-center gap-2 col-span-4">
                                 <Icon name="grid-horizontal" size={26}/>
                                 All Cards
                             </div>

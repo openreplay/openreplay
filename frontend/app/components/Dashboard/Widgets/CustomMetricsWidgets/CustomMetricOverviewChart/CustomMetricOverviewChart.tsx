@@ -27,7 +27,7 @@ function CustomMetricOverviewChart(props: Props) {
                     />
                 </div>
             </div>
-            <ResponsiveContainer height={100} width="100%">
+            <ResponsiveContainer height={100} width="100%" className='rounded-lg overflow-hidden'>
                 <AreaChart
                     data={data.chart}
                     margin={{

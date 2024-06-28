@@ -137,28 +137,34 @@ function WidgetView(props: Props) {
                         </div>
                     }
                 >
-                    <Space direction="vertical" size={20} className="w-full">
-                        <WidgetViewHeader onSave={onSave} undoChanges={undoChanges}/>
+                    <div className="w-full">
+                        <div className='my-3'>
+                            <WidgetViewHeader onSave={onSave} undoChanges={undoChanges}/>
+                        </div>
 
-                        <WidgetFormNew/>
+                        <div className='my-3'>
+                            <WidgetFormNew/>
+                        </div>
 
                         {/*<div className="bg-white rounded border mt-3">*/}
                         {/*    <WidgetForm expanded={expanded} onDelete={onBackHandler} {...props} />*/}
                         {/*</div>*/}
 
-                        <WidgetPreview name={widget.name} isEditing={expanded}/>
+                        <div className='my-3'>
+                            <WidgetPreview name={widget.name} isEditing={expanded}/>
 
-                        {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
-                            <>
-                                {(widget.metricType === TABLE || widget.metricType === TIMESERIES || widget.metricType === CLICKMAP || widget.metricType === INSIGHTS) &&
-                                    <WidgetSessions/>}
-                                {widget.metricType === FUNNEL && <FunnelIssues/>}
-                            </>
-                        )}
+                            {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
+                                <>
+                                    {(widget.metricType === TABLE || widget.metricType === TIMESERIES || widget.metricType === CLICKMAP || widget.metricType === INSIGHTS) &&
+                                        <WidgetSessions/>}
+                                    {widget.metricType === FUNNEL && <FunnelIssues/>}
+                                </>
+                            )}
 
-                        {widget.metricType === USER_PATH && <CardIssues/>}
-                        {widget.metricType === RETENTION && <CardUserList/>}
-                    </Space>
+                            {widget.metricType === USER_PATH && <CardIssues/>}
+                            {widget.metricType === RETENTION && <CardUserList/>}
+                        </div>
+                    </div>
                 </NoContent>
             </div>
         </Loader>

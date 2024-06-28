@@ -26,7 +26,8 @@ function WidgetViewHeader({onClick, onSave, undoChanges}: Props) {
             <h1 className="mb-0 text-2xl mr-4 min-w-fit">
                 <WidgetName name={widget.name}
                             onUpdate={(name) => metricStore.merge({name})}
-                            canEdit={true}/>
+                            canEdit={true}
+                />
             </h1>
             <Space>
                 <WidgetDateRange label=""/>

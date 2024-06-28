@@ -1,5 +1,5 @@
 import React from 'react';
-import {Card, Space, Typography, Button} from "antd";
+import {Card, Space, Typography, Button, Alert} from "antd";
 import {useStore} from "App/mstore";
 import {eventKeys} from "Types/filter/newFilter";
 import {
@@ -60,10 +60,10 @@ export default observer(WidgetFormNew);
 
 function DefineSteps({metric, excludeFilterKeys}: any) {
     return (
-        <Space className="px-4 py-2 rounded-lg shadow-sm">
-            <Typography.Text strong>Define Steps</Typography.Text>
+        <div className="px-4 py-2 rounded-lg shadow-sm flex items-center ">
+            <Typography.Text strong>Filter</Typography.Text>
             <AddStepButton excludeFilterKeys={excludeFilterKeys} series={metric.series[0]}/>
-        </Space>
+        </div>
     );
 }
 
@@ -172,8 +172,5 @@ const AdditionalFilters = observer(() => {
 
 
 const PredefinedMessage = () => (
-    <div className='flex items-center my-6 justify-center'>
-        <Icon name='info-circle' size='18' color='gray-medium'/>
-        <div className='ml-2'>Filtering and drill-downs will be supported soon for this card type.</div>
-    </div>
+    <Alert message="Drilldown or filtering isn't supported on this legacy card." type='warning' showIcon closable className='border-transparent rounded-lg' />
 );

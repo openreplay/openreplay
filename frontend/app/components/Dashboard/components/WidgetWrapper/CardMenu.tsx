@@ -21,7 +21,7 @@ function CardMenu({card}: any) {
         },
         {
             key: 'hide',
-            label: 'Hide',
+            label: 'Remove',
             icon: <EyeOffIcon size={16}/>,
         },
     ];

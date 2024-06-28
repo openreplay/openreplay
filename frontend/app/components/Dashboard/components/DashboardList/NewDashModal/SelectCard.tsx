@@ -73,7 +73,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
         <>
             <Space className="items-center justify-between">
                 <div className="text-xl leading-4 font-medium">
-                    {dashboardId ? (isLibrary ? "Add Card" : "Create Card") : "Select a template to create a card"}
+                    {dashboardId ? (isLibrary ? "Your Library" : "Create Card") : "Select a template to create a card"}
                 </div>
                 {isLibrary && (
                     <Space>
@@ -84,7 +84,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
                         ) : ''}
 
                         <Input.Search
-                            placeholder="Search"
+                            placeholder="Find by card title"
                             onChange={(value) => setLibraryQuery(value.target.value)}
                             style={{width: 200}}
                         />

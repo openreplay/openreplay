@@ -50,7 +50,7 @@ function Modal(props: Props) {
             style={{ zIndex: '9999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}
             onClick={handleClose}
         >
-            <div className="absolute z-10 bg-white rounded border" style={style}>
+            <div className="absolute z-10 bg-white rounded-lg shadow-sm" style={style}>
                 {children}
             </div>
         </div>

@@ -57,7 +57,7 @@ function FunnelIssues() {
     }, [stages.length, drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (
-        <div className="bg-white rounded p-4 border">
+        <div className="bg-white rounded-lg mt-4 p-4 border">
             <div className="flex">
                 <h2 className="font-medium text-xl">Most significant issues <span className="font-normal">identified in this funnel</span></h2>
             </div>

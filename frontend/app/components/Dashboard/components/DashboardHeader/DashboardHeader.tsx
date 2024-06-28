@@ -61,7 +61,7 @@ function DashboardHeader(props: Props) {
                 closeHandler={() => setShowEditModal(false)}
                 focusTitle={focusTitle}
             />
-            <Breadcrumb
+            {/* <Breadcrumb
                 items={[
                     {
                         label: 'Dashboards',
@@ -69,18 +69,18 @@ function DashboardHeader(props: Props) {
                     },
                     {label: (dashboard && dashboard.name) || ''},
                 ]}
-            />
+            /> */}
             <div className="flex items-center mb-2 justify-between">
                 <div className="flex items-center" style={{flex: 3}}>
                     <PageTitle
                         title={
                             // @ts-ignore
-                            <Tooltip delay={100} arrow title="Double click to edit">
+                            <Tooltip delay={0}  title="Double click to edit" placement='bottom'>
                                 {dashboard?.name}
                             </Tooltip>
                         }
                         onDoubleClick={() => onEdit(true)}
-                        className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
+                        className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
                     />
                 </div>
                 <div className="flex items-center gap-2" style={{flex: 1, justifyContent: 'end'}}>
@@ -112,7 +112,7 @@ function DashboardHeader(props: Props) {
             </div>
             <div className="pb-4">
                 {/* @ts-ignore */}
-                <Tooltip delay={100} arrow title="Double click to edit" className="w-fit !block">
+                <Tooltip arrow title="Double click to edit" placement='top' className="w-fit !block">
                     <h2
                         className="my-2 font-normal w-fit text-disabled-text border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                         onDoubleClick={() => onEdit(false)}

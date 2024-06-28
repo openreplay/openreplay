@@ -15,7 +15,7 @@ function ExCard({
 }) {
     return (
         <div
-            className={'rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:border-blue hover:shadow-sm relative'}
+            className={'rounded-lg overflow-hidden border border-transparent p-4 bg-white hover:shadow-sm relative'}
             style={{width: '100%', height: height || 286}}
         >
             <div className="absolute inset-0 z-10 cursor-pointer" onClick={() => onCard(type)}></div>

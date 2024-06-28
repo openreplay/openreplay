@@ -72,8 +72,8 @@ function SessionsBy(props: Props) {
                     {total > 3 && (
                         <div className="flex">
                             <Button type="link" onClick={showMore}>
-                                <Space>
-                                    {total - 3} more
+                                <Space className='flex font-medium gap-1'>
+                                    {total - 5} More
                                     <ArrowRight size={16}/>
                                 </Space>
                             </Button>
