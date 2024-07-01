@@ -477,7 +477,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
             f_k = f"f_value{i}"
             full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k)}
             op = sh.get_sql_operator(f.operator) \
-                if filter_type not in [schemas.FilterType.events_count] else f.operator
+                if filter_type not in [schemas.FilterType.events_count] else f.operator.value
             is_any = sh.isAny_opreator(f.operator)
             is_undefined = sh.isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
