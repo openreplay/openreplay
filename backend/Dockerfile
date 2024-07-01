@@ -1,7 +1,7 @@
 #ARCH can be amd64 or arm64
 ARG ARCH=amd64
 
-FROM --platform=linux/$ARCH golang:1.21-alpine3.18 AS build
+FROM --platform=linux/$ARCH golang:1.21-alpine AS build
 RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5;
 WORKDIR /root
 
