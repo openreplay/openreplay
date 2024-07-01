@@ -6,7 +6,7 @@ import React from 'react';
 import FilterItem from 'Shared/Filters/FilterItem';
 import cn from 'classnames';
 
-import { Button } from 'UI';
+import { Button } from 'antd';
 
 interface Props {
   filter: Filter;
@@ -47,7 +47,7 @@ function ExcludeFilters(props: Props) {
           ))}
         </div>
       ) : (
-        <Button variant="text-primary" onClick={addPageFilter}>
+        <Button type="link" onClick={addPageFilter}>
           Add Exclusion
         </Button>
       )}

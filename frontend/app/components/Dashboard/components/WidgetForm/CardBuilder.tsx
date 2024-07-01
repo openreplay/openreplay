@@ -182,7 +182,7 @@ const SeriesList = observer(() => {
                             emptyMessage={
                                 metric.metricType === TABLE
                                     ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
-                                    : 'Add user event or filter to define the series by clicking Add Step.'
+                                    : 'Add an event or filter step to define the series.'
                             }
                         />
                     </div>

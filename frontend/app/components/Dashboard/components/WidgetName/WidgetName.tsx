@@ -80,7 +80,11 @@ function WidgetName(props: Props) {
         </Tooltip>
 
       )}
-      { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div> }
+      { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}>
+        <Tooltip title='Rename' placement='bottom'>
+          <Icon name="pencil" size="16" />
+        </Tooltip>
+        </div> }
     </div>
   );
 }
