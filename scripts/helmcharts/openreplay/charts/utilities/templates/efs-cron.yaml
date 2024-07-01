@@ -46,7 +46,7 @@ spec:
               # Delete all the files older than {{.Values.efsCleaner.retention}} days
               set -x
               echo "Cleaning NFS strorage for data older than {{.Values.efsCleaner.retention}} days"
-              storage=`du -sh /mnt/efs`
+              storage=$(df -h /mnt/efs | awk 'NR==2 {print $2}')
               {{- $time := mul .Values.efsCleaner.retention 1440 }}
               {{- if .Values.efsCleaner.retentionHours }}
               {{- $time = mul .Values.efsCleaner.retentionHours 60 }} 
@@ -55,7 +55,7 @@ spec:
               echo "Storage before cleaning"
               echo ${storage}
               echo "Storage after cleaning"
-              du -sh /mnt/efs
+              df -h /mnt/efs | awk 'NR==2 {print $2}'
             volumeMounts:
             - mountPath: /mnt/efs
               name: datadir
