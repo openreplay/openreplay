@@ -44,7 +44,7 @@ function StackEventRow(props: Props) {
           <div className='code-font text-xs'>{message}</div>
         </div>
       </div>
-      <JumpButton onClick={onJump} />
+      <JumpButton time={event.time} onClick={onJump} />
     </div>
   );
 }

@@ -44,6 +44,12 @@ export function durationFromMsFormatted(ms: number): string {
   return durationFormatted(Duration.fromMillis(ms || 0));
 }
 
+export function shortDurationFromMs(ms: number): string {
+  const dur = Duration.fromMillis(ms)
+
+  return dur.toFormat(`mm:ss`)
+}
+
 export function durationFromMs(ms: number, isFull?: boolean): string {
   const dur = Duration.fromMillis(ms)
 
