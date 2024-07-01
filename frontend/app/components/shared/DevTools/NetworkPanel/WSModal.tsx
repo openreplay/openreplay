@@ -25,7 +25,7 @@ function WSModal({ socketMsgList }: Props) {
         <div className={'col-span-1'}>Length</div>
         <div className={'col-span-2 text-right'}>Time</div>
       </div>
-      <div style={{ height: '100%', maxWidth: 700, overflowY: 'auto' }}>
+      <div style={{ height: 'calc(100% - 36px)', maxWidth: 700, overflowY: 'auto' }}>
         {socketMsgList.map((msg) => (
           <Row msg={msg} key={msg.timestamp} />
         ))}

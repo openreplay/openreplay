@@ -53,7 +53,7 @@ function WidgetPreview(props: Props) {
           <WidgetWrapper
             widget={metric}
             isPreview={true}
-            isSaved={metric.exists()}
+            // isSaved={metric.exists()}
             hideName
           />
         </div>

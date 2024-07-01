@@ -1,4 +1,6 @@
+import copy from 'copy-to-clipboard';
 import { useContext, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 import { PlayerContext } from 'Components/Session/playerContext';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
@@ -23,8 +25,18 @@ function useShortcuts({
   setActiveTab: (tab: string) => void;
   disableDevtools?: boolean;
 }) {
-  const { player } = useContext(PlayerContext);
+  const { player, store } = useContext(PlayerContext);
 
+  const copySessionUrl = (withTs?: boolean) => {
+    if (withTs) {
+      const time = store.get().time;
+      const sessUrl = `${window.location.href}?jumpto=${time}`;
+      copy(sessUrl);
+    } else {
+      copy(window.location.href);
+    }
+    toast.success('Copied session url to clipboard');
+  };
   const forthTenSeconds = () => {
     player.jumpInterval(SKIP_INTERVALS[skipInterval]);
   };
@@ -41,6 +53,7 @@ function useShortcuts({
       ) {
         return false;
       } else {
+        console.log(e);
         // shift + f = fullscreenOn
         if (e.shiftKey) {
           e.preventDefault();
@@ -49,9 +62,13 @@ function useShortcuts({
             case 'F':
               return fullScreenOn();
             case 'X':
-              return disableDevtools ? null : toggleBottomBlock(blocks.overview);
+              return disableDevtools
+                ? null
+                : toggleBottomBlock(blocks.overview);
             case 'P':
-              return disableDevtools ? null : toggleBottomBlock(blocks.performance);
+              return disableDevtools
+                ? null
+                : toggleBottomBlock(blocks.performance);
             case 'N':
               return disableDevtools ? null : toggleBottomBlock(blocks.network);
             case 'C':
@@ -59,11 +76,15 @@ function useShortcuts({
             case 'R':
               return disableDevtools ? null : toggleBottomBlock(blocks.storage);
             case 'E':
-              return disableDevtools ? null : toggleBottomBlock(blocks.stackEvents);
+              return disableDevtools
+                ? null
+                : toggleBottomBlock(blocks.stackEvents);
             case '>':
               return openNextSession();
             case '<':
               return openPrevSession();
+            case 'U':
+              return copySessionUrl(true);
             case 'A':
               player.pause();
               return setActiveTab('EVENTS');
@@ -100,4 +121,4 @@ function useShortcuts({
   }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
 }
 
-export default useShortcuts
+export default useShortcuts;

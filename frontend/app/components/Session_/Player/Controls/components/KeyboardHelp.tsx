@@ -36,6 +36,7 @@ function ShortcutGrid() {
     <div className={'p-4 overflow-y-auto h-screen'}>
       <div className={'mb-4 font-semibold text-xl'}>Keyboard Shortcuts</div>
       <div className=" grid grid-cols-2 grid-flow-row-dense auto-cols-max gap-4 justify-items-start">
+        <Cell shortcut="⇧ + U" text="Copy Session URL with time" />
         <Cell shortcut="⇧ + C" text="Launch Console" />
         <Cell shortcut="⇧ + N" text="Launch Network" />
         <Cell shortcut="⇧ + P" text="Launch Performance" />
