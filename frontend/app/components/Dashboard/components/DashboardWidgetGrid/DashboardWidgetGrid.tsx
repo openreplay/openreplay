@@ -75,7 +75,7 @@ function DashboardWidgetGrid(props: Props) {
 
                                             } dashboardId={dashboardId}
                                             siteId={siteId}
-                                            isWidget={true}
+                                            isSaved={true}
                                             grid="vitals"
                                         />
                                     </React.Fragment>
@@ -102,7 +102,7 @@ function DashboardWidgetGrid(props: Props) {
                                         }
                                         dashboardId={dashboardId}
                                         siteId={siteId}
-                                        isWidget={true}
+                                        isSaved={true}
                                         grid="other"
                                     />
                                 </React.Fragment>

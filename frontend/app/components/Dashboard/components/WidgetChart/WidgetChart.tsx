@@ -37,13 +37,13 @@ import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/Sessio
 
 interface Props {
     metric: any;
-    isWidget?: boolean;
+    isSaved?: boolean;
     isTemplate?: boolean;
     isPreview?: boolean;
 }
 
 function WidgetChart(props: Props) {
-    const {isWidget = false, metric, isTemplate} = props;
+    const {isSaved = false, metric, isTemplate} = props;
     const {dashboardStore, metricStore, sessionStore} = useStore();
     const _metric: any = metricStore.instance;
     const period = dashboardStore.period;
@@ -93,10 +93,10 @@ function WidgetChart(props: Props) {
         ..._metric.series, ..._metric.excludes, ..._metric.startPoint,
         hideExcess: _metric.hideExcess
     });
-    const fetchMetricChartData = (metric: any, payload: any, isWidget: any, period: any) => {
+    const fetchMetricChartData = (metric: any, payload: any, isSaved: any, period: any) => {
         if (!isMounted()) return;
         setLoading(true);
-        dashboardStore.fetchMetricChartData(metric, payload, isWidget, period).then((res: any) => {
+        dashboardStore.fetchMetricChartData(metric, payload, isSaved, period).then((res: any) => {
             if (isMounted()) setData(res);
         }).finally(() => {
             setLoading(false);
@@ -111,8 +111,8 @@ function WidgetChart(props: Props) {
         }
         prevMetricRef.current = metric;
         const timestmaps = drillDownPeriod.toTimestamps();
-        const payload = isWidget ? {...params} : {...metricParams, ...timestmaps, ...metric.toJson()};
-        debounceRequest(metric, payload, isWidget, !isWidget ? drillDownPeriod : period);
+        const payload = isSaved ? {...params} : {...metricParams, ...timestmaps, ...metric.toJson()};
+        debounceRequest(metric, payload, isSaved, !isSaved ? drillDownPeriod : period);
     };
     useEffect(() => {
         _metric.updateKey('page', 1);
@@ -126,7 +126,7 @@ function WidgetChart(props: Props) {
         const metricWithData = {...metric, data};
 
         if (metricType === FUNNEL) {
-            return <FunnelWidget metric={metric} data={data} isWidget={isWidget || isTemplate}/>;
+            return <FunnelWidget metric={metric} data={data} isWidget={isSaved || isTemplate}/>;
         }
 
         if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
@@ -166,7 +166,7 @@ function WidgetChart(props: Props) {
                         metric={metric}
                         data={data}
                         isTemplate={isTemplate}
-                        isEdit={!isWidget && !isTemplate}
+                        isEdit={!isSaved && !isTemplate}
                     />
                 );
             }
@@ -176,7 +176,7 @@ function WidgetChart(props: Props) {
                         metric={metric}
                         data={data}
                         // isTemplate={isTemplate}
-                        isEdit={!isWidget && !isTemplate}
+                        isEdit={!isSaved && !isTemplate}
                     />
                 );
             }

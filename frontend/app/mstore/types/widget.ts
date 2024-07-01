@@ -85,6 +85,7 @@ export default class Widget {
     page: number = 1;
     limit: number = 5;
     thumbnail?: string;
+    sessionId?: string;
     params: any = {density: 70};
     startType: string = 'start';
     startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
@@ -165,6 +166,7 @@ export default class Widget {
             this.predefinedKey = json.predefinedKey;
             this.category = json.category;
             this.thumbnail = json.thumbnail;
+            this.sessionId = json.sessionId;
             this.isPublic = json.isPublic;
 
             if (this.metricType === FUNNEL) {
@@ -220,6 +222,7 @@ export default class Widget {
             name: this.name,
             series: this.series.map((series: any) => series.toJson()),
             thumbnail: this.thumbnail,
+            sessionId: this.sessionId,
             page: this.page,
             limit: this.limit,
             config: {

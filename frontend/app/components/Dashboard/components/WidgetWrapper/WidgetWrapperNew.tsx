@@ -27,7 +27,7 @@ interface Props {
     active?: boolean;
     history?: any;
     onClick?: () => void;
-    isWidget?: boolean;
+    isSaved?: boolean;
     hideName?: boolean;
     grid?: string;
     isGridView?: boolean;
@@ -36,7 +36,7 @@ interface Props {
 function WidgetWrapperNew(props: Props & RouteComponentProps) {
     const {dashboardStore} = useStore();
     const {
-        isWidget = false,
+        isSaved = false,
         active = false,
         index = 0,
         moveListItem = null,
@@ -75,7 +75,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     });
 
     const onChartClick = () => {
-        if (!isWidget || isPredefined) return;
+        if (!isSaved || isPredefined) return;
         props.history.push(
             withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
         );
@@ -86,7 +86,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     const addOverlay =
         isTemplate ||
         (!isPredefined &&
-            isWidget &&
+         isSaved &&
             widget.metricOf !== FilterKey.ERRORS &&
             widget.metricOf !== FilterKey.SESSIONS);
 
@@ -95,7 +95,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
             className={cn(
                 'relative group',
                 'col-span-' + widget.config.col,
-                {'hover:shadow': !isTemplate && isWidget},
+                {'hover:shadow': !isTemplate && isSaved},
             )}
             style={{
                 userSelect: 'none',
@@ -107,7 +107,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
             onClick={props.onClick ? props.onClick : () => null}
             id={`widget-${widget.widgetId}`}
             title={!props.hideName ? widget.name : null}
-            extra={isWidget ? [
+            extra={isSaved ? [
                 <div className="flex items-center" id="no-print">
                     {!isPredefined && isTimeSeries && !isGridView && (
                         <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId}/>
@@ -131,7 +131,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
                 },
             }}
         >
-            {!isTemplate && isWidget && isPredefined && (
+            {!isTemplate && isSaved && isPredefined && (
                 <Tooltip title="Cannot drill down system provided metrics">
                     <div
                         className={cn(stl.drillDownMessage, 'disabled text-gray text-sm invisible group-hover:visible')}>
@@ -148,7 +148,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
                         isPreview={isPreview}
                         metric={widget}
                         isTemplate={isTemplate}
-                        isWidget={isWidget}
+                        isSaved={isSaved}
                     />
                 </div>
             </LazyLoad>

@@ -410,7 +410,7 @@ export default class DashboardStore {
   fetchMetricChartData(
     metric: Widget,
     data: any,
-    isWidget: boolean = false,
+    isSaved: boolean = false,
     period: Record<string, any>
   ): Promise<any> {
     period = period.toTimestamps();
@@ -425,7 +425,7 @@ export default class DashboardStore {
       this.pendingRequests += 1;
 
       try {
-        const data = await metricService.getMetricChartData(metric, params, isWidget);
+        const data = await metricService.getMetricChartData(metric, params, isSaved);
         resolve(metric.setData(data, period));
       } catch (error) {
         reject(error);

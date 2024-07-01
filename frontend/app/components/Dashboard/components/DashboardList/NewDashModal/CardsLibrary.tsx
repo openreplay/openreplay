@@ -73,7 +73,7 @@ function CardsLibrary(props: Props) {
                                         // isPreview={true}
                                         metric={metric}
                                         isTemplate={true}
-                                        isWidget={true}
+                                        isSaved={true}
                                     />
                                 </Card>
                             </LazyLoad>

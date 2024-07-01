@@ -24,7 +24,7 @@ function GridView(props: Props) {
             widget={metric}
             isGridView={true}
             active={selectedList.includes(metric.metricId)}
-            isWidget={true}
+            isSaved={true}
             onClick={() => onItemClick(parseInt(metric.metricId))}
           />
         </React.Fragment>

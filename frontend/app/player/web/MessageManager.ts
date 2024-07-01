@@ -202,10 +202,15 @@ export default class MessageManager {
         namesObj[tabId] = ''
       }
     }
+
     lastMsgArr.sort((a, b) => a[1] - b[1])
-    lastMsgArr.forEach(([tabId, lastMessageTs]) => {
-      this.tabCloseManager.append({ tabId, time: lastMessageTs })
-    })
+    if (Object.keys(namesObj).length === 1) {
+      this.tabCloseManager.append({ tabId: lastMsgArr[0][0], time: this.session.durationMs - 250 })
+    } else {
+      lastMsgArr.forEach(([tabId, lastMessageTs]) => {
+        this.tabCloseManager.append({ tabId, time: lastMessageTs })
+      })
+    }
 
     this.state.update({ tabNames: namesObj })
   }
