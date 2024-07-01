@@ -42,9 +42,9 @@ function DashboardList({ siteId }: { siteId: string }) {
         },
         {
             title: 'Owner',
-            dataIndex: 'ownerEmail',
+            dataIndex: 'owner',
             width: '16.67%',
-            sorter: (a, b) => a.ownerEmail.localeCompare(b.ownerEmail),
+            sorter: (a, b) => a.owner.localeCompare(b.owner),
             sortDirections: ['ascend', 'descend'],
         },
         {
