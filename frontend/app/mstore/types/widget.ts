@@ -233,9 +233,7 @@ export default class Widget {
                     this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION ||
                     this.metricType === USER_PATH
                         ? 4
-                        : this.metricType === WEB_VITALS
-                            ? 1
-                            : 2
+                        : 2
             }
         };
 
