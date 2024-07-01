@@ -235,14 +235,14 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION,
         category: CARD_CATEGORIES[1].key,
         data: {
-            chart: generateAreaData(),
-            label: "Page Response Time (ms)",
+            chart: generateBarChartData(),
+            label: "Number of Calls",
             unit: 'ms',
             namesMap: [
                 "Series 1"
             ]
         },
-        example: AreaChartCard,
+        example: BarChartCard,
     },
 
     {
@@ -252,7 +252,7 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
         category: CARD_CATEGORIES[1].key,
         data: {
-            chart: generateBarChartDate(),
+            chart: generateBarChartData(),
             namesMap: [
                 "Series 1"
             ]
@@ -303,6 +303,8 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[1].key,
         data: {
             chart: generateAreaData(),
+            label: "Time to Render (ms)",
+            unit: 'ms',
             namesMap: [
                 "Series 1"
             ]
@@ -318,9 +320,10 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[1].key,
         data: {
             chart: generateAreaData(),
+            label: "Number of Sessions",
             namesMap: [
                 "Series 1"
-            ]
+            ],
         },
         example: AreaChartCard,
     },
@@ -386,7 +389,7 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
         category: CARD_CATEGORIES[3].key,
         data: {
-            chart: generateBarChartDate(),
+            chart: generateBarChartData(),
         },
         example: BarChartCard,
     },
@@ -397,7 +400,7 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.RESOURCES_BY_PARTY,
         category: CARD_CATEGORIES[3].key,
         data: {
-            chart: generateBarChartDate(),
+            chart: generateBarChartData(),
         },
         example: BarChartCard,
     },
@@ -417,7 +420,7 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.ERRORS_PER_TYPE,
         category: CARD_CATEGORIES[3].key,
         data: {
-            chart: generateBarChartDate(),
+            chart: generateBarChartData(),
         },
         example: BarChartCard,
     },
@@ -725,7 +728,7 @@ function generateRandomValue(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateBarChartDate(): any[] {
+function generateBarChartData(): any[] {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     return months.map(month => ({
         time: month,
