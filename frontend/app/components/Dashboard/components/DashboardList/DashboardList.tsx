@@ -41,10 +41,10 @@ function DashboardList({ siteId }: { siteId: string }) {
             render: (date) => checkForRecent(date, 'LLL dd, yyyy, hh:mm a'),
         },
         {
-            title: 'Modified By',
-            dataIndex: 'updatedBy',
+            title: 'Created By',
+            dataIndex: 'ownerEmail',
             width: '16.67%',
-            sorter: (a, b) => a.updatedBy.localeCompare(b.updatedBy),
+            sorter: (a, b) => a.ownerEmail.localeCompare(b.ownerEmail),
             sortDirections: ['ascend', 'descend'],
         },
         {
@@ -104,13 +104,13 @@ function DashboardList({ siteId }: { siteId: string }) {
         list.length === 0 && !dashboardStore.filter.showMine ? (
             <div className='flex justify-center text-center'>
             <Empty
-                image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />} 
-                imageStyle={{ 
-                    width: imageDimensions.width, 
+                image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
+                imageStyle={{
+                    width: imageDimensions.width,
                     height: imageDimensions.height,
                     margin: 'auto',
                     padding: '2rem 0'
-                }} 
+                }}
                 description={emptyDescription}
             />
             </div>

@@ -17,6 +17,7 @@ export default class Dashboard {
     currentWidget: Widget = new Widget()
     config: any = {}
     createdAt: number = new Date().getTime()
+    ownerEmail: string = ""
 
     constructor() {
         makeAutoObservable(this)
@@ -65,6 +66,7 @@ export default class Dashboard {
             this.isPublic = json.isPublic
             this.key = json.dashboardId
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
+            this.ownerEmail = json.ownerEmail
             if (json.widgets) {
                 const smallWidgets: any[] = json.widgets.filter(wi => wi.config.col === 1)
                 const otherWidgets: any[] = json.widgets.filter(wi => wi.config.col !== 1)
