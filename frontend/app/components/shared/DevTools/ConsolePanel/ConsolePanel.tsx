@@ -26,6 +26,7 @@ const LEVEL_TAB = {
   [LogLevel.WARN]: WARNINGS,
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
+  [LogLevel.DEBUG]: INFO,
 } as const;
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
