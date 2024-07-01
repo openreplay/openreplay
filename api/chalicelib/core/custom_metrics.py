@@ -699,21 +699,11 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
-    elif metric.metric_type == schemas.MetricType.click_map:
-        if raw_metric["data"]:
-            keys = sessions_mobs. \
-                __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
-            mob_exists = False
-            for k in keys:
-                if StorageClient.exists(bucket=config("sessions_bucket"), key=k):
-                    mob_exists = True
-                    break
-            if mob_exists:
-                raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
-                                                                      project_id=project_id)
-                raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
-                    session_id=raw_metric["data"]["sessionId"])
-                return raw_metric["data"]
+    elif metric.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map):
+        if raw_metric["data"] and raw_metric["data"].get("sessionId"):
+            return heatmaps.get_selected_session(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
+        else:
+            return heatmaps.search_short_session(project_id=project_id, data=metric)
 
     return get_chart(project_id=project_id, data=metric, user_id=user_id)
 

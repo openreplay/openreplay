@@ -155,27 +155,8 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     # this part is identical to FOSS
     SESSION_PROJECTION_COLS = """s.project_id,
     s.session_id::text AS session_id,
-    s.user_uuid,
-    s.user_id,
-    s.user_os,
-    s.user_browser,
-    s.user_device,
-    s.user_device_type,
-    s.user_country,
     s.start_ts,
-    s.duration,
-    s.events_count,
-    s.pages_count,
-    s.errors_count,
-    s.user_anonymous_id,
-    s.platform,
-    s.issue_score,
-    to_jsonb(s.issue_types) AS issue_types,
-    favorite_sessions.session_id NOTNULL            AS favorite,
-    COALESCE((SELECT TRUE
-     FROM public.user_viewed_sessions AS fs
-     WHERE s.session_id = fs.session_id
-       AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
+    s.duration"""
 
 
     def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id,
@@ -233,34 +214,63 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                 elif _depth == 0 and len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
                     logger.info("couldn't find an existing replay after 3 iterations for heatmap")
 
-            session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
-                                                         event_type=schemas.EventType.location)
+        session['events'] = get_page_events(session_id=session["session_id"])
 
         return helper.dict_to_camel_case(session)
+
+
+    def get_selected_session(project_id, session_id):
+        with pg_client.PostgresClient() as cur:
+            main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_COLS}
+                                         FROM public.sessions AS s
+                                         WHERE session_id=%(session_id)s;""", {"session_id": session_id})
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
+            try:
+                cur.execute(main_query)
+            except Exception as err:
+                logger.warning("--------- CLICK MAP GET SELECTED SESSION QUERY EXCEPTION -----------")
+                logger.warning(main_query.decode('UTF-8'))
+                raise err
+
+            session = cur.fetchone()
+        if session:
+            session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
+            session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
+            if len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
+                session["_issue"] = "mob file not found"
+                logger.info("can't find selected mob file for heatmap")
+            session['events'] = get_page_events(session_id=session["session_id"])
+
+        return helper.dict_to_camel_case(session)
+
+
+    def get_page_events(session_id):
+        with pg_client.PostgresClient() as cur:
+            cur.execute(cur.mogrify("""\
+                    SELECT 
+                        message_id,
+                        timestamp,
+                        host,
+                        path
+                        query,
+                        path AS value,
+                        path AS url,
+                        'LOCATION' AS type
+                    FROM events.pages
+                    WHERE session_id = %(session_id)s
+                    ORDER BY timestamp,message_id;""", {"session_id": session_id}))
+            rows = cur.fetchall()
+            rows = helper.list_to_camel_case(rows)
+        return rows
+
 else:
     # use CH
-    SESSION_PROJECTION_COLS = """
-    s.project_id,
+    SESSION_PROJECTION_COLS = """s.project_id,
     s.session_id AS session_id,
-    s.user_uuid AS user_uuid,
-    s.user_id AS user_id,
-    s.user_os AS user_os,
-    s.user_browser AS user_browser,
-    s.user_device AS user_device,
-    s.user_device_type AS user_device_type,
-    s.user_country AS user_country,
-    s.user_city AS user_city,
-    s.user_state AS user_state,
     toUnixTimestamp(s.datetime)*1000 AS start_ts,
-    s.duration AS duration,
-    s.events_count AS events_count,
-    s.pages_count AS pages_count,
-    s.errors_count AS errors_count,
-    s.user_anonymous_id AS user_anonymous_id,
-    s.platform AS platform,
-    s.timezone AS timezone,
-    coalesce(issue_score,0) AS issue_score,
-    s.issue_types AS issue_types """
+    s.duration AS duration"""
 
 
     def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id,
@@ -321,3 +331,49 @@ else:
                                                          event_type=schemas.EventType.location)
 
         return helper.dict_to_camel_case(session)
+
+
+    def get_selected_session(project_id, session_id):
+        with ch_client.ClickHouseClient() as cur:
+            main_query = cur.format(f"""SELECT {SESSION_PROJECTION_COLS}
+                                              FROM experimental.sessions AS s
+                                              WHERE session_id=%(session_id)s;""", {"session_id": session_id})
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
+            try:
+                session = cur.execute(main_query)
+            except Exception as err:
+                logger.warning("--------- CLICK MAP GET SELECTED SESSION QUERY EXCEPTION -----------")
+                logger.warning(main_query.decode('UTF-8'))
+                raise err
+        if len(session) > 0:
+            session = session[0]
+        if session:
+            session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
+            session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
+            if len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
+                session["_issue"] = "mob file not found"
+                logger.info("can't find selected mob file for heatmap")
+            session['events'] = get_page_events(session_id=session["session_id"])
+
+        return helper.dict_to_camel_case(session)
+
+
+    def get_page_events(session_id):
+        with ch_client.ClickHouseClient() as cur:
+            rows = cur.execute("""\
+                    SELECT 
+                        message_id,
+                        timestamp,
+                        host,
+                        path
+                        query,
+                        path AS value,
+                        path AS url,
+                        'LOCATION' AS type
+                    FROM experimental.events
+                    WHERE session_id = %(session_id)s AS event_type='LOCATION'
+                    ORDER BY timestamp,message_id;""", {"session_id": session_id})
+            rows = helper.list_to_camel_case(rows)
+        return rows
