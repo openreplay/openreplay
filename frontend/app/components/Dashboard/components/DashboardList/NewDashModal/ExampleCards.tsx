@@ -484,7 +484,7 @@ export const CARD_LIST: CardType[] = [
 
     // Web vitals
     {
-        title: 'CPU Load',
+        title: 'Avg. CPU Load',
         key: FilterKey.AVG_CPU,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_CPU,
@@ -493,7 +493,7 @@ export const CARD_LIST: CardType[] = [
         example: WebVital,
     },
     {
-        title: 'DOM Content Loaded',
+        title: 'Avg. DOM Content Load Time',
         key: FilterKey.AVG_DOM_CONTENT_LOADED,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_DOM_CONTENT_LOADED,
@@ -513,7 +513,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'First Meaningful Paint',
+        title: 'Avg. First Meaningful Paint Time',
         key: FilterKey.AVG_FIRST_CONTENTFUL_PIXEL,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_FIRST_CONTENTFUL_PIXEL,
@@ -523,7 +523,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'First Paint',
+        title: 'Avg. First Paint Time',
         key: FilterKey.AVG_FIRST_PAINT,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_FIRST_PAINT,
@@ -533,7 +533,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'Frame Rate',
+        title: 'Avg. Frame Rate',
         key: FilterKey.AVG_FPS,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_FPS,
@@ -543,7 +543,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'Image Load Time',
+        title: 'Avg. Load Time of Images',
         key: FilterKey.AVG_IMAGE_LOAD_TIME,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_IMAGE_LOAD_TIME,
@@ -553,7 +553,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'Page Load Time',
+        title: 'Avg. Load Time of Pages',
         key: FilterKey.AVG_PAGE_LOAD_TIME,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_PAGE_LOAD_TIME,
@@ -563,7 +563,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'DOM Build Time',
+        title: 'Avg. DOM Build Time',
         key: FilterKey.AVG_PAGES_DOM_BUILD_TIME,
         cardType: WEB_VITALS,
         metricOf: FilterKey.AVG_PAGES_DOM_BUILD_TIME,
