@@ -15,6 +15,7 @@ import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
 import { Switch, Button as AntButton, Popover } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
+import { checkParam } from 'App/utils';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -27,6 +28,14 @@ function SubHeader(props) {
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const { uxtestingStore } = useStore();
+  const [hideTools, setHideTools] = React.useState(false);
+
+  React.useEffect(() => {
+    const hideDevtools = checkParam('hideTools');
+    if (hideDevtools) {
+      setHideTools(true);
+    }
+  }, []);
 
   const enabledIntegration = useMemo(() => {
     const { integrations } = props;
@@ -59,7 +68,7 @@ function SubHeader(props) {
       <div
         className="w-full px-4 flex items-center border-b relative"
         style={{
-          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined,
+          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined
         }}
       >
         {showWarning ? (
@@ -71,7 +80,7 @@ function SubHeader(props) {
               left: '50%',
               bottom: '-24px',
               transform: 'translate(-50%, 0)',
-              fontWeight: 500,
+              fontWeight: 500
             }}
           >
             Some assets may load incorrectly on localhost.
@@ -88,45 +97,50 @@ function SubHeader(props) {
             </div>
           </div>
         ) : null}
-        <SessionTabs />
-        <div
-          className={cn(
-            'ml-auto text-sm flex items-center color-gray-medium gap-2',
-            hasIframe ? 'opacity-50 pointer-events-none' : ''
-          )}
-          style={{ width: 'max-content' }}
-        >
-          <KeyboardHelp />
-          <Bookmark sessionId={props.sessionId} />
-          <NotePopup />
-          {enabledIntegration && <Issues sessionId={props.sessionId} />}
-          <SharePopup
-            showCopyLink={true}
-            trigger={
-              <div className="relative">
-                <Popover content={'Share Session'}>
-                  <AntButton size={'small'} className="flex items-center justify-center">
-                    <ShareAltOutlined />
-                  </AntButton>
-                </Popover>
-              </div>
-            }
-          />
 
-          {uxtestingStore.isUxt() ? (
-            <Switch
-              checkedChildren={'DevTools'}
-              unCheckedChildren={'DevTools'}
-              onChange={toggleDevtools}
-              defaultChecked={!uxtestingStore.hideDevtools}
+        <SessionTabs />
+
+        {!hideTools && (
+          <div
+            className={cn(
+              'ml-auto text-sm flex items-center color-gray-medium gap-2',
+              hasIframe ? 'opacity-50 pointer-events-none' : ''
+            )}
+            style={{ width: 'max-content' }}
+          >
+            <KeyboardHelp />
+            <Bookmark sessionId={props.sessionId} />
+            <NotePopup />
+            {enabledIntegration && <Issues sessionId={props.sessionId} />}
+            <SharePopup
+              showCopyLink={true}
+              trigger={
+                <div className="relative">
+                  <Popover content={'Share Session'}>
+                    <AntButton size={'small'} className="flex items-center justify-center">
+                      <ShareAltOutlined />
+                    </AntButton>
+                  </Popover>
+                </div>
+              }
             />
-          ) : (
-            <div>
-              <QueueControls />
-            </div>
-          )}
-        </div>
+
+            {uxtestingStore.isUxt() ? (
+              <Switch
+                checkedChildren={'DevTools'}
+                unCheckedChildren={'DevTools'}
+                onChange={toggleDevtools}
+                defaultChecked={!uxtestingStore.hideDevtools}
+              />
+            ) : (
+              <div>
+                <QueueControls />
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
       {location && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
@@ -146,5 +160,5 @@ function SubHeader(props) {
 export default connect((state) => ({
   siteId: state.getIn(['site', 'siteId']),
   integrations: state.getIn(['issues', 'list']),
-  modules: state.getIn(['user', 'account', 'modules']) || [],
+  modules: state.getIn(['user', 'account', 'modules']) || []
 }))(observer(SubHeader));
