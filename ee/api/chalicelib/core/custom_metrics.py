@@ -442,12 +442,14 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
     params["card_info"] = None
-    params["session_data"] = metric["data"]
+    params["session_data"] = json.dumps(metric["data"])
     if data.metric_type == schemas.MetricType.pathAnalysis:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
-    elif data.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map) \
-            and data.session_id is not None:
-        params["session_data"] = json.dumps({"sessionId": data.session_id})
+    elif data.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map):
+        if data.session_id is not None:
+            params["session_data"] = json.dumps({"sessionId": data.session_id})
+        elif "data" in metric:
+            params["session_data"] = json.dumps({"sessionId": metric["data"]["sessionId"]})
 
     with pg_client.PostgresClient() as cur:
         sub_queries = []
