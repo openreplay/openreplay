@@ -524,7 +524,8 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
 
 def get_all(project_id, user_id):
     default_search = schemas.SearchCardsSchema()
-    result = rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    result = []
+    rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
     while len(rows) == default_search.limit:
         default_search.page += 1
         rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
