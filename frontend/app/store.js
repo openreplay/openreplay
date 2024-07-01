@@ -1,5 +1,5 @@
 import { createStore, applyMiddleware, compose } from 'redux';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import { Map } from 'immutable';
 import indexReducer from './duck';
 import apiMiddleware from './api_middleware';
