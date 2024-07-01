@@ -155,7 +155,7 @@ export default class Widget {
                     ? json.series.map((series: any) => new FilterSeries().fromJson(series))
                     : [new FilterSeries()];
             this.dashboards = json.dashboards || [];
-            this.owner = json.ownerEmail;
+            this.owner = json.ownerName;
             this.lastModified =
                 json.editedAt || json.createdAt
                     ? DateTime.fromMillis(json.editedAt || json.createdAt)
