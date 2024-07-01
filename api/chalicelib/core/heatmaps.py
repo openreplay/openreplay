@@ -147,14 +147,25 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                          include_mobs: bool = True, exclude_sessions: list[str] = [],
                          _depth: int = 3):
     no_platform = True
+    no_location = True
     for f in data.filters:
         if f.type == schemas.FilterType.platform:
             no_platform = False
+            break
+    for f in data.events:
+        if f.type == schemas.EventType.location:
+            no_location = False
+            if len(f.value) == 0:
+                f.operator = schemas.SearchEventOperator._is_any
             break
     if no_platform:
         data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.platform,
                                                               value=[schemas.PlatformType.desktop],
                                                               operator=schemas.SearchEventOperator._is))
+    if no_location:
+        data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.location,
+                                                             value=[],
+                                                             operator=schemas.SearchEventOperator._is_any))
 
     data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
                                                           value=[0],
@@ -203,6 +214,8 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                 logger.info("couldn't find an existing replay after 3 iterations for heatmap")
 
         session['events'] = get_page_events(session_id=session["session_id"])
+    else:
+        logger.debug("No session found for heatmap")
 
     return helper.dict_to_camel_case(session)
 
