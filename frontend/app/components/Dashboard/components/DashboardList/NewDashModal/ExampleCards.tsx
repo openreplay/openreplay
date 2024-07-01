@@ -19,6 +19,8 @@ import BarChartCard from "Components/Dashboard/components/DashboardList/NewDashM
 import AreaChartCard from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/AreaChartCard";
 import CallsWithErrorsExample
     from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/CallsWithErrorsExample";
+import SessionsPerBrowserExample
+    from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsPerBrowserExample';
 
 export const CARD_CATEGORY = {
     PRODUCT_ANALYTICS: 'product-analytics',
@@ -260,7 +262,7 @@ export const CARD_LIST: CardType[] = [
         metricOf: FilterKey.SESSIONS_PER_BROWSER,
         category: CARD_CATEGORIES[1].key,
         data: generateRandomBarsData(),
-        example: Bars,
+        example: SessionsPerBrowserExample,
     },
 
     {
