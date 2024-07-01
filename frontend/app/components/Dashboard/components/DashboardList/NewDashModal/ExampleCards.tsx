@@ -21,6 +21,8 @@ import CallsWithErrorsExample
     from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/CallsWithErrorsExample";
 import SessionsPerBrowserExample
     from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsPerBrowserExample';
+import SlowestDomains
+    from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/SlowestDomains';
 
 export const CARD_CATEGORY = {
     PRODUCT_ANALYTICS: 'product-analytics',
@@ -256,7 +258,7 @@ export const CARD_LIST: CardType[] = [
     },
 
     {
-        title: 'Sessions per Browser',
+        title: 'Sessions by Browser & Version',
         key: FilterKey.SESSIONS_PER_BROWSER,
         cardType: PERFORMANCE,
         metricOf: FilterKey.SESSIONS_PER_BROWSER,
@@ -271,8 +273,8 @@ export const CARD_LIST: CardType[] = [
         cardType: PERFORMANCE,
         metricOf: FilterKey.SLOWEST_DOMAINS,
         category: CARD_CATEGORIES[1].key,
-        data: generateRandomBarsData(),
-        example: Bars,
+        // data: generateRandomBarsData(),
+        example: SlowestDomains,
     },
 
     {

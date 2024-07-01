@@ -4,6 +4,7 @@ import React from 'react';
 import { Circle } from './Count';
 import ExCard from './ExCard';
 
+// TODO - delete this
 function SlowestDomain(props: any) {
   const rows = [
     {

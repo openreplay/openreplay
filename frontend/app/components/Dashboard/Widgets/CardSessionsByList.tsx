@@ -4,11 +4,11 @@ import cn from "classnames";
 
 interface Props {
     list: any;
-    selected: any;
-    onClickHandler: (event: any, data: any) => void;
+    selected?: any;
+    onClickHandler?: (event: any, data: any) => void;
 }
 
-function CardSessionsByList({ list, selected, onClickHandler }: Props) {
+function CardSessionsByList({ list, selected, onClickHandler = () => null }: Props) {
     return (
         <List
             dataSource={list}

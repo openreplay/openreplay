@@ -78,7 +78,7 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.SESSIONS_PER_BROWSER:
                 return <SessionsPerBrowser data={data} />
             case FilterKey.SLOWEST_DOMAINS:
-                return <SlowestDomains data={data} metric={metric} />
+                return <SlowestDomains data={data} />
             case FilterKey.TIME_TO_RENDER:
                 return <TimeToRender data={data} metric={metric} />
 
