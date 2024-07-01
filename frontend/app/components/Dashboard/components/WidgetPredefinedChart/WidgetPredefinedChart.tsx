@@ -60,7 +60,7 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION:
                 return <ResponseTimeDistribution data={data} metric={metric} />
             case FilterKey.SPEED_LOCATION:
-                return <SpeedIndexByLocation metric={metric} />
+                return <SpeedIndexByLocation data={data} />
             case FilterKey.CPU:
                 return <CPULoad data={data} metric={metric} />
             case FilterKey.CRASHES:

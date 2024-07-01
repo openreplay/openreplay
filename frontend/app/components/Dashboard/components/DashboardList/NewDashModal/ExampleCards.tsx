@@ -23,6 +23,8 @@ import SessionsPerBrowserExample
     from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsPerBrowserExample';
 import SlowestDomains
     from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/SlowestDomains';
+import SpeedIndexByLocationExample
+    from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
 
 export const CARD_CATEGORY = {
     PRODUCT_ANALYTICS: 'product-analytics',
@@ -234,7 +236,8 @@ export const CARD_LIST: CardType[] = [
         category: CARD_CATEGORIES[1].key,
         data: {
             chart: generateAreaData(),
-            label: "Number of Calls",
+            label: "Page Response Time (ms)",
+            unit: 'ms',
             namesMap: [
                 "Series 1"
             ]
@@ -289,7 +292,7 @@ export const CARD_LIST: CardType[] = [
                 "Series 1"
             ]
         },
-        example: AreaChartCard,
+        example: SpeedIndexByLocationExample,
     },
 
     {

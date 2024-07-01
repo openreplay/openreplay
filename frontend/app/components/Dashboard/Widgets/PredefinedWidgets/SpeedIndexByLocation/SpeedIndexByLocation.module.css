@@ -15,7 +15,7 @@
 
     &:focus,
     &:hover {
-        fill: $teal !important;
+        fill: #2E3ECC !important;
         outline: 0;
     }
 }
@@ -25,23 +25,23 @@
 }
 
 .heat_index5 {
-    fill: #3EAAAF !important;
+    fill: #B0B8FF !important;
 }
 
 .heat_index4 {
-    fill:#5FBABF !important;
+    fill:#6171FF !important;
 }
 
 .heat_index3 {
-    fill: #7BCBCF !important;
+    fill: #394EFF !important;
 }
 
 .heat_index2 {
-    fill: #96DCDF !important;
+    fill: #2E3ECC !important;
 }
 
 .heat_index1 {
-    fill: #ADDCDF !important;
+    fill: #222F99 !important;
 }
 
 .tooltip {
