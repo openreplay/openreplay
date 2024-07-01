@@ -171,10 +171,6 @@ def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_
                                                           value=[0],
                                                           operator=schemas.MathOperator._greater))
 
-    data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
-                                                          value=[0],
-                                                          operator=schemas.MathOperator._greater))
-
     full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
                                                         favorite_only=data.bookmarked, issue=None,
                                                         project_id=project_id, user_id=user_id)
