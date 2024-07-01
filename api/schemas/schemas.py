@@ -700,7 +700,7 @@ class SessionSearchFilterSchema(BaseModel):
                 else:
                     raise ValueError(f"value should be of type PlatformType for {values.type} filter")
         elif values.type == FilterType.events_count:
-            if values.operator in MathOperator.has_value(values.operator):
+            if MathOperator.has_value(values.operator):
                 values.operator = MathOperator(values.operator)
             else:
                 raise ValueError(f"operator should be of type MathOperator for {values.type} filter")

@@ -22,6 +22,17 @@ ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS normalized_x smallint NULL,
     ADD COLUMN IF NOT EXISTS normalized_y smallint NULL;
 
+UPDATE public.metrics
+SET default_config=default_config || '{"col":2}'
+WHERE metric_type = 'webVitals'
+  AND default_config ->> 'col' = '1';
+
+UPDATE public.dashboard_widgets
+SET config=config || '{"col":2}'
+WHERE metric_id IN (SELECT metric_id
+                    FROM public.metrics
+                    WHERE metric_type = 'webVitals')
+  AND config ->> 'col' = '1';
 
 COMMIT;
 
