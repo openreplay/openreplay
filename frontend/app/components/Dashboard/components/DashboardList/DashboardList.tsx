@@ -41,7 +41,7 @@ function DashboardList({ siteId }: { siteId: string }) {
             render: (date) => checkForRecent(date, 'LLL dd, yyyy, hh:mm a'),
         },
         {
-            title: 'Created By',
+            title: 'Owner',
             dataIndex: 'ownerEmail',
             width: '16.67%',
             sorter: (a, b) => a.ownerEmail.localeCompare(b.ownerEmail),
