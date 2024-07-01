@@ -410,8 +410,8 @@ export const CARD_LIST: CardType[] = [
         cardType: ERRORS,
         metricOf: FilterKey.ERRORS_PER_DOMAINS,
         category: CARD_CATEGORIES[3].key,
-        example: Bars,
-        data: generateRandomBarsData(),
+        example: SlowestDomains,
+        // data: generateRandomBarsData(),
     },
     {
         title: 'Errors by Type',
