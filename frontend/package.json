@@ -21,7 +21,8 @@
     "cy:open": "cypress open",
     "cy:test": "cypress install && cypress run --browser chrome",
     "cy:test-firefox": "cypress install && cypress run --browser firefox",
-    "cy:test-edge": "cypress install && cypress run --browser edge"
+    "cy:test-edge": "cypress install && cypress run --browser edge",
+    "check-unimported": "npx unimported"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.5",
