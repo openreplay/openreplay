@@ -540,6 +540,9 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                 WHERE {" AND ".join(constraints)}
                 ORDER BY created_at {data.order.value}
                 LIMIT %(limit)s OFFSET %(offset)s;""", params)
+        logger.debug("---------")
+        logger.debug(query)
+        logger.debug("---------")
         cur.execute(query)
         rows = cur.fetchall()
         if include_series:
@@ -556,8 +559,8 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
 
 def get_all(project_id, user_id):
     default_search = schemas.SearchCardsSchema()
-    result = []
     rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    result = rows
     while len(rows) == default_search.limit:
         default_search.page += 1
         rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
