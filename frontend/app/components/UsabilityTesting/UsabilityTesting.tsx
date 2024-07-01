@@ -8,7 +8,7 @@ import AnimatedSVG from 'Shared/AnimatedSVG';
 import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Loader, NoContent, Pagination, Link, Icon } from 'UI';
 import { checkForRecent, getDateFromMill } from 'App/date';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, PlusOutlined } from '@ant-design/icons';
 import { useHistory, useParams } from 'react-router-dom';
 import { withSiteId, usabilityTestingEdit, usabilityTestingView } from 'App/routes';
 import { debounce } from 'App/utils';
@@ -110,9 +110,10 @@ function TestsTable() {
             Usability Tests
           </h1>
           <div className={'ml-auto'} />
-          <Button type="primary" onClick={openModal}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>
             Create Usability Test
           </Button>
+
           <Search
             placeholder="Filter by title"
             allowClear

@@ -7,7 +7,7 @@ import {
   edit as editFilter,
   fetchFilterSearch,
 } from 'Duck/liveSearch';
-import { Button } from 'UI';
+import { Button } from 'antd';
 import { useModal } from 'App/components/Modal';
 import SessionSearchField from 'Shared/SessionSearchField';
 import { MODULES } from 'Components/Client/Modules';
@@ -42,11 +42,11 @@ function AssistSearchField(props: Props) {
         <SessionSearchField />
       </div>
       {props.isEnterprise && props.modules.includes(MODULES.OFFLINE_RECORDINGS)
-       ? <Button variant="outline" onClick={showRecords}>Training Videos</Button> : null
+       ? <Button type="primary" ghost onClick={showRecords}>Training Videos</Button> : null
       }
-      <Button variant="outline" onClick={showStats} disabled={!props.modules.includes(MODULES.ASSIST_STATS) || !props.modules.includes(MODULES.ASSIST)}>Co-Browsing Reports</Button>
+      <Button type="primary" ghost onClick={showStats} disabled={!props.modules.includes(MODULES.ASSIST_STATS) || !props.modules.includes(MODULES.ASSIST)}>Co-Browsing Reports</Button>
       <Button
-        variant="text-primary"
+        type="link"
         className="ml-auto font-medium"
         disabled={!hasFilters && !hasEvents}
         onClick={() => props.clearSearch()}

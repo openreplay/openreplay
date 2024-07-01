@@ -2,6 +2,7 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
+import {Input} from 'antd';
 import { debounce } from 'App/utils';
 
 let debounceUpdate: any = () => {};
@@ -22,12 +23,12 @@ function MetricsSearch() {
 
   return useObserver(() => (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
-      <input
+      <Input.Search
         value={query}
+        allowClear
         name="metricsSearch"
-        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
-        placeholder="Filter by title and owner"
+        className="w-full"
+        placeholder="Filter by title or owner"
         onChange={write}
       />
     </div>

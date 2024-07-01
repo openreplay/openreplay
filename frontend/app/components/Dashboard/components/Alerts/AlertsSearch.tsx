@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from 'UI';
+import {Input} from 'antd';
 import { debounce } from 'App/utils';
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
@@ -22,11 +23,12 @@ function AlertsSearch() {
   return (
     <div className="relative">
       <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
-      <input
+      <Input.Search
         value={inputValue}
+        allowClear
         name="alertsSearch"
-        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
-        placeholder="Filter by title"
+        className="w-full"
+        placeholder="Filter by alert title"
         onChange={write}
       />
     </div>
