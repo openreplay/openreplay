@@ -17,6 +17,7 @@ function ByComponent({ title, rows, lineWidth, onCard, type }: {
   const _rows = rows.map((r) => ({
     ...r,
     name: r.label,
+    displayName: r.label,
     sessionCount: r.value
   })).slice(0, 4);
   return (
