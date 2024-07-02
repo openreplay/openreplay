@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import Select from 'Shared/Select'
 import { components } from 'react-select';
 import { Icon } from 'UI';
+import { Button } from 'antd';
+import { FunnelPlotOutlined } from '@ant-design/icons';
 import FunnelIssuesSelectedFilters from '../FunnelIssuesSelectedFilters';
 import { useStore } from 'App/mstore';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -59,7 +61,7 @@ function FunnelIssuesDropdown() {
     }
 
     return (
-        <div className="flex items-start">
+        <div className="flex items-center gap-2">
             <Select
                 menuIsOpen={isOpen}
                 // onMenuOpen={() => setIsOpen(true)}
@@ -69,8 +71,8 @@ function FunnelIssuesDropdown() {
                 styles={{
                     control: (provided: any) => ({
                         ...provided,
-                        border: 'none',
-                        boxShadow: 'none',
+                        border:'transparent',
+                        borderColor:'transparent',
                         backgroundColor: 'transparent',
                         minHeight: 'unset',
                     }),
@@ -92,14 +94,16 @@ function FunnelIssuesDropdown() {
                         >
                             <components.Control {...props}>
                                 { children }
-                                <button
+                                <Button
                                     id="dd-button"
-                                    className="px-2 py-1 bg-white rounded-2xl border border-teal border-dashed color-teal flex items-center hover:bg-active-blue select-none"
+                                    className="px-2 select-none gap-0"
                                     onClick={() => setIsOpen(!isOpen)}
+                                    icon={<FunnelPlotOutlined />}
+                                    type='primary' ghost
+                                    size='small'
                                 >
-                                    <Icon name="funnel" size={16} color="teal" className="pointer-events-none" />
                                     <span className="ml-2 pointer-events-none">Issues</span>
-                                </button>
+                                </Button>
                                 
                             </components.Control>
                         </OutsideClickDetectingDiv>

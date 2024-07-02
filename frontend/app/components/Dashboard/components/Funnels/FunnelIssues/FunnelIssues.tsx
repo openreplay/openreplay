@@ -61,7 +61,7 @@ function FunnelIssues() {
             <div className="flex">
                 <h2 className="font-medium text-xl">Most significant issues <span className="font-normal">identified in this funnel</span></h2>
             </div>
-            <div className="my-6 flex justify-between items-start">
+            <div className="my-6 flex justify-between items-center">
                 <FunnelIssuesDropdown />
                 <div className="flex-shrink-0">
                     <FunnelIssuesSort />

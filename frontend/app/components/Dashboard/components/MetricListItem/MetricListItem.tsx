@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, Checkbox, Tooltip, confirm, Modal } from 'UI';
-import { Dropdown, Button, Input } from 'antd';
+import { Icon, Checkbox, confirm, Modal } from 'UI';
+import { Dropdown, Button, Input, Tooltip } from 'antd';
 import { checkForRecent } from 'App/date';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
@@ -26,7 +26,7 @@ function MetricTypeIcon({ type }: any) {
   }, [type]);
 
   return (
-    <Tooltip delay={0} title={<div className="capitalize">{card.title}</div>}>
+    <Tooltip title={<div className="capitalize">{card.title}</div>}>
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
         {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
       </div>
