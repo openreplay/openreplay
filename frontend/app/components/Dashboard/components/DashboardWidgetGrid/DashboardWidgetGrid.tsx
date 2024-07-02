@@ -54,7 +54,7 @@ function DashboardWidgetGrid(props: Props) {
                     }
                     dashboardId={dashboardId}
                     siteId={siteId}
-                    isWidget={true}
+                    isWidget={false}
                     grid="other"
                   />
                 </React.Fragment>

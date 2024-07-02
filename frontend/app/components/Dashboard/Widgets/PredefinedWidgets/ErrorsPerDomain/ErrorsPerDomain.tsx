@@ -1,8 +1,5 @@
 import React from 'react';
 import { Icon, NoContent } from 'UI';
-import { Styles } from '../../common';
-import { numberWithCommas } from 'App/utils';
-import Bar from './Bar';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import ListWithIcons from 'Components/Dashboard/Widgets/ListWithIcons';
 
@@ -12,9 +9,6 @@ interface Props {
 
 function ErrorsPerDomain(props: Props) {
   const { data } = props;
-  // const firstAvg = 10;
-  // const firstAvg = data.chart[0] && data.chart[0].errorsCount;
-
   const highest = data.chart[0] && data.chart[0].errorsCount;
   const list = data.chart.slice(0, 4).map((item: any) => ({
     name: item.domain,
