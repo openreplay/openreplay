@@ -3,17 +3,20 @@ import { Modal } from 'antd';
 import SelectCard from './SelectCard';
 import CreateCard from 'Components/Dashboard/components/DashboardList/NewDashModal/CreateCard';
 import colors from 'tailwindcss/colors';
+import { connect } from 'react-redux';
 
 interface NewDashboardModalProps {
   onClose: () => void;
   open: boolean;
   isAddingFromLibrary?: boolean;
+  isEnterprise?: boolean;
 }
 
 const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                                                                onClose,
                                                                open,
-                                                               isAddingFromLibrary = false
+                                                               isAddingFromLibrary = false,
+                                                               isEnterprise = false
                                                              }) => {
   const [step, setStep] = React.useState<number>(0);
   const [selectedCategory, setSelectedCategory] = React.useState<string>('product-analytics');
@@ -49,7 +52,8 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                                      selected={selectedCategory}
                                      setSelectedCategory={setSelectedCategory}
                                      onCard={() => setStep(step + 1)}
-                                     isLibrary={isAddingFromLibrary} />}
+                                     isLibrary={isAddingFromLibrary}
+                                     isEnterprise={isEnterprise} />}
           {step === 1 && <CreateCard onBack={() => setStep(0)} />}
         </div>
       </Modal>
@@ -58,4 +62,9 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
     ;
 };
 
-export default NewDashboardModal;
+const mapStateToProps = (state: any) => ({
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
+    state.getIn(['user', 'account', 'edition']) === 'msaas'
+});
+
+export default connect(mapStateToProps)(NewDashboardModal);

@@ -44,7 +44,7 @@ function DashboardList({ siteId }: { siteId: string }) {
             title: 'Owner',
             dataIndex: 'owner',
             width: '16.67%',
-            sorter: (a, b) => a.owner.localeCompare(b.owner),
+            sorter: (a, b) => a.owner?.localeCompare(b.owner),
             sortDirections: ['ascend', 'descend'],
         },
         {
