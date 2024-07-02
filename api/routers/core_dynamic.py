@@ -419,15 +419,15 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 
 @app.post('/{projectId}/sessions/{sessionId}/heatmaps', tags=["heatmaps"])
 def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
-                                   data: schemas.GetHeatmapBasePayloadSchema = Body(...),
+                                   data: schemas.GetHeatMapPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_x_y_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
 
 
 @app.post('/{projectId}/sessions/{sessionId}/clickmaps', tags=["heatmaps"])
 def get_clickmaps_by_session_id_url(projectId: int, sessionId: int,
-                                   data: schemas.GetHeatmapBasePayloadSchema = Body(...),
-                                   context: schemas.CurrentContext = Depends(OR_context)):
+                                    data: schemas.GetClickMapPayloadSchema = Body(...),
+                                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_selectors_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
 
 

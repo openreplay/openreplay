@@ -44,6 +44,11 @@ UPDATE public.metrics
 SET view_type='lineChart'
 WHERE view_type = 'progress';
 
+UPDATE public.metrics
+SET metric_type='heatMap',
+    metric_of='heatMapUrl'
+WHERE metric_type = 'clickMap';
+
 COMMIT;
 
 \elif :is_next

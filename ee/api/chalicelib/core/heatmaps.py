@@ -159,7 +159,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     s.duration"""
 
 
-    def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id,
+    def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
                              include_mobs: bool = True, exclude_sessions: list[str] = [],
                              _depth: int = 3):
         no_platform = True
@@ -290,7 +290,7 @@ else:
     s.duration AS duration"""
 
 
-    def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id,
+    def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
                              include_mobs: bool = True, exclude_sessions: list[str] = [],
                              _depth: int = 3):
         no_platform = True

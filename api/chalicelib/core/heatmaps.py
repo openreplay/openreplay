@@ -80,7 +80,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
     return helper.list_to_camel_case(rows)
 
 
-def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapBasePayloadSchema):
+def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
     constraints = ["session_id = %(session_id)s",
                    "(url = %(url)s OR path= %(url)s)",
@@ -108,7 +108,7 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatm
     return helper.list_to_camel_case(rows)
 
 
-def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapBasePayloadSchema):
+def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
     constraints = ["session_id = %(session_id)s",
                    "(url = %(url)s OR path= %(url)s)"]
@@ -143,7 +143,7 @@ s.start_ts,
 s.duration"""
 
 
-def search_short_session(data: schemas.ClickMapSessionsSearch, project_id, user_id,
+def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
                          include_mobs: bool = True, exclude_sessions: list[str] = [],
                          _depth: int = 3):
     no_platform = True
