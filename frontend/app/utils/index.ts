@@ -480,3 +480,22 @@ export const checkParam = (paramName: string, storageKey?: string, search?: stri
 };
 
 export const isValidUrl = (url) => /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(url);
+
+export function truncateStringToFit(string: string, screenWidth: number, charWidth: number = 5): string {
+  if (string.length * charWidth <= screenWidth) {
+    return string;
+  }
+
+  const ellipsis = '...';
+  const maxLen = Math.floor(screenWidth / charWidth);
+
+  if (maxLen <= ellipsis.length) {
+    return ellipsis.slice(0, maxLen);
+  }
+
+  const frontLen = Math.floor((maxLen - ellipsis.length) / 2);
+  const backLen = maxLen - ellipsis.length - frontLen;
+
+  return string.slice(0, frontLen) + ellipsis + string.slice(-backLen);
+}
+

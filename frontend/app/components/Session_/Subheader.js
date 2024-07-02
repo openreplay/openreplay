@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useStore } from 'App/mstore';
 import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
@@ -13,8 +13,9 @@ import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
-import { Switch, Button as AntButton, Popover } from 'antd';
+import { Switch, Button as AntButton, Popover, Tooltip } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
+import { checkParam, truncateStringToFit } from 'App/utils';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -27,6 +28,14 @@ function SubHeader(props) {
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const { uxtestingStore } = useStore();
+  const [hideTools, setHideTools] = React.useState(false);
+
+  React.useEffect(() => {
+    const hideDevtools = checkParam('hideTools');
+    if (hideDevtools) {
+      setHideTools(true);
+    }
+  }, []);
 
   const enabledIntegration = useMemo(() => {
     const { integrations } = props;
@@ -37,13 +46,10 @@ function SubHeader(props) {
     return integrations.some((i) => i.token);
   }, [props.integrations]);
 
-  const location =
-    currentLocation && currentLocation.length > 140
-      ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
-      : currentLocation;
+  const locationTruncated = truncateStringToFit(currentLocation, window.innerWidth - 200);
 
   const showWarning =
-    location && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(location) && showWarningModal;
+    currentLocation && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation) && showWarningModal;
   const closeWarning = () => {
     localStorage.setItem(localhostWarnKey, '1');
     setWarning(false);
@@ -59,7 +65,7 @@ function SubHeader(props) {
       <div
         className="w-full px-4 flex items-center border-b relative"
         style={{
-          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined,
+          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined
         }}
       >
         {showWarning ? (
@@ -71,7 +77,7 @@ function SubHeader(props) {
               left: '50%',
               bottom: '-24px',
               transform: 'translate(-50%, 0)',
-              fontWeight: 500,
+              fontWeight: 500
             }}
           >
             Some assets may load incorrectly on localhost.
@@ -88,52 +94,57 @@ function SubHeader(props) {
             </div>
           </div>
         ) : null}
-        <SessionTabs />
-        <div
-          className={cn(
-            'ml-auto text-sm flex items-center color-gray-medium gap-2',
-            hasIframe ? 'opacity-50 pointer-events-none' : ''
-          )}
-          style={{ width: 'max-content' }}
-        >
-          <KeyboardHelp />
-          <Bookmark sessionId={props.sessionId} />
-          <NotePopup />
-          {enabledIntegration && <Issues sessionId={props.sessionId} />}
-          <SharePopup
-            showCopyLink={true}
-            trigger={
-              <div className="relative">
-                <Popover content={'Share Session'}>
-                  <AntButton size={'small'} className="flex items-center justify-center">
-                    <ShareAltOutlined />
-                  </AntButton>
-                </Popover>
-              </div>
-            }
-          />
 
-          {uxtestingStore.isUxt() ? (
-            <Switch
-              checkedChildren={'DevTools'}
-              unCheckedChildren={'DevTools'}
-              onChange={toggleDevtools}
-              defaultChecked={!uxtestingStore.hideDevtools}
+        <SessionTabs />
+
+        {!hideTools && (
+          <div
+            className={cn(
+              'ml-auto text-sm flex items-center color-gray-medium gap-2',
+              hasIframe ? 'opacity-50 pointer-events-none' : ''
+            )}
+            style={{ width: 'max-content' }}
+          >
+            <KeyboardHelp />
+            <Bookmark sessionId={props.sessionId} />
+            <NotePopup />
+            {enabledIntegration && <Issues sessionId={props.sessionId} />}
+            <SharePopup
+              showCopyLink={true}
+              trigger={
+                <div className="relative">
+                  <Tooltip title="Share Session" placement="bottom">
+                    <AntButton size={'small'} className="flex items-center justify-center">
+                      <ShareAltOutlined />
+                    </AntButton>
+                  </Tooltip>
+                </div>
+              }
             />
-          ) : (
-            <div>
-              <QueueControls />
-            </div>
-          )}
-        </div>
+
+            {uxtestingStore.isUxt() ? (
+              <Switch
+                checkedChildren={'DevTools'}
+                unCheckedChildren={'DevTools'}
+                onChange={toggleDevtools}
+                defaultChecked={!uxtestingStore.hideDevtools}
+              />
+            ) : (
+              <div>
+                <QueueControls />
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      {location && (
+
+      {locationTruncated && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Icon size="20" name="event/link" className="mr-1" />
             <Tooltip title="Open in new tab" delay={0}>
-              <a href={currentLocation} target="_blank">
-                {location}
+              <a href={currentLocation} target="_blank" className="truncate">
+                {locationTruncated}
               </a>
             </Tooltip>
           </div>
@@ -146,5 +157,5 @@ function SubHeader(props) {
 export default connect((state) => ({
   siteId: state.getIn(['site', 'siteId']),
   integrations: state.getIn(['issues', 'list']),
-  modules: state.getIn(['user', 'account', 'modules']) || [],
+  modules: state.getIn(['user', 'account', 'modules']) || []
 }))(observer(SubHeader));
