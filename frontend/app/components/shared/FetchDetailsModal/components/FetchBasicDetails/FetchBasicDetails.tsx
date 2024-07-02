@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { formatBytes } from 'App/utils';
 import CopyText from 'Shared/CopyText';
+import {Tag} from 'antd';
 import cn from 'classnames';
 
 interface Props {
@@ -20,69 +21,72 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
   return (
     <div>
       <div className="flex items-center py-1">
-        <div className="font-medium">Name</div>
-        <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip cursor-pointer">
+        <div className="font-medium w-36">Request URL</div>
+        <Tag className='text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip cursor-pointer max-w-80 truncate' bordered={false}>
           <CopyText content={resource.url}>{text}</CopyText>
-        </div>
+        </Tag>
       </div>
-
-      <div className="flex items-center py-1">
-        <div className="font-medium">Type</div>
-        <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
-          {resource.type}
-        </div>
-      </div>
-
-      {!!resource.decodedBodySize && (
-        <div className="flex items-center py-1">
-          <div className="font-medium">Size</div>
-          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
-            {formatBytes(resource.decodedBodySize)}
-          </div>
-        </div>
-      )}
 
       {resource.method && (
         <div className="flex items-center py-1">
-          <div className="font-medium">Request Method</div>
-          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+          <div className="font-medium w-36">Request Method</div>
+          <Tag className='text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip' bordered={false}>
             {resource.method}
-          </div>
+          </Tag>
         </div>
       )}
 
       {resource.status && (
         <div className="flex items-center py-1">
-          <div className="font-medium">Status</div>
-          <div
+          <div className="text-base font-medium w-36">Status Code</div>
+          <Tag
+          bordered={false}
             className={cn(
-              'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center',
+              'text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip flex items-center',
               { 'error color-red': !resource.success }
             )}
           >
             {resource.status === '200' && (
-              <div className="w-4 h-4 bg-green rounded-full mr-2"></div>
+              <Tag  bordered={false} className="text-base bg-emerald-100 rounded-full mr-2"></Tag>
             )}
             {resource.status}
-          </div>
+          </Tag>
         </div>
       )}
 
+      <div className="flex items-center py-1">
+        <div className="font-medium w-36">Type</div>
+        <Tag className="text-base capitalize rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+          {resource.type}
+        </Tag>
+      </div>
+
+      {!!resource.decodedBodySize && (
+        <div className="flex items-center py-1">
+          <div className="font-medium w-36">Size</div>
+          <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+            {formatBytes(resource.decodedBodySize)}
+          </Tag>
+        </div>
+      )}
+
+      
+
       {!!_duration && (
         <div className="flex items-center py-1">
-          <div className="font-medium">Duration</div>
-          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+          <div className="font-medium w-36">Duration</div>
+          <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
             {_duration} ms
-          </div>
+          </Tag>
         </div>
       )}
 
       {timestamp && (
         <div className="flex items-center py-1">
-        <div className="font-medium">Time</div>
-        <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+        <div className="font-medium w-36">Time</div>
+        <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
           {timestamp}
-        </div>
+        </Tag>
       </div>
 
       )}
