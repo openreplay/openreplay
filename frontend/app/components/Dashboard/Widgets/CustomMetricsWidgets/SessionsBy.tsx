@@ -38,7 +38,8 @@ function SessionsBy(props: Props) {
     onClick(filters);
   };
 
-  const showMore = () => {
+  const showMore = (e: any) => {
+    e.stopPropagation();
     openModal(
       <CardSessionsByList list={data.values} onClickHandler={(e, item) => {
         closeModal();

@@ -75,7 +75,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     });
 
     const onChartClick = () => {
-        if (!isWidget || isPredefined) return;
+        // if (!isWidget || isPredefined) return;
         props.history.push(
             withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
         );
