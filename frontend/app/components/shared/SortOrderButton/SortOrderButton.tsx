@@ -1,8 +1,6 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
 import { Segmented } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import cn from 'classnames';
 
 interface Props {
   sortOrder: string;
@@ -21,6 +19,7 @@ export default React.memo(function SortOrderButton(props: Props) {
               { label: 'Ascending', value: 'Ascending', icon: <ArrowUpOutlined /> },
               { label: 'Descending', value: 'Descending', icon: <ArrowDownOutlined /> },
             ]}
+            defaultValue="Descending"
             onChange={(value) => {
               if (value === 'Ascending') {
                 onChange('asc');

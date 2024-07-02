@@ -6,9 +6,9 @@ function FunnelIssuesHeader({ criticalIssuesCount, filters }) {
     <div className="flex items-center">
       <div className="flex items-center mr-auto text-xl">
         <div className="font-medium mr-2">          
-          Most significant issues
+          Significant issues
         </div>
-        <div className="mr-2">identified in this funnel</div>        
+        <div className="mr-2">in this funnel</div>        
       </div>      
     </div>
   )

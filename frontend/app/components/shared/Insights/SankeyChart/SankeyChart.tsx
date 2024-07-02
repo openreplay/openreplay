@@ -101,7 +101,7 @@ const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props)
         <NoContent
             style={{paddingTop: '80px'}}
             show={!data.nodes.length || !data.links.length}
-            title={'No data for the selected time period.'}
+            title={'No data available for the selected period.'}
         >
             <ResponsiveContainer height={height} width='100%'>
                 <Sankey
