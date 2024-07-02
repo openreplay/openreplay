@@ -106,9 +106,7 @@ func (c *cacher) cacheURL(t *Task) {
 	t.retries--
 	start := time.Now()
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
-	if t.retries%2 == 0 {
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0")
-	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
 	}
