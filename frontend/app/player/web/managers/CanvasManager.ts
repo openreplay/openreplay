@@ -155,13 +155,16 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         if (node && node.node) {
           const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
           const canvasEl = node.node as HTMLVideoElement;
-          canvasCtx?.drawImage(
-            this.snapImage,
-            0,
-            0,
-            canvasEl.width,
-            canvasEl.height
-          );
+          requestAnimationFrame(() => {
+            canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            canvasCtx?.drawImage(
+              this.snapImage,
+              0,
+              0,
+              canvasEl.width,
+              canvasEl.height
+            );
+          })
           this.debugCanvas
             ?.getContext('2d')
             ?.drawImage(this.snapImage, 0, 0, 300, 200);
