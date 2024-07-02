@@ -135,7 +135,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_PROJECTS} size={170} />
+                <AnimatedSVG name={ICONS.NO_PROJECTS} size={60} />
                 <div className="text-center text-gray-600 my-4">No matching results</div>
               </div>
             }

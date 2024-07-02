@@ -116,7 +116,7 @@ function FunnelIssuesList(props: RouteComponentProps<Props>) {
       show={!loading && filteredIssues.length === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <AnimatedSVG name={ICONS.NO_ISSUES} size="170" />
+          <AnimatedSVG name={ICONS.NO_ISSUES} size={60} />
           <div className="mt-4">No issues found</div>
         </div>
       }

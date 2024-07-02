@@ -105,7 +105,7 @@ function FetchTabs({ resource }: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
                 <div className="mt-6">
                   Body is Empty or not captured.
                   {' '}
@@ -137,7 +137,7 @@ function FetchTabs({ resource }: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
                 <div className="mt-6">
                   Body is Empty or not captured.
                   {' '}

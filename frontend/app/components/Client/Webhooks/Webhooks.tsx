@@ -59,7 +59,7 @@ function Webhooks() {
                 <NoContent
                     title={
                         <div className="flex flex-col items-center justify-center">
-                            <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={170} />
+                            <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={60} />
                             <div className="text-center my-4">None added yet</div>
                         </div>
                     }
