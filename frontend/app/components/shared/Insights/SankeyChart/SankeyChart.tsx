@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Sankey, ResponsiveContainer} from 'recharts';
 import CustomLink from './CustomLink';
 import CustomNode from './CustomNode';
-import {NoContent} from 'UI';
+import {NoContent, Icon} from 'UI';
 
 interface Node {
     idd: string;
@@ -101,7 +101,12 @@ const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props)
         <NoContent
             style={{paddingTop: '80px'}}
             show={!data.nodes.length || !data.links.length}
-            title={'No data available for the selected period.'}
+            title={
+                <div className="flex items-center text-lg">
+                    <Icon name="info-circle" className="mr-2" size="18" />
+                    No data available for the selected period.
+                </div>
+            }
         >
             <ResponsiveContainer height={height} width='100%'>
                 <Sankey
