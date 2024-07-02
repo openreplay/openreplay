@@ -132,7 +132,7 @@ export const Stage = observer(({ stage, index, isWidget, uxt, focusStage, focuse
         >
           <IndexNumber index={index} />
           {!uxt ? <Funnelbar index={index} filter={stage} focusStage={focusStage} focusedFilter={focusedFilter} /> : <UxTFunnelBar filter={stage} />}
-          {!isWidget && !uxt && <BarActions bar={stage} />}
+          {/*{!isWidget && !uxt && <BarActions bar={stage} />}*/}
         </div>
       ) : (
         <></>

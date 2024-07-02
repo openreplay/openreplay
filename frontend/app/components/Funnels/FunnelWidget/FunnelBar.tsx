@@ -62,7 +62,7 @@ function FunnelBar(props: Props) {
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="arrow-right-short" size="20" color="green" />
-          <span className="mx-1 font-medium">{filter.sessionsCount} Sessions</span>
+          <span className="mx-1">{filter.sessionsCount} Sessions</span>
           <span className="color-gray-medium text-sm">
             ({filter.completedPercentage}%) Completed
           </span>
@@ -70,7 +70,7 @@ function FunnelBar(props: Props) {
         <Space className="items-center">
           <Icon name="caret-down-fill" color={filter.droppedCount > 0 ? 'red' : 'gray-light'} size={16} />
           <span
-            className={'font-medium mx-1 ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>{filter.droppedCount} Sessions</span>
+            className={'mx-1 ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>{filter.droppedCount} Sessions</span>
           <span
             className={'text-sm ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>({filter.droppedPercentage}%) Dropped</span>
         </Space>
