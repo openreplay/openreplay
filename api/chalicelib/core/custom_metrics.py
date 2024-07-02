@@ -25,25 +25,6 @@ def __try_live(project_id, data: schemas.CardSchema):
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
-        if data.view_type == schemas.MetricTimeseriesViewType.progress:
-            r = {"count": results[-1]}
-            diff = s.filter.endTimestamp - s.filter.startTimestamp
-            s.filter.endTimestamp = s.filter.startTimestamp
-            s.filter.startTimestamp = s.filter.endTimestamp - diff
-            r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                                         view_type=data.view_type, metric_type=data.metric_type,
-                                                         metric_of=data.metric_of, metric_value=data.metric_value)
-            r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
-            r["seriesName"] = s.name if s.name else i + 1
-            r["seriesId"] = s.series_id if s.series_id else None
-            results[-1] = r
-        elif data.view_type == schemas.MetricTableViewType.pie_chart:
-            if len(results[i].get("values", [])) > PIE_CHART_GROUP:
-                results[i]["values"] = results[i]["values"][:PIE_CHART_GROUP] \
-                                       + [{
-                    "name": "Others", "group": True,
-                    "sessionCount": sum(r["sessionCount"] for r in results[i]["values"][PIE_CHART_GROUP:])
-                }]
 
     return results
 
@@ -112,8 +93,6 @@ def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardP
 
 def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
     series_charts = __try_live(project_id=project_id, data=data)
-    if data.view_type == schemas.MetricTimeseriesViewType.progress:
-        return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
