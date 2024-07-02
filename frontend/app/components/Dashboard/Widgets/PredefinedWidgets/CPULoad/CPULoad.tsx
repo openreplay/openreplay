@@ -1,5 +1,5 @@
 import React from 'react';
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { Styles } from '../../common';
 import { 
     AreaChart, Area,
@@ -19,7 +19,12 @@ function CPULoad(props: Props) {
     return (
         <NoContent
           size="small"
-          title="No data available"
+          title={
+            <div className="flex items-center text-lg">
+              <Icon name="info-circle" className="mr-2" size="18" />
+              No data available for the selected period.
+            </div>
+          }
           show={ metric.data.chart && metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

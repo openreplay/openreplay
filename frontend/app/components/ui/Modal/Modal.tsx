@@ -25,7 +25,7 @@ function Modal(props: Props) {
             style.width = '300px';
             break;
         case 'small':
-            style.width = '400px';
+            style.width = '420px';
             break;
         case 'large':
             style.width = '700px';

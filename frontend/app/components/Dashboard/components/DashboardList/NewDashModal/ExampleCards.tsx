@@ -535,7 +535,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'DOM Content Loaded Start',
+    title: 'Avg. DOM Content Loaded Start',
     key: FilterKey.AVG_DOM_CONTENT_LOAD_START,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_DOM_CONTENT_LOAD_START,
@@ -605,7 +605,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Page Response Time',
+    title: 'Avg. Page Response Time',
     key: FilterKey.AVG_PAGES_RESPONSE_TIME,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_PAGES_RESPONSE_TIME,
@@ -615,7 +615,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Request Load Time',
+    title: 'Avg. Request Load Time',
     key: FilterKey.AVG_REQUEST_LOADT_IME,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_REQUEST_LOADT_IME,
@@ -624,7 +624,7 @@ export const CARD_LIST: CardType[] = [
     example: WebVital
   },
   {
-    title: 'Response Time',
+    title: 'Avg. Response Time',
     key: FilterKey.AVG_RESPONSE_TIME,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_RESPONSE_TIME,
@@ -634,7 +634,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Session Duration',
+    title: 'Avg. Session Duration',
     key: FilterKey.AVG_SESSION_DURATION,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_SESSION_DURATION,
@@ -644,7 +644,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Time Till First Byte',
+    title: 'Avg. Time Till First Byte',
     key: FilterKey.AVG_TILL_FIRST_BYTE,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_TILL_FIRST_BYTE,
@@ -654,7 +654,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Time to be Interactive',
+    title: 'Avg. Time to be Interactive',
     key: FilterKey.AVG_TIME_TO_INTERACTIVE,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_TIME_TO_INTERACTIVE,
@@ -664,7 +664,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Time to Render',
+    title: 'Avg. Time to Render',
     key: FilterKey.AVG_TIME_TO_RENDER,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_TIME_TO_RENDER,
@@ -674,7 +674,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'JS Heap Size',
+    title: 'Avg. JS Heap Size',
     key: FilterKey.AVG_USED_JS_HEAP_SIZE,
     cardType: WEB_VITALS,
     metricOf: FilterKey.AVG_USED_JS_HEAP_SIZE,

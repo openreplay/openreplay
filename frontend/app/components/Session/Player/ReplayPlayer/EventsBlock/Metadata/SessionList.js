@@ -28,7 +28,7 @@ class SessionList extends React.PureComponent {
                     show={!loading && (similarSessionWithoutCurrent.length === 0 || similarSessionWithoutCurrent.size === 0)}
                     title={
                         <div className="flex items-center justify-center flex-col">
-                            <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
+                            <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
                             <div className="mt-2" />
                             <div className="text-center text-gray-600">No sessions found</div>
                         </div>

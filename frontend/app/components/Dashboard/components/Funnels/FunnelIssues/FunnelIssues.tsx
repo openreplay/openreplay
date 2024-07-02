@@ -59,7 +59,7 @@ function FunnelIssues() {
     return useObserver(() => (
         <div className="bg-white rounded-lg mt-4 p-4 border">
             <div className="flex">
-                <h2 className="font-medium text-xl">Most significant issues <span className="font-normal">identified in this funnel</span></h2>
+                <h2 className="font-medium text-xl">Significant issues <span className="font-normal"> in this funnel</span></h2>
             </div>
             <div className="my-6 flex justify-between items-center">
                 <FunnelIssuesDropdown />

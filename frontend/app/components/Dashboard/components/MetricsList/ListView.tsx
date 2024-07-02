@@ -34,7 +34,7 @@ function ListView(props: Props) {
         <div className="col-span-2">Owner</div>
         <div className="col-span-2">Visibility</div>
         <div className="col-span-2">Last Modified</div>
-        <div className={'col-span-2 text-right'}>Options</div>
+        <div className={'col-span-2 text-right invisible'}>Options</div>
       </div>
       {list.map((metric: any) => (
         <MetricListItem

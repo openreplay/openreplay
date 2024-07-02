@@ -61,7 +61,7 @@ function SessionsModal(props: Props) {
 
             <NoContent show={data.sessions.length === 0} title={
                 <div>
-                    <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
+                    <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
                     <div className="mt-2" />
                     <div className="text-center text-gray-600">No recordings found.</div>
                 </div>

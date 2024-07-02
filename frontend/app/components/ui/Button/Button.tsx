@@ -45,7 +45,7 @@ export default (props: Props) => {
   };
 
   let classes = cn(
-    'relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap',
+    'relative flex items-center h-10 px-3 rounded-lg tracking-wide whitespace-nowrap',
     variantClasses[variant],
     { 'opacity-40 pointer-events-none': disabled },
     { '!rounded-full h-10 w-10 justify-center': rounded },

@@ -38,15 +38,6 @@ function MetricViewHeader({siteId}: { siteId: string }) {
 
             <div className='border-y px-6 py-1 mt-2 flex items-center w-full justify-between'>
                 <div className='items-center flex gap-4'>
-                    <Toggler
-                        label='My Cards'
-                        checked={filter.showMine}
-                        name='test'
-                        className='font-medium mr-2'
-                        onChange={() =>
-                            metricStore.updateKey('filter', {...filter, showMine: !filter.showMine})
-                        }
-                    />
                     <Select
                         options={[{label: 'All Types', value: 'all'}, ...DROPDOWN_OPTIONS]}
                         name='type'
@@ -59,14 +50,14 @@ function MetricViewHeader({siteId}: { siteId: string }) {
                     />
 
                     <DashboardDropdown
-                        plain={true}
+                        plain={false}
                         onChange={(value: any) =>
                             metricStore.updateKey('filter', {...filter, dashboard: value})
                         }
                     />
                 </div>
 
-                <div className='flex items-center'>
+                <div className='flex items-center gap-2'>
                     <ListViewToggler/>
 
                     <Select
@@ -79,6 +70,15 @@ function MetricViewHeader({siteId}: { siteId: string }) {
                         onChange={({value}) => metricStore.updateKey('sort', {by: value.value})}
                         plain={true}
                         className='ml-4'
+                    />
+                    <Toggler
+                        label='My Cards'
+                        checked={filter.showMine}
+                        name='test'
+                        className='font-medium mr-2'
+                        onChange={() =>
+                            metricStore.updateKey('filter', {...filter, showMine: !filter.showMine})
+                        }
                     />
                 </div>
 
@@ -112,6 +112,7 @@ function DashboardDropdown({onChange, plain = false}: { plain?: boolean; onChang
             value={metricStore.filter.dashboard}
             onChange={({value}: any) => onChange(value)}
             isMulti={true}
+            color='black'
         />
     );
 }

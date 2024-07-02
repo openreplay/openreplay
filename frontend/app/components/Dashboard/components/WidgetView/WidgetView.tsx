@@ -132,7 +132,7 @@ function WidgetView(props: Props) {
                     show={metricNotFound}
                     title={
                         <div className="flex flex-col items-center justify-between">
-                            <AnimatedSVG name={ICONS.EMPTY_STATE} size={100}/>
+                            <AnimatedSVG name={ICONS.EMPTY_STATE} size={60}/>
                             <div className="mt-4">Metric not found!</div>
                         </div>
                     }

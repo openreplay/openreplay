@@ -25,7 +25,7 @@ function RecordingsList() {
       show={length === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <AnimatedSVG name={ICONS.NO_RECORDINGS} size={180} />
+          <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
           <div className="text-center mt-4">
             {recordsSearch !== ''
               ? 'No matching results'

@@ -52,9 +52,9 @@ function FunnelWidget(props: Props) {
         <NoContent
             style={{ minHeight: 220 }}
             title={
-                <div className="flex items-center">
+                <div className="flex items-center text-lg">
                     <Icon name="info-circle" className="mr-2" size="18" />
-                    No data for selected period
+                    No data available for the selected period.
                 </div>
             }
             show={!stages || stages.length === 0}

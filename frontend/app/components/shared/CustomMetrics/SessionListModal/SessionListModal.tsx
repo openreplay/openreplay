@@ -103,7 +103,7 @@ function SessionListModal(props: Props) {
                             show={ !loading && (filteredSessions.length === 0 )}
                             title={
                                 <div className="flex flex-col items-center justify-center">
-                                    <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                                    <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
                                     <div className="mt-6 text-2xl">No recordings found!</div>
                                 </div>
                             }

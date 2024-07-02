@@ -142,7 +142,7 @@ function WidgetSessions(props: Props) {
           <NoContent
             title={
               <div className='flex items-center justify-center flex-col'>
-                <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
+                <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
                 <div className='mt-4' />
                 <div className='text-center'>
                   No relevant sessions found for the selected time period

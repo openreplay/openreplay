@@ -55,7 +55,7 @@ function MetricsList({
         show={lenth === 0}
         title={
           <div className='flex flex-col items-center justify-center'>
-            <AnimatedSVG name={ICONS.NO_CARDS} size={180} />
+            <AnimatedSVG name={ICONS.NO_CARDS} size={60} />
             <div className='text-center mt-4'>
               {metricsSearch !== '' ? 'No matching results' : 'You haven\'t created any cards yet'}
             </div>
