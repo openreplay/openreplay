@@ -70,13 +70,13 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
+def __get_heat_map_chart(project_id, user_id, data: schemas.CardHeatMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
     return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
-                                         data=schemas.ClickMapSessionsSearch(
+                                         data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
                                          include_mobs=include_mobs)
 
@@ -160,8 +160,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     supported = {
         schemas.MetricType.timeseries: __get_timeseries_chart,
         schemas.MetricType.table: __get_table_chart,
-        schemas.MetricType.click_map: __get_click_map_chart,
-        schemas.MetricType.heat_map: __get_click_map_chart,
+        schemas.MetricType.heat_map: __get_heat_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_chart
@@ -290,7 +289,7 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
     supported = {
         schemas.MetricType.timeseries: not_supported,
         schemas.MetricType.table: not_supported,
-        schemas.MetricType.click_map: not_supported,
+        schemas.MetricType.heat_map: not_supported,
         schemas.MetricType.funnel: __get_funnel_issues,
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_issues,
@@ -309,12 +308,12 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
-        if data.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map):
+        if data.metric_type == schemas.MetricType.heat_map:
             if data.session_id is not None:
                 session_data = json.dumps({"sessionId": data.session_id})
             else:
-                session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
-                                                     data=data, include_mobs=False)
+                session_data = __get_heat_map_chart(project_id=project_id, user_id=user_id,
+                                                    data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = json.dumps({"sessionId": session_data["sessionId"]})
         _data = {"session_data": session_data}
@@ -392,7 +391,7 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     params["session_data"] = json.dumps(metric["data"])
     if data.metric_type == schemas.MetricType.pathAnalysis:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
-    elif data.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map):
+    elif data.metric_type == schemas.MetricType.heat_map:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})
         elif "data" in metric:
@@ -682,11 +681,11 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
-    elif metric.metric_type in (schemas.MetricType.click_map, schemas.MetricType.heat_map):
+    elif metric.metric_type == schemas.MetricType.heat_map:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
             return heatmaps.get_selected_session(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
         else:
-            return heatmaps.search_short_session(project_id=project_id, data=metric)
+            return heatmaps.search_short_session(project_id=project_id, data=metric, user_id=user_id)
 
     return get_chart(project_id=project_id, data=metric, user_id=user_id)
 

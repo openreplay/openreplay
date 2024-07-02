@@ -936,8 +936,6 @@ class MetricType(str, Enum):
     pathAnalysis = "pathAnalysis"
     retention = "retention"
     stickiness = "stickiness"
-    click_map = "clickMap"
-    # click_map and heat_map are the same
     heat_map = "heatMap"
     insights = "insights"
 
@@ -1024,8 +1022,8 @@ class MetricOfFunnels(str, Enum):
     user_count = MetricOfTimeseries.user_count.value
 
 
-class MetricOfClickMap(str, Enum):
-    click_map_url = "clickMapUrl"
+class MetricOfHeatMap(str, Enum):
+    heat_map_url = "heatMapUrl"
 
 
 class MetricOfPathAnalysis(str, Enum):
@@ -1134,17 +1132,6 @@ class __CardSchema(CardSessionsSchema):
     def is_predefined(self) -> bool:
         return self.metric_type in [MetricType.errors, MetricType.performance,
                                     MetricType.resources, MetricType.web_vital]
-
-    # TODO: finish the reset of these conditions
-    # @model_validator(mode='after')
-    # def __validator(cls, values):
-    #     if values.metric_type == MetricType.click_map:
-    #         # assert isinstance(values.metric_of, MetricOfClickMap), \
-    #         #     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
-    #         for s in values.series:
-    #             for f in s.filter.events:
-    #                 assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
-    #     return values
 
 
 class CardTimeSeries(__CardSchema):
@@ -1274,9 +1261,9 @@ class CardWebVital(__CardSchema):
         return values
 
 
-class CardClickMap(__CardSchema):
-    metric_type: Literal[MetricType.click_map]
-    metric_of: MetricOfClickMap = Field(default=MetricOfClickMap.click_map_url)
+class CardHeatMap(__CardSchema):
+    metric_type: Literal[MetricType.heat_map]
+    metric_of: MetricOfHeatMap = Field(default=MetricOfHeatMap.heat_map_url)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1285,7 +1272,7 @@ class CardClickMap(__CardSchema):
 
     @model_validator(mode="after")
     def __transform(cls, values):
-        values.metric_of = MetricOfClickMap(values.metric_of)
+        values.metric_of = MetricOfHeatMap(values.metric_of)
         return values
 
 
@@ -1384,7 +1371,7 @@ class CardPathAnalysis(__CardSchema):
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
     CardErrors, CardPerformance, CardResources,
-    CardWebVital, CardClickMap,
+    CardWebVital, CardHeatMap,
     CardPathAnalysis]
 CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
 
@@ -1559,13 +1546,13 @@ class SearchCardsSchema(_PaginatedSchema):
     query: Optional[str] = Field(default=None)
 
 
-class _ClickMapSearchEventRaw(SessionSearchEventSchema2):
+class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.location] = Field(...)
 
 
-class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
-    events: Optional[List[_ClickMapSearchEventRaw]] = Field(default=[])
-    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field(default=[])
+class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
+    events: Optional[List[_HeatMapSearchEventRaw]] = Field(default=[])
+    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default=[])
 
     @model_validator(mode="before")
     def __transform(cls, values):
@@ -1578,7 +1565,7 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
         return values
 
 
-class ClickMapFilterSchema(BaseModel):
+class HeatMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
@@ -1586,12 +1573,16 @@ class ClickMapFilterSchema(BaseModel):
 
 class GetHeatmapPayloadSchema(_TimedSchema):
     url: str = Field(...)
-    filters: List[ClickMapFilterSchema] = Field(default=[])
+    filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
 
 
-class GetHeatmapBasePayloadSchema(BaseModel):
+class GetHeatMapPayloadSchema(BaseModel):
     url: str = Field(...)
+
+
+class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):
+    pass
 
 
 class FeatureFlagVariant(BaseModel):

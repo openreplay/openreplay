@@ -23,6 +23,11 @@ ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS x integer DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS y integer DEFAULT NULL;
 
+UPDATE public.metrics
+SET metric_type='clickMap',
+    metric_of='clickMapUrl'
+WHERE metric_type = 'heatMap';
+
 COMMIT;
 
 \elif :is_next
