@@ -329,6 +329,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     full_args["step_size"] = step_size
     with pg_client.PostgresClient() as cur:
         if isinstance(metric_of, schemas.MetricOfTable):
+            full_args["limit"] = data.limit
+            full_args["limit_s"] = (data.page - 1) * data.limit
+            full_args["limit_e"] = data.page * data.limit
+
             main_col = "user_id"
             extra_col = ""
             extra_where = ""
@@ -356,7 +360,9 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             if metric_format == schemas.MetricExtendedFormatType.session_count:
                 main_query = f"""SELECT COUNT(*) AS count,
                                     COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
-                                    COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                    COALESCE(JSONB_AGG(users_sessions) 
+                                            FILTER ( WHERE rn > %(limit_s)s 
+                                                        AND rn <= %(limit_e)s ), '[]'::JSONB) AS values
                                  FROM (SELECT {main_col} AS name,
                                      count(DISTINCT session_id)                                   AS session_count,
                                      ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
