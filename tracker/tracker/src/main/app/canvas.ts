@@ -191,11 +191,24 @@ function captureSnapshot(
     if (!ctx) {
       return ''
     }
+    ctx.clearRect(0, 0, dummy.width, dummy.height)
     ctx.drawImage(canvas, 0, 0, dummy.width, dummy.height)
     dummy.toBlob(onBlob, imageFormat, qualityInt[quality])
   } else {
     canvas.toBlob(onBlob, imageFormat, qualityInt[quality])
   }
+}
+
+function saveImageData(imageDataBlob: Blob, name: string) {
+  const imageDataUrl = URL.createObjectURL(imageDataBlob)
+  const link = document.createElement('a')
+  link.href = imageDataUrl
+  link.download = name
+  link.style.display = 'none'
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
@@ -213,18 +226,6 @@ function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
   }
 
   return [new Blob([u8arr], { type: mime }), u8arr]
-}
-
-function saveImageData(imageDataBlob: Blob, name: string) {
-  const imageDataUrl = URL.createObjectURL(imageDataBlob)
-  const link = document.createElement('a')
-  link.href = imageDataUrl
-  link.download = name
-  link.style.display = 'none'
-
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
 }
 
 export default CanvasRecorder
