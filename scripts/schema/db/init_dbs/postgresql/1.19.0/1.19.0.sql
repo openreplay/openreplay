@@ -34,6 +34,14 @@ WHERE metric_id IN (SELECT metric_id
                     WHERE metric_type = 'webVitals')
   AND config ->> 'col' = '1';
 
+UPDATE public.metrics
+SET view_type='table'
+WHERE view_type = 'pieChart';
+
+UPDATE public.metrics
+SET view_type='lineChart'
+WHERE view_type = 'progress';
+
 COMMIT;
 
 \elif :is_next

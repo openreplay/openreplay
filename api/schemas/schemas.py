@@ -913,13 +913,11 @@ class CardSeriesSchema(BaseModel):
 
 class MetricTimeseriesViewType(str, Enum):
     line_chart = "lineChart"
-    progress = "progress"
     area_chart = "areaChart"
 
 
 class MetricTableViewType(str, Enum):
     table = "table"
-    pie_chart = "pieChart"
 
 
 class MetricOtherViewType(str, Enum):
