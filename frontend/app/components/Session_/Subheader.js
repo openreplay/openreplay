@@ -15,7 +15,7 @@ import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
 import { Switch, Button as AntButton, Popover, Tooltip } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
-import { checkParam } from 'App/utils';
+import { checkParam, truncateStringToFit } from 'App/utils';
 
 const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
@@ -46,13 +46,10 @@ function SubHeader(props) {
     return integrations.some((i) => i.token);
   }, [props.integrations]);
 
-  const location =
-    currentLocation && currentLocation.length > 70
-      ? `${currentLocation.slice(0, 25)}...${currentLocation.slice(-40)}`
-      : currentLocation;
+  const locationTruncated = truncateStringToFit(currentLocation, window.innerWidth - 200);
 
   const showWarning =
-    location && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(location) && showWarningModal;
+    currentLocation && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation) && showWarningModal;
   const closeWarning = () => {
     localStorage.setItem(localhostWarnKey, '1');
     setWarning(false);
@@ -116,7 +113,7 @@ function SubHeader(props) {
               showCopyLink={true}
               trigger={
                 <div className="relative">
-                  <Tooltip title='Share Session' placement='bottom'>
+                  <Tooltip title="Share Session" placement="bottom">
                     <AntButton size={'small'} className="flex items-center justify-center">
                       <ShareAltOutlined />
                     </AntButton>
@@ -141,13 +138,13 @@ function SubHeader(props) {
         )}
       </div>
 
-      {location && (
+      {locationTruncated && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
             <Icon size="20" name="event/link" className="mr-1" />
             <Tooltip title="Open in new tab" delay={0}>
-              <a href={currentLocation} target="_blank">
-                {location}
+              <a href={currentLocation} target="_blank" className="truncate">
+                {locationTruncated}
               </a>
             </Tooltip>
           </div>
