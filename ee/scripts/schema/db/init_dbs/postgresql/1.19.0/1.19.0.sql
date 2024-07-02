@@ -20,7 +20,9 @@ $fn_def$, :'next_version')
 --
 ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS normalized_x smallint NULL,
-    ADD COLUMN IF NOT EXISTS normalized_y smallint NULL;
+    ADD COLUMN IF NOT EXISTS normalized_y smallint NULL,
+    DROP COLUMN IF EXISTS x,
+    DROP COLUMN IF EXISTS y;
 
 UPDATE public.metrics
 SET default_config=default_config || '{"col":2}'

@@ -659,16 +659,16 @@ CREATE INDEX pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_op
 
 CREATE TABLE events.clicks
 (
-    session_id bigint             NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
-    message_id bigint             NOT NULL,
-    timestamp  bigint             NOT NULL,
-    label      text    DEFAULT NULL,
-    url        text    DEFAULT '' NOT NULL,
-    path       text,
-    selector   text    DEFAULT '' NOT NULL,
-    hesitation integer DEFAULT NULL,
-    x          integer DEFAULT NULL,
-    y          integer DEFAULT NULL,
+    session_id   bigint              NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+    message_id   bigint              NOT NULL,
+    timestamp    bigint              NOT NULL,
+    label        text     DEFAULT NULL,
+    url          text     DEFAULT '' NOT NULL,
+    path         text,
+    selector     text     DEFAULT '' NOT NULL,
+    hesitation   integer  DEFAULT NULL,
+    normalized_x smallint DEFAULT NULL,
+    normalized_y smallint DEFAULT NULL,
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX clicks_session_id_idx ON events.clicks (session_id);

@@ -254,7 +254,7 @@ def get_page_events(session_id):
                     message_id,
                     timestamp,
                     host,
-                    path
+                    path,
                     query,
                     path AS value,
                     path AS url,
