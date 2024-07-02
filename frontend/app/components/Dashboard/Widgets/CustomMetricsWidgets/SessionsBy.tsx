@@ -67,6 +67,7 @@ function SessionsBy(props: Props) {
         />
       ) : (
         <div className="flex flex-col justify-between w-full" style={{ height: 220 }}>
+          {/* TODO - remove slice once the api pagination is fixed */}
           <CardSessionsByList list={data.values.slice(0, 3)}
                               selected={selected}
                               onClickHandler={onClickHandler} />
@@ -74,7 +75,7 @@ function SessionsBy(props: Props) {
             <div className="flex">
               <Button type="link" onClick={showMore}>
                 <Space className="flex font-medium gap-1">
-                  {total - 5} More
+                  {total - 3} More
                   <ArrowRight size={16} />
                 </Space>
               </Button>

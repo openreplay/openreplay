@@ -8,7 +8,6 @@ function BackButton() {
   const siteId = location.pathname.split('/')[1];
 
   const handleBackClick = () => {
-    console.log('siteId', siteId);
     history.push(`/${siteId}/dashboard`);
   };
 
