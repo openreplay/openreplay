@@ -408,9 +408,11 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
-        full_args["limit_s"] = 0
-        full_args["limit_e"] = 200
         if isinstance(metric_of, schemas.MetricOfTable):
+            full_args["limit"] = data.limit
+            full_args["limit_s"] = (data.page - 1) * data.limit
+            full_args["limit_e"] = data.page * data.limit
+
             main_col = "user_id"
             extra_col = "s.user_id"
             extra_where = ""
