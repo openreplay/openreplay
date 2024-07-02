@@ -81,7 +81,8 @@ CREATE TABLE IF NOT EXISTS experimental.events
     error_tags_values              Array(Nullable(String)),
     transfer_size                  Nullable(UInt32),
     selector                       Nullable(String),
-    coordinate                     Tuple(x Nullable(UInt16), y Nullable(UInt16)),
+    normalized_x                   Nullable(UInt8),
+    normalized_y                   Nullable(UInt8),
     message_id                     UInt64                               DEFAULT 0,
     _timestamp                     DateTime                             DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -281,7 +282,8 @@ SELECT session_id,
        error_tags_values,
        transfer_size,
        selector,
-       coordinate,
+       normalized_x,
+       normalized_y,
        message_id,
        _timestamp
 FROM experimental.events
@@ -441,7 +443,6 @@ CREATE TABLE IF NOT EXISTS experimental.ios_events
     issue_type     Nullable(Enum8('tap_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19,'mouse_thrashing'=20,'app_crash'=21)),
     issue_id       Nullable(String),
     transfer_size  Nullable(UInt32),
-    coordinate     Tuple(x Nullable(UInt16), y Nullable(UInt16)),
     direction      Nullable(String),
     reason         Nullable(String),
     stacktrace     Nullable(String),

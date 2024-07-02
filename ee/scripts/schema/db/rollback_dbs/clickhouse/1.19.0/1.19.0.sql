@@ -1,11 +1,12 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.19.0-ee';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.18.0-ee';
 
 DROP TABLE IF EXISTS experimental.events_l7d_mv;
 
 ALTER TABLE experimental.events
-    ADD COLUMN IF NOT EXISTS normalized_x Nullable(UInt8),
-    ADD COLUMN IF NOT EXISTS normalized_y Nullable(UInt8),
-    DROP COLUMN IF EXISTS coordinate;
+    ADD COLUMN IF NOT EXISTS coordinate Tuple(x Nullable(UInt16), y Nullable(UInt16));
+
+ALTER TABLE experimental.ios_events
+    ADD COLUMN IF NOT EXISTS coordinate Tuple(x Nullable(UInt16), y Nullable(UInt16));
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.events_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
@@ -73,12 +74,8 @@ SELECT session_id,
        error_tags_values,
        transfer_size,
        selector,
-       normalized_x,
-       normalized_y,
+       coordinate,
        message_id,
        _timestamp
 FROM experimental.events
 WHERE datetime >= now() - INTERVAL 7 DAY;
-
-ALTER TABLE experimental.ios_events
-    DROP COLUMN IF EXISTS coordinate;
