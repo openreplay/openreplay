@@ -35,35 +35,43 @@ function NoteItem(props: Props) {
     });
   };
   const menuItems = [
-    { icon: 'link-45deg', text: 'Copy Note URL', onClick: onCopy },
+    { icon: 'link-45deg', text: 'Copy Link', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
 
   const safeStrMessage =
     props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message;
   return (
-    <div className="flex items-center p-2 border-b">
+    <div className="flex items-center px-2 border-b">
       <Link
         style={{ width: '90%' }}
         to={
-          session(props.note.sessionId) +
-          (props.note.timestamp > 0
-            ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
-            : `?note=${props.note.noteId}`)
-        }
-      >
-        <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
-          <div className="py-1 capitalize-first text-lg">{safeStrMessage}</div>
-          <div className="flex items-center">
-            {props.note.tag ? (
+              session(props.note.sessionId) +
+              (props.note.timestamp > 0
+                ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
+                : `?note=${props.note.noteId}`)
+            }
+          >
+        <div className="flex flex-col p-2 rounded cursor-pointer">
+          <div className="flex py-1 text-base">
+            
+          {props.note.tag ? (
               <Tag
                 color={tagProps[props.note.tag]}
+                className='border-0 rounded-lg hover:inherit gap-2 w-14 text-center'
               >
                 {props.note.tag}
               </Tag>
             ) : null}
-            <div className="text-disabled-text flex items-center text-sm">
-              <span className="color-gray-darkest mr-1">By </span>
+
+            <div className='cap-first'>
+            {safeStrMessage}
+            </div>
+          </div>
+          <div className="flex items-center">
+            
+            <div className="flex items-center text-sm">
+              <span className="text-gray-600 mr-1 capitalize">By </span>
               {props.note.userName},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
               <div className="mx-2" />

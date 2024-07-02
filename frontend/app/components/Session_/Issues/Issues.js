@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Popover, Icon } from 'UI';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
-import { Popover as AntPopover, Button } from 'antd';
+import { Tooltip, Button } from 'antd';
 
 @connect(
   (state) => ({
@@ -67,11 +67,11 @@ class Issues extends React.Component {
         )}
       >
         <div>
-          <AntPopover content={'Create Issue'}>
+          <Tooltip title={'Create Issue'} placement='bottom'>
             <Button size={'small'} className={'flex items-center justify-center'}>
               <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} />
             </Button>
-          </AntPopover>
+          </Tooltip>
         </div>
       </Popover>
     );

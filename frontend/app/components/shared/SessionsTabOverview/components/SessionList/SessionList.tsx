@@ -215,7 +215,7 @@ function SessionList(props: Props) {
               <div className='flex items-center justify-center flex-col'>
                 <AnimatedSVG name={NO_CONTENT.icon} size={180} />
                 <div className='mt-4' />
-                <div className='text-center relative'>
+                <div className='text-center relative text-lg'>
                   {NO_CONTENT.message}
                 </div>
               </div>

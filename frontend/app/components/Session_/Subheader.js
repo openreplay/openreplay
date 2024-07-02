@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useStore } from 'App/mstore';
 import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
@@ -13,7 +13,7 @@ import { connect } from 'react-redux';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { IFRAME } from 'App/constants/storageKeys';
 import cn from 'classnames';
-import { Switch, Button as AntButton, Popover } from 'antd';
+import { Switch, Button as AntButton, Popover, Tooltip } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
 
 const localhostWarn = (project) => project + '_localhost_warn';
@@ -96,6 +96,7 @@ function SubHeader(props) {
           )}
           style={{ width: 'max-content' }}
         >
+          
           <KeyboardHelp />
           <Bookmark sessionId={props.sessionId} />
           <NotePopup />
@@ -104,11 +105,11 @@ function SubHeader(props) {
             showCopyLink={true}
             trigger={
               <div className="relative">
-                <Popover content={'Share Session'}>
+                <Tooltip title='Share Session' placement='bottom'>
                   <AntButton size={'small'} className="flex items-center justify-center">
                     <ShareAltOutlined />
                   </AntButton>
-                </Popover>
+                </Tooltip>
               </div>
             }
           />

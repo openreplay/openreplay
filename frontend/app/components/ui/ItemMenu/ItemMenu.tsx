@@ -1,7 +1,7 @@
 import React from "react";
 import { Icon, Popover, Tooltip } from "UI";
 import { Dropdown, Menu, Button } from "antd";
-import { MoreOutlined } from "@ant-design/icons";
+import {EllipsisVertical} from 'lucide-react';
 import styles from "./itemMenu.module.css";
 import cn from "classnames";
 
@@ -99,7 +99,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
         <Button
           className={cn("select-none", !this.props.flat ? parentStyles : "", {
             "": !this.props.flat && displayed && label,
-          })}
+          }, 'border-0 shadow-one')}
         >
           {label && (
             <span className={cn("font-medium")}>
@@ -114,7 +114,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
               className={cn("rounded-full flex items-center justify-center")}
               role="button"
             >
-              <MoreOutlined />
+              <EllipsisVertical size={16} />
             </div>
           )}
         </Button>

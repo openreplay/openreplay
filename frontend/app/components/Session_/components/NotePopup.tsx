@@ -2,7 +2,7 @@ import CreateNote from 'Components/Session_/Player/Controls/components/CreateNot
 import React from 'react';
 import { connect } from 'react-redux';
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { Button, Popover } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { MessageOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
 
@@ -22,7 +22,7 @@ function NotePopup({ tooltipActive }: { tooltipActive: boolean }) {
   };
 
   return (
-    <Popover content={'Add Note'}>
+    <Tooltip title={'Add Note'} placement='bottom'>
       <Button
         size={'small'}
         className={'flex items-center justify-center'}
@@ -31,7 +31,7 @@ function NotePopup({ tooltipActive }: { tooltipActive: boolean }) {
       >
         <MessageOutlined />
       </Button>
-    </Popover>
+    </Tooltip>
   );
 }
 
