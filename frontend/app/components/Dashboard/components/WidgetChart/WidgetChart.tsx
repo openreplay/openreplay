@@ -253,8 +253,8 @@ function WidgetChart(props: Props) {
         return <div>Unknown metric type</div>;
     };
     return (
-        <Loader loading={loading} style={{height: `${isOverviewWidget ? 100 : 240}px`}}>
-            <div style={{minHeight: isOverviewWidget ? 100 : 240}}>{renderChart()}</div>
+        <Loader loading={loading} style={{height: `240px`}}>
+            <div style={{minHeight: 240}}>{renderChart()}</div>
         </Loader>
     );
 }

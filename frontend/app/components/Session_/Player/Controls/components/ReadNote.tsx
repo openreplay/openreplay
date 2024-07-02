@@ -1,11 +1,12 @@
 import React from 'react';
 import { Icon } from 'UI';
+import { Button, Tag } from 'antd';
+import { PlayCircleOutlined } from '@ant-design/icons';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
-import { Tag } from 'antd'
 
 interface Props {
   note?: Note;
@@ -21,7 +22,7 @@ function ReadNote(props: Props) {
     return (
       <div style={{ position: 'absolute', top: '45%', left: 'calc(50% - 200px)' }}>
         <div
-          className="flex items-start flex-col p-4 border gap-2 rounded"
+          className="flex items-start flex-col p-4 border gap-2 rounded-lg"
           style={{ background: '#FFFEF5', width: 400 }}
         >
           <div className="flex items-start font-semibold w-full text-xl">
@@ -50,8 +51,8 @@ function ReadNote(props: Props) {
       className="flex items-center justify-center"
     >
       <div
-        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded"
-        style={{ background: '#FFFEF5', width: 500 }}
+        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded-lg bg-amber-50"
+        style={{ width: 500 }}
       >
         <div className="flex items-center w-full">
           <div className="p-2 bg-gray-light rounded-full">
@@ -71,23 +72,32 @@ function ReadNote(props: Props) {
           {props.note.message}
         </div>
         <div className="w-full">
-          <div className="flex items-center gap-2 flex-wrap w-full">
+          <div className="flex items-center justify-between w-full">
+            <div className='flex gap-1 items-center'>
             {props.note.tag ? (
               <Tag
                 color={tagProps[props.note.tag]}
+                className='border-0 rounded-lg'
               >
                 {props.note.tag}
               </Tag>
             ) : null}
+            
+            <Tag bordered={false} >
             {!props.note.isPublic ? null : <TeamBadge />}
+            </Tag>
 
-            <div
-              onClick={props.onClose}
-              className="ml-auto rounded py-2 px-4 flex items-center text-blue gap-2 cursor-pointer hover:bg-active-blue"
-            >
-              <Icon size={20} name="play-fill" color="main" />
-              <span>Play Session</span>
             </div>
+
+            <Button
+              onClick={props.onClose}
+              icon={<PlayCircleOutlined />}
+              type='default'
+            >
+              
+             
+              Play Session
+            </Button>
           </div>
         </div>
       </div>

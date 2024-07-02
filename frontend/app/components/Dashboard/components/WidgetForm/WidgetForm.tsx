@@ -4,6 +4,7 @@ import {FilterKey} from 'Types/filter/filterType';
 import {useStore} from 'App/mstore';
 import {observer} from 'mobx-react-lite';
 import {Button, Icon, confirm, Tooltip} from 'UI';
+import {Input, Alert} from 'antd'
 import FilterSeries from '../FilterSeries';
 import Select from 'Shared/Select';
 import {withSiteId, dashboardMetricDetails, metricDetails} from 'App/routes';
@@ -26,7 +27,6 @@ import {eventKeys} from 'App/types/filter/newFilter';
 import {renderClickmapThumbnail} from './renderMap';
 import Widget from 'App/mstore/types/widget';
 import FilterItem from 'Shared/Filters/FilterItem';
-import {Input} from 'antd'
 
 interface Props {
     history: any;
@@ -261,12 +261,7 @@ function WidgetForm(props: Props) {
             )}
 
             {isPredefined && (
-                <div className='flex items-center my-6 justify-center'>
-                    <Icon name='info-circle' size='18' color='gray-medium'/>
-                    <div className='ml-2'>
-                        Filtering and drill-downs will be supported soon for this card type.
-                    </div>
-                </div>
+                <Alert message="Drilldown or filtering isn't supported on this legacy card." type='warning' showIcon closable  className='border-transparent rounded-lg' />
             )}
             {testingKey ? <Input
                 placeholder="AI Query"
@@ -323,7 +318,7 @@ function WidgetForm(props: Props) {
                                         emptyMessage={
                                             isTable
                                                 ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
-                                                : 'Add user event or filter to define the series by clicking Add Step.'
+                                                : 'Add an event or filter step to define the series.'
                                         }
                                     />
                                 </div>

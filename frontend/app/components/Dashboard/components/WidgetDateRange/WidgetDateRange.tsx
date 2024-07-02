@@ -27,6 +27,8 @@ function WidgetDateRange({
                 period={period}
                 onChange={onChangePeriod}
                 right={true}
+                isAnt={true}
+                useButtonStyle={true}
             />
         </Space>
     );

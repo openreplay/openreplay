@@ -147,7 +147,7 @@ function FilterList(props: Props) {
                                         width: 'calc(100% + 2.5rem)',
                                     }}
                                     className={
-                                        'hover:bg-active-blue px-5 gap-2 items-center flex z-10'
+                                        'hover:bg-active-blue px-5 gap-2 items-center flex'
                                     }
                                     id={`${filter.key}-${filterIndex}`}
                                     onDragOver={(e) => handleDragOverEv(e, filterIndex)}

@@ -1,6 +1,8 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
+import { Modal, Form, Icon, Checkbox, Input } from 'UI';
+import {Button} from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore'
 
 interface Props {
@@ -32,14 +34,13 @@ function DashboardEditModal(props: Props) {
         <Modal open={ show } onClose={closeHandler}>
             <Modal.Header className="flex items-center justify-between">
                 <div>{ 'Edit Dashboard' }</div>
-                <Icon
-                    role="button"
-                    tabIndex="-1"
-                    color="gray-dark"
-                    size="14"
+                <Button
+                    type='text'
                     name="close"
                     onClick={ closeHandler }
+                    icon={<CloseOutlined />} 
                 />
+                
             </Modal.Header>
 
             <Modal.Content>
@@ -91,13 +92,13 @@ function DashboardEditModal(props: Props) {
             <Modal.Footer>
                 <div className="-mx-2 px-2">
                     <Button
-                        variant="primary"
+                        type="primary"
                         onClick={ onSave }
                         className="float-left mr-2"
                     >
                         Save
                     </Button>
-                    <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
+                    <Button type='default' onClick={ closeHandler }>{ 'Cancel' }</Button>
                 </div>
             </Modal.Footer>
       </Modal>

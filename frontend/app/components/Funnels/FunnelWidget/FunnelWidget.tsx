@@ -5,6 +5,7 @@ import cn from 'classnames';
 import stl from './FunnelWidget.module.css';
 import { observer } from 'mobx-react-lite';
 import { NoContent, Icon } from 'UI';
+import { Tag, Tooltip } from 'antd';
 import { useModal } from 'App/components/Modal';
 
 interface Props {
@@ -90,19 +91,21 @@ function FunnelWidget(props: Props) {
             </div>
             <div className="flex items-center pb-4">
                 <div className="flex items-center">
-                    <span className="text-xl mr-2">Lost conversion</span>
-                    <div className="rounded px-2 py-1 bg-red-lightest color-red">
-                        <span className="text-xl mr-2 font-medium">{funnel.lostConversions}</span>
-                        <span className="text-sm">({funnel.lostConversionsPercentage}%)</span>
-                    </div>
+                    <span className="text-base font-medium mr-2">Lost conversion</span>
+                    <Tooltip title={`${funnel.lostConversions} Sessions ${funnel.lostConversionsPercentage}%`}>
+                        <Tag bordered={false} color="red" className='text-lg font-medium rounded-lg'>
+                        {funnel.lostConversions}
+                        </Tag>
+                    </Tooltip>
                 </div>
                 <div className="mx-3" />
                 <div className="flex items-center">
-                    <span className="text-xl mr-2">Total conversion</span>
-                    <div className="rounded px-2 py-1 bg-tealx-lightest color-tealx">
-                        <span className="text-xl mr-2 font-medium">{funnel.totalConversions}</span>
-                        <span className="text-sm">({funnel.totalConversionsPercentage}%)</span>
-                    </div>
+                    <span className="text-base font-medium mr-2">Total conversion</span>
+                    <Tooltip title={`${funnel.totalConversions} Sessions ${funnel.totalConversionsPercentage}%`}>
+                        <Tag bordered={false} color="cyan" className='text-lg font-medium rounded-lg'>
+                        {funnel.totalConversions}
+                        </Tag>
+                    </Tooltip>
                 </div>
             </div>
             {funnel.totalDropDueToIssues > 0 && <div className="flex items-center mb-2"><Icon name="magic" /> <span className="ml-2">{funnel.totalDropDueToIssues} sessions dropped due to issues.</span></div>}

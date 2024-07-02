@@ -52,7 +52,7 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded hover-fill-teal'}
+            className={'!rounded-lg hover-fill-teal'}
           >
             Setup OpenReplay
           </Menu.Item>
@@ -66,7 +66,7 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded hover-fill-teal'}
+            className={'!rounded-lg hover-fill-teal'}
           >
             Identify Users
           </Menu.Item>
@@ -80,7 +80,7 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded hover-fill-teal'}
+            className={'!rounded-lg hover-fill-teal'}
           >
             Invite Collaborators
           </Menu.Item>
@@ -94,7 +94,7 @@ function SideMenu(props: Props) {
                 color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded hover-fill-teal'}
+            className={'!rounded-lg hover-fill-teal'}
           >
             Integrations
           </Menu.Item>
@@ -109,7 +109,7 @@ function SideMenu(props: Props) {
                 color={activeTab === 'support' ? 'teal' : 'gray'}
               />
             }
-            className={'!rounded hover-fill-teal'}
+            className={'!rounded-lg hover-fill-teal'}
           >
             Support
           </Menu.Item>

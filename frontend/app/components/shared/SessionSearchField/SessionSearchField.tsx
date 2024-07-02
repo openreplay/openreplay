@@ -54,7 +54,7 @@ function SessionSearchField(props: Props) {
         id="search"
         type="search"
         autoComplete="off"
-        className="hover:border-gray-medium text-lg placeholder-lg"
+        className="hover:border-gray-medium text-lg placeholder-lg h-9 shadow-sm"
       />
 
       {showModal && (

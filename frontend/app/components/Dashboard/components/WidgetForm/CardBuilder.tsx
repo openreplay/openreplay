@@ -5,7 +5,7 @@ import {metricOf, issueOptions, issueCategories} from 'App/constants/filterOptio
 import {FilterKey} from 'Types/filter/filterType';
 import {withSiteId, dashboardMetricDetails, metricDetails} from 'App/routes';
 import {Icon, confirm} from 'UI';
-import {Card, Input, Space, Button, Segmented} from 'antd';
+import {Card, Input, Space, Button, Segmented, Alert} from 'antd';
 import {AudioWaveform} from "lucide-react";
 import FilterSeries from '../FilterSeries';
 import Select from 'Shared/Select';
@@ -28,16 +28,13 @@ const AIInput = ({value, setValue, placeholder, onEnter}) => (
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className='w-full mb-2'
+        className='w-full mb-2 bg-white'
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
     />
 );
 
 const PredefinedMessage = () => (
-    <div className='flex items-center my-6 justify-center'>
-        <Icon name='info-circle' size='18' color='gray-medium'/>
-        <div className='ml-2'>Filtering and drill-downs will be supported soon for this card type.</div>
-    </div>
+    <Alert message="Drilldown or filtering isn't supported on this legacy card." type='warning' showIcon closable className='border-transparent rounded-lg' />
 );
 
 const MetricTabs = ({metric, writeOption}: any) => {
@@ -185,7 +182,7 @@ const SeriesList = observer(() => {
                             emptyMessage={
                                 metric.metricType === TABLE
                                     ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
-                                    : 'Add user event or filter to define the series by clicking Add Step.'
+                                    : 'Add an event or filter step to define the series.'
                             }
                         />
                     </div>

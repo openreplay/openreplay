@@ -1,5 +1,7 @@
 import React from 'react';
 import { Icon } from 'UI';
+import{Tag} from 'antd';
+import {CloseOutlined} from '@ant-design/icons'
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -14,12 +16,15 @@ function FunnelIssuesSelectedFilters(props: Props) {
     return (
         <div className="flex items-center flex-wrap">
             {issuesFilter.map((option, index) => (
-                <div key={index} className="transition-all ml-2 mb-2 flex items-center border rounded-2xl bg-white select-none overflow-hidden">
-                    <span className="pl-3 color-gray-dark">{option.label}</span>
-                    <button className="ml-1 hover:bg-active-blue px-2 py-2" onClick={() => removeSelectedValue(option.value)}>
-                        <Icon name="close"/>
-                    </button>
-                </div>
+                <Tag
+                bordered = {false}
+                key={index}
+                closable
+                onClose={() => removeSelectedValue(option.value)}
+                className="select-none rounded-lg text-base gap-1 bg-indigo-50 flex items-center"
+              >
+                {option.label}
+              </Tag>
             ))}
         </div>
     );

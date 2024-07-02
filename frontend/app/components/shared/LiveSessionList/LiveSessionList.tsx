@@ -41,7 +41,7 @@ function LiveSessionList(props: Props) {
   var timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-  const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(
+  const sortOptions = [{ label: 'Freshness', value: 'timestamp' }].concat(
     metaList
       .map((i: any) => ({
         label: capitalize(i),
@@ -105,6 +105,7 @@ function LiveSessionList(props: Props) {
                   onChange={onSortChange}
                   value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
               />
+
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => props.applyFilter({ order: state })}
@@ -204,3 +205,4 @@ export default withPermissions(['ASSIST_LIVE'])(
     }
   )(LiveSessionList)
 );
+

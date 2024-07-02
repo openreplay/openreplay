@@ -156,7 +156,7 @@ export default class Widget {
                     ? json.series.map((series: any) => new FilterSeries().fromJson(series))
                     : [new FilterSeries()];
             this.dashboards = json.dashboards || [];
-            this.owner = json.ownerEmail;
+            this.owner = json.ownerName;
             this.lastModified =
                 json.editedAt || json.createdAt
                     ? DateTime.fromMillis(json.editedAt || json.createdAt)
@@ -236,9 +236,7 @@ export default class Widget {
                     this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION ||
                     this.metricType === USER_PATH
                         ? 4
-                        : this.metricType === WEB_VITALS
-                            ? 1
-                            : 2
+                        : 2
             }
         };
 

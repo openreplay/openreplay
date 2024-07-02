@@ -1,6 +1,7 @@
 import React from 'react';
-import {PageTitle, Button, Toggler, Icon} from "UI";
-import {Segmented} from 'antd';
+import {PageTitle, Toggler, Icon} from "UI";
+import {Segmented, Button} from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import {useStore} from 'App/mstore';
@@ -24,10 +25,11 @@ function MetricViewHeader({siteId}: { siteId: string }) {
                     <PageTitle title='Cards' className=''/>
                 </div>
                 <div className='ml-auto flex items-center'>
-                    <Button variant='primary'
+                    <Button type='primary'
                         // onClick={() => showModal(<AddCardModal siteId={siteId}/>, {right: true})}
                             onClick={() => setShowAddCardModal(true)}
-                    >New Card</Button>
+                            icon={<PlusOutlined />}
+                    >Create Card</Button>
                     <div className='ml-4 w-1/4' style={{minWidth: 300}}>
                         <MetricsSearch/>
                     </div>
@@ -119,7 +121,8 @@ function ListViewToggler() {
     const listView = useObserver(() => metricStore.listView);
     return (
         <div className='flex items-center'>
-            <Segmented
+            <Segmented 
+                size='small'
                 options={[
                     {
                         label: <div className={'flex items-center gap-2'}>

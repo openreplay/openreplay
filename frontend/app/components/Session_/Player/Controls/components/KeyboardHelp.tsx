@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { Popover, Button } from 'antd';
+import {Keyboard} from 'lucide-react'
+import { Button, Tooltip } from 'antd';
 import { useModal } from "../../../../Modal";
 
 const Key = ({ label }: { label: string }) => <div style={{ minWidth: 52 }} className="whitespace-nowrap font-bold bg-gray-lightest rounded shadow px-2 py-1 text-figmaColors-text-primary text-center">{label}</div>;
@@ -35,7 +36,7 @@ function ShortcutGrid() {
   return (
     <div className={'p-4 overflow-y-auto h-screen'}>
       <div className={'mb-4 font-semibold text-xl'}>Keyboard Shortcuts</div>
-      <div className=" grid grid-cols-2 grid-flow-row-dense auto-cols-max gap-4 justify-items-start">
+      <div className=" grid grid-cols-1 grid-flow-row-dense auto-cols-max gap-4 justify-items-start">
         <Cell shortcut="⇧ + U" text="Copy Session URL with time" />
         <Cell shortcut="⇧ + C" text="Launch Console" />
         <Cell shortcut="⇧ + N" text="Launch Network" />
@@ -62,6 +63,7 @@ function ShortcutGrid() {
 function KeyboardHelp() {
   const { showModal } = useModal();
   return (
+    <Tooltip placement='bottom' title='Keyboard Shortcuts'>
     <Button
       size={'small'}
       className={'flex items-center justify-center'}
@@ -69,8 +71,9 @@ function KeyboardHelp() {
         showModal(<ShortcutGrid />, { right: true, width: 420 })
       }}
     >
-      <Icon name={'keyboard'} size={21} color={'black'} />
+      <Keyboard size={18}/>
     </Button>
+    </Tooltip>
   );
 }
 

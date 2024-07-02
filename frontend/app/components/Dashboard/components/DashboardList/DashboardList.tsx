@@ -1,25 +1,29 @@
-import {LockOutlined, TeamOutlined} from '@ant-design/icons';
-import {Empty, Switch, Table, TableColumnsType, Tag, Tooltip, Typography} from 'antd';
-import {observer} from 'mobx-react-lite';
+import { LockOutlined, TeamOutlined } from '@ant-design/icons';
+import { Empty, Switch, Table, TableColumnsType, Tag, Tooltip, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import {connect} from 'react-redux';
-import {withRouter} from 'react-router-dom';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 
-import {checkForRecent} from 'App/date';
-import {useStore} from 'App/mstore';
+import { checkForRecent } from 'App/date';
+import { useStore } from 'App/mstore';
 import Dashboard from 'App/mstore/types/dashboard';
-import {dashboardSelected, withSiteId} from 'App/routes';
+import { dashboardSelected, withSiteId } from 'App/routes';
 
-import AnimatedSVG, {ICONS} from 'Shared/AnimatedSVG/AnimatedSVG';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import CreateDashboardButton from "Components/Dashboard/components/CreateDashboardButton";
-import {useHistory} from "react-router";
+import { useHistory } from "react-router";
+import classNames from 'classnames';
 
-function DashboardList({siteId}: { siteId: string }) {
-    const {dashboardStore} = useStore();
+function DashboardList({ siteId }: { siteId: string }) {
+    const { dashboardStore } = useStore();
     const list = dashboardStore.filteredList;
     const dashboardsSearch = dashboardStore.filter.query;
     const history = useHistory();
 
+    // Define custom width and height for each scenario
+    const searchImageDimensions = { width: 200, height: 'auto' };
+    const defaultImageDimensions = { width: 600, height: 'auto' };
 
     const tableConfig: TableColumnsType<Dashboard> = [
         {
@@ -27,14 +31,6 @@ function DashboardList({siteId}: { siteId: string }) {
             dataIndex: 'name',
             width: '25%',
             render: (t) => <div className="link capitalize-first">{t}</div>,
-        },
-        {
-            title: 'Description',
-            ellipsis: {
-                showTitle: false,
-            },
-            width: '25%',
-            dataIndex: 'description',
         },
         {
             title: 'Last Modified',
@@ -45,54 +41,79 @@ function DashboardList({siteId}: { siteId: string }) {
             render: (date) => checkForRecent(date, 'LLL dd, yyyy, hh:mm a'),
         },
         {
-            title: 'Modified By',
-            dataIndex: 'updatedBy',
+            title: 'Owner',
+            dataIndex: 'owner',
             width: '16.67%',
-            sorter: (a, b) => a.updatedBy.localeCompare(b.updatedBy),
+            sorter: (a, b) => a.owner?.localeCompare(b.owner),
             sortDirections: ['ascend', 'descend'],
         },
         {
             title: (
-                <div className={'flex items-center justify-between'}>
+                <div className={'flex items-center justify-start gap-2'}>
                     <div>Visibility</div>
-                    <Switch checked={!dashboardStore.filter.showMine} onChange={() =>
-                        dashboardStore.updateKey('filter', {
-                            ...dashboardStore.filter,
-                            showMine: !dashboardStore.filter.showMine,
-                        })} checkedChildren={'Public'} unCheckedChildren={'Private'}/>
+                    <Tooltip title='Toggle to view your dashboards or all team dashboards.' placement='topRight'>
+                        <Switch checked={!dashboardStore.filter.showMine} onChange={() =>
+                            dashboardStore.updateKey('filter', {
+                                ...dashboardStore.filter,
+                                showMine: !dashboardStore.filter.showMine,
+                            })} checkedChildren={'Team'} unCheckedChildren={'Private'} />
+                    </Tooltip>
                 </div>
             ),
             width: '16.67%',
             dataIndex: 'isPublic',
             render: (isPublic: boolean) => (
-                <Tag icon={isPublic ? <TeamOutlined/> : <LockOutlined/>}>
+                <Tag icon={isPublic ? <TeamOutlined /> : <LockOutlined />}>
                     {isPublic ? 'Team' : 'Private'}
                 </Tag>
             ),
         },
     ];
+
+    const emptyDescription = dashboardsSearch !== '' ? (
+        <div className="text-center">
+            <div>
+                <Typography.Text className="my-2 text-xl font-medium">
+                    No search results found.
+                </Typography.Text>
+                <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
+                    Try adjusting your search criteria or creating a new dashboard.
+                </div>
+            </div>
+        </div>
+    ) : (
+        <div className="text-center">
+            <div>
+                <Typography.Text className="my-2 text-xl font-medium">
+                    Create your first dashboard.
+                </Typography.Text>
+                <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
+                    Organize your product and technical insights as cards in dashboards to see the bigger picture.
+                </div>
+                <div className="my-4">
+                    <CreateDashboardButton />
+                </div>
+            </div>
+        </div>
+    );
+
+    const emptyImage = dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS;
+    const imageDimensions = dashboardsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
+
     return (
         list.length === 0 && !dashboardStore.filter.showMine ? (
+            <div className='flex justify-center text-center'>
             <Empty
-                image={<AnimatedSVG name={dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS} size={600}/>}
-
-                imageStyle={{height: 300}}
-                description={(
-                    <div className="text-center">
-                        <div>
-                            <Typography.Text className="my-2 text-xl font-medium">
-                                Create your first dashboard.
-                            </Typography.Text>
-                            <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
-                                Organize your product and technical insights as cards in dashboards to see the bigger picture, <br/>take action and improve user experience.
-                            </div>
-                            <div className="my-4">
-                                <CreateDashboardButton/>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
+                imageStyle={{
+                    width: imageDimensions.width,
+                    height: imageDimensions.height,
+                    margin: 'auto',
+                    padding: '2rem 0'
+                }}
+                description={emptyDescription}
             />
+            </div>
         ) : (
             <Table
                 dataSource={list}
@@ -112,9 +133,10 @@ function DashboardList({siteId}: { siteId: string }) {
                         history.push(path);
                     },
                 })}
-            />)
+            />
+        )
     );
-    
+
 }
 
 export default connect((state: any) => ({

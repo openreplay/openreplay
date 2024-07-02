@@ -1,11 +1,16 @@
 import React from 'react';
-import { Icon, Button } from 'UI';
+import { Alert, Space, Button } from 'antd';
 import { connect } from 'react-redux';
 import { onboarding as onboardingRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import * as routes from '../../../routes';
+import { indigo } from 'tailwindcss/colors';
+import { SquareArrowOutUpRight } from 'lucide-react';
+
 
 const withSiteId = routes.withSiteId;
+const indigoWithOpacity = `rgba(${parseInt(indigo[500].slice(1, 3), 16)}, ${parseInt(indigo[500].slice(3, 5), 16)}, ${parseInt(indigo[500].slice(5, 7), 16)}, 0.1)`; // 0.5 is the opacity level
+
 
 const NoSessionsMessage = (props) => {
   const {
@@ -19,32 +24,35 @@ const NoSessionsMessage = (props) => {
   return (
     <>
       {showNoSessions && (
-        <div>
-          <div
-            className='rounded text-sm flex items-center p-2 justify-between mb-4'
-            style={{ backgroundColor: 'rgba(255, 239, 239, 1)', border: 'solid thin rgba(221, 181, 181, 1)' }}
-          >
-            <div className='flex items-center w-full'>
-              <div className='flex-shrink-0 w-8 flex justify-center'>
-                <Icon name='info-circle' size='14' color='gray-darkest' />
-              </div>
-              <div className='ml-2 color-gray-darkest mr-auto text-base'>
-                It might take a few minutes for first recording to appear.
-                <a href='https://docs.openreplay.com/en/troubleshooting/session-recordings/' className='link ml-2'>
-                  Troubleshoot
-                </a>
-                .
-              </div>
-              <Button
-                variant='primary'
-                className='h-8 text-base'
-                onClick={() => props.history.push(onboardingPath)}
-              >
-                Complete Project Setup
-              </Button>
-            </div>
+            <div className="w-full mb-5">
+            <Space direction="vertical" className="w-full">
+              <Alert
+                className="border-transparent rounded-lg w-full"
+                message="Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback."
+                type="warning"
+                showIcon
+                action={
+                  <Space>
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={() => window.open('https://docs.openreplay.com/en/troubleshooting/session-recordings/', '_blank')}
+                      icon={<SquareArrowOutUpRight size={16} />}
+                    >
+                      Troubleshoot
+                    </Button>
+                    <Button
+                      type="default"
+                      size="small"
+                      onClick={() => history.push(onboardingPath)}
+                    >
+                      Complete Project Setup
+                    </Button>
+                  </Space>
+                }
+              />
+            </Space>
           </div>
-        </div>
       )}
     </>
   );

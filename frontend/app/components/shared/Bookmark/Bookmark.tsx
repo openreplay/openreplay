@@ -1,4 +1,4 @@
-import { Button, Popover } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { BookmarkCheck, Bookmark as BookmarkIcn, Vault } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
@@ -13,6 +13,7 @@ interface Props {
   isEnterprise: boolean;
   noMargin?: boolean;
 }
+
 function Bookmark(props: Props) {
   const { sessionId, favorite, isEnterprise, noMargin } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
@@ -48,7 +49,7 @@ function Bookmark(props: Props) {
 
   return (
     <div onClick={toggleFavorite} className="w-full">
-      <Popover content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
+      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD} placement='bottom'>
         <Button
           type={isFavorite ? 'primary' : undefined}
           ghost={isFavorite}
@@ -57,7 +58,7 @@ function Bookmark(props: Props) {
         >
           {icon}
         </Button>
-      </Popover>
+      </Tooltip>
     </div>
   );
 }

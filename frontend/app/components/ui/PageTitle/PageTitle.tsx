@@ -14,7 +14,7 @@ function PageTitle({ title, actionButton = null, subTitle = '', className = '', 
     return (
         <div>
             <div className='flex items-center'>
-                <h1 className={cn("text-2xl capitalize-first", className)} onDoubleClick={onDoubleClick} onClick={onClick}>
+                <h1 className={cn("text-2xl capitalize-first mt-.5 cursor-pointer")} onDoubleClick={onDoubleClick} onClick={onClick}>
                     {title}
                 </h1>
                 { actionButton && <div className="ml-2">{actionButton}</div> }

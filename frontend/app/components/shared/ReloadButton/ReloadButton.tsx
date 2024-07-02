@@ -1,5 +1,6 @@
 import React from 'react';
-import { CircularLoader, Icon, Tooltip, Button } from 'UI';
+import {Button, Tooltip} from 'antd';
+import { ListRestart } from 'lucide-react';
 import cn from 'classnames';
 
 interface Props {
@@ -12,8 +13,9 @@ interface Props {
 export default function ReloadButton(props: Props) {
   const { loading, onClick, iconSize = '20', iconName = 'arrow-repeat', className = '' } = props;
   return (
-    <Tooltip title="Refresh">
-      <Button icon={iconName} variant="text" onClick={onClick}>
+    <Tooltip title="Refresh" placement='right'>
+      <Button  type="default" onClick={onClick}>
+       <ListRestart size={18} />
       </Button>
     </Tooltip>
   );

@@ -47,7 +47,7 @@ function FilterSelection(props: Props) {
           })
         ) : (
           <div
-            className={cn('rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade', { 'opacity-50 pointer-events-none': disabled })}
+            className={cn('rounded-lg py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade', { 'opacity-50 pointer-events-none': disabled })}
             style={{ width: '150px', height: '26px', border: 'solid thin #e9e9e9' }}
             onClick={() => setShowModal(true)}
           >

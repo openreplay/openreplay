@@ -46,7 +46,7 @@ function AreaChartCard(props: Props) {
                     {/*<div className="flex items-center justify-end mb-3">*/}
                     {/*    <AvgLabel text="Avg" className="ml-3" count={data?.value}/>*/}
                     {/*</div>*/}
-                    <ResponsiveContainer height={207} width="100%">
+                    <ResponsiveContainer width="100%">
                         <AreaChart
                             data={data?.chart}
                             margin={Styles.chartMargins}

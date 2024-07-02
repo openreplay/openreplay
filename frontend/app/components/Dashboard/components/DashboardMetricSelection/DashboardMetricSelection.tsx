@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
-import { Icon } from 'UI';
+import { Icon, Loader } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
-import { Loader } from 'UI';
 
 interface IWiProps {
     category: Record<string, any>

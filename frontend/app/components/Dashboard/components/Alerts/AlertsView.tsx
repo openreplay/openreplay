@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Button, PageTitle, Icon, Link } from 'UI';
+import { PageTitle, Icon, Link } from 'UI';
+import { Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import withPageTitle from 'HOCs/withPageTitle';
 import { withSiteId, alertCreate } from 'App/routes';
 
@@ -32,7 +34,14 @@ function AlertsView({ siteId }: IAlertsView) {
                     <PageTitle title="Alerts" />
                 </div>
                 <div className="ml-auto flex items-center">
-                    <Link to={withSiteId(alertCreate(), siteId)}><Button variant="primary">New Alert</Button></Link>
+                    <Link to={withSiteId(alertCreate(), siteId)}>
+                    <Button 
+                        type="primary" 
+                        icon={<PlusOutlined />}>
+                            Create Alert
+                    </Button>
+
+                    </Link>
                     <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
                         <AlertsSearch />
                     </div>

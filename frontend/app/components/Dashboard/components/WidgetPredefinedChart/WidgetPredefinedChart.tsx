@@ -60,7 +60,7 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION:
                 return <ResponseTimeDistribution data={data} metric={metric} />
             case FilterKey.SPEED_LOCATION:
-                return <SpeedIndexByLocation metric={metric} />
+                return <SpeedIndexByLocation data={data} />
             case FilterKey.CPU:
                 return <CPULoad data={data} metric={metric} />
             case FilterKey.CRASHES:
@@ -76,9 +76,9 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.RESOURCES_VS_VISUALLY_COMPLETE:
                 return <ResourceLoadedVsVisuallyComplete data={data} metric={metric} />
             case FilterKey.SESSIONS_PER_BROWSER:
-                return <SessionsPerBrowser data={data} metric={metric} />
+                return <SessionsPerBrowser data={data} />
             case FilterKey.SLOWEST_DOMAINS:
-                return <SlowestDomains data={data} metric={metric} />
+                return <SlowestDomains data={data} />
             case FilterKey.TIME_TO_RENDER:
                 return <TimeToRender data={data} metric={metric} />
 

@@ -85,7 +85,7 @@ function FilterSeries(props: Props) {
         },
         canDelete,
         hideHeader = false,
-        emptyMessage = 'Add user event or filter to define the series by clicking Add Step.',
+        emptyMessage = 'Add an event or filter step to define the series.',
         supportsEmpty = true,
         excludeFilterKeys = [],
         canExclude = false,

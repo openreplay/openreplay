@@ -86,7 +86,7 @@ function MetricsList({
         )}
 
         <div className='w-full flex items-center justify-between py-4 px-6 border-t'>
-          <div className='text-disabled-text'>
+          <div className=''>
             Showing{' '}
             <span className='font-semibold'>{Math.min(cards.length, metricStore.pageSize)}</span> out
             of <span className='font-semibold'>{cards.length}</span> cards

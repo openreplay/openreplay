@@ -2,27 +2,32 @@ import React from 'react';
 import { List, Progress, Typography } from 'antd';
 import cn from 'classnames';
 
-interface Props {
-  list: any;
-  selected?: any;
-  onClickHandler?: (event: any, data: any) => void;
+interface ListItem {
+  icon?: any;
+  title: string;
+  progress: number;
+  value?: number;
 }
 
-function CardSessionsByList({ list, selected, onClickHandler = () => null }: Props) {
+interface Props {
+  list: ListItem[];
+}
+
+function ListWithIcons({ list = [] }: Props) {
   return (
     <List
       dataSource={list}
       split={false}
       renderItem={(row: any) => (
         <List.Item
-          key={row.name}
-          onClick={(e) => onClickHandler(e, row)} // Remove onClick handler to disable click interaction
+          key={row.domain}
+          // onClick={(e) => onClickHandler(e, row)} // Remove onClick handler to disable click interaction
           style={{
             borderBottom: '1px dotted rgba(0, 0, 0, 0.05)',
             padding: '4px 10px',
             lineHeight: '1px'
           }}
-          className={cn('rounded', selected === row.name ? 'bg-active-blue' : '')} // Remove hover:bg-active-blue and cursor-pointer
+          className={cn('rounded')} // Remove hover:bg-active-blue and cursor-pointer
         >
           <List.Item.Meta
             className="m-0"
@@ -30,8 +35,8 @@ function CardSessionsByList({ list, selected, onClickHandler = () => null }: Pro
             title={(
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">
-                  <Typography.Text>{row.displayName}</Typography.Text>
-                  <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
+                  <Typography.Text>{row.name}</Typography.Text>
+                  <Typography.Text type="secondary"> {row.value}</Typography.Text>
                 </div>
 
                 <Progress
@@ -57,4 +62,4 @@ function CardSessionsByList({ list, selected, onClickHandler = () => null }: Pro
   );
 }
 
-export default CardSessionsByList;
+export default ListWithIcons;

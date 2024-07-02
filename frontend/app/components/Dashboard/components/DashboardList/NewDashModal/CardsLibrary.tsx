@@ -52,7 +52,7 @@ function CardsLibrary(props: Props) {
                         <div className={'col-span-' + metric.config.col}
                              onClick={() => onItemClick(metric.metricId)}>
                             <LazyLoad>
-                                <Card hoverable
+                                <Card className='border border-transparent hover:border-indigo-50 hover:shadow-sm  rounded-lg'
                                       style={{
                                           border: selectedList.includes(metric.metricId) ? '1px solid #1890ff' : '1px solid #f0f0f0',
                                       }}
@@ -73,7 +73,7 @@ function CardsLibrary(props: Props) {
                                         // isPreview={true}
                                         metric={metric}
                                         isTemplate={true}
-                                        isSaved={true}
+                                        isWidget={true}
                                     />
                                 </Card>
                             </LazyLoad>

@@ -1,8 +1,13 @@
 import { withCopy } from 'HOCs';
 import React from 'react';
+import { Tag } from "antd";
 
 function ProjectKey({ value }: any) {
-  return <div className="rounded border bg-gray-lightest w-fit px-2">{value}</div>;
+  return <div className="w-fit">
+    <Tag bordered={false} className='text-base font-mono'>
+    {value}
+    </Tag>
+    </div>;
 }
 
 export default withCopy(ProjectKey);

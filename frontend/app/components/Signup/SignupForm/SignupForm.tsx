@@ -97,7 +97,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
       <div className='m-10 '>
         <img src='/assets/logo.svg' width={200} alt='Logo' />
       </div>
-      <Form onSubmit={onSubmit} className='bg-white border rounded' style={{ maxWidth: '420px' }}>
+      <Form onSubmit={onSubmit} className='bg-white border rounded-lg shadow-sm' style={{ maxWidth: '420px' }}>
         <div className='mb-8'>
           <h2 className='text-center text-2xl font-medium mb-6 border-b p-5 w-full'>
             Create Account
@@ -138,6 +138,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
                 onChange={write}
                 required={true}
                 icon='envelope'
+                className='rounded-lg'
               />
             </Form.Field>
             <Form.Field>
@@ -150,6 +151,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
                 onChange={write}
                 required={true}
                 icon='key'
+                className='rounded-lg'
               />
             </Form.Field>
             <Form.Field>
@@ -161,6 +163,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
                 onChange={write}
                 required={true}
                 icon='user-alt'
+                className='rounded-lg'
               />
             </Form.Field>
             <Form.Field>
@@ -172,13 +175,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
                 onChange={write}
                 required={true}
                 icon='buildings'
+                className='rounded-lg'
               />
             </Form.Field>
 
             {passwordError && (
               // <Alert type='error' message={PASSWORD_POLICY} banner icon={null} />
               <Alert
-                className='my-3'
+                className='my-3 rounded-lg'
                 // message="Error Text"
                 description={PASSWORD_POLICY}
                 type='error'
@@ -186,14 +190,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
             )}
             {errors && errors.length && (
               <Alert
-                className='my-3'
+                className='my-3 rounded-lg'
                 // message="Error Text"
                 description={errors[0]}
                 type='error'
               />
             )}
 
-            <Button type='submit' variant='primary' loading={loading} className='w-full'>
+            <Button type='submit' variant='primary' loading={loading} className='w-full rounded-lg'>
               Create Account
             </Button>
             <div className='my-6'>

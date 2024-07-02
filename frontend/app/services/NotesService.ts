@@ -4,8 +4,8 @@ import APIClient from 'App/api_client';
 export const tagProps = {
   'ISSUE': 'red',
   'QUERY': 'geekblue',
-  'TASK': 'cyan',
-  'OTHER': 'rgba(0, 0, 0, 0.6)',
+  'TASK': 'purple',
+  'OTHER': '',
 }
 
 export type iTag = keyof typeof tagProps | "ALL"

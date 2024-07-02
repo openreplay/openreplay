@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
+import {Input, Tooltip} from 'antd';
 
 interface Props {
   name: string;
@@ -35,21 +36,26 @@ function SeriesName(props: Props) {
   return (
     <div className="flex items-center">
       { editing ? (
-        <input
+        <Input
           ref={ ref }
           name="name"
-          className="fluid border-0 -mx-2 px-2 h-8"
           value={name}
           // readOnly={!editing} 
           onChange={write}
           onBlur={onBlur}
           onFocus={() => setEditing(true)}
+          className='bg-white'
         />
       ) : (
         <div className="text-base h-8 flex items-center border-transparent">{name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name }</div>
       )}
       
-      <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div>
+
+      <div className="ml-3 cursor-pointer " onClick={() => setEditing(true)}>
+        <Tooltip title='Rename' placement='bottom'>
+          <Icon name="pencil" size="14" />
+        </Tooltip>
+      </div>
     </div>
   );
 }

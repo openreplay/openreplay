@@ -175,7 +175,7 @@ function ShareModalComp({
             <div>
               <div className={'flex flex-col gap-4'}>
                 <div>
-                  <div className={'font-semibold flex items-center'}>
+                  <div className={'font-medium flex items-center'}>
                     Share via
                   </div>
                   {hasBoth ? (
@@ -214,7 +214,7 @@ function ShareModalComp({
                 </div>
 
                 <div>
-                  <div className={'font-semibold'}>Select a channel or individual</div>
+                  <div className={'font-medium'}>Select a channel or individual</div>
                   {shareTo === 'slack' ? (
                     <Select
                       options={slackOptions}
@@ -233,7 +233,7 @@ function ShareModalComp({
                 </div>
 
                 <div>
-                  <div className={'font-semibold'}>Message</div>
+                  <div className={'font-medium'}>Message</div>
                   <textarea
                     name="message"
                     id="message"

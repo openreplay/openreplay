@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, Icon } from 'UI';
+import { Button } from 'antd';
+import { LinkOutlined } from '@ant-design/icons';
+
 import copy from 'copy-to-clipboard';
 
 function SessionCopyLink({ time }: { time: number }) {
@@ -20,11 +22,8 @@ function SessionCopyLink({ time }: { time: number }) {
 
   return (
     <div className="flex justify-between items-center w-full mt-2">
-      <Button variant="text-primary" onClick={copyHandler}>
-        <>
-          <Icon name="link-45deg" className="mr-2" color="teal" size="18" />
-          <span>Copy URL at current time</span>
-        </>
+      <Button type="text" onClick={copyHandler} icon={<LinkOutlined />}>
+        Copy URL at Current Time
       </Button>
       {copied && <div className="color-gray-medium">Copied</div>}
     </div>
