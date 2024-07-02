@@ -34,9 +34,9 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
 
 def get_dashboards(project_id, user_id):
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT *, owner_email
+        pg_query = f"""SELECT *, owner_email, owner_name
                         FROM dashboards
-                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                         LEFT JOIN LATERAL (SELECT email AS owner_email, name AS owner_name
                                             FROM users
                                             WHERE deleted_at ISNULL
                                               AND users.user_id = dashboards.user_id

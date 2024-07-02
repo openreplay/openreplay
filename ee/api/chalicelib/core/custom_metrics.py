@@ -231,7 +231,7 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
     # No need for this because UI is sending the full payload
     # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     # if card is None:
-    #     return None
+    #    return None
     # metric: schemas.CardSchema = schemas.CardSchema(**card)
     # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
@@ -521,7 +521,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
                         metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
-                        dashboards, owner_email, default_config AS config, thumbnail
+                        dashboards, owner_email, owner_name, default_config AS config, thumbnail
                 FROM metrics
                          {sub_join}
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
@@ -532,7 +532,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                                                     AND project_id = %(project_id)s
                                                     AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                             ) AS connected_dashboards ON (TRUE)
-                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                         LEFT JOIN LATERAL (SELECT email AS owner_email, name AS owner_name
                                             FROM users
                                             WHERE deleted_at ISNULL
                                               AND users.user_id = metrics.user_id
