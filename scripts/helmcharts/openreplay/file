@@ -1,0 +1,12 @@
+charts/alerts/values.yaml
+charts/assets/values.yaml
+charts/db/values.yaml
+charts/ender/values.yaml
+charts/heuristics/values.yaml
+charts/integrations/values.yaml
+charts/sink/values.yaml
+charts/storage/values.yaml
+charts/imagestorage/values.yaml
+charts/canvas-handler/values.yaml
+charts/canvas-maker/values.yaml
+charts/videostorage/values.yaml

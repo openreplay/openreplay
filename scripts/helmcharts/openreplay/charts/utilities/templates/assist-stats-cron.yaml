@@ -24,6 +24,18 @@ spec:
           {{- end }}
         spec:
           restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
           - name: assiststats-cron
             image: "{{ tpl .Values.assiststats.image.repository . }}:{{ .Values.assiststats.image.tag | default .Chart.AppVersion }}-ee"

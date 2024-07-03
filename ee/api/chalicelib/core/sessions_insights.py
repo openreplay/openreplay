@@ -1,9 +1,11 @@
 from typing import Optional
-
+import logging
 import schemas
 from chalicelib.core import metrics
 from chalicelib.core import sessions_exp
 from chalicelib.utils import ch_client
+
+logger = logging.getLogger(__name__)
 
 
 def _table_slice(table, index):
@@ -22,14 +24,12 @@ def _table_where(table, index, value):
 
 
 def _sum_table_index(table, index):
-    # print(f'index {index}')
     s = 0
     count = 0
     for row in table:
         v = row[index]
         if v is None:
             continue
-        # print(v)
         s += v
         count += 1
     return s
@@ -46,8 +46,6 @@ def _sort_table_index(table, index, reverse=False):
 
 
 def _select_rec(l, selector):
-    # print('selector:', selector)
-    # print('list:', l)
     if len(selector) == 1:
         return l[selector[0]]
     else:
@@ -109,9 +107,9 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
                 ORDER BY T1.hh DESC;"""
     with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
-        # print("--------")
-        # print(query)
-        # print("--------")
+        logging.debug("--------")
+        logging.debug(query)
+        logging.debug("--------")
         res = conn.execute(query=query)
         if res is None or sum([r.get("sessions") for r in res]) == 0:
             return []
@@ -119,7 +117,6 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
     table_hh1, table_hh2, columns, this_period_hosts, last_period_hosts = __get_two_values(res, time_index='hh',
                                                                                            name_index='source')
     test = [k[4] for k in table_hh1]
-    # print(f'length {len(test)}, uniques {len(set(test))}')
     del res
 
     new_hosts = [x for x in this_period_hosts if x not in last_period_hosts]
@@ -218,9 +215,9 @@ def query_most_errors_by_period(project_id, start_time, end_time,
 
     with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
-        # print("--------")
-        # print(query)
-        # print("--------")
+        logging.debug("--------")
+        logging.debug(query)
+        logging.debug("--------")
         res = conn.execute(query=query)
         if res is None or sum([r.get("sessions") for r in res]) == 0:
             return []
@@ -228,17 +225,11 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     table_hh1, table_hh2, columns, this_period_errors, last_period_errors = __get_two_values(res, time_index='hh',
                                                                                              name_index='names')
     del res
-    # print(table_hh1)
-    # print('\n')
-    # print(table_hh2)
-    # print('\n')
     new_errors = [x for x in this_period_errors if x not in last_period_errors]
     common_errors = [x for x in this_period_errors if x not in new_errors]
 
     sessions_idx = columns.index('sessions')
     names_idx = columns.index('names')
-
-    print(_table_where(table_hh1, names_idx, this_period_errors[0]))
 
     percentage_errors = dict()
     total = _sum_table_index(table_hh1, sessions_idx)
@@ -308,9 +299,9 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
                 ORDER BY T1.hh DESC;"""
     with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
-        # print("--------")
-        # print(query)
-        # print("--------")
+        logging.debug("--------")
+        logging.debug(query)
+        logging.debug("--------")
         res = conn.execute(query=query)
         if res is None or sum([r.get("sessions") for r in res]) == 0:
             return []
@@ -318,8 +309,8 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
     table_hh1, table_hh2, columns, this_period_resources, last_period_resources = __get_two_values(res, time_index='hh',
                                                                                                    name_index='names')
 
-    print(f'TB1\n{table_hh1}')
-    print(f'TB2\n{table_hh2}')
+    logging.debug(f'TB1\n{table_hh1}')
+    logging.debug(f'TB2\n{table_hh2}')
     del res
 
     memory_idx = columns.index('memory_used')
@@ -387,9 +378,9 @@ def query_click_rage_by_period(project_id, start_time, end_time,
                 ORDER BY T1.hh DESC;"""
     with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
-        # print("--------")
-        # print(query)
-        # print("--------")
+        logging.debug("--------")
+        logging.debug(query)
+        logging.debug("--------")
         res = conn.execute(query=query)
         if res is None or sum([r.get("sessions") for r in res]) == 0:
             return []

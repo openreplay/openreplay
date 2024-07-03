@@ -7,7 +7,17 @@ import ByBrowser from './Examples/SessionsBy/ByBrowser';
 import BySystem from './Examples/SessionsBy/BySystem';
 import ByCountry from './Examples/SessionsBy/ByCountry';
 import ByUrl from './Examples/SessionsBy/ByUrl';
-import { ERRORS, FUNNEL, INSIGHTS, PERFORMANCE, TABLE, TIMESERIES, USER_PATH, WEB_VITALS } from 'App/constants/card';
+import {
+  CLICKMAP,
+  ERRORS,
+  FUNNEL,
+  INSIGHTS,
+  PERFORMANCE,
+  TABLE,
+  TIMESERIES,
+  USER_PATH,
+  WEB_VITALS
+} from 'App/constants/card';
 import { FilterKey } from 'Types/filter/filterType';
 import { Activity, BarChart, TableCellsMerge, TrendingUp } from 'lucide-react';
 import WebVital from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/WebVital';
@@ -25,6 +35,7 @@ import SlowestDomains
   from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/SlowestDomains';
 import SpeedIndexByLocationExample
   from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
+import HeatmapsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/HeatmapsExample';
 
 export const CARD_CATEGORY = {
   PRODUCT_ANALYTICS: 'product-analytics',
@@ -91,6 +102,14 @@ export const CARD_LIST: CardType[] = [
     }
   },
   {
+    title: 'Heatmaps',
+    key: CLICKMAP,
+    cardType: CLICKMAP,
+    metricOf: 'sessionCount',
+    category: CARD_CATEGORIES[0].key,
+    example: HeatmapsExample
+  },
+  {
     title: 'Path Finder',
     key: USER_PATH,
     cardType: USER_PATH,
@@ -121,6 +140,7 @@ export const CARD_LIST: CardType[] = [
     category: CARD_CATEGORIES[0].key,
     example: ByIssues
   },
+
 
   {
     title: 'Insights',

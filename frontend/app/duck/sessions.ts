@@ -34,6 +34,7 @@ const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
 const TOGGLE_FAVORITE = new RequestTypes('sessions/TOGGLE_FAVORITE');
 const FETCH_ERROR_STACK = new RequestTypes('sessions/FETCH_ERROR_STACK');
 const FETCH_INSIGHTS = new RequestTypes('sessions/FETCH_INSIGHTS');
+const FETCH_SESSION_CLICKMAP = new RequestTypes('sessions/FETCH_SESSION_CLICKMAP');
 const SORT = 'sessions/SORT';
 const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
@@ -215,6 +216,7 @@ const reducer = (state = initialState, action: IAction) => {
           }
         });
       });
+
       return state
         .set('current', session)
         .set('eventsIndex', matching)
@@ -373,6 +375,7 @@ const reducer = (state = initialState, action: IAction) => {
       return state.set('timezone', action.timezone);
     case TOGGLE_CHAT_WINDOW:
       return state.set('showChatWindow', action.state);
+    case FETCH_SESSION_CLICKMAP.SUCCESS:
     case FETCH_INSIGHTS.SUCCESS:
       return state.set(
         'insights',
@@ -584,6 +587,14 @@ export function fetchInsights(params) {
     types: FETCH_INSIGHTS.toArray(),
     call: (client) => client.post('/heatmaps/url', params),
   };
+}
+
+export function fetchSessionClickmap(sessionId, params) {
+  return {
+    types: FETCH_SESSION_CLICKMAP.toArray(),
+    call: (client) => client.post(`/sessions/${sessionId}/clickmaps`, params),
+  };
+
 }
 
 export function fetchLiveList(params = {}) {

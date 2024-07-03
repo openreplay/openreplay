@@ -29,7 +29,7 @@ import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import Selection from './modules/selection.js'
 import Tabs from './modules/tabs.js'
 
-import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
+import { IN_BROWSER, deprecationWarn, DOCS_HOST, inIframe } from './utils.js'
 import FeatureFlags, { IFeatureFlag } from './modules/featureFlags.js'
 import type { Options as AppOptions } from './app/index.js'
 import type { Options as ConsoleOptions } from './modules/console.js'
@@ -99,8 +99,10 @@ export default class API {
   public featureFlags: FeatureFlags
 
   private readonly app: App | null = null
+  private readonly crossdomainMode: boolean = false
 
   constructor(private readonly options: Options) {
+    this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
@@ -158,25 +160,38 @@ export default class API {
       return
     }
 
-    const app = new App(options.projectKey, options.sessionToken, options, this.signalStartIssue)
+    const app = new App(
+      options.projectKey,
+      options.sessionToken,
+      options,
+      this.signalStartIssue,
+      this.crossdomainMode,
+    )
     this.app = app
-    Viewport(app)
+    if (!this.crossdomainMode) {
+      // no need to send iframe viewport data since its a node for us
+      Viewport(app)
+      // calculated in main window
+      Connection(app)
+      // while we can calculate it here, trying to compute it for all parts is hard
+      Performance(app, options)
+      // no tabs in iframes yet
+      Tabs(app)
+    }
+    Mouse(app, options.mouse)
+    // inside iframe, we ignore viewport scroll
+    Scroll(app, this.crossdomainMode)
     CSSRules(app)
     ConstructedStyleSheets(app)
-    Connection(app)
     Console(app, options)
     Exception(app, options)
     Img(app)
     Input(app, options)
-    Mouse(app, options.mouse)
     Timing(app, options)
-    Performance(app, options)
-    Scroll(app)
     Focus(app)
     Fonts(app)
     Network(app, options.network)
     Selection(app)
-    Tabs(app)
     ;(window as any).__OPENREPLAY__ = this
 
     if (options.flags && options.flags.onFlagsLoad) {

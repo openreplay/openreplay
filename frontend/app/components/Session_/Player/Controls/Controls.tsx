@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
@@ -74,7 +75,7 @@ function getStorageName(type: any) {
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
   const { uxtestingStore } = useStore();
-
+  const history = useHistory();
   const {
     playing,
     completed,
@@ -105,11 +106,11 @@ function Controls(props: any) {
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
-    props.history.push(withSiteId(sessionRoute(nextSessionId), siteId));
+    history.push(withSiteId(sessionRoute(nextSessionId), siteId));
   };
 
   const prevHandler = () => {
-    props.history.push(withSiteId(sessionRoute(previousSessionId), siteId));
+    history.push(withSiteId(sessionRoute(previousSessionId), siteId));
   };
 
   useShortcuts({
@@ -144,6 +145,7 @@ function Controls(props: any) {
     ? PlayingState.Playing
     : PlayingState.Paused;
 
+  const events = session.stackEvents ?? [];
   return (
     <div className={styles.controls}>
       <Timeline />
@@ -181,7 +183,7 @@ function Controls(props: any) {
                 toggleBottomTools={toggleBottomTools}
                 bottomBlock={bottomBlock}
                 disabled={disabled}
-                audioUrl={session.audio}
+                events={events}
               />
             )}
 
@@ -204,7 +206,7 @@ interface IDevtoolsButtons {
   toggleBottomTools: (blockName: number) => void;
   bottomBlock: number;
   disabled: boolean;
-  audioUrl?: string;
+  events: any[];
 }
 
 const DevtoolsButtons = observer(
@@ -213,7 +215,7 @@ const DevtoolsButtons = observer(
     toggleBottomTools,
     bottomBlock,
     disabled,
-    audioUrl,
+    events,
   }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
@@ -250,6 +252,8 @@ const DevtoolsButtons = observer(
       }
       aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
     };
+
+    const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
@@ -350,7 +354,9 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
-        {audioUrl ? <DropdownAudioPlayer url={audioUrl} /> : null}
+        {possibleAudio.length ? (
+          <DropdownAudioPlayer audioEvents={possibleAudio} />
+        ) : null}
       </>
     );
   }

@@ -5,7 +5,7 @@ import type { Timed } from './timed'
 import type { RawMessage } from './raw.gen'
 import type {
   RawTimestamp,
-  RawSetPageLocation,
+  RawSetPageLocationDeprecated,
   RawSetViewportSize,
   RawSetViewportScroll,
   RawCreateDocument,
@@ -32,7 +32,7 @@ import type {
   RawVuex,
   RawMobX,
   RawNgRx,
-  RawGraphQl,
+  RawGraphQlDeprecated,
   RawPerformanceTrack,
   RawStringDict,
   RawSetNodeAttributeDict,
@@ -46,6 +46,7 @@ import type {
   RawSetCssDataURLBased,
   RawCssInsertRuleURLBased,
   RawMouseClick,
+  RawMouseClickDeprecated,
   RawCreateIFrameDocument,
   RawAdoptedSsReplaceURLBased,
   RawAdoptedSsReplace,
@@ -65,16 +66,18 @@ import type {
   RawCanvasNode,
   RawTagTrigger,
   RawRedux,
-  RawIosEvent,
-  RawIosScreenChanges,
-  RawIosClickEvent,
-  RawIosInputEvent,
-  RawIosPerformanceEvent,
-  RawIosLog,
-  RawIosInternalError,
-  RawIosNetworkCall,
-  RawIosSwipeEvent,
-  RawIosIssueEvent,
+  RawSetPageLocation,
+  RawGraphQl,
+  RawMobileEvent,
+  RawMobileScreenChanges,
+  RawMobileClickEvent,
+  RawMobileInputEvent,
+  RawMobilePerformanceEvent,
+  RawMobileLog,
+  RawMobileInternalError,
+  RawMobileNetworkCall,
+  RawMobileSwipeEvent,
+  RawMobileIssueEvent,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -82,7 +85,7 @@ export type Message = RawMessage & Timed
 
 export type Timestamp = RawTimestamp & Timed
 
-export type SetPageLocation = RawSetPageLocation & Timed
+export type SetPageLocationDeprecated = RawSetPageLocationDeprecated & Timed
 
 export type SetViewportSize = RawSetViewportSize & Timed
 
@@ -136,7 +139,7 @@ export type MobX = RawMobX & Timed
 
 export type NgRx = RawNgRx & Timed
 
-export type GraphQl = RawGraphQl & Timed
+export type GraphQlDeprecated = RawGraphQlDeprecated & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
 
@@ -163,6 +166,8 @@ export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 
 export type MouseClick = RawMouseClick & Timed
+
+export type MouseClickDeprecated = RawMouseClickDeprecated & Timed
 
 export type CreateIFrameDocument = RawCreateIFrameDocument & Timed
 
@@ -202,23 +207,27 @@ export type TagTrigger = RawTagTrigger & Timed
 
 export type Redux = RawRedux & Timed
 
-export type IosEvent = RawIosEvent & Timed
+export type SetPageLocation = RawSetPageLocation & Timed
 
-export type IosScreenChanges = RawIosScreenChanges & Timed
+export type GraphQl = RawGraphQl & Timed
 
-export type IosClickEvent = RawIosClickEvent & Timed
+export type MobileEvent = RawMobileEvent & Timed
 
-export type IosInputEvent = RawIosInputEvent & Timed
+export type MobileScreenChanges = RawMobileScreenChanges & Timed
 
-export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
+export type MobileClickEvent = RawMobileClickEvent & Timed
 
-export type IosLog = RawIosLog & Timed
+export type MobileInputEvent = RawMobileInputEvent & Timed
 
-export type IosInternalError = RawIosInternalError & Timed
+export type MobilePerformanceEvent = RawMobilePerformanceEvent & Timed
 
-export type IosNetworkCall = RawIosNetworkCall & Timed
+export type MobileLog = RawMobileLog & Timed
 
-export type IosSwipeEvent = RawIosSwipeEvent & Timed
+export type MobileInternalError = RawMobileInternalError & Timed
 
-export type IosIssueEvent = RawIosIssueEvent & Timed
+export type MobileNetworkCall = RawMobileNetworkCall & Timed
+
+export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
+
+export type MobileIssueEvent = RawMobileIssueEvent & Timed
 

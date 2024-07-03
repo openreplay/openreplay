@@ -70,7 +70,7 @@ function ConsoleRow(props: Props) {
             </div>
           ))}
       </div>
-      <JumpButton onClick={() => jump(log.time)} />
+      <JumpButton time={log.time} onClick={() => jump(log.time)} />
     </div>
   );
 }

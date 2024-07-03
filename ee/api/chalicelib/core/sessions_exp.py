@@ -269,15 +269,30 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(processed_sessions.session_id) AS count
-                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id AS session_id,
-                                        s.datetime AS datetime
-                                    {query_part}) AS processed_sessions
-                            GROUP BY timestamp
-                            ORDER BY timestamp;"""
+                if metric_of == schemas.MetricOfTimeseries.session_count:
+                    query = f"""SELECT toUnixTimestamp(
+                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                        ) * 1000 AS timestamp,
+                                    COUNT(processed_sessions.session_id) AS count
+                                FROM (SELECT s.session_id AS session_id,
+                                            s.datetime AS datetime
+                                        {query_part}) AS processed_sessions
+                                GROUP BY timestamp
+                                ORDER BY timestamp;"""
+                elif metric_of == schemas.MetricOfTimeseries.user_count:
+                    query = f"""SELECT toUnixTimestamp(
+                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                        ) * 1000 AS timestamp,
+                                    COUNT(DISTINCT processed_sessions.user_id) AS count
+                                FROM (SELECT s.user_id AS user_id,
+                                            s.datetime AS datetime
+                                        {query_part}
+                                      WHERE isNotNull(s.user_id)
+                                        AND s.user_id != '') AS processed_sessions
+                                GROUP BY timestamp
+                                ORDER BY timestamp;"""
+                else:
+                    raise Exception(f"Unsupported metricOf:{metric_of}")
                 main_query = cur.format(query, full_args)
             else:
                 main_query = cur.format(f"""SELECT count(DISTINCT s.session_id) AS count
@@ -351,7 +366,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                  metric_of: schemas.MetricOfTable, metric_value: List):
+                  metric_of: schemas.MetricOfTable, metric_value: List,
+                  metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density))
     extra_event = None
@@ -392,13 +408,14 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     full_args["step_size"] = step_size
     sessions = []
     with ch_client.ClickHouseClient() as cur:
-        full_args["limit_s"] = 0
-        full_args["limit_e"] = 200
         if isinstance(metric_of, schemas.MetricOfTable):
+            full_args["limit"] = data.limit
+            full_args["limit_s"] = (data.page - 1) * data.limit
+            full_args["limit_e"] = data.page * data.limit
+
             main_col = "user_id"
             extra_col = "s.user_id"
             extra_where = ""
-            pre_query = ""
             if metric_of == schemas.MetricOfTable.user_country:
                 main_col = "user_country"
                 extra_col = "s.user_country"
@@ -421,19 +438,33 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             elif metric_of == schemas.MetricOfTable.visited_url:
                 main_col = "url_path"
                 extra_col = "s.url_path"
-            main_query = cur.format(f"""{pre_query}
-                                        SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
-                                             {main_col} AS name,
-                                             count(DISTINCT session_id) AS session_count
-                                        FROM (SELECT s.session_id AS session_id, 
-                                                    {extra_col}
-                                        {query_part}
-                                        ORDER BY s.session_id desc) AS filtred_sessions
-                                        {extra_where}
-                                        GROUP BY {main_col}
-                                        ORDER BY session_count DESC
-                                        LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
-                                    full_args)
+
+            if metric_format == schemas.MetricExtendedFormatType.session_count:
+                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                     {main_col} AS name,
+                                     count(DISTINCT session_id) AS session_count
+                                FROM (SELECT s.session_id AS session_id, 
+                                            {extra_col}
+                                {query_part}) AS filtred_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY session_count DESC
+                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+            else:
+                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                     {main_col} AS name,
+                                     count(DISTINCT user_id) AS user_count
+                                FROM (SELECT s.user_id AS user_id, 
+                                            {extra_col}
+                                {query_part}
+                                WHERE isNotNull(user_id)
+                                    AND user_id != '') AS filtred_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY user_count DESC
+                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+
+            main_query = cur.format(main_query, full_args)
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
@@ -587,7 +618,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             f_k = f"f_value{i}"
             full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
             op = __get_sql_operator(f.operator) \
-                if filter_type not in [schemas.FilterType.events_count] else f.operator
+                if filter_type not in [schemas.FilterType.events_count] else f.operator.value
             is_any = _isAny_opreator(f.operator)
             is_undefined = _isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:

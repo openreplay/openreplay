@@ -5,6 +5,7 @@ export const enum LogLevel {
   WARN = 'warn',
   ERROR = 'error',
   EXCEPTION = 'exception',
+  DEBUG = 'debug',
 } 
 
 export interface ILog {

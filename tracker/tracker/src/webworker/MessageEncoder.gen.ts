@@ -14,7 +14,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1])
     break
 
-    case Messages.Type.SetPageLocation:
+    case Messages.Type.SetPageLocationDeprecated:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
@@ -150,8 +150,8 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break
 
-    case Messages.Type.GraphQL:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4])
+    case Messages.Type.GraphQLDeprecated:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.int(msg[5])
     break
 
     case Messages.Type.PerformanceTrack:
@@ -211,6 +211,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.MouseClick:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5]) && this.uint(msg[6])
+    break
+
+    case Messages.Type.MouseClickDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3]) && this.string(msg[4])
     break
 
@@ -300,6 +304,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.Redux:
       return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.uint(msg[4])
+    break
+
+    case Messages.Type.SetPageLocation:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.uint(msg[3]) && this.string(msg[4])
+    break
+
+    case Messages.Type.GraphQL:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.uint(msg[5])
     break
 
     }

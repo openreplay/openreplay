@@ -141,7 +141,7 @@ const NewSiteForm = ({
                   },
                   {
                     value: 'ios',
-                    label: 'iOS',
+                    label: 'Mobile',
                   },
                 ]}
                 value={site.platform}

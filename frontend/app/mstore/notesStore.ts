@@ -50,6 +50,10 @@ export default class NotesStore {
     this.sessionNotes = notes
   }
 
+  appendNote(note: Note) {
+    this.sessionNotes = [note, ...this.sessionNotes]
+  }
+
   async fetchSessionNotes(sessionId: string) {
     this.setLoading(true)
     try {
@@ -68,6 +72,7 @@ export default class NotesStore {
     this.setLoading(true)
     try {
       const addedNote = await notesService.addNote(sessionId, note)
+      this.appendNote(addedNote)
       return addedNote
     } catch (e) {
       console.error(e)

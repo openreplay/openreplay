@@ -12,7 +12,7 @@ export default class SnapshotManager extends ListWalker<Timestamp> {
   private snapshots: Snapshots = {}
 
   public mapToSnapshots(files: TarFile[]) {
-    const filenameRegexp = /(\d+)_1_(\d+)\.jpeg$/;
+    const filenameRegexp = /(\d+)_1_(\d+)\.(jpeg|png|avif|webp)$/;
     const firstPair = files[0].name.match(filenameRegexp)
     const sessionStart = firstPair ? parseInt(firstPair[1], 10) : 0
     files.forEach(file => {

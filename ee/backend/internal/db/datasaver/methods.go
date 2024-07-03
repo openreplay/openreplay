@@ -29,7 +29,7 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		err     error
 	)
 
-	if msg.TypeID() == messages.MsgSessionEnd {
+	if msg.TypeID() == messages.MsgSessionEnd || msg.TypeID() == messages.MsgMobileSessionEnd {
 		session, err = s.sessions.GetUpdated(msg.SessionID())
 	} else {
 		session, err = s.sessions.Get(msg.SessionID())

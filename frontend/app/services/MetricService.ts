@@ -72,7 +72,7 @@ export default class MetricService {
       .then((response: { data: any; }) => response.data || []);
   }
 
-  async getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
+  async getMetricChartData(metric: Widget, data: any, isSaved: boolean = false): Promise<any> {
     if (
       metric.metricType === CLICKMAP
       && document.location.pathname.split('/').pop() === 'metrics'
@@ -80,7 +80,7 @@ export default class MetricService {
     ) {
       return Promise.resolve({});
     }
-    const path = isWidget ? `/cards/${metric.metricId}/chart` : `/cards/try`;
+    const path = isSaved ? `/cards/${metric.metricId}/chart` : `/cards/try`;
     if (metric.metricType === USER_PATH) {
       data.density = 5;
       data.metricOf = 'sessionCount';

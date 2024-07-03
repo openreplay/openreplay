@@ -20,11 +20,18 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
   return (
     <div>
+      <div className="flex items-start py-1">
+        <div className="font-medium">Name</div>
+        <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 cursor-pointer word-break">
+          <CopyText content={resource.url}>{resource.url}</CopyText>
+        </div>
+      </div>
+
       <div className="flex items-center py-1">
-        <div className="font-medium w-36">Request URL</div>
-        <Tag className='text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip cursor-pointer max-w-80 truncate' bordered={false}>
-          <CopyText content={resource.url}>{text}</CopyText>
-        </Tag>
+        <div className="font-medium">Type</div>
+        <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+          {resource.type}
+        </div>
       </div>
 
       {resource.method && (

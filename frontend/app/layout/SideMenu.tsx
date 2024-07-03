@@ -1,5 +1,5 @@
 import React from 'react';
-import { Divider, Menu, Typography } from 'antd';
+import { Menu, Typography } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
@@ -8,7 +8,7 @@ import { categories as main_menu, MENU, preferences, PREFERENCES_MENU } from './
 import { connect } from 'react-redux';
 import { MODULES } from 'Components/Client/Modules';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Icon, Divider } from 'UI';
 import SupportModal from 'App/layout/SupportModal';
 import { setActiveTab } from 'Duck/search';
 

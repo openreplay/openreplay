@@ -140,6 +140,21 @@ export default class TopObserver extends Observer {
     )
   }
 
+  crossdomainObserve(selfId: number, frameOder: number) {
+    const observer = this
+    Element.prototype.attachShadow = function () {
+      // eslint-disable-next-line
+      const shadow = attachShadowNativeFn.apply(this, arguments)
+      observer.handleShadowRoot(shadow)
+      return shadow
+    }
+    this.app.nodes.clear()
+    this.app.nodes.syntheticMode(frameOder)
+    const iframeObserver = new IFrameObserver(this.app)
+    this.iframeObservers.push(iframeObserver)
+    iframeObserver.syntheticObserve(selfId, window.document)
+  }
+
   disconnect() {
     this.iframeOffsets.clear()
     Element.prototype.attachShadow = attachShadowNativeFn

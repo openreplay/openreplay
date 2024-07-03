@@ -37,6 +37,18 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
       - name: git
         image: alpine/git
@@ -62,6 +74,27 @@ spec:
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
             {{ .Values.global.dbMigrationPreCommand | default "" }}
+
+            exit_count=0
+            error_connection=1
+
+            while [ $exit_count -le 20 ];do
+              nc -zv {{.Values.global.postgresql.postgresqlHost}} {{.Values.global.postgresql.postgresqlPort}} -w 1
+              if [ $? -ne 0 ]; then
+                echo "[info] postgresql is not up; retrying in 5 seconds"
+                sleep 4
+                exit_count=$(($exit_count+1))
+                echo $exit_count
+              else
+                error_connection=0
+                break
+              fi
+            done
+
+            if [ $error_connection -eq 1 ]; then
+              echo "[error] clickhouse is not running. Check kubectl get po -n db; exiting"
+              exit 100
+            fi
 
             # Checking variable is empty. Shell independant method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then

@@ -7,7 +7,7 @@ import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
 import { useObserver } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-
+import { toJS } from 'mobx';
 type TimezonesDropdown = Timezone[];
 
 function DefaultTimezone() {
@@ -24,10 +24,11 @@ function DefaultTimezone() {
 
   const getCurrentTimezone = () => {
     const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const timezoneOffset = new Date().getTimezoneOffset() / -60;
+    const timezoneOffset = Math.floor(new Date().getTimezoneOffset() / -60);
+    const remainingVal = Math.abs(new Date().getTimezoneOffset() % 60)
     const timezoneValue = `UTC${
       (timezoneOffset >= 0 ? '+' : '-') + timezoneOffset.toString().padStart(2, '0')
-    }`;
+    }${remainingVal ? `:${remainingVal.toString().padStart(2, '0')}` : ''}`;
     const selectedTimezone = timezoneOptions.find(
       (option) => option.label.includes(currentTimezone) || option.value === timezoneValue
     );

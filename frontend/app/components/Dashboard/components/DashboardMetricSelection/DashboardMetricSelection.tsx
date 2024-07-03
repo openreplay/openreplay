@@ -136,7 +136,7 @@ function DashboardMetricSelection(props: IProps) {
                                 widget={widget}
                                 active={selectedWidgetIds.includes(widget.metricId)}
                                 isTemplate={true}
-                                isWidget={widget.metricType === 'predefined'}
+                                isSaved={widget.metricType === 'predefined'}
                                 onClick={() => dashboardStore.toggleWidgetSelection(widget)}
                             />
                         ))}

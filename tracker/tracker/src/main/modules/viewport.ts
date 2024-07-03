@@ -3,7 +3,7 @@ import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
 
 export default function (app: App): void {
-  let url: string, width: number, height: number
+  let url: string | null, width: number, height: number
   let navigationStart: number
   let referrer = document.referrer
 
@@ -11,7 +11,7 @@ export default function (app: App): void {
     const { URL } = document
     if (URL !== url) {
       url = URL
-      app.send(SetPageLocation(url, referrer, navigationStart))
+      app.send(SetPageLocation(url, referrer, navigationStart, document.title))
       navigationStart = 0
       referrer = url
     }
@@ -32,7 +32,7 @@ export default function (app: App): void {
       : app.safe(() => app.send(SetPageVisibility(document.hidden)))
 
   app.attachStartCallback(() => {
-    url = ''
+    url = null
     navigationStart = getTimeOrigin()
     width = height = -1
     sendSetPageLocation()

@@ -578,6 +578,11 @@ class MetricFormatType(str, Enum):
     session_count = 'sessionCount'
 
 
+class MetricExtendedFormatType(str, Enum):
+    session_count = 'sessionCount'
+    user_count = 'userCount'
+
+
 class HttpMethod(str, Enum):
     _get = 'GET'
     _head = 'HEAD'
@@ -695,7 +700,7 @@ class SessionSearchFilterSchema(BaseModel):
                 else:
                     raise ValueError(f"value should be of type PlatformType for {values.type} filter")
         elif values.type == FilterType.events_count:
-            if values.operator in MathOperator.has_value(values.operator):
+            if MathOperator.has_value(values.operator):
                 values.operator = MathOperator(values.operator)
             else:
                 raise ValueError(f"operator should be of type MathOperator for {values.type} filter")
@@ -801,7 +806,9 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
                 continue
             j = i + 1
             while j < len(values):
-                if values[i].type == values[j].type:
+                if values[i].type == values[j].type \
+                        and values[i].operator == values[j].operator \
+                        and (values[i].type != FilterType.metadata or values[i].source == values[j].source):
                     values[i].value += values[j].value
                     del values[j]
                 else:
@@ -906,13 +913,11 @@ class CardSeriesSchema(BaseModel):
 
 class MetricTimeseriesViewType(str, Enum):
     line_chart = "lineChart"
-    progress = "progress"
     area_chart = "areaChart"
 
 
 class MetricTableViewType(str, Enum):
     table = "table"
-    pie_chart = "pieChart"
 
 
 class MetricOtherViewType(str, Enum):
@@ -931,7 +936,7 @@ class MetricType(str, Enum):
     pathAnalysis = "pathAnalysis"
     retention = "retention"
     stickiness = "stickiness"
-    click_map = "clickMap"
+    heat_map = "heatMap"
     insights = "insights"
 
 
@@ -990,6 +995,7 @@ class MetricOfWebVitals(str, Enum):
     avg_visited_pages = "avgVisitedPages"
     count_requests = "countRequests"
     count_sessions = "countSessions"
+    count_users = "countUsers"
 
 
 class MetricOfTable(str, Enum):
@@ -1008,14 +1014,16 @@ class MetricOfTable(str, Enum):
 
 class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
+    user_count = "userCount"
 
 
 class MetricOfFunnels(str, Enum):
     session_count = MetricOfTimeseries.session_count.value
+    user_count = MetricOfTimeseries.user_count.value
 
 
-class MetricOfClickMap(str, Enum):
-    click_map_url = "clickMapUrl"
+class MetricOfHeatMap(str, Enum):
+    heat_map_url = "heatMapUrl"
 
 
 class MetricOfPathAnalysis(str, Enum):
@@ -1069,6 +1077,36 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
 
         return values
 
+    @model_validator(mode="after")
+    def __merge_out_filters_with_series(cls, values):
+        if len(values.filters) > 0:
+            for f in values.filters:
+                for s in values.series:
+                    found = False
+
+                    if f.is_event:
+                        sub = s.filter.events
+                    else:
+                        sub = s.filter.filters
+
+                    for e in sub:
+                        if f.type == e.type and f.operator == e.operator:
+                            found = True
+                            if f.is_event:
+                                # If extra event: append value
+                                for v in f.value:
+                                    if v not in e.value:
+                                        e.value.append(v)
+                            else:
+                                # If extra filter: override value
+                                e.value = f.value
+                    if not found:
+                        sub.append(f)
+
+            values.filters = []
+
+        return values
+
 
 class CardConfigSchema(BaseModel):
     col: Optional[int] = Field(default=None)
@@ -1086,23 +1124,14 @@ class __CardSchema(CardSessionsSchema):
     metric_type: MetricType = Field(...)
     metric_of: Any
     metric_value: List[IssueType] = Field(default=[])
+    # This is used to save the selected session for heatmaps
+    session_id: Optional[int] = Field(default=None)
 
     @computed_field
     @property
     def is_predefined(self) -> bool:
         return self.metric_type in [MetricType.errors, MetricType.performance,
                                     MetricType.resources, MetricType.web_vital]
-
-    # TODO: finish the reset of these conditions
-    # @model_validator(mode='after')
-    # def __validator(cls, values):
-    #     if values.metric_type == MetricType.click_map:
-    #         # assert isinstance(values.metric_of, MetricOfClickMap), \
-    #         #     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
-    #         for s in values.series:
-    #             for f in s.filter.events:
-    #                 assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
-    #     return values
 
 
 class CardTimeSeries(__CardSchema):
@@ -1125,6 +1154,7 @@ class CardTable(__CardSchema):
     metric_type: Literal[MetricType.table]
     metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
     view_type: MetricTableViewType = Field(...)
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.session_count)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
@@ -1137,6 +1167,15 @@ class CardTable(__CardSchema):
         values.metric_of = MetricOfTable(values.metric_of)
         return values
 
+    @model_validator(mode="after")
+    def __validator(cls, values):
+        if values.metric_of not in (MetricOfTable.issues, MetricOfTable.user_browser,
+                                    MetricOfTable.user_device, MetricOfTable.user_country,
+                                    MetricOfTable.visited_url):
+            assert values.metric_format == MetricExtendedFormatType.session_count, \
+                f'metricFormat:{MetricExtendedFormatType.user_count.value} is not supported for this metricOf'
+        return values
+
 
 class CardFunnel(__CardSchema):
     metric_type: Literal[MetricType.funnel]
@@ -1145,7 +1184,8 @@ class CardFunnel(__CardSchema):
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        values["metricOf"] = MetricOfFunnels.session_count
+        if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
+            values["metricOf"] = MetricOfFunnels.session_count
         values["viewType"] = MetricOtherViewType.other_chart
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
@@ -1221,9 +1261,9 @@ class CardWebVital(__CardSchema):
         return values
 
 
-class CardClickMap(__CardSchema):
-    metric_type: Literal[MetricType.click_map]
-    metric_of: MetricOfClickMap = Field(default=MetricOfClickMap.click_map_url)
+class CardHeatMap(__CardSchema):
+    metric_type: Literal[MetricType.heat_map]
+    metric_of: MetricOfHeatMap = Field(default=MetricOfHeatMap.heat_map_url)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1232,7 +1272,7 @@ class CardClickMap(__CardSchema):
 
     @model_validator(mode="after")
     def __transform(cls, values):
-        values.metric_of = MetricOfClickMap(values.metric_of)
+        values.metric_of = MetricOfHeatMap(values.metric_of)
         return values
 
 
@@ -1331,7 +1371,7 @@ class CardPathAnalysis(__CardSchema):
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
     CardErrors, CardPerformance, CardResources,
-    CardWebVital, CardClickMap,
+    CardWebVital, CardHeatMap,
     CardPathAnalysis]
 CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
 
@@ -1506,13 +1546,13 @@ class SearchCardsSchema(_PaginatedSchema):
     query: Optional[str] = Field(default=None)
 
 
-class _ClickMapSearchEventRaw(SessionSearchEventSchema2):
+class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
     type: Literal[EventType.location] = Field(...)
 
 
-class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
-    events: Optional[List[_ClickMapSearchEventRaw]] = Field(default=[])
-    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field(default=[])
+class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
+    events: Optional[List[_HeatMapSearchEventRaw]] = Field(default=[])
+    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default=[])
 
     @model_validator(mode="before")
     def __transform(cls, values):
@@ -1525,7 +1565,7 @@ class ClickMapSessionsSearch(SessionsSearchPayloadSchema):
         return values
 
 
-class ClickMapFilterSchema(BaseModel):
+class HeatMapFilterSchema(BaseModel):
     value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     type: Literal[FilterType.issue] = Field(...)
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
@@ -1533,8 +1573,16 @@ class ClickMapFilterSchema(BaseModel):
 
 class GetHeatmapPayloadSchema(_TimedSchema):
     url: str = Field(...)
-    filters: List[ClickMapFilterSchema] = Field(default=[])
+    filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
+
+
+class GetHeatMapPayloadSchema(BaseModel):
+    url: str = Field(...)
+
+
+class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):
+    pass
 
 
 class FeatureFlagVariant(BaseModel):

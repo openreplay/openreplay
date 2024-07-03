@@ -56,6 +56,7 @@ def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
                  schemas.MetricOfResources.slowest_resources: metrics.get_slowest_resources,
                  schemas.MetricOfResources.resources_loading_time: metrics.get_resources_loading_time,
                  schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
-                 schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
+                 schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type,
+                 schemas.MetricOfWebVitals.count_users: metrics.get_unique_users,}
 
     return supported.get(key, lambda *args: None)(project_id=project_id, **data)

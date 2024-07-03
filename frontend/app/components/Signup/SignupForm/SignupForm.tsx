@@ -58,7 +58,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ tenants, errors, loading, signu
       'g-recaptcha-response': token
     }).then((resp: any) => {
       if (resp && resp.errors && Array.isArray(resp.errors) && resp.errors.length > 0) {
-        resp.errors[0] ? toast.error(resp.errors[0]) : toast.error('Something went wrong');
+        if ((resp.errors[0] as string).includes('in use')) {
+          toast.error("This email is already linked to an account or team on OpenReplay and can't be used again.")
+        } else {
+          resp.errors[0] ? toast.error(resp.errors[0]) : toast.error('Something went wrong');
+        }
       }
     });
     setState({ ...state, reload: true });

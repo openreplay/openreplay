@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, sessions_favorite
@@ -189,17 +189,35 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with pg_client.PostgresClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                                {query_part})
-                                            SELECT generated_timestamp AS timestamp,
-                                                   COUNT(s)            AS count
-                                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                         FROM full_sessions
-                                                                         WHERE start_ts >= generated_timestamp
-                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                            GROUP BY generated_timestamp
-                                            ORDER BY generated_timestamp;""", full_args)
+                if metric_of == schemas.MetricOfTimeseries.session_count:
+                    # main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                    main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT s.session_id, s.start_ts
+                                                                    {query_part})
+                                                SELECT generated_timestamp AS timestamp,
+                                                       COUNT(s)            AS count
+                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                         LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                             FROM full_sessions
+                                                                             WHERE start_ts >= generated_timestamp
+                                                                               AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                GROUP BY generated_timestamp
+                                                ORDER BY generated_timestamp;""", full_args)
+                elif metric_of == schemas.MetricOfTimeseries.user_count:
+                    main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT s.user_id, s.start_ts
+                                                                    {query_part}
+                                                                    AND s.user_id IS NOT NULL
+                                                                    AND s.user_id != '')
+                                                SELECT generated_timestamp AS timestamp,
+                                                       COUNT(s)            AS count
+                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                         LEFT JOIN LATERAL ( SELECT DISTINCT user_id AS s
+                                                                             FROM full_sessions
+                                                                             WHERE start_ts >= generated_timestamp
+                                                                               AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                GROUP BY generated_timestamp
+                                                ORDER BY generated_timestamp;""", full_args)
+                else:
+                    raise Exception(f"Unsupported metricOf:{metric_of}")
             else:
                 main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
@@ -278,7 +296,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                  metric_of: schemas.MetricOfTable, metric_value: List):
+                  metric_of: schemas.MetricOfTable, metric_value: List,
+                  metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
@@ -310,10 +329,13 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
     full_args["step_size"] = step_size
     with pg_client.PostgresClient() as cur:
         if isinstance(metric_of, schemas.MetricOfTable):
+            full_args["limit"] = data.limit
+            full_args["limit_s"] = (data.page - 1) * data.limit
+            full_args["limit_e"] = data.page * data.limit
+
             main_col = "user_id"
             extra_col = ""
             extra_where = ""
-            pre_query = ""
             distinct_on = "s.session_id"
             if metric_of == schemas.MetricOfTable.user_country:
                 main_col = "user_country"
@@ -335,25 +357,48 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_col = "path"
                 extra_col = ", path"
                 distinct_on += ",path"
-            main_query = cur.mogrify(f"""{pre_query}
-                                         SELECT COUNT(*) AS count,
-                                                COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
-                                                COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
-                                                    FROM (SELECT {main_col} AS name,
-                                                             count(DISTINCT session_id)                                   AS session_count,
-                                                             ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
-                                                        FROM (SELECT *
-                                                        FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
-                                                                    s.user_id, s.user_os, 
-                                                                    s.user_browser, s.user_device, 
-                                                                    s.user_device_type, s.user_country, s.issue_types{extra_col}
-                                                        {query_part}
-                                                        ORDER BY s.session_id desc) AS filtred_sessions
-                                                        ) AS full_sessions
-                                                        {extra_where}
-                                                        GROUP BY {main_col}
-                                                        ORDER BY session_count DESC) AS users_sessions;""",
-                                     full_args)
+            if metric_format == schemas.MetricExtendedFormatType.session_count:
+                main_query = f"""SELECT COUNT(*) AS count,
+                                    COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
+                                    COALESCE(JSONB_AGG(users_sessions) 
+                                            FILTER ( WHERE rn > %(limit_s)s 
+                                                        AND rn <= %(limit_e)s ), '[]'::JSONB) AS values
+                                 FROM (SELECT {main_col} AS name,
+                                     count(DISTINCT session_id)                                   AS session_count,
+                                     ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                       FROM (SELECT *
+                                             FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
+                                                    s.user_id, s.user_os, 
+                                                    s.user_browser, s.user_device, 
+                                                    s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            ) AS full_sessions
+                                 {extra_where}
+                                 GROUP BY {main_col}
+                                 ORDER BY session_count DESC) AS users_sessions;"""
+            else:
+                main_query = f"""SELECT COUNT(*) AS count,
+                                    COALESCE(SUM(users_sessions.user_count),0) AS total_users,
+                                    COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                 FROM (SELECT {main_col} AS name,
+                                         count(DISTINCT user_id)                                AS user_count,
+                                         ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                       FROM (SELECT *
+                                             FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
+                                                        s.user_id, s.user_os, 
+                                                        s.user_browser, s.user_device, 
+                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                             {query_part}
+                                             AND s.user_id IS NOT NULL
+                                             AND s.user_id !=''
+                                             ORDER BY s.session_id desc) AS filtred_sessions
+                                        ) AS full_sessions
+                                {extra_where}
+                                GROUP BY {main_col}
+                                ORDER BY user_count DESC) AS users_sessions;"""
+
+            main_query = cur.mogrify(main_query, full_args)
         logging.debug("--------------------")
         logging.debug(main_query)
         logging.debug("--------------------")
@@ -438,7 +483,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
             f_k = f"f_value{i}"
             full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k)}
             op = sh.get_sql_operator(f.operator) \
-                if filter_type not in [schemas.FilterType.events_count] else f.operator
+                if filter_type not in [schemas.FilterType.events_count] else f.operator.value
             is_any = sh.isAny_opreator(f.operator)
             is_undefined = sh.isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
@@ -726,7 +771,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_from = event_from % f"{events.EventType.CLICK_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.CLICK_MOBILE.column} {op} %({e_k})s",
+                                                event.value,
                                                 value_key=e_k))
 
             elif event_type == events.EventType.TAG.ui_type:
@@ -750,7 +796,8 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_from = event_from % f"{events.EventType.INPUT_MOBILE.table} AS main "
                     if not is_any:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.INPUT_MOBILE.column} {op} %({e_k})s",
+                                                event.value,
                                                 value_key=e_k))
 
 

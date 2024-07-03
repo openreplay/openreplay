@@ -261,27 +261,35 @@ export default class MetricStore {
     }
   }
 
+  setLoading(val: boolean) {
+    this.isLoading = val;
+  }
+
+  setMetrics(metrics: Widget[]) {
+    this.metrics = metrics;
+  }
+
   fetchList() {
-    this.isLoading = true;
+    this.setLoading(true)
     return metricService
       .getMetrics()
       .then((metrics: any[]) => {
-        this.metrics = metrics.map((m) => new Widget().fromJson(m));
+        this.setMetrics(metrics.map((m) => new Widget().fromJson(m)));
       })
       .finally(() => {
-        this.isLoading = false;
+        this.setLoading(false)
       });
   }
 
   fetch(id: string, period?: any) {
-    this.isLoading = true;
+    this.setLoading(true)
     return metricService
       .getMetric(id)
       .then((metric: any) => {
         return (this.instance = new Widget().fromJson(metric, period));
       })
       .finally(() => {
-        this.isLoading = false;
+        this.setLoading(false);
       });
   }
 

@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite, sessions_notes, click_maps, sessions_replay, signup, feature_flags
+    errors_favorite, sessions_notes, sessions_replay, signup, feature_flags
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -446,6 +446,22 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
 
 
+@app.post('/{projectId}/sessions/{sessionId}/heatmaps', tags=["heatmaps"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
+                                   data: schemas.GetHeatmapPayloadSchema = Body(...),
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": heatmaps.get_x_y_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
+
+
+@app.post('/{projectId}/sessions/{sessionId}/clickmaps', tags=["heatmaps"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+def get_clickmaps_by_session_id_url(projectId: int, sessionId: int,
+                                    data: schemas.GetClickMapPayloadSchema = Body(...),
+                                    context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": heatmaps.get_selectors_by_url_and_session_id(project_id=projectId, session_id=sessionId, data=data)}
+
+
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"],
          dependencies=[OR_scope(Permissions.session_replay)])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
@@ -564,12 +580,6 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
     if "errors" in data:
         return data
     return {'data': data}
-
-
-@app.post('/{projectId}/click_maps/search', tags=["click maps"], dependencies=[OR_scope(Permissions.session_replay)])
-def click_map_search(projectId: int, data: schemas.ClickMapSessionsSearch = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"],

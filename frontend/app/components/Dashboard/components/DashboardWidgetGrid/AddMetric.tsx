@@ -83,7 +83,7 @@ function AddMetric({ history, siteId, title, description }: IProps) {
                   widget={metric}
                   active={selectedWidgetIds.includes(metric.metricId)}
                   isTemplate={true}
-                  isWidget={metric.metricType === 'predefined'}
+                  isSaved={metric.metricType === 'predefined'}
                   onClick={() => dashboardStore.toggleWidgetSelection(metric)}
                 />
               ))

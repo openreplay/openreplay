@@ -27,7 +27,7 @@ jobs:
         run: |
           git fetch --tags
           git checkout main
-          git push rjshrjndn HEAD:refs/tags/$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          git push origin HEAD:refs/tags/$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1) --force
     # - name: Debug Job
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3

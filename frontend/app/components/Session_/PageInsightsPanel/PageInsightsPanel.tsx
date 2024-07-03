@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, Icon } from 'UI';
 import { connect } from 'react-redux';
-import { fetchInsights } from 'Duck/sessions';
+import { fetchSessionClickmap } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { compareJsonObjects } from 'App/utils';
@@ -13,7 +13,7 @@ import Period from 'Types/app/period';
 const JUMP_OFFSET = 1000;
 interface Props {
     filters: any;
-    fetchInsights: (filters: Record<string, any>) => void;
+    fetchSessionClickmap: (sessionId: string, filters: Record<string, any>) => void;
     insights: any;
     events: Array<any>;
     urlOptions: Array<any>;
@@ -23,7 +23,7 @@ interface Props {
     sessionId: string;
 }
 
-function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab, sessionId }: Props) {
+function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insights, urlOptions, host, loading = true, setActiveTab, sessionId }: Props) {
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
@@ -55,7 +55,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
         if (urlOptions && urlOptions[0]) {
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             Player.pause();
-            fetchInsights({ ...insightsFilters, sessionId, url });
+            fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
             markTargets([]);
         }
         prevInsights.current = insightsFilters;
@@ -118,5 +118,5 @@ export default connect(
             sessionId: state.getIn(['sessions', 'current']).sessionId,
         };
     },
-    { fetchInsights }
+    { fetchSessionClickmap }
 )(PageInsightsPanel);

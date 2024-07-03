@@ -1,7 +1,6 @@
 # @openreplay/react-native
 
-Only iOS devices are supported right now. Regular View and empty callbacks are used for android devices,
-so its safe to use with crossplatform apps.
+Openreplay React-native connector for mobile applications.
 
 ## Installation
 

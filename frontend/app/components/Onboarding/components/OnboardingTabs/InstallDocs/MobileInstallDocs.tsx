@@ -5,7 +5,7 @@ import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
 import { CopyButton } from 'UI';
 
-const installationCommand = `
+export const installationCommand = `
 // make sure to grab latest version from https://github.com/openreplay/ios-tracker
 // Cocoapods
 pod 'Openreplay', '~> 1.0.5'
@@ -16,7 +16,7 @@ dependencies: [
 ]
 `;
 
-const usageCode = `// AppDelegate.swift
+export const usageCode = `// AppDelegate.swift
 import OpenReplay
 
 //... 
@@ -24,15 +24,15 @@ import OpenReplay
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        OpenReplay.shared.serverURL = "https://your.instance.com/ingest"
+        // not required if you're using our SaaS version
+        OpenReplay.shared.serverURL = "INGEST_POINT"
         OpenReplay.shared.start(projectKey: "PROJECT_KEY", options: .defaults)
         
         // ...
         return true
     }
 // ...`;
-const configuration = `let crashs: Bool
+const configuration = `let crashes: Bool
 let analytics: Bool
 let performances: Bool
 let logs: Bool
@@ -72,8 +72,8 @@ TextField("Input", text: $text)
 // UIKit will use placeholder as label and sender.isSecureTextEntry to mask the input
 Analytics.shared.addObservedInput(inputEl)`
 
-function MobileInstallDocs({ site }: any) {
-  const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey);
+function MobileInstallDocs({ site, ingestPoint }: any) {
+  const _usageCode = usageCode.replace('INGEST_POINT', ingestPoint).replace('PROJECT_KEY', site.projectKey);
 
   return (
     <div>

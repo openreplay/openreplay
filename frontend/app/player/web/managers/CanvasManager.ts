@@ -86,7 +86,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
 
   public mapToSnapshots(files: TarFile[]) {
     const tempArr: Timestamp[] = [];
-    const filenameRegexp = /(\d+)_(\d+)_(\d+)\.jpeg$/;
+    const filenameRegexp = /(\d+)_(\d+)_(\d+)\.(jpeg|png|avif|webp)$/;
     const firstPair = files[0].name.match(filenameRegexp);
     if (!firstPair) {
       console.error('Invalid file name format', files[0].name);
@@ -155,13 +155,16 @@ export default class CanvasManager extends ListWalker<Timestamp> {
         if (node && node.node) {
           const canvasCtx = (node.node as HTMLCanvasElement).getContext('2d');
           const canvasEl = node.node as HTMLVideoElement;
-          canvasCtx?.drawImage(
-            this.snapImage,
-            0,
-            0,
-            canvasEl.width,
-            canvasEl.height
-          );
+          requestAnimationFrame(() => {
+            canvasCtx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            canvasCtx?.drawImage(
+              this.snapImage,
+              0,
+              0,
+              canvasEl.width,
+              canvasEl.height
+            );
+          })
           this.debugCanvas
             ?.getContext('2d')
             ?.drawImage(this.snapImage, 0, 0, 300, 200);

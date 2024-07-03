@@ -3,9 +3,9 @@ import stl from './installDocs.module.css';
 import cn from 'classnames';
 import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
-import {CopyButton} from 'UI';
+import { CopyButton } from 'UI';
 
-const installationCommand = `// Add it in your root build.gradle at the end of repositories:
+export const installationCommand = `// Add it in your root build.gradle at the end of repositories:
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -20,18 +20,18 @@ dependencies {
 }
 `;
 
-const usageCode = `// MainActivity.kt
+export const usageCode = `// MainActivity.kt
 import com.openreplay.tracker.OpenReplay
 
 //...
 class MainActivity : TrackingActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
     // not required if you're using our SaaS version
-    OpenReplay.serverURL = "https://your.instance.com/ingest"
+    OpenReplay.serverURL = "INGEST_POINT"
     // check out our SDK docs to see available options
     OpenReplay.start(
         applicationContext,
-        "projectkey",
+        "PROJECT_KEY",
         OpenReplay.Options.defaults(),
         onStarted = {
             println("OpenReplay Started")
@@ -40,7 +40,7 @@ class MainActivity : TrackingActivity() {
         // ...
     }
 }`;
-const configuration = `let crashs: Bool
+const configuration = `let crashes: Bool
 let analytics: Bool
 let performances: Bool
 let logs: Bool
@@ -57,38 +57,38 @@ const sensitive = `import com.openreplay.tracker.OpenReplay
 OpenReplay.addIgnoredView(view)
 `
 
-const inputs = `import com.opnereplay.tracker.OpenReplay
+const inputs = `import com.openreplay.tracker.OpenReplay
 
 val passwordEditText = binding.password
 passwordEditText.trackTextInput(label = "password", masked = true)`
 
-function AndroidInstallDocs({site}: any) {
-    const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey);
+function AndroidInstallDocs({ site, ingestPoint }: any) {
+    let _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey).replace('INGEST_POINT', ingestPoint);
 
     return (
         <div>
             <div className="mb-4">
                 <div className="font-semibold mb-2 flex items-center">
-                    <CircleNumber text="1"/>
+                    <CircleNumber text="1" />
                     Install the SDK
                 </div>
                 <div className={cn(stl.snippetWrapper, 'ml-10')}>
                     <div className="absolute mt-1 mr-2 right-0">
-                        <CopyButton content={installationCommand}/>
+                        <CopyButton content={installationCommand} />
                     </div>
                     <Highlight className="cli">{installationCommand}</Highlight>
                 </div>
             </div>
 
             <div className="font-semibold mb-2 flex items-center">
-                <CircleNumber text="2"/>
+                <CircleNumber text="2" />
                 Add to your app
             </div>
             <div className="flex ml-10 mt-4">
                 <div className="w-full">
                     <div className={cn(stl.snippetWrapper)}>
                         <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={_usageCode}/>
+                            <CopyButton content={_usageCode} />
                         </div>
                         <Highlight className="swift">{_usageCode}</Highlight>
                     </div>
@@ -96,7 +96,7 @@ function AndroidInstallDocs({site}: any) {
             </div>
 
             <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="3"/>
+                <CircleNumber text="3" />
                 Configuration
             </div>
             <div className="flex ml-10 mt-4">
@@ -110,14 +110,14 @@ function AndroidInstallDocs({site}: any) {
             </div>
 
             <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="4"/>
+                <CircleNumber text="4" />
                 Set up touch events listener
             </div>
             <div className="flex ml-10 mt-4">
                 <div className="w-full">
                     <div className={cn(stl.snippetWrapper)}>
                         <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={touches}/>
+                            <CopyButton content={touches} />
                         </div>
                         <Highlight className="swift">{touches}</Highlight>
                     </div>
@@ -125,14 +125,14 @@ function AndroidInstallDocs({site}: any) {
             </div>
 
             <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="5"/>
+                <CircleNumber text="5" />
                 Hide sensitive views
             </div>
             <div className="flex ml-10 mt-4">
                 <div className="w-full">
                     <div className={cn(stl.snippetWrapper)}>
                         <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={sensitive}/>
+                            <CopyButton content={sensitive} />
                         </div>
                         <Highlight className="swift">{sensitive}</Highlight>
                     </div>
@@ -140,14 +140,14 @@ function AndroidInstallDocs({site}: any) {
             </div>
 
             <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="6"/>
+                <CircleNumber text="6" />
                 Track inputs
             </div>
             <div className="flex ml-10 mt-4">
                 <div className="w-full">
                     <div className={cn(stl.snippetWrapper)}>
                         <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={inputs}/>
+                            <CopyButton content={inputs} />
                         </div>
                         <Highlight className="swift">{inputs}</Highlight>
                     </div>
@@ -157,4 +157,4 @@ function AndroidInstallDocs({site}: any) {
     );
 }
 
-export default AndroidInstallDocs
+export default AndroidInstallDocs;

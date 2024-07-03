@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'UI';
+import { Link, confirm } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
@@ -28,11 +28,17 @@ function NoteItem(props: Props) {
     );
     toast.success('Note URL copied to clipboard');
   };
-  const onDelete = () => {
-    notesStore.deleteNote(props.note.noteId).then((r) => {
-      notesStore.fetchNotes();
-      toast.success('Note deleted');
-    });
+  const onDelete = async () => {
+    if (await confirm({
+      header: 'Confirm',
+      confirmButton: 'Yes, delete',
+      confirmation: `Are you sure you want to delete this note?`,
+    })) {
+      notesStore.deleteNote(props.note.noteId).then((r) => {
+        notesStore.fetchNotes();
+        toast.success('Note deleted');
+      });
+    }
   };
   const menuItems = [
     { icon: 'link-45deg', text: 'Copy Link', onClick: onCopy },

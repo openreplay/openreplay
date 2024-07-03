@@ -52,7 +52,7 @@ function build_alerts() {
         tag="ee-"
     }
     mv Dockerfile_alerts.dockerignore .dockerignore
-    docker build -f ./Dockerfile_alerts --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/alerts:${image_tag} .
+    docker build -f ./Dockerfile_alerts --platform linux/${ARCH:-"amd64"} --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/alerts:${image_tag} .
     cd ../api
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {

@@ -13,9 +13,11 @@ let timeOrigin: number = IN_BROWSER ? Date.now() - performance.now() : 0
 export function adjustTimeOrigin() {
   timeOrigin = Date.now() - performance.now()
 }
+
 export function getTimeOrigin() {
   return timeOrigin
 }
+
 export const now: () => number =
   IN_BROWSER && !!performance.now
     ? () => Math.round(performance.now() + timeOrigin)
@@ -102,13 +104,17 @@ export function generateRandomId(len?: number) {
   // msCrypto = IE11
   // @ts-ignore
   const safeCrypto = window.crypto || window.msCrypto
-  safeCrypto.getRandomValues(arr)
-  return Array.from(arr, dec2hex).join('')
+  if (safeCrypto) {
+    safeCrypto.getRandomValues(arr)
+    return Array.from(arr, dec2hex).join('')
+  } else {
+    return Array.from({ length: len || 40 }, () => dec2hex(Math.floor(Math.random() * 16))).join('')
+  }
 }
 
 export function inIframe() {
   try {
-    return window.self !== window.top
+    return window.self && window.top && window.self !== window.top
   } catch (e) {
     return true
   }
@@ -141,9 +147,10 @@ export function createEventListener(
   try {
     target[safeAddEventListener](event, cb, capture)
   } catch (e) {
+    const msg = e.message
     console.debug(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      `Openreplay: ${e.messages}; if this error is caused by an IframeObserver, ignore it`,
+      `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
     )
   }
 }
@@ -160,13 +167,13 @@ export function deleteEventListener(
   try {
     target[safeRemoveEventListener](event, cb, capture)
   } catch (e) {
+    const msg = e.message
     console.debug(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      `Openreplay: ${e.messages}; if this error is caused by an IframeObserver, ignore it`,
+      `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
     )
   }
 }
-
 
 class FIFOTaskScheduler {
   taskQueue: any[]
@@ -233,4 +240,28 @@ export function requestIdleCb(callback: () => void) {
   //     outgoing.postMessage(1)
   //   })
   // }
+}
+
+export function simpleMerge<T>(defaultObj: T, givenObj: Partial<T>): T {
+  const result = { ...defaultObj }
+
+  for (const key in givenObj) {
+    // eslint-disable-next-line no-prototype-builtins
+    if (givenObj.hasOwnProperty(key)) {
+      const userOptionValue = givenObj[key]
+      const defaultOptionValue = defaultObj[key]
+
+      if (
+        typeof userOptionValue === 'object' &&
+        !Array.isArray(userOptionValue) &&
+        userOptionValue !== null
+      ) {
+        result[key] = simpleMerge(defaultOptionValue || {}, userOptionValue) as any
+      } else {
+        result[key] = userOptionValue as any
+      }
+    }
+  }
+
+  return result
 }

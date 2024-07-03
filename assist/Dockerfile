@@ -1,7 +1,4 @@
-#ARCH can be amd64 or arm64
-ARG ARCH=amd64
-
-FROM --platform=linux/$ARCH node:20-alpine
+FROM node:20-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache tini
 

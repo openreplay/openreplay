@@ -1,3 +1,22 @@
+# 15.0.0
+
+- updated graphql plugin and messages
+
+# 14.0.0
+
+- titles for tabs
+- new `MouseClick` message to introduce heatmaps instead of clickmaps
+- crossdomain iframe tracking functionality
+
+# 13.0.2
+
+- more file extensions for canvas
+
+# 13.0.1
+
+- moved canvas snapshots to webp, additional option to utilize useAnimationFrame method (for webgl)
+- simpler, faster canvas recording manager
+
 # 13.0.0
 
 - `assistOnly` flag for tracker options (EE only feature)

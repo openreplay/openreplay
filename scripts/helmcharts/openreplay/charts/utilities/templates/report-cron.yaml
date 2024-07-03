@@ -24,6 +24,18 @@ spec:
           {{- end }}
         spec:
           restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
           - name: report-cron
             image: "{{ tpl .Values.report.image.repository . }}:{{ .Values.report.image.tag | default .Chart.AppVersion }}-ee"

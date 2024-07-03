@@ -5417,6 +5417,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-confirm@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@types/react-confirm@npm:0.2.3"
+  dependencies:
+    "@types/react": "*"
+  checksum: 2a1e24de5adf70c4d4ab1408fe770b0e003f0a6f8f643ec0e195915e13654fe68943b8c57e8842eff17910f171923f32682588b8b5d4aca18e6786ef251e3052
+  languageName: node
+  linkType: hard
+
 "@types/react-dom@npm:^18.0.4":
   version: 18.2.24
   resolution: "@types/react-dom@npm:18.2.24"
@@ -5621,6 +5630,13 @@ __metadata:
   version: 2.0.10
   resolution: "@types/unist@npm:2.0.10"
   checksum: 5f247dc2229944355209ad5c8e83cfe29419fa7f0a6d557421b1985a1500444719cc9efcc42c652b55aab63c931813c88033e0202c1ac684bcd4829d66e44731
+  languageName: node
+  linkType: hard
+
+"@types/use-sync-external-store@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "@types/use-sync-external-store@npm:0.0.3"
+  checksum: 82824c1051ba40a00e3d47964cdf4546a224e95f172e15a9c62aa3f118acee1c7518b627a34f3aa87298a2039f982e8509f92bfcc18bea7c255c189c293ba547
   languageName: node
   linkType: hard
 
@@ -11842,10 +11858,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.7.4":
-  version: 0.7.4
-  resolution: "fflate@npm:0.7.4"
-  checksum: 5e749eb3a6ed61a0f6c55756abf9f4258f06f60505db689e22d18503dd252ca5af656d32668e4b7b20714adf8b313febf695d23863a8352f23e325baee0f672d
+"fflate@npm:^0.8.2":
+  version: 0.8.2
+  resolution: "fflate@npm:0.8.2"
+  checksum: 03448d630c0a583abea594835a9fdb2aaf7d67787055a761515bf4ed862913cfd693b4c4ffd5c3f3b355a70cf1e19033e9ae5aedcca103188aaff91b8bd6e293
   languageName: node
   linkType: hard
 
@@ -12447,7 +12463,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fzstd@npm:^0.1.0":
+"fzstd@npm:^0.1.1":
   version: 0.1.1
   resolution: "fzstd@npm:0.1.1"
   checksum: c4ae25a4b9e7ac58e9716fcb0c4ec19f3e678d90a67a59e97ce361beb27e4aa4b8666b58b4dc2d715e92db4b65b189c978186a5fedba6fccb5ec9765717dd1cd
@@ -13885,7 +13901,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.2, invariant@npm:^2.2.4":
+"invariant@npm:^2.2.2":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -18320,6 +18336,7 @@ __metadata:
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/luxon": ^3.0.0
     "@types/react": ^18.0.9
+    "@types/react-confirm": ^0.2.3
     "@types/react-dom": ^18.0.4
     "@types/react-redux": ^7.1.24
     "@types/react-router-dom": ^5.3.3
@@ -18347,10 +18364,10 @@ __metadata:
     eslint: ^8.15.0
     eslint-plugin-react: ^7.29.4
     eslint-plugin-react-hooks: ^4.5.0
-    fflate: ^0.7.4
+    fflate: ^0.8.2
     file-loader: ^6.2.0
     flow-bin: ^0.115.0
-    fzstd: ^0.1.0
+    fzstd: ^0.1.1
     html-to-image: ^1.9.0
     html-webpack-plugin: ^5.5.0
     html2canvas: ^1.4.1
@@ -18384,7 +18401,7 @@ __metadata:
     rc-time-picker: ^3.7.3
     react: ^18.2.0
     react-circular-progressbar: ^2.1.0
-    react-confirm: ^0.2.3
+    react-confirm: ^0.3.0-7
     react-daterange-picker: ^2.0.1
     react-dnd: ^16.0.1
     react-dnd-html5-backend: ^15.1.2
@@ -18394,7 +18411,7 @@ __metadata:
     react-highlight: ^0.14.0
     react-lazyload: ^3.2.0
     react-merge-refs: ^2.0.1
-    react-redux: ^5.1.2
+    react-redux: ^9.1.2
     react-router: ^5.3.3
     react-router-dom: ^5.3.3
     react-select: ^5.3.2
@@ -18404,9 +18421,9 @@ __metadata:
     react-virtualized: ^9.22.3
     react18-json-view: ^0.2.8
     recharts: ^2.12.7
-    redux: ^4.0.5
+    redux: ^5.0.1
     redux-immutable: ^4.0.0
-    redux-thunk: ^2.3.0
+    redux-thunk: ^3.1.0
     sass: ^1.51.0
     sass-loader: ^13.0.0
     semantic-ui-css: ^2.4.1
@@ -19939,7 +19956,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:15.x, prop-types@npm:^15.0.0, prop-types@npm:^15.5.0, prop-types@npm:^15.5.10, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -20954,13 +20971,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-confirm@npm:^0.2.3":
-  version: 0.2.4
-  resolution: "react-confirm@npm:0.2.4"
+"react-confirm@npm:^0.3.0-7":
+  version: 0.3.0-7
+  resolution: "react-confirm@npm:0.3.0-7"
   peerDependencies:
     react: 18.x
     react-dom: 18.x
-  checksum: b06897e41a50985bc2107b3f3b5abf658e2de84177f8c1c39968e64f2afd20e44c3506c5ba6b51b6dd9ba2289ea9df9a4e39008aa8d8de73af6f0cbfd6515d46
+  checksum: 38c863bce5f3b8c4c17b59f995da77d69f1b442c5c7e812d8a62f2721a426d859ae17d3e4ed3eaf878cf458b3be047cedb1ec125aa5a29cd2a03eaef773923c8
   languageName: node
   linkType: hard
 
@@ -21160,7 +21177,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-lifecycles-compat@npm:^3.0.0, react-lifecycles-compat@npm:^3.0.4":
+"react-lifecycles-compat@npm:^3.0.4":
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
   checksum: 1d0df3c85af79df720524780f00c064d53a9dd1899d785eddb7264b378026979acbddb58a4b7e06e7d0d12aa1494fd5754562ee55d32907b15601068dae82c27
@@ -21195,21 +21212,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-redux@npm:^5.1.2":
-  version: 5.1.2
-  resolution: "react-redux@npm:5.1.2"
+"react-redux@npm:^9.1.2":
+  version: 9.1.2
+  resolution: "react-redux@npm:9.1.2"
   dependencies:
-    "@babel/runtime": ^7.1.2
-    hoist-non-react-statics: ^3.3.0
-    invariant: ^2.2.4
-    loose-envify: ^1.1.0
-    prop-types: ^15.6.1
-    react-is: ^16.6.0
-    react-lifecycles-compat: ^3.0.0
+    "@types/use-sync-external-store": ^0.0.3
+    use-sync-external-store: ^1.0.0
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0-0 || ^16.0.0-0
-    redux: ^2.0.0 || ^3.0.0 || ^4.0.0-0
-  checksum: 3b8675ff45081181ccac1213a356fab3bfbf84e13639cc483f2e2dd8bb20ff2ec50fd47dfb46ed02b6df0f5fc23acafd5f9951c484cd98126db292341571557f
+    "@types/react": ^18.2.25
+    react: ^18.0
+    redux: ^5.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    redux:
+      optional: true
+  checksum: 56ac98228e011b26e0202346af9c8dd408ad5ea8235d8761c8e05ea0953b8ca801cdf9d1f481fdec7b285d7f30ceef7238b46b3df7636ef77dd5c2ea8c5be5b2
   languageName: node
   linkType: hard
 
@@ -21611,15 +21629,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:^2.3.0":
-  version: 2.4.2
-  resolution: "redux-thunk@npm:2.4.2"
-  peerDependencies:
-    redux: ^4
-  checksum: e202d6ef7dfa7df08ed24cb221aa89d6c84dbaa7d65fe90dbd8e826d0c10d801f48388f9a7598a4fd970ecbc93d335014570a61ca7bc8bf569eab5de77b31a3c
-  languageName: node
-  linkType: hard
-
 "redux-thunk@npm:^3.1.0":
   version: 3.1.0
   resolution: "redux-thunk@npm:3.1.0"
@@ -21629,7 +21638,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:^4.0.0, redux@npm:^4.0.5, redux@npm:^4.1.2, redux@npm:^4.2.0":
+"redux@npm:^4.0.0, redux@npm:^4.1.2, redux@npm:^4.2.0":
   version: 4.2.1
   resolution: "redux@npm:4.2.1"
   dependencies:
@@ -25210,6 +25219,15 @@ __metadata:
     "@types/react":
       optional: true
   checksum: d8deea8b85e55ac6daba237a889630bfdbf0ebf60e9e22b6a78a78c26fabe6025e04ada7abef1e444e6786227d921e648b2707db8b3564daf757264a148a6e23
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.0.0":
+  version: 1.2.2
+  resolution: "use-sync-external-store@npm:1.2.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 23b1597c10adf15b26ade9e8c318d8cc0abc9ec0ab5fc7ca7338da92e89c2536abd150a5891bf076836c352fdfa104fc7231fb48f806fd9960e0cbe03601abaf
   languageName: node
   linkType: hard
 

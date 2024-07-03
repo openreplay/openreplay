@@ -26,7 +26,7 @@ interface Props {
   active?: boolean;
   history?: any;
   onClick?: () => void;
-  isWidget?: boolean;
+  isSaved?: boolean;
   hideName?: boolean;
   grid?: string;
   isGridView?: boolean;
@@ -34,7 +34,7 @@ interface Props {
 function WidgetWrapper(props: Props & RouteComponentProps) {
   const { dashboardStore } = useStore();
   const {
-    isWidget = false,
+    isSaved = false,
     active = false,
     index = 0,
     moveListItem = null,
@@ -78,7 +78,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   };
 
   const onChartClick = () => {
-    if (!isWidget || isPredefined) return;
+    if (!isSaved || isPredefined) return;
 
     props.history.push(
       withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
@@ -90,7 +90,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   const addOverlay =
     isTemplate ||
     (!isPredefined &&
-      isWidget &&
+     isSaved &&
       widget.metricOf !== FilterKey.ERRORS &&
       widget.metricOf !== FilterKey.SESSIONS);
 
@@ -99,7 +99,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
       className={cn(
         'relative rounded bg-white border group rounded-lg',
         'col-span-' + widget.config.col,
-        { 'hover:shadow-border-gray': !isTemplate && isWidget },
+        { 'hover:shadow-border-gray': !isTemplate && isSaved },
         { 'hover:shadow-border-main': isTemplate }
       )}
       style={{
@@ -112,7 +112,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
       onClick={props.onClick ? props.onClick : () => {}}
       id={`widget-${widget.widgetId}`}
     >
-      {!isTemplate && isWidget && isPredefined && (
+      {!isTemplate && isSaved && isPredefined && (
         <div
           className={cn(
             stl.drillDownMessage,
@@ -126,7 +126,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
       {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
       <div
         className={cn('p-3 pb-4 flex items-center justify-between', {
-          'cursor-move': !isTemplate && isWidget,
+          'cursor-move': !isTemplate && isSaved,
         })}
       >
         {!props.hideName ? (
@@ -134,7 +134,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
             <TextEllipsis text={widget.name} />
           </div>
         ) : null}
-        {isWidget && (
+        {isSaved && (
           <div className="flex items-center" id="no-print">
             {!isPredefined && isTimeSeries && !isGridView && (
               <>
@@ -171,7 +171,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
             isPreview={isPreview}
             metric={widget}
             isTemplate={isTemplate}
-            isWidget={isWidget}
+            isSaved={isSaved}
           />
         </div>
       </LazyLoad>

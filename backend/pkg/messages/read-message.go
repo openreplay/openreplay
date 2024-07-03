@@ -77,9 +77,9 @@ func DecodeSessionEndDeprecated(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSetPageLocation(reader BytesReader) (Message, error) {
+func DecodeSetPageLocationDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &SetPageLocation{}
+	msg := &SetPageLocationDeprecated{}
 	if msg.URL, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -693,9 +693,9 @@ func DecodeNgRx(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeGraphQL(reader BytesReader) (Message, error) {
+func DecodeGraphQLDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &GraphQL{}
+	msg := &GraphQLDeprecated{}
 	if msg.OperationKind, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -706,6 +706,9 @@ func DecodeGraphQL(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadInt(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1020,6 +1023,30 @@ func DecodeCSSInsertRuleURLBased(reader BytesReader) (Message, error) {
 func DecodeMouseClick(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &MouseClick{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.HesitationTime, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Selector, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.NormalizedX, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.NormalizedY, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeMouseClickDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MouseClickDeprecated{}
 	if msg.ID, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1423,6 +1450,45 @@ func DecodeRedux(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.ActionTime, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetPageLocation(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetPageLocation{}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Referrer, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.NavigationStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DocumentTitle, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeGraphQL(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &GraphQL{}
+	if msg.OperationKind, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.OperationName, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Variables, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1899,7 +1965,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 3:
 		return DecodeSessionEndDeprecated(reader)
 	case 4:
-		return DecodeSetPageLocation(reader)
+		return DecodeSetPageLocationDeprecated(reader)
 	case 5:
 		return DecodeSetViewportSize(reader)
 	case 6:
@@ -1977,7 +2043,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 47:
 		return DecodeNgRx(reader)
 	case 48:
-		return DecodeGraphQL(reader)
+		return DecodeGraphQLDeprecated(reader)
 	case 49:
 		return DecodePerformanceTrack(reader)
 	case 50:
@@ -2012,8 +2078,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeAssetCache(reader)
 	case 67:
 		return DecodeCSSInsertRuleURLBased(reader)
-	case 69:
+	case 68:
 		return DecodeMouseClick(reader)
+	case 69:
+		return DecodeMouseClickDeprecated(reader)
 	case 70:
 		return DecodeCreateIFrameDocument(reader)
 	case 71:
@@ -2064,6 +2132,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeTagTrigger(reader)
 	case 121:
 		return DecodeRedux(reader)
+	case 122:
+		return DecodeSetPageLocation(reader)
+	case 123:
+		return DecodeGraphQL(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

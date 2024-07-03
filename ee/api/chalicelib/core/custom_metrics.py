@@ -5,7 +5,7 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import funnels, issues, click_maps, sessions_insights, sessions_mobs, sessions_favorite, \
+from chalicelib.core import funnels, issues, heatmaps, sessions_insights, sessions_mobs, sessions_favorite, \
     product_analytics, custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -36,25 +36,6 @@ def __try_live(project_id, data: schemas.CardSchema):
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
-        if data.view_type == schemas.MetricTimeseriesViewType.progress:
-            r = {"count": results[-1]}
-            diff = s.filter.endTimestamp - s.filter.startTimestamp
-            s.filter.endTimestamp = s.filter.startTimestamp
-            s.filter.startTimestamp = s.filter.endTimestamp - diff
-            r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                                         view_type=data.view_type, metric_type=data.metric_type,
-                                                         metric_of=data.metric_of, metric_value=data.metric_value)
-            r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
-            r["seriesName"] = s.name if s.name else i + 1
-            r["seriesId"] = s.series_id if s.series_id else None
-            results[-1] = r
-        elif data.view_type == schemas.MetricTableViewType.pie_chart:
-            if len(results[i].get("values", [])) > PIE_CHART_GROUP:
-                results[i]["values"] = results[i]["values"][:PIE_CHART_GROUP] \
-                                       + [{
-                    "name": "Others", "group": True,
-                    "sessionCount": sum(r["sessionCount"] for r in results[i]["values"][PIE_CHART_GROUP:])
-                }]
 
     return results
 
@@ -63,7 +44,8 @@ def __get_table_of_series(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
         results.append(sessions.search2_table(data=s.filter, project_id=project_id, density=data.density,
-                                              metric_of=data.metric_of, metric_value=data.metric_value))
+                                              metric_of=data.metric_of, metric_value=data.metric_value,
+                                              metric_format=data.metric_format))
 
     return results
 
@@ -74,7 +56,10 @@ def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int =
             "stages": [],
             "totalDropDueToIssues": 0
         }
-    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+
+    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
+                                                      data=data.series[0].filter,
+                                                      metric_of=data.metric_of)
 
 
 def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
@@ -96,15 +81,15 @@ def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __get_click_map_chart(project_id, user_id, data: schemas.CardClickMap, include_mobs: bool = True):
+def __get_heat_map_chart(project_id, user_id, data: schemas.CardHeatMap, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
-    # this code is duplicating the clickmap filters when creating a card
-    # data.series[0].filter.filters += data.series[0].filter.events
-    return click_maps.search_short_session(project_id=project_id, user_id=user_id,
-                                           data=schemas.ClickMapSessionsSearch(
-                                               **data.series[0].filter.model_dump()),
-                                           include_mobs=include_mobs)
+    data.series[0].filter.filters += data.series[0].filter.events
+    data.series[0].filter.events = []
+    return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
+                                         data=schemas.HeatMapSessionsSearch(
+                                             **data.series[0].filter.model_dump()),
+                                         include_mobs=include_mobs)
 
 
 # EE only
@@ -128,8 +113,6 @@ def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardP
 
 def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
     series_charts = __try_live(project_id=project_id, data=data)
-    if data.view_type == schemas.MetricTimeseriesViewType.progress:
-        return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
@@ -197,7 +180,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     supported = {
         schemas.MetricType.timeseries: __get_timeseries_chart,
         schemas.MetricType.table: __get_table_chart,
-        schemas.MetricType.click_map: __get_click_map_chart,
+        schemas.MetricType.heat_map: __get_heat_map_chart,
         schemas.MetricType.funnel: __get_funnel_chart,
         schemas.MetricType.insights: __get_insights_chart,
         schemas.MetricType.pathAnalysis: __get_path_analysis_chart
@@ -205,31 +188,34 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
-def __merge_metric_with_data(metric: schemas.CardSchema,
-                             data: schemas.CardSessionsSchema) -> schemas.CardSchema:
-    metric.startTimestamp = data.startTimestamp
-    metric.endTimestamp = data.endTimestamp
-    metric.page = data.page
-    metric.limit = data.limit
-    metric.density = data.density
-    if data.series is not None and len(data.series) > 0:
-        metric.series = data.series
-
-    # if len(data.filters) > 0:
-    #     for s in metric.series:
-    #         s.filter.filters += data.filters
-    # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
-    return metric
+# def __merge_metric_with_data(metric: schemas.CardSchema,
+#                              data: schemas.CardSessionsSchema) -> schemas.CardSchema:
+#     metric.startTimestamp = data.startTimestamp
+#     metric.endTimestamp = data.endTimestamp
+#     metric.page = data.page
+#     metric.limit = data.limit
+#     metric.density = data.density
+#     if data.series is not None and len(data.series) > 0:
+#         metric.series = data.series
+#
+#     # if len(data.filters) > 0:
+#     #     for s in metric.series:
+#     #         s.filter.filters += data.filters
+#     # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
+#     return metric
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if card is None:
+    # No need for this because UI is sending the full payload
+    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if card is None:
+    #    return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**card)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**card)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     results = []
-    for s in metric.series:
+    for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -237,27 +223,33 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
 
 
 def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if raw_metric is None:
+    # No need for this because UI is sending the full payload
+    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if raw_metric is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if raw_metric is None:
+    # No need for this because UI is sending the full payload
+    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if raw_metric is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         return {"seriesId": s.series_id, "seriesName": s.name,
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
@@ -317,7 +309,7 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
     supported = {
         schemas.MetricType.timeseries: not_supported,
         schemas.MetricType.table: not_supported,
-        schemas.MetricType.click_map: not_supported,
+        schemas.MetricType.heat_map: not_supported,
         schemas.MetricType.funnel: __get_funnel_issues,
         schemas.MetricType.insights: not_supported,
         schemas.MetricType.pathAnalysis: __get_path_analysis_issues,
@@ -336,9 +328,12 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
-        if data.metric_type == schemas.MetricType.click_map:
-            session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
-                                                 data=data, include_mobs=False)
+        if data.metric_type == schemas.MetricType.heat_map:
+            if data.session_id is not None:
+                session_data = json.dumps({"sessionId": data.session_id})
+            else:
+                session_data = __get_heat_map_chart(project_id=project_id, user_id=user_id,
+                                                    data=data, include_mobs=False)
             if session_data is not None:
                 # for EE only
                 keys = sessions_mobs. \
@@ -350,7 +345,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
                     try:
                         extra.tag_session(file_key=k, tag_value=tag)
                     except Exception as e:
-                        logger.warning(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                        logger.warning(f"!!!Error while tagging: {k} to {tag} for heatMap")
                         logger.error(str(e))
                 session_data = json.dumps(session_data)
         _data = {"session_data": session_data}
@@ -391,7 +386,8 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
 
 
 def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
-    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = get_card(metric_id=metric_id, project_id=project_id,
+                            user_id=user_id, flatten=False, include_data=True)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -424,8 +420,14 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
     params["card_info"] = None
+    params["session_data"] = json.dumps(metric["data"])
     if data.metric_type == schemas.MetricType.pathAnalysis:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+    elif data.metric_type == schemas.MetricType.heat_map:
+        if data.session_id is not None:
+            params["session_data"] = json.dumps({"sessionId": data.session_id})
+        elif "data" in metric:
+            params["session_data"] = json.dumps({"sessionId": metric["data"]["sessionId"]})
 
     with pg_client.PostgresClient() as cur:
         sub_queries = []
@@ -459,7 +461,8 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
                 edited_at = timezone('utc'::text, now()),
                 default_config = %(config)s,
                 thumbnail = %(thumbnail)s,
-                card_info = %(card_info)s
+                card_info = %(card_info)s,
+                data = %(session_data)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -496,7 +499,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
                         metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
-                        dashboards, owner_email, default_config AS config, thumbnail
+                        dashboards, owner_email, owner_name, default_config AS config, thumbnail
                 FROM metrics
                          {sub_join}
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
@@ -507,7 +510,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                                                     AND project_id = %(project_id)s
                                                     AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                             ) AS connected_dashboards ON (TRUE)
-                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                         LEFT JOIN LATERAL (SELECT email AS owner_email, name AS owner_name
                                             FROM users
                                             WHERE deleted_at ISNULL
                                               AND users.user_id = metrics.user_id
@@ -515,6 +518,9 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                 WHERE {" AND ".join(constraints)}
                 ORDER BY created_at {data.order.value}
                 LIMIT %(limit)s OFFSET %(offset)s;""", params)
+        logger.debug("---------")
+        logger.debug(query)
+        logger.debug("---------")
         cur.execute(query)
         rows = cur.fetchall()
         if include_series:
@@ -531,7 +537,8 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
 
 def get_all(project_id, user_id):
     default_search = schemas.SearchCardsSchema()
-    result = rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    result = rows
     while len(rows) == default_search.limit:
         default_search.page += 1
         rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
@@ -565,7 +572,7 @@ def delete_card(project_id, metric_id, user_id):
                 try:
                     extra.tag_session(file_key=k, tag_value=tag)
                 except Exception as e:
-                    logger.warning(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                    logger.warning(f"!!!Error while tagging: {k} to {tag} for heatMap")
                     logger.error(str(e))
     return {"state": "success"}
 
@@ -668,14 +675,17 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if card is None:
+    # No need for this because UI is sending the full payload
+    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    # if card is None:
+    #     return None
+    # metric: schemas.CardSchema = schemas.CardSchema(**card)
+    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
+    # if metric is None:
+    #     return None
+    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
-    metric: schemas.CardSchema = schemas.CardSchema(**card)
-    metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    if metric is None:
-        return None
-    for s in metric.series:
+    for s in data.series:
         s.filter.startTimestamp = data.startTimestamp
         s.filter.endTimestamp = data.endTimestamp
         s.filter.limit = data.limit
@@ -718,20 +728,40 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
-    elif metric.metric_type == schemas.MetricType.click_map:
-        if raw_metric["data"]:
-            keys = sessions_mobs. \
-                __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
-            mob_exists = False
-            for k in keys:
-                if StorageClient.exists(bucket=config("sessions_bucket"), key=k):
-                    mob_exists = True
-                    break
-            if mob_exists:
-                raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
-                                                                      project_id=project_id)
-                raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
-                    session_id=raw_metric["data"]["sessionId"])
-                return raw_metric["data"]
+    elif metric.metric_type == schemas.MetricType.heat_map:
+        if raw_metric["data"] and raw_metric["data"].get("sessionId"):
+            return heatmaps.get_selected_session(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
+        else:
+            return heatmaps.search_short_session(project_id=project_id, data=metric, user_id=user_id)
 
     return get_chart(project_id=project_id, data=metric, user_id=user_id)
+
+
+def card_exists(metric_id, project_id, user_id) -> bool:
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""SELECT 1
+                FROM metrics
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))
+                                                    AND metric_id = %(metric_id)s) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                            AND users.user_id = metrics.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE metrics.project_id = %(project_id)s
+                  AND metrics.deleted_at ISNULL
+                  AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                  AND metrics.metric_id = %(metric_id)s
+                ORDER BY created_at;""",
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
+        )
+        cur.execute(query)
+        row = cur.fetchone()
+        return row is not None

@@ -25,7 +25,7 @@ function TopHeader(props: Props) {
 
   const { account, siteId } = props;
   const { userStore, notificationStore } = useStore();
-  const initialDataFetched = useObserver(() => userStore.initialDataFetched);
+  const initialDataFetched = userStore.initialDataFetched;
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
