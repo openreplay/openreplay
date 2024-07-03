@@ -25,7 +25,6 @@ function MetricTypeIcon({ type }: any) {
     setCard(t);
   }, [type]);
 
-  console.log(type, TYPES)
   return (
     <Tooltip title={<div className="capitalize">{card.title}</div>}>
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
@@ -82,7 +81,6 @@ function MetricListItem(props: Props) {
       toast.error('Failed to rename card');
     }}
 
-  console.log(metric)
   return (
     <>
       <Modal open={isEdit} onClose={() => setIsEdit(false)}>

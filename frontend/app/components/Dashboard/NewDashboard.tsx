@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
-import cn from 'classnames';
 import withPermissions from 'HOCs/withPermissions';
 
 interface RouterProps {
@@ -17,7 +15,7 @@ interface RouterProps {
 function NewDashboard(props: RouteComponentProps<RouterProps>) {
   const { history, match: { params: { siteId, dashboardId } } } = props;
   const { dashboardStore } = useStore();
-  const loading = useObserver(() => dashboardStore.isLoading);
+  const loading = dashboardStore.isLoading;
   const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
   const isDashboardDetails = history.location.pathname.includes('/dashboard/');
   const isAlertsDetails = history.location.pathname.includes('/alert/');
@@ -31,11 +29,11 @@ function NewDashboard(props: RouteComponentProps<RouterProps>) {
     });
   }, [siteId]);
 
-  return useObserver(() => (
+  return (
     <Loader loading={loading} className='mt-12'>
       <DashboardRouter />
     </Loader>
-  ));
+  );
 }
 
-export default withRouter(withPermissions(['METRICS'])(NewDashboard));
+export default withRouter(withPermissions(['METRICS'])(observer(NewDashboard)));

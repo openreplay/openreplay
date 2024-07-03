@@ -38,6 +38,7 @@ function ListView(props: Props) {
       </div>
       {list.map((metric: any) => (
         <MetricListItem
+          key={metric.metricId}
           disableSelection={disableSelection}
           metric={metric}
           siteId={siteId}
