@@ -34,7 +34,7 @@ const ControlButton = ({
       id={'control-button-' + label.toLowerCase()}
       disabled={disabled}
     >
-      <div className={stl.labels}>{hasErrors && <div className={stl.errorSymbol} />}</div>
+      {hasErrors && <div className={stl.labels}><div className={stl.errorSymbol} /></div>}
       <span className={cn('font-semibold hover:text-main', active ? 'color-main' : 'color-gray-darkest')}>
         {label}
       </span>

@@ -136,7 +136,9 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div className={cn('flex items-center w-full', { 'px-4': isLocation })}>
-            {event.type && iconName ? <Icon name={iconName} size='16' color={'gray-dark'} /> : icon}
+            <div style={{ minWidth: '16px' }}>
+              {event.type && iconName ? <Icon name={iconName} size='16' color={'gray-dark'} /> : icon}
+            </div>
             <div className='ml-3 w-full'>
               <div className='flex w-full items-first justify-between'>
                 <div className='flex items-center w-full' style={{ minWidth: '0' }}>
@@ -202,8 +204,8 @@ const Event: React.FC<Props> = ({
           {event.target ? 'Copy CSS' : 'Copy URL'}
         </button>
       )}
-      <div className={cn(cls.topBlock, 'w-full')}>
-        <div className={cn(cls.firstLine, 'w-full')}>{renderBody()}</div>
+      <div className={cn(cls.topBlock, cls.firstLine, 'w-full')}>
+        {renderBody()}
       </div>
       {isLocation &&
         (event.fcpTime || event.visuallyComplete || event.timeToInteractive) && (
