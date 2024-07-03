@@ -30,7 +30,7 @@ function CardIssues() {
   function getFilters(filter: any) {
     const mapSeries = (item: any) => {
       const filters = item.filter.filters
-          .map((f: any) => f.toJson());
+        .map((f: any) => f.toJson());
 
       return {
         ...item,
@@ -83,32 +83,32 @@ function CardIssues() {
     debounceRequest(newPayload);
   }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
 
-    const clearFilters = () => {
-        metricStore.updateKey('page', 1);
-        dashboardStore.resetDrillDownFilter();
-    };
+  const clearFilters = () => {
+    metricStore.updateKey('page', 1);
+    dashboardStore.resetDrillDownFilter();
+  };
 
   return useObserver(() => (
-    <div className='bg-white rounded p-4 border'>
-      <div className='flex justify-between'>
-        <div className='flex items-center'>
-          <h1 className='font-medium text-2xl'>Issues</h1>
+    <div className="bg-white rounded p-4 border">
+      <div className="flex justify-between">
+        <div className="flex items-center">
+          <h1 className="font-medium text-2xl">Issues</h1>
           {!!filter.filters[1] && (
-            <div className='text-disabled-text ml-3'>
-              Showing issues of <span className='font-medium'>{filter.filters[0].value}</span>
+            <div className="text-disabled-text ml-3">
+              Showing issues of <span className="font-medium">{filter.filters[0].value}</span>
               <span className="mx-1">to</span>
-              <span className='font-medium'>{filter.filters[1].value}</span>
+              <span className="font-medium">{filter.filters[1].value}</span>
             </div>
           )}
         </div>
-        <div className='flex items-center gap-4'>
-          {hasFilters && <Button variant='text-primary' onClick={clearFilters}>Clear Filters</Button>}
-          <Button variant='text-primary' onClick={() => handleClick()}>All Sessions</Button>
+        <div className="flex items-center gap-4">
+          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
+          <Button variant="text-primary" onClick={() => handleClick()}>All Sessions</Button>
         </div>
       </div>
 
       <Loader loading={loading}>
-        <NoContent show={data.issues.length == 0} title='No data!'>
+        <NoContent show={data.issues.length == 0} title="No data!">
           {data.issues.map((item: any, index: any) => (
             <div onClick={() => handleClick(item)} key={index}>
               <CardIssueItem issue={item} />
@@ -117,13 +117,13 @@ function CardIssues() {
         </NoContent>
       </Loader>
 
-      <div className='w-full flex items-center justify-between pt-4'>
-        <div className='text-disabled-text'>
+      <div className="w-full flex items-center justify-between pt-4">
+        <div className="text-disabled-text">
           {data.total && (
             <>
-              Showing < span className='font-medium'>{(filter.page - 1) * pageSize + 1}</span> to{' '}
-              <span className='font-medium'>{(filter.page - 1) * pageSize + pageSize}</span> of{' '}
-              <span className='font-medium'>{data.total}</span> issues.
+              Showing < span className="font-medium">{(filter.page - 1) * pageSize + 1}</span> to{' '}
+              <span className="font-medium">{(filter.page - 1) * pageSize + pageSize}</span> of{' '}
+              <span className="font-medium">{data.total}</span> issues.
             </>
           )}
         </div>
@@ -132,7 +132,7 @@ function CardIssues() {
           page={filter.page}
           total={data.total}
           onPageChange={(page: any) => filter.updateKey('page', page)}
-          limit={pageSize}
+          limit={widget.limit}
           debounceRequest={500}
         />
       </div>
