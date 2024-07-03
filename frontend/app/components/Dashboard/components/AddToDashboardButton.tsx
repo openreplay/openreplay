@@ -16,7 +16,7 @@ function AddToDashboardButton({metricId}: Props) {
         label: i.name,
         value: i.dashboardId,
     }));
-    const [selectedId, setSelectedId] = React.useState(dashboardOptions[0].value);
+    const [selectedId, setSelectedId] = React.useState(dashboardOptions[0]?.value);
 
     const onSave = (close: any) => {
         const dashboard = dashboardStore.getDashboard(selectedId)
