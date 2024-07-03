@@ -13,8 +13,8 @@ function Headers(props: Props) {
       <NoContent
         title={
           <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={ICONS.NO_RESULTS} size="60" />
-            <div className="mt-6 text-2xl">No data available</div>
+            <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+            <div className="mt-6 text-base">No data available</div>
           </div>
         }
         size="small"

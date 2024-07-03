@@ -29,13 +29,13 @@ function AddCardSelectionModal(props: Props) {
     return (
         <>
             <Modal
-                title="Add card to dashboard"
+                title="Add a card to dashboard"
                 open={props.open}
                 footer={null}
                 onCancel={props.onClose}
                 className='addCard'
             >
-                <Row gutter={16} justify="center">
+                <Row gutter={16} justify="center" className='py-5'>
                     <Col span={12}>
                         <div className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3" style={{height: '80px'}} onClick={() => onClick(true)}>
                             <GalleryVertical style={{fontSize: '24px', color: '#394EFF'}}/>

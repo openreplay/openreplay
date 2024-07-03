@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Button, Input, Segmented, Space } from 'antd';
+import { Info } from 'lucide-react';
 import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
 import { useStore } from 'App/mstore';
 import Option from './Option';
@@ -21,6 +22,15 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   const { metricStore, dashboardStore } = useStore();
   const dashboardId = window.location.pathname.split('/')[3];
   const [libraryQuery, setLibraryQuery] = React.useState<string>('');
+  const [headerText, setHeaderText] = useState<string>('');
+
+  useEffect(() => {
+    if (dashboardId) {
+      setHeaderText(isLibrary ? 'Your Library' : 'Create Card');
+    } else {
+      setHeaderText('Select a card template to start your dashboard');
+    }
+  }, [dashboardId, isLibrary]);
 
   const handleCardSelection = (card: string) => {
     metricStore.init();
@@ -29,7 +39,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
     const cardData: any = {
       metricType: selectedCard.cardType,
       name: selectedCard.title,
-      metricOf: selectedCard.metricOf
+      metricOf: selectedCard.metricOf,
     };
 
     if (selectedCard.cardType === FUNNEL) {
@@ -43,14 +53,16 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   };
 
   const cardItems = useMemo(() => {
-    return CARD_LIST.filter((card) => card.category === selected && (!card.isEnterprise || card.isEnterprise && isEnterprise))
+    return CARD_LIST.filter((card) => card.category === selected && (!card.isEnterprise || (card.isEnterprise && isEnterprise)))
       .map((card) => (
         <div key={card.key} className={card.width ? `col-span-${card.width}` : 'col-span-2'}>
-          <card.example onCard={handleCardSelection}
-                        type={card.key}
-                        title={card.title}
-                        data={card.data}
-                        height={card.height} />
+          <card.example
+            onCard={handleCardSelection}
+            type={card.key}
+            title={card.title}
+            data={card.data}
+            height={card.height}
+          />
         </div>
       ));
   }, [selected]);
@@ -73,18 +85,22 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
 
   return (
     <>
-      <Space className="items-center justify-between">
+      <Space className="items-center justify-between px-2">
         <div className="text-xl leading-4 font-medium">
-          {dashboardId ? (isLibrary ? 'Your Library' : 'Create Card') : 'Select a template to create a card'}
+          {headerText}
+          {headerText === 'Select a card template to start your dashboard' && (
+            <div className='text-sm font-normal mt-3 text-gray-500 flex gap-2 items-center'>
+              <Info size={14} /> Following card previews are based on mock data for illustrative purposes only.
+            </div>
+          )}
         </div>
         {isLibrary && (
           <Space>
-            {selectedCards.length > 0 ? (
+            {selectedCards.length > 0 && (
               <Button type="primary" onClick={onAddSelected}>
                 Add {selectedCards.length} Selected
               </Button>
-            ) : ''}
-
+            )}
             <Input.Search
               placeholder="Find by card title"
               onChange={(value) => setLibraryQuery(value.target.value)}
@@ -93,15 +109,17 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           </Space>
         )}
       </Space>
-
       {!isLibrary && <CategorySelector setSelected={setSelectedCategory} selected={selected} />}
-
-      {isLibrary ?
-        <CardsLibrary query={libraryQuery}
-                      selectedList={selectedCards}
-                      category={selected}
-                      onCard={onCardClick} /> :
-        <ExampleCardsGrid items={cardItems} />}
+      {isLibrary ? (
+        <CardsLibrary
+          query={libraryQuery}
+          selectedList={selectedCards}
+          category={selected}
+          onCard={onCardClick}
+        />
+      ) : (
+        <ExampleCardsGrid items={cardItems} />
+      )}
     </>
   );
 };
@@ -115,11 +133,11 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({ setSelected, select
   <Segmented
     options={CARD_CATEGORIES.map(({ key, label, icon }) => ({
       label: <Option key={key} label={label} Icon={icon} />,
-      value: key
+      value: key,
     }))}
     value={selected}
     onChange={setSelected}
-    className="w-fit"
+    className="w-fit shadow-sm"
   />
 );
 

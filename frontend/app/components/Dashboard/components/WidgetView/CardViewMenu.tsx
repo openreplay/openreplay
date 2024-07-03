@@ -40,9 +40,9 @@ const CardViewMenu = () => {
             icon: <TrashIcon size={16}/>,
             onClick: () => {
                 Modal.confirm({
-                    title: 'Are you sure you want to remove this card?',
+                    title: 'Confirm Card Deletion',
                     icon: null,
-                    // content: 'Bla bla ...',
+                    content:'Are you sure you want to remove this card? This action is permanent and cannot be undone.',
                     footer: (_, {OkBtn, CancelBtn}) => (
                         <>
                             <CancelBtn/>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Icon, Popover, Tooltip } from "UI";
-import { Dropdown, Menu, Button } from "antd";
+import { Dropdown, Menu, Button} from "antd";
 import {EllipsisVertical} from 'lucide-react';
 import styles from "./itemMenu.module.css";
 import cn from "classnames";
@@ -96,28 +96,30 @@ export default class ItemMenu extends React.PureComponent<Props> {
           </div>
         )}
       >
-        <Button
-          className={cn("select-none", !this.props.flat ? parentStyles : "", {
-            "": !this.props.flat && displayed && label,
-          }, 'border-0 shadow-one')}
-        >
-          {label && (
-            <span className={cn("font-medium")}>
-              {label}
-            </span>
-          )}
-          {!this.props.flat && (
-            <div
-              ref={(ref) => {
-                this.menuBtnRef = ref;
-              }}
-              className={cn("rounded-full flex items-center justify-center")}
-              role="button"
+        
+            <Button
+              className={cn("select-none", !this.props.flat ? parentStyles : "", {
+                "": !this.props.flat && displayed && label,
+              }, ' shadow-sm')}
             >
-              <EllipsisVertical size={16} />
-            </div>
-          )}
-        </Button>
+              {label && (
+                <span className={cn("font-medium")}>
+                  {label}
+                </span>
+              )}
+              {!this.props.flat && (
+                <div
+                  ref={(ref) => {
+                    this.menuBtnRef = ref;
+                  }}
+                  className={cn("rounded-full flex items-center justify-center")}
+                  role="button"
+                >
+                  <EllipsisVertical size={16} />
+                </div>
+              )}
+            </Button>
+        
       </Popover>
     );
   }

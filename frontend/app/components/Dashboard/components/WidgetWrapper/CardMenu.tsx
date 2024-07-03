@@ -21,7 +21,7 @@ function CardMenu({card}: any) {
         },
         {
             key: 'hide',
-            label: 'Remove',
+            label: 'Remove from Dashboard',
             icon: <EyeOffIcon size={16}/>,
         },
     ];

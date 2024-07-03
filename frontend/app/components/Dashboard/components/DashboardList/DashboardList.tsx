@@ -30,7 +30,7 @@ function DashboardList({ siteId }: { siteId: string }) {
             title: 'Title',
             dataIndex: 'name',
             width: '25%',
-            render: (t) => <div className="link capitalize-first">{t}</div>,
+            render: (t) => <div className="link cap-first">{t}</div>,
         },
         {
             title: 'Last Modified',
@@ -46,6 +46,7 @@ function DashboardList({ siteId }: { siteId: string }) {
             width: '16.67%',
             sorter: (a, b) => a.owner?.localeCompare(b.owner),
             sortDirections: ['ascend', 'descend'],
+            render: (owner) => <div className="cap-first">{owner}</div>,
         },
         {
             title: (
@@ -63,7 +64,7 @@ function DashboardList({ siteId }: { siteId: string }) {
             width: '16.67%',
             dataIndex: 'isPublic',
             render: (isPublic: boolean) => (
-                <Tag icon={isPublic ? <TeamOutlined /> : <LockOutlined />}>
+                <Tag icon={isPublic ? <TeamOutlined /> : <LockOutlined />} bordered={false} className='rounded-lg'>
                     {isPublic ? 'Team' : 'Private'}
                 </Tag>
             ),
@@ -103,16 +104,16 @@ function DashboardList({ siteId }: { siteId: string }) {
     return (
         list.length === 0 && !dashboardStore.filter.showMine ? (
             <div className='flex justify-center text-center'>
-            <Empty
-                image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
-                imageStyle={{
-                    width: imageDimensions.width,
-                    height: imageDimensions.height,
-                    margin: 'auto',
-                    padding: '2rem 0'
-                }}
-                description={emptyDescription}
-            />
+                <Empty
+                    image={<AnimatedSVG name={emptyImage} size={imageDimensions.width} />}
+                    imageStyle={{
+                        width: imageDimensions.width,
+                        height: imageDimensions.height,
+                        margin: 'auto',
+                        padding: '2rem 0'
+                    }}
+                    description={emptyDescription}
+                />
             </div>
         ) : (
             <Table
@@ -136,7 +137,6 @@ function DashboardList({ siteId }: { siteId: string }) {
             />
         )
     );
-
 }
 
 export default connect((state: any) => ({

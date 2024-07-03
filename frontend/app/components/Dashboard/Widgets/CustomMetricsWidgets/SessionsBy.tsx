@@ -1,8 +1,9 @@
 import React from 'react';
 import { Button, Space } from 'antd';
 import { filtersMap } from 'Types/filter/newFilter';
-import { Icon } from 'UI';
+// import { Icon } from 'UI';
 import { Empty } from 'antd';
+import { Info } from 'lucide-react'
 import { ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
@@ -57,10 +58,10 @@ function SessionsBy(props: Props) {
           image={null}
           style={{ minHeight: 220 }}
           className="flex flex-col items-center justify-center"
-          imageStyle={{ height: 60 }}
+          imageStyle={{ height: 0}}
           description={
-            <div className="flex items-center justify-center text-lg">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="flex items-center gap-2 justify-center text-lg font-medium text-black">
+              <Info size={16} />
               No data available for the selected period.
             </div>
           }
