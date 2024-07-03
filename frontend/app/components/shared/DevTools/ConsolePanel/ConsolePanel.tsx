@@ -220,7 +220,7 @@ function ConsolePanel({
                 ref={_list}
                 deferredMeasurementCache={cache}
                 overscanRowCount={5}
-                estimatedRowSize={36}
+                estimatedRowSize={24}
                 rowCount={Math.ceil(filteredList.length || 1)}
                 rowHeight={cache.rowHeight}
                 rowRenderer={_rowRenderer}

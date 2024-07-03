@@ -105,15 +105,15 @@ function FetchTabs({ resource }: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
-                <div className="mt-6">
-                  Body is Empty or not captured.
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+                <div className="mt-6 text-base font-normal">
+                  Body is empty or not captured.
                   {' '}
                   <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
                     Configure
                   </a>
                   {' '}
-                  network capturing to get more out of fetch/XHR requests.
+                  network capturing to get more out of Fetch/XHR requests.
                 </div>
               </div>
             }
@@ -137,15 +137,15 @@ function FetchTabs({ resource }: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
-                <div className="mt-6">
-                  Body is Empty or not captured.
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+                <div className="mt-6 text-base font-normal">
+                  Body is empty or not captured.
                   {' '}
                   <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
                     Configure
                   </a>
                   {' '}
-                  network capturing to get more out of fetch/XHR requests.
+                  network capturing to get more out of Fetch/XHR requests.
                 </div>
               </div>
             }

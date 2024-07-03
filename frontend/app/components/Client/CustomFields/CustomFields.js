@@ -90,7 +90,7 @@ function CustomFields(props) {
                 <NoContent
                     title={
                         <div className="flex flex-col items-center justify-center">
-                            <AnimatedSVG name={ICONS.NO_METADATA} size={170} />
+                            <AnimatedSVG name={ICONS.NO_METADATA} size={60} />
                             {/* <div className="mt-4" /> */}
                             <div className="text-center my-4">None added yet</div>
                         </div>

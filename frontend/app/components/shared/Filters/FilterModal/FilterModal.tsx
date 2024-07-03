@@ -225,8 +225,8 @@ function FilterModal(props: Props) {
           <div className="-mx-6 px-6">
             {isResultEmpty && !fetchingFilterSearchList ? (
               <div className="flex items-center flex-col">
-                <AnimatedSVG name={ICONS.NO_SEARCH_RESULTS} size={180} />
-                <div className="color-gray-medium font-medium px-3">
+                <AnimatedSVG name={ICONS.NO_SEARCH_RESULTS} size={30} />
+                <div className="color-gray-medium font-medium px-3 mt-4">
                   {' '}
                   No Suggestions Found
                 </div>

@@ -37,7 +37,7 @@ function AuditList(props: Props) {
             <NoContent
                 title={
                     <div className="flex flex-col items-center justify-center">
-                    <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                    <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={60} />
                     <div className="text-center my-4">No data available</div>
                     </div>
                 }

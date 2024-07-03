@@ -83,7 +83,7 @@ type State = TimeLineInfo & typeof initialState;
 
 //const TABLE_HEIGHT = 195;
 let _additionalHeight = 0;
-const ROW_HEIGHT = 32;
+const ROW_HEIGHT = 24;
 //const VISIBLE_COUNT = Math.ceil(TABLE_HEIGHT/ROW_HEIGHT);
 
 const TIME_SECTIONS_COUNT = 8;

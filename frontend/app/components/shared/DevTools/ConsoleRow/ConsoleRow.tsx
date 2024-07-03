@@ -34,7 +34,7 @@ function ConsoleRow(props: Props) {
     <div
       style={style}
       className={cn(
-        'border-b flex items-center py-2 px-4 overflow-hidden group relative select-none',
+        'border-b flex items-start py-1 px-4 overflow-hidden group relative select-none',
         {
           info: !log.isYellow && !log.isRed,
           warn: log.isYellow,
@@ -48,14 +48,19 @@ function ConsoleRow(props: Props) {
         <Icon size="14" {...iconProps} />
       </div>
       <div key={log.key} data-scroll-item={log.isRed}>
-        <div className="flex items-center">
-          <div className={cn('flex items-center', { 'cursor-pointer underline decoration-dotted decoration-gray-400': !!log.errorId })}>
+        <div className="flex items-start text-sm">
+          <div className={cn('flex items-start', { 'cursor-pointer underline decoration-dotted decoration-gray-400': !!log.errorId })}>
             {canExpand && (
               <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
             )}
-            <span style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{renderWithNL(lines.pop())}</span>
+            <span className='font-mono text-nowrap max-w-xs'>
+                {renderWithNL(lines.pop())}
+            </span>
           </div>
-          {log.errorId && <TextEllipsis className="ml-2 overflow-hidden" text={log.message}></TextEllipsis>}
+          {log.errorId && 
+              <div className="ml-2 overflow-hidden text-ellipsis text-wrap font-mono">
+                    <span className='w-full'>{log.message}</span>
+              </div>}
         </div>
         {canExpand &&
           expanded &&
