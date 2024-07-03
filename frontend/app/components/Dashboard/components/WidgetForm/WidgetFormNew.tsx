@@ -18,7 +18,6 @@ import { metricOf } from 'App/constants/filterOptions';
 import { AudioWaveform, ChevronDown, ChevronUp, PlusIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import AddStepButton from 'Components/Dashboard/components/FilterSeries/AddStepButton';
-import { Icon } from 'UI';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterKey } from 'Types/filter/filterType';
 

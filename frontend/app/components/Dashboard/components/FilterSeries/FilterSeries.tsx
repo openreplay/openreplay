@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
@@ -93,6 +93,14 @@ function FilterSeries(props: Props) {
     } = props;
     const [expanded, setExpanded] = useState(!expandable);
     const {series, seriesIndex} = props;
+    const [prevLength, setPrevLength] = useState(0);
+
+    useEffect(() => {
+        if (series.filter.filters.length === 1 && prevLength === 0 && seriesIndex === 0) {
+            setExpanded(true);
+        }
+        setPrevLength(series.filter.filters.length);
+    }, [series.filter.filters.length]);
 
     const onUpdateFilter = (filterIndex: any, filter: any) => {
         series.filter.updateFilter(filterIndex, filter);
