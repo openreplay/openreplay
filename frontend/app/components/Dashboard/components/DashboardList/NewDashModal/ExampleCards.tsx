@@ -102,7 +102,7 @@ export const CARD_LIST: CardType[] = [
     title: 'Heatmaps',
     key: HEATMAP,
     cardType: HEATMAP,
-    metricOf: 'sessionCount',
+    metricOf: 'clickMapUrl',
     category: CARD_CATEGORIES[0].key,
     example: HeatmapsExample
   },

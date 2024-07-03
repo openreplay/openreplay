@@ -15,7 +15,7 @@ interface NameFormatter {
 
 class BaseFormatter implements NameFormatter {
   format(name: string): string {
-    return name.replace(/_/g, ' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))).trim();
+    return name?.replace(/_/g, ' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))).trim();
   }
 }
 
@@ -40,6 +40,16 @@ class IssueFormatter extends BaseFormatter {
   }
 }
 
+class UserNameFormatter extends BaseFormatter {
+  format(name: string): string {
+    if (name === null || name === undefined || name === '' || name === 'null' || name === 'undefined') {
+      return 'Anonymous';
+    }
+
+    return super.format(name);
+  }
+}
+
 export class SessionsByRow {
   name: string;
   displayName: string;
@@ -53,7 +63,7 @@ export class SessionsByRow {
     this.displayName = nameFormatter.format(json.name) || 'Unidentified';
     this.sessionCount = numberWithCommas(json.sessionCount);
     this.progress = Math.round((json.sessionCount / totalSessions) * 100);
-    this.icon = iconProvider.getIcon(json.name);
+    this.icon = iconProvider.getIcon(json);
     return this;
   }
 
@@ -72,7 +82,7 @@ export class SessionsByRow {
       case 'platform':
         return { nameFormatter: new BaseFormatter(), iconProvider: new OsIconProvider() };
       case 'userId':
-        return { nameFormatter: new BaseFormatter(), iconProvider: new UserIconProvider() };
+        return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
       default:
         return { nameFormatter: new BaseFormatter(), iconProvider: new DefaultIconProvider() };
     }
