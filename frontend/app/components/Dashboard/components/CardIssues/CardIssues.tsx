@@ -9,6 +9,7 @@ import CardIssueItem from './CardIssueItem';
 import SessionsModal from '../SessionsModal';
 import { useModal } from 'App/components/Modal';
 import Issue from 'App/mstore/types/issue';
+import { List } from 'antd';
 
 function CardIssues() {
   const { metricStore, dashboardStore } = useStore();
@@ -109,11 +110,19 @@ function CardIssues() {
 
       <Loader loading={loading}>
         <NoContent show={data.issues.length == 0} title="No data!">
-          {data.issues.map((item: any, index: any) => (
-            <div onClick={() => handleClick(item)} key={index}>
-              <CardIssueItem issue={item} />
-            </div>
-          ))}
+          {/*{data.issues.map((item: any, index: any) => (*/}
+          {/*  <div onClick={() => handleClick(item)} key={index}>*/}
+          {/*    <CardIssueItem issue={item} />*/}
+          {/*  </div>*/}
+          {/*))}*/}
+          <List
+            itemLayout="horizontal"
+            dataSource={data.issues}
+            renderItem={(item: any) => (
+              <List.Item onClick={() => handleClick(item)}>
+                <CardIssueItem issue={item} />
+              </List.Item>
+            )}/>
         </NoContent>
       </Loader>
 
