@@ -1,8 +1,6 @@
 import ExampleFunnel from './Examples/Funnel';
 import ExamplePath from './Examples/Path';
 import ExampleTrend from './Examples/Trend';
-import Trend from './Examples/Trend';
-import PerfBreakdown from './Examples/PerfBreakdown';
 import ByBrowser from './Examples/SessionsBy/ByBrowser';
 import BySystem from './Examples/SessionsBy/BySystem';
 import ByCountry from './Examples/SessionsBy/ByCountry';
@@ -21,7 +19,6 @@ import {
 import { FilterKey } from 'Types/filter/filterType';
 import { Activity, BarChart, TableCellsMerge, TrendingUp } from 'lucide-react';
 import WebVital from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/WebVital';
-import Bars from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/Bars';
 import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues';
 import InsightsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample';
 import ByUser from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByUser';

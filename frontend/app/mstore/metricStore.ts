@@ -91,7 +91,7 @@ export default class MetricStore {
     }
   }
 
-  setClickMaps(val: boolean) {
+  setClickMapsRage(val: boolean) {
     this.clickMapFilter = val;
   }
 
@@ -207,6 +207,10 @@ export default class MetricStore {
     if (metric) {
       this.instance = metric;
     }
+  }
+
+  setInstance(metric: Widget) {
+    this.instance = metric;
   }
 
   addToList(metric: Widget) {

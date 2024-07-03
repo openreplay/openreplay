@@ -46,9 +46,6 @@ function ClickMapCard({
                     <div className="flex items-center relative text-lg">
                         <Icon name="info-circle" className="mr-2" size="18" />
                         No data available for the selected period.
-                        <div style={{ position: 'absolute', right: -240, top: -110 }}>
-                            <Icon name="pointer-sessions-search" size={250} width={240} />
-                        </div>
                     </div>
                 }
                 show={true}
@@ -56,7 +53,7 @@ function ClickMapCard({
         )
     }
 
-    if (!metricStore.instance.data || !customSession) {
+    if (!metricStore.instance.data?.sessionId || !customSession) {
         return <div className="py-2">Loading session</div>
     }
 

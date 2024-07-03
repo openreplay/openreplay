@@ -1,7 +1,6 @@
 import React, {useState, useRef, useEffect} from 'react';
 import CustomMetricLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricLineChart';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
-import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import {Styles} from 'App/components/Dashboard/Widgets/common';
 import {observer} from 'mobx-react-lite';
@@ -215,7 +214,7 @@ function WidgetChart(props: Props) {
                 );
             }
             return (
-                <ClickMapCard/>
+                <ClickMapCard />
             );
         }
 
