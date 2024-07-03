@@ -138,10 +138,9 @@ function FilterSeries(props: Props) {
             )}
 
             {expandable && !expanded && (
-                <Space className="justify-between w-full px-5 py-2">
+                <Space className="justify-between w-full px-5 py-2 cursor-pointer" onClick={() => setExpanded(!expanded)}>
                     <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>
-                    <Button onClick={() => setExpanded(!expanded)}
-                            size="small"
+                    <Button size="small"
                             icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
                 </Space>
             )}
