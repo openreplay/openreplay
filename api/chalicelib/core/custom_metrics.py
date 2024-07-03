@@ -272,11 +272,20 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         page=data.page,
         filters=filters
     )
+    # ---- To make issues response close to the chart response
+    search_data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
+                                                                 operator=schemas.MathOperator._greater,
+                                                                 value=[1]))
+    if len(data.start_point) == 0:
+        search_data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.location,
+                                                                    operator=schemas.SearchEventOperator._is_any,
+                                                                    value=[]))
+    # ---- End
 
     for s in data.excludes:
-        search_data.filters.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                     operator=schemas.SearchEventOperator._not_on,
-                                                                     value=s.value))
+        search_data.events.append(schemas.SessionSearchEventSchema2(type=s.type,
+                                                                    operator=schemas.SearchEventOperator._not_on,
+                                                                    value=s.value))
     result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
     return result
 
