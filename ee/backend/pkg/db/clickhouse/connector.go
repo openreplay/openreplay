@@ -325,8 +325,8 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 	return nil
 }
 
-func extractUrlPath(url string) string {
-	_, path, query, err := url.GetURLParts(url)
+func extractUrlPath(fullUrl string) string {
+	_, path, query, err := url.GetURLParts(fullUrl)
 	if err != nil {
 		log.Printf("can't parse url: %s", err)
 		return ""
