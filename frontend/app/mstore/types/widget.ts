@@ -83,7 +83,7 @@ export default class Widget {
     dashboardIds: any[] = [];
     config: any = {};
     page: number = 1;
-    limit: number = 5;
+    limit: number = 20;
     thumbnail?: string;
     sessionId?: string;
     params: any = {density: 70};
