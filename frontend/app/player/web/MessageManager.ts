@@ -192,27 +192,26 @@ export default class MessageManager {
     this.state.update({ messagesProcessed: true });
   };
 
+  /**
+   * Scan tab managers for last message ts
+   * */
   public createTabCloseEvents = () => {
     const lastMsgArr: [string, number][] = []
-    const namesObj: Record<string, string> = {}
     for (const [tabId, tab] of Object.entries(this.tabs)) {
       const { lastMessageTs } = tab
       if (lastMessageTs && tabId) {
         lastMsgArr.push([tabId, lastMessageTs])
-        namesObj[tabId] = ''
       }
     }
 
     lastMsgArr.sort((a, b) => a[1] - b[1])
-    if (Object.keys(namesObj).length === 1) {
+    if (Object.keys(this.tabs).length === 1) {
       this.tabCloseManager.append({ tabId: lastMsgArr[0][0], time: this.session.durationMs - 250 })
     } else {
       lastMsgArr.forEach(([tabId, lastMessageTs]) => {
         this.tabCloseManager.append({ tabId, time: lastMessageTs })
       })
     }
-
-    this.state.update({ tabNames: namesObj })
   }
 
   public startLoading = () => {
@@ -326,13 +325,14 @@ export default class MessageManager {
       case MType.TabChange:
         const prevChange = this.activeTabManager.last;
         if (!prevChange || prevChange.tabId !== msg.tabId) {
+          const tabMap = mapTabs(this.tabs);
           this.tabChangeEvents.push({
             tabId: msg.tabId,
             time: msg.time,
-            tabName: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
+            tabName: prevChange?.tabId ? tabMap[prevChange.tabId] : '',
             timestamp: this.sessionStart + msg.time,
-            toTab: mapTabs(this.tabs)[msg.tabId],
-            fromTab: prevChange?.tabId ? mapTabs(this.tabs)[prevChange.tabId] : '',
+            toTab: tabMap[msg.tabId],
+            fromTab: prevChange?.tabId ? tabMap[prevChange.tabId] : '',
             type: 'TABCHANGE',
             activeUrl: '',
           });
