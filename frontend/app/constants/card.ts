@@ -14,7 +14,7 @@ export interface CardType {
 export const LIBRARY = 'library';
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
-export const CLICKMAP = 'clickMap';
+export const HEATMAP = 'heatMap';
 export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';
 export const PERFORMANCE = 'performance';
@@ -48,10 +48,10 @@ export const TYPES: CardType[] = [
     subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
   },
   {
-    title: 'Clickmap',
+    title: 'Heatmap',
     icon: 'puzzle-piece',
     description: 'See where users click and where they get frustrated.',
-    slug: CLICKMAP,
+    slug: HEATMAP,
     subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
   {

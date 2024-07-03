@@ -16,7 +16,7 @@ import {FilterKey} from 'Types/filter/filterType';
 import {
     TIMESERIES,
     TABLE,
-    CLICKMAP,
+    HEATMAP,
     FUNNEL,
     ERRORS,
     PERFORMANCE,
@@ -206,7 +206,7 @@ function WidgetChart(props: Props) {
                 );
             }
         }
-        if (metricType === CLICKMAP) {
+        if (metricType === HEATMAP) {
             if (!props.isPreview) {
                 return (
                     <div style={{height: '229px', overflow: 'hidden', marginBottom: '10px'}}>

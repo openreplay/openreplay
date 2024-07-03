@@ -10,7 +10,7 @@ import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
-import { CLICKMAP } from 'App/constants/card';
+import { HEATMAP } from 'App/constants/card';
 import { connect } from 'react-redux';
 
 interface Props {
@@ -67,7 +67,7 @@ function WidgetSessions(props: Props) {
   const depsString = JSON.stringify(widget.series);
 
   const loadData = () => {
-    if (widget.metricType === CLICKMAP && metricStore.clickMapSearch) {
+    if (widget.metricType === HEATMAP && metricStore.clickMapSearch) {
       const clickFilter = {
         value: [metricStore.clickMapSearch],
         type: 'CLICK',
@@ -128,7 +128,7 @@ function WidgetSessions(props: Props) {
 
         <div className='flex items-center gap-4'>
           {hasFilters && <Button variant='text-primary' onClick={clearFilters}>Clear Filters</Button>}
-          {widget.metricType !== 'table' && widget.metricType !== CLICKMAP && (
+          {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
             <div className='flex items-center ml-6'>
               <span className='mr-2 color-gray-medium'>Filter by Series</span>
               <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />

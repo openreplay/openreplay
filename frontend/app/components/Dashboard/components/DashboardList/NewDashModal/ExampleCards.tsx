@@ -8,7 +8,7 @@ import BySystem from './Examples/SessionsBy/BySystem';
 import ByCountry from './Examples/SessionsBy/ByCountry';
 import ByUrl from './Examples/SessionsBy/ByUrl';
 import {
-  CLICKMAP,
+  HEATMAP,
   ERRORS,
   FUNNEL,
   INSIGHTS,
@@ -103,8 +103,8 @@ export const CARD_LIST: CardType[] = [
   },
   {
     title: 'Heatmaps',
-    key: CLICKMAP,
-    cardType: CLICKMAP,
+    key: HEATMAP,
+    cardType: HEATMAP,
     metricOf: 'sessionCount',
     category: CARD_CATEGORIES[0].key,
     example: HeatmapsExample

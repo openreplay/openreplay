@@ -13,7 +13,7 @@ import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
 import {
     TIMESERIES,
     TABLE,
-    CLICKMAP,
+    HEATMAP,
     FUNNEL,
     ERRORS,
     RESOURCE_MONITORING,
@@ -52,7 +52,7 @@ function WidgetForm(props: Props) {
     const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
     const tableOptions = metricOf.filter((i) => i.type === 'table');
     const isTable = metric.metricType === TABLE;
-    const isClickmap = metric.metricType === CLICKMAP;
+    const isClickmap = metric.metricType === HEATMAP;
     const isFunnel = metric.metricType === FUNNEL;
     const isInsights = metric.metricType === INSIGHTS;
     const isPathAnalysis = metric.metricType === USER_PATH;

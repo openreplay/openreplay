@@ -12,7 +12,7 @@ import {
   PERFORMANCE,
   WEB_VITALS,
   INSIGHTS,
-  CLICKMAP,
+  HEATMAP,
   USER_PATH,
   RETENTION
 } from 'App/constants/card';
@@ -159,7 +159,7 @@ export default class MetricStore {
       value === RESOURCE_MONITORING ||
       value === PERFORMANCE ||
       value === WEB_VITALS ||
-      value === CLICKMAP
+      value === HEATMAP
     ) {
       obj['viewType'] = 'chart';
     }
@@ -185,9 +185,9 @@ export default class MetricStore {
       // obj['startType'] = 'start';
     }
 
-    if (value === CLICKMAP) {
+    if (value === HEATMAP) {
       obj.series = obj.series.slice(0, 1);
-      if (this.instance.metricType !== CLICKMAP) {
+      if (this.instance.metricType !== HEATMAP) {
         obj.series[0].filter.removeFilter(0);
       }
 

@@ -4,14 +4,14 @@ import {ArrowLeft, ArrowRight} from "lucide-react";
 import CardBuilder from "Components/Dashboard/components/WidgetForm/CardBuilder";
 import {useHistory} from "react-router";
 import {useStore} from "App/mstore";
-import {CLICKMAP} from "App/constants/card";
+import { HEATMAP } from "App/constants/card";
 import {renderClickmapThumbnail} from "Components/Dashboard/components/WidgetForm/renderMap";
 import WidgetPreview from "Components/Dashboard/components/WidgetPreview/WidgetPreview";
 
 const getTitleByType = (type: string) => {
     switch (type) {
-        case CLICKMAP:
-            return 'Clickmap';
+        case HEATMAP:
+            return 'Heatmap';
         default:
             return 'Trend Single';
     }
@@ -48,7 +48,7 @@ function CreateCard(props: Props) {
     }
 
     const createCard = async () => {
-        const isClickMap = metric.metricType === CLICKMAP;
+        const isClickMap = metric.metricType === HEATMAP;
         if (isClickMap) {
             try {
                 metric.thumbnail = await renderClickmapThumbnail();

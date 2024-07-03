@@ -13,7 +13,7 @@ import AnimatedSVG, {ICONS} from 'Shared/AnimatedSVG/AnimatedSVG';
 import {
     TIMESERIES,
     TABLE,
-    CLICKMAP,
+    HEATMAP,
     FUNNEL,
     INSIGHTS,
     USER_PATH,
@@ -52,7 +52,7 @@ function WidgetView(props: Props) {
     const [metricNotFound, setMetricNotFound] = useState(false);
     const history = useHistory();
     const [initialInstance, setInitialInstance] = useState();
-    const isClickMap = widget.metricType === CLICKMAP;
+    const isClickMap = widget.metricType === HEATMAP;
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
@@ -155,7 +155,7 @@ function WidgetView(props: Props) {
 
                             {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                                 <>
-                                    {(widget.metricType === TABLE || widget.metricType === TIMESERIES || widget.metricType === CLICKMAP || widget.metricType === INSIGHTS) &&
+                                    {(widget.metricType === TABLE || widget.metricType === TIMESERIES || widget.metricType === HEATMAP || widget.metricType === INSIGHTS) &&
                                         <WidgetSessions/>}
                                     {widget.metricType === FUNNEL && <FunnelIssues/>}
                                 </>

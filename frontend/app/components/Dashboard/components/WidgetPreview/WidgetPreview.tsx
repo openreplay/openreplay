@@ -8,7 +8,7 @@ import {observer} from 'mobx-react-lite';
 // import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 import ClickMapRagePicker from "Components/Dashboard/components/ClickMapRagePicker";
 // import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
-import {CLICKMAP, TABLE, TIMESERIES, RETENTION, USER_PATH} from 'App/constants/card';
+import {HEATMAP, TABLE, TIMESERIES, RETENTION, USER_PATH} from 'App/constants/card';
 import {Space, Switch} from 'antd';
 // import AddToDashboardButton from "Components/Dashboard/components/AddToDashboardButton";
 
@@ -115,7 +115,7 @@ function WidgetPreview(props: Props) {
                         {/*)}*/}
 
                         <div className="mx-4"/>
-                        {metric.metricType === CLICKMAP ? (
+                        {metric.metricType === HEATMAP ? (
                             <ClickMapRagePicker/>
                         ) : null}
 

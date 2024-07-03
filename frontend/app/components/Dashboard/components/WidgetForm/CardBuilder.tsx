@@ -15,7 +15,7 @@ import {eventKeys} from 'App/types/filter/newFilter';
 import {renderClickmapThumbnail} from './renderMap';
 import FilterItem from 'Shared/Filters/FilterItem';
 import {
-    TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING,
+    TIMESERIES, TABLE, HEATMAP, FUNNEL, ERRORS, RESOURCE_MONITORING,
     PERFORMANCE, WEB_VITALS, INSIGHTS, USER_PATH, RETENTION
 } from 'App/constants/card';
 import {useParams} from 'react-router-dom';
@@ -159,8 +159,8 @@ const PathAnalysisFilter = observer(({metric}: any) => (
 const SeriesList = observer(() => {
     const {metricStore, dashboardStore, aiFiltersStore} = useStore();
     const metric = metricStore.instance;
-    const excludeFilterKeys = [CLICKMAP, USER_PATH].includes(metric.metricType) ? eventKeys : [];
-    const hasSeries = ![TABLE, FUNNEL, CLICKMAP, INSIGHTS, USER_PATH, RETENTION].includes(metric.metricType);
+    const excludeFilterKeys = [HEATMAP, USER_PATH].includes(metric.metricType) ? eventKeys : [];
+    const hasSeries = ![TABLE, FUNNEL, HEATMAP, INSIGHTS, USER_PATH, RETENTION].includes(metric.metricType);
     const canAddSeries = metric.series.length < 3;
 
     return (
@@ -171,10 +171,10 @@ const SeriesList = observer(() => {
                     <div className='mb-2' key={series.name}>
                         <FilterSeries
                             canExclude={metric.metricType === USER_PATH}
-                            supportsEmpty={![CLICKMAP, USER_PATH].includes(metric.metricType)}
+                            supportsEmpty={![HEATMAP, USER_PATH].includes(metric.metricType)}
                             excludeFilterKeys={excludeFilterKeys}
                             observeChanges={() => metric.updateKey('hasChanged', true)}
-                            hideHeader={[TABLE, CLICKMAP, INSIGHTS, USER_PATH, FUNNEL].includes(metric.metricType)}
+                            hideHeader={[TABLE, HEATMAP, INSIGHTS, USER_PATH, FUNNEL].includes(metric.metricType)}
                             seriesIndex={index}
                             series={series}
                             onRemoveSeries={() => metric.removeSeries(index)}
@@ -251,7 +251,7 @@ const CardBuilder = observer((props: CardBuilderProps) => {
 
     const onSave = useCallback(async () => {
         const wasCreating = !metric.exists();
-        if (metric.metricType === CLICKMAP) {
+        if (metric.metricType === HEATMAP) {
             try {
                 metric.thumbnail = await renderClickmapThumbnail();
             } catch (e) {

@@ -1,6 +1,6 @@
 import Widget from 'App/mstore/types/widget';
 import APIClient from 'App/api_client';
-import { CLICKMAP, USER_PATH } from 'App/constants/card';
+import { HEATMAP, USER_PATH } from 'App/constants/card';
 
 export default class MetricService {
   private client: APIClient;
@@ -74,7 +74,7 @@ export default class MetricService {
 
   async getMetricChartData(metric: Widget, data: any, isSaved: boolean = false): Promise<any> {
     if (
-      metric.metricType === CLICKMAP
+      metric.metricType === HEATMAP
       && document.location.pathname.split('/').pop() === 'metrics'
       && (document.location.pathname.indexOf('dashboard') !== -1 && document.location.pathname.indexOf('metric') === -1)
     ) {

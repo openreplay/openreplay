@@ -3,7 +3,7 @@ import { Card, Space, Typography, Button, Alert } from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
-  CLICKMAP,
+  HEATMAP,
   ERRORS,
   FUNNEL,
   INSIGHTS,
@@ -28,7 +28,7 @@ function WidgetFormNew() {
 
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
   const filtersLength = metric.series[0].filter.filters.filter((i: any) => i && !i.isEvent).length;
-  const isClickMap = metric.metricType === CLICKMAP;
+  const isClickMap = metric.metricType === HEATMAP;
   const isPathAnalysis = metric.metricType === USER_PATH;
   const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
   const hasFilters = filtersLength > 0 || eventsLength > 0;
@@ -67,7 +67,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   // const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
   // const tableOptions = metricOf.filter((i) => i.type === 'table');
   const isTable = metric.metricType === TABLE;
-  const isClickMap = metric.metricType === CLICKMAP;
+  const isClickMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
   const isInsights = metric.metricType === INSIGHTS;
   const isPathAnalysis = metric.metricType === USER_PATH;
