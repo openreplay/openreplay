@@ -406,12 +406,12 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	if msg.Label == "" {
 		return nil
 	}
-	var nX *uint32 = nil
-	var nY *uint32 = nil
+	var nX *uint8 = nil
+	var nY *uint8 = nil
 	if msg.NormalizedX <= 100 && msg.NormalizedY <= 100 {
-		nXVal := uint32(msg.NormalizedX)
+		nXVal := uint8(msg.NormalizedX)
 		nX = &nXVal
-		nYVal := uint32(msg.NormalizedY)
+		nYVal := uint8(msg.NormalizedY)
 		nY = &nYVal
 	}
 	if err := c.batches["clicks"].Append(
