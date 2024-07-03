@@ -123,7 +123,7 @@ var batches = map[string]string{
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type, transfer_size) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?)",
+	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type, transfer_size, url_path) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000))",
 	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -325,22 +325,24 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 	return nil
 }
 
+func extractUrlPath(url string) string {
+	_, path, query, err := url.GetURLParts(url)
+	if err != nil {
+		log.Printf("can't parse url: %s", err)
+		return ""
+	}
+	pathQuery := path
+	if query != "" {
+		pathQuery += "?" + query
+	}
+	return strings.ToLower(pathQuery)
+}
+
 func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error {
 	msgType := url.GetResourceType(msg.Initiator, msg.URL)
 	resourceType := url.EnsureType(msgType)
 	if resourceType == "" {
 		return fmt.Errorf("can't parse resource type, sess: %d, type: %s", session.SessionID, msgType)
-	}
-	fullPath := ""
-	_, path, query, err := url.GetURLParts(msg.URL)
-	if err == nil {
-		pathQuery := path
-		if query != "" {
-			pathQuery += "?" + query
-		}
-		fullPath = strings.ToLower(pathQuery)
-	} else {
-		log.Printf("can't parse url: %s", err)
 	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
@@ -355,7 +357,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
 		msg.Duration != 0,
-		fullPath,
+		extractUrlPath(msg.URL),
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -364,17 +366,6 @@ func (c *connectorImpl) InsertWebResourceEvent(session *sessions.Session, msg *m
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
-	fullPath := ""
-	_, path, query, err := url.GetURLParts(msg.URL)
-	if err == nil {
-		pathQuery := path
-		if query != "" {
-			pathQuery += "?" + query
-		}
-		fullPath = strings.ToLower(pathQuery)
-	} else {
-		log.Printf("can't parse url: %s", err)
-	}
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -393,7 +384,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		nullableUint16(uint16(msg.SpeedIndex)),
 		nullableUint16(uint16(msg.VisuallyComplete)),
 		nullableUint16(uint16(msg.TimeToInteractive)),
-		fullPath,
+		extractUrlPath(msg.URL),
 		"LOCATION",
 	); err != nil {
 		c.checkError("pages", err)
@@ -532,6 +523,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		msg.Status < 400,
 		"REQUEST",
 		uint32(msg.TransferredBodySize),
+		extractUrlPath(msg.URL),
 	); err != nil {
 		c.checkError("requests", err)
 		return fmt.Errorf("can't append to requests batch: %s", err)
