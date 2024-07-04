@@ -72,7 +72,7 @@ function Session({
 }
 
 export default withPermissions(
-  ['SESSION_REPLAY'],
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
   '',
   true
 )(
