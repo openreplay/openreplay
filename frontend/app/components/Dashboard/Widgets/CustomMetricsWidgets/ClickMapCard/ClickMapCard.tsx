@@ -17,19 +17,20 @@ function ClickMapCard({
         metricStore.changeClickMapSearch(s, innerText)
     }
     const mapUrl = metricStore.instance.series[0].filter.filters[0].value[0]
+    const sessionId = metricStore.instance.data.sessionId
 
     React.useEffect(() => {
         return () => setCustomSession(null)
     }, [])
 
     React.useEffect(() => {
-        if (metricStore.instance.data.domURL) {
+        if (metricStore.instance.data.domURL && sessionId && sessionId !== customSession?.sessionId) {
             setCustomSession(null)
             setTimeout(() => {
                 setCustomSession(metricStore.instance.data)
             }, 100)
         }
-    }, [metricStore.instance])
+    }, [metricStore.instance, sessionId])
 
     React.useEffect(() => {
         const rangeValue = dashboardStore.drillDownPeriod.rangeValue

@@ -3,6 +3,7 @@ import { Checkbox } from "UI";
 import { Button } from 'antd'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { toJS } from 'mobx';
 
 function ClickMapRagePicker() {
     const { metricStore, dashboardStore } = useStore();
@@ -12,13 +13,19 @@ function ClickMapRagePicker() {
     }
 
     const refreshHeatmapSession = async () => {
+        const oldData = metricStore.instance.toJson()
         metricStore.instance.updateKey('data', { sessionId: null, domURL: [] })
-        await dashboardStore.fetchMetricChartData(
-          metricStore.instance,
-          {...metricStore.instance.toJson() },
-          false,
-          dashboardStore.period)
-        metricStore.instance.updateKey('hasChanged', true)
+        try {
+            await dashboardStore.fetchMetricChartData(
+              metricStore.instance,
+              oldData,
+              false,
+              dashboardStore.period)
+
+            metricStore.instance.updateKey('hasChanged', true)
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     React.useEffect(() => {
