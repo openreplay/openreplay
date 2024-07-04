@@ -49,6 +49,10 @@ SET metric_type='heatMap',
     metric_of='heatMapUrl'
 WHERE metric_type = 'clickMap';
 
+UPDATE public.roles
+SET permissions='{SERVICE_SESSION_REPLAY,SERVICE_DEV_TOOLS,SERVICE_ASSIST_LIVE,SERVICE_ASSIST_CALL}'
+WHERE service_role;
+
 COMMIT;
 
 \elif :is_next
