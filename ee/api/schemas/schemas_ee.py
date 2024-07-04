@@ -34,7 +34,7 @@ class CurrentContext(schemas.CurrentContext):
         if values.get("permissions") is not None:
             perms = []
             for p in values["permissions"]:
-                if Permissions.has_value(p):
+                if Permissions.has_value(p) or ServicePermissions.has_value(p):
                     perms.append(p)
             values["permissions"] = perms
         return values
