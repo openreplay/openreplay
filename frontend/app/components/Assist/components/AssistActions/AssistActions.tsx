@@ -292,7 +292,7 @@ function AssistActions({
 const con = connect((state: any) => {
   const permissions = state.getIn(['user', 'account', 'permissions']) || [];
   return {
-    hasPermission: permissions.includes('ASSIST_CALL'),
+    hasPermission: permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL'),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
     agentId: state.getIn(['user', 'account', 'id'])
