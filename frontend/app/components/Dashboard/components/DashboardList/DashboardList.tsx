@@ -30,6 +30,8 @@ function DashboardList({ siteId }: { siteId: string }) {
             title: 'Title',
             dataIndex: 'name',
             width: '25%',
+            sorter: (a, b) => a.name?.localeCompare(b.name),
+            sortDirections: ['ascend', 'descend'],
             render: (t) => <div className="link cap-first">{t}</div>,
         },
         {

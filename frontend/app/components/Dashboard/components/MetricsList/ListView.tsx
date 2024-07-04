@@ -1,6 +1,6 @@
 import React from 'react';
+import { Checkbox, Table } from 'antd';
 import MetricListItem from '../MetricListItem';
-import { Checkbox } from 'UI';
 
 interface Props {
   list: any;
@@ -9,48 +9,126 @@ interface Props {
   toggleSelection?: (metricId: any) => void;
   toggleAll?: (e: any) => void;
   disableSelection?: boolean;
-  allSelected?: boolean
+  allSelected?: boolean;
   existingCardIds?: number[];
 }
-function ListView(props: Props) {
-  const { siteId, list, selectedList, toggleSelection, disableSelection = false, allSelected = false } = props;
-  return (
-    <div>
-      <div className="grid grid-cols-12 py-2 font-medium px-6">
-        <div className="col-span-4 flex items-center">
+
+const ListView: React.FC<Props> = (props: Props) => {
+  const { siteId, list, selectedList, toggleSelection, disableSelection = false, allSelected = false, toggleAll } = props;
+
+  const columns = [
+    {
+      title: (
+        <div className="flex items-center">
           {!disableSelection && (
             <Checkbox
               name="slack"
               className="mr-4"
-              type="checkbox"
               checked={allSelected}
-              // onClick={() => selectedList(list.map((i: any) => i.metricId))}
-              onClick={props.toggleAll}
+              onClick={toggleAll}
             />
           )}
           <span>Title</span>
         </div>
-
-        <div className="col-span-2">Owner</div>
-        <div className="col-span-2">Visibility</div>
-        <div className="col-span-2">Last Modified</div>
-        <div className={'col-span-2 text-right invisible'}>Options</div>
-      </div>
-      {list.map((metric: any) => (
+      ),
+      dataIndex: 'name',
+      key: 'title',
+      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      render: (text: any, metric: any) => (
         <MetricListItem
           key={metric.metricId}
-          disableSelection={disableSelection}
           metric={metric}
           siteId={siteId}
+          disableSelection={disableSelection}
           selected={selectedList.includes(parseInt(metric.metricId))}
           toggleSelection={(e: any) => {
             e.stopPropagation();
             toggleSelection && toggleSelection(parseInt(metric.metricId));
           }}
+          renderColumn="title"
         />
-      ))}
-    </div>
+      ),
+    },
+    {
+      title: 'Owner',
+      dataIndex: 'owner',
+      key: 'owner',
+      sorter: (a: any, b: any) => a.owner.localeCompare(b.owner),
+      render: (text: any, metric: any) => (
+        <MetricListItem
+          key={metric.metricId}
+          metric={metric}
+          siteId={siteId}
+          renderColumn="owner"
+        />
+      ),
+    },
+    {
+      title: 'Visibility',
+      dataIndex: 'visibility',
+      key: 'visibility',
+      render: (text: any, metric: any) => (
+        <MetricListItem
+          key={metric.metricId}
+          metric={metric}
+          siteId={siteId}
+          renderColumn="visibility"
+        />
+      ),
+    },
+    {
+      title: 'Last Modified',
+      dataIndex: 'lastModified',
+      key: 'lastModified',
+      sorter: (a: any, b: any) => new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime(),
+      render: (text: any, metric: any) => (
+        <MetricListItem
+          key={metric.metricId}
+          metric={metric}
+          siteId={siteId}
+          renderColumn="lastModified"
+        />
+      ),
+    },
+    {
+      title: 'Options',
+      key: 'options',
+      render: (text: any, metric: any) => (
+        <MetricListItem
+          key={metric.metricId}
+          metric={metric}
+          siteId={siteId}
+          renderColumn="options"
+        />
+      ),
+    },
+  ];
+
+  const data = list.map((metric: any) => ({
+    ...metric,
+    key: metric.metricId,
+  }));
+
+  return (
+    <Table
+      columns={columns}
+      dataSource={data}
+      rowKey="metricId"
+      rowSelection={
+        !disableSelection
+          ? {
+              selectedRowKeys: selectedList.map((id: any) => id.toString()),
+              onChange: (selectedRowKeys) => {
+                selectedRowKeys.forEach((key) => {
+                  toggleSelection && toggleSelection(parseInt(key));
+                });
+              },
+            }
+          : undefined
+      }
+      pagination={false}
+    />
   );
-}
+};
 
 export default ListView;

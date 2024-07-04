@@ -17,7 +17,7 @@ import {
   WEB_VITALS
 } from 'App/constants/card';
 import { FilterKey } from 'Types/filter/filterType';
-import { Activity, BarChart, TableCellsMerge, TrendingUp } from 'lucide-react';
+import { Activity, BarChart, TableCellsMerge, SearchSlash, TrendingUp } from 'lucide-react';
 import WebVital from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/WebVital';
 import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues';
 import InsightsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample';
@@ -46,7 +46,7 @@ export const CARD_CATEGORIES = [
   { key: CARD_CATEGORY.PRODUCT_ANALYTICS, label: 'Product Analytics', icon: TrendingUp, types: [USER_PATH, ERRORS] },
   { key: CARD_CATEGORY.PERFORMANCE_MONITORING, label: 'Performance Monitoring', icon: Activity, types: [TIMESERIES] },
   { key: CARD_CATEGORY.WEB_ANALYTICS, label: 'Web Analytics', icon: BarChart, types: [TABLE] },
-  { key: CARD_CATEGORY.ERROR_TRACKING, label: 'Errors Tracking', icon: TableCellsMerge, types: [WEB_VITALS] },
+  { key: CARD_CATEGORY.ERROR_TRACKING, label: 'Errors Tracking', icon: SearchSlash, types: [WEB_VITALS] },
   { key: CARD_CATEGORY.WEB_VITALS, label: 'Web Vitals', icon: TableCellsMerge, types: [WEB_VITALS] }
 ];
 

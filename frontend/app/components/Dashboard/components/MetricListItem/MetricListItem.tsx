@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, Checkbox, confirm, Modal } from 'UI';
-import { Dropdown, Button, Input, Tooltip } from 'antd';
-import { checkForRecent } from 'App/date';
+import { Icon } from 'UI';
+import { Tooltip, Modal, Input, Button, Dropdown, Menu, Tag } from 'antd';
+import { UserOutlined, UserAddOutlined, TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 import { TYPES } from 'App/constants/card';
@@ -16,6 +16,7 @@ interface Props extends RouteComponentProps {
   selected?: boolean;
   toggleSelection?: any;
   disableSelection?: boolean;
+  renderColumn: string;
 }
 
 function MetricTypeIcon({ type }: any) {
@@ -28,21 +29,21 @@ function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{card.title}</div>}>
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
-        {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
+      {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
       </div>
     </Tooltip>
   );
 }
 
-function MetricListItem(props: Props) {
-  const {
-    metric,
-    history,
-    siteId,
-    selected,
-    toggleSelection = () => {},
-    disableSelection = false,
-  } = props;
+const MetricListItem: React.FC<Props> = ({
+  metric,
+  siteId,
+  history,
+  selected,
+  toggleSelection = () => {},
+  disableSelection = false,
+  renderColumn
+}) => {
   const { metricStore } = useStore();
   const [isEdit, setIsEdit] = useState(false);
   const [newName, setNewName] = useState(metric.name);
@@ -57,111 +58,103 @@ function MetricListItem(props: Props) {
 
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === 'delete') {
-      if (await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this card?`
-      })) {
-        await metricStore.delete(metric)
-        // toast.success('Card deleted');
-      }
+      Modal.confirm({
+        title: 'Confirm',
+        content: 'Are you sure you want to permanently delete this card?',
+        okText: 'Yes, delete',
+        cancelText: 'No',
+        onOk: async () => {
+          await metricStore.delete(metric);
+        },
+      });
     }
     if (key === 'rename') {
       setIsEdit(true);
     }
-  }
+  };
+
   const onRename = async () => {
     try {
       metric.updateKey('name', newName);
       await metricStore.save(metric);
-      void metricStore.fetchList()
-      setIsEdit(false)
+      metricStore.fetchList();
+      setIsEdit(false);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       toast.error('Failed to rename card');
-    }}
+    }
+  };
 
-  return (
-    <>
-      <Modal open={isEdit} onClose={() => setIsEdit(false)}>
-        <Modal.Header>Rename Card</Modal.Header>
-        <Modal.Content>
-          <Input
-            placeholder="Enter new card title"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-        </Modal.Content>
-        <Modal.Footer>
-          <Button
-            onClick={onRename}
-            type={'primary'}
-            className="mr-2"
-          >
-            Save
-          </Button>
-
-          <Button
-            onClick={() => setIsEdit(false)}
-          >
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <div
-        className="grid grid-cols-12 py-4 border-t select-none items-center hover:bg-active-blue cursor-pointer px-6"
-        onClick={onItemClick}
-      >
-        <div className="col-span-4 flex items-center">
-          {!disableSelection && (
-            <Checkbox
-              name="slack"
-              className="mr-4"
-              type="checkbox"
-              checked={selected}
-              onClick={toggleSelection}
-            />
-          )}
-
-          <div className="flex items-center">
-            <MetricTypeIcon type={metric.metricType} />
-            <div className={cn('capitalize-first', { link: disableSelection })}>{metric.name}</div>
-          </div>
-        </div>
-        <div className="col-span-2">{metric.owner}</div>
-        <div className="col-span-2">
-          <div className="flex items-center">
-            <Icon name={metric.isPublic ? 'user-friends' : 'person-fill'} className="mr-2" />
-            <span>{metric.isPublic ? 'Team' : 'Private'}</span>
-          </div>
-        </div>
-        <div className="col-span-2">
-          {metric.lastModified && checkForRecent(metric.lastModified, 'LLL dd, yyyy, hh:mm a')}
-        </div>
-        <div className={'col-span-2'} onClick={e => e.stopPropagation()}>
-          <Dropdown menu={{
-            items: [
-              {
-                label: "Rename",
-                key: "rename",
-                icon: <Icon name={'pencil'} size="16" />,
-              },
-              {
-                label: "Delete",
-                key: "delete",
-                icon: <Icon name={'trash'} size="16" />
-              }
-            ],
-            onClick: onMenuClick,
-          }}>
-          <div className={'ml-auto p-2 rounded border border-transparent w-fit hover:border-gray-light'}>
-            <Icon name="ellipsis-v" size="16" />
-          </div>
-          </Dropdown>
-        </div>
-      </div>
-    </>
+  const renderModal = () => (
+    <Modal
+      title="Rename Card"
+      visible={isEdit}
+      onCancel={() => setIsEdit(false)}
+      footer={[
+        <Button key="back" onClick={() => setIsEdit(false)}>
+          Cancel
+        </Button>,
+        <Button key="submit" type="primary" onClick={onRename}>
+          Save
+        </Button>,
+      ]}
+    >
+      <Input
+        placeholder="Enter new card title"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+      />
+    </Modal>
   );
-}
+
+  switch (renderColumn) {
+    case 'title':
+      return (
+        <>
+          <div className="flex items-center cursor-pointer" onClick={onItemClick}>
+            <MetricTypeIcon type={metric.metricType} />
+            <div className="capitalize-first link block">{metric.name}</div>
+          </div>
+          {renderModal()}
+        </>
+      );
+    case 'owner':
+      return <div>{metric.owner}</div>;
+    case 'visibility':
+      return (
+        <div className="flex items-center">
+          <Tag className='rounded-lg' bordered={false}>
+            {metric.isPublic ? <TeamOutlined className="mr-2" /> : <LockOutlined className="mr-2" />}
+            {metric.isPublic ? 'Team' : 'Private'}
+          </Tag>
+        </div>
+      );
+    case 'lastModified':
+      return new Date(metric.lastModified).toLocaleString();
+    case 'options':
+      return (
+        <>
+          <Dropdown
+            overlay={
+              <Menu onClick={onMenuClick}>
+                <Menu.Item key="rename" icon={<EditOutlined />}>
+                  Rename
+                </Menu.Item>
+                <Menu.Item key="delete" icon={<DeleteOutlined />}>
+                  Delete
+                </Menu.Item>
+              </Menu>
+            }
+            trigger={['click']}
+          >
+            <Button type="default" icon={<MoreOutlined />} />
+          </Dropdown>
+          {renderModal()}
+        </>
+      );
+    default:
+      return null;
+  }
+};
 
 export default withRouter(observer(MetricListItem));
