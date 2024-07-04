@@ -25,5 +25,5 @@ const Cont = connect((state: any) => ({
 }))(Assist);
 
 export default withPageTitle('Assist - OpenReplay')(
-  withPermissions(['ASSIST_LIVE'])(withRouter(Cont))
+  withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'])(withRouter(Cont))
 );
