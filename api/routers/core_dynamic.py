@@ -412,7 +412,7 @@ def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
 
 
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
-def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
+def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatMapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
 
