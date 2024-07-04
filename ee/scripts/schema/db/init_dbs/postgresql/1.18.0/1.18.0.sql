@@ -33,6 +33,10 @@ UPDATE public.roles
 SET permissions='{SERVICE_SESSION_REPLAY,SERVICE_DEV_TOOLS,SERVICE_ASSIST_LIVE,SERVICE_ASSIST_CALL}'
 WHERE service_role;
 
+UPDATE public.users
+SET weekly_report= FALSE
+WHERE service_account;
+
 COMMIT;
 
 \elif :is_next
