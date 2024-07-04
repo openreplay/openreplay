@@ -1571,14 +1571,10 @@ class HeatMapFilterSchema(BaseModel):
     operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
 
 
-class GetHeatmapPayloadSchema(_TimedSchema):
+class GetHeatMapPayloadSchema(_TimedSchema):
     url: str = Field(...)
     filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
-
-
-class GetHeatMapPayloadSchema(BaseModel):
-    url: str = Field(...)
 
 
 class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):

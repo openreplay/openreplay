@@ -17,7 +17,7 @@ from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 logger = logging.getLogger(__name__)
 
 
-def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
+def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
@@ -90,7 +90,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         return helper.list_to_camel_case(rows)
 
 
-def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapPayloadSchema):
+def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
@@ -120,7 +120,7 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatm
         return helper.list_to_camel_case(rows)
 
 
-def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatmapPayloadSchema):
+def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
