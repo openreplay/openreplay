@@ -13,16 +13,16 @@ function CardSessionsByList({ list, selected, onClickHandler = () => null }: Pro
     <List
       dataSource={list}
       split={false}
-      renderItem={(row: any) => (
+      renderItem={(row: any, index: number) => (
         <List.Item
           key={row.name}
-          onClick={(e) => onClickHandler(e, row)} // Remove onClick handler to disable click interaction
+          onClick={(e) => onClickHandler(e, row)}
           style={{
-            borderBottom: '1px dotted rgba(0, 0, 0, 0.05)',
+            borderBottom: index === list.length - 1 ? 'none' : '1px dotted rgba(0, 0, 0, 0.05)',
             padding: '4px 10px',
             lineHeight: '1px'
           }}
-          className={cn('rounded', selected === row.name ? 'bg-active-blue' : '')} // Remove hover:bg-active-blue and cursor-pointer
+          className={cn('rounded', selected === row.name ? 'bg-active-blue' : '')}
         >
           <List.Item.Meta
             className="m-0"
