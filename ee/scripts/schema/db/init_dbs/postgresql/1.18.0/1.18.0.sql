@@ -29,6 +29,14 @@ ALTER TABLE IF EXISTS public.sessions
 CREATE INDEX IF NOT EXISTS graphql_session_id_idx ON events.graphql (session_id);
 CREATE INDEX IF NOT EXISTS crashes_session_id_idx ON events_common.crashes (session_id);
 
+UPDATE public.roles
+SET permissions='{SERVICE_SESSION_REPLAY,SERVICE_DEV_TOOLS,SERVICE_ASSIST_LIVE,SERVICE_ASSIST_CALL}'
+WHERE service_role;
+
+UPDATE public.users
+SET weekly_report= FALSE
+WHERE service_account;
+
 COMMIT;
 
 \elif :is_next
