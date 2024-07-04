@@ -72,9 +72,7 @@ function Session({
 }
 
 export default withPermissions(
-  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'],
-  '',
-  true
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', true, false
 )(
   connect(
     (state: any, props: any) => {

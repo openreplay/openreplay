@@ -1,20 +1,20 @@
-import React from "react";
-import { connect } from "react-redux";
-import { NoPermission, NoSessionPermission } from "UI";
+import React from 'react';
+import { connect } from 'react-redux';
+import { NoPermission, NoSessionPermission } from 'UI';
 
-export default (requiredPermissions, className, isReplay = false) => (BaseComponent) => {
+export default (requiredPermissions, className, isReplay = false, andEd = true) => (BaseComponent) => {
   @connect((state, props) => ({
     permissions:
-      state.getIn(["user", "account", "permissions"]) || [],
+      state.getIn(['user', 'account', 'permissions']) || [],
     isEnterprise:
-      state.getIn(["user", "account", "edition"]) === "ee",
+      state.getIn(['user', 'account', 'edition']) === 'ee'
   }))
   class WrapperClass extends React.PureComponent {
     render() {
-      const hasPermission = requiredPermissions.every(
-        (permission) =>
-          this.props.permissions.includes(permission)
-      );
+      const hasPermission = andEd ?
+        requiredPermissions.every((permission) => this.props.permissions.includes(permission)) :
+        requiredPermissions.some((permission) => this.props.permissions.includes(permission)
+        );
 
       return !this.props.isEnterprise || hasPermission ? (
         <BaseComponent {...this.props} />
@@ -29,5 +29,6 @@ export default (requiredPermissions, className, isReplay = false) => (BaseCompon
       );
     }
   }
-  return WrapperClass
+
+  return WrapperClass;
 }

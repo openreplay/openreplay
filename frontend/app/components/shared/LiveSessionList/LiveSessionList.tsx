@@ -185,7 +185,7 @@ function LiveSessionList(props: Props) {
   );
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'])(
+export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
   connect(
     (state: any) => ({
       list: state.getIn(['liveSearch', 'list']),
