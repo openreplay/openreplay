@@ -35,6 +35,7 @@ function ExampleTrend(props: Props) {
                 }
                 label={props.data?.label}
                 onClick={props.onClick}
+                hideLegend={props.data?.hideLegend}
             />
         </ExCard>
     );

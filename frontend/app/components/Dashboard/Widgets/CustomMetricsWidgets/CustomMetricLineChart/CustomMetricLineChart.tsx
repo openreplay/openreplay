@@ -11,6 +11,7 @@ interface Props {
     onClick?: (event, index) => void;
     yaxis?: any;
     label?: string;
+    hideLegend?: boolean;
 }
 
 function CustomMetricLineChart(props: Props) {
@@ -20,7 +21,8 @@ function CustomMetricLineChart(props: Props) {
         colors,
         onClick = () => null,
         yaxis = {...Styles.yaxis},
-        label = 'Number of Sessions'
+        label = 'Number of Sessions',
+        hideLegend = false,
     } = props;
 
     return (
@@ -47,7 +49,7 @@ function CustomMetricLineChart(props: Props) {
                         value: label || "Number of Sessions"
                     }}
                 />
-                <Legend/>
+                {!hideLegend && <Legend/>}
                 <Tooltip {...Styles.tooltip} />
                 {Array.isArray(data.namesMap) && data.namesMap.map((key, index) => (
                     <Line

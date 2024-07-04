@@ -62,6 +62,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
             title={card.title}
             data={card.data}
             height={card.height}
+            hideLegend={card.data?.hideLegend}
           />
         </div>
       ));

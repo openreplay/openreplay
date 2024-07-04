@@ -254,7 +254,7 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION,
     category: CARD_CATEGORIES[1].key,
     data: {
-      chart: generateBarChartData(),
+      chart: generateStackedBarChartData(['Page Response Time (ms)']),
       label: 'Number of Calls',
       unit: 'ms',
       namesMap: [
@@ -271,7 +271,8 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
     category: CARD_CATEGORIES[1].key,
     data: {
-      chart: generateBarChartData(),
+      chart: generateStackedBarChartData(['Images', 'Scripts', 'CSS']),
+      label: 'Visually Completed (ms)',
       namesMap: [
         'Series 1'
       ]
@@ -408,7 +409,9 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
     category: CARD_CATEGORIES[3].key,
     data: {
-      chart: generateBarChartData()
+      chart: generateBarChartData(),
+      hideLegend: true,
+      label: 'Number of Sessions'
     },
     example: BarChartCard
   },
@@ -419,7 +422,7 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.RESOURCES_BY_PARTY,
     category: CARD_CATEGORIES[3].key,
     data: {
-      chart: generateBarChartData()
+      chart: generateStackedBarChartData(['1st Party', '3rd Party'])
     },
     example: BarChartCard
   },
@@ -439,7 +442,7 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.ERRORS_PER_TYPE,
     category: CARD_CATEGORIES[3].key,
     data: {
-      chart: generateBarChartData()
+      chart: generateStackedBarChartData(['Integrations', '4xx', '5xx'])
     },
     example: BarChartCard
   },
@@ -487,6 +490,7 @@ export const CARD_LIST: CardType[] = [
     data: {
       chart: generateTimeSeriesData(),
       label: 'Number of Errors',
+      hideLegend: true,
       namesMap: [
         'Series 1'
       ]
@@ -503,6 +507,7 @@ export const CARD_LIST: CardType[] = [
     data: {
       chart: generateTimeSeriesData(),
       label: 'Number of Errors',
+      hideLegend: true,
       namesMap: [
         'Series 1'
       ]
@@ -752,5 +757,16 @@ function generateBarChartData(): any[] {
   return months.map(month => ({
     time: month,
     value: generateRandomValue(1000, 5000)
+  }));
+}
+
+function generateStackedBarChartData(keys: any): any[] {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+  return months.map(month => ({
+    time: month,
+    ...keys.reduce((acc: any, key: any) => {
+      acc[key] = generateRandomValue(1000, 5000);
+      return acc;
+    }, {})
   }));
 }

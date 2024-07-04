@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, Progress, Typography } from 'antd';
+import { Avatar, List, Progress, Typography } from 'antd';
 import cn from 'classnames';
 
 interface Props {
@@ -26,7 +26,7 @@ function CardSessionsByList({ list, selected, onClickHandler = () => null }: Pro
         >
           <List.Item.Meta
             className="m-0"
-            avatar={row.icon ? row.icon : null}
+            avatar={<Avatar src={row.icon} />}
             title={(
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">

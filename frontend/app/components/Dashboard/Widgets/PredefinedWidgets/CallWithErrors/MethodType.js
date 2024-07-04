@@ -1,10 +1,12 @@
-import React from 'react'
-import { Label } from 'UI';
+import React from 'react';
+import { Tag } from 'antd';
 
 const MethodType = ({ data }) => {
   return (
-    <Label className="ml-1">{data.method}</Label>
-  )
-}
+    <Tag bordered={false} className="rounded-lg">
+      {data.method}
+    </Tag>
+  );
+};
 
-export default MethodType
+export default MethodType;
