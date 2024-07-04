@@ -144,7 +144,6 @@ function WidgetView(props: Props) {
             {/*<div className="bg-white rounded border mt-3">*/}
             {/*    <WidgetForm expanded={expanded} onDelete={onBackHandler} {...props} />*/}
             {/*</div>*/}
-            <div className="my-1" />
 
             <WidgetPreview name={widget.name} isEditing={expanded} />
 

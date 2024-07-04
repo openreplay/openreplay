@@ -111,18 +111,17 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
       }
 
       {!isSingleSeries && canAddSeries && (
-        <Card styles={{ body: { padding: '4px' } }}>
+        <Card styles={{body: {padding: '4px'}}} className='rounded-full shadow-sm'>
           <Button
-            type="link"
-            onClick={() => {
-              metric.addSeries();
-
+            type='link'
+            onClick={() => {metric.addSeries();
             }}
             disabled={!canAddSeries}
             size="small"
+            className='block w-full'
           >
             <Space>
-              <AudioWaveform size={16} />
+              <AudioWaveform size={16}/>
               New Chart Series
             </Space>
           </Button>

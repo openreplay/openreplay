@@ -402,7 +402,7 @@ export const CARD_LIST: CardType[] = [
 
   // Errors Tracking
   {
-    title: 'JS Errors',
+    title: 'Sessions Impacted by JS Errors',
     key: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
     cardType: ERRORS,
     metricOf: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
