@@ -53,8 +53,6 @@ function useShortcuts({
       ) {
         return false;
       } else {
-        console.log(e);
-        // shift + f = fullscreenOn
         if (e.shiftKey) {
           e.preventDefault();
           player.toggleInspectorMode(false);
