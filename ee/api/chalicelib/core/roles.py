@@ -121,6 +121,7 @@ def get_roles(tenant_id):
                                                           AND projects.deleted_at ISNULL ) AS role_projects ON (TRUE)
                                WHERE tenant_id =%(tenant_id)s
                                     AND deleted_at IS NULL
+                                    AND not service_role
                                ORDER BY role_id;""",
                             {"tenant_id": tenant_id})
         cur.execute(query=query)
