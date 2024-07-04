@@ -435,7 +435,7 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     elif data.metric_type == schemas.MetricType.heat_map:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})
-        elif "data" in metric:
+        elif metric.get("data"):
             params["session_data"] = json.dumps({"sessionId": metric["data"]["sessionId"]})
 
     with pg_client.PostgresClient() as cur:
