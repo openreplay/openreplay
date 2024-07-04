@@ -12,11 +12,13 @@ require (
 	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/confluentinc/confluent-kafka-go/v2 v2.2.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/elastic/go-elasticsearch/v8 v8.13.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.3.0
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
