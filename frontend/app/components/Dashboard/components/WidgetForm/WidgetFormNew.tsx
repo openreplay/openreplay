@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Space, Typography, Button, Alert } from 'antd';
+import { Card, Space, Typography, Button, Alert, Form } from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -11,15 +11,16 @@ import {
   RESOURCE_MONITORING,
   RETENTION,
   TABLE,
-  USER_PATH, WEB_VITALS
+  USER_PATH, WEB_VITALS, TIMESERIES
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
-import { metricOf } from 'App/constants/filterOptions';
+import { issueCategories, metricOf } from 'App/constants/filterOptions';
 import { AudioWaveform, ChevronDown, ChevronUp, PlusIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import AddStepButton from 'Components/Dashboard/components/FilterSeries/AddStepButton';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterKey } from 'Types/filter/filterType';
+import Select from 'Shared/Select';
 
 function WidgetFormNew() {
   const { metricStore, dashboardStore, aiFiltersStore } = useStore();
@@ -111,17 +112,18 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
       }
 
       {!isSingleSeries && canAddSeries && (
-        <Card styles={{body: {padding: '4px'}}} className='rounded-full shadow-sm'>
+        <Card styles={{ body: { padding: '4px' } }} className="rounded-full shadow-sm">
           <Button
-            type='link'
-            onClick={() => {metric.addSeries();
+            type="link"
+            onClick={() => {
+              metric.addSeries();
             }}
             disabled={!canAddSeries}
             size="small"
-            className='block w-full'
+            className="block w-full"
           >
             <Space>
-              <AudioWaveform size={16}/>
+              <AudioWaveform size={16} />
               New Chart Series
             </Space>
           </Button>
@@ -132,34 +134,86 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
 });
 
 
-const PathAnalysisFilter = observer(({ metric }: any) => (
-  <Card styles={{
-    body: { padding: '4px 20px' },
-    header: { padding: '4px 20px', fontSize: '14px', fontWeight: 'bold', borderBottom: 'none' }
-  }}
-        title={metric.startType === 'start' ? 'Start Point' : 'End Point'}
-  >
-    <div className="form-group flex flex-col">
-      <FilterItem
-        hideDelete
-        filter={metric.startPoint}
-        allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
-        onUpdate={val => metric.updateStartPoint(val)}
-        onRemoveFilter={() => {
-        }}
-      />
-    </div>
-  </Card>
-));
+const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
+  const metricValueOptions = [
+    { value: 'location', label: 'Pages' },
+    { value: 'click', label: 'Clicks' },
+    { value: 'input', label: 'Input' },
+    { value: 'custom', label: 'Custom' }
+  ];
+  return (
+    <Card styles={{ body: { padding: '20px 20px' } }}>
+      <Form.Item>
+        <Space>
+          <Select
+            name="startType"
+            options={[
+              { value: 'start', label: 'With Start Point' },
+              { value: 'end', label: 'With End Point' }
+            ]}
+            defaultValue={metric.startType}
+            onChange={writeOption}
+            placeholder="All Issues"
+          />
+          <span className="mx-3">showing</span>
+          <Select
+            name="metricValue"
+            options={metricValueOptions}
+            value={metric.metricValue}
+            isMulti={true}
+            onChange={writeOption}
+            placeholder="All Issues"
+          />
+        </Space>
+      </Form.Item>
+      <Form.Item label={metric.startType === 'start' ? 'Start Point' : 'End Point'} className="mb-0">
+        <FilterItem
+          hideDelete
+          filter={metric.startPoint}
+          allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
+          onUpdate={val => metric.updateStartPoint(val)}
+          onRemoveFilter={() => {
+          }}
+        />
+      </Form.Item>
+    </Card>
+  );
+});
+
+const InsightsFilter = observer(({ metric, writeOption }: any) => {
+  return (
+    <Card styles={{ body: { padding: '20px 20px' } }}>
+      <Form.Item className="mb-0">
+        <Space>
+          <Select
+            name="metricValue"
+            options={issueCategories}
+            value={metric.metricValue}
+            onChange={writeOption}
+            isMulti
+            placeholder="All Categories"
+          />
+        </Space>
+      </Form.Item>
+    </Card>
+  );
+});
 
 const AdditionalFilters = observer(() => {
   const { metricStore, dashboardStore, aiFiltersStore } = useStore();
   const metric: any = metricStore.instance;
 
+  const writeOption = ({ value, name }: { value: any; name: any }) => {
+    value = Array.isArray(value) ? value : value.value;
+    const obj: any = { [name]: value };
+    metricStore.merge(obj);
+  };
+
   return (
-    // <Space direction="vertical" className="w-full">
-    metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric} />
-    // </Space>
+    <>
+      {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric} writeOption={writeOption} />}
+      {metric.metricType === INSIGHTS && <InsightsFilter metric={metric} writeOption={writeOption} />}
+    </>
   );
 });
 

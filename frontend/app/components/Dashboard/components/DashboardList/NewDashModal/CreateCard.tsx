@@ -7,6 +7,7 @@ import {useStore} from "App/mstore";
 import { HEATMAP } from "App/constants/card";
 import {renderClickmapThumbnail} from "Components/Dashboard/components/WidgetForm/renderMap";
 import WidgetPreview from "Components/Dashboard/components/WidgetPreview/WidgetPreview";
+import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
 
 const getTitleByType = (type: string) => {
     switch (type) {
@@ -93,7 +94,8 @@ function CreateCard(props: Props) {
                     </Space>
                 </Button>
             </div>
-            <CardBuilder siteId={siteId}/>
+            {/*<CardBuilder siteId={siteId}/>*/}
+            <WidgetFormNew/>
             <WidgetPreview className="" name={metric.name} isEditing={true}/>
         </div>
     );
