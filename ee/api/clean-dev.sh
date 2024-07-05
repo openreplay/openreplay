@@ -93,3 +93,4 @@ rm -rf ./schemas/schemas.py
 rm -rf ./schemas/transformers_validators.py
 rm -rf ./orpy.py
 rm -rf ./chalicelib/core/usability_testing/
+rm -rf ./chalicelib/core/db_request_handler.py
