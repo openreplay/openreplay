@@ -9,7 +9,6 @@ import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-import moment from 'moment';  // Import moment
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -83,7 +82,7 @@ const MetricListItem: React.FC<Props> = ({
     try {
       console.log('Renaming metric:', metric);
       console.log('New name:', newName);
-      metric.name = newName; // Directly update the name property
+      metric.name = newName; 
 
       // Add a toJson method if it doesn't exist
       if (typeof metric.toJson !== 'function') {
@@ -138,13 +137,36 @@ const MetricListItem: React.FC<Props> = ({
   );
 
   const parseDate = (dateString: string) => {
-    // Try to parse as ISO 8601 string first
-    let date = moment(dateString, moment.ISO_8601);
-    if (!date.isValid()) {
-      // Try to parse as a number (timestamp)
-      date = moment(Number(dateString));
+    let date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      date = new Date(parseInt(dateString, 10));
     }
     return date;
+  };
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const formatTime = (date: Date) => {
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      return `${hours}:${minutes} ${ampm}`;
+    };
+
+    if (diffDays <= 1) {
+      return `Today at ${formatTime(date)}`;
+    } else if (diffDays <= 2) {
+      return `Yesterday at ${formatTime(date)}`;
+    } else if (diffDays <= 3) {
+      return `${diffDays} days ago at ${formatTime(date)}`;
+    } else {
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} at ${formatTime(date)}`;
+    }
   };
 
   switch (renderColumn) {
@@ -170,7 +192,8 @@ const MetricListItem: React.FC<Props> = ({
         </div>
       );
     case 'lastModified':
-      return parseDate(metric.lastModified).calendar();    // Use moment to return relative time
+      const date = parseDate(metric.lastModified);
+      return formatDate(date);
     case 'options':
       return (
         <>
