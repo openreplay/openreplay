@@ -162,6 +162,7 @@ func handleEvent(msg messages.Message) map[string]string {
 		return nil
 	}
 	event["sessionid"] = fmt.Sprintf("%d", msg.SessionID())
+	event["received_at"] = fmt.Sprintf("%d", time.Now().Unix())
 	return event
 }
 

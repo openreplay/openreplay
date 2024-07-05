@@ -29,6 +29,7 @@ type Config struct {
 	CommitBatchTimeout time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=5s"`
 	UseProfiler        bool          `env:"PROFILER_ENABLED,default=false"`
 	ProjectIDs         string        `env:"PROJECT_IDS"`
+	UseS3Batches       bool          `env:"CLICKHOUSE_USE_S3_BATCHES,default=true"`
 }
 
 func New(log logger.Logger) *Config {

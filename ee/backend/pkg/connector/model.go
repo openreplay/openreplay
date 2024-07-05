@@ -1,6 +1,8 @@
 package connector
 
-import "strconv"
+import (
+	"strconv"
+)
 
 var sessionColumns = []string{
 	"sessionid",
@@ -146,6 +148,7 @@ var eventColumns = []string{
 	"mobile_viewcomponentevent_view_name",
 	"mobile_viewcomponentevent_visible",
 	"mobile_viewcomponentevent_timestamp",
+	"received_at",
 }
 
 var eventInts = []string{
