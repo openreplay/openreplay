@@ -191,6 +191,7 @@ export default class UserStore {
               response.invitationLink
             );
           }
+          copy(response.invitationLink);
           resolve(response);
         })
         .catch((error) => {

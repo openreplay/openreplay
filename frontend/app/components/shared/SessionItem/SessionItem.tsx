@@ -351,7 +351,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             )}
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center m-auto">
             <div
               className={cn(
                 stl.playLink,
