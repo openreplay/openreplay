@@ -2,19 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { Checkbox, Table, Typography } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
+import Widget from 'App/mstore/types/widget';
 
 const { Text } = Typography;
 
-interface Metric {
-  metricId: number;
-  name: string;
-  owner: string;
-  lastModified: string;
-  visibility: string;
-}
+// interface Metric {
+//   metricId: number;
+//   name: string;
+//   owner: string;
+//   lastModified: string;
+//   visibility: string;
+// }
 
 interface Props {
-  list: Metric[];
+  list: Widget[];
   siteId: string;
   selectedList: number[];
   toggleSelection?: (metricId: number) => void;

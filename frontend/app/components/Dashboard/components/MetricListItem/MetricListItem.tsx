@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Icon, Modal } from 'UI';
-import { Tooltip, Input, Button, Dropdown, Menu, Tag } from 'antd';
+import { Tooltip, Input, Button, Dropdown, Menu, Tag, Modal as AntdModal, Form, Avatar } from 'antd';
 import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 import { TYPES } from 'App/constants/card';
-import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
+import { useHistory } from 'react-router';
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -28,22 +28,20 @@ function MetricTypeIcon({ type }: any) {
 
   return (
     <Tooltip title={<div className="capitalize">{card.title}</div>}>
-      <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
-        {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
-      </div>
+      <Avatar src={card.icon && <Icon name={card.icon} size="16" color="tealx" />} className="bg-tealx-lightest mr-2" />
     </Tooltip>
   );
 }
 
 const MetricListItem: React.FC<Props> = ({
-  metric,
-  siteId,
-  history,
-  selected,
-  toggleSelection = () => {},
-  disableSelection = false,
-  renderColumn
-}) => {
+                                           metric,
+                                           siteId,
+                                           toggleSelection = () => {
+                                           },
+                                           disableSelection = false,
+                                           renderColumn
+                                         }) => {
+  const history = useHistory();
   const { metricStore } = useStore();
   const [isEdit, setIsEdit] = useState(false);
   const [newName, setNewName] = useState(metric.name);
@@ -62,15 +60,14 @@ const MetricListItem: React.FC<Props> = ({
 
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === 'delete') {
-      Modal.confirm({
+      AntdModal.confirm({
         title: 'Confirm',
         content: 'Are you sure you want to permanently delete this card?',
         okText: 'Yes, delete',
         cancelText: 'No',
         onOk: async () => {
           await metricStore.delete(metric);
-          toast.success('Card deleted');
-        },
+        }
       });
     }
     if (key === 'rename') {
@@ -80,56 +77,30 @@ const MetricListItem: React.FC<Props> = ({
 
   const onRename = async () => {
     try {
-      metric.name = newName; 
-
-      // Add a toJson method if it doesn't exist
-      if (typeof metric.toJson !== 'function') {
-        metric.toJson = function () {
-          return {
-            metricId: this.metricId,
-            widgetId: this.widgetId,
-            category: this.category,
-            name: this.name,
-            metricType: this.metricType,
-          };
-        };
-      }
-
-      await metricStore.save(metric.toJson());
-
+      metric.update({ name: newName });
+      await metricStore.save(metric);
       metricStore.fetchList();
       setIsEdit(false);
     } catch (e) {
-      console.log(e);
       toast.error('Failed to rename card');
     }
   };
 
   const renderModal = () => (
-    <Modal open={isEdit} onClose={() => setIsEdit(false)}>
-      <Modal.Header>Rename Card</Modal.Header>
-      <Modal.Content>
-        <Input
-          placeholder="Enter new card title"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-      </Modal.Content>
-      <Modal.Footer>
-        <Button
-          onClick={onRename}
-          type="primary"
-          className="mr-2"
-        >
-          Save
-        </Button>
-        <Button
-          onClick={() => setIsEdit(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
+    <AntdModal
+      title="Rename Card"
+      open={isEdit}
+      okText="Save"
+      cancelText="Cancel"
+      onOk={onRename}
+      onCancel={() => setIsEdit(false)}
+    >
+      <Input
+        placeholder="Enter new card title"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+      />
+    </AntdModal>
   );
 
   const parseDate = (dateString: string) => {
@@ -193,7 +164,7 @@ const MetricListItem: React.FC<Props> = ({
     case 'visibility':
       return (
         <div className="flex items-center">
-          <Tag className='rounded-lg' bordered={false}>
+          <Tag className="rounded-lg" bordered={false}>
             {metric.isPublic ? <TeamOutlined className="mr-2" /> : <LockOutlined className="mr-2" />}
             {metric.isPublic ? 'Team' : 'Private'}
           </Tag>
@@ -221,4 +192,4 @@ const MetricListItem: React.FC<Props> = ({
   }
 };
 
-export default withRouter(observer(MetricListItem));
+export default observer(MetricListItem);
