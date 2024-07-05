@@ -98,9 +98,10 @@ export default class ItemMenu extends React.PureComponent<Props> {
       >
         
             <Button
+              type="text"
               className={cn("select-none", !this.props.flat ? parentStyles : "", {
                 "": !this.props.flat && displayed && label,
-              }, ' shadow-sm')}
+              })}
             >
               {label && (
                 <span className={cn("font-medium")}>

@@ -22,7 +22,7 @@ function DashboardList({ siteId }: { siteId: string }) {
     const history = useHistory();
 
     // Define custom width and height for each scenario
-    const searchImageDimensions = { width: 200, height: 'auto' };
+    const searchImageDimensions = { width: 60, height: 'auto' };
     const defaultImageDimensions = { width: 600, height: 'auto' };
 
     const tableConfig: TableColumnsType<Dashboard> = [

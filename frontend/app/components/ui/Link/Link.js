@@ -8,7 +8,7 @@ import styles from './link.module.css';
 const OpenReplayLink = ({ siteId, to, className="", dispatch, ...other })  => (
   <Link 
     { ...other } 
-    className={ cn(className, styles.link , 'px-2', 'rounded-lg', 'hover:text-inherit', 'hover:bg-amber-50', 'hover:shadow-sm') }
+    className={ cn(className, styles.link , 'px-2', 'hover:text-inherit') }
     to={ withSiteId(to, siteId) }
   />
 );

@@ -63,7 +63,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       <div className="flex items-center py-1">
         <div className="font-medium w-36">Type</div>
-        <Tag className="text-base capitalize rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+        <Tag className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
           {resource.type}
         </Tag>
       </div>
@@ -71,7 +71,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {!!resource.decodedBodySize && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Size</div>
-          <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
             {formatBytes(resource.decodedBodySize)}
           </Tag>
         </div>
@@ -82,7 +82,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {!!_duration && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Duration</div>
-          <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
             {_duration} ms
           </Tag>
         </div>
@@ -91,7 +91,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {timestamp && (
         <div className="flex items-center py-1">
         <div className="font-medium w-36">Time</div>
-        <Tag className="text-base rounded-lg bg-indgo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+        <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
           {timestamp}
         </Tag>
       </div>

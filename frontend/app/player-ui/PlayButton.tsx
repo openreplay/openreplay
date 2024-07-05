@@ -44,7 +44,7 @@ export function PlayButton({ togglePlay, iconSize, state }: IProps) {
     >
       <div
         onClick={togglePlay}
-        className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
+        className="hover-main color-main cursor-pointer rounded-full hover:bg-indigo-50"
       >
         <Icon name={icon} size={iconSize} color="inherit" />
       </div>

@@ -48,9 +48,9 @@ function NoteItem(props: Props) {
   const safeStrMessage =
     props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message;
   return (
-    <div className="flex items-center px-2 border-b">
+    <div className="flex items-center px-2 border-b hover:bg-amber-50 justify-between py-2">
       <Link
-        style={{ width: '90%' }}
+        style={{ width: '90%',  }}
         to={
               session(props.note.sessionId) +
               (props.note.timestamp > 0
@@ -58,7 +58,7 @@ function NoteItem(props: Props) {
                 : `?note=${props.note.noteId}`)
             }
           >
-        <div className="flex flex-col p-2 rounded cursor-pointer">
+        <div className="flex flex-col p-2 rounded cursor-pointer justify-between">
           <div className="flex py-1 text-base">
             
           {props.note.tag ? (
@@ -70,14 +70,14 @@ function NoteItem(props: Props) {
               </Tag>
             ) : null}
 
-            <div className='cap-first'>
+            <div className='cap-first font-medium'>
             {safeStrMessage}
             </div>
           </div>
           <div className="flex items-center">
             
-            <div className="flex items-center text-sm">
-              <span className="text-gray-600 mr-1 capitalize">By </span>
+            <div className="flex items-center text-sm text-start">
+              <span className="text-gray-600 mr-1 capitalize text-start">By </span>
               {props.note.userName},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
               <div className="mx-2" />
@@ -86,9 +86,10 @@ function NoteItem(props: Props) {
           </div>
         </div>
       </Link>
+{/* 
       <div className="ml-auto">
         <PlayLink isAssist={false} viewed={false} sessionId={props.note.sessionId} />
-      </div>
+      </div> */}
       <div className="ml-2 cursor-pointer">
         <ItemMenu bold items={menuItems} />
       </div>

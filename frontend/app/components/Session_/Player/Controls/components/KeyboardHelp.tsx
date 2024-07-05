@@ -4,7 +4,7 @@ import {Keyboard} from 'lucide-react'
 import { Button, Tooltip } from 'antd';
 import { useModal } from "../../../../Modal";
 
-const Key = ({ label }: { label: string }) => <div style={{ minWidth: 52 }} className="whitespace-nowrap font-bold bg-gray-lightest rounded shadow px-2 py-1 text-figmaColors-text-primary text-center">{label}</div>;
+const Key = ({ label }: { label: string }) => <div style={{ minWidth: 52 }} className="whitespace-nowrap font-normal bg-indigo-50 rounded-lg px-2 py-1 text-figmaColors-text-primary text-center font-mono">{label}</div>;
 function Cell({ shortcut, text }: any) {
   return (
     <div className="flex items-center gap-2 justify-start rounded">
@@ -68,7 +68,7 @@ function KeyboardHelp() {
       size={'small'}
       className={'flex items-center justify-center'}
       onClick={() => {
-        showModal(<ShortcutGrid />, { right: true, width: 420 })
+        showModal(<ShortcutGrid />, { right: true, width: 320 })
       }}
     >
       <Keyboard size={18}/>

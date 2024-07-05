@@ -1292,7 +1292,7 @@ export const session = {
         sessionId: 8119081922378909,
         messageId: 37522,
         timestamp: 1673887715900,
-        label: 'hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade',
+        label: 'hover-main color-main cursor-pointer rounded-full hover:bg-indigo-50',
         url: 'app.openreplay.com/5095/session/8118843021704432',
         selector:
           '#app > div.relative > div.flex > div.w-full > div.session-module__session--PKpp5.relative > div.playerBlock-module__playerBlock--c8_Ul.flex.flex-col.overflow-x-hidden > div.flex-1.player-module__playerBody--aoTX_.flex.flex-col.relative > div.controls-module__controls--fXp80 > div.controls-module__buttons--vje3y > div.flex.items-center > div.flex.items-center > div.relative > div > div.hover-main.color-main.cursor-pointer.rounded.hover:bg-gray-light-shade',
@@ -2780,7 +2780,7 @@ export const session = {
         sessionId: 8119081922378909,
         messageId: 67718,
         timestamp: 1673888012602,
-        label: 'hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade',
+        label: 'hover-main color-main cursor-pointer rounded-full hover:bg-indigo-50',
         url: 'app.openreplay.com/5095/session/8118633985734291',
         selector:
           '#app > div.relative > div.flex > div.w-full > div.session-module__session--PKpp5.relative > div.playerBlock-module__playerBlock--c8_Ul.flex.flex-col.overflow-x-hidden > div.flex-1.player-module__playerBody--aoTX_.flex.flex-col.relative > div.controls-module__controls--fXp80 > div.controls-module__buttons--vje3y > div.flex.items-center > div.flex.items-center > div.relative > div > div.hover-main.color-main.cursor-pointer.rounded.hover:bg-gray-light-shade',
@@ -4046,7 +4046,7 @@ export const session = {
         sessionId: 8119081922378909,
         messageId: 90402,
         timestamp: 1673888133249,
-        label: 'hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade',
+        label: 'hover-main color-main cursor-pointer rounded-full hover:bg-indigo-50',
         url: 'app.openreplay.com/5095/session/8118556979885624',
         selector:
           '#app > div.relative > div.flex > div.w-full > div.session-module__session--PKpp5.relative > div.playerBlock-module__playerBlock--c8_Ul.flex.flex-col.overflow-x-hidden > div.flex-1.player-module__playerBody--aoTX_.flex.flex-col.relative > div.controls-module__controls--fXp80 > div.controls-module__buttons--vje3y > div.flex.items-center > div.flex.items-center > div.relative > div > div.hover-main.color-main.cursor-pointer.rounded.hover:bg-gray-light-shade',
