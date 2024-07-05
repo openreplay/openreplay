@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Icon } from 'UI';
-import { Tooltip, Modal, Input, Button, Dropdown, Menu, Tag } from 'antd';
-import { UserOutlined, UserAddOutlined, TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import { Icon, Modal } from 'UI';
+import { Tooltip, Input, Button, Dropdown, Menu, Tag } from 'antd';
+import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 import { TYPES } from 'App/constants/card';
@@ -9,6 +9,7 @@ import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
+import moment from 'moment';  // Import moment
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -29,7 +30,7 @@ function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{card.title}</div>}>
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
-      {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
+        {card.icon && <Icon name={card.icon} size="16" color="tealx" />}
       </div>
     </Tooltip>
   );
@@ -48,6 +49,10 @@ const MetricListItem: React.FC<Props> = ({
   const [isEdit, setIsEdit] = useState(false);
   const [newName, setNewName] = useState(metric.name);
 
+  useEffect(() => {
+    setNewName(metric.name);
+  }, [metric]);
+
   const onItemClick = (e: React.MouseEvent) => {
     if (!disableSelection) {
       return toggleSelection(e);
@@ -65,6 +70,7 @@ const MetricListItem: React.FC<Props> = ({
         cancelText: 'No',
         onOk: async () => {
           await metricStore.delete(metric);
+          toast.success('Card deleted');
         },
       });
     }
@@ -75,8 +81,27 @@ const MetricListItem: React.FC<Props> = ({
 
   const onRename = async () => {
     try {
-      metric.updateKey('name', newName);
-      await metricStore.save(metric);
+      console.log('Renaming metric:', metric);
+      console.log('New name:', newName);
+      metric.name = newName; // Directly update the name property
+
+      // Add a toJson method if it doesn't exist
+      if (typeof metric.toJson !== 'function') {
+        metric.toJson = function () {
+          return {
+            metricId: this.metricId,
+            widgetId: this.widgetId,
+            category: this.category,
+            name: this.name,
+            metricType: this.metricType,
+            // Add other relevant properties here
+          };
+        };
+      }
+
+      await metricStore.save(metric.toJson());
+
+      console.log('Metric saved:', metric);
       metricStore.fetchList();
       setIsEdit(false);
     } catch (e) {
@@ -86,26 +111,41 @@ const MetricListItem: React.FC<Props> = ({
   };
 
   const renderModal = () => (
-    <Modal
-      title="Rename Card"
-      visible={isEdit}
-      onCancel={() => setIsEdit(false)}
-      footer={[
-        <Button key="back" onClick={() => setIsEdit(false)}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" onClick={onRename}>
+    <Modal open={isEdit} onClose={() => setIsEdit(false)}>
+      <Modal.Header>Rename Card</Modal.Header>
+      <Modal.Content>
+        <Input
+          placeholder="Enter new card title"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+      </Modal.Content>
+      <Modal.Footer>
+        <Button
+          onClick={onRename}
+          type="primary"
+          className="mr-2"
+        >
           Save
-        </Button>,
-      ]}
-    >
-      <Input
-        placeholder="Enter new card title"
-        value={newName}
-        onChange={(e) => setNewName(e.target.value)}
-      />
+        </Button>
+        <Button
+          onClick={() => setIsEdit(false)}
+        >
+          Cancel
+        </Button>
+      </Modal.Footer>
     </Modal>
   );
+
+  const parseDate = (dateString: string) => {
+    // Try to parse as ISO 8601 string first
+    let date = moment(dateString, moment.ISO_8601);
+    if (!date.isValid()) {
+      // Try to parse as a number (timestamp)
+      date = moment(Number(dateString));
+    }
+    return date;
+  };
 
   switch (renderColumn) {
     case 'title':
@@ -130,10 +170,11 @@ const MetricListItem: React.FC<Props> = ({
         </div>
       );
     case 'lastModified':
-      return new Date(metric.lastModified).toLocaleString();
+      return parseDate(metric.lastModified).calendar();    // Use moment to return relative time
     case 'options':
       return (
         <>
+        <div className='flex justify-end'>
           <Dropdown
             overlay={
               <Menu onClick={onMenuClick}>
@@ -147,8 +188,9 @@ const MetricListItem: React.FC<Props> = ({
             }
             trigger={['click']}
           >
-            <Button type="default" icon={<MoreOutlined />} />
+            <Button type="text" icon={<MoreOutlined />} />
           </Dropdown>
+          </div>
           {renderModal()}
         </>
       );

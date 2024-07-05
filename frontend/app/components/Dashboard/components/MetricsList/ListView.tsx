@@ -1,6 +1,7 @@
 import React from 'react';
 import { Checkbox, Table } from 'antd';
 import MetricListItem from '../MetricListItem';
+import classNames from 'classnames';
 
 interface Props {
   list: any;
@@ -33,7 +34,9 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
       dataIndex: 'name',
       key: 'title',
+      className: 'cap-first',
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      width: '40%',
       render: (text: any, metric: any) => (
         <MetricListItem
           key={metric.metricId}
@@ -53,7 +56,9 @@ const ListView: React.FC<Props> = (props: Props) => {
       title: 'Owner',
       dataIndex: 'owner',
       key: 'owner',
+      className: 'capitalize',
       sorter: (a: any, b: any) => a.owner.localeCompare(b.owner),
+      width: '25%',
       render: (text: any, metric: any) => (
         <MetricListItem
           key={metric.metricId}
@@ -64,23 +69,11 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
     },
     {
-      title: 'Visibility',
-      dataIndex: 'visibility',
-      key: 'visibility',
-      render: (text: any, metric: any) => (
-        <MetricListItem
-          key={metric.metricId}
-          metric={metric}
-          siteId={siteId}
-          renderColumn="visibility"
-        />
-      ),
-    },
-    {
       title: 'Last Modified',
       dataIndex: 'lastModified',
       key: 'lastModified',
       sorter: (a: any, b: any) => new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime(),
+      width: '20%',
       render: (text: any, metric: any) => (
         <MetricListItem
           key={metric.metricId}
@@ -91,8 +84,26 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
     },
     {
-      title: 'Options',
+      title: 'Visibility',
+      dataIndex: 'visibility',
+      key: 'visibility',
+      width: '10%',
+      render: (text: any, metric: any) => (
+        <MetricListItem
+          key={metric.metricId}
+          metric={metric}
+          siteId={siteId}
+          renderColumn="visibility"
+        />
+      ),
+    },
+    
+    {
+      title: '',
       key: 'options',
+      className: 'text-right',
+      width: '5%',
+      align: 'right',
       render: (text: any, metric: any) => (
         <MetricListItem
           key={metric.metricId}
