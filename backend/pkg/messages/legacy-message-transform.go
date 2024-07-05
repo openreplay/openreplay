@@ -52,6 +52,13 @@ func transformDeprecated(msg Message) Message {
 			NormalizedX:    101, // 101 is a magic number to signal that the value is not present
 			NormalizedY:    101, // 101 is a magic number to signal that the value is not present
 		}
+	case *SetPageLocationDeprecated:
+		return &SetPageLocation{
+			URL:             m.URL,
+			Referrer:        m.Referrer,
+			NavigationStart: m.NavigationStart,
+			DocumentTitle:   "",
+		}
 	}
 	return msg
 }
