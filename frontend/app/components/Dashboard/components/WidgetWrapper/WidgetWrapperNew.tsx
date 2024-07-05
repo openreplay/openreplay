@@ -32,6 +32,7 @@ interface Props {
   grid?: string;
   isGridView?: boolean;
   showMenu?: boolean;
+  isSaved?: boolean;
 }
 
 function WidgetWrapperNew(props: Props & RouteComponentProps) {
@@ -46,7 +47,8 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     siteId,
     grid = '',
     isGridView = false,
-    showMenu = false
+    showMenu = false,
+    isSaved = false
   } = props;
   const widget: any = props.widget;
   const isTimeSeries = widget.metricType === TIMESERIES;
@@ -151,6 +153,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
             metric={widget}
             isTemplate={isTemplate}
             isWidget={isWidget}
+            isSaved={isSaved}
           />
         </div>
       </LazyLoad>

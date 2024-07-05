@@ -56,6 +56,7 @@ function DashboardWidgetGrid(props: Props) {
                     siteId={siteId}
                     grid="other"
                     showMenu={true}
+                    isSaved={true}
                   />
                 </React.Fragment>
               ))
