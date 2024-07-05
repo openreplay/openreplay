@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Checkbox, Table } from 'antd';
+import { Checkbox, Table, Typography } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
+
+const { Text } = Typography;
 
 interface Metric {
   metricId: number;
@@ -23,12 +25,27 @@ interface Props {
 }
 
 const ListView: React.FC<Props> = (props: Props) => {
-  const { siteId, list, selectedList, toggleSelection, disableSelection = false, allSelected = false, toggleAll } = props;
+  const {
+    siteId,
+    list,
+    selectedList,
+    toggleSelection,
+    disableSelection = false,
+    allSelected = false,
+    toggleAll
+  } = props;
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
     order: 'descend'
   });
   const [pagination, setPagination] = useState<TablePaginationConfig>({ current: 1, pageSize: 10 });
+  const totalMessage = (
+    <>
+      Showing <Text strong>{pagination.pageSize * (pagination.current - 1) + 1}</Text> to <Text
+      strong>{Math.min(pagination.pageSize * pagination.current, list.length)}</Text> of <Text
+      strong>{list.length}</Text> cards
+    </>
+  );
 
   const sortedData = useMemo(() => {
     return [...list].sort((a, b) => {
@@ -37,9 +54,9 @@ const ListView: React.FC<Props> = (props: Props) => {
           ? new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime()
           : new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
       } else if (sorter.field === 'name') {
-        return sorter.order === 'ascend' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        return sorter.order === 'ascend' ? a.name?.localeCompare(b.name) : b.name?.localeCompare(a.name);
       } else if (sorter.field === 'owner') {
-        return sorter.order === 'ascend' ? a.owner.localeCompare(b.owner) : b.owner.localeCompare(a.owner);
+        return sorter.order === 'ascend' ? a.owner?.localeCompare(b.owner) : b.owner?.localeCompare(a.owner);
       }
       return 0;
     });
@@ -82,7 +99,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'name',
       key: 'title',
       className: 'cap-first',
-      width:'35%',
+      width: '35%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -97,14 +114,14 @@ const ListView: React.FC<Props> = (props: Props) => {
           }}
           renderColumn="title"
         />
-      ),
+      )
     },
     {
       title: 'Owner',
       dataIndex: 'owner',
       key: 'owner',
       className: 'capitalize',
-      width:'25%',
+      width: '25%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -113,7 +130,7 @@ const ListView: React.FC<Props> = (props: Props) => {
           siteId={siteId}
           renderColumn="owner"
         />
-      ),
+      )
     },
     {
       title: 'Last Modified',
@@ -127,7 +144,7 @@ const ListView: React.FC<Props> = (props: Props) => {
           siteId={siteId}
           renderColumn="lastModified"
         />
-      ),
+      )
     },
     {
       title: 'Visibility',
@@ -141,7 +158,7 @@ const ListView: React.FC<Props> = (props: Props) => {
           siteId={siteId}
           renderColumn="visibility"
         />
-      ),
+      )
     },
     {
       title: '',
@@ -154,8 +171,8 @@ const ListView: React.FC<Props> = (props: Props) => {
           siteId={siteId}
           renderColumn="options"
         />
-      ),
-    },
+      )
+    }
   ];
 
   return (
@@ -167,19 +184,31 @@ const ListView: React.FC<Props> = (props: Props) => {
       rowSelection={
         !disableSelection
           ? {
-              selectedRowKeys: selectedList.map((id: number) => id.toString()),
-              onChange: (selectedRowKeys) => {
-                selectedRowKeys.forEach((key) => {
-                  toggleSelection && toggleSelection(parseInt(key));
-                });
-              },
+            selectedRowKeys: selectedList.map((id: number) => id.toString()),
+            onChange: (selectedRowKeys) => {
+              selectedRowKeys.forEach((key: any) => {
+                toggleSelection && toggleSelection(parseInt(key));
+              });
             }
+          }
           : undefined
       }
+      // footer={() => (
+      //   <div className="flex justify-end">
+      //     <Checkbox name="slack" checked={allSelected} onClick={toggleAll}>
+      //       Select All
+      //     </Checkbox>
+      //   </div>
+      // )}
       pagination={{
         current: pagination.current,
         pageSize: pagination.pageSize,
         total: sortedData.length,
+        showSizeChanger: false,
+        className: 'px-4',
+        showLessItems: true,
+        showTotal: () => totalMessage,
+        showQuickJumper: true
       }}
     />
   );

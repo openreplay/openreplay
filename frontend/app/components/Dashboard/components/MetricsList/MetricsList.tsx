@@ -54,20 +54,20 @@ function MetricsList({
       <NoContent
         show={lenth === 0}
         title={
-          <div className='flex flex-col items-center justify-center'>
+          <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_CARDS} size={60} />
-            <div className='text-center mt-4'>
+            <div className="text-center mt-4">
               {metricsSearch !== '' ? 'No matching results' : 'You haven\'t created any cards yet'}
             </div>
           </div>
         }
-        subtext='Utilize cards to visualize key user interactions or product performance metrics.'
+        subtext="Utilize cards to visualize key user interactions or product performance metrics."
       >
         {listView ? (
           <ListView
             disableSelection={!onSelectionChange}
             siteId={siteId}
-            list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
+            list={cards}
             selectedList={selectedMetrics}
             existingCardIds={existingCardIds}
             toggleSelection={toggleMetricSelection}
@@ -77,28 +77,29 @@ function MetricsList({
             }
           />
         ) : (
-          <GridView
-            siteId={siteId}
-            list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
-            selectedList={selectedMetrics}
-            toggleSelection={toggleMetricSelection}
-          />
+          <>
+            <GridView
+              siteId={siteId}
+              list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
+              selectedList={selectedMetrics}
+              toggleSelection={toggleMetricSelection}
+            />
+            <div className="w-full flex items-center justify-between py-4 px-6 border-t">
+              <div className="">
+                Showing{' '}
+                <span className="font-semibold">{Math.min(cards.length, metricStore.pageSize)}</span> out
+                of <span className="font-semibold">{cards.length}</span> cards
+              </div>
+              <Pagination
+                page={metricStore.page}
+                total={lenth}
+                onPageChange={(page) => metricStore.updateKey('page', page)}
+                limit={metricStore.pageSize}
+                debounceRequest={100}
+              />
+            </div>
+          </>
         )}
-
-        <div className='w-full flex items-center justify-between py-4 px-6 border-t'>
-          <div className=''>
-            Showing{' '}
-            <span className='font-semibold'>{Math.min(cards.length, metricStore.pageSize)}</span> out
-            of <span className='font-semibold'>{cards.length}</span> cards
-          </div>
-          <Pagination
-            page={metricStore.page}
-            total={lenth}
-            onPageChange={(page) => metricStore.updateKey('page', page)}
-            limit={metricStore.pageSize}
-            debounceRequest={100}
-          />
-        </div>
       </NoContent>
     </Loader>
   );
