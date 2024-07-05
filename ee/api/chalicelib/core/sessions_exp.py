@@ -1504,7 +1504,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     extra_join = ""
     if issue is not None:
         extra_join = """
-                INNER JOIN (SELECT session_id
+                INNER JOIN (SELECT DISTINCT session_id
                            FROM experimental.issues
                                     INNER JOIN experimental.events USING (issue_id)
                            WHERE issues.type = %(issue_type)s
