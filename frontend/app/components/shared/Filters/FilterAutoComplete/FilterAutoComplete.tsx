@@ -152,15 +152,11 @@ function FilterAutoComplete(props: Props) {
             if (key === 'type' && params[key] === 'metadata') {
                 acc['key'] = params['key'].replace(/^_/, '');
                 acc['type'] = 'metadata';
+            } else {
+                acc[key] = params[key];
             }
             return acc;
         }, {});
-
-        // const _params: Record<string, string> = {}
-        // const keys = Object.keys(params);
-        // keys.forEach((key) => {
-        //     _params[key.replace('_', '')] = params[key];
-        // })
 
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
@@ -267,11 +263,3 @@ function FilterAutoComplete(props: Props) {
 }
 
 export default FilterAutoComplete;
-
-const DropdownIndicator = (props: DropdownIndicatorProps<true>) => {
-    return (
-        <components.DropdownIndicator {...props}>
-            <Icon name="chevron-down" size="16" />
-        </components.DropdownIndicator>
-    );
-};
