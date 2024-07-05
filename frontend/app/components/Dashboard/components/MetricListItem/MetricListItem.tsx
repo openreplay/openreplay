@@ -80,8 +80,6 @@ const MetricListItem: React.FC<Props> = ({
 
   const onRename = async () => {
     try {
-      console.log('Renaming metric:', metric);
-      console.log('New name:', newName);
       metric.name = newName; 
 
       // Add a toJson method if it doesn't exist
@@ -93,14 +91,12 @@ const MetricListItem: React.FC<Props> = ({
             category: this.category,
             name: this.name,
             metricType: this.metricType,
-            // Add other relevant properties here
           };
         };
       }
 
       await metricStore.save(metric.toJson());
 
-      console.log('Metric saved:', metric);
       metricStore.fetchList();
       setIsEdit(false);
     } catch (e) {

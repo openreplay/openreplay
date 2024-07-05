@@ -216,7 +216,7 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
             </div>
           </div>
           <div style={{ maxWidth: 550 }}>
-            <Link className="link" to={test.status === 'preview' ? editLink : link}>
+            <Link className="link !p-0" to={test.status === 'preview' ? editLink : link}>
               {test.title}
             </Link>
             <div className={'text-disabled-text whitespace-nowrap text-ellipsis overflow-hidden'}>

@@ -16,9 +16,7 @@ interface Props {
 
 function SpeedIndexByLocation(props: Props) {
   const { data } = props;
-  console.log('data', data);
   const wrapper: any = React.useRef(null);
-  let map: any = null;
   const [tooltipStyle, setTooltipStyle] = React.useState({ display: 'none' });
   const [pointedLocation, setPointedLocation] = React.useState<any>(null);
 
@@ -27,7 +25,6 @@ function SpeedIndexByLocation(props: Props) {
     const max = data.chart?.reduce((acc: any, item: any) => Math.max(acc, item.value), 0);
     const min = data.chart?.reduce((acc: any, item: any) => Math.min(acc, item.value), 0);
     data.chart?.forEach((item: any) => {
-      console.log('item', item);
       if (!item || !item.userCountry) {
         return;
       }

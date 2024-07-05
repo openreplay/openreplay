@@ -113,7 +113,6 @@ function FilterSeries(props: Props) {
     }
 
     const onChangeEventsOrder = (_: any, {name, value}: any) => {
-        console.log(name, value)
         series.filter.updateKey(name, value);
         observeChanges();
     };

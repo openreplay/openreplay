@@ -41,7 +41,6 @@ const MetricTabs = ({metric, writeOption}: any) => {
     if (![TABLE].includes(metric.metricType)) return null;
 
     const onChange = (value: string) => {
-        console.log('value', value);
         writeOption({
             value: {
                 value
@@ -231,8 +230,6 @@ const CardBuilder = observer((props: CardBuilderProps) => {
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
     const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
-
-    console.log('metric', metric);
 
 
     useEffect(() => {

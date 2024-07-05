@@ -145,7 +145,7 @@ function spawnDebugVideo(stream: MediaStream, node: VElement) {
   video
     .play()
     .then(() => {
-      console.log('started streaming canvas');
+      console.debug('started streaming canvas');
     })
     .catch((e) => {
       console.error(e);
