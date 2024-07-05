@@ -165,6 +165,18 @@ const MetricListItem: React.FC<Props> = ({
     }
   };
 
+  const menuItems = [
+    {
+      key: "rename",
+      icon: <EditOutlined />,
+      label: "Rename"
+    },
+    {
+      key: "delete",
+      icon: <DeleteOutlined />,
+      label: "Delete"
+    }
+  ]
   switch (renderColumn) {
     case 'title':
       return (
@@ -195,16 +207,7 @@ const MetricListItem: React.FC<Props> = ({
         <>
         <div className='flex justify-end'>
           <Dropdown
-            overlay={
-              <Menu onClick={onMenuClick}>
-                <Menu.Item key="rename" icon={<EditOutlined />}>
-                  Rename
-                </Menu.Item>
-                <Menu.Item key="delete" icon={<DeleteOutlined />}>
-                  Delete
-                </Menu.Item>
-              </Menu>
-            }
+            menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}
           >
             <Button type="text" icon={<MoreOutlined />} />
