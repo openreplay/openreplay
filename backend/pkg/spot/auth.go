@@ -58,17 +58,17 @@ func (a *authImpl) IsAuthorized(authHeader string) (*User, error) {
 	}
 
 	// Check if the user exists and the token is not expired
-	return a.authExists(claims.UserId, int(claims.IssuedAt))
+	return a.authExists(claims.UserId, claims.TenantID, int(claims.IssuedAt))
 }
 
-func (a *authImpl) authExists(userID, jwtIAT int) (*User, error) {
+func (a *authImpl) authExists(userID, tenantID, jwtIAT int) (*User, error) {
 	sql := `
 		SELECT user_id, name, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat
 	   	FROM public.users
 	   	WHERE user_id = $1 AND deleted_at IS NULL
 	   	LIMIT 1;`
 
-	user := &User{}
+	user := &User{TenantID: uint64(tenantID)}
 	if err := a.pgconn.QueryRow(sql, userID).Scan(&user.ID, &user.Name, &user.JwtIat); err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
