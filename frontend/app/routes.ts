@@ -142,6 +142,8 @@ export const usabilityTestingCreate = () => usabilityTesting() + '/create';
 export const usabilityTestingEdit = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/edit/${id}`, hash);
 export const usabilityTestingView = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/view/${id}`, hash);
 
+export const spotsList = (): string => '/spots';
+
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
