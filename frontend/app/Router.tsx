@@ -15,6 +15,7 @@ import Layout from 'App/layout/Layout';
 import { withStore } from 'App/mstore';
 import { checkParam } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
+import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { setSessionPath } from 'Duck/sessions';
 import { fetchList as fetchSiteList } from 'Duck/site';
