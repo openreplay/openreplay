@@ -13,7 +13,7 @@ const CountryFlagIcon: React.FC<CountryFlagProps> = ({ countryCode, style }) => 
   return hasFlag(countryCode) && FlagComponent ? (
     <FlagComponent style={style} />
   ) : (
-    <div className='text-xs bg-gray-light px-1 rounded'>N/A</div>
+    <div className='text-xs bg-gray-bg px-1 rounded color-white'>N/A</div>
   );
 };
 

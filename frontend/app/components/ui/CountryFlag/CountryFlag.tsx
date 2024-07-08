@@ -37,33 +37,20 @@ const CountryFlag: FC<CountryFlagProps> = ({
   // display full geo info, check each part if not null, display as string
   const fullGeoInfo = [userCity, userState, countryName].filter(Boolean).join(', ');
 
-  const renderUnknownCountry = (
-    <div className='flex items-center w-full'>
-      <Icon name='flag-na' size={22} className='' />
-      <div className='ml-2 leading-none' style={{ whiteSpace: 'nowrap' }}>
-        Unknown Country
-      </div>
-    </div>
-  );
-
   const renderGeoInfo = displayGeoInfo && (
-    <span className='mx-1'>
-      <TextEllipsis text={displayGeoInfo} maxWidth='150px' />
+    <span className="mx-1">
+      <TextEllipsis text={displayGeoInfo} maxWidth="150px" />
     </span>
   );
 
   return (
-    <div className='flex items-center' style={style}>
-      {knownCountry ? (
-        <Tooltip title={fullGeoInfo}>
-          <div>
-            <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
-                             style={{ width: `${width}px`, borderRadius: '2px' }} />
-          </div>
-        </Tooltip>
-      ) : (
-        renderUnknownCountry
-      )}
+    <div className="flex items-center" style={style}>
+      <Tooltip title={fullGeoInfo}>
+        <div>
+          <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
+                           style={{ width: `${width}px`, borderRadius: '2px' }} />
+        </div>
+      </Tooltip>
       {showLabel && renderGeoInfo}
     </div>
   );
