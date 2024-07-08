@@ -761,14 +761,18 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
     @model_validator(mode="before")
     def add_missing_attributes(cls, values):
+        # in case isEvent is wrong:
+        for f in values.get("filters"):
+            if EventType.has_value(f["type"]) and not f.get("isEvent"):
+                f["isEvent"] = True
+            elif FilterType.has_value(f["type"]) and f.get("isEvent"):
+                f["isEvent"] = False
+
         # in case the old search payload was passed
         if len(values.get("events", [])) > 0:
             for v in values["events"]:
                 v["isEvent"] = True
 
-        # for v in values.get("filters", []):
-        #     if v.get("isEvent") is None:
-        #         v["isEvent"] = False
         return values
 
     @model_validator(mode="before")
