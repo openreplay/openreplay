@@ -44,11 +44,11 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
           <div className="text-disabled-text">
             Showing{' '}
             <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span> out
-            of <span className="font-semibold">{list.length}</span> notes
+            of <span className="font-semibold">{notesStore.total}</span> notes
           </div>
           <Pagination
             page={notesStore.page}
-            total={list.length}
+            total={notesStore.total}
             onPageChange={(page) => notesStore.changePage(page)}
             limit={notesStore.pageSize}
             debounceRequest={100}

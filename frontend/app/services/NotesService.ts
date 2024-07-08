@@ -56,7 +56,7 @@ export default class NotesService {
     this.client = client || new APIClient();
   }
 
-  fetchNotes(filter: NotesFilter): Promise<Note[]> {
+  fetchNotes(filter: NotesFilter): Promise<{ notes: Note[], count: number }> {
     return this.client.post('/notes', filter).then(r => {
       return r.json().then(r => r.data)
     })

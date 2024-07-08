@@ -1,6 +1,10 @@
-import { makeAutoObservable } from "mobx"
-import { notesService } from "App/services"
-import { Note, WriteNote, iTag, NotesFilter } from 'App/services/NotesService'
+import { makeAutoObservable } from "mobx";
+
+
+
+import { notesService } from "App/services";
+import { Note, NotesFilter, WriteNote, iTag } from 'App/services/NotesService';
+
 
 export default class NotesStore {
   notes: Note[] = []
@@ -12,6 +16,7 @@ export default class NotesStore {
   sort = 'createdAt'
   order: 'DESC' | 'ASC' = 'DESC'
   ownOnly = false
+  total = 0
 
   constructor() {
     makeAutoObservable(this)
@@ -20,9 +25,15 @@ export default class NotesStore {
   setLoading(loading: boolean) {
     this.loading = loading
   }
+
   setNotes(notes: Note[]) {
     this.notes = notes
   }
+
+  setTotal(total: number) {
+    this.total = total
+  }
+
   async fetchNotes() {
     const filter: NotesFilter = {
       page: this.page,
@@ -36,8 +47,9 @@ export default class NotesStore {
 
     this.setLoading(true)
     try {
-      const notes = await notesService.fetchNotes(filter)
+      const { notes, count } = await notesService.fetchNotes(filter);
       this.setNotes(notes);
+      this.setTotal(count)
       return notes;
     } catch (e) {
       console.error(e)
