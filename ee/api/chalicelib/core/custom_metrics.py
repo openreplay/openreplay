@@ -739,9 +739,12 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
                                                     data=data.model_dump())
     elif metric.metric_type == schemas.MetricType.heat_map:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
-            return heatmaps.get_selected_session(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
+            return heatmaps.get_selected_session(project_id=project_id,
+                                                 session_id=raw_metric["data"]["sessionId"])
         else:
-            return heatmaps.search_short_session(project_id=project_id, data=metric, user_id=user_id)
+            return heatmaps.search_short_session(project_id=project_id,
+                                                 data=schemas.HeatMapSessionsSearch(**metric.model_dump()),
+                                                 user_id=user_id)
 
     return get_chart(project_id=project_id, data=metric, user_id=user_id)
 
