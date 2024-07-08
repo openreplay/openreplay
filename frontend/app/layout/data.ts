@@ -53,6 +53,7 @@ export const enum MENU {
   PREFERENCES = 'preferences',
   SUPPORT = 'support',
   EXIT = 'exit',
+  SPOTS = 'spots',
 }
 
 export const categories: Category[] = [
@@ -65,6 +66,13 @@ export const categories: Category[] = [
       { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
+    ]
+  },
+  {
+    title: '',
+    key: 'spot',
+    items: [
+      { label: 'Your Spots', key: MENU.SPOTS, icon: 'broadcast' },
     ]
   },
   {
