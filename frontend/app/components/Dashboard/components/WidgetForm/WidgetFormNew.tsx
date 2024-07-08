@@ -48,17 +48,10 @@ export default observer(WidgetFormNew);
 
 function DefineSteps({ metric, excludeFilterKeys }: any) {
   return (
-    <Card
-      styles={{
-        body: { padding: '0' },
-        cover: {}
-      }}
-    >
-      <div className="px-4 py-2 rounded-lg shadow-sm flex items-center">
+      <div className="px-4 py-2 bg-white rounded-lg shadow-sm flex items-center">
         <Typography.Text strong>Filter</Typography.Text>
         <AddStepButton excludeFilterKeys={excludeFilterKeys} series={metric.series[0]} />
       </div>
-    </Card>
   );
 }
 
