@@ -1,6 +1,7 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Input } from 'antd';
 import React from 'react';
+import { observer } from 'mobx-react-lite'
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -112,14 +113,19 @@ function SpotsListHeader() {
         key: 'own',
       },
     ],
-    onClick: ({ key }: any) => spotStore.setFilter(key),
+    onClick: ({ key }: any) => onFilterChange(key),
   };
 
   const { spotStore } = useStore();
 
   const onSearch = (value: string) => {
-    console.log(value);
+    spotStore.setQuery(value)
+    void spotStore.fetchSpots()
   };
+  const onFilterChange = (key: string) => {
+    spotStore.setFilter(key);
+    void spotStore.fetchSpots();
+  }
   return (
     <div className={'flex items-center px-4 gap-4'}>
       <div className={'text-2xl capitalize mr-2'}>Spots</div>
@@ -154,7 +160,12 @@ function SpotsList() {
   React.useEffect(() => {
     void spotStore.fetchSpots();
   }, []);
-  const spots = fakeData;
+
+  const onPageChange = (page: number) => {
+    spotStore.setPage(page);
+    void spotStore.fetchSpots();
+  };
+
   return (
     <div className={'w-full'}>
       <div
@@ -168,7 +179,7 @@ function SpotsList() {
             'py-2 px-0.5 border-t border-b border-gray-lighter grid grid-cols-4 gap-2'
           }
         >
-          {spots.map((spot, index) => (
+          {spotStore.spots.map((spot, index) => (
             <SpotListItem key={index} spot={spot} />
           ))}
         </div>
@@ -193,7 +204,7 @@ function SpotsList() {
             <Pagination
               page={spotStore.page}
               total={spotStore.total}
-              onPageChange={(page) => spotStore.setPage(page)}
+              onPageChange={onPageChange}
               limit={spotStore.limit}
               debounceRequest={500}
             />
@@ -204,4 +215,4 @@ function SpotsList() {
   );
 }
 
-export default SpotsList;
+export default observer(SpotsList);
