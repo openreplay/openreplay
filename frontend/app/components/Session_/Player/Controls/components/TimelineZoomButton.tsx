@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { toggleZoom } from 'Duck/components/player';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -33,9 +33,11 @@ function TimelineZoomButton({ enabled, toggleZoom }: Props) {
     }
   }, [])
   return (
+    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selction." placement='top'>
     <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-semibold'}>
-      Timeline Zoom {enabled ? 'On' : 'Off'}
+      Focus Mode: {enabled ? 'On' : 'Off'}
     </Button>
+    </Tooltip>
   );
 }
 

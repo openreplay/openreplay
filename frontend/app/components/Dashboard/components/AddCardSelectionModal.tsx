@@ -47,7 +47,7 @@ function AddCardSelectionModal(props: Props) {
                     <Col span={12}>
                         <div className="flex flex-col items-center justify-center hover:bg-indigo-50 border rounded-lg shadow-sm cursor-pointer gap-3" style={{height: '80px'}} onClick={() => onClick(false)}>
                             <Plus style={{fontSize: '24px', color: '#394EFF'}}/>
-                            <Typography.Text strong>Create New Card</Typography.Text>
+                            <Typography.Text strong>Create New</Typography.Text>
                         </div>
                     </Col>
                 </Row>

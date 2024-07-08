@@ -10,6 +10,7 @@ import {
 import { useParams, useHistory, Prompt } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import {Power, Info, ListTodo} from 'lucide-react';
 import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -194,7 +195,7 @@ function TestEdit() {
       </Modal>
       <div className={'grid grid-cols-4 gap-2'}>
         <div className={'flex w-full flex-col gap-2 col-span-3'}>
-          <div className={'flex items-start p-4 rounded bg-white border justify-between'}>
+          <div className={'flex items-start p-4 rounded-lg bg-white shadow-sm justify-between'}>
             <div>
               <Typography.Title level={4}>{uxtestingStore.instance.title}</Typography.Title>
               <Typography.Text>{uxtestingStore.instance.description}</Typography.Text>
@@ -206,32 +207,40 @@ function TestEdit() {
             </div>
           </div>
 
-          <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Title level={5}>🏁 Starting point</Typography.Title>
-            <Input
-              style={{ width: 400 }}
-              type={'url'}
-              disabled={isPublished}
-              placeholder={'https://mywebsite.com/example-page'}
-              value={uxtestingStore.instance!.startingPath}
-              onChange={(e) => {
-                setHasChanged(true);
-                if (!e.target.value.startsWith('https://')) {
-                  e.target.value = 'https://';
-                }
-                uxtestingStore.instance!.setProperty('startingPath', e.target.value);
-              }}
-            />
-            {uxtestingStore.instance!.startingPath === 'https://' || isStartingPointValid ? (
-              <Typography.Text>The test starts at this URL, but not everyone visiting the link will see it. After publishing, you'll get a Distribution URL to share with selected participants.</Typography.Text>
-            ) : (
-              <Typography.Text color={'red'}>Starting point URL is invalid.</Typography.Text>
-            )}
-          </div>
+          <div className={'p-4 rounded-lg bg-white shadow-sm flex flex-col gap-2'}>
+              <Typography.Title level={5} className='flex gap-2 items-center'>
+                <Power size={16} /> Starting point
+              </Typography.Title>
+              <Input
+                style={{ width: 400 }}
+                type={'url'}
+                disabled={isPublished}
+                placeholder={'yoursite.com/example-page'}
+                value={uxtestingStore.instance!.startingPath.replace('https://', '')}
+                addonBefore="https://"
+                onChange={(e) => {
+                  setHasChanged(true);
+                  let value = e.target.value;
+                  if (value.startsWith('https://')) {
+                    value = value.replace('https://', '');
+                  }
+                  uxtestingStore.instance!.setProperty('startingPath', 'https://' + value);
+                }}
+              />
+              {uxtestingStore.instance!.startingPath === 'https://' || isStartingPointValid ? (
+                <Typography.Text className='text-sm'>
+                  The test will start on this page. A special link from this will be created for you to share with participants only.
+                </Typography.Text>
+              ) : (
+                <Typography.Text className='text-sm text-red-600'>Invalid starting point.</Typography.Text>
+              )}
+            </div>
 
-          <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Title level={5}>
-              📖 Introduction and Guidelines for Participants
+
+
+          <div className={'p-4 rounded-lg bg-white shadow-sm flex flex-col gap-2'}>
+            <Typography.Title level={5} className='flex gap-2 items-center'>
+            <Info size={16} /> Introduction and Guidelines for Participants
             </Typography.Title>
             <Typography.Text></Typography.Text>
             {isOverviewEditing ? (
@@ -276,15 +285,15 @@ function TestEdit() {
                   </Button>
                 </>
               ) : (
-                <Button type={'primary'} ghost onClick={() => setIsOverviewEditing(true)}>
-                  {uxtestingStore.instance?.guidelines?.length ? 'Edit' : 'Add'}
+                <Button type={'link'} onClick={() => setIsOverviewEditing(true)} className='px-0'>
+                  {uxtestingStore.instance?.guidelines?.length ? 'Edit' : 'Specify Guidelines'}
                 </Button>
               )}
             </div>
           </div>
 
-          <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Title level={5}>📋 Tasks</Typography.Title>
+          <div className={'p-4 rounded-lg bg-white shadow-sm flex flex-col gap-2'}>
+            <Typography.Title level={5} className='flex gap-2 items-center'><ListTodo size={16} /> Tasks</Typography.Title>
             {uxtestingStore.instance!.tasks.map((task, index) => (
               <Step
                 ind={index}
@@ -359,7 +368,7 @@ function TestEdit() {
           </div>
 
           <div className={'p-4 rounded bg-white border flex flex-col gap-2'}>
-            <Typography.Title level={5}>🎉 Conclusion Message</Typography.Title>
+            <Typography.Title level={5}>🎉 Conclusion</Typography.Title>
             <div>
               {isConclusionEditing ? (
                 <Input.TextArea
@@ -398,7 +407,7 @@ function TestEdit() {
                   </Button>
                 </>
               ) : (
-                <Button type={'primary'} ghost onClick={() => setIsConclusionEditing(true)}>
+                <Button type={'link'} className='px-0' onClick={() => setIsConclusionEditing(true)}>
                   Edit
                 </Button>
               )}

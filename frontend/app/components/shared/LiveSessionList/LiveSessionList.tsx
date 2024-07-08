@@ -121,7 +121,7 @@ function LiveSessionList(props: Props) {
               <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={60} />
                 <div className="mt-4" />
-                <div className="text-center">No live sessions found</div>
+                <div className="text-center  text-lg font-medium">No live sessions found</div>
               </div>
             }
             subtext={

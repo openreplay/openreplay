@@ -37,7 +37,7 @@ function AlertsList({ siteId }: Props) {
         title={
           <div className='flex flex-col items-center justify-center'>
             <AnimatedSVG name={ICONS.NO_ALERTS} size={60} />
-            <div className='text-center mt-4'>
+            <div className='text-center mt-4  text-lg font-medium'>
               {alertsSearch !== '' ? 'No matching results' : 'You haven\'t created any alerts yet'}
             </div>
           </div>
@@ -59,7 +59,7 @@ function AlertsList({ siteId }: Props) {
         </div>
 
         <div className='w-full flex items-center justify-between pt-4 px-6'>
-          <div className='text-disabled-text'>
+          <div className=''>
             Showing <span className='font-semibold'>{Math.min(list.length, pageSize)}</span> out of{' '}
             <span className='font-semibold'>{list.length}</span> Alerts
           </div>

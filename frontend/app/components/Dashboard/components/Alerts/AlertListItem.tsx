@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
+import { Tag } from 'antd';
 import { checkForRecent } from 'App/date';
 import { withSiteId, alertEdit } from 'App/routes';
 import { numberWithCommas } from 'App/utils';
@@ -116,8 +117,10 @@ function AlertListItem(props: Props) {
           </div>
         </div>
         <div className="col-span-2">
-          <div className="flex items-center uppercase">
-            <span>{alert.detectionMethod}</span>
+          <div className="flex items-center">
+            <Tag className='rounded-full bg-indigo-50 cap-first text-base' bordered={false}>
+              {alert.detectionMethod}
+            </Tag>
           </div>
         </div>
         <div className="col-span-2 text-right">
@@ -129,38 +132,38 @@ function AlertListItem(props: Props) {
               )}
         </div>
       </div>
-      <div className="color-gray-medium px-2 pb-2">
+      <div className="text-sm w-2/3 px-2 pb-2 ">
         {'When the '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+        <span className="font-medium font-mono" >
           {alert.detectionMethod}
         </span>
         {' of '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+        <span className="font-medium font-mono" >
           {triggerOptions ? formTriggerName() : alert.seriesName}
         </span>
         {' is '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+        <span className="font-medium font-mono" >
           {alert.query.operator}
           {numberWithCommas(alert.query.right)}
           {alert.change === 'percent' ? '%' : alert.metric?.unit}
         </span>
         {' over the past '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+        <span className="font-medium font-mono">
           {getThreshold(alert.currentPeriod)}
         </span>
         {alert.detectionMethod === 'change' ? (
           <>
             {' compared to the previous '}
-            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>
+            <span className="font-medium font-mono" >
               {getThreshold(alert.previousPeriod)}
             </span>
           </>
         ) : null}
-        {', notify me on '}
+        {', notify via '}
         <span>{getNotifyChannel(alert, webhooks)}</span>.
       </div>
       {alert.description ? (
-        <div className="color-gray-medium px-2 pb-2">{alert.description}</div>
+        <div className="px-2 pb-2">{alert.description}</div>
       ) : null}
     </div>
   );

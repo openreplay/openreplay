@@ -81,7 +81,7 @@ function StepsModal({
           checkedChildren="Yes"
           unCheckedChildren="No"
         />
-        <div className={'text-disabled-text mb-4 mt-1'}>
+        <div className={'text-sm mb-4 mt-1'}>
           Enabling this option will show a text field for participants to type
           their answer.
         </div>

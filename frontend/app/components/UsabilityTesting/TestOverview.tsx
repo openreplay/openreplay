@@ -4,7 +4,8 @@ import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
 import LiveTestsModal from 'Components/UsabilityTesting/LiveTestsModal';
 import React from 'react';
-import { Button, Typography, Select, Space, Popover, Dropdown } from 'antd';
+import { Button, Typography, Select, Space, Popover, Dropdown, Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
 import { useParams, useHistory } from 'react-router-dom';
 import Breadcrumb from 'Shared/Breadcrumb';
@@ -106,7 +107,7 @@ function TestOverview() {
   }, [testId, siteId]);
 
   if (!uxtestingStore.instance) {
-    return <Loader loading={uxtestingStore.isLoading}>No data.</Loader>;
+    return <Loader loading={uxtestingStore.isLoading}>No Data</Loader>;
   } else {
     document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
   }
@@ -128,8 +129,10 @@ function TestOverview() {
           }
         ]}
       />
-      <div className={'rounded border bg-white'}>
+      <div className={'rounded-lg shadow-sm bg-white'}>
+        
         <Title testId={testId} siteId={siteId} />
+
         {uxtestingStore.instance.liveCount ? (
           <div className={'p-4 flex items-center gap-2'}>
             <div className={'relative h-4 w-4'}>
@@ -158,10 +161,12 @@ function TestOverview() {
           </div>
         ) : null}
       </div>
+
       <ParticipantOverview />
+      
       <TaskSummary />
 
-      <div className={'mt-2 rounded border p-4 bg-white flex gap-2 items-center'}>
+      <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white flex flex-col gap-2'}>
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Open-ended task responses
         </Typography.Title>
@@ -178,11 +183,13 @@ function TestOverview() {
             </Space>
           </Button>
         ) : (
-          <Typography.Text>0 at the moment.</Typography.Text>
+          <div className='text-base flex gap-2 mx-auto py-5'>
+              <InfoCircleOutlined /> No Data
+            </div>  
         )}
       </div>
 
-      <div className={'mt-2 rounded border p-4 bg-white flex gap-1 items-start flex-col'}>
+      <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white flex gap-1 items-start flex-col'}>
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Sessions
         </Typography.Title>
@@ -190,7 +197,12 @@ function TestOverview() {
         {/*<div className={'flex gap-1 link'}>clear selection</div>*/}
         <div className={'flex flex-col w-full'}>
           <Loader loading={uxtestingStore.isLoading}>
-            <NoContent show={uxtestingStore.testSessions.list.length == 0} title='No data'>
+            <NoContent show={uxtestingStore.testSessions.list.length == 0} 
+            title={
+            <div className='text-base flex gap-2'>
+              <InfoCircleOutlined /> No Data
+            </div>  
+            }>
               {uxtestingStore.testSessions.list.map((session) => (
                 // @ts-ignore
                 <SessionItem session={session} query={'?uxt=true'} />
@@ -231,7 +243,7 @@ const ParticipantOverview = observer(() => {
   const { uxtestingStore } = useStore();
 
   return (
-    <div className={'p-4 rounded border bg-white mt-2'}>
+    <div className={'p-4 rounded-lg shadow-sm bg-white mt-2'}>
       <Typography.Title level={5}>Participant Overview</Typography.Title>
       {uxtestingStore.testStats ? (
         <div className={'flex gap-4'}>
@@ -316,7 +328,7 @@ const TaskSummary = observer(() => {
     : uxtestingStore.taskStats;
 
   return (
-    <div className={'mt-2 rounded border p-4 bg-white'}>
+    <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white'}>
       <div className={'flex justify-between items-center mb-2'}>
         <Typography.Title level={5}>Task Summary</Typography.Title>
 
@@ -337,7 +349,12 @@ const TaskSummary = observer(() => {
           </div>
         ) : null}
       </div>
-      {!uxtestingStore.taskStats.length ? <NoContent show title={'No data'} /> : null}
+      {!uxtestingStore.taskStats.length ? <NoContent show title=
+      {
+        <div className='text-base flex gap-2'>
+         <InfoCircleOutlined /> No Data
+       </div>  
+      } /> : null}
       {shownTasks.map((tst, index) => (
         <Stage
           stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed }}
@@ -363,16 +380,16 @@ const Title = observer(({ testId, siteId }: any) => {
     uxtestingStore.updateTestStatus(value);
     switch (value) {
       case 'in-progress':
-        toast.success('The usability test is now live and accessible to participants.');
+        toast.success('The test is now live. Use the distribution link to share it with participants.');
         break;
       case 'paused':
         toast.success(
-          'Usability test is on \'Hold\'—participant activity paused. Switch it to “ongoing” to resume activity.'
+          'The test is on \'Hold\'—participant activity paused. Toggle back to “ongoing” to resume activity.'
         );
         break;
       case 'closed':
         toast.success(
-          'The usability test has been marked as completed. All participant interactions are now finalized.'
+          'The test is complete and closed.'
         );
         break;
     }
@@ -434,9 +451,10 @@ const Title = observer(({ testId, siteId }: any) => {
   return (
     <div className={'p-4 border-b'}>
       <div className={'flex items-center gap-2'}>
-        <Typography.Title level={4}>{uxtestingStore.instance!.title}</Typography.Title>
+        <Typography.Title level={4} className='cap-first'>{uxtestingStore.instance!.title}</Typography.Title>
         <div className={'ml-auto'} />
         <Select
+          className='utStatusToggler'
           value={uxtestingStore.instance!.status}
           style={{ width: 150 }}
           onChange={handleChange}
@@ -447,35 +465,36 @@ const Title = observer(({ testId, siteId }: any) => {
             </Space>
           )}
         />
-        <Button
+        {/* <Button
           disabled={uxtestingStore.instance!.status === 'closed'}
           type={'primary'}
+          ghost
           onClick={redirectToEdit}
         >
           <Space align={'center'}>
             {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
-        </Button>
+        </Button> */}
         {isActive ?
           <Popover
-            trigger={'click'}
-            title={'Participants Link'}
+            trigger={'hover'}
+            placement="bottomRight"
+            className='rounded-lg'
             content={
-              <div style={{ width: '220px' }}>
-                <div className={'text-disabled-text text-sm'}>
-                  Distribute following link via email or other methods to share the survey with test
-                  participants.
+              <div style={{ width: '300px' }}>
+                <div className={'text-base font-medium'}>
+                Distribute the following link with test participants via email or other methods.
                 </div>
                 <div
                   style={{ background: '#E4F6F6' }}
-                  className={'p-2 rounded border shadow break-all my-2'}
+                  className={'p-2 rounded-lg break-all my-2 text-lg'}
                 >
                   {`${uxtestingStore.instance!.startingPath}?oruxt=${
                     uxtestingStore.instance!.testId
                   }`}
                 </div>
                 <CopyButton
-                  variant={'outline'}
+                  variant={'text-primary'}
                   content={`${uxtestingStore.instance!.startingPath}?oruxt=${
                     uxtestingStore.instance!.testId
                   }`}
@@ -483,12 +502,14 @@ const Title = observer(({ testId, siteId }: any) => {
               </div>
             }
           >
-            <Button type={'primary'} ghost>
+           
+            <Button type={'primary'} >
               <Space align={'center'}>
-                Distribute
+                Distribute Test
                 <ShareAltOutlined rev={undefined} />
               </Space>
             </Button>
+
           </Popover>
           : null}
         <Dropdown
@@ -503,7 +524,7 @@ const Title = observer(({ testId, siteId }: any) => {
           <Button icon={<MoreOutlined rev={undefined} />}></Button>
         </Dropdown>
       </div>
-      <div className={'whitespace-pre-wrap mt-2'}>{truncatedDescr}</div>
+      <div className={'whitespace-pre-wrap mt-2 cap-first'}>{truncatedDescr}</div>
       {uxtestingStore.instance?.description && uxtestingStore.instance.description.length > 250 ? (
         <div className={'link'} onClick={() => setTruncate(!truncate)}>
           {truncate ? 'Show more' : 'Show less'}

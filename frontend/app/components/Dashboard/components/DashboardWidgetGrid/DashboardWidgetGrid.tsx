@@ -1,12 +1,10 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
-import WidgetWrapper from '../WidgetWrapper';
-import { NoContent, Loader, Icon } from 'UI';
-import { useObserver } from 'mobx-react-lite';
-import Widget from 'App/mstore/types/widget';
-import MetricTypeList from '../MetricTypeList';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
 import { Empty } from 'antd';
+import { NoContent, Loader } from 'UI';
+import { useObserver } from 'mobx-react-lite';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
   siteId: string;
@@ -23,48 +21,50 @@ function DashboardWidgetGrid(props: Props) {
   const list = useObserver(() => dashboard?.widgets);
 
   return useObserver(() => (
-    // @ts-ignore
-    list?.length === 0 ? <Empty description="No cards in this dashboard" /> : (
-      <Loader loading={loading}>
-        <NoContent
-          show={list?.length === 0}
-          icon="no-metrics-chart"
-          title={
-            <div className="bg-white rounded-lg">
-              <div className="border-b p-5">
-                <div className="text-2xl font-normal">
-                  There are no cards in this dashboard
+    <Loader loading={loading}>
+      {
+        list?.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-5">
+            <NoContent
+              show={true}
+              icon="no-metrics-chart"
+              title={
+                <div className="text-center">
+                   <div className='mb-4'>
+                   <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
+                   </div>
+                  <div className="text-xl font-medium mb-2">
+                    There are no cards in this dashboard
+                  </div>
+                  <div className="text-base font-normal">
+                  Create a card by clicking the "Add Card" button to visualize insights here.
+                  </div>
                 </div>
-                <div className="text-base font-normal">
-                  Create a card from any of the below types or pick an existing one from your library.
-                </div>
-              </div>
-            </div>
-          }
-        >
-          <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
-            {
-              list?.map((item: any, index: any) => (
-                <React.Fragment key={item.widgetId}>
-                  <WidgetWrapperNew
-                    index={index}
-                    widget={item}
-                    moveListItem={(dragIndex: any, hoverIndex: any) =>
-                      dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
-                    }
-                    dashboardId={dashboardId}
-                    siteId={siteId}
-                    grid="other"
-                    showMenu={true}
-                    isSaved={true}
-                  />
-                </React.Fragment>
-              ))
-            }
+              }
+            />
           </div>
-        </NoContent>
-      </Loader>
-    )
+        ) : (
+          <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
+            {list?.map((item: any, index: any) => (
+              <React.Fragment key={item.widgetId}>
+                <WidgetWrapperNew
+                  index={index}
+                  widget={item}
+                  moveListItem={(dragIndex: any, hoverIndex: any) =>
+                    dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
+                  }
+                  dashboardId={dashboardId}
+                  siteId={siteId}
+                  grid="other"
+                  showMenu={true}
+                  isSaved={true}
+                />
+              </React.Fragment>
+            ))}
+          </div>
+        )
+      }
+    </Loader>
   ));
 }
 

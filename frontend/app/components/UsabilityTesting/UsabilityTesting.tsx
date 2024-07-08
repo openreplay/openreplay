@@ -132,7 +132,7 @@ function TestsTable() {
                 {uxtestingStore.searchQuery === '' ? (
                   <AnimatedSVG name={ICONS.NO_UXT} size={172} />
                 ) : null}
-                <div className={'text-xl font-semibold mt-4'}>
+                <div className={'text-lg font-medium mt-4'}>
                   {uxtestingStore.searchQuery === ''
                     ? 'Uncover real user insights through usability tests.'
                     : 'No results matching your search'}
@@ -215,11 +215,11 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
               <Icon name={'list-ul'} color={'tealx'} size={20} />
             </div>
           </div>
-          <div style={{ maxWidth: 550 }}>
+          <div style={{ maxWidth: 550 }} className='cap-first'>
             <Link className="link !p-0" to={test.status === 'preview' ? editLink : link}>
               {test.title}
             </Link>
-            <div className={'text-disabled-text whitespace-nowrap text-ellipsis overflow-hidden'}>
+            <div className={'w-11/12 text-sm whitespace-nowrap text-ellipsis overflow-hidden'}>
               {test.description}
             </div>
           </div>
@@ -230,7 +230,7 @@ function Row({ test, siteId }: { test: UxTListEntry; siteId: string }) {
         {checkForRecent(getDateFromMill(test.updatedAt)!, 'LLL dd, yyyy, hh:mm a')}
       </Cell>
       <Cell size={1}>
-        <Tag color={colors[test.status]}>{statusMap[test.status]}</Tag>
+        <Tag className='text-base rounded-lg' bordered={false} color={colors[test.status]}>{statusMap[test.status]}</Tag>
       </Cell>
     </div>
   );

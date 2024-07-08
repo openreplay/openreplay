@@ -217,7 +217,7 @@ function SessionList(props: Props) {
                 <AnimatedSVG name={NO_CONTENT.icon} size={60} />
                 </span>
                 <div className='mt-4' />
-                <div className='text-center relative'>
+                <div className='text-center relative text-lg font-medium'>
                   {NO_CONTENT.message }
                 </div>
               </div>
