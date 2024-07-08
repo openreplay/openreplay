@@ -342,16 +342,7 @@ spec:
           name: db-migration-script
       - name: shared
         emptyDir: {}
-      {{- if eq .Values.global.pvcRWXName  "hostPath" }}
       - name: datadir
-        hostPath:
-          # Ensure the file directory is created.
-          path: {{.Values.global.orTmpDir}}
-          type: DirectoryOrCreate
-      {{- else }}
-      - name: datadir
-        persistentVolumeClaim:
-          claimName: "{{ .Values.global.pvcRWXName }}"
-      {{- end }}
+        emptyDir: {}      
       restartPolicy: Never
 {{- end}}
