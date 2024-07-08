@@ -305,7 +305,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append("array_length(issue_types, 1) > 0")
             else:
                 sessions_conditions.append(
-                    sh.multi_conditions(f"%({f_k})s {op} ANY (issue_types)", f.value, is_not=is_not,
+                    sh.multi_conditions(f"has(issue_types,%({f_k})s)", f.value, is_not=is_not,
                                         value_key=f_k))
 
         elif f.type == schemas.FilterType.events_count:
@@ -327,7 +327,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     selected_event_type_sub_query = " OR ".join(selected_event_type_sub_query)
     ch_sub_query.append(f"({selected_event_type_sub_query})")
 
-    main_events_table = exp_ch_helper.get_main_events_table(data.startTimestamp)
+    main_events_table = exp_ch_helper.get_main_events_table(data.startTimestamp) + " AS events"
+    main_sessions_table = exp_ch_helper.get_main_sessions_table(data.startTimestamp) + " AS sessions"
     if len(sessions_conditions) > 0:
         sessions_conditions.append(f"sessions.project_id = toUInt16(%(project_id)s)")
         sessions_conditions.append(f"sessions.datetime >= toDateTime(%(startTimestamp)s / 1000)")
@@ -336,7 +337,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         sessions_conditions.append("sessions.duration>0")
 
         initial_sessions_cte = f"""sub_sessions AS (SELECT DISTINCT session_id
-                        FROM {exp_ch_helper.get_main_sessions_table(data.startTimestamp)}
+                        FROM {main_sessions_table}
                         WHERE {" AND ".join(sessions_conditions)}),"""
     else:
         initial_sessions_cte = ""
@@ -360,7 +361,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                     WHERE {" AND ".join(step_0_conditions)}"""
         initial_event_cte = f"""\
             initial_event AS (SELECT events.session_id, MIN(datetime) AS start_event_timestamp
-                       FROM {main_events_table} AS events {"INNER JOIN sub_sessions USING (session_id)" if len(sessions_conditions) > 0 else ""}
+                       FROM {main_events_table} {"INNER JOIN sub_sessions USING (session_id)" if len(sessions_conditions) > 0 else ""}
                        WHERE {" AND ".join(start_points_conditions)}
                        GROUP BY 1),"""
         ch_sub_query.append("events.datetime>=initial_event.start_event_timestamp")
