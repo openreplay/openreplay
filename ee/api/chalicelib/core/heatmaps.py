@@ -347,7 +347,8 @@ else:
                 logger.warning("--------------------")
                 raise err
 
-        if session:
+        if len(session) > 0:
+            session = session[0]
             if include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
@@ -361,6 +362,8 @@ else:
 
             session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
                                                          event_type=schemas.EventType.location)
+        else:
+            return None
 
         return helper.dict_to_camel_case(session)
 
