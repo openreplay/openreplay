@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urljoin
 
 from decouple import config
@@ -8,6 +9,8 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
 
 
 def get_note(tenant_id, project_id, user_id, note_id, share=None):
@@ -66,19 +69,22 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
             conditions.append("sessions_notes.user_id = %(user_id)s")
         else:
             conditions.append("(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public)")
-        query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS user_name
+        query = cur.mogrify(f"""SELECT COUNT(1) OVER () AS full_count, sessions_notes.*, users.name AS user_name
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE {" AND ".join(conditions)}
                                 ORDER BY created_at {data.order}
                                 LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id, **extra_params})
-
+        logger.debug(query)
         cur.execute(query=query)
         rows = cur.fetchall()
-        rows = helper.list_to_camel_case(rows)
+        result = {"count": 0, "notes": helper.list_to_camel_case(rows)}
+        if len(rows) > 0:
+            result["count"] = rows[0]["fullCount"]
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
-    return rows
+            row.pop("fullCount")
+    return result
 
 
 def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
