@@ -31,11 +31,11 @@ type GetSpotResponse struct {
 }
 
 type GetSpotsRequest struct {
-	Query    *string `json:"query"`    // for search by name (optional)
-	FilterBy string  `json:"filterBy"` // "own", "all", "shared"
-	Order    string  `json:"order"`
-	Page     uint64  `json:"page"`
-	Limit    uint64  `json:"limit"`
+	Query    string `json:"query"`    // for search by name (optional)
+	FilterBy string `json:"filterBy"` // "own", "all", "shared"
+	Order    string `json:"order"`
+	Page     uint64 `json:"page"`
+	Limit    uint64 `json:"limit"`
 }
 
 type ShortInfo struct {

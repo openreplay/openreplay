@@ -123,6 +123,22 @@ func getSpotID(r *http.Request) (uint64, error) {
 	return id, nil
 }
 
+func getSpotsRequest(r *http.Request) (*GetSpotsRequest, error) {
+	vars := mux.Vars(r)
+	page := vars["page"]
+	limit := vars["limit"]
+	pageNum, _ := strconv.ParseUint(page, 10, 64)
+	limitNum, _ := strconv.ParseUint(limit, 10, 64)
+	req := &GetSpotsRequest{
+		Query:    vars["query"],
+		FilterBy: vars["filterBy"],
+		Order:    vars["order"],
+		Page:     pageNum,
+		Limit:    limitNum,
+	}
+	return req, nil
+}
+
 func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
@@ -224,15 +240,8 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	req, err := getSpotsRequest(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodySize = len(bodyBytes)
-
-	req := &GetSpotsRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
