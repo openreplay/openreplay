@@ -1314,7 +1314,7 @@ class CardPathAnalysisSeriesSchema(CardSeriesSchema):
         if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
             values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
                                                   endTimestamp=values["endTimestamp"],
-                                                  density=values["density"])
+                                                  density=values.get("density", 4))
         return values
 
 
