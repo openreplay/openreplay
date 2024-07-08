@@ -34,13 +34,13 @@ type Key struct {
 }
 
 type GetOpts struct {
-	SpotID     uint64 // grab particular spot by ID
-	UserID     uint64 // for filtering by user
-	TenantID   uint64 // for filtering by all users in tenant
-	NameFilter string // for filtering by name (substring)
-	Order      string // sorting ("asc" or "desc")
-	Limit      int    // pagination (limit for page)
-	Offset     int    // pagination (offset for page)
+	SpotID     uint64  // grab particular spot by ID
+	UserID     uint64  // for filtering by user
+	TenantID   uint64  // for filtering by all users in tenant
+	NameFilter *string // for filtering by name (substring)
+	Order      string  // sorting ("asc" or "desc")
+	Limit      uint64  // pagination (limit for page)
+	Offset     uint64  // pagination (offset for page)
 }
 
 type spotsImpl struct {
@@ -189,9 +189,9 @@ func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, error) {
 		sql += ` AND user_id = ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, opts.UserID)
 	}
-	if opts.NameFilter != "" {
+	if opts.NameFilter != nil && *opts.NameFilter != "" {
 		sql += ` AND name ILIKE ` + fmt.Sprintf("$%d", len(args)+1)
-		args = append(args, "%"+opts.NameFilter+"%")
+		args = append(args, "%"+*opts.NameFilter+"%")
 	}
 	if opts.Order != "" {
 		sql += ` ORDER BY created_at ` + opts.Order

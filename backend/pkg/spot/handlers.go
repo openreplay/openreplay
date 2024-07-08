@@ -56,15 +56,12 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate upload URLs
-	mobKey := fmt.Sprintf("%d/events.mob", newSpot.ID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.getMobURL(newSpot.ID)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	videoKey := fmt.Sprintf("%d/video.webm", newSpot.ID)
-	videoURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(videoKey)
+	videoURL, err := e.getVideoURL(newSpot.ID)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -90,6 +87,24 @@ func getSpotPreview(preview string) ([]byte, error) {
 		return nil, fmt.Errorf("can't decode base64 preview: %s", err)
 	}
 	return data, nil
+}
+
+func (e *Router) getMobURL(spotID uint64) (string, error) {
+	mobKey := fmt.Sprintf("%d/events.mob", spotID)
+	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	if err != nil {
+		return "", fmt.Errorf("can't get mob URL: %s", err)
+	}
+	return mobURL, nil
+}
+
+func (e *Router) getVideoURL(spotID uint64) (string, error) {
+	mobKey := fmt.Sprintf("%d/video.webm", spotID)
+	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	if err != nil {
+		return "", fmt.Errorf("can't get video URL: %s", err)
+	}
+	return mobURL, nil
 }
 
 func getSpotID(r *http.Request) (uint64, error) {
@@ -129,10 +144,27 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]interface{}{
-		"spot": res[0],
+	mobURL, err := e.getMobURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	videoURL, err := e.getVideoURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	spotInfo := &Info{
+		Name:      res[0].Name,
+		Duration:  res[0].Duration,
+		Comments:  res[0].Comments,
+		CreatedAt: res[0].CreatedAt,
+		MobURL:    mobURL,
+		VideoURL:  videoURL,
+		Key:       res[0].Key,
+	}
+	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) updateSpot(w http.ResponseWriter, r *http.Request) {
@@ -165,10 +197,27 @@ func (e *Router) updateSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]interface{}{
-		"spot": updatedSpot,
+	mobURL, err := e.getMobURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	videoURL, err := e.getVideoURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	spotInfo := &Info{
+		Name:      updatedSpot.Name,
+		Duration:  updatedSpot.Duration,
+		Comments:  updatedSpot.Comments,
+		CreatedAt: updatedSpot.CreatedAt,
+		MobURL:    mobURL,
+		VideoURL:  videoURL,
+		Key:       updatedSpot.Key,
+	}
+	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
@@ -188,7 +237,30 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e.ResponseWithError(r.Context(), w, http.StatusNotImplemented, fmt.Errorf("not implemented"), time.Now(), r.URL.Path, 0)
+	user := r.Context().Value("userData").(*User)
+	opts := &GetOpts{
+		NameFilter: req.Query, Order: req.Order, Offset: req.Page * req.Limit, Limit: req.Limit}
+	switch req.FilterBy {
+	case "own":
+		opts.UserID = user.ID
+	default:
+		opts.TenantID = user.TenantID
+	}
+	spots, err := e.services.Spots.Get(user, opts)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	res := make([]ShortInfo, 0, len(spots))
+	for _, spot := range spots {
+		res = append(res, ShortInfo{
+			Name:       spot.Name,
+			UserID:     spot.UserID,
+			Duration:   spot.Duration,
+			PreviewURL: fmt.Sprintf("%d/preview.jpeg", spot.ID),
+		})
+	}
+	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
@@ -247,10 +319,27 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]interface{}{
-		"spot": updatedSpot,
+	mobURL, err := e.getMobURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	videoURL, err := e.getVideoURL(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	spotInfo := &Info{
+		Name:      updatedSpot.Name,
+		Duration:  updatedSpot.Duration,
+		Comments:  updatedSpot.Comments,
+		CreatedAt: updatedSpot.CreatedAt,
+		MobURL:    mobURL,
+		VideoURL:  videoURL,
+		Key:       updatedSpot.Key,
+	}
+	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
@@ -268,6 +357,29 @@ func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 	e.log.Info(r.Context(), "uploaded spot %d, from user: %+v", id, user)
 
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getSpotVideo(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	key := fmt.Sprintf("%d/video.webm", id)
+	videoURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	resp := map[string]interface{}{
+		"url": videoURL,
+	}
+	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
