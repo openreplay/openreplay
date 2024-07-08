@@ -137,11 +137,7 @@ function LivePlayer({
   );
 }
 
-export default withPermissions(
-  ['ASSIST_LIVE'],
-  '',
-  true
-)(
+export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
   connect((state: any) => {
     return {
       siteId: state.getIn([ 'site', 'siteId' ]),
