@@ -176,7 +176,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
                                                         project_id=project_id, user_id=user_id)
     full_args["exclude_sessions"] = tuple(exclude_sessions)
     if len(exclude_sessions) > 0:
-        query_part += "\n AND session_id NOT IN (%(exclude_sessions)s)"
+        query_part += "\n AND session_id NOT IN %(exclude_sessions)s"
     with pg_client.PostgresClient() as cur:
         data.order = schemas.SortOrderType.desc
         data.sort = 'duration'
