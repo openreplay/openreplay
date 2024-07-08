@@ -38,7 +38,7 @@ function AlertsList({ siteId }: Props) {
           <div className='flex flex-col items-center justify-center'>
             <AnimatedSVG name={ICONS.NO_ALERTS} size={60} />
             <div className='text-center mt-4  text-lg font-medium'>
-              {alertsSearch !== '' ? 'No matching results' : 'You haven\'t created any alerts yet'}
+              {alertsSearch !== '' ? 'No matching results' : 'No alerts have been configured yet'}
             </div>
           </div>
         }

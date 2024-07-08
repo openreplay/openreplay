@@ -21,7 +21,7 @@ function SessionDateRange(props: Props) {
   return (
     <div className="flex items-center">
       <span className="mr-1">No sessions {isCustom ? 'between' : 'in the'}</span>
-      <div className="border-0 rounded-lg"><SelectDateRange period={period} onChange={onDateChange} right={true} /></div>
+      <div className="rounded-lg border"><SelectDateRange period={period} onChange={onDateChange} right={true} /></div>
     </div>
   );
 }

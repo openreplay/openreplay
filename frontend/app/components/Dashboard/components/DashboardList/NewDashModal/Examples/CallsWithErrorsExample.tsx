@@ -15,7 +15,7 @@ function CallsWithErrorsExample(props: Props) {
         <ExCard
             {...props}
         >
-            <CallWithErrors data={props.data}/>
+            <div className='eg-card'><CallWithErrors data={props.data}/></div>
         </ExCard>
     );
 }

@@ -443,13 +443,13 @@ export function Step({
     description && description?.length > 300 ? description.slice(0, 300) + '...' : description;
   return (
     <div
-      className={`p-4 rounded border ${
-        hover ? 'bg-white hover:' : ''
-      }bg-active-blue flex items-start gap-2`}
+      className={`p-4 rounded-lg  ${
+        hover ? 'bg-white hover:border hover:border-indigo-500' : ''
+      }bg-active-blue flex items-start gap-2 shadow-sm`}
     >
       <div
         style={{ minWidth: '1.5rem' }}
-        className={'w-6 h-6 bg-white rounded-full border flex items-center justify-center'}
+        className={'w-6 h-6 bg-white rounded-full flex items-center justify-center'}
       >
         {ind + 1}
       </div>

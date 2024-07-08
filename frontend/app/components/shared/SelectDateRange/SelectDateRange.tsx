@@ -72,7 +72,7 @@ function SelectDateRange(props: Props) {
 
     return (
       <div className={'relative'}>
-        <Dropdown menu={menuProps}>
+        <Dropdown menu={menuProps} >
           {useButtonStyle ? (
             <Button type='text'>
               <span>{isCustomRange ? customRange : selectedValue?.label}</span>

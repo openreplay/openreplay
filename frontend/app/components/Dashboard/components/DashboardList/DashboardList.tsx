@@ -76,8 +76,8 @@ function DashboardList({ siteId }: { siteId: string }) {
     const emptyDescription = dashboardsSearch !== '' ? (
         <div className="text-center">
             <div>
-                <Typography.Text className="my-2 text-xl font-medium">
-                    No search results found.
+                <Typography.Text className="my-2 text-lg font-medium">
+                No matching results
                 </Typography.Text>
                 <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
                     Try adjusting your search criteria or creating a new dashboard.

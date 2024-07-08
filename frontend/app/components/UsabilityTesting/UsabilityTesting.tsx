@@ -131,15 +131,17 @@ function TestsTable() {
               <div className={'flex flex-col items-center justify-center mt-10'}>
                 {uxtestingStore.searchQuery === '' ? (
                   <AnimatedSVG name={ICONS.NO_UXT} size={172} />
-                ) : null}
+                ) : (
+                  <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
+                )}
                 <div className={'text-lg font-medium mt-4'}>
                   {uxtestingStore.searchQuery === ''
-                    ? 'Uncover real user insights through usability tests.'
-                    : 'No results matching your search'}
+                    ? 'Uncover real user insights through usability tests'
+                    : 'No matching results'}
                 </div>
                 <div className="text-center text-gray-600">
                   {uxtestingStore.searchQuery === ''
-                    ? 'Conduct summative testing to observe task completion and iterate your product.'
+                    ? 'Conduct summative usability testing to observe task completion and iterate your product.'
                     : ''}
                 </div>
               </div>

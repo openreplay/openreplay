@@ -333,7 +333,8 @@ const TaskSummary = observer(() => {
         <Typography.Title level={5}>Task Summary</Typography.Title>
 
         {uxtestingStore.taskStats.length ? (
-          <div className={'p-2 rounded bg-teal-light flex items-center gap-1'}>
+          <div className={'p-2 rounded-lg bg-indigo-50  flex items-center gap-1 px-4'}>
+            <ClockCircleOutlined rev={undefined} />
             <Typography.Text>Average completion time of all tasks:</Typography.Text>
             <Typography.Text strong>
               {uxtestingStore.taskStats
@@ -345,7 +346,7 @@ const TaskSummary = observer(() => {
                 )
                 : null}
             </Typography.Text>
-            <ClockCircleOutlined rev={undefined} />
+            
           </div>
         ) : null}
       </div>

@@ -124,7 +124,7 @@ export function UxTFunnelBar(props: Props) {
               {durationFormatted(filter.avgCompletionTime)}
             </span>
             <span>
-              Avg. completion time
+              avg. completion time
             </span>
           </div>
         </div>

@@ -98,7 +98,7 @@ const ResponsesOverview = observer(() => {
       </div>
       <div className={'grid grid-cols-9 border-b py-1'}>
         <div className={'col-span-1'}>
-          <Typography.Text strong># Response</Typography.Text>
+          <Typography.Text strong>#</Typography.Text>
         </div>
         <div className={'col-span-2'}>
           <Typography.Text strong>Participant</Typography.Text>
