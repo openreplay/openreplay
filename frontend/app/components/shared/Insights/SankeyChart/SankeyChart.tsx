@@ -102,8 +102,8 @@ const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props)
             style={{paddingTop: '80px'}}
             show={!data.nodes.length || !data.links.length}
             title={
-                <div className="flex items-center text-lg">
-                    <Icon name="info-circle" className="mr-2" size="18" />
+                <div className="flex items-center">
+                    <Icon name="info-circle" className="mr-2" size="14" />
                     No data available for the selected period.
                 </div>
             }

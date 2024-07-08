@@ -57,8 +57,8 @@ function CustomMetricTable(props: Props) {
                 show={data.values && data.values.length === 0}
                 size="small"
                 title={
-                    <div className="flex items-center text-lg">
-                        <Icon name="info-circle" className="mr-2" size="18"/>
+                    <div className="flex items-center">
+                        <Icon name="info-circle" className="mr-2" size="14"/>
                         No data available for the selected period.
                     </div>
                 }

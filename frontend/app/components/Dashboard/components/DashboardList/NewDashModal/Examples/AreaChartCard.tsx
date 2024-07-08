@@ -1,5 +1,6 @@
 import React from 'react';
 import {NoContent} from 'UI';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 import {
     AreaChart, Area,
@@ -39,7 +40,11 @@ function AreaChartCard(props: Props) {
         >
             <NoContent
                 size="small"
-                title={NO_METRIC_DATA}
+                title={
+                    <div className='flex items-center gap-2 text-base font-normal'>
+                        <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+                    </div>
+                }
                 show={data?.chart.length === 0}
             >
                 <>

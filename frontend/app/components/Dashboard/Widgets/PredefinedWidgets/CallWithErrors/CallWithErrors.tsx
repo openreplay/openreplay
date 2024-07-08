@@ -8,6 +8,7 @@ import cn from 'classnames';
 import stl from './callWithErrors.module.css';
 import { NO_METRIC_DATA } from 'App/constants/messages'
 import { List } from 'immutable';
+import { InfoCircleOutlined } from '@ant-design/icons'
 
 const cols = [
   {
@@ -61,7 +62,11 @@ function CallWithErrors(props: Props) {
     return (
         <NoContent
           size="small"
-          title={NO_METRIC_DATA}
+          title={
+          <div className='flex items-center gap-2 text-base font-normal'>
+                <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+            </div>
+          }
           show={ data.chart.length === 0 }
           style={{ height: '240px'}}
         >

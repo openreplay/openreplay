@@ -3,6 +3,7 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import Bar from './Bar';
 import { NO_METRIC_DATA } from 'App/constants/messages';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
   data: any;
@@ -20,7 +21,11 @@ function SessionsPerBrowser(props: Props) {
   return (
     <NoContent
       size="small"
-      title={NO_METRIC_DATA}
+      title={
+        <div className='flex items-center gap-2 text-base font-normal'>
+        <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+    </div>
+      }
       show={data.chart.length === 0}
       style={{ minHeight: 220 }}
     >
@@ -33,7 +38,7 @@ function SessionsPerBrowser(props: Props) {
             versions={getVersions(item)}
             width={Math.round((item.count * 100) / firstAvg) - 10}
             domain={item.browser}
-            colors={Styles.colors}
+            colors={Styles.compareColors}
           />
         )}
       </div>

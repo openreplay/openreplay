@@ -9,7 +9,8 @@ import {
     XAxis, YAxis
   } from 'recharts';
 import { toUnderscore } from 'App/utils';
-import { NO_METRIC_DATA } from 'App/constants/messages'
+import { NO_METRIC_DATA } from 'App/constants/messages';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 const WIDGET_KEY = 'resourcesLoadingTime';
 export const RESOURCE_OPTIONS = [
@@ -37,7 +38,11 @@ function ResourceLoadingTime(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
-          title={NO_METRIC_DATA}
+          title={
+            <div className='flex items-center gap-2 text-base font-normal'>
+            <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+        </div>
+          }
         >
           <>
             <div className="flex items-center mb-3">

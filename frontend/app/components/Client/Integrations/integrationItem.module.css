@@ -1,5 +1,5 @@
 .wrapper {
-  border-radius: 3px;  
+  border-radius: .5rem;  
   /* border: solid thin $gray-light-shade; */
   padding: 20px;
   cursor: pointer;

@@ -90,7 +90,7 @@ function CreateCard(props: Props) {
                 </Space>
                 <Button type="primary" onClick={createDashboardAndAddCard}>
                     <Space>
-                        <ArrowRight size={14}/>Create
+                        Create Dashboard <ArrowRight size={14}/>
                     </Space>
                 </Button>
             </div>

@@ -1,5 +1,5 @@
 .wrapper {
-  border-radius: 3px;
+  border-radius: .5rem;
   border: solid thin $gray-light;
   padding: 20px;
   overflow: hidden;

@@ -44,8 +44,8 @@ function ClickMapCard({
             <NoContent
                 style={{ minHeight: 220 }}
                 title={
-                    <div className="flex items-center relative text-lg">
-                        <Icon name="info-circle" className="mr-2" size="18" />
+                    <div className="flex items-center relative">
+                        <Icon name="info-circle" className="mr-2" size="14" />
                         No data available for the selected period.
                     </div>
                 }

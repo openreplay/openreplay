@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon, NoContent } from 'UI';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import ListWithIcons from 'Components/Dashboard/Widgets/ListWithIcons';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
   data: any;
@@ -22,7 +23,11 @@ function ErrorsPerDomain(props: Props) {
       size="small"
       show={data.chart.length === 0}
       style={{ height: '240px' }}
-      title={NO_METRIC_DATA}
+      title={
+        <div className='flex items-center gap-2 text-base font-normal'>
+        <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+    </div>
+      }
     >
       <div className="w-full" style={{ height: '240px' }}>
         <ListWithIcons list={list} />

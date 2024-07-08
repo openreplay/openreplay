@@ -9,6 +9,7 @@ import { SVGMap } from 'react-svg-map';
 import stl from './SpeedIndexByLocation.module.css';
 import cn from 'classnames';
 import { NO_METRIC_DATA } from 'App/constants/messages';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
   data?: any;
@@ -68,7 +69,12 @@ function SpeedIndexByLocation(props: Props) {
   };
 
   return (
-    <NoContent size="small" show={false} style={{ height: '240px' }} title={NO_METRIC_DATA}>
+    <NoContent size="small" show={false} style={{ height: '240px' }} 
+    title={
+      <div className='flex items-center gap-2 text-base font-normal'>
+      <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+     </div>
+    }>
       <div className="absolute right-0 mr-4 top=0 w-full flex justify-end">
         <AvgLabel text="Avg" count={Math.round(data.value)} unit="ms" />
       </div>

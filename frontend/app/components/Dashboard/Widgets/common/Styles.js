@@ -4,7 +4,7 @@ import {numberWithCommas} from 'App/utils';
 const colorsTeal = ['#1E889A', '#239DB2', '#28B2C9', '#36C0D7', '#65CFE1'];
 const colors = ['#6774E2', '#929ACD', '#3EAAAF', '#565D97', '#8F9F9F', '#376F72'];
 const colorsx = ['#256669', '#38999e', '#3eaaaf', '#51b3b7', '#78c4c7', '#9fd5d7', '#c5e6e7'].reverse();
-const compareColors = ['#394EFF', '#4D5FFF', '#808DFF', '#B3BBFF', '#E5E8FF'];
+const compareColors = ['#394EFF', '#6272FF', '#808DFF', '#B3BBFF', '#C9CFFF'];
 const compareColorsx = ["#222F99", "#2E3ECC", "#394EFF", "#6171FF", "#8895FF", "#B0B8FF", "#D7DCFF"].reverse();
 const customMetricColors = ['#394EFF', '#3EAAAF', '#565D97'];
 const colorsPie = colors.concat(["#DDDDDD"]);
@@ -24,7 +24,7 @@ export default {
     compareColorsx,
     lineColor: '#2A7B7F',
     lineColorCompare: '#394EFF',
-    strokeColor: compareColors[2],
+    strokeColor: compareColors[0],
     xaxis: {
         axisLine: {stroke: '#CCCCCC'},
         interval: 0,

@@ -6,7 +6,8 @@ import {
     Legend, ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
-import { NO_METRIC_DATA } from 'App/constants/messages'
+import { NO_METRIC_DATA } from 'App/constants/messages';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
     data: any
@@ -17,7 +18,11 @@ function ErrorsByType(props: Props) {
     return (
         <NoContent
           size="small"
-          title={NO_METRIC_DATA}
+          title={
+            <div className='flex items-center gap-2 text-base font-normal'>
+            <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+        </div>
+          }
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >
@@ -40,10 +45,10 @@ function ErrorsByType(props: Props) {
               />
               <Legend />
               <Tooltip {...Styles.tooltip} />
-              <Bar minPointSize={1} name="Integrations" dataKey="integrations" stackId="a" fill={Styles.colors[0]}/>
-              <Bar name="4xx" dataKey="4xx" stackId="a" fill={Styles.colors[1]} />
-              <Bar name="5xx" dataKey="5xx" stackId="a" fill={Styles.colors[2]} />
-              <Bar name="Javascript" dataKey="js" stackId="a" fill={Styles.colors[3]} />
+              <Bar minPointSize={1} name="Integrations" dataKey="integrations" stackId="a" fill={Styles.compareColors[0]}/>
+              <Bar name="4xx" dataKey="4xx" stackId="a" fill={Styles.compareColors[1]} />
+              <Bar name="5xx" dataKey="5xx" stackId="a" fill={Styles.compareColors[2]} />
+              <Bar name="Javascript" dataKey="js" stackId="a" fill={Styles.compareColors[3]} />
             </BarChart>
           </ResponsiveContainer>
         </NoContent>

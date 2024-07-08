@@ -60,7 +60,7 @@ function InsightsCard({ data }: any) {
       style={{ minHeight: 220 }}
       title={
         <div className="flex items-center text-lg">
-          <Icon name="info-circle" className="mr-2" size="18" />
+          <Icon name="info-circle" className="mr-2" size="14" />
           No data available for the selected period.
         </div>
       }

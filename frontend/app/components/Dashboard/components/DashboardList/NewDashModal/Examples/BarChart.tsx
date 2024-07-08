@@ -34,7 +34,7 @@ function BarChartCard(props: Props) {
               key={key}
               dataKey={key}
               stackId="a"
-              fill={Styles.colors[index % Styles.colors.length]}
+              fill={Styles.compareColors[index % Styles.compareColors.length]}
               name={key}
             />
           ))}

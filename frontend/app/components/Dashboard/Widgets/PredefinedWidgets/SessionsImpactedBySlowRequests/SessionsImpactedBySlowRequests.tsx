@@ -7,7 +7,8 @@ import {
     ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
-import { NO_METRIC_DATA } from 'App/constants/messages'
+import { NO_METRIC_DATA } from 'App/constants/messages';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
     data: any
@@ -19,7 +20,11 @@ function SessionsImpactedBySlowRequests(props: Props) {
 
     return (
         <NoContent
-        title={NO_METRIC_DATA}
+        title={
+          <div className='flex items-center gap-2 text-base font-normal'>
+          <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
+      </div>
+        }
           size="small"
           show={ metric.data.chart.length === 0 }
         >

@@ -60,8 +60,8 @@ function SessionsBy(props: Props) {
           className="flex flex-col items-center justify-center"
           imageStyle={{ height: 0}}
           description={
-            <div className="flex items-center gap-2 justify-center text-lg font-medium text-black">
-              <Info size={16} />
+            <div className="flex items-center gap-2 justify-center text-black">
+              <Info size={14} />
               No data available for the selected period.
             </div>
           }

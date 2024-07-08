@@ -9,8 +9,8 @@ function Headers(props) {
       <NoContent
         title={
           <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={ICONS.NO_RESULTS} size="60" />
-            <div className="mt-4">No data available</div>
+            <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
+            <div className="mt-4">No data available for the selected period.</div>
           </div>
         }
         size="small"

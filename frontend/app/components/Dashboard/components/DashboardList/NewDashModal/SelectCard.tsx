@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button, Input, Segmented, Space } from 'antd';
+import { RightOutlined } from '@ant-design/icons'
 import { ArrowRight, Info } from 'lucide-react';
 import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
 import { useStore } from 'App/mstore';
@@ -118,9 +119,10 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           )}
         </div>
         {isCreatingDashboard && (
-          <Button type="primary" onClick={createNewDashboard} loading={dashboardCreating}>
+          <Button type="link" onClick={createNewDashboard} loading={dashboardCreating} className='gap-2'>
             <Space>
               Create Blank
+              <RightOutlined />
             </Space>
           </Button>
         )}

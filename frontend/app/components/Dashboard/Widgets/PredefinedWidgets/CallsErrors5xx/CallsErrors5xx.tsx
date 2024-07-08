@@ -17,8 +17,8 @@ function CallsErrors5xx(props: Props) {
         <NoContent
           size="small"
           title={
-            <div className="flex items-center text-lg">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="flex items-center">
+              <Icon name="info-circle" className="mr-2" size="14" />
               No data available for the selected period.
             </div>
           }
