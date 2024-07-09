@@ -104,6 +104,20 @@ const dropdownStyles = {
     },
 };
 
+type FilterParam = { [key: string]: any };
+
+function processKey(input: FilterParam): FilterParam {
+    const result: FilterParam = {};
+    for (const key in input) {
+        if (input.type === "metadata" && typeof input[key] === 'string' && input[key].startsWith('_')) {
+            result[key] = input[key].substring(1);
+        } else {
+            result[key] = input[key];
+        }
+    }
+    return result;
+}
+
 interface Props {
     showOrButton?: boolean;
     showCloseButton?: boolean;
@@ -146,17 +160,7 @@ function FilterAutoComplete(props: Props) {
     }, [value])
 
     const loadOptions = (inputValue: string, callback: (options: []) => void) => {
-        const _params = Object.keys(params).reduce((acc: any, key: string) => {
-            // all metadata keys start with underscore to avoid conflicts with predefined filter keys
-            // they should be removed before sending to the server
-            if (key === 'type' && params[key] === 'metadata') {
-                acc['key'] = params['key'].replace(/^_/, '');
-                acc['type'] = 'metadata';
-            } else {
-                acc[key] = params[key];
-            }
-            return acc;
-        }, {});
+        const _params = processKey(params);
 
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
