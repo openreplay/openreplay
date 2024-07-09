@@ -213,7 +213,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
             elif _depth == 0 and len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
                 logger.info("couldn't find an existing replay after 3 iterations for heatmap")
 
-        session['events'] = get_page_events(session_id=session["session_id"])
+        session['events'] = get_page_events(session_id=session["session_id"], project_id=project_id)
     else:
         logger.debug("No session found for heatmap")
 
@@ -236,18 +236,19 @@ def get_selected_session(project_id, session_id):
             raise err
 
         session = cur.fetchone()
+
     if session:
         session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
         session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
         if len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
             session["_issue"] = "mob file not found"
             logger.info("can't find selected mob file for heatmap")
-        session['events'] = get_page_events(session_id=session["session_id"])
+        session['events'] = get_page_events(session_id=session["session_id"], project_id=project_id)
 
     return helper.dict_to_camel_case(session)
 
 
-def get_page_events(session_id):
+def get_page_events(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
                 SELECT 
@@ -255,7 +256,6 @@ def get_page_events(session_id):
                     timestamp,
                     host,
                     path,
-                    query,
                     path AS value,
                     path AS url,
                     'LOCATION' AS type
