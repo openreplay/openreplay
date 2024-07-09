@@ -75,7 +75,7 @@ class UrlIconProvider implements IconProvider {
 
 class DeviceIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    const s = obj.name.toLowerCase();
+    const s = obj.name?.toLowerCase() || '';
     let icon = 'color/device/desktop';
     if (s.includes('desktop')) {
       icon = 'color/device/desktop';

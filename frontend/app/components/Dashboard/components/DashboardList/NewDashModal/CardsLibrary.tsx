@@ -40,7 +40,9 @@ function CardsLibrary(props: Props) {
         metricStore.fetchList();
     }, []);
 
-    const onItemClick = (metricId: number) => {
+    const onItemClick = (e: any, metricId: number) => {
+        e.stopPropagation();
+        e.preventDefault();
         props.onCard(metricId);
     }
 
@@ -49,10 +51,10 @@ function CardsLibrary(props: Props) {
             <div className="grid grid-cols-4 gap-4 items-start">
                 {cards.map((metric: any) => (
                     <React.Fragment key={metric.metricId}>
-                        <div className={'col-span-' + metric.config.col}
-                             onClick={() => onItemClick(metric.metricId)}>
+                        <div className={'relative col-span-' + metric.config.col}>
+                            <div className="absolute inset-0 z-10 cursor-pointer" onClick={(e) => onItemClick(e, metric.metricId)} />
                             <LazyLoad>
-                                <Card className='border border-transparent hover:border-indigo-50 hover:shadow-sm  rounded-lg'
+                                <Card className='border border-transparent hover:border-indigo-50 hover:shadow-sm rounded-lg'
                                       style={{
                                           border: selectedList.includes(metric.metricId) ? '1px solid #1890ff' : '1px solid #f0f0f0',
                                       }}
