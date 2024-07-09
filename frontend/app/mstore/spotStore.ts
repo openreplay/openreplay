@@ -73,6 +73,6 @@ export default class SpotStore {
       spotService.fetchSpot(id)
     )
 
-    this.setCurrentSpot(new Spot(response))
+    this.setCurrentSpot(new Spot({ ...response.spot, id } ))
   }
 }
