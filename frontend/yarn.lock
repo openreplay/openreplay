@@ -15777,15 +15777,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsx-runtime@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "jsx-runtime@npm:1.2.0"
-  dependencies:
-    object-assign: ^3.0.0
-  checksum: 26b2f65c8a11fd8f5ed1e499b72aacc28e209fd3e5c6caa1eb600042334acf7ac5fd0a058b48d821ae68552ea3e789eb6fe6ff663987a8db847f6aa010dcd70a
-  languageName: node
-  linkType: hard
-
 "junk@npm:^3.1.0":
   version: 3.1.0
   resolution: "junk@npm:3.1.0"
@@ -18079,13 +18070,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "object-assign@npm:3.0.0"
-  checksum: 88d1b93de35a2073df309239486829b8b3252ef86196a0d5e06fae20f9e6e5830a33ccaa1c675bd63191eec4310961797ff577fa586583a92a09ece53e668416
-  languageName: node
-  linkType: hard
-
 "object-copy@npm:^0.1.0":
   version: 0.1.0
   resolution: "object-copy@npm:0.1.0"
@@ -18378,7 +18362,6 @@ __metadata:
     jsbi: ^4.1.0
     jshint: ^2.11.1
     jspdf: ^2.5.1
-    jsx-runtime: ^1.2.0
     lucide-react: ^0.396.0
     luxon: ^1.24.1
     microdiff: ^1.4.0

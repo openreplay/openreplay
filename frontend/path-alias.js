@@ -20,6 +20,4 @@ module.exports = {
     'Shared/*': path.resolve(__dirname, 'app/components/shared/*'),
     Player: path.resolve(__dirname, 'app/player'),
     'Player/*': path.resolve(__dirname, 'app/player/*'),
-    'react/jsx-runtime.js': 'react/jsx-runtime',
-    'react/jsx-dev-runtime.js': 'react/jsx-dev-runtime',
 };
