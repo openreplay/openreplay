@@ -1,12 +1,9 @@
-# 15.0.0
-
-- updated graphql plugin and messages
-
 # 14.0.0
 
 - titles for tabs
 - new `MouseClick` message to introduce heatmaps instead of clickmaps
 - crossdomain iframe tracking functionality
+- updated graphql plugin and messages
 
 # 13.0.2
 
