@@ -25,6 +25,7 @@ import {
   Timer,
   VenetianMask,
   Workflow,
+  Flag,
 } from 'lucide-react';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -67,6 +68,7 @@ const IconMap = {
   [FilterKey.UTM_SOURCE]: <CornerDownRight size={18}/>,
   [FilterKey.UTM_MEDIUM]: <Layers size={18}/>,
   [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18}/>,
+  [FilterKey.FEATURE_FLAG]: <Flag size={18}/>,
 };
 
 function filterJson(
@@ -172,7 +174,7 @@ function FilterModal(props: Props) {
     Object.keys(matchingFilters).length === 0;
 
   const getNewIcon = (filter: Record<string, any>) => {
-    if (filter.icon.includes('metadata')) {
+    if (filter.icon?.includes('metadata')) {
       return IconMap[FilterKey.METADATA]
     }
     // @ts-ignore
