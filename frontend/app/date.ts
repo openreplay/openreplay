@@ -146,13 +146,13 @@ export function formatTimeOrDate(timestamp: number, timezone?: Timezone, isFull 
  * @param {String} format Returning date format.
  * @return {String} Formated date string.
  */
-export const checkForRecent = (date: DateTime, format: string, showFull?: boolean): string => {
+export const checkForRecent = (date: DateTime, format: string): string => {
   const d = new Date();
   // Today
-  if (date.hasSame(d, 'day')) return `Today${showFull ? ' at ' + date.toFormat('hh:mm a') : ''}`;
+  if (date.hasSame(d, 'day')) return 'Today';
 
   // Yesterday
-  if (date.hasSame(d.setDate(d.getDate() - 1), 'day')) return `Yesterday${showFull ? ' at ' + date.toFormat('hh:mm a') : ''}`;
+  if (date.hasSame(d.setDate(d.getDate() - 1), 'day')) return 'Yesterday';
 
   // Formatted
   return date.toFormat(format);

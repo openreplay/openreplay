@@ -1,4 +1,4 @@
-import { checkForRecent, shortDurationFromMs } from 'App/date';
+import { resentOrDate, shortDurationFromMs } from "App/date";
 
 export class Spot {
   thumbnail: string;
@@ -6,14 +6,14 @@ export class Spot {
   createdAt: string;
   user: string;
   duration: string;
-  spotId: string;
+  spotId: number;
 
   constructor(data: Record<string, any>) {
-    this.thumbnail = data.thumbnail;
-    this.title = data.title;
-    this.createdAt = checkForRecent(data.createdAt, 'LLL dd, yyyy, hh:mm a', true);
-    this.user = data.user;
+  this.thumbnail = data.previewURL
+    this.title = data.name;
+    this.createdAt = resentOrDate(new Date(data.createdAt).getTime());
+    this.user = data.userID;
     this.duration = shortDurationFromMs(data.duration);
-    this.spotId = data.spotId;
+    this.spotId = data.id;
   }
 }
