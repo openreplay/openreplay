@@ -11,14 +11,18 @@ import {
 } from '@ant-design/icons';
 import { Button, Checkbox, Dropdown } from 'antd';
 import React from 'react';
+import { Link, useHistory, useParams } from 'react-router-dom';
 
 import { Spot } from 'App/mstore/types/spot';
+import { spot as spotUrl, withSiteId } from 'App/routes';
 
 interface ISpotListItem {
   spot: Spot;
 }
 
 function SpotListItem({ spot }: ISpotListItem) {
+  const history = useHistory();
+  const { siteId } = useParams<{ siteId: string }>();
   const menuItems = [
     {
       key: 'rename',
@@ -56,11 +60,21 @@ function SpotListItem({ spot }: ISpotListItem) {
   const onMenuClick = ({ key }: any) => {
     console.log('Menu item clicked:', key);
   };
+  const onSpotClick = (e: any) => {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      const spotLink = withSiteId(spotUrl(spot.spotId.toString()), siteId);
+      const fullLink = `${window.location.origin}${spotLink}`;
+      window.open(fullLink, '_blank');
+    } else {
+      history.push(withSiteId(spotUrl(spot.spotId.toString()), siteId));
+    }
+  };
   return (
     <div
       className={
         'border rounded-xl overflow-hidden flex flex-col items-start cursor-pointer hover:shadow'
       }
+      onClick={onSpotClick}
     >
       <div style={{ width: '100%', height: 180, position: 'relative' }}>
         <img

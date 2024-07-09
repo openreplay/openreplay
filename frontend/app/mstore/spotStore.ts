@@ -67,4 +67,12 @@ export default class SpotStore {
     this.setSpots(response.spots.map((spot: any) => new Spot(spot)));
     this.setTotal(response.total);
   }
+
+  async fetchSpotById(id: string) {
+    const response = await this.withLoader(() =>
+      spotService.fetchSpot(id)
+    )
+
+    this.setCurrentSpot(new Spot(response))
+  }
 }

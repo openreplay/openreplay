@@ -167,9 +167,7 @@ const Router: React.FC<RouterProps> = (props) => {
   }
 
   if (isLoggedIn && spotLoginUrl) {
-    setTimeout(() => {
-      window.open(`${spotLoginUrl}?token=${jwt}`, '_self');
-    }, 25);
+    window.postMessage({ type: "orspot:token", token: jwt }, '*')
   }
 
   return isLoggedIn ? (
