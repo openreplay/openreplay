@@ -9,9 +9,8 @@ import { observer } from 'mobx-react-lite';
 
 function Header() {
   const { dashboardStore } = useStore();
-  const list = dashboardStore.filteredList;
   const dashboardsSearch = dashboardStore.filter.query;
-  const showSearch = list.length > 0 || dashboardsSearch;
+  const showSearch = dashboardStore.dashboards.length > 0 || dashboardsSearch;
   return (
     <>
       <div className="flex items-center justify-between px-4 pb-2">
