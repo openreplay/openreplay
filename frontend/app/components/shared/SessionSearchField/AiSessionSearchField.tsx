@@ -81,11 +81,11 @@ function SessionSearchField(props: Props) {
         placeholder={
           'Search sessions using any captured event (click, input, page, error...)'
         }
-        style={{ minWidth: 360, height: 33 }}
+        style={{ minWidth: 360, height: 30 }}
         id="search"
         type="search"
         autoComplete="off"
-        className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg nofocus"
+        className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-full nofocus"
       />
 
       {showModal && (
@@ -144,9 +144,9 @@ const AiSearchField = observer(
           id="search"
           onKeyDown={handleKeyDown}
           value={searchQuery}
-          style={{ minWidth: 360, height: 33 }}
+          style={{ minWidth: 360, height: 30 }}
           autoComplete="off"
-          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-r-lg nofocus"
+          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
           leadingButton={
             searchQuery !== '' ? (
               <div
@@ -189,7 +189,7 @@ function AiSessionSearchField(props: Props) {
                    ? gradientBox
                    : isFocused ? regularBoxFocused : regularBoxUnfocused;
   return (
-    <div className={'bg-white rounded-lg'}>
+    <div className={'bg-white rounded-full'}>
       <div
         className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''}
         style={boxStyle}
@@ -315,7 +315,7 @@ export const AskAiSwitchToggle = ({
 
 const gradientBox = {
   border: 'double 1.5px transparent',
-  borderRadius: '6px',
+  borderRadius: '100px',
   background:
     'linear-gradient(#ffffff, #ffffff), linear-gradient(-45deg, #394eff, #3eaaaf, #3ccf65)',
   backgroundOrigin: 'border-box',
@@ -328,7 +328,7 @@ const gradientBox = {
 };
 
 const regularBoxUnfocused = {
-  borderRadius: '6px',
+  borderRadius: '100px',
   border: 'solid 1.5px #BFBFBF',
   background: '#fffff',
   display: 'flex',
@@ -338,7 +338,7 @@ const regularBoxUnfocused = {
 };
 
 const regularBoxFocused = {
-  borderRadius: '6px',
+  borderRadius: '100px',
   border: 'solid 1.5px #394EFF',
   background: '#fffff',
   display: 'flex',

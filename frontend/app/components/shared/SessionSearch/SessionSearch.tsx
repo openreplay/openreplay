@@ -110,7 +110,7 @@ function SessionSearch(props: Props) {
   return !metaLoading ? (
     <>
       {showPanel ? (
-        <div className="border bg-white rounded mt-4">
+        <div className="border bg-white rounded-lg mt-4">
           <div className="p-5">
             {aiFiltersStore.isLoading ? (
               <div className={'font-semibold flex items-center gap-2'}>
