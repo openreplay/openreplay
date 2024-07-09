@@ -158,7 +158,8 @@ const Router: React.FC<RouterProps> = (props) => {
   const hideHeader =
     (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') ||
-    location.pathname.includes('multiview');
+    location.pathname.includes('multiview') ||
+    location.pathname.includes('/spot/');
 
   if (isIframe) {
     return (

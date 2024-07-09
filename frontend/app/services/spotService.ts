@@ -1,6 +1,6 @@
 import BaseService from "./BaseService";
 
-interface SpotInfo {
+export interface SpotInfo {
   name: string;
   duration: number;
   comments: SpotComment[];
@@ -9,7 +9,7 @@ interface SpotInfo {
   createdAt: string;
   userID: number;
 }
-interface SpotComment {
+export interface SpotComment {
   user: string;
   text: string;
   createdAt: string;
