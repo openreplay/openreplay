@@ -76,7 +76,7 @@ function NoteEvent(props: Props) {
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
   return (
-    <div className="flex items-start flex-col p-2 border rounded" style={{ background: '#FFFEF5' }}>
+    <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: '#FFFEF5' }}>
       <div className="flex items-center w-full relative">
         <div className="p-3 bg-gray-light rounded-full">
           <Icon name="quotes" color="main" />
@@ -93,7 +93,7 @@ function NoteEvent(props: Props) {
           >
             {props.note.userName}
           </div>
-          <div className="text-disabled-text text-sm">
+          <div className="text-disabled-text text-xs">
             {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
           </div>
         </div>
@@ -110,7 +110,7 @@ function NoteEvent(props: Props) {
       <div>
         <div className="flex items-center flex-wrap w-full">
           {props.note.tag ? (
-            <Tag color={tagProps[props.note.tag]}>
+            <Tag color={tagProps[props.note.tag]} bordered={false} className='rounded-lg'>
               {props.note.tag}
             </Tag>
           ) : null}

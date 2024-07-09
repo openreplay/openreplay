@@ -7,9 +7,8 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { NoContent } from 'UI';
-
+import { InfoCircleOutlined } from '@ant-design/icons';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-
 import FunnelIssueModal from '../FunnelIssueModal';
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
 
@@ -117,7 +116,7 @@ function FunnelIssuesList(props: RouteComponentProps<Props>) {
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_ISSUES} size={60} />
-          <div className="mt-4">No issues found</div>
+          <div className="mt-4 text-base"><InfoCircleOutlined /> No issues found</div>
         </div>
       }
     >

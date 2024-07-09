@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { Button, Loader, NoContent, Pagination } from 'UI';
-
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import CardIssueItem from './CardIssueItem';
@@ -90,12 +91,12 @@ function CardIssues() {
   };
 
   return useObserver(() => (
-    <div className="bg-white rounded p-4 border">
+    <div className="bg-white rounded-lg shadow-sm p-4 border">
       <div className="flex justify-between">
         <div className="flex items-center">
-          <h1 className="font-medium text-2xl">Issues</h1>
+          <h2 className="font-normal text-xl">Issues</h2>
           {!!filter.filters[1] && (
-            <div className="text-disabled-text ml-3">
+            <div className="ml-3 pt-1">
               Showing issues of <span className="font-medium">{filter.filters[0].value}</span>
               <span className="mx-1">to</span>
               <span className="font-medium">{filter.filters[1].value}</span>
@@ -109,7 +110,15 @@ function CardIssues() {
       </div>
 
       <Loader loading={loading}>
-        <NoContent show={data.issues.length == 0} title="No data!">
+        <NoContent show={data.issues.length == 0} 
+         title={
+          <div className="flex flex-col items-center justify-center">
+          <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
+          <div className="text-center my-4 text-base"><InfoCircleOutlined />  No data available.</div>
+          </div>
+      }
+        
+        >
           {/*{data.issues.map((item: any, index: any) => (*/}
           {/*  <div onClick={() => handleClick(item)} key={index}>*/}
           {/*    <CardIssueItem issue={item} />*/}

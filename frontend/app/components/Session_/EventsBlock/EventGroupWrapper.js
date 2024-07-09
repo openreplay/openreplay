@@ -142,12 +142,13 @@ class EventGroupWrapper extends React.Component {
              style={{
                position: 'absolute',
                top: '50%',
-               left: -7,
+               left: -10,
                width: 10,
                height: 10,
                transform: 'rotate(45deg) translate(0, -50%)',
                background: '#394EFF',
                zIndex: 99,
+               borderRadius: '.15rem',
             }}
             />
           ) : null}

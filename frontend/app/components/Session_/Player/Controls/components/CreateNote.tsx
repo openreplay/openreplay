@@ -241,8 +241,10 @@ function CreateNote({
             <Tag
               onClick={() => addTag(tag)}
               key={tag}
-              className={'cursor-pointer'}
+              className='cursor-pointer rounded-lg hover:bg-indigo-50'
               color={tagActive(tag) ? tagProps[tag] : undefined}
+              bordered={false}
+
             >
               <div className={'flex items-center gap-2'}>
                 {tagActive(tag) ? (

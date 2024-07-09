@@ -65,12 +65,13 @@ function NoteItem(props: Props) {
               <Tag
                 color={tagProps[props.note.tag]}
                 className='border-0 rounded-lg hover:inherit gap-2 w-14 text-center'
+                bordered={false}
               >
                 {props.note.tag}
               </Tag>
             ) : null}
 
-            <div className='cap-first font-medium'>
+            <div className='cap-first font-normal'>
             {safeStrMessage}
             </div>
           </div>
