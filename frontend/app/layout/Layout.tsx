@@ -22,7 +22,7 @@ interface Props {
 
 function Layout(props: Props) {
   const { hideHeader, siteId } = props;
-  const isPlayer = /\/(session|assist)\//.test(window.location.pathname);
+  const isPlayer = /\/(session|assist|spot)\//.test(window.location.pathname);
   const { settingsStore } = useStore();
 
   // const lastFetchedSiteIdRef = React.useRef<string | null>(null);

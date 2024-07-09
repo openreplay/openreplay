@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Checkbox, Dropdown } from 'antd';
 import React from 'react';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
