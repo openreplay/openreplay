@@ -37,6 +37,7 @@ type JWTClaims struct {
 type User struct {
 	ID       uint64 `json:"id"`
 	Name     string `json:"name"`
+	Email    string `json:"email"`
 	TenantID uint64 `json:"tenantId"`
 	JwtIat   int    `json:"jwtIat"`
 }
@@ -63,13 +64,13 @@ func (a *authImpl) IsAuthorized(authHeader string) (*User, error) {
 
 func (a *authImpl) authExists(userID, tenantID, jwtIAT int) (*User, error) {
 	sql := `
-		SELECT user_id, name, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat
+		SELECT user_id, name, email, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat
 	   	FROM public.users
 	   	WHERE user_id = $1 AND deleted_at IS NULL
 	   	LIMIT 1;`
 
 	user := &User{TenantID: uint64(tenantID)}
-	if err := a.pgconn.QueryRow(sql, userID).Scan(&user.ID, &user.Name, &user.JwtIat); err != nil {
+	if err := a.pgconn.QueryRow(sql, userID).Scan(&user.ID, &user.Name, &user.Email, &user.JwtIat); err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
 	if user.JwtIat == 0 || abs(jwtIAT-user.JwtIat) > 1 {

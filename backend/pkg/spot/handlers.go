@@ -200,6 +200,7 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 
 	spotInfo := &Info{
 		Name:      res[0].Name,
+		UserEmail: res[0].UserEmail,
 		Duration:  res[0].Duration,
 		Comments:  res[0].Comments,
 		CreatedAt: res[0].CreatedAt,
@@ -296,7 +297,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 		res = append(res, ShortInfo{
 			ID:         spot.ID,
 			Name:       spot.Name,
-			UserID:     spot.UserID,
+			UserEmail:  spot.UserEmail,
 			Duration:   spot.Duration,
 			CreatedAt:  spot.CreatedAt,
 			PreviewURL: previewUrl,

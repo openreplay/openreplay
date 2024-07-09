@@ -17,7 +17,7 @@ type CreateSpotResponse struct {
 
 type Info struct {
 	Name      string    `json:"name"`
-	UserID    uint64    `json:"userID"`
+	UserEmail string    `json:"userEmail"`
 	Duration  int       `json:"duration"`
 	Comments  []Comment `json:"comments"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -41,7 +41,7 @@ type GetSpotsRequest struct {
 type ShortInfo struct {
 	ID         uint64    `json:"id"`
 	Name       string    `json:"name"`
-	UserID     uint64    `json:"userID"`
+	UserEmail  string    `json:"userEmail"`
 	Duration   int       `json:"duration"`
 	CreatedAt  time.Time `json:"createdAt"`
 	PreviewURL string    `json:"previewURL"`
