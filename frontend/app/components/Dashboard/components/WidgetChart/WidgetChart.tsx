@@ -4,7 +4,7 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import {Styles} from 'App/components/Dashboard/Widgets/common';
 import {observer} from 'mobx-react-lite';
-import {Loader} from 'UI';
+import { Icon, Loader } from 'UI';
 import {useStore} from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
@@ -33,6 +33,7 @@ import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/
 import SankeyChart from 'Shared/Insights/SankeyChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy";
+import { Empty } from 'antd';
 
 interface Props {
     metric: any;
@@ -207,19 +208,24 @@ function WidgetChart(props: Props) {
         }
         if (metricType === HEATMAP) {
             if (!props.isPreview) {
-                return (
+                return metric.thumbnail ? (
                     <div style={{height: '229px', overflow: 'hidden', marginBottom: '10px'}}>
                         <img src={metric.thumbnail} alt='clickmap thumbnail'/>
                     </div>
+                ) : (
+                  <div className="flex items-center relative justify-center" style={{ height: '229px'}}>
+                      <Icon name="info-circle" className="mr-2" size="14" />
+                      No data available for the selected period.
+                  </div>
                 );
             }
             return (
-                <ClickMapCard />
+              <ClickMapCard />
             );
         }
 
         if (metricType === INSIGHTS) {
-            return <InsightsCard data={data}/>;
+            return <InsightsCard data={data} />;
         }
 
         if (metricType === USER_PATH && data && data.links) {
