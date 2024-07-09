@@ -229,7 +229,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                 elif _depth == 0 and len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
                     logger.info("couldn't find an existing replay after 3 iterations for heatmap")
 
-            session['events'] = get_page_events(session_id=session["session_id"])
+            session['events'] = get_page_events(session_id=session["session_id"], project_id=project_id)
         else:
             logger.debug("No session found for heatmap")
 
@@ -258,12 +258,12 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
             if len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
                 session["_issue"] = "mob file not found"
                 logger.info("can't find selected mob file for heatmap")
-            session['events'] = get_page_events(session_id=session["session_id"])
+            session['events'] = get_page_events(session_id=session["session_id"], project_id=project_id)
 
         return helper.dict_to_camel_case(session)
 
 
-    def get_page_events(session_id):
+    def get_page_events(session_id, project_id):
         with pg_client.PostgresClient() as cur:
             cur.execute(cur.mogrify("""\
                     SELECT 
@@ -271,7 +271,6 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                         timestamp,
                         host,
                         path
-                        query,
                         path AS value,
                         path AS url,
                         'LOCATION' AS type
@@ -384,31 +383,35 @@ else:
                 raise err
         if len(session) > 0:
             session = session[0]
+        else:
+            session = None
+
         if session:
             session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
             session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
             if len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
                 session["_issue"] = "mob file not found"
                 logger.info("can't find selected mob file for heatmap")
-            session['events'] = get_page_events(session_id=session["session_id"])
+            session['events'] = get_page_events(session_id=session["session_id"], project_id=project_id)
 
         return helper.dict_to_camel_case(session)
 
 
-    def get_page_events(session_id):
+    def get_page_events(session_id, project_id):
         with ch_client.ClickHouseClient() as cur:
             rows = cur.execute("""\
                     SELECT 
                         message_id,
-                        timestamp,
-                        host,
-                        path,
-                        query,
-                        path AS value,
-                        path AS url,
+                        toUnixTimestamp(datetime)*1000 AS timestamp,
+                        url_host AS host,
+                        url_path AS path,
+                        url_path AS value,
+                        url_path AS url,
                         'LOCATION' AS type
                     FROM experimental.events
-                    WHERE session_id = %(session_id)s AS event_type='LOCATION'
-                    ORDER BY timestamp,message_id;""", {"session_id": session_id})
+                    WHERE session_id = %(session_id)s 
+                        AND event_type='LOCATION'
+                        AND project_id= %(project_id)s
+                    ORDER BY datetime,message_id;""", {"session_id": session_id,"project_id": project_id})
             rows = helper.list_to_camel_case(rows)
         return rows
