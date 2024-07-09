@@ -1,7 +1,7 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Input } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { observer } from 'mobx-react-lite'
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -13,93 +13,6 @@ const visibilityOptions = {
   all: 'All Spots',
   own: 'My Spots',
 } as const;
-
-const fakeData = [
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-  {
-    thumbnail: 'https://via.placeholder.com/310x170',
-    title: 'Spot 1',
-    createdAt: 'Today, 12:39 PM',
-    user: 'sudheer@openreplay.com',
-    duration: '1:30',
-  },
-];
 
 function SpotsListHeader() {
   const dropdownProps = {
@@ -119,13 +32,13 @@ function SpotsListHeader() {
   const { spotStore } = useStore();
 
   const onSearch = (value: string) => {
-    spotStore.setQuery(value)
-    void spotStore.fetchSpots()
+    spotStore.setQuery(value);
+    void spotStore.fetchSpots();
   };
-  const onFilterChange = (key: string) => {
+  const onFilterChange = (key: "all" | "own") => {
     spotStore.setFilter(key);
     void spotStore.fetchSpots();
-  }
+  };
   return (
     <div className={'flex items-center px-4 gap-4'}>
       <div className={'text-2xl capitalize mr-2'}>Spots</div>
@@ -166,6 +79,7 @@ function SpotsList() {
     void spotStore.fetchSpots();
   };
 
+  console.log(spotStore.spots);
   return (
     <div className={'w-full'}>
       <div
