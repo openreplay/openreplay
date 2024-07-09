@@ -100,7 +100,6 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'name',
       key: 'title',
       className: 'cap-first',
-      width: '35%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -122,7 +121,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'owner',
       key: 'owner',
       className: 'capitalize',
-      width: '25%',
+      width: '30%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -138,6 +137,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'lastModified',
       key: 'lastModified',
       sorter: true,
+      width: '16.67%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
@@ -147,24 +147,25 @@ const ListView: React.FC<Props> = (props: Props) => {
         />
       )
     },
-    {
-      title: 'Visibility',
-      dataIndex: 'visibility',
-      key: 'visibility',
-      width: '10%',
-      render: (text: string, metric: Metric) => (
-        <MetricListItem
-          key={metric.metricId}
-          metric={metric}
-          siteId={siteId}
-          renderColumn="visibility"
-        />
-      )
-    },
+    // {
+    //   title: 'Visibility',
+    //   dataIndex: 'visibility',
+    //   key: 'visibility',
+    //   width: '10%',
+    //   render: (text: string, metric: Metric) => (
+    //     <MetricListItem
+    //       key={metric.metricId}
+    //       metric={metric}
+    //       siteId={siteId}
+    //       renderColumn="visibility"
+    //     />
+    //   )
+    // },
     {
       title: '',
       key: 'options',
       className: 'text-right',
+      width: '5%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
@@ -182,6 +183,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataSource={paginatedData}
       rowKey="metricId"
       onChange={handleTableChange}
+      size='middle'
       rowSelection={
         !disableSelection
           ? {

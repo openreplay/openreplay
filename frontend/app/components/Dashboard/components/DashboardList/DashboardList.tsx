@@ -35,14 +35,6 @@ function DashboardList({ siteId }: { siteId: string }) {
             render: (t) => <div className="link cap-first">{t}</div>,
         },
         {
-            title: 'Last Modified',
-            dataIndex: 'updatedAt',
-            width: '16.67%',
-            sorter: (a, b) => a.updatedAt.toMillis() - b.updatedAt.toMillis(),
-            sortDirections: ['ascend', 'descend'],
-            render: (date) => checkForRecent(date, 'LLL dd, yyyy, hh:mm a'),
-        },
-        {
             title: 'Owner',
             dataIndex: 'owner',
             width: '16.67%',
@@ -50,6 +42,15 @@ function DashboardList({ siteId }: { siteId: string }) {
             sortDirections: ['ascend', 'descend'],
             render: (owner) => <div className="cap-first">{owner}</div>,
         },
+        {
+            title: 'Last Modified',
+            dataIndex: 'updatedAt',
+            width: '16.67%',
+            sorter: (a, b) => a.updatedAt.toMillis() - b.updatedAt.toMillis(),
+            sortDirections: ['ascend', 'descend'],
+            render: (date) => checkForRecent(date, 'LLL dd, yyyy, hh:mm a'),
+        },
+        
         {
             title: (
                 <div className={'flex items-center justify-start gap-2'}>

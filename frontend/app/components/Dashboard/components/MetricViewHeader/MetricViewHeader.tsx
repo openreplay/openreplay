@@ -64,7 +64,7 @@ function MetricViewHeader({ siteId }: { siteId: string }) {
                 <div className='flex items-center gap-6'>
                     <ListViewToggler />
 
-                    <Toggler
+                    {/* <Toggler
                         label='My Cards'
                         checked={filter.showMine}
                         name='test'
@@ -72,7 +72,7 @@ function MetricViewHeader({ siteId }: { siteId: string }) {
                         onChange={() =>
                             metricStore.updateKey('filter', { ...filter, showMine: !filter.showMine })
                         }
-                    />
+                    /> */}
                 </div>
 
                 <NewDashboardModal

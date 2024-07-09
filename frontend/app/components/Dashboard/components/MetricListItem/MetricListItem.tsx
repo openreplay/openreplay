@@ -28,7 +28,7 @@ function MetricTypeIcon({ type }: any) {
 
   return (
     <Tooltip title={<div className="capitalize">{card.title}</div>}>
-      <Avatar src={card.icon && <Icon name={card.icon} size="16" color="tealx" />} className="bg-tealx-lightest mr-2" />
+      <Avatar src={card.icon && <Icon name={card.icon} size="16" color="tealx" />}  size="small" className="bg-tealx-lightest mr-2" />
     </Tooltip>
   );
 }
