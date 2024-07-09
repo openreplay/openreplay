@@ -1,4 +1,8 @@
 {{- if .Values.global.enterpriseEditionLicense }}
+{{- $context := . }}
+{{- range $key, $job := .Values.apiCrons }}
+{{- with $context }}
+---
 {{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
 {{- if semverCompare ">=1.22.0-0" $kubeTargetVersion }}
 apiVersion: batch/v1
@@ -7,10 +11,10 @@ apiVersion: batch/v1beta1
 {{- end }}
 kind: CronJob
 metadata:
-  name: assiststats-cron
+  name: {{$key | kebabcase}}-cron
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: "{{ .Values.assiststats.cron }}"
+  schedule: "{{ $job.cron }}"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 1
   jobTemplate:
@@ -37,9 +41,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
-          - name: assiststats-cron
-            image: "{{ tpl .Values.assiststats.image.repository . }}:{{ .Values.assiststats.image.tag | default .Chart.AppVersion }}-ee"
-            imagePullPolicy: {{ .Values.assiststats.image.pullPolicy }}
+          - name: report-cron
+            image: "{{ tpl $job.image.repository . }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
+            imagePullPolicy: "{{ $job.image.pullPolicy}}"
             env:
               {{- range $key, $val := .Values.global.env }}
               - name: {{ $key }}
@@ -116,8 +120,10 @@ spec:
                 value: '{{ .Values.global.email.emailSslCert }}'
               - name: EMAIL_FROM
                 value: '{{ .Values.global.email.emailFrom }}'
-              {{- range $key, $val := .Values.assiststats.env }}
+              {{- range $key, $val := $job.env }}
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end}}
+{{- end}}
+{{- end}}
 {{- end}}

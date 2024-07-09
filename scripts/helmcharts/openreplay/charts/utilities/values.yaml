@@ -28,61 +28,62 @@ telemetry:
   env:
     ACTION: "TELEMETRY"
 
-assiststats:
-  # https://crontab.guru/#5_12_*_*_*
-  # Midnight 12.05
-  cron: "0 * * * *"
-  image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
-  env:
-    ACTION: "ASSIST_STATS"
-report:
-  # https://crontab.guru/#0_5_*_*_1
-  # Monday morning 5am
-  cron: "0 5 * * 1"
-  image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
-  env:
-    ACTION: "REPORT"
-sessionsCleaner:
-  # https://crontab.guru/#5_1_*_*_*
-  # Midnight 1.05
-  cron: "5 1 * * *"
-  image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
-  env:
-    ACTION: "JOB"
-projectsStats:
-  # https://crontab.guru/#*/18_*_*_*_*
-  # Every 18 min
-  cron: "*/18 * * * *"
-  image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
-  env:
-    ACTION: "PROJECTS_STATS"
-fixProjectsStats:
-  # https://crontab.guru/#0_5_*_*_0
-  # Sunday at 5am
-  cron: "0 5 * * 0"
-  image:
-    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
-  env:
-    ACTION: "FIX_PROJECTS_STATS"
+apiCrons: 
+  assiststats:
+    # https://crontab.guru/#5_12_*_*_*
+    # Midnight 12.05
+    cron: "0 * * * *"
+    image:
+      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      pullPolicy: Always
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    env:
+      ACTION: "ASSIST_STATS"
+  report:
+    # https://crontab.guru/#0_5_*_*_1
+    # Monday morning 5am
+    cron: "0 5 * * 1"
+    image:
+      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      pullPolicy: Always
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    env:
+      ACTION: "REPORT"
+  sessionsCleaner:
+    # https://crontab.guru/#5_1_*_*_*
+    # Midnight 1.05
+    cron: "5 1 * * *"
+    image:
+      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      pullPolicy: Always
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    env:
+      ACTION: "JOB"
+  projectsStats:
+    # https://crontab.guru/#*/18_*_*_*_*
+    # Every 18 min
+    cron: "*/18 * * * *"
+    image:
+      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      pullPolicy: Always
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    env:
+      ACTION: "PROJECTS_STATS"
+  fixProjectsStats:
+    # https://crontab.guru/#0_5_*_*_0
+    # Sunday at 5am
+    cron: "0 5 * * 0"
+    image:
+      repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+      pullPolicy: Always
+      # Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+    env:
+      ACTION: "FIX_PROJECTS_STATS"
 
 # Common env values are from chalice for the crons
 chalice:
