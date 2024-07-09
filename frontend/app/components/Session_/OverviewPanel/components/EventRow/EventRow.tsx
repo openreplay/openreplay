@@ -36,7 +36,7 @@ const EventRow = React.memo((props: Props) => {
     >
       <div
         className={cn(
-          'uppercase color-gray-medium text-sm flex items-center py-1',
+          'uppercase text-sm flex items-center py-1',
           props.noMargin ? '' : 'ml-2'
         )}
       >
@@ -67,7 +67,7 @@ const EventRow = React.memo((props: Props) => {
             );
           })
         ) : (
-          <div className={cn('color-gray-medium text-sm pt-2', props.noMargin ? '' : 'ml-4')}>
+          <div className={cn('color-gray-medium text-sm', props.noMargin ? '' : 'ml-4')}>
             None captured.
           </div>
         )}

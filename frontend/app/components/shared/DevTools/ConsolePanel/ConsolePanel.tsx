@@ -40,7 +40,7 @@ function renderWithNL(s: string | null = '') {
   ));
 }
 
-const getIconProps = (level: any) => {
+const getIconProps = (level: LogLevel) => {
   switch (level) {
     case LogLevel.INFO:
     case LogLevel.LOG:
@@ -58,8 +58,11 @@ const getIconProps = (level: any) => {
         name: 'console/error',
         color: 'red',
       };
+    default:
+      return {
+        name: 'console/info',
+      };
   }
-  return null;
 };
 
 const INDEX_KEY = 'console';
