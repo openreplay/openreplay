@@ -42,9 +42,9 @@ function BreakdownOfLoadedResources(props: Props) {
                 />
                 <Legend />
                 <Tooltip {...Styles.tooltip} />
-                <Bar minPointSize={1} name="CSS" dataKey="stylesheet" stackId="a" fill={Styles.colors[0]} />
-                <Bar name="Images" dataKey="img" stackId="a" fill={Styles.colors[2]} />
-                <Bar name="Scripts" dataKey="script" stackId="a" fill={Styles.colors[3]} />
+                <Bar minPointSize={1} name="CSS" dataKey="stylesheet" stackId="a" fill={Styles.compareColors[0]} />
+                <Bar name="Images" dataKey="img" stackId="a" fill={Styles.compareColors[1]} />
+                <Bar name="Scripts" dataKey="script" stackId="a" fill={Styles.compareColors[2]} />
               </BarChart>
           </ResponsiveContainer>
         </NoContent>

@@ -102,7 +102,7 @@ function FunnelWidget(props: Props) {
                 <div className="flex items-center">
                     <span className="text-base font-medium mr-2">Total conversion</span>
                     <Tooltip title={`${funnel.totalConversions} Sessions ${funnel.totalConversionsPercentage}%`}>
-                        <Tag bordered={false} color="cyan" className='text-lg font-medium rounded-lg'>
+                        <Tag bordered={false} color="green" className='text-lg font-medium rounded-lg'>
                         {funnel.totalConversions}
                         </Tag>
                     </Tooltip>

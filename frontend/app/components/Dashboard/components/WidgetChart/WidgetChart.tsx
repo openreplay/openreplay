@@ -177,6 +177,7 @@ function WidgetChart(props: Props) {
                         data={data}
                         // isTemplate={isTemplate}
                         isEdit={!isSaved && !isTemplate}
+                        
                     />
                 );
             }

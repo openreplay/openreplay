@@ -356,6 +356,8 @@ p {
   white-space: nowrap !important;
 }
 
+
+
 .stripes {
   background: repeating-linear-gradient(
     135deg,
@@ -424,4 +426,8 @@ p {
 
 .eg-card input[name="search"] {
   visibility: hidden !important;
+}
+
+.ant-segmented-group{
+  gap:0.25rem;
 }

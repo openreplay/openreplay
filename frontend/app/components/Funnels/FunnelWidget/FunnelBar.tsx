@@ -22,10 +22,10 @@ function FunnelBar(props: Props) {
       <div
         style={{
           height: '25px',
-          width: '100%',
+          width: '99.8%',
           backgroundColor: '#f5f5f5',
           position: 'relative',
-          borderRadius: '3px',
+          borderRadius: '.5rem',
           overflow: 'hidden'
         }}
       >
@@ -37,7 +37,7 @@ function FunnelBar(props: Props) {
             top: 0,
             left: 0,
             bottom: 0,
-            backgroundColor: Styles.colors[0]
+            backgroundColor: Styles.compareColors[1]
           }}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
@@ -88,10 +88,10 @@ export function UxTFunnelBar(props: Props) {
       <div
         style={{
           height: '25px',
-          width: '100%',
+          width: '99.8%',
           backgroundColor: '#f5f5f5',
           position: 'relative',
-          borderRadius: '3px',
+          borderRadius: '.5rem',
           overflow: 'hidden'
         }}
       >
@@ -103,7 +103,7 @@ export function UxTFunnelBar(props: Props) {
             top: 0,
             left: 0,
             bottom: 0,
-            backgroundColor: '#00b5ad'
+            backgroundColor: '#6272FF'
           }}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">

@@ -26,7 +26,7 @@ function ExampleTrend(props: Props) {
             {/*<AreaChartCard data={props.data} label={props.data?.label}/>*/}
             <CustomMetricLineChart
                 data={props.data}
-                colors={Styles.customMetricColors}
+                colors={Styles.compareColors}
                 params={{
                     density: 21,
                 }}

@@ -55,16 +55,17 @@ function ResourceLoadedVsVisuallyComplete(props: Props) {
                   tickFormatter={val => Styles.tickFormatter(val)}
                 />
                 <Tooltip {...Styles.tooltip} />
-                <Legend />
-                <Bar minPointSize={1} yAxisId="right" name="Images" type="monotone" dataKey="types.img" stackId="a" fill={Styles.colors[2]} />
-                <Bar yAxisId="right" name="Scripts" type="monotone" dataKey="types.script" stackId="a" fill={Styles.colors[3]} />
-                <Bar yAxisId="right" name="CSS" type="monotone" dataKey="types.stylesheet" stackId="a" fill={Styles.colors[4]} />
+                <Legend  />
+                <Bar minPointSize={1} yAxisId="right" name="Images" type="monotone" dataKey="types.img" stackId="a" fill={Styles.compareColors[0]} />
+                <Bar yAxisId="right" name="Scripts" type="monotone" dataKey="types.script" stackId="a" fill={Styles.compareColors[1]} />
+                <Bar yAxisId="right" name="CSS" type="monotone" dataKey="types.stylesheet" stackId="a" fill={Styles.compareColors[2]} />
                 <Line
                   yAxisId="left"
                   name="Visually Complete"
                   type="monotone"
                   dataKey="avgTimeToRender"
-                  stroke={Styles.lineColor }
+                  stroke={Styles.strokeColor }
+                  
                   dot={false}
                   unit=" ms"
                   strokeWidth={2}
