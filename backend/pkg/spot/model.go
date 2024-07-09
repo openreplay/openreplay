@@ -39,7 +39,7 @@ type GetSpotsRequest struct {
 }
 
 type ShortInfo struct {
-	ID         uint64    `json:"id"`
+	ID         string    `json:"id"`
 	Name       string    `json:"name"`
 	UserEmail  string    `json:"userEmail"`
 	Duration   int       `json:"duration"`

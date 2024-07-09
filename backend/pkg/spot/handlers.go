@@ -295,7 +295,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 			e.log.Error(r.Context(), "can't get preview URL: %s", err)
 		}
 		res = append(res, ShortInfo{
-			ID:         spot.ID,
+			ID:         strconv.Itoa(int(spot.ID)),
 			Name:       spot.Name,
 			UserEmail:  spot.UserEmail,
 			Duration:   spot.Duration,
