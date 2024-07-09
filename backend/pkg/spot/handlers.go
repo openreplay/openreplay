@@ -56,12 +56,12 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mobURL, err := e.getMobURL(newSpot.ID)
+	mobURL, err := e.getUploadMobURL(newSpot.ID)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	videoURL, err := e.getVideoURL(newSpot.ID)
+	videoURL, err := e.getUploadVideoURL(newSpot.ID)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -89,7 +89,7 @@ func getSpotPreview(preview string) ([]byte, error) {
 	return data, nil
 }
 
-func (e *Router) getMobURL(spotID uint64) (string, error) {
+func (e *Router) getUploadMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
 	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
@@ -98,7 +98,7 @@ func (e *Router) getMobURL(spotID uint64) (string, error) {
 	return mobURL, nil
 }
 
-func (e *Router) getVideoURL(spotID uint64) (string, error) {
+func (e *Router) getUploadVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID)
 	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
@@ -137,6 +137,33 @@ func getSpotsRequest(r *http.Request) (*GetSpotsRequest, error) {
 		Limit:    limitNum,
 	}
 	return req, nil
+}
+
+func (e *Router) getPreviewURL(spotID uint64) (string, error) {
+	previewKey := fmt.Sprintf("%d/preview.jpeg", spotID)
+	previewURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(previewKey)
+	if err != nil {
+		return "", fmt.Errorf("can't get preview URL: %s", err)
+	}
+	return previewURL, nil
+}
+
+func (e *Router) getMobURL(spotID uint64) (string, error) {
+	mobKey := fmt.Sprintf("%d/events.mob", spotID)
+	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	if err != nil {
+		return "", fmt.Errorf("can't get mob URL: %s", err)
+	}
+	return mobURL, nil
+}
+
+func (e *Router) getVideoURL(spotID uint64) (string, error) {
+	mobKey := fmt.Sprintf("%d/video.webm", spotID) // TODO: later return url to m3u8 file
+	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	if err != nil {
+		return "", fmt.Errorf("can't get video URL: %s", err)
+	}
+	return mobURL, nil
 }
 
 func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
@@ -262,14 +289,20 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 	}
 	res := make([]ShortInfo, 0, len(spots))
 	for _, spot := range spots {
+		previewUrl, err := e.getPreviewURL(spot.ID)
+		if err != nil {
+			e.log.Error(r.Context(), "can't get preview URL: %s", err)
+		}
 		res = append(res, ShortInfo{
+			ID:         spot.ID,
 			Name:       spot.Name,
 			UserID:     spot.UserID,
 			Duration:   spot.Duration,
-			PreviewURL: fmt.Sprintf("%d/preview.jpeg", spot.ID),
+			CreatedAt:  spot.CreatedAt,
+			PreviewURL: previewUrl,
 		})
 	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: uint64(len(res))}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {

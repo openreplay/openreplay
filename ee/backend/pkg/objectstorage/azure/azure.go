@@ -140,6 +140,10 @@ func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
 	return sasURL, nil
 }
 
+func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
 func loadFileTag() map[string]string {
 	// Load file tag from env
 	key := "retention"

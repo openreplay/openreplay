@@ -39,14 +39,17 @@ type GetSpotsRequest struct {
 }
 
 type ShortInfo struct {
-	Name       string `json:"name"`
-	UserID     uint64 `json:"userID"`
-	Duration   int    `json:"duration"`
-	PreviewURL string `json:"previewURL"`
+	ID         uint64    `json:"id"`
+	Name       string    `json:"name"`
+	UserID     uint64    `json:"userID"`
+	Duration   int       `json:"duration"`
+	CreatedAt  time.Time `json:"createdAt"`
+	PreviewURL string    `json:"previewURL"`
 }
 
 type GetSpotsResponse struct {
 	Spots []ShortInfo `json:"spots"`
+	Total uint64      `json:"total"`
 }
 
 type UpdateSpotRequest struct {
