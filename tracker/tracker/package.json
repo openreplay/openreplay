@@ -21,7 +21,6 @@
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
     "build": "bun run clean && bun run tscRun && bun run rollup && bun run compile",
-    "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",

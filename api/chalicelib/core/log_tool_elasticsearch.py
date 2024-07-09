@@ -1,10 +1,11 @@
-from elasticsearch import Elasticsearch
-from chalicelib.core import log_tools
 import logging
 
+from elasticsearch import Elasticsearch
+
+from chalicelib.core import log_tools
 from schemas import schemas
 
-logging.getLogger('elasticsearch').level = logging.ERROR
+logger = logging.getLogger(__name__)
 
 IN_TY = "elasticsearch"
 
@@ -63,9 +64,9 @@ def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
     try:
         args = {
             "hosts": [{"host": host, "port": port, "scheme": scheme}],
-            "verify_certs": False,
+            "verify_certs": use_ssl,
             "request_timeout": timeout,
-            "api_key": (api_key_id, api_key)
+            "api_key": api_key
         }
         es = Elasticsearch(
             **args
@@ -76,8 +77,8 @@ def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
         if not r:
             return None
     except Exception as err:
-        print("================exception connecting to ES host:")
-        print(err)
+        logger.error("================exception connecting to ES host:")
+        logger.exception(err)
         return None
     return es
 
