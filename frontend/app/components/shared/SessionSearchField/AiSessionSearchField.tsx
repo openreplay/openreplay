@@ -146,7 +146,7 @@ const AiSearchField = observer(
           value={searchQuery}
           style={{ minWidth: 360, height: 30 }}
           autoComplete="off"
-          className="px-2 py-1 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
+          className="px-2 py-1 pe-9 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
           leadingButton={
             searchQuery !== '' ? (
               <div
@@ -189,7 +189,7 @@ function AiSessionSearchField(props: Props) {
                    ? gradientBox
                    : isFocused ? regularBoxFocused : regularBoxUnfocused;
   return (
-    <div className={'bg-white rounded-full'}>
+    <div className={'bg-white rounded-full shadow-sm'}>
       <div
         className={aiFiltersStore.isLoading ? 'animate-bg-spin' : ''}
         style={boxStyle}

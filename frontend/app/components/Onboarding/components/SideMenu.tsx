@@ -44,7 +44,6 @@ function SideMenu(props: Props) {
         >
           <Menu.Item
             key={OB_TABS.INSTALLING}
-            style={{ paddingLeft: 0 }}
             icon={
               <Icon
                 name="tools"
@@ -58,7 +57,6 @@ function SideMenu(props: Props) {
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.IDENTIFY_USERS}
-            style={{ paddingLeft: 0 }}
             icon={
               <Icon
                 name="person-border"
@@ -72,7 +70,6 @@ function SideMenu(props: Props) {
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.MANAGE_USERS}
-            style={{ paddingLeft: 0 }}
             icon={
               <Icon
                 name="people"
@@ -86,7 +83,6 @@ function SideMenu(props: Props) {
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.INTEGRATIONS}
-            style={{ paddingLeft: 0 }}
             icon={
               <Icon
                 name="plug"
@@ -101,7 +97,6 @@ function SideMenu(props: Props) {
           <Divider style={{ margin: '6px 0' }} />
           <Menu.Item
             key={'support'}
-            style={{ paddingLeft: 0 }}
             icon={
               <Icon
                 name="question-circle"

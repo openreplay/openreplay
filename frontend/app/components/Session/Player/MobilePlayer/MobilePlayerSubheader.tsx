@@ -24,7 +24,7 @@ function SubHeader(props: any) {
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
-        <Tag color="error">{props.isIOS ? 'iOS' : 'ANDROID'} BETA</Tag>
+        <Tag color="green" bordered={false} className='rounded-full'>{props.isIOS ? 'iOS' : 'Android'} BETA</Tag>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
