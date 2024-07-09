@@ -323,7 +323,7 @@ class IntegrationCloudwatchSchema(IntegrationCloudwatchBasicSchema):
 class IntegrationElasticsearchTestSchema(IntegrationBase):
     host: str = Field(...)
     port: int = Field(...)
-    api_key_id: str = Field(...)
+    api_key_id: Optional[str] = Field(default=None)
     api_key: str = Field(...)
 
 
