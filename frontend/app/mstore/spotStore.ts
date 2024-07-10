@@ -73,6 +73,9 @@ export default class SpotStore {
       spotService.fetchSpot(id)
     )
 
-    this.setCurrentSpot(new Spot({ ...response.spot, id } ))
+    const spotInst = new Spot({ ...response.spot, id } )
+    this.setCurrentSpot(spotInst)
+
+    return spotInst
   }
 }

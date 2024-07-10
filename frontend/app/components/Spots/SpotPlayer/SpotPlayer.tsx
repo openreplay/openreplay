@@ -1,21 +1,15 @@
-import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Avatar, Icon } from 'UI'
 
 import { useStore } from 'App/mstore';
-import { SpotComment } from 'App/services/spotService';
-import { hashString } from "Types/session/session";
-import { UserSwitchOutlined, CommentOutlined } from '@ant-design/icons';
-import CommentsSection from './CommentsSection';
+import { Loader } from 'UI';
 
-const TABS = {
-  COMMENTS: 'comments',
-  ACTIVITY: 'activity',
-} as const;
-
-type Tab = (typeof TABS)[keyof typeof TABS];
+import SpotPlayerControls from './SpotPlayerControls';
+import SpotPlayerHeader from './SpotPlayerHeader';
+import SpotPlayerSideBar from './SpotSideBar';
+import { Tab } from './consts';
+import spotPlayerStore from './spotPlayerStore';
 
 function SpotPlayer() {
   const { spotStore } = useStore();
@@ -23,10 +17,27 @@ function SpotPlayer() {
   const [activeTab, setActiveTab] = React.useState<Tab | null>(null);
 
   React.useEffect(() => {
-    void spotStore.fetchSpotById(spotId);
+    spotStore.fetchSpotById(spotId).then(async (spotInst) => {
+      if (spotInst.mobURL) {
+        try {
+          const mobResp = await fetch(spotInst.mobURL);
+          const {
+            clicks = [],
+            logs = [],
+            network = [],
+            locations = [],
+            startTs = 0,
+          } = await mobResp.json();
+          spotPlayerStore.setStartTs(startTs);
+          spotPlayerStore.setEvents(logs, locations, clicks, network);
+        } catch (e) {
+          console.error("Couldn't parse mob file", e);
+        }
+      }
+    });
   }, []);
   if (!spotStore.currentSpot) {
-    return <div>loading...</div>;
+    return <Loader />;
   }
   console.log(spotStore.currentSpot);
 
@@ -35,7 +46,7 @@ function SpotPlayer() {
   };
   return (
     <div className={'w-screen h-screen  flex flex-col'}>
-      <Header
+      <SpotPlayerHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         title={spotStore.currentSpot.title}
@@ -47,14 +58,13 @@ function SpotPlayer() {
           <div>url</div>
           <div className={'relative w-full h-full'}>
             <video
-              autoPlay
               className={'object-cover absolute top-0 left-0 w-full h-full'}
               src={spotStore.currentSpot?.videoURL}
             />
           </div>
-          <div className={'w-full p-4'}>controls</div>
+          <SpotPlayerControls />
         </div>
-        <SideBar
+        <SpotPlayerSideBar
           activeTab={activeTab}
           onClose={closeTab}
           comments={spotStore.currentSpot?.comments ?? []}
@@ -62,77 +72,6 @@ function SpotPlayer() {
       </div>
     </div>
   );
-}
-
-function Header({
-  activeTab,
-  setActiveTab,
-  title,
-  user,
-  date,
-}: {
-  activeTab: Tab | null;
-  setActiveTab: (tab: Tab) => void;
-  title: string;
-  user: string;
-  date: string;
-}) {
-  return (
-    <div className={'flex items-center gap-4 p-4 w-full bg-white border-b border-gray-light'}>
-      <div>
-        <div className={'flex items-center gap-2'}>
-          <Icon name={'orSpot'} size={24} />
-          <div className={'text-lg font-semibold'}>Spot</div>
-        </div>
-        <div className={'text-disabled-text text-xs'}>by OpenReplay</div>
-      </div>
-      <div className={'h-full rounded-xl bg-gray-light mx-2'} style={{ width: 1 }} />
-      <div className={'flex items-center gap-2'}>
-        <Avatar seed={hashString(user)} />
-        <div>
-          <div>{title}</div>
-          <div className={'flex items-center gap-2 text-disabled-text'}>
-            <div>{user}</div>
-            <div>·</div>
-            <div>{date}</div>
-          </div>
-        </div>
-      </div>
-      <div className={'ml-auto'} />
-      <Button
-        size={'small'}
-        disabled={activeTab === TABS.ACTIVITY}
-        onClick={() => setActiveTab(TABS.ACTIVITY)}
-        icon={<UserSwitchOutlined />}
-      >
-        Activity
-      </Button>
-      <Button
-        size={'small'}
-        disabled={activeTab === TABS.COMMENTS}
-        onClick={() => setActiveTab(TABS.COMMENTS)}
-        icon={<CommentOutlined />}
-      >
-        Comments
-      </Button>
-    </div>
-  );
-}
-
-function SideBar({
-  activeTab,
-  onClose,
-  comments,
-}: {
-  activeTab: Tab | null;
-  onClose: () => void;
-  comments: SpotComment[];
-}) {
-  if (activeTab === TABS.COMMENTS) {
-    return <CommentsSection comments={comments} onClose={onClose} />;
-  }
-
-  return null;
 }
 
 export default observer(SpotPlayer);
