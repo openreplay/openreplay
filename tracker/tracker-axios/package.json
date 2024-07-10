@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@openreplay/tracker": "file:../tracker",
-    "axios": "^0.26.0",
+    "axios": "^1.7.2",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"
