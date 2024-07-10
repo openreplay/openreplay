@@ -90,7 +90,7 @@ function SpotsList() {
 
         <div
           className={
-            'py-2 px-0.5 border-t border-b border-gray-lighter grid grid-cols-4 gap-2'
+            'py-2 px-0.5 border-t border-b border-gray-lighter grid grid-cols-3 gap-2'
           }
         >
           {spotStore.spots.map((spot, index) => (
