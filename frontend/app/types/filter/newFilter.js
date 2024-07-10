@@ -945,7 +945,7 @@ export const addElementToFiltersMap = (
     type,
     category,
     // remove _ from key
-    label: key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2),
+    label: getMetadataLabel(key),
     operator: operator,
     operatorOptions,
     icon,
@@ -962,6 +962,10 @@ export const addOptionsToFilter = (
   }
 }
 
+function getMetadataLabel(key) {
+  return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
+}
+
 export const addElementToFlagConditionsMap = (
   category = FilterCategory.METADATA,
   key,
@@ -974,7 +978,7 @@ export const addElementToFlagConditionsMap = (
     key,
     type,
     category,
-    label: capitalize(key),
+    label: getMetadataLabel(key),
     operator: operator,
     operatorOptions,
     icon,
@@ -994,7 +998,7 @@ export const addElementToConditionalFiltersMap = (
     key,
     type,
     category,
-    label: capitalize(key),
+    label: getMetadataLabel(key),
     operator: operator,
     operatorOptions,
     icon,
@@ -1014,7 +1018,7 @@ export const addElementToMobileConditionalFiltersMap = (
     key,
     type,
     category,
-    label: capitalize(key),
+    label: getMetadataLabel(key),
     operator: operator,
     operatorOptions,
     icon,
@@ -1032,7 +1036,7 @@ export const addElementToLiveFiltersMap = (
 ) => {
   liveFiltersMap[key] = {
     key, type, category,
-    label: key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2),
+    label: getMetadataLabel(key),
     operator: operator,
     operatorOptions,
     icon,
