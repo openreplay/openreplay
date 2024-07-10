@@ -15,6 +15,7 @@ export class Spot {
 
 
   constructor(data: Record<string, any>) {
+    this.setAdditionalData(data)
     this.thumbnail = data.previewURL
     this.title = data.name;
     this.createdAt = resentOrDate(new Date(data.createdAt).getTime());
@@ -22,7 +23,6 @@ export class Spot {
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id
 
-    this.setAdditionalData(data)
   }
 
   setAdditionalData(data: Record<string, any>) {

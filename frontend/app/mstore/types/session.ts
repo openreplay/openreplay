@@ -4,7 +4,7 @@ import { Duration } from 'luxon';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
-function hashString(s: string): number {
+export function hashString(s: string): number {
   let mul = 1;
   let hash = 0;
   for (let i = 0; i < s.length; i++) {
