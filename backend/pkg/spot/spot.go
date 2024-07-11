@@ -118,7 +118,7 @@ func (s *spotsImpl) encodeComment(comment *Comment) string {
 }
 
 func (s *spotsImpl) add(spot *Spot) error {
-	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, comments, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, comments, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	var comments []string
 	for _, comment := range spot.Comments {
 		if encodedComment := s.encodeComment(&comment); encodedComment != "" {

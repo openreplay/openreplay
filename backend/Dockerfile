@@ -115,7 +115,7 @@ RUN if [ "$SERVICE_NAME" = "http" ]; then \
       apk add --no-cache zstd; \
     elif [ "$SERVICE_NAME" = "canvas-handler" ]; then \
           apk add --no-cache zstd; \
-    elif [ "$SERVICE_NAME" = "canvas-maker" ]; then \
+    elif [ "$SERVICE_NAME" = "spot" ]; then \
           apk add --no-cache ffmpeg; \
     fi
 

@@ -396,8 +396,10 @@ func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*User)
-	// TODO: add a new transcoding task to the queue
 	e.log.Info(r.Context(), "uploaded spot %d, from user: %+v", id, user)
+	if err := e.services.Transcoder.Transcode(id); err != nil {
+		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
+	}
 
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }

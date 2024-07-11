@@ -16,6 +16,8 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	objectstorage.ObjectsConfig
+	FSDir                   string        `env:"FS_DIR,required"`
+	SpotsDir                string        `env:"SPOTS_DIR,default=spots"`
 	HTTPHost                string        `env:"HTTP_HOST,default="`
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
