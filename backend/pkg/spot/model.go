@@ -10,7 +10,7 @@ type CreateSpotRequest struct {
 }
 
 type CreateSpotResponse struct {
-	ID       uint64 `json:"id"`
+	ID       string `json:"id"`
 	MobURL   string `json:"mobURL"`
 	VideoURL string `json:"videoURL"`
 }

@@ -68,7 +68,7 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := &CreateSpotResponse{
-		ID:       newSpot.ID,
+		ID:       strconv.Itoa(int(newSpot.ID)),
 		MobURL:   mobURL,
 		VideoURL: videoURL,
 	}
