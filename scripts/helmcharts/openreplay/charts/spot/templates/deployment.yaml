@@ -106,6 +106,7 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
       volumes:
       {{- with .Values.persistence.volumes }}
         {{- toYaml . | nindent 6 }}
