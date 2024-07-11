@@ -319,13 +319,14 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         session_data = None
         if data.metric_type == schemas.MetricType.heat_map:
             if data.session_id is not None:
-                session_data = json.dumps({"sessionId": data.session_id})
+                session_data = {"sessionId": data.session_id}
             else:
                 session_data = __get_heat_map_chart(project_id=project_id, user_id=user_id,
                                                     data=data, include_mobs=False)
                 if session_data is not None:
-                    session_data = json.dumps({"sessionId": session_data["sessionId"]})
-        _data = {"session_data": session_data}
+                    session_data = {"sessionId": session_data["sessionId"]}
+
+        _data = {"session_data": json.dumps(session_data) if session_data is not None else None}
         for i, s in enumerate(data.series):
             for k in s.model_dump().keys():
                 _data[f"{k}_{i}"] = s.__getattribute__(k)
