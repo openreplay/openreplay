@@ -62,9 +62,9 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
                                     AND issues.datetime <= toDateTime(%(endDate)s/1000)
                                     AND issues.project_id = toUInt16(%(project_id)s)
                                     AND issues.event_type = 'ISSUE'
-                                    AND issues.project_id = toUInt16(%(project_id)s
-                                    AND mis.project_id = toUInt16(%(project_id)s
-                                    AND mis.type='click_rage'))))""")
+                                    AND issues.project_id = toUInt16(%(project_id)s)
+                                    AND mis.project_id = toUInt16(%(project_id)s)
+                                    AND mis.type='click_rage'))""")
         query_from += """ LEFT JOIN experimental.events AS issues ON (main_events.session_id=issues.session_id)
                        LEFT JOIN experimental.issues AS mis ON (issues.issue_id=mis.issue_id)"""
     with ch_client.ClickHouseClient() as cur:
