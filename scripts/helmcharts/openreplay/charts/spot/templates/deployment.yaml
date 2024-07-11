@@ -107,10 +107,24 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 8 }}
-      {{- with .Values.persistence.volumes  }}
+      {{- with .Values.persistence.volumes }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ tpl .Values.pvc.hostMountPath . }}
+          type: DirectoryOrCreate
+      {{- else }}
+      volumes:
+      {{- with .Values.persistence.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: "{{ tpl .Values.pvc.name . }}"
+      {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
