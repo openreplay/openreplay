@@ -98,6 +98,8 @@ spec:
               protocol: TCP
             {{- end }}
           volumeMounts:
+          - name: datadir
+            mountPath: /mnt/efs
           {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
           {{- with .Values.persistence.mounts  }}
             {{- toYaml . | nindent 12 }}
