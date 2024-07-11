@@ -57,16 +57,16 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     #                                                    f.value, value_key=f_k))
 
     if data.click_rage and not has_click_rage_filter:
-        constraints.append("""(issues.session_id IS NULL 
-                                OR (issues.datetime >= toDateTime(%(startDate)s/1000)
-                                    AND issues.datetime <= toDateTime(%(endDate)s/1000)
-                                    AND issues.project_id = toUInt16(%(project_id)s)
-                                    AND issues.event_type = 'ISSUE'
-                                    AND issues.project_id = toUInt16(%(project_id)s
-                                    AND mis.project_id = toUInt16(%(project_id)s
-                                    AND mis.type='click_rage'))))""")
-        query_from += """ LEFT JOIN experimental.events AS issues ON (main_events.session_id=issues.session_id)
-                       LEFT JOIN experimental.issues AS mis ON (issues.issue_id=mis.issue_id)"""
+        constraints.append("""(issues_t.session_id IS NULL 
+                                OR (issues_t.datetime >= toDateTime(%(startDate)s/1000)
+                                    AND issues_t.datetime <= toDateTime(%(endDate)s/1000)
+                                    AND issues_t.project_id = toUInt16(%(project_id)s)
+                                    AND issues_t.event_type = 'ISSUE'
+                                    AND issues_t.project_id = toUInt16(%(project_id)s)
+                                    AND mis.project_id = toUInt16(%(project_id)s)
+                                    AND mis.type='click_rage'))""")
+        query_from += """ LEFT JOIN experimental.events AS issues_t ON (main_events.session_id=issues_t.session_id)
+                       LEFT JOIN experimental.issues AS mis ON (issues_t.issue_id=mis.issue_id)"""
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(f"""SELECT main_events.normalized_x AS normalized_x, 
                                             main_events.normalized_y AS normalized_y
