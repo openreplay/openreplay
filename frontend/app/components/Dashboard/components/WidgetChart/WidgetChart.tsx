@@ -146,6 +146,7 @@ function WidgetChart(props: Props) {
                         colors={colors}
                         params={params}
                         onClick={onChartClick}
+                        label={metric.metricOf === 'sessionCount' ? 'Number of Sessions' : 'Number of Users'}
                     />
                 );
             } else if (viewType === 'progress') {
@@ -177,7 +178,7 @@ function WidgetChart(props: Props) {
                         data={data}
                         // isTemplate={isTemplate}
                         isEdit={!isSaved && !isTemplate}
-                        
+
                     />
                 );
             }
