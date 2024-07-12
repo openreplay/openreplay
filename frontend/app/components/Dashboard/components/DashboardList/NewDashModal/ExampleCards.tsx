@@ -128,6 +128,21 @@ export const CARD_LIST: CardType[] = [
     },
     example: ExampleTrend
   },
+  {
+    title: 'Users Trend',
+    key: TIMESERIES + '_userCount',
+    cardType: TIMESERIES,
+    metricOf: 'userCount',
+    category: CARD_CATEGORIES[0].key,
+    data: {
+      chart: generateTimeSeriesData(),
+      label: 'Number of Users',
+      namesMap: [
+        'Series 1'
+      ]
+    },
+    example: ExampleTrend
+  },
 
   {
     title: 'Sessions by Issues',
