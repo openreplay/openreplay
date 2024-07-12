@@ -11,7 +11,7 @@ import {
 } from 'App/player-ui';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
 
-import spotPlayerStore, { PANELS } from '../spotPlayerStore';
+import spotPlayerStore, { PANELS, PanelType } from "../spotPlayerStore";
 
 function SpotPlayerControls() {
   const toggleFullScreen = () => {
@@ -27,8 +27,12 @@ function SpotPlayerControls() {
   const playState = spotPlayerStore.isPlaying
     ? PlayingState.Playing
     : PlayingState.Paused;
+
+  const togglePanel = (panel: PanelType) => {
+    spotPlayerStore.setActivePanel(panel === spotPlayerStore.activePanel ? null : panel);
+  }
   return (
-    <div className={'w-full p-4 flex items-center gap-4'}>
+    <div className={'w-full p-4 flex items-center gap-4 bg-white'}>
       <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
 
       <div
@@ -55,12 +59,12 @@ function SpotPlayerControls() {
 
       <ControlButton
         label={'Console'}
-        onClick={() => spotPlayerStore.setActivePanel(PANELS.CONSOLE)}
+        onClick={() => togglePanel(PANELS.CONSOLE)}
         active={spotPlayerStore.activePanel === PANELS.CONSOLE}
       />
       <ControlButton
         label={'Network'}
-        onClick={() => spotPlayerStore.setActivePanel(PANELS.NETWORK)}
+        onClick={() => togglePanel(PANELS.NETWORK)}
         active={spotPlayerStore.activePanel === PANELS.NETWORK}
       />
 

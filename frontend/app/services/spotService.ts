@@ -19,10 +19,10 @@ interface GetSpotResponse {
   spot: SpotInfo;
 }
 
-interface UpdateSpotRequest {
-  name: string;
+export interface UpdateSpotRequest {
+  name?: string;
   /** timestamp of public key expiration */
-  keyExpiration: number;
+  keyExpiration?: number;
 }
 
 interface AddCommentRequest {
@@ -57,7 +57,7 @@ export default class SpotService extends BaseService {
       .catch(console.error)
   }
 
-  async updateSpot(id: number, filter: UpdateSpotRequest) {
+  async updateSpot(id: string, filter: UpdateSpotRequest) {
     return this.client.patch(`/spot/v1/spots/${id}`, filter)
       .then(r => r.json())
       .catch(console.error)
@@ -73,6 +73,12 @@ export default class SpotService extends BaseService {
 
   async addComment(id: string, data: AddCommentRequest) {
     return this.client.post(`/spot/v1/spots/${id}/comment`, data)
+      .then(r => r.json())
+      .catch(console.error)
+  }
+
+  async getVideo(id:string) {
+    return this.client.get(`/spot/v1/spots/${id}/video`)
       .then(r => r.json())
       .catch(console.error)
   }

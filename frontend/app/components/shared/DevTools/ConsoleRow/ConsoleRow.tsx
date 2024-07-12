@@ -10,7 +10,7 @@ interface Props {
   renderWithNL?: any;
   style?: any;
   recalcHeight?: () => void;
-  onClick: () => void;
+  onClick?: () => void;
 }
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
@@ -42,7 +42,7 @@ function ConsoleRow(props: Props) {
           'cursor-pointer': clickable,
         }
       )}
-      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : undefined}
+      onClick={clickable ? () => (!!log.errorId ? props.onClick?.() : toggleExpand()) : undefined}
     >
       <div className="mr-2">
         <Icon size="14" {...iconProps} />

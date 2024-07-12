@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
 import { spotService } from 'App/services';
-
+import { UpdateSpotRequest } from 'App/services/spotService';
 import { Spot } from './types/spot';
 
 export default class SpotStore {
@@ -11,7 +11,7 @@ export default class SpotStore {
   page: number = 1;
   filter: 'all' | 'own' = 'all';
   query: string = '';
-  total: number = 3;
+  total: number = 0;
   limit: number = 10;
   readonly order = 'desc';
 
@@ -84,5 +84,29 @@ export default class SpotStore {
       await spotService.addComment(spotId, { comment, userName });
       return this.fetchSpotById(spotId);
     });
+  }
+
+  async deleteSpot(spotIds: string[]) {
+    await this.withLoader(() => spotService.deleteSpot(spotIds));
+    this.spots = this.spots.filter((spot) => spotIds.findIndex(s => s === spot.spotId) === -1);
+    this.total = this.total - spotIds.length;
+    await this.fetchSpots();
+  }
+
+  async updateSpot(spotId: string, data: UpdateSpotRequest) {
+    await this.withLoader(() => spotService.updateSpot(spotId, data));
+    if (data.name !== undefined) {
+      const updatedSpots = this.spots.map(s => {
+        if (s.spotId === spotId) {
+          s.title = data.name!
+        }
+        return s;
+      })
+      this.setSpots(updatedSpots);
+    }
+  }
+
+  async getVideo(id: string) {
+    return await this.withLoader(() => spotService.getVideo(id));
   }
 }

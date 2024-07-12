@@ -1,5 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
+import { getResourceFromNetworkRequest } from 'App/player';
+
 interface Event {
   time: number;
   [key: string]: any;
@@ -18,129 +20,196 @@ interface Click extends Event {
   label: string;
 }
 
-interface SpotNetworkRequest extends Event{
+interface SpotNetworkRequest extends Event {
   type: string;
   statusCode: number;
   url: string;
   fromCache: boolean;
   body: string;
+  encodedBodySize: number;
+  responseBodySize: number;
+  duration: number;
+  method: string;
 }
+
+
+const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
+  const { type, statusCode} = ev;
+  const mapType = (type: string) => {
+    switch (type) {
+      case 'xmlhttprequest':
+        return 'xhr';
+      case 'fetch':
+        return 'fetch';
+      case 'resource':
+        return 'resource';
+      default:
+        return 'other';
+    }
+  };
+
+  return ({
+    ...ev,
+    method: 'GET',
+    type: mapType(type),
+    status: statusCode,
+  })
+};
 
 export const PANELS = {
   CONSOLE: 'CONSOLE',
   NETWORK: 'NETWORK',
-} as const
+} as const;
 
-type PanelType = keyof typeof PANELS
+export type PanelType = keyof typeof PANELS;
 
 class SpotPlayerStore {
-  time = 0
-  duration = 0
-  durationString = ''
-  isPlaying = true
-  isMuted = false
-  volume = 1
-  playbackRate = 1
-  isFullScreen = false
-  logs: Log[] = []
-  locations: Location[] = []
-  clicks: Click[] = []
-  network: SpotNetworkRequest[] = []
-  startTs = 0
-  activePanel: PanelType | null = null
+  time = 0;
+  duration = 0;
+  durationString = '';
+  isPlaying = true;
+  isMuted = false;
+  volume = 1;
+  playbackRate = 1;
+  isFullScreen = false;
+  logs: Log[] = [];
+  locations: Location[] = [];
+  clicks: Click[] = [];
+  network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
+  startTs = 0;
+  activePanel: PanelType | null = null;
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this);
   }
 
   setActivePanel(panel: PanelType | null): void {
-    this.activePanel = panel
+    this.activePanel = panel;
   }
 
   setDuration(durString: string) {
-    const [minutes,seconds] = durString.split(':').map(Number)
-    this.durationString = durString
-    this.duration = minutes * 60 + seconds
+    const [minutes, seconds] = durString.split(':').map(Number);
+    this.durationString = durString;
+    this.duration = minutes * 60 + seconds;
   }
 
   setPlaybackRate(rate: number): void {
-    this.playbackRate = rate
+    this.playbackRate = rate;
   }
 
   setStartTs(ts: number): void {
-    this.startTs = ts
+    this.startTs = ts;
   }
 
   setTime(time: number): void {
-    this.time = time
+    this.time = time;
   }
 
   setIsPlaying(isPlaying: boolean): void {
-    this.isPlaying = isPlaying
+    this.isPlaying = isPlaying;
   }
 
   setIsMuted(isMuted: boolean): void {
-    this.isMuted = isMuted
+    this.isMuted = isMuted;
   }
 
   setVolume(volume: number): void {
-    this.volume = volume
+    this.volume = volume;
   }
 
   setIsFullScreen(isFullScreen: boolean): void {
-    this.isFullScreen = isFullScreen
+    this.isFullScreen = isFullScreen;
   }
 
-  setEvents(logs: Log[], locations: Location[], clicks: Click[], network: SpotNetworkRequest[]): void {
-    this.logs = logs.map(log => ({ ...log, time: log.time - this.startTs }))
-    this.locations = locations.map(location => ({ ...location, time: location.time - this.startTs }))
-    console.log(this.locations)
-    this.clicks = clicks.map(click => ({ ...click, time: click.time - this.startTs }))
-    this.network = network.map(request => ({ ...request, time: request.time - this.startTs }))
+  setEvents(
+    logs: Log[],
+    locations: Location[],
+    clicks: Click[],
+    network: SpotNetworkRequest[]
+  ): void {
+    this.logs = logs.map((log) => ({ ...log, time: log.time - this.startTs }));
+    this.locations = locations.map((location) => ({
+      ...location,
+      time: location.time - this.startTs,
+    }));
+    console.log(this.locations);
+    this.clicks = clicks.map((click) => ({
+      ...click,
+      time: click.time - this.startTs,
+    }));
+    this.network = network.map((request) => {
+      const ev = { ...request, timestamp: request.time };
+      console.log(mapSpotNetworkToEv(ev), getResourceFromNetworkRequest(
+        mapSpotNetworkToEv(ev),
+        this.startTs
+      ), ev)
+      return getResourceFromNetworkRequest(
+        mapSpotNetworkToEv(ev),
+        this.startTs
+      );
+    });
   }
 
   get currentLogIndex() {
-    return this.logs.findIndex(log => log.time >= this.time)
+    return this.logs.findIndex((log) => log.time >= this.time);
   }
 
-  getHighlightedEvent<T extends (Log | Location | Click | SpotNetworkRequest)>(time: number, events: T[]): T | null {
+  getHighlightedEvent<T extends Log | Location | Click | SpotNetworkRequest>(
+    time: number,
+    events: T[]
+  ): { event: T | null; index: number } {
     if (!events.length) {
-      return null
+      return { event: null, index: 0 };
     }
     let highlightedEvent = events[0];
-    const currentTs = time * 1000
+    const currentTs = time * 1000;
+    let index = 0;
     for (let i = 0; i < events.length; i++) {
       const event = events[i];
       const nextEvent = events[i + 1];
 
-      if (currentTs >= event.time && (!nextEvent || currentTs < nextEvent.time)) {
+      if (
+        currentTs >= event.time &&
+        (!nextEvent || currentTs < nextEvent.time)
+      ) {
         highlightedEvent = event;
+        index = i;
         break;
       }
     }
 
-    return highlightedEvent;
+    return { event: highlightedEvent, index };
   }
 
   getClosestLocation(time: number): Location {
-    const event = this.getHighlightedEvent(time, this.locations)
-    return event ?? { location: "loading", time: 0 }
+    const { event } = this.getHighlightedEvent(time, this.locations);
+    return event ?? { location: 'loading', time: 0 };
   }
 
   getClosestClick(time: number): Click {
-    return this.getHighlightedEvent(time, this.clicks) ?? { label: "loading", time: 0 }
+    const { event } = this.getHighlightedEvent(time, this.clicks);
+    return event ?? { label: 'loading', time: 0 };
   }
 
   getClosestNetworkIndex(time: number): SpotNetworkRequest {
     // @ts-ignore
-    return this.getHighlightedEvent(time, this.network) ?? { type: "loading", time: 0 }
+    const event = this.getHighlightedEvent(time, this.network);
+    // @ts-ignore
+    return event ?? { type: 'loading', time: 0 };
   }
 
   getClosestLog(time: number): Log {
-    return this.getHighlightedEvent(time, this.logs) ?? { message: "loading", time: 0, type: "info" }
+    const { event } = this.getHighlightedEvent(time, this.logs);
+    return (
+      event ?? {
+        message: 'loading',
+        time: 0,
+        type: 'info',
+      }
+    );
   }
 }
 
-const spotPlayerStore = new SpotPlayerStore()
+const spotPlayerStore = new SpotPlayerStore();
 
-export default spotPlayerStore
+export default spotPlayerStore;
