@@ -1,6 +1,8 @@
 import { makeAutoObservable } from 'mobx';
-import { Spot } from './types/spot'
-import { spotService } from "App/services";
+
+import { spotService } from 'App/services';
+
+import { Spot } from './types/spot';
 
 export default class SpotStore {
   isLoading: boolean = false;
@@ -11,10 +13,10 @@ export default class SpotStore {
   query: string = '';
   total: number = 3;
   limit: number = 10;
-  readonly order = 'desc'
+  readonly order = 'desc';
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this);
   }
 
   withLoader<T>(fn: () => Promise<T>): Promise<T> {
@@ -58,8 +60,8 @@ export default class SpotStore {
       filterBy: this.filter,
       query: this.query,
       order: this.order,
-      limit: this.limit
-    } as const
+      limit: this.limit,
+    } as const;
 
     const response = await this.withLoader(() =>
       spotService.fetchSpots(filters)
@@ -69,13 +71,18 @@ export default class SpotStore {
   }
 
   async fetchSpotById(id: string) {
-    const response = await this.withLoader(() =>
-      spotService.fetchSpot(id)
-    )
+    const response = await this.withLoader(() => spotService.fetchSpot(id));
 
-    const spotInst = new Spot({ ...response.spot, id } )
-    this.setCurrentSpot(spotInst)
+    const spotInst = new Spot({ ...response.spot, id });
+    this.setCurrentSpot(spotInst);
 
-    return spotInst
+    return spotInst;
+  }
+
+  async addComment(spotId: string, comment: string, userName: string) {
+    await this.withLoader(async () => {
+      await spotService.addComment(spotId, { comment, userName });
+      return this.fetchSpotById(spotId);
+    });
   }
 }
