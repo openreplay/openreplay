@@ -5,7 +5,7 @@ import React from 'react';
 import { hashString } from 'App/types/session/session';
 import { Avatar, Icon } from 'UI';
 
-import { TABS, Tab } from './consts';
+import { TABS, Tab } from '../consts';
 
 function SpotPlayerHeader({
   activeTab,

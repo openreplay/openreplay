@@ -139,6 +139,7 @@
   border: 1px solid $gray-lighter;
   display: flex;
   align-items: center;
+  background: white;
 }
 
 

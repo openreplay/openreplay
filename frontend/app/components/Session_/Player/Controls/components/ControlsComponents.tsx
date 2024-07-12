@@ -137,12 +137,10 @@ export function JumpForward({
 export function SpeedOptions({
   toggleSpeed,
   disabled,
-  toggleTooltip,
   speed,
 }: {
   toggleSpeed: (i: number) => void;
   disabled: boolean;
-  toggleTooltip: () => void;
   speed: number;
 }) {
   return (
@@ -175,7 +173,7 @@ export function SpeedOptions({
         </div>
       )}
     >
-      <div onClick={toggleTooltip} className="cursor-pointer select-none">
+      <div className="cursor-pointer select-none">
         <AntPopover
           content={
             <div className={'flex gap-2 items-center'}>

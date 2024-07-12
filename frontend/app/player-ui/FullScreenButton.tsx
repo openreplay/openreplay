@@ -6,15 +6,16 @@ import { PlaySessionInFullscreenShortcut } from 'Components/Session_/Player/Cont
 interface IProps {
   size: number;
   onClick: () => void;
-  customClasses: string;
+  customClasses?: string;
+  noShortcut?: boolean;
 }
 
-export function FullScreenButton({ size = 18, onClick }: IProps) {
+export function FullScreenButton({ size = 18, onClick, noShortcut }: IProps) {
   return (
     <Popover
       content={
         <div className={'flex gap-2 items-center'}>
-          <PlaySessionInFullscreenShortcut />
+          {!noShortcut ? <PlaySessionInFullscreenShortcut /> : null}
           <div>Play In Fullscreen</div>
         </div>
       }
