@@ -33,6 +33,7 @@ import SlowestDomains
 import SpeedIndexByLocationExample
   from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
 import HeatmapsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/HeatmapsExample';
+import ByReferrer from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByRferrer';
 
 export const CARD_CATEGORY = {
   PRODUCT_ANALYTICS: 'product-analytics',
@@ -414,6 +415,15 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.LOCATION,
     category: CARD_CATEGORIES[2].key,
     example: ByUrl
+  },
+
+  {
+    title: 'Sessions by Referrer',
+    key: FilterKey.REFERRER,
+    cardType: TABLE,
+    metricOf: FilterKey.REFERRER,
+    category: CARD_CATEGORIES[2].key,
+    example: ByReferrer
   },
 
   // Errors Tracking

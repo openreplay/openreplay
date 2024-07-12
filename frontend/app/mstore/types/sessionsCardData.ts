@@ -83,6 +83,8 @@ export class SessionsByRow {
         return { nameFormatter: new BaseFormatter(), iconProvider: new OsIconProvider() };
       case 'userId':
         return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
+      case 'referrer':
+        return { nameFormatter: new BaseFormatter(), iconProvider: new UrlIconProvider() };
       default:
         return { nameFormatter: new BaseFormatter(), iconProvider: new DefaultIconProvider() };
     }
