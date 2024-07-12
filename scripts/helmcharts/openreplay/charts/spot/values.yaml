@@ -102,6 +102,16 @@ autoscaling:
 env:
   TOKEN_SECRET: secret_token_string # TODO: generate on build
   CACHE_ASSETS: true
+  FS_CLEAN_HRS: 24
+
+
+pvc:
+  # This can be either persistentVolumeClaim or hostPath.
+  # In case of pvc, you'll have to provide the pvc name.
+  # For example
+  # name: openreplay-efs
+  name: "{{ .Values.global.pvcRWXName }}"
+  hostMountPath: "{{ .Values.global.orTmpDir }}"
 
 
 nodeSelector: {}
