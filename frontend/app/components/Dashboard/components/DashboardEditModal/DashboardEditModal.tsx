@@ -1,7 +1,7 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
 import { Modal, Form, Icon, Checkbox, Input } from 'UI';
-import {Button} from 'antd';
+import { Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore'
 
@@ -46,7 +46,7 @@ function DashboardEditModal(props: Props) {
             <Modal.Content>
             <Form onSubmit={onSave}>
                 <Form.Field>
-                    <label>{'Title:'}</label>
+                    <label>Title:</label>
                     <Input
                         className=""
                         name="name"

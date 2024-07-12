@@ -6,7 +6,7 @@ export class Spot {
   createdAt: string;
   user: string;
   duration: string;
-  spotId: number;
+  spotId: string;
   mobURL?: string;
   videoURL?: string;
   comments?: { user: string, text: string, createdAt: string }[] = []

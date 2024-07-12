@@ -43,7 +43,7 @@ const TYPE_TO_TAB = {
 };
 
 const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS] as const;
-const TABS = TAP_KEYS.map((tab) => ({
+export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
 }));
@@ -272,12 +272,12 @@ interface Props {
   startedAt: number;
   isMobile?: boolean;
   zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
+  zoomStartTs?: number;
+  zoomEndTs?: number;
   panelHeight: number;
 }
 
-const NetworkPanelComp = observer(
+export const NetworkPanelComp = observer(
   ({
     loadTime,
     domBuildingTime,
@@ -360,7 +360,7 @@ const NetworkPanelComp = observer(
               transferredBodySize: 0,
             }))
           )
-          .filter((req) => (zoomEnabled ? req.time >= zoomStartTs && req.time <= zoomEndTs : true))
+          .filter((req) => (zoomEnabled ? req.time >= zoomStartTs! && req.time <= zoomEndTs! : true))
           .sort((a, b) => a.time - b.time),
       [resourceList.length, fetchList.length, socketList]
     );
@@ -462,7 +462,6 @@ const NetworkPanelComp = observer(
     };
 
     return (
-      <React.Fragment>
         <BottomBlock
           style={{ height: '100%' }}
           className="border"
@@ -475,7 +474,7 @@ const NetworkPanelComp = observer(
               {isMobile ? null : (
                 <Tabs
                   className="uppercase"
-                  tabs={TABS}
+                  tabs={NETWORK_TABS}
                   active={activeTab}
                   onClick={onTabClick}
                   border={false}
@@ -606,7 +605,6 @@ const NetworkPanelComp = observer(
             </NoContent>
           </BottomBlock.Content>
         </BottomBlock>
-      </React.Fragment>
     );
   }
 );
