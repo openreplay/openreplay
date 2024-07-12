@@ -1,9 +1,18 @@
-import { CommentOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CommentOutlined,
+  SettingOutlined,
+  UserSwitchOutlined,
+  LinkOutlined,
+} from '@ant-design/icons';
 import { Button } from 'antd';
 import React from 'react';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 import { hashString } from 'App/types/session/session';
-import { Avatar, Icon } from 'UI';
+import { Avatar, Icon, CopyButton } from 'UI';
+import copy from 'copy-to-clipboard';
 
 import { TABS, Tab } from '../consts';
 
@@ -13,13 +22,21 @@ function SpotPlayerHeader({
   title,
   user,
   date,
+  isLoggedIn,
 }: {
   activeTab: Tab | null;
   setActiveTab: (tab: Tab) => void;
   title: string;
   user: string;
   date: string;
+  isLoggedIn: boolean;
 }) {
+  const [isCopied, setIsCopied] = React.useState(false);
+  const onCopy = () => {
+    setIsCopied(true);
+    copy(window.location.href);
+    setTimeout(() => setIsCopied(false), 2000);
+  }
   return (
     <div
       className={
@@ -27,11 +44,22 @@ function SpotPlayerHeader({
       }
     >
       <div>
-        <div className={'flex items-center gap-2'}>
-          <Icon name={'orSpot'} size={24} />
-          <div className={'text-lg font-semibold'}>Spot</div>
-        </div>
-        <div className={'text-disabled-text text-xs'}>by OpenReplay</div>
+        {isLoggedIn ? (
+          <Link to={'/spots'}>
+            <div className={'flex items-center gap-2'}>
+              <ArrowLeftOutlined />
+              <div className={'font-semibold'}>All spots</div>
+            </div>
+          </Link>
+        ) : (
+          <>
+            <div className={'flex items-center gap-2'}>
+              <Icon name={'orSpot'} size={24} />
+              <div className={'text-lg font-semibold'}>Spot</div>
+            </div>
+            <div className={'text-disabled-text text-xs'}>by OpenReplay</div>
+          </>
+        )}
       </div>
       <div
         className={'h-full rounded-xl bg-gray-light mx-2'}
@@ -49,8 +77,31 @@ function SpotPlayerHeader({
         </div>
       </div>
       <div className={'ml-auto'} />
+      {isLoggedIn ? (
+        <>
+          <Button
+            size={"small"}
+            onClick={onCopy}
+            type={"primary"}
+            icon={<LinkOutlined />}
+          >
+            {isCopied ? 'Copied!' : 'Copy Link'}
+          </Button>
+          <Button
+            size={"small"}
+            onClick={() => null}
+            icon={<SettingOutlined />}
+          >
+            Manage Access
+          </Button>
+          <div
+            className={"h-full rounded-xl bg-gray-light mx-2"}
+            style={{ width: 1 }}
+          />
+        </>
+      ) : null}
       <Button
-        size={'small'}
+        size={"small"}
         disabled={activeTab === TABS.ACTIVITY}
         onClick={() => setActiveTab(TABS.ACTIVITY)}
         icon={<UserSwitchOutlined />}
@@ -69,4 +120,7 @@ function SpotPlayerHeader({
   );
 }
 
-export default SpotPlayerHeader;
+export default connect((state: any) => {
+  const jwt = state.getIn(['user', 'jwt']);
+  return { isLoggedIn: !!jwt };
+})(SpotPlayerHeader);

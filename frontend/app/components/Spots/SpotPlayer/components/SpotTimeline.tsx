@@ -4,7 +4,7 @@ import React from 'react';
 import CustomDragLayer from 'App/components/Session_/Player/Controls/components/CustomDragLayer';
 import stl from 'App/components/Session_/Player/Controls/timeline.module.css';
 import { debounce } from 'App/utils';
-
+import cn from 'classnames'
 import spotPlayerStore from '../spotPlayerStore';
 import SpotTimeTracker from './SpotTimeTracker';
 
@@ -50,17 +50,15 @@ function SpotTimeline() {
   };
 
   return (
-    <div className={'-mt-1'}>
-      <div
-        ref={progressRef}
-        role={'button'}
-        className={stl.progress}
-        onClick={jump}
-      >
-        <SpotTimeTracker onDrop={onDrop} />
-        <CustomDragLayer minX={0} onDrag={onDrag} maxX={maxWidth} />
-        <div className={stl.timeline} />
-      </div>
+    <div
+      ref={progressRef}
+      role={'button'}
+      className={cn(stl.progress, '-mb-1')}
+      onClick={jump}
+    >
+      <SpotTimeTracker onDrop={onDrop} />
+      <CustomDragLayer minX={0} onDrag={onDrag} maxX={maxWidth} />
+      <div className={stl.timeline} />
     </div>
   );
 }

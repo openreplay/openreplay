@@ -16,7 +16,7 @@ function CommentsSection({
   return (
     <div
       className={'h-full p-4 bg-white border border-gray-light'}
-      style={{ width: 320 }}
+      style={{ minWidth: 320, width: 320 }}
     >
       <div className={'flex items-center justify-between'}>
         <div className={'font-semibold'}>Comments</div>
@@ -55,7 +55,13 @@ function CommentsSection({
 
 function BottomSection({ loggedIn }: { loggedIn?: boolean }) {
   const promoTitles = ['Found this Spot helpful?', 'Enjoyed this recording?']
+  const [commentText, setCommentText] = React.useState('')
   const { spotStore } = useStore()
+
+  const addComment = async () => {
+    await spotStore.addComment(spotStore.currentSpot!.spotId, commentText, "ochen umni uzer")
+    setCommentText('')
+  }
   return (
     <div className={cn('rounded-xl border p-4 mt-auto', loggedIn ? 'bg-white' : 'bg-active-dark-blue')}>
       {loggedIn ? (
@@ -64,8 +70,10 @@ function BottomSection({ loggedIn }: { loggedIn?: boolean }) {
             className={'w-full'}
             rows={3}
             autoSize={{ minRows: 3, maxRows: 3 }}
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
           />
-          <Button type={'primary'}>Add Comment</Button>
+          <Button type={'primary'} onClick={addComment} disabled={commentText.trim().length === 0}>Add Comment</Button>
         </div>
       ) : (
         <div>
