@@ -66,7 +66,7 @@ func (t *transcoderImpl) transcode(spotID uint64) {
 		t.log.Fatal(context.Background(), "Error creating directories: %v", err)
 	}
 
-	video, err := t.objStorage.Get(fmt.Sprintf("%d", spotID))
+	video, err := t.objStorage.Get(fmt.Sprintf("%d/video.webm", spotID))
 	if err != nil {
 		t.log.Error(context.Background(), "Failed to download spot %s: %s", spotID, err)
 		return
