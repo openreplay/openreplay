@@ -63,5 +63,5 @@ type AddCommentRequest struct {
 }
 
 type DeleteSpotRequest struct {
-	SpotIDs []uint64 `json:"spotIDs"`
+	SpotIDs []string `json:"spotIDs"`
 }

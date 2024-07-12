@@ -322,9 +322,18 @@ func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
 		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	spotsToDelete := make([]uint64, 0, len(req.SpotIDs))
+	for _, idStr := range req.SpotIDs {
+		id, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			e.ResponseWithError(r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid spot id: %s", idStr), startTime, r.URL.Path, bodySize)
+			return
+		}
+		spotsToDelete = append(spotsToDelete, id)
+	}
 
 	user := r.Context().Value("userData").(*User)
-	if err := e.services.Spots.Delete(user, req.SpotIDs); err != nil {
+	if err := e.services.Spots.Delete(user, spotsToDelete); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
