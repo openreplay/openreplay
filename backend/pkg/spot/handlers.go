@@ -415,7 +415,7 @@ func (e *Router) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := fmt.Sprintf("%d/video.webm", id)
-	videoURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
+	videoURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(key)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
