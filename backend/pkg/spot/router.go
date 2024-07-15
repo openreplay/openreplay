@@ -102,8 +102,7 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			vars := mux.Vars(r)
-			user, err = e.services.Keys.IsValid(vars["key"])
+			user, err = e.services.Keys.IsValid(r.URL.Query().Get("key"))
 			if err != nil {
 				e.log.Warn(r.Context(), "Wrong public key: %s", err)
 				w.WriteHeader(http.StatusUnauthorized)
