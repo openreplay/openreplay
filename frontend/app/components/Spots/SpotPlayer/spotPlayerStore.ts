@@ -78,9 +78,14 @@ class SpotPlayerStore {
   network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
   startTs = 0;
   activePanel: PanelType | null = null;
+  skipInterval = 10;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setSkipInterval = (interval: number) => {
+    this.skipInterval = interval;
   }
 
   setActivePanel(panel: PanelType | null): void {
@@ -102,7 +107,7 @@ class SpotPlayerStore {
   }
 
   setTime(time: number): void {
-    this.time = time;
+    this.time = Math.max(0, Math.min(time, this.duration));
   }
 
   setIsPlaying(isPlaying: boolean): void {
