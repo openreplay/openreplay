@@ -5,16 +5,17 @@ import {
   UserSwitchOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Popover } from 'antd';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { hashString } from 'App/types/session/session';
-import { Avatar, Icon, CopyButton } from 'UI';
+import { Avatar, Icon } from 'UI';
 import copy from 'copy-to-clipboard';
 
 import { TABS, Tab } from '../consts';
+import AccessModal from "./AccessModal";
 
 function SpotPlayerHeader({
   activeTab,
@@ -32,6 +33,7 @@ function SpotPlayerHeader({
   isLoggedIn: boolean;
 }) {
   const [isCopied, setIsCopied] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const onCopy = () => {
     setIsCopied(true);
     copy(window.location.href);
@@ -87,13 +89,15 @@ function SpotPlayerHeader({
           >
             {isCopied ? 'Copied!' : 'Copy Link'}
           </Button>
-          <Button
-            size={"small"}
-            onClick={() => null}
-            icon={<SettingOutlined />}
-          >
-            Manage Access
-          </Button>
+          <Popover open={dropdownOpen} content={<AccessModal />}>
+            <Button
+              size={"small"}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              icon={<SettingOutlined />}
+            >
+              Manage Access
+            </Button>
+          </Popover>
           <div
             className={"h-full rounded-xl bg-gray-light mx-2"}
             style={{ width: 1 }}

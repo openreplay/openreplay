@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { spotService } from 'App/services';
 import { UpdateSpotRequest } from 'App/services/spotService';
+
 import { Spot } from './types/spot';
 
 export default class SpotStore {
@@ -13,6 +14,7 @@ export default class SpotStore {
   query: string = '';
   total: number = 0;
   limit: number = 10;
+  pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
 
   constructor() {
@@ -82,13 +84,23 @@ export default class SpotStore {
   async addComment(spotId: string, comment: string, userName: string) {
     await this.withLoader(async () => {
       await spotService.addComment(spotId, { comment, userName });
-      return this.fetchSpotById(spotId);
+      const spot = this.currentSpot;
+      if (spot) {
+        spot.comments!.push({
+          text: comment,
+          user: userName,
+          createdAt: new Date().toISOString(),
+        });
+        this.setCurrentSpot(spot);
+      }
     });
   }
 
   async deleteSpot(spotIds: string[]) {
     await this.withLoader(() => spotService.deleteSpot(spotIds));
-    this.spots = this.spots.filter((spot) => spotIds.findIndex(s => s === spot.spotId) === -1);
+    this.spots = this.spots.filter(
+      (spot) => spotIds.findIndex((s) => s === spot.spotId) === -1
+    );
     this.total = this.total - spotIds.length;
     await this.fetchSpots();
   }
@@ -96,17 +108,40 @@ export default class SpotStore {
   async updateSpot(spotId: string, data: UpdateSpotRequest) {
     await this.withLoader(() => spotService.updateSpot(spotId, data));
     if (data.name !== undefined) {
-      const updatedSpots = this.spots.map(s => {
+      const updatedSpots = this.spots.map((s) => {
         if (s.spotId === spotId) {
-          s.title = data.name!
+          s.title = data.name!;
         }
         return s;
-      })
+      });
       this.setSpots(updatedSpots);
     }
   }
 
   async getVideo(id: string) {
     return await this.withLoader(() => spotService.getVideo(id));
+  }
+
+  setPubKey(key: { value: string; expiration: number }) {
+    this.pubKey = key;
+  }
+
+  /**
+   * @param expiration - in seconds
+   * @param id - spot id string
+   * */
+  async generateKey(id: string, expiration: number) {
+    const { key } = await this.withLoader(() =>
+      spotService.generateKey(id, expiration)
+    );
+    console.log(key)
+    this.setPubKey(key);
+
+    return key
+  }
+
+  async getPubKey(id: string) {
+    const { key } = await this.withLoader(() => spotService.getKey(id));
+    this.setPubKey(key);
   }
 }
