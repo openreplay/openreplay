@@ -1,4 +1,5 @@
 import { resentOrDate, shortDurationFromMs } from "App/date";
+import { makeAutoObservable } from "mobx";
 
 export class Spot {
   thumbnail: string;
@@ -23,6 +24,7 @@ export class Spot {
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id
 
+    makeAutoObservable(this)
   }
 
   setAdditionalData(data: Record<string, any>) {

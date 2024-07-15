@@ -82,4 +82,20 @@ export default class SpotService extends BaseService {
       .then(r => r.json())
       .catch(console.error)
   }
+
+  /**
+   * @param id - spot id string
+   * @param expiration - in seconds, 0 if removing
+   * */
+  async generateKey(id: string, expiration: number): Promise<{ key: { value: string, expiration: number }}> {
+    return this.client.patch(`/spot/v1/spots/${id}/public-key`, { expiration })
+      .then(r => r.json())
+      .catch(console.error)
+  }
+
+  async getKey(id: string): Promise<{ key: { value: string, expiration: number }}> {
+    return this.client.get(`/spot/v1/spots/${id}/public-key`)
+      .then(r => r.json())
+      .catch(console.error)
+  }
 }
