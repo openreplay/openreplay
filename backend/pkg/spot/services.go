@@ -14,6 +14,7 @@ type ServicesBuilder struct {
 	ObjStorage objectstorage.ObjectStorage
 	Auth       Auth
 	Spots      Spots
+	Keys       Keys
 	Transcoder Transcoder
 }
 
@@ -28,6 +29,7 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*
 		ObjStorage: objStore,
 		Auth:       NewAuth(log, cfg.JWTSecret, pgconn),
 		Spots:      NewSpots(log, pgconn, flaker),
+		Keys:       NewKeys(log, pgconn),
 		Transcoder: NewTranscoder(cfg, log, objStore),
 	}, nil
 }

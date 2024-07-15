@@ -18,7 +18,6 @@ type Spot struct {
 	TenantID  uint64    `json:"tenantID"`
 	Duration  int       `json:"duration"`
 	Comments  []Comment `json:"comments"`
-	Key       *Key      `json:"key"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
@@ -26,12 +25,6 @@ type Comment struct {
 	UserName  string    `json:"user"`
 	Text      string    `json:"text"`
 	CreatedAt time.Time `json:"createdAt"`
-}
-
-type Key struct {
-	Value      string    `json:"value"`
-	Expiration uint64    `json:"expiration"`
-	ExpiredAt  time.Time `json:"expiredAt"`
 }
 
 type GetOpts struct {
@@ -59,7 +52,8 @@ type Update struct {
 type Spots interface {
 	Add(user *User, name, comment string, duration int) (*Spot, error)
 	Get(user *User, opts *GetOpts) ([]*Spot, error)
-	Update(user *User, update *Update) (*Spot, error)
+	UpdateName(user *User, spotID uint64, newName string) (*Spot, error)
+	AddComment(user *User, spotID uint64, comment *Comment) (*Spot, error)
 	Delete(user *User, spotIds []uint64) error
 }
 
@@ -224,23 +218,16 @@ func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, error) {
 	return spots, nil
 }
 
-func (s *spotsImpl) Update(user *User, update *Update) (*Spot, error) {
+func (s *spotsImpl) UpdateName(user *User, spotID uint64, newName string) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
-	case update == nil:
-		return nil, fmt.Errorf("update is required")
-	case update.ID == 0:
+	case spotID == 0:
 		return nil, fmt.Errorf("spot id is required")
+	case newName == "":
+		return nil, fmt.Errorf("new name is required")
 	}
-	if update.NewName != "" {
-		return s.updateName(update.ID, update.NewName, user)
-	}
-	if update.NewComment != nil {
-		update.NewComment.CreatedAt = time.Now()
-		return s.addComment(update.ID, update.NewComment, user)
-	}
-	return nil, fmt.Errorf("nothing to update")
+	return s.updateName(spotID, newName, user)
 }
 
 func (s *spotsImpl) updateName(spotID uint64, newName string, user *User) (*Spot, error) {
@@ -255,7 +242,24 @@ func (s *spotsImpl) updateName(spotID uint64, newName string, user *User) (*Spot
 	if updated == 0 {
 		return nil, fmt.Errorf("not allowed to update name")
 	}
-	return &Spot{ID: spotID, Name: newName}, nil // TODO: return updated spot
+	return &Spot{ID: spotID, Name: newName}, nil
+}
+
+func (s *spotsImpl) AddComment(user *User, spotID uint64, comment *Comment) (*Spot, error) {
+	switch {
+	case user == nil:
+		return nil, fmt.Errorf("user is required")
+	case spotID == 0:
+		return nil, fmt.Errorf("spot id is required")
+	case comment == nil:
+		return nil, fmt.Errorf("comment is required")
+	case comment.UserName == "":
+		return nil, fmt.Errorf("user name is required")
+	case comment.Text == "":
+		return nil, fmt.Errorf("comment text is required")
+	}
+	comment.CreatedAt = time.Now()
+	return s.addComment(spotID, comment, user)
 }
 
 func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *User) (*Spot, error) {
@@ -274,7 +278,7 @@ func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *User) (
 	if updated == 0 {
 		return nil, fmt.Errorf("not allowed to add comment")
 	}
-	return &Spot{ID: spotID}, nil // TODO: return updated spot
+	return &Spot{ID: spotID}, nil
 }
 
 func (s *spotsImpl) Delete(user *User, spotIds []uint64) error {

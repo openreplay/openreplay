@@ -23,7 +23,6 @@ type Info struct {
 	CreatedAt time.Time `json:"createdAt"`
 	MobURL    string    `json:"mobURL"`
 	VideoURL  string    `json:"videoURL"`
-	Key       *Key      `json:"key"`
 }
 
 type GetSpotResponse struct {
@@ -53,8 +52,7 @@ type GetSpotsResponse struct {
 }
 
 type UpdateSpotRequest struct {
-	Name          string `json:"name"`
-	KeyExpiration int    `json:"keyExpiration"`
+	Name string `json:"name"`
 }
 
 type AddCommentRequest struct {
@@ -64,4 +62,8 @@ type AddCommentRequest struct {
 
 type DeleteSpotRequest struct {
 	SpotIDs []string `json:"spotIDs"`
+}
+
+type UpdateSpotPublicKeyRequest struct {
+	Expiration uint64 `json:"expiration"` // in seconds
 }

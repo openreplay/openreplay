@@ -206,7 +206,6 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: res[0].CreatedAt,
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
-		Key:       res[0].Key,
 	}
 	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
@@ -235,33 +234,13 @@ func (e *Router) updateSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*User)
-	updatedSpot, err := e.services.Spots.Update(user, &Update{ID: id, NewName: req.Name})
+	_, err = e.services.Spots.UpdateName(user, id, req.Name)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	mobURL, err := e.getMobURL(id)
-	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	videoURL, err := e.getVideoURL(id)
-	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	spotInfo := &Info{
-		Name:      updatedSpot.Name,
-		Duration:  updatedSpot.Duration,
-		Comments:  updatedSpot.Comments,
-		CreatedAt: updatedSpot.CreatedAt,
-		MobURL:    mobURL,
-		VideoURL:  videoURL,
-		Key:       updatedSpot.Key,
-	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
+	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
@@ -365,7 +344,7 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*User)
-	updatedSpot, err := e.services.Spots.Update(user, &Update{ID: id, NewComment: &Comment{UserName: req.UserName, Text: req.Comment}})
+	updatedSpot, err := e.services.Spots.AddComment(user, id, &Comment{UserName: req.UserName, Text: req.Comment})
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -389,7 +368,6 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: updatedSpot.CreatedAt,
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
-		Key:       updatedSpot.Key,
 	}
 	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
@@ -432,6 +410,63 @@ func (e *Router) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 
 	resp := map[string]interface{}{
 		"url": videoURL,
+	}
+	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getPublicKey(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	user := r.Context().Value("userData").(*User)
+	key, err := e.services.Keys.Get(id, user)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	resp := map[string]interface{}{
+		"key": key,
+	}
+	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) updatePublicKey(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	bodySize = len(bodyBytes)
+
+	req := &UpdateSpotPublicKeyRequest{}
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	user := r.Context().Value("userData").(*User)
+	key, err := e.services.Keys.Set(id, req.Expiration, user)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	resp := map[string]interface{}{
+		"key": key,
 	}
 	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

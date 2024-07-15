@@ -8,6 +8,8 @@ import (
 	spotConfig "openreplay/backend/internal/config/spot"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/logger"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -53,6 +55,8 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/spots/{id}/comment", e.addComment).Methods("POST", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/uploaded", e.uploadedSpot).Methods("POST", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/video", e.getSpotVideo).Methods("GET", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/{id}/public-key", e.getPublicKey).Methods("GET", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/{id}/public-key", e.updatePublicKey).Methods("PATCH", "OPTIONS")
 
 	// CORS middleware
 	e.router.Use(e.corsMiddleware)
@@ -92,14 +96,44 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 		// Check if the request is authorized
 		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"))
 		if err != nil {
-			e.log.Warn(r.Context(), "Unauthorized request")
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+			e.log.Warn(r.Context(), "Unauthorized request: %s", err)
+			if !isGetSpotRequest(r.URL.Path) {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			vars := mux.Vars(r)
+			user, err = e.services.Keys.IsValid(vars["key"])
+			if err != nil {
+				e.log.Warn(r.Context(), "Wrong public key: %s", err)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 		}
 
 		r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"userData": user}))
 		next.ServeHTTP(w, r)
 	})
+}
+
+func isGetSpotRequest(path string) bool {
+	// Check if the path starts with the correct prefix
+	prefix := "/v1/spots/"
+	if !strings.HasPrefix(path, prefix) {
+		return false
+	}
+
+	// Extract the ID part after the prefix
+	id := path[len(prefix):]
+
+	// Check if the ID part is a valid number
+	_, err := strconv.Atoi(id)
+	if err != nil {
+		return false
+	}
+
+	// Ensure that the path ends after the ID part (no additional characters)
+	return len(id) > 0
 }
 
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
