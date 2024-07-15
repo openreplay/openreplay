@@ -10,6 +10,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
 import { session as sessionRoute, withSiteId } from 'App/routes';
+import DropdownAudioPlayer from 'Components/Session/Player/ReplayPlayer/AudioPlayer';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
 import {
   LaunchConsoleShortcut,
@@ -37,7 +38,6 @@ import {
 import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
 
-import DropdownAudioPlayer from '../../../Session/Player/ReplayPlayer/AudioPlayer';
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
@@ -432,7 +432,12 @@ export default connect(
     const permissions = state.getIn(['user', 'account', 'permissions']) || [];
     const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
     return {
-      disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS')),
+      disableDevtools:
+        isEnterprise &&
+        !(
+          permissions.includes('DEV_TOOLS') ||
+          permissions.includes('SERVICE_DEV_TOOLS')
+        ),
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
       bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
       showStorageRedux: !state.getIn([
