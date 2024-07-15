@@ -54,6 +54,7 @@ function SpotPlayer() {
   React.useEffect(() => {
     spotStore.fetchSpotById(spotId).then(async (spotInst) => {
       if (spotInst.mobURL) {
+        void spotStore.getPubKey(spotId)
         try {
           const mobResp = await fetch(spotInst.mobURL);
           const {

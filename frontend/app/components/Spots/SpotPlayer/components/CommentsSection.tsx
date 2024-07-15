@@ -1,18 +1,19 @@
+import { Button, Input } from 'antd';
+import cn from 'classnames';
 import { X } from 'lucide-react';
 import React from 'react';
-import cn from 'classnames';
-import { Button, Input } from 'antd';
+import { connect } from 'react-redux';
 import { resentOrDate } from 'App/date';
-import { SpotComment } from 'App/services/spotService';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 function CommentsSection({
-  comments,
   onClose,
 }: {
-  comments: SpotComment[];
   onClose?: () => void;
 }) {
+  const { spotStore } = useStore();
+  const comments = spotStore.currentSpot?.comments ?? [];
   return (
     <div
       className={'h-full p-4 bg-white border border-gray-light'}
@@ -47,47 +48,83 @@ function CommentsSection({
           </div>
         ))}
 
-        <BottomSection loggedIn />
+        <BottomSectionContainer />
       </div>
     </div>
   );
 }
 
-function BottomSection({ loggedIn }: { loggedIn?: boolean }) {
-  const promoTitles = ['Found this Spot helpful?', 'Enjoyed this recording?']
-  const [commentText, setCommentText] = React.useState('')
-  const { spotStore } = useStore()
+function BottomSection({ loggedIn, userEmail }: { loggedIn?: boolean, userEmail?: string }) {
+  const [commentText, setCommentText] = React.useState('');
+  const [userName, setUserName] = React.useState<string>(userEmail ?? '');
+  const { spotStore } = useStore();
 
   const addComment = async () => {
-    await spotStore.addComment(spotStore.currentSpot!.spotId, commentText, "ochen umni uzer")
-    setCommentText('')
-  }
+    await spotStore.addComment(
+      spotStore.currentSpot!.spotId,
+      commentText,
+      userName
+    );
+    setCommentText('');
+  };
   return (
-    <div className={cn('rounded-xl border p-4 mt-auto', loggedIn ? 'bg-white' : 'bg-active-dark-blue')}>
-      {loggedIn ? (
-        <div className={'flex flex-col gap-2'}>
-          <Input.TextArea
-            className={'w-full'}
-            rows={3}
-            autoSize={{ minRows: 3, maxRows: 3 }}
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-          />
-          <Button type={'primary'} onClick={addComment} disabled={commentText.trim().length === 0}>Add Comment</Button>
-        </div>
-      ) : (
-        <div>
-          <div className={'text-xl'}>{promoTitles[0]}</div>
-          <div className={'my-2'}>
-            With Spot, capture issues and provide your team with detailed insights for frictionless experiences.
-          </div>
-          <Button>
-            Spot Your Issues Now
-          </Button>
-        </div>
+    <div
+      className={cn(
+        'rounded-xl border p-4 mt-auto',
+        loggedIn ? 'bg-white' : 'bg-active-dark-blue'
       )}
+    >
+      <div className={'flex flex-col gap-2'}>
+        <Input
+          readOnly={loggedIn}
+          disabled={loggedIn}
+          placeholder={'Add a name'}
+          required
+          className={'w-full'}
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+        />
+        <Input.TextArea
+          className={'w-full'}
+          rows={3}
+          autoSize={{ minRows: 3, maxRows: 3 }}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+        />
+        <Button
+          type={'primary'}
+          onClick={addComment}
+          disabled={commentText.trim().length === 0}
+        >
+          Add Comment
+        </Button>
+      </div>
     </div>
-  )
+  );
 }
 
-export default CommentsSection;
+function mapStateToProps(state: any) {
+  const userEmail = state.getIn(['user', 'account', 'name']);
+  const loggedIn = !!userEmail;
+  return {
+    userEmail,
+    loggedIn,
+  };
+}
+
+const BottomSectionContainer = connect(mapStateToProps)(BottomSection);
+
+// const promoTitles = ['Found this Spot helpful?', 'Enjoyed this recording?'];
+//
+//   <div>
+//     <div className={'text-xl'}>{promoTitles[0]}</div>
+//     <div className={'my-2'}>
+//       With Spot, capture issues and provide your team with detailed insights for frictionless experiences.
+//     </div>
+//     <Button>
+//       Spot Your Issues Now
+//     </Button>
+//   </div>
+// )}
+
+export default observer(CommentsSection);
