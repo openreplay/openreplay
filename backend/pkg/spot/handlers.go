@@ -124,15 +124,15 @@ func getSpotID(r *http.Request) (uint64, error) {
 }
 
 func getSpotsRequest(r *http.Request) (*GetSpotsRequest, error) {
-	vars := mux.Vars(r)
-	page := vars["page"]
-	limit := vars["limit"]
+	params := r.URL.Query()
+	page := params.Get("page")
+	limit := params.Get("limit")
 	pageNum, _ := strconv.ParseUint(page, 10, 64)
 	limitNum, _ := strconv.ParseUint(limit, 10, 64)
 	req := &GetSpotsRequest{
-		Query:    vars["query"],
-		FilterBy: vars["filterBy"],
-		Order:    vars["order"],
+		Query:    params.Get("query"),
+		FilterBy: params.Get("filterBy"),
+		Order:    params.Get("order"),
 		Page:     pageNum,
 		Limit:    limitNum,
 	}
