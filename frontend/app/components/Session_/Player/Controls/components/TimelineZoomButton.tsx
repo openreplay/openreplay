@@ -33,7 +33,7 @@ function TimelineZoomButton({ enabled, toggleZoom }: Props) {
     }
   }, [])
   return (
-    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selction." placement='top'>
+    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selection." placement='top'>
     <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-semibold'}>
       Focus Mode: {enabled ? 'On' : 'Off'}
     </Button>
