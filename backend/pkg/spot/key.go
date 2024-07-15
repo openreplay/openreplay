@@ -129,7 +129,7 @@ func (k *keysImpl) IsValid(key string) (*User, error) {
 	// Get user info by userID
 	user := &User{ID: userID}
 	// We don't need tenantID here
-	sql = `SELECT 0, name, email FROM public.users WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`
+	sql = `SELECT 1, name, email FROM public.users WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`
 	if err := k.conn.QueryRow(sql, userID).Scan(&user.TenantID, &user.Name, &user.Email); err != nil {
 		k.log.Error(context.Background(), "failed to get user: %v", err)
 		return nil, fmt.Errorf("user not found")
