@@ -478,7 +478,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 for s in sessions:
                     s.pop("main_count")
                     s.pop("total_sessions")
-            sessions = {"count": count, "totalSessions": total_sessions, "values": helper.list_to_camel_case(sessions)}
+            sessions = {"total": count, "count": total_sessions, "values": helper.list_to_camel_case(sessions)}
 
         return sessions
 
@@ -524,7 +524,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
             total_sessions = 0
             issues_count = 0
 
-        return {"count": issues_count, "totalSessions": total_sessions, "values": issues}
+        return {"total": issues_count, "count": total_sessions, "values": issues}
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):

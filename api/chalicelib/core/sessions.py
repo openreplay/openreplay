@@ -359,12 +359,12 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 distinct_on += ",path"
             if metric_format == schemas.MetricExtendedFormatType.session_count:
                 main_query = f"""SELECT COUNT(*) AS count,
-                                    COALESCE(SUM(users_sessions.session_count),0) AS total_sessions,
+                                    COALESCE(SUM(users_sessions.session_count),0) AS count,
                                     COALESCE(JSONB_AGG(users_sessions) 
                                             FILTER ( WHERE rn > %(limit_s)s 
                                                         AND rn <= %(limit_e)s ), '[]'::JSONB) AS values
                                  FROM (SELECT {main_col} AS name,
-                                     count(DISTINCT session_id)                                   AS session_count,
+                                     count(DISTINCT session_id)                                   AS total,
                                      ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                        FROM (SELECT *
                                              FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
@@ -379,7 +379,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                  ORDER BY session_count DESC) AS users_sessions;"""
             else:
                 main_query = f"""SELECT COUNT(*) AS count,
-                                    COALESCE(SUM(users_sessions.user_count),0) AS total_users,
+                                    COALESCE(SUM(users_sessions.user_count),0) AS count,
                                     COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                  FROM (SELECT {main_col} AS name,
                                          count(DISTINCT user_id)                                AS user_count,
@@ -420,12 +420,12 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
         main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
-                                            COALESCE(SUM(session_count), 0) AS total_sessions,
+                                            COALESCE(SUM(session_count), 0) AS count,
                                             COALESCE(JSONB_AGG(ranked_issues) 
                                                 FILTER ( WHERE rn > %(issues_limit_s)s 
                                                             AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
                                       FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
-                                            FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS session_count
+                                            FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS total
                                                   FROM (SELECT session_id
                                                         {query_part}) AS filtered_sessions
                                                      INNER JOIN events_common.issues USING (session_id)
