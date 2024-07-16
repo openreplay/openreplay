@@ -399,10 +399,17 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	}
 	var nX *uint8 = nil
 	var nY *uint8 = nil
-	if msg.NormalizedX <= 100 && msg.NormalizedY <= 100 {
-		nXVal := uint8(msg.NormalizedX)
+	if msg.NormalizedX != 101 && msg.NormalizedY != 101 {
+		// To support previous versions of tracker
+		if msg.NormalizedX <= 100 && msg.NormalizedY <= 100 {
+			msg.NormalizedX *= 100
+			msg.NormalizedY *= 100
+		}
+		normalizedX := float32(msg.NormalizedX) / 100.0
+		normalizedY := float32(msg.NormalizedY) / 100.0
+		nXVal := uint8(normalizedX)
 		nX = &nXVal
-		nYVal := uint8(msg.NormalizedY)
+		nYVal := uint8(normalizedY)
 		nY = &nYVal
 	}
 	if err := c.batches["clicks"].Append(
