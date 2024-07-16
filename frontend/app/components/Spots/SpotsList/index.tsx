@@ -105,7 +105,6 @@ function SpotsList() {
     return spotStore.getVideo(id);
   };
 
-  console.log(spotStore.spots);
   return (
     <div className={'w-full'}>
       <div
