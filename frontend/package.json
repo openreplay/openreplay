@@ -40,6 +40,7 @@
     "country-flag-icons": "^1.5.7",
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
+    "hls.js": "^1.5.13",
     "html-to-image": "^1.9.0",
     "html2canvas": "^1.4.1",
     "immutable": "^4.0.0-rc.12",
