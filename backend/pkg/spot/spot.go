@@ -35,6 +35,7 @@ type GetOpts struct {
 	Order      string // sorting ("asc" or "desc")
 	Limit      uint64 // pagination (limit for page)
 	Offset     uint64 // pagination (offset for page)
+	Page       uint64
 }
 
 type spotsImpl struct {
@@ -175,6 +176,10 @@ func (s *spotsImpl) Get(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
 	if opts.Limit <= 0 || opts.Limit > 10 {
 		opts.Limit = 9
 	}
+	if opts.Page < 1 {
+		opts.Page = 1
+	}
+	opts.Offset = (opts.Page - 1) * opts.Limit
 	return s.getAll(user, opts)
 }
 

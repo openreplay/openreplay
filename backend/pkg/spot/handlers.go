@@ -255,7 +255,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 
 	user := r.Context().Value("userData").(*User)
 	opts := &GetOpts{
-		NameFilter: req.Query, Order: req.Order, Offset: req.Page * req.Limit, Limit: req.Limit}
+		NameFilter: req.Query, Order: req.Order, Page: req.Page, Limit: req.Limit}
 	switch req.FilterBy {
 	case "own":
 		opts.UserID = user.ID
