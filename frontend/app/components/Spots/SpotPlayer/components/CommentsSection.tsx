@@ -92,6 +92,7 @@ function BottomSection({ loggedIn, userEmail, disableComments }: { disableCommen
           className={'w-full'}
           rows={3}
           autoSize={{ minRows: 3, maxRows: 3 }}
+          maxLength={120}
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
         />

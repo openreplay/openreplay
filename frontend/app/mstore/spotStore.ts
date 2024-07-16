@@ -13,7 +13,7 @@ export default class SpotStore {
   filter: 'all' | 'own' = 'all';
   query: string = '';
   total: number = 0;
-  limit: number = 1;
+  limit: number = 9;
   accessKey: string | undefined = undefined;
   pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
