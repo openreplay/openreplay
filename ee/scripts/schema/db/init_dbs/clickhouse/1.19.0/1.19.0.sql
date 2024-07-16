@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.19.0-ee';
 DROP TABLE IF EXISTS experimental.events_l7d_mv;
 
 ALTER TABLE experimental.events
-    ADD COLUMN IF NOT EXISTS normalized_x Nullable(UInt8),
-    ADD COLUMN IF NOT EXISTS normalized_y Nullable(UInt8),
+    ADD COLUMN IF NOT EXISTS normalized_x Nullable(Float32),
+    ADD COLUMN IF NOT EXISTS normalized_y Nullable(Float32),
     DROP COLUMN IF EXISTS coordinate;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.events_l7d_mv

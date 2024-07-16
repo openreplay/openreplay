@@ -19,8 +19,8 @@ $fn_def$, :'next_version')
 
 --
 ALTER TABLE IF EXISTS events.clicks
-    ADD COLUMN IF NOT EXISTS normalized_x smallint NULL,
-    ADD COLUMN IF NOT EXISTS normalized_y smallint NULL,
+    ADD COLUMN IF NOT EXISTS normalized_x decimal NULL,
+    ADD COLUMN IF NOT EXISTS normalized_y decimal NULL,
     DROP COLUMN IF EXISTS x,
     DROP COLUMN IF EXISTS y;
 
