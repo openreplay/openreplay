@@ -471,6 +471,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             logging.debug("--------------------")
             sessions = cur.execute(main_query)
             count = 0
+            total_sessions = 0
             if len(sessions) > 0:
                 count = sessions[0]["main_count"]
                 total_sessions = sessions[0]["total_sessions"]
