@@ -48,14 +48,14 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     projectUrl: String?,
     promise: Promise
   ) {
-    val serverURL = projectUrl ?: "https://foss.openreplay.com/ingest"
+    val serverURL = projectUrl ?: "https://api.openreplay.com/ingest"
     val options = OROptions(
       crashes = getBooleanOrDefault(optionsMap, "crashes", true),
       analytics = getBooleanOrDefault(optionsMap, "analytics", true),
       performances = getBooleanOrDefault(optionsMap, "performances", true),
-      logs = getBooleanOrDefault(optionsMap, "logs", true),
+      logs = getBooleanOrDefault(optionsMap, "logs", false),
       screen = getBooleanOrDefault(optionsMap, "screen", true),
-      debugLogs = getBooleanOrDefault(optionsMap, "debugLogs", true),
+      debugLogs = getBooleanOrDefault(optionsMap, "debugLogs", false),
       wifiOnly = getBooleanOrDefault(optionsMap, "wifiOnly", true),
     )
 

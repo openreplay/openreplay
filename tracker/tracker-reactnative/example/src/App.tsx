@@ -8,7 +8,6 @@ export default function App() {
   const [number, onChangeNumber] = React.useState('');
 
   const start = () => {
-    console.log(process.env)
     Openreplay.tracker.startSession(
       process.env.REACT_APP_KEY!,
       {},
