@@ -177,8 +177,8 @@ export default class TargetMarker {
           pointMap[key].times = times;
         } else {
           const clickData = [
-            (point.normalizedX / 10000) * scrollWidth,
-            (point.normalizedY / 10000) * scrollHeight,
+            (point.normalizedX / 100) * scrollWidth,
+            (point.normalizedY / 100) * scrollHeight,
           ];
           pointMap[key] = { times: 1, data: clickData, original: point };
         }
