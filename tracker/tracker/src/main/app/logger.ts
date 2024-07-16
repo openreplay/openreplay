@@ -15,25 +15,25 @@ export default class Logger {
     this.level = debugLevel
   }
 
-  private shouldLog(level: ILogLevel): boolean {
+  private readonly shouldLog = (level: ILogLevel): boolean => {
     return this.level >= level
   }
 
-  log(...args: any[]) {
+  log = (...args: any[]) => {
     if (this.shouldLog(LogLevel.Log)) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.log(...args)
     }
   }
 
-  warn(...args: any[]) {
+  warn = (...args: any[]) => {
     if (this.shouldLog(LogLevel.Warnings)) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.warn(...args)
     }
   }
 
-  error(...args: any[]) {
+  error = (...args: any[]) => {
     if (this.shouldLog(LogLevel.Errors)) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       console.error(...args)

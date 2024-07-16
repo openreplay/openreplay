@@ -1,4 +1,8 @@
-# 14.0.0
+# 14.0.2
+
+- fix logger check
+
+# 14.0.0 & .1
 
 - titles for tabs
 - new `MouseClick` message to introduce heatmaps instead of clickmaps
