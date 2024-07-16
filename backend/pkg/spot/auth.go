@@ -46,7 +46,11 @@ func (a *authImpl) IsAuthorized(authHeader string) (*User, error) {
 	if authHeader == "" {
 		return nil, fmt.Errorf("authorization header missing")
 	}
-	tokenString := strings.Split(authHeader, "Bearer ")[1]
+	tokenParts := strings.Split(authHeader, "Bearer ")
+	if len(tokenParts) != 2 {
+		return nil, fmt.Errorf("invalid token")
+	}
+	tokenString := tokenParts[1]
 
 	// Parse and validate the token
 	claims := &JWTClaims{}
