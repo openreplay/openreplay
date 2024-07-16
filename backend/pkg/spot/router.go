@@ -2,15 +2,17 @@ package spot
 
 import (
 	"fmt"
-	"github.com/docker/distribution/context"
-	"github.com/gorilla/mux"
 	"net/http"
-	spotConfig "openreplay/backend/internal/config/spot"
-	"openreplay/backend/internal/http/util"
-	"openreplay/backend/pkg/logger"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/docker/distribution/context"
+	"github.com/gorilla/mux"
+
+	spotConfig "openreplay/backend/internal/config/spot"
+	"openreplay/backend/internal/http/util"
+	"openreplay/backend/pkg/logger"
 )
 
 type Router struct {

@@ -51,7 +51,8 @@ type Update struct {
 
 type Spots interface {
 	Add(user *User, name, comment string, duration int) (*Spot, error)
-	Get(user *User, opts *GetOpts) ([]*Spot, error)
+	GetByID(user *User, spotID uint64) (*Spot, error)
+	Get(user *User, opts *GetOpts) ([]*Spot, uint64, error)
 	UpdateName(user *User, spotID uint64, newName string) (*Spot, error)
 	AddComment(user *User, spotID uint64, comment *Comment) (*Spot, error)
 	Delete(user *User, spotIds []uint64) error
@@ -126,35 +127,14 @@ func (s *spotsImpl) add(spot *Spot) error {
 	return nil
 }
 
-func (s *spotsImpl) Get(user *User, opts *GetOpts) ([]*Spot, error) {
+func (s *spotsImpl) GetByID(user *User, spotID uint64) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
-	case opts == nil:
-		return nil, fmt.Errorf("get options are required")
-	case user.TenantID == 0: // Tenant ID is required even for public get functions
-		return nil, fmt.Errorf("tenant id is required")
+	case spotID == 0:
+		return nil, fmt.Errorf("spot id is required")
 	}
-
-	// Get particular spot by ID
-	if opts.SpotID != 0 {
-		res, err := s.getByID(opts.SpotID, user)
-		if err != nil {
-			return nil, err
-		}
-		return []*Spot{res}, nil
-	}
-
-	// Prepare options
-	if opts.Limit <= 0 || opts.Limit > 10 {
-		opts.Limit = 9
-	}
-	// Show the latest spots first
-	if opts.Order != "asc" && opts.Order != "desc" {
-		opts.Order = "desc"
-	}
-	// Get a list of spots
-	return s.getAll(user, opts)
+	return s.getByID(spotID, user)
 }
 
 func (s *spotsImpl) getByID(spotID uint64, user *User) (*Spot, error) {
@@ -178,8 +158,28 @@ func (s *spotsImpl) getByID(spotID uint64, user *User) (*Spot, error) {
 	return spot, nil
 }
 
-func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, error) {
-	sql := `SELECT spot_id, name, user_email, duration, created_at FROM spots WHERE tenant_id = $1 AND deleted_at IS NULL`
+func (s *spotsImpl) Get(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
+	switch {
+	case user == nil:
+		return nil, 0, fmt.Errorf("user is required")
+	case opts == nil:
+		return nil, 0, fmt.Errorf("get options are required")
+	case user.TenantID == 0: // Tenant ID is required even for public get functions
+		return nil, 0, fmt.Errorf("tenant id is required")
+	}
+
+	// Show the latest spots first by default
+	if opts.Order != "asc" && opts.Order != "desc" {
+		opts.Order = "desc"
+	}
+	if opts.Limit <= 0 || opts.Limit > 10 {
+		opts.Limit = 9
+	}
+	return s.getAll(user, opts)
+}
+
+func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
+	sql := `SELECT COUNT(1) OVER () AS total, spot_id, name, user_email, duration, created_at FROM spots WHERE tenant_id = $1 AND deleted_at IS NULL`
 	args := []interface{}{user.TenantID}
 	if opts.UserID != 0 {
 		sql += ` AND user_id = ` + fmt.Sprintf("$%d", len(args)+1)
@@ -203,19 +203,20 @@ func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, error) {
 	s.log.Info(context.Background(), "sql: %s, args: %v", sql, args)
 	rows, err := s.pgconn.Query(sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
+	var total uint64
 	var spots []*Spot
 	for rows.Next() {
 		spot := &Spot{}
-		if err = rows.Scan(&spot.ID, &spot.Name, &spot.UserEmail, &spot.Duration, &spot.CreatedAt); err != nil {
-			return nil, err
+		if err = rows.Scan(&total, &spot.ID, &spot.Name, &spot.UserEmail, &spot.Duration, &spot.CreatedAt); err != nil {
+			return nil, 0, err
 		}
 		spots = append(spots, spot)
 	}
-	return spots, nil
+	return spots, total, nil
 }
 
 func (s *spotsImpl) UpdateName(user *User, spotID uint64, newName string) (*Spot, error) {
@@ -257,6 +258,9 @@ func (s *spotsImpl) AddComment(user *User, spotID uint64, comment *Comment) (*Sp
 		return nil, fmt.Errorf("user name is required")
 	case comment.Text == "":
 		return nil, fmt.Errorf("comment text is required")
+	}
+	if len(comment.Text) > 120 {
+		comment.Text = comment.Text[:120]
 	}
 	comment.CreatedAt = time.Now()
 	return s.addComment(spotID, comment, user)

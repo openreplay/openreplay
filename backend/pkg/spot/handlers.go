@@ -177,12 +177,12 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*User)
-	res, err := e.services.Spots.Get(user, &GetOpts{SpotID: id})
+	res, err := e.services.Spots.GetByID(user, id)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	if len(res) == 0 {
+	if res == nil {
 		e.ResponseWithError(r.Context(), w, http.StatusNotFound, fmt.Errorf("spot not found"), startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -199,11 +199,11 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spotInfo := &Info{
-		Name:      res[0].Name,
-		UserEmail: res[0].UserEmail,
-		Duration:  res[0].Duration,
-		Comments:  res[0].Comments,
-		CreatedAt: res[0].CreatedAt,
+		Name:      res.Name,
+		UserEmail: res.UserEmail,
+		Duration:  res.Duration,
+		Comments:  res.Comments,
+		CreatedAt: res.CreatedAt,
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
 	}
@@ -262,7 +262,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 	default:
 		opts.TenantID = user.TenantID
 	}
-	spots, err := e.services.Spots.Get(user, opts)
+	spots, total, err := e.services.Spots.Get(user, opts)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -282,7 +282,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 			PreviewURL: previewUrl,
 		})
 	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: uint64(len(res))}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: total}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
