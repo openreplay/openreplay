@@ -68,7 +68,11 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   React.useEffect(() => {
     spotStore.fetchSpotById(spotId).then(async (spotInst) => {
       if (spotInst.mobURL) {
-        void spotStore.getPubKey(spotId)
+        try {
+          void spotStore.getPubKey(spotId)
+        } catch {
+          // ignore
+        }
         try {
           const mobResp = await fetch(spotInst.mobURL);
           const {
@@ -120,7 +124,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
       </div>
     );
   }
-  console.log(spotStore.currentSpot);
 
   const closeTab = () => {
     setActiveTab(null);
