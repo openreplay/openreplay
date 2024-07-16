@@ -81,8 +81,8 @@ CREATE TABLE IF NOT EXISTS experimental.events
     error_tags_values              Array(Nullable(String)),
     transfer_size                  Nullable(UInt32),
     selector                       Nullable(String),
-    normalized_x                   Nullable(UInt8),
-    normalized_y                   Nullable(UInt8),
+    normalized_x                   Nullable(Float32),
+    normalized_y                   Nullable(Float32),
     message_id                     UInt64                               DEFAULT 0,
     _timestamp                     DateTime                             DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
