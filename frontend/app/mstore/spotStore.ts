@@ -13,7 +13,8 @@ export default class SpotStore {
   filter: 'all' | 'own' = 'all';
   query: string = '';
   total: number = 0;
-  limit: number = 10;
+  limit: number = 1;
+  accessKey: string | undefined = undefined;
   pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
 
@@ -26,6 +27,10 @@ export default class SpotStore {
     return fn().finally(() => {
       this.setLoading(false);
     });
+  }
+
+  setAccessKey(key: string) {
+    this.accessKey = key;
   }
 
   setSpots(spots: Spot[]) {
@@ -73,7 +78,7 @@ export default class SpotStore {
   }
 
   async fetchSpotById(id: string) {
-    const response = await this.withLoader(() => spotService.fetchSpot(id));
+    const response = await this.withLoader(() => spotService.fetchSpot(id, this.accessKey));
 
     const spotInst = new Spot({ ...response.spot, id });
     this.setCurrentSpot(spotInst);

@@ -46,7 +46,7 @@ const enhancedComponents: any = {
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(components.UsabilityTestOverviewPure),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
-  Spot: withSiteIdUpdater(components.SpotPure),
+  Spot: components.SpotPure,
 };
 
 const withSiteId = routes.withSiteId;
