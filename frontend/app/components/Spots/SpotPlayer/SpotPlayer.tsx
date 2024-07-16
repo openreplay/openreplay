@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useHistory } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { EscapeButton, Loader } from 'UI';
@@ -20,13 +20,27 @@ import SpotTimeline from './components/SpotTimeline';
 import SpotVideoContainer from './components/SpotVideoContainer';
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
+import { connect } from 'react-redux';
 
-function SpotPlayer() {
+function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   const defaultHeight = getDefaultPanelHeight();
+  const history = useHistory()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { spotStore } = useStore();
   const { spotId } = useParams<{ spotId: string }>();
   const [activeTab, setActiveTab] = React.useState<Tab | null>(null);
+
+  React.useEffect(() => {
+    if (!loggedIn) {
+      const query = new URLSearchParams(window.location.search);
+      const pubKey = query.get('pub_key');
+      if (pubKey) {
+        spotStore.setAccessKey(pubKey);
+      } else {
+        history.push('/');
+      }
+    }
+  }, [loggedIn])
 
   const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -177,4 +191,15 @@ function SpotPlayer() {
   );
 }
 
-export default observer(SpotPlayer);
+
+function mapStateToProps(state: any) {
+  const userEmail = state.getIn(['user', 'account', 'name']);
+  const loggedIn = !!userEmail;
+  return {
+    userEmail,
+    loggedIn,
+  };
+}
+
+
+export default connect(mapStateToProps)(observer(SpotPlayer))

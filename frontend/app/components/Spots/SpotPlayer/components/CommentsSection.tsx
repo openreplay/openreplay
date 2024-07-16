@@ -1,4 +1,4 @@
-import { Button, Input } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
 import cn from 'classnames';
 import { X } from 'lucide-react';
 import React from 'react';
@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { SendOutlined } from '@ant-design/icons';
 
 function CommentsSection({
   onClose,
@@ -48,13 +49,13 @@ function CommentsSection({
           </div>
         ))}
 
-        <BottomSectionContainer />
+        <BottomSectionContainer disableComments={comments.length > 5} />
       </div>
     </div>
   );
 }
 
-function BottomSection({ loggedIn, userEmail }: { loggedIn?: boolean, userEmail?: string }) {
+function BottomSection({ loggedIn, userEmail, disableComments }: { disableComments: boolean, loggedIn?: boolean, userEmail?: string }) {
   const [commentText, setCommentText] = React.useState('');
   const [userName, setUserName] = React.useState<string>(userEmail ?? '');
   const { spotStore } = useStore();
@@ -67,6 +68,8 @@ function BottomSection({ loggedIn, userEmail }: { loggedIn?: boolean, userEmail?
     );
     setCommentText('');
   };
+
+  const disableSubmit = commentText.trim().length === 0 || userName.trim().length === 0 || disableComments
   return (
     <div
       className={cn(
@@ -74,7 +77,8 @@ function BottomSection({ loggedIn, userEmail }: { loggedIn?: boolean, userEmail?
         loggedIn ? 'bg-white' : 'bg-active-dark-blue'
       )}
     >
-      <div className={'flex flex-col gap-2'}>
+      <div className={'flex items-center gap-2'}>
+      <div className={'flex flex-col w-full gap-2'}>
         <Input
           readOnly={loggedIn}
           disabled={loggedIn}
@@ -91,13 +95,16 @@ function BottomSection({ loggedIn, userEmail }: { loggedIn?: boolean, userEmail?
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
         />
-        <Button
-          type={'primary'}
-          onClick={addComment}
-          disabled={commentText.trim().length === 0}
-        >
-          Add Comment
-        </Button>
+      </div>
+        <Tooltip title={disableComments ? "" : "Limited to 5 Messages. Join team to send more."}>
+          <Button
+            type={'primary'}
+            onClick={addComment}
+            disabled={disableSubmit}
+            icon={<SendOutlined />}
+            shape={"circle"}
+          />
+        </Tooltip>
       </div>
     </div>
   );

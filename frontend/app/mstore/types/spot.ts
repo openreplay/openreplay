@@ -16,6 +16,7 @@ export class Spot {
 
 
   constructor(data: Record<string, any>) {
+    makeAutoObservable(this)
     this.setAdditionalData(data)
     this.thumbnail = data.previewURL
     this.title = data.name;
@@ -24,7 +25,6 @@ export class Spot {
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id
 
-    makeAutoObservable(this)
   }
 
   setAdditionalData(data: Record<string, any>) {
