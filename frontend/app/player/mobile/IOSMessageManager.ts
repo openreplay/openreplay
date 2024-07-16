@@ -78,10 +78,10 @@ export interface State extends ScreenState, ListsState {
 }
 
 const userEvents = [
-  MType.IosSwipeEvent,
-  MType.IosClickEvent,
-  MType.IosInputEvent,
-  MType.IosScreenChanges,
+  MType.MobileSwipeEvent,
+  MType.MobileClickEvent,
+  MType.MobileInputEvent,
+  MType.MobileScreenChanges,
 ];
 
 export default class IOSMessageManager implements IMessageManager {
@@ -233,7 +233,7 @@ export default class IOSMessageManager implements IMessageManager {
     }
 
     switch (msg.tp) {
-      case MType.IosPerformanceEvent:
+      case MType.MobilePerformanceEvent:
         const performanceStats = ['background', 'memoryUsage', 'mainThreadCPU'];
         if (performanceStats.includes(msg.name)) {
           this.performanceManager.append(msg);
@@ -253,21 +253,21 @@ export default class IOSMessageManager implements IMessageManager {
       // case MType.IosInputEvent:
       //   console.log('input', msg)
       //   break;
-      case MType.IosNetworkCall:
+      case MType.MobileNetworkCall:
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart));
         break;
       case MType.WsChannel:
         this.lists.lists.websocket.insert(msg);
         break;
-      case MType.IosEvent:
+      case MType.MobileEvent:
         // @ts-ignore
         this.lists.lists.event.insert({ ...msg, source: 'openreplay' });
         break;
-      case MType.IosSwipeEvent:
-      case MType.IosClickEvent:
+      case MType.MobileSwipeEvent:
+      case MType.MobileClickEvent:
         this.touchManager.append(msg);
         break;
-      case MType.IosLog:
+      case MType.MobileLog:
         const log = { ...msg, level: msg.severity };
         // @ts-ignore
         this.lists.lists.log.append(Log(log));
