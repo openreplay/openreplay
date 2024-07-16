@@ -96,7 +96,7 @@ function BottomSection({ loggedIn, userEmail, disableComments }: { disableCommen
           onChange={(e) => setCommentText(e.target.value)}
         />
       </div>
-        <Tooltip title={disableComments ? "" : "Limited to 5 Messages. Join team to send more."}>
+        <Tooltip title={!disableComments ? "" : "Limited to 5 Messages. Join team to send more."}>
           <Button
             type={'primary'}
             onClick={addComment}
