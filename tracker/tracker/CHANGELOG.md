@@ -1,3 +1,7 @@
+# 14.0.3
+
+- send integer instead of float for normalizedX/Y coords (basically moving from 0-100 to 0-10000 range)
+
 # 14.0.2
 
 - fix logger check
