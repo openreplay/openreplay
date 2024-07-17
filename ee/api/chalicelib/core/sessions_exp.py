@@ -915,7 +915,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
-                        if event.operator == schemas.ClickEventExtraOperator.SELECTOR_IS:
+                        if event.operator == schemas.ClickEventExtraOperator.ON_SELECTOR:
                             event_where.append(
                                 _multiple_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
