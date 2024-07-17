@@ -5,6 +5,7 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { confirm } from 'UI';
+import { durationFormatted } from "../../../../date";
 
 const HOUR_SECS = 60 * 60;
 const DAY_SECS = 24 * HOUR_SECS;
@@ -30,8 +31,8 @@ function AccessModal() {
     [Intervals.week]: WEEK_SECS,
   };
   const spotId = spotStore.currentSpot!.spotId!;
-  const spotLink = `${window.location.origin}/spot/${spotId}?pub_key=${
-    spotStore.pubKey ? spotStore.pubKey.value : ''
+  const spotLink = `${window.location.origin}/spot/${spotId}${
+    spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
   const menuItems = [
@@ -172,7 +173,7 @@ function AccessModal() {
             <div>Link expires in</div>
             <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
               <div>
-                {spotStore.isLoading ? 'Loading' : 'date here'}
+                {spotStore.isLoading ? 'Loading' : durationFormatted(spotStore.pubKey!.expiration)}
                 <DownOutlined />
               </div>
             </Dropdown>
