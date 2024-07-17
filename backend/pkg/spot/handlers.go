@@ -427,7 +427,11 @@ func (e *Router) getPublicKey(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("userData").(*User)
 	key, err := e.services.Keys.Get(id, user)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if strings.Contains(err.Error(), "not found") {
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	resp := map[string]interface{}{
