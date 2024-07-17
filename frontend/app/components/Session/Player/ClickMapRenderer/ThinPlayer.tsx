@@ -51,8 +51,8 @@ function WebPlayer(props: any) {
   const isPlayerReady = contextValue.store?.get().ready
 
   React.useEffect(() => {
-    if (isPlayerReady && insights.size > 0 && jumpTimestamp) {
       contextValue.player && contextValue.player.play()
+    if (isPlayerReady && insights.size > 0 && jumpTimestamp) {
       setTimeout(() => {
         contextValue.player.pause()
         contextValue.player.jump(jumpTimestamp)
