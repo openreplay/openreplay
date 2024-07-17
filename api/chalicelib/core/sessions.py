@@ -760,9 +760,9 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 if platform == "web":
                     event_from = event_from % f"{events.EventType.CLICK.table} AS main "
                     if not is_any:
-                        if schemas.ClickEventExtraOperator.has_value(event.operator):
+                        if event.operator == schemas.ClickEventExtraOperator.ON_SELECTOR:
                             event_where.append(
-                                sh.multi_conditions(f"main.selector {op} %({e_k})s", event.value, value_key=e_k))
+                                sh.multi_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
                         else:
                             event_where.append(
                                 sh.multi_conditions(f"main.{events.EventType.CLICK.column} {op} %({e_k})s", event.value,
