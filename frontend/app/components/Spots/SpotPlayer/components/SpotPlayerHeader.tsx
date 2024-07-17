@@ -27,6 +27,9 @@ function SpotPlayerHeader({
   user,
   date,
   isLoggedIn,
+  browserVersion,
+  resolution,
+  platform,
 }: {
   activeTab: Tab | null;
   setActiveTab: (tab: Tab) => void;
@@ -34,6 +37,9 @@ function SpotPlayerHeader({
   user: string;
   date: string;
   isLoggedIn: boolean;
+  browserVersion: string | null;
+  resolution: string | null;
+  platform: string | null;
 }) {
   const [isCopied, setIsCopied] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -78,6 +84,24 @@ function SpotPlayerHeader({
             <div>{user}</div>
             <div>·</div>
             <div>{date}</div>
+            {browserVersion && (
+              <>
+                <div>·</div>
+                <div>Chrome v{browserVersion}</div>
+              </>
+            )}
+            {resolution && (
+              <>
+                <div>·</div>
+                <div>{resolution}</div>
+              </>
+            )}
+            {platform && (
+              <>
+                <div>·</div>
+                <div>{platform}</div>
+              </>
+            )}
           </div>
         </div>
       </div>

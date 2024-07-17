@@ -79,9 +79,18 @@ class SpotPlayerStore {
   startTs = 0;
   activePanel: PanelType | null = null;
   skipInterval = 10;
+  browserVersion: string | null = null;
+  resolution: string | null = null;
+  platform: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setDeviceData(browserVersion: string, resolution: string, platform: string) {
+    this.browserVersion = browserVersion;
+    this.resolution = resolution;
+    this.platform = platform;
   }
 
   setSkipInterval = (interval: number) => {

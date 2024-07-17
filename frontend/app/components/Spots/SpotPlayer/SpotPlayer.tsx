@@ -81,9 +81,13 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
             network = [],
             locations = [],
             startTs = 0,
+            browserVersion,
+            resolution,
+            platform,
           } = await mobResp.json();
           spotPlayerStore.setStartTs(startTs);
           spotPlayerStore.setDuration(spotInst.duration);
+          spotPlayerStore.setDeviceData(browserVersion, resolution, platform);
           spotPlayerStore.setEvents(logs, locations, clicks, network);
         } catch (e) {
           console.error("Couldn't parse mob file", e);
@@ -146,6 +150,9 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         title={spotStore.currentSpot.title}
         user={spotStore.currentSpot.user}
         date={spotStore.currentSpot.createdAt}
+        resolution={spotPlayerStore.resolution}
+        platform={spotPlayerStore.platform}
+        browserVersion={spotPlayerStore.browserVersion}
       />
       <div className={'w-full h-full flex'}>
         <div className={'w-full h-full flex flex-col justify-between'}>
