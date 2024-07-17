@@ -107,7 +107,7 @@ class TestFeatureFlag:
             schemas.SearchFlagsSchema(
                 limit=15,
                 user_id=123,
-                order=schemas.SortOrderType.desc,
+                order=schemas.SortOrderType.DESC,
                 query="search term",
                 is_active=True
             )

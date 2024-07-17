@@ -177,7 +177,7 @@ def get_all(tenant_id, data: schemas.TrailSearchPayloadSchema):
             conditions.append("users.name ILIKE %(query)s")
             conditions.append("users.tenant_id = %(tenant_id)s")
             params["query"] = helper.values_for_operator(value=data.query,
-                                                         op=schemas.SearchEventOperator._contains)
+                                                         op=schemas.SearchEventOperator.CONTAINS)
         cur.execute(
             cur.mogrify(
                 f"""SELECT COUNT(*) AS count,

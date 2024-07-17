@@ -70,10 +70,10 @@ def __transform_journey(rows, reverse_path=False):
 
 
 JOURNEY_TYPES = {
-    schemas.ProductAnalyticsSelectedEventType.location: {"table": "events.pages", "column": "path"},
-    schemas.ProductAnalyticsSelectedEventType.click: {"table": "events.clicks", "column": "label"},
-    schemas.ProductAnalyticsSelectedEventType.input: {"table": "events.inputs", "column": "label"},
-    schemas.ProductAnalyticsSelectedEventType.custom_event: {"table": "events_common.customs", "column": "name"}
+    schemas.ProductAnalyticsSelectedEventType.LOCATION: {"table": "events.pages", "column": "path"},
+    schemas.ProductAnalyticsSelectedEventType.CLICK: {"table": "events.clicks", "column": "label"},
+    schemas.ProductAnalyticsSelectedEventType.INPUT: {"table": "events.inputs", "column": "label"},
+    schemas.ProductAnalyticsSelectedEventType.CUSTOM_EVENT: {"table": "events_common.customs", "column": "name"}
 }
 
 
@@ -92,10 +92,10 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sessions_conditions = ["start_ts>=%(startTimestamp)s", "start_ts<%(endTimestamp)s",
                            "project_id=%(project_id)s", "events_count > 1", "duration>0"]
     if len(data.metric_value) == 0:
-        data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.location)
-        sub_events.append({"table": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["table"],
-                           "column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.location]["column"],
-                           "eventType": schemas.ProductAnalyticsSelectedEventType.location.value})
+        data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.LOCATION)
+        sub_events.append({"table": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["table"],
+                           "column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["column"],
+                           "eventType": schemas.ProductAnalyticsSelectedEventType.LOCATION.value})
     else:
         for v in data.metric_value:
             if JOURNEY_TYPES.get(v):
@@ -149,49 +149,49 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
             continue
 
         # ---- meta-filters
-        if f.type == schemas.FilterType.user_browser:
+        if f.type == schemas.FilterType.USER_BROWSER:
             if is_any:
                 sessions_conditions.append('user_browser IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_os]:
+        elif f.type in [schemas.FilterType.USER_OS]:
             if is_any:
                 sessions_conditions.append('user_os IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_device]:
+        elif f.type in [schemas.FilterType.USER_DEVICE]:
             if is_any:
                 sessions_conditions.append('user_device IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_country]:
+        elif f.type in [schemas.FilterType.USER_COUNTRY]:
             if is_any:
                 sessions_conditions.append('user_country IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.user_city:
+        elif f.type == schemas.FilterType.USER_CITY:
             if is_any:
                 sessions_conditions.append('user_city IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.user_state:
+        elif f.type == schemas.FilterType.USER_STATE:
             if is_any:
                 sessions_conditions.append('user_state IS NOT NULL')
             else:
                 sessions_conditions.append(
                     sh.multi_conditions(f'user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.utm_source]:
+        elif f.type in [schemas.FilterType.UTM_SOURCE]:
             if is_any:
                 sessions_conditions.append('utm_source IS NOT NULL')
             elif is_undefined:
@@ -201,7 +201,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.utm_medium]:
+        elif f.type in [schemas.FilterType.UTM_MEDIUM]:
             if is_any:
                 sessions_conditions.append('utm_medium IS NOT NULL')
             elif is_undefined:
@@ -211,7 +211,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.utm_campaign]:
+        elif f.type in [schemas.FilterType.UTM_CAMPAIGN]:
             if is_any:
                 sessions_conditions.append('utm_campaign IS NOT NULL')
             elif is_undefined:
@@ -221,14 +221,14 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f'utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.duration:
+        elif f.type == schemas.FilterType.DURATION:
             if len(f.value) > 0 and f.value[0] is not None:
                 sessions_conditions.append("duration >= %(minDuration)s")
                 extra_values["minDuration"] = f.value[0]
             if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                 sessions_conditions.append("duration <= %(maxDuration)s")
                 extra_values["maxDuration"] = f.value[1]
-        elif f.type == schemas.FilterType.referrer:
+        elif f.type == schemas.FilterType.REFERRER:
             # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
             if is_any:
                 sessions_conditions.append('base_referrer IS NOT NULL')
@@ -236,7 +236,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"base_referrer {op} %({f_k})s", f.value, is_not=is_not,
                                         value_key=f_k))
-        elif f.type == schemas.FilterType.metadata:
+        elif f.type == schemas.FilterType.METADATA:
             # get metadata list only if you need it
             if meta_keys is None:
                 meta_keys = metadata.get(project_id=project_id)
@@ -252,7 +252,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                             f"{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                             f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
+        elif f.type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('user_id IS NOT NULL')
             elif is_undefined:
@@ -262,8 +262,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.user_anonymous_id,
-                        schemas.FilterType.user_anonymous_id_mobile]:
+        elif f.type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                        schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('user_anonymous_id IS NOT NULL')
             elif is_undefined:
@@ -273,7 +273,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
+        elif f.type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
             if is_any:
                 sessions_conditions.append('rev_id IS NOT NULL')
             elif is_undefined:
@@ -282,13 +282,13 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                 sessions_conditions.append(
                     sh.multi_conditions(f"rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
 
-        elif f.type == schemas.FilterType.platform:
+        elif f.type == schemas.FilterType.PLATFORM:
             # op = __ sh.get_sql_operator(f.operator)
             sessions_conditions.append(
                 sh.multi_conditions(f"user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))
 
-        elif f.type == schemas.FilterType.issue:
+        elif f.type == schemas.FilterType.ISSUE:
             if is_any:
                 sessions_conditions.append("array_length(issue_types, 1) > 0")
             else:
@@ -296,7 +296,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sh.multi_conditions(f"%({f_k})s {op} ANY (issue_types)", f.value, is_not=is_not,
                                         value_key=f_k))
 
-        elif f.type == schemas.FilterType.events_count:
+        elif f.type == schemas.FilterType.EVENTS_COUNT:
             sessions_conditions.append(
                 sh.multi_conditions(f"events_count {op} %({f_k})s", f.value, is_not=is_not,
                                     value_key=f_k))

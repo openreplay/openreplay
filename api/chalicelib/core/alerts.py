@@ -229,5 +229,5 @@ def get_predefined_values():
                "unit": "count" if v.endswith(".count") else "ms",
                "predefined": True,
                "metricId": None,
-               "seriesId": None} for v in values if v != schemas.AlertColumn.custom]
+               "seriesId": None} for v in values if v != schemas.AlertColumn.CUSTOM]
     return values

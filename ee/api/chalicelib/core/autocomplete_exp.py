@@ -8,23 +8,23 @@ TABLE = "experimental.autocomplete"
 
 
 def __get_autocomplete_table(value, project_id):
-    autocomplete_events = [schemas.FilterType.rev_id,
-                           schemas.EventType.click,
-                           schemas.FilterType.user_device,
-                           schemas.FilterType.user_id,
-                           schemas.FilterType.user_browser,
-                           schemas.FilterType.user_os,
-                           schemas.EventType.custom,
-                           schemas.FilterType.user_country,
-                           schemas.FilterType.user_city,
-                           schemas.FilterType.user_state,
-                           schemas.EventType.location,
-                           schemas.EventType.input]
+    autocomplete_events = [schemas.FilterType.REV_ID,
+                           schemas.EventType.CLICK,
+                           schemas.FilterType.USER_DEVICE,
+                           schemas.FilterType.USER_ID,
+                           schemas.FilterType.USER_BROWSER,
+                           schemas.FilterType.USER_OS,
+                           schemas.EventType.CUSTOM,
+                           schemas.FilterType.USER_COUNTRY,
+                           schemas.FilterType.USER_CITY,
+                           schemas.FilterType.USER_STATE,
+                           schemas.EventType.LOCATION,
+                           schemas.EventType.INPUT]
     autocomplete_events.sort()
     sub_queries = []
     c_list = []
     for e in autocomplete_events:
-        if e == schemas.FilterType.user_country:
+        if e == schemas.FilterType.USER_COUNTRY:
             c_list = countries.get_country_code_autocomplete(value)
             if len(c_list) > 0:
                 sub_queries.append(f"""(SELECT DISTINCT ON(value) '{e.value}' AS _type, value
@@ -73,7 +73,7 @@ def __get_autocomplete_table(value, project_id):
 
 
 def __generic_query(typename, value_length=None):
-    if typename == schemas.FilterType.user_country:
+    if typename == schemas.FilterType.USER_COUNTRY:
         return f"""SELECT DISTINCT value, type
                     FROM {TABLE}
                     WHERE
@@ -128,7 +128,7 @@ def __generic_autocomplete_metas(typename):
             params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
                       "svalue": helper.string_to_sql_like("^" + text)}
 
-            if typename == schemas.FilterType.user_country:
+            if typename == schemas.FilterType.USER_COUNTRY:
                 params["value"] = tuple(countries.get_country_code_autocomplete(text))
                 if len(params["value"]) == 0:
                     return []

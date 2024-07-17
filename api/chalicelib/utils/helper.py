@@ -143,8 +143,8 @@ def string_to_sql_like_with_op(value, op):
         return _value.replace("%", "%%")
 
 
-likable_operators = [schemas.SearchEventOperator._starts_with, schemas.SearchEventOperator._ends_with,
-                     schemas.SearchEventOperator._contains, schemas.SearchEventOperator._not_contains]
+likable_operators = [schemas.SearchEventOperator.STARTS_WITH, schemas.SearchEventOperator.ENDS_WITH,
+                     schemas.SearchEventOperator.CONTAINS, schemas.SearchEventOperator.NOT_CONTAINS]
 
 
 def is_likable(op: schemas.SearchEventOperator):
@@ -162,11 +162,11 @@ def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator
     else:
         if value is None:
             return value
-        if op == schemas.SearchEventOperator._starts_with:
+        if op == schemas.SearchEventOperator.STARTS_WITH:
             return f"{value}%"
-        elif op == schemas.SearchEventOperator._ends_with:
+        elif op == schemas.SearchEventOperator.ENDS_WITH:
             return f"%{value}"
-        elif op == schemas.SearchEventOperator._contains or op == schemas.SearchEventOperator._not_contains:
+        elif op == schemas.SearchEventOperator.CONTAINS or op == schemas.SearchEventOperator.NOT_CONTAINS:
             return f"%{value}%"
     return value
 
@@ -278,22 +278,22 @@ def old_search_payload_to_flat(values):
 
 def custom_alert_to_front(values):
     # to support frontend format for payload
-    if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.custom:
+    if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.CUSTOM:
         values["query"]["left"] = values["seriesId"]
         values["seriesId"] = None
     return values
 
 
 def __time_value(row):
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    row["unit"] = schemas.TemplatePredefinedUnits.MILLISECOND
     factor = 1
     if row["value"] > TimeUTC.MS_MINUTE:
         row["value"] = row["value"] / TimeUTC.MS_MINUTE
-        row["unit"] = schemas.TemplatePredefinedUnits.minute
+        row["unit"] = schemas.TemplatePredefinedUnits.MINUTE
         factor = TimeUTC.MS_MINUTE
     elif row["value"] > 1 * 1000:
         row["value"] = row["value"] / 1000
-        row["unit"] = schemas.TemplatePredefinedUnits.second
+        row["unit"] = schemas.TemplatePredefinedUnits.SECOND
         factor = 1000
 
     if "chart" in row and factor > 1:

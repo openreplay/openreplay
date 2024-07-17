@@ -107,7 +107,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
         return w
 
 
-def exists_by_name(name: str, exclude_id: Optional[int], webhook_type: str = schemas.WebhookType.webhook,
+def exists_by_name(name: str, exclude_id: Optional[int], webhook_type: str = schemas.WebhookType.WEBHOOK,
                    tenant_id: Optional[int] = None) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 

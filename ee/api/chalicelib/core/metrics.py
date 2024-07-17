@@ -201,7 +201,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         count = count[0]["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
 
 
@@ -1067,7 +1067,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
                     FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages
                     WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.millisecond}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1147,7 +1147,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                     quantiles[0]["values"][i]) else 0)} for i, v in enumerate(quantiles_keys)
         ],
         "extremeValues": [{"count": 0}],
-        "unit": schemas.TemplatePredefinedUnits.millisecond
+        "unit": schemas.TemplatePredefinedUnits.MILLISECOND
     }
     if len(rows) > 0:
         rows = helper.list_to_camel_case(rows)
@@ -1376,7 +1376,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                                                                         end_time=endTimestamp,
                                                                         density=density,
                                                                         neutral={"value": 0})),
-            "unit": schemas.TemplatePredefinedUnits.memory}
+            "unit": schemas.TemplatePredefinedUnits.MEMORY}
 
 
 def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1409,7 +1409,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                                         end_time=endTimestamp,
                                                                         density=density,
                                                                         neutral={"value": 0})),
-            "unit": schemas.TemplatePredefinedUnits.percentage}
+            "unit": schemas.TemplatePredefinedUnits.PERCENTAGE}
 
 
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1442,7 +1442,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                                         end_time=endTimestamp,
                                                                         density=density,
                                                                         neutral={"value": 0})),
-            "unit": schemas.TemplatePredefinedUnits.frame}
+            "unit": schemas.TemplatePredefinedUnits.FRAME}
 
 
 def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1511,7 +1511,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 density=density,
                                                 neutral={"value": 0}),
               "browsers": browsers,
-              "unit": schemas.TemplatePredefinedUnits.count}
+              "unit": schemas.TemplatePredefinedUnits.COUNT}
     return result
 
 
@@ -1652,7 +1652,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM {exp_ch_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2432,7 +2432,7 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
 
 
@@ -2623,7 +2623,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                                         end_time=endTimestamp,
                                         density=density, neutral={"value": 0})
         result["chart"] = rows
-    result["unit"] = schemas.TemplatePredefinedUnits.count
+    result["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return helper.dict_to_camel_case(result)
 
 
@@ -2847,5 +2847,5 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         count = count[0]["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results

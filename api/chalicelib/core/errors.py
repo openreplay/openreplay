@@ -420,18 +420,18 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     if chart:
         ch_sub_query += [f"timestamp >=  generated_timestamp",
                          f"timestamp <  generated_timestamp + %({step_size_name})s"]
-    if platform == schemas.PlatformType.mobile:
+    if platform == schemas.PlatformType.MOBILE:
         ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.desktop:
+    elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
 
 def __get_sort_key(key):
     return {
-        schemas.ErrorSort.occurrence: "max_datetime",
-        schemas.ErrorSort.users_count: "users",
-        schemas.ErrorSort.sessions_count: "sessions"
+        schemas.ErrorSort.OCCURRENCE: "max_datetime",
+        schemas.ErrorSort.USERS_COUNT: "users",
+        schemas.ErrorSort.SESSIONS_COUNT: "sessions"
     }.get(key, 'max_datetime')
 
 
@@ -443,7 +443,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
     platform = None
     for f in data.filters:
-        if f.type == schemas.FilterType.platform and len(f.value) > 0:
+        if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
     pg_sub_query = __get_basic_constraints(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
@@ -472,7 +472,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
-        order = schemas.SortOrderType.desc
+        order = schemas.SortOrderType.DESC
         if data.order is not None:
             order = data.order
         extra_join = ""
@@ -483,7 +483,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
-        if data.status != schemas.ErrorStatus.all:
+        if data.status != schemas.ErrorStatus.ALL:
             pg_sub_query.append("status = %(error_status)s")
             params["error_status"] = data.status
         if data.limit is not None and data.page is not None:
@@ -502,7 +502,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         if data.query is not None and len(data.query) > 0:
             pg_sub_query.append("(pe.name ILIKE %(error_query)s OR pe.message ILIKE %(error_query)s)")
             params["error_query"] = helper.values_for_operator(value=data.query,
-                                                               op=schemas.SearchEventOperator._contains)
+                                                               op=schemas.SearchEventOperator.CONTAINS)
 
         main_pg_query = f"""SELECT full_count,
                                    error_id,

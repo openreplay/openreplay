@@ -15,12 +15,12 @@ class MSTeams(BaseCollaboration):
     @classmethod
     def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
         if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
-                                  webhook_type=schemas.WebhookType.msteams):
+                                  webhook_type=schemas.WebhookType.MSTEAMS):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url.unicode_string(),
-                               webhook_type=schemas.WebhookType.msteams,
+                               webhook_type=schemas.WebhookType.MSTEAMS,
                                name=data.name)
         return None
 
@@ -157,9 +157,9 @@ class MSTeams(BaseCollaboration):
     def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
             return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
-                                       webhook_type=schemas.WebhookType.msteams)
+                                       webhook_type=schemas.WebhookType.MSTEAMS)
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.msteams)
+        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.MSTEAMS)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]

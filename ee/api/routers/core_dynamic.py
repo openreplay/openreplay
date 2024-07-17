@@ -235,7 +235,7 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 # for backward compatibility
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.SESSION_REPLAY)])
 def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                 context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -255,7 +255,7 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
@@ -264,7 +264,7 @@ def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = 
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
@@ -273,7 +273,7 @@ def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema
 
 
 @app.get('/{projectId}/sessions/{sessionId}/first-mob', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.SESSION_REPLAY)])
 def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -289,7 +289,7 @@ def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_ta
 
 
 @app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.SESSION_REPLAY)])
 def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -309,7 +309,7 @@ def get_session_events(projectId: int, sessionId: Union[int, str], background_ta
 
 
 @app.get('/{projectId}/sessions/{sessionId}/events', tags=["sessions", "replay"],
-         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.SESSION_REPLAY)])
 def get_session_events(projectId: int, sessionId: Union[int, str],
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
@@ -326,7 +326,7 @@ def get_session_events(projectId: int, sessionId: Union[int, str],
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"],
-         dependencies=[OR_scope(Permissions.dev_tools)])
+         dependencies=[OR_scope(Permissions.DEV_TOOLS)])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -337,7 +337,7 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.DEV_TOOLS)])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
@@ -348,7 +348,7 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     return data
 
 
-@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.DEV_TOOLS)])
 def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -359,7 +359,7 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"], dependencies=[OR_scope(Permissions.dev_tools)])
+@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"], dependencies=[OR_scope(Permissions.DEV_TOOLS)])
 def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
                               endDate: int = TimeUTC.now(),
                               context: schemas.CurrentContext = Depends(OR_context)):
@@ -378,7 +378,7 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
 
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, ServicePermissions.assist_live)])
+         dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
@@ -394,8 +394,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay,
-                                ServicePermissions.assist_live, ServicePermissions.session_replay)])
+         dependencies=[OR_scope(Permissions.ASSIST_LIVE, Permissions.SESSION_REPLAY,
+                                ServicePermissions.ASSIST_LIVE, ServicePermissions.SESSION_REPLAY)])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
@@ -417,9 +417,9 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 
 
 @app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"],
-         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools,
-                                ServicePermissions.assist_live, ServicePermissions.session_replay,
-                                ServicePermissions.dev_tools)])
+         dependencies=[OR_scope(Permissions.ASSIST_LIVE, Permissions.SESSION_REPLAY, Permissions.DEV_TOOLS,
+                                ServicePermissions.ASSIST_LIVE, ServicePermissions.SESSION_REPLAY,
+                                ServicePermissions.DEV_TOOLS)])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}
@@ -440,14 +440,14 @@ def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
     return FileResponse(path=path, media_type="application/octet-stream")
 
 
-@app.post('/{projectId}/heatmaps/url', tags=["heatmaps"], dependencies=[OR_scope(Permissions.session_replay)])
+@app.post('/{projectId}/heatmaps/url', tags=["heatmaps"], dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatMapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
 
 
 @app.post('/{projectId}/sessions/{sessionId}/heatmaps', tags=["heatmaps"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
                                    data: schemas.GetHeatMapPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
@@ -455,7 +455,7 @@ def get_heatmaps_by_session_id_url(projectId: int, sessionId: int,
 
 
 @app.post('/{projectId}/sessions/{sessionId}/clickmaps', tags=["heatmaps"],
-          dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY, ServicePermissions.SESSION_REPLAY)])
 def get_clickmaps_by_session_id_url(projectId: int, sessionId: int,
                                     data: schemas.GetClickMapPayloadSchema = Body(...),
                                     context: schemas.CurrentContext = Depends(OR_context)):
@@ -463,14 +463,14 @@ def get_clickmaps_by_session_id_url(projectId: int, sessionId: int,
 
 
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
                                                tenant_id=context.tenant_id,
@@ -483,7 +483,7 @@ def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = 
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
@@ -496,7 +496,7 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
 
 
 @app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def comment_assignment(projectId: int, sessionId: int, issueId: str,
                        data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
@@ -511,7 +511,7 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
 
 
 @app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=sessionId):
@@ -526,7 +526,7 @@ def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema 
 
 
 @app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
                                             session_id=sessionId, user_id=context.user_id)
@@ -538,7 +538,7 @@ def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentCo
 
 
 @app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
-          dependencies=[OR_scope(Permissions.session_replay)])
+          dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
@@ -551,14 +551,14 @@ def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema
 
 
 @app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
-            dependencies=[OR_scope(Permissions.session_replay)])
+            dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def delete_note(projectId: int, noteId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.delete(project_id=projectId, note_id=noteId)
     return data
 
 
 @app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
@@ -572,7 +572,7 @@ def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
                                            note_id=noteId, webhook_id=webhookId)
 
 
-@app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
+@app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
@@ -583,7 +583,7 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
 
 
 @app.post('/{project_id}/feature-flags/search', tags=["feature flags"],
-          dependencies=[OR_scope(Permissions.feature_flags)])
+          dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def search_feature_flags(project_id: int,
                          data: schemas.SearchFlagsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
@@ -591,19 +591,19 @@ def search_feature_flags(project_id: int,
 
 
 @app.get('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-         dependencies=[OR_scope(Permissions.feature_flags)])
+         dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def get_feature_flag(project_id: int, feature_flag_id: int):
     return feature_flags.get_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)
 
 
-@app.post('/{project_id}/feature-flags', tags=["feature flags"], dependencies=[OR_scope(Permissions.feature_flags)])
+@app.post('/{project_id}/feature-flags', tags=["feature flags"], dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def add_feature_flag(project_id: int, data: schemas.FeatureFlagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.create_feature_flag(project_id=project_id, user_id=context.user_id, feature_flag_data=data)
 
 
 @app.put('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-         dependencies=[OR_scope(Permissions.feature_flags)])
+         dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.FeatureFlagSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return feature_flags.update_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id,
@@ -611,13 +611,13 @@ def update_feature_flag(project_id: int, feature_flag_id: int, data: schemas.Fea
 
 
 @app.delete('/{project_id}/feature-flags/{feature_flag_id}', tags=["feature flags"],
-            dependencies=[OR_scope(Permissions.feature_flags)])
+            dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def delete_feature_flag(project_id: int, feature_flag_id: int, _=Body(None)):
     return {"data": feature_flags.delete_feature_flag(project_id=project_id, feature_flag_id=feature_flag_id)}
 
 
 @app.post('/{project_id}/feature-flags/{feature_flag_id}/status', tags=["feature flags"],
-          dependencies=[OR_scope(Permissions.feature_flags)])
+          dependencies=[OR_scope(Permissions.FEATURE_FLAGS)])
 def update_feature_flag_status(project_id: int, feature_flag_id: int,
                                data: schemas.FeatureFlagStatus = Body(...)):
     return {"data": feature_flags.update_feature_flag_status(project_id=project_id, feature_flag_id=feature_flag_id,

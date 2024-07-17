@@ -60,7 +60,7 @@ def search_records(project_id: int, data: schemas.AssistRecordSearchPayloadSchem
     if data.query is not None and len(data.query) > 0:
         conditions.append("(users.name ILIKE %(query)s OR assist_records.name ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
-                                                     op=schemas.SearchEventOperator._contains)
+                                                     op=schemas.SearchEventOperator.CONTAINS)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT COUNT(assist_records.record_id) OVER () AS count,
                                        record_id, user_id, session_id, assist_records.created_at, 

@@ -106,12 +106,12 @@ def prepare_constraints_params_to_search(data, project_id, user_id):
     if data.query is not None and len(data.query) > 0:
         constraints.append("flag_key ILIKE %(query)s")
         params["query"] = helper.values_for_operator(value=data.query,
-                                                     op=schemas.SearchEventOperator._contains)
+                                                     op=schemas.SearchEventOperator.CONTAINS)
     return constraints, params
 
 
 def create_feature_flag(project_id: int, user_id: int, feature_flag_data: schemas.FeatureFlagSchema) -> Optional[int]:
-    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant and len(feature_flag_data.variants) == 0:
+    if feature_flag_data.flag_type == schemas.FeatureFlagType.MULTI_VARIANT and len(feature_flag_data.variants) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Variants are required for multi variant flag")
 
@@ -193,7 +193,7 @@ def validate_unique_flag_key(feature_flag_data, project_id, exclude_id=None):
 
 
 def validate_multi_variant_flag(feature_flag_data):
-    if feature_flag_data.flag_type == schemas.FeatureFlagType.multi_variant:
+    if feature_flag_data.flag_type == schemas.FeatureFlagType.MULTI_VARIANT:
         if sum([v.rollout_percentage for v in feature_flag_data.variants]) > 100:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f"Sum of rollout percentage for variants cannot be greater than 100.")
