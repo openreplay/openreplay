@@ -963,8 +963,8 @@ export default class App {
         deviceMemory,
         jsHeapSizeLimit,
         timezone: getTimezone(),
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: window.screen.width,
+        height: window.screen.height,
       }),
     })
     const {
@@ -1220,7 +1220,9 @@ export default class App {
           timezone: getTimezone(),
           condition: conditionName,
           assistOnly: startOpts.assistOnly ?? this.socketMode,
-        }),
+          width: window.screen.width,
+          height: window.screen.height
+    }),
       })
       if (r.status !== 200) {
         const error = await r.text()
