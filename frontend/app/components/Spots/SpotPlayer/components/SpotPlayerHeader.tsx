@@ -16,6 +16,9 @@ import copy from 'copy-to-clipboard';
 
 import { TABS, Tab } from '../consts';
 import AccessModal from "./AccessModal";
+import { spotsList } from "App/routes";
+
+const spotLink = spotsList()
 
 function SpotPlayerHeader({
   activeTab,
@@ -47,7 +50,7 @@ function SpotPlayerHeader({
     >
       <div>
         {isLoggedIn ? (
-          <Link to={'/spots'}>
+          <Link to={spotLink}>
             <div className={'flex items-center gap-2'}>
               <ArrowLeftOutlined />
               <div className={'font-semibold'}>All spots</div>

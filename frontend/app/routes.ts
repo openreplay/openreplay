@@ -143,7 +143,7 @@ export const usabilityTestingEdit = (id = ':testId', hash?: string | number): st
 export const usabilityTestingView = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/view/${id}`, hash);
 
 export const spotsList = (): string => '/spots';
-export const spot = (id = ':spotId', hash?: string | number): string => hashed(`/spot/${id}`, hash);
+export const spot = (id = ':spotId', hash?: string | number): string => hashed(`/view-spot/${id}`, hash);
 
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
