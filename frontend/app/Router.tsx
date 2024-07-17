@@ -159,7 +159,8 @@ const Router: React.FC<RouterProps> = (props) => {
     (location.pathname && location.pathname.includes('/session/')) ||
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview') ||
-    location.pathname.includes('/spot/');
+    location.pathname.includes('/view-spot/') ||
+    location.pathname.includes('/spots/');
 
   if (isIframe) {
     return (
