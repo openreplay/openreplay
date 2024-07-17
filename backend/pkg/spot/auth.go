@@ -73,7 +73,7 @@ func (a *authImpl) authExists(userID, tenantID, jwtIAT int) (*User, error) {
 	   	WHERE user_id = $1 AND deleted_at IS NULL
 	   	LIMIT 1;`
 
-	user := &User{TenantID: uint64(tenantID)}
+	user := &User{TenantID: 1} // fixed for oss
 	if err := a.pgconn.QueryRow(sql, userID).Scan(&user.ID, &user.Name, &user.Email, &user.JwtIat); err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
