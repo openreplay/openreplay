@@ -23,7 +23,7 @@ interface Props {
 }
 
 function PublicRoutes(props: Props) {
-  const hideSupport = props.isEnterprise || location.pathname.includes('spot')
+  const hideSupport = props.isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot')
   return (
     <Suspense fallback={<Loader loading={true} className='flex-1' />}>
       <Switch>

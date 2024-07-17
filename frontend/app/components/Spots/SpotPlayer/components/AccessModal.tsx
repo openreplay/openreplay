@@ -31,7 +31,7 @@ function AccessModal() {
     [Intervals.week]: WEEK_SECS,
   };
   const spotId = spotStore.currentSpot!.spotId!;
-  const spotLink = `${window.location.origin}/spot/${spotId}${
+  const spotLink = `${window.location.origin}/view-spot/${spotId}${
     spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
@@ -135,7 +135,7 @@ function AccessModal() {
             <div className={'text-disabled-text'}>
               All team members in your project will able to view this Spot
             </div>
-            <div className={'px-2 py-1 border rounded bg-[#FAFAFA] w-fit whitespace-nowrap overflow-ellipsis overflow-hidden'}>
+            <div className={'px-2 py-1 border rounded bg-[#FAFAFA] whitespace-nowrap overflow-ellipsis overflow-hidden'}>
               {spotLink}
             </div>
           </div>
@@ -169,11 +169,11 @@ function AccessModal() {
               {spotLink}
             </div>
           </div>
-          <div>
+          <div className={'flex items-center gap-2'}>
             <div>Link expires in</div>
             <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
               <div>
-                {spotStore.isLoading ? 'Loading' : durationFormatted(spotStore.pubKey!.expiration)}
+                {spotStore.isLoading ? 'Loading' : durationFormatted(spotStore.pubKey!.expiration * 1000)}
                 <DownOutlined />
               </div>
             </Dropdown>
