@@ -1,12 +1,12 @@
-certifi==2022.09.24
+certifi==2024.7.4
 chardet==5.1.0
-idna==3.4
+idna==3.7
 confluent-kafka==2.1.1
 pandas==1.5.1
 psycopg2-binary==2.9.6
 pytz==2023.3
-requests==2.28.1
+requests==2.32.2
 SQLAlchemy==1.4.43
 tzlocal==5.0.1
-urllib3==1.26.12
+urllib3==1.26.19
 PyYAML==6.0
