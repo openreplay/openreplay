@@ -48,9 +48,18 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
     }
   };
 
+  const request = JSON.stringify({
+    headers: ev.requestHeaders,
+    body: ev.body,
+  })
+  const response = JSON.stringify({
+    headers: ev.responseHeaders,
+    body: { warn: "Chrome Manifest V3 -- No response body available in Chrome 93+" }
+  })
   return ({
     ...ev,
-    method: 'GET',
+    request,
+    response,
     type: mapType(type),
     status: statusCode,
   })
@@ -178,6 +187,7 @@ class SpotPlayerStore {
         this.startTs
       );
     });
+    console.log(network, this.network)
   }
 
   get currentLogIndex() {
