@@ -87,6 +87,27 @@ class SpotPlayerStore {
     makeAutoObservable(this);
   }
 
+  clearData = () => {
+    this.time = 0;
+    this.duration = 0;
+    this.durationString = '';
+    this.isPlaying = true;
+    this.isMuted = false;
+    this.volume = 1;
+    this.playbackRate = 1;
+    this.isFullScreen = false;
+    this.logs = [];
+    this.locations = [];
+    this.clicks = [];
+    this.network = [];
+    this.startTs = 0;
+    this.activePanel = null;
+    this.skipInterval = 10;
+    this.browserVersion = null;
+    this.resolution = null;
+    this.platform = null;
+  }
+
   setDeviceData(browserVersion: string, resolution: string, platform: string) {
     this.browserVersion = browserVersion;
     this.resolution = resolution;

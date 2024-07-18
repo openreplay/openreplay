@@ -22,6 +22,12 @@ export default class SpotStore {
     makeAutoObservable(this);
   }
 
+  clearCurrent = () => {
+    this.currentSpot = null;
+    this.pubKey = null;
+    this.accessKey = undefined;
+  };
+
   withLoader<T>(fn: () => Promise<T>): Promise<T> {
     this.setLoading(true);
     return fn().finally(() => {
@@ -78,7 +84,9 @@ export default class SpotStore {
   }
 
   async fetchSpotById(id: string) {
-    const response = await this.withLoader(() => spotService.fetchSpot(id, this.accessKey));
+    const response = await this.withLoader(() =>
+      spotService.fetchSpot(id, this.accessKey)
+    );
 
     const spotInst = new Spot({ ...response.spot, id });
     this.setCurrentSpot(spotInst);
@@ -139,14 +147,18 @@ export default class SpotStore {
     const { key } = await this.withLoader(() =>
       spotService.generateKey(id, expiration)
     );
-    console.log(key)
+    console.log(key);
     this.setPubKey(key);
 
-    return key
+    return key;
   }
 
   async getPubKey(id: string) {
-    const { key } = await this.withLoader(() => spotService.getKey(id));
-    this.setPubKey(key);
+    try {
+      const { key } = await this.withLoader(() => spotService.getKey(id));
+      this.setPubKey(key);
+    } catch (e) {
+      console.log('no pubkey', e)
+    }
   }
 }
