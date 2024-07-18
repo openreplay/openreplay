@@ -1,4 +1,4 @@
-import { App, Messages } from "@openreplay/tracker";
+import { App, Messages } from '@openreplay/tracker';
 
 function createGraphqlMiddleware() {
   return (app: App | null) => {
@@ -10,7 +10,7 @@ function createGraphqlMiddleware() {
       operationName: string,
       variables: any,
       result: any,
-      duration = 0
+      duration = 0,
     ) => {
       try {
         app.send(
@@ -30,4 +30,4 @@ function createGraphqlMiddleware() {
   };
 }
 
-export default createGraphqlMiddleware
+export default createGraphqlMiddleware;
