@@ -471,13 +471,13 @@ class EventType(str, Enum):
     state_action = "stateAction"
     error = "error"
     tag = "tag"
-    click_mobile = "tapIos"
-    input_mobile = "inputIos"
-    view_mobile = "viewIos"
-    custom_mobile = "customIos"
-    request_mobile = "requestIos"
-    error_mobile = "errorIos"
-    swipe_mobile = "swipeIos"
+    click_mobile = "click_mobile"
+    input_mobile = "input_mobile"
+    view_mobile = "view_mobile"
+    custom_mobile = "custom_mobile"
+    request_mobile = "request_mobile"
+    error_mobile = "error_mobile"
+    swipe_mobile = "swipe_mobile"
 
 
 class PerformanceEventType(str, Enum):
