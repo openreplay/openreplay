@@ -19,7 +19,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/{projectId}/autocomplete', tags=["events"])
+@app.get('/{projectId}/autocomplete', tags=["autocomplete"])
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
@@ -27,8 +27,11 @@ def events_search(projectId: int, q: str,
                   schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if len(q) == 0:
+    if len(q) == 0 and not type:
         return {"data": []}
+    elif type:
+        # TODO: return to values related to type
+        pass
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)

@@ -144,14 +144,17 @@ def string_to_sql_like_with_op(value, op):
 
 
 likable_operators = [schemas.SearchEventOperator.STARTS_WITH, schemas.SearchEventOperator.ENDS_WITH,
-                     schemas.SearchEventOperator.CONTAINS, schemas.SearchEventOperator.NOT_CONTAINS]
+                     schemas.SearchEventOperator.CONTAINS, schemas.SearchEventOperator.NOT_CONTAINS,
+                     schemas.ClickEventExtraOperator.STARTS_WITH, schemas.ClickEventExtraOperator.ENDS_WITH,
+                     schemas.ClickEventExtraOperator.CONTAINS, schemas.ClickEventExtraOperator.NOT_CONTAINS]
 
 
-def is_likable(op: schemas.SearchEventOperator):
+def is_likable(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
     return op in likable_operators
 
 
-def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator):
+def values_for_operator(value: Union[str, list],
+                        op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
     if not is_likable(op):
         return value
     if isinstance(value, list):
@@ -162,11 +165,12 @@ def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator
     else:
         if value is None:
             return value
-        if op == schemas.SearchEventOperator.STARTS_WITH:
+        if op in (schemas.SearchEventOperator.STARTS_WITH, schemas.ClickEventExtraOperator.STARTS_WITH):
             return f"{value}%"
-        elif op == schemas.SearchEventOperator.ENDS_WITH:
+        elif op in (schemas.SearchEventOperator.ENDS_WITH, schemas.ClickEventExtraOperator.ENDS_WITH):
             return f"%{value}"
-        elif op == schemas.SearchEventOperator.CONTAINS or op == schemas.SearchEventOperator.NOT_CONTAINS:
+        elif op in (schemas.SearchEventOperator.CONTAINS, schemas.SearchEventOperator.NOT_CONTAINS,
+                    schemas.ClickEventExtraOperator.CONTAINS, schemas.ClickEventExtraOperator.NOT_CONTAINS):
             return f"%{value}%"
     return value
 
