@@ -541,7 +541,14 @@ class SearchEventOperator(str, Enum):
 
 
 class ClickEventExtraOperator(str, Enum):
-    ON_SELECTOR = "onSelector"
+    IS = "selectorIs"
+    IS_ANY = "selectorIsAny"
+    IS_NOT = "selectorIsNot"
+    IS_UNDEFINED = "selectorIsUndefined"
+    CONTAINS = "selectorContains"
+    NOT_CONTAINS = "selectorNotContains"
+    STARTS_WITH = "selectorStartsWith"
+    ENDS_WITH = "selectorEndsWith"
 
 
 class PlatformType(str, Enum):
