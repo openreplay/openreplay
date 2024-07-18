@@ -18,13 +18,13 @@ export class Spot {
   constructor(data: Record<string, any>) {
     makeAutoObservable(this)
     this.setAdditionalData(data)
+    this.comments = data.comments ?? [];
     this.thumbnail = data.previewURL
     this.title = data.name;
     this.createdAt = resentOrDate(new Date(data.createdAt).getTime());
     this.user = data.userEmail;
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id
-
   }
 
   setAdditionalData(data: Record<string, any>) {
