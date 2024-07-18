@@ -567,7 +567,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.fetch_failed: "REQUEST",
         schemas.EventType.error: "CRASH",
     }
-    if platform == "ios" and event_type in defs_mobile:
+    if platform != "web" and event_type in defs_mobile:
         return defs_mobile.get(event_type)
     if event_type not in defs:
         raise Exception(f"unsupported EventType:{event_type}")
@@ -968,7 +968,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                                 value_key=f"custom{i}"))
                         full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
                 else:
-                    _column = events.EventType.INPUT_IOS.column
+                    _column = events.EventType.INPUT_MOBILE.column
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
@@ -1001,7 +1001,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                                     event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                 else:
-                    _column = events.EventType.VIEW_IOS.column
+                    _column = events.EventType.VIEW_MOBILE.column
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
@@ -1092,6 +1092,114 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_extra_join += f" AND {event_where[-1]}"
 
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
+
+            # ----- Mobile
+            elif event_type == events.EventType.CLICK_MOBILE.ui_type:
+                _column = events.EventType.CLICK_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.INPUT_MOBILE.ui_type:
+                _column = events.EventType.INPUT_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.VIEW_MOBILE.ui_type:
+                _column = events.EventType.VIEW_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
+                _column = events.EventType.CUSTOM_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.REQUEST_MOBILE.ui_type:
+                event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
+                _column = 'url_path'
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.CRASH_MOBILE.ui_type:
+                _column = events.EventType.CRASH_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
+            elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform != "web":
+                _column = events.EventType.SWIPE_MOBILE.column
+                event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
+                events_conditions.append({"type": event_where[-1]})
+                if not is_any:
+                    if is_not:
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
+                        events_conditions_not.append(
+                            {"type": f"sub.event_type='{__get_event_type(event_type, platform=platform)}'"})
+                        events_conditions_not[-1]["condition"] = event_where[-1]
+                    else:
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
+                        events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == schemas.PerformanceEventType.fetch_failed:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
