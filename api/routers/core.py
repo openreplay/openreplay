@@ -19,6 +19,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
+@app.get('/{projectId}/autocomplete', tags=["events"])
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,

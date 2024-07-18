@@ -814,12 +814,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         event_where.append(
                             sh.multi_conditions(f"main.{events.EventType.VIEW_MOBILE.column} {op} %({e_k})s",
                                                 event.value, value_key=e_k))
-            elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform == "ios":
-                event_from = event_from % f"{events.EventType.SWIPE_MOBILE.table} AS main "
-                if not is_any:
-                    event_where.append(
-                        sh.multi_conditions(f"main.{events.EventType.SWIPE_MOBILE.column} {op} %({e_k})s",
-                                            event.value, value_key=e_k))
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{events.EventType.CUSTOM.table} AS main "
                 if not is_any:
@@ -855,7 +849,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_where.append(sh.multi_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
-            # ----- IOS
+            # ----- Mobile
             elif event_type == events.EventType.CLICK_MOBILE.ui_type:
                 event_from = event_from % f"{events.EventType.CLICK_MOBILE.table} AS main "
                 if not is_any:
@@ -897,6 +891,13 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                     event_where.append(
                         sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                             event.value, value_key=e_k))
+            elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform != "web":
+                event_from = event_from % f"{events.EventType.SWIPE_MOBILE.table} AS main "
+                if not is_any:
+                    event_where.append(
+                        sh.multi_conditions(f"main.{events.EventType.SWIPE_MOBILE.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
+
             elif event_type == schemas.PerformanceEventType.fetch_failed:
                 event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
                 if not is_any:
