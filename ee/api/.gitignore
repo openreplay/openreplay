@@ -250,7 +250,6 @@ Pipfile.lock
 /chalicelib/utils/storage/generators.py
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
-/chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
 /crons/__init__.py
 /crons/core_crons.py

@@ -9,20 +9,20 @@ from .transformers_validators import remove_whitespace, remove_duplicate_values
 
 
 class Permissions(str, Enum):
-    session_replay = "SESSION_REPLAY"
-    dev_tools = "DEV_TOOLS"
+    SESSION_REPLAY = "SESSION_REPLAY"
+    DEV_TOOLS = "DEV_TOOLS"
     # errors = "ERRORS"
-    metrics = "METRICS"
-    assist_live = "ASSIST_LIVE"
-    assist_call = "ASSIST_CALL"
-    feature_flags = "FEATURE_FLAGS"
+    METRICS = "METRICS"
+    ASSIST_LIVE = "ASSIST_LIVE"
+    ASSIST_CALL = "ASSIST_CALL"
+    FEATURE_FLAGS = "FEATURE_FLAGS"
 
 
 class ServicePermissions(str, Enum):
-    session_replay = "SERVICE_SESSION_REPLAY"
-    dev_tools = "SERVICE_DEV_TOOLS"
-    assist_live = "SERVICE_ASSIST_LIVE"
-    assist_call = "SERVICE_ASSIST_CALL"
+    SESSION_REPLAY = "SERVICE_SESSION_REPLAY"
+    DEV_TOOLS = "SERVICE_DEV_TOOLS"
+    ASSIST_LIVE = "SERVICE_ASSIST_LIVE"
+    ASSIST_CALL = "SERVICE_ASSIST_CALL"
 
 
 class CurrentContext(schemas.CurrentContext):
@@ -58,10 +58,10 @@ class SignalsSchema(BaseModel):
 
 
 class InsightCategories(str, Enum):
-    errors = "errors"
-    network = "network"
-    rage = "rage"
-    resources = "resources"
+    ERRORS = "errors"
+    NETWORK = "network"
+    RAGE = "rage"
+    RESOURCES = "resources"
 
 
 class GetInsightsSchema(schemas._TimedSchema):
@@ -89,12 +89,12 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     action: Optional[str] = Field(default=None)
-    order: schemas.SortOrderType = Field(default=schemas.SortOrderType.desc)
+    order: schemas.SortOrderType = Field(default=schemas.SortOrderType.DESC)
 
     @model_validator(mode="before")
     def transform_order(cls, values):
         if values.get("order") is None:
-            values["order"] = schemas.SortOrderType.desc
+            values["order"] = schemas.SortOrderType.DESC
         else:
             values["order"] = values["order"].upper()
         return values
@@ -145,7 +145,6 @@ class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema, schemas._TimedSc
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     order: Literal["asc", "desc"] = Field(default="desc")
-
 
 # TODO: move these to schema when Insights is supported on PG
 class CardInsights(schemas.CardInsights):

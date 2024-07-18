@@ -19,7 +19,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/{projectId}/autocomplete', tags=["events"])
+@app.get('/{projectId}/autocomplete', tags=["autocomplete"])
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
@@ -27,25 +27,28 @@ def events_search(projectId: int, q: str,
                   schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if len(q) == 0:
+    if len(q) == 0 and not type:
         return {"data": []}
+    elif type:
+        # TODO: return to values related to type
+        pass
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)
-    if type in [schemas.FetchFilterType._url]:
-        type = schemas.EventType.request
-    elif type in [schemas.GraphqlFilterType._name]:
-        type = schemas.EventType.graphql
+    if type in [schemas.FetchFilterType.FETCH_URL]:
+        type = schemas.EventType.REQUEST
+    elif type in [schemas.GraphqlFilterType.GRAPHQL_NAME]:
+        type = schemas.EventType.GRAPHQL
     elif isinstance(type, schemas.PerformanceEventType):
-        if type in [schemas.PerformanceEventType.location_dom_complete,
-                    schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                    schemas.PerformanceEventType.location_ttfb,
-                    schemas.PerformanceEventType.location_avg_cpu_load,
-                    schemas.PerformanceEventType.location_avg_memory_usage
+        if type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                    schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
+                    schemas.PerformanceEventType.LOCATION_TTFB,
+                    schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
+                    schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                     ]:
-            type = schemas.EventType.location
-        elif type in [schemas.PerformanceEventType.fetch_failed]:
-            type = schemas.EventType.request
+            type = schemas.EventType.LOCATION
+        elif type in [schemas.PerformanceEventType.FETCH_FAILED]:
+            type = schemas.EventType.REQUEST
         else:
             return {"data": []}
 
@@ -73,12 +76,12 @@ def integration_notify(projectId: int, integration: str, webhookId: int, source:
             "user": context.email, "comment": comment, "project_id": projectId,
             "integration_id": webhookId,
             "project_name": context.project.name}
-    if integration == schemas.WebhookType.slack:
+    if integration == schemas.WebhookType.SLACK:
         if source == "sessions":
             return Slack.share_session(session_id=sourceId, **args)
         elif source == "errors":
             return Slack.share_error(error_id=sourceId, **args)
-    elif integration == schemas.WebhookType.msteams:
+    elif integration == schemas.WebhookType.MSTEAMS:
         if source == "sessions":
             return MSTeams.share_session(session_id=sourceId, **args)
         elif source == "errors":
@@ -712,7 +715,7 @@ def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
 def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.slack)}
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.SLACK)}
 
 
 @app.get('/integrations/slack/{integrationId}', tags=["integrations"])
@@ -809,7 +812,7 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/integrations/msteams/channels', tags=["integrations"])
 def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.msteams)}
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.MSTEAMS)}
 
 
 @app.post('/integrations/msteams', tags=['integrations'])

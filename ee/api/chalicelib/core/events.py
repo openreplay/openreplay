@@ -61,7 +61,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
 def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with pg_client.PostgresClient() as cur:
         rows = []
-        if event_type is None or event_type == schemas.EventType.click:
+        if event_type is None or event_type == schemas.EventType.CLICK:
             cur.execute(cur.mogrify("""\
                 SELECT 
                     c.*,
@@ -75,7 +75,7 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
             rows += cur.fetchall()
             if group_clickrage:
                 rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
-        if event_type is None or event_type == schemas.EventType.input:
+        if event_type is None or event_type == schemas.EventType.INPUT:
             cur.execute(cur.mogrify("""
                 SELECT 
                     i.*,
@@ -87,7 +87,7 @@ def get_by_session_id(session_id, project_id, group_clickrage=False, event_type:
                                     {"project_id": project_id, "session_id": session_id})
                         )
             rows += cur.fetchall()
-        if event_type is None or event_type == schemas.EventType.location:
+        if event_type is None or event_type == schemas.EventType.LOCATION:
             cur.execute(cur.mogrify("""\
                 SELECT 
                     l.*,
@@ -121,26 +121,26 @@ def _search_tags(project_id, value, key=None, source=None):
 
 
 class EventType:
-    CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
-    INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
-    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="path")
-    CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
-    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
-    GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
-    STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
-    TAG = Event(ui_type=schemas.EventType.tag, table="events.tags", column="tag_id")
-    ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
+    CLICK = Event(ui_type=schemas.EventType.CLICK, table="events.clicks", column="label")
+    INPUT = Event(ui_type=schemas.EventType.INPUT, table="events.inputs", column="label")
+    LOCATION = Event(ui_type=schemas.EventType.LOCATION, table="events.pages", column="path")
+    CUSTOM = Event(ui_type=schemas.EventType.CUSTOM, table="events_common.customs", column="name")
+    REQUEST = Event(ui_type=schemas.EventType.REQUEST, table="events_common.requests", column="path")
+    GRAPHQL = Event(ui_type=schemas.EventType.GRAPHQL, table="events.graphql", column="name")
+    STATEACTION = Event(ui_type=schemas.EventType.STATE_ACTION, table="events.state_actions", column="name")
+    TAG = Event(ui_type=schemas.EventType.TAG, table="events.tags", column="tag_id")
+    ERROR = Event(ui_type=schemas.EventType.ERROR, table="events.errors",
                   column=None)  # column=None because errors are searched by name or message
-    METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
+    METADATA = Event(ui_type=schemas.FilterType.METADATA, table="public.sessions", column=None)
     #     MOBILE
-    CLICK_MOBILE = Event(ui_type=schemas.EventType.click_mobile, table="events_ios.taps", column="label")
-    INPUT_MOBILE = Event(ui_type=schemas.EventType.input_mobile, table="events_ios.inputs", column="label")
-    VIEW_MOBILE = Event(ui_type=schemas.EventType.view_mobile, table="events_ios.views", column="name")
-    SWIPE_MOBILE = Event(ui_type=schemas.EventType.swipe_mobile, table="events_ios.swipes", column="label")
-    CUSTOM_MOBILE = Event(ui_type=schemas.EventType.custom_mobile, table="events_common.customs", column="name")
-    REQUEST_MOBILE = Event(ui_type=schemas.EventType.request_mobile, table="events_common.requests", column="path")
-    CRASH_MOBILE = Event(ui_type=schemas.EventType.error_mobile, table="events_common.crashes",
-                      column=None)  # column=None because errors are searched by name or message
+    CLICK_MOBILE = Event(ui_type=schemas.EventType.CLICK_MOBILE, table="events_ios.taps", column="label")
+    INPUT_MOBILE = Event(ui_type=schemas.EventType.INPUT_MOBILE, table="events_ios.inputs", column="label")
+    VIEW_MOBILE = Event(ui_type=schemas.EventType.VIEW_MOBILE, table="events_ios.views", column="name")
+    SWIPE_MOBILE = Event(ui_type=schemas.EventType.SWIPE_MOBILE, table="events_ios.swipes", column="label")
+    CUSTOM_MOBILE = Event(ui_type=schemas.EventType.CUSTOM_MOBILE, table="events_common.customs", column="name")
+    REQUEST_MOBILE = Event(ui_type=schemas.EventType.REQUEST_MOBILE, table="events_common.requests", column="path")
+    CRASH_MOBILE = Event(ui_type=schemas.EventType.ERROR_MOBILE, table="events_common.crashes",
+                         column=None)  # column=None because errors are searched by name or message
 
 
 SUPPORTED_TYPES = {

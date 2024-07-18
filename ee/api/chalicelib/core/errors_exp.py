@@ -20,31 +20,31 @@ def _multiple_values(values, value_key="value"):
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
     return {
-        schemas.SearchEventOperator._is: "=",
-        schemas.SearchEventOperator._is_any: "IN",
-        schemas.SearchEventOperator._on: "=",
-        schemas.SearchEventOperator._on_any: "IN",
-        schemas.SearchEventOperator._is_not: "!=",
-        schemas.SearchEventOperator._not_on: "!=",
-        schemas.SearchEventOperator._contains: "ILIKE",
-        schemas.SearchEventOperator._not_contains: "NOT ILIKE",
-        schemas.SearchEventOperator._starts_with: "ILIKE",
-        schemas.SearchEventOperator._ends_with: "ILIKE",
+        schemas.SearchEventOperator.IS: "=",
+        schemas.SearchEventOperator.IS_ANY: "IN",
+        schemas.SearchEventOperator.ON: "=",
+        schemas.SearchEventOperator.ON_ANY: "IN",
+        schemas.SearchEventOperator.IS_NOT: "!=",
+        schemas.SearchEventOperator.NOT_ON: "!=",
+        schemas.SearchEventOperator.CONTAINS: "ILIKE",
+        schemas.SearchEventOperator.NOT_CONTAINS: "NOT ILIKE",
+        schemas.SearchEventOperator.STARTS_WITH: "ILIKE",
+        schemas.SearchEventOperator.ENDS_WITH: "ILIKE",
     }.get(op, "=")
 
 
 def _isAny_opreator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
+    return op in [schemas.SearchEventOperator.ON_ANY, schemas.SearchEventOperator.IS_ANY]
 
 
 def _isUndefined_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_undefined]
+    return op in [schemas.SearchEventOperator.IS_UNDEFINED]
 
 
 def __is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_not,
-                  schemas.SearchEventOperator._not_on,
-                  schemas.SearchEventOperator._not_contains]
+    return op in [schemas.SearchEventOperator.IS_NOT,
+                  schemas.SearchEventOperator.NOT_ON,
+                  schemas.SearchEventOperator.NOT_CONTAINS]
 
 
 def _multiple_conditions(condition, values, value_key="value", is_not=False):
@@ -501,9 +501,9 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     if time_constraint:
         ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
-    if platform == schemas.PlatformType.mobile:
+    if platform == schemas.PlatformType.MOBILE:
         ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.desktop:
+    elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
@@ -515,9 +515,9 @@ def __get_step_size(startTimestamp, endTimestamp, density):
 
 def __get_sort_key(key):
     return {
-        schemas.ErrorSort.occurrence: "max_datetime",
-        schemas.ErrorSort.users_count: "users",
-        schemas.ErrorSort.sessions_count: "sessions"
+        schemas.ErrorSort.OCCURRENCE: "max_datetime",
+        schemas.ErrorSort.USERS_COUNT: "users",
+        schemas.ErrorSort.SESSIONS_COUNT: "sessions"
     }.get(key, 'max_datetime')
 
 
@@ -534,9 +534,9 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
     if chart:
         ch_sub_query += [f"timestamp >=  generated_timestamp",
                          f"timestamp <  generated_timestamp + %({step_size_name})s"]
-    if platform == schemas.PlatformType.mobile:
+    if platform == schemas.PlatformType.MOBILE:
         ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == schemas.PlatformType.desktop:
+    elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
@@ -547,7 +547,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
     platform = None
     for f in data.filters:
-        if f.type == schemas.FilterType.platform and len(f.value) > 0:
+        if f.type == schemas.FilterType.PLATFORM and len(f.value) > 0:
             platform = f.value[0]
     ch_sessions_sub_query = __get_basic_constraints(platform, type_condition=False)
     # ignore platform for errors table
@@ -567,7 +567,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     if len(data.events) > 0:
         errors_condition_count = 0
         for i, e in enumerate(data.events):
-            if e.type == schemas.EventType.error:
+            if e.type == schemas.EventType.ERROR:
                 errors_condition_count += 1
                 is_any = _isAny_opreator(e.operator)
                 op = __get_sql_operator(e.operator)
@@ -596,7 +596,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             f_k = f"f_value{i}"
             params = {**params, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
             op = __get_sql_operator(f.operator) \
-                if filter_type not in [schemas.FilterType.events_count] else f.operator
+                if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator
             is_any = _isAny_opreator(f.operator)
             is_undefined = _isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
@@ -604,7 +604,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             is_not = False
             if __is_negation_operator(f.operator):
                 is_not = True
-            if filter_type == schemas.FilterType.user_browser:
+            if filter_type == schemas.FilterType.USER_BROWSER:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_browser)')
                 else:
@@ -612,14 +612,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
+            elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_os)')
                 else:
                     ch_sessions_sub_query.append(
                         _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
+            elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_device)')
                 else:
@@ -627,7 +627,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
+            elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_country)')
                 else:
@@ -636,7 +636,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                              value_key=f_k))
 
 
-            elif filter_type in [schemas.FilterType.utm_source]:
+            elif filter_type in [schemas.FilterType.UTM_SOURCE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.utm_source)')
                 elif is_undefined:
@@ -646,7 +646,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.utm_medium]:
+            elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.utm_medium)')
                 elif is_undefined:
@@ -655,7 +655,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     ch_sessions_sub_query.append(
                         _multiple_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                              value_key=f_k))
-            elif filter_type in [schemas.FilterType.utm_campaign]:
+            elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.utm_campaign)')
                 elif is_undefined:
@@ -665,7 +665,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type == schemas.FilterType.duration:
+            elif filter_type == schemas.FilterType.DURATION:
                 if len(f.value) > 0 and f.value[0] is not None:
                     ch_sessions_sub_query.append("s.duration >= %(minDuration)s")
                     params["minDuration"] = f.value[0]
@@ -673,14 +673,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     ch_sessions_sub_query.append("s.duration <= %(maxDuration)s")
                     params["maxDuration"] = f.value[1]
 
-            elif filter_type == schemas.FilterType.referrer:
+            elif filter_type == schemas.FilterType.REFERRER:
                 # extra_from += f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"
                 if is_any:
                     referrer_constraint = 'isNotNull(s.base_referrer)'
                 else:
                     referrer_constraint = _multiple_conditions(f"s.base_referrer {op} %({f_k})s", f.value,
                                                                is_not=is_not, value_key=f_k)
-            elif filter_type == schemas.FilterType.metadata:
+            elif filter_type == schemas.FilterType.METADATA:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -696,7 +696,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                 f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
+            elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_id)')
                 elif is_undefined:
@@ -705,8 +705,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     ch_sessions_sub_query.append(
                         _multiple_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
-            elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_mobile]:
+            elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                                 schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.user_anonymous_id)')
                 elif is_undefined:
@@ -717,7 +717,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                              is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
+            elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
                 if is_any:
                     ch_sessions_sub_query.append('isNotNull(s.rev_id)')
                 elif is_undefined:
@@ -727,7 +727,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                         _multiple_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
 
-            elif filter_type == schemas.FilterType.platform:
+            elif filter_type == schemas.FilterType.PLATFORM:
                 # op = __get_sql_operator(f.operator)
                 ch_sessions_sub_query.append(
                     _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
@@ -743,7 +743,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             #         if is_not:
             #             extra_constraints[-1] = f"not({extra_constraints[-1]})"
             #             ss_constraints[-1] = f"not({ss_constraints[-1]})"
-            elif filter_type == schemas.FilterType.events_count:
+            elif filter_type == schemas.FilterType.EVENTS_COUNT:
                 ch_sessions_sub_query.append(
                     _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
                                          value_key=f_k))

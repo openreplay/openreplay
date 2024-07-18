@@ -7,7 +7,7 @@ from chalicelib.core import dashboards, custom_metrics, funnels
 from or_dependencies import OR_context, OR_scope
 from routers.base import get_routers
 
-public_app, app, app_apikey = get_routers([OR_scope(schemas.Permissions.metrics)])
+public_app, app, app_apikey = get_routers([OR_scope(schemas.Permissions.METRICS)])
 
 
 @app.post('/{projectId}/dashboards', tags=["dashboard"])

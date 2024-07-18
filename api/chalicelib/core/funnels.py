@@ -7,10 +7,10 @@ from chalicelib.utils import sql_helper as sh
 
 
 def filter_stages(stages: List[schemas.SessionSearchEventSchema2]):
-    ALLOW_TYPES = [schemas.EventType.click, schemas.EventType.input,
-                   schemas.EventType.location, schemas.EventType.custom,
-                   schemas.EventType.click_mobile, schemas.EventType.input_mobile,
-                   schemas.EventType.view_mobile, schemas.EventType.custom_mobile, ]
+    ALLOW_TYPES = [schemas.EventType.CLICK, schemas.EventType.INPUT,
+                   schemas.EventType.LOCATION, schemas.EventType.CUSTOM,
+                   schemas.EventType.CLICK_MOBILE, schemas.EventType.INPUT_MOBILE,
+                   schemas.EventType.VIEW_MOBILE, schemas.EventType.CUSTOM_MOBILE, ]
     return [s for s in stages if s.type in ALLOW_TYPES and s.value is not None]
 
 
@@ -24,7 +24,7 @@ def __fix_stages(f_events: List[schemas.SessionSearchEventSchema2]):
     events = []
     for e in f_events:
         if e.operator is None:
-            e.operator = schemas.SearchEventOperator._is
+            e.operator = schemas.SearchEventOperator.IS
 
         if not isinstance(e.value, list):
             e.value = [e.value]
@@ -47,10 +47,10 @@ def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilte
                                                                        metric_of=metric_of)
     insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
-        if metric_of == schemas.MetricOfFunnels.session_count and total_drop_due_to_issues > (
+        if metric_of == schemas.MetricOfFunnels.SESSION_COUNT and total_drop_due_to_issues > (
                 insights[0]["sessionsCount"] - insights[-1]["sessionsCount"]):
             total_drop_due_to_issues = insights[0]["sessionsCount"] - insights[-1]["sessionsCount"]
-        elif metric_of == schemas.MetricOfFunnels.user_count and total_drop_due_to_issues > (
+        elif metric_of == schemas.MetricOfFunnels.USER_COUNT and total_drop_due_to_issues > (
                 insights[0]["usersCount"] - insights[-1]["usersCount"]):
             total_drop_due_to_issues = insights[0]["usersCount"] - insights[-1]["usersCount"]
         insights[-1]["dropDueToIssues"] = total_drop_due_to_issues

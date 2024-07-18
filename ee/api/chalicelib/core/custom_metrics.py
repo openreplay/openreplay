@@ -159,14 +159,14 @@ def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int =
 
 def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
     supported = {
-        schemas.MetricOfTable.sessions: __get_table_of_sessions,
-        schemas.MetricOfTable.errors: __get_table_of_errors,
-        schemas.MetricOfTable.user_id: __get_table_of_user_ids,
-        schemas.MetricOfTable.issues: __get_table_of_issues,
+        schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
+        schemas.MetricOfTable.ERRORS: __get_table_of_errors,
+        schemas.MetricOfTable.USER_ID: __get_table_of_user_ids,
+        schemas.MetricOfTable.ISSUES: __get_table_of_issues,
         schemas.MetricOfTable.user_browser: __get_table_of_browsers,
-        schemas.MetricOfTable.user_device: __get_table_of_devises,
-        schemas.MetricOfTable.user_country: __get_table_of_countries,
-        schemas.MetricOfTable.visited_url: __get_table_of_urls,
+        schemas.MetricOfTable.USER_DEVICE: __get_table_of_devises,
+        schemas.MetricOfTable.USER_COUNTRY: __get_table_of_countries,
+        schemas.MetricOfTable.VISITED_URL: __get_table_of_urls,
     }
     return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
@@ -178,12 +178,12 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
                                                     data=data.model_dump())
 
     supported = {
-        schemas.MetricType.timeseries: __get_timeseries_chart,
-        schemas.MetricType.table: __get_table_chart,
-        schemas.MetricType.heat_map: __get_heat_map_chart,
-        schemas.MetricType.funnel: __get_funnel_chart,
-        schemas.MetricType.insights: __get_insights_chart,
-        schemas.MetricType.pathAnalysis: __get_path_analysis_chart
+        schemas.MetricType.TIMESERIES: __get_timeseries_chart,
+        schemas.MetricType.TABLE: __get_table_chart,
+        schemas.MetricType.HEAT_MAP: __get_heat_map_chart,
+        schemas.MetricType.FUNNEL: __get_funnel_chart,
+        schemas.MetricType.INSIGHTS: __get_insights_chart,
+        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
@@ -293,18 +293,18 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
         filters=filters
     )
     # ---- To make issues response close to the chart response
-    search_data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
-                                                                 operator=schemas.MathOperator._greater,
+    search_data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
+                                                                 operator=schemas.MathOperator.GREATER,
                                                                  value=[1]))
     if len(data.start_point) == 0:
-        search_data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.location,
-                                                                    operator=schemas.SearchEventOperator._is_any,
+        search_data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
+                                                                    operator=schemas.SearchEventOperator.IS_ANY,
                                                                     value=[]))
     # ---- End
 
     for s in data.excludes:
         search_data.events.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                    operator=schemas.SearchEventOperator._not_on,
+                                                                    operator=schemas.SearchEventOperator.NOT_ON,
                                                                     value=s.value))
     result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
     return result
@@ -313,15 +313,15 @@ def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.Card
 def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
     if data.is_predefined:
         return not_supported()
-    if data.metric_of == schemas.MetricOfTable.issues:
+    if data.metric_of == schemas.MetricOfTable.ISSUES:
         return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
     supported = {
-        schemas.MetricType.timeseries: not_supported,
-        schemas.MetricType.table: not_supported,
-        schemas.MetricType.heat_map: not_supported,
-        schemas.MetricType.funnel: __get_funnel_issues,
-        schemas.MetricType.insights: not_supported,
-        schemas.MetricType.pathAnalysis: __get_path_analysis_issues,
+        schemas.MetricType.TIMESERIES: not_supported,
+        schemas.MetricType.TABLE: not_supported,
+        schemas.MetricType.HEAT_MAP: not_supported,
+        schemas.MetricType.FUNNEL: __get_funnel_issues,
+        schemas.MetricType.INSIGHTS: not_supported,
+        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_issues,
     }
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
@@ -337,7 +337,7 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
 def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
-        if data.metric_type == schemas.MetricType.heat_map:
+        if data.metric_type == schemas.MetricType.HEAT_MAP:
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
@@ -370,7 +370,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
         params["default_config"] = json.dumps(data.default_config.model_dump())
         params["card_info"] = None
-        if data.metric_type == schemas.MetricType.pathAnalysis:
+        if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
             params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
@@ -433,9 +433,9 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
     params["d_series_ids"] = tuple(d_series_ids)
     params["card_info"] = None
     params["session_data"] = json.dumps(metric["data"])
-    if data.metric_type == schemas.MetricType.pathAnalysis:
+    if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
         params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
-    elif data.metric_type == schemas.MetricType.heat_map:
+    elif data.metric_type == schemas.MetricType.HEAT_MAP:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})
         elif metric.get("data") and metric["data"].get("sessionId"):
@@ -499,7 +499,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
     if data.query is not None and len(data.query) > 0:
         constraints.append("(name ILIKE %(query)s OR owner.owner_email ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
-                                                     op=schemas.SearchEventOperator._contains)
+                                                     op=schemas.SearchEventOperator.CONTAINS)
     with pg_client.PostgresClient() as cur:
         sub_join = ""
         if include_series:
@@ -641,7 +641,7 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         row = helper.dict_to_camel_case(row)
-        if row["metricType"] == schemas.MetricType.pathAnalysis:
+        if row["metricType"] == schemas.MetricType.PATH_ANALYSIS:
             row = __get_path_analysis_attributes(row=row)
     return row
 
@@ -740,7 +740,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
                                                     project_id=project_id,
                                                     data=data.model_dump())
-    elif metric.metric_type == schemas.MetricType.heat_map:
+    elif metric.metric_type == schemas.MetricType.HEAT_MAP:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
             return heatmaps.get_selected_session(project_id=project_id,
                                                  session_id=raw_metric["data"]["sessionId"])

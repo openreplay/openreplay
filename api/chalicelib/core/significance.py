@@ -57,29 +57,29 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             is_not = False
             if sh.is_negation_operator(f.operator):
                 is_not = True
-            if filter_type == schemas.FilterType.user_browser:
+            if filter_type == schemas.FilterType.USER_BROWSER:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile]:
+            elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile]:
+            elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile]:
+            elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-            elif filter_type == schemas.FilterType.duration:
+            elif filter_type == schemas.FilterType.DURATION:
                 if len(f.value) > 0 and f.value[0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
                     values["minDuration"] = f.value[0]
                 if len(f["value"]) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                     first_stage_extra_constraints.append('s.duration <= %(maxDuration)s')
                     values["maxDuration"] = f.value[1]
-            elif filter_type == schemas.FilterType.referrer:
+            elif filter_type == schemas.FilterType.REFERRER:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
                 first_stage_extra_constraints.append(
@@ -94,16 +94,16 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
                             f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
                             is_not=is_not, value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile]:
+            elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.user_anonymous_id,
-                                 schemas.FilterType.user_anonymous_id_mobile]:
+            elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                                 schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile]:
+            elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
@@ -111,7 +111,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     for s in stages:
 
         if s.operator is None:
-            s.operator = schemas.SearchEventOperator._is
+            s.operator = schemas.SearchEventOperator.IS
 
         if not isinstance(s.value, list):
             s.value = [s.value]
@@ -431,7 +431,7 @@ def count_users(rows, n_stages, user_key="user_uuid"):
     return users_count
 
 
-def get_stages(stages, rows, metric_of=schemas.MetricOfFunnels.session_count):
+def get_stages(stages, rows, metric_of=schemas.MetricOfFunnels.SESSION_COUNT):
     n_stages = len(stages)
     if metric_of == "sessionCount":
         base_counts = count_sessions(rows, n_stages)
