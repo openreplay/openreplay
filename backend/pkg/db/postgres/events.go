@@ -132,8 +132,15 @@ func (conn *Conn) InsertWebClickEvent(sess *sessions.Session, e *messages.MouseC
 	}
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
-	if e.NormalizedX <= 100 && e.NormalizedY <= 100 {
-		if err := conn.bulks.Get("webClickXYEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime, e.NormalizedX, e.NormalizedY); err != nil {
+	if e.NormalizedX != 101 && e.NormalizedY != 101 {
+		// To support previous versions of tracker
+		if e.NormalizedX <= 100 && e.NormalizedY <= 100 {
+			e.NormalizedX *= 100
+			e.NormalizedY *= 100
+		}
+		normalizedX := float32(e.NormalizedX) / 100.0
+		normalizedY := float32(e.NormalizedY) / 100.0
+		if err := conn.bulks.Get("webClickXYEvents").Append(sess.SessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime, normalizedX, normalizedY); err != nil {
 			sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 			conn.log.Error(sessCtx, "insert web click event in bulk err: %s", err)
 		}
