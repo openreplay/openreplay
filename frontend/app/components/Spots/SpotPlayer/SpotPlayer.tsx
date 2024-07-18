@@ -119,6 +119,8 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     document.addEventListener('keydown', ev);
     return () => {
       document.removeEventListener('keydown', ev);
+      spotStore.clearCurrent()
+      spotPlayerStore.clearData()
     };
   }, []);
   if (!spotStore.currentSpot) {
