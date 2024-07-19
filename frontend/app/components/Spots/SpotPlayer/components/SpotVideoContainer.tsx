@@ -1,6 +1,7 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+
 import spotPlayerStore from '../spotPlayerStore';
 
 const base64toblob = (str: string) => {
@@ -32,18 +33,27 @@ function SpotVideoContainer({
           // 1MB buffer -- we have small videos anyways
           maxBufferSize: 1000 * 1000,
         });
-        const url = URL.createObjectURL(base64toblob(streamFile));
+      const url = URL.createObjectURL(base64toblob(streamFile));
         if (url && videoRef.current) {
           hls.loadSource(url);
           hls.attachMedia(videoRef.current);
+          if (spotPlayerStore.isPlaying) {
+            void videoRef.current.play();
+          }
           hlsRef.current = hls;
         } else {
           if (videoRef.current) {
             videoRef.current.src = videoURL;
+            if (spotPlayerStore.isPlaying) {
+              void videoRef.current.play();
+            }
           }
         }
       } else {
         videoRef.current.src = videoURL;
+        if (spotPlayerStore.isPlaying) {
+          void videoRef.current.play();
+        }
       }
     }
     return () => {
