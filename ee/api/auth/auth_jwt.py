@@ -29,6 +29,11 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     return request.state.currentContext
 
 
+def _allow_access_to_endpoint(request: Request, current_context: schemas.CurrentContext) -> bool:
+    return not current_context.service_account \
+        or request.url.path not in ["/logout", "/api/logout", "/refresh", "/api/refresh"]
+
+
 class JWTAuth(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super(JWTAuth, self).__init__(auto_error=auto_error)
@@ -68,7 +73,10 @@ class JWTAuth(HTTPBearer):
                         or old_jwt_payload.get("userId") != jwt_payload.get("userId"):
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-                return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                ctx = _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                if not _allow_access_to_endpoint(request=request, current_context=ctx):
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized endpoint.")
+                return ctx
 
         else:
             credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)
@@ -95,7 +103,10 @@ class JWTAuth(HTTPBearer):
 
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-                return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                ctx = _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                if not _allow_access_to_endpoint(request=request, current_context=ctx):
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized endpoint.")
+                return ctx
 
         logger.warning("Invalid authorization code.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")
