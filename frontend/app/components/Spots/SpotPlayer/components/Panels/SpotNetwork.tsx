@@ -5,7 +5,7 @@ import { NetworkPanelComp } from 'Components/shared/DevTools/NetworkPanel/Networ
 
 import spotPlayerStore from '../../spotPlayerStore';
 
-function SpotNetwork({ panelHeight }: { panelHeight: number }) {
+function SpotNetwork({ panelHeight, onClose }: { panelHeight: number, onClose: () => void }) {
   const list = spotPlayerStore.network;
   const { index } = spotPlayerStore.getHighlightedEvent(
     spotPlayerStore.time,
@@ -27,6 +27,7 @@ function SpotNetwork({ panelHeight }: { panelHeight: number }) {
         /* @ts-ignore */
         player={{ jump: (t) => spotPlayerStore.setTime(t) }}
         activeIndex={index}
+        onClose={onClose}
       />
   );
 }

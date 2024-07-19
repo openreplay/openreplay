@@ -135,6 +135,10 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     setActiveTab(null);
   };
 
+  const onPanelClose = () => {
+    spotPlayerStore.setActivePanel(null);
+  }
+
   const isFullScreen = spotPlayerStore.isFullScreen;
   return (
     <div
@@ -160,7 +164,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         <div className={'w-full h-full flex flex-col justify-between'}>
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
-            <SpotVideoContainer videoURL={spotStore.currentSpot.videoURL!} />
+            <SpotVideoContainer videoURL={spotStore.currentSpot.videoURL!} streamFile={spotStore.currentSpot.streamFile} />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (
             <div
@@ -181,10 +185,10 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
               {spotPlayerStore.activePanel ? (
                 <div className={'w-full h-full bg-white'}>
                   {spotPlayerStore.activePanel === PANELS.CONSOLE ? (
-                    <SpotConsole />
+                    <SpotConsole onClose={onPanelClose} />
                   ) : null}
                   {spotPlayerStore.activePanel === PANELS.NETWORK ? (
-                    <SpotNetwork panelHeight={panelHeight} />
+                    <SpotNetwork onClose={onPanelClose} panelHeight={panelHeight} />
                   ) : null}
                 </div>
               ) : null}
