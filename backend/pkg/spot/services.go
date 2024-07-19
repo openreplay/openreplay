@@ -30,6 +30,6 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*
 		Auth:       NewAuth(log, cfg.JWTSecret, pgconn),
 		Spots:      NewSpots(log, pgconn, flaker),
 		Keys:       NewKeys(log, pgconn),
-		Transcoder: NewTranscoder(cfg, log, objStore),
+		Transcoder: NewTranscoder(cfg, log, objStore, pgconn),
 	}, nil
 }

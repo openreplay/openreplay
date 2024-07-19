@@ -205,7 +205,7 @@ func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
 		sql += ` OFFSET ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, opts.Offset)
 	}
-	s.log.Info(context.Background(), "sql: %s, args: %v", sql, args)
+	//s.log.Info(context.Background(), "sql: %s, args: %v", sql, args)
 	rows, err := s.pgconn.Query(sql, args...)
 	if err != nil {
 		return nil, 0, err

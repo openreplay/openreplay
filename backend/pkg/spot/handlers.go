@@ -207,6 +207,10 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
 	}
+	if e.services.Transcoder.IsSpotStreamReady(id) {
+		spotInfo.StreamURL = fmt.Sprintf("/v1/spots/%d/stream", id)
+	}
+
 	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
@@ -412,6 +416,38 @@ func (e *Router) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 		"url": videoURL,
 	}
 	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *Router) getSpotStream(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Example data to serve as the file content
+	streamPlaylist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	// Create a buffer with the file content
+	buffer := bytes.NewBuffer(streamPlaylist)
+
+	// Set the headers for the response
+	w.Header().Set("Content-Disposition", "attachment; filename=index.m3u8")
+	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl") //"application/octet-stream")
+	w.Header().Set("Content-Length", string(len(streamPlaylist)))
+
+	// Write the content of the buffer to the response writer
+	if _, err := buffer.WriteTo(w); err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 }
 
 func (e *Router) getPublicKey(w http.ResponseWriter, r *http.Request) {

@@ -23,6 +23,7 @@ type Info struct {
 	CreatedAt time.Time `json:"createdAt"`
 	MobURL    string    `json:"mobURL"`
 	VideoURL  string    `json:"videoURL"`
+	StreamURL string    `json:"streamURL"`
 }
 
 type GetSpotResponse struct {

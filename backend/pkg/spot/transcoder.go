@@ -1,21 +1,26 @@
 package spot
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"openreplay/backend/internal/config/spot"
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type Transcoder interface {
 	Transcode(spotID uint64) error
+	GetSpotStreamPlaylist(spotID uint64) ([]byte, error)
+	IsSpotStreamReady(spotID uint64) bool
 	Close()
 }
 
@@ -24,14 +29,16 @@ type transcoderImpl struct {
 	log        logger.Logger
 	queue      chan uint64 // in-memory queue for transcoding
 	objStorage objectstorage.ObjectStorage
+	conn       pool.Pool
 }
 
-func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage) Transcoder {
+func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool) Transcoder {
 	tnsc := &transcoderImpl{
 		cfg:        cfg,
 		log:        log,
 		queue:      make(chan uint64, 100),
 		objStorage: objStorage,
+		conn:       conn,
 	}
 	go tnsc.mainLoop()
 	return tnsc
@@ -105,21 +112,94 @@ func (t *transcoderImpl) transcode(spotID uint64) {
 	}
 	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start))
 
-	// Upload transcoded spot to S3 (chunks only)
-	files, err := os.ReadDir(path)
-	if err != nil || len(files) == 0 {
-		t.log.Error(context.Background(), "Failed to read directory %s: %s", path, err)
+	// Read the M3U8 file
+	file, err := os.Open(playlistPath)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
 		return
 	}
-	chunks := make(map[string]string) // origin chuck name -> pre-signed url
-	for _, file := range files {
-		if file.IsDir() || file.Name() == "origin.webm" || file.Name() == "index.m3u8" {
-			continue
+	defer file.Close()
+
+	var originalLines []string
+	var lines []string
+	var chunks []string
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		lines = append(lines, line)
+		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
+			chunks = append(chunks, line)
 		}
-		chunks[file.Name()] = file.Name()
+		originalLines = append(originalLines, line)
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	// Insert stream chunks to s3
+	for _, chunk := range chunks {
+		chunkPath := path + chunk
+		chunkFile, err := os.Open(chunkPath)
+		if err != nil {
+			fmt.Println("Error opening file:", err)
+			return
+		}
+		defer chunkFile.Close()
+
+		key := fmt.Sprintf("%d/%s", spotID, chunk)
+		err = t.objStorage.Upload(chunkFile, key, "video/mp2t", objectstorage.NoCompression)
+		if err != nil {
+			fmt.Println("Error uploading file:", err)
+			return
+		}
+	}
+
+	// Replace indexN.ts with pre-signed URLs
+	for i, line := range lines {
+		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
+			key := fmt.Sprintf("%d/%s", spotID, line)
+			presignedURL, err := t.objStorage.GetPreSignedDownloadUrl(key)
+			if err != nil {
+				fmt.Println("Error generating presigned URL:", err)
+				return
+			}
+			lines[i] = presignedURL
+		}
+	}
+
+	originalContent := strings.Join(originalLines, "\n")
+	modifiedContent := strings.Join(lines, "\n")
+	// Insert playlist to DB
+	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at) VALUES ($1, $2, $3) ON CONFLICT (spot_id) DO UPDATE SET playlist = $2, modified_playlist = $3, created_at = $4`
+	if err := t.conn.Exec(sql, spotID, originalContent, modifiedContent, time.Now()); err != nil {
+		fmt.Println("Error inserting playlist to DB:", err)
+		return
 	}
 
 	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
+}
+
+func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
+	// Get modified playlist from DB
+	sql := `SELECT modified_playlist FROM spots_streams WHERE spot_id = $1`
+	var playlist string
+	if err := t.conn.QueryRow(sql, spotID).Scan(&playlist); err != nil {
+		t.log.Error(context.Background(), "Error getting spot stream playlist: %v", err)
+		return []byte(""), err
+	}
+	return []byte(playlist), nil
+}
+
+func (t *transcoderImpl) IsSpotStreamReady(spotID uint64) bool {
+	// check if spot is present in DB
+	sql := `SELECT COUNT(*) FROM spots_streams WHERE spot_id = $1`
+	var count int
+	if err := t.conn.QueryRow(sql, spotID).Scan(&count); err != nil {
+		t.log.Error(context.Background(), "Error checking spot stream: %v", err)
+	}
+	return count > 0
 }
 
 func (t *transcoderImpl) Close() {
