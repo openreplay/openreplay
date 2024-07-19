@@ -23,7 +23,7 @@ import { init as initSite } from 'Duck/site';
 import { fetchUserInfo, setJwt } from 'Duck/user';
 import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
-
+import { toast } from 'react-toastify'
 import * as routes from './routes';
 
 interface RouterProps
@@ -170,6 +170,9 @@ const Router: React.FC<RouterProps> = (props) => {
 
   if (isLoggedIn && spotLoginUrl) {
     window.postMessage({ type: "orspot:token", token: jwt }, '*')
+    toast.success('You have been logged into Spot successfully');
+    history.push(routes.spotsList())
+    // check permissions, show error notifications if not exist in EE
   }
 
   return isLoggedIn ? (
