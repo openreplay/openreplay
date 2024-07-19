@@ -172,7 +172,7 @@ func (t *transcoderImpl) transcode(spotID uint64) {
 	originalContent := strings.Join(originalLines, "\n")
 	modifiedContent := strings.Join(lines, "\n")
 	// Insert playlist to DB
-	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at) VALUES ($1, $2, $3) ON CONFLICT (spot_id) DO UPDATE SET playlist = $2, modified_playlist = $3, created_at = $4`
+	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (spot_id) DO UPDATE SET original_playlist = $2, modified_playlist = $3, created_at = $4`
 	if err := t.conn.Exec(sql, spotID, originalContent, modifiedContent, time.Now()); err != nil {
 		fmt.Println("Error inserting playlist to DB:", err)
 		return
