@@ -168,12 +168,15 @@ const Router: React.FC<RouterProps> = (props) => {
     );
   }
 
-  if (isLoggedIn && spotLoginUrl) {
-    window.postMessage({ type: "orspot:token", token: jwt }, '*')
-    toast.success('You have been logged into Spot successfully');
-    history.push(routes.spotsList())
-    // check permissions, show error notifications if not exist in EE
-  }
+  React.useEffect(() => {
+    if (isLoggedIn && spotLoginUrl) {
+      window.postMessage({ type: "orspot:token", token: jwt }, '*')
+      toast.success('You have been logged into Spot successfully');
+      history.push(routes.spotsList())
+      // check permissions, show error notifications if not exist in EE
+    }
+  }, [isLoggedIn, spotLoginUrl])
+
 
   return isLoggedIn ? (
     <NewModalProvider>
