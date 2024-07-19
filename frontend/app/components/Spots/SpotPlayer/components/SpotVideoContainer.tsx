@@ -1,12 +1,9 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-
-import { useStore } from 'App/mstore';
-
 import spotPlayerStore from '../spotPlayerStore';
 
-const base64toblob = (str) => {
+const base64toblob = (str: string) => {
   const byteCharacters = atob(str);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -25,15 +22,21 @@ function SpotVideoContainer({
 }) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
-  const { spotStore } = useStore();
+  const hlsRef = React.useRef<Hls | null>(null);
+
   React.useEffect(() => {
     if (Hls.isSupported() && videoRef.current) {
       if (streamFile) {
-        const hls = new Hls({ workerPath: '/hls-worker.js' });
+        const hls = new Hls({
+          workerPath: '/hls-worker.js',
+          // 1MB buffer -- we have small videos anyways
+          maxBufferSize: 1000 * 1000,
+        });
         const url = URL.createObjectURL(base64toblob(streamFile));
         if (url && videoRef.current) {
           hls.loadSource(url);
           hls.attachMedia(videoRef.current);
+          hlsRef.current = hls;
         } else {
           if (videoRef.current) {
             videoRef.current.src = videoURL;
@@ -43,6 +46,9 @@ function SpotVideoContainer({
         videoRef.current.src = videoURL;
       }
     }
+    return () => {
+      hlsRef.current?.destroy();
+    };
   }, []);
 
   React.useEffect(() => {
