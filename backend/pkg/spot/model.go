@@ -16,14 +16,14 @@ type CreateSpotResponse struct {
 }
 
 type Info struct {
-	Name      string    `json:"name"`
-	UserEmail string    `json:"userEmail"`
-	Duration  int       `json:"duration"`
-	Comments  []Comment `json:"comments"`
-	CreatedAt time.Time `json:"createdAt"`
-	MobURL    string    `json:"mobURL"`
-	VideoURL  string    `json:"videoURL"`
-	StreamURL string    `json:"streamURL"`
+	Name       string    `json:"name"`
+	UserEmail  string    `json:"userEmail"`
+	Duration   int       `json:"duration"`
+	Comments   []Comment `json:"comments"`
+	CreatedAt  time.Time `json:"createdAt"`
+	MobURL     string    `json:"mobURL"`
+	VideoURL   string    `json:"videoURL"`
+	StreamFile string    `json:"streamFile"`
 }
 
 type GetSpotResponse struct {

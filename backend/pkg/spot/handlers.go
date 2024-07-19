@@ -207,8 +207,11 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
 	}
-	if e.services.Transcoder.IsSpotStreamReady(id) {
-		spotInfo.StreamURL = fmt.Sprintf("/v1/spots/%d/stream", id)
+	playlist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	if err != nil {
+		e.log.Warn(r.Context(), "can't get stream playlist: %s", err)
+	} else {
+		spotInfo.StreamFile = base64.StdEncoding.EncodeToString(playlist)
 	}
 
 	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)

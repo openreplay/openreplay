@@ -20,7 +20,6 @@ import (
 type Transcoder interface {
 	Transcode(spotID uint64) error
 	GetSpotStreamPlaylist(spotID uint64) ([]byte, error)
-	IsSpotStreamReady(spotID uint64) bool
 	Close()
 }
 
@@ -190,16 +189,6 @@ func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
 		return []byte(""), err
 	}
 	return []byte(playlist), nil
-}
-
-func (t *transcoderImpl) IsSpotStreamReady(spotID uint64) bool {
-	// check if spot is present in DB
-	sql := `SELECT COUNT(*) FROM spots_streams WHERE spot_id = $1`
-	var count int
-	if err := t.conn.QueryRow(sql, spotID).Scan(&count); err != nil {
-		t.log.Error(context.Background(), "Error checking spot stream: %v", err)
-	}
-	return count > 0
 }
 
 func (t *transcoderImpl) Close() {
