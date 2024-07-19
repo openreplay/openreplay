@@ -20,6 +20,12 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
   const jump = (time: number) => {
     spotPlayerStore.setTime(time);
   };
+
+  const getShadowColor = (ind: number) => {
+    if (ind < index) return '#A7BFFF';
+    if (ind === index) return '#394EFF';
+    return 'transparent';
+  };
   return (
     <div
       className={'h-full bg-white border border-gray-light'}
@@ -36,16 +42,42 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
         style={{ maxHeight: 'calc(100vh - 128px)' }}
       >
         {mixedEvents.map((event, i) => (
-          <div onClick={() => jump(event.time)}>
+          <div
+            key={event.time}
+            onClick={() => jump(event.time)}
+            className={'relative'}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: 1.5,
+                height: '100%',
+                backgroundColor: getShadowColor(i),
+                zIndex: 98,
+              }}
+            />
+            {i === index ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: -10,
+                  width: 10,
+                  height: 10,
+                  transform: 'rotate(45deg) translate(0, -50%)',
+                  background: '#394EFF',
+                  zIndex: 99,
+                  borderRadius: '.15rem',
+                }}
+              />
+            ) : null}
             {'label' in event ? (
               // @ts-ignore
-              <ClickEv key={event.time} event={event} isCurrent={i === index} />
+              <ClickEv event={event} isCurrent={i === index} />
             ) : (
-              <LocationEv
-                key={event.time}
-                event={event}
-                isCurrent={i === index}
-              />
+              <LocationEv event={event} isCurrent={i === index} />
             )}
           </div>
         ))}

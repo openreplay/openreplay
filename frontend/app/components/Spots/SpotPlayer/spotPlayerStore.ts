@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
 import { getResourceFromNetworkRequest } from 'App/player';
+import { Log as PLog, ILog } from "App/player";
 
 interface Event {
   time: number;
@@ -8,8 +9,8 @@ interface Event {
 }
 
 interface Log extends Event {
-  type: 'log' | 'error' | 'warn' | 'info';
-  message: string;
+  level: 'log' | 'error' | 'warn' | 'info';
+  msg: string;
 }
 
 interface Location extends Event {
@@ -81,7 +82,7 @@ class SpotPlayerStore {
   volume = 1;
   playbackRate = 1;
   isFullScreen = false;
-  logs: Log[] = [];
+  logs: typeof PLog[] = [];
   locations: Location[] = [];
   clicks: Click[] = [];
   network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
@@ -171,7 +172,11 @@ class SpotPlayerStore {
     clicks: Click[],
     network: SpotNetworkRequest[]
   ): void {
-    this.logs = logs.map((log) => ({ ...log, time: log.time - this.startTs }));
+    this.logs = logs.map((log) => PLog({
+      ...log,
+      time: log.time - this.startTs,
+      value: log.msg,
+    }));
     this.locations = locations.map((location) => ({
       ...location,
       time: location.time - this.startTs,
@@ -242,9 +247,9 @@ class SpotPlayerStore {
     const { event } = this.getHighlightedEvent(time, this.logs);
     return (
       event ?? {
-        message: 'loading',
+        msg: 'loading',
         time: 0,
-        type: 'info',
+        level: 'info',
       }
     );
   }

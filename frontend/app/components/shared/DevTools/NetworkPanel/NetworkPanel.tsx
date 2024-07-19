@@ -275,6 +275,7 @@ interface Props {
   zoomStartTs?: number;
   zoomEndTs?: number;
   panelHeight: number;
+  onClose?: () => void;
 }
 
 export const NetworkPanelComp = observer(
@@ -294,6 +295,7 @@ export const NetworkPanelComp = observer(
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
+    onClose,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -468,7 +470,7 @@ export const NetworkPanelComp = observer(
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
-          <BottomBlock.Header>
+          <BottomBlock.Header onClose={onClose}>
             <div className="flex items-center">
               <span className="font-semibold color-gray-medium mr-4">Network</span>
               {isMobile ? null : (

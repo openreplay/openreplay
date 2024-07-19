@@ -14,7 +14,7 @@ import { Icon, NoContent, Tabs } from 'UI';
 
 import spotPlayerStore from '../../spotPlayerStore';
 
-function SpotConsole() {
+function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
   const _list = React.useRef<List>(null);
   const cache = useCellMeasurerCache();
@@ -22,11 +22,12 @@ function SpotConsole() {
     setActiveTab(tab);
   };
   const logs = spotPlayerStore.logs;
+  console.log(logs)
   const filteredList = React.useMemo(() => {
     return logs.filter((log) => {
       const tabType = activeTab.text.toLowerCase();
       if (tabType === 'all') return true;
-      return tabType.includes(log.type);
+      return tabType.includes(log.level);
     });
   }, [activeTab]);
   const jump = (t: number) => {
@@ -62,7 +63,7 @@ function SpotConsole() {
 
   return (
     <BottomBlock>
-      <BottomBlock.Header>
+      <BottomBlock.Header onClose={onClose}>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Console</span>
           <Tabs
