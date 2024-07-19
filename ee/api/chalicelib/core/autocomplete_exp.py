@@ -212,7 +212,8 @@ def __pg_errors_query(source=None, value_length=None):
 
 def __search_errors(project_id, value, key=None, source=None):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(__pg_errors_query(source, value_length=len(value)),
+        query = cur.format(__pg_errors_query(source,
+                                             value_length=len(value)),
                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
                             "svalue": helper.string_to_sql_like("^" + value),
                             "source": source})
