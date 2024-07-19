@@ -5,6 +5,7 @@ from typing import List, Union
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics, sessions_favorite, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
+from chalicelib.utils.sql_helper import get_sql_operator
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -54,21 +55,6 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'issue_score',       toString(coalesce(issue_score,0)),
 'viewed',            toString(viewed_sessions.session_id > 0)
 """
-
-
-def __get_sql_operator(op: schemas.SearchEventOperator):
-    return {
-        schemas.SearchEventOperator.IS: "=",
-        schemas.SearchEventOperator.IS_ANY: "IN",
-        schemas.SearchEventOperator.ON: "=",
-        schemas.SearchEventOperator.ON_ANY: "IN",
-        schemas.SearchEventOperator.IS_NOT: "!=",
-        schemas.SearchEventOperator.NOT_ON: "!=",
-        schemas.SearchEventOperator.CONTAINS: "ILIKE",
-        schemas.SearchEventOperator.NOT_CONTAINS: "NOT ILIKE",
-        schemas.SearchEventOperator.STARTS_WITH: "ILIKE",
-        schemas.SearchEventOperator.ENDS_WITH: "ILIKE",
-    }.get(op, "=")
 
 
 def __is_negation_operator(op: schemas.SearchEventOperator):
@@ -558,14 +544,13 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE: 'PERFORMANCE'
     }
     defs_mobile = {
-        schemas.EventType.CLICK: "TAP",
-        schemas.EventType.INPUT: "INPUT",
-        schemas.EventType.LOCATION: "VIEW",
-        schemas.EventType.CUSTOM: "CUSTOM",
-        schemas.EventType.REQUEST: "REQUEST",
-        schemas.EventType.REQUEST_DETAILS: "REQUEST",
-        schemas.PerformanceEventType.FETCH_FAILED: "REQUEST",
-        schemas.EventType.ERROR: "CRASH",
+        schemas.EventType.CLICK_MOBILE: "TAP",
+        schemas.EventType.INPUT_MOBILE: "INPUT",
+        schemas.EventType.CUSTOM_MOBILE: "CUSTOM",
+        schemas.EventType.REQUEST_MOBILE: "REQUEST",
+        schemas.EventType.ERROR_MOBILE: "CRASH",
+        schemas.EventType.VIEW_MOBILE: "VIEW",
+        schemas.EventType.SWIPE_MOBILE: "SWIPE"
     }
     if platform != "web" and event_type in defs_mobile:
         return defs_mobile.get(event_type)
@@ -621,7 +606,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
-            op = __get_sql_operator(f.operator) \
+            op = get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
             is_any = _isAny_opreator(f.operator)
             is_undefined = _isUndefined_operator(f.operator)
@@ -818,7 +803,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         _multiple_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type == schemas.FilterType.PLATFORM:
-                # op = __get_sql_operator(f.operator)
+                # op = get_sql_operator(f.operator)
                 extra_constraints.append(
                     _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                          value_key=f_k))
@@ -879,7 +864,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 event.value = [event.value]
             if not __is_valid_event(is_any=is_any, event=event):
                 continue
-            op = __get_sql_operator(event.operator)
+            op = get_sql_operator(event.operator)
             is_not = False
             if __is_negation_operator(event.operator):
                 is_not = True
@@ -915,9 +900,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     event_where.append(f"main.event_type='{__get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
-                        if event.operator == schemas.ClickEventExtraOperator.SELECTOR_IS:
+                        if schemas.ClickEventExtraOperator.has_value(event.operator):
                             event_where.append(
-                                _multiple_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
+                                _multiple_conditions(f"main.selector {op} %({e_k})s", event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
                             if is_not:
@@ -1307,7 +1292,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             #     full_args = {**full_args,
             #                  **_multiple_values(event.value[0].value, value_key=e_k1),
             #                  **_multiple_values(event.value[1].value, value_key=e_k2)}
-            #     s_op = __get_sql_operator(event.value[0].operator)
+            #     s_op = get_sql_operator(event.value[0].operator)
             #     # event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
             #     # if event_index > 0 and not or_events:
             #     #     event_where.append("main2.session_id=event_0.session_id")
@@ -1318,7 +1303,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             #                 f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
             #                 event.value[0].value, value_key=e_k1))
             #         events_conditions[-2]["condition"] = event_where[-1]
-            #     s_op = __get_sql_operator(event.value[1].operator)
+            #     s_op = get_sql_operator(event.value[1].operator)
             #     is_any = _isAny_opreator(event.value[1].operator)
             #     if not is_any:
             #         event_where.append(
@@ -1348,7 +1333,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = __get_sql_operator(f.operator)
+                    op = get_sql_operator(f.operator)
                     e_k_f = e_k + f"_fetch{j}"
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType.FETCH_URL:
@@ -1401,7 +1386,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = __get_sql_operator(f.operator)
+                    op = get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
@@ -1657,7 +1642,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 if _isAny_opreator(c.operator):
                     continue
                 e_k = f"ec_value{i}"
-                op = __get_sql_operator(c.operator)
+                op = get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **_multiple_values(c.value, value_key=e_k)}
