@@ -9,6 +9,7 @@ const Header = ({
   children,
   className,
   closeBottomBlock,
+  onClose,
   onFilterChange,
   showClose = true,
   ...props
@@ -18,11 +19,12 @@ const Header = ({
   closeBottomBlock?: () => void;
   onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   showClose?: boolean;
+  onClose?: () => void;
 }) => (
   <div className={ cn("relative border-r border-l py-1", stl.header) } >
     <div className={ cn("w-full h-full flex justify-between items-center", className) } >
       <div className="w-full flex items-center justify-between">{ children }</div>
-      { showClose && <CloseButton onClick={ closeBottomBlock } size="18" className="ml-2" /> }
+      { showClose && <CloseButton onClick={ onClose ? onClose : closeBottomBlock } size="18" className="ml-2" /> }
     </div>
   </div>
 );

@@ -10,6 +10,7 @@ export class Spot {
   spotId: string;
   mobURL?: string;
   videoURL?: string;
+  streamFile?: string;
   comments?: { user: string, text: string, createdAt: string }[] = []
   /** public access key to add to url */
   key?: { key: string, expirationDate: string } | null = null
