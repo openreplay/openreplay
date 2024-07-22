@@ -2,7 +2,7 @@ import { App, Messages } from '@openreplay/tracker';
 import type { Middleware, RelayRequest } from './relaytypes';
 import { Sanitizer } from './types';
 
-const createRelayMiddleware = (sanitizer?: Sanitizer) => {
+const createRelayMiddleware = (sanitizer?: Sanitizer<Record<string, any>>) => {
   return (app: App | null): Middleware => {
     if (!app) {
       return (next) => async (req) => await next(req);
@@ -41,7 +41,7 @@ function getMessage(
   request: RelayRequest,
   json: Record<string, any>,
   duration: number,
-  sanitizer?: Sanitizer,
+  sanitizer?: Sanitizer<Record<string, any>>,
 ) {
   const opKind = request.operation.kind;
   const opName = request.operation.name;

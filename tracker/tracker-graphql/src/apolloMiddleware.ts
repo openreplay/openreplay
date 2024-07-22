@@ -10,7 +10,9 @@ type Operation = {
 };
 type NextLink = (operation: Operation) => Observable<Record<string, any>>;
 
-export const createTrackerLink = (sanitizer?: Sanitizer) => {
+export const createTrackerLink = (
+  sanitizer?: Sanitizer<Record<string, any> | undefined | null>,
+) => {
   return (app: App | null) => {
     if (!app) {
       return (operation: Operation, forward: NextLink) => forward(operation);
@@ -22,9 +24,12 @@ export const createTrackerLink = (sanitizer?: Sanitizer) => {
         const subscription = observable.subscribe({
           next(value) {
             const end = app.timestamp();
+            const operationDefinition = operation.query.definitions[0];
             app.send(
               Messages.GraphQL(
-                operation.query.definitions[0].kind,
+                operationDefinition.kind === 'OperationDefinition'
+                  ? operationDefinition.operation
+                  : 'unknown?',
                 operation.operationName,
                 JSON.stringify(
                   sanitizer

@@ -8,7 +8,7 @@ type ConcreteBatch = {
   text: string | null;
   operationKind: string;
 };
-type Variables = { [name: string]: any };
+export type Variables = { [name: string]: any };
 interface FetchOpts {
   url?: string;
   method: 'POST' | 'GET';

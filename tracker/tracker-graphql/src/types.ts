@@ -1,1 +1,1 @@
-export type Sanitizer = (values: Record<string, any>) => Record<string, any>;
+export type Sanitizer<T> = (values: T) => Partial<T>;
