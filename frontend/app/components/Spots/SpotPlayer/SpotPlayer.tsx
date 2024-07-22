@@ -18,6 +18,7 @@ import SpotPlayerHeader from './components/SpotPlayerHeader';
 import SpotPlayerSideBar from './components/SpotSideBar';
 import SpotTimeline from './components/SpotTimeline';
 import SpotVideoContainer from './components/SpotVideoContainer';
+// import VideoJS from "./components/Vjs"; backup player
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
 import { connect } from 'react-redux';
@@ -140,6 +141,29 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   }
 
   const isFullScreen = spotPlayerStore.isFullScreen;
+  //
+  // const base64toblob = (str: string) => {
+  //   const byteCharacters = atob(str);
+  //   const byteNumbers = new Array(byteCharacters.length);
+  //   for (let i = 0; i < byteCharacters.length; i++) {
+  //     byteNumbers[i] = byteCharacters.charCodeAt(i);
+  //   }
+  //   const byteArray = new Uint8Array(byteNumbers);
+  //   return new Blob([byteArray]);
+  // };
+  //
+  // const url = URL.createObjectURL(base64toblob(spotStore.currentSpot.streamFile));
+  // const videoJsOptions = {
+  //   autoplay: true,
+  //   controls: true,
+  //   responsive: false,
+  //   fluid: false,
+  //   fill: true,
+  //   sources: [{
+  //     src: url,
+  //     type: 'application/x-mpegURL'
+  //   }]
+  // };
   return (
     <div
       className={cn(
@@ -164,6 +188,9 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         <div className={'w-full h-full flex flex-col justify-between'}>
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
+            {/*<VideoJS backup player */}
+            {/*  options={videoJsOptions}*/}
+            {/*/>*/}
             <SpotVideoContainer videoURL={spotStore.currentSpot.videoURL!} streamFile={spotStore.currentSpot.streamFile} />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (

@@ -1,7 +1,6 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-
 import spotPlayerStore from '../spotPlayerStore';
 
 const base64toblob = (str: string) => {
@@ -55,6 +54,13 @@ function SpotVideoContainer({
           void videoRef.current.play();
         }
       }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.src = videoURL;
+        if (spotPlayerStore.isPlaying) {
+          void videoRef.current.play();
+        }
+      }
     }
     return () => {
       hlsRef.current?.destroy();
@@ -63,7 +69,12 @@ function SpotVideoContainer({
 
   React.useEffect(() => {
     if (spotPlayerStore.isPlaying) {
-      void videoRef.current?.play();
+      videoRef.current
+        ?.play()
+        .then((r) => {
+          console.log('started', r);
+        })
+        .catch((e) => console.error(e));
     } else {
       videoRef.current?.pause();
     }
@@ -91,20 +102,6 @@ function SpotVideoContainer({
       videoRef.current.playbackRate = spotPlayerStore.playbackRate;
     }
   }, [spotPlayerStore.playbackRate]);
-
-  const getTypeFromUrl = (url: string) => {
-    const ext = url.split('.').pop();
-    if (ext === 'mp4') {
-      return 'video/mp4';
-    }
-    if (ext === 'webm') {
-      return 'video/webm';
-    }
-    if (ext === 'ogg') {
-      return 'video/ogg';
-    }
-    return 'video/mp4';
-  };
   return (
     <video
       ref={videoRef}
