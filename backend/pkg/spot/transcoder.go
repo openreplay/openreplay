@@ -94,11 +94,15 @@ func (t *transcoderImpl) transcode(spotID uint64) {
 
 	// Transcode video tp HLS format
 	// ffmpeg -i origin.webm -codec: copy -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
+	// Transcode with correct audio codec
+	// ffmpeg -i origin.webm -c:v copy -c:a aac -b:a 128k -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
 	start := time.Now()
 	videoPath := path + "origin.webm"
 	playlistPath := path + "index.m3u8"
-	cmd := exec.Command("ffmpeg", "-i", videoPath, "-codec:", "copy", "-start_number", "0", "-hls_time", "10",
-		"-hls_list_size", "0", "-f", "hls", playlistPath)
+	cmd := exec.Command("ffmpeg", "-i", videoPath, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+		"-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", playlistPath)
+	//cmd := exec.Command("ffmpeg", "-i", videoPath, "-codec:", "copy", "-start_number", "0", "-hls_time", "10",
+	//	"-hls_list_size", "0", "-f", "hls", playlistPath)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
