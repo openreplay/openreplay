@@ -87,7 +87,8 @@
     "semantic-ui-react": "^2.1.2",
     "socket.io-client": "^4.4.1",
     "source-map": "^0.7.3",
-    "syncod": "^0.0.1"
+    "syncod": "^0.0.1",
+    "video.js": "^8.16.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.0",
