@@ -1,4 +1,3 @@
-
 type ConcreteBatch = {
   kind: 'Batch';
   fragment: any;
@@ -9,7 +8,7 @@ type ConcreteBatch = {
   text: string | null;
   operationKind: string;
 };
-type Variables = { [name: string]: any };
+export type Variables = { [name: string]: any };
 interface FetchOpts {
   url?: string;
   method: 'POST' | 'GET';
@@ -17,7 +16,13 @@ interface FetchOpts {
   body: string | FormData;
   credentials?: 'same-origin' | 'include' | 'omit';
   mode?: 'cors' | 'websocket' | 'navigate' | 'no-cors' | 'same-origin';
-  cache?: 'default' | 'no-store' | 'reload' | 'no-cache' | 'force-cache' | 'only-if-cached';
+  cache?:
+    | 'default'
+    | 'no-store'
+    | 'reload'
+    | 'no-cache'
+    | 'force-cache'
+    | 'only-if-cached';
   redirect?: 'follow' | 'error' | 'manual';
   signal?: AbortSignal;
   [name: string]: any;
