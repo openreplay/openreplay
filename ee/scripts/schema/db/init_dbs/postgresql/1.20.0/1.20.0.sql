@@ -22,6 +22,17 @@ ALTER TABLE IF EXISTS events.clicks
     ALTER COLUMN normalized_x SET DATA TYPE decimal,
     ALTER COLUMN normalized_y SET DATA TYPE decimal;
 
+UPDATE public.roles
+SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{SPOT}') AS e)
+WHERE NOT permissions @> '{SPOT}'
+  AND NOT service_role;
+
+UPDATE public.roles
+SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{SPOT_PUBLIC}') AS e)
+WHERE NOT permissions @> '{SPOT_PUBLIC}'
+  AND name ILIKE 'owner';
+
+
 COMMIT;
 
 \elif :is_next

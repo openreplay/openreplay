@@ -16,6 +16,8 @@ class Permissions(str, Enum):
     ASSIST_LIVE = "ASSIST_LIVE"
     ASSIST_CALL = "ASSIST_CALL"
     FEATURE_FLAGS = "FEATURE_FLAGS"
+    SPOT = "SPOT"
+    SPOT_PUBLIC = "SPOT_PUBLIC"
 
 
 class ServicePermissions(str, Enum):
@@ -145,6 +147,7 @@ class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema, schemas._TimedSc
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     order: Literal["asc", "desc"] = Field(default="desc")
+
 
 # TODO: move these to schema when Insights is supported on PG
 class CardInsights(schemas.CardInsights):
