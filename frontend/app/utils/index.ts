@@ -158,7 +158,7 @@ export function formatBytes(bt: number): string {
   if (bt > KB) {
     return `${Math.trunc((bt / KB) * 1e2) / 1e2}KB`;
   }
-  return `${bt}B`;
+  return `${Math.trunc(bt)}B`;
 }
 
 export function percentOf(part: number, whole: number): number {
