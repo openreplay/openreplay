@@ -1,4 +1,4 @@
-package spot
+package service
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/spot/auth"
 	"time"
 )
 
@@ -51,12 +52,12 @@ type Update struct {
 }
 
 type Spots interface {
-	Add(user *User, name, comment string, duration int) (*Spot, error)
-	GetByID(user *User, spotID uint64) (*Spot, error)
-	Get(user *User, opts *GetOpts) ([]*Spot, uint64, error)
-	UpdateName(user *User, spotID uint64, newName string) (*Spot, error)
-	AddComment(user *User, spotID uint64, comment *Comment) (*Spot, error)
-	Delete(user *User, spotIds []uint64) error
+	Add(user *auth.User, name, comment string, duration int) (*Spot, error)
+	GetByID(user *auth.User, spotID uint64) (*Spot, error)
+	Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
+	UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error)
+	AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error)
+	Delete(user *auth.User, spotIds []uint64) error
 }
 
 func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots {
@@ -67,7 +68,7 @@ func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots
 	}
 }
 
-func (s *spotsImpl) Add(user *User, name, comment string, duration int) (*Spot, error) {
+func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -128,7 +129,7 @@ func (s *spotsImpl) add(spot *Spot) error {
 	return nil
 }
 
-func (s *spotsImpl) GetByID(user *User, spotID uint64) (*Spot, error) {
+func (s *spotsImpl) GetByID(user *auth.User, spotID uint64) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -138,7 +139,7 @@ func (s *spotsImpl) GetByID(user *User, spotID uint64) (*Spot, error) {
 	return s.getByID(spotID, user)
 }
 
-func (s *spotsImpl) getByID(spotID uint64, user *User) (*Spot, error) {
+func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
 	sql := `SELECT name, user_email, duration, comments, created_at FROM spots 
             WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
 	spot := &Spot{}
@@ -159,7 +160,7 @@ func (s *spotsImpl) getByID(spotID uint64, user *User) (*Spot, error) {
 	return spot, nil
 }
 
-func (s *spotsImpl) Get(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
+func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
 	switch {
 	case user == nil:
 		return nil, 0, fmt.Errorf("user is required")
@@ -183,7 +184,7 @@ func (s *spotsImpl) Get(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
 	return s.getAll(user, opts)
 }
 
-func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
+func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
 	sql := `SELECT COUNT(1) OVER () AS total, spot_id, name, user_email, duration, created_at FROM spots WHERE tenant_id = $1 AND deleted_at IS NULL`
 	args := []interface{}{user.TenantID}
 	if opts.UserID != 0 {
@@ -224,7 +225,7 @@ func (s *spotsImpl) getAll(user *User, opts *GetOpts) ([]*Spot, uint64, error) {
 	return spots, total, nil
 }
 
-func (s *spotsImpl) UpdateName(user *User, spotID uint64, newName string) (*Spot, error) {
+func (s *spotsImpl) UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -236,7 +237,7 @@ func (s *spotsImpl) UpdateName(user *User, spotID uint64, newName string) (*Spot
 	return s.updateName(spotID, newName, user)
 }
 
-func (s *spotsImpl) updateName(spotID uint64, newName string, user *User) (*Spot, error) {
+func (s *spotsImpl) updateName(spotID uint64, newName string, user *auth.User) (*Spot, error) {
 	sql := `WITH updated AS (
 		UPDATE spots SET name = $1, updated_at = $2 
 		WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL RETURNING *)
@@ -251,7 +252,7 @@ func (s *spotsImpl) updateName(spotID uint64, newName string, user *User) (*Spot
 	return &Spot{ID: spotID, Name: newName}, nil
 }
 
-func (s *spotsImpl) AddComment(user *User, spotID uint64, comment *Comment) (*Spot, error) {
+func (s *spotsImpl) AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -271,7 +272,7 @@ func (s *spotsImpl) AddComment(user *User, spotID uint64, comment *Comment) (*Sp
 	return s.addComment(spotID, comment, user)
 }
 
-func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *User) (*Spot, error) {
+func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *auth.User) (*Spot, error) {
 	sql := `WITH updated AS (
 		UPDATE spots SET comments = array_append(comments, $1), updated_at = $2 
 		WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL RETURNING *)
@@ -290,7 +291,7 @@ func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *User) (
 	return &Spot{ID: spotID}, nil
 }
 
-func (s *spotsImpl) Delete(user *User, spotIds []uint64) error {
+func (s *spotsImpl) Delete(user *auth.User, spotIds []uint64) error {
 	switch {
 	case user == nil:
 		return fmt.Errorf("user is required")
@@ -300,7 +301,7 @@ func (s *spotsImpl) Delete(user *User, spotIds []uint64) error {
 	return s.deleteSpots(spotIds, user)
 }
 
-func (s *spotsImpl) deleteSpots(spotIds []uint64, user *User) error {
+func (s *spotsImpl) deleteSpots(spotIds []uint64, user *auth.User) error {
 	sql := `WITH updated AS (UPDATE spots SET deleted_at = NOW() WHERE tenant_id = $1 AND spot_id IN (`
 	args := []interface{}{user.TenantID}
 	for i, spotID := range spotIds {

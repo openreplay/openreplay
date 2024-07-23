@@ -1,8 +1,9 @@
-package spot
+package api
 
 import (
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/spot/service"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,10 +21,10 @@ type Router struct {
 	cfg      *spotConfig.Config
 	router   *mux.Router
 	mutex    *sync.RWMutex
-	services *ServicesBuilder
+	services *service.ServicesBuilder
 }
 
-func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *service.ServicesBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -96,7 +97,7 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Check if the request is authorized
-		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"))
+		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path))
 		if err != nil {
 			e.log.Warn(r.Context(), "Unauthorized request: %s", err)
 			if !isGetSpotRequest(r.URL.Path) {

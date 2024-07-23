@@ -1,4 +1,4 @@
-package spot
+package api
 
 import (
 	"bytes"
@@ -12,6 +12,8 @@ import (
 	"net/http"
 	metrics "openreplay/backend/pkg/metrics/http"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/spot/service"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +37,7 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Creat a spot
-	currUser := r.Context().Value("userData").(*User)
+	currUser := r.Context().Value("userData").(*auth.User)
 	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -176,7 +178,7 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	res, err := e.services.Spots.GetByID(user, id)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -240,7 +242,7 @@ func (e *Router) updateSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	_, err = e.services.Spots.UpdateName(user, id, req.Name)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -260,8 +262,8 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
-	opts := &GetOpts{
+	user := r.Context().Value("userData").(*auth.User)
+	opts := &service.GetOpts{
 		NameFilter: req.Query, Order: req.Order, Page: req.Page, Limit: req.Limit}
 	switch req.FilterBy {
 	case "own":
@@ -318,7 +320,7 @@ func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
 		spotsToDelete = append(spotsToDelete, id)
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	if err := e.services.Spots.Delete(user, spotsToDelete); err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -350,8 +352,8 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
-	updatedSpot, err := e.services.Spots.AddComment(user, id, &Comment{UserName: req.UserName, Text: req.Comment})
+	user := r.Context().Value("userData").(*auth.User)
+	updatedSpot, err := e.services.Spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -389,7 +391,7 @@ func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	e.log.Info(r.Context(), "uploaded spot %d, from user: %+v", id, user)
 	if err := e.services.Transcoder.Transcode(id); err != nil {
 		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
@@ -463,7 +465,7 @@ func (e *Router) getPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	key, err := e.services.Keys.Get(id, user)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -502,7 +504,7 @@ func (e *Router) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*User)
+	user := r.Context().Value("userData").(*auth.User)
 	key, err := e.services.Keys.Set(id, req.Expiration, user)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
