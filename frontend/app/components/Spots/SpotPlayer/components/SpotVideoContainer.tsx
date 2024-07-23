@@ -16,9 +16,11 @@ const base64toblob = (str: string) => {
 function SpotVideoContainer({
   videoURL,
   streamFile,
+  thumbnail,
 }: {
   videoURL: string;
   streamFile?: string;
+  thumbnail?: string;
 }) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
@@ -103,13 +105,16 @@ function SpotVideoContainer({
     }
   }, [spotPlayerStore.playbackRate]);
   return (
-    <video
-      ref={videoRef}
-      className={
-        'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
-      }
-      onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
-    />
+    <>
+      <video
+        ref={videoRef}
+        className={
+          'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer z-20'
+        }
+        onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
+      />
+      <img src={thumbnail} alt={'spot thumbnail'} className={'z-10 object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest pointer-events-none'} />
+    </>
   );
 }
 

@@ -6,7 +6,8 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Avatar, Icon, Loader, Pagination } from "UI";
+import { Icon, Loader, Pagination } from "UI";
+import withPermissions from "../../hocs/withPermissions";
 
 import SpotListItem from './SpotListItem';
 
@@ -237,4 +238,4 @@ function EmptyPage() {
   );
 }
 
-export default observer(SpotsList);
+export default withPermissions(['SPOT'])(observer(SpotsList))

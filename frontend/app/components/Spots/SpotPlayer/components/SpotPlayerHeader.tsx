@@ -1,24 +1,24 @@
 import {
   ArrowLeftOutlined,
   CommentOutlined,
+  LinkOutlined,
   SettingOutlined,
   UserSwitchOutlined,
-  LinkOutlined,
 } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
+import copy from 'copy-to-clipboard';
 import React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 
+import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
 import { Avatar, Icon } from 'UI';
-import copy from 'copy-to-clipboard';
 
 import { TABS, Tab } from '../consts';
-import AccessModal from "./AccessModal";
-import { spotsList } from "App/routes";
+import AccessModal from './AccessModal';
 
-const spotLink = spotsList()
+const spotLink = spotsList();
 
 function SpotPlayerHeader({
   activeTab,
@@ -30,6 +30,7 @@ function SpotPlayerHeader({
   browserVersion,
   resolution,
   platform,
+  hasShareAccess,
 }: {
   activeTab: Tab | null;
   setActiveTab: (tab: Tab) => void;
@@ -40,6 +41,7 @@ function SpotPlayerHeader({
   browserVersion: string | null;
   resolution: string | null;
   platform: string | null;
+  hasShareAccess: boolean;
 }) {
   const [isCopied, setIsCopied] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -47,7 +49,7 @@ function SpotPlayerHeader({
     setIsCopied(true);
     copy(window.location.href);
     setTimeout(() => setIsCopied(false), 2000);
-  }
+  };
   return (
     <div
       className={
@@ -109,30 +111,32 @@ function SpotPlayerHeader({
       {isLoggedIn ? (
         <>
           <Button
-            size={"small"}
+            size={'small'}
             onClick={onCopy}
-            type={"primary"}
+            type={'primary'}
             icon={<LinkOutlined />}
           >
             {isCopied ? 'Copied!' : 'Copy Link'}
           </Button>
-          <Popover open={dropdownOpen} content={<AccessModal />}>
-            <Button
-              size={"small"}
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              icon={<SettingOutlined />}
-            >
-              Manage Access
-            </Button>
-          </Popover>
+          {hasShareAccess ? (
+            <Popover open={dropdownOpen} content={<AccessModal />}>
+              <Button
+                size={'small'}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                icon={<SettingOutlined />}
+              >
+                Manage Access
+              </Button>
+            </Popover>
+          ) : null}
           <div
-            className={"h-full rounded-xl bg-gray-light mx-2"}
+            className={'h-full rounded-xl bg-gray-light mx-2'}
             style={{ width: 1 }}
           />
         </>
       ) : null}
       <Button
-        size={"small"}
+        size={'small'}
         disabled={activeTab === TABS.ACTIVITY}
         onClick={() => setActiveTab(TABS.ACTIVITY)}
         icon={<UserSwitchOutlined />}
@@ -153,5 +157,10 @@ function SpotPlayerHeader({
 
 export default connect((state: any) => {
   const jwt = state.getIn(['user', 'jwt']);
-  return { isLoggedIn: !!jwt };
+  const isEE = state.getIn(['user', 'account', 'edition']) === 'ee';
+  const permissions: string[] =
+    state.getIn(['user', 'account', 'permissions']) || [];
+
+  const hasShareAccess = isEE ? permissions.includes('SPOT_PUBLIC') : true;
+  return { isLoggedIn: !!jwt, hasShareAccess };
 })(SpotPlayerHeader);
