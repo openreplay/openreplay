@@ -1,7 +1,8 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { EscapeButton, Loader } from 'UI';
@@ -10,6 +11,7 @@ import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from '../../Session/Player/ReplayPlayer/PlayerInst';
+import withPermissions from '../../hocs/withPermissions';
 import SpotConsole from './components/Panels/SpotConsole';
 import SpotNetwork from './components/Panels/SpotNetwork';
 import SpotLocation from './components/SpotLocation';
@@ -21,11 +23,10 @@ import SpotVideoContainer from './components/SpotVideoContainer';
 // import VideoJS from "./components/Vjs"; backup player
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
-import { connect } from 'react-redux';
 
 function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   const defaultHeight = getDefaultPanelHeight();
-  const history = useHistory()
+  const history = useHistory();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { spotStore } = useStore();
   const { spotId } = useParams<{ spotId: string }>();
@@ -41,7 +42,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         history.push('/');
       }
     }
-  }, [loggedIn])
+  }, [loggedIn]);
 
   const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -70,7 +71,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     spotStore.fetchSpotById(spotId).then(async (spotInst) => {
       if (spotInst.mobURL) {
         try {
-          void spotStore.getPubKey(spotId)
+          void spotStore.getPubKey(spotId);
         } catch {
           // ignore
         }
@@ -120,8 +121,8 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     document.addEventListener('keydown', ev);
     return () => {
       document.removeEventListener('keydown', ev);
-      spotStore.clearCurrent()
-      spotPlayerStore.clearData()
+      spotStore.clearCurrent();
+      spotPlayerStore.clearData();
     };
   }, []);
   if (!spotStore.currentSpot) {
@@ -138,10 +139,10 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
 
   const onPanelClose = () => {
     spotPlayerStore.setActivePanel(null);
-  }
+  };
 
   const isFullScreen = spotPlayerStore.isFullScreen;
-  //
+  // 2nd player option
   // const base64toblob = (str: string) => {
   //   const byteCharacters = atob(str);
   //   const byteNumbers = new Array(byteCharacters.length);
@@ -164,6 +165,8 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   //     type: 'application/x-mpegURL'
   //   }]
   // };
+
+  console.log(spotStore.currentSpot)
   return (
     <div
       className={cn(
@@ -191,7 +194,11 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
             {/*<VideoJS backup player */}
             {/*  options={videoJsOptions}*/}
             {/*/>*/}
-            <SpotVideoContainer videoURL={spotStore.currentSpot.videoURL!} streamFile={spotStore.currentSpot.streamFile} />
+            <SpotVideoContainer
+              videoURL={spotStore.currentSpot.videoURL!}
+              streamFile={spotStore.currentSpot.streamFile}
+              thumbnail={spotStore.currentSpot.thumbnail}
+            />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (
             <div
@@ -215,7 +222,10 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
                     <SpotConsole onClose={onPanelClose} />
                   ) : null}
                   {spotPlayerStore.activePanel === PANELS.NETWORK ? (
-                    <SpotNetwork onClose={onPanelClose} panelHeight={panelHeight} />
+                    <SpotNetwork
+                      onClose={onPanelClose}
+                      panelHeight={panelHeight}
+                    />
                   ) : null}
                 </div>
               ) : null}
@@ -234,7 +244,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
-
 function mapStateToProps(state: any) {
   const userEmail = state.getIn(['user', 'account', 'name']);
   const loggedIn = !!userEmail;
@@ -244,5 +253,6 @@ function mapStateToProps(state: any) {
   };
 }
 
-
-export default connect(mapStateToProps)(observer(SpotPlayer))
+export default withPermissions(['SPOT'])(
+  connect(mapStateToProps)(observer(SpotPlayer))
+);
