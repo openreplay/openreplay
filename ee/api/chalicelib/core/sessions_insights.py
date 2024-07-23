@@ -185,8 +185,9 @@ def __filter_subquery(project_id: int, filters: Optional[schemas.SessionsSearchP
                                                                   errors_only=True, favorite_only=None,
                                                                   issue=None, user_id=None)
         params = {**params, **qp_params}
-        # TODO: test if this line impacts other cards beside insights
-        # sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+        # This line was added because insights is failing when you add filter steps,
+        # for example when you add a LOCATION filter
+        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     return params, sub_query
 
 
