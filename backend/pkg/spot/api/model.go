@@ -25,6 +25,7 @@ type Info struct {
 	Comments   []service.Comment `json:"comments"`
 	CreatedAt  time.Time         `json:"createdAt"`
 	MobURL     string            `json:"mobURL"`
+	PreviewURL string            `json:"previewURL"`
 	VideoURL   string            `json:"videoURL"`
 	StreamFile string            `json:"streamFile"`
 }

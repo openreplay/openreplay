@@ -189,6 +189,10 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	previewUrl, err := e.getPreviewURL(id)
+	if err != nil {
+		e.log.Error(r.Context(), "can't get preview URL: %s", err)
+	}
 	mobURL, err := e.getMobURL(id)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -201,13 +205,14 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spotInfo := &Info{
-		Name:      res.Name,
-		UserEmail: res.UserEmail,
-		Duration:  res.Duration,
-		Comments:  res.Comments,
-		CreatedAt: res.CreatedAt,
-		MobURL:    mobURL,
-		VideoURL:  videoURL,
+		Name:       res.Name,
+		UserEmail:  res.UserEmail,
+		Duration:   res.Duration,
+		Comments:   res.Comments,
+		CreatedAt:  res.CreatedAt,
+		PreviewURL: previewUrl,
+		MobURL:     mobURL,
+		VideoURL:   videoURL,
 	}
 	playlist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
 	if err != nil {
