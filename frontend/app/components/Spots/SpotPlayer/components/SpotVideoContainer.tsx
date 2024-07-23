@@ -1,6 +1,9 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+
+import { useStore } from 'App/mstore';
+
 import spotPlayerStore from '../spotPlayerStore';
 
 const base64toblob = (str: string) => {
@@ -22,13 +25,19 @@ function SpotVideoContainer({
   streamFile?: string;
   thumbnail?: string;
 }) {
-  const [isLoaded, setLoaded] = React.useState(false)
+  const [videoLink, setVideoLink] = React.useState<string>(videoURL);
+
+  const { spotStore } = useStore();
+  const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
   const hlsRef = React.useRef<Hls | null>(null);
 
   React.useEffect(() => {
     if (Hls.isSupported() && videoRef.current) {
+      videoRef.current.addEventListener('loadeddata', () => {
+        setLoaded(true);
+      });
       if (streamFile) {
         const hls = new Hls({
           enableWorker: false,
@@ -36,7 +45,7 @@ function SpotVideoContainer({
           // 1MB buffer -- we have small videos anyways
           maxBufferSize: 1000 * 1000,
         });
-      const url = URL.createObjectURL(base64toblob(streamFile));
+        const url = URL.createObjectURL(base64toblob(streamFile));
         if (url && videoRef.current) {
           hls.loadSource(url);
           hls.attachMedia(videoRef.current);
@@ -53,6 +62,25 @@ function SpotVideoContainer({
           }
         }
       } else {
+        const check = () => {
+          fetch(videoLink).then((r) => {
+            if (r.ok && r.status === 200) {
+              if (videoRef.current) {
+                videoRef.current.src = '';
+                setTimeout(() => {
+                  videoRef.current!.src = videoURL;
+                }, 0);
+              }
+
+              return true;
+            } else {
+              setTimeout(() => {
+                check();
+              }, 1000);
+            }
+          });
+        };
+        check();
         videoRef.current.src = videoURL;
         if (spotPlayerStore.isPlaying) {
           void videoRef.current.play();
@@ -60,6 +88,9 @@ function SpotVideoContainer({
       }
     } else {
       if (videoRef.current) {
+        videoRef.current.addEventListener('loadeddata', () => {
+          setLoaded(true);
+        });
         videoRef.current.src = videoURL;
         if (spotPlayerStore.isPlaying) {
           void videoRef.current.play();
@@ -83,21 +114,6 @@ function SpotVideoContainer({
       videoRef.current?.pause();
     }
   }, [spotPlayerStore.isPlaying]);
-
-  React.useEffect(() => {
-    if (videoRef.current) {
-      let recheck = setTimeout(() => {
-        window.location.reload()
-      }, 30 * 1000)
-      videoRef.current.addEventListener('loadeddata', () => {
-        setLoaded(true);
-        clearTimeout(recheck)
-        if (videoRef.current) {
-          videoRef.current.removeAttribute('poster')
-        }
-      })
-    }
-  }, [])
 
   React.useEffect(() => {
     const int = setInterval(() => {
@@ -131,11 +147,19 @@ function SpotVideoContainer({
         }
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
       />
-      {isLoaded ? null : <div className={"z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-figmaColors-outlined-border"}>
-        <div className={"font-semibold color-white stroke-black animate-pulse"}>
-          Loading your video...
+      {isLoaded ? null : (
+        <div
+          className={
+            'z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-figmaColors-outlined-border'
+          }
+        >
+          <div
+            className={'font-semibold color-white stroke-black animate-pulse'}
+          >
+            Loading your video...
+          </div>
         </div>
-      </div>}
+      )}
     </>
   );
 }
