@@ -18,6 +18,9 @@ type User struct {
 }
 
 func (u *User) HasPermission(perm string) bool {
+	if u.Permissions == nil {
+		return true // no permissions
+	}
 	_, ok := u.Permissions[perm]
 	return ok
 }

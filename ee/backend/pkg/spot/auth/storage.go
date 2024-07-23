@@ -21,6 +21,7 @@ func authUser(conn pool.Pool, userID, tenantID, jwtIAT int) (*User, error) {
 	if user.JwtIat == 0 || abs(jwtIAT-user.JwtIat) > 1 {
 		return nil, fmt.Errorf("token expired")
 	}
+	user.Permissions = make(map[string]bool)
 	for _, perm := range permissions {
 		user.Permissions[perm] = true
 	}
