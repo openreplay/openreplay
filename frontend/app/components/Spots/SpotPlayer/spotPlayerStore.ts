@@ -192,7 +192,6 @@ class SpotPlayerStore {
         this.startTs
       );
     });
-    console.log(network, this.network)
   }
 
   get currentLogIndex() {

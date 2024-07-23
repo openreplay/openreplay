@@ -22,6 +22,7 @@ function SpotVideoContainer({
   streamFile?: string;
   thumbnail?: string;
 }) {
+  const [isLoaded, setLoaded] = React.useState(false)
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
   const hlsRef = React.useRef<Hls | null>(null);
@@ -30,7 +31,8 @@ function SpotVideoContainer({
     if (Hls.isSupported() && videoRef.current) {
       if (streamFile) {
         const hls = new Hls({
-          workerPath: '/hls-worker.js',
+          enableWorker: false,
+          // workerPath: '/hls-worker.js',
           // 1MB buffer -- we have small videos anyways
           maxBufferSize: 1000 * 1000,
         });
@@ -83,6 +85,21 @@ function SpotVideoContainer({
   }, [spotPlayerStore.isPlaying]);
 
   React.useEffect(() => {
+    if (videoRef.current) {
+      let recheck = setTimeout(() => {
+        window.location.reload()
+      }, 30 * 1000)
+      videoRef.current.addEventListener('loadeddata', () => {
+        setLoaded(true);
+        clearTimeout(recheck)
+        if (videoRef.current) {
+          videoRef.current.removeAttribute('poster')
+        }
+      })
+    }
+  }, [])
+
+  React.useEffect(() => {
     const int = setInterval(() => {
       const videoTime = videoRef.current?.currentTime ?? 0;
       if (videoTime !== spotPlayerStore.time) {
@@ -108,12 +125,17 @@ function SpotVideoContainer({
     <>
       <video
         ref={videoRef}
+        poster={thumbnail}
         className={
-          'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer z-20'
+          'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
         }
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
       />
-      <img src={thumbnail} alt={'spot thumbnail'} className={'z-10 object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest pointer-events-none'} />
+      {isLoaded ? null : <div className={"z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-figmaColors-outlined-border"}>
+        <div className={"font-semibold color-white stroke-black animate-pulse"}>
+          Loading your video...
+        </div>
+      </div>}
     </>
   );
 }
