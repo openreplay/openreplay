@@ -18,7 +18,7 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
     mixedEvents
   );
   const jump = (time: number) => {
-    spotPlayerStore.setTime(time);
+    spotPlayerStore.setTime(time / 1000);
   };
 
   const getShadowColor = (ind: number) => {
