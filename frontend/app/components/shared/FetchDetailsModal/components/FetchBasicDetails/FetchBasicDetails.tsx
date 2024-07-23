@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
 import { formatBytes } from 'App/utils';
 import CopyText from 'Shared/CopyText';
-import {Tag} from 'antd';
+import { Tag } from 'antd';
 import cn from 'classnames';
 
 interface Props {
   resource: any;
   timestamp?: string;
 }
+
 function FetchBasicDetails({ resource, timestamp }: Props) {
   const _duration = parseInt(resource.duration);
   const text = useMemo(() => {
@@ -22,14 +23,16 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
     <div>
       <div className="flex items-start py-1">
         <div className="font-medium w-36">Name</div>
-        <Tag className='text-base max-w-96 rounded-lg text-clip bg-indigo-50 whitespace-nowrap overflow-hidden text-clip cursor-pointer word-break' bordered={false}>
+        <Tag
+          className="text-base max-w-96 rounded-lg text-clip bg-indigo-50 whitespace-nowrap overflow-hidden text-clip cursor-pointer word-break"
+          bordered={false}>
           <CopyText content={resource.url}>{resource.url}</CopyText>
         </Tag>
       </div>
 
       <div className="flex items-center py-1">
         <div className="font-medium w-36">Type</div>
-        <Tag className='text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip' bordered={false}>
+        <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
           {resource.type}
         </Tag>
       </div>
@@ -37,7 +40,8 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {resource.method && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Request Method</div>
-          <Tag className='text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip' bordered={false}>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+               bordered={false}>
             {resource.method}
           </Tag>
         </div>
@@ -47,15 +51,12 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
         <div className="flex items-center py-1">
           <div className="text-base font-medium w-36">Status Code</div>
           <Tag
-          bordered={false}
+            bordered={false}
             className={cn(
               'text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip flex items-center',
               { 'error color-red': !resource.success }
             )}
           >
-            {resource.status === '200' && (
-              <Tag  bordered={false} className="text-base bg-emerald-100 rounded-full mr-2"></Tag>
-            )}
             {resource.status}
           </Tag>
         </div>
@@ -63,7 +64,8 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       <div className="flex items-center py-1">
         <div className="font-medium w-36">Type</div>
-        <Tag className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+        <Tag className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+             bordered={false}>
           {resource.type}
         </Tag>
       </div>
@@ -71,18 +73,19 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {!!resource.decodedBodySize && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Size</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+               bordered={false}>
             {formatBytes(resource.decodedBodySize)}
           </Tag>
         </div>
       )}
 
-      
 
       {!!_duration && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Duration</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+               bordered={false}>
             {_duration} ms
           </Tag>
         </div>
@@ -90,11 +93,12 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       {timestamp && (
         <div className="flex items-center py-1">
-        <div className="font-medium w-36">Time</div>
-        <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
-          {timestamp}
-        </Tag>
-      </div>
+          <div className="font-medium w-36">Time</div>
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+               bordered={false}>
+            {timestamp}
+          </Tag>
+        </div>
 
       )}
     </div>
