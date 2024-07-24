@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { getResourceFromNetworkRequest } from 'App/player';
 import { Log as PLog, ILog } from "App/player";
+import { PlayingState } from 'App/player-ui'
 
 interface Event {
   time: number;
@@ -77,7 +78,8 @@ class SpotPlayerStore {
   time = 0;
   duration = 0;
   durationString = '';
-  isPlaying = true;
+  isPlaying = false;
+  state = PlayingState.Paused
   isMuted = false;
   volume = 1;
   playbackRate = 1;
@@ -101,7 +103,7 @@ class SpotPlayerStore {
     this.time = 0;
     this.duration = 0;
     this.durationString = '';
-    this.isPlaying = true;
+    this.isPlaying = false;
     this.isMuted = false;
     this.volume = 1;
     this.playbackRate = 1;
@@ -152,6 +154,11 @@ class SpotPlayerStore {
 
   setIsPlaying(isPlaying: boolean): void {
     this.isPlaying = isPlaying;
+    this.state = isPlaying ? PlayingState.Playing : PlayingState.Paused;
+  }
+
+  onComplete = () => {
+    this.state = PlayingState.Completed;
   }
 
   setIsMuted(isMuted: boolean): void {
