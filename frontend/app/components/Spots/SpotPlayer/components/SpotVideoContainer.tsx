@@ -123,6 +123,11 @@ function SpotVideoContainer({
         spotPlayerStore.setTime(videoTime);
       }
     }, 100);
+    if (videoRef.current) {
+      videoRef.current.addEventListener('ended', () => {
+        spotPlayerStore.onComplete()
+      })
+    }
     return () => clearInterval(int);
   }, []);
 

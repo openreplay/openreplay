@@ -24,15 +24,17 @@ function SpotPlayerControls() {
     spotPlayerStore.setIsFullScreen(true);
   };
   const togglePlay = () => {
+    if (spotPlayerStore.state === PlayingState.Completed) {
+      spotPlayerStore.setTime(0);
+      spotPlayerStore.setIsPlaying(true);
+    }
     spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying);
   };
 
   const changeSpeed = (speed: number) => {
     spotPlayerStore.setPlaybackRate(SPEED_OPTIONS[speed]);
   };
-  const playState = spotPlayerStore.isPlaying
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+  const playState = spotPlayerStore.state
 
   const togglePanel = (panel: PanelType) => {
     spotPlayerStore.setActivePanel(
