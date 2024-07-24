@@ -196,6 +196,14 @@ export enum FilterType {
 }
 
 export enum FilterKey {
+  CLICK_MOBILE = 'clickMobile',
+  INPUT_MOBILE = 'inputMobile',
+  VIEW_MOBILE = 'viewMobile',
+  CUSTOM_MOBILE = 'customMobile',
+  REQUEST_MOBILE = 'requestMobile',
+  ERROR_MOBILE = 'errorMobile',
+  SWIPE_MOBILE = 'swipeMobile',
+
   ERROR = 'error',
   MISSING_RESOURCE = 'missingResource',
   SLOW_SESSION = 'slowSession',
