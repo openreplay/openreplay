@@ -262,12 +262,6 @@ def __search_metadata(project_id, value, key=None, source=None):
     return helper.list_to_camel_case(results)
 
 
-class TableColumn:
-    def __init__(self, table, column):
-        self.table = table
-        self.column = column
-
-
 TYPE_TO_COLUMN = {
     schemas.EventType.CLICK: "label",
     schemas.EventType.INPUT: "label",
