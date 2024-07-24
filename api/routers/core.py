@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global, tags
+    custom_metrics, saved_search, integrations_global, tags, autocomplete
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -21,17 +21,19 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/{projectId}/autocomplete', tags=["autocomplete"])
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str,
+def events_search(projectId: int, q: Optional[str] = None,
                   type: Union[schemas.FilterType, schemas.EventType,
                   schemas.PerformanceEventType, schemas.FetchFilterType,
                   schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if len(q) == 0 and not type:
+    if type and (not q or len(q) == 0) \
+            and (schemas.FilterType.has_value(type) or schemas.EventType.has_value(type)):
+        # TODO: check if type is a valid value for autocomplete
+        return autocomplete.get_top_values(project_id=projectId, event_type=type,event_key=key)
+    elif (not q or len(q) == 0) and not type:
         return {"data": []}
-    elif type:
-        # TODO: return to values related to type
-        pass
+
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)

@@ -1,4 +1,4 @@
-import { stringConditional, tagElementOperators, targetConditional } from "App/constants/filterOptions";
+import { stringConditional, tagElementOperators, targetConditional } from 'App/constants/filterOptions';
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -13,10 +13,78 @@ const filterOrder = {
   [FilterCategory.TECHNICAL]: 1,
   [FilterCategory.PERFORMANCE]: 2,
   [FilterCategory.USER]: 3,
-  [FilterCategory.GEAR]: 4,
-}
+  [FilterCategory.GEAR]: 4
+};
+
+export const mobileFilters = [
+  {
+    key: FilterKey.CLICK_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Tap',
+    operator: 'on',
+    operatorOptions: filterOptions.targetOperators,
+    icon: 'filters/click',
+    isEvent: true
+  },
+  {
+    key: FilterKey.INPUT_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Text Input',
+    placeholder: 'Enter input label name',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/input',
+    isEvent: true
+  },
+  {
+    key: FilterKey.VIEW_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Screen',
+    placeholder: 'Enter screen name',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/screen',
+    isEvent: true
+  },
+  {
+    key: FilterKey.CUSTOM_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.TECHNICAL,
+    label: 'Custom Events',
+    placeholder: 'Enter event key',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/custom',
+    isEvent: true
+  },
+  {
+    key: FilterKey.ERROR_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.TECHNICAL,
+    label: 'Error Message',
+    placeholder: 'E.g. Uncaught SyntaxError',
+    operator: 'is',
+    operatorOptions: filterOptions.stringOperators,
+    icon: 'filters/error',
+    isEvent: true
+  },
+  {
+    key: FilterKey.SWIPE_MOBILE,
+    type: FilterType.MULTIPLE,
+    category: FilterCategory.INTERACTIONS,
+    label: 'Swipe',
+    operator: 'on',
+    operatorOptions: filterOptions.targetOperators,
+    icon: 'filters/chevrons-up-down',
+    isEvent: true
+  }
+];
 
 export const filters = [
+  ...mobileFilters,
   {
     key: FilterKey.CLICK,
     type: FilterType.MULTIPLE,
@@ -96,7 +164,7 @@ export const filters = [
         operator: 'is',
         placeholder: 'Select method type',
         operatorOptions: filterOptions.stringOperatorsLimited,
-      icon: 'filters/fetch',
+        icon: 'filters/fetch',
         options: filterOptions.methodOptions
       },
       {
@@ -232,7 +300,7 @@ export const filters = [
     isEvent: true,
     icon: 'filters/tag-element',
     operatorOptions: filterOptions.tagElementOperators,
-    options: [],
+    options: []
   },
   {
     key: FilterKey.UTM_SOURCE,
@@ -241,7 +309,7 @@ export const filters = [
     label: 'UTM Source',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country',
+    icon: 'filters/country'
   },
   {
     key: FilterKey.UTM_MEDIUM,
@@ -250,7 +318,7 @@ export const filters = [
     label: 'UTM Medium',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country',
+    icon: 'filters/country'
   },
   {
     key: FilterKey.UTM_CAMPAIGN,
@@ -259,7 +327,7 @@ export const filters = [
     label: 'UTM Campaign',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/country',
+    icon: 'filters/country'
   },
   {
     key: FilterKey.USER_COUNTRY,
@@ -471,12 +539,12 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'collection'
-  },
+  }
 ].sort((a, b) => {
-  const aOrder = filterOrder[a.category] ?? 9
-  const bOrder = filterOrder[b.category] ?? 9
-  return aOrder - bOrder
-})
+  const aOrder = filterOrder[a.category] ?? 9;
+  const bOrder = filterOrder[b.category] ?? 9;
+  return aOrder - bOrder;
+});
 
 export const flagConditionFilters = [
   {
@@ -559,10 +627,10 @@ export const flagConditionFilters = [
     icon: 'filters/userid'
   }
 ].sort((a, b) => {
-  const aOrder = filterOrder[a.category] ?? 9
-  const bOrder = filterOrder[b.category] ?? 9
-  return aOrder - bOrder
-})
+  const aOrder = filterOrder[a.category] ?? 9;
+  const bOrder = filterOrder[b.category] ?? 9;
+  return aOrder - bOrder;
+});
 
 export const conditionalFilters = [
   {
@@ -612,7 +680,7 @@ export const conditionalFilters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringConditional,
-        icon: "filters/fetch"
+        icon: 'filters/fetch'
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -622,7 +690,7 @@ export const conditionalFilters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: "filters/fetch"
+        icon: 'filters/fetch'
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -643,8 +711,8 @@ export const conditionalFilters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: "filters/fetch"
-      },
+        icon: 'filters/fetch'
+      }
     ],
     icon: 'filters/fetch',
     isEvent: true
@@ -667,7 +735,7 @@ export const conditionalFilters = [
     label: 'Duration',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: "filters/duration",
+    icon: 'filters/duration',
     isEvent: false
   },
   {
@@ -690,10 +758,10 @@ export const conditionalFilters = [
     icon: 'filters/userid'
   }
 ].sort((a, b) => {
-  const aOrder = filterOrder[a.category] ?? 9
-  const bOrder = filterOrder[b.category] ?? 9
-  return aOrder - bOrder
-})
+  const aOrder = filterOrder[a.category] ?? 9;
+  const bOrder = filterOrder[b.category] ?? 9;
+  return aOrder - bOrder;
+});
 
 export const mobileConditionalFilters = [
   {
@@ -703,7 +771,7 @@ export const mobileConditionalFilters = [
     label: 'Duration',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: "filters/duration",
+    icon: 'filters/duration',
     isEvent: false
   },
   {
@@ -721,7 +789,7 @@ export const mobileConditionalFilters = [
         placeholder: 'Enter path or URL',
         operator: 'is',
         operatorOptions: filterOptions.stringConditional,
-        icon: "filters/fetch"
+        icon: 'filters/fetch'
       },
       {
         key: FilterKey.FETCH_STATUS_CODE,
@@ -731,7 +799,7 @@ export const mobileConditionalFilters = [
         placeholder: 'Enter status code',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: "filters/fetch"
+        icon: 'filters/fetch'
       },
       {
         key: FilterKey.FETCH_METHOD,
@@ -752,8 +820,8 @@ export const mobileConditionalFilters = [
         placeholder: 'E.g. 12',
         operator: '=',
         operatorOptions: filterOptions.customOperators,
-        icon: "filters/fetch"
-      },
+        icon: 'filters/fetch'
+      }
     ],
     icon: 'filters/fetch',
     isEvent: true
@@ -779,11 +847,11 @@ export const mobileConditionalFilters = [
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/cpu-load',
     options: [
-      { label: 'nominal', value: "0" },
-      { label: 'warm', value: "1" },
-      { label: 'hot', value: "2" },
-      { label: 'critical', value: "3" }
-    ],
+      { label: 'nominal', value: '0' },
+      { label: 'warm', value: '1' },
+      { label: 'hot', value: '2' },
+      { label: 'critical', value: '3' }
+    ]
   },
   {
     key: 'mainThreadCPU',
@@ -793,7 +861,7 @@ export const mobileConditionalFilters = [
     placeholder: '0 .. 100',
     operator: '=',
     operatorOptions: filterOptions.customOperators,
-    icon: 'filters/cpu-load',
+    icon: 'filters/cpu-load'
   },
   {
     key: 'viewComponent',
@@ -803,7 +871,7 @@ export const mobileConditionalFilters = [
     placeholder: 'View Name',
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
-    icon: 'filters/view',
+    icon: 'filters/view'
   },
   {
     key: FilterKey.USERID,
@@ -833,7 +901,7 @@ export const mobileConditionalFilters = [
     placeholder: 'logged value',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/console',
+    icon: 'filters/console'
   },
   {
     key: 'clickEvent',
@@ -854,7 +922,7 @@ export const mobileConditionalFilters = [
     operatorOptions: filterOptions.customOperators,
     icon: 'filters/memory-load'
   }
-]
+];
 
 export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
 export const nonFlagFilters = filters.filter(i => {
@@ -955,12 +1023,12 @@ export const addElementToFiltersMap = (
 
 export const addOptionsToFilter = (
   key,
-  options,
+  options
 ) => {
   if (filtersMap[key] && filtersMap[key].options) {
-    filtersMap[key].options = options
+    filtersMap[key].options = options;
   }
-}
+};
 
 function getMetadataLabel(key) {
   return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
@@ -1008,11 +1076,11 @@ export const addElementToConditionalFiltersMap = (
 
 export const addElementToMobileConditionalFiltersMap = (
   category = FilterCategory.METADATA,
-    key,
-    type = FilterType.MULTIPLE,
-    operator = 'is',
-    operatorOptions = filterOptions.stringOperators,
-    icon = 'filters/metadata'
+  key,
+  type = FilterType.MULTIPLE,
+  operator = 'is',
+  operatorOptions = filterOptions.stringOperators,
+  icon = 'filters/metadata'
 ) => {
   mobileConditionalFiltersMap[key] = {
     key,
@@ -1023,8 +1091,8 @@ export const addElementToMobileConditionalFiltersMap = (
     operatorOptions,
     icon,
     isLive: true
-  }
-}
+  };
+};
 
 export const addElementToLiveFiltersMap = (
   category = FilterCategory.METADATA,
@@ -1094,7 +1162,7 @@ export default Record({
         _filter = filtersMap[`_${filter.source}`];
       } else {
         if (filtersMap[filter.key]) {
-          _filter = filtersMap[filter.key]
+          _filter = filtersMap[filter.key];
         } else {
           _filter = filtersMap[type];
         }
@@ -1118,14 +1186,35 @@ export default Record({
   }
 });
 
+const WEB_EXCLUDE = [
+  FilterKey.CLICK_MOBILE, FilterKey.SWIPE_MOBILE, FilterKey.INPUT_MOBILE,
+  FilterKey.VIEW_MOBILE, FilterKey.CUSTOM_MOBILE, FilterKey.REQUEST_MOBILE, FilterKey.ERROR_MOBILE
+];
+
+const MOBILE_EXCLUDE = [
+  FilterKey.CLICK, FilterKey.INPUT, FilterKey.ERROR, FilterKey.CUSTOM,
+  FilterKey.LOCATION, FilterKey.FETCH, FilterKey.DOM_COMPLETE,
+  FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, FilterKey.TTFB, FilterKey.USER_BROWSER,
+  FilterKey.PLATFORM
+];
+
 /**
  * Group filters by category
- * @param {*} filtersMap
  * @returns
+ * @param map
+ * @param isMobile
  */
-export const generateFilterOptions = (map) => {
+export const generateFilterOptions = (map, isMobile = false) => {
   const filterSection = {};
   Object.keys(map).forEach(key => {
+    if (isMobile && MOBILE_EXCLUDE.includes(key)) {
+      return;
+    }
+
+    if (!isMobile && WEB_EXCLUDE.includes(key)) {
+      return;
+    }
+
     const filter = map[key];
     if (filterSection.hasOwnProperty(filter.category)) {
       filterSection[filter.category].push(filter);

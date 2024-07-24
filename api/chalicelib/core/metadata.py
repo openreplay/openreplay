@@ -236,47 +236,6 @@ def get_keys_by_projects(project_ids):
         return results
 
 
-# def add_edit_delete(tenant_id, project_id, new_metas):
-#     old_metas = get(project_id)
-#     old_indexes = [k["index"] for k in old_metas]
-#     new_indexes = [k["index"] for k in new_metas if "index" in k]
-#     new_keys = [k["key"] for k in new_metas]
-#
-#     add_metas = [k["key"] for k in new_metas
-#                  if "index" not in k]
-#     new_metas = {k["index"]: {"key": k["key"]} for
-#                  k in new_metas if
-#                  "index" in k}
-#     old_metas = {k["index"]: {"key": k["key"]} for k in old_metas}
-#
-#     if len(new_keys) > 20:
-#         return {"errors": ["you cannot add more than 20 key"]}
-#     for k in new_metas.keys():
-#         if re.match(regex, new_metas[k]["key"]) is None:
-#             return {"errors": [f"invalid key {k}"]}
-#     for k in add_metas:
-#         if re.match(regex, k) is None:
-#             return {"errors": [f"invalid key {k}"]}
-#     if len(new_indexes) > len(set(new_indexes)):
-#         return {"errors": ["duplicate indexes"]}
-#     if len(new_keys) > len(set(new_keys)):
-#         return {"errors": ["duplicate keys"]}
-#     to_delete = list(set(old_indexes) - set(new_indexes))
-#
-#     with pg_client.PostgresClient() as cur:
-#         for d in to_delete:
-#             delete(tenant_id=tenant_id, project_id=project_id, index=d)
-#
-#         for k in add_metas:
-#             add(tenant_id=tenant_id, project_id=project_id, new_name=k)
-#
-#         for k in new_metas.keys():
-#             if new_metas[k]["key"].lower() != old_metas[k]["key"]:
-#                 edit(tenant_id=tenant_id, project_id=project_id, index=k, new_name=new_metas[k]["key"])
-#
-#     return {"data": get(project_id)}
-
-
 def get_remaining_metadata_with_count(tenant_id):
     all_projects = projects.get_projects(tenant_id=tenant_id)
     results = []
@@ -290,3 +249,15 @@ def get_remaining_metadata_with_count(tenant_id):
             {**p, "limit": MAX_INDEXES, "remaining": remaining, "count": len(used_metas[str(p["projectId"])])})
 
     return results
+
+
+def get_colname_by_key(project_id, key):
+    if key is None or len(key) == 0:
+        return None
+
+    meta_keys = get(project_id=project_id)
+    meta_keys = {m["key"]: m["index"] for m in meta_keys if m["key"] == key}
+    if len(meta_keys) == 0:
+        return None
+
+    return index_to_colname(meta_keys[key])

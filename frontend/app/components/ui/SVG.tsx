@@ -277,6 +277,7 @@ import {
   Filter,
   Filters_arrow_return_right,
   Filters_browser,
+  Filters_chevrons_up_down,
   Filters_click,
   Filters_clickrage,
   Filters_code,
@@ -305,6 +306,7 @@ import {
   Filters_referrer,
   Filters_resize,
   Filters_rev_id,
+  Filters_screen,
   Filters_state_action,
   Filters_tag_element,
   Filters_ttfb,
@@ -434,6 +436,7 @@ import {
   No_metrics_chart,
   No_metrics,
   No_recordings,
+  Orspot,
   Orspot,
   Os_android,
   Os_chrome_os,
@@ -1396,6 +1399,9 @@ const SVG = (props: Props) => {
     // case 'filters/browser':
     case 'filters/browser': return <Filters_browser width={ width } height={ height } fill={ fill } />;
   
+    // case 'filters/chevrons-up-down':
+    case 'filters/chevrons-up-down': return <Filters_chevrons_up_down width={ width } height={ height } fill={ fill } />;
+  
     // case 'filters/click':
     case 'filters/click': return <Filters_click width={ width } height={ height } fill={ fill } />;
   
@@ -1479,6 +1485,9 @@ const SVG = (props: Props) => {
   
     // case 'filters/rev-id':
     case 'filters/rev-id': return <Filters_rev_id width={ width } height={ height } fill={ fill } />;
+  
+    // case 'filters/screen':
+    case 'filters/screen': return <Filters_screen width={ width } height={ height } fill={ fill } />;
   
     // case 'filters/state-action':
     case 'filters/state-action': return <Filters_state_action width={ width } height={ height } fill={ fill } />;
@@ -1866,6 +1875,9 @@ const SVG = (props: Props) => {
   
     // case 'no-recordings':
     case 'no-recordings': return <No_recordings width={ width } height={ height } fill={ fill } />;
+  
+    
+    case 'orSpot': return <Orspot width={ width } height={ height } fill={ fill } />;
   
     
     case 'orSpot': return <Orspot width={ width } height={ height } fill={ fill } />;
