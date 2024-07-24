@@ -18,6 +18,7 @@ type Spot struct {
 	UserEmail string    `json:"userEmail"`
 	TenantID  uint64    `json:"tenantID"`
 	Duration  int       `json:"duration"`
+	Crop      []int     `json:"crop"`
 	Comments  []Comment `json:"comments"`
 	CreatedAt time.Time `json:"createdAt"`
 }
@@ -52,7 +53,7 @@ type Update struct {
 }
 
 type Spots interface {
-	Add(user *auth.User, name, comment string, duration int) (*Spot, error)
+	Add(user *auth.User, name, comment string, duration int, crop []int) (*Spot, error)
 	GetByID(user *auth.User, spotID uint64) (*Spot, error)
 	Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
 	UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error)
@@ -68,7 +69,7 @@ func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots
 	}
 }
 
-func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int) (*Spot, error) {
+func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int, crop []int) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -90,6 +91,7 @@ func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int) (*S
 		UserEmail: user.Email,
 		TenantID:  user.TenantID,
 		Duration:  duration,
+		Crop:      crop,
 		CreatedAt: createdAt,
 	}
 	if comment != "" {
@@ -115,14 +117,16 @@ func (s *spotsImpl) encodeComment(comment *Comment) string {
 }
 
 func (s *spotsImpl) add(spot *Spot) error {
-	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, comments, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, crop, comments, created_at) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	var comments []string
 	for _, comment := range spot.Comments {
 		if encodedComment := s.encodeComment(&comment); encodedComment != "" {
 			comments = append(comments, encodedComment)
 		}
 	}
-	err := s.pgconn.Exec(sql, spot.ID, spot.Name, spot.UserID, spot.UserEmail, spot.TenantID, spot.Duration, comments, spot.CreatedAt)
+	err := s.pgconn.Exec(sql, spot.ID, spot.Name, spot.UserID, spot.UserEmail, spot.TenantID, spot.Duration, spot.Crop,
+		comments, spot.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -140,11 +144,12 @@ func (s *spotsImpl) GetByID(user *auth.User, spotID uint64) (*Spot, error) {
 }
 
 func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
-	sql := `SELECT name, user_email, duration, comments, created_at FROM spots 
+	sql := `SELECT name, user_email, duration, crop, comments, created_at FROM spots 
             WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
-	spot := &Spot{}
+	spot := &Spot{ID: spotID}
 	var comments []string
-	err := s.pgconn.QueryRow(sql, spotID, user.TenantID).Scan(&spot.Name, &spot.UserEmail, &spot.Duration, &comments, &spot.CreatedAt)
+	err := s.pgconn.QueryRow(sql, spotID, user.TenantID).Scan(&spot.Name, &spot.UserEmail, &spot.Duration, &spot.Crop,
+		&comments, &spot.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +190,8 @@ func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
 }
 
 func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
-	sql := `SELECT COUNT(1) OVER () AS total, spot_id, name, user_email, duration, created_at FROM spots WHERE tenant_id = $1 AND deleted_at IS NULL`
+	sql := `SELECT COUNT(1) OVER () AS total, spot_id, name, user_email, duration, created_at FROM spots 
+			WHERE tenant_id = $1 AND deleted_at IS NULL`
 	args := []interface{}{user.TenantID}
 	if opts.UserID != 0 {
 		sql += ` AND user_id = ` + fmt.Sprintf("$%d", len(args)+1)

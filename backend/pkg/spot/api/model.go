@@ -9,6 +9,7 @@ type CreateSpotRequest struct {
 	Name     string `json:"name"`
 	Comment  string `json:"comment"`
 	Duration int    `json:"duration"`
+	Crop     []int  `json:"crop"`
 	Preview  string `json:"preview"`
 }
 

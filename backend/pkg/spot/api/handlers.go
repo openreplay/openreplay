@@ -38,7 +38,7 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 
 	// Creat a spot
 	currUser := r.Context().Value("userData").(*auth.User)
-	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration)
+	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -397,8 +397,13 @@ func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*auth.User)
-	e.log.Info(r.Context(), "uploaded spot %d, from user: %+v", id, user)
-	if err := e.services.Transcoder.Transcode(id); err != nil {
+	spot, err := e.services.Spots.GetByID(user, id) // check if spot exists
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	e.log.Info(r.Context(), "uploaded spot %+v, from user: %+v", spot, user)
+	if err := e.services.Transcoder.Transcode(spot); err != nil {
 		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
 	}
 

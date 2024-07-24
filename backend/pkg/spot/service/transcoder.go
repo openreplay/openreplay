@@ -18,7 +18,7 @@ import (
 )
 
 type Transcoder interface {
-	Transcode(spotID uint64) error
+	Transcode(spot *Spot) error
 	GetSpotStreamPlaylist(spotID uint64) ([]byte, error)
 	Close()
 }
@@ -26,7 +26,7 @@ type Transcoder interface {
 type transcoderImpl struct {
 	cfg        *spot.Config
 	log        logger.Logger
-	queue      chan uint64 // in-memory queue for transcoding
+	queue      chan *Spot // in-memory queue for transcoding
 	objStorage objectstorage.ObjectStorage
 	conn       pool.Pool
 }
@@ -35,7 +35,7 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 	tnsc := &transcoderImpl{
 		cfg:        cfg,
 		log:        log,
-		queue:      make(chan uint64, 100),
+		queue:      make(chan *Spot, 100),
 		objStorage: objStorage,
 		conn:       conn,
 	}
@@ -43,22 +43,27 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 	return tnsc
 }
 
-func (t *transcoderImpl) Transcode(spotID uint64) error {
-	t.queue <- spotID
+func (t *transcoderImpl) Transcode(spot *Spot) error {
+	t.queue <- spot
 	return nil
 }
 
 func (t *transcoderImpl) mainLoop() {
 	for {
 		select {
-		case spotID := <-t.queue:
-			t.transcode(spotID)
+		case spot := <-t.queue:
+			t.transcode(spot)
 		}
 	}
 }
 
-func (t *transcoderImpl) transcode(spotID uint64) {
-	t.log.Info(context.Background(), "Transcoding spot %s", spotID)
+func (t *transcoderImpl) transcode(spot *Spot) {
+	if spot.Crop == nil && spot.Duration < 15000 {
+		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
+		return
+	}
+	spotID := spot.ID
+	t.log.Info(context.Background(), "Processing spot %s", spotID)
 
 	// Prepare path for spot video
 	path := t.cfg.FSDir + "/"
@@ -91,6 +96,36 @@ func (t *transcoderImpl) transcode(spotID uint64) {
 	}
 	originVideo.Close()
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d", spotID)
+
+	if spot.Crop != nil && len(spot.Crop) == 2 {
+		// Crop video
+		// ffmpeg -i input.webm -ss 5 -to 20 -c copy output.webm
+		crop := spot.Crop
+		start := time.Now()
+
+		cmd := exec.Command("ffmpeg", "-i", path+"origin.webm",
+			"-ss", fmt.Sprintf("%.2f", float64(crop[0])/1000.0),
+			"-to", fmt.Sprintf("%.2f", float64(crop[1])/1000.0),
+			"-c", "copy", path+"cropped.webm")
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		err = cmd.Run()
+		if err != nil {
+			t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
+			return
+		}
+		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start))
+
+		// mv cropped.webm origin.webm
+		err = os.Rename(path+"cropped.webm", path+"origin.webm")
+	}
+
+	if spot.Duration < 15000 {
+		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", spotID)
+		return
+	}
 
 	// Transcode video tp HLS format
 	// ffmpeg -i origin.webm -c:v copy -c:a aac -b:a 128k -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
