@@ -144,13 +144,15 @@ export default class SpotStore {
    * @param id - spot id string
    * */
   async generateKey(id: string, expiration: number) {
+    try {
     const { key } = await this.withLoader(() =>
       spotService.generateKey(id, expiration)
     );
-    console.log(key);
     this.setPubKey(key);
-
     return key;
+    } catch (e) {
+      console.error('couldnt generate pubkey')
+    }
   }
 
   async getPubKey(id: string) {
@@ -158,7 +160,7 @@ export default class SpotStore {
       const { key } = await this.withLoader(() => spotService.getKey(id));
       this.setPubKey(key);
     } catch (e) {
-      console.log('no pubkey', e)
+      console.error('no pubkey', e)
     }
   }
 }
