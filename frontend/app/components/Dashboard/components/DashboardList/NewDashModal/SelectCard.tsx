@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button, Input, Segmented, Space } from 'antd';
-import { RightOutlined } from '@ant-design/icons'
+import { RightOutlined } from '@ant-design/icons';
 import { ArrowRight, Info } from 'lucide-react';
 import { CARD_LIST, CARD_CATEGORIES, CardType } from './ExampleCards';
 import { useStore } from 'App/mstore';
@@ -8,6 +8,7 @@ import Option from './Option';
 import CardsLibrary from 'Components/Dashboard/components/DashboardList/NewDashModal/CardsLibrary';
 import { FUNNEL } from 'App/constants/card';
 import { useHistory } from 'react-router';
+import { FilterKey } from 'Types/filter/filterType';
 
 interface SelectCardProps {
   onClose: (refresh?: boolean) => void;
@@ -16,10 +17,11 @@ interface SelectCardProps {
   selected?: string;
   setSelectedCategory?: React.Dispatch<React.SetStateAction<string>>;
   isEnterprise?: boolean;
+  isMobile?: boolean;
 }
 
 const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
-  const { onCard, isLibrary = false, selected, setSelectedCategory, isEnterprise } = props;
+  const { onCard, isLibrary = false, selected, setSelectedCategory, isEnterprise, isMobile } = props;
   const [selectedCards, setSelectedCards] = React.useState<number[]>([]);
   const { metricStore, dashboardStore } = useStore();
   const siteId: string = location.pathname.split('/')[1];
@@ -74,20 +76,23 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
   };
 
   const cardItems = useMemo(() => {
-    return CARD_LIST.filter((card) => card.category === selected && (!card.isEnterprise || (card.isEnterprise && isEnterprise)))
-      .map((card) => (
-        <div key={card.key} className={card.width ? `col-span-${card.width}` : 'col-span-2'}>
-          <card.example
-            onCard={handleCardSelection}
-            type={card.key}
-            title={card.title}
-            data={card.data}
-            height={card.height}
-            hideLegend={card.data?.hideLegend}
-          />
-        </div>
-      ));
-  }, [selected]);
+    return CARD_LIST.filter((card) =>
+      card.category === selected &&
+      (!card.isEnterprise || (card.isEnterprise && isEnterprise)) &&
+      (!isMobile || (isMobile && ![FilterKey.USER_BROWSER].includes(card.key)))
+    ).map((card) => (
+      <div key={card.key} className={card.width ? `col-span-${card.width}` : 'col-span-2'}>
+        <card.example
+          onCard={handleCardSelection}
+          type={card.key}
+          title={card.title}
+          data={card.data}
+          height={card.height}
+          hideLegend={card.data?.hideLegend}
+        />
+      </div>
+    ));
+  }, [selected, isEnterprise, isMobile]);
 
   const onCardClick = (cardId: number) => {
     if (selectedCards.includes(cardId)) {
@@ -119,7 +124,7 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
           )}
         </div>
         {isCreatingDashboard && (
-          <Button type="link" onClick={createNewDashboard} loading={dashboardCreating} className='gap-2'>
+          <Button type="link" onClick={createNewDashboard} loading={dashboardCreating} className="gap-2">
             <Space>
               Create Blank
               <RightOutlined />
