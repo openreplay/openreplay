@@ -2,7 +2,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Input } from 'antd';
 import { Pin, Puzzle, Share2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -17,12 +17,26 @@ const visibilityOptions = {
 } as const;
 
 function SpotsListHeader({
-  disableButton,
   onDelete,
+  showDeleteButton,
 }: {
-  disableButton: boolean;
   onDelete: () => void;
+  showDeleteButton: boolean;
 }) {
+  const { spotStore } = useStore();
+  const [selectedKey, setSelectedKey] = useState('all');
+
+  const onSearch = (value: string) => {
+    spotStore.setQuery(value);
+    void spotStore.fetchSpots();
+  };
+
+  const onFilterChange = (key: 'all' | 'own') => {
+    setSelectedKey(key);
+    spotStore.setFilter(key);
+    void spotStore.fetchSpots();
+  };
+
   const dropdownProps = {
     items: [
       {
@@ -35,43 +49,44 @@ function SpotsListHeader({
       },
     ],
     onClick: ({ key }: any) => onFilterChange(key),
+    selectedKeys: [selectedKey],
   };
 
-  const { spotStore } = useStore();
-
-  const onSearch = (value: string) => {
-    spotStore.setQuery(value);
-    void spotStore.fetchSpots();
-  };
-  const onFilterChange = (key: 'all' | 'own') => {
-    spotStore.setFilter(key);
-    void spotStore.fetchSpots();
-  };
   return (
-    <div className={'flex items-center px-4 gap-4 pb-4'}>
-      <Icon name={'orSpot'} size={24} />
-      <div className={'text-2xl capitalize mr-2'}>Spots</div>
-      <div className={'ml-auto'}>
-        <Button size={'small'} disabled={disableButton} onClick={onDelete}>
-          Delete Selected
-        </Button>
+    <div className={'flex items-center justify-between w-full'}>
+      <div className='flex gap-1 items-center'>
+        <Icon name={'orSpot'} size={24} />
+        <h1 className={'text-2xl capitalize mr-2'}>Spots</h1>
       </div>
-      <Dropdown menu={dropdownProps}>
-        <div className={'cursor-pointer flex items-center justify-end gap-2'}>
-          <div>{visibilityOptions[spotStore.filter]}</div>
-          <DownOutlined />
+      
+      <div className='flex gap-4 items-center'>
+          <div className={'ml-auto'}>
+            {showDeleteButton && (
+              <Button onClick={onDelete} type='primary' ghost>
+                Delete Selected
+              </Button>
+            )}
+          </div>
+
+          <Dropdown menu={dropdownProps} className='border'>
+          <Button>
+              {visibilityOptions[spotStore.filter]}
+              <DownOutlined />
+            </Button>
+          </Dropdown>
+          <div className='w-56'>
+            <Input.Search
+              value={spotStore.query}
+              allowClear
+              name="spot-search"
+              placeholder="Filter by title"
+              onChange={(e) => spotStore.setQuery(e.target.value)}
+              onSearch={(value) => onSearch(value)}
+              className='rounded-lg'
+            />
+          </div>
         </div>
-      </Dropdown>
-      <div style={{ width: 210 }}>
-        <Input.Search
-          value={spotStore.query}
-          allowClear
-          name="spot-search"
-          placeholder="Filter by title"
-          onChange={(e) => spotStore.setQuery(e.target.value)}
-          onSearch={(value) => onSearch(value)}
-        />
-      </div>
+
     </div>
   );
 }
@@ -89,12 +104,13 @@ function SpotsList() {
     void spotStore.fetchSpots();
   };
 
-  const onDelete = (spotId: string) => {
-    void spotStore.deleteSpot([spotId]);
+  const onDelete = async (spotId: string) => {
+    await spotStore.deleteSpot([spotId]);
+    setSelectedSpots(selectedSpots.filter((s) => s !== spotId));
   };
 
-  const batchDelete = () => {
-    void spotStore.deleteSpot(selectedSpots);
+  const batchDelete = async () => {
+    await spotStore.deleteSpot(selectedSpots);
     setSelectedSpots([]);
   };
 
@@ -107,23 +123,26 @@ function SpotsList() {
   };
 
   return (
-    <div className={'w-full'}>
-      <div
-        className={'mx-auto bg-white rounded border py-4'}
-        style={{ maxWidth: 1360 }}
-      >
+    <div className={'w-full relative'}>
+
+      <div className={'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'}>
         <SpotsListHeader
-          disableButton={selectedSpots.length === 0}
+          showDeleteButton={selectedSpots.length > 0}
           onDelete={batchDelete}
         />
+      </div>
 
+      <div
+        className={'mx-auto pb-4'}
+        style={{ maxWidth: 1360 }}
+      >
         {spotStore.total === 0 ? (
           spotStore.isLoading ? <Loader /> : <EmptyPage />
         ) : (
           <>
             <div
               className={
-                'py-2 px-0.5 border-t border-b border-gray-lighter grid grid-cols-3 gap-2'
+                'py-2 border-gray-lighter grid grid-cols-3 gap-6'
               }
             >
               {spotStore.spots.map((spot, index) => (
@@ -145,7 +164,7 @@ function SpotsList() {
                 />
               ))}
             </div>
-            <div className="flex items-center justify-between p-5 w-full">
+            <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
                 Showing{' '}
                 <span className="font-medium">
@@ -238,4 +257,4 @@ function EmptyPage() {
   );
 }
 
-export default withPermissions(['SPOT'])(observer(SpotsList))
+export default withPermissions(['SPOT'])(observer(SpotsList));
