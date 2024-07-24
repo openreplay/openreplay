@@ -76,7 +76,7 @@ function reducer(state = initialState, action = {}) {
   switch (action.type) {
     case REFRESH_FILTER_OPTIONS:
       return state
-        .set('filterList', generateFilterOptions(filtersMap))
+        .set('filterList', generateFilterOptions(filtersMap, action.isMobile))
         .set('filterListLive', generateFilterOptions(liveFiltersMap))
         .set(
           'filterListConditional',
@@ -466,10 +466,12 @@ export const editSavedSearch = (instance) => {
   };
 };
 
-export const refreshFilterOptions = () => {
-  return {
+export const refreshFilterOptions = () => (dispatch, getState) => {
+  const currentProject = getState().getIn(['site', 'instance']);
+  return dispatch({
     type: REFRESH_FILTER_OPTIONS,
-  };
+    isMobile: currentProject?.platform === 'ios'
+  });
 };
 
 export const setScrollPosition = (scrollPosition) => {
