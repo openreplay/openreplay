@@ -48,12 +48,12 @@ def transform_old_filter_type(cls, values):
         "GRAPHQL": EventType.graphql.value,
         "STATEACTION": EventType.state_action.value,
         "ERROR": EventType.error.value,
-        "CLICK_MOBILE": EventType.click_mobile.value,
-        "INPUT_MOBILE": EventType.input_mobile.value,
-        "VIEW_MOBILE": EventType.view_mobile.value,
-        "CUSTOM_MOBILE": EventType.custom_mobile.value,
-        "REQUEST_MOBILE": EventType.request_mobile.value,
-        "ERROR_MOBILE": EventType.error_mobile.value,
+        "CLICK_IOS": EventType.click_mobile.value,
+        "INPUT_IOS": EventType.input_mobile.value,
+        "VIEW_IOS": EventType.view_mobile.value,
+        "CUSTOM_IOS": EventType.custom_mobile.value,
+        "REQUEST_IOS": EventType.request_mobile.value,
+        "ERROR_IOS": EventType.error_mobile.value,
         "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
         "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
         "TTFB": PerformanceEventType.location_ttfb.value,
@@ -471,13 +471,13 @@ class EventType(str, Enum):
     state_action = "stateAction"
     error = "error"
     tag = "tag"
-    click_mobile = "click_mobile"
-    input_mobile = "input_mobile"
-    view_mobile = "view_mobile"
-    custom_mobile = "custom_mobile"
-    request_mobile = "request_mobile"
-    error_mobile = "error_mobile"
-    swipe_mobile = "swipe_mobile"
+    click_mobile = "clickMobile"
+    input_mobile = "inputMobile"
+    view_mobile = "viewMobile"
+    custom_mobile = "customMobile"
+    request_mobile = "requestMobile"
+    error_mobile = "errorMobile"
+    swipe_mobile = "swipeMobile"
 
 
 class PerformanceEventType(str, Enum):
@@ -1459,7 +1459,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     operator: Literal[SearchEventOperator._is, \
         SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
-    transform = model_validator(mode='before')(transform_old_filter_type)
+    _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
     def __validator(cls, values):
