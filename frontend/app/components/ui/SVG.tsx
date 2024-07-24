@@ -437,7 +437,6 @@ import {
   No_metrics,
   No_recordings,
   Orspot,
-  Orspot,
   Os_android,
   Os_chrome_os,
   Os_fedora,
