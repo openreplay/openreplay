@@ -223,9 +223,12 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 
 	originalContent := strings.Join(originalLines, "\n")
 	modifiedContent := strings.Join(lines, "\n")
+	now := time.Now()
 	// Insert playlist to DB
-	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (spot_id) DO UPDATE SET original_playlist = $2, modified_playlist = $3, created_at = $4`
-	if err := t.conn.Exec(sql, spotID, originalContent, modifiedContent, time.Now()); err != nil {
+	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at, expired_at) 
+		VALUES ($1, $2, $3, $4, $5) ON CONFLICT (spot_id) DO UPDATE SET original_playlist = $2, modified_playlist = $3, 
+		created_at = $4, expired_at = $5`
+	if err := t.conn.Exec(sql, spotID, originalContent, modifiedContent, now, now.Add(10*time.Minute)); err != nil {
 		fmt.Println("Error inserting playlist to DB:", err)
 		return
 	}
@@ -235,13 +238,46 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 
 func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
 	// Get modified playlist from DB
-	sql := `SELECT modified_playlist FROM spots_streams WHERE spot_id = $1`
-	var playlist string
-	if err := t.conn.QueryRow(sql, spotID).Scan(&playlist); err != nil {
+	sql := `
+	SELECT
+    	CASE
+        	WHEN expired_at > $2 THEN modified_playlist
+        	ELSE original_playlist
+        	END AS playlist,
+    	CASE
+        	WHEN expired_at > $2 THEN 'modified'
+        	ELSE 'original'
+        	END AS playlist_type
+	FROM spots_streams
+    WHERE spot_id = $1`
+	var playlist, flag string
+	if err := t.conn.QueryRow(sql, spotID, time.Now()).Scan(&playlist, &flag); err != nil {
 		t.log.Error(context.Background(), "Error getting spot stream playlist: %v", err)
 		return []byte(""), err
 	}
-	return []byte(playlist), nil
+	if flag == "modified" {
+		return []byte(playlist), nil
+	}
+	// Have to generate a new modified playlist with updated pre-signed URLs for chunks
+	lines := strings.Split(playlist, "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
+			key := fmt.Sprintf("%d/%s", spotID, line)
+			presignedURL, err := t.objStorage.GetPreSignedDownloadUrl(key)
+			if err != nil {
+				t.log.Error(context.Background(), "Error generating pre-signed URL: %v", err)
+				return []byte(""), err
+			}
+			lines[i] = presignedURL
+		}
+	}
+	modifiedPlaylist := strings.Join(lines, "\n")
+	// Save modified playlist to DB
+	sql = `UPDATE spots_streams SET modified_playlist = $1, expired_at = $2 WHERE spot_id = $3`
+	if err := t.conn.Exec(sql, modifiedPlaylist, time.Now().Add(10*time.Minute), spotID); err != nil {
+		t.log.Warn(context.Background(), "Error updating modified playlist: %v", err)
+	}
+	return []byte(modifiedPlaylist), nil
 }
 
 func (t *transcoderImpl) Close() {
