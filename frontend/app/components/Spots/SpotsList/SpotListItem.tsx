@@ -3,7 +3,7 @@ import {
   DownloadOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-  GlobalOutlined,
+  UserOutlined,
   MailOutlined,
   MessageOutlined,
   MoreOutlined,
@@ -51,15 +51,15 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       icon: <ExclamationCircleOutlined />,
     },
     {
-      key: 'delete',
-      icon: <DeleteOutlined />,
-      label: 'Delete',
-    },
-    {
       key: 'slack',
       icon: <SlackOutlined />,
       label: 'Share via Slack',
     },
+    {
+      key: 'delete',
+      icon: <DeleteOutlined />,
+      label: 'Delete',
+    }
   ];
 
   const onMenuClick = async ({ key }: any) => {
@@ -165,9 +165,9 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
             <span className='capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80	mb-0 block'>{spot.title}</span>
           </Checkbox>
         </div>
-        <div className={'flex items-center gap-1 leading-4 text-xs'}>
+        <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
           <div>
-            <GlobalOutlined />
+          <UserOutlined />
           </div>
           <div>{spot.user}</div>
           <div className='ms-4'>

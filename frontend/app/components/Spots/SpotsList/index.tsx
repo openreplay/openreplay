@@ -54,16 +54,24 @@ function SpotsListHeader({
 
   return (
     <div className={'flex items-center justify-between w-full'}>
-      <div className='flex gap-1 items-center'>
-        <Icon name={'orSpot'} size={24} />
-        <h1 className={'text-2xl capitalize mr-2'}>Spots</h1>
+      <div className='flex gap-4 items-center'>
+          <div className='flex gap-1 items-center'>
+            <Icon name={'orSpot'} size={24} />
+            <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+          </div>
+          <Button type='default' size='small'  className='flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border'>
+            <div className='w-50'>
+              <img src={'assets/img/chromeStore.svg'} alt={'Get Spot by OpenReplay'} width={18} />
+            </div>
+             Get Free Extension <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-up-right"><path d="M13 5H19V11"/><path d="M19 5L5 19"/></svg>
+          </Button>
       </div>
       
       <div className='flex gap-4 items-center'>
           <div className={'ml-auto'}>
             {showDeleteButton && (
               <Button onClick={onDelete} type='primary' ghost>
-                Delete Selected
+                Delete
               </Button>
             )}
           </div>

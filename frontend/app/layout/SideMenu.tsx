@@ -182,7 +182,7 @@ function SideMenu(props: Props) {
                         key={item.key}
                         icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
                         style={{ paddingLeft: '20px' }}
-                        className={cn('!rounded-lg hover-fill-teal pe-0')}
+                        className={cn('!rounded-lg hover-fill-teal !pe-0')}
                         itemIcon={item.leading ? <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
