@@ -169,10 +169,10 @@ interface DevtoolsButtonsProps {
   bottomBlock: number;
 }
 
-function DevtoolsButtons({
+const DevtoolsButtons = observer(({
   toggleBottomTools,
   bottomBlock,
-}: DevtoolsButtonsProps) {
+}: DevtoolsButtonsProps) => {
   const { aiSummaryStore } = useStore();
   const { store, player } = React.useContext(MobilePlayerContext);
 
@@ -277,7 +277,7 @@ function DevtoolsButtons({
       />
     </>
   );
-}
+})
 
 const ControlPlayer = observer(Controls);
 
