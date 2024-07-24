@@ -116,10 +116,26 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 			t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
 			return
 		}
-		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start))
+		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
 		// mv cropped.webm origin.webm
 		err = os.Rename(path+"cropped.webm", path+"origin.webm")
+
+		// upload cropped video back to s3
+		start = time.Now()
+		video, err := os.Open(path + "origin.webm")
+		if err != nil {
+			t.log.Error(context.Background(), "Failed to open cropped video: %v", err)
+			return
+		}
+		defer video.Close()
+
+		err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
+		if err != nil {
+			t.log.Error(context.Background(), "Failed to upload cropped video: %v", err)
+			return
+		}
+		t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
 	}
 
 	if spot.Duration < 15000 {
@@ -144,8 +160,9 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
 		return
 	}
-	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start))
+	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
 
+	start = time.Now()
 	// Read the M3U8 file
 	file, err := os.Open(playlistPath)
 	if err != nil {
@@ -189,6 +206,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 			return
 		}
 	}
+	t.log.Info(context.Background(), "Uploaded chunks for spot %d in %v", spotID, time.Since(start).Seconds())
 
 	// Replace indexN.ts with pre-signed URLs
 	for i, line := range lines {
