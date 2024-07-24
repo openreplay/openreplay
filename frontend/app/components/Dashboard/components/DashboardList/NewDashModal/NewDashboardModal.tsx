@@ -10,13 +10,15 @@ interface NewDashboardModalProps {
   open: boolean;
   isAddingFromLibrary?: boolean;
   isEnterprise?: boolean;
+  isMobile?: boolean;
 }
 
 const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                                                                onClose,
                                                                open,
                                                                isAddingFromLibrary = false,
-                                                               isEnterprise = false
+                                                               isEnterprise = false,
+                                                               isMobile = false
                                                              }) => {
   const [step, setStep] = React.useState<number>(0);
   const [selectedCategory, setSelectedCategory] = React.useState<string>('product-analytics');
@@ -53,6 +55,7 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
                                      setSelectedCategory={setSelectedCategory}
                                      onCard={() => setStep(step + 1)}
                                      isLibrary={isAddingFromLibrary}
+                                     isMobile={isMobile}
                                      isEnterprise={isEnterprise} />}
           {step === 1 && <CreateCard onBack={() => setStep(0)} />}
         </div>
@@ -63,6 +66,7 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
 };
 
 const mapStateToProps = (state: any) => ({
+  isMobile: state.getIn(['site', 'instance', 'platform']) === 'ios',
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
     state.getIn(['user', 'account', 'edition']) === 'msaas'
 });
