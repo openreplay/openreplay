@@ -113,6 +113,8 @@ spec:
               value: {{ .Values.global.s3.assistRecordsBucket }}
             - name: sessions_bucket
               value: {{ .Values.global.s3.recordingsBucket }}
+            - name: IOS_VIDEO_BUCKET
+              value: {{ .Values.global.s3.recordingsBucket }}
             - name: sourcemaps_bucket
               value: {{ .Values.global.s3.sourcemapsBucket }} 
             - name: js_cache_bucket
