@@ -134,7 +134,7 @@ class EventType:
     CUSTOM_MOBILE = Event(ui_type=schemas.EventType.custom_mobile, table="events_common.customs", column="name")
     REQUEST_MOBILE = Event(ui_type=schemas.EventType.request_mobile, table="events_common.requests", column="path")
     CRASH_MOBILE = Event(ui_type=schemas.EventType.error_mobile, table="events_common.crashes",
-                      column=None)  # column=None because errors are searched by name or message
+                         column=None)  # column=None because errors are searched by name or message
 
 
 SUPPORTED_TYPES = {
@@ -163,22 +163,25 @@ SUPPORTED_TYPES = {
                                                 query=None),
     #     MOBILE
     EventType.CLICK_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_MOBILE),
-                                                 query=autocomplete.__generic_query(
-                                                     typename=EventType.CLICK_MOBILE.ui_type)),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=EventType.CLICK_MOBILE.ui_type)),
+    EventType.SWIPE_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.SWIPE_MOBILE),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=EventType.SWIPE_MOBILE.ui_type)),
     EventType.INPUT_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_MOBILE),
-                                                 query=autocomplete.__generic_query(
-                                                     typename=EventType.INPUT_MOBILE.ui_type)),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=EventType.INPUT_MOBILE.ui_type)),
     EventType.VIEW_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_MOBILE),
-                                                query=autocomplete.__generic_query(
-                                                    typename=EventType.VIEW_MOBILE.ui_type)),
-    EventType.CUSTOM_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_MOBILE),
-                                                  query=autocomplete.__generic_query(
-                                                      typename=EventType.CUSTOM_MOBILE.ui_type)),
-    EventType.REQUEST_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_MOBILE),
                                                    query=autocomplete.__generic_query(
-                                                       typename=EventType.REQUEST_MOBILE.ui_type)),
+                                                       typename=EventType.VIEW_MOBILE.ui_type)),
+    EventType.CUSTOM_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_MOBILE),
+                                                     query=autocomplete.__generic_query(
+                                                         typename=EventType.CUSTOM_MOBILE.ui_type)),
+    EventType.REQUEST_MOBILE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_MOBILE),
+                                                      query=autocomplete.__generic_query(
+                                                          typename=EventType.REQUEST_MOBILE.ui_type)),
     EventType.CRASH_MOBILE.ui_type: SupportedFilter(get=autocomplete.__search_errors_mobile,
-                                                 query=None),
+                                                    query=None),
 }
 
 
