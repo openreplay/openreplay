@@ -13,6 +13,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardHeader from '../DashboardHeader';
 import {useHistory} from "react-router";
+import AiQuery from "./AiQuery";
 
 interface IProps {
     siteId: string;
@@ -96,7 +97,7 @@ function DashboardView(props: Props) {
             <div style={{maxWidth: '1360px', margin: 'auto'}}>
                 {/* @ts-ignore */}
                 <DashboardHeader renderReport={props.renderReport} siteId={siteId} dashboardId={dashboardId}/>
-
+                <AiQuery />
                 <DashboardWidgetGrid
                     siteId={siteId}
                     dashboardId={dashboardId}

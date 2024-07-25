@@ -18,7 +18,6 @@ import {
     TIMESERIES, TABLE, HEATMAP, FUNNEL, ERRORS, RESOURCE_MONITORING,
     PERFORMANCE, WEB_VITALS, INSIGHTS, USER_PATH, RETENTION
 } from 'App/constants/card';
-import {useParams} from 'react-router-dom';
 import {useHistory} from "react-router";
 
 const tableOptions = metricOf.filter((i) => i.type === 'table');
