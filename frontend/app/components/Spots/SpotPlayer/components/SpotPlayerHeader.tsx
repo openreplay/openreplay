@@ -1,15 +1,15 @@
 import {
   ArrowLeftOutlined,
   CommentOutlined,
-  LinkOutlined,
+  CopyOutlined,
   SettingOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Button, Popover, message } from 'antd';
 import copy from 'copy-to-clipboard';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
@@ -43,27 +43,25 @@ function SpotPlayerHeader({
   platform: string | null;
   hasShareAccess: boolean;
 }) {
-  const [isCopied, setIsCopied] = React.useState(false);
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const history = useHistory();
+
   const onCopy = () => {
-    setIsCopied(true);
     copy(window.location.href);
-    setTimeout(() => setIsCopied(false), 2000);
+    message.success('Internal sharing link copied to clipboard');
   };
+
+  const navigateToSpotsList = () => {
+    history.push(spotLink);
+  };
+
   return (
-    <div
-      className={
-        'flex items-center gap-4 p-4 w-full bg-white border-b border-gray-light'
-      }
-    >
+    <div className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}>
       <div>
         {isLoggedIn ? (
-          <Link to={spotLink}>
-            <div className={'flex items-center gap-2'}>
-              <ArrowLeftOutlined />
-              <div className={'font-semibold'}>All spots</div>
-            </div>
-          </Link>
+          <Button type="text" onClick={navigateToSpotsList} icon={<ArrowLeftOutlined />}>
+            All spots
+          </Button>
         ) : (
           <>
             <div className={'flex items-center gap-2'}>
@@ -74,15 +72,12 @@ function SpotPlayerHeader({
           </>
         )}
       </div>
-      <div
-        className={'h-full rounded-xl bg-gray-light mx-2'}
-        style={{ width: 1 }}
-      />
+      <div className={'h-full rounded-xl border-l mr-2'} style={{ width: 1 }} />
       <div className={'flex items-center gap-2'}>
         <Avatar seed={hashString(user)} />
         <div>
           <div>{title}</div>
-          <div className={'flex items-center gap-2 text-disabled-text'}>
+          <div className={'flex items-center gap-2 text-black/50 text-sm'}>
             <div>{user}</div>
             <div>·</div>
             <div>{date}</div>
@@ -110,29 +105,17 @@ function SpotPlayerHeader({
       <div className={'ml-auto'} />
       {isLoggedIn ? (
         <>
-          <Button
-            size={'small'}
-            onClick={onCopy}
-            type={'primary'}
-            icon={<LinkOutlined />}
-          >
-            {isCopied ? 'Copied!' : 'Copy Link'}
+          <Button size={'small'} onClick={onCopy} type={'default'} icon={<CopyOutlined />}>
+            Copy Link
           </Button>
           {hasShareAccess ? (
-            <Popover open={dropdownOpen} content={<AccessModal />}>
-              <Button
-                size={'small'}
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                icon={<SettingOutlined />}
-              >
+            <Popover trigger={'click'} content={<AccessModal onClose={() => setDropdownOpen(false)} />}>
+              <Button size={'small'} icon={<SettingOutlined />} onClick={() => setDropdownOpen(!dropdownOpen)}>
                 Manage Access
               </Button>
             </Popover>
           ) : null}
-          <div
-            className={'h-full rounded-xl bg-gray-light mx-2'}
-            style={{ width: 1 }}
-          />
+          <div className={'h-full rounded-xl border-l mx-2'} style={{ width: 1 }} />
         </>
       ) : null}
       <Button
@@ -158,8 +141,7 @@ function SpotPlayerHeader({
 export default connect((state: any) => {
   const jwt = state.getIn(['user', 'jwt']);
   const isEE = state.getIn(['user', 'account', 'edition']) === 'ee';
-  const permissions: string[] =
-    state.getIn(['user', 'account', 'permissions']) || [];
+  const permissions: string[] = state.getIn(['user', 'account', 'permissions']) || [];
 
   const hasShareAccess = isEE ? permissions.includes('SPOT_PUBLIC') : true;
   return { isLoggedIn: !!jwt, hasShareAccess };

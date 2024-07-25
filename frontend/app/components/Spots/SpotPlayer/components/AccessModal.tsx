@@ -1,10 +1,9 @@
-import { DownOutlined, LinkOutlined, StopOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Segmented } from 'antd';
+import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
 import copy from 'copy-to-clipboard';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { useStore } from 'App/mstore';
-import { confirm } from 'UI';
 import { durationFormatted } from "../../../../date";
 
 const HOUR_SECS = 60 * 60;
@@ -18,11 +17,13 @@ enum Intervals {
   week,
 }
 
-function AccessModal() {
+function AccessModal({ onClose }: { onClose: () => void }) {
   const { spotStore } = useStore();
-  const [isCopied, setIsCopied] = React.useState(false);
-  const [isPublic, setIsPublic] = React.useState(!!spotStore.pubKey);
-  const [generated, setGenerated] = React.useState(!!spotStore.pubKey);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isPublic, setIsPublic] = useState(!!spotStore.pubKey);
+  const [generated, setGenerated] = useState(!!spotStore.pubKey);
+  const [selectedInterval, setSelectedInterval] = useState<Intervals>(Intervals.hour);
+  const [loadingKey, setLoadingKey] = useState(false);
 
   const expirationValues = {
     [Intervals.hour]: HOUR_SECS,
@@ -35,70 +36,64 @@ function AccessModal() {
     spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
+  useEffect(() => {
+    if (spotStore.pubKey) {
+      const interval = Object.keys(expirationValues).find(key => expirationValues[key as Intervals] === spotStore.pubKey.expiration);
+      if (interval) setSelectedInterval(Number(interval) as Intervals);
+    }
+  }, [spotStore.pubKey]);
+
   const menuItems = [
     {
-      key: Intervals.hour,
+      key: Intervals.hour.toString(),
       label: <div>One Hour</div>,
     },
     {
-      key: Intervals.threeHours,
+      key: Intervals.threeHours.toString(),
       label: <div>Three Hours</div>,
     },
     {
-      key: Intervals.day,
+      key: Intervals.day.toString(),
       label: <div>One Day</div>,
     },
     {
-      key: Intervals.week,
+      key: Intervals.week.toString(),
       label: <div>One Week</div>,
     },
   ];
-  const onMenuClick = ({ key }: { key: Intervals }) => {
-    const val = expirationValues[key];
-    if (
-      spotStore.pubKey?.expiration &&
-      Math.abs(spotStore.pubKey?.expiration - val) / val < 0.1
-    ) {
-      return;
-    }
-    void spotStore.generateKey(spotId, val);
+
+  const onMenuClick = async (info: { key: string }) => {
+    console.log('Menu item clicked:', info.key);
+    const val = expirationValues[Number(info.key) as Intervals];
+    setSelectedInterval(Number(info.key) as Intervals);
+    setLoadingKey(true);
+    console.log('Generating key with expiration:', val);
+    await spotStore.generateKey(spotId, val);
+    setLoadingKey(false);
   };
 
   const changeAccess = async (toPublic: boolean) => {
     if (isPublic && !toPublic && spotStore.pubKey) {
-      if (
-        await confirm({
-          header: 'Confirm',
-          confirmButton: 'Disable',
-          confirmation:
-            'Are you sure you want to disable public sharing for this spot?',
-        })
-      ) {
-        void spotStore.generateKey(spotId, 0);
-      }
+      await spotStore.generateKey(spotId, 0);
+      setIsPublic(toPublic);
+    } else {
+      setIsPublic(toPublic);
     }
-    setIsPublic(toPublic);
   };
+
   const revokeKey = async () => {
-    if (
-      await confirm({
-        header: 'Confirm',
-        confirmButton: 'Disable',
-        confirmation:
-          'Are you sure you want to disable public sharing for this spot?',
-      })
-    ) {
-      void spotStore.generateKey(spotId, 0);
-      setGenerated(false);
-      setIsPublic(false);
-    }
+    await spotStore.generateKey(spotId, 0);
+    setGenerated(false);
   };
+
   const generateInitial = async () => {
+    setLoadingKey(true);
     const k = await spotStore.generateKey(
       spotId,
       expirationValues[Intervals.hour]
     );
     setGenerated(!!k);
+    setLoadingKey(false);
   };
 
   const onCopy = () => {
@@ -107,13 +102,18 @@ function AccessModal() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const formatExpirationTime = (seconds: number) => {
+    if (seconds >= WEEK_SECS) {
+      return `${Math.floor(seconds / DAY_SECS)} days`;
+    }
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
+  };
+
   return (
-    <div
-      className={'flex flex-col gap-4 align-start'}
-      style={{ width: 420, height: generated ? 240 : 200 }}
-    >
+    <div className={'flex flex-col gap-4 align-start w-96 p-1'} >
       <div>
-        <div className={'font-semibold mb-2'}>Who can access this Spot</div>
         <Segmented
           options={[
             {
@@ -132,10 +132,10 @@ function AccessModal() {
       {!isPublic ? (
         <>
           <div>
-            <div className={'text-disabled-text'}>
-              All team members in your project will able to view this Spot
+            <div className={'text-black/50'}>
+              Link for internal team members
             </div>
-            <div className={'px-2 py-1 border rounded bg-[#FAFAFA] whitespace-nowrap overflow-ellipsis overflow-hidden'}>
+            <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
               {spotLink}
             </div>
           </div>
@@ -143,37 +143,41 @@ function AccessModal() {
             <Button
               size={'small'}
               onClick={onCopy}
-              type={'text'}
-              icon={<LinkOutlined />}
+              type={'default'}
+              icon={<CopyOutlined />}
             >
               {isCopied ? 'Copied!' : 'Copy Link'}
             </Button>
           </div>
         </>
       ) : !generated ? (
-        <div className={'w-fit'}>
+        <div className={'w-fit p-1'}>
           <Button
-            loading={spotStore.isLoading}
+            loading={loadingKey}
             onClick={generateInitial}
             type={'primary'}
             ghost
+            size='small'
+            className='mt-1'
           >
             Enable Public Sharing
           </Button>
         </div>
       ) : (
         <>
-          <div>
-            <div className={'text-disabled-text'}>Anyone with following link will be able to view this spot</div>
-            <div className={'px-2 py-1 border rounded bg-[#FAFAFA] whitespace-nowrap overflow-ellipsis overflow-hidden'}>
+          <div className='flex flex-col gap-4 px-1'>
+            <div>
+            <div className={'text-black/50'}>Anyone with the following link can access this Spot</div>
+            <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
               {spotLink}
             </div>
-          </div>
-          <div className={'flex items-center gap-2'}>
+            </div>
+
+            <div className={'flex items-center gap-2'}>
             <div>Link expires in</div>
-            <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
-              <div>
-                {spotStore.isLoading ? 'Loading' : durationFormatted(spotStore.pubKey!.expiration * 1000)}
+            <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
+              <div className='flex items-center cursor-pointer'>
+                {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
                 <DownOutlined />
               </div>
             </Dropdown>
@@ -181,19 +185,21 @@ function AccessModal() {
           <div className={'flex items-center gap-2'}>
             <div className={'w-fit'}>
               <Button
-                type={'primary'}
-                ghost
+                type={'default'}
                 size={'small'}
                 onClick={onCopy}
-                icon={<LinkOutlined />}
+                icon={<CopyOutlined />}
               >
                 {isCopied ? 'Copied!' : 'Copy Link'}
               </Button>
             </div>
-            <Button type={'text'} icon={<StopOutlined />} onClick={revokeKey}>
+            <Button type={'text'} size='small' icon={<StopOutlined />} onClick={revokeKey}>
               Disable Public Sharing
             </Button>
           </div>
+
+          </div>
+          
         </>
       )}
     </div>

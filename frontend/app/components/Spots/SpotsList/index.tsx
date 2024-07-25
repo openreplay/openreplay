@@ -19,9 +19,11 @@ const visibilityOptions = {
 function SpotsListHeader({
   onDelete,
   showDeleteButton,
+  selectedCount,
 }: {
   onDelete: () => void;
   showDeleteButton: boolean;
+  selectedCount: number;
 }) {
   const { spotStore } = useStore();
   const [selectedKey, setSelectedKey] = useState('all');
@@ -55,46 +57,45 @@ function SpotsListHeader({
   return (
     <div className={'flex items-center justify-between w-full'}>
       <div className='flex gap-4 items-center'>
-          <div className='flex gap-1 items-center'>
-            <Icon name={'orSpot'} size={24} />
-            <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+        <div className='flex gap-1 items-center'>
+          <Icon name={'orSpot'} size={24} />
+          <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+        </div>
+        <Button type='default' size='small' className='flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border'>
+          <div className='w-50'>
+            <img src={'assets/img/chromeStore.svg'} alt={'Get Spot by OpenReplay'} width={18} />
           </div>
-          <Button type='default' size='small'  className='flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border'>
-            <div className='w-50'>
-              <img src={'assets/img/chromeStore.svg'} alt={'Get Spot by OpenReplay'} width={18} />
-            </div>
-             Get Free Extension <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-up-right"><path d="M13 5H19V11"/><path d="M19 5L5 19"/></svg>
-          </Button>
+          Get Free Extension <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-up-right"><path d="M13 5H19V11"/><path d="M19 5L5 19"/></svg>
+        </Button>
       </div>
-      
-      <div className='flex gap-4 items-center'>
-          <div className={'ml-auto'}>
-            {showDeleteButton && (
-              <Button onClick={onDelete} type='primary' ghost>
-                Delete
-              </Button>
-            )}
-          </div>
 
-          <Dropdown menu={dropdownProps} className='border'>
-          <Button>
-              {visibilityOptions[spotStore.filter]}
-              <DownOutlined />
+      <div className='flex gap-4 items-center'>
+        <div className={'ml-auto'}>
+          {showDeleteButton && (
+            <Button onClick={onDelete} type='primary' ghost>
+              Delete {selectedCount}
             </Button>
-          </Dropdown>
-          <div className='w-56'>
-            <Input.Search
-              value={spotStore.query}
-              allowClear
-              name="spot-search"
-              placeholder="Filter by title"
-              onChange={(e) => spotStore.setQuery(e.target.value)}
-              onSearch={(value) => onSearch(value)}
-              className='rounded-lg'
-            />
-          </div>
+          )}
         </div>
 
+        <Dropdown menu={dropdownProps} className='border'>
+          <Button>
+            {visibilityOptions[spotStore.filter]}
+            <DownOutlined />
+          </Button>
+        </Dropdown>
+        <div className='w-56'>
+          <Input.Search
+            value={spotStore.query}
+            allowClear
+            name="spot-search"
+            placeholder="Filter by title"
+            onChange={(e) => spotStore.setQuery(e.target.value)}
+            onSearch={(value) => onSearch(value)}
+            className='rounded-lg'
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -132,27 +133,20 @@ function SpotsList() {
 
   return (
     <div className={'w-full relative'}>
-
       <div className={'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'}>
         <SpotsListHeader
           showDeleteButton={selectedSpots.length > 0}
           onDelete={batchDelete}
+          selectedCount={selectedSpots.length}
         />
       </div>
 
-      <div
-        className={'mx-auto pb-4'}
-        style={{ maxWidth: 1360 }}
-      >
+      <div className={'mx-auto pb-4'} style={{ maxWidth: 1360 }}>
         {spotStore.total === 0 ? (
           spotStore.isLoading ? <Loader /> : <EmptyPage />
         ) : (
           <>
-            <div
-              className={
-                'py-2 border-gray-lighter grid grid-cols-3 gap-6'
-              }
-            >
+            <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
               {spotStore.spots.map((spot, index) => (
                 <SpotListItem
                   key={index}
@@ -164,9 +158,7 @@ function SpotsList() {
                     if (checked) {
                       setSelectedSpots([...selectedSpots, spot.spotId]);
                     } else {
-                      setSelectedSpots(
-                        selectedSpots.filter((s) => s !== spot.spotId)
-                      );
+                      setSelectedSpots(selectedSpots.filter((s) => s !== spot.spotId));
                     }
                   }}
                 />
@@ -180,8 +172,7 @@ function SpotsList() {
                 </span>{' '}
                 to{' '}
                 <span className="font-medium">
-                  {(spotStore.page - 1) * spotStore.limit +
-                    spotStore.spots.length}
+                  {(spotStore.page - 1) * spotStore.limit + spotStore.spots.length}
                 </span>{' '}
                 of{' '}
                 <span className="font-medium">

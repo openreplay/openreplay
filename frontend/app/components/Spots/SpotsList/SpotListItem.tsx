@@ -8,6 +8,7 @@ import {
   MessageOutlined,
   MoreOutlined,
   SlackOutlined,
+  PlayCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import React, { useState } from 'react';
@@ -119,13 +120,13 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       {isEdit ? (
         <EditItemModal onSave={onSave} onClose={() => setIsEdit(false)} itemName={spot.title} />
       ) : null}
-      <div className='relative group overflow-hidden bg-black' style={{ width: '100%', height: 180 }}>
+      <div className='relative group overflow-hidden' style={{ width: '100%', height: 180, backgroundImage: `url('../../../assets/img/spotThumbBg.svg')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <AnimatedSVG name={ICONS.LOADER} size={32} />
           </div>
         )}
-        <div className='block w-full h-full cursor-pointer transition  hover:bg-teal/50' onClick={onSpotClick}>
+        <div className='block w-full h-full cursor-pointer transition hover:bg-teal/50 relative' onClick={onSpotClick}>
           <img
             src={spot.thumbnail}
             alt={spot.title}
@@ -134,40 +135,41 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
             onError={() => setLoading(false)}
             style={{ display: loading ? 'none' : 'block' }}
           />
+          <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
+            <PlayCircleOutlined style={{ fontSize: '48px', color: 'white' }} />
+          </div>
         </div>
 
         <div className='absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 transition-transform transform translate-y-full group-hover:translate-y-0 group-hover:opacity-100 opacity-0'>
-        
-        <Tooltip title={tooltipText}>
+          <Tooltip title={tooltipText}>
             <div
               className={
-                ' bg-black/70 text-white p-1 px-2 text-xs rounded-lg text-white'
+                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg'
               }
               onClick={copyToClipboard}
               style={{ cursor: 'pointer' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
             </div>
-        </Tooltip>
-
-        <div
-          className={
-            'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center'
-          }
-        >
-          {spot.duration}
-        </div>
+          </Tooltip>
+          <div
+            className={
+              'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center'
+            }
+          >
+            {spot.duration}
+          </div>
         </div>
       </div>
       <div className={'px-4 py-4 w-full border-t'}>
         <div className={'flex items-center gap-2'}>
           <Checkbox onChange={({ target: { checked } }) => onSelect(checked)} className='flex cursor-pointer capitalize w-full'>
-            <span className='capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80	mb-0 block'>{spot.title}</span>
+            <span className='capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block'>{spot.title}</span>
           </Checkbox>
         </div>
         <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
           <div>
-          <UserOutlined />
+            <UserOutlined />
           </div>
           <div>{spot.user}</div>
           <div className='ms-4'>
