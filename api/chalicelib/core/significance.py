@@ -152,7 +152,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
             next_table = events.EventType.CUSTOM_MOBILE.table
             next_col_name = events.EventType.CUSTOM_MOBILE.column
         else:
-            logging.warning(f"=================UNDEFINED:{event_type}")
+            logger.warning(f"=================UNDEFINED:{event_type}")
             continue
 
         values = {**values, **sh.multi_values(helper.values_for_operator(value=s.value, op=s.operator),
@@ -219,18 +219,18 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(n_stages_query, params)
-        logging.debug("---------------------------------------------------")
-        logging.debug(query)
-        logging.debug("---------------------------------------------------")
+        logger.debug("---------------------------------------------------")
+        logger.debug(query)
+        logger.debug("---------------------------------------------------")
         try:
             cur.execute(query)
             rows = cur.fetchall()
         except Exception as err:
-            logging.warning("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
-            logging.warning(query.decode('UTF-8'))
-            logging.warning("--------- PAYLOAD -----------")
-            logging.warning(filter_d.model_dump_json())
-            logging.warning("--------------------")
+            logger.warning("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
+            logger.warning(query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(filter_d.model_dump_json())
+            logger.warning("--------------------")
             raise err
     for r in rows:
         if r["user_id"] == "":
@@ -481,7 +481,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     if last_stage is None:
         last_stage = n_stages
     if last_stage > n_stages:
-        logging.debug(
+        logger.debug(
             "The number of the last stage provided is greater than the number of stages. Using n_stages instead")
         last_stage = n_stages
 
@@ -548,7 +548,7 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id, metri
     stages = filter_d.events
 
     if len(stages) == 0:
-        logging.debug("no stages found")
+        logger.debug("no stages found")
         return output, 0
 
     # The result of the multi-stage query

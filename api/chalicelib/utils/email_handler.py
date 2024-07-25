@@ -61,11 +61,11 @@ def send_html(BODY_HTML, SUBJECT, recipient):
         for r in recipient:
             msg["To"] = r
             try:
-                logging.info(f"Email sending to: {r}")
+                logger.info(f"Email sending to: {r}")
                 s.send_message(msg)
             except Exception as e:
-                logging.error("!!! Email error!")
-                logging.error(e)
+                logger.error("!!! Email error!")
+                logger.error(e)
 
 
 def send_text(recipients, text, subject):
@@ -79,8 +79,8 @@ def send_text(recipients, text, subject):
         try:
             s.send_message(msg)
         except Exception as e:
-            logging.error("!! Text-email failed: " + subject),
-            logging.error(e)
+            logger.error("!! Text-email failed: " + subject),
+            logger.error(e)
 
 
 def __escape_text_html(text):

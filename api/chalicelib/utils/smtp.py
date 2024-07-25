@@ -5,10 +5,11 @@ from smtplib import SMTPAuthenticationError
 from decouple import config
 from fastapi import HTTPException
 
+logger = logging.getLogger(__name__)
 
 class EmptySMTP:
     def sendmail(self, from_addr, to_addrs, msg, mail_options=(), rcpt_options=()):
-        logging.error("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
+        logger.error("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
 
     def send_message(self, msg):
         self.sendmail( msg["FROM"], msg["TO"], msg.as_string() )
@@ -55,9 +56,9 @@ class SMTPClient:
             if not (status == 250):
                 raise Exception(f"SMTP connexion error, status:{status}")
         except Exception as e:  # smtplib.SMTPServerDisconnected
-            logging.error(
+            logger.error(
                 f'!! SMTP connexion error to {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)}')
-            logging.error(e)
+            logger.error(e)
             return False, e
 
         # check authentication
@@ -65,8 +66,8 @@ class SMTPClient:
             self.__enter__()
             self.__exit__()
         except Exception as e:
-            logging.error(f'!! SMTP authentication error to {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)}')
-            logging.error(e)
+            logger.error(f'!! SMTP authentication error to {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)}')
+            logger.error(e)
             return False, e
 
         return True, None
@@ -80,8 +81,8 @@ SMTP_NOTIFIED = False
 def has_smtp():
     global VALID_SMTP, SMTP_ERROR, SMTP_NOTIFIED
     if SMTP_ERROR is not None:
-        logging.error("!!! SMTP error found, disabling SMTP configuration:")
-        logging.error(SMTP_ERROR)
+        logger.error("!!! SMTP error found, disabling SMTP configuration:")
+        logger.error(SMTP_ERROR)
 
     if VALID_SMTP is not None:
         return VALID_SMTP
@@ -91,7 +92,7 @@ def has_smtp():
         return VALID_SMTP
     elif not SMTP_NOTIFIED:
         SMTP_NOTIFIED = True
-        logging.info("no SMTP configuration found")
+        logger.info("no SMTP configuration found")
     return False
 
 
@@ -105,7 +106,7 @@ def check_connexion():
     if not (result == 0):
         error = f"""!! SMTP {config("EMAIL_HOST")}:{config("EMAIL_PORT", cast=int)} is unreachable
 f'please make sure the host&port are correct, and the SMTP protocol is authorized on your server."""
-        logging.error(error)
+        logger.error(error)
         sock.close()
         return False, error
 

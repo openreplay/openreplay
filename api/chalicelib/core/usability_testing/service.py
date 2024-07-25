@@ -157,7 +157,7 @@ def get_ut_test(project_id: int, test_id: int):
         live_sessions = assist.__get_live_sessions_ws(project_id, body)
         row['live_count'] = live_sessions['total']
     except Exception as e:
-        logging.error(f"Failed to get live sessions count: {e}")
+        logger.error(f"Failed to get live sessions count: {e}")
         row['live_count'] = 0
 
     row['created_at'] = TimeUTC.datetime_to_timestamp(row['created_at'])
@@ -403,7 +403,7 @@ def get_statistics(test_id: int):
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
-        logging.error(f"Unexpected error occurred: {e}")
+        logger.error(f"Unexpected error occurred: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 

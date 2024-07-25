@@ -11,7 +11,7 @@ from chalicelib.core import sessions
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
-logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logging.basicConfig(level=config("LOGLEVEL", default=logger.info))
 
 LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
@@ -92,7 +92,7 @@ def can_check(a) -> bool:
         else a["options"]["previousPeriod"]
 
     if TimeInterval.get(repetitionBase) is None:
-        logging.error(f"repetitionBase: {repetitionBase} NOT FOUND")
+        logger.error(f"repetitionBase: {repetitionBase} NOT FOUND")
         return False
 
     return (a["options"]["renotifyInterval"] <= 0 or
@@ -116,8 +116,8 @@ def Build(a):
         try:
             data = schemas.SessionsSearchPayloadSchema.model_validate(a["filter"])
         except ValidationError:
-            logging.warning("Validation error for:")
-            logging.warning(a["filter"])
+            logger.warning("Validation error for:")
+            logger.warning(a["filter"])
             raise
 
         full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
@@ -196,23 +196,23 @@ def process():
                 try:
                     query = cur.mogrify(query, params)
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
-                    logging.error(e)
+                    logger.error(e)
                     continue
-                logging.debug(alert)
-                logging.debug(query)
+                logger.debug(alert)
+                logger.debug(query)
                 try:
                     cur.execute(query)
                     result = cur.fetchone()
                     if result["valid"]:
-                        logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
+                        logger.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
-                    logging.error(query)
-                    logging.error(e)
+                    logger.error(query)
+                    logger.error(e)
                     cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
             cur.execute(

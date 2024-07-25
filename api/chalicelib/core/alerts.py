@@ -124,26 +124,26 @@ def process_notifications(data):
                 try:
                     send_to_slack_batch(notifications_list=notifications_list)
                 except Exception as e:
-                    logging.error("!!!Error while sending slack notifications batch")
-                    logging.error(str(e))
+                    logger.error("!!!Error while sending slack notifications batch")
+                    logger.error(str(e))
             elif t == "msteams":
                 try:
                     send_to_msteams_batch(notifications_list=notifications_list)
                 except Exception as e:
-                    logging.error("!!!Error while sending msteams notifications batch")
-                    logging.error(str(e))
+                    logger.error("!!!Error while sending msteams notifications batch")
+                    logger.error(str(e))
             elif t == "email":
                 try:
                     send_by_email_batch(notifications_list=notifications_list)
                 except Exception as e:
-                    logging.error("!!!Error while sending email notifications batch")
-                    logging.error(str(e))
+                    logger.error("!!!Error while sending email notifications batch")
+                    logger.error(str(e))
             elif t == "webhook":
                 try:
                     webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
-                    logging.error("!!!Error while sending webhook notifications batch")
-                    logging.error(str(e))
+                    logger.error("!!!Error while sending webhook notifications batch")
+                    logger.error(str(e))
 
 
 def send_by_email(notification, destination):
@@ -158,9 +158,9 @@ def send_by_email(notification, destination):
 
 def send_by_email_batch(notifications_list):
     if not smtp.has_smtp():
-        logging.info("no SMTP configuration for email notifications")
+        logger.info("no SMTP configuration for email notifications")
     if notifications_list is None or len(notifications_list) == 0:
-        logging.info("no email notifications")
+        logger.info("no email notifications")
         return
     for n in notifications_list:
         send_by_email(notification=n.get("notification"), destination=n.get("destination"))
