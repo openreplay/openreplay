@@ -368,9 +368,6 @@ TYPE_TO_TABLE = {
     schemas.EventType.REQUEST: "events_common.requests",
     schemas.EventType.GRAPHQL: "events.graphql",
     schemas.EventType.STATE_ACTION: "events.state_actions",
-    # For ERROR, sessions search is happening over name OR message,
-    # for simplicity top 10 is using name only
-    schemas.EventType.ERROR: "name"
 }
 
 
@@ -395,6 +392,19 @@ def get_top_values(project_id, event_type, event_key=None):
                                      ORDER BY row_count DESC
                                      LIMIT 10)
                         SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count, 2) AS row_percentage
+                        FROM raw;"""
+        elif event_type==schemas.EventType.ERROR:
+            colname = TYPE_TO_COLUMN.get(event_type)
+            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
+                                                                 COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
+                                                                 COUNT(1) OVER ()                   AS total_count
+                                                 FROM public.errors
+                                                 WHERE project_id = %(project_id)s
+                                                   AND {colname} IS NOT NULL
+                                                   AND {colname} != ''
+                                                 ORDER BY row_count DESC
+                                                 LIMIT 10)
+                        SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count,2) AS row_percentage
                         FROM raw;"""
         else:
             colname = TYPE_TO_COLUMN.get(event_type)
