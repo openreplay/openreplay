@@ -170,10 +170,26 @@ const Router: React.FC<RouterProps> = (props) => {
 
   React.useEffect(() => {
     if (isLoggedIn && spotLoginUrl) {
-      window.postMessage({ type: "orspot:token", token: jwt }, '*')
-      toast.success('You have been logged into Spot successfully');
-      history.push(routes.spotsList())
-      // check permissions, show error notifications if not exist in EE
+      let tries = 0
+      window.addEventListener('message', (event) => {
+        if (event.data.type === 'orspot:logged') {
+          clearInterval(int)
+          toast.success('You have been logged into Spot successfully');
+          history.push(routes.spotsList())
+        }
+      })
+      const int = setInterval(() => {
+        if (tries > 20) {
+          clearInterval(int)
+          toast.error('Failed to log into Spot')
+          return
+        }
+        window.postMessage({
+          type: "orspot:token", token: jwt
+        }, '*')
+        tries += 1
+      }, 250)
+      // check permissions, show error notifications if not exist in EE ?
     }
   }, [isLoggedIn, spotLoginUrl])
 

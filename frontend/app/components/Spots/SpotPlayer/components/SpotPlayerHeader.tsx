@@ -61,7 +61,7 @@ function SpotPlayerHeader({
           <Link to={spotLink}>
             <div className={'flex items-center gap-2'}>
               <ArrowLeftOutlined />
-              <div className={'font-semibold'}>All Spots</div>
+              <div className={'font-semibold'}>All spots</div>
             </div>
           </Link>
         ) : (

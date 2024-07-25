@@ -81,13 +81,13 @@ func (s *saverImpl) handleMobileMessage(msg Message) error {
 		if err = s.sessions.UpdateUserID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERID_MOBILE", m.ID)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERIDMOBILE", m.ID)
 		return nil
 	case *MobileUserAnonymousID:
 		if err = s.sessions.UpdateAnonymousID(session.SessionID, m.ID); err != nil {
 			return err
 		}
-		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSID_MOBILE", m.ID)
+		s.pg.InsertAutocompleteValue(session.SessionID, session.ProjectID, "USERANONYMOUSIDMOBILE", m.ID)
 		return nil
 	case *MobileMetadata:
 		return s.sessions.UpdateMetadata(m.SessionID(), m.Key, m.Value)
