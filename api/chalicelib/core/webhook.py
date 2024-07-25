@@ -159,7 +159,7 @@ def trigger_batch(data_list):
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
         if webhooks_map[w["destination"]] is None:
-            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
+            logger.error(f"!!Error webhook not found: webhook_id={w['destination']}")
         else:
             __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
@@ -172,10 +172,10 @@ def __trigger(hook, data):
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            logging.error("=======> webhook: something went wrong for:")
-            logging.error(hook)
-            logging.error(r.status_code)
-            logging.error(r.text)
+            logger.error("=======> webhook: something went wrong for:")
+            logger.error(hook)
+            logger.error(r.status_code)
+            logger.error(r.text)
             return
         response = None
         try:
@@ -184,5 +184,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                logging.info("no response found")
+                logger.info("no response found")
         return response

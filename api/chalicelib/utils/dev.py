@@ -16,7 +16,7 @@ def timed(f):
         result = f(*args, **kwds)
         elapsed = time() - start
         if inspect.stack()[1][3] == "_view_func":
-            logging.debug("%s: took %d s to finish" % (f.__name__, elapsed))
+            logger.debug("%s: took %d s to finish" % (f.__name__, elapsed))
         else:
             call_stack = [i[3] for i in inspect.stack()[1:] if i[3] != "wrapper"]
             call_stack = [c for c in call_stack if

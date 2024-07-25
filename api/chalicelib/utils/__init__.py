@@ -1,10 +1,13 @@
-from . import smtp
 import logging
+
 from decouple import config
 
-logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+from . import smtp
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=config("LOGLEVEL", default=logging.info))
 
 if smtp.has_smtp():
-    logging.info("valid SMTP configuration found")
+    logger.info("valid SMTP configuration found")
 else:
-    logging.info("no SMTP configuration found or SMTP validation failed")
+    logger.info("no SMTP configuration found or SMTP validation failed")

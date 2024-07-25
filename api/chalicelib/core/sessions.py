@@ -128,18 +128,18 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
-        logging.debug("--------------------")
-        logging.debug(main_query)
-        logging.debug("--------------------")
+        logger.debug("--------------------")
+        logger.debug(main_query)
+        logger.debug("--------------------")
         try:
             cur.execute(main_query)
             sessions = cur.fetchone()
         except Exception as err:
-            logging.warning("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            logging.warning(main_query.decode('UTF-8'))
-            logging.warning("--------- PAYLOAD -----------")
-            logging.warning(data.model_dump_json())
-            logging.warning("--------------------")
+            logger.warning("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
+            logger.warning(main_query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(data.model_dump_json())
+            logger.warning("--------------------")
             raise err
         if errors_only or ids_only:
             return helper.list_to_camel_case(cur.fetchall())
@@ -222,17 +222,17 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
 
-            logging.debug("--------------------")
-            logging.debug(main_query)
-            logging.debug("--------------------")
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
             try:
                 cur.execute(main_query)
             except Exception as err:
-                logging.warning("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
-                logging.warning(main_query.decode('UTF-8'))
-                logging.warning("--------- PAYLOAD -----------")
-                logging.warning(data.model_dump_json())
-                logging.warning("--------------------")
+                logger.warning("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
+                logger.warning(main_query.decode('UTF-8'))
+                logger.warning("--------- PAYLOAD -----------")
+                logger.warning(data.model_dump_json())
+                logger.warning("--------------------")
                 raise err
             if view_type == schemas.MetricTimeseriesViewType.LINE_CHART:
                 sessions = cur.fetchall()
@@ -284,9 +284,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                             GROUP BY {main_col}
                                                             ORDER BY session_count DESC) AS users_sessions;""",
                                          full_args)
-            logging.debug("--------------------")
-            logging.debug(main_query)
-            logging.debug("--------------------")
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
             cur.execute(main_query)
             sessions = helper.dict_to_camel_case(cur.fetchone())
             for s in sessions["values"]:
@@ -399,9 +399,9 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                 ORDER BY user_count DESC) AS users_sessions;"""
 
             main_query = cur.mogrify(main_query, full_args)
-        logging.debug("--------------------")
-        logging.debug(main_query)
-        logging.debug("--------------------")
+        logger.debug("--------------------")
+        logger.debug(main_query)
+        logger.debug("--------------------")
         cur.execute(main_query)
         sessions = helper.dict_to_camel_case(cur.fetchone())
         for s in sessions["values"]:
@@ -436,9 +436,9 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
                                                   GROUP BY type, context_string
                                                   ORDER BY session_count DESC) AS filtered_issues
                                             ) AS ranked_issues;""", full_args)
-        logging.debug("--------------------")
-        logging.debug(main_query)
-        logging.debug("--------------------")
+        logger.debug("--------------------")
+        logger.debug(main_query)
+        logger.debug("--------------------")
         cur.execute(main_query)
         sessions = helper.dict_to_camel_case(cur.fetchone())
         for s in sessions["values"]:
@@ -988,7 +988,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                                                 value_key=e_k_f))
                         apply = True
                     else:
-                        logging.warning(f"undefined FETCH filter: {f.type}")
+                        logger.warning(f"undefined FETCH filter: {f.type}")
                 if not apply:
                     continue
             elif event_type == schemas.EventType.GRAPHQL:
@@ -1015,7 +1015,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         event_where.append(
                             sh.multi_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     else:
-                        logging.warning(f"undefined GRAPHQL filter: {f.type}")
+                        logger.warning(f"undefined GRAPHQL filter: {f.type}")
             else:
                 continue
             if event_index == 0 or or_events:
@@ -1165,7 +1165,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                         sh.multi_conditions(f"ev.{events.EventType.LOCATION.column} {op} %({e_k})s",
                                             c.value, value_key=e_k))
                 else:
-                    logging.warning(f"unsupported extra_event type:${c.type}")
+                    logger.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:
                 extra_constraints.append("(" + " OR ".join(_extra_or_condition) + ")")
     query_part = f"""\
