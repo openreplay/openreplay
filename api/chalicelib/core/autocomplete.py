@@ -231,7 +231,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
         query = f"""(SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
                         '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -241,7 +241,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -251,7 +251,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
                     (SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
                         '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -261,7 +261,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -271,7 +271,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
         query = f"""(SELECT DISTINCT ON(lg.reason)
                             lg.reason AS value,
                             '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                        FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                         WHERE
                           s.project_id = %(project_id)s
                           AND lg.project_id = %(project_id)s
@@ -281,7 +281,7 @@ def __search_errors_mobile(project_id, value, key=None, source=None):
                         (SELECT DISTINCT ON(lg.name)
                             lg.name AS value,
                             '{events.EventType.CRASH_MOBILE.ui_type}' AS type
-                        FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        FROM {events.EventType.CRASH_MOBILE.table} INNER JOIN public.crashes_ios AS lg USING (crash_ios_id) LEFT JOIN public.sessions AS s USING(session_id)
                         WHERE
                           s.project_id = %(project_id)s
                           AND lg.project_id = %(project_id)s
