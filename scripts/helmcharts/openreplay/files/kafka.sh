@@ -8,7 +8,11 @@ RETENTION_TIME=${RETENTION_TIME:-345600000}
 topics=(
     "raw"
     "raw-ios"
+    "raw-images"
+    "canvas-images"
     "trigger"
+    "canvas-trigger"
+    "mobile-trigger"
     "cache"
     "analytics"
     "storage-failover"
