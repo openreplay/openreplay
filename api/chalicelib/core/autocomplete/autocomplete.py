@@ -390,9 +390,11 @@ def get_top_values(project_id, event_type, event_key=None):
             query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
                                                      COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
                                                      COUNT(1) OVER () AS total_count
-                                     FROM experimental.sessions
+                                     FROM public.sessions
                                      WHERE project_id = %(project_id)s
                                        AND {colname} IS NOT NULL
+                                       AND sessions.duration IS NOT NULL
+                                       AND sessions.duration > 0
                                      ORDER BY row_count DESC
                                      LIMIT 10)
                         SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count, 2) AS row_percentage
