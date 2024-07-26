@@ -12,7 +12,7 @@ import {
   JWT_PARAM,
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
-import { withStore } from 'App/mstore';
+import { withStore } from "App/mstore";
 import { checkParam } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
@@ -23,7 +23,6 @@ import { init as initSite } from 'Duck/site';
 import { fetchUserInfo, setJwt } from 'Duck/user';
 import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
-import { toast } from 'react-toastify'
 import * as routes from './routes';
 
 interface RouterProps
@@ -50,9 +49,6 @@ interface RouterProps
 }
 
 const Router: React.FC<RouterProps> = (props) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  const spotUrl = searchParams.get('spotCallback');
-
   const {
     isLoggedIn,
     siteId,
@@ -66,12 +62,9 @@ const Router: React.FC<RouterProps> = (props) => {
       params: { siteId: siteIdFromPath },
     },
     setSessionPath,
-    jwt,
   } = props;
-  const [spotLoginUrl, setSpotLogin] = React.useState(spotUrl);
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
-
   const handleJwtFromUrl = () => {
     const urlJWT = new URLSearchParams(location.search).get('jwt');
     if (urlJWT) {
@@ -167,32 +160,6 @@ const Router: React.FC<RouterProps> = (props) => {
       <IFrameRoutes isJwt={isJwt} isLoggedIn={isLoggedIn} loading={loading} />
     );
   }
-
-  React.useEffect(() => {
-    if (isLoggedIn && spotLoginUrl) {
-      let tries = 0
-      window.addEventListener('message', (event) => {
-        if (event.data.type === 'orspot:logged') {
-          clearInterval(int)
-          toast.success('You have been logged into Spot successfully');
-          history.push(routes.spotsList())
-        }
-      })
-      const int = setInterval(() => {
-        if (tries > 20) {
-          clearInterval(int)
-          toast.error('Failed to log into Spot')
-          return
-        }
-        window.postMessage({
-          type: "orspot:token", token: jwt
-        }, '*')
-        tries += 1
-      }, 250)
-      // check permissions, show error notifications if not exist in EE ?
-    }
-  }, [isLoggedIn, spotLoginUrl])
-
 
   return isLoggedIn ? (
     <NewModalProvider>

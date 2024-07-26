@@ -18,6 +18,7 @@ import UserService from './UserService';
 import UxtestingService from './UxtestingService';
 import WebhookService from './WebhookService';
 import SpotService from './spotService';
+import LoginService from "./loginService";
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -38,6 +39,7 @@ export const uxtestingService = new UxtestingService();
 export const tagWatchService = new TagWatchService();
 export const aiService = new AiService();
 export const spotService = new SpotService();
+export const loginService = new LoginService();
 
 export const services = [
   dashboardService,
@@ -59,4 +61,5 @@ export const services = [
   tagWatchService,
   aiService,
   spotService,
+  loginService,
 ];
