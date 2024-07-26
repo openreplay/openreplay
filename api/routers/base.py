@@ -6,11 +6,11 @@ from auth.auth_project import ProjectAuthorizer
 from or_dependencies import ORRoute
 
 
-def get_routers(extra_dependencies=[]) -> (APIRouter, APIRouter, APIRouter):
-    public_app = APIRouter(route_class=ORRoute)
+def get_routers(prefix="", extra_dependencies=[], tags=[]) -> (APIRouter, APIRouter, APIRouter):
+    public_app = APIRouter(route_class=ORRoute, prefix=prefix, tags=tags)
     app = APIRouter(dependencies=[Depends(JWTAuth()), Depends(ProjectAuthorizer("projectId"))] + extra_dependencies,
-                    route_class=ORRoute)
+                    route_class=ORRoute, prefix=prefix, tags=tags)
     app_apikey = APIRouter(
         dependencies=[Depends(APIKeyAuth()), Depends(ProjectAuthorizer("projectKey"))] + extra_dependencies,
-        route_class=ORRoute)
+        route_class=ORRoute, prefix=prefix, tags=tags)
     return public_app, app, app_apikey

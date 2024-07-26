@@ -19,7 +19,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0):
             token,
             config("jwt_secret"),
             algorithms=config("jwt_algorithm"),
-            audience=[f"front:{helper.get_stage_name()}"],
+            audience=[f"front:{helper.get_stage_name()}",f"spot:{helper.get_stage_name()}"],
             leeway=leeway
         )
     except jwt.ExpiredSignatureError:
@@ -63,7 +63,7 @@ def jwt_context(context):
     }
 
 
-def generate_jwt(user_id, tenant_id, iat, aud):
+def generate_spot_jwt(user_id, tenant_id, iat, aud):
     token = jwt.encode(
         payload={
             "userId": user_id,
@@ -79,7 +79,7 @@ def generate_jwt(user_id, tenant_id, iat, aud):
     return token
 
 
-def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
+def generate_spot_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
     token = jwt.encode(
         payload={
             "userId": user_id,
