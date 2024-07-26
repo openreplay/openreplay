@@ -52,7 +52,9 @@ func (t *transcoderImpl) mainLoop() {
 	for {
 		select {
 		case spot := <-t.queue:
+			start := time.Now()
 			t.transcode(spot)
+			t.log.Info(context.Background(), "total time for transcoding spot %d - %v sec", spot.ID, time.Since(start).Seconds())
 		}
 	}
 }
@@ -72,6 +74,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 	}
 	path += strconv.FormatUint(spotID, 10) + "/"
 
+	start := time.Now()
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
 		t.log.Fatal(context.Background(), "Error creating directories: %v", err)
@@ -95,7 +98,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		return
 	}
 	originVideo.Close()
-	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d", spotID)
+	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
 
 	if spot.Crop != nil && len(spot.Crop) == 2 {
 		// Crop video
@@ -106,7 +109,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		cmd := exec.Command("ffmpeg", "-i", path+"origin.webm",
 			"-ss", fmt.Sprintf("%.2f", float64(crop[0])/1000.0),
 			"-to", fmt.Sprintf("%.2f", float64(crop[1])/1000.0),
-			"-c", "copy", path+"cropped.webm")
+			"-c", "copy", path+"cropped.mp4	")
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
@@ -119,7 +122,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
 		// mv cropped.webm origin.webm
-		err = os.Rename(path+"cropped.webm", path+"origin.webm")
+		err = os.Rename(path+"cropped.mp4", path+"origin.webm")
 
 		// upload cropped video back to s3
 		start = time.Now()
@@ -145,10 +148,10 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 
 	// Transcode video tp HLS format
 	// ffmpeg -i origin.webm -c:v copy -c:a aac -b:a 128k -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
-	start := time.Now()
+	start = time.Now()
 	videoPath := path + "origin.webm"
 	playlistPath := path + "index.m3u8"
-	cmd := exec.Command("ffmpeg", "-i", videoPath, "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+	cmd := exec.Command("ffmpeg", "-i", videoPath, "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
 		"-start_number", "0", "-hls_time", "10", "-hls_list_size", "0", "-f", "hls", playlistPath)
 
 	var stdout, stderr bytes.Buffer
