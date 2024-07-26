@@ -109,7 +109,7 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		cmd := exec.Command("ffmpeg", "-i", path+"origin.webm",
 			"-ss", fmt.Sprintf("%.2f", float64(crop[0])/1000.0),
 			"-to", fmt.Sprintf("%.2f", float64(crop[1])/1000.0),
-			"-c", "copy", path+"cropped.mp4	")
+			"-c", "copy", path+"cropped.mp4")
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
