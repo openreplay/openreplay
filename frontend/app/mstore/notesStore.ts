@@ -1,7 +1,5 @@
 import { makeAutoObservable } from "mobx";
 
-
-
 import { notesService } from "App/services";
 import { Note, NotesFilter, WriteNote, iTag } from 'App/services/NotesService';
 

@@ -149,7 +149,8 @@ export default class APIClient {
 
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-    if (path.includes('/spot')) {
+    const spotService = path.includes('/spot') && !path.includes('/login')
+    if (spotService) {
       edp = edp.replace('/api', '')
     }
     if (

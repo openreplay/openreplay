@@ -1,17 +1,21 @@
-import React, {useState, useEffect, useRef} from 'react';
-// import {useSelector, useDispatch} from 'react-redux';
-import {useHistory, useLocation} from 'react-router-dom';
-import {login, setJwt, fetchTenants} from 'Duck/user';
-import withPageTitle from 'HOCs/withPageTitle'; // Consider using a different approach for titles in functional components
-import ReCAPTCHA from 'react-google-recaptcha';
-import {Button, Form, Input, Link, Loader, Popover, Tooltip, Icon} from 'UI';
-import {forgotPassword, signup} from 'App/routes';
-import LoginBg from '../../svg/login-illustration.svg';
-import {ENTERPRISE_REQUEIRED} from 'App/constants';
+import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
-import stl from './login.module.css';
+import React, { useEffect, useRef, useState } from 'react';
+// Consider using a different approach for titles in functional components
+import ReCAPTCHA from 'react-google-recaptcha';
+import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import { toast } from 'react-toastify';
+
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { useStore } from 'App/mstore';
+import { forgotPassword, signup } from 'App/routes';
+import { fetchTenants, login, setJwt } from 'Duck/user';
+import { Button, Form, Icon, Input, Link, Loader, Tooltip } from 'UI';
+
 import Copyright from 'Shared/Copyright';
-import {connect} from 'react-redux';
+
+import stl from './login.module.css';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -26,12 +30,22 @@ interface LoginProps {
   location: Location;
 }
 
-const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJwt, fetchTenants, location}) => {
+const Login: React.FC<LoginProps> = ({
+  errors,
+  loading,
+  authDetails,
+  login,
+  setJwt,
+  fetchTenants,
+  location,
+}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [CAPTCHA_ENABLED, setCAPTCHA_ENABLED] = useState(window.env.CAPTCHA_ENABLED === 'true');
+  const [CAPTCHA_ENABLED, setCAPTCHA_ENABLED] = useState(
+    window.env.CAPTCHA_ENABLED === 'true'
+  );
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-
+  const { loginStore } = useStore();
   const history = useHistory();
   const params = new URLSearchParams(location.search);
 
@@ -44,15 +58,54 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
   }, [authDetails]);
 
   useEffect(() => {
-    fetchTenants()
+    fetchTenants();
     const jwt = params.get('jwt');
     if (jwt) {
       setJwt(jwt);
     }
   }, []);
 
+  const handleSpotLogin = (jwt: string) => {
+    let tries = 0;
+    if (!jwt) {
+      return;
+    }
+    let int: ReturnType<typeof setInterval>;
+
+    const onSpotMsg = (event: any) => {
+      if (event.data.type === 'orspot:logged') {
+        clearInterval(int);
+        window.removeEventListener('message', onSpotMsg);
+        toast.success('You have been logged into Spot successfully');
+      }
+    };
+    window.addEventListener('message', onSpotMsg);
+
+    int = setInterval(() => {
+      if (tries > 20) {
+        clearInterval(int);
+        window.removeEventListener('message', onSpotMsg);
+        return;
+      }
+      window.postMessage(
+        {
+          type: 'orspot:token',
+          token: jwt,
+        },
+        '*'
+      );
+      tries += 1;
+    }, 250);
+  };
+
   const handleSubmit = (token?: string) => {
-    login({email: email.trim(), password, 'g-recaptcha-response': token});
+    login({ email: email.trim(), password, 'g-recaptcha-response': token });
+    loginStore.setEmail(email.trim());
+    loginStore.setPassword(password);
+    if (token) {
+      loginStore.setCaptchaResponse(token);
+    }
+    void loginStore.generateSpotJWT((jwt) => handleSpotLogin(jwt));
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,7 +118,8 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
   };
 
   const onSSOClick = () => {
-    if (window !== window.top) { // if in iframe
+    if (window !== window.top) {
+      // if in iframe
       window.parent.location.href = `${window.location.origin}/api/sso/saml2?iFrame=true`;
     } else {
       window.location.href = `${window.location.origin}/api/sso/saml2`;
@@ -76,17 +130,17 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center">
         <div className="m-10 ">
-          <img src="/assets/logo.svg" width={200}/>
+          <img src="/assets/logo.svg" width={200} />
         </div>
         <div className="border rounded-lg bg-white shadow-sm">
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             Login to your account
           </h2>
-          <div className={cn({'hidden': authDetails.enforceSSO})}>
+          <div className={cn({ hidden: authDetails.enforceSSO })}>
             <Form
               onSubmit={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
-              style={{width: '350px'}}
+              style={{ width: '350px' }}
             >
               <Loader loading={loading}>
                 {CAPTCHA_ENABLED && (
@@ -97,7 +151,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                     onChange={(token) => handleSubmit(token)}
                   />
                 )}
-                <div style={{width: '350px'}} className="px-8">
+                <div style={{ width: '350px' }} className="px-8">
                   <Form.Field>
                     <label>Email Address</label>
                     <Input
@@ -110,7 +164,6 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       icon="envelope"
-                      
                     />
                   </Form.Field>
                   <Form.Field>
@@ -132,8 +185,11 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                 <div className="px-8 my-2 w-full">
                   {errors.map((error) => (
                     <div className="flex items-center bg-red-lightest rounded p-3">
-                      <Icon name="info" color="red" size="20"/>
-                      <span className="color-red ml-2">{error}<br/></span>
+                      <Icon name="info" color="red" size="20" />
+                      <span className="color-red ml-2">
+                        {error}
+                        <br />
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -150,7 +206,9 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                 </Button>
 
                 <div className="my-8 text-center">
-                  <span className="color-gray-medium">Having trouble logging in?</span>{' '}
+                  <span className="color-gray-medium">
+                    Having trouble logging in?
+                  </span>{' '}
                   <Link to={FORGOT_PASSWORD} className="link ml-1">
                     {'Reset password'}
                   </Link>
@@ -163,7 +221,9 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                 <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
                   <Button variant="text-primary" type="submit">
                     {`Login with SSO ${
-                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                      authDetails.ssoProvider
+                        ? `(${authDetails.ssoProvider})`
+                        : ''
                     }`}
                   </Button>
                 </a>
@@ -174,8 +234,9 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                     <div className="text-center">
                       {authDetails.edition === 'ee' ? (
                         <span>
-                            SSO has not been configured. <br/> Please reach out to your admin.
-                          </span>
+                          SSO has not been configured. <br /> Please reach out
+                          to your admin.
+                        </span>
                       ) : (
                         ENTERPRISE_REQUEIRED
                       )}
@@ -189,7 +250,9 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
                     className="pointer-events-none opacity-30"
                   >
                     {`Login with SSO ${
-                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                      authDetails.ssoProvider
+                        ? `(${authDetails.ssoProvider})`
+                        : ''
                     }`}
                   </Button>
                 </Tooltip>
@@ -197,7 +260,10 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
             </div>
           </div>
           <div
-            className={cn("flex items-center w-96 justify-center my-8", {'hidden': !authDetails.enforceSSO})}>
+            className={cn('flex items-center w-96 justify-center my-8', {
+              hidden: !authDetails.enforceSSO,
+            })}
+          >
             <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
               <Button variant="primary">{`Login with SSO ${
                 authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
@@ -207,7 +273,7 @@ const Login: React.FC<LoginProps> = ({errors, loading, authDetails, login, setJw
         </div>
       </div>
 
-      <Copyright/>
+      <Copyright />
     </div>
   );
 };
