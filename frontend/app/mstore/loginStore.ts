@@ -77,6 +77,11 @@ class LoginStore {
       this.setSpotJwtPending(false)
     }
   }
+
+  invalidateSpotJWT = () => {
+    this.spotJWT = undefined
+    localStorage.removeItem(spotTokenKey)
+  }
 }
 
 export default LoginStore;

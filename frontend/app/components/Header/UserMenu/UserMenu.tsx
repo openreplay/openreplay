@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 import { logout } from 'Duck/user';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { Icon } from 'UI';
-import cn from 'classnames';
 import { getInitials } from 'App/utils';
+import { useStore } from "App/mstore";
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -17,10 +17,19 @@ interface Props {
 }
 function UserMenu(props: RouteComponentProps<Props>) {
   const { account, history, className, onLogoutClick }: any = props;
+  const { loginStore } = useStore();
 
   const onAccountClick = () => {
     history.push(CLIENT_PATH);
   };
+
+  const onLogout = () => {
+    loginStore.invalidateSpotJWT()
+    window.postMessage({
+      type: "orspot:invalidate"
+    }, "*")
+    onLogoutClick();
+  }
   return (
     <div
 
@@ -42,7 +51,7 @@ function UserMenu(props: RouteComponentProps<Props>) {
       <div className="p-2">
         <div
           className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
-          onClick={onLogoutClick}
+          onClick={onLogout}
         >
           <Icon name="door-closed" size="16" />
           <button className="ml-2">{'Logout'}</button>
