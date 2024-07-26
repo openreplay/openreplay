@@ -15,7 +15,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic, additional_routes
-from routers.subs import insights, metrics, v1_api, health, usability_tests
+from routers.subs import insights, metrics, v1_api, health, usability_tests, spot
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -123,6 +123,10 @@ app.include_router(health.app_apikey)
 app.include_router(usability_tests.public_app)
 app.include_router(usability_tests.app)
 app.include_router(usability_tests.app_apikey)
+
+app.include_router(spot.public_app)
+app.include_router(spot.app)
+app.include_router(spot.app_apikey)
 
 app.include_router(additional_routes.app)
 

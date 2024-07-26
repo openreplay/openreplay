@@ -611,11 +611,11 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
         r = helper.dict_to_camel_case(r)
         jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
         return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                            aud=f"front:{helper.get_stage_name()}"),
-            "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                             jwt_jti=jwt_r_jti),
+            "jwt": authorizers.generate_spot_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+                                                 aud=f"front:{helper.get_stage_name()}"),
+            "refreshToken": authorizers.generate_spot_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                                  iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                                  jwt_jti=jwt_r_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
             **r
@@ -627,7 +627,8 @@ def logout(user_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.users
-               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
+               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL,
+                   spot_jwt_iat = NULL, spot_jwt_refresh_jti = NULL, spot_jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
             {"user_id": user_id})
         cur.execute(query)
@@ -636,11 +637,11 @@ def logout(user_id: int):
 def refresh(user_id: int, tenant_id: int = -1) -> dict:
     jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
     return {
-        "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
-                                        aud=f"front:{helper.get_stage_name()}"),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id,
-                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                         jwt_jti=jwt_r_jti),
+        "jwt": authorizers.generate_spot_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
+                                             aud=f"front:{helper.get_stage_name()}"),
+        "refreshToken": authorizers.generate_spot_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=jwt_r_iat,
+                                                              aud=f"front:{helper.get_stage_name()}",
+                                                              jwt_jti=jwt_r_jti),
         "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
     }
 
