@@ -95,8 +95,8 @@ function LocationEv({
   event: { time: number; location: string };
   isCurrent?: boolean;
 }) {
-  const locEvent = { type: TYPES.LOCATION, url: event.location };
-  return <Event whiteBg event={locEvent} isCurrent={isCurrent} />;
+  const locEvent = { ...event, type: TYPES.LOCATION, url: event.location };
+  return <Event showLoadInfo whiteBg event={locEvent} isCurrent={isCurrent} />;
 }
 
 function ClickEv({

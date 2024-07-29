@@ -60,7 +60,7 @@ function SpotPlayerHeader({
       <div>
         {isLoggedIn ? (
           <Button type="text" onClick={navigateToSpotsList} icon={<ArrowLeftOutlined />}>
-            All spots
+            All Spots
           </Button>
         ) : (
           <>
