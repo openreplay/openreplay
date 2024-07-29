@@ -184,14 +184,20 @@ class SpotPlayerStore {
       time: log.time - this.startTs,
       value: log.msg,
     }));
+
     this.locations = locations.map((location) => ({
       ...location,
       time: location.time - this.startTs,
+      fcpTime: location.navTiming.fcpTime,
+      timeToInteractive: location.navTiming.timeToInteractive,
+      visuallyComplete: location.navTiming.visuallyComplete,
     }));
+
     this.clicks = clicks.map((click) => ({
       ...click,
       time: click.time - this.startTs,
     }));
+
     this.network = network.map((request) => {
       const ev = { ...request, timestamp: request.time };
       return getResourceFromNetworkRequest(
