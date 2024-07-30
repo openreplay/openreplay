@@ -11,10 +11,6 @@ import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get_stage_name():
-    return "OpenReplay"
-
-
 def random_string(length=36):
     return "".join(random.choices(string.hexdigits, k=length))
 
