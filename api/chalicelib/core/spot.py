@@ -35,7 +35,7 @@ def refresh_spot_jwt_iat_jti(user_id):
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return row.get("spot_jwt_iat"), row.get("spot_jwt_refresh_jti"), row.get("spot_jwt_refresh_jti")
+        return row.get("spot_jwt_iat"), row.get("spot_jwt_refresh_jti"), row.get("spot_jwt_refresh_iat")
 
 
 def authenticate(email, password) -> dict | None:
