@@ -1,21 +1,19 @@
-import {
-  DeleteOutlined,
-  DownloadOutlined,
-  EditOutlined,
-  CopyOutlined,
-  GlobalOutlined,
-  MessageOutlined,
-  MoreOutlined,
-  SlackOutlined,
-} from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, GlobalOutlined, MessageOutlined, MoreOutlined, SlackOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Dropdown } from 'antd';
+import copy from 'copy-to-clipboard';
 import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import copy from 'copy-to-clipboard';
+import { toast } from 'react-toastify';
+
+
+
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
+
+
+
 import EditItemModal from "./EditItemModal";
-import { toast } from 'react-toastify';
+
 
 interface ISpotListItem {
   spot: Spot;
@@ -67,7 +65,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
         await downloadFile(url, `${spot.title}.webm`)
         return;
       case 'copy':
-        copy(withSiteId(spotUrl(spot.spotId.toString()), siteId));
+        copy(`${window.location.origin}${withSiteId(spotUrl(spot.spotId.toString()), siteId)}`);
         return toast.success('Spot URL copied to clipboard');
       case 'delete':
         return onDelete();
