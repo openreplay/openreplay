@@ -2,9 +2,8 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
-  ExclamationCircleOutlined,
+  CopyOutlined,
   GlobalOutlined,
-  MailOutlined,
   MessageOutlined,
   MoreOutlined,
   SlackOutlined,
@@ -12,10 +11,11 @@ import {
 import { Button, Checkbox, Dropdown } from 'antd';
 import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-
+import copy from 'copy-to-clipboard';
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
 import EditItemModal from "./EditItemModal";
+import { toast } from 'react-toastify';
 
 interface ISpotListItem {
   spot: Spot;
@@ -41,9 +41,9 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       icon: <DownloadOutlined />,
     },
     {
-      key: 'report',
-      label: 'Report Issue',
-      icon: <ExclamationCircleOutlined />,
+      key: 'copy',
+      label: 'Copy Spot URL',
+      icon: <CopyOutlined />,
     },
     {
       key: 'delete',
@@ -66,8 +66,9 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
         const { url } = await onVideo(spot.spotId)
         await downloadFile(url, `${spot.title}.webm`)
         return;
-      case 'report':
-        return window.open('mailto:support@openreplay.com')
+      case 'copy':
+        copy(withSiteId(spotUrl(spot.spotId.toString()), siteId));
+        return toast.success('Spot URL copied to clipboard');
       case 'delete':
         return onDelete();
       case 'slack':
