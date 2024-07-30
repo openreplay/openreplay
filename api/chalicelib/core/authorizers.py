@@ -2,16 +2,20 @@ import logging
 
 import jwt
 from decouple import config
-
+from typing import Optional
 from chalicelib.core import tenants
-from chalicelib.core import users
-from chalicelib.utils import helper
+from chalicelib.core import users, spot
+
 from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
 
 
-def jwt_authorizer(scheme: str, token: str, leeway=0):
+def get_supported_audience():
+    return [users.AUDIENCE, spot.AUDIENCE]
+
+
+def jwt_authorizer(scheme: str, token: str, leeway=0) -> Optional[dict]:
     if scheme.lower() != "bearer":
         return None
     try:
@@ -19,7 +23,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0):
             token,
             config("jwt_secret"),
             algorithms=config("jwt_algorithm"),
-            audience=[f"front:{helper.get_stage_name()}",f"spot:{helper.get_stage_name()}"],
+            audience=get_supported_audience(),
             leeway=leeway
         )
     except jwt.ExpiredSignatureError:
@@ -40,7 +44,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
             token,
             config("JWT_REFRESH_SECRET"),
             algorithms=config("jwt_algorithm"),
-            audience=[f"front:{helper.get_stage_name()}"]
+            audience=get_supported_audience()
         )
     except jwt.ExpiredSignatureError:
         logger.debug("! JWT-refresh Expired signature")
@@ -52,18 +56,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
     return payload
 
 
-def jwt_context(context):
-    user = users.get(user_id=context["userId"], tenant_id=context["tenantId"])
-    if user is None:
-        return None
-    return {
-        "tenantId": context["tenantId"],
-        "userId": context["userId"],
-        **user
-    }
-
-
-def generate_spot_jwt(user_id, tenant_id, iat, aud):
+def generate_jwt(user_id, tenant_id, iat, aud):
     token = jwt.encode(
         payload={
             "userId": user_id,
@@ -79,7 +72,7 @@ def generate_spot_jwt(user_id, tenant_id, iat, aud):
     return token
 
 
-def generate_spot_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
+def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti):
     token = jwt.encode(
         payload={
             "userId": user_id,

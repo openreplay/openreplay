@@ -91,6 +91,9 @@ class JWTAuth(HTTPBearer):
 
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
+                if jwt_payload.get("aud","").startswith("spot"):
+                    pass
+                #     TODO allow access to spot endpoints only
                 return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
 
         logger.warning("Invalid authorization code.")
