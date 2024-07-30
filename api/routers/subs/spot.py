@@ -11,6 +11,8 @@ from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers(prefix="/spot", tags=["spot"])
 
+COOKIE_PATH = "/api/spot/refresh"
+
 
 @public_app.post('/login')
 def login_spot(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
@@ -41,7 +43,7 @@ def login_spot(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
         }
     }
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/spot/refresh",
+    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     return response
 
@@ -58,7 +60,7 @@ def refresh_spot_login(context: schemas.CurrentContext = Depends(OR_context)):
     r = spot.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
+    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path=COOKIE_PATH,
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
     return response
 
