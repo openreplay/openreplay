@@ -31,7 +31,7 @@ def refresh_spot_jwt_iat_jti(user_id):
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, 
                                           spot_jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM spot_jwt_refresh_jti)::BIGINT AS spot_jwt_refresh_jti;""",
+                                          EXTRACT(epoch FROM spot_jwt_refresh_iat)::BIGINT AS spot_jwt_refresh_iat;""",
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
