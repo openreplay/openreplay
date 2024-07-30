@@ -85,3 +85,18 @@ def refresh(user_id: int, tenant_id: int = -1) -> dict:
                                                          aud=AUDIENCE, jwt_jti=spot_jwt_r_jti),
         "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (spot_jwt_iat - spot_jwt_r_iat)
     }
+
+
+def refresh_auth_exists(user_id, jwt_jti=None):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(f"""SELECT user_id 
+                            FROM public.users  
+                            WHERE user_id = %(userId)s 
+                                AND deleted_at IS NULL
+                                AND spot_jwt_refresh_jti = %(jwt_jti)s
+                            LIMIT 1;""",
+                        {"userId": user_id, "jwt_jti": jwt_jti})
+        )
+        r = cur.fetchone()
+    return r is not None

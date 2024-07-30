@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from starlette.responses import JSONResponse, Response
 
 import schemas
-from chalicelib.core import spot
+from chalicelib.core import spot, webhook
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from or_dependencies import OR_context
@@ -61,3 +61,8 @@ def refresh_spot_login(context: schemas.CurrentContext = Depends(OR_context)):
     response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
     return response
+
+
+@app.get('/integrations/slack/channels', tags=["integrations"])
+def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.SLACK)}
