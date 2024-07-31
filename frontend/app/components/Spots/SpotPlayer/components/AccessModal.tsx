@@ -36,13 +36,6 @@ function AccessModal({ onClose }: { onClose: () => void }) {
     spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
-  useEffect(() => {
-    if (spotStore.pubKey) {
-      const interval = Object.keys(expirationValues).find(key => expirationValues[key as Intervals] === spotStore.pubKey.expiration);
-      if (interval) setSelectedInterval(Number(interval) as Intervals);
-    }
-  }, [spotStore.pubKey]);
-
   const menuItems = [
     {
       key: Intervals.hour.toString(),
@@ -63,11 +56,9 @@ function AccessModal({ onClose }: { onClose: () => void }) {
   ];
 
   const onMenuClick = async (info: { key: string }) => {
-    console.log('Menu item clicked:', info.key);
     const val = expirationValues[Number(info.key) as Intervals];
     setSelectedInterval(Number(info.key) as Intervals);
     setLoadingKey(true);
-    console.log('Generating key with expiration:', val);
     await spotStore.generateKey(spotId, val);
     setLoadingKey(false);
   };
@@ -167,39 +158,37 @@ function AccessModal({ onClose }: { onClose: () => void }) {
         <>
           <div className='flex flex-col gap-4 px-1'>
             <div>
-            <div className={'text-black/50'}>Anyone with the following link can access this Spot</div>
-            <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
-              {spotLink}
-            </div>
+              <div className={'text-black/50'}>Anyone with the following link can access this Spot</div>
+              <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
+                {spotLink}
+              </div>
             </div>
 
             <div className={'flex items-center gap-2'}>
-            <div>Link expires in</div>
-            <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
-              <div className='flex items-center cursor-pointer'>
-                {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
-                <DownOutlined />
+              <div>Link expires in</div>
+              <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
+                <div className='flex items-center cursor-pointer'>
+                  {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
+                  <DownOutlined />
+                </div>
+              </Dropdown>
+            </div>
+            <div className={'flex items-center gap-2'}>
+              <div className={'w-fit'}>
+                <Button
+                  type={'default'}
+                  size={'small'}
+                  onClick={onCopy}
+                  icon={<CopyOutlined />}
+                >
+                  {isCopied ? 'Copied!' : 'Copy Link'}
+                </Button>
               </div>
-            </Dropdown>
-          </div>
-          <div className={'flex items-center gap-2'}>
-            <div className={'w-fit'}>
-              <Button
-                type={'default'}
-                size={'small'}
-                onClick={onCopy}
-                icon={<CopyOutlined />}
-              >
-                {isCopied ? 'Copied!' : 'Copy Link'}
+              <Button type={'text'} size='small' icon={<StopOutlined />} onClick={revokeKey}>
+                Disable Public Sharing
               </Button>
             </div>
-            <Button type={'text'} size='small' icon={<StopOutlined />} onClick={revokeKey}>
-              Disable Public Sharing
-            </Button>
           </div>
-
-          </div>
-          
         </>
       )}
     </div>

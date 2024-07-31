@@ -4,7 +4,6 @@ import {
   EditOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
-  MailOutlined,
   MessageOutlined,
   MoreOutlined,
   SlackOutlined,
@@ -13,12 +12,12 @@ import {
 import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
 import EditItemModal from "./EditItemModal";
 import styles from './loader.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import {Link2} from 'lucide-react';
 
 interface ISpotListItem {
   spot: Spot;
@@ -149,7 +148,8 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
               onClick={copyToClipboard}
               style={{ cursor: 'pointer' }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+              <Link2 size={16} strokeWidth={1} />
+              
             </div>
           </Tooltip>
           <div

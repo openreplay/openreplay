@@ -1,8 +1,9 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Input } from 'antd';
+import { MoveUpRight } from 'lucide-react';
 import { Pin, Puzzle, Share2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -18,15 +19,12 @@ const visibilityOptions = {
 
 function SpotsListHeader({
   onDelete,
-  showDeleteButton,
   selectedCount,
 }: {
   onDelete: () => void;
-  showDeleteButton: boolean;
   selectedCount: number;
 }) {
   const { spotStore } = useStore();
-  const [selectedKey, setSelectedKey] = useState('all');
 
   const onSearch = (value: string) => {
     spotStore.setQuery(value);
@@ -34,7 +32,6 @@ function SpotsListHeader({
   };
 
   const onFilterChange = (key: 'all' | 'own') => {
-    setSelectedKey(key);
     spotStore.setFilter(key);
     void spotStore.fetchSpots();
   };
@@ -51,7 +48,7 @@ function SpotsListHeader({
       },
     ],
     onClick: ({ key }: any) => onFilterChange(key),
-    selectedKeys: [selectedKey],
+    selectedKeys: [spotStore.filter],
   };
 
   return (
@@ -62,18 +59,18 @@ function SpotsListHeader({
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
         </div>
         <Button type='default' size='small' className='flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border'>
-          <div className='w-50'>
-            <img src={'assets/img/chromeStore.svg'} alt={'Get Spot by OpenReplay'} width={18} />
+          <div className='w-50 pb-0.5'>
+            <img src={'assets/img/chrome.svg'} alt={'Get Spot by OpenReplay'} width={16} />
           </div>
-          Get Free Extension <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-up-right"><path d="M13 5H19V11"/><path d="M19 5L5 19"/></svg>
+          Get Extension <MoveUpRight size={16} strokeWidth={1.5} />
         </Button>
       </div>
 
       <div className='flex gap-4 items-center'>
         <div className={'ml-auto'}>
-          {showDeleteButton && (
+          {selectedCount > 0 && (
             <Button onClick={onDelete} type='primary' ghost>
-              Delete {selectedCount}
+              Delete ({selectedCount})
             </Button>
           )}
         </div>
@@ -106,7 +103,7 @@ function SpotsList() {
 
   React.useEffect(() => {
     void spotStore.fetchSpots();
-  }, []);
+  }, [spotStore]);
 
   const onPageChange = (page: number) => {
     spotStore.setPage(page);
@@ -135,7 +132,6 @@ function SpotsList() {
     <div className={'w-full relative'}>
       <div className={'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'}>
         <SpotsListHeader
-          showDeleteButton={selectedSpots.length > 0}
           onDelete={batchDelete}
           selectedCount={selectedSpots.length}
         />

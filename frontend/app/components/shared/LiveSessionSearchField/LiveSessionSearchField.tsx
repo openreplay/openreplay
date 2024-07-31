@@ -30,7 +30,7 @@ function LiveSessionSearchField(props: Props) {
     <div className="relative">
       <Input
         // inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
-        className={stl.searchField, {'h-8'}}
+        className={stl.searchField}
         onFocus={ () => setShowModal(true) }
         onBlur={ () => setTimeout(setShowModal, 200, false) }
         onChange={ onSearchChange }
