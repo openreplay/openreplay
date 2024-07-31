@@ -16,6 +16,7 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
+AUDIENCE = "front:OpenReplay"
 
 
 def __generate_invitation_token():
@@ -109,8 +110,7 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
         cur.execute(query)
         result = cur.fetchone()
         result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
-
-        return helper.dict_to_camel_case(result)
+    return helper.dict_to_camel_case(result)
 
 
 def generate_new_invitation(user_id):
@@ -165,22 +165,20 @@ def update(tenant_id, user_id, changes, output=True):
     changes["role_id"] = changes.get("roleId", changes.get("role_id"))
     with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
-            cur.execute(
-                cur.mogrify(f"""\
+            query = cur.mogrify(f"""\
                             UPDATE public.users
                             SET {" ,".join(sub_query_users)}
                             WHERE users.user_id = %(user_id)s
                               AND users.tenant_id = %(tenant_id)s;""",
-                            {"tenant_id": tenant_id, "user_id": user_id, **changes})
-            )
+                                {"tenant_id": tenant_id, "user_id": user_id, **changes})
+            cur.execute(query)
         if len(sub_query_bauth) > 0:
-            cur.execute(
-                cur.mogrify(f"""\
+            query = cur.mogrify(f"""\
                             UPDATE public.basic_authentication
                             SET {" ,".join(sub_query_bauth)}
                             WHERE basic_authentication.user_id = %(user_id)s;""",
-                            {"tenant_id": tenant_id, "user_id": user_id, **changes})
-            )
+                                {"tenant_id": tenant_id, "user_id": user_id, **changes})
+            cur.execute(query)
     if not output:
         return None
     return get(user_id=user_id, tenant_id=tenant_id)
@@ -488,14 +486,15 @@ def delete_member(user_id, tenant_id, id_to_delete):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.users
-                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL,
+                           SET deleted_at = timezone('utc'::text, now()),
                                 jwt_iat= NULL, jwt_refresh_jti= NULL, 
-                                jwt_refresh_iat= NULL 
+                                jwt_refresh_iat= NULL,
+                                role_id=NULL
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
         cur.execute(
-            cur.mogrify(f"""UPDATE public.basic_authentication 
-                           SET password=NULL, invitation_token= NULL,
+            cur.mogrify(f"""UPDATE public.basic_authentication
+                           SET password= NULL, invitation_token= NULL,
                                 invited_at= NULL, changed_at= NULL,
                                 change_pwd_expire_at= NULL, change_pwd_token= NULL
                            WHERE user_id=%(user_id)s;""",
@@ -546,7 +545,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "client": c,
+            "client": c
         }
     }
 
@@ -668,7 +667,7 @@ def refresh_jwt_iat_jti(user_id):
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat""",
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
@@ -729,9 +728,9 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
 
         return {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                            aud=f"front:{helper.get_stage_name()}"),
+                                            aud=AUDIENCE),
             "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
+                                                             iat=jwt_r_iat, aud=AUDIENCE,
                                                              jwt_jti=jwt_r_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
@@ -811,7 +810,8 @@ def logout(user_id: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """UPDATE public.users
-               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL
+               SET jwt_iat = NULL, jwt_refresh_jti = NULL, jwt_refresh_iat = NULL,
+                   spot_jwt_iat = NULL, spot_jwt_refresh_jti = NULL, spot_jwt_refresh_iat = NULL
                WHERE user_id = %(user_id)s;""",
             {"user_id": user_id})
         cur.execute(query)
@@ -821,10 +821,9 @@ def refresh(user_id: int, tenant_id: int) -> dict:
     jwt_iat, jwt_r_jti, jwt_r_iat = refresh_jwt_iat_jti(user_id=user_id)
     return {
         "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=jwt_iat,
-                                        aud=f"front:{helper.get_stage_name()}"),
-        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id,
-                                                         iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                         jwt_jti=jwt_r_jti),
+                                        aud=AUDIENCE),
+        "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=jwt_r_iat,
+                                                         aud=AUDIENCE, jwt_jti=jwt_r_jti),
         "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int) - (jwt_iat - jwt_r_iat)
     }
 
@@ -858,10 +857,10 @@ def authenticate_sso(email, internal_id, exp=None):
         jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
         return {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
-                                            aud=f"front:{helper.get_stage_name()}"),
+                                            aud=AUDIENCE),
             "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=f"front:{helper.get_stage_name()}",
-                                                             jwt_jti=jwt_r_jti),
+                                                             iat=jwt_r_iat,
+                                                             aud=AUDIENCE, jwt_jti=jwt_r_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
         }
     logger.warning(f"SSO user not found with email: {email} and internal_id: {internal_id}")
@@ -933,8 +932,7 @@ def get_user_settings(user_id):
                     LIMIT 1""",
                 {"user_id": user_id})
         )
-        settings = cur.fetchone()
-        return helper.dict_to_camel_case(settings)
+        return helper.dict_to_camel_case(cur.fetchone())
 
 
 def update_user_module(user_id, data: schemas.ModuleStatus):
