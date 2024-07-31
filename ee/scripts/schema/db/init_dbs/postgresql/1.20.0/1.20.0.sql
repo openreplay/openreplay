@@ -32,6 +32,10 @@ SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{SPO
 WHERE NOT permissions @> '{SPOT_PUBLIC}'
   AND name ILIKE 'owner';
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS spot_jwt_iat         timestamp without time zone NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS spot_jwt_refresh_jti integer                     NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS spot_jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
 
 COMMIT;
 
