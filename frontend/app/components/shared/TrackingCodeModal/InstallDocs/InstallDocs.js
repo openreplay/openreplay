@@ -11,7 +11,9 @@ const tracker = new Tracker({
   projectKey: "PROJECT_KEY",
   ingestPoint: "https://${window.location.hostname}/ingest",
 });
-tracker.start();`
+
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )`
 const usageCodeSST = `import Tracker from '@openreplay/tracker/cjs';
 
 const tracker = new Tracker({
@@ -21,7 +23,8 @@ const tracker = new Tracker({
 
 function MyApp() {
   useEffect(() => { // use componentDidMount in case of React Class Component
-    tracker.start();
+    // .start() returns a promise
+    tracker.start().then(sessionData => ... ).catch(e => ... )
   }, []);
   
   //...

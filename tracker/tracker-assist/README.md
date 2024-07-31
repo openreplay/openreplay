@@ -33,7 +33,8 @@ const tracker = new Tracker({
 });
 tracker.use(trackerAssist(options)); // check the list of available options below
 
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 
 ```
 
@@ -53,7 +54,8 @@ tracker.use(trackerAssist(options)); // check the list of available options belo
 //...
 function MyApp() {
   useEffect(() => { // use componentDidMount in case of React Class Component
-    tracker.start();
+    // .start() returns a promise
+    tracker.start().then(sessionData => ... ).catch(e => ... )
   }, [])
 //...
 }

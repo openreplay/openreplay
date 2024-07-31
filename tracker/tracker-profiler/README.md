@@ -21,7 +21,8 @@ import trackerProfiler from '@openreplay/tracker-profiler';
 const tracker = new Tracker({
   projectKey: YOUR_PROJECT_KEY,
 });
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 
 export const profiler = tracker.plugin(trackerProfiler());
 
