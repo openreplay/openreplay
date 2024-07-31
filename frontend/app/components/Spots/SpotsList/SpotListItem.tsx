@@ -19,6 +19,8 @@ import styles from './loader.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import {Link2} from 'lucide-react';
 
+const backgroundUrl = '/assets/img/spotThumbBg.svg';
+
 interface ISpotListItem {
   spot: Spot;
   onRename: (id: string, title: string) => void;
@@ -119,7 +121,15 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       {isEdit ? (
         <EditItemModal onSave={onSave} onClose={() => setIsEdit(false)} itemName={spot.title} />
       ) : null}
-      <div className='relative group overflow-hidden' style={{ width: '100%', height: 180, backgroundImage: `url('../../../assets/img/spotThumbBg.svg')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className='relative group overflow-hidden'
+        style={{
+          width: '100%',
+          height: 180,
+          backgroundImage: `url(${backgroundUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <AnimatedSVG name={ICONS.LOADER} size={32} />
