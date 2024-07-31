@@ -46,14 +46,14 @@ if not tenants.tenants_exists_sync(use_pool=False):
 
 
 @public_app.post('/login', tags=["authentication"])
-def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
+def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid captcha."
         )
 
-    r = users.authenticate(data.email, data.password.get_secret_value())
+    r = users.authenticate(email=data.email, password=data.password.get_secret_value(), include_spot=spot)
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,9 +74,17 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
             "user": r
         }
     }
+    if spot:
+        content["spotJwt"] = r.pop("spotJwt")
+        spot_refresh_token = r.pop("spotRefreshToken")
+        spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
+
     response = JSONResponse(content=content)
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                         max_age=refresh_token_max_age, secure=True, httponly=True)
+    if spot:
+        response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
+                            max_age=spot_refresh_token_max_age, secure=True, httponly=True)
     return response
 
 
@@ -84,6 +92,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
 def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     users.logout(user_id=context.user_id)
     response.delete_cookie(key="refreshToken", path="/api/refresh")
+    response.delete_cookie(key="spotRefreshToken", path="/api/spot/refresh")
     return {"data": "success"}
 
 

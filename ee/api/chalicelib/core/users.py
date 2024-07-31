@@ -4,11 +4,12 @@ import secrets
 
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
+from pydantic import BaseModel
 from starlette import status
 
 import schemas
 from chalicelib.core import authorizers, metadata, projects
-from chalicelib.core import roles
+from chalicelib.core import roles, spot
 from chalicelib.core import tenants, assist
 from chalicelib.utils import email_helper, smtp
 from chalicelib.utils import helper
@@ -643,20 +644,40 @@ def refresh_auth_exists(user_id, tenant_id, jwt_jti=None):
     return r is not None
 
 
-def change_jwt_iat_jti(user_id):
+class ChangeJwt(BaseModel):
+    jwt_iat: int
+    jwt_refresh_jti: int
+    jwt_refresh_iat: int
+    spot_jwt_iat: int | None = None
+    spot_jwt_refresh_jti: int | None = None
+    spot_jwt_refresh_iat: int | None = None
+
+
+def change_jwt_iat_jti(user_id, include_spot: bool = False):
+    sub_query = ""
+    sub_result = ""
+    if include_spot:
+        sub_query = """,spot_jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
+                        spot_jwt_refresh_jti = 0, 
+                        spot_jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')"""
+        sub_result = """,EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, 
+                         spot_jwt_refresh_jti, 
+                         EXTRACT (epoch FROM spot_jwt_refresh_iat)::BIGINT AS spot_jwt_refresh_iat"""
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     jwt_refresh_jti = 0, 
-                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s') 
+                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')
+                                    {sub_query} 
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat;""",
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat
+                                          {sub_result};""",
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
-        return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
+        return ChangeJwt(**row)
 
 
 def refresh_jwt_iat_jti(user_id):
@@ -674,7 +695,7 @@ def refresh_jwt_iat_jti(user_id):
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def authenticate(email, password, for_change_password=False) -> dict | bool | None:
+def authenticate(email, password, for_change_password=False, include_spot=False) -> dict | bool | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -724,18 +745,29 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
         elif config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
-
-        return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+        j_r = change_jwt_iat_jti(user_id=r['userId'], include_spot=include_spot)
+        response = {
+            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
                                             aud=AUDIENCE),
             "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat, aud=AUDIENCE,
-                                                             jwt_jti=jwt_r_jti),
+                                                             iat=j_r.jwt_refresh_iat, aud=AUDIENCE,
+                                                             jwt_jti=j_r.jwt_refresh_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
             **r
         }
+        if include_spot:
+            response = {**response,
+                        "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                            iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE),
+                        "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
+                                                                             tenant_id=r['tenantId'],
+                                                                             iat=j_r.spot_jwt_refresh_iat,
+                                                                             aud=spot.AUDIENCE,
+                                                                             jwt_jti=j_r.spot_jwt_refresh_jti),
+                        "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+                        }
+        return response
     if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
         return {"errors": ["must sign-in with SSO, enforced by admin"]}
     return None

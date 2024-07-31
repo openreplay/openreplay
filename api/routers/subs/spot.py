@@ -43,7 +43,7 @@ def login_spot(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
         }
     }
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
+    response.set_cookie(key="spotRefreshToken", value=refresh_token, path=COOKIE_PATH,
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     return response
 
@@ -51,7 +51,7 @@ def login_spot(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
 @app.get('/logout')
 def logout_spot(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     spot.logout(user_id=context.user_id)
-    response.delete_cookie(key="refreshToken", path="/api/refresh")
+    response.delete_cookie(key="spotRefreshToken", path="/api/refresh")
     return {"data": "success"}
 
 
@@ -60,7 +60,7 @@ def refresh_spot_login(context: schemas.CurrentContext = Depends(OR_context)):
     r = spot.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
     response = JSONResponse(content=content)
-    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path=COOKIE_PATH,
+    response.set_cookie(key="spotRefreshToken", value=r.get("refreshToken"), path=COOKIE_PATH,
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
     return response
 
