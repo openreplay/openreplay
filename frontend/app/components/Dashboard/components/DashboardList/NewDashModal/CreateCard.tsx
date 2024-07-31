@@ -20,7 +20,8 @@ const getTitleByType = (type: string) => {
 
 interface Props {
     // cardType: string,
-    onBack: () => void
+    onBack?: () => void
+    onAdded?: () => void
 }
 
 function CreateCard(props: Props) {
@@ -67,7 +68,8 @@ function CreateCard(props: Props) {
 
         if (dashboardId) {
             await addCardToDashboard(dashboardId, cardId);
-            dashboardStore.fetch(dashboardId);
+            void dashboardStore.fetch(dashboardId);
+            props.onAdded?.();
         } else if (isItDashboard) {
             const dashboardId = await createNewDashboard();
             await addCardToDashboard(dashboardId, cardId);
@@ -81,9 +83,9 @@ function CreateCard(props: Props) {
         <div className="flex gap-4 flex-col">
             <div className="flex items-center justify-between">
                 <Space>
-                    <Button type="text" onClick={props.onBack}>
-                        <ArrowLeft size={16}/>
-                    </Button>
+                    {props.onBack ? <Button type="text" onClick={props.onBack}>
+                        <ArrowLeft size={16} />
+                    </Button> : null}
                     <div className="text-xl leading-4 font-medium">
                         {metric.name}
                     </div>

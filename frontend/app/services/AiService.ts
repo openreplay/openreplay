@@ -32,7 +32,7 @@ export default class AiService extends BaseService {
     return data;
   }
 
-  async getCardFilters(query: string, chartType: string): Promise<Record<string, any>> {
+  async getCardFilters(query: string, chartType?: string): Promise<Record<string, any>> {
     const r = await this.client.post('/intelligent/search-plus', {
       question: query,
       chartType

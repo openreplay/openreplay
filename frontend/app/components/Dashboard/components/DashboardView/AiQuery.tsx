@@ -1,32 +1,67 @@
-import { Input, Icon } from 'UI';
-import React from 'react';
 import { SendOutlined } from '@ant-design/icons';
+import { Modal } from 'antd';
+import Lottie from 'lottie-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import colors from 'tailwindcss/colors';
 
 import { gradientBox } from 'App/components/shared/SessionSearchField/AiSessionSearchField';
+import aiSpinner from 'App/lottie/aiSpinner.json';
+import { useStore } from 'App/mstore';
+import { Icon, Input } from 'UI';
+
+import CreateCard from '../DashboardList/NewDashModal/CreateCard';
 
 function AiQuery() {
-  const [searchQuery, setSearchQuery] = React.useState('');
   const grad = {
     background: 'linear-gradient(90deg, #F3F4FF 0%, #F2FEFF 100%)',
   };
-  const fetchResults = () => null;
-
-  // const fetchResults = useCallback(() => aiFiltersStore.getCardFilters(aiQuery, metric.metricType)
-  //         .then(f => metric.createSeries(f.filters)), [aiFiltersStore, aiQuery, metric]);
   return (
-    <div className={'rounded p-4 mb-4'} style={grad}>
+    <>
+      <QueryModal />
+      <div className={'rounded p-4 mb-4'} style={grad}>
+        <InputBox />
+      </div>
+    </>
+  );
+}
+
+const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
+  const { aiFiltersStore, metricStore } = useStore();
+  const metric = metricStore.instance;
+  const fetchResults = () => {
+    aiFiltersStore
+      .getCardFilters(aiFiltersStore.query, undefined)
+      .then((f) => metric.createSeries(f.filters));
+    if (!inModal) {
+      aiFiltersStore.setModalOpen(true);
+    }
+  };
+  return (
+    <>
       <div className={'flex items-center mb-2 gap-2'}>
         <Icon name={'sparkles'} size={16} />
         <div className={'font-semibold'}>What would you like to visualize?</div>
       </div>
       <div style={gradientBox}>
         <Input
-          style={{ minWidth: '840px', height: 34, borderRadius: 32, }}
-          onChange={({ target }: any) => setSearchQuery(target.value)}
+          wrapperClassName={'w-full pr-2'}
+          value={aiFiltersStore.query}
+          style={{
+            minWidth: inModal ? '600px' : '840px',
+            height: 34,
+            borderRadius: 32,
+          }}
+          onChange={({ target }: any) => aiFiltersStore.setQuery(target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && aiFiltersStore.query.trim().length > 2) {
+              fetchResults();
+            }
+          }}
           placeholder={'E.g., Track all the errors in checkout flow.'}
           className="ml-2 px-2 pe-9 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
           leadingButton={
-            searchQuery !== '' ? (
+            aiFiltersStore.query !== '' ? (
               <div
                 className={'h-full flex items-center cursor-pointer'}
                 onClick={fetchResults}
@@ -39,8 +74,56 @@ function AiQuery() {
           }
         />
       </div>
+    </>
+  );
+});
+
+const QueryModal = observer(() => {
+  const { aiFiltersStore } = useStore();
+
+  const onClose = () => {
+    aiFiltersStore.setModalOpen(false);
+  };
+  return (
+    <Modal
+      open={aiFiltersStore.modalOpen}
+      onCancel={onClose}
+      width={900}
+      destroyOnClose={true}
+      footer={null}
+      closeIcon={false}
+      styles={{
+        content: {
+          backgroundColor: colors.gray[100],
+        },
+      }}
+      centered={true}
+    >
+      <div className={'flex flex-col gap-2'}>
+        <InputBox inModal />
+        {aiFiltersStore.isLoading ? (
+          <Loader />
+        ) : (
+          <CreateCard onAdded={onClose} />
+        )}
+      </div>
+    </Modal>
+  );
+});
+
+function Loader() {
+  return (
+    <div
+      className={
+        'flex items-center justify-center flex-col font-semibold text-xl min-h-80'
+      }
+    >
+      <div style={{ width: 150, height: 150 }}>
+        <Lottie animationData={aiSpinner} loop={true} />
+      </div>
+      <div>AI is brewing your card, wait a few seconds...</div>
     </div>
   );
 }
 
-export default AiQuery;
+export default observer(AiQuery);

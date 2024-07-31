@@ -92,12 +92,16 @@ function DashboardView(props: Props) {
 
     if (!dashboard) return null;
 
+    const originStr = window.env.ORIGIN || window.location.origin;
+    const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
+
+    const isSaas = testingKey && /app\.openreplay\.com/.test(originStr);
     return (
         <Loader loading={loading}>
             <div style={{maxWidth: '1360px', margin: 'auto'}}>
                 {/* @ts-ignore */}
                 <DashboardHeader renderReport={props.renderReport} siteId={siteId} dashboardId={dashboardId}/>
-                <AiQuery />
+                {isSaas ? <AiQuery /> : null}
                 <DashboardWidgetGrid
                     siteId={siteId}
                     dashboardId={dashboardId}

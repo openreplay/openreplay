@@ -10,9 +10,19 @@ export default class AiFiltersStore {
   cardFilters: Record<string, any> = { filters: [] };
   filtersSetKey = 0;
   isLoading: boolean = false;
+  query: string = '';
+  modalOpen: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setQuery = (query: string): void => {
+    this.query = query;
+  }
+
+  setModalOpen = (isOpen: boolean): void => {
+    this.modalOpen = isOpen;
   }
 
   setFilters = (filters: Record<string, any>): void => {
@@ -35,8 +45,12 @@ export default class AiFiltersStore {
     console.log(r)
   }
 
-  getCardFilters = async (query: string, chartType: string): Promise<any> => {
-    this.isLoading = true;
+  setLoading = (loading: boolean): void => {
+    this.isLoading = loading;
+  }
+
+  getCardFilters = async (query: string, chartType?: string): Promise<any> => {
+    this.setLoading(true)
     try {
       const r = await aiService.getCardFilters(query, chartType);
       const filterObj = Filter({
@@ -57,6 +71,7 @@ export default class AiFiltersStore {
               ? { ...filtersMap[matchingFilter], ...f }
               : { ...f, value: f.value ?? [] };
             return {
+              type: filter.key,
               ...filter,
               value: filter.value
                 ? filter.value.map((i: string) => parseInt(i, 10) * 60 * 1000)
@@ -76,7 +91,7 @@ export default class AiFiltersStore {
     } catch (e) {
       console.trace(e);
     } finally {
-      this.isLoading = false;
+      this.setLoading(false)
     }
   };
 
