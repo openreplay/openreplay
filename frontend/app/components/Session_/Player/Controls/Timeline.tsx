@@ -31,6 +31,7 @@ interface IProps {
 function Timeline(props: IProps) {
   const { player, store } = useContext(PlayerContext);
   const [wasPlaying, setWasPlaying] = useState(false);
+  const [maxWidth, setMaxWidth] = useState(0);
   const { settingsStore } = useStore();
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
   const { issues, timezone, timelineZoomEnabled } = props;
@@ -45,6 +46,9 @@ function Timeline(props: IProps) {
 
     if (firstIssue && skipToIssue) {
       player.jump(firstIssue.time);
+    }
+    if (progressRef.current) {
+      setMaxWidth(progressRef.current.clientWidth);
     }
   }, []);
 
@@ -150,7 +154,7 @@ function Timeline(props: IProps) {
         <CustomDragLayer
           onDrag={onDrag}
           minX={0}
-          maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
+          maxX={maxWidth}
         />
 
         <div className={stl.timeline} ref={timelineRef}>

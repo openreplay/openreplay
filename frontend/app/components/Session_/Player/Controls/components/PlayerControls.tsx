@@ -43,7 +43,6 @@ function PlayerControls(props: Props) {
     startedAt,
     sessionTz,
   } = props;
-  const [showTooltip, setShowTooltip] = React.useState(false);
   const [timeMode, setTimeMode] = React.useState<ITimeMode>(
     localStorage.getItem('__or_player_time_mode') as ITimeMode
   );
@@ -51,10 +50,6 @@ function PlayerControls(props: Props) {
   const saveTimeMode = (mode: ITimeMode) => {
     localStorage.setItem('__or_player_time_mode', mode);
     setTimeMode(mode);
-  };
-
-  const toggleTooltip = () => {
-    setShowTooltip(!showTooltip);
   };
 
   return (
@@ -74,7 +69,6 @@ function PlayerControls(props: Props) {
         <IntervalSelector
           skipIntervals={skipIntervals}
           setSkipInterval={setSkipInterval}
-          toggleTooltip={toggleTooltip}
           currentInterval={currentInterval}
         />
         <JumpForward forthTenSeconds={forthTenSeconds} currentInterval={currentInterval} />
@@ -84,7 +78,6 @@ function PlayerControls(props: Props) {
         <SpeedOptions
           toggleSpeed={toggleSpeed}
           disabled={disabled}
-          toggleTooltip={toggleTooltip}
           speed={speed}
         />
         <Button

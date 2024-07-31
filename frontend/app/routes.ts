@@ -53,6 +53,7 @@ export const setQueryParams = (location: Location, params: Record<string, any>):
 };
 
 export const login = (): string => '/login';
+export const spotLogin = (): string => '/spot-login';
 export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
@@ -140,6 +141,9 @@ export const usabilityTesting = () => '/usability-testing';
 export const usabilityTestingCreate = () => usabilityTesting() + '/create';
 export const usabilityTestingEdit = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/edit/${id}`, hash);
 export const usabilityTestingView = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/view/${id}`, hash);
+
+export const spotsList = (): string => '/spots';
+export const spot = (id = ':spotId', hash?: string | number): string => hashed(`/view-spot/${id}`, hash);
 
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),

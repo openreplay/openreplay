@@ -29,9 +29,9 @@ const LEVEL_TAB = {
   [LogLevel.DEBUG]: INFO,
 } as const;
 
-const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
+export const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
 
-function renderWithNL(s: string | null = '') {
+export function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
   return s.split('\n').map((line, i) => (
     <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
@@ -40,7 +40,7 @@ function renderWithNL(s: string | null = '') {
   ));
 }
 
-const getIconProps = (level: LogLevel) => {
+export const getIconProps = (level: LogLevel) => {
   switch (level) {
     case LogLevel.INFO:
     case LogLevel.LOG:
