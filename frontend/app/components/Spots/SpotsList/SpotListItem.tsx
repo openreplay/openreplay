@@ -4,7 +4,7 @@ import {
   EditOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
-  MessageOutlined,
+  ClockCircleOutlined,
   MoreOutlined,
   SlackOutlined,
   PlayCircleOutlined,
@@ -27,9 +27,10 @@ interface ISpotListItem {
   onDelete: () => void;
   onVideo: (id: string) => Promise<{ url: string }>;
   onSelect: (selected: boolean) => void;
+  isSelected: boolean;  // Add this prop
 }
 
-function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotListItem) {
+function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect, isSelected }: ISpotListItem) {
   const [isEdit, setIsEdit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tooltipText, setTooltipText] = useState('Copy link to clipboard');
@@ -114,10 +115,10 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
 
   return (
     <div
-      className={
-        'bg-white rounded-lg overflow-hidden shadow-sm border border-transparent transition flex flex-col items-start hover:border hover:border-teal'
-      }
-    >
+    className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
+      isSelected ? 'border-teal/30' : 'border-transparent'
+    } transition flex flex-col items-start hover:border-teal`}
+  >
       {isEdit ? (
         <EditItemModal onSave={onSave} onClose={() => setIsEdit(false)} itemName={spot.title} />
       ) : null}
@@ -135,7 +136,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
             <AnimatedSVG name={ICONS.LOADER} size={32} />
           </div>
         )}
-        <div className='block w-full h-full cursor-pointer transition hover:bg-teal/50 relative' onClick={onSpotClick}>
+        <div className='block w-full h-full cursor-pointer transition hover:bg-teal/70 relative' onClick={onSpotClick}>
           <img
             src={spot.thumbnail}
             alt={spot.title}
@@ -144,16 +145,16 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
             onError={() => setLoading(false)}
             style={{ display: loading ? 'none' : 'block' }}
           />
-          <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
+          <div className='absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all hover:scale-100 hover:transition-all group-hover:opacity-100 transition-opacity '>
             <PlayCircleOutlined style={{ fontSize: '48px', color: 'white' }} />
           </div>
         </div>
 
-        <div className='absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 transition-transform transform translate-y-full group-hover:translate-y-0 group-hover:opacity-100 opacity-0'>
+        <div className='absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 '>
           <Tooltip title={tooltipText}>
             <div
               className={
-                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg'
+                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
               }
               onClick={copyToClipboard}
               style={{ cursor: 'pointer' }}
@@ -164,7 +165,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
           </Tooltip>
           <div
             className={
-              'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center'
+              'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal'
             }
           >
             {spot.duration}
@@ -173,7 +174,11 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       </div>
       <div className={'px-4 py-4 w-full border-t'}>
         <div className={'flex items-center gap-2'}>
-          <Checkbox onChange={({ target: { checked } }) => onSelect(checked)} className='flex cursor-pointer capitalize w-full'>
+          <Checkbox
+            checked={isSelected}  // Use isSelected prop to control the checkbox state
+            onChange={({ target: { checked } }) => onSelect(checked)} 
+            className='flex cursor-pointer capitalize w-full'
+          >
             <span className='capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block'>{spot.title}</span>
           </Checkbox>
         </div>
@@ -183,7 +188,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
           </div>
           <div>{spot.user}</div>
           <div className='ms-4'>
-            <MessageOutlined />
+            <ClockCircleOutlined />
           </div>
           <div>{spot.createdAt}</div>
           <div className={'ml-auto'}>

@@ -1,5 +1,4 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input } from 'antd';
+import { Button, Input, Segmented, message } from 'antd';
 import { MoveUpRight } from 'lucide-react';
 import { Pin, Puzzle, Share2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -12,43 +11,38 @@ import withPermissions from "../../hocs/withPermissions";
 
 import SpotListItem from './SpotListItem';
 
-const visibilityOptions = {
-  all: 'All Spots',
-  own: 'My Spots',
-} as const;
-
 function SpotsListHeader({
   onDelete,
   selectedCount,
+  onClearSelection,
 }: {
   onDelete: () => void;
   selectedCount: number;
+  onClearSelection: () => void;
 }) {
   const { spotStore } = useStore();
 
+  // Handle search input and trigger spot fetching
   const onSearch = (value: string) => {
     spotStore.setQuery(value);
     void spotStore.fetchSpots();
   };
 
+  // Handle input change and update the query in the store
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    spotStore.setQuery(e.target.value);
+  };
+
+  // Handle filter changes (All Spots / My Spots) and fetch spots accordingly
   const onFilterChange = (key: 'all' | 'own') => {
     spotStore.setFilter(key);
     void spotStore.fetchSpots();
   };
 
-  const dropdownProps = {
-    items: [
-      {
-        label: 'All Spots',
-        key: 'all',
-      },
-      {
-        label: 'My Spots',
-        key: 'own',
-      },
-    ],
-    onClick: ({ key }: any) => onFilterChange(key),
-    selectedKeys: [spotStore.filter],
+  // Update filter state based on selected segment
+  const handleSegmentChange = (value: string) => {
+    const key = value === 'All Spots' ? 'all' : 'own';
+    onFilterChange(key);
   };
 
   return (
@@ -66,29 +60,37 @@ function SpotsListHeader({
         </Button>
       </div>
 
-      <div className='flex gap-4 items-center'>
+      <div className='flex gap-2 items-center'>
+
+        {/* Display Delete and Clear Selection buttons if items are selected */}
         <div className={'ml-auto'}>
           {selectedCount > 0 && (
-            <Button onClick={onDelete} type='primary' ghost>
-              Delete ({selectedCount})
-            </Button>
+            <>
+              <Button type='text' onClick={onClearSelection} className='mr-2 px-3'>
+                Clear
+              </Button>
+              <Button onClick={onDelete} type='primary' ghost>
+                Delete ({selectedCount})
+              </Button>
+            </>
           )}
         </div>
 
-        <Dropdown menu={dropdownProps} className='border'>
-          <Button>
-            {visibilityOptions[spotStore.filter]}
-            <DownOutlined />
-          </Button>
-        </Dropdown>
+        <Segmented
+          options={['All Spots', 'My Spots']}
+          value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
+          onChange={handleSegmentChange}
+          className='mr-4 lg:hidden xl:flex'
+        />
+       
         <div className='w-56'>
           <Input.Search
-            value={spotStore.query}
+            value={spotStore.query}  // Controlled input value
             allowClear
             name="spot-search"
             placeholder="Filter by title"
-            onChange={(e) => spotStore.setQuery(e.target.value)}
-            onSearch={(value) => onSearch(value)}
+            onChange={handleInputChange}  // Update query as user types
+            onSearch={onSearch}  // Trigger search on enter or search button click
             className='rounded-lg'
           />
         </div>
@@ -101,31 +103,67 @@ function SpotsList() {
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
   const { spotStore } = useStore();
 
+  // Fetch spots when component mounts or when store changes
   React.useEffect(() => {
     void spotStore.fetchSpots();
   }, [spotStore]);
 
+  // Handle pagination changes
   const onPageChange = (page: number) => {
     spotStore.setPage(page);
     void spotStore.fetchSpots();
   };
 
+  // Delete a single spot and update selection
   const onDelete = async (spotId: string) => {
     await spotStore.deleteSpot([spotId]);
     setSelectedSpots(selectedSpots.filter((s) => s !== spotId));
   };
 
+  // Batch delete selected spots, manage pagination if page becomes empty
   const batchDelete = async () => {
+    const deletedCount = selectedSpots.length;
     await spotStore.deleteSpot(selectedSpots);
     setSelectedSpots([]);
+
+    // Adjust pagination if the current page becomes empty after deletion
+    const remainingItemsOnPage = spotStore.spots.length - deletedCount;
+    if (remainingItemsOnPage <= 0 && spotStore.page > 1) {
+        spotStore.setPage(spotStore.page - 1);
+        await spotStore.fetchSpots();
+    } else {
+        await spotStore.fetchSpots();
+    }
+
+    // Display success message with correct pluralization
+    message.success(`${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`);
   };
 
+  // Rename a spot
   const onRename = (id: string, newName: string) => {
     return spotStore.updateSpot(id, { name: newName });
   };
 
+  // Fetch video associated with a spot
   const onVideo = (id: string) => {
     return spotStore.getVideo(id);
+  };
+
+  // Handle selection of spots for deletion
+  const handleSelectSpot = (spotId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedSpots((prev) => [...prev, spotId]);
+    } else {
+      setSelectedSpots((prev) => prev.filter((id) => id !== spotId));
+    }
+  };
+
+  // Check if a spot is selected
+  const isSpotSelected = (spotId: string) => selectedSpots.includes(spotId);
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedSpots([]);
   };
 
   return (
@@ -134,29 +172,27 @@ function SpotsList() {
         <SpotsListHeader
           onDelete={batchDelete}
           selectedCount={selectedSpots.length}
+          onClearSelection={clearSelection}
         />
       </div>
 
       <div className={'mx-auto pb-4'} style={{ maxWidth: 1360 }}>
         {spotStore.total === 0 ? (
+          // Show loader or empty state if no spots are available
           spotStore.isLoading ? <Loader /> : <EmptyPage />
         ) : (
           <>
+            {/* Display list of spots with selection, delete, and pagination */}
             <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
-              {spotStore.spots.map((spot, index) => (
+              {spotStore.spots.map((spot) => (
                 <SpotListItem
-                  key={index}
+                  key={spot.spotId}
                   spot={spot}
                   onDelete={() => onDelete(spot.spotId)}
                   onRename={onRename}
                   onVideo={onVideo}
-                  onSelect={(checked: boolean) => {
-                    if (checked) {
-                      setSelectedSpots([...selectedSpots, spot.spotId]);
-                    } else {
-                      setSelectedSpots(selectedSpots.filter((s) => s !== spot.spotId));
-                    }
-                  }}
+                  onSelect={(checked: boolean) => handleSelectSpot(spot.spotId, checked)}
+                  isSelected={isSpotSelected(spot.spotId)}
                 />
               ))}
             </div>
