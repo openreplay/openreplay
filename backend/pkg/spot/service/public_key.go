@@ -128,7 +128,7 @@ func (k *keysImpl) IsValid(key string) (*auth.User, error) {
 		return nil, fmt.Errorf("key is expired")
 	}
 	// Get user info by userID
-	user := &auth.User{ID: userID}
+	user := &auth.User{ID: userID, AuthMethod: "public-key"}
 	// We don't need tenantID here
 	sql = `SELECT 1, name, email FROM public.users WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`
 	if err := k.conn.QueryRow(sql, userID).Scan(&user.TenantID, &user.Name, &user.Email); err != nil {

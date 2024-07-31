@@ -15,6 +15,7 @@ type User struct {
 	TenantID    uint64          `json:"tenantId"`
 	JwtIat      int             `json:"jwtIat"`
 	Permissions map[string]bool `json:"permissions"`
+	AuthMethod  string
 }
 
 func (u *User) HasPermission(perm string) bool {

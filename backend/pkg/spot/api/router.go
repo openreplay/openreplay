@@ -141,6 +141,8 @@ func isGetSpotRequest(path string) bool {
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		e.log.Info(r.Context(), "request received: %s", r.URL.Path)
+		rData := e.requestParser(r)
+		e.log.Info(r.Context(), "request data: %v", rData)
 		next.ServeHTTP(w, r)
 	})
 }

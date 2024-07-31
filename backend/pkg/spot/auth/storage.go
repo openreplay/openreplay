@@ -12,7 +12,7 @@ func authUser(conn pool.Pool, userID, tenantID, jwtIAT int) (*User, error) {
 	   	WHERE user_id = $1 AND deleted_at IS NULL
 	   	LIMIT 1;`
 
-	user := &User{TenantID: 1}
+	user := &User{TenantID: 1, AuthMethod: "jwt"}
 	if err := conn.QueryRow(sql, userID).Scan(&user.ID, &user.Name, &user.Email, &user.JwtIat); err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
