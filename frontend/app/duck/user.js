@@ -126,9 +126,18 @@ export const login = params => ({
   call: client => client.post('/login', params)
 });
 
+export const loadingLogin = () => ({
+  type: LOGIN.REQUEST,
+});
+
 export const loginSuccess = data => ({
-  types: LOGIN.SUCCESS,
+  type: LOGIN.SUCCESS,
   data
+})
+
+export const loginFailure = errors => ({
+  type: LOGIN.FAILURE,
+  errors
 })
 
 export const signup = params => dispatch => dispatch({
