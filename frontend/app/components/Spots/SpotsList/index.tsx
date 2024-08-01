@@ -1,76 +1,108 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input } from 'antd';
+import { Button, Input, Segmented, message } from 'antd';
+import { MoveUpRight } from 'lucide-react';
 import { Pin, Puzzle, Share2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Icon, Loader, Pagination } from "UI";
-import withPermissions from "../../hocs/withPermissions";
+import { Icon, Loader, Pagination } from 'UI';
 
+import withPermissions from '../../hocs/withPermissions';
 import SpotListItem from './SpotListItem';
 
-const visibilityOptions = {
-  all: 'All Spots',
-  own: 'My Spots',
-} as const;
-
 function SpotsListHeader({
-  disableButton,
   onDelete,
+  selectedCount,
+  onClearSelection,
 }: {
-  disableButton: boolean;
   onDelete: () => void;
+  selectedCount: number;
+  onClearSelection: () => void;
 }) {
-  const dropdownProps = {
-    items: [
-      {
-        label: 'All Spots',
-        key: 'all',
-      },
-      {
-        label: 'My Spots',
-        key: 'own',
-      },
-    ],
-    onClick: ({ key }: any) => onFilterChange(key),
-  };
-
   const { spotStore } = useStore();
 
   const onSearch = (value: string) => {
     spotStore.setQuery(value);
     void spotStore.fetchSpots();
   };
+
+  // Handle input change and update the query in the store
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    spotStore.setQuery(e.target.value);
+  };
+
+  // Handle filter changes (All Spots / My Spots) and fetch spots accordingly
   const onFilterChange = (key: 'all' | 'own') => {
     spotStore.setFilter(key);
     void spotStore.fetchSpots();
   };
+
+  // Update filter state based on selected segment
+  const handleSegmentChange = (value: string) => {
+    const key = value === 'All Spots' ? 'all' : 'own';
+    onFilterChange(key);
+  };
+
   return (
-    <div className={'flex items-center px-4 gap-4 pb-4'}>
-      <Icon name={'orSpot'} size={24} />
-      <div className={'text-2xl capitalize mr-2'}>Spots</div>
-      <div className={'ml-auto'}>
-        <Button size={'small'} disabled={disableButton} onClick={onDelete}>
-          Delete Selected
+    <div className={'flex items-center justify-between w-full'}>
+      <div className="flex gap-4 items-center">
+        <div className="flex gap-1 items-center">
+          <Icon name={'orSpot'} size={24} />
+          <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+        </div>
+        <Button
+          type="default"
+          size="small"
+          className="flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border"
+        >
+          <div className="w-50 pb-0.5">
+            <img
+              src={'assets/img/chrome.svg'}
+              alt={'Get Spot by OpenReplay'}
+              width={16}
+            />
+          </div>
+          Get Extension <MoveUpRight size={16} strokeWidth={1.5} />
         </Button>
       </div>
-      <Dropdown menu={dropdownProps}>
-        <div className={'cursor-pointer flex items-center justify-end gap-2'}>
-          <div>{visibilityOptions[spotStore.filter]}</div>
-          <DownOutlined />
+
+      <div className="flex gap-2 items-center">
+        <div className={'ml-auto'}>
+          {selectedCount > 0 && (
+            <>
+              <Button
+                type="text"
+                onClick={onClearSelection}
+                className="mr-2 px-3"
+              >
+                Clear
+              </Button>
+              <Button onClick={onDelete} type="primary" ghost>
+                Delete ({selectedCount})
+              </Button>
+            </>
+          )}
         </div>
-      </Dropdown>
-      <div style={{ width: 210 }}>
-        <Input.Search
-          value={spotStore.query}
-          allowClear
-          name="spot-search"
-          placeholder="Filter by title"
-          onChange={(e) => spotStore.setQuery(e.target.value)}
-          onSearch={(value) => onSearch(value)}
+
+        <Segmented
+          options={['All Spots', 'My Spots']}
+          value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
+          onChange={handleSegmentChange}
+          className="mr-4 lg:hidden xl:flex"
         />
+
+        <div className="w-56">
+          <Input.Search
+            value={spotStore.query} // Controlled input value
+            allowClear
+            name="spot-search"
+            placeholder="Filter by title"
+            onChange={handleInputChange} // Update query as user types
+            onSearch={onSearch} // Trigger search on enter or search button click
+            className="rounded-lg"
+          />
+        </div>
       </div>
     </div>
   );
@@ -80,72 +112,108 @@ function SpotsList() {
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
   const { spotStore } = useStore();
 
+  // Fetch spots when component mounts or when store changes
   React.useEffect(() => {
     void spotStore.fetchSpots();
   }, []);
 
+  // Handle pagination changes
   const onPageChange = (page: number) => {
     spotStore.setPage(page);
     void spotStore.fetchSpots();
   };
 
-  const onDelete = (spotId: string) => {
-    void spotStore.deleteSpot([spotId]);
+  const onDelete = async (spotId: string) => {
+    await spotStore.deleteSpot([spotId]);
+    setSelectedSpots(selectedSpots.filter((s) => s !== spotId));
   };
 
-  const batchDelete = () => {
-    void spotStore.deleteSpot(selectedSpots);
+  const batchDelete = async () => {
+    const deletedCount = selectedSpots.length;
+    await spotStore.deleteSpot(selectedSpots);
     setSelectedSpots([]);
+
+    // Adjust pagination if the current page becomes empty after deletion
+    const remainingItemsOnPage = spotStore.spots.length - deletedCount;
+    if (remainingItemsOnPage <= 0 && spotStore.page > 1) {
+      spotStore.setPage(spotStore.page - 1);
+      await spotStore.fetchSpots();
+    } else {
+      await spotStore.fetchSpots();
+    }
+
+    // Display success message with correct pluralization
+    message.success(
+      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`
+    );
   };
 
+  // Rename a spot
   const onRename = (id: string, newName: string) => {
     return spotStore.updateSpot(id, { name: newName });
   };
 
+  // Fetch video associated with a spot
   const onVideo = (id: string) => {
     return spotStore.getVideo(id);
   };
 
+  // Handle selection of spots for deletion
+  const handleSelectSpot = (spotId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedSpots((prev) => [...prev, spotId]);
+    } else {
+      setSelectedSpots((prev) => prev.filter((id) => id !== spotId));
+    }
+  };
+
+  // Check if a spot is selected
+  const isSpotSelected = (spotId: string) => selectedSpots.includes(spotId);
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedSpots([]);
+  };
+
   return (
-    <div className={'w-full'}>
+    <div className={'w-full relative'}>
       <div
-        className={'mx-auto bg-white rounded border py-4'}
-        style={{ maxWidth: 1360 }}
+        className={
+          'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'
+        }
       >
         <SpotsListHeader
-          disableButton={selectedSpots.length === 0}
           onDelete={batchDelete}
+          selectedCount={selectedSpots.length}
+          onClearSelection={clearSelection}
         />
+      </div>
 
+      <div className={'mx-auto pb-4'} style={{ maxWidth: 1360 }}>
         {spotStore.total === 0 ? (
-          spotStore.isLoading ? <Loader /> : <EmptyPage />
+          spotStore.isLoading ? (
+            <Loader />
+          ) : (
+            <EmptyPage />
+          )
         ) : (
           <>
-            <div
-              className={
-                'py-2 px-0.5 border-t border-b border-gray-lighter grid grid-cols-3 gap-2'
-              }
-            >
-              {spotStore.spots.map((spot, index) => (
+            <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
+              {spotStore.spots.map((spot) => (
                 <SpotListItem
-                  key={index}
+                  key={spot.spotId}
                   spot={spot}
                   onDelete={() => onDelete(spot.spotId)}
                   onRename={onRename}
                   onVideo={onVideo}
-                  onSelect={(checked: boolean) => {
-                    if (checked) {
-                      setSelectedSpots([...selectedSpots, spot.spotId]);
-                    } else {
-                      setSelectedSpots(
-                        selectedSpots.filter((s) => s !== spot.spotId)
-                      );
-                    }
-                  }}
+                  onSelect={(checked: boolean) =>
+                    handleSelectSpot(spot.spotId, checked)
+                  }
+                  isSelected={isSpotSelected(spot.spotId)}
                 />
               ))}
             </div>
-            <div className="flex items-center justify-between p-5 w-full">
+            <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
                 Showing{' '}
                 <span className="font-medium">
@@ -238,4 +306,4 @@ function EmptyPage() {
   );
 }
 
-export default withPermissions(['SPOT'])(observer(SpotsList))
+export default withPermissions(['SPOT'])(observer(SpotsList));

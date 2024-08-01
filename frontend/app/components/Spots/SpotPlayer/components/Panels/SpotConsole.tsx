@@ -77,7 +77,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
       <BottomBlock.Content className={'overflow-y-auto'}>
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
+            <div className="capitalize flex items-center">
               <Icon name="info-circle" className="mr-2" size="18" />
               No Data
             </div>

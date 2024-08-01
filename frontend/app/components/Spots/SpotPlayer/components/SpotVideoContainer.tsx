@@ -159,9 +159,9 @@ function SpotVideoContainer({
           }
         >
           <div
-            className={'font-semibold color-white stroke-black animate-pulse'}
+            className={'text-2xl font-semibold color-white stroke-black animate-pulse'}
           >
-            Loading your video...
+            Loading...
           </div>
         </div>
       )}

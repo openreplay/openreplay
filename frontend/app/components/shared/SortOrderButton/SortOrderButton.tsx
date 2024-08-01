@@ -19,7 +19,7 @@ export default React.memo(function SortOrderButton(props: Props) {
               { label: 'Ascending', value: 'Ascending', icon: <ArrowUpOutlined /> },
               { label: 'Descending', value: 'Descending', icon: <ArrowDownOutlined /> },
             ]}
-            defaultValue="Descending"
+            defaultValue="Ascending"
             onChange={(value) => {
               if (value === 'Ascending') {
                 onChange('asc');
