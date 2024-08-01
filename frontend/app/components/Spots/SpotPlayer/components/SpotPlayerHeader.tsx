@@ -5,7 +5,7 @@ import {
   SettingOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { Button, Popover, message } from 'antd';
+import { Button, Popover, message, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
@@ -64,11 +64,16 @@ function SpotPlayerHeader({
           </Button>
         ) : (
           <>
-            <div className={'flex items-center gap-2'}>
-              <Icon name={'orSpot'} size={24} />
-              <div className={'text-lg font-semibold'}>Spot</div>
-            </div>
-            <div className={'text-disabled-text text-xs'}>by OpenReplay</div>
+            <a href="https://openreplay.com/spot" target="_blank" >
+              <Button type="text" className="orSpotBranding flex gap-1 items-center py-2">
+                <Icon name={'orSpot'} size={28} />
+                <div className='flex flex-col justify-start text-start'>
+                    <div className={'text-lg font-semibold'}>Spot</div>
+                    <div className={'text-disabled-text text-xs -mt-1'}>by OpenReplay</div>
+                </div>
+                
+              </Button>
+            </a>
           </>
         )}
       </div>
@@ -76,7 +81,9 @@ function SpotPlayerHeader({
       <div className={'flex items-center gap-2'}>
         <Avatar seed={hashString(user)} />
         <div>
-          <div>{title}</div>
+          <Tooltip title={title}>
+          <div className='w-9/12 text-ellipsis truncate cursor-normal'>{title}</div>
+          </Tooltip>
           <div className={'flex items-center gap-2 text-black/50 text-sm'}>
             <div>{user}</div>
             <div>·</div>
