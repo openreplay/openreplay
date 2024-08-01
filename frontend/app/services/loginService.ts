@@ -1,8 +1,8 @@
 import BaseService from "./BaseService";
 
 export default class LoginService extends BaseService {
-  public async spotLogin({ email, password, captchaResponse }: { email: string, password: string, captchaResponse?: string }) {
-    return this.client.post('/spot/login', {
+  public async login({ email, password, captchaResponse }: { email: string, password: string, captchaResponse?: string }) {
+    return this.client.post('/login?spot=true', {
       email: email.trim(),
       password,
       'g-recaptcha-response': captchaResponse,
