@@ -72,7 +72,7 @@ class LoginStore {
       this.setSpotJWT(resp.spotJwt)
       return resp
     } catch (e) {
-      console.error(e)
+      throw e
     } finally {
       this.setSpotJwtPending(false)
     }
