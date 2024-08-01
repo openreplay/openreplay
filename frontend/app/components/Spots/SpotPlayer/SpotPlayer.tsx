@@ -98,6 +98,12 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     });
 
     const ev = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return false;
+      }
       if (e.key === 'Escape') {
         spotPlayerStore.setIsFullScreen(false);
       }
