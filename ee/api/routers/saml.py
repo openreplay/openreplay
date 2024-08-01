@@ -129,8 +129,8 @@ async def process_sso_assertion(request: Request):
             users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
-    print(">>>>>>>>")
-    print(expiration)
+    logger.warning(">>>>>>>>")
+    logger.warning(expiration)
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
         else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
@@ -248,6 +248,8 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
             users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
+    logger.warning(">>>>>>>>")
+    logger.warning(expiration)
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
         else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
