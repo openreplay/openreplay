@@ -1,14 +1,10 @@
 import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
 import copy from 'copy-to-clipboard';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { useStore } from 'App/mstore';
-import { durationFormatted } from "../../../../date";
-
-const HOUR_SECS = 60 * 60;
-const DAY_SECS = 24 * HOUR_SECS;
-const WEEK_SECS = 7 * DAY_SECS;
+import { formatExpirationTime, HOUR_SECS, DAY_SECS, WEEK_SECS } from 'App/utils/index'; 
 
 enum Intervals {
   hour,
@@ -91,15 +87,6 @@ function AccessModal({ onClose }: { onClose: () => void }) {
     setIsCopied(true);
     copy(spotLink);
     setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  const formatExpirationTime = (seconds: number) => {
-    if (seconds >= WEEK_SECS) {
-      return `${Math.floor(seconds / DAY_SECS)} days`;
-    }
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
   };
 
   return (
