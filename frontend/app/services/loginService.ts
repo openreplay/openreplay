@@ -8,12 +8,13 @@ export default class LoginService extends BaseService {
       'g-recaptcha-response': captchaResponse,
     })
       .then((r) => {
-        if (r.ok) {
           return r.json();
-        }
       })
       .catch((e) => {
-        throw e;
+        return e.response.json()
+          .then((r: { errors: string[] }) => {
+            throw r.errors;
+          });
       });
   }
 }
