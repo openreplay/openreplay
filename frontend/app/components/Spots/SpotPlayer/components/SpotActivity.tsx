@@ -1,5 +1,6 @@
+import { CloseOutlined } from '@ant-design/icons';
 import { TYPES } from 'Types/session/event';
-import { X } from 'lucide-react';
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
@@ -28,14 +29,14 @@ function SpotActivity({ onClose }: { onClose: () => void }) {
   };
   return (
     <div
-      className={'h-full bg-white border border-gray-light'}
+      className={'h-full bg-white border-l'}
       style={{ minWidth: 320, width: 320 }}
     >
       <div className={'flex items-center justify-between p-4'}>
-        <div className={'font-semibold'}>Activity</div>
-        <div onClick={onClose} className={'p-1 cursor-pointer'}>
-          <X size={16} />
-        </div>
+        <div className={'font-medium text-lg'}>Activity</div>
+        <Button type="text" size="small" onClick={onClose}>
+          <CloseOutlined />
+        </Button>
       </div>
       <div
         className={'overflow-y-auto'}

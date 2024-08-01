@@ -495,7 +495,7 @@ export const NetworkPanelComp = observer(
             />
           </BottomBlock.Header>
           <BottomBlock.Content>
-            <div className="flex items-center justify-between px-4">
+            <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
               <div>
                 <Toggler
                   checked={showOnlyErrors}
@@ -537,7 +537,7 @@ export const NetworkPanelComp = observer(
             </div>
             <NoContent
               title={
-                <div className="capitalize flex items-center mt-16">
+                <div className="capitalize flex items-center">
                   <Icon name="info-circle" className="mr-2" size="18" />
                   No Data
                 </div>

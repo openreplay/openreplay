@@ -19,7 +19,7 @@ export default function NoContent(props: Props) {
     return !show ? (
         children
     ) : (
-        <div className={`${styles.wrapper} ${size && styles[size]}`} style={style}>
+        <div className={`${styles.wrapper} ${size && styles[size]} h-full`} style={style}>
             {icon && <Icon name={icon} size={iconSize} />}
             {title && <div className='flex'>{title}</div>}
             {subtext && <div className={styles.subtext}>{subtext}</div>}
