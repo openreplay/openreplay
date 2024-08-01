@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Typography } from 'antd';
+import { Menu, Typography, Tag } from 'antd';
 import SVG from 'UI/SVG';
 import * as routes from 'App/routes';
 import { bookmarks, client, CLIENT_DEFAULT_TAB, CLIENT_TABS, fflags, notes, sessions, withSiteId } from 'App/routes';
@@ -21,7 +21,6 @@ const TabToUrlMap = {
   flags: fflags() as '/feature-flags'
 };
 
-
 interface Props extends RouteComponentProps {
   siteId?: string;
   modules: string[];
@@ -31,14 +30,11 @@ interface Props extends RouteComponentProps {
   isCollapsed?: boolean;
 }
 
-
 function SideMenu(props: Props) {
-  // @ts-ignore
   const { activeTab, siteId, modules, location, account, isEnterprise, isCollapsed } = props;
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
-
 
   let menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
@@ -78,17 +74,15 @@ function SideMenu(props: Props) {
         return { ...item, hidden: isHidden };
       });
 
-      // Check if all items are hidden in this category
       const allItemsHidden = updatedItems.every(item => item.hidden);
 
       return {
         ...category,
         items: updatedItems,
-        hidden: allItemsHidden // Set the hidden flag for the category
+        hidden: allItemsHidden
       };
     });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules]);
-
 
   React.useEffect(() => {
     const currentLocation = location.pathname;
@@ -97,7 +91,6 @@ function SideMenu(props: Props) {
       props.setActiveTab({ type: tab });
     }
   }, [location.pathname]);
-
 
   const menuRoutes: any = {
     [MENU.EXIT]: () => props.history.push(withSiteId(routes.sessions(), siteId)),
@@ -150,11 +143,9 @@ function SideMenu(props: Props) {
     return false;
   };
 
-
   const pushTo = (path: string) => {
     props.history.push(path);
   };
-
 
   return (
     <>
@@ -169,66 +160,83 @@ function SideMenu(props: Props) {
               <>
                 {index > 0 && <Divider style={{ margin: '6px 0' }} />}
 
-                  {category.items.filter((item: any) => !item.hidden).map((item: any) => {
-                    const isActive = isMenuItemActive(item.key);
+                {category.items.filter((item: any) => !item.hidden).map((item: any) => {
+                  const isActive = isMenuItemActive(item.key);
 
-                    if (item.key === MENU.EXIT) {
-                      return (
-                        <Menu.Item
-                          key={item.key}
-                          style={{ paddingLeft: '20px' }}
-                          icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
-                          className={cn('!rounded-lg hover-fill-teal')}
-                        >
-                          {item.label}
-                        </Menu.Item>
-                      );
-                    }
-
-                    return item.children ? (
-                      <Menu.SubMenu
-                        key={item.key}
-                        title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
-                        icon={<SVG name={item.icon} size={16} />}>
-                        {/*style={{ paddingLeft: '30px' }}*/}
-                        {item.children.map((child: any) => <Menu.Item
-                          className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
-                          key={child.key}>{child.label}</Menu.Item>)}
-                      </Menu.SubMenu>
-                    ) : (
+                  if (item.key === MENU.EXIT) {
+                    return (
                       <Menu.Item
                         key={item.key}
-                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''}
-                                    className={'hover-fill-teal'} />}
                         style={{ paddingLeft: '20px' }}
+                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
                         className={cn('!rounded-lg hover-fill-teal')}
-                        itemIcon={item.leading ?
-                          <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}>
+                      >
                         {item.label}
                       </Menu.Item>
                     );
-                  })}
+                  }
 
+                  if (item.key === MENU.SPOTS) {
+                    return (
+                      <Menu.Item
+                        key={item.key}
+                        icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} />}
+                        style={{ paddingLeft: '20px' }}
+                        className={cn('!rounded-lg hover-fill-teal !pe-0')}
+                        itemIcon={item.leading ? <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          {item.label}
+                          <Tag color="cyan" bordered={false} className='text-xs'> Beta </Tag>
+                        </div>
+                      </Menu.Item>
+                    );
+                  }
+
+                  return item.children ? (
+                    <Menu.SubMenu
+                      key={item.key}
+                      title={<Text className={cn('ml-5 !rounded')}>{item.label}</Text>}
+                      icon={<SVG name={item.icon} size={16} />}
+                    >
+                      {item.children.map((child: any) => (
+                        <Menu.Item
+                          className={cn('ml-8', { 'ant-menu-item-selected !bg-active-dark-blue': isMenuItemActive(child.key) })}
+                          key={child.key}
+                        >
+                          {child.label}
+                        </Menu.Item>
+                      ))}
+                    </Menu.SubMenu>
+                  ) : (
+                    <Menu.Item
+                      key={item.key}
+                      icon={<Icon name={item.icon} size={16} color={isActive ? 'teal' : ''} className={'hover-fill-teal'} />}
+                      style={{ paddingLeft: '20px' }}
+                      className={cn('!rounded-lg hover-fill-teal')}
+                      itemIcon={item.leading ? <Icon name={item.leading} size={16} color={isActive ? 'teal' : ''} /> : null}
+                    >
+                      {item.label}
+                    </Menu.Item>
+                  );
+                })}
               </>
             )}
           </React.Fragment>
         ))}
       </Menu>
-      <SupportModal
-        onClose={() => {
-          setSupportOpen(false);
-        }} open={supportOpen} />
+      <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </>
   );
 }
 
 export default withRouter(
   connect((state: any) => ({
-      modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
-      activeTab: state.getIn(['search', 'activeTab', 'type']),
-      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      account: state.getIn(['user', 'account'])
-    }),
+    modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
+    activeTab: state.getIn(['search', 'activeTab', 'type']),
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    account: state.getIn(['user', 'account'])
+  }),
     { setActiveTab }
   )(SideMenu)
 );
