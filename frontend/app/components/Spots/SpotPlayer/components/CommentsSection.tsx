@@ -107,7 +107,11 @@ function BottomSection({
             autoSize={{ minRows: 3, maxRows: 3 }}
             maxLength={120}
             value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
+            onChange={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setCommentText(e.target.value)
+            }}
             placeholder="Add a comment..."
           />
         </div>

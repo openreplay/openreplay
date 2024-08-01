@@ -145,7 +145,6 @@ function SpotPlayerHeader({
               >
                 Manage Access
               </Button>
-              Ï
             </Popover>
           ) : null}
           <div
