@@ -20,11 +20,11 @@ from starlette.responses import RedirectResponse
 
 @public_app.get("/sso/saml2", tags=["saml2"])
 @public_app.get("/sso/saml2/", tags=["saml2"])
-async def start_sso(request: Request, iFrame: bool = False):
+async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
     request.path = ''
     req = await prepare_request(request=request)
     auth = init_saml_auth(req)
-    sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame}))
+    sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame, 'spot': spot}))
     return RedirectResponse(url=sso_built_url)
 
 
@@ -47,6 +47,7 @@ async def process_sso_assertion(request: Request):
         post_data = {}
 
     redirect_to_link2 = None
+    spot = False
     relay_state = post_data.get('RelayState')
     if relay_state:
         if isinstance(relay_state, str):
@@ -57,6 +58,7 @@ async def process_sso_assertion(request: Request):
             logger.error(relay_state)
             relay_state = {}
         redirect_to_link2 = relay_state.get("iFrame")
+        spot = relay_state.get("spot")
 
     request_id = None
     if 'AuthNRequestID' in session:
@@ -127,18 +129,25 @@ async def process_sso_assertion(request: Request):
             users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
+    print(">>>>>>>>")
+    print(expiration)
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
         else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
-    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
+    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    refresh_token = jwt["refreshToken"]
-    refresh_token_max_age = jwt["refreshTokenMaxAge"]
-    response = Response(
-        status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
-    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    response = Response(status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path="/api/refresh",
+                        max_age=jwt["refreshTokenMaxAge"], secure=True, httponly=True)
+    if spot:
+        response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path="/api/spot/refresh",
+                            max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
+        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"], "spotJwt": jwt["spotJwt"]},
+                                                            redirect_to_link2=redirect_to_link2)}
+    else:
+        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"]}, redirect_to_link2=redirect_to_link2)}
+
+    response.init_headers(headers)
     return response
 
 
@@ -161,6 +170,7 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
         post_data = {}
 
     redirect_to_link2 = None
+    spot = False
     relay_state = post_data.get('RelayState')
     if relay_state:
         if isinstance(relay_state, str):
@@ -171,6 +181,7 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
             logger.error(relay_state)
             relay_state = {}
         redirect_to_link2 = relay_state.get("iFrame")
+        spot = relay_state.get("spot")
 
     request_id = None
     if 'AuthNRequestID' in session:
@@ -239,16 +250,21 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
     expiration = auth.get_session_expiration()
     expiration = expiration if expiration is not None and expiration > 10 * 60 \
         else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
-    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
+    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    refresh_token = jwt["refreshToken"]
-    refresh_token_max_age = jwt["refreshTokenMaxAge"]
-    response = Response(
-        status_code=status.HTTP_302_FOUND,
-        headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
-    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    response = Response(status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path="/api/refresh",
+                        max_age=jwt["refreshTokenMaxAge"], secure=True, httponly=True)
+    if spot:
+        response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path="/api/spot/refresh",
+                            max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
+        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"], "spotJwt": jwt["spotJwt"]},
+                                                            redirect_to_link2=redirect_to_link2)}
+    else:
+        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"]}, redirect_to_link2=redirect_to_link2)}
+
+    response.init_headers(headers)
     return response
 
 
