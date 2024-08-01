@@ -28,9 +28,7 @@ async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
     return RedirectResponse(url=sso_built_url)
 
 
-@public_app.post('/sso/saml2/acs', tags=["saml2"])
-@public_app.post('/sso/saml2/acs/', tags=["saml2"])
-async def process_sso_assertion(request: Request):
+async def __process_assertion(request: Request, tenant_key=None):
     req = await prepare_request(request=request)
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
@@ -66,7 +64,6 @@ async def process_sso_assertion(request: Request):
 
     auth.process_response(request_id=request_id)
     errors = auth.get_errors()
-    user_data = {}
     if len(errors) == 0:
         if 'AuthNRequestID' in session:
             del session['AuthNRequestID']
@@ -78,11 +75,14 @@ async def process_sso_assertion(request: Request):
         return {"errors": [error_reason]}
 
     email = auth.get_nameid()
-    logger.debug(f"received nameId: {email}")
-    existing = users.get_by_email_only(auth.get_nameid())
+    if tenant_key is None:
+        tenant_key = user_data.get("tenantKey", [])
+    else:
+        logger.info("Using tenant key from ACS-URL")
 
-    internal_id = next(iter(user_data.get("internalId", [])), None)
-    tenant_key = user_data.get("tenantKey", [])
+    logger.debug(f"received nameId: {email}  tenant_key: {tenant_key}")
+    logger.debug(">user_data:")
+    logger.debug(user_data)
     if len(tenant_key) == 0:
         logger.error("tenantKey not present in assertion, please check your SP-assertion-configuration")
         return {"errors": ["tenantKey not present in assertion, please check your SP-assertion-configuration"]}
@@ -91,22 +91,24 @@ async def process_sso_assertion(request: Request):
         if t is None:
             logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-    logger.debug(user_data)
-    role_name = user_data.get("role", [])
-    if len(role_name) == 0:
-        logger.info("No role specified, setting role to member")
-        role_name = ["member"]
-    role_name = role_name[0]
-    role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
-    if role is None:
-        return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
-
-    admin_privileges = user_data.get("adminPrivileges", [])
-    admin_privileges = not (len(admin_privileges) == 0
-                            or admin_privileges[0] is None
-                            or admin_privileges[0].lower() == "false")
+    existing = users.get_by_email_only(auth.get_nameid())
+    internal_id = next(iter(user_data.get("internalId", [])), None)
 
     if existing is None:
+        role_name = user_data.get("role", [])
+        if len(role_name) == 0:
+            logger.info("No role specified, setting role to member")
+            role_name = ["member"]
+        role_name = role_name[0]
+        role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
+        if role is None:
+            return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
+
+        admin_privileges = user_data.get("adminPrivileges", [])
+        admin_privileges = not (len(admin_privileges) == 0
+                                or admin_privileges[0] is None
+                                or admin_privileges[0].lower() == "false")
+
         deleted = users.get_deleted_user_by_email(auth.get_nameid())
         if deleted is not None:
             logger.info("== restore deleted user ==")
@@ -128,146 +130,33 @@ async def process_sso_assertion(request: Request):
             logger.info(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
             users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
-    expiration = auth.get_session_expiration()
-    logger.warning(">>>>>>>>")
-    logger.warning(expiration)
-    expiration = expiration if expiration is not None and expiration > 10 * 60 \
-        else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
-    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
+    jwt = users.authenticate_sso(email=email, internal_id=internal_id, include_spot=spot)
     if jwt is None:
         return {"errors": ["null JWT"]}
     response = Response(status_code=status.HTTP_302_FOUND)
     response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path="/api/refresh",
                         max_age=jwt["refreshTokenMaxAge"], secure=True, httponly=True)
+    query_params = {"jwt": jwt["jwt"]}
     if spot:
         response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path="/api/spot/refresh",
                             max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
-        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"], "spotJwt": jwt["spotJwt"]},
-                                                            redirect_to_link2=redirect_to_link2)}
-    else:
-        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"]}, redirect_to_link2=redirect_to_link2)}
+        query_params["spotJwt"] = jwt["spotJwt"]
 
+    headers = {'Location': SAML2_helper.get_landing_URL(query_params=query_params, redirect_to_link2=redirect_to_link2)}
     response.init_headers(headers)
     return response
+
+
+@public_app.post('/sso/saml2/acs', tags=["saml2"])
+@public_app.post('/sso/saml2/acs/', tags=["saml2"])
+async def process_sso_assertion(request: Request):
+    return await __process_assertion(request)
 
 
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
 @public_app.post('/sso/saml2/acs/{tenantKey}/', tags=["saml2"])
 async def process_sso_assertion_tk(tenantKey: str, request: Request):
-    req = await prepare_request(request=request)
-    session = req["cookie"]["session"]
-    auth = init_saml_auth(req)
-
-    post_data = req.get("post_data")
-    if post_data is None:
-        post_data = {}
-    elif isinstance(post_data, str):
-        post_data = json.loads(post_data)
-    elif not isinstance(post_data, dict):
-        logger.error("Received invalid post_data")
-        logger.error("type: {}".format(type(post_data)))
-        logger.error(post_data)
-        post_data = {}
-
-    redirect_to_link2 = None
-    spot = False
-    relay_state = post_data.get('RelayState')
-    if relay_state:
-        if isinstance(relay_state, str):
-            relay_state = json.loads(relay_state)
-        elif not isinstance(relay_state, dict):
-            logger.error("Received invalid relay_state")
-            logger.error("type: {}".format(type(relay_state)))
-            logger.error(relay_state)
-            relay_state = {}
-        redirect_to_link2 = relay_state.get("iFrame")
-        spot = relay_state.get("spot")
-
-    request_id = None
-    if 'AuthNRequestID' in session:
-        request_id = session['AuthNRequestID']
-
-    auth.process_response(request_id=request_id)
-    errors = auth.get_errors()
-    user_data = {}
-    if len(errors) == 0:
-        if 'AuthNRequestID' in session:
-            del session['AuthNRequestID']
-        user_data = auth.get_attributes()
-    else:
-        error_reason = auth.get_last_error_reason()
-        logger.error("SAML2 error:")
-        logger.error(error_reason)
-        return {"errors": [error_reason]}
-
-    email = auth.get_nameid()
-    logger.debug(f"received nameId: {email}")
-    existing = users.get_by_email_only(auth.get_nameid())
-
-    internal_id = next(iter(user_data.get("internalId", [])), None)
-
-    t = tenants.get_by_tenant_key(tenantKey)
-    if t is None:
-        logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
-        return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-    logger.debug(user_data)
-    role_name = user_data.get("role", [])
-    if len(role_name) == 0:
-        logger.info("No role specified, setting role to member")
-        role_name = ["member"]
-    role_name = role_name[0]
-    role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
-    if role is None:
-        return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
-
-    admin_privileges = user_data.get("adminPrivileges", [])
-    admin_privileges = not (len(admin_privileges) == 0
-                            or admin_privileges[0] is None
-                            or admin_privileges[0].lower() == "false")
-
-    if existing is None:
-        deleted = users.get_deleted_user_by_email(auth.get_nameid())
-        if deleted is not None:
-            logger.info("== restore deleted user ==")
-            users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
-                                   admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
-                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                                   internal_id=internal_id, role_id=role["roleId"])
-        else:
-            logger.info("== new user ==")
-            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
-                                  origin=SAML2_helper.get_saml2_provider(),
-                                  name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                                  internal_id=internal_id, role_id=role["roleId"])
-    else:
-        if t['tenantId'] != existing["tenantId"]:
-            logger.warning("user exists for a different tenant")
-            return {"errors": ["user exists for a different tenant"]}
-        if existing.get("origin") is None:
-            logger.info(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
-                         changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
-    expiration = auth.get_session_expiration()
-    logger.warning(">>>>>>>>")
-    logger.warning(expiration)
-    expiration = expiration if expiration is not None and expiration > 10 * 60 \
-        else int(config("sso_exp_delta_seconds", cast=int, default=24 * 60 * 60))
-    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration, include_spot=spot)
-    if jwt is None:
-        return {"errors": ["null JWT"]}
-    response = Response(status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path="/api/refresh",
-                        max_age=jwt["refreshTokenMaxAge"], secure=True, httponly=True)
-    if spot:
-        response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path="/api/spot/refresh",
-                            max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
-        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"], "spotJwt": jwt["spotJwt"]},
-                                                            redirect_to_link2=redirect_to_link2)}
-    else:
-        headers = {'Location': SAML2_helper.get_landing_URL({"jwt": jwt["jwt"]}, redirect_to_link2=redirect_to_link2)}
-
-    response.init_headers(headers)
-    return response
+    return await __process_assertion(request, tenantKey)
 
 
 @public_app.get('/sso/saml2/sls', tags=["saml2"])
