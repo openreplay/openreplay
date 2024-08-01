@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { fetchTenants, login, setJwt } from 'Duck/user';
+import { fetchTenants, loginSuccess, setJwt } from 'Duck/user';
 import { Button, Form, Icon, Input, Link, Loader, Tooltip } from 'UI';
 
 import Copyright from 'Shared/Copyright';
@@ -24,7 +24,7 @@ interface LoginProps {
   errors: any; // Adjust the type based on your state shape
   loading: boolean;
   authDetails: any; // Adjust the type based on your state shape
-  login: typeof login;
+  loginSuccess: typeof loginSuccess;
   setJwt: typeof setJwt;
   fetchTenants: typeof fetchTenants;
   location: Location;
@@ -34,7 +34,7 @@ const Login: React.FC<LoginProps> = ({
   errors,
   loading,
   authDetails,
-  login,
+  loginSuccess,
   setJwt,
   fetchTenants,
   location,
@@ -99,13 +99,17 @@ const Login: React.FC<LoginProps> = ({
   };
 
   const handleSubmit = (token?: string) => {
-    login({ email: email.trim(), password, 'g-recaptcha-response': token });
     loginStore.setEmail(email.trim());
     loginStore.setPassword(password);
     if (token) {
       loginStore.setCaptchaResponse(token);
     }
-    void loginStore.generateSpotJWT((jwt) => handleSpotLogin(jwt));
+    loginStore.generateJWT().then((resp) => {
+      if (resp) {
+        handleSpotLogin(resp.spotJwt);
+      }
+      loginSuccess(resp)
+    })
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -286,7 +290,7 @@ const mapStateToProps = (state: any, ownProps: any) => ({
 });
 
 const mapDispatchToProps = {
-  login,
+  loginSuccess,
   setJwt,
   fetchTenants,
 };

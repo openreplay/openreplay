@@ -58,19 +58,19 @@ class LoginStore {
     this.spotJwtPending = pending
   }
 
-  generateSpotJWT = async (onSuccess: (jwt:string) => void) => {
+  generateJWT = async () => {
     if (this.spotJwtPending) {
       return
     }
     this.setSpotJwtPending(true)
     try {
-      const resp = await loginService.spotLogin({
+      const resp = await loginService.login({
         email: this.email,
         password: this.password,
         captchaResponse: this.captchaResponse
       })
-      this.setSpotJWT(resp.jwt)
-      onSuccess(resp.jwt)
+      this.setSpotJWT(resp.spotJwt)
+      return resp
     } catch (e) {
       console.error(e)
     } finally {
