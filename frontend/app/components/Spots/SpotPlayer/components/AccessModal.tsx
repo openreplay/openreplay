@@ -39,19 +39,19 @@ function AccessModal({ onClose }: { onClose: () => void }) {
   const menuItems = [
     {
       key: Intervals.hour.toString(),
-      label: <div>One Hour</div>,
+      label: <div>1 Hour</div>,
     },
     {
       key: Intervals.threeHours.toString(),
-      label: <div>Three Hours</div>,
+      label: <div>3 Hours</div>,
     },
     {
       key: Intervals.day.toString(),
-      label: <div>One Day</div>,
+      label: <div>1 Day</div>,
     },
     {
       key: Intervals.week.toString(),
-      label: <div>One Week</div>,
+      label: <div>1 Week</div>,
     },
   ];
 

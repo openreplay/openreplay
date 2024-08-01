@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import { closeBottomBlock } from 'Duck/components/player';
 import { CloseButton } from 'UI';
+import { Tooltip } from 'antd';
 import stl from './header.module.css';
 
 const Header = ({
@@ -23,9 +24,14 @@ const Header = ({
 }) => (
   <div className={ cn("relative border-r border-l py-1", stl.header) } >
     <div className={ cn("w-full h-full flex justify-between items-center", className) } >
-      <div className="w-full flex items-center justify-between">{ children }</div>
-      { showClose && <CloseButton onClick={ onClose ? onClose : closeBottomBlock } size="18" className="ml-2" /> }
-    </div>
+    <div className="w-full flex items-center justify-between">{ children }</div>
+{ showClose && (
+  <Tooltip title="Close Panel">
+    <CloseButton onClick={ onClose ? onClose : closeBottomBlock } size="18" className="ml-2 hover:bg-black/10 rounded-lg p-1" />
+  </Tooltip>
+) }
+</div>
+
   </div>
 );
 

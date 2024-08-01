@@ -59,7 +59,7 @@ function SpotPlayerHeader({
     <div className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}>
       <div>
         {isLoggedIn ? (
-          <Button type="text" onClick={navigateToSpotsList} icon={<ArrowLeftOutlined />}>
+          <Button type="text" onClick={navigateToSpotsList} icon={<ArrowLeftOutlined />} className='px-2'>
             All Spots
           </Button>
         ) : (
