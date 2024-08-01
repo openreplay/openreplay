@@ -146,7 +146,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect, isSelected 
             style={{ display: loading ? 'none' : 'block' }}
           />
           <div className='absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all hover:scale-100 hover:transition-all group-hover:opacity-100 transition-opacity '>
-            <PlayCircleOutlined style={{ fontSize: '48px', color: 'white' }} />
+            <PlayCircleOutlined style={{ fontSize: '48px', color: 'white' }} className='bg-teal/50 rounded-full' />
           </div>
         </div>
 

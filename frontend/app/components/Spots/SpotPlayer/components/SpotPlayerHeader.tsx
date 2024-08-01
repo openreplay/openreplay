@@ -80,11 +80,11 @@ function SpotPlayerHeader({
           <div className={'flex items-center gap-2 text-black/50 text-sm'}>
             <div>{user}</div>
             <div>·</div>
-            <div>{date}</div>
+            <div className='capitalize'>{date}</div>
             {browserVersion && (
               <>
                 <div>·</div>
-                <div>Chrome v{browserVersion}</div>
+                <div className='capitalize'>Chrome v{browserVersion}</div>
               </>
             )}
             {resolution && (
@@ -96,7 +96,7 @@ function SpotPlayerHeader({
             {platform && (
               <>
                 <div>·</div>
-                <div>{platform}</div>
+                <div className='capitalize'>{platform}</div>
               </>
             )}
           </div>
