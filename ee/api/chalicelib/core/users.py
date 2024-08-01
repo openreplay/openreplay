@@ -860,7 +860,7 @@ def refresh(user_id: int, tenant_id: int) -> dict:
     }
 
 
-def authenticate_sso(email, internal_id, exp=None):
+def authenticate_sso(email: str, internal_id: str, exp=None, include_spot: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -886,15 +886,28 @@ def authenticate_sso(email, internal_id, exp=None):
         if r["serviceAccount"]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="service account is not authorized to login")
-        jwt_iat, jwt_r_jti, jwt_r_iat = change_jwt_iat_jti(user_id=r['userId'])
-        return {
-            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=jwt_iat,
+        j_r = change_jwt_iat_jti(user_id=r['userId'], include_spot=include_spot)
+        response = {
+            "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
                                             aud=AUDIENCE),
             "refreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                             iat=jwt_r_iat,
-                                                             aud=AUDIENCE, jwt_jti=jwt_r_jti),
-            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+                                                             iat=j_r.jwt_refresh_iat,
+                                                             aud=AUDIENCE, jwt_jti=j_r.jwt_refresh_jti),
+            "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
         }
+        if include_spot:
+            response = {
+                **response,
+                "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                    iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE),
+                "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
+                                                                     tenant_id=r['tenantId'],
+                                                                     iat=j_r.spot_jwt_refresh_iat,
+                                                                     aud=spot.AUDIENCE,
+                                                                     jwt_jti=j_r.spot_jwt_refresh_jti),
+                "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
+            }
+        return response
     logger.warning(f"SSO user not found with email: {email} and internal_id: {internal_id}")
     return None
 
