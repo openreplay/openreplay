@@ -22,7 +22,8 @@ import trackerAxios from '@openreplay/tracker-axios';
 const tracker = new Tracker({
   projectKey: YOUR_PROJECT_KEY,
 });
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 
 tracker.use(trackerAxios({ /* options here*/ }));
 ```

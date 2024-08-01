@@ -36,7 +36,8 @@ import trackerVuex from '@openreplay/tracker-vuex';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 //...
 const examplePiniaStore = useExamplePiniaStore()
 // check list of available options below
@@ -65,7 +66,8 @@ const tracker = new OpenReplay({
 //...
 
 // start tracker when the app is mounted
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 
 //...
 const examplePiniaStore = useExamplePiniaStore()

@@ -48,7 +48,7 @@ def update_feature_flag_status(project_id: int, feature_flag_id: int, is_active:
 
             return {"is_active": cur.fetchone()["is_active"]}
     except Exception as e:
-        logging.error(f"Failed to update feature flag status: {e}")
+        logger.error(f"Failed to update feature flag status: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Failed to update feature flag status")
 

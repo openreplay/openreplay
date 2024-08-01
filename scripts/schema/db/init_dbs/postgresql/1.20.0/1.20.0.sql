@@ -22,6 +22,11 @@ ALTER TABLE IF EXISTS events.clicks
     ALTER COLUMN normalized_x SET DATA TYPE decimal,
     ALTER COLUMN normalized_y SET DATA TYPE decimal;
 
+ALTER TABLE IF EXISTS public.users
+    ADD COLUMN IF NOT EXISTS spot_jwt_iat         timestamp without time zone NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS spot_jwt_refresh_jti integer                     NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS spot_jwt_refresh_iat timestamp without time zone NULL DEFAULT NULL;
+
 COMMIT;
 
 \elif :is_next

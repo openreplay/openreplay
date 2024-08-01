@@ -23,7 +23,7 @@ from routers import ee
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
 from crons import core_crons, ee_crons, core_dynamic_crons
-from routers.subs import insights, metrics, v1_api, health, usability_tests
+from routers.subs import insights, metrics, v1_api, health, usability_tests, spot
 from routers.subs import v1_api_ee
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
@@ -145,6 +145,10 @@ app.include_router(health.app_apikey)
 app.include_router(usability_tests.public_app)
 app.include_router(usability_tests.app)
 app.include_router(usability_tests.app_apikey)
+
+app.include_router(spot.public_app)
+app.include_router(spot.app)
+app.include_router(spot.app_apikey)
 
 if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)

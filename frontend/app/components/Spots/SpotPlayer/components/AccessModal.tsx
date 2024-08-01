@@ -2,7 +2,7 @@ import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
-
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { formatExpirationTime, HOUR_SECS, DAY_SECS, WEEK_SECS } from 'App/utils/index'; 
 
@@ -13,7 +13,7 @@ enum Intervals {
   week,
 }
 
-function AccessModal({ onClose }: { onClose: () => void }) {
+function AccessModal() {
   const { spotStore } = useStore();
   const [isCopied, setIsCopied] = useState(false);
   const [isPublic, setIsPublic] = useState(!!spotStore.pubKey);
@@ -54,9 +54,7 @@ function AccessModal({ onClose }: { onClose: () => void }) {
   const onMenuClick = async (info: { key: string }) => {
     const val = expirationValues[Number(info.key) as Intervals];
     setSelectedInterval(Number(info.key) as Intervals);
-    setLoadingKey(true);
     await spotStore.generateKey(spotId, val);
-    setLoadingKey(false);
   };
 
   const changeAccess = async (toPublic: boolean) => {
@@ -71,6 +69,7 @@ function AccessModal({ onClose }: { onClose: () => void }) {
   const revokeKey = async () => {
     await spotStore.generateKey(spotId, 0);
     setGenerated(false);
+    setIsPublic(false);
   };
 
   const generateInitial = async () => {
@@ -131,7 +130,7 @@ function AccessModal({ onClose }: { onClose: () => void }) {
       ) : !generated ? (
         <div className={'w-fit p-1'}>
           <Button
-            loading={loadingKey}
+            loading={spotStore.isLoading}
             onClick={generateInitial}
             type={'primary'}
             ghost
@@ -182,4 +181,4 @@ function AccessModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default AccessModal;
+export default observer(AccessModal);

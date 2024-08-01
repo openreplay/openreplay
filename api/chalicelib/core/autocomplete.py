@@ -1,9 +1,11 @@
+import logging
 import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.event_filter_definition import Event
 
+logger = logging.getLogger(__name__)
 TABLE = "public.autocomplete"
 
 
@@ -329,3 +331,102 @@ def __search_metadata(project_id, value, key=None, source=None):
                                   "svalue": helper.string_to_sql_like("^" + value)}))
         results = helper.list_to_camel_case(cur.fetchall())
     return results
+
+
+TYPE_TO_COLUMN = {
+    schemas.EventType.CLICK: "label",
+    schemas.EventType.INPUT: "label",
+    schemas.EventType.LOCATION: "url_path",
+    schemas.EventType.CUSTOM: "name",
+    schemas.EventType.REQUEST: "url_path",
+    schemas.EventType.GRAPHQL: "name",
+    schemas.EventType.STATE_ACTION: "name",
+    # For ERROR, sessions search is happening over name OR message,
+    # for simplicity top 10 is using name only
+    schemas.EventType.ERROR: "name",
+    schemas.FilterType.USER_COUNTRY: "user_country",
+    schemas.FilterType.USER_CITY: "user_city",
+    schemas.FilterType.USER_STATE: "user_state",
+    schemas.FilterType.USER_ID: "user_id",
+    schemas.FilterType.USER_ANONYMOUS_ID: "user_anonymous_id",
+    schemas.FilterType.USER_OS: "user_os",
+    schemas.FilterType.USER_BROWSER: "user_browser",
+    schemas.FilterType.USER_DEVICE: "user_device",
+    schemas.FilterType.PLATFORM: "platform",
+    schemas.FilterType.REV_ID: "rev_id",
+    schemas.FilterType.REFERRER: "referrer",
+    schemas.FilterType.UTM_SOURCE: "utm_source",
+    schemas.FilterType.UTM_MEDIUM: "utm_medium",
+    schemas.FilterType.UTM_CAMPAIGN: "utm_campaign",
+}
+
+TYPE_TO_TABLE = {
+    schemas.EventType.CLICK: "events.clicks",
+    schemas.EventType.INPUT: "events.inputs",
+    schemas.EventType.LOCATION: "events.pages",
+    schemas.EventType.CUSTOM: "events_common.customs",
+    schemas.EventType.REQUEST: "events_common.requests",
+    schemas.EventType.GRAPHQL: "events.graphql",
+    schemas.EventType.STATE_ACTION: "events.state_actions",
+}
+
+
+def get_top_values(project_id, event_type, event_key=None):
+    with pg_client.PostgresClient() as cur:
+        if schemas.FilterType.has_value(event_type):
+            if event_type == schemas.FilterType.METADATA \
+                    and (event_key is None \
+                         or (colname := metadata.get_colname_by_key(project_id=project_id, key=event_key)) is None) \
+                    or event_type != schemas.FilterType.METADATA \
+                    and (colname := TYPE_TO_COLUMN.get(event_type)) is None:
+                return []
+
+            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
+                                                     COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
+                                                     COUNT(1) OVER () AS total_count
+                                     FROM public.sessions
+                                     WHERE project_id = %(project_id)s
+                                       AND {colname} IS NOT NULL
+                                       AND sessions.duration IS NOT NULL
+                                       AND sessions.duration > 0
+                                     ORDER BY row_count DESC
+                                     LIMIT 10)
+                        SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count, 2) AS row_percentage
+                        FROM raw;"""
+        elif event_type==schemas.EventType.ERROR:
+            colname = TYPE_TO_COLUMN.get(event_type)
+            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
+                                                                 COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
+                                                                 COUNT(1) OVER ()                   AS total_count
+                                                 FROM public.errors
+                                                 WHERE project_id = %(project_id)s
+                                                   AND {colname} IS NOT NULL
+                                                   AND {colname} != ''
+                                                 ORDER BY row_count DESC
+                                                 LIMIT 10)
+                        SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count,2) AS row_percentage
+                        FROM raw;"""
+        else:
+            colname = TYPE_TO_COLUMN.get(event_type)
+            table = TYPE_TO_TABLE.get(event_type)
+            query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
+                                                     COUNT(1) OVER (PARTITION BY {colname}) AS row_count,
+                                                     COUNT(1) OVER ()                   AS total_count
+                                     FROM {table} INNER JOIN public.sessions USING(session_id)
+                                     WHERE project_id = %(project_id)s
+                                       AND {colname} IS NOT NULL
+                                       AND {colname} != ''
+                                       AND sessions.duration IS NOT NULL
+                                       AND sessions.duration > 0
+                                     ORDER BY row_count DESC
+                                     LIMIT 10)
+                        SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count,2) AS row_percentage
+                        FROM raw;"""
+        params = {"project_id": project_id}
+        query = cur.mogrify(query, params)
+        logger.debug("--------------------")
+        logger.debug(query)
+        logger.debug("--------------------")
+        cur.execute(query=query)
+        results = cur.fetchall()
+        return helper.list_to_camel_case(results)

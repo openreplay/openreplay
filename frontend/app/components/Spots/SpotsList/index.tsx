@@ -6,9 +6,9 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Icon, Loader, Pagination } from "UI";
-import withPermissions from "../../hocs/withPermissions";
+import { Icon, Loader, Pagination } from 'UI';
 
+import withPermissions from '../../hocs/withPermissions';
 import SpotListItem from './SpotListItem';
 
 function SpotsListHeader({
@@ -22,7 +22,6 @@ function SpotsListHeader({
 }) {
   const { spotStore } = useStore();
 
-  // Handle search input and trigger spot fetching
   const onSearch = (value: string) => {
     spotStore.setQuery(value);
     void spotStore.fetchSpots();
@@ -47,29 +46,39 @@ function SpotsListHeader({
 
   return (
     <div className={'flex items-center justify-between w-full'}>
-      <div className='flex gap-4 items-center'>
-        <div className='flex gap-1 items-center'>
+      <div className="flex gap-4 items-center">
+        <div className="flex gap-1 items-center">
           <Icon name={'orSpot'} size={24} />
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
         </div>
-        <Button type='default' size='small' className='flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border'>
-          <div className='w-50 pb-0.5'>
-            <img src={'assets/img/chrome.svg'} alt={'Get Spot by OpenReplay'} width={16} />
+        <Button
+          type="default"
+          size="small"
+          className="flex items-center bg-teal/10 rounded-xl shadow-none border border-transparent hover:border"
+        >
+          <div className="w-50 pb-0.5">
+            <img
+              src={'assets/img/chrome.svg'}
+              alt={'Get Spot by OpenReplay'}
+              width={16}
+            />
           </div>
           Get Extension <MoveUpRight size={16} strokeWidth={1.5} />
         </Button>
       </div>
 
-      <div className='flex gap-2 items-center'>
-
-        {/* Display Delete and Clear Selection buttons if items are selected */}
+      <div className="flex gap-2 items-center">
         <div className={'ml-auto'}>
           {selectedCount > 0 && (
             <>
-              <Button type='text' onClick={onClearSelection} className='mr-2 px-3'>
+              <Button
+                type="text"
+                onClick={onClearSelection}
+                className="mr-2 px-3"
+              >
                 Clear
               </Button>
-              <Button onClick={onDelete} type='primary' ghost>
+              <Button onClick={onDelete} type="primary" ghost>
                 Delete ({selectedCount})
               </Button>
             </>
@@ -80,18 +89,18 @@ function SpotsListHeader({
           options={['All Spots', 'My Spots']}
           value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
           onChange={handleSegmentChange}
-          className='mr-4 lg:hidden xl:flex'
+          className="mr-4 lg:hidden xl:flex"
         />
-       
-        <div className='w-56'>
+
+        <div className="w-56">
           <Input.Search
-            value={spotStore.query}  // Controlled input value
+            value={spotStore.query} // Controlled input value
             allowClear
             name="spot-search"
             placeholder="Filter by title"
-            onChange={handleInputChange}  // Update query as user types
-            onSearch={onSearch}  // Trigger search on enter or search button click
-            className='rounded-lg'
+            onChange={handleInputChange} // Update query as user types
+            onSearch={onSearch} // Trigger search on enter or search button click
+            className="rounded-lg"
           />
         </div>
       </div>
@@ -106,7 +115,7 @@ function SpotsList() {
   // Fetch spots when component mounts or when store changes
   React.useEffect(() => {
     void spotStore.fetchSpots();
-  }, [spotStore]);
+  }, []);
 
   // Handle pagination changes
   const onPageChange = (page: number) => {
@@ -114,13 +123,11 @@ function SpotsList() {
     void spotStore.fetchSpots();
   };
 
-  // Delete a single spot and update selection
   const onDelete = async (spotId: string) => {
     await spotStore.deleteSpot([spotId]);
     setSelectedSpots(selectedSpots.filter((s) => s !== spotId));
   };
 
-  // Batch delete selected spots, manage pagination if page becomes empty
   const batchDelete = async () => {
     const deletedCount = selectedSpots.length;
     await spotStore.deleteSpot(selectedSpots);
@@ -129,14 +136,16 @@ function SpotsList() {
     // Adjust pagination if the current page becomes empty after deletion
     const remainingItemsOnPage = spotStore.spots.length - deletedCount;
     if (remainingItemsOnPage <= 0 && spotStore.page > 1) {
-        spotStore.setPage(spotStore.page - 1);
-        await spotStore.fetchSpots();
+      spotStore.setPage(spotStore.page - 1);
+      await spotStore.fetchSpots();
     } else {
-        await spotStore.fetchSpots();
+      await spotStore.fetchSpots();
     }
 
     // Display success message with correct pluralization
-    message.success(`${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`);
+    message.success(
+      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`
+    );
   };
 
   // Rename a spot
@@ -168,7 +177,11 @@ function SpotsList() {
 
   return (
     <div className={'w-full relative'}>
-      <div className={'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'}>
+      <div
+        className={
+          'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'
+        }
+      >
         <SpotsListHeader
           onDelete={batchDelete}
           selectedCount={selectedSpots.length}
@@ -178,11 +191,13 @@ function SpotsList() {
 
       <div className={'mx-auto pb-4'} style={{ maxWidth: 1360 }}>
         {spotStore.total === 0 ? (
-          // Show loader or empty state if no spots are available
-          spotStore.isLoading ? <Loader /> : <EmptyPage />
+          spotStore.isLoading ? (
+            <Loader />
+          ) : (
+            <EmptyPage />
+          )
         ) : (
           <>
-            {/* Display list of spots with selection, delete, and pagination */}
             <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
               {spotStore.spots.map((spot) => (
                 <SpotListItem
@@ -191,7 +206,9 @@ function SpotsList() {
                   onDelete={() => onDelete(spot.spotId)}
                   onRename={onRename}
                   onVideo={onVideo}
-                  onSelect={(checked: boolean) => handleSelectSpot(spot.spotId, checked)}
+                  onSelect={(checked: boolean) =>
+                    handleSelectSpot(spot.spotId, checked)
+                  }
                   isSelected={isSpotSelected(spot.spotId)}
                 />
               ))}
@@ -204,7 +221,8 @@ function SpotsList() {
                 </span>{' '}
                 to{' '}
                 <span className="font-medium">
-                  {(spotStore.page - 1) * spotStore.limit + spotStore.spots.length}
+                  {(spotStore.page - 1) * spotStore.limit +
+                    spotStore.spots.length}
                 </span>{' '}
                 of{' '}
                 <span className="font-medium">

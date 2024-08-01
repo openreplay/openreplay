@@ -1221,18 +1221,18 @@ export default class App {
           condition: conditionName,
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
-          height: window.screen.height
-    }),
+          height: window.screen.height,
+        }),
       })
       if (r.status !== 200) {
         const error = await r.text()
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
       if (!this.worker) {
-        const reason = 'no worker found after start request (this might not happen)'
+        const reason = 'no worker found after start request (this should not happen in real world)'
         this.signalError(reason, [])
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
       const {
         token,
@@ -1265,7 +1265,7 @@ export default class App {
       ) {
         const reason = `Incorrect server response: ${JSON.stringify(r)}`
         this.signalError(reason, [])
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
 
       this.delay = delay
