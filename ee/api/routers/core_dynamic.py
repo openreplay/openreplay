@@ -39,16 +39,15 @@ async def get_all_signup():
 if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
-    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+    async def signup_handler(response: JSONResponse, data: schemas.UserSignupSchema = Body(...)):
         content = await signup.create_tenant(data)
         if "errors" in content:
             return content
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
-        response = JSONResponse(content=content)
         response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                             max_age=refresh_token_max_age, secure=True, httponly=True)
-        return response
+        return content
 
 
 @public_app.post('/login', tags=["authentication"])
@@ -85,13 +84,12 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
         spot_refresh_token = r.pop("spotRefreshToken")
         spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
 
-    response = JSONResponse(content=content)
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     if spot:
         response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
                             max_age=spot_refresh_token_max_age, secure=True, httponly=True)
-    return response
+    return content
 
 
 @app.get('/logout', tags=["login"])

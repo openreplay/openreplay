@@ -42,10 +42,9 @@ def login_spot(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
             "user": r
         }
     }
-    response = JSONResponse(content=content)
     response.set_cookie(key="spotRefreshToken", value=refresh_token, path=COOKIE_PATH,
                         max_age=refresh_token_max_age, secure=True, httponly=True)
-    return response
+    return content
 
 
 @app.get('/logout')
@@ -56,13 +55,12 @@ def logout_spot(response: Response, context: schemas.CurrentContext = Depends(OR
 
 
 @app.get('/refresh')
-def refresh_spot_login(context: schemas.CurrentContext = Depends(OR_context)):
+def refresh_spot_login(response: JSONResponse, context: schemas.CurrentContext = Depends(OR_context)):
     r = spot.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
-    response = JSONResponse(content=content)
     response.set_cookie(key="spotRefreshToken", value=r.get("refreshToken"), path=COOKIE_PATH,
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
-    return response
+    return content
 
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
