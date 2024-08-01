@@ -860,7 +860,7 @@ def refresh(user_id: int, tenant_id: int) -> dict:
     }
 
 
-def authenticate_sso(email: str, internal_id: str, exp=None, include_spot: bool = False):
+def authenticate_sso(email: str, internal_id: str, include_spot: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
