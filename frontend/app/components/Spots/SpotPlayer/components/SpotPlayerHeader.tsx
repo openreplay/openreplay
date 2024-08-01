@@ -1,15 +1,15 @@
 import {
   ArrowLeftOutlined,
   CommentOutlined,
-  LinkOutlined,
+  CopyOutlined,
   SettingOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Button, Popover, Tooltip, message } from 'antd';
 import copy from 'copy-to-clipboard';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
@@ -43,53 +43,68 @@ function SpotPlayerHeader({
   platform: string | null;
   hasShareAccess: boolean;
 }) {
-  const [isCopied, setIsCopied] = React.useState(false);
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const history = useHistory();
+
   const onCopy = () => {
-    setIsCopied(true);
     copy(window.location.href);
-    setTimeout(() => setIsCopied(false), 2000);
+    message.success('Internal sharing link copied to clipboard');
   };
+
+  const navigateToSpotsList = () => {
+    history.push(spotLink);
+  };
+
   return (
     <div
-      className={
-        'flex items-center gap-4 p-4 w-full bg-white border-b border-gray-light'
-      }
+      className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}
     >
       <div>
         {isLoggedIn ? (
-          <Link to={spotLink}>
-            <div className={'flex items-center gap-2'}>
-              <ArrowLeftOutlined />
-              <div className={'font-semibold'}>All Spots</div>
-            </div>
-          </Link>
+          <Button
+            type="text"
+            onClick={navigateToSpotsList}
+            icon={<ArrowLeftOutlined />}
+            className="px-2"
+          >
+            All Spots
+          </Button>
         ) : (
           <>
-            <div className={'flex items-center gap-2'}>
-              <Icon name={'orSpot'} size={24} />
-              <div className={'text-lg font-semibold'}>Spot</div>
-            </div>
-            <div className={'text-disabled-text text-xs'}>by OpenReplay</div>
+            <a href="https://openreplay.com/spot" target="_blank">
+              <Button
+                type="text"
+                className="orSpotBranding flex gap-1 items-center py-2"
+              >
+                <Icon name={'orSpot'} size={28} />
+                <div className="flex flex-col justify-start text-start">
+                  <div className={'text-lg font-semibold'}>Spot</div>
+                  <div className={'text-disabled-text text-xs -mt-1'}>
+                    by OpenReplay
+                  </div>
+                </div>
+              </Button>
+            </a>
           </>
         )}
       </div>
-      <div
-        className={'h-full rounded-xl bg-gray-light mx-2'}
-        style={{ width: 1 }}
-      />
+      <div className={'h-full rounded-xl border-l mr-2'} style={{ width: 1 }} />
       <div className={'flex items-center gap-2'}>
         <Avatar seed={hashString(user)} />
         <div>
-          <div>{title}</div>
-          <div className={'flex items-center gap-2 text-disabled-text'}>
+          <Tooltip title={title}>
+            <div className="w-9/12 text-ellipsis truncate cursor-normal">
+              {title}
+            </div>
+          </Tooltip>
+          <div className={'flex items-center gap-2 text-black/50 text-sm'}>
             <div>{user}</div>
             <div>·</div>
-            <div>{date}</div>
+            <div className="capitalize">{date}</div>
             {browserVersion && (
               <>
                 <div>·</div>
-                <div>Chrome v{browserVersion}</div>
+                <div className="capitalize">Chrome v{browserVersion}</div>
               </>
             )}
             {resolution && (
@@ -101,7 +116,7 @@ function SpotPlayerHeader({
             {platform && (
               <>
                 <div>·</div>
-                <div>{platform}</div>
+                <div className="capitalize">{platform}</div>
               </>
             )}
           </div>
@@ -113,24 +128,27 @@ function SpotPlayerHeader({
           <Button
             size={'small'}
             onClick={onCopy}
-            type={'primary'}
-            icon={<LinkOutlined />}
+            type={'default'}
+            icon={<CopyOutlined />}
           >
-            {isCopied ? 'Copied!' : 'Copy Link'}
+            Copy Link
           </Button>
           {hasShareAccess ? (
-            <Popover open={dropdownOpen} content={<AccessModal />}>
+            <Popover
+              trigger={'click'}
+              content={<AccessModal onClose={() => setDropdownOpen(false)} />}
+            >
               <Button
                 size={'small'}
-                onClick={() => setDropdownOpen(!dropdownOpen)}
                 icon={<SettingOutlined />}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 Manage Access
               </Button>
             </Popover>
           ) : null}
           <div
-            className={'h-full rounded-xl bg-gray-light mx-2'}
+            className={'h-full rounded-xl border-l mx-2'}
             style={{ width: 1 }}
           />
         </>

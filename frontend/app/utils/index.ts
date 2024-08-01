@@ -3,6 +3,19 @@ import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';
 import { SESSION_FILTER } from 'App/constants/storageKeys';
 
+export const HOUR_SECS = 60 * 60;
+export const DAY_SECS = 24 * HOUR_SECS;
+export const WEEK_SECS = 7 * DAY_SECS;
+
+export const formatExpirationTime = (seconds: number) => {
+    if (seconds >= WEEK_SECS) {
+        return `${Math.floor(seconds / DAY_SECS)} days`;
+    }
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
+};
+
 export function debounce(callback, wait, context = this) {
   let timeout = null;
   let callbackArgs = null;
@@ -488,4 +501,3 @@ export function truncateStringToFit(string: string, screenWidth: number, charWid
 
   return string.slice(0, frontLen) + ellipsis + string.slice(-backLen);
 }
-
