@@ -33,16 +33,15 @@ async def get_all_signup():
 if not tenants.tenants_exists_sync(use_pool=False):
     @public_app.post('/signup', tags=['signup'])
     @public_app.put('/signup', tags=['signup'])
-    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+    async def signup_handler(response: JSONResponse, data: schemas.UserSignupSchema = Body(...)):
         content = await signup.create_tenant(data)
         if "errors" in content:
             return content
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
-        response = JSONResponse(content=content)
         response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                             max_age=refresh_token_max_age, secure=True, httponly=True)
-        return response
+        return content
 
 
 @public_app.post('/login', tags=["authentication"])
@@ -79,13 +78,12 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
         spot_refresh_token = r.pop("spotRefreshToken")
         spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
 
-    response = JSONResponse(content=content)
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     if spot:
         response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
                             max_age=spot_refresh_token_max_age, secure=True, httponly=True)
-    return response
+    return content
 
 
 @app.get('/logout', tags=["login"])
@@ -97,13 +95,12 @@ def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR
 
 
 @app.get('/refresh', tags=["login"])
-def refresh_login(context: schemas.CurrentContext = Depends(OR_context)):
+def refresh_login(response: JSONResponse, context: schemas.CurrentContext = Depends(OR_context)):
     r = users.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
-    response = JSONResponse(content=content)
     response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
-    return response
+    return content
 
 
 @app.get('/account', tags=['accounts'])
