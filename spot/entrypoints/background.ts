@@ -41,6 +41,8 @@ export default defineBackground(() => {
       to: {
         setJWT: "content:set-jwt",
         micStatus: "content:mic-status",
+        unmount: "content:unmount",
+        notification: "notif:display"
       },
     },
     injected: {
@@ -708,7 +710,7 @@ export default defineBackground(() => {
               // id of spot, mobURL - for events, videoURL - for video
               if (!resp || !resp.id) {
                 return sendToActiveTab({
-                  type: "notif:display",
+                  type: messages.content.to.notification,
                   message: "Couldn't save Spot",
                 });
               }
@@ -755,7 +757,7 @@ export default defineBackground(() => {
             .catch((e) => {
               console.error(e);
               void sendToActiveTab({
-                type: "notif:display",
+                type: messages.content.to.notification,
                 message: `Error saving Spot: ${e.message}`,
               });
             })
@@ -1083,7 +1085,7 @@ export default defineBackground(() => {
       const streamId = await browser.tabCapture.getMediaStreamId({
         targetTabId: usedTab,
       });
-      await sendToOffscreen({
+      const resp = await sendToOffscreen({
         type: messages.offscreen.to.startRecording,
         target: "offscreen",
         data: streamId,
@@ -1091,6 +1093,21 @@ export default defineBackground(() => {
         microphone,
         audioId,
       });
+      if (!resp.success) {
+        recordingState = {
+          activeTabId: null,
+          area: null,
+          recording: REC_STATE.stopped,
+        };
+        void sendToActiveTab({
+          type: messages.content.to.unmount,
+        })
+        void sendToActiveTab({
+          type: messages.content.to.notification,
+          message: "Error starting recording",
+        })
+        return;
+      }
       const mountMsg = {
         type: "content:start",
         microphone,
@@ -1132,7 +1149,7 @@ export default defineBackground(() => {
               void sendToActiveTab(msg);
             });
           if (previousTab) {
-            const unmountMsg = { type: "content:unmount" };
+            const unmountMsg = { type: messages.content.to.unmount };
             void browser.tabs.sendMessage(previousTab, unmountMsg);
           }
           previousTab = tabId;
