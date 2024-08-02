@@ -58,6 +58,29 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
       });
   });
 
+  const spacePressed = (e: KeyboardEvent) => {
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    ) {
+      return;
+    }
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.key === " ") {
+      if (playing()) {
+        pause();
+      } else {
+        resume();
+      }
+    }
+  };
+
+  createEffect(() => {
+    window.addEventListener("keydown", spacePressed);
+    onCleanup(() => window.removeEventListener("keydown", spacePressed));
+  });
+
   const convertToPercentage = (clientX: number, element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
     const x = clientX - rect.left;
@@ -455,9 +478,7 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
                 </div>
 
                 <div
-                  class={
-                    "flex items-center gap-2 mt-2 tooltip tooltip-bottom"
-                  }
+                  class={"flex items-center gap-2 mt-2 tooltip tooltip-bottom"}
                   data-tip="Recordings open in a new tab by default. Enable to spot issues back-to-back."
                 >
                   <label class="label cursor-pointer">
@@ -472,7 +493,6 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
                     </span>
                   </label>
                 </div>
-
 
                 <p class="text-xs">
                   Spots are saved to your{" "}
