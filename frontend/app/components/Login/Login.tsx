@@ -10,7 +10,13 @@ import { toast } from 'react-toastify';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { fetchTenants, loadingLogin, loginSuccess, setJwt, loginFailure } from 'Duck/user';
+import {
+  fetchTenants,
+  loadingLogin,
+  loginFailure,
+  loginSuccess,
+  setJwt,
+} from 'Duck/user';
 import { Button, Form, Icon, Input, Link, Loader, Tooltip } from 'UI';
 
 import Copyright from 'Shared/Copyright';
@@ -64,8 +70,12 @@ const Login: React.FC<LoginProps> = ({
   useEffect(() => {
     fetchTenants();
     const jwt = params.get('jwt');
+    const spotJwt = params.get('spotJwt');
     if (jwt) {
       setJwt(jwt);
+    }
+    if (spotJwt) {
+      handleSpotLogin(spotJwt);
     }
   }, []);
 
@@ -112,16 +122,18 @@ const Login: React.FC<LoginProps> = ({
     if (token) {
       loginStore.setCaptchaResponse(token);
     }
-    loginStore.generateJWT().then((resp) => {
-      if (resp) {
-        loginSuccess(resp);
-        setJwt(resp.jwt);
-        handleSpotLogin(resp.spotJwt);
-      }
-    })
-      .catch(e => {
-        loginFailure(e);
+    loginStore
+      .generateJWT()
+      .then((resp) => {
+        if (resp) {
+          loginSuccess(resp);
+          setJwt(resp.jwt);
+          handleSpotLogin(resp.spotJwt);
+        }
       })
+      .catch((e) => {
+        loginFailure(e);
+      });
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -133,14 +145,10 @@ const Login: React.FC<LoginProps> = ({
     }
   };
 
-  const onSSOClick = () => {
-    if (window !== window.top) {
-      // if in iframe
-      window.parent.location.href = `${window.location.origin}/api/sso/saml2?iFrame=true`;
-    } else {
-      window.location.href = `${window.location.origin}/api/sso/saml2`;
-    }
-  };
+  const ssoLink =
+    window !== window.top
+      ? `${window.location.origin}/api/sso/saml2?iFrame=true&spot=true`
+      : `${window.location.origin}/api/sso/saml2?spot=true`;
 
   return (
     <div className="flex items-center justify-center h-screen">
@@ -234,7 +242,7 @@ const Login: React.FC<LoginProps> = ({
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
               {authDetails.sso ? (
-                <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
+                <a href={ssoLink} rel="noopener noreferrer">
                   <Button variant="text-primary" type="submit">
                     {`Login with SSO ${
                       authDetails.ssoProvider
@@ -280,7 +288,7 @@ const Login: React.FC<LoginProps> = ({
               hidden: !authDetails.enforceSSO,
             })}
           >
-            <a href="#" rel="noopener noreferrer" onClick={onSSOClick}>
+            <a href={ssoLink} rel="noopener noreferrer">
               <Button variant="primary">{`Login with SSO ${
                 authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
               }`}</Button>
