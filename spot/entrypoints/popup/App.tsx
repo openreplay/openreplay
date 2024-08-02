@@ -38,7 +38,7 @@ const orSite = () => {
 function Header({ openSettings }: { openSettings: () => void }) {
   const openHomePage = async () => {
     const { settings } = await chrome.storage.local.get("settings");
-    return window.open(`${settings.ingestPoint}`, "_blank");
+    return window.open(`${settings.ingestPoint}/spots`, "_blank");
   };
   return (
     <div class={"flex items-center gap-1"}>
