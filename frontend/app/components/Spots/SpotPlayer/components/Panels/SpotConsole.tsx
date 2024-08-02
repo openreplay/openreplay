@@ -1,8 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { AutoSizer, CellMeasurer, List } from 'react-virtualized';
+import { VList, VListHandle } from 'virtua';
 
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import BottomBlock from 'Components/shared/DevTools/BottomBlock';
 import {
   TABS,
@@ -16,13 +15,11 @@ import spotPlayerStore from '../../spotPlayerStore';
 
 function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
-  const _list = React.useRef<List>(null);
-  const cache = useCellMeasurerCache();
+  const _list = React.useRef<VListHandle>(null);
   const onTabClick = (tab: any) => {
     setActiveTab(tab);
   };
   const logs = spotPlayerStore.logs;
-  console.log(logs)
   const filteredList = React.useMemo(() => {
     return logs.filter((log) => {
       const tabType = activeTab.text.toLowerCase();
@@ -30,35 +27,9 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
       return tabType.includes(log.level);
     });
   }, [activeTab]);
+
   const jump = (t: number) => {
     spotPlayerStore.setTime(t);
-  };
-  const _rowRenderer = ({ index, key, parent, style }: any) => {
-    const item = filteredList[index];
-
-    return (
-      // @ts-ignore
-      <CellMeasurer
-        cache={cache}
-        columnIndex={0}
-        key={key}
-        rowIndex={index}
-        parent={parent}
-      >
-        {({ measure, registerChild }) => (
-          // @ts-ignore
-          <div ref={registerChild} style={style}>
-            <ConsoleRow
-              log={item}
-              jump={jump}
-              iconProps={getIconProps(item.level)}
-              renderWithNL={renderWithNL}
-              recalcHeight={measure}
-            />
-          </div>
-        )}
-      </CellMeasurer>
-    );
   };
 
   return (
@@ -85,22 +56,21 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
           size="small"
           show={filteredList.length === 0}
         >
-          <AutoSizer>
-            {({ height, width }: any) => (
-              <List
-                ref={_list}
-                deferredMeasurementCache={cache}
-                overscanRowCount={5}
-                estimatedRowSize={24}
-                rowCount={Math.ceil(filteredList.length || 1)}
-                rowHeight={cache.rowHeight}
-                rowRenderer={_rowRenderer}
-                width={width}
-                height={height}
-                scrollToAlignment="center"
+          <VList
+            ref={_list}
+            itemSize={25}
+            count={filteredList.length || 1}
+          >
+            {filteredList.map((log, index) => (
+              <ConsoleRow
+                key={log.time + index}
+                log={log}
+                jump={jump}
+                iconProps={getIconProps(log.level)}
+                renderWithNL={renderWithNL}
               />
-            )}
-          </AutoSizer>
+            ))}
+          </VList>
         </NoContent>
       </BottomBlock.Content>
     </BottomBlock>

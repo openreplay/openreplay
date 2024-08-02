@@ -1,20 +1,21 @@
+import Session, { mergeEventLists, sortEvents } from 'Types/session';
+import { TYPES } from 'Types/session/event';
+import { InjectedEvent } from 'Types/session/event';
+import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
-import cn from 'classnames';
-import { Icon } from 'UI';
-import { List, AutoSizer, CellMeasurer } from 'react-virtualized';
-import { TYPES } from 'Types/session/event';
-import { setEventFilter, filterOutNote } from 'Duck/sessions';
-import EventGroupWrapper from './EventGroupWrapper';
-import styles from './eventsBlock.module.css';
-import EventSearch from './EventSearch/EventSearch';
+import { VList, VListHandle } from 'virtua';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck';
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
-import { InjectedEvent } from 'Types/session/event';
-import Session, { mergeEventLists, sortEvents } from 'Types/session';
 import { useStore } from 'App/mstore';
+import { filterOutNote, setEventFilter } from 'Duck/sessions';
+import { Icon } from 'UI';
+
+import EventGroupWrapper from './EventGroupWrapper';
+import EventSearch from './EventSearch/EventSearch';
+import styles from './eventsBlock.module.css';
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void;
@@ -33,16 +34,18 @@ interface IProps {
 
 function EventsBlock(props: IProps) {
   const { notesStore, uxtestingStore } = useStore();
-  const [mouseOver, setMouseOver] = React.useState(true);
-  const scroller = React.useRef<List>(null);
-  const cache = useCellMeasurerCache({
-    fixedWidth: true,
-    defaultHeight: 300,
-  });
+  const [mouseOver, setMouseOver] = React.useState(false);
+  const scroller = React.useRef<VListHandle>(null);
 
   const { store, player } = React.useContext(PlayerContext);
 
-  const { time, endTime, playing, tabStates, tabChangeEvents = [] } = store.get();
+  const {
+    time,
+    endTime,
+    playing,
+    tabStates,
+    tabChangeEvents = [],
+  } = store.get();
 
   const {
     filteredEvents,
@@ -99,48 +102,50 @@ function EventsBlock(props: IProps) {
     props.zoomStartTs,
     props.zoomEndTs,
   ]);
-  const findLastFitting = React.useCallback((time: number) => {
-    if (!usedEvents.length) return 0;
-    let i = usedEvents.length - 1;
-     if (time > endTime / 2) {
-      while (i >= 0) {
-        const event = usedEvents[i];
-        if ('time' in event && event.time <= time) break;
-        i--;
+  const findLastFitting = React.useCallback(
+    (time: number) => {
+      if (!usedEvents.length) return 0;
+      let i = usedEvents.length - 1;
+      if (time > endTime / 2) {
+        while (i >= 0) {
+          const event = usedEvents[i];
+          if ('time' in event && event.time <= time) break;
+          i--;
+        }
+        return i;
+      } else {
+        let l = 0;
+        while (l < i) {
+          const event = usedEvents[l];
+          if ('time' in event && event.time >= time) break;
+          l++;
+        }
+        return l;
       }
-      return i;
-     } else {
-       let l = 0;
-       while (l < i) {
-         const event = usedEvents[l];
-         if ('time' in event && event.time >= time) break;
-         l++;
-       }
-       return l;
-     }
-  }, [usedEvents, time, endTime]);
-  const currentTimeEventIndex = findLastFitting(time)
+    },
+    [usedEvents, time, endTime]
+  );
+  const currentTimeEventIndex = findLastFitting(time);
 
-  const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+  const write = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     props.setEventFilter({ query: value });
 
     setTimeout(() => {
       if (!scroller.current) return;
 
-      scroller.current.scrollToRow(0);
+      scroller.current.scrollToIndex(0);
     }, 100);
   };
 
   const clearSearch = () => {
     props.setEventFilter({ query: '' });
-    if (scroller.current) {
-      scroller.current.forceUpdateGrid();
-    }
 
     setTimeout(() => {
       if (!scroller.current) return;
 
-      scroller.current.scrollToRow(0);
+      scroller.current.scrollToIndex(0);
     }, 100);
   };
 
@@ -151,9 +156,9 @@ function EventsBlock(props: IProps) {
   }, []);
   React.useEffect(() => {
     if (scroller.current) {
-      scroller.current.forceUpdateGrid();
       if (!mouseOver) {
-        scroller.current.scrollToRow(currentTimeEventIndex);
+        console.log('scrolling to index', currentTimeEventIndex, scroller.current);
+        scroller.current.scrollToIndex(currentTimeEventIndex, { align: 'center' });
       }
     }
   }, [currentTimeEventIndex]);
@@ -167,45 +172,33 @@ function EventsBlock(props: IProps) {
 
   const renderGroup = ({
     index,
-    key,
-    style,
-    parent,
   }: {
     index: number;
-    key: string;
-    style: React.CSSProperties;
-    parent: any;
   }) => {
     const isLastEvent = index === usedEvents.length - 1;
-    const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
+    const isLastInGroup =
+      isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
     const isCurrent = index === currentTimeEventIndex;
     const isPrev = index < currentTimeEventIndex;
     return (
-      <CellMeasurer key={key} cache={cache} parent={parent} rowIndex={index}>
-        {({ measure, registerChild }) => (
-          <div style={{ ...style }} ref={registerChild}>
-            <EventGroupWrapper
-              query={query}
-              presentInSearch={eventsIndex.includes(index)}
-              isFirst={index == 0}
-              mesureHeight={measure}
-              onEventClick={onEventClick}
-              event={event}
-              isLastEvent={isLastEvent}
-              isLastInGroup={isLastInGroup}
-              isCurrent={isCurrent}
-              showSelection={!playing}
-              isNote={isNote}
-              isTabChange={isTabChange}
-              isPrev={isPrev}
-              filterOutNote={filterOutNote}
-            />
-          </div>
-        )}
-      </CellMeasurer>
+      <EventGroupWrapper
+        query={query}
+        presentInSearch={eventsIndex.includes(index)}
+        isFirst={index == 0}
+        onEventClick={onEventClick}
+        event={event}
+        isLastEvent={isLastEvent}
+        isLastInGroup={isLastInGroup}
+        isCurrent={isCurrent}
+        showSelection={!playing}
+        isNote={isNote}
+        isTabChange={isTabChange}
+        isPrev={isPrev}
+        filterOutNote={filterOutNote}
+      />
     );
   };
 
@@ -226,7 +219,11 @@ function EventsBlock(props: IProps) {
               width={240}
             />
             <div
-              style={{ top: '40%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              style={{
+                top: '40%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
               className={'absolute z-10'}
             >
               No video
@@ -234,7 +231,11 @@ function EventsBlock(props: IProps) {
           </div>
         ) : null}
         <div className={cn(styles.hAndProgress, 'mt-3')}>
-          <EventSearch onChange={write} setActiveTab={setActiveTab} value={query} />
+          <EventSearch
+            onChange={write}
+            setActiveTab={setActiveTab}
+            value={query}
+          />
         </div>
         <div className="mt-1 color-gray-medium">{eventsText}</div>
       </div>
@@ -251,23 +252,16 @@ function EventsBlock(props: IProps) {
             <span className="ml-2">No Matching Results</span>
           </div>
         )}
-        <AutoSizer disableWidth>
-          {({ height }) => (
-            <List
-              ref={scroller}
-              className={styles.eventsList}
-              height={height + 10}
-              width={270}
-              overscanRowCount={6}
-              itemSize={230}
-              rowCount={usedEvents.length}
-              deferredMeasurementCache={cache}
-              rowHeight={cache.rowHeight}
-              rowRenderer={renderGroup}
-              scrollToAlignment="center"
-            />
+        <VList
+          count={usedEvents.length}
+          className={styles.eventsList}
+          ref={scroller}
+        >
+          {usedEvents.map((_, i) => {
+              return renderGroup({ index: i })
+            }
           )}
-        </AutoSizer>
+        </VList>
       </div>
     </>
   );

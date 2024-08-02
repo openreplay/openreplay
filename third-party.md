@@ -75,7 +75,6 @@ up to date with every new library you use.
 | rc-time-picker             | MIT                | JavaScript     |
 | snabbdom                   | MIT                | JavaScript     |
 | react                      | MIT                | JavaScript     |
-| react-circular-progressbar | MIT                | JavaScript     |
 | react-codemirror2          | MIT                | JavaScript     |
 | react-confirm              | MIT                | JavaScript     |
 | react-datepicker           | MIT                | JavaScript     |

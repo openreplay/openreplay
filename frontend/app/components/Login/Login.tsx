@@ -109,6 +109,7 @@ const Login: React.FC<LoginProps> = ({
         handleSpotLogin(resp.spotJwt);
       }
       loginSuccess(resp)
+      setJwt(resp.jwt)
     })
   };
 

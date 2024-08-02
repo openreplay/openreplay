@@ -6,13 +6,12 @@ import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { IOSPlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
+import { VList, VListHandle } from 'virtua';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -87,12 +86,6 @@ function MobileConsolePanel() {
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
   filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
-  React.useEffect(() => {
-    setTimeout(() => {
-      cache.clearAll();
-      _list.current?.recomputeRowHeights();
-    }, 0);
-  }, [activeTab, filter]);
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) =>
     devTools.update(INDEX_KEY, { filter: value });
@@ -112,15 +105,13 @@ function MobileConsolePanel() {
     timeoutStartAutoscroll();
   };
 
-  const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
+  const _list = useRef<VListHandle>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
-      _list.current.scrollToRow(activeIndex);
+      _list.current.scrollToIndex(activeIndex);
     }
   }, [activeIndex]);
-
-  const cache = useCellMeasurerCache();
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
@@ -135,27 +126,6 @@ function MobileConsolePanel() {
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
     stopAutoscroll();
   };
-  const _rowRenderer = ({ index, key, parent, style }: any) => {
-    const item = filteredList[index];
-
-    return (
-      // @ts-ignore
-      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-        {({ measure, registerChild }) => (
-          <div ref={registerChild} style={style}>
-            <ConsoleRow
-              log={item}
-              jump={jump}
-              iconProps={getIconProps(item.level)}
-              renderWithNL={renderWithNL}
-              onClick={() => showDetails(item)}
-              recalcHeight={measure}
-            />
-          </div>
-        )}
-      </CellMeasurer>
-    );
-  };
 
   return (
     <BottomBlock
@@ -163,7 +133,6 @@ function MobileConsolePanel() {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* @ts-ignore */}
       <BottomBlock.Header>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Console</span>
@@ -178,9 +147,7 @@ function MobileConsolePanel() {
           onChange={onFilterChange}
           value={filter}
         />
-        {/* @ts-ignore */}
       </BottomBlock.Header>
-      {/* @ts-ignore */}
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
@@ -192,27 +159,23 @@ function MobileConsolePanel() {
           size="small"
           show={filteredList.length === 0}
         >
-          {/* @ts-ignore */}
-          <AutoSizer>
-            {({ height, width }: any) => (
-              // @ts-ignore
-              <List
-                ref={_list}
-                deferredMeasurementCache={cache}
-                overscanRowCount={5}
-                estimatedRowSize={36}
-                rowCount={Math.ceil(filteredList.length || 1)}
-                rowHeight={cache.rowHeight}
-                rowRenderer={_rowRenderer}
-                width={width}
-                height={height}
-                // scrollToIndex={activeIndex}
-                scrollToAlignment="center"
+          <VList
+            ref={_list}
+            itemSize={25}
+            count={filteredList.length || 1}
+          >
+            {filteredList.map((log, index) => (
+              <ConsoleRow
+                key={log.time + index}
+                log={log}
+                jump={jump}
+                iconProps={getIconProps(log.level)}
+                renderWithNL={renderWithNL}
+                onClick={() => showDetails(log)}
               />
-            )}
-          </AutoSizer>
+            ))}
+          </VList>
         </NoContent>
-        {/* @ts-ignore */}
       </BottomBlock.Content>
     </BottomBlock>
   );

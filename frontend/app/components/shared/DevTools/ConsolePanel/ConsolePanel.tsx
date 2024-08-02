@@ -6,14 +6,13 @@ import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { connect } from 'react-redux';
+import { VList, VListHandle } from "virtua";
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -82,6 +81,7 @@ function ConsolePanel({
     sessionStore: { devTools },
   } = useStore();
 
+  const _list = useRef<VListHandle>(null);
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
@@ -115,10 +115,6 @@ function ConsolePanel({
   filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
   React.useEffect(() => {
-    setTimeout(() => {
-      cache.clearAll();
-      _list.current?.recomputeRowHeights();
-    }, 0);
   }, [activeTab, filter]);
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) =>
@@ -139,15 +135,12 @@ function ConsolePanel({
     timeoutStartAutoscroll();
   };
 
-  const _list = useRef<List>(null); // TODO: fix react-virtualized types & encapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
-      _list.current.scrollToRow(activeIndex);
+      _list.current.scrollToIndex(activeIndex);
     }
   }, [activeIndex]);
-
-  const cache = useCellMeasurerCache();
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
@@ -161,27 +154,6 @@ function ConsolePanel({
     });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
     stopAutoscroll();
-  };
-  const _rowRenderer = ({ index, key, parent, style }: any) => {
-    const item = filteredList[index];
-
-    return (
-      // @ts-ignore
-      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-        {({ measure, registerChild }) => (
-          <div ref={registerChild} style={style}>
-            <ConsoleRow
-              log={item}
-              jump={jump}
-              iconProps={getIconProps(item.level)}
-              renderWithNL={renderWithNL}
-              onClick={() => showDetails(item)}
-              recalcHeight={measure}
-            />
-          </div>
-        )}
-      </CellMeasurer>
-    );
   };
 
   return (
@@ -215,25 +187,17 @@ function ConsolePanel({
           size="small"
           show={filteredList.length === 0}
         >
-          {/* @ts-ignore */}
-          <AutoSizer>
-            {({ height, width }: any) => (
-              // @ts-ignore
-              <List
-                ref={_list}
-                deferredMeasurementCache={cache}
-                overscanRowCount={5}
-                estimatedRowSize={24}
-                rowCount={Math.ceil(filteredList.length || 1)}
-                rowHeight={cache.rowHeight}
-                rowRenderer={_rowRenderer}
-                width={width}
-                height={height}
-                // scrollToIndex={activeIndex}
-                scrollToAlignment="center"
+          <VList ref={_list} itemSize={25}>
+            {filteredList.map((log) => (
+              <ConsoleRow
+                log={log}
+                jump={jump}
+                iconProps={getIconProps(log.level)}
+                renderWithNL={renderWithNL}
+                onClick={() => showDetails(log)}
               />
-            )}
-          </AutoSizer>
+            ))}
+          </VList>
         </NoContent>
         {/* @ts-ignore */}
       </BottomBlock.Content>

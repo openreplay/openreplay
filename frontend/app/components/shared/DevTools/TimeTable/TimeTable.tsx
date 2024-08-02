@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, AutoSizer } from 'react-virtualized';
+import { VList, VListHandle } from 'virtua';
 import cn from 'classnames';
 import { Duration } from 'luxon';
 import { NoContent, Button } from 'UI';
@@ -140,7 +140,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     return Math.ceil(this.tableHeight / ROW_HEIGHT);
   }
 
-  scroller = React.createRef<List>();
+  scroller = React.createRef<VListHandle>();
   autoScroll = true;
 
   adjustScroll(prevActiveIndex: number) {
@@ -150,7 +150,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       prevActiveIndex !== this.props.activeIndex &&
       this.scroller.current
     ) {
-      this.scroller.current.scrollToRow(this.props.activeIndex);
+      this.scroller.current.scrollToIndex(this.props.activeIndex);
     }
   }
 
@@ -191,15 +191,13 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     }
   };
 
-  renderRow = ({ index, key, style: rowStyle }: any) => {
+  renderRow = (index: number) => {
     const { activeIndex } = this.props;
     const { children: columns, rows, renderPopup, hoverable, onRowClick } = this.props;
     const { timestart, timewidth } = this.state;
     const row = rows[index];
     return (
       <div
-        style={rowStyle}
-        key={key}
         className={cn(
           'dev-row border-b border-color-gray-light-shade group items-center',
           stl.row,
@@ -240,7 +238,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       }
     }
     if (this.scroller.current != null) {
-      this.scroller.current.scrollToRow(prevRedIndex);
+      this.scroller.current.scrollToIndex(prevRedIndex);
     }
   };
 
@@ -253,15 +251,13 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       }
     }
     if (this.scroller.current != null) {
-      this.scroller.current.scrollToRow(prevRedIndex);
+      this.scroller.current.scrollToIndex(prevRedIndex);
     }
   };
 
   onColumnClick = (dataKey: string, onClick: any) => {
     if (typeof onClick === 'function') {
-      // this.scroller.current.scrollToRow(0);
       onClick(dataKey);
-      this.scroller.current.forceUpdateGrid();
     }
   };
 
@@ -359,24 +355,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                 />
               ))}
             </div>
-            <AutoSizer disableHeight>
-              {({ width }: { width: number }) => (
-                <List
-                  scrollToIndex={this.props.activeIndex || 0}
-                  ref={this.scroller}
-                  className={stl.list}
-                  height={this.tableHeight + additionalHeight}
-                  width={width}
-                  overscanRowCount={20}
-                  rowCount={rows.length}
-                  rowHeight={ROW_HEIGHT}
-                  rowRenderer={this.renderRow}
-                  onScroll={this.onScroll}
-                  scrollToAlignment="center"
-                  forceUpdateProp={timestart | timewidth | (activeIndex || 0)}
-                />
-              )}
-            </AutoSizer>
+            <VList className={stl.list} ref={this.scroller} itemSize={ROW_HEIGHT} count={rows.length}>
+              {this.props.rows.map((_, index) => this.renderRow(index))}
+            </VList>
           </div>
         </NoContent>
       </div>
