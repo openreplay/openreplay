@@ -71,11 +71,11 @@ const Login: React.FC<LoginProps> = ({
     fetchTenants();
     const jwt = params.get('jwt');
     const spotJwt = params.get('spotJwt');
-    if (jwt) {
-      setJwt(jwt);
-    }
     if (spotJwt) {
       handleSpotLogin(spotJwt);
+    }
+    if (jwt) {
+      setJwt(jwt);
     }
   }, []);
 
