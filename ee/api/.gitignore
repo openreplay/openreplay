@@ -250,7 +250,6 @@ Pipfile.lock
 /chalicelib/utils/storage/generators.py
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
-/chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
 /crons/__init__.py
 /crons/core_crons.py
@@ -274,3 +273,4 @@ Pipfile.lock
 /chalicelib/core/usability_testing/
 /NOTES.md
 /chalicelib/core/db_request_handler.py
+/routers/subs/spot.py

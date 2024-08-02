@@ -5,7 +5,7 @@ import schemas
 from chalicelib.core import permissions
 from chalicelib.utils.storage import StorageClient
 
-SCOPES = SecurityScopes([schemas.Permissions.dev_tools])
+SCOPES = SecurityScopes([schemas.Permissions.DEV_TOOLS])
 
 
 def __get_devtools_keys(project_id, session_id):

@@ -126,6 +126,11 @@ export const login = params => ({
   call: client => client.post('/login', params)
 });
 
+export const loginSuccess = data => ({
+  types: LOGIN.SUCCESS,
+  data
+})
+
 export const signup = params => dispatch => dispatch({
   types: SIGNUP.toArray(),
   call: client => client.post('/signup', params)

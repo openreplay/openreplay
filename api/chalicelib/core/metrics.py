@@ -94,25 +94,25 @@ def __get_meta_constraint(project_id, data):
         else:
             filter_type = f["key"].upper()
             filter_type = [filter_type, "USER" + filter_type, filter_type[4:]]
-            if any(item in [schemas.FilterType.user_browser] \
+            if any(item in [schemas.FilterType.USER_BROWSER] \
                    for item in filter_type):
                 constraints.append(f"sessions.user_browser = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_os, schemas.FilterType.user_os_mobile] \
+            elif any(item in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_os = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_device, schemas.FilterType.user_device_mobile] \
+            elif any(item in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_device = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_country, schemas.FilterType.user_country_mobile] \
+            elif any(item in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_country  = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_id, schemas.FilterType.user_id_mobile] \
+            elif any(item in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_id = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.user_anonymous_id, schemas.FilterType.user_anonymous_id_mobile] \
+            elif any(item in [schemas.FilterType.USER_ANONYMOUS_ID, schemas.FilterType.USER_ANONYMOUS_ID_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_anonymous_id = %({f['key']}_{i})s")
-            elif any(item in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_mobile] \
+            elif any(item in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE] \
                      for item in filter_type):
                 constraints.append(f"sessions.rev_id = %({f['key']}_{i})s")
     return constraints
@@ -167,7 +167,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         count = cur.fetchone()["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
 
 
@@ -1087,7 +1087,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.millisecond}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1180,7 +1180,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
             } for i, v in enumerate(quantiles_keys)
             ],
             "extremeValues": [{"count": 0}],
-            "unit": schemas.TemplatePredefinedUnits.millisecond
+            "unit": schemas.TemplatePredefinedUnits.MILLISECOND
         }
         rows = helper.list_to_camel_case(rows)
         _99 = result["percentiles"][-1]["responseTime"]
@@ -1422,7 +1422,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.memory}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MEMORY}
 
 
 def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1455,7 +1455,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
     return {"value": avg, "chart": helper.list_to_camel_case(rows),
-            "unit": schemas.TemplatePredefinedUnits.percentage}
+            "unit": schemas.TemplatePredefinedUnits.PERCENTAGE}
 
 
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1488,7 +1488,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.frame}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.FRAME}
 
 
 def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1559,7 +1559,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 versions.append({v["version"]: v["count"] / (r["total"] / 100)})
             r["versions"] = versions
 
-    return {"chart": rows, "browsers": browsers, "unit": schemas.TemplatePredefinedUnits.count}
+    return {"chart": rows, "browsers": browsers, "unit": schemas.TemplatePredefinedUnits.COUNT}
 
 
 def __get_neutral(rows, add_All_if_empty=True):
@@ -1713,7 +1713,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2551,7 +2551,7 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
 
 
@@ -2911,7 +2911,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
         cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
         rows = cur.fetchall()
         row["chart"] = rows
-    row["unit"] = schemas.TemplatePredefinedUnits.count
+    row["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return helper.dict_to_camel_case(row)
 
 
@@ -2960,5 +2960,5 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         count = cur.fetchone()["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.count
+    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results

@@ -313,7 +313,7 @@ export const AskAiSwitchToggle = ({
   );
 };
 
-const gradientBox = {
+export const gradientBox = {
   border: 'double 1.5px transparent',
   borderRadius: '100px',
   background:

@@ -32,7 +32,7 @@ import { connect } from 'react-redux';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
-import { FilterKey } from '../../../../types/filter/filterType';
+import { FilterKey } from 'Types/filter/filterType';
 import stl from './FilterModal.module.css';
 
 const IconMap = {

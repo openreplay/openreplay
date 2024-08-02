@@ -62,6 +62,7 @@ export default class FilterItem {
   }
 
   fromData(data: any) {
+    Object.assign(this, data)
     this.type = data.type
     this.key = data.key
     this.label = data.label
@@ -78,7 +79,7 @@ export default class FilterItem {
     this.isActive = Boolean(data.isActive)
     this.completed = data.completed
     this.dropped = data.dropped
-
+    this.options = data.options
     return this
   }
 

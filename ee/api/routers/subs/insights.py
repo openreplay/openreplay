@@ -5,7 +5,7 @@ from chalicelib.core import product_analytics
 from or_dependencies import OR_scope
 from routers.base import get_routers
 
-public_app, app, app_apikey = get_routers([OR_scope(schemas.Permissions.metrics)])
+public_app, app, app_apikey = get_routers(extra_dependencies=[OR_scope(schemas.Permissions.METRICS)])
 
 
 @app.post('/{projectId}/insights/journey', tags=["insights"])

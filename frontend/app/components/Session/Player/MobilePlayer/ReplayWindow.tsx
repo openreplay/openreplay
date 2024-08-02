@@ -171,7 +171,7 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
             });
 
             videoRef.current = videoEl;
-          }
+        }
         }
       }
     }

@@ -5,23 +5,31 @@ import schemas
 
 def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
     return {
-        schemas.SearchEventOperator._is: "=",
-        schemas.SearchEventOperator._is_any: "IN",
-        schemas.SearchEventOperator._on: "=",
-        schemas.SearchEventOperator._on_any: "IN",
-        schemas.SearchEventOperator._is_not: "!=",
-        schemas.SearchEventOperator._not_on: "!=",
-        schemas.SearchEventOperator._contains: "ILIKE",
-        schemas.SearchEventOperator._not_contains: "NOT ILIKE",
-        schemas.SearchEventOperator._starts_with: "ILIKE",
-        schemas.SearchEventOperator._ends_with: "ILIKE",
+        schemas.SearchEventOperator.IS: "=",
+        schemas.SearchEventOperator.ON: "=",
+        schemas.SearchEventOperator.ON_ANY: "IN",
+        schemas.SearchEventOperator.IS_NOT: "!=",
+        schemas.SearchEventOperator.NOT_ON: "!=",
+        schemas.SearchEventOperator.CONTAINS: "ILIKE",
+        schemas.SearchEventOperator.NOT_CONTAINS: "NOT ILIKE",
+        schemas.SearchEventOperator.STARTS_WITH: "ILIKE",
+        schemas.SearchEventOperator.ENDS_WITH: "ILIKE",
+        # Selector operators:
+        schemas.ClickEventExtraOperator.IS: "=",
+        schemas.ClickEventExtraOperator.IS_NOT: "!=",
+        schemas.ClickEventExtraOperator.CONTAINS: "ILIKE",
+        schemas.ClickEventExtraOperator.NOT_CONTAINS: "NOT ILIKE",
+        schemas.ClickEventExtraOperator.STARTS_WITH: "ILIKE",
+        schemas.ClickEventExtraOperator.ENDS_WITH: "ILIKE",
     }.get(op, "=")
 
 
 def is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_not,
-                  schemas.SearchEventOperator._not_on,
-                  schemas.SearchEventOperator._not_contains]
+    return op in [schemas.SearchEventOperator.IS_NOT,
+                  schemas.SearchEventOperator.NOT_ON,
+                  schemas.SearchEventOperator.NOT_CONTAINS,
+                  schemas.ClickEventExtraOperator.IS_NOT,
+                  schemas.ClickEventExtraOperator.NOT_CONTAINS]
 
 
 def reverse_sql_operator(op):
@@ -46,8 +54,8 @@ def multi_values(values, value_key="value"):
 
 
 def isAny_opreator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
+    return op in [schemas.SearchEventOperator.ON_ANY, schemas.SearchEventOperator.IS_ANY]
 
 
 def isUndefined_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_undefined]
+    return op in [schemas.SearchEventOperator.IS_UNDEFINED]

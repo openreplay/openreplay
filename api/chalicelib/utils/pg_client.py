@@ -62,18 +62,18 @@ def make_pool():
         try:
             postgreSQL_pool.closeall()
         except (Exception, psycopg2.DatabaseError) as error:
-            logging.error("Error while closing all connexions to PostgreSQL", error)
+            logger.error("Error while closing all connexions to PostgreSQL", error)
     try:
         postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=4),
                                                    config("PG_MAXCONN", cast=int, default=8),
                                                    **PG_CONFIG)
         if (postgreSQL_pool):
-            logging.info("Connection pool created successfully")
+            logger.info("Connection pool created successfully")
     except (Exception, psycopg2.DatabaseError) as error:
-        logging.error("Error while connecting to PostgreSQL", error)
+        logger.error("Error while connecting to PostgreSQL", error)
         if RETRY < RETRY_MAX:
             RETRY += 1
-            logging.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
+            logger.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
             time.sleep(RETRY_INTERVAL)
             make_pool()
         else:
@@ -123,13 +123,13 @@ class PostgresClient:
             if not self.use_pool or self.long_query or self.unlimited_query:
                 self.connection.close()
         except Exception as error:
-            logging.error("Error while committing/closing PG-connection", error)
+            logger.error("Error while committing/closing PG-connection", error)
             if str(error) == "connection already closed" \
                     and self.use_pool \
                     and not self.long_query \
                     and not self.unlimited_query \
                     and config('PG_POOL', cast=bool, default=True):
-                logging.info("Recreating the connexion pool")
+                logger.info("Recreating the connexion pool")
                 make_pool()
             else:
                 raise error
@@ -144,9 +144,9 @@ class PostgresClient:
         try:
             result = self.cursor.cursor_execute(query=query, vars=vars)
         except psycopg2.Error as error:
-            logging.error(f"!!! Error of type:{type(error)} while executing query:")
-            logging.error(query)
-            logging.info("starting rollback to allow future execution")
+            logger.error(f"!!! Error of type:{type(error)} while executing query:")
+            logger.error(query)
+            logger.info("starting rollback to allow future execution")
             self.connection.rollback()
             raise error
         return result
@@ -156,17 +156,17 @@ class PostgresClient:
             try:
                 self.connection.rollback()
             except Exception as error:
-                logging.error("Error while rollbacking connection for recreation", error)
+                logger.error("Error while rollbacking connection for recreation", error)
         try:
             self.cursor.close()
         except Exception as error:
-            logging.error("Error while closing cursor for recreation", error)
+            logger.error("Error while closing cursor for recreation", error)
         self.cursor = None
         return self.__enter__()
 
 
 async def init():
-    logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
+    logger.info(f">PG_POOL:{config('PG_POOL', default=None)}")
     if config('PG_POOL', cast=bool, default=True):
         make_pool()
 
@@ -176,6 +176,6 @@ async def terminate():
     if postgreSQL_pool is not None:
         try:
             postgreSQL_pool.closeall()
-            logging.info("Closed all connexions to PostgreSQL")
+            logger.info("Closed all connexions to PostgreSQL")
         except (Exception, psycopg2.DatabaseError) as error:
-            logging.error("Error while closing all connexions to PostgreSQL", error)
+            logger.error("Error while closing all connexions to PostgreSQL", error)

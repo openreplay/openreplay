@@ -233,10 +233,10 @@ export default class Screen {
         break;
       case ScaleMode.AdjustParentHeight:
         // we want to scale the document with true height so the clickmap will be scrollable
-        const usedHeight =
-          this.document?.body.scrollHeight && this.document?.body.scrollHeight > height
-            ? this.document.body.scrollHeight + 'px'
-            : height + 'px';
+        const usedHeight = height + 'px';
+          // this.document?.body.scrollHeight && this.document?.body.scrollHeight > height
+          //   ? this.document.body.scrollHeight + 'px'
+          //   : height + 'px';
         this.scaleRatio = offsetWidth / width;
         translate = 'translate(-50%, 0)';
         posStyles = { top: 0, height: usedHeight };

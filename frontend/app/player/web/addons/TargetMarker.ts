@@ -146,39 +146,37 @@ export default class TargetMarker {
     if (clicks && this.screen.document) {
       this.clickMapOverlay?.remove();
       const overlay = document.createElement('canvas');
-      const iframeSize = this.screen.iframeStylesRef;
       const scrollHeight = this.screen.document?.documentElement.scrollHeight || 0;
       const scrollWidth = this.screen.document?.documentElement.scrollWidth || 0;
-      const scaleRatio = this.screen.getScale();
+
       Object.assign(
         overlay.style,
         clickmapStyles.overlayStyle({
-          height: iframeSize.height,
-          width: iframeSize.width,
-          scale: scaleRatio,
+          height: scrollHeight + 'px',
+          width: scrollWidth + 'px',
         })
       );
 
       this.clickMapOverlay = overlay;
-      this.screen.getParentElement()?.appendChild(overlay);
+      this.screen.document.body.appendChild(overlay);
 
       const pointMap: Record<string, { times: number; data: number[], original: any }> = {};
-      const ovWidth = parseInt(iframeSize.width);
-      const ovHeight = parseInt(iframeSize.height);
-      overlay.width = ovWidth;
-      overlay.height = ovHeight;
+      overlay.width = scrollWidth;
+      overlay.height = scrollHeight;
       let maxIntensity = 0;
 
       clicks.forEach((point) => {
-        const key = `${point.normalizedY}-${point.normalizedX}`;
+        const y = roundToSecond(point.normalizedY);
+        const x = roundToSecond(point.normalizedX);
+        const key = `${y}-${x}`;
         if (pointMap[key]) {
           const times = pointMap[key].times + 1;
           maxIntensity = Math.max(maxIntensity, times);
           pointMap[key].times = times;
         } else {
           const clickData = [
-            (point.normalizedX / 100) * scrollWidth,
-            (point.normalizedY / 100) * scrollHeight,
+            (x / 100) * scrollWidth,
+            (y / 100) * scrollHeight,
           ];
           pointMap[key] = { times: 1, data: clickData, original: point };
         }
@@ -203,4 +201,8 @@ export default class TargetMarker {
       this.clickMapOverlay = null;
     }
   }
+}
+
+function roundToSecond(num: number) {
+  return Math.round(num * 100) / 100;
 }

@@ -1,14 +1,12 @@
 export const clickmapStyles = {
-  overlayStyle: ({ height, width, scale }: { height: string, width: string, scale: number }) => ({
-    transform: `scale(${scale}) translate(-50%, 0)`,
+  overlayStyle: ({ height, width }: { height: string, width: string }) => ({
     position: 'absolute',
     top: '0px',
-    left: '50%',
+    left: 0,
     width,
     height,
     background: 'rgba(0,0,0, 0.15)',
     zIndex: 9 * 10e3,
-    transformOrigin: 'left top',
   }),
   totalClicks: {
     fontSize: '16px',

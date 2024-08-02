@@ -36,7 +36,8 @@ import trackerVuex from '@openreplay/tracker-vuex';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-tracker.start();
+// .start() returns a promise
+tracker.start().then(sessionData => ... ).catch(e => ... )
 //...
 const store = new Vuex.Store({
   //...
@@ -56,7 +57,8 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    tracker.start();
+    // .start() returns a promise
+    tracker.start().then(sessionData => ... ).catch(e => ... )
   }, [])
 //...
 const store = new Vuex.Store({

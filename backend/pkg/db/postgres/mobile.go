@@ -13,14 +13,14 @@ func (conn *Conn) InsertMobileEvent(session *sessions.Session, e *messages.Mobil
 	if err := conn.InsertCustomEvent(session.SessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(session.SessionID, session.ProjectID, "CUSTOM_Mobile", e.Name)
+	conn.InsertAutocompleteValue(session.SessionID, session.ProjectID, "CUSTOMMOBILE", e.Name)
 	return nil
 }
 
 func (conn *Conn) InsertMobileNetworkCall(sess *sessions.Session, e *messages.MobileNetworkCall) error {
 	err := conn.InsertRequest(sess.SessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Status < 400)
 	if err == nil {
-		conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUEST_Mobile", url.DiscardURLQuery(e.URL))
+		conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "REQUESTMOBILE", url.DiscardURLQuery(e.URL))
 	}
 	return err
 }
@@ -36,7 +36,7 @@ func (conn *Conn) InsertMobileClickEvent(sess *sessions.Session, clickEvent *mes
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICK_Mobile", clickEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "CLICKMOBILE", clickEvent.Label)
 	return nil
 }
 
@@ -51,7 +51,7 @@ func (conn *Conn) InsertMobileSwipeEvent(sess *sessions.Session, swipeEvent *mes
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "SWIPE_Mobile", swipeEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "SWIPEMOBILE", swipeEvent.Label)
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (conn *Conn) InsertMobileInputEvent(sess *sessions.Session, inputEvent *mes
 	); err != nil {
 		return err
 	}
-	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUT_Mobile", inputEvent.Label)
+	conn.InsertAutocompleteValue(sess.SessionID, sess.ProjectID, "INPUTMOBILE", inputEvent.Label)
 	return nil
 }
 

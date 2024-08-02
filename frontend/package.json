@@ -40,6 +40,7 @@
     "country-flag-icons": "^1.5.7",
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
+    "hls.js": "^1.5.13",
     "html-to-image": "^1.9.0",
     "html2canvas": "^1.4.1",
     "immutable": "^4.0.0-rc.12",
@@ -48,6 +49,7 @@
     "jsbi": "^4.1.0",
     "jshint": "^2.11.1",
     "jspdf": "^2.5.1",
+    "lottie-react": "^2.4.0",
     "lucide-react": "^0.396.0",
     "luxon": "^1.24.1",
     "microdiff": "^1.4.0",
@@ -86,7 +88,8 @@
     "semantic-ui-react": "^2.1.2",
     "socket.io-client": "^4.4.1",
     "source-map": "^0.7.3",
-    "syncod": "^0.0.1"
+    "syncod": "^0.0.1",
+    "video.js": "^8.16.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.23.0",
@@ -164,10 +167,10 @@
     "ts-jest": "^29.0.5",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4",
-    "webpack": "^5.89.0",
-    "webpack-bundle-analyzer": "^4.9.1",
-    "webpack-cli": "^4.9.2",
-    "webpack-dev-server": "^4.9.0",
+    "webpack": "^5.92.1",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4",
     "workbox-webpack-plugin": "^6.5.1"
   },
   "engines": {

@@ -1,4 +1,5 @@
 import logging
+import urllib
 from http import cookies
 from os import environ
 from urllib.parse import urlparse
@@ -137,14 +138,19 @@ def get_saml2_provider():
         config("idp_name", default="saml2")) > 0 else None
 
 
-def get_landing_URL(jwt, redirect_to_link2=False):
+def get_landing_URL(query_params: dict = None, redirect_to_link2=False):
+    if query_params is not None and len(query_params.keys()) > 0:
+        query_params = "?" + urllib.parse.urlencode(query_params)
+    else:
+        query_params = ""
+
     if redirect_to_link2:
         if len(config("sso_landing_override", default="")) == 0:
             logging.warning("SSO trying to redirect to custom URL, but sso_landing_override env var is empty")
         else:
-            return config("sso_landing_override") + "?jwt=%s" % jwt
+            return config("sso_landing_override") + query_params
 
-    return config("SITE_URL") + config("sso_landing", default="/login?jwt=%s") % jwt
+    return config("SITE_URL") + config("sso_landing", default="/login") + query_params
 
 
 environ["hastSAML2"] = str(is_saml2_available())

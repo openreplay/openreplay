@@ -1,4 +1,16 @@
-# 14.0.0
+# 14.0.4
+
+- remove reject from start
+
+# 14.0.3
+
+- send integer instead of float for normalizedX/Y coords (basically moving from 0-100 to 0-10000 range)
+
+# 14.0.2
+
+- fix logger check
+
+# 14.0.0 & .1
 
 - titles for tabs
 - new `MouseClick` message to introduce heatmaps instead of clickmaps

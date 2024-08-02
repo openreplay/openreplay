@@ -90,7 +90,7 @@ class DatabaseRequestHandler:
         if additional_clauses:
             query += " " + additional_clauses
 
-        logging.debug(f"Query: {query}")
+        logger.debug(f"Query: {query}")
         return query
 
     def execute_query(self, query, data=None):

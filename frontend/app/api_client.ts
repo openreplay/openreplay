@@ -149,7 +149,10 @@ export default class APIClient {
 
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-
+    const spotService = path.includes('/spot') && !path.includes('/login')
+    if (spotService) {
+      edp = edp.replace('/api', '')
+    }
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
@@ -220,5 +223,10 @@ export default class APIClient {
   delete(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'DELETE';
     return this.fetch(path, params, 'DELETE');
+  }
+
+  patch(path: string, params?: any, options?: any): Promise<Response> {
+    this.init.method = 'PATCH';
+    return this.fetch(path, params, 'PATCH');
   }
 }

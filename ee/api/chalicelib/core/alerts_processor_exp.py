@@ -13,101 +13,101 @@ from chalicelib.utils.TimeUTC import TimeUTC
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 LeftToDb = {
-    schemas.AlertColumn.performance__dom_content_loaded__average: {
+    schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "COALESCE(AVG(NULLIF(dom_content_loaded_event_time ,0)),0)",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__first_meaningful_paint__average: {
+    schemas.AlertColumn.PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "COALESCE(AVG(NULLIF(first_contentful_paint_time,0)),0)",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__page_load_time__average: {
+    schemas.AlertColumn.PERFORMANCE__PAGE_LOAD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(load_event_time ,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__dom_build_time__average: {
+    schemas.AlertColumn.PERFORMANCE__DOM_BUILD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(dom_building_time,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__speed_index__average: {
+    schemas.AlertColumn.PERFORMANCE__SPEED_INDEX__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(speed_index,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__page_response_time__average: {
+    schemas.AlertColumn.PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(response_time,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__ttfb__average: {
+    schemas.AlertColumn.PERFORMANCE__TTFB__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(first_contentful_paint_time,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__time_to_render__average: {
+    schemas.AlertColumn.PERFORMANCE__TIME_TO_RENDER__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS pages",
         "formula": "AVG(NULLIF(visually_complete,0))",
         "eventType": "LOCATION"
     },
-    schemas.AlertColumn.performance__image_load_time__average: {
+    schemas.AlertColumn.PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
         "formula": "AVG(NULLIF(resources.duration,0))",
         "condition": "type='img'"
     },
-    schemas.AlertColumn.performance__request_load_time__average: {
+    schemas.AlertColumn.PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
         "formula": "AVG(NULLIF(resources.duration,0))",
         "condition": "type='fetch'"
     },
-    schemas.AlertColumn.resources__load_time__average: {
+    schemas.AlertColumn.RESOURCES__LOAD_TIME__AVERAGE: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
         "formula": "AVG(NULLIF(resources.duration,0))"
     },
-    schemas.AlertColumn.resources__missing__count: {
+    schemas.AlertColumn.RESOURCES__MISSING__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_resources_table(timestamp)} AS resources",
         "formula": "COUNT(DISTINCT url_hostpath)",
         "condition": "success= FALSE AND type='img'"
     },
-    schemas.AlertColumn.errors__4xx_5xx__count: {
+    schemas.AlertColumn.ERRORS__4XX_5XX__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
         "eventType": "REQUEST",
         "formula": "COUNT(1)",
         "condition": "intDiv(requests.status, 100)!=2"
     },
-    schemas.AlertColumn.errors__4xx__count: {
+    schemas.AlertColumn.ERRORS__4XX__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
         "eventType": "REQUEST",
         "formula": "COUNT(1)",
         "condition": "intDiv(requests.status, 100)==4"
     },
-    schemas.AlertColumn.errors__5xx__count: {
+    schemas.AlertColumn.ERRORS__5XX__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS requests",
         "eventType": "REQUEST",
         "formula": "COUNT(1)",
         "condition": "intDiv(requests.status, 100)==5"
     },
-    schemas.AlertColumn.errors__javascript__impacted_sessions__count: {
+    schemas.AlertColumn.ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
         "eventType": "ERROR",
         "formula": "COUNT(DISTINCT session_id)",
         "condition": "source='js_exception'"
     },
-    schemas.AlertColumn.performance__crashes__count: {
+    schemas.AlertColumn.PERFORMANCE__CRASHES__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_sessions_table(timestamp)} AS sessions",
         "formula": "COUNT(DISTINCT session_id)",
         "condition": "duration>0 AND errors_count>0"
     },
-    schemas.AlertColumn.errors__javascript__count: {
+    schemas.AlertColumn.ERRORS__JAVASCRIPT__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
         "eventType": "ERROR",
         "formula": "COUNT(DISTINCT session_id)",
         "condition": "source='js_exception'"
     },
-    schemas.AlertColumn.errors__backend__count: {
+    schemas.AlertColumn.ERRORS__BACKEND__COUNT: {
         "table": lambda timestamp: f"{exp_ch_helper.get_main_events_table(timestamp)} AS errors",
         "eventType": "ERROR",
         "formula": "COUNT(DISTINCT session_id)",
@@ -122,7 +122,7 @@ def Build(a):
     full_args = {}
     if a["seriesId"] is not None:
         a["filter"]["sort"] = "session_id"
-        a["filter"]["order"] = schemas.SortOrderType.desc
+        a["filter"]["order"] = schemas.SortOrderType.DESC
         a["filter"]["startDate"] = 0
         a["filter"]["endDate"] = TimeUTC.now()
         try:
@@ -148,7 +148,7 @@ def Build(a):
 
     q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
 
-    if a["detectionMethod"] == schemas.AlertDetectionMethod.threshold:
+    if a["detectionMethod"] == schemas.AlertDetectionMethod.THRESHOLD:
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
         else:
@@ -157,7 +157,7 @@ def Build(a):
                             AND datetime<=toDateTime(%(now)s/1000) ) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
-        if a["change"] == schemas.AlertDetectionType.change:
+        if a["change"] == schemas.AlertDetectionType.CHANGE:
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})-({sub2})) AS value"

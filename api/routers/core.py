@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global, tags
+    custom_metrics, saved_search, integrations_global, tags, autocomplete
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -19,32 +19,38 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
+@app.get('/{projectId}/autocomplete', tags=["autocomplete"])
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str,
+def events_search(projectId: int, q: Optional[str] = None,
                   type: Union[schemas.FilterType, schemas.EventType,
                   schemas.PerformanceEventType, schemas.FetchFilterType,
                   schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if len(q) == 0:
+    if type and (not q or len(q) == 0) \
+            and (schemas.FilterType.has_value(type) or schemas.EventType.has_value(type)):
+        # TODO: check if type is a valid value for autocomplete
+        return autocomplete.get_top_values(project_id=projectId, event_type=type,event_key=key)
+    elif (not q or len(q) == 0) and not type:
         return {"data": []}
+
     if live:
         return assist.autocomplete(project_id=projectId, q=q,
                                    key=key if key is not None else type)
-    if type in [schemas.FetchFilterType._url]:
-        type = schemas.EventType.request
-    elif type in [schemas.GraphqlFilterType._name]:
-        type = schemas.EventType.graphql
+    if type in [schemas.FetchFilterType.FETCH_URL]:
+        type = schemas.EventType.REQUEST
+    elif type in [schemas.GraphqlFilterType.GRAPHQL_NAME]:
+        type = schemas.EventType.GRAPHQL
     elif isinstance(type, schemas.PerformanceEventType):
-        if type in [schemas.PerformanceEventType.location_dom_complete,
-                    schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                    schemas.PerformanceEventType.location_ttfb,
-                    schemas.PerformanceEventType.location_avg_cpu_load,
-                    schemas.PerformanceEventType.location_avg_memory_usage
+        if type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
+                    schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
+                    schemas.PerformanceEventType.LOCATION_TTFB,
+                    schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
+                    schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE
                     ]:
-            type = schemas.EventType.location
-        elif type in [schemas.PerformanceEventType.fetch_failed]:
-            type = schemas.EventType.request
+            type = schemas.EventType.LOCATION
+        elif type in [schemas.PerformanceEventType.FETCH_FAILED]:
+            type = schemas.EventType.REQUEST
         else:
             return {"data": []}
 
@@ -72,12 +78,12 @@ def integration_notify(projectId: int, integration: str, webhookId: int, source:
             "user": context.email, "comment": comment, "project_id": projectId,
             "integration_id": webhookId,
             "project_name": context.project.name}
-    if integration == schemas.WebhookType.slack:
+    if integration == schemas.WebhookType.SLACK:
         if source == "sessions":
             return Slack.share_session(session_id=sourceId, **args)
         elif source == "errors":
             return Slack.share_error(error_id=sourceId, **args)
-    elif integration == schemas.WebhookType.msteams:
+    elif integration == schemas.WebhookType.MSTEAMS:
         if source == "sessions":
             return MSTeams.share_session(session_id=sourceId, **args)
         elif source == "errors":
@@ -711,7 +717,7 @@ def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
 def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.slack)}
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.SLACK)}
 
 
 @app.get('/integrations/slack/{integrationId}', tags=["integrations"])
@@ -808,7 +814,7 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/integrations/msteams/channels', tags=["integrations"])
 def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.msteams)}
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.MSTEAMS)}
 
 
 @app.post('/integrations/msteams', tags=['integrations'])

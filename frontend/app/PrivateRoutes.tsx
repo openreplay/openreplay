@@ -26,6 +26,8 @@ const components: any = {
   UsabilityTestingPure: lazy(() => import('Components/UsabilityTesting/UsabilityTesting')),
   UsabilityTestEditPure: lazy(() => import('Components/UsabilityTesting/TestEdit')),
   UsabilityTestOverviewPure: lazy(() => import('Components/UsabilityTesting/TestOverview')),
+  SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
+  SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
 };
 
 const enhancedComponents: any = {
@@ -43,6 +45,8 @@ const enhancedComponents: any = {
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(components.UsabilityTestOverviewPure),
+  SpotsList: withSiteIdUpdater(components.SpotsListPure),
+  Spot: components.SpotPure,
 };
 
 const withSiteId = routes.withSiteId;
@@ -85,6 +89,9 @@ const ASSIST_STATS_PATH = routes.assistStats();
 const USABILITY_TESTING_PATH = routes.usabilityTesting();
 const USABILITY_TESTING_EDIT_PATH = routes.usabilityTestingEdit();
 const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
+
+const SPOTS_LIST_PATH = routes.spotsList();
+const SPOT_PATH = routes.spot();
 
 interface Props {
   isEnterprise: boolean;
@@ -233,6 +240,18 @@ function PrivateRoutes(props: Props) {
           strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(SPOTS_LIST_PATH, siteIdList)}
+          component={enhancedComponents.SpotsList}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(SPOT_PATH, siteIdList)}
+          component={enhancedComponents.Spot}
         />
 
         {Object.entries(routes.redirects).map(([fr, to]) => (

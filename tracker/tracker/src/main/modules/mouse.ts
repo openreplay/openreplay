@@ -262,5 +262,5 @@ export default function (app: App, options?: MouseHandlerOptions): void {
  * 0.39643 => 396.43 => 396 => 39.6%
  * */
 function roundNumber(num: number) {
-  return Math.round(num * 1e3) / 1e1
+  return Math.round(num * 1e4)
 }

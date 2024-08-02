@@ -36,6 +36,8 @@ function UserCard({ className, request, session, width, height, similarSessions,
         userDisplayName,
         userDeviceType,
         revId,
+        screenWidth,
+        screenHeight
     } = session;
 
     const hasUserDetails = !!userId || !!userAnonymousId;
@@ -137,7 +139,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
                     <SessionInfoItem
                       icon={deviceTypeIcon(userDeviceType)}
                       label={userDeviceType}
-                      value={getDimension(width, height)}
+                      value={getDimension(width || screenWidth, height || screenHeight)}
                       isLast={!revId}
                     />
                     {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}

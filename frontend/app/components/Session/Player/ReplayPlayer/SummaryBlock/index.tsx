@@ -3,18 +3,18 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
-import { debounce }                          from 'App/utils';
-import { IResourceRequest, IResourceTiming } from "../../../../../player";
-import { WsChannel }                         from "../../../../../player/web/messages";
-import { PlayerContext } from "../../../playerContext";
+import { debounce } from 'App/utils';
+
+import { IResourceRequest, IResourceTiming } from 'App/player';
+import { WsChannel } from 'App/player/web/messages';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 let debounceUpdate: any = () => {};
 
-const userBehaviorRegex = /User\s+(\w+\s+)?Behavior/i;
-const issuesErrorsRegex = /Issues\s+(and\s+|,?\s+)?(\w+\s+)?Errors/i;
+const boldLine = /\*\*(.*?)\*\*/i;
 
 function isTitleLine(line: string): boolean {
-  return userBehaviorRegex.test(line) || issuesErrorsRegex.test(line);
+  return boldLine.test(line)
 }
 
 function SummaryBlock({
@@ -77,12 +77,12 @@ function SummaryBlock({
 
   const formattedText = aiSummaryStore.text.split('\n').map((line) => {
     if (isTitleLine(line)) {
-      return <div className={'font-semibold mt-2'}>{line}</div>;
+      return <div className={'font-semibold mt-2'}>{line.replace(/\*/g, '')}</div>;
     }
     if (line.startsWith('*')) {
       return (
         <li className={'ml-1 marker:mr-1 flex items-center gap-1'}>
-            <CodeStringFormatter text={line.replace('* ', '')} />
+            <CodeStringFormatter text={line.replace(/\*/g, '')} />
         </li>
       );
     }

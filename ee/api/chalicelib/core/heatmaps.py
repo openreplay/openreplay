@@ -165,27 +165,27 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
         no_platform = True
         no_location = True
         for f in data.filters:
-            if f.type == schemas.FilterType.platform:
+            if f.type == schemas.FilterType.PLATFORM:
                 no_platform = False
                 break
         for f in data.events:
-            if f.type == schemas.EventType.location:
+            if f.type == schemas.EventType.LOCATION:
                 no_location = False
                 if len(f.value) == 0:
-                    f.operator = schemas.SearchEventOperator._is_any
+                    f.operator = schemas.SearchEventOperator.IS_ANY
                 break
         if no_platform:
-            data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.platform,
-                                                                  value=[schemas.PlatformType.desktop],
-                                                                  operator=schemas.SearchEventOperator._is))
+            data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
+                                                                  value=[schemas.PlatformType.DESKTOP],
+                                                                  operator=schemas.SearchEventOperator.IS))
         if no_location:
-            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.location,
+            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
                                                                  value=[],
-                                                                 operator=schemas.SearchEventOperator._is_any))
+                                                                 operator=schemas.SearchEventOperator.IS_ANY))
 
-        data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
+        data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
                                                               value=[0],
-                                                              operator=schemas.MathOperator._greater))
+                                                              operator=schemas.MathOperator.GREATER))
 
         full_args, query_part = sessions.search_query_parts(data=data, error_status=None, errors_only=False,
                                                             favorite_only=data.bookmarked, issue=None,
@@ -194,7 +194,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
         if len(exclude_sessions) > 0:
             query_part += "\n AND session_id NOT IN %(exclude_sessions)s"
         with pg_client.PostgresClient() as cur:
-            data.order = schemas.SortOrderType.desc
+            data.order = schemas.SortOrderType.DESC
             data.sort = 'duration'
             main_query = cur.mogrify(f"""SELECT *
                                          FROM (SELECT {SESSION_PROJECTION_COLS}
@@ -295,27 +295,27 @@ else:
         no_platform = True
         no_location = True
         for f in data.filters:
-            if f.type == schemas.FilterType.platform:
+            if f.type == schemas.FilterType.PLATFORM:
                 no_platform = False
                 break
         for f in data.events:
-            if f.type == schemas.EventType.location:
+            if f.type == schemas.EventType.LOCATION:
                 no_location = False
                 if len(f.value) == 0:
-                    f.operator = schemas.SearchEventOperator._is_any
+                    f.operator = schemas.SearchEventOperator.IS_ANY
                 break
         if no_platform:
-            data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.platform,
-                                                                  value=[schemas.PlatformType.desktop],
-                                                                  operator=schemas.SearchEventOperator._is))
+            data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
+                                                                  value=[schemas.PlatformType.DESKTOP],
+                                                                  operator=schemas.SearchEventOperator.IS))
         if no_location:
-            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.location,
+            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
                                                                  value=[],
-                                                                 operator=schemas.SearchEventOperator._is_any))
+                                                                 operator=schemas.SearchEventOperator.IS_ANY))
 
-        data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.events_count,
+        data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
                                                               value=[0],
-                                                              operator=schemas.MathOperator._greater))
+                                                              operator=schemas.MathOperator.GREATER))
 
         full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=None, errors_only=False,
                                                                favorite_only=data.bookmarked, issue=None,
@@ -324,7 +324,7 @@ else:
         if len(exclude_sessions) > 0:
             query_part += "\n AND session_id NOT IN (%(exclude_sessions)s)"
         with ch_client.ClickHouseClient() as cur:
-            data.order = schemas.SortOrderType.desc
+            data.order = schemas.SortOrderType.DESC
             data.sort = 'duration'
             main_query = cur.format(f"""SELECT * 
                                                FROM (SELECT {SESSION_PROJECTION_COLS}
@@ -360,7 +360,7 @@ else:
                     logger.info("couldn't find an existing replay after 3 iterations for heatmap")
 
             session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
-                                                         event_type=schemas.EventType.location)
+                                                         event_type=schemas.EventType.LOCATION)
         else:
             return None
 

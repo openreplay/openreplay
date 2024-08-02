@@ -9,7 +9,7 @@
   height: 100%;
   /* border: solid thin $gray-light; */
   /* border-radius: 3px; */
-  overflow: hidden;
+  overflow-y: scroll;
 }
 
 .checkers {

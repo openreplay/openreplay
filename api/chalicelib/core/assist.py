@@ -52,7 +52,7 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
         "sort": {"key": body.sort, "order": body.order}
     }
     for f in body.filters:
-        if f.type == schemas.LiveFilterType.metadata:
+        if f.type == schemas.LiveFilterType.METADATA:
             data["filter"][f.source] = {"values": f.value, "operator": f.operator}
 
         else:
@@ -281,23 +281,23 @@ def session_exists(project_id, session_id):
 
 def __change_keys(key):
     return {
-        "PAGETITLE": schemas.LiveFilterType.page_title.value,
+        "PAGETITLE": schemas.LiveFilterType.PAGE_TITLE.value,
         "ACTIVE": "active",
         "LIVE": "live",
-        "SESSIONID": schemas.LiveFilterType.session_id.value,
-        "METADATA": schemas.LiveFilterType.metadata.value,
-        "USERID": schemas.LiveFilterType.user_id.value,
-        "USERUUID": schemas.LiveFilterType.user_UUID.value,
+        "SESSIONID": schemas.LiveFilterType.SESSION_ID.value,
+        "METADATA": schemas.LiveFilterType.METADATA.value,
+        "USERID": schemas.LiveFilterType.USER_ID.value,
+        "USERUUID": schemas.LiveFilterType.USER_UUID.value,
         "PROJECTKEY": "projectKey",
-        "REVID": schemas.LiveFilterType.rev_id.value,
+        "REVID": schemas.LiveFilterType.REV_ID.value,
         "TIMESTAMP": "timestamp",
-        "TRACKERVERSION": schemas.LiveFilterType.tracker_version.value,
+        "TRACKERVERSION": schemas.LiveFilterType.TRACKER_VERSION.value,
         "ISSNIPPET": "isSnippet",
-        "USEROS": schemas.LiveFilterType.user_os.value,
-        "USERBROWSER": schemas.LiveFilterType.user_browser.value,
-        "USERBROWSERVERSION": schemas.LiveFilterType.user_browser_version.value,
-        "USERDEVICE": schemas.LiveFilterType.user_device.value,
-        "USERDEVICETYPE": schemas.LiveFilterType.user_device_type.value,
-        "USERCOUNTRY": schemas.LiveFilterType.user_country.value,
+        "USEROS": schemas.LiveFilterType.USER_OS.value,
+        "USERBROWSER": schemas.LiveFilterType.USER_BROWSER.value,
+        "USERBROWSERVERSION": schemas.LiveFilterType.USER_BROWSER_VERSION.value,
+        "USERDEVICE": schemas.LiveFilterType.USER_DEVICE.value,
+        "USERDEVICETYPE": schemas.LiveFilterType.USER_DEVICE_TYPE.value,
+        "USERCOUNTRY": schemas.LiveFilterType.USER_COUNTRY.value,
         "PROJECTID": "projectId"
     }.get(key.upper(), key)

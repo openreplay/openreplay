@@ -72,7 +72,7 @@ const CustomDragLayer: FC<Props> = memo(function CustomDragLayer({ maxX, minX, o
   }
 
   return (
-      <div style={layerStyles}>
+      <div id={"drag-layer"} style={layerStyles}>
         <div
           style={getItemStyles(initialOffset, currentOffset, maxX, minX)}
         >

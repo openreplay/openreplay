@@ -15,12 +15,12 @@ class MSTeams(BaseCollaboration):
     @classmethod
     def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
         if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
-                                  webhook_type=schemas.WebhookType.msteams):
+                                  webhook_type=schemas.WebhookType.MSTEAMS):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url.unicode_string(),
-                               webhook_type=schemas.WebhookType.msteams,
+                               webhook_type=schemas.WebhookType.MSTEAMS,
                                name=data.name)
         return None
 
@@ -35,8 +35,8 @@ class MSTeams(BaseCollaboration):
                 "title": "Welcome to OpenReplay"
             })
         if r.status_code != 200:
-            logging.warning("MSTeams integration failed")
-            logging.warning(r.text)
+            logger.warning("MSTeams integration failed")
+            logger.warning(r.text)
             return False
         return True
 
@@ -51,15 +51,15 @@ class MSTeams(BaseCollaboration):
                 json=body,
                 timeout=5)
             if r.status_code != 200:
-                logging.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
-                logging.warning(r.text)
+                logger.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
+                logger.warning(r.text)
                 return None
         except requests.exceptions.Timeout:
-            logging.warning(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
+            logger.warning(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
             return None
         except Exception as e:
-            logging.warning(f"!! Issue sending msteams raw webhookId:{webhook_id}")
-            logging.warning(e)
+            logger.warning(f"!! Issue sending msteams raw webhookId:{webhook_id}")
+            logger.warning(e)
             return None
         return {"data": r.text}
 
@@ -68,7 +68,7 @@ class MSTeams(BaseCollaboration):
         integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["msteams integration not found"]}
-        logging.debug(f"====> sending msteams batch notification: {len(attachments)}")
+        logger.debug(f"====> sending msteams batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 50):
             part = attachments[i:i + 50]
             for j in range(1, len(part), 2):
@@ -82,8 +82,8 @@ class MSTeams(BaseCollaboration):
                                   "sections": part
                               })
             if r.status_code != 200:
-                logging.warning("!!!! something went wrong")
-                logging.warning(r.text)
+                logger.warning("!!!! something went wrong")
+                logger.warning(r.text)
 
     @classmethod
     def __share(cls, tenant_id, integration_id, attachement, extra=None):
@@ -157,9 +157,9 @@ class MSTeams(BaseCollaboration):
     def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
             return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
-                                       webhook_type=schemas.WebhookType.msteams)
+                                       webhook_type=schemas.WebhookType.MSTEAMS)
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.msteams)
+        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.MSTEAMS)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]

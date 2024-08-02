@@ -73,7 +73,6 @@ rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/storage/generators.py
 rm -rf ./chalicelib/utils/storage/interface.py
 rm -rf ./chalicelib/utils/storage/s3.py
-rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
 rm -rf ./crons/__init__.py
 rm -rf ./crons/core_crons.py
@@ -94,3 +93,5 @@ rm -rf ./schemas/transformers_validators.py
 rm -rf ./orpy.py
 rm -rf ./chalicelib/core/usability_testing/
 rm -rf ./chalicelib/core/db_request_handler.py
+rm -rf ./chalicelib/core/db_request_handler.py
+rm -rf ./routers/subs/spot.py

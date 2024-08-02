@@ -16,50 +16,50 @@ def transform_old_filter_type(cls, values):
         return values
     values["type"] = {
         # filters
-        "USEROS": FilterType.user_os.value,
-        "USERBROWSER": FilterType.user_browser.value,
-        "USERDEVICE": FilterType.user_device.value,
-        "USERCOUNTRY": FilterType.user_country.value,
-        "USERID": FilterType.user_id.value,
-        "USERANONYMOUSID": FilterType.user_anonymous_id.value,
-        "REFERRER": FilterType.referrer.value,
-        "REVID": FilterType.rev_id.value,
-        "USEROS_IOS": FilterType.user_os_mobile.value,
-        "USERDEVICE_IOS": FilterType.user_device_mobile.value,
-        "USERCOUNTRY_IOS": FilterType.user_country_mobile.value,
-        "USERID_IOS": FilterType.user_id_mobile.value,
-        "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_mobile.value,
-        "REVID_IOS": FilterType.rev_id_mobile.value,
-        "DURATION": FilterType.duration.value,
-        "PLATFORM": FilterType.platform.value,
-        "METADATA": FilterType.metadata.value,
-        "ISSUE": FilterType.issue.value,
-        "EVENTS_COUNT": FilterType.events_count.value,
-        "UTM_SOURCE": FilterType.utm_source.value,
-        "UTM_MEDIUM": FilterType.utm_medium.value,
-        "UTM_CAMPAIGN": FilterType.utm_campaign.value,
+        "USEROS": FilterType.USER_OS.value,
+        "USERBROWSER": FilterType.USER_BROWSER.value,
+        "USERDEVICE": FilterType.USER_DEVICE.value,
+        "USERCOUNTRY": FilterType.USER_COUNTRY.value,
+        "USERID": FilterType.USER_ID.value,
+        "USERANONYMOUSID": FilterType.USER_ANONYMOUS_ID.value,
+        "REFERRER": FilterType.REFERRER.value,
+        "REVID": FilterType.REV_ID.value,
+        "USEROS_IOS": FilterType.USER_OS_MOBILE.value,
+        "USERDEVICE_IOS": FilterType.USER_DEVICE_MOBILE.value,
+        "USERCOUNTRY_IOS": FilterType.USER_COUNTRY_MOBILE.value,
+        "USERID_IOS": FilterType.USER_ID_MOBILE.value,
+        "USERANONYMOUSID_IOS": FilterType.USER_ANONYMOUS_ID_MOBILE.value,
+        "REVID_IOS": FilterType.REV_ID_MOBILE.value,
+        "DURATION": FilterType.DURATION.value,
+        "PLATFORM": FilterType.PLATFORM.value,
+        "METADATA": FilterType.METADATA.value,
+        "ISSUE": FilterType.ISSUE.value,
+        "EVENTS_COUNT": FilterType.EVENTS_COUNT.value,
+        "UTM_SOURCE": FilterType.UTM_SOURCE.value,
+        "UTM_MEDIUM": FilterType.UTM_MEDIUM.value,
+        "UTM_CAMPAIGN": FilterType.UTM_CAMPAIGN.value,
         # events:
-        "CLICK": EventType.click.value,
-        "INPUT": EventType.input.value,
-        "LOCATION": EventType.location.value,
-        "CUSTOM": EventType.custom.value,
-        "REQUEST": EventType.request.value,
-        "FETCH": EventType.request_details.value,
-        "GRAPHQL": EventType.graphql.value,
-        "STATEACTION": EventType.state_action.value,
-        "ERROR": EventType.error.value,
-        "CLICK_MOBILE": EventType.click_mobile.value,
-        "INPUT_MOBILE": EventType.input_mobile.value,
-        "VIEW_MOBILE": EventType.view_mobile.value,
-        "CUSTOM_MOBILE": EventType.custom_mobile.value,
-        "REQUEST_MOBILE": EventType.request_mobile.value,
-        "ERROR_MOBILE": EventType.error_mobile.value,
-        "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
-        "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
-        "TTFB": PerformanceEventType.location_ttfb.value,
-        "AVG_CPU_LOAD": PerformanceEventType.location_avg_cpu_load.value,
-        "AVG_MEMORY_USAGE": PerformanceEventType.location_avg_memory_usage.value,
-        "FETCH_FAILED": PerformanceEventType.fetch_failed.value,
+        "CLICK": EventType.CLICK.value,
+        "INPUT": EventType.INPUT.value,
+        "LOCATION": EventType.LOCATION.value,
+        "CUSTOM": EventType.CUSTOM.value,
+        "REQUEST": EventType.REQUEST.value,
+        "FETCH": EventType.REQUEST_DETAILS.value,
+        "GRAPHQL": EventType.GRAPHQL.value,
+        "STATEACTION": EventType.STATE_ACTION.value,
+        "ERROR": EventType.ERROR.value,
+        "CLICK_IOS": EventType.CLICK_MOBILE.value,
+        "INPUT_IOS": EventType.INPUT_MOBILE.value,
+        "VIEW_IOS": EventType.VIEW_MOBILE.value,
+        "CUSTOM_IOS": EventType.CUSTOM_MOBILE.value,
+        "REQUEST_IOS": EventType.REQUEST_MOBILE.value,
+        "ERROR_IOS": EventType.ERROR_MOBILE.value,
+        "DOM_COMPLETE": PerformanceEventType.LOCATION_DOM_COMPLETE.value,
+        "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME.value,
+        "TTFB": PerformanceEventType.LOCATION_TTFB.value,
+        "AVG_CPU_LOAD": PerformanceEventType.LOCATION_AVG_CPU_LOAD.value,
+        "AVG_MEMORY_USAGE": PerformanceEventType.LOCATION_AVG_MEMORY_USAGE.value,
+        "FETCH_FAILED": PerformanceEventType.FETCH_FAILED.value,
     }.get(values["type"], values["type"])
     return values
 
@@ -371,8 +371,8 @@ class _AlertMessageSchema(BaseModel):
 
 
 class AlertDetectionType(str, Enum):
-    percent = "percent"
-    change = "change"
+    PERCENT = "percent"
+    CHANGE = "change"
 
 
 class _AlertOptionSchema(BaseModel):
@@ -384,34 +384,34 @@ class _AlertOptionSchema(BaseModel):
 
 
 class AlertColumn(str, Enum):
-    performance__dom_content_loaded__average = "performance.dom_content_loaded.average"
-    performance__first_meaningful_paint__average = "performance.first_meaningful_paint.average"
-    performance__page_load_time__average = "performance.page_load_time.average"
-    performance__dom_build_time__average = "performance.dom_build_time.average"
-    performance__speed_index__average = "performance.speed_index.average"
-    performance__page_response_time__average = "performance.page_response_time.average"
-    performance__ttfb__average = "performance.ttfb.average"
-    performance__time_to_render__average = "performance.time_to_render.average"
-    performance__image_load_time__average = "performance.image_load_time.average"
-    performance__request_load_time__average = "performance.request_load_time.average"
-    resources__load_time__average = "resources.load_time.average"
-    resources__missing__count = "resources.missing.count"
-    errors__4xx_5xx__count = "errors.4xx_5xx.count"
-    errors__4xx__count = "errors.4xx.count"
-    errors__5xx__count = "errors.5xx.count"
-    errors__javascript__impacted_sessions__count = "errors.javascript.impacted_sessions.count"
-    performance__crashes__count = "performance.crashes.count"
-    errors__javascript__count = "errors.javascript.count"
-    errors__backend__count = "errors.backend.count"
-    custom = "CUSTOM"
+    PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE = "performance.dom_content_loaded.average"
+    PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE = "performance.first_meaningful_paint.average"
+    PERFORMANCE__PAGE_LOAD_TIME__AVERAGE = "performance.page_load_time.average"
+    PERFORMANCE__DOM_BUILD_TIME__AVERAGE = "performance.dom_build_time.average"
+    PERFORMANCE__SPEED_INDEX__AVERAGE = "performance.speed_index.average"
+    PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE = "performance.page_response_time.average"
+    PERFORMANCE__TTFB__AVERAGE = "performance.ttfb.average"
+    PERFORMANCE__TIME_TO_RENDER__AVERAGE = "performance.time_to_render.average"
+    PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE = "performance.image_load_time.average"
+    PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE = "performance.request_load_time.average"
+    RESOURCES__LOAD_TIME__AVERAGE = "resources.load_time.average"
+    RESOURCES__MISSING__COUNT = "resources.missing.count"
+    ERRORS__4XX_5XX__COUNT = "errors.4xx_5xx.count"
+    ERRORS__4XX__COUNT = "errors.4xx.count"
+    ERRORS__5XX__COUNT = "errors.5xx.count"
+    ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT = "errors.javascript.impacted_sessions.count"
+    PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
+    ERRORS__JAVASCRIPT__COUNT = "errors.javascript.count"
+    ERRORS__BACKEND__COUNT = "errors.backend.count"
+    CUSTOM = "CUSTOM"
 
 
 class MathOperator(str, Enum):
-    _equal = "="
-    _less = "<"
-    _greater = ">"
-    _less_eq = "<="
-    _greater_eq = ">="
+    EQUAL = "="
+    LESS = "<"
+    GREATER = ">"
+    LESS_EQ = "<="
+    GREATER_EQ = ">="
 
 
 class _AlertQuerySchema(BaseModel):
@@ -421,14 +421,14 @@ class _AlertQuerySchema(BaseModel):
 
 
 class AlertDetectionMethod(str, Enum):
-    threshold = "threshold"
-    change = "change"
+    THRESHOLD = "threshold"
+    CHANGE = "change"
 
 
 class AlertSchema(BaseModel):
     name: str = Field(..., pattern=NAME_PATTERN)
     detection_method: AlertDetectionMethod = Field(...)
-    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
+    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.CHANGE)
     description: Optional[str] = Field(default=None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
@@ -439,7 +439,7 @@ class AlertSchema(BaseModel):
         values.series_id = None
         if isinstance(values.query.left, int):
             values.series_id = values.query.left
-            values.query.left = AlertColumn.custom
+            values.query.left = AlertColumn.CUSTOM
 
         return values
 
@@ -449,166 +449,161 @@ class SourcemapUploadPayloadSchema(BaseModel):
 
 
 class ErrorSource(str, Enum):
-    js_exception = "js_exception"
-    bugsnag = "bugsnag"
-    cloudwatch = "cloudwatch"
-    datadog = "datadog"
-    newrelic = "newrelic"
-    rollbar = "rollbar"
-    sentry = "sentry"
-    stackdriver = "stackdriver"
-    sumologic = "sumologic"
+    JS_EXCEPTION = "js_exception"
+    BUGSNAG = "bugsnag"
+    CLOUDWATCH = "cloudwatch"
+    DATADOG = "datadog"
+    NEWRELIC = "newrelic"
+    ROLLBAR = "rollbar"
+    SENTRY = "sentry"
+    STACKDRIVER = "stackdriver"
+    SUMOLOGIC = "sumologic"
 
 
 class EventType(str, Enum):
-    click = "click"
-    input = "input"
-    location = "location"
-    custom = "custom"
-    request = "request"
-    request_details = "fetch"
-    graphql = "graphql"
-    state_action = "stateAction"
-    error = "error"
-    tag = "tag"
-    click_mobile = "tapIos"
-    input_mobile = "inputIos"
-    view_mobile = "viewIos"
-    custom_mobile = "customIos"
-    request_mobile = "requestIos"
-    error_mobile = "errorIos"
-    swipe_mobile = "swipeIos"
+    CLICK = "click"
+    INPUT = "input"
+    LOCATION = "location"
+    CUSTOM = "custom"
+    REQUEST = "request"
+    REQUEST_DETAILS = "fetch"
+    GRAPHQL = "graphql"
+    STATE_ACTION = "stateAction"
+    ERROR = "error"
+    TAG = "tag"
+    CLICK_MOBILE = "clickMobile"
+    INPUT_MOBILE = "inputMobile"
+    VIEW_MOBILE = "viewMobile"
+    CUSTOM_MOBILE = "customMobile"
+    REQUEST_MOBILE = "requestMobile"
+    ERROR_MOBILE = "errorMobile"
+    SWIPE_MOBILE = "swipeMobile"
 
 
 class PerformanceEventType(str, Enum):
-    location_dom_complete = "domComplete"
-    location_largest_contentful_paint_time = "largestContentfulPaintTime"
-    location_ttfb = "ttfb"
-    location_avg_cpu_load = "avgCpuLoad"
-    location_avg_memory_usage = "avgMemoryUsage"
-    fetch_failed = "fetchFailed"
+    LOCATION_DOM_COMPLETE = "domComplete"
+    LOCATION_LARGEST_CONTENTFUL_PAINT_TIME = "largestContentfulPaintTime"
+    LOCATION_TTFB = "ttfb"
+    LOCATION_AVG_CPU_LOAD = "avgCpuLoad"
+    LOCATION_AVG_MEMORY_USAGE = "avgMemoryUsage"
+    FETCH_FAILED = "fetchFailed"
     # fetch_duration = "FETCH_DURATION"
 
 
 class FilterType(str, Enum):
-    user_os = "userOs"
-    user_browser = "userBrowser"
-    user_device = "userDevice"
-    user_country = "userCountry"
-    user_city = "userCity"
-    user_state = "userState"
-    user_id = "userId"
-    user_anonymous_id = "userAnonymousId"
-    referrer = "referrer"
-    rev_id = "revId"
+    USER_OS = "userOs"
+    USER_BROWSER = "userBrowser"
+    USER_DEVICE = "userDevice"
+    USER_COUNTRY = "userCountry"
+    USER_CITY = "userCity"
+    USER_STATE = "userState"
+    USER_ID = "userId"
+    USER_ANONYMOUS_ID = "userAnonymousId"
+    REFERRER = "referrer"
+    REV_ID = "revId"
     # IOS
-    user_os_mobile = "userOsIos"
-    user_device_mobile = "userDeviceIos"
-    user_country_mobile = "userCountryIos"
-    user_id_mobile = "userIdIos"
-    user_anonymous_id_mobile = "userAnonymousIdIos"
-    rev_id_mobile = "revIdIos"
+    USER_OS_MOBILE = "userOsIos"
+    USER_DEVICE_MOBILE = "userDeviceIos"
+    USER_COUNTRY_MOBILE = "userCountryIos"
+    USER_ID_MOBILE = "userIdIos"
+    USER_ANONYMOUS_ID_MOBILE = "userAnonymousIdIos"
+    REV_ID_MOBILE = "revIdIos"
     #
-    duration = "duration"
-    platform = "platform"
-    metadata = "metadata"
-    issue = "issue"
-    events_count = "eventsCount"
-    utm_source = "utmSource"
-    utm_medium = "utmMedium"
-    utm_campaign = "utmCampaign"
+    DURATION = "duration"
+    PLATFORM = "platform"
+    METADATA = "metadata"
+    ISSUE = "issue"
+    EVENTS_COUNT = "eventsCount"
+    UTM_SOURCE = "utmSource"
+    UTM_MEDIUM = "utmMedium"
+    UTM_CAMPAIGN = "utmCampaign"
     # Mobile conditions
-    thermal_state = "thermalState"
-    main_thread_cpu = "mainThreadCPU"
-    view_component = "viewComponent"
-    log_event = "logEvent"
-    click_event = "clickEvent"
-    memory_usage = "memoryUsage"
+    THERMAL_STATE = "thermalState"
+    MAIN_THREAD_CPU = "mainThreadCPU"
+    VIEW_COMPONENT = "viewComponent"
+    LOG_EVENT = "logEvent"
+    CLICK_EVENT = "clickEvent"
+    MEMORY_USAGE = "memoryUsage"
 
 
 class SearchEventOperator(str, Enum):
-    _is = "is"
-    _is_any = "isAny"
-    _on = "on"
-    _on_any = "onAny"
-    _is_not = "isNot"
-    _is_undefined = "isUndefined"
-    _not_on = "notOn"
-    _contains = "contains"
-    _not_contains = "notContains"
-    _starts_with = "startsWith"
-    _ends_with = "endsWith"
+    IS = "is"
+    IS_ANY = "isAny"
+    ON = "on"
+    ON_ANY = "onAny"
+    IS_NOT = "isNot"
+    IS_UNDEFINED = "isUndefined"
+    NOT_ON = "notOn"
+    CONTAINS = "contains"
+    NOT_CONTAINS = "notContains"
+    STARTS_WITH = "startsWith"
+    ENDS_WITH = "endsWith"
 
 
 class ClickEventExtraOperator(str, Enum):
-    _on_selector = "onSelector"
+    IS = "selectorIs"
+    IS_ANY = "selectorIsAny"
+    IS_NOT = "selectorIsNot"
+    IS_UNDEFINED = "selectorIsUndefined"
+    CONTAINS = "selectorContains"
+    NOT_CONTAINS = "selectorNotContains"
+    STARTS_WITH = "selectorStartsWith"
+    ENDS_WITH = "selectorEndsWith"
 
 
 class PlatformType(str, Enum):
-    mobile = "mobile"
-    desktop = "desktop"
-    tablet = "tablet"
+    MOBILE = "mobile"
+    DESKTOP = "desktop"
+    TABLET = "tablet"
 
 
 class SearchEventOrder(str, Enum):
-    _then = "then"
-    _or = "or"
-    _and = "and"
+    THEN = "then"
+    OR = "or"
+    AND = "and"
 
 
 class IssueType(str, Enum):
-    click_rage = 'click_rage'
-    dead_click = 'dead_click'
-    excessive_scrolling = 'excessive_scrolling'
-    bad_request = 'bad_request'
-    missing_resource = 'missing_resource'
-    memory = 'memory'
-    cpu = 'cpu'
-    slow_resource = 'slow_resource'
-    slow_page_load = 'slow_page_load'
-    crash = 'crash'
-    custom = 'custom'
-    js_exception = 'js_exception'
-    mouse_thrashing = 'mouse_thrashing'
+    CLICK_RAGE = 'click_rage'
+    DEAD_CLICK = 'dead_click'
+    EXCESSIVE_SCROLLING = 'excessive_scrolling'
+    BAD_REQUEST = 'bad_request'
+    MISSING_RESOURCE = 'missing_resource'
+    MEMORY = 'memory'
+    CPU = 'cpu'
+    SLOW_RESOURCE = 'slow_resource'
+    SLOW_PAGE_LOAD = 'slow_page_load'
+    CRASH = 'crash'
+    CUSTOM = 'custom'
+    JS_EXCEPTION = 'js_exception'
+    MOUSE_THRASHING = 'mouse_thrashing'
     # IOS
-    tap_rage = 'tap_rage'
+    TAP_RAGE = 'tap_rage'
 
 
 class MetricFormatType(str, Enum):
-    session_count = 'sessionCount'
+    SESSION_COUNT = 'sessionCount'
 
 
 class MetricExtendedFormatType(str, Enum):
-    session_count = 'sessionCount'
-    user_count = 'userCount'
-
-
-class HttpMethod(str, Enum):
-    _get = 'GET'
-    _head = 'HEAD'
-    _post = 'POST'
-    _put = 'PUT'
-    _delete = 'DELETE'
-    _connect = 'CONNECT'
-    _option = 'OPTIONS'
-    _trace = 'TRACE'
-    _patch = 'PATCH'
+    SESSION_COUNT = 'sessionCount'
+    USER_COUNT = 'userCount'
 
 
 class FetchFilterType(str, Enum):
-    _url = "fetchUrl"
-    _status_code = "fetchStatusCode"
-    _method = "fetchMethod"
-    _duration = "fetchDuration"
-    _request_body = "fetchRequestBody"
-    _response_body = "fetchResponseBody"
+    FETCH_URL = "fetchUrl"
+    FETCH_STATUS_CODE = "fetchStatusCode"
+    FETCH_METHOD = "fetchMethod"
+    FETCH_DURATION = "fetchDuration"
+    FETCH_REQUEST_BODY = "fetchRequestBody"
+    FETCH_RESPONSE_BODY = "fetchResponseBody"
 
 
 class GraphqlFilterType(str, Enum):
-    _name = "graphqlName"
-    _method = "graphqlMethod"
-    _request_body = "graphqlRequestBody"
-    _response_body = "graphqlResponseBody"
+    GRAPHQL_NAME = "graphqlName"
+    GRAPHQL_METHOD = "graphqlMethod"
+    GRAPHQL_REQUEST_BODY = "graphqlRequestBody"
+    GRAPHQL_RESPONSE_BODY = "graphqlResponseBody"
 
 
 class RequestGraphqlFilterSchema(BaseModel):
@@ -633,7 +628,7 @@ class SessionSearchEventSchema2(BaseModel):
     @model_validator(mode='after')
     def event_validator(cls, values):
         if isinstance(values.type, PerformanceEventType):
-            if values.type == PerformanceEventType.fetch_failed:
+            if values.type == PerformanceEventType.FETCH_FAILED:
                 return values
             # assert values.get("source") is not None, "source should not be null for PerformanceEventType"
             # assert isinstance(values["source"], list) and len(values["source"]) > 0, \
@@ -644,18 +639,18 @@ class SessionSearchEventSchema2(BaseModel):
             assert isinstance(values.source, list), f"source of type list is required for {values.type}"
             for c in values["source"]:
                 assert isinstance(c, int), f"source value should be of type int for {values.type}"
-        elif values.type == EventType.error and values.source is None:
-            values.source = [ErrorSource.js_exception]
-        elif values.type == EventType.request_details:
+        elif values.type == EventType.ERROR and values.source is None:
+            values.source = [ErrorSource.JS_EXCEPTION]
+        elif values.type == EventType.REQUEST_DETAILS:
             assert isinstance(values.filters, List) and len(values.filters) > 0, \
-                f"filters should be defined for {EventType.request_details}"
-        elif values.type == EventType.graphql:
+                f"filters should be defined for {EventType.REQUEST_DETAILS}"
+        elif values.type == EventType.GRAPHQL:
             assert isinstance(values.filters, List) and len(values.filters) > 0, \
-                f"filters should be defined for {EventType.graphql}"
+                f"filters should be defined for {EventType.GRAPHQL}"
 
         if isinstance(values.operator, ClickEventExtraOperator):
-            assert values.type == EventType.click, \
-                f"operator:{values.operator} is only available for event-type: {EventType.click}"
+            assert values.type == EventType.CLICK, \
+                f"operator:{values.operator} is only available for event-type: {EventType.CLICK}"
         return values
 
 
@@ -684,22 +679,22 @@ class SessionSearchFilterSchema(BaseModel):
 
     @model_validator(mode='after')
     def filter_validator(cls, values):
-        if values.type == FilterType.metadata:
+        if values.type == FilterType.METADATA:
             assert values.source is not None and len(values.source) > 0, \
                 "must specify a valid 'source' for metadata filter"
-        elif values.type == FilterType.issue:
+        elif values.type == FilterType.ISSUE:
             for v in values.value:
                 if IssueType.has_value(v):
                     v = IssueType(v)
                 else:
                     raise ValueError(f"value should be of type IssueType for {values.type} filter")
-        elif values.type == FilterType.platform:
+        elif values.type == FilterType.PLATFORM:
             for v in values.value:
                 if PlatformType.has_value(v):
                     v = PlatformType(v)
                 else:
                     raise ValueError(f"value should be of type PlatformType for {values.type} filter")
-        elif values.type == FilterType.events_count:
+        elif values.type == FilterType.EVENTS_COUNT:
             if MathOperator.has_value(values.operator):
                 values.operator = MathOperator(values.operator)
             else:
@@ -722,8 +717,8 @@ class _PaginatedSchema(BaseModel):
 
 
 class SortOrderType(str, Enum):
-    asc = "ASC"
-    desc = "DESC"
+    ASC = "ASC"
+    DESC = "DESC"
 
 
 def add_missing_is_event(values: dict):
@@ -743,8 +738,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default=[])
     sort: str = Field(default="startTs")
-    order: SortOrderType = Field(default=SortOrderType.desc)
-    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder.THEN)
     group_by_user: bool = Field(default=False)
     bookmarked: bool = Field(default=False)
 
@@ -754,7 +749,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             values["sort"] = "startTs"
 
         if values.get("order") is None:
-            values["order"] = SortOrderType.desc
+            values["order"] = SortOrderType.DESC
         else:
             values["order"] = values["order"].upper()
         return values
@@ -762,16 +757,15 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     @model_validator(mode="before")
     def add_missing_attributes(cls, values):
         # in case isEvent is wrong:
-        for f in values.get("filters"):
+        for f in values.get("filters") or []:
             if EventType.has_value(f["type"]) and not f.get("isEvent"):
                 f["isEvent"] = True
             elif FilterType.has_value(f["type"]) and f.get("isEvent"):
                 f["isEvent"] = False
 
         # in case the old search payload was passed
-        if len(values.get("events", [])) > 0:
-            for v in values["events"]:
-                v["isEvent"] = True
+        for v in values.get("events") or []:
+            v["isEvent"] = True
 
         return values
 
@@ -803,8 +797,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         # ignore 'issue' type as it could be used for step-filters and tab-filters at the same time
         i = 0
         while i < len(values):
-            if values[i].is_event or values[i].type == FilterType.issue:
-                if values[i].type == FilterType.issue:
+            if values[i].is_event or values[i].type == FilterType.ISSUE:
+                if values[i].type == FilterType.ISSUE:
                     values[i] = remove_duplicate_values(values[i])
                 i += 1
                 continue
@@ -812,7 +806,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
             while j < len(values):
                 if values[i].type == values[j].type \
                         and values[i].operator == values[j].operator \
-                        and (values[i].type != FilterType.metadata or values[i].source == values[j].source):
+                        and (values[i].type != FilterType.METADATA or values[i].source == values[j].source):
                     values[i].value += values[j].value
                     del values[j]
                 else:
@@ -824,30 +818,30 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
 
 
 class ErrorStatus(str, Enum):
-    all = 'all'
-    unresolved = 'unresolved'
-    resolved = 'resolved'
-    ignored = 'ignored'
+    ALL = 'all'
+    UNRESOLVED = 'unresolved'
+    RESOLVED = 'resolved'
+    IGNORED = 'ignored'
 
 
 class ErrorSort(str, Enum):
-    occurrence = 'occurrence'
-    users_count = 'users'
-    sessions_count = 'sessions'
+    OCCURRENCE = 'occurrence'
+    USERS_COUNT = 'users'
+    SESSIONS_COUNT = 'sessions'
 
 
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
-    sort: ErrorSort = Field(default=ErrorSort.occurrence)
+    sort: ErrorSort = Field(default=ErrorSort.OCCURRENCE)
     density: Optional[int] = Field(default=7)
-    status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
+    status: Optional[ErrorStatus] = Field(default=ErrorStatus.ALL)
     query: Optional[str] = Field(default=None)
 
 
 class ProductAnalyticsSelectedEventType(str, Enum):
-    click = EventType.click.value
-    input = EventType.input.value
-    location = EventType.location.value
-    custom_event = EventType.custom.value
+    CLICK = EventType.CLICK.value
+    INPUT = EventType.INPUT.value
+    LOCATION = EventType.LOCATION.value
+    CUSTOM_EVENT = EventType.CUSTOM.value
 
 
 class PathAnalysisSubFilterSchema(BaseModel):
@@ -904,7 +898,7 @@ class MobileSignPayloadSchema(BaseModel):
 
 class CardSeriesFilterSchema(SearchErrorsSchema):
     sort: Optional[str] = Field(default=None)
-    order: SortOrderType = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
     group_by_user: Literal[False] = False
 
 
@@ -916,122 +910,122 @@ class CardSeriesSchema(BaseModel):
 
 
 class MetricTimeseriesViewType(str, Enum):
-    line_chart = "lineChart"
-    area_chart = "areaChart"
+    LINE_CHART = "lineChart"
+    AREA_CHART = "areaChart"
 
 
 class MetricTableViewType(str, Enum):
-    table = "table"
+    TABLE = "table"
 
 
 class MetricOtherViewType(str, Enum):
-    other_chart = "chart"
-    list_chart = "list"
+    OTHER_CHART = "chart"
+    LIST_CHART = "list"
 
 
 class MetricType(str, Enum):
-    timeseries = "timeseries"
-    table = "table"
-    funnel = "funnel"
-    errors = "errors"
-    performance = "performance"
-    resources = "resources"
-    web_vital = "webVitals"
-    pathAnalysis = "pathAnalysis"
-    retention = "retention"
-    stickiness = "stickiness"
-    heat_map = "heatMap"
-    insights = "insights"
+    TIMESERIES = "timeseries"
+    TABLE = "table"
+    FUNNEL = "funnel"
+    ERRORS = "errors"
+    PERFORMANCE = "performance"
+    RESOURCES = "resources"
+    WEB_VITAL = "webVitals"
+    PATH_ANALYSIS = "pathAnalysis"
+    RETENTION = "retention"
+    STICKINESS = "stickiness"
+    HEAT_MAP = "heatMap"
+    INSIGHTS = "insights"
 
 
 class MetricOfErrors(str, Enum):
-    calls_errors = "callsErrors"
-    domains_errors_4xx = "domainsErrors4xx"
-    domains_errors_5xx = "domainsErrors5xx"
-    errors_per_domains = "errorsPerDomains"
-    errors_per_type = "errorsPerType"
-    impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"
-    resources_by_party = "resourcesByParty"
+    CALLS_ERRORS = "callsErrors"
+    DOMAINS_ERRORS_4XX = "domainsErrors4xx"
+    DOMAINS_ERRORS_5XX = "domainsErrors5xx"
+    ERRORS_PER_DOMAINS = "errorsPerDomains"
+    ERRORS_PER_TYPE = "errorsPerType"
+    IMPACTED_SESSIONS_BY_JS_ERRORS = "impactedSessionsByJsErrors"
+    RESOURCES_BY_PARTY = "resourcesByParty"
 
 
 class MetricOfPerformance(str, Enum):
-    cpu = "cpu"
-    crashes = "crashes"
-    fps = "fps"
-    impacted_sessions_by_slow_pages = "impactedSessionsBySlowPages"
-    memory_consumption = "memoryConsumption"
-    pages_dom_buildtime = "pagesDomBuildtime"
-    pages_response_time = "pagesResponseTime"
-    pages_response_time_distribution = "pagesResponseTimeDistribution"
-    resources_vs_visually_complete = "resourcesVsVisuallyComplete"
-    sessions_per_browser = "sessionsPerBrowser"
-    slowest_domains = "slowestDomains"
-    speed_location = "speedLocation"
-    time_to_render = "timeToRender"
+    CPU = "cpu"
+    CRASHES = "crashes"
+    FPS = "fps"
+    IMPACTED_SESSIONS_BY_SLOW_PAGES = "impactedSessionsBySlowPages"
+    MEMORY_CONSUMPTION = "memoryConsumption"
+    PAGES_DOM_BUILDTIME = "pagesDomBuildtime"
+    PAGES_RESPONSE_TIME = "pagesResponseTime"
+    PAGES_RESPONSE_TIME_DISTRIBUTION = "pagesResponseTimeDistribution"
+    RESOURCES_VS_VISUALLY_COMPLETE = "resourcesVsVisuallyComplete"
+    SESSIONS_PER_BROWSER = "sessionsPerBrowser"
+    SLOWEST_DOMAINS = "slowestDomains"
+    SPEED_LOCATION = "speedLocation"
+    TIME_TO_RENDER = "timeToRender"
 
 
 class MetricOfResources(str, Enum):
-    missing_resources = "missingResources"
-    resources_count_by_type = "resourcesCountByType"
-    resources_loading_time = "resourcesLoadingTime"
-    resource_type_vs_response_end = "resourceTypeVsResponseEnd"
-    slowest_resources = "slowestResources"
+    MISSING_RESOURCES = "missingResources"
+    RESOURCES_COUNT_BY_TYPE = "resourcesCountByType"
+    RESOURCES_LOADING_TIME = "resourcesLoadingTime"
+    RESOURCE_TYPE_VS_RESPONSE_END = "resourceTypeVsResponseEnd"
+    SLOWEST_RESOURCES = "slowestResources"
 
 
 class MetricOfWebVitals(str, Enum):
-    avg_cpu = "avgCpu"
-    avg_dom_content_loaded = "avgDomContentLoaded"
-    avg_dom_content_load_start = "avgDomContentLoadStart"
-    avg_first_contentful_pixel = "avgFirstContentfulPixel"
-    avg_first_paint = "avgFirstPaint"
-    avg_fps = "avgFps"
-    avg_image_load_time = "avgImageLoadTime"
-    avg_page_load_time = "avgPageLoadTime"
-    avg_pages_dom_buildtime = "avgPagesDomBuildtime"
-    avg_pages_response_time = "avgPagesResponseTime"
-    avg_request_load_time = "avgRequestLoadTime"
-    avg_response_time = "avgResponseTime"
-    avg_session_duration = "avgSessionDuration"
-    avg_till_first_byte = "avgTillFirstByte"
-    avg_time_to_interactive = "avgTimeToInteractive"
-    avg_time_to_render = "avgTimeToRender"
-    avg_used_js_heap_size = "avgUsedJsHeapSize"
-    avg_visited_pages = "avgVisitedPages"
-    count_requests = "countRequests"
-    count_sessions = "countSessions"
-    count_users = "countUsers"
+    AVG_CPU = "avgCpu"
+    AVG_DOM_CONTENT_LOADED = "avgDomContentLoaded"
+    AVG_DOM_CONTENT_LOAD_START = "avgDomContentLoadStart"
+    AVG_FIRST_CONTENTFUL_PIXEL = "avgFirstContentfulPixel"
+    AVG_FIRST_PAINT = "avgFirstPaint"
+    AVG_FPS = "avgFps"
+    AVG_IMAGE_LOAD_TIME = "avgImageLoadTime"
+    AVG_PAGE_LOAD_TIME = "avgPageLoadTime"
+    AVG_PAGES_DOM_BUILDTIME = "avgPagesDomBuildtime"
+    AVG_PAGES_RESPONSE_TIME = "avgPagesResponseTime"
+    AVG_REQUEST_LOAD_TIME = "avgRequestLoadTime"
+    AVG_RESPONSE_TIME = "avgResponseTime"
+    AVG_SESSION_DURATION = "avgSessionDuration"
+    AVG_TILL_FIRST_BYTE = "avgTillFirstByte"
+    AVG_TIME_TO_INTERACTIVE = "avgTimeToInteractive"
+    AVG_TIME_TO_RENDER = "avgTimeToRender"
+    AVG_USED_JS_HEAP_SIZE = "avgUsedJsHeapSize"
+    AVG_VISITED_PAGES = "avgVisitedPages"
+    COUNT_REQUESTS = "countRequests"
+    COUNT_SESSIONS = "countSessions"
+    COUNT_USERS = "countUsers"
 
 
 class MetricOfTable(str, Enum):
-    user_os = FilterType.user_os.value
-    user_browser = FilterType.user_browser.value
-    user_device = FilterType.user_device.value
-    user_country = FilterType.user_country.value
+    USER_OS = FilterType.USER_OS.value
+    USER_BROWSER = FilterType.USER_BROWSER.value
+    USER_DEVICE = FilterType.USER_DEVICE.value
+    USER_COUNTRY = FilterType.USER_COUNTRY.value
     # user_city = FilterType.user_city.value
     # user_state = FilterType.user_state.value
-    user_id = FilterType.user_id.value
-    issues = FilterType.issue.value
-    visited_url = "location"
-    sessions = "sessions"
-    errors = "jsException"
+    USER_ID = FilterType.USER_ID.value
+    ISSUES = FilterType.ISSUE.value
+    VISITED_URL = "location"
+    SESSIONS = "sessions"
+    ERRORS = "jsException"
 
 
 class MetricOfTimeseries(str, Enum):
-    session_count = "sessionCount"
-    user_count = "userCount"
+    SESSION_COUNT = "sessionCount"
+    USER_COUNT = "userCount"
 
 
 class MetricOfFunnels(str, Enum):
-    session_count = MetricOfTimeseries.session_count.value
-    user_count = MetricOfTimeseries.user_count.value
+    SESSION_COUNT = MetricOfTimeseries.SESSION_COUNT.value
+    USER_COUNT = MetricOfTimeseries.USER_COUNT.value
 
 
 class MetricOfHeatMap(str, Enum):
-    heat_map_url = "heatMapUrl"
+    HEAT_MAP_URL = "heatMapUrl"
 
 
 class MetricOfPathAnalysis(str, Enum):
-    session_count = MetricOfTimeseries.session_count.value
+    session_count = MetricOfTimeseries.SESSION_COUNT.value
 
 
 # class CardSessionsSchema(SessionsSearchPayloadSchema):
@@ -1134,13 +1128,13 @@ class __CardSchema(CardSessionsSchema):
     @computed_field
     @property
     def is_predefined(self) -> bool:
-        return self.metric_type in [MetricType.errors, MetricType.performance,
-                                    MetricType.resources, MetricType.web_vital]
+        return self.metric_type in [MetricType.ERRORS, MetricType.PERFORMANCE,
+                                    MetricType.RESOURCES, MetricType.WEB_VITAL]
 
 
 class CardTimeSeries(__CardSchema):
-    metric_type: Literal[MetricType.timeseries]
-    metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.session_count)
+    metric_type: Literal[MetricType.TIMESERIES]
+    metric_of: MetricOfTimeseries = Field(default=MetricOfTimeseries.SESSION_COUNT)
     view_type: MetricTimeseriesViewType
 
     @model_validator(mode="before")
@@ -1155,14 +1149,14 @@ class CardTimeSeries(__CardSchema):
 
 
 class CardTable(__CardSchema):
-    metric_type: Literal[MetricType.table]
-    metric_of: MetricOfTable = Field(default=MetricOfTable.user_id)
+    metric_type: Literal[MetricType.TABLE]
+    metric_of: MetricOfTable = Field(default=MetricOfTable.USER_ID)
     view_type: MetricTableViewType = Field(...)
-    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.session_count)
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.issues:
+        if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.ISSUES:
             values["metricValue"] = []
         return values
 
@@ -1173,24 +1167,24 @@ class CardTable(__CardSchema):
 
     @model_validator(mode="after")
     def __validator(cls, values):
-        if values.metric_of not in (MetricOfTable.issues, MetricOfTable.user_browser,
-                                    MetricOfTable.user_device, MetricOfTable.user_country,
-                                    MetricOfTable.visited_url):
-            assert values.metric_format == MetricExtendedFormatType.session_count, \
-                f'metricFormat:{MetricExtendedFormatType.user_count.value} is not supported for this metricOf'
+        if values.metric_of not in (MetricOfTable.ISSUES, MetricOfTable.USER_BROWSER,
+                                    MetricOfTable.USER_DEVICE, MetricOfTable.USER_COUNTRY,
+                                    MetricOfTable.VISITED_URL):
+            assert values.metric_format == MetricExtendedFormatType.SESSION_COUNT, \
+                f'metricFormat:{MetricExtendedFormatType.USER_COUNT.value} is not supported for this metricOf'
         return values
 
 
 class CardFunnel(__CardSchema):
-    metric_type: Literal[MetricType.funnel]
-    metric_of: MetricOfFunnels = Field(default=MetricOfFunnels.session_count)
+    metric_type: Literal[MetricType.FUNNEL]
+    metric_of: MetricOfFunnels = Field(default=MetricOfFunnels.SESSION_COUNT)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
         if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
-            values["metricOf"] = MetricOfFunnels.session_count
-        values["viewType"] = MetricOtherViewType.other_chart
+            values["metricOf"] = MetricOfFunnels.SESSION_COUNT
+        values["viewType"] = MetricOtherViewType.OTHER_CHART
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
@@ -1202,8 +1196,8 @@ class CardFunnel(__CardSchema):
 
 
 class CardErrors(__CardSchema):
-    metric_type: Literal[MetricType.errors]
-    metric_of: MetricOfErrors = Field(default=MetricOfErrors.impacted_sessions_by_js_errors)
+    metric_type: Literal[MetricType.ERRORS]
+    metric_of: MetricOfErrors = Field(default=MetricOfErrors.IMPACTED_SESSIONS_BY_JS_ERRORS)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1218,8 +1212,8 @@ class CardErrors(__CardSchema):
 
 
 class CardPerformance(__CardSchema):
-    metric_type: Literal[MetricType.performance]
-    metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.cpu)
+    metric_type: Literal[MetricType.PERFORMANCE]
+    metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.CPU)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1234,8 +1228,8 @@ class CardPerformance(__CardSchema):
 
 
 class CardResources(__CardSchema):
-    metric_type: Literal[MetricType.resources]
-    metric_of: MetricOfResources = Field(default=MetricOfResources.missing_resources)
+    metric_type: Literal[MetricType.RESOURCES]
+    metric_of: MetricOfResources = Field(default=MetricOfResources.MISSING_RESOURCES)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1250,8 +1244,8 @@ class CardResources(__CardSchema):
 
 
 class CardWebVital(__CardSchema):
-    metric_type: Literal[MetricType.web_vital]
-    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.avg_cpu)
+    metric_type: Literal[MetricType.WEB_VITAL]
+    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_CPU)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1266,8 +1260,8 @@ class CardWebVital(__CardSchema):
 
 
 class CardHeatMap(__CardSchema):
-    metric_type: Literal[MetricType.heat_map]
-    metric_of: MetricOfHeatMap = Field(default=MetricOfHeatMap.heat_map_url)
+    metric_type: Literal[MetricType.HEAT_MAP]
+    metric_of: MetricOfHeatMap = Field(default=MetricOfHeatMap.HEAT_MAP_URL)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1281,17 +1275,17 @@ class CardHeatMap(__CardSchema):
 
 
 class MetricOfInsights(str, Enum):
-    issue_categories = "issueCategories"
+    ISSUE_CATEGORIES = "issueCategories"
 
 
 class CardInsights(__CardSchema):
-    metric_type: Literal[MetricType.insights]
-    metric_of: MetricOfInsights = Field(default=MetricOfInsights.issue_categories)
+    metric_type: Literal[MetricType.INSIGHTS]
+    metric_of: MetricOfInsights = Field(default=MetricOfInsights.ISSUE_CATEGORIES)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        values["view_type"] = MetricOtherViewType.list_chart
+        values["view_type"] = MetricOtherViewType.LIST_CHART
         return values
 
     @model_validator(mode="after")
@@ -1301,7 +1295,7 @@ class CardInsights(__CardSchema):
 
     @model_validator(mode='after')
     def restrictions(cls, values):
-        raise ValueError(f"metricType:{MetricType.insights} not supported yet.")
+        raise ValueError(f"metricType:{MetricType.INSIGHTS} not supported yet.")
 
 
 class CardPathAnalysisSeriesSchema(CardSeriesSchema):
@@ -1319,7 +1313,7 @@ class CardPathAnalysisSeriesSchema(CardSeriesSchema):
 
 
 class CardPathAnalysis(__CardSchema):
-    metric_type: Literal[MetricType.pathAnalysis]
+    metric_type: Literal[MetricType.PATH_ANALYSIS]
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
     metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[])
@@ -1333,7 +1327,7 @@ class CardPathAnalysis(__CardSchema):
 
     @model_validator(mode="before")
     def __enforce_default(cls, values):
-        values["viewType"] = MetricOtherViewType.other_chart.value
+        values["viewType"] = MetricOtherViewType.OTHER_CHART.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
@@ -1425,45 +1419,45 @@ class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
 
 
 class TemplatePredefinedUnits(str, Enum):
-    millisecond = "ms"
-    second = "s"
-    minute = "min"
-    memory = "mb"
-    frame = "f/s"
-    percentage = "%"
-    count = "count"
+    MILLISECOND = "ms"
+    SECOND = "s"
+    MINUTE = "min"
+    MEMORY = "mb"
+    FRAME = "f/s"
+    PERCENTAGE = "%"
+    COUNT = "count"
 
 
 class LiveFilterType(str, Enum):
-    user_os = FilterType.user_os.value
-    user_browser = FilterType.user_browser.value
-    user_device = FilterType.user_device.value
-    user_country = FilterType.user_country.value
-    user_id = FilterType.user_id.value
-    user_anonymous_id = FilterType.user_anonymous_id.value
-    rev_id = FilterType.rev_id.value
-    platform = FilterType.platform.value
-    page_title = "pageTitle"
-    session_id = "sessionId"
-    metadata = FilterType.metadata.value
-    user_UUID = "userUuid"
-    tracker_version = "trackerVersion"
-    user_browser_version = "userBrowserVersion"
-    user_device_type = "userDeviceType"
+    USER_OS = FilterType.USER_OS.value
+    USER_BROWSER = FilterType.USER_BROWSER.value
+    USER_DEVICE = FilterType.USER_DEVICE.value
+    USER_COUNTRY = FilterType.USER_COUNTRY.value
+    USER_ID = FilterType.USER_ID.value
+    USER_ANONYMOUS_ID = FilterType.USER_ANONYMOUS_ID.value
+    REV_ID = FilterType.REV_ID.value
+    PLATFORM = FilterType.PLATFORM.value
+    PAGE_TITLE = "pageTitle"
+    SESSION_ID = "sessionId"
+    METADATA = FilterType.METADATA.value
+    USER_UUID = "userUuid"
+    TRACKER_VERSION = "trackerVersion"
+    USER_BROWSER_VERSION = "userBrowserVersion"
+    USER_DEVICE_TYPE = "userDeviceType"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
-    operator: Literal[SearchEventOperator._is, \
-        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
+    operator: Literal[SearchEventOperator.IS, \
+        SearchEventOperator.CONTAINS] = Field(default=SearchEventOperator.CONTAINS)
 
-    transform = model_validator(mode='before')(transform_old_filter_type)
+    _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
     def __validator(cls, values):
-        if values.type is not None and values.type == LiveFilterType.metadata:
+        if values.type is not None and values.type == LiveFilterType.METADATA:
             assert values.source is not None, "source should not be null for METADATA type"
             assert len(values.source) > 0, "source should not be empty for METADATA type"
         return values
@@ -1472,7 +1466,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
 class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     filters: List[LiveSessionSearchFilterSchema] = Field([])
     sort: Union[LiveFilterType, str] = Field(default="TIMESTAMP")
-    order: SortOrderType = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
 
     @model_validator(mode="before")
     def __transform(cls, values):
@@ -1486,8 +1480,8 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 else:
                     i += 1
             for i in values["filters"]:
-                if i.get("type") == LiveFilterType.platform:
-                    i["type"] = LiveFilterType.user_device_type
+                if i.get("type") == LiveFilterType.PLATFORM:
+                    i["type"] = LiveFilterType.USER_DEVICE_TYPE
         if values.get("sort") is not None:
             if values["sort"].lower() == "startts":
                 values["sort"] = "TIMESTAMP"
@@ -1495,24 +1489,24 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
 
 
 class IntegrationType(str, Enum):
-    github = "GITHUB"
-    jira = "JIRA"
-    slack = "SLACK"
-    ms_teams = "MSTEAMS"
-    sentry = "SENTRY"
-    bugsnag = "BUGSNAG"
-    rollbar = "ROLLBAR"
-    elasticsearch = "ELASTICSEARCH"
-    datadog = "DATADOG"
-    sumologic = "SUMOLOGIC"
-    stackdriver = "STACKDRIVER"
-    cloudwatch = "CLOUDWATCH"
-    newrelic = "NEWRELIC"
+    GITHUB = "GITHUB"
+    JIRA = "JIRA"
+    SLACK = "SLACK"
+    MS_TEAMS = "MSTEAMS"
+    SENTRY = "SENTRY"
+    BUGSNAG = "BUGSNAG"
+    ROLLBAR = "ROLLBAR"
+    ELASTICSEARCH = "ELASTICSEARCH"
+    DATADOG = "DATADOG"
+    SUMOLOGIC = "SUMOLOGIC"
+    STACKDRIVER = "STACKDRIVER"
+    CLOUDWATCH = "CLOUDWATCH"
+    NEWRELIC = "NEWRELIC"
 
 
 class SearchNoteSchema(_PaginatedSchema):
     sort: str = Field(default="createdAt")
-    order: SortOrderType = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
     tags: Optional[List[str]] = Field(default=[])
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
@@ -1537,21 +1531,21 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
 
 
 class WebhookType(str, Enum):
-    webhook = "webhook"
-    slack = "slack"
-    email = "email"
-    msteams = "msteams"
+    WEBHOOK = "webhook"
+    SLACK = "slack"
+    EMAIL = "email"
+    MSTEAMS = "msteams"
 
 
 class SearchCardsSchema(_PaginatedSchema):
-    order: SortOrderType = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
     query: Optional[str] = Field(default=None)
 
 
 class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
-    type: Literal[EventType.location] = Field(...)
+    type: Literal[EventType.LOCATION] = Field(...)
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
@@ -1561,18 +1555,18 @@ class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
     @model_validator(mode="before")
     def __transform(cls, values):
         for f in values.get("filters", []):
-            if f.get("type") == FilterType.duration:
+            if f.get("type") == FilterType.DURATION:
                 return values
         values["filters"] = values.get("filters", [])
-        values["filters"].append({"value": [5000], "type": FilterType.duration,
-                                  "operator": SearchEventOperator._is, "filters": []})
+        values["filters"].append({"value": [5000], "type": FilterType.DURATION,
+                                  "operator": SearchEventOperator.IS, "filters": []})
         return values
 
 
 class HeatMapFilterSchema(BaseModel):
-    value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
-    type: Literal[FilterType.issue] = Field(...)
-    operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
+    value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(default=[])
+    type: Literal[FilterType.ISSUE] = Field(...)
+    operator: Literal[SearchEventOperator.IS, MathOperator.EQUAL] = Field(...)
 
 
 class GetHeatMapPayloadSchema(_TimedSchema):
@@ -1617,14 +1611,14 @@ class FeatureFlagCondition(BaseModel):
 class SearchFlagsSchema(_PaginatedSchema):
     limit: int = Field(default=15, gt=0, le=200)
     user_id: Optional[int] = Field(default=None)
-    order: SortOrderType = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.DESC)
     query: Optional[str] = Field(default=None)
     is_active: Optional[bool] = Field(default=None)
 
 
 class FeatureFlagType(str, Enum):
-    single_variant = "single"
-    multi_variant = "multi"
+    SINGLE_VARIANT = "single"
+    MULTI_VARIANT = "multi"
 
 
 class FeatureFlagStatus(BaseModel):
@@ -1635,7 +1629,7 @@ class FeatureFlagSchema(BaseModel):
     payload: Optional[str] = Field(default=None)
     flag_key: str = Field(..., pattern=r'^[a-zA-Z0-9\-]+$')
     description: Optional[str] = Field(default=None)
-    flag_type: FeatureFlagType = Field(default=FeatureFlagType.single_variant)
+    flag_type: FeatureFlagType = Field(default=FeatureFlagType.SINGLE_VARIANT)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
     conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
