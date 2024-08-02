@@ -20,6 +20,8 @@ from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
 
+COOKIE_PATH = "/api/refresh"
+
 
 @public_app.get('/signup', tags=['signup'])
 async def get_all_signup():
@@ -39,7 +41,7 @@ if not tenants.tenants_exists_sync(use_pool=False):
             return content
         refresh_token = content.pop("refreshToken")
         refresh_token_max_age = content.pop("refreshTokenMaxAge")
-        response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+        response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
                             max_age=refresh_token_max_age, secure=True, httponly=True)
         return content
 
@@ -78,7 +80,7 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
         spot_refresh_token = r.pop("spotRefreshToken")
         spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
 
-    response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
+    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
                         max_age=refresh_token_max_age, secure=True, httponly=True)
     if spot:
         response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
@@ -89,7 +91,7 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
 @app.get('/logout', tags=["login"])
 def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     users.logout(user_id=context.user_id)
-    response.delete_cookie(key="refreshToken", path="/api/refresh")
+    response.delete_cookie(key="refreshToken", path=COOKIE_PATH)
     response.delete_cookie(key="spotRefreshToken", path="/api/spot/refresh")
     return {"data": "success"}
 
@@ -98,7 +100,7 @@ def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR
 def refresh_login(response: JSONResponse, context: schemas.CurrentContext = Depends(OR_context)):
     r = users.refresh(user_id=context.user_id)
     content = {"jwt": r.get("jwt")}
-    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path="/api/refresh",
+    response.set_cookie(key="refreshToken", value=r.get("refreshToken"), path=COOKIE_PATH,
                         max_age=r.pop("refreshTokenMaxAge"), secure=True, httponly=True)
     return content
 
