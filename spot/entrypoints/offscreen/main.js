@@ -304,8 +304,12 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
           message.audioId,
         )
         .then(() => {
-          respond({ time: Date.now() });
-        });
+          respond({ success: true, time: Date.now() });
+        })
+        .catch(e => {
+          console.error(e);
+          respond({ success: false, time: Date.now() });
+        })
       return true;
     }
     if (message.type === "offscr:get-ts") {
