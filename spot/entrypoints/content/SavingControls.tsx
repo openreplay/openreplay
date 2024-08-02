@@ -192,7 +192,7 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
 
   const onMetaLoad = async () => {
     let videoDuration = videoRef.duration;
-    if (videoDuration === Infinity || isNaN(Number(videoDuration))) {
+    if (videoDuration === Infinity || Number.isNaN(videoDuration)) {
       videoDuration = await getDuration();
     }
     setDuration(videoDuration);

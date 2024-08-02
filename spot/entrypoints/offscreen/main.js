@@ -1,50 +1,18 @@
 const hardLimit = 24 * 1024 * 1024; // 24 MB
 
 function getRecordingSettings(qualityValue) {
-  let audioBitsPerSecond = 128000;
-  let videoBitsPerSecond = 5000000;
-  let width = 1920;
-  let height = 1080;
-  const duration = 3 * 60 * 1000; // 3 minutes
+  const settingsMap = {
+    "4k": { audioBitsPerSecond: 192000, videoBitsPerSecond: 40000000, width: 4096, height: 2160 },
+    "1080p": { audioBitsPerSecond: 192000, videoBitsPerSecond: 8000000, width: 1920, height: 1080 },
+    "720p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 1280, height: 720 },
+    "480p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 854, height: 480 },
+    "360p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 1000000, width: 640, height: 360 },
+    "240p": { audioBitsPerSecond: 64000, videoBitsPerSecond: 500000, width: 426, height: 240 },
+  };
 
-  if (qualityValue === "4k") {
-    audioBitsPerSecond = 192000;
-    videoBitsPerSecond = 40000000;
-  } else if (qualityValue === "1080p") {
-    audioBitsPerSecond = 192000;
-    videoBitsPerSecond = 8000000;
-  } else if (qualityValue === "720p") {
-    audioBitsPerSecond = 96000;
-    videoBitsPerSecond = 2500000;
-  } else if (qualityValue === "480p") {
-    audioBitsPerSecond = 96000;
-    videoBitsPerSecond = 2500000;
-  } else if (qualityValue === "360p") {
-    audioBitsPerSecond = 96000;
-    videoBitsPerSecond = 1000000;
-  } else if (qualityValue === "240p") {
-    audioBitsPerSecond = 64000;
-    videoBitsPerSecond = 500000;
-  }
-  if (qualityValue === "4k") {
-    width = 4096;
-    height = 2160;
-  } else if (qualityValue === "1080p") {
-    width = 1920;
-    height = 1080;
-  } else if (qualityValue === "720p") {
-    width = 1280;
-    height = 720;
-  } else if (qualityValue === "480p") {
-    width = 854;
-    height = 480;
-  } else if (qualityValue === "360p") {
-    width = 640;
-    height = 360;
-  } else if (qualityValue === "240p") {
-    width = 426;
-    height = 240;
-  }
+  const defaultSettings = { audioBitsPerSecond: 128000, videoBitsPerSecond: 5000000, width: 1920, height: 1080 };
+  const { audioBitsPerSecond, videoBitsPerSecond, width, height } = settingsMap[qualityValue] || defaultSettings;
+  const duration = 3 * 60 * 1000; // 3 minutes
 
   const mimeTypes = [
     "video/webm;codecs=h264",
@@ -55,11 +23,7 @@ function getRecordingSettings(qualityValue) {
     "video/webm;codecs=vp9,opus",
   ];
 
-  // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
   let mimeType = mimeTypes[0];
-  //     mimeTypes.find((mimeType) =>
-  //   MediaRecorder.isTypeSupported(mimeType),
-  // );
 
   const constrains = {
     frameRate: {
