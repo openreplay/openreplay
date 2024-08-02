@@ -3,6 +3,7 @@ import logging
 from typing import Callable
 
 from fastapi import Depends, Security
+from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
 from fastapi.security import SecurityScopes
 from starlette import status
@@ -31,6 +32,11 @@ class ORRoute(APIRoute):
             logger.debug(f"call processed by: {self.methods} {self.path_format}")
             try:
                 response: Response = await original_route_handler(request)
+            except RequestValidationError as exc:
+                # 422 validation exception
+                logger.warning(f"422 exception when calling: {request.method} {request.url}")
+                logger.warning(exc.errors())
+                raise exc
             except HTTPException as e:
                 if e.status_code // 100 == 4:
                     return JSONResponse(content={"errors": e.detail if isinstance(e.detail, list) else [e.detail]},
@@ -41,6 +47,8 @@ class ORRoute(APIRoute):
             if isinstance(response, JSONResponse):
                 response: JSONResponse = response
                 body = json.loads(response.body.decode('utf8'))
+                response.body = response.render(helper.cast_session_id_to_string(body))
+                response.headers["Content-Length"] = str(len(response.body))
                 if response.status_code == 200 \
                         and body is not None and isinstance(body, dict) \
                         and body.get("errors") is not None:
@@ -48,6 +56,7 @@ class ORRoute(APIRoute):
                         response.status_code = status.HTTP_404_NOT_FOUND
                     else:
                         response.status_code = status.HTTP_400_BAD_REQUEST
+
             return response
 
         return custom_route_handler

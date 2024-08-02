@@ -223,26 +223,6 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
-# for backward compatibility
-@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions", "replay"])
-def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
-                context: schemas.CurrentContext = Depends(OR_context)):
-    if not sessionId.isnumeric():
-        return {"errors": ["session not found"]}
-    else:
-        sessionId = int(sessionId)
-    data = sessions_replay.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                         include_fav_viewed=True, group_metadata=True, context=context)
-    if data is None:
-        return {"errors": ["session not found"]}
-    if data.get("inDB"):
-        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
-                                  session_id=sessionId)
-    return {
-        'data': data
-    }
-
-
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
 def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
