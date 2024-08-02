@@ -17,9 +17,14 @@ export default class SpotStore {
   accessKey: string | undefined = undefined;
   pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
+  accessError = false;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setAccessError(error: boolean) {
+    this.accessError = error;
   }
 
   clearCurrent = () => {
@@ -84,14 +89,21 @@ export default class SpotStore {
   }
 
   async fetchSpotById(id: string) {
-    const response = await this.withLoader(() =>
-      spotService.fetchSpot(id, this.accessKey)
-    );
+    try {
+      const response = await this.withLoader(() =>
+        spotService.fetchSpot(id, this.accessKey)
+      );
 
-    const spotInst = new Spot({ ...response.spot, id });
-    this.setCurrentSpot(spotInst);
+      const spotInst = new Spot({ ...response.spot, id });
+      this.setCurrentSpot(spotInst);
 
-    return spotInst;
+      return spotInst;
+    } catch (e) {
+      if (e.response.status === 401 || e.response.status === 403) {
+        this.setAccessError(true);
+      }
+      throw e;
+    }
   }
 
   async addComment(spotId: string, comment: string, userName: string) {

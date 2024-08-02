@@ -54,7 +54,6 @@ export default class SpotService extends BaseService {
   async fetchSpot(id: string, accessKey?: string): Promise<GetSpotResponse> {
     return this.client.get(`/spot/v1/spots/${id}${accessKey ? `?key=${accessKey}` : ''}`)
       .then(r => r.json())
-      .catch(console.error)
   }
 
   async updateSpot(id: string, filter: UpdateSpotRequest) {
