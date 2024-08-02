@@ -1,4 +1,9 @@
-import { stringConditional, tagElementOperators, targetConditional } from 'App/constants/filterOptions';
+import {
+  clickSelectorOperators,
+  stringConditional,
+  tagElementOperators,
+  targetConditional
+} from 'App/constants/filterOptions';
 import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
@@ -91,7 +96,7 @@ export const filters = [
     category: FilterCategory.INTERACTIONS,
     label: 'Click',
     operator: 'on',
-    operatorOptions: filterOptions.targetOperators,
+    operatorOptions: filterOptions.targetOperators.concat(clickSelectorOperators),
     icon: 'filters/click',
     isEvent: true
   },

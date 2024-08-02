@@ -61,6 +61,15 @@ export const stringOperatorsPerformance = options.filter(({ key }) => stringFilt
 export const targetOperators = options.filter(({ key }) => targetFilterKeys.includes(key));
 export const targetConditional = options.filter(({ key }) => ['on', 'notOn', 'startsWith', 'endsWith', 'contains'].includes(key));
 export const stringConditional = options.filter(({ key }) => ['isAny', 'is', 'isNot', 'startsWith', 'endsWith', 'contains'].includes(key));
+export const clickSelectorOperators = [
+  { key: 'selectorIs', label: 'selector is', value: 'selectorIs' },
+  { key: 'selectorIsAny', label: 'selector is any', value: 'selectorIsAny' },
+  { key: 'selectorIsNot', label: 'selector is not', value: 'selectorIsNot' },
+  { key: 'selectorContains', label: 'selector contains', value: 'selectorContains' },
+  { key: 'selectorNotContains', label: 'selector not contains', value: 'selectorNotContains' },
+  { key: 'selectorStartsWith', label: 'selector starts with', value: 'selectorStartsWith' },
+  { key: 'selectorEndsWith', label: 'selector ends with', value: 'selectorEndsWith' }
+]
 
 export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
