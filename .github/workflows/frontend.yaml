@@ -21,8 +21,10 @@ jobs:
       - name: Cache node modules
         uses: actions/cache@v4
         with:
-          path: node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          path: |
+            /home/runner/work/openreplay/openreplay/frontend/node_modules
+            /home/runner/work/openreplay/openreplay/frontend/.yarn
+          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
