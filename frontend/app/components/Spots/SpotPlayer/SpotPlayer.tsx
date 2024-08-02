@@ -133,8 +133,13 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   }, []);
   if (!spotStore.currentSpot) {
     return (
-      <div className={'w-screen h-screen flex items-center justify-center'}>
-        <Loader />
+      <div className={'w-screen h-screen flex items-center justify-center flex-col gap-2'}>
+        {spotStore.accessError ? (
+          <>
+            <div className={'font-semibold'}>The public link to this Spot video has expired</div>
+            <div>Either the link’s set time has expired, or public sharing has been disabled. Please contact the sender for a new link</div>
+          </>
+        ) : <Loader />}
       </div>
     );
   }
