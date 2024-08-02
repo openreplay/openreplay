@@ -39,10 +39,10 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
   };
   return (
     <>
-      <div className={'flex items-center mb-2 gap-2'}>
-        <Icon name={'sparkles'} size={16} />
-        <div className={'font-semibold'}>What would you like to visualize?</div>
-      </div>
+      {!inModal ? <div className={"flex items-center mb-2 gap-2"}>
+        <Icon name={"sparkles"} size={16} />
+        <div className={"font-semibold"}>What would you like to visualize?</div>
+      </div> : null}
       <div style={gradientBox}>
         <Input
           wrapperClassName={'w-full pr-2'}
@@ -100,11 +100,10 @@ const QueryModal = observer(() => {
       centered={true}
     >
       <div className={'flex flex-col gap-2'}>
-        <InputBox inModal />
         {aiFiltersStore.isLoading ? (
           <Loader />
         ) : (
-          <CreateCard onAdded={onClose} />
+          <CreateCard extra={<InputBox inModal />} onAdded={onClose} />
         )}
       </div>
     </Modal>

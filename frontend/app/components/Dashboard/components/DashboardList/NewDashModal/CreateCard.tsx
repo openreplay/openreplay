@@ -22,6 +22,7 @@ interface Props {
     // cardType: string,
     onBack?: () => void
     onAdded?: () => void
+    extra?: React.ReactNode
 }
 
 function CreateCard(props: Props) {
@@ -96,6 +97,7 @@ function CreateCard(props: Props) {
                     </Space>
                 </Button>
             </div>
+            {props.extra}
             {/*<CardBuilder siteId={siteId}/>*/}
             <WidgetFormNew/>
             <WidgetPreview className="" name={metric.name} isEditing={true}/>
