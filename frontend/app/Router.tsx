@@ -66,10 +66,48 @@ const Router: React.FC<RouterProps> = (props) => {
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
   const handleJwtFromUrl = () => {
-    const urlJWT = new URLSearchParams(location.search).get('jwt');
+    const params = new URLSearchParams(location.search)
+    const urlJWT = params.get('jwt');
+    const spotJwt = params.get('spotJwt');
+    if (spotJwt) {
+      handleSpotLogin(spotJwt);
+    }
     if (urlJWT) {
       props.setJwt(urlJWT);
     }
+  };
+
+  const handleSpotLogin = (jwt: string) => {
+    let tries = 0;
+    if (!jwt) {
+      return;
+    }
+    let int: ReturnType<typeof setInterval>;
+
+    const onSpotMsg = (event: any) => {
+      if (event.data.type === 'orspot:logged') {
+        clearInterval(int);
+        window.removeEventListener('message', onSpotMsg);
+        toast.success('You have been logged into Spot successfully');
+      }
+    };
+    window.addEventListener('message', onSpotMsg);
+
+    int = setInterval(() => {
+      if (tries > 20) {
+        clearInterval(int);
+        window.removeEventListener('message', onSpotMsg);
+        return;
+      }
+      window.postMessage(
+        {
+          type: 'orspot:token',
+          token: jwt,
+        },
+        '*'
+      );
+      tries += 1;
+    }, 250);
   };
 
   const handleDestinationPath = () => {
