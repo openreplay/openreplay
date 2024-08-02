@@ -11,5 +11,6 @@ async function requestMicrophoneAccess() {
     console.error("Error requesting audio permission:", error);
   }
 }
-
-void requestMicrophoneAccess();
+document.addEventListener('DOMContentLoaded', () => {
+  void requestMicrophoneAccess();
+});
