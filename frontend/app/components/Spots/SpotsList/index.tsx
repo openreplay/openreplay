@@ -70,7 +70,7 @@ function SpotsList() {
   };
 
   return (
-    <div className={'w-full relative'}>
+    <div className={'relative w-full mx-auto'}  style={{ maxWidth: 1360 }}>
       <div
         className={
           'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm mb-2 w-full z-50'
@@ -83,7 +83,7 @@ function SpotsList() {
         />
       </div>
 
-      <div className={'mx-auto pb-4'} style={{ maxWidth: 1360 }}>
+      <div className={'pb-4 w-full'}>
         {spotStore.total === 0 ? (
           spotStore.isLoading ? (
             <Loader />
