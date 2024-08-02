@@ -67,7 +67,7 @@ export default class SpotStore {
     this.total = total;
   }
 
-  async fetchSpots() {
+   fetchSpots = async () => {
     const filters = {
       page: this.page,
       filterBy: this.filter,
