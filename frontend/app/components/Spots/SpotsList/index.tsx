@@ -11,7 +11,7 @@ import { Icon, Loader, Pagination } from 'UI';
 import withPermissions from '../../hocs/withPermissions';
 import SpotListItem from './SpotListItem';
 
-function SpotsListHeader({
+const SpotsListHeader = observer(({
   onDelete,
   selectedCount,
   onClearSelection,
@@ -19,7 +19,7 @@ function SpotsListHeader({
   onDelete: () => void;
   selectedCount: number;
   onClearSelection: () => void;
-}) {
+}) => {
   const { spotStore } = useStore();
 
   const onSearch = (value: string) => {
@@ -106,7 +106,7 @@ function SpotsListHeader({
       </div>
     </div>
   );
-}
+})
 
 function SpotsList() {
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
