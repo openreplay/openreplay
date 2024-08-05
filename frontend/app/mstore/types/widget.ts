@@ -280,6 +280,15 @@ export default class Widget {
         return this.metricId !== undefined;
     }
 
+    calculateTotalSeries = (data: any): any => {
+        return data.map(entry => {
+            const total = Object.keys(entry)
+              .filter(key => key !== 'timestamp' && key !== 'time')
+              .reduce((sum, key) => sum + entry[key], 0);
+            return { ...entry, Total: total };
+        });
+    };
+
 
     setData(data: any, period: any) {
         const _data: any = {...data};
@@ -320,19 +329,20 @@ export default class Widget {
                         return unique;
                     }, []);
             } else {
-                _data['chart'] = getChartFormatter(period)(Array.isArray(data) ? data : []);
-                _data['namesMap'] = Array.isArray(data)
-                    ? data
-                        .map((i) => Object.keys(i))
-                        .flat()
-                        .filter((i) => i !== 'time' && i !== 'timestamp')
-                        .reduce((unique: any, item: any) => {
-                            if (!unique.includes(item)) {
-                                unique.push(item);
-                            }
-                            return unique;
-                        }, [])
-                    : [];
+                const updatedData: any = this.calculateTotalSeries(data);
+                _data['chart'] = getChartFormatter('period')(updatedData);
+                _data['namesMap'] = Array.isArray(updatedData)
+                  ? updatedData
+                    .map((i) => Object.keys(i))
+                    .flat()
+                    .filter((i) => i !== 'time' && i !== 'timestamp')
+                    .reduce((unique: string[], item: string) => {
+                        if (!unique.includes(item)) {
+                            unique.push(item);
+                        }
+                        return unique;
+                    }, [])
+                  : [];
             }
         }
 
