@@ -3,8 +3,10 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/spot/auth"
 	"openreplay/backend/pkg/spot/service"
 	"sync"
+	"time"
 
 	"github.com/docker/distribution/context"
 	"github.com/gorilla/mux"
@@ -20,6 +22,7 @@ type Router struct {
 	router   *mux.Router
 	mutex    *sync.RWMutex
 	services *service.ServicesBuilder
+	limiter  *UserRateLimiter
 }
 
 func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *service.ServicesBuilder) (*Router, error) {
@@ -36,6 +39,7 @@ func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *service.Serv
 		cfg:      cfg,
 		mutex:    &sync.RWMutex{},
 		services: services,
+		limiter:  NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 	}
 	e.init()
 	return e, nil
@@ -62,6 +66,7 @@ func (e *Router) init() {
 	// CORS middleware
 	e.router.Use(e.corsMiddleware)
 	e.router.Use(e.authMiddleware)
+	e.router.Use(e.rateLimitMiddleware)
 	e.router.Use(e.actionMiddleware)
 }
 
@@ -127,6 +132,19 @@ func isSpotWithKeyRequest(r *http.Request) bool {
 		return true
 	}
 	return false
+}
+
+func (e *Router) rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value("userData").(*auth.User)
+		rl := e.limiter.GetRateLimiter(user.ID)
+
+		if !rl.Allow() {
+			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
