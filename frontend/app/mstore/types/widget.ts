@@ -281,14 +281,13 @@ export default class Widget {
     }
 
     calculateTotalSeries = (data: any): any => {
-        return data.map(entry => {
+        return Array.isArray(data) ? data.map(entry => {
             const total = Object.keys(entry)
               .filter(key => key !== 'timestamp' && key !== 'time')
               .reduce((sum, key) => sum + entry[key], 0);
             return { ...entry, Total: total };
-        });
+        }) : [];
     };
-
 
     setData(data: any, period: any) {
         const _data: any = {...data};
