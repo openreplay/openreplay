@@ -267,8 +267,8 @@ TYPE_TO_COLUMN = {
     schemas.EventType.INPUT: "label",
     schemas.EventType.LOCATION: "url_path",
     schemas.EventType.CUSTOM: "name",
-    schemas.EventType.REQUEST: "url_path",
-    schemas.EventType.GRAPHQL: "name",
+    schemas.FetchFilterType.FETCH_URL: "url_path",
+    schemas.GraphqlFilterType.GRAPHQL_NAME: "name",
     schemas.EventType.STATE_ACTION: "name",
     # For ERROR, sessions search is happening over name OR message,
     # for simplicity top 10 is using name only
@@ -288,6 +288,10 @@ TYPE_TO_COLUMN = {
     schemas.FilterType.UTM_MEDIUM: "utm_medium",
     schemas.FilterType.UTM_CAMPAIGN: "utm_campaign",
 }
+
+
+def is_top_supported(event_type):
+    return TYPE_TO_COLUMN.get(event_type, False)
 
 
 def get_top_values(project_id, event_type, event_key=None):
