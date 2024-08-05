@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Icon, Loader, Pagination } from 'UI';
+import { Icon, Loader, NoContent, Pagination } from "UI";
 
 import withPermissions from '../../hocs/withPermissions';
 import SpotListItem from './SpotListItem';
@@ -84,29 +84,33 @@ function SpotsList() {
       </div>
 
       <div className={'pb-4 w-full'}>
-        {spotStore.total === 0 ? (
-          spotStore.isLoading ? (
-            <Loader />
-          ) : (
-            <EmptyPage />
-          )
+        {spotStore.total === 0 && spotStore.query === ''
+         ? (spotStore.isLoading
+            ? (<Loader />)
+            : (<EmptyPage />)
         ) : (
           <>
-            <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
-              {spotStore.spots.map((spot) => (
-                <SpotListItem
-                  key={spot.spotId}
-                  spot={spot}
-                  onDelete={() => onDelete(spot.spotId)}
-                  onRename={onRename}
-                  onVideo={onVideo}
-                  onSelect={(checked: boolean) =>
-                    handleSelectSpot(spot.spotId, checked)
-                  }
-                  isSelected={isSpotSelected(spot.spotId)}
-                />
-              ))}
-            </div>
+            <NoContent
+              show={spotStore.spots.length === 0}
+              title={'No spots found'}
+              subtext={'Try to search for something else'}
+            >
+              <div className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}>
+                {spotStore.spots.map((spot) => (
+                  <SpotListItem
+                    key={spot.spotId}
+                    spot={spot}
+                    onDelete={() => onDelete(spot.spotId)}
+                    onRename={onRename}
+                    onVideo={onVideo}
+                    onSelect={(checked: boolean) =>
+                      handleSelectSpot(spot.spotId, checked)
+                    }
+                    isSelected={isSpotSelected(spot.spotId)}
+                  />
+                ))}
+              </div>
+            </NoContent>
             <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
                 Showing{' '}
