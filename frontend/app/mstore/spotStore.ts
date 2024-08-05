@@ -108,7 +108,7 @@ export default class SpotStore {
 
   async addComment(spotId: string, comment: string, userName: string) {
     await this.withLoader(async () => {
-      await spotService.addComment(spotId, { comment, userName });
+      await spotService.addComment(spotId, { comment, userName }, this.accessKey);
       const spot = this.currentSpot;
       if (spot) {
         spot.comments!.push({
