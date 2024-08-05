@@ -28,10 +28,10 @@ def events_search(projectId: int, q: Optional[str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
     if type and (not q or len(q) == 0) \
-            and (schemas.FilterType.has_value(type) or schemas.EventType.has_value(type)):
+            and (autocomplete.is_top_supported(type)):
         # TODO: check if type is a valid value for autocomplete
-        return autocomplete.get_top_values(project_id=projectId, event_type=type,event_key=key)
-    elif (not q or len(q) == 0) and not type:
+        return autocomplete.get_top_values(project_id=projectId, event_type=type, event_key=key)
+    elif (not q or len(q) == 0):
         return {"data": []}
 
     if live:
