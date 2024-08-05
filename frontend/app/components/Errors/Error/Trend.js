@@ -1,14 +1,15 @@
 import React from 'react';
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 import domain from "Components/Dashboard/Widgets/common/domain";
-import moment from 'moment';
+import { DateTime } from 'luxon'
 
 const CustomTooltip = ({ active, payload, label, timeFormat = 'hh:mm a' }) => {
   if (active) {
 		const p = payload[0].payload;
+		const dateStr = DateTime.fromMillis(p.timestamp).toFormat(timeFormat)
     return (
       <div className="rounded border bg-white p-2">
-        <p className="label text-sm color-gray-medium">{`${moment(p.timestamp).format(timeFormat)}`}</p>
+        <p className="label text-sm color-gray-medium">{dateStr}</p>
         <p className="text-sm">Sessions: {p.count}</p>
       </div>
     );

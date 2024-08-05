@@ -15,7 +15,7 @@ function ErrorsBadge({ errorsStats = {}, fetchNewErrorsCount, projects }) {
   useEffect(() => {
     if (projects.size === 0 || !!intervalId) return;
     
-    const params = { startTimestamp: weekRange.start.unix() * 1000, endTimestamp: weekRange.end.unix() * 1000 };
+    const params = { startTimestamp: weekRange.start.ts, endTimestamp: weekRange.end.ts };
     fetchNewErrorsCount(params)
 
     intervalId = setInterval(() => {

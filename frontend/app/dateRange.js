@@ -1,10 +1,8 @@
-import origMoment from "moment";
-import { extendMoment } from "moment-range";
-export const moment = extendMoment(origMoment);
-import { DateTime } from "luxon";
+import { DateTime, Interval } from 'luxon';
+
 import { TIMEZONE } from 'App/constants/storageKeys';
 
-export const CUSTOM_RANGE = "CUSTOM_RANGE";
+export const CUSTOM_RANGE = 'CUSTOM_RANGE';
 
 const DATE_RANGE_LABELS = {
     // LAST_30_MINUTES: '30 Minutes',
@@ -21,94 +19,90 @@ const DATE_RANGE_LABELS = {
 
 const DATE_RANGE_VALUES = {};
 Object.keys(DATE_RANGE_LABELS).forEach((key) => {
-    DATE_RANGE_VALUES[key] = key;
+  DATE_RANGE_VALUES[key] = key;
 });
 
 export { DATE_RANGE_VALUES };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
 
 export const DATE_RANGE_OPTIONS = Object.keys(DATE_RANGE_LABELS).map((key) => {
-    return {
-        label: DATE_RANGE_LABELS[key],
-        value: key,
-    };
+  return {
+    label: DATE_RANGE_LABELS[key],
+    value: key,
+  };
 });
 
-export function getDateRangeFromTs(start, end) {
-    return moment.range(moment(start), moment(end));
-}
-
 export function getDateRangeLabel(value) {
-    return DATE_RANGE_LABELS[value];
+  return DATE_RANGE_LABELS[value];
 }
 
 export function getDateRangeFromValue(value) {
-    const tz = JSON.parse(localStorage.getItem(TIMEZONE));
-    const offset = tz ? tz.label.slice(-6) : 0;
+  const tz = JSON.parse(localStorage.getItem(TIMEZONE));
+  const offset = tz.value
 
-    switch (value) {
-        case DATE_RANGE_VALUES.LAST_30_MINUTES:
-            return moment.range(
-                moment().utcOffset(offset).startOf("hour").subtract(30, "minutes"),
-                moment().utcOffset(offset).startOf("hour")
-            );
-            case DATE_RANGE_VALUES.YESTERDAY:
-                return moment.range(
-                    moment().utcOffset(offset).subtract(1, "days").startOf("day"),
-                    moment().utcOffset(offset).subtract(1, "days").endOf("day")
-                    );
-        case DATE_RANGE_VALUES.TODAY:
-            return moment.range(moment().utcOffset(offset).startOf("day"), moment().utcOffset(offset).endOf("day"));
-        case DATE_RANGE_VALUES.LAST_24_HOURS:
-            return moment.range(moment().utcOffset(offset).subtract(24, "hours"), moment().utcOffset(offset));
-        case DATE_RANGE_VALUES.LAST_7_DAYS:
-            return moment.range(
-                moment().utcOffset(offset).subtract(7, "days").startOf("day"),
-                moment().utcOffset(offset).endOf("day")
-            );
-        case DATE_RANGE_VALUES.LAST_30_DAYS:
-            return moment.range(
-                moment().utcOffset(offset).subtract(30, "days").startOf("day"),
-                moment().utcOffset(offset).endOf("day")
-            );
-        case DATE_RANGE_VALUES.THIS_MONTH:
-            return moment().utcOffset(offset).range("month");
-        case DATE_RANGE_VALUES.LAST_MONTH:
-            return moment().utcOffset(offset).subtract(1, "months").range("month");
-        case DATE_RANGE_VALUES.THIS_YEAR:
-            return moment().utcOffset(offset).range("year");
-        case DATE_RANGE_VALUES.CUSTOM_RANGE:
-            return moment.range(moment().utcOffset(offset), moment().utcOffset(offset));
-    }
-    return null;
+  const now = DateTime.now().setZone(offset);
+
+  switch (value) {
+    // case DATE_RANGE_VALUES.LAST_30_MINUTES:
+    //   return Interval.fromDateTimes(
+    //     now.minus({ minutes: 30 }).startOf('minute'),
+    //     now.startOf('minute')
+    //   );
+    // case DATE_RANGE_VALUES.YESTERDAY:
+    //   return Interval.fromDateTimes(
+    //     now.minus({ days: 1 }).startOf('day'),
+    //     now.minus({ days: 1 }).endOf('day')
+    //   );
+    // case DATE_RANGE_VALUES.TODAY:
+    //   return Interval.fromDateTimes(now.startOf('day'), now.endOf('day'));
+    case DATE_RANGE_VALUES.LAST_24_HOURS:
+      return Interval.fromDateTimes(now.minus({ hours: 24 }), now);
+    case DATE_RANGE_VALUES.LAST_7_DAYS:
+      const range = Interval.fromDateTimes(
+        now.minus({ days: 7 }).startOf('day'),
+        now.endOf('day')
+      );
+        console.log(range, now.minus({ days: 7}))
+      return Interval.fromDateTimes(
+        now.minus({ days: 7 }).startOf('day'),
+        now.endOf('day')
+      );
+    case DATE_RANGE_VALUES.LAST_30_DAYS:
+      return Interval.fromDateTimes(
+        now.minus({ days: 30 }).startOf('day'),
+        now.endOf('day')
+      );
+    // case DATE_RANGE_VALUES.THIS_MONTH:
+    //   return Interval.fromDateTimes(now.startOf('month'), now.endOf('month'));
+    // case DATE_RANGE_VALUES.LAST_MONTH:
+    //   const lastMonth = now.minus({ months: 1 });
+    //   return Interval.fromDateTimes(
+    //     lastMonth.startOf('month'),
+    //     lastMonth.endOf('month')
+    //   );
+    // case DATE_RANGE_VALUES.THIS_YEAR:
+    //   return Interval.fromDateTimes(now.startOf('year'), now.endOf('year'));
+    // case DATE_RANGE_VALUES.CUSTOM_RANGE:
+    //   return Interval.fromDateTimes(now, now);
+    default:
+      throw new Error('Invalid date range value');
+  }
 }
 
 /**
  * Check if the given date is today/yesterday else return in specified format.
- * @param {Date} date Date to be cheked.
+ * @param {DateTime} date Date to be checked.
  * @param {String} format Returning date format.
- * @return {String} Formated date string.
+ * @return {String} Formatted date string.
  */
 export const checkForRecent = (date, format) => {
-    const d = new Date();
-    // Today
-    if (date.hasSame(d, "day")) return "Today";
+  const now = DateTime.now();
+  // Today
+  if (date.hasSame(now, 'day')) return 'Today';
 
-    // Yesterday
-    if (date.hasSame(d.setDate(d.getDate() - 1), "day")) return "Yesterday";
+  // Yesterday
+  if (date.hasSame(now.minus({ days: 1 }), 'day')) return 'Yesterday';
 
-    // Formatted
-    return date.toFormat(format);
-};
-
-export const overPastString = (period) => {
-    if (period.rangeName === DATE_RANGE_VALUES.CUSTOM_RANGE) {
-        const format = "LLL dd, yyyy HH:mm";
-        const { startTimestamp, endTimestamp } = period.toTimestamps();
-        const start = DateTime.fromMillis(startTimestamp).toFormat(format);
-        const end = DateTime.fromMillis(endTimestamp).toFormat(format);
-        return ` between ${start} - ${end}`;
-    }
-
-    return ' over the ' + DATE_RANGE_LABELS[period.rangeName];
+  // Formatted
+  return date.toFormat(format);
 };

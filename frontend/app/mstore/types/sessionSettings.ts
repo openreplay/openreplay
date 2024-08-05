@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import moment from 'moment';
 import { SKIP_TO_ISSUE, TIMEZONE, SHOWN_TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
+import { DateTime } from 'luxon'
 
 export type Timezone = {
     label: string;
@@ -76,16 +76,14 @@ export default class SessionSettings {
   shownTimezone: 'user' | 'local';
 
   constructor() {
-    // compatibility fix for old timezone storage
-    // TODO: remove after a while (1.7.1?)
-    const userTimezoneOffset = moment().format('Z');
+    const userTimezoneOffset = DateTime.local().toFormat('Z');
     const defaultTimezone = this.defaultTimezones.find((tz) =>
       tz.value.includes('UTC' + userTimezoneOffset.slice(0, 3))
     ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
-    this.timezoneFix(defaultTimezone);
-    // @ts-ignore
-    this.timezone = JSON.parse(localStorage.getItem(TIMEZONE)) || defaultTimezone;
+
+    const savedTz = localStorage.getItem(TIMEZONE)
+    this.timezone = savedTz ? JSON.parse(savedTz) : defaultTimezone;
     if (localStorage.getItem(MOUSE_TRAIL) === null) {
       localStorage.setItem(MOUSE_TRAIL, 'true');
     }
@@ -111,12 +109,6 @@ export default class SessionSettings {
   changeConditionalCapture = (all: boolean) => {
     this.conditionalCapture = all;
   };
-
-  timezoneFix(defaultTimezone: Record<string, string>) {
-    if (localStorage.getItem(TIMEZONE) === '[object Object]' || !localStorage.getItem(TIMEZONE)) {
-      localStorage.setItem(TIMEZONE, JSON.stringify(defaultTimezone));
-    }
-  }
 
   updateKey = (key: string, value: any) => {
     runInAction(() => {

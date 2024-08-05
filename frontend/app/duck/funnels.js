@@ -53,8 +53,8 @@ const REMOVE_SUCCESS = success(REMOVE);
 const range = getDateRangeFromValue(LAST_7_DAYS);
 const defaultDateFilters = {
   rangeValue: LAST_7_DAYS,
-  startDate: range.start.unix() * 1000,
-  endDate: range.end.unix() * 1000
+  startDate: range.start.ts,
+  endDate: range.end.ts
 }
 
 const initialState = Map({
