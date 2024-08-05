@@ -86,7 +86,7 @@ function BottomSection({
   return (
     <div
       className={cn(
-        'mt-auto border-t	pt-2',
+        'mt-auto border-t	p-2',
         loggedIn ? 'bg-white' : 'bg-active-dark-blue'
       )}
     >

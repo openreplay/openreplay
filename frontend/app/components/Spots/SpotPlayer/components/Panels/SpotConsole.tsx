@@ -22,7 +22,6 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
     setActiveTab(tab);
   };
   const logs = spotPlayerStore.logs;
-  console.log(logs)
   const filteredList = React.useMemo(() => {
     return logs.filter((log) => {
       const tabType = activeTab.text.toLowerCase();
@@ -31,7 +30,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
     });
   }, [activeTab]);
   const jump = (t: number) => {
-    spotPlayerStore.setTime(t);
+    spotPlayerStore.setTime(t / 1000);
   };
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
