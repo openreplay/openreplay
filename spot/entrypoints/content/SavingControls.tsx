@@ -46,6 +46,7 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
   const [endPos, setEndPos] = createSignal(100);
   const [dragging, setDragging] = createSignal<string | null>(null);
   const [openInNewTab, setOpenInNewTab] = createSignal(true);
+  const [isTyping, setIsTyping] = createSignal(false);
 
   createEffect(() => {
     setTrimBounds([0, 0]);
@@ -61,7 +62,8 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
   const spacePressed = (e: KeyboardEvent) => {
     if (
       e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
+      e.target instanceof HTMLTextAreaElement ||
+      isTyping()
     ) {
       return;
     }
@@ -441,6 +443,8 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
                     placeholder="Name this Spot"
                     maxlength={64}
                     value={name()}
+                    onFocus={() => setIsTyping(true)}
+                    onBlur={() => setIsTyping(false)}
                     onInput={(e) => setName(e.currentTarget.value)}
                     class="input input-bordered w-full input-sm text-base mt-1"
                   />
@@ -451,6 +455,8 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
                     placeholder="Add more details..."
                     value={description()}
                     maxLength={256}
+                    onFocus={() => setIsTyping(true)}
+                    onBlur={() => setIsTyping(false)}
                     onInput={(e) => setDescription(e.currentTarget.value)}
                     class="textarea textarea-bordered w-full textarea-sm text-base leading-normal mt-1"
                     rows={4}
