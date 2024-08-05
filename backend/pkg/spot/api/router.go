@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"openreplay/backend/pkg/spot/service"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/docker/distribution/context"
@@ -100,7 +98,7 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path))
 		if err != nil {
 			e.log.Warn(r.Context(), "Unauthorized request: %s", err)
-			if !isGetSpotRequest(r.URL.Path) {
+			if !isSpotWithKeyRequest(r) {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -118,24 +116,17 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func isGetSpotRequest(path string) bool {
-	// Check if the path starts with the correct prefix
-	prefix := "/v1/spots/"
-	if !strings.HasPrefix(path, prefix) {
-		return false
-	}
-
-	// Extract the ID part after the prefix
-	id := path[len(prefix):]
-
-	// Check if the ID part is a valid number
-	_, err := strconv.Atoi(id)
+func isSpotWithKeyRequest(r *http.Request) bool {
+	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
 	if err != nil {
 		return false
 	}
-
-	// Ensure that the path ends after the ID part (no additional characters)
-	return len(id) > 0
+	getSpotPrefix := "/v1/spots/{id}"            // GET
+	addCommentPrefix := "/v1/spots/{id}/comment" // POST
+	if (pathTemplate == getSpotPrefix && r.Method == "GET") || (pathTemplate == addCommentPrefix && r.Method == "POST") {
+		return true
+	}
+	return false
 }
 
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
