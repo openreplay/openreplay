@@ -16,8 +16,10 @@ import spotPlayerStore from '../../spotPlayerStore';
 function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
   const _list = React.useRef<VListHandle>(null);
-  const onTabClick = (tab: any) => {
-    setActiveTab(tab);
+  const cache = useCellMeasurerCache();
+  const onTabClick = (tab: string) => {
+    const newTab = TABS.find((t) => t.text === tab);
+    setActiveTab(newTab);
   };
   const logs = spotPlayerStore.logs;
   const filteredList = React.useMemo(() => {
