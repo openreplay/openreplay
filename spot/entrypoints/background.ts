@@ -1,6 +1,6 @@
 import { WebRequest } from "webextension-polyfill";
 export default defineBackground(() => {
-  const CHECK_INT = 24 * 60 * 60 * 1000;
+  const CHECK_INT = 60 * 1000;
   const messages = {
     popup: {
       from: {
@@ -42,7 +42,7 @@ export default defineBackground(() => {
         setJWT: "content:set-jwt",
         micStatus: "content:mic-status",
         unmount: "content:unmount",
-        notification: "notif:display"
+        notification: "notif:display",
       },
     },
     injected: {
@@ -161,6 +161,9 @@ export default defineBackground(() => {
 
   let slackChannels: { name: string; webhookId: number }[] = [];
   const refreshToken = async (ingest: string) => {
+    if (!isTokenExpired(jwtToken)) {
+      return true;
+    }
     const resp = await fetch(`${ingest}/spot/refresh`, {
       method: "GET",
       headers: {
@@ -180,7 +183,9 @@ export default defineBackground(() => {
     setJWTToken(refreshedJwt);
     return true;
   };
+
   const fetchSlackChannels = async (token: string, ingest: string) => {
+    await refreshToken(ingest);
     const resp = await fetch(`${ingest}/spot/integrations/slack/channels`, {
       method: "GET",
       headers: {
@@ -680,89 +685,93 @@ export default defineBackground(() => {
             },
           );
 
-          const dataUrl = `${safeApiUrl(settings.ingestPoint)}/spot/v1/spots`;
-          fetch(dataUrl, {
-            method: "POST",
-            body: JSON.stringify(dataObj),
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${jwtToken}`,
-            },
-          })
-            .then((r) => {
-              if (r.ok) {
-                return r.json();
-              } else {
-                if (r.status === 401) {
-                  throw new Error(
-                    "Not authorized or no permissions to create Spot",
-                  );
-                }
-              }
-            })
-            .then(async (resp) => {
-              recordingState = {
-                activeTabId: null,
-                area: null,
-                recording: REC_STATE.stopped,
-              };
-              // id of spot, mobURL - for events, videoURL - for video
-              if (!resp || !resp.id) {
-                return sendToActiveTab({
-                  type: messages.content.to.notification,
-                  message: "Couldn't save Spot",
-                });
-              }
-              const { id, mobURL, videoURL } = resp;
-              const link = settings.ingestPoint.includes("api.openreplay.com")
-                ? "https://app.openreplay.com"
-                : settings.ingestPoint;
-              chrome.tabs.create({
-                url: `${link}/view-spot/${id}`,
-                active: settings.openInNewTab,
-              });
-              void sendToActiveTab({
-                type: "content:spot-saved",
-                url: `${link}/view-spot/${id}`,
-              });
-              const blob = base64ToBlob(videoData);
+          const ingestUrl = safeApiUrl(settings.ingestPoint);
 
-              const mPromise = fetch(mobURL, {
-                method: "PUT",
-                body: JSON.stringify(mobData),
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              });
-              const vPromise = fetch(videoURL, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "video/webm",
-                },
-                body: blob,
-              });
-              Promise.all([mPromise, vPromise])
-                .then(async (r) => {
-                  const uploadedUrl = `${safeApiUrl(settings.ingestPoint)}/spot/v1/spots/${id}/uploaded`;
-                  void fetch(uploadedUrl, {
-                    method: "POST",
-                    headers: {
-                      Authorization: `Bearer ${jwtToken}`,
-                    },
+          const dataUrl = `${ingestUrl}/spot/v1/spots`;
+          refreshToken(ingestUrl).then(() => {
+            fetch(dataUrl, {
+              method: "POST",
+              body: JSON.stringify(dataObj),
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${jwtToken}`,
+              },
+            })
+              .then((r) => {
+                if (r.ok) {
+                  return r.json();
+                } else {
+                  if (r.status === 401) {
+                    throw new Error(
+                      "Not authorized or no permissions to create Spot",
+                    );
+                  }
+                }
+              })
+              .then(async (resp) => {
+                recordingState = {
+                  activeTabId: null,
+                  area: null,
+                  recording: REC_STATE.stopped,
+                };
+                // id of spot, mobURL - for events, videoURL - for video
+                if (!resp || !resp.id) {
+                  return sendToActiveTab({
+                    type: messages.content.to.notification,
+                    message: "Couldn't save Spot",
                   });
-                })
-                .catch(console.error);
-            })
-            .catch((e) => {
-              console.error(e);
-              void sendToActiveTab({
-                type: messages.content.to.notification,
-                message: `Error saving Spot: ${e.message}`,
+                }
+                const { id, mobURL, videoURL } = resp;
+                const link = settings.ingestPoint.includes("api.openreplay.com")
+                  ? "https://app.openreplay.com"
+                  : settings.ingestPoint;
+                chrome.tabs.create({
+                  url: `${link}/view-spot/${id}`,
+                  active: settings.openInNewTab,
+                });
+                void sendToActiveTab({
+                  type: "content:spot-saved",
+                  url: `${link}/view-spot/${id}`,
+                });
+                const blob = base64ToBlob(videoData);
+
+                const mPromise = fetch(mobURL, {
+                  method: "PUT",
+                  body: JSON.stringify(mobData),
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                });
+                const vPromise = fetch(videoURL, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "video/webm",
+                  },
+                  body: blob,
+                });
+                Promise.all([mPromise, vPromise])
+                  .then(async (r) => {
+                    const uploadedUrl = `${safeApiUrl(settings.ingestPoint)}/spot/v1/spots/${id}/uploaded`;
+                    void fetch(uploadedUrl, {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${jwtToken}`,
+                      },
+                    });
+                  })
+                  .catch(console.error);
+              })
+              .catch((e) => {
+                console.error(e);
+                void sendToActiveTab({
+                  type: messages.content.to.notification,
+                  message: `Error saving Spot: ${e.message}`,
+                });
+              })
+              .finally(() => {
+                finalSpotObj = defaultSpotObj;
               });
-            })
-            .finally(() => {
-              finalSpotObj = defaultSpotObj;
-            });
+          });
         });
       }
 
@@ -773,14 +782,12 @@ export default defineBackground(() => {
   void browser.runtime.setUninstallURL("https://forms.gle/sMo8da2AvrPg5o7YA");
   browser.runtime.onInstalled.addListener(async ({ reason }) => {
     // Also fired on update and browser_update
-    // if (reason !== "install") return;
+    if (reason !== "install") return;
 
     await browser.tabs.create({
       url: "https://www.openreplay.com/spot/welcome?ref=extension",
       active: true,
     });
-    
-    
   });
   void initializeOffscreenDocument();
 
@@ -1100,11 +1107,11 @@ export default defineBackground(() => {
         };
         void sendToActiveTab({
           type: messages.content.to.unmount,
-        })
+        });
         void sendToActiveTab({
           type: messages.content.to.notification,
           message: "Error starting recording",
-        })
+        });
         return;
       }
       const mountMsg = {
@@ -1246,4 +1253,16 @@ export default defineBackground(() => {
       console.error("Error starting recording", e, activeTab, activeTabId);
     }
   }
+
+  const decodeJwt = (jwt: string): any => {
+    const base64Url = jwt.split(".")[1];
+    const base64 = base64Url.replace("-", "+").replace("_", "/");
+    return JSON.parse(window.atob(base64));
+  };
+
+  const isTokenExpired = (token: string): boolean => {
+    const decoded: any = decodeJwt(token);
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  };
 });
