@@ -1268,6 +1268,9 @@ export default defineBackground(() => {
 
   const decodeJwt = (jwt: string): any => {
     const base64Url = jwt.split(".")[1];
+    if (!base64Url) {
+      return { exp: 0 }
+    }
     const base64 = base64Url.replace("-", "+").replace("_", "/");
     return JSON.parse(atob(base64));
   };
