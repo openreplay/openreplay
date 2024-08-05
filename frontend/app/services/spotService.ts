@@ -70,8 +70,8 @@ export default class SpotService extends BaseService {
       .catch(console.error)
   }
 
-  async addComment(id: string, data: AddCommentRequest) {
-    return this.client.post(`/spot/v1/spots/${id}/comment`, data)
+  async addComment(id: string, data: AddCommentRequest, accessKey?: string) {
+    return this.client.post(`/spot/v1/spots/${id}/comment${accessKey ? `?key=${accessKey}` : ''}`, data)
       .then(r => r.json())
       .catch(console.error)
   }

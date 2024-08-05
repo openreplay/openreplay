@@ -283,6 +283,7 @@ export default defineBackground(() => {
       }
       finalVideoBase64 = "";
       const recArea = request.area;
+      finalSpotObj.startTs = Date.now();
       if (recArea === "tab") {
         function signalTabRecording() {
           recordingState = {
@@ -302,7 +303,6 @@ export default defineBackground(() => {
             settings.consoleLogs,
             () => recordingState.recording,
           );
-          finalSpotObj.startTs = Date.now();
           respond(true);
         }
         if (!recordingState.activeTabId) {
@@ -343,7 +343,6 @@ export default defineBackground(() => {
         ).then(() => {
           respond(true);
         });
-        finalSpotObj.startTs = Date.now();
         return true;
       }
     }

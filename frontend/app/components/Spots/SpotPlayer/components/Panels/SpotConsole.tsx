@@ -29,7 +29,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   }, [activeTab]);
 
   const jump = (t: number) => {
-    spotPlayerStore.setTime(t);
+    spotPlayerStore.setTime(t / 1000);
   };
 
   return (
