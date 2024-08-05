@@ -491,11 +491,11 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
                     <input
                       type="checkbox"
                       class="toggle toggle-primary toggle-xs cursor-pointer"
-                      checked={!openInNewTab()}
+                      checked={openInNewTab()}
                       onChange={toggleOpenInNewTab}
                     />
                     <span class="text-sm label-text ms-1">
-                      Take me to video.
+                      Take me to Spot.
                     </span>
                   </label>
                 </div>
