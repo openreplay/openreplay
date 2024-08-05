@@ -43,6 +43,7 @@ const dropdownStyles = {
       left: 0,
       minWidth: 'fit-content',
       overflow: 'hidden',
+      zIndex: 100,
   }),
   container: (provided: any) => ({
       ...provided,
