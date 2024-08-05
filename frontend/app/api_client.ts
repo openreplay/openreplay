@@ -130,6 +130,7 @@ export default class APIClient {
   async fetch(path: string, params?: any, method: string = 'GET', options: {
     clean?: boolean
   } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
+    let _path = path;
     let jwt = store.getState().getIn(['user', 'jwt']);
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       jwt = await this.handleTokenRefresh();
@@ -175,7 +176,11 @@ export default class APIClient {
       delete init.credentials;
     }
 
-    return fetch(edp + path, init).then((response) => {
+    if (path.includes('PROJECT_ID')) {
+      _path = _path.replace('PROJECT_ID', this.siteId + '');
+    }
+
+    return fetch(edp + _path, init).then((response) => {
       if (response.ok) {
         return response;
       } else {
