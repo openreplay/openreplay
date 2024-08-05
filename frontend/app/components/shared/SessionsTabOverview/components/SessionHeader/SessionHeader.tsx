@@ -7,6 +7,7 @@ import NoteTags from '../Notes/NoteTags';
 import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { setActiveTab } from 'Duck/search';
+import { Space } from 'antd';
 
 interface Props {
   listCount: number;
@@ -51,11 +52,12 @@ function SessionHeader(props: Props) {
             <>
               <SessionTags />
               <div className='mr-auto' />
-              <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
-              <div className='mx-2' />
+              <Space>
+                <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
+                <SessionSort />
+              </Space>
             </>
           )}
-          <SessionSort />
         </div>
       ) : null}
 
