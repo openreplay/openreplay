@@ -22,20 +22,8 @@ class EventGroupWrapper extends React.Component {
     this.props.toggleLoadInfo();
   };
 
-  componentDidUpdate(prevProps) {
-    if (
-      prevProps.showLoadInfo !== this.props.showLoadInfo ||
-      prevProps.query !== this.props.query ||
-      prevProps.event.timestamp !== this.props.event.timestamp ||
-      prevProps.isNote !== this.props.isNote
-    ) {
-      this.props.mesureHeight();
-    }
-  }
-
   componentDidMount() {
     this.props.toggleLoadInfo(this.props.isFirst);
-    this.props.mesureHeight();
   }
 
   onEventClick = (e) => this.props.onEventClick(e, this.props.event);

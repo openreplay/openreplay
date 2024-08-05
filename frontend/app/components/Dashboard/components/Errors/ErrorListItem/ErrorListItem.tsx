@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import moment from 'moment';
+import { DateTime } from 'luxon'
 import { IGNORED, RESOLVED } from 'Types/errorInfo';
 import ErrorName from '../ErrorName';
 import ErrorLabel from '../ErrorLabel';
@@ -76,9 +76,10 @@ export default ErrorListItem;
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active) {
       const p = payload[0].payload;
+			const dateStr = p.timestamp ? DateTime.fromMillis(p.timestamp).toFormat('l') : ''
       return (
         <div className="rounded border bg-white p-2">
-          <p className="label text-sm color-gray-medium">{`${p.timestamp ? moment(p.timestamp).format('l') : ''}`}</p>
+          <p className="label text-sm color-gray-medium">{dateStr}</p>
           <p className="text-sm">Sessions: {p.count}</p>
         </div>
       );

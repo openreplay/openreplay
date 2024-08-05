@@ -2,7 +2,7 @@ import React from 'react';
 import stl from './SelectorCard.module.css';
 import cn from 'classnames';
 import type { MarkedTarget } from 'Player';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'antd'
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {

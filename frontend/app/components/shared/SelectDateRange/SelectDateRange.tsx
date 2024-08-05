@@ -46,6 +46,7 @@ function SelectDateRange(props: Props) {
   };
 
   const onApplyDateRange = (value: any) => {
+    console.log(value)
     const range = new Period({
       rangeName: CUSTOM_RANGE,
       start: value.start,
@@ -105,7 +106,7 @@ function SelectDateRange(props: Props) {
             <div
               className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
               style={{
-                width: '770px',
+                width: '520px',
                 fontSize: '14px',
                 textAlign: 'left',
               }}
@@ -162,7 +163,7 @@ function SelectDateRange(props: Props) {
           <div
             className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
             style={{
-              width: '770px',
+              width: '520px',
               fontSize: '14px',
               textAlign: 'left',
             }}

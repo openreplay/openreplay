@@ -336,3 +336,11 @@ svg {
     --json-boolean: #0184bc;
     --json-null: #0184bc;
 }
+
+.react-daterange-picker__wrapper {
+    display: none!important;
+}
+.react-daterange-picker__calendar {
+    position: relative!important;
+    inset: 0!important;
+}

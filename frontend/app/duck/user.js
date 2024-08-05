@@ -127,7 +127,7 @@ export const login = params => ({
 });
 
 export const loginSuccess = data => ({
-  types: LOGIN.SUCCESS,
+  type: LOGIN.SUCCESS,
   data
 })
 

@@ -8,13 +8,12 @@ import {
   getDateRangeFromValue
 } from 'App/dateRange';
 import Event from './event';
-// import CustomFilter from './customFilter';
 import NewFilter from './newFilter';
 
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
 const range = getDateRangeFromValue(rangeValue);
-const startDate = range.start.unix() * 1000;
-const endDate = range.end.unix() * 1000;
+const startDate = range.start.ts;
+const endDate = range.end.ts;
 
 export default Record({
   name: '',
@@ -86,8 +85,8 @@ export default Record({
     const rValue = filter.rangeValue || rangeValue;
     if (rValue !== CUSTOM_RANGE) {
       const range = getDateRangeFromValue(rValue);
-      startDate = range.start.unix() * 1000;
-      endDate = range.end.unix() * 1000;
+      startDate = range.start.ts;
+      endDate = range.end.ts;
     } else if (filter.startDate && filter.endDate) {
       startDate = filter.startDate;
       endDate = filter.endDate;

@@ -2,7 +2,6 @@ import { Timed } from 'Player';
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tabs, Input, NoContent, Icon } from 'UI';
-import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { PlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
@@ -13,8 +12,8 @@ import StackEventRow from 'Shared/DevTools/StackEventRow';
 import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache';
 import { connect } from 'react-redux';
+import { VList, VListHandle } from 'virtua';
 
 const mapNames = (type: string) => {
   if (type === 'openreplay') return 'OpenReplay';
@@ -153,8 +152,6 @@ function EventsPanel({
     timeoutStartAutoscroll();
   };
 
-  const cache = useCellMeasurerCache();
-
   const showDetails = (item: any) => {
     setIsDetailsModalActive(true);
     showModal(<StackEventModal event={item} />, {
@@ -169,37 +166,12 @@ function EventsPanel({
     stopAutoscroll();
   };
 
-  const _list = React.useRef();
+  const _list = React.useRef<VListHandle>(null);
   useEffect(() => {
     if (_list.current) {
-      // @ts-ignore
-      _list.current.scrollToRow(activeIndex);
+      _list.current.scrollToIndex(activeIndex);
     }
   }, [activeIndex]);
-
-  const _rowRenderer = ({ index, key, parent, style }: any) => {
-    const item = filteredList[index];
-
-    return (
-      // @ts-ignore
-      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-        {() => (
-          <StackEventRow
-            isActive={activeIndex === index}
-            style={style}
-            key={item.key}
-            event={item}
-            onJump={() => {
-              stopAutoscroll();
-              devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
-              jump(item.time);
-            }}
-            onClick={() => showDetails(item)}
-          />
-        )}
-      </CellMeasurer>
-    );
-  };
 
   return (
     <BottomBlock style={{ height: '100%' }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
@@ -235,21 +207,24 @@ function EventsPanel({
           size="small"
           show={filteredList.length === 0}
         >
-          <AutoSizer>
-            {({ height, width }: any) => (
-              <List
-                ref={_list}
-                deferredMeasurementCache={cache}
-                overscanRowCount={5}
-                rowCount={Math.ceil(filteredList.length || 1)}
-                rowHeight={cache.rowHeight}
-                rowRenderer={_rowRenderer}
-                width={width}
-                height={height}
-                scrollToAlignment="center"
+          <VList
+            ref={_list}
+            count={filteredList.length || 1}
+          >
+            {filteredList.map((item, index) => (
+              <StackEventRow
+                isActive={activeIndex === index}
+                key={item.key}
+                event={item}
+                onJump={() => {
+                  stopAutoscroll();
+                  devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+                  jump(item.time);
+                }}
+                onClick={() => showDetails(item)}
               />
-            )}
-          </AutoSizer>
+            ))}
+          </VList>
         </NoContent>
       </BottomBlock.Content>
     </BottomBlock>
