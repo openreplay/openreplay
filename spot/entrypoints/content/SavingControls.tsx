@@ -187,7 +187,7 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
     canvas.width = width;
     canvas.height = height;
 
-    videoRef.currentTime = 3;
+    videoRef.currentTime = duration() ? duration() / 4 : 3;
     context.drawImage(videoRef, 0, 0, canvas.width, canvas.height);
     thumbnailRes = canvas.toDataURL("image/jpeg");
 
