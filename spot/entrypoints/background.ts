@@ -688,7 +688,13 @@ export default defineBackground(() => {
           const ingestUrl = safeApiUrl(settings.ingestPoint);
 
           const dataUrl = `${ingestUrl}/spot/v1/spots`;
-          refreshToken(ingestUrl).then(() => {
+          refreshToken(ingestUrl).then((r) => {
+            if (!r) {
+              void sendToActiveTab({
+                type: messages.content.to.notification,
+                message: `Error saving Spot: couldn't get active login`,
+              });
+            }
             fetch(dataUrl, {
               method: "POST",
               body: JSON.stringify(dataObj),
@@ -771,7 +777,13 @@ export default defineBackground(() => {
               .finally(() => {
                 finalSpotObj = defaultSpotObj;
               });
-          });
+          })
+            .catch(e => {
+              void sendToActiveTab({
+                type: messages.content.to.notification,
+                message: `Error saving Spot: ${e.message}`,
+              });
+            })
         });
       }
 
@@ -1257,7 +1269,7 @@ export default defineBackground(() => {
   const decodeJwt = (jwt: string): any => {
     const base64Url = jwt.split(".")[1];
     const base64 = base64Url.replace("-", "+").replace("_", "/");
-    return JSON.parse(window.atob(base64));
+    return JSON.parse(atob(base64));
   };
 
   const isTokenExpired = (token: string): boolean => {
