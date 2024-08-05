@@ -23,6 +23,7 @@ import AiSummaryStore from "./aiSummaryStore";
 import AiFiltersStore from "./aiFiltersStore";
 import SpotStore from "./spotStore";
 import LoginStore from "./loginStore";
+import FilterStore from "./filterStore";
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -47,6 +48,7 @@ export class RootStore {
   aiFiltersStore: AiFiltersStore;
   spotStore: SpotStore;
   loginStore: LoginStore;
+  filterStore: FilterStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -71,6 +73,7 @@ export class RootStore {
     this.aiFiltersStore = new AiFiltersStore();
     this.spotStore = new SpotStore();
     this.loginStore = new LoginStore();
+    this.filterStore = new FilterStore();
   }
 
   initClient() {
