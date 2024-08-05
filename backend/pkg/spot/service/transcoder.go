@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	metrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"os/exec"
@@ -60,6 +61,7 @@ func (t *transcoderImpl) mainLoop() {
 }
 
 func (t *transcoderImpl) transcode(spot *Spot) {
+	metrics.IncreaseVideosTotal()
 	if spot.Crop == nil && spot.Duration < 15000 {
 		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
 		return
@@ -97,7 +99,14 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		t.log.Error(context.Background(), "can't copy file: %s", err.Error())
 		return
 	}
+	if fileInfo, err := originVideo.Stat(); err != nil {
+		t.log.Error(context.Background(), "Failed to get file info: %v", err)
+	} else {
+		metrics.RecordOriginalVideoSize(float64(fileInfo.Size()))
+	}
 	originVideo.Close()
+	metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
+
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
 
 	if spot.Crop != nil && len(spot.Crop) == 2 {
@@ -119,6 +128,9 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 			t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
 			return
 		}
+		metrics.IncreaseVideosCropped()
+		metrics.RecordCroppingDuration(time.Since(start).Seconds())
+
 		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
 		// mv cropped.webm origin.webm
@@ -133,11 +145,19 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		}
 		defer video.Close()
 
+		if fileInfo, err := video.Stat(); err != nil {
+			t.log.Error(context.Background(), "Failed to get file info: %v", err)
+		} else {
+			metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
+		}
+
 		err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
 		if err != nil {
 			t.log.Error(context.Background(), "Failed to upload cropped video: %v", err)
 			return
 		}
+		metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
+
 		t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
 	}
 
@@ -163,6 +183,8 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
 		return
 	}
+	metrics.IncreaseVideosTranscoded()
+	metrics.RecordTranscodingDuration(time.Since(start).Seconds())
 	t.log.Info(context.Background(), "Transcoded spot %d in %v", spotID, time.Since(start).Seconds())
 
 	start = time.Now()
@@ -209,6 +231,8 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 			return
 		}
 	}
+	metrics.RecordTranscodedVideoUploadDuration(time.Since(start).Seconds())
+
 	t.log.Info(context.Background(), "Uploaded chunks for spot %d in %v", spotID, time.Since(start).Seconds())
 
 	// Replace indexN.ts with pre-signed URLs

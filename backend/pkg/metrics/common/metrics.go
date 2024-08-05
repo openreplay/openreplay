@@ -9,3 +9,7 @@ var DefaultSizeBuckets = []float64{1, 10, 50, 100, 250, 500, 1000, 2500, 5000, 1
 
 // DefaultBuckets is a set of buckets from 1 to 1_000_000 elements
 var DefaultBuckets = []float64{1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10_000, 50_000, 100_000, 1_000_000}
+
+// VideoSizeBuckets is a set of buckets from 1_000 bytes (~1 Kb) to 500_000_000 bytes (~500 Mb)
+var VideoSizeBuckets = []float64{1_000, 10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 30_000_000,
+	40_000_000, 50_000_000, 75_000_000, 100_000_000, 250_000_000, 500_000_000}

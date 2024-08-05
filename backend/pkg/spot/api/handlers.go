@@ -7,16 +7,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	metrics "openreplay/backend/pkg/metrics/http"
-	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/spot/auth"
-	"openreplay/backend/pkg/spot/service"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+
+	metrics "openreplay/backend/pkg/metrics/spot"
+	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/spot/service"
 )
 
 func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
