@@ -18,8 +18,9 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
   const _list = React.useRef<List>(null);
   const cache = useCellMeasurerCache();
-  const onTabClick = (tab: any) => {
-    setActiveTab(tab);
+  const onTabClick = (tab: string) => {
+    const newTab = TABS.find((t) => t.text === tab);
+    setActiveTab(newTab);
   };
   const logs = spotPlayerStore.logs;
   const filteredList = React.useMemo(() => {
