@@ -176,8 +176,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   //     type: 'application/x-mpegURL'
   //   }]
   // };
-
-  console.log(spotStore.currentSpot)
   return (
     <div
       className={cn(
