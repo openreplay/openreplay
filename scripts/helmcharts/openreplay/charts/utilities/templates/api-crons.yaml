@@ -13,6 +13,8 @@ kind: CronJob
 metadata:
   name: {{$key | kebabcase}}-cron
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "utilities.labels" . | nindent 4 }}
 spec:
   schedule: "{{ $job.cron }}"
   failedJobsHistoryLimit: 1
