@@ -72,7 +72,7 @@ export default class SpotStore {
     this.total = total;
   }
 
-   fetchSpots = async () => {
+  fetchSpots = async () => {
     const filters = {
       page: this.page,
       filterBy: this.filter,
@@ -86,7 +86,7 @@ export default class SpotStore {
     );
     this.setSpots(response.spots.map((spot: any) => new Spot(spot)));
     this.setTotal(response.total);
-  }
+  };
 
   async fetchSpotById(id: string) {
     try {
@@ -108,7 +108,11 @@ export default class SpotStore {
 
   async addComment(spotId: string, comment: string, userName: string) {
     await this.withLoader(async () => {
-      await spotService.addComment(spotId, { comment, userName }, this.accessKey);
+      await spotService.addComment(
+        spotId,
+        { comment, userName },
+        this.accessKey
+      );
       const spot = this.currentSpot;
       if (spot) {
         spot.comments!.push({
@@ -155,24 +159,26 @@ export default class SpotStore {
    * @param expiration - in seconds
    * @param id - spot id string
    * */
-  async generateKey(id: string, expiration: number) {
+  generateKey = async (id: string, expiration: number) => {
     try {
-    const { key } = await this.withLoader(() =>
-      spotService.generateKey(id, expiration)
-    );
-    this.setPubKey(key);
-    return key;
+      const { key } = await this.withLoader(() => {
+        return spotService.generateKey(id, expiration);
+      });
+      this.setPubKey(key);
+      return key;
     } catch (e) {
-      console.error('couldnt generate pubkey')
+      console.error('couldnt generate pubkey');
     }
-  }
+  };
 
-  async getPubKey(id: string) {
+  getPubKey = async (id: string) => {
     try {
-      const { key } = await this.withLoader(() => spotService.getKey(id));
+      const { key } = await this.withLoader(() => {
+        return spotService.getKey(id);
+      });
       this.setPubKey(key);
     } catch (e) {
-      console.error('no pubkey', e)
+      console.error('no pubkey', e);
     }
-  }
+  };
 }
