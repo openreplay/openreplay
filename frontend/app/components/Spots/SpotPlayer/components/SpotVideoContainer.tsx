@@ -33,6 +33,23 @@ function SpotVideoContainer({
   const hlsRef = React.useRef<Hls | null>(null);
 
   React.useEffect(() => {
+    const startPlaying = () => {
+      if (spotPlayerStore.isPlaying && videoRef.current) {
+        videoRef.current.play()
+          .then(() => {
+            console.debug('playing')
+          })
+          .catch((e) => {
+            console.error(e)
+            spotPlayerStore.setIsPlaying(false)
+            const onClick = () => {
+              spotPlayerStore.setIsPlaying(true)
+              document.removeEventListener('click', onClick);
+            }
+            document.addEventListener('click', onClick);
+          })
+      }
+    }
     import('hls.js').then(({ default: Hls }) => {
       if (Hls.isSupported() && videoRef.current) {
         videoRef.current.addEventListener('loadeddata', () => {
@@ -50,16 +67,12 @@ function SpotVideoContainer({
           if (url && videoRef.current) {
             hls.loadSource(url);
             hls.attachMedia(videoRef.current);
-            if (spotPlayerStore.isPlaying) {
-              void videoRef.current.play();
-            }
+            startPlaying()
             hlsRef.current = hls;
           } else {
             if (videoRef.current) {
               videoRef.current.src = videoURL;
-              if (spotPlayerStore.isPlaying) {
-                void videoRef.current.play();
-              }
+              startPlaying()
             }
           }
         } else {
@@ -83,9 +96,7 @@ function SpotVideoContainer({
           };
           check();
           videoRef.current.src = videoURL;
-          if (spotPlayerStore.isPlaying) {
-            void videoRef.current.play();
-          }
+          startPlaying()
         }
       } else {
         if (videoRef.current) {
@@ -93,9 +104,7 @@ function SpotVideoContainer({
             setLoaded(true);
           });
           videoRef.current.src = videoURL;
-          if (spotPlayerStore.isPlaying) {
-            void videoRef.current.play();
-          }
+          startPlaying()
         }
       }
     });
