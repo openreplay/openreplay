@@ -23,7 +23,7 @@ import FeatureSelection, {
 import OverviewPanelContainer from './components/OverviewPanelContainer';
 import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
-import VerticalPointerLine from './components/VerticalPointerLine';
+import VerticalPointerLine, { VerticalPointerLineComp } from './components/VerticalPointerLine';
 
 function MobileOverviewPanelCont({
   issuesList,
@@ -210,6 +210,33 @@ function WebOverviewPanelCont({
   );
 }
 
+export function SpotOverviewPanelCont({
+  resourceList,
+  exceptionsList,
+  spotTime,
+  spotEndTime
+}: any) {
+  const selectedFeatures = ['ERRORS', 'NETWORK'];
+  const fetchPresented = false; // TODO
+  const endTime = 0; // TODO
+  const resources = {
+    NETWORK: resourceList,
+    ERRORS: exceptionsList,
+  };
+
+  return (
+    <PanelComponent
+      resources={resources}
+      endTime={endTime}
+      selectedFeatures={selectedFeatures}
+      fetchPresented={fetchPresented}
+      isSpot
+      spotTime={spotTime}
+      spotEndTime={spotEndTime}
+    />
+  );
+}
+
 function PanelComponent({
   selectedFeatures,
   endTime,
@@ -224,6 +251,9 @@ function PanelComponent({
   sessionId,
   zoomTab,
   setZoomTab,
+  isSpot,
+  spotTime,
+  spotEndTime
 }: any) {
   return (
     <React.Fragment>
@@ -265,13 +295,15 @@ function PanelComponent({
               </>
             ) : null}
           </div>
-          <div className="flex items-center h-20 mr-4 gap-2">
-            <TimelineZoomButton />
-            <FeatureSelection
-              list={selectedFeatures}
-              updateList={setSelectedFeatures}
-            />
-          </div>
+          {isSpot ? null : (
+            <div className="flex items-center h-20 mr-4 gap-2">
+              <TimelineZoomButton />
+              <FeatureSelection
+                list={selectedFeatures}
+                updateList={setSelectedFeatures}
+              />
+            </div>
+          )}
         </BottomBlock.Header>
         <BottomBlock.Content className={'overflow-y-auto'}>
           {summaryChecked ? <SummaryBlock sessionId={sessionId} /> : null}
@@ -291,7 +323,7 @@ function PanelComponent({
                   </div>
                 }
               >
-                <VerticalPointerLine />
+                {isSpot ? <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} /> : <VerticalPointerLine />}
                 {selectedFeatures.map((feature: any, index: number) => (
                   <div
                     key={feature}
@@ -310,7 +342,7 @@ function PanelComponent({
                           fetchPresented={fetchPresented}
                         />
                       )}
-                      endTime={endTime}
+                      endTime={isSpot ? spotEndTime : endTime}
                       message={HELP_MESSAGE[feature]}
                     />
                     {isMobile && feature === 'PERFORMANCE' ? (

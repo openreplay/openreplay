@@ -5,12 +5,14 @@ import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
+import { OverviewPanel } from 'Components/Session_/OverviewPanel';
 import { EscapeButton, Loader } from 'UI';
 
 import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from '../../Session/Player/ReplayPlayer/PlayerInst';
+import { SpotOverviewPanelCont } from '../../Session_/OverviewPanel/OverviewPanel';
 import withPermissions from '../../hocs/withPermissions';
 import SpotConsole from './components/Panels/SpotConsole';
 import SpotNetwork from './components/Panels/SpotNetwork';
@@ -133,13 +135,24 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   }, []);
   if (!spotStore.currentSpot) {
     return (
-      <div className={'w-screen h-screen flex items-center justify-center flex-col gap-2'}>
+      <div
+        className={
+          'w-screen h-screen flex items-center justify-center flex-col gap-2'
+        }
+      >
         {spotStore.accessError ? (
           <>
-            <div className={'font-semibold'}>The public link to this Spot video has expired</div>
-            <div>Either the link’s set time has expired, or public sharing has been disabled. Please contact the sender for a new link</div>
+            <div className={'font-semibold'}>
+              The public link to this Spot video has expired
+            </div>
+            <div>
+              Either the link’s set time has expired, or public sharing has been
+              disabled. Please contact the sender for a new link
+            </div>
           </>
-        ) : <Loader />}
+        ) : (
+          <Loader />
+        )}
       </div>
     );
   }
@@ -176,6 +189,8 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   //     type: 'application/x-mpegURL'
   //   }]
   // };
+
+
   return (
     <div
       className={cn(
@@ -236,6 +251,9 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
                       panelHeight={panelHeight}
                     />
                   ) : null}
+                  {spotPlayerStore.activePanel === PANELS.OVERVIEW ? (
+                    <SpotOverviewConnector />
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -252,6 +270,25 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     </div>
   );
 }
+
+const SpotOverviewConnector = observer(() => {
+  const endTime = spotPlayerStore.duration * 1000
+  const time = spotPlayerStore.time * 1000
+  const resourceList = spotPlayerStore.network
+    .filter((r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400))
+    .filter((i: any) => i.type === 'xhr')
+  const exceptionsList = spotPlayerStore.logs
+    .filter(l => l.level === 'error')
+
+  return (
+    <SpotOverviewPanelCont
+      exceptionsList={exceptionsList}
+      resourceList={resourceList}
+      spotTime={time}
+      spotEndTime={endTime}
+    />
+  )
+})
 
 function mapStateToProps(state: any) {
   const userEmail = state.getIn(['user', 'account', 'name']);
