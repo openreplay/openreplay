@@ -105,17 +105,17 @@ export default defineUnlistedScript(() => {
       window.postMessage({ type: "ort:bump-logs", logs }, "*");
     };
 
-    const handler = {
+    const handler = (level: string) => ({
       apply: function (target, thisArg, argumentsList) {
         Reflect.apply(target, ctx, argumentsList);
         n = n + 1;
         if (n > 10) {
           return;
         } else {
-          sendConsoleLog(target.name, argumentsList);
+          sendConsoleLog(level, argumentsList);
         }
       },
-    };
+    });
 
     window.__or_proxy_revocable = [];
     consoleMethods.forEach((method) => {
@@ -124,7 +124,7 @@ export default defineUnlistedScript(() => {
       }
       const fn = ctx.console[method];
       // is there any way to preserve the original console trace?
-      const revProxy = Proxy.revocable(fn, handler);
+      const revProxy = Proxy.revocable(fn, handler(method));
       console[method] = revProxy.proxy;
       window.__or_proxy_revocable.push(revProxy);
     });
