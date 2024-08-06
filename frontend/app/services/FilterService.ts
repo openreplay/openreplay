@@ -11,8 +11,12 @@ export default class FilterService {
     this.client = client || new APIClient();
   }
 
-  fetchTopValues = async (key: string) => {
-    const response = await this.client.get(`/PROJECT_ID/events/search?type=${key}`);
+  fetchTopValues = async (key: string, source?: string) => {
+    let path = `/PROJECT_ID/events/search?type=${key}`;
+    if (source) {
+      path += `&source=${source}`;
+    }
+    const response = await this.client.get(path);
     return await response.json();
   };
 }

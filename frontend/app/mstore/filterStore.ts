@@ -17,26 +17,18 @@ export default class FilterStore {
 
   constructor() {
     makeAutoObservable(this);
-
-    filters.forEach((filter) => {
-      this.topValues[filter.key] = [];
-    });
   }
 
   setTopValues = (key: string, values: TopValue[]) => {
     this.topValues[key] = values.filter((value) => value !== null && value.value !== '');
   };
 
-  getTopValues = async (key: string) => {
-    if (!this.topValues[key] || this.topValues[key].length === 0) {
-      await this.fetchTopValues(key);
+  fetchTopValues = async (key: string, source?: string) => {
+    if (this.topValues.hasOwnProperty(key)) {
+      return Promise.resolve(this.topValues[key]);
     }
-    return Promise.resolve(this.topValues[key]);
-  };
-
-  fetchTopValues = async (key: string) => {
-    return filterService.fetchTopValues(key).then((response: TopValue[]) => {
-      this.setTopValues(key, response);
+    return filterService.fetchTopValues(key, source).then((response: TopValue[]) => {
+      this.setTopValues(`${key}${source || ''}`, response);
     });
   };
 }

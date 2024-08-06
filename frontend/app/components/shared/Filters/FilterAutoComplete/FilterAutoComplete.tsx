@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, ChangeEvent, KeyboardEvent } from 'react';
 import { Icon } from 'UI';
 import APIClient from 'App/api_client';
 import { debounce } from 'App/utils';
@@ -135,168 +135,177 @@ interface Props {
   hideOrText?: boolean;
 }
 
-function FilterAutoComplete(props: Props) {
-  const {
-    showCloseButton = false,
-    placeholder = 'Type to search',
-    method = 'GET',
-    showOrButton = false,
-    onRemoveValue = () => null,
-    onAddValue = () => null,
-    endpoint = '',
-    params = {},
-    value = '',
-    hideOrText = false
-  } = props;
-
+const FilterAutoComplete: React.FC<Props> = ({
+                                               showCloseButton = false,
+                                               placeholder = 'Type to search',
+                                               method = 'GET',
+                                               showOrButton = false,
+                                               endpoint = '',
+                                               params = {},
+                                               value = '',
+                                               hideOrText = false,
+                                               onSelect,
+                                               onRemoveValue,
+                                               onAddValue
+                                             }: Props) => {
   const [loading, setLoading] = useState(false);
-  const [options, setOptions] = useState<any>([]);
+  const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [query, setQuery] = useState(value);
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const [initialFocus, setInitialFocus] = useState(false);
-  let selectRef: any = null;
-  let inputRef: any = null;
+  const [previousQuery, setPreviousQuery] = useState(value);
+  const selectRef = useRef<any>(null);
+  const inputRef = useRef<any>(null);
   const { filterStore } = useStore();
   const _params = processKey(params);
-  const [topValues, setTopValues] = useState<any>([]);
+  const filterKey = `${_params.type}${_params.key || ''}`;
+  const topValues = filterStore.topValues[filterKey] || [];
   const [topValuesLoading, setTopValuesLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchValues = async () => {
-      setTopValuesLoading(true);
-      const values = await filterStore.getTopValues(_params.type);
-      setTopValues(values);
-
+  const loadTopValues = () => {
+    setTopValuesLoading(true);
+    filterStore.fetchTopValues(_params.type, _params.key).finally(() => {
       setTopValuesLoading(false);
       setLoading(false);
-    };
-    fetchValues().then(r => {
     });
-  }, []);
+  };
+
+  useEffect(() => {
+    if (topValues.length > 0) {
+      const mappedValues = topValues.map((i) => ({ value: i.value, label: i.value }));
+      setOptions(mappedValues);
+      if (!query.length && initialFocus) {
+        setMenuIsOpen(true);
+      }
+    }
+  }, [topValues, initialFocus, query.length]);
+
+  useEffect(loadTopValues, [_params.type]);
 
   useEffect(() => {
     setQuery(value);
   }, [value]);
 
-  const loadOptions = (inputValue: string, callback: (options: []) => void) => {
+  const loadOptions = async (inputValue: string, callback: (options: { value: string; label: string }[]) => void) => {
     if (!inputValue.length) {
-      setOptions(topValues.map((i: any) => ({ value: i.value, label: i.value })));
-      callback(topValues.map((i: any) => ({ value: i.value, label: i.value })));
+      const mappedValues = topValues.map((i) => ({ value: i.value, label: i.value }));
+      setOptions(mappedValues);
+      callback(mappedValues);
       setLoading(false);
       return;
     }
 
-    // @ts-ignore
-    new APIClient()
-      [method?.toLocaleLowerCase()](endpoint, { ..._params, q: inputValue })
-      .then((response: any) => {
-        return response.json();
-      })
-      .then(({ data }: any) => {
-        const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
-        setOptions(_options);
-        callback(_options);
-        setLoading(false);
-      })
-      .catch((e) => {
-        throw new Error(e);
-      });
+    try {
+      const response = await new APIClient()[method.toLowerCase()](endpoint, { ..._params, q: inputValue });
+      const data = await response.json();
+      const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+      setOptions(_options);
+      callback(_options);
+    } catch (e) {
+      throw new Error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const debouncedLoadOptions = React.useCallback(debounce(loadOptions, 1000), [params, topValues]);
+  const debouncedLoadOptions = useCallback(debounce(loadOptions, 1000), [params, topValues]);
 
   const handleInputChange = (newValue: string) => {
     setLoading(true);
     setInitialFocus(true);
     setQuery(newValue);
-    debouncedLoadOptions(newValue, (opt: any) => {
-      selectRef?.focus();
+    debouncedLoadOptions(newValue, () => {
+      selectRef.current?.focus();
     });
   };
 
-  const onChange = (item: any) => {
+  const handleChange = (item: { value: string }) => {
     setMenuIsOpen(false);
-    setQuery(item);
-    props.onSelect(null, item);
+    setQuery(item.value);
+    onSelect(null, item.value);
   };
 
-  const onFocus = () => {
+  const handleFocus = () => {
     setInitialFocus(true);
     if (!query.length) {
       setLoading(topValuesLoading);
       setMenuIsOpen(!topValuesLoading && topValues.length > 0);
-      setOptions(topValues.map((i: any) => ({ value: i.value, label: i.value })));
+      setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
     } else {
       setMenuIsOpen(true);
     }
   };
 
-  const onBlur = () => {
+  const handleBlur = () => {
     setMenuIsOpen(false);
-    props.onSelect(null, query);
+    setInitialFocus(false);
+    if (query !== previousQuery) {
+      onSelect(null, query);
+    }
+    setPreviousQuery(query);
   };
 
-  const selected = value ? options.find((i: any) => i.value === query) : null;
-  const uniqueOptions = options.filter((i: Record<string, string>) => i.value !== query);
+  const selected = value ? options.find((i) => i.value === query) : null;
+  const uniqueOptions = options.filter((i) => i.value !== query);
   const selectOptionsArr = query.length ? [{ value: query, label: query }, ...uniqueOptions] : options;
 
   return (
     <div className="relative flex items-center">
       <div className={cn(stl.wrapper, 'relative')}>
         <input
-          ref={(ref: any) => (inputRef = ref)}
+          ref={inputRef}
           className="w-full rounded px-2 no-focus"
           value={query}
-          onChange={({ target: { value } }: any) => handleInputChange(value)}
-          onClick={onFocus}
-          onFocus={onFocus}
-          onBlur={onBlur}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e.target.value)}
+          onClick={handleFocus}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder={placeholder}
-          onKeyDown={(e: any) => {
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
-              inputRef?.blur();
+              inputRef.current.blur();
             }
           }}
         />
         {loading && (
-          <div className="absolute top-0 right-0" style={{
-            marginTop: '5px',
-            marginRight: !showCloseButton || (showCloseButton && !showOrButton) ? '34px' : '62px'
-          }}>
+          <div
+            className="absolute top-0 right-0"
+            style={{
+              marginTop: '5px',
+              marginRight: !showCloseButton || (showCloseButton && !showOrButton) ? '34px' : '62px'
+            }}
+          >
             <Icon name="spinner" className="animate-spin" size="14" />
           </div>
         )}
         <Select
-          ref={(ref: any) => {
-            selectRef = ref;
-          }}
+          ref={selectRef}
           options={selectOptionsArr}
           value={selected}
-          onChange={(e: any) => onChange(e.value)}
+          onChange={(e) => handleChange(e as { value: string })}
           menuIsOpen={initialFocus && menuIsOpen}
           menuPlacement="auto"
           styles={dropdownStyles}
           components={{
-            Control: ({ children, ...props }: any) => <></>
+            Control: () => null
           }}
         />
         <div className={stl.right}>
           {showCloseButton && (
-            <div onClick={props.onRemoveValue}>
+            <div onClick={onRemoveValue}>
               <Icon name="close" size="12" />
             </div>
           )}
           {showOrButton && (
-            <div onClick={props.onAddValue} className="color-teal">
+            <div onClick={onAddValue} className="color-teal">
               <span className="px-1">or</span>
             </div>
           )}
         </div>
       </div>
-
       {!showOrButton && !hideOrText && <div className="ml-3">or</div>}
     </div>
   );
-}
+};
 
 export default observer(FilterAutoComplete);
