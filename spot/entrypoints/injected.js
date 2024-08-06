@@ -105,14 +105,14 @@ export default defineUnlistedScript(() => {
       window.postMessage({ type: "ort:bump-logs", logs }, "*");
     };
 
-    const handler = (level: string) => ({
+    const handler = (level) => ({
       apply: function (target, thisArg, argumentsList) {
         Reflect.apply(target, ctx, argumentsList);
         n = n + 1;
         if (n > 10) {
           return;
         } else {
-          sendConsoleLog(level, argumentsList);
+          sendConsoleLog(level, argumentsList); // Pass the correct level
         }
       },
     });
