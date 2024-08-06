@@ -182,14 +182,14 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
     if (!context) return "";
     let thumbnailRes = "";
     const aspectRatio = videoRef.videoWidth / videoRef.videoHeight;
-    const width = 720;
+    const width = 1080;
     const height = width / aspectRatio;
     canvas.width = width;
     canvas.height = height;
 
     videoRef.currentTime = duration() ? duration() / 4 : 3;
     context.drawImage(videoRef, 0, 0, canvas.width, canvas.height);
-    thumbnailRes = canvas.toDataURL("image/jpeg");
+    thumbnailRes = canvas.toDataURL("image/jpeg", 0.7);
 
     return new Promise((res) => {
       const interval = setInterval(() => {

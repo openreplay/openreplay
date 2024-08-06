@@ -41,7 +41,8 @@ function SpotVideoContainer({
         if (streamFile) {
           const hls = new Hls({
             enableWorker: false,
-            // workerPath: '/hls-worker.js',
+            // no need for small videos (for now?)
+          // workerPath: '/hls-worker.js',
             // 1MB buffer -- we have small videos anyways
             maxBufferSize: 1000 * 1000,
           });
@@ -148,6 +149,7 @@ function SpotVideoContainer({
       <video
         ref={videoRef}
         poster={thumbnail}
+        autoPlay
         className={
           'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
         }
@@ -160,7 +162,9 @@ function SpotVideoContainer({
           }
         >
           <div
-            className={'text-2xl font-semibold color-white stroke-black animate-pulse'}
+            className={
+              'text-2xl font-semibold color-white stroke-black animate-pulse'
+            }
           >
             Loading...
           </div>
