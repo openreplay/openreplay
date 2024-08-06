@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import { Icon, TextEllipsis } from 'UI';
+import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
 interface Props {
