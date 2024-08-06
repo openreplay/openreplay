@@ -30,6 +30,22 @@ function ConsoleRow(props: Props) {
     setExpanded(!expanded);
   };
 
+  const urlRegex = /(https?:\/\/[^\s)]+)/g;
+  const renderLine = (l: string) => {
+    const parts = l.split(urlRegex);
+    const formattedLine = parts.map((part, index) => {
+      if (urlRegex.test(part)) {
+        return (
+          <a key={`link-${index}`}  className={'link text-main'} href={part} target="_blank" rel="noopener noreferrer">
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+
+    return formattedLine
+  }
   return (
     <div
       style={style}
@@ -66,7 +82,7 @@ function ConsoleRow(props: Props) {
           expanded &&
           lines.map((l: string, i: number) => (
             <div key={l.slice(0, 4) + i} className="ml-4 mb-1" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
-              {l}
+              {renderLine(l)}
             </div>
           ))}
       </div>
