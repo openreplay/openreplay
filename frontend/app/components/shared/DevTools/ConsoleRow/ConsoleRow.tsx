@@ -46,6 +46,9 @@ function ConsoleRow(props: Props) {
 
     return formattedLine
   }
+
+  const titleLine = lines[0];
+  const restLines = lines.slice(1);
   return (
     <div
       style={style}
@@ -70,7 +73,7 @@ function ConsoleRow(props: Props) {
               <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
             )}
             <span className='font-mono '>
-                {renderWithNL(lines.pop())}
+                {renderWithNL(titleLine)}
             </span>
           </div>
           {log.errorId && 
@@ -80,7 +83,7 @@ function ConsoleRow(props: Props) {
         </div>
         {canExpand &&
           expanded &&
-          lines.map((l: string, i: number) => (
+          restLines.map((l: string, i: number) => (
             <div key={l.slice(0, 4) + i} className="ml-4 mb-1" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
               {renderLine(l)}
             </div>
