@@ -1,35 +1,13 @@
 import React from 'react';
-import Highlight from 'react-highlight';
+import { CodeBlock } from "UI";
 import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 import { connect } from 'react-redux';
 
 const ZustandDoc = (props) => {
     const { projectKey } = props;
-    return (
-        <div className="bg-white h-screen overflow-y-auto" style={{ width: '500px' }}>
-            <h3 className="p-5 text-2xl">Zustand</h3>
-            <div className="p-5">
-                <div>
-                    This plugin allows you to capture Zustand mutations/state and inspect them later on while replaying session recordings. This is very
-                    useful for understanding and fixing issues.
-                </div>
 
-                <div className="font-bold my-2 text-lg">Installation</div>
-                <Highlight className="js">{`npm i @openreplay/tracker-zustand --save`}</Highlight>
-
-                <div className="font-bold my-2 text-lg">Usage</div>
-                <p>
-                    Initialize the @openreplay/tracker package as usual and load the plugin into it. Then put the generated plugin into your plugins
-                    field of your store.
-                </p>
-                <div className="py-3" />
-
-                <ToggleContent
-                    label="Server-Side-Rendered (SSR)?"
-                    first={
-                        <Highlight className="js">
-                            {`import create from "zustand";
+    const usage = `import create from "zustand";
 import Tracker from '@openreplay/tracker';
 import trackerZustand, { StateLogger } from '@openreplay/tracker-zustand';
 
@@ -55,12 +33,8 @@ const useBearStore = create(
   'bear_store'
   )
 )
-`}
-                        </Highlight>
-                    }
-                    second={
-                        <Highlight className="js">
-                            {`import create from "zustand";
+`
+      const usageCjs =`import create from "zustand";
 import Tracker from '@openreplay/tracker/cjs';
 import trackerZustand, { StateLogger } from '@openreplay/tracker-zustand/cjs';
 
@@ -85,8 +59,33 @@ const useBearStore = create(
     // and is randomly generated if undefined
   'bear_store'
   )
-)`}
-                        </Highlight>
+)`
+    return (
+        <div className="bg-white h-screen overflow-y-auto" style={{ width: '500px' }}>
+            <h3 className="p-5 text-2xl">Zustand</h3>
+            <div className="p-5">
+                <div>
+                    This plugin allows you to capture Zustand mutations/state and inspect them later on while replaying session recordings. This is very
+                    useful for understanding and fixing issues.
+                </div>
+
+                <div className="font-bold my-2 text-lg">Installation</div>
+                <CodeBlock language={'bash'} code={`npm i @openreplay/tracker-zustand --save`} />
+
+                <div className="font-bold my-2 text-lg">Usage</div>
+                <p>
+                    Initialize the @openreplay/tracker package as usual and load the plugin into it. Then put the generated plugin into your plugins
+                    field of your store.
+                </p>
+                <div className="py-3" />
+
+                <ToggleContent
+                    label="Server-Side-Rendered (SSR)?"
+                    first={
+                        <CodeBlock language={'js'} code={usage} />
+                    }
+                    second={
+                        <CodeBlock language={'jsx'} code={usageCjs} />
                     }
                 />
 

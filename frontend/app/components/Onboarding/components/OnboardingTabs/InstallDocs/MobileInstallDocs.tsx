@@ -1,9 +1,8 @@
 import React from 'react';
 import stl from './installDocs.module.css';
 import cn from 'classnames';
-import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
-import { CopyButton } from 'UI';
+import { CopyButton, CodeBlock } from 'UI';
 
 export const installationCommand = `
 // make sure to grab latest version from https://github.com/openreplay/ios-tracker
@@ -86,7 +85,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
           <div className="absolute mt-1 mr-2 right-0">
             <CopyButton content={installationCommand} />
           </div>
-          <Highlight className="cli">{installationCommand}</Highlight>
+          <CodeBlock code={installationCommand} language={'bash'} />
         </div>
       </div>
 
@@ -100,7 +99,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
             <div className="absolute mt-1 mr-2 right-0">
               <CopyButton content={_usageCode} />
             </div>
-            <Highlight className="swift">{_usageCode}</Highlight>
+            <CodeBlock code={_usageCode} language={'swift'} />
           </div>
         </div>
       </div>
@@ -112,7 +111,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
       <div className="flex ml-10 mt-4">
         <div className="w-full">
           <div className={cn(stl.snippetWrapper)}>
-            <Highlight className="swift">{configuration}</Highlight>
+            <CodeBlock code={configuration} language={'swift'} />
             <div className={"mt-2"}>By default, all options equals <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code></div>
           </div>
         </div>
@@ -128,7 +127,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
             <div className="absolute mt-1 mr-2 right-0">
               <CopyButton content={touches} />
             </div>
-            <Highlight className="swift">{touches}</Highlight>
+            <CodeBlock code={touches} language={'swift'} />
           </div>
         </div>
       </div>
@@ -143,7 +142,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
             <div className="absolute mt-1 mr-2 right-0">
               <CopyButton content={sensitive} />
             </div>
-            <Highlight className="swift">{sensitive}</Highlight>
+            <CodeBlock code={sensitive} language={'swift'} />
           </div>
         </div>
       </div>
@@ -158,7 +157,7 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
             <div className="absolute mt-1 mr-2 right-0">
               <CopyButton content={inputs} />
             </div>
-            <Highlight className="swift">{inputs}</Highlight>
+            <CodeBlock code={inputs} language={'swift'} />
           </div>
         </div>
       </div>

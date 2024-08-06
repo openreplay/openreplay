@@ -1,18 +1,11 @@
 import React from 'react';
-import Highlight from 'react-highlight'
-import ToggleContent from 'Shared/ToggleContent'
+
+import { CodeBlock } from 'UI';
+
+import ToggleContent from 'Shared/ToggleContent';
 
 function AssistNpm(props) {
-  return (
-    <div>
-      <p>Initialize the tracker then load the @openreplay/tracker-assist plugin.</p>
-
-      <div className="font-bold my-2">Usage</div>
-      <ToggleContent
-        label="Server-Side-Rendered (SSR)?"
-        first={
-          <Highlight className="js">
-        {`import OpenReplay from '@openreplay/tracker';
+  const usage = `import OpenReplay from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
 const tracker = new OpenReplay({
   projectKey: '${props.projectKey}',
@@ -20,12 +13,8 @@ const tracker = new OpenReplay({
 // .start() returns a promise
 tracker.start().then(sessionData => ... ).catch(e => ... )
 
-tracker.use(trackerAssist(options)); // check the list of available options below`}
-      </Highlight>
-        }
-        second={
-          <Highlight className="js">
-        {`import OpenReplay from '@openreplay/tracker/cjs';
+tracker.use(trackerAssist(options)); // check the list of available options below`;
+  const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
 import trackerAssist from '@openreplay/tracker-assist/cjs';
 const tracker = new OpenReplay({
   projectKey: '${props.projectKey}'
@@ -38,14 +27,8 @@ function MyApp() {
     tracker.start().then(sessionData => ... ).catch(e => ... )
   }, [])
 //...
-}`}
-      </Highlight>
-        }
-      />
-
-      <div className="font-bold my-2">Options</div>
-      <Highlight className="js">
-        {`trackerAssist({
+}`;
+  const options = `trackerAssist({
   onAgentConnect: StartEndCallback;
   onCallStart: StartEndCallback;
   onRemoteControlStart: StartEndCallback;
@@ -75,8 +58,22 @@ type ButtonOptions = HTMLButtonElement | string | {
   innerHTML?: string, // to pass an svg string or text
   style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
 }
-`}
-      </Highlight>
+`
+  return (
+    <div>
+      <p>
+        Initialize the tracker then load the @openreplay/tracker-assist plugin.
+      </p>
+
+      <div className="font-bold my-2">Usage</div>
+      <ToggleContent
+        label="Server-Side-Rendered (SSR)?"
+        first={<CodeBlock code={usage} language="javascript" />}
+        second={<CodeBlock code={usageCjs} language="jsx" />}
+      />
+
+      <div className="font-bold my-2">Options</div>
+      <CodeBlock code={options} language="typescript" />
     </div>
   );
 }

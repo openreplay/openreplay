@@ -1,14 +1,8 @@
 import React from 'react';
-import Highlight from 'react-highlight'
+import { CodeBlock } from "UI";
 
 function AssistScript(props) {
-  return (
-    <div>
-      <p>If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:</p>
-      <div className="py-3" />
-
-      <Highlight className="js">
-        {`<!-- OpenReplay Tracking Code -->
+  const scriptCode = `<!-- OpenReplay Tracking Code -->
 <script>
 (function(A,s,a,y,e,r){
   r=window.OpenReplay=[s,r,e,[y-1]];
@@ -24,8 +18,13 @@ function AssistScript(props) {
   r.isActive=function(){return false};
   r.getSessionToken=function(){};
 })(0, "${props.projectKey}", "${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
-</script>`}
-      </Highlight>
+</script>`
+  return (
+    <div>
+      <p>If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:</p>
+      <div className="py-3" />
+
+      <CodeBlock code={scriptCode} language={'js'} />
     </div>
   );
 }

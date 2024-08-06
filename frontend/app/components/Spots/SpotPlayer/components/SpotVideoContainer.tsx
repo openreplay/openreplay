@@ -1,4 +1,3 @@
-import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
@@ -34,69 +33,71 @@ function SpotVideoContainer({
   const hlsRef = React.useRef<Hls | null>(null);
 
   React.useEffect(() => {
-    if (Hls.isSupported() && videoRef.current) {
-      videoRef.current.addEventListener('loadeddata', () => {
-        setLoaded(true);
-      });
-      if (streamFile) {
-        const hls = new Hls({
-          enableWorker: false,
-          // workerPath: '/hls-worker.js',
-          // 1MB buffer -- we have small videos anyways
-          maxBufferSize: 1000 * 1000,
-        });
-        const url = URL.createObjectURL(base64toblob(streamFile));
-        if (url && videoRef.current) {
-          hls.loadSource(url);
-          hls.attachMedia(videoRef.current);
-          if (spotPlayerStore.isPlaying) {
-            void videoRef.current.play();
-          }
-          hlsRef.current = hls;
-        } else {
-          if (videoRef.current) {
-            videoRef.current.src = videoURL;
-            if (spotPlayerStore.isPlaying) {
-              void videoRef.current.play();
-            }
-          }
-        }
-      } else {
-        const check = () => {
-          fetch(videoLink).then((r) => {
-            if (r.ok && r.status === 200) {
-              if (videoRef.current) {
-                videoRef.current.src = '';
-                setTimeout(() => {
-                  videoRef.current!.src = videoURL;
-                }, 0);
-              }
-
-              return true;
-            } else {
-              setTimeout(() => {
-                check();
-              }, 1000);
-            }
-          });
-        };
-        check();
-        videoRef.current.src = videoURL;
-        if (spotPlayerStore.isPlaying) {
-          void videoRef.current.play();
-        }
-      }
-    } else {
-      if (videoRef.current) {
+    import('hls.js').then(({ default: Hls }) => {
+      if (Hls.isSupported() && videoRef.current) {
         videoRef.current.addEventListener('loadeddata', () => {
           setLoaded(true);
         });
-        videoRef.current.src = videoURL;
-        if (spotPlayerStore.isPlaying) {
-          void videoRef.current.play();
+        if (streamFile) {
+          const hls = new Hls({
+            enableWorker: false,
+            // workerPath: '/hls-worker.js',
+            // 1MB buffer -- we have small videos anyways
+            maxBufferSize: 1000 * 1000,
+          });
+          const url = URL.createObjectURL(base64toblob(streamFile));
+          if (url && videoRef.current) {
+            hls.loadSource(url);
+            hls.attachMedia(videoRef.current);
+            if (spotPlayerStore.isPlaying) {
+              void videoRef.current.play();
+            }
+            hlsRef.current = hls;
+          } else {
+            if (videoRef.current) {
+              videoRef.current.src = videoURL;
+              if (spotPlayerStore.isPlaying) {
+                void videoRef.current.play();
+              }
+            }
+          }
+        } else {
+          const check = () => {
+            fetch(videoLink).then((r) => {
+              if (r.ok && r.status === 200) {
+                if (videoRef.current) {
+                  videoRef.current.src = '';
+                  setTimeout(() => {
+                    videoRef.current!.src = videoURL;
+                  }, 0);
+                }
+
+                return true;
+              } else {
+                setTimeout(() => {
+                  check();
+                }, 1000);
+              }
+            });
+          };
+          check();
+          videoRef.current.src = videoURL;
+          if (spotPlayerStore.isPlaying) {
+            void videoRef.current.play();
+          }
+        }
+      } else {
+        if (videoRef.current) {
+          videoRef.current.addEventListener('loadeddata', () => {
+            setLoaded(true);
+          });
+          videoRef.current.src = videoURL;
+          if (spotPlayerStore.isPlaying) {
+            void videoRef.current.play();
+          }
         }
       }
-    }
+    });
     return () => {
       hlsRef.current?.destroy();
     };
@@ -125,8 +126,8 @@ function SpotVideoContainer({
     }, 100);
     if (videoRef.current) {
       videoRef.current.addEventListener('ended', () => {
-        spotPlayerStore.onComplete()
-      })
+        spotPlayerStore.onComplete();
+      });
     }
     return () => clearInterval(int);
   }, []);

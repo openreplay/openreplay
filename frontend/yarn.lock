@@ -5331,6 +5331,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/prismjs@npm:^1":
+  version: 1.26.4
+  resolution: "@types/prismjs@npm:1.26.4"
+  checksum: 996be7d119779c4cbe66e58342115a12d35a02226dae3aaa4a744c9652d5a3939c93c26182e18156965ac4f93575ebb309c3469c36f52e60ee5c0f8f27e874df
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.12
   resolution: "@types/prop-types@npm:15.7.12"
@@ -7402,6 +7409,15 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.4.0 || ^8.0.0-0 <8.0.0
   checksum: 0b55a35a75a261f62477d8d0f0c4a8e3b66f109323ce301d7de6898e168c41224de3bc26a92f48f2c7fcc19dfd1fc60fe71098bfd4f804a0463ff78586892403
+  languageName: node
+  linkType: hard
+
+"babel-plugin-prismjs@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "babel-plugin-prismjs@npm:2.1.0"
+  peerDependencies:
+    prismjs: ^1.18.0
+  checksum: 826c89fad2f372da668712cbffef762e4bc4427e41789fa18d579d43e1eb5767af7efbe3e71bb99f07c612140f4425426d4bb63b0a0a731f9c909317896355cc
   languageName: node
   linkType: hard
 
@@ -13135,13 +13151,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"highlight.js@npm:^10.5.0":
-  version: 10.7.3
-  resolution: "highlight.js@npm:10.7.3"
-  checksum: 073837eaf816922427a9005c56c42ad8786473dc042332dfe7901aa065e92bc3d94ebf704975257526482066abb2c8677cc0326559bb8621e046c21c5991c434
-  languageName: node
-  linkType: hard
-
 "history@npm:^4.9.0":
   version: 4.10.1
   resolution: "history@npm:4.10.1"
@@ -18264,6 +18273,7 @@ __metadata:
     "@svgr/webpack": ^6.2.1
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
     "@types/luxon": ^3.0.0
+    "@types/prismjs": ^1
     "@types/react": ^18.0.9
     "@types/react-confirm": ^0.2.3
     "@types/react-dom": ^18.0.4
@@ -18276,6 +18286,7 @@ __metadata:
     antd: ^5.18.3
     autoprefixer: ^10.4.7
     babel-loader: ^9.1.3
+    babel-plugin-prismjs: ^2.1.0
     babel-plugin-react-require: ^4.0.2
     babel-plugin-recharts: ^2.0.0
     babel-plugin-transform-decorators-legacy: ^1.3.5
@@ -18323,6 +18334,7 @@ __metadata:
     postcss-nesting: ^10.1.6
     postcss-simple-vars: ^6.0.3
     prettier: ^2.6.2
+    prismjs: ^1.29.0
     rc-time-picker: ^3.7.3
     react: ^18.2.0
     react-confirm: ^0.3.0-7
@@ -18332,7 +18344,6 @@ __metadata:
     react-dom: ^18.2.0
     react-draggable: ^4.4.5
     react-google-recaptcha: ^2.1.0
-    react-highlight: ^0.14.0
     react-lazyload: ^3.2.0
     react-merge-refs: ^2.0.1
     react-redux: ^9.1.2
@@ -19794,6 +19805,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prismjs@npm:^1.29.0":
+  version: 1.29.0
+  resolution: "prismjs@npm:1.29.0"
+  checksum: d906c4c4d01b446db549b4f57f72d5d7e6ccaca04ecc670fb85cea4d4b1acc1283e945a9cbc3d81819084a699b382f970e02f9d1378e14af9808d366d9ed7ec6
+  languageName: node
+  linkType: hard
+
 "proc-log@npm:^3.0.0":
   version: 3.0.0
   resolution: "proc-log@npm:3.0.0"
@@ -21101,18 +21119,6 @@ __metadata:
   peerDependencies:
     react: ">=16.4.1"
   checksum: c2f38cedd50ee90711e510cbc5c57e2810a9c5aa3c8508415fae635f9f66ad0ef571da30770b87bb6ab21dd9b5ccd69622624691ec2f26cdfc5f480d0e11d24b
-  languageName: node
-  linkType: hard
-
-"react-highlight@npm:^0.14.0":
-  version: 0.14.0
-  resolution: "react-highlight@npm:0.14.0"
-  dependencies:
-    highlight.js: ^10.5.0
-  peerDependencies:
-    react: ^15.0.0 || ^16.0.0 || ^17.0.0
-    react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0
-  checksum: e2a4224977da519025986fa9a844f37d7ceea9c01004ddd6b2bbd5e2a421b949e1b72d2b1e3b4619d69c27faacf429b13f5aae9c1a7fe81edc93caf263a7eaf6
   languageName: node
   linkType: hard
 

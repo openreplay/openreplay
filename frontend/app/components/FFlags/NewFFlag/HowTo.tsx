@@ -1,16 +1,8 @@
 import React from 'react';
-// @ts-ignore
-import Highlight from 'react-highlight';
-import { PageTitle } from 'UI';
+import { PageTitle, CodeBlock } from 'UI';
 
 function HowTo() {
-  return (
-    <div className={'w-full h-screen p-4'}>
-      <PageTitle title={'Implement feature flags'} />
-
-      <div className={'my-2'}>
-        <Highlight className={'js'}>
-          {`
+  const code = `
 // can be imported from @openreplay/tracker
 interface IFeatureFlag {
   key: string
@@ -36,8 +28,13 @@ tracker.getFeatureFlag('my_flag')
 // reload flags from server 
 // (in case if any user data changed during the session)
 tracker.reloadFlags() 
-`}
-        </Highlight>
+`
+  return (
+    <div className={'w-full h-screen p-4'}>
+      <PageTitle title={'Implement feature flags'} />
+
+      <div className={'my-2'}>
+        <CodeBlock code={code} language={'typescript'} />
       </div>
       <a className={'link'} href={"https://docs.openreplay.com/en/installation/feature-flags"}>Documentation</a>
     </div>
