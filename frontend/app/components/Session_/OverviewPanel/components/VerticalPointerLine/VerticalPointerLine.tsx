@@ -7,9 +7,13 @@ function VerticalPointerLine() {
     const { store } = React.useContext(PlayerContext)
 
     const { time, endTime } = store.get();
-    const scale = 100 / endTime;
+    return <VerticalPointerLineComp time={time} endTime={endTime} />
+}
 
+export function VerticalPointerLineComp ({ time, endTime }: { time: number, endTime: number }) {
+    const scale = 100 / endTime;
     const left = time * scale;
+
     return <VerticalLine left={left} className="border-teal" />;
 }
 

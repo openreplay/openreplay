@@ -70,6 +70,7 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
 export const PANELS = {
   CONSOLE: 'CONSOLE',
   NETWORK: 'NETWORK',
+  OVERVIEW: 'OVERVIEW',
 } as const;
 
 export type PanelType = keyof typeof PANELS;
@@ -84,7 +85,7 @@ class SpotPlayerStore {
   volume = 1;
   playbackRate = 1;
   isFullScreen = false;
-  logs: typeof PLog[] = [];
+  logs: ReturnType<typeof PLog>[] = [];
   locations: Location[] = [];
   clicks: Click[] = [];
   network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
