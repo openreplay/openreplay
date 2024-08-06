@@ -78,8 +78,8 @@ class SpotPlayerStore {
   time = 0;
   duration = 0;
   durationString = '';
-  isPlaying = false;
-  state = PlayingState.Paused
+  isPlaying = true;
+  state = PlayingState.Playing;
   isMuted = false;
   volume = 1;
   playbackRate = 1;
@@ -103,7 +103,8 @@ class SpotPlayerStore {
     this.time = 0;
     this.duration = 0;
     this.durationString = '';
-    this.isPlaying = false;
+    this.isPlaying = true;
+    this.state = PlayingState.Playing;
     this.isMuted = false;
     this.volume = 1;
     this.playbackRate = 1;
