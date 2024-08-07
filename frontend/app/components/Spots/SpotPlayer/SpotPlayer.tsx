@@ -124,6 +124,16 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         const highest = 16;
         spotPlayerStore.setPlaybackRate(Math.min(highest, current * 2));
       }
+      if (e.key === 'ArrowRight') {
+        spotPlayerStore.setTime(
+          Math.min(spotPlayerStore.duration, spotPlayerStore.time + spotPlayerStore.skipInterval)
+        );
+      }
+      if (e.key === 'ArrowLeft') {
+        spotPlayerStore.setTime(
+          Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval)
+        );
+      }
     };
 
     document.addEventListener('keydown', ev);
