@@ -114,23 +114,23 @@ class JWTAuth(HTTPBearer):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code for refresh.")
 
     async def __process_spot_refresh_call(self, request: Request) -> schemas.CurrentContext:
-        if "refreshToken" not in request.cookies:
-            logger.warning("Missing sopt-refreshToken cookie.")
+        if "spotRefreshToken" not in request.cookies:
+            logger.warning("Missing soptRefreshToken cookie.")
             jwt_payload = None
         else:
-            jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["refreshToken"])
+            jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["spotRefreshToken"])
 
         if jwt_payload is None or jwt_payload.get("jti") is None:
-            logger.warning("Null spot-refreshToken's payload, or null JTI.")
+            logger.warning("Null spotRefreshToken's payload, or null JTI.")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                                detail="Invalid spot-refresh-token or expired refresh-token.")
+                                detail="Invalid spotRefreshToken or expired refresh-token.")
         auth_exists = spot.refresh_auth_exists(user_id=jwt_payload.get("userId", -1),
                                                jwt_jti=jwt_payload["jti"])
         if not auth_exists:
-            logger.warning("spot-refreshToken's user not found.")
+            logger.warning("spotRefreshToken's user not found.")
             logger.warning(jwt_payload)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                                detail="Invalid spot-refresh-token or expired refresh-token.")
+                                detail="Invalid spotRefreshToken or expired refresh-token.")
 
         credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)
         if credentials:
