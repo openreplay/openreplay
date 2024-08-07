@@ -26,6 +26,7 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: databases
+    or.workload/type: db-migrate
     {{- include "openreplay.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
