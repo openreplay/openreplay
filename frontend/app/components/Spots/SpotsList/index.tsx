@@ -1,10 +1,13 @@
-import { message } from 'antd';
+import { message, Card, Button, Alert, Badge } from 'antd';
+import { ChromeOutlined } from '@ant-design/icons'
+import { CirclePlay, Pin, Puzzle, Share2, ArrowUpRight  } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
-import { Loader, NoContent, Pagination } from 'UI';
+import { Icon, Loader, NoContent, Pagination } from "UI";
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import withPermissions from '../../hocs/withPermissions';
 import EmptyPage from './EmptyPage';
@@ -95,10 +98,15 @@ function SpotsList() {
           )
         ) : (
           <>
-            <NoContent
+            <NoContent className='w-full bg-white rounded-lg shadow-sm'
               show={spotStore.spots.length === 0}
-              title={'No spots found'}
-              subtext={'Try to search for something else'}
+              title={
+              <div>
+                    <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
+                    <div className="font-medium text-center mt-4">
+                        No Matching Results.
+                      </div>
+              </div>}
             >
               <div
                 className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}
