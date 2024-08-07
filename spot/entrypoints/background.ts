@@ -37,12 +37,14 @@ export default defineBackground(() => {
         started: "ort:started",
         stopped: "ort:stopped",
         restart: "ort:restart",
+        getErrorEvents: "ort:get-error-events",
       },
       to: {
         setJWT: "content:set-jwt",
         micStatus: "content:mic-status",
         unmount: "content:unmount",
         notification: "notif:display",
+        updateErrorEvents: "content:error-events"
       },
     },
     injected: {
@@ -488,7 +490,7 @@ export default defineBackground(() => {
         browserVersion: "",
         platform: "",
         resolution: "",
-        crop: undefined,
+        crop: null,
       };
       finalVideoBase64 = "";
       finalReady = false;
@@ -517,6 +519,22 @@ export default defineBackground(() => {
         mic: lastReq.mic,
         audioId: lastReq.selectedAudioDevice,
       });
+    }
+    if (request.type === messages.content.from.getErrorEvents) {
+      const logs = finalSpotObj.logs.filter(
+        (log) => log.level === "error",
+      ).map(l => ({ title: 'JS Error', time: (l.time - finalSpotObj.startTs)/1000 }))
+      const network = finalSpotObj.network.filter(
+        (net) => net.statusCode >= 400,
+      ).map(n => ({ title: 'Network Error', time: (n.time - finalSpotObj.startTs)/1000 }))
+
+      const errorData = [...logs, ...network]
+        .sort((a, b) => a.time - b.time)
+
+      void sendToActiveTab({
+        type: messages.content.to.updateErrorEvents,
+        errorData,
+      })
     }
     if (request.type === "ort:stop") {
       browser.runtime
