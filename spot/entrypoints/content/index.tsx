@@ -153,6 +153,7 @@ export default defineContentScript({
         stopClickRecording();
         stopLocationRecording();
         ui.remove();
+        recState = "stopped";
         return;
       }
       const { name, comment, useHook, thumbnail, crop, blob } = spotObj;
