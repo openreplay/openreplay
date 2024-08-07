@@ -1,10 +1,6 @@
 import orLogo from "@/assets/orSpot.svg";
-import helpLogo from "@/assets/circle-help.svg";
-import settingsLogo from "@/assets/Setting.svg";
 import micOff from "@/assets/mic-off-red.svg";
 import micOn from "@/assets/mic-on.svg";
-import tab from "@/assets/tab.svg";
-import desktop from "@/assets/desktop.svg";
 import Login from "@/entrypoints/popup/Login";
 import Settings from "@/entrypoints/popup/Settings";
 import { createSignal, createEffect } from "solid-js";

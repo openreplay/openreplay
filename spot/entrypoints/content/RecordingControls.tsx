@@ -127,7 +127,7 @@ function RecordingControls({
   }, 250);
   return (
     <div
-      class={"rec-controls popupanimated"}
+      class={"rec-controls popupanimated cursor-grab"}
       use:draggable={{ bounds: "body" }}
       ref={(el) => (handleRef = el)}
     >
@@ -163,7 +163,7 @@ function RecordingControls({
             </button>
           ) : (
             <button
-              className={
+              class={
                 "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-black/70 hover:bg-black"
               }
               data-tip="Resume Recording"
@@ -179,7 +179,7 @@ function RecordingControls({
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                className="lucide lucide-play"
+                class="lucide lucide-play"
               >
                 <polygon points="6 3 20 12 6 21 6 3" />
               </svg>
@@ -214,7 +214,7 @@ function RecordingControls({
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                className="lucide lucide-mic-off"
+                class="lucide lucide-mic-off"
               >
                 <line x1="2" x2="22" y1="2" y2="22" />
                 <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" />
@@ -229,7 +229,7 @@ function RecordingControls({
           <div class="divider hidden"></div>
 
           <button
-            className={
+            class={
               "btn btn-sm btn-ghost btn-circle tooltip tooltip-top flex items-center bg-red-600  hover:bg-red-700 "
             }
             data-tip="End Recording"
@@ -245,7 +245,7 @@ function RecordingControls({
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              className="lucide lucide-square"
+              class="lucide lucide-square"
             >
               <rect width="18" height="18" x="3" y="3" rx="2" />
             </svg>
