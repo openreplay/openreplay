@@ -653,7 +653,7 @@ def authenticate(email, password, for_change_password=False, include_spot=False)
                                                                      iat=j_r.spot_jwt_refresh_iat,
                                                                      aud=spot.AUDIENCE,
                                                                      jwt_jti=j_r.spot_jwt_refresh_jti),
-                "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
+                "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)
             }
         return response
     return None

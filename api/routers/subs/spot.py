@@ -1,11 +1,8 @@
-from fastapi import Body, Depends
-from fastapi import HTTPException, status
+from fastapi import Depends
 from starlette.responses import JSONResponse, Response
 
 import schemas
 from chalicelib.core import spot, webhook
-from chalicelib.utils import captcha
-from chalicelib.utils import helper
 from or_dependencies import OR_context
 from routers.base import get_routers
 
