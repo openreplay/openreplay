@@ -3,6 +3,7 @@ from chalicelib.core import countries, events, metadata
 from chalicelib.utils import ch_client
 from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.event_filter_definition import Event
+from chalicelib.utils.or_cache import CachedResponse
 
 TABLE = "experimental.autocomplete"
 
@@ -294,6 +295,7 @@ def is_top_supported(event_type):
     return TYPE_TO_COLUMN.get(event_type, False)
 
 
+@CachedResponse(table="or_cache.autocomplete_top_values", ttl=5 * 60)
 def get_top_values(project_id, event_type, event_key=None):
     with ch_client.ClickHouseClient() as cur:
         if schemas.FilterType.has_value(event_type):

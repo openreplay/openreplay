@@ -95,3 +95,4 @@ rm -rf ./chalicelib/core/usability_testing/
 rm -rf ./chalicelib/core/db_request_handler.py
 rm -rf ./chalicelib/core/db_request_handler.py
 rm -rf ./routers/subs/spot.py
+rm -rf ./chalicelib/utils/or_cache

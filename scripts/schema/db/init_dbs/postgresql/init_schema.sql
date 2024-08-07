@@ -17,6 +17,7 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS events_common;
 CREATE SCHEMA IF NOT EXISTS events;
 CREATE SCHEMA IF NOT EXISTS events_ios;
+CREATE SCHEMA IF NOT EXISTS or_cache;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -1189,5 +1190,19 @@ CREATE TABLE public.projects_conditions
     capture_rate integer      NOT NULL CHECK (capture_rate >= 0 AND capture_rate <= 100),
     filters      jsonb        NOT NULL DEFAULT '[]'::jsonb
 );
+
+CREATE TABLE or_cache.autocomplete_top_values
+(
+    project_id     integer                                        NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    event_type     text                                           NOT NULL,
+    event_key      text                                           NULL,
+    result         jsonb                                          NULL,
+    execution_time integer                                        NULL,
+    created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (project_id, event_type, event_key)
+-- TODO: use `UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)`
+--      when PG upgrade is validated by devops team
+);
+
 
 COMMIT;
