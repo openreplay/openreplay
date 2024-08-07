@@ -242,6 +242,11 @@ export default defineBackground(() => {
     }
     if (request.type === messages.popup.from.start) {
       lastReq = request;
+      finalSpotObj.logs = [];
+      finalSpotObj.clicks = [];
+      finalSpotObj.locations = [];
+      finalSpotObj.vitals = [];
+      finalSpotObj.network = [];
       finalSpotObj = defaultSpotObj;
       recordingState = {
         activeTabId: null,
@@ -525,7 +530,7 @@ export default defineBackground(() => {
         (log) => log.level === "error",
       ).map(l => ({ title: 'JS Error', time: (l.time - finalSpotObj.startTs)/1000 }))
       const network = finalSpotObj.network.filter(
-        (net) => net.statusCode >= 400,
+        (net) => net.statusCode >= 400 || net.error,
       ).map(n => ({ title: 'Network Error', time: (n.time - finalSpotObj.startTs)/1000 }))
 
       const errorData = [...logs, ...network]
@@ -835,6 +840,7 @@ export default defineBackground(() => {
     type: string;
     time: TrackedRequest["timeStamp"];
     statusCode: number;
+    error?: string;
     url: TrackedRequest["url"];
     fromCache: boolean;
     body: string;
@@ -926,6 +932,8 @@ export default defineBackground(() => {
     const reqSize = trackedRequest.reqBody
       ? trackedRequest.requestSize || trackedRequest.reqBody.length
       : 0;
+
+    const status = getRequestStatus(trackedRequest);
     const request: SpotNetworkRequest = {
       method: trackedRequest.method,
       type,
@@ -933,7 +941,8 @@ export default defineBackground(() => {
       requestHeaders,
       responseHeaders,
       time: trackedRequest.timeStamp,
-      statusCode: trackedRequest.statusCode || 200,
+      statusCode: status,
+      error: trackedRequest.error,
       url: trackedRequest.url,
       fromCache: trackedRequest.fromCache || false,
       encodedBodySize: reqSize,
@@ -1298,4 +1307,14 @@ export default defineBackground(() => {
     const currentTime = Date.now() / 1000;
     return decoded.exp < currentTime;
   };
+
+  function getRequestStatus(request: any): number {
+    if (request.statusCode) {
+      return request.statusCode;
+    }
+    if (request.error) {
+      return 0
+    }
+    return 200;
+  }
 });

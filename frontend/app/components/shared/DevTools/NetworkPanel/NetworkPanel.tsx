@@ -133,18 +133,19 @@ export function renderDuration(r: any) {
   );
 }
 
-function renderStatus({ status, cached }: { status: string; cached: boolean }) {
+function renderStatus({ status, cached, error }: { status: string; cached: boolean, error?: string }) {
+  const displayedStatus = error ? error :  status
   return (
     <>
       {cached ? (
         <Tooltip title={'Served from cache'}>
           <div className="flex items-center">
-            <span className="mr-1">{status}</span>
+            <span className="mr-1">{displayedStatus}</span>
             <Icon name="wifi" size={16} />
           </div>
         </Tooltip>
       ) : (
-        status
+        displayedStatus
       )}
     </>
   );
@@ -371,7 +372,7 @@ export const NetworkPanelComp = observer(
       if (!showOnlyErrors) {
         return list;
       }
-      return list.filter((it) => parseInt(it.status) >= 400 || !it.success);
+      return list.filter((it) => parseInt(it.status) >= 400 || !it.success || it.error);
     }, [showOnlyErrors, list]);
     filteredList = useRegExListFilterMemo(
       filteredList,
