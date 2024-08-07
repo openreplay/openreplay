@@ -1,21 +1,26 @@
-import WebPlayer from 'Player/web/WebPlayer';
-import MobilePlayer from 'Player/mobile/IOSPlayer';
-import React, { useMemo, useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { Duration } from 'luxon';
-
-import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { ResourceType, Timed } from 'Player';
-import { formatBytes } from 'App/utils';
-import { formatMs } from 'App/date';
-import { useModal } from 'App/components/Modal';
-import FetchDetailsModal from 'Shared/FetchDetailsModal';
-import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
-import { useStore } from 'App/mstore';
+import MobilePlayer from 'Player/mobile/IOSPlayer';
+import WebPlayer from 'Player/web/WebPlayer';
+import { Duration } from 'luxon';
+import { observer } from 'mobx-react-lite';
+import React, { useMemo, useState } from 'react';
 import { connect } from 'react-redux';
-import TimeTable from '../TimeTable';
+
+import { useModal } from 'App/components/Modal';
+import {
+  MobilePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { formatMs } from 'App/date';
+import { useStore } from 'App/mstore';
+import { formatBytes } from 'App/utils';
+import { Icon, Input, NoContent, Tabs, Toggler, Tooltip } from 'UI';
+
+import FetchDetailsModal from 'Shared/FetchDetailsModal';
+
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
+import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import WSModal from './WSModal';
@@ -96,7 +101,9 @@ function renderSize(r: any) {
     content = (
       <ul>
         {showTransferred && (
-          <li>{`${formatBytes(r.encodedBodySize + headerSize)} transferred over network`}</li>
+          <li>{`${formatBytes(
+            r.encodedBodySize + headerSize
+          )} transferred over network`}</li>
         )}
         <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
       </ul>
@@ -133,8 +140,27 @@ export function renderDuration(r: any) {
   );
 }
 
-function renderStatus({ status, cached, error }: { status: string; cached: boolean, error?: string }) {
-  const displayedStatus = error ? error :  status
+function renderStatus({
+  status,
+  cached,
+  error,
+}: {
+  status: string;
+  cached: boolean;
+  error?: string;
+}) {
+  const displayedStatus = error ? (
+    <Tooltip delay={0} title={error}>
+      <div
+        style={{ width: 90 }}
+        className={'overflow-hidden overflow-ellipsis'}
+      >
+        {error}
+      </div>
+    </Tooltip>
+  ) : (
+    status
+  );
   return (
     <>
       {cached ? (
@@ -166,7 +192,13 @@ function NetworkPanelCont({
 }) {
   const { player, store } = React.useContext(PlayerContext);
 
-  const { domContentLoadedTime, loadTime, domBuildingTime, tabStates, currentTab } = store.get();
+  const {
+    domContentLoadedTime,
+    loadTime,
+    domBuildingTime,
+    tabStates,
+    currentTab,
+  } = store.get();
   const {
     fetchList = [],
     resourceList = [],
@@ -314,7 +346,8 @@ export const NetworkPanelComp = observer(
     const socketList = useMemo(
       () =>
         websocketList.filter(
-          (ws, i, arr) => arr.findIndex((it) => it.channelName === ws.channelName) === i
+          (ws, i, arr) =>
+            arr.findIndex((it) => it.channelName === ws.channelName) === i
         ),
       [websocketList]
     );
@@ -363,7 +396,11 @@ export const NetworkPanelComp = observer(
               transferredBodySize: 0,
             }))
           )
-          .filter((req) => (zoomEnabled ? req.time >= zoomStartTs! && req.time <= zoomEndTs! : true))
+          .filter((req) =>
+            zoomEnabled
+              ? req.time >= zoomStartTs! && req.time <= zoomEndTs!
+              : true
+          )
           .sort((a, b) => a.time - b.time),
       [resourceList.length, fetchList.length, socketList]
     );
@@ -372,18 +409,27 @@ export const NetworkPanelComp = observer(
       if (!showOnlyErrors) {
         return list;
       }
-      return list.filter((it) => parseInt(it.status) >= 400 || !it.success || it.error);
+      return list.filter(
+        (it) => parseInt(it.status) >= 400 || !it.success || it.error
+      );
     }, [showOnlyErrors, list]);
     filteredList = useRegExListFilterMemo(
       filteredList,
       (it) => [it.status, it.name, it.type, it.method],
       filter
     );
-    filteredList = useTabListFilterMemo(filteredList, (it) => TYPE_TO_TAB[it.type], ALL, activeTab);
+    filteredList = useTabListFilterMemo(
+      filteredList,
+      (it) => TYPE_TO_TAB[it.type],
+      ALL,
+      activeTab
+    );
 
     const onTabClick = (activeTab: (typeof TAP_KEYS)[number]) =>
       devTools.update(INDEX_KEY, { activeTab });
-    const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
+    const onFilterChange = ({
+      target: { value },
+    }: React.ChangeEvent<HTMLInputElement>) =>
       devTools.update(INDEX_KEY, { filter: value });
 
     // AutoScroll
@@ -402,7 +448,11 @@ export const NetworkPanelComp = observer(
     };
 
     const resourcesSize = useMemo(
-      () => resourceList.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0),
+      () =>
+        resourceList.reduce(
+          (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
+          0
+        ),
       [resourceList.length]
     );
     const transferredSize = useMemo(
@@ -436,7 +486,9 @@ export const NetworkPanelComp = observer(
 
     const showDetailsModal = (item: any) => {
       if (item.type === 'websocket') {
-        const socketMsgList = websocketList.filter((ws) => ws.channelName === item.channelName);
+        const socketMsgList = websocketList.filter(
+          (ws) => ws.channelName === item.channelName
+        );
 
         return showModal(<WSModal socketMsgList={socketMsgList} />, {
           right: true,
@@ -465,149 +517,158 @@ export const NetworkPanelComp = observer(
     };
 
     return (
-        <BottomBlock
-          style={{ height: '100%' }}
-          className="border"
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-        >
-          <BottomBlock.Header onClose={onClose}>
-            <div className="flex items-center">
-              <span className="font-semibold color-gray-medium mr-4">Network</span>
-              {isMobile ? null : (
-                <Tabs
-                  className="uppercase"
-                  tabs={NETWORK_TABS}
-                  active={activeTab}
-                  onClick={onTabClick}
-                  border={false}
-                />
-              )}
+      <BottomBlock
+        style={{ height: '100%' }}
+        className="border"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        <BottomBlock.Header onClose={onClose}>
+          <div className="flex items-center">
+            <span className="font-semibold color-gray-medium mr-4">
+              Network
+            </span>
+            {isMobile ? null : (
+              <Tabs
+                className="uppercase"
+                tabs={NETWORK_TABS}
+                active={activeTab}
+                onClick={onTabClick}
+                border={false}
+              />
+            )}
+          </div>
+          <Input
+            className="input-small"
+            placeholder="Filter by name, type, method or value"
+            icon="search"
+            name="filter"
+            onChange={onFilterChange}
+            height={28}
+            width={280}
+            value={filter}
+          />
+        </BottomBlock.Header>
+        <BottomBlock.Content>
+          <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
+            <div>
+              <Toggler
+                checked={showOnlyErrors}
+                name="show-errors-only"
+                onChange={() => setShowOnlyErrors(!showOnlyErrors)}
+                label="4xx-5xx Only"
+              />
             </div>
-            <Input
-              className="input-small"
-              placeholder="Filter by name, type, method or value"
-              icon="search"
-              name="filter"
-              onChange={onFilterChange}
-              height={28}
-              width={280}
-              value={filter}
-            />
-          </BottomBlock.Header>
-          <BottomBlock.Content>
-            <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
-              <div>
-                <Toggler
-                  checked={showOnlyErrors}
-                  name="show-errors-only"
-                  onChange={() => setShowOnlyErrors(!showOnlyErrors)}
-                  label="4xx-5xx Only"
-                />
+            <InfoLine>
+              <InfoLine.Point
+                label={filteredList.length + ''}
+                value=" requests"
+              />
+              <InfoLine.Point
+                label={formatBytes(transferredSize)}
+                value="transferred"
+                display={transferredSize > 0}
+              />
+              <InfoLine.Point
+                label={formatBytes(resourcesSize)}
+                value="resources"
+                display={resourcesSize > 0}
+              />
+              <InfoLine.Point
+                label={formatMs(domBuildingTime)}
+                value="DOM Building Time"
+                display={domBuildingTime != null}
+              />
+              <InfoLine.Point
+                label={
+                  domContentLoadedTime && formatMs(domContentLoadedTime.value)
+                }
+                value="DOMContentLoaded"
+                display={domContentLoadedTime != null}
+                dotColor={DOM_LOADED_TIME_COLOR}
+              />
+              <InfoLine.Point
+                label={loadTime && formatMs(loadTime.value)}
+                value="Load"
+                display={loadTime != null}
+                dotColor={LOAD_TIME_COLOR}
+              />
+            </InfoLine>
+          </div>
+          <NoContent
+            title={
+              <div className="capitalize flex items-center">
+                <Icon name="info-circle" className="mr-2" size="18" />
+                No Data
               </div>
-              <InfoLine>
-                <InfoLine.Point label={filteredList.length + ''} value=" requests" />
-                <InfoLine.Point
-                  label={formatBytes(transferredSize)}
-                  value="transferred"
-                  display={transferredSize > 0}
-                />
-                <InfoLine.Point
-                  label={formatBytes(resourcesSize)}
-                  value="resources"
-                  display={resourcesSize > 0}
-                />
-                <InfoLine.Point
-                  label={formatMs(domBuildingTime)}
-                  value="DOM Building Time"
-                  display={domBuildingTime != null}
-                />
-                <InfoLine.Point
-                  label={domContentLoadedTime && formatMs(domContentLoadedTime.value)}
-                  value="DOMContentLoaded"
-                  display={domContentLoadedTime != null}
-                  dotColor={DOM_LOADED_TIME_COLOR}
-                />
-                <InfoLine.Point
-                  label={loadTime && formatMs(loadTime.value)}
-                  value="Load"
-                  display={loadTime != null}
-                  dotColor={LOAD_TIME_COLOR}
-                />
-              </InfoLine>
-            </div>
-            <NoContent
-              title={
-                <div className="capitalize flex items-center">
-                  <Icon name="info-circle" className="mr-2" size="18" />
-                  No Data
-                </div>
-              }
-              size="small"
-              show={filteredList.length === 0}
+            }
+            size="small"
+            show={filteredList.length === 0}
+          >
+            {/*@ts-ignore*/}
+            <TimeTable
+              rows={filteredList}
+              tableHeight={panelHeight - 102}
+              referenceLines={referenceLines}
+              renderPopup
+              onRowClick={showDetailsModal}
+              sortBy={sortBy}
+              sortAscending={sortAscending}
+              onJump={(row: any) => {
+                devTools.update(INDEX_KEY, {
+                  index: filteredList.indexOf(row),
+                });
+                player.jump(row.time);
+              }}
+              activeIndex={activeIndex}
             >
-              {/*@ts-ignore*/}
-              <TimeTable
-                rows={filteredList}
-                tableHeight={panelHeight - 102}
-                referenceLines={referenceLines}
-                renderPopup
-                onRowClick={showDetailsModal}
-                sortBy={sortBy}
-                sortAscending={sortAscending}
-                onJump={(row: any) => {
-                  devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
-                  player.jump(row.time);
-                }}
-                activeIndex={activeIndex}
-              >
-                {[
-                  // {
-                  //   label: 'Start',
-                  //   width: 120,
-                  //   render: renderStart,
-                  // },
-                  {
-                    label: 'Status',
-                    dataKey: 'status',
-                    width: 90,
-                    render: renderStatus,
-                  },
-                  {
-                    label: 'Type',
-                    dataKey: 'type',
-                    width: 90,
-                    render: renderType,
-                  },
-                  {
-                    label: 'Method',
-                    width: 80,
-                    dataKey: 'method',
-                  },
-                  {
-                    label: 'Name',
-                    width: 240,
-                    dataKey: 'name',
-                    render: renderName,
-                  },
-                  {
-                    label: 'Size',
-                    width: 80,
-                    dataKey: 'decodedBodySize',
-                    render: renderSize,
-                    hidden: activeTab === XHR,
-                  },
-                  {
-                    label: 'Duration',
-                    width: 80,
-                    dataKey: 'duration',
-                    render: renderDuration,
-                  },
-                ]}
-              </TimeTable>
-            </NoContent>
-          </BottomBlock.Content>
-        </BottomBlock>
+              {[
+                // {
+                //   label: 'Start',
+                //   width: 120,
+                //   render: renderStart,
+                // },
+                {
+                  label: 'Status',
+                  dataKey: 'status',
+                  width: 90,
+                  render: renderStatus,
+                },
+                {
+                  label: 'Type',
+                  dataKey: 'type',
+                  width: 90,
+                  render: renderType,
+                },
+                {
+                  label: 'Method',
+                  width: 80,
+                  dataKey: 'method',
+                },
+                {
+                  label: 'Name',
+                  width: 240,
+                  dataKey: 'name',
+                  render: renderName,
+                },
+                {
+                  label: 'Size',
+                  width: 80,
+                  dataKey: 'decodedBodySize',
+                  render: renderSize,
+                  hidden: activeTab === XHR,
+                },
+                {
+                  label: 'Duration',
+                  width: 80,
+                  dataKey: 'duration',
+                  render: renderDuration,
+                },
+              ]}
+            </TimeTable>
+          </NoContent>
+        </BottomBlock.Content>
+      </BottomBlock>
     );
   }
 );
