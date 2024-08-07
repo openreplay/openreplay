@@ -52,7 +52,11 @@ function ControlsBox({
     setBoxState(newState);
   };
 
-  const onTimerEnd = async () => {
+  const onTimerEnd = async (proceed?: boolean) => {
+    if (!proceed) {
+      onClose(false);
+      return changeState(STATES.idle)
+    }
     await callRecording();
     let int = setInterval(() => {
       const state = getInitState();
