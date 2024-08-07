@@ -23,6 +23,7 @@ import { init as initSite } from 'Duck/site';
 import { fetchUserInfo, setJwt } from 'Duck/user';
 import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
+import { spotsList } from "./routes";
 import * as routes from './routes';
 import { toast } from 'react-toastify'
 
@@ -64,6 +65,9 @@ const Router: React.FC<RouterProps> = (props) => {
     },
     setSessionPath,
   } = props;
+  const params = new URLSearchParams(location.search)
+  const spotCb = params.get('spotCallback');
+
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
   const handleJwtFromUrl = () => {
@@ -162,6 +166,9 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     if (prevIsLoggedIn !== isLoggedIn && isLoggedIn) {
       handleUserLogin();
+      if (spotCb) {
+        history.push(spotsList())
+      }
     }
   }, [isLoggedIn]);
 

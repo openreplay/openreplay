@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
-import { forgotPassword, signup } from 'App/routes';
+import { forgotPassword, signup, spotsList } from 'App/routes';
 import {
   fetchTenants,
   loadingLogin,
