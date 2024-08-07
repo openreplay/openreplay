@@ -37,6 +37,7 @@ export default defineContentScript({
               getInitState={() => recState}
               callRecording={countEnd}
               onRestart={onRestart}
+              getErrorEvents={getErrorEvents}
             />
           ),
           container,
@@ -69,6 +70,28 @@ export default defineContentScript({
     let data: Record<string, any> | null = null;
     const videoChunks: string[] = [];
     let chunksReady = false;
+    let errorsReady = false;
+    const errorData: {title:string;time:number}[] = []
+
+    const getErrorEvents = async (): Promise<any> => {
+      let tries = 0;
+      browser.runtime.sendMessage({ type: "ort:get-error-events" });
+      return new Promise((res) => {
+        const interval = setInterval(async () => {
+          if (errorsReady) {
+            clearInterval(interval);
+            errorsReady = false;
+            res(errorData);
+          }
+          // 3 sec timeout
+          if (tries > 30) {
+            clearInterval(interval);
+            res([]);
+          }
+          tries += 1;
+        }, 100);
+      });
+    }
 
     const getVideoData = async (): Promise<any> => {
       let tries = 0;
@@ -326,6 +349,10 @@ export default defineContentScript({
       }
       if (message.type === "content:mic-status") {
         micResponse = message.micStatus;
+      }
+      if (message.type === "content:error-events") {
+        errorsReady = true
+        errorData.push(...message.errorData)
       }
     });
   },

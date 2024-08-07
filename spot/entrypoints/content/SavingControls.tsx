@@ -18,6 +18,7 @@ interface ISavingControls {
     },
   ) => void;
   getVideoData: () => Promise<any>;
+  getErrorEvents: () => Promise<{title:string,time:number}>
 }
 
 const base64ToBlob = (base64: string) => {
@@ -32,7 +33,7 @@ const base64ToBlob = (base64: string) => {
   return new Blob([ab], { type: "video/webm" });
 };
 
-function SavingControls({ onClose, getVideoData }: ISavingControls) {
+function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingControls) {
   const [name, setName] = createSignal(document.title);
   const [description, setDescription] = createSignal("");
   const [currentTime, setCurrentTime] = createSignal(0);
@@ -47,9 +48,13 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
   const [dragging, setDragging] = createSignal<string | null>(null);
   const [openInNewTab, setOpenInNewTab] = createSignal(true);
   const [isTyping, setIsTyping] = createSignal(false);
+  const [errorEvents, setErrorEvents] = createSignal([])
 
   createEffect(() => {
     setTrimBounds([0, 0]);
+    getErrorEvents().then(r => {
+      setErrorEvents(r)
+    })
     browser.runtime
       .sendMessage({
         type: "ort:check-new-tab",
@@ -335,6 +340,17 @@ function SavingControls({ onClose, getVideoData }: ISavingControls) {
               />
             </div>
             <div class={"card p-1"}>
+              {errorEvents().length ? (
+                <div class={'relative w-full h-4'}>
+                  {errorEvents().map(e => (
+                    <div
+                      class={'w-3 h-3 rounded-full bg-red-600 absolute tooltip'}
+                      style={{ top: '2px', left: `${(e.time/duration()) * 100}%` }}
+                      data-tip={e.title}
+                    />
+                  ))}
+                </div>
+              ) : null}
               <div class={"flex items-center gap-2"}>
                 <div
                   class={`${playing() ? "" : "bg-indigo-100"} cursor-pointer btn btn-ghost btn-circle btn-sm hover:bg-indigo-50 border border-slate-100`}
