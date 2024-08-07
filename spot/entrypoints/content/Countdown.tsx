@@ -1,24 +1,35 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 
-function Countdown(props: { onEnd: () => void }) {
+function Countdown(props: { onEnd: (proceed?: boolean) => void }) {
   const [count, setCount] = createSignal(3);
 
   let interval: any;
+
+  const escHandler = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      clearInterval(interval);
+      props.onEnd(false)
+    }
+  }
 
   onMount(() => {
     interval = setInterval(() => {
       setCount((prev) => {
         if (prev === 0) {
           clearInterval(interval);
-          props.onEnd();
+          props.onEnd(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+    window.addEventListener("keydown", escHandler);
   });
 
-  onCleanup(() => clearInterval(interval));
+  onCleanup(() => {
+    clearInterval(interval)
+    window.removeEventListener("keydown", escHandler);
+  });
 
   return (
     <div class="modal-overlay">
@@ -86,7 +97,7 @@ function Countdown(props: { onEnd: () => void }) {
               Unmute anytime to add voice memos.
             </span>
             <span class="text-base text-white/70 flex gap-2 items-center">
-              You can drag the box btw!
+              <span class="px-1 rounded-lg bg-white/30 text-inherit">ESC</span> to cancel.
             </span>
           </div>
         </div>
