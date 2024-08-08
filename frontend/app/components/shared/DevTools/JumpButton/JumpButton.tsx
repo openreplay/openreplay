@@ -13,7 +13,7 @@ function JumpButton(props: Props) {
     <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center">
       <Tooltip title={tooltip} disabled={!tooltip}>
         <div
-          className="mr-2 border cursor-pointer hidden group-hover:flex rounded bg-white text-xs items-center px-2 py-1 color-teal hover:shadow h-6"
+          className="border cursor-pointer hidden group-hover:flex rounded bg-white text-xs items-center px-2 py-1 color-teal hover:shadow h-6"
           onClick={(e: any) => {
             e.stopPropagation();
             props.onClick();
