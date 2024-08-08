@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
     UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
 
+ALTER TABLE IF EXISTS public.tenants
+    ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT 'full';
+
 COMMIT;
 
 \elif :is_next

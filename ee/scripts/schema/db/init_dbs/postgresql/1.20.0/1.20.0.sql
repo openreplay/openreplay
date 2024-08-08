@@ -30,7 +30,8 @@ WHERE NOT permissions @> '{SPOT}'
 UPDATE public.roles
 SET permissions = (SELECT array_agg(distinct e) FROM unnest(permissions || '{SPOT_PUBLIC}') AS e)
 WHERE NOT permissions @> '{SPOT_PUBLIC}'
-  AND name ILIKE 'owner';
+  AND NOT service_role;
+--   AND name ILIKE 'owner';
 
 ALTER TABLE IF EXISTS public.users
     ADD COLUMN IF NOT EXISTS spot_jwt_iat         timestamp without time zone NULL DEFAULT NULL,
@@ -48,6 +49,9 @@ CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
     created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
+
+ALTER TABLE IF EXISTS public.tenants
+    ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT 'full';
 
 COMMIT;
 
