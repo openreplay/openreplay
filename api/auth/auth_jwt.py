@@ -36,7 +36,7 @@ class JWTAuth(HTTPBearer):
             return await self.__process_refresh_call(request)
 
         elif request.url.path in ["/spot/refresh", "/spot/api/refresh"]:
-            return await self.__process_refresh_call(request)
+            return await self.__process_spot_refresh_call(request)
 
         else:
             credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)

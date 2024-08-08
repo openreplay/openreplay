@@ -81,14 +81,12 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
             "user": r
         }
     }
+    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
     if spot:
         content["spotJwt"] = r.pop("spotJwt")
         spot_refresh_token = r.pop("spotRefreshToken")
         spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
-
-    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
-    if spot:
         response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
                             max_age=spot_refresh_token_max_age, secure=True, httponly=True)
     return content
