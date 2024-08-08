@@ -51,8 +51,8 @@ const SpotsListHeader = observer(
         <div className="flex gap-1 items-center">
           <Icon name={'orSpot'} size={24} />
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+          <Button onClick={toggleEmptyState}>DEBUG: toggle empty state</Button>
         </div>
-        <Button onClick={toggleEmptyState}>DEBUG: toggle empty state</Button>
 
         {isEmpty ? null : (
           <div className="flex gap-2 items-center">
