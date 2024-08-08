@@ -60,11 +60,6 @@ function SpotListItem({
       icon: <DownloadOutlined />,
     },
     {
-      key: 'copy',
-      label: 'Copy Spot URL',
-      icon: <CopyOutlined />,
-    },
-    {
       key: 'delete',
       icon: <DeleteOutlined />,
       label: 'Delete',
