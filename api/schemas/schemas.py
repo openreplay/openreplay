@@ -1651,3 +1651,12 @@ class TagCreate(TagUpdate):
     selector: str = Field(..., min_length=1, max_length=255)
     ignoreClickRage: bool = Field(default=False)
     ignoreDeadClick: bool = Field(default=False)
+
+
+class ScopeType(str, Enum):
+    FULL_OR = "full"
+    SPOT_ONLY = "spot"
+
+
+class ScopeSchema(BaseModel):
+    scope: ScopeType = Field(default=ScopeType.FULL_OR)

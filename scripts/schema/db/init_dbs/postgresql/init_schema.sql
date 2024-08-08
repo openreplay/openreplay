@@ -103,8 +103,9 @@ CREATE TABLE public.tenants
     t_sessions     bigint                      NOT NULL DEFAULT 0,
     t_users        integer                     NOT NULL DEFAULT 1,
     t_integrations integer                     NOT NULL DEFAULT 0,
-    last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT)
-        CONSTRAINT onerow_uni CHECK (tenant_id = 1)
+    last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT),
+    scope          text                        NOT NULL DEFAULT 'full',
+    CONSTRAINT onerow_uni CHECK (tenant_id = 1)
 );
 
 CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member');

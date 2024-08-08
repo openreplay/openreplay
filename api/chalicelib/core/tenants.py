@@ -11,7 +11,8 @@ def get_by_tenant_id(tenant_id):
                                        tenants.created_at,
                                        '{license.EDITION}' AS edition,
                                        openreplay_version() AS version_number,
-                                       tenants.opt_out
+                                       tenants.opt_out,
+                                       scope
                                 FROM public.tenants
                                 LIMIT 1;""",
                             {"tenantId": tenant_id})

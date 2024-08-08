@@ -31,7 +31,8 @@ def get_by_tenant_id(tenant_id):
                                         '{license.EDITION}' AS edition,
                                         openreplay_version() AS version_number,
                                         tenants.opt_out,
-                                        tenants.tenant_key
+                                        tenants.tenant_key,
+                                        scope
                                 FROM public.tenants
                                 WHERE tenants.tenant_id = %(tenantId)s 
                                     AND tenants.deleted_at ISNULL

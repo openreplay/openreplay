@@ -7,6 +7,7 @@ psycopg2-binary==2.9.9
 psycopg[pool,binary]==3.2.1
 elasticsearch==8.14.0
 jira==3.8.0
+cachetools==5.4.0
 
 
 
