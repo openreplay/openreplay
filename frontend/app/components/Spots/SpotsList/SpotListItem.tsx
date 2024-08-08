@@ -1,6 +1,5 @@
 import {
   ClockCircleOutlined,
-  CopyOutlined,
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
