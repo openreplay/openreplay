@@ -71,7 +71,7 @@ export default defineContentScript({
     const videoChunks: string[] = [];
     let chunksReady = false;
     let errorsReady = false;
-    const errorData: {title:string;time:number}[] = []
+    const errorData: { title: string; time: number }[] = [];
 
     const getErrorEvents = async (): Promise<any> => {
       let tries = 0;
@@ -91,7 +91,7 @@ export default defineContentScript({
           tries += 1;
         }, 100);
       });
-    }
+    };
 
     const getVideoData = async (): Promise<any> => {
       let tries = 0;
@@ -225,6 +225,9 @@ export default defineContentScript({
     };
 
     window.addEventListener("message", (event) => {
+      if (event.data.type === "orspot:ping") {
+        window.postMessage({ type: "orspot:pong" }, "*");
+      }
       if (event.data.type === "orspot:token") {
         window.postMessage({ type: "orspot:logged" }, "*");
         void browser.runtime.sendMessage({
@@ -351,8 +354,8 @@ export default defineContentScript({
         micResponse = message.micStatus;
       }
       if (message.type === "content:error-events") {
-        errorsReady = true
-        errorData.push(...message.errorData)
+        errorsReady = true;
+        errorData.push(...message.errorData);
       }
     });
   },
