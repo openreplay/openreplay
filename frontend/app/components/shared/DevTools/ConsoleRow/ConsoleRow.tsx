@@ -84,7 +84,7 @@ function ConsoleRow(props: Props) {
         {canExpand &&
           expanded &&
           restLines.map((l: string, i: number) => (
-            <div key={l.slice(0, 4) + i} className="ml-4 mb-1" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+            <div key={l.slice(0, 4) + i} className="ml-4 mb-1 text-xs" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
               {renderLine(l)}
             </div>
           ))}
