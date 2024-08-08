@@ -95,7 +95,6 @@ chalice:
     announcement_url: ''
     jwt_secret: "SetARandomStringHere"
     jwt_algorithm: HS512
-    jwt_exp_delta_seconds: '2592000'
     # Enable logging for python app
     # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
     PYTHONUNBUFFERED: '0'

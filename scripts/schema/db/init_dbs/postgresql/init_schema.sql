@@ -1199,9 +1199,7 @@ CREATE TABLE or_cache.autocomplete_top_values
     result         jsonb                                          NULL,
     execution_time integer                                        NULL,
     created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE (project_id, event_type, event_key)
--- TODO: use `UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)`
---      when PG upgrade is validated by devops team
+    UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
 
 
