@@ -2,11 +2,13 @@ import { message } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
+import withPermissions from 'App/components/hocs/withPermissions';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Loader, NoContent, Pagination } from 'UI';
 
-import withPermissions from '../../hocs/withPermissions';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 import EmptyPage from './EmptyPage';
 import SpotListItem from './SpotListItem';
 import SpotsListHeader from './SpotsListHeader';
@@ -96,9 +98,16 @@ function SpotsList() {
         ) : (
           <>
             <NoContent
+              className="w-full bg-white rounded-lg shadow-sm"
               show={spotStore.spots.length === 0}
-              title={'No spots found'}
-              subtext={'Try to search for something else'}
+              title={
+                <div>
+                  <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
+                  <div className="font-medium text-center mt-4">
+                    No Matching Results.
+                  </div>
+                </div>
+              }
             >
               <div
                 className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}
