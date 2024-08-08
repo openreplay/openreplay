@@ -879,8 +879,6 @@ def health_check():
     return {}
 
 
-# tags
-
 @app.post('/{projectId}/tags', tags=["tags"])
 def tags_create(projectId: int, data: schemas.TagCreate = Body(),
                 context: schemas.CurrentContext = Depends(OR_context)):

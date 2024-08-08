@@ -36,8 +36,11 @@ CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
     result         jsonb                                          NULL,
     execution_time integer                                        NULL,
     created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE (project_id, event_type, event_key)
+    UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
+
+ALTER TABLE IF EXISTS public.tenants
+    ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT 'full';
 
 COMMIT;
 
