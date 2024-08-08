@@ -95,7 +95,6 @@ up to date with every new library you use.
 | redux                      | MIT                | JavaScript     |
 | redux-immutable            | BSD3               | JavaScript     |
 | redux-thunk                | MIT                | JavaScript     |
-| semantic-ui-react          | MIT                | JavaScript     |
 | socket.io                  | MIT                | JavaScript     |
 | socket.io-client           | MIT                | JavaScript     |
 | uWebSockets.js             | Apache2            | JavaScript     |

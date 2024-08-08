@@ -79,8 +79,6 @@
     "redux": "^5.0.1",
     "redux-immutable": "^4.0.0",
     "redux-thunk": "^3.1.0",
-    "semantic-ui-css": "^2.4.1",
-    "semantic-ui-react": "^2.1.2",
     "socket.io-client": "^4.4.1",
     "syncod": "^0.0.1",
     "virtua": "^0.33.4"
