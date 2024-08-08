@@ -4,35 +4,34 @@ import { ArrowUpRight, CirclePlay } from 'lucide-react';
 import React from 'react';
 
 function EmptyPage() {
-  // const extKey = '__$spot_ext_exist$__';
-  // const [extExist, setExtExist] = React.useState<boolean>(false);
-  // React.useEffect(() => {
-  //   let int: any;
-  //   const v = localStorage.getItem(extKey);
-  //   if (v) {
-  //     setExtExist(true);
-  //   } else {
-  //     int = setInterval(() => {
-  //       window.postMessage({ type: 'orspot:ping' }, '*');
-  //     });
-  //     const onSpotMsg = (e) => {
-  //       if (e.data.type === 'orspot:pong') {
-  //         setExtExist(true);
-  //         localStorage.setItem(extKey, '1');
-  //         clearInterval(int);
-  //         int = null;
-  //         window.removeEventListener('message', onSpotMsg);
-  //       }
-  //     };
-  //     window.addEventListener('message', onSpotMsg);
-  //   }
-  //   return () => {
-  //     if (int) {
-  //       clearInterval(int);
-  //     }
-  //   };
-  // }, []);
-  const extExist = false;
+  const extKey = '__$spot_ext_exist$__';
+  const [extExist, setExtExist] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    let int: any;
+    const v = localStorage.getItem(extKey);
+    if (v) {
+      setExtExist(true);
+    } else {
+      int = setInterval(() => {
+        window.postMessage({ type: 'orspot:ping' }, '*');
+      });
+      const onSpotMsg = (e) => {
+        if (e.data.type === 'orspot:pong') {
+          setExtExist(true);
+          localStorage.setItem(extKey, '1');
+          clearInterval(int);
+          int = null;
+          window.removeEventListener('message', onSpotMsg);
+        }
+      };
+      window.addEventListener('message', onSpotMsg);
+    }
+    return () => {
+      if (int) {
+        clearInterval(int);
+      }
+    };
+  }, []);
   return (
     <div>
       <div
