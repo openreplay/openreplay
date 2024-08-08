@@ -162,18 +162,16 @@ function SpotVideoContainer({
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
       />
       {isLoaded ? null : (
-        <div
-          className={
-            'z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-figmaColors-outlined-border'
-          }
-        >
-          <div
-            className={
-              'text-2xl font-semibold color-white stroke-black animate-pulse'
-            }
-          >
-            Loading...
+        <div className={ 'z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-indigo-500/50'}>
+
+          <div className='flex flex-col gap5 text-center items-center'>
+          <img src={'../assets/img/videoProcessing.svg'} alt={'Optimizing video..'} width={100} />
+          <div className={'text-6xl font-black color-white'}>
+          Optimizing Spot Recording
           </div>
+          </div>
+
+         
         </div>
       )}
     </>

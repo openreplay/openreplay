@@ -1,0 +1,30 @@
+<svg width="100px" height="100px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#FFFFFF">
+    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+    <g id="SVGRepo_iconCarrier">
+        <!-- Outer Circle -->
+        <circle cx="50" cy="50" r="45" stroke="#FFFFFF" stroke-width="4" fill="none"/>
+
+        <!-- Video Icon, No Nested SVG -->
+        <g transform="translate(28,28) scale(1.6)">
+            <rect x="2" y="-2" width="22" height="30" rx="4" ry="4" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+            <polygon points="10,8 16,12 10,16" fill="#FFFFFF"/>
+        </g>
+        
+        <!-- Animated Dots Around -->
+        <g id="dots">
+            <circle cx="50" cy="12" r="3" fill="#FFFFFF">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="88" r="3" fill="#FFFFFF" opacity="0.6">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="88" cy="50" r="3" fill="#FFFFFF" opacity="0.3">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="12" cy="50" r="3" fill="#FFFFFF" opacity="0.1">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+        </g>
+    </g>
+</svg>
