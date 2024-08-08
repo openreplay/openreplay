@@ -11,6 +11,7 @@ from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessi
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
+from chalicelib.core import scope
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.core.users import get_user_settings
 from chalicelib.utils import SAML2_helper, smtp
@@ -78,6 +79,7 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
     content = {
         'jwt': r.pop('jwt'),
         'data': {
+            "scope":scope.get_scope(r["tenantId"]),
             "user": r
         }
     }
@@ -138,6 +140,11 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 def edit_account(data: schemas.EditAccountSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
+@app.post('/account/scope', tags=["account"])
+def change_scope(data: schemas.ScopeSchema = Body(),
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    data = scope.update_scope(tenant_id=-1, scope=data.scope)
+    return {'data': data}
 
 
 @app.post('/integrations/slack', tags=['integrations'])

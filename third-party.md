@@ -55,6 +55,7 @@ up to date with every new library you use.
 | sqlalchemy                 | MIT                | Python         |
 | pandas-redshift            | MIT                | Python         |
 | confluent-kafka            | Apache2            | Python         |
+| cachetools                 | MIT                | Python         |
 | amplitude-js               | MIT                | JavaScript     |
 | classnames                 | MIT                | JavaScript     |
 | codemirror                 | MIT                | JavaScript     |

@@ -94,6 +94,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
         'refreshToken': r.pop('refreshToken'),
         'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
         'data': {
+            "scope": "full",
             "user": r
         }
     }
