@@ -13,12 +13,14 @@ const SpotsListHeader = observer(
     onClearSelection,
     isEmpty,
     toggleEmptyState,
+    isEmptyState,
   }: {
     onDelete: () => void;
     selectedCount: number;
     onClearSelection: () => void;
     isEmpty?: boolean;
     toggleEmptyState?: () => void;
+    isEmptyState?: boolean
   }) => {
     const { spotStore } = useStore();
 
@@ -51,7 +53,7 @@ const SpotsListHeader = observer(
         <div className="flex gap-1 items-center">
           <Icon name={'orSpot'} size={24} />
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
-          <Button onClick={toggleEmptyState}>DEBUG: toggle empty state</Button>
+          <Button onClick={toggleEmptyState}>DEBUG: empty state {isEmptyState ? 'ON' : 'OFF'}</Button>
         </div>
 
         {isEmpty ? null : (
