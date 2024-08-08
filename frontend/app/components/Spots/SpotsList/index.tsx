@@ -15,7 +15,7 @@ import SpotsListHeader from './SpotsListHeader';
 
 function SpotsList() {
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
-  const [isEmpty, setIsEmpty] = React.useState(false);
+  const [isEmptyState, setIsEmpty] = React.useState(false);
   const { spotStore } = useStore();
 
   React.useEffect(() => {
@@ -73,7 +73,7 @@ function SpotsList() {
   };
 
   const isLoading = spotStore.isLoading;
-  // const isEmpty = spotStore.total === 0 && spotStore.query === ''
+  const isEmpty = isEmptyState || spotStore.total === 0 && spotStore.query === ''
   return (
     <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
       <div
@@ -86,7 +86,8 @@ function SpotsList() {
           selectedCount={selectedSpots.length}
           onClearSelection={clearSelection}
           isEmpty={isEmpty}
-          toggleEmptyState={() => setIsEmpty(!isEmpty)}
+          isEmptyState={isEmptyState}
+          toggleEmptyState={() => setIsEmpty(!isEmptyState)}
         />
       </div>
 
