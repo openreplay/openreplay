@@ -1,4 +1,4 @@
-import { ChromeOutlined } from '@ant-design/icons';
+import { ChromeOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Alert, Badge, Button } from 'antd';
 import { ArrowUpRight, CirclePlay } from 'lucide-react';
 import React from 'react';
