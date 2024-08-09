@@ -1,5 +1,5 @@
-import { Menu, Tag, Typography, Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Menu, Tag, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -21,12 +21,14 @@ import { MODULES } from 'Components/Client/Modules';
 import { setActiveTab } from 'Duck/search';
 import { Divider, Icon } from 'UI';
 import SVG from 'UI/SVG';
+import { getScope } from "../duck/user";
 
 import {
   MENU,
   PREFERENCES_MENU,
   categories as main_menu,
   preferences,
+  spotOnlyCats,
 } from './data';
 
 const { Text } = Typography;
@@ -45,6 +47,8 @@ interface Props extends RouteComponentProps {
   activeTab: string;
   isEnterprise: boolean;
   isCollapsed?: boolean;
+  spotOnly?: boolean;
+  account: any;
 }
 
 function SideMenu(props: Props) {
@@ -56,6 +60,7 @@ function SideMenu(props: Props) {
     account,
     isEnterprise,
     isCollapsed,
+    spotOnly,
   } = props;
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
@@ -64,54 +69,69 @@ function SideMenu(props: Props) {
   let menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
 
-    return sourceMenu.map((category) => {
-      const updatedItems = category.items.map((item) => {
-        if (isEnterprise) {
-          if (item.key === MENU.BOOKMARKS) {
-            return { ...item, hidden: true };
-          }
-
-          if (item.key === MENU.VAULT) {
-            return { ...item, hidden: false };
-          }
-        } else {
-          if (item.key === MENU.VAULT) {
-            return { ...item, hidden: true };
-          }
-
-          if (item.key === MENU.BOOKMARKS) {
-            return { ...item, hidden: false };
-          }
+    return sourceMenu
+      .filter((cat) => {
+        if (spotOnly) {
+          return spotOnlyCats.includes(cat.key);
         }
-        if (item.hidden) return item;
+        return true;
+      })
+      .map((category) => {
+        const updatedItems = category.items
+          .filter((item) => {
+            if (spotOnly) {
+              return spotOnlyCats.includes(item.key)
+            }
+            return true;
+          })
+          .map((item) => {
+          if (isEnterprise) {
+            if (item.key === MENU.BOOKMARKS) {
+              return { ...item, hidden: true };
+            }
 
-        const isHidden = [
-          item.key === MENU.RECOMMENDATIONS &&
-            modules.includes(MODULES.RECOMMENDATIONS),
-          item.key === MENU.FEATURE_FLAGS &&
-            modules.includes(MODULES.FEATURE_FLAGS),
-          item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
-          item.key === MENU.LIVE_SESSIONS && modules.includes(MODULES.ASSIST),
-          item.key === MENU.SESSIONS &&
-            modules.includes(MODULES.OFFLINE_RECORDINGS),
-          item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-          item.isAdmin && !isAdmin,
-          item.isEnterprise && !isEnterprise,
-        ].some((cond) => cond);
+            if (item.key === MENU.VAULT) {
+              return { ...item, hidden: false };
+            }
+          } else {
+            if (item.key === MENU.VAULT) {
+              return { ...item, hidden: true };
+            }
 
-        return { ...item, hidden: isHidden };
+            if (item.key === MENU.BOOKMARKS) {
+              return { ...item, hidden: false };
+            }
+          }
+          if (item.hidden) return item;
+
+          const isHidden = [
+            item.key === MENU.RECOMMENDATIONS &&
+              modules.includes(MODULES.RECOMMENDATIONS),
+            item.key === MENU.FEATURE_FLAGS &&
+              modules.includes(MODULES.FEATURE_FLAGS),
+            item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
+            item.key === MENU.LIVE_SESSIONS && modules.includes(MODULES.ASSIST),
+            item.key === MENU.SESSIONS &&
+              modules.includes(MODULES.OFFLINE_RECORDINGS),
+            item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
+            item.isAdmin && !isAdmin,
+            item.isEnterprise && !isEnterprise,
+          ].some((cond) => cond);
+
+          return { ...item, hidden: isHidden };
+        });
+
+        const allItemsHidden = updatedItems.every((item) => item.hidden);
+
+        return {
+          ...category,
+          items: updatedItems,
+          hidden: allItemsHidden,
+        };
       });
+  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly]);
 
-      const allItemsHidden = updatedItems.every((item) => item.hidden);
-
-      return {
-        ...category,
-        items: updatedItems,
-        hidden: allItemsHidden,
-      };
-    });
-  }, [isAdmin, isEnterprise, isPreferencesActive, modules]);
-
+  console.log(menu)
   React.useEffect(() => {
     const currentLocation = location.pathname;
     const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
@@ -319,7 +339,7 @@ function SideMenu(props: Props) {
           </React.Fragment>
         ))}
       </Menu>
-      <InitORCard />
+      {spotOnly && !isPreferencesActive ? <InitORCard /> : null}
       <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </>
   );
@@ -328,7 +348,9 @@ function SideMenu(props: Props) {
 function InitORCard() {
   return (
     <div
-      className={'shadow-sm flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded'}
+      className={
+        'shadow-sm flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded'
+      }
       style={{ width: 236 }}
     >
       <img src={'/assets/img/init-or.png'} width={200} height={120} />
@@ -358,6 +380,7 @@ export default withRouter(
       activeTab: state.getIn(['search', 'activeTab', 'type']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       account: state.getIn(['user', 'account']),
+      spotOnly: getScope(state) === 'spot',
     }),
     { setActiveTab }
   )(SideMenu)
