@@ -42,6 +42,7 @@ export const initialState = Map({
     loading: false,
     errors: [],
   },
+  scope: null,
 });
 
 const setClient = (state, data) => {
@@ -59,6 +60,8 @@ export function setJwt(data) {
   };
 }
 
+export const getScope = (state) => state.getIn(['user', 'scope']);
+
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
     case RESET_ERRORS:
@@ -71,6 +74,7 @@ const reducer = (state = initialState, action = {}) => {
     case LOGIN.SUCCESS:
       return state
         .set('account', Account({ ...action.data.user }))
+        .set('scope', action.data.scope)
         .set('loginRequest', { loading: false, errors: [] });
     case UPDATE_PASSWORD.REQUEST:
     case UPDATE_PASSWORD.SUCCESS:
@@ -85,6 +89,7 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_ACCOUNT.SUCCESS:
       return state
         .set('account', Account(action.data))
+        .set('scope', action.data.scope)
         .set('passwordErrors', List());
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
