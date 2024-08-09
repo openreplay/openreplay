@@ -20,11 +20,11 @@ function ScopeForm({
   const onContinue = (skip?: boolean) => {
     if (skip) {
       upgradeScope();
-      history.push(routes.sessions())
+      history.push(routes.onboarding())
     }
     if (scope === Scope.FULL) {
       upgradeScope();
-      history.push(routes.sessions())
+      history.push(routes.onboarding())
     } else {
       downgradeScope();
       history.push(routes.spotsList())
