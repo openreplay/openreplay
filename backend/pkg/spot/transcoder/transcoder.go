@@ -32,7 +32,6 @@ type transcoderImpl struct {
 	queue      chan *service.Spot // in-memory queue for transcoding
 	objStorage objectstorage.ObjectStorage
 	conn       pool.Pool
-	tasks      Tasks
 	streams    Streams
 	spots      service.Spots
 }
@@ -44,7 +43,6 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 		queue:      make(chan *service.Spot, 100),
 		objStorage: objStorage,
 		conn:       conn,
-		tasks:      NewTasks(conn),
 		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
 	}
