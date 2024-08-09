@@ -19,7 +19,7 @@ import (
 )
 
 type Transcoder interface {
-	Transcode(spot *Spot) error
+	Transcode(spot *service.Spot) error
 	GetSpotStreamPlaylist(spotID uint64) ([]byte, error)
 	Close()
 }
@@ -27,24 +27,26 @@ type Transcoder interface {
 type transcoderImpl struct {
 	cfg        *spot.Config
 	log        logger.Logger
-	queue      chan *Spot // in-memory queue for transcoding
+	queue      chan *service.Spot // in-memory queue for transcoding
 	objStorage objectstorage.ObjectStorage
 	conn       pool.Pool
+	spots      service.Spots
 }
 
-func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool) Transcoder {
+func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool, spots service.Spots) Transcoder {
 	tnsc := &transcoderImpl{
 		cfg:        cfg,
 		log:        log,
-		queue:      make(chan *Spot, 100),
+		queue:      make(chan *service.Spot, 100),
 		objStorage: objStorage,
 		conn:       conn,
+		spots:      spots,
 	}
 	go tnsc.mainLoop()
 	return tnsc
 }
 
-func (t *transcoderImpl) Transcode(spot *Spot) error {
+func (t *transcoderImpl) Transcode(spot *service.Spot) error {
 	t.queue <- spot
 	return nil
 }
@@ -60,7 +62,7 @@ func (t *transcoderImpl) mainLoop() {
 	}
 }
 
-func (t *transcoderImpl) transcode(spot *Spot) {
+func (t *transcoderImpl) transcode(spot *service.Spot) {
 	metrics.IncreaseVideosTotal()
 	if spot.Crop == nil && spot.Duration < 15000 {
 		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
@@ -260,6 +262,9 @@ func (t *transcoderImpl) transcode(spot *Spot) {
 		return
 	}
 
+	if err := t.spots.SetStatus(spotID, "processed"); err != nil {
+		t.log.Error(context.Background(), "Error updating spot status: %v", err)
+	}
 	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
 }
 

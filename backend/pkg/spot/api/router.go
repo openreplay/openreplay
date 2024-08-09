@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/spot"
 	"openreplay/backend/pkg/spot/auth"
-	"openreplay/backend/pkg/spot/service"
 	"sync"
 	"time"
 
@@ -21,11 +21,11 @@ type Router struct {
 	cfg      *spotConfig.Config
 	router   *mux.Router
 	mutex    *sync.RWMutex
-	services *service.ServicesBuilder
+	services *spot.ServicesBuilder
 	limiter  *UserRateLimiter
 }
 
-func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *service.ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *spot.ServicesBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -62,6 +62,7 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/spots/{id}/video", e.getSpotVideo).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.getPublicKey).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.updatePublicKey).Methods("PATCH", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/{id}/status", e.spotStatus).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/ping", e.ping).Methods("GET", "OPTIONS")
 
 	// CORS middleware

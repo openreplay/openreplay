@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"openreplay/backend/pkg/spot"
 	"openreplay/backend/pkg/spot/api"
-	"openreplay/backend/pkg/spot/service"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,7 +30,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	services, err := service.NewServiceBuilder(log, cfg, pgConn)
+	services, err := spot.NewServiceBuilder(log, cfg, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

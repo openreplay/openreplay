@@ -528,6 +528,28 @@ func (e *Router) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
+func (e *Router) spotStatus(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
+	id, err := getSpotID(r)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	user := r.Context().Value("userData").(*auth.User)
+	status, err := e.services.Spots.GetStatus(user, id)
+	if err != nil {
+		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+	resp := map[string]interface{}{
+		"status": status,
+	}
+	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
 func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
 	if bodySize > 0 {
 		metrics.RecordRequestSize(float64(bodySize), url, code)

@@ -59,6 +59,8 @@ type Spots interface {
 	UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error)
 	AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error)
 	Delete(user *auth.User, spotIds []uint64) error
+	SetStatus(spotID uint64, status string) error
+	GetStatus(user *auth.User, spotID uint64) (string, error)
 }
 
 func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots {
@@ -117,8 +119,8 @@ func (s *spotsImpl) encodeComment(comment *Comment) string {
 }
 
 func (s *spotsImpl) add(spot *Spot) error {
-	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, crop, comments, created_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, crop, comments, status, created_at) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	var comments []string
 	for _, comment := range spot.Comments {
 		if encodedComment := s.encodeComment(&comment); encodedComment != "" {
@@ -126,7 +128,7 @@ func (s *spotsImpl) add(spot *Spot) error {
 		}
 	}
 	err := s.pgconn.Exec(sql, spot.ID, spot.Name, spot.UserID, spot.UserEmail, spot.TenantID, spot.Duration, spot.Crop,
-		comments, spot.CreatedAt)
+		comments, "pending", spot.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -327,4 +329,33 @@ func (s *spotsImpl) deleteSpots(spotIds []uint64, user *auth.User) error {
 		return fmt.Errorf("failed to delete all requested spots")
 	}
 	return nil
+}
+
+func (s *spotsImpl) SetStatus(spotID uint64, status string) error {
+	switch {
+	case spotID == 0:
+		return fmt.Errorf("spot id is required")
+	case status == "":
+		return fmt.Errorf("status is required")
+	}
+	sql := `UPDATE spots SET status = $1, updated_at = $2 WHERE spot_id = $3 AND deleted_at IS NULL`
+	if err := s.pgconn.Exec(sql, status, time.Now(), spotID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *spotsImpl) GetStatus(user *auth.User, spotID uint64) (string, error) {
+	switch {
+	case user == nil:
+		return "", fmt.Errorf("user is required")
+	case spotID == 0:
+		return "", fmt.Errorf("spot id is required")
+	}
+	sql := `SELECT status FROM spots WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
+	var status string
+	if err := s.pgconn.QueryRow(sql, spotID, user.TenantID).Scan(&status); err != nil {
+		return "", err
+	}
+	return status, nil
 }
