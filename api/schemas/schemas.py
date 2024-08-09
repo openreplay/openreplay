@@ -1008,6 +1008,7 @@ class MetricOfTable(str, Enum):
     VISITED_URL = "location"
     SESSIONS = "sessions"
     ERRORS = "jsException"
+    REFERRER = "referrer"
 
 
 class MetricOfTimeseries(str, Enum):

@@ -357,9 +357,13 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_col = "path"
                 extra_col = ", path"
                 distinct_on += ",path"
+            elif metric_of == schemas.MetricOfTable.REFERRER:
+                main_col = "referrer"
+                extra_col = ", referrer"
+
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(*) AS count,
-                                    COALESCE(SUM(users_sessions.session_count),0) AS count,
+                                    COALESCE(SUM(users_sessions.total),0) AS total,
                                     COALESCE(JSONB_AGG(users_sessions) 
                                             FILTER ( WHERE rn > %(limit_s)s 
                                                         AND rn <= %(limit_e)s ), '[]'::JSONB) AS values
@@ -376,7 +380,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                             ) AS full_sessions
                                  {extra_where}
                                  GROUP BY {main_col}
-                                 ORDER BY session_count DESC) AS users_sessions;"""
+                                 ORDER BY total DESC) AS users_sessions;"""
             else:
                 main_query = f"""SELECT COUNT(*) AS count,
                                     COALESCE(SUM(users_sessions.user_count),0) AS count,
