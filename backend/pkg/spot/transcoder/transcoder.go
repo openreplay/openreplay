@@ -1,4 +1,4 @@
-package service
+package transcoder
 
 import (
 	"bufio"
@@ -6,16 +6,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"openreplay/backend/internal/config/spot"
-	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/logger"
-	metrics "openreplay/backend/pkg/metrics/spot"
-	"openreplay/backend/pkg/objectstorage"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
+
+	"openreplay/backend/internal/config/spot"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/logger"
+	metrics "openreplay/backend/pkg/metrics/spot"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/spot/service"
 )
 
@@ -31,6 +32,8 @@ type transcoderImpl struct {
 	queue      chan *service.Spot // in-memory queue for transcoding
 	objStorage objectstorage.ObjectStorage
 	conn       pool.Pool
+	tasks      Tasks
+	streams    Streams
 	spots      service.Spots
 }
 
@@ -41,6 +44,8 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 		queue:      make(chan *service.Spot, 100),
 		objStorage: objStorage,
 		conn:       conn,
+		tasks:      NewTasks(conn),
+		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
 	}
 	go tnsc.mainLoop()
@@ -65,12 +70,13 @@ func (t *transcoderImpl) mainLoop() {
 
 func (t *transcoderImpl) transcode(spot *service.Spot) {
 	metrics.IncreaseVideosTotal()
+	spotID := spot.ID
+	t.log.Info(context.Background(), "Processing spot %s", spotID)
+
 	if spot.Crop == nil && spot.Duration < 15000 {
 		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
 		return
 	}
-	spotID := spot.ID
-	t.log.Info(context.Background(), "Processing spot %s", spotID)
 
 	// Prepare path for spot video
 	path := t.cfg.FSDir + "/"
@@ -79,7 +85,41 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 	}
 	path += strconv.FormatUint(spotID, 10) + "/"
 
+	// Download video from S3
+	t.downloadSpotVideo(spotID, path)
+
+	// Crop video if needed
+	if spot.Crop != nil && len(spot.Crop) == 2 {
+		t.cropSpotVideo(spotID, spot.Crop, path)
+	}
+
+	if spot.Duration < 15000 {
+		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", spotID)
+		return
+	}
+
+	// Transcode spot video to HLS format
+	streamPlaylist, err := t.transcodeSpotVideo(spotID, path)
+	if err != nil {
+		t.log.Error(context.Background(), "Error transcoding spot %d: %v", spotID, err)
+		return
+	}
+
+	// Save stream playlist to DB
+	if err := t.streams.Add(spotID, streamPlaylist); err != nil {
+		t.log.Error(context.Background(), "Error adding spot stream to DB: %v", err)
+		return
+	}
+
+	if err := t.spots.SetStatus(spotID, "processed"); err != nil {
+		t.log.Error(context.Background(), "Error updating spot status: %v", err)
+	}
+	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
+}
+
+func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) {
 	start := time.Now()
+
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
 		t.log.Fatal(context.Background(), "Error creating directories: %v", err)
@@ -108,70 +148,69 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 		metrics.RecordOriginalVideoSize(float64(fileInfo.Size()))
 	}
 	originVideo.Close()
+
 	metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
+}
 
-	if spot.Crop != nil && len(spot.Crop) == 2 {
-		// Crop video
-		// ffmpeg -i input.webm -ss 5 -to 20 -c copy output.webm
-		crop := spot.Crop
-		start := time.Now()
+func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) {
+	// Crop video
+	// ffmpeg -i input.webm -ss 5 -to 20 -c copy output.webm
 
-		cmd := exec.Command("ffmpeg", "-i", path+"origin.webm",
-			"-ss", fmt.Sprintf("%.2f", float64(crop[0])/1000.0),
-			"-to", fmt.Sprintf("%.2f", float64(crop[1])/1000.0),
-			"-c", "copy", path+"cropped.mp4")
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
+	start := time.Now()
+	cmd := exec.Command("ffmpeg", "-i", path+"origin.webm",
+		"-ss", fmt.Sprintf("%.2f", float64(crop[0])/1000.0),
+		"-to", fmt.Sprintf("%.2f", float64(crop[1])/1000.0),
+		"-c", "copy", path+"cropped.mp4")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
-		err = cmd.Run()
-		if err != nil {
-			t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
-			return
-		}
-		metrics.IncreaseVideosCropped()
-		metrics.RecordCroppingDuration(time.Since(start).Seconds())
+	err := cmd.Run()
+	if err != nil {
+		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
+		return
+	}
+	metrics.IncreaseVideosCropped()
+	metrics.RecordCroppingDuration(time.Since(start).Seconds())
 
-		t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
+	t.log.Info(context.Background(), "Cropped spot %d in %v", spotID, time.Since(start).Seconds())
 
-		// mv cropped.webm origin.webm
-		err = os.Rename(path+"cropped.mp4", path+"origin.webm")
+	// mv cropped.webm origin.webm
+	err = os.Rename(path+"cropped.mp4", path+"origin.webm")
 
-		// upload cropped video back to s3
-		start = time.Now()
-		video, err := os.Open(path + "origin.webm")
-		if err != nil {
-			t.log.Error(context.Background(), "Failed to open cropped video: %v", err)
-			return
-		}
-		defer video.Close()
+	// upload cropped video back to s3
+	start = time.Now()
+	video, err := os.Open(path + "origin.webm")
+	if err != nil {
+		t.log.Error(context.Background(), "Failed to open cropped video: %v", err)
+		return
+	}
+	defer video.Close()
 
-		if fileInfo, err := video.Stat(); err != nil {
-			t.log.Error(context.Background(), "Failed to get file info: %v", err)
-		} else {
-			metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
-		}
-
-		err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
-		if err != nil {
-			t.log.Error(context.Background(), "Failed to upload cropped video: %v", err)
-			return
-		}
-		metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
-
-		t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
+	if fileInfo, err := video.Stat(); err != nil {
+		t.log.Error(context.Background(), "Failed to get file info: %v", err)
+	} else {
+		metrics.RecordCroppedVideoSize(float64(fileInfo.Size()))
 	}
 
-	if spot.Duration < 15000 {
-		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", spotID)
+	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
+	if err != nil {
+		t.log.Error(context.Background(), "Failed to upload cropped video: %v", err)
 		return
 	}
 
+	metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
+
+	t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
+}
+
+func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string, error) {
 	// Transcode video tp HLS format
 	// ffmpeg -i origin.webm -c:v copy -c:a aac -b:a 128k -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
-	start = time.Now()
+
+	start := time.Now()
 	videoPath := path + "origin.webm"
 	playlistPath := path + "index.m3u8"
 	cmd := exec.Command("ffmpeg", "-i", videoPath, "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
@@ -181,10 +220,10 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
-		return
+		return "", err
 	}
 	metrics.IncreaseVideosTranscoded()
 	metrics.RecordTranscodingDuration(time.Since(start).Seconds())
@@ -195,7 +234,7 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 	file, err := os.Open(playlistPath)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
-		return
+		return "", err
 	}
 	defer file.Close()
 
@@ -214,7 +253,7 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 	}
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
-		return
+		return "", err
 	}
 
 	// Insert stream chunks to s3
@@ -223,7 +262,7 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 		chunkFile, err := os.Open(chunkPath)
 		if err != nil {
 			fmt.Println("Error opening file:", err)
-			return
+			return "", err
 		}
 		defer chunkFile.Close()
 
@@ -231,86 +270,17 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 		err = t.objStorage.Upload(chunkFile, key, "video/mp2t", objectstorage.NoCompression)
 		if err != nil {
 			fmt.Println("Error uploading file:", err)
-			return
+			return "", err
 		}
 	}
 	metrics.RecordTranscodedVideoUploadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Uploaded chunks for spot %d in %v", spotID, time.Since(start).Seconds())
-
-	// Replace indexN.ts with pre-signed URLs
-	for i, line := range lines {
-		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
-			key := fmt.Sprintf("%d/%s", spotID, line)
-			presignedURL, err := t.objStorage.GetPreSignedDownloadUrl(key)
-			if err != nil {
-				fmt.Println("Error generating pre-signed URL:", err)
-				return
-			}
-			lines[i] = presignedURL
-		}
-	}
-
-	originalContent := strings.Join(originalLines, "\n")
-	modifiedContent := strings.Join(lines, "\n")
-	now := time.Now()
-	// Insert playlist to DB
-	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at, expired_at) 
-		VALUES ($1, $2, $3, $4, $5) ON CONFLICT (spot_id) DO UPDATE SET original_playlist = $2, modified_playlist = $3, 
-		created_at = $4, expired_at = $5`
-	if err := t.conn.Exec(sql, spotID, originalContent, modifiedContent, now, now.Add(10*time.Minute)); err != nil {
-		fmt.Println("Error inserting playlist to DB:", err)
-		return
-	}
-
-	if err := t.spots.SetStatus(spotID, "processed"); err != nil {
-		t.log.Error(context.Background(), "Error updating spot status: %v", err)
-	}
-	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
+	return strings.Join(lines, "\n"), nil
 }
 
 func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
-	// Get modified playlist from DB
-	sql := `
-	SELECT
-    	CASE
-        	WHEN expired_at > $2 THEN modified_playlist
-        	ELSE original_playlist
-        	END AS playlist,
-    	CASE
-        	WHEN expired_at > $2 THEN 'modified'
-        	ELSE 'original'
-        	END AS playlist_type
-	FROM spots_streams
-    WHERE spot_id = $1`
-	var playlist, flag string
-	if err := t.conn.QueryRow(sql, spotID, time.Now()).Scan(&playlist, &flag); err != nil {
-		t.log.Error(context.Background(), "Error getting spot stream playlist: %v", err)
-		return []byte(""), err
-	}
-	if flag == "modified" {
-		return []byte(playlist), nil
-	}
-	// Have to generate a new modified playlist with updated pre-signed URLs for chunks
-	lines := strings.Split(playlist, "\n")
-	for i, line := range lines {
-		if strings.HasPrefix(line, "index") && strings.HasSuffix(line, ".ts") {
-			key := fmt.Sprintf("%d/%s", spotID, line)
-			presignedURL, err := t.objStorage.GetPreSignedDownloadUrl(key)
-			if err != nil {
-				t.log.Error(context.Background(), "Error generating pre-signed URL: %v", err)
-				return []byte(""), err
-			}
-			lines[i] = presignedURL
-		}
-	}
-	modifiedPlaylist := strings.Join(lines, "\n")
-	// Save modified playlist to DB
-	sql = `UPDATE spots_streams SET modified_playlist = $1, expired_at = $2 WHERE spot_id = $3`
-	if err := t.conn.Exec(sql, modifiedPlaylist, time.Now().Add(10*time.Minute), spotID); err != nil {
-		t.log.Warn(context.Background(), "Error updating modified playlist: %v", err)
-	}
-	return []byte(modifiedPlaylist), nil
+	return t.streams.Get(spotID)
 }
 
 func (t *transcoderImpl) Close() {
