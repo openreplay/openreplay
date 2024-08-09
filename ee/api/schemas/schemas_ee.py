@@ -74,13 +74,13 @@ class GetInsightsSchema(schemas._TimedSchema):
 
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
-    roleId: Optional[int] = Field(None)
+    roleId: Optional[int] = Field(default=None)
 
 
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
-    admin: bool = Field(False)
+    admin: bool = Field(default=False)
     roleId: int = Field(...)
 
 

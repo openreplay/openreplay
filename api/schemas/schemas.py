@@ -218,7 +218,7 @@ class CreateMemberSchema(BaseModel):
     user_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     email: EmailStr = Field(...)
-    admin: bool = Field(default=False)
+    admin: Optional[bool] = Field(default=False)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
