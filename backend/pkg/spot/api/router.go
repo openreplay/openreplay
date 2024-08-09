@@ -62,6 +62,7 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/spots/{id}/video", e.getSpotVideo).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.getPublicKey).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.updatePublicKey).Methods("PATCH", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/ping", e.ping).Methods("GET", "OPTIONS")
 
 	// CORS middleware
 	e.router.Use(e.corsMiddleware)
@@ -71,6 +72,10 @@ func (e *Router) init() {
 }
 
 func (e *Router) root(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 

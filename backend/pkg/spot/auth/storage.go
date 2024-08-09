@@ -7,7 +7,7 @@ import (
 
 func authUser(conn pool.Pool, userID, tenantID, jwtIAT int) (*User, error) {
 	sql := `
-		SELECT user_id, name, email, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat
+		SELECT user_id, name, email, EXTRACT(epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat
 	   	FROM public.users
 	   	WHERE user_id = $1 AND deleted_at IS NULL
 	   	LIMIT 1;`

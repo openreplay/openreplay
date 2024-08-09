@@ -6,7 +6,7 @@ import (
 )
 
 func authUser(conn pool.Pool, userID, tenantID, jwtIAT int) (*User, error) {
-	sql := `SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat, roles.permissions
+	sql := `SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, roles.permissions
 		FROM users
 		JOIN tenants on users.tenant_id = tenants.tenant_id
 		JOIN roles on users.role_id = roles.role_id
