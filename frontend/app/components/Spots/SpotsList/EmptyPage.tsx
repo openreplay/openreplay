@@ -69,7 +69,7 @@ function EmptyPage() {
         <div className={'flex gap-4 w-full justify-center'}>
           <div className={'border rounded bg-cyan-50'}>
             <img src={'assets/img/spot1.svg'} alt={'pin spot'} width={400} />
-            <div className={'flex items-center gap-2 text-lg p-4'}>
+            <div className={'flex items-center gap-2 text-lg p-4 justify-center'}>
               <Badge count={1} color="cyan" /> Pin Spot extension
             </div>
           </div>
@@ -79,7 +79,7 @@ function EmptyPage() {
               alt={'start recording'}
               width={400}
             />
-            <div className={'flex items-center gap-2 text-lg p-4'}>
+            <div className={'flex items-center gap-2 text-lg p-4  justify-center'}>
               <Badge count={2} color="cyan" /> Capture and share a bug
             </div>
           </div>
