@@ -29,6 +29,7 @@ const components: any = {
   UsabilityTestOverviewPure: lazy(() => import('Components/UsabilityTesting/TestOverview')),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
+  ScopeSetup: lazy(() => import('Components/ScopeForm')),
 };
 
 const enhancedComponents: any = {
@@ -48,6 +49,7 @@ const enhancedComponents: any = {
   UsabilityTestOverview: withSiteIdUpdater(components.UsabilityTestOverviewPure),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
+  ScopeSetup: components.ScopeSetup
 };
 
 const withSiteId = routes.withSiteId;
@@ -93,6 +95,7 @@ const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
+const SCOPE_SETUP = routes.scopeSetup();
 
 interface Props {
   isEnterprise: boolean;
@@ -109,6 +112,7 @@ function PrivateRoutes(props: Props) {
   const redirectToOnboarding =
     !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
   const siteIdList: any = sites.map(({ id }) => id).toJS();
+
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
@@ -120,14 +124,20 @@ function PrivateRoutes(props: Props) {
         <Route
           exact
           strict
-          path={withSiteId(SPOTS_LIST_PATH, siteIdList)}
+          path={SPOTS_LIST_PATH}
           component={enhancedComponents.SpotsList}
         />
         <Route
           exact
           strict
-          path={withSiteId(SPOT_PATH, siteIdList)}
+          path={SPOT_PATH}
           component={enhancedComponents.Spot}
+        />
+        <Route
+          exact
+          strict
+          path={SCOPE_SETUP}
+          component={enhancedComponents.ScopeSetup}
         />
         {props.spotOnly ? null : <>
           <Route
