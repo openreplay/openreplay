@@ -181,4 +181,17 @@ export default class SpotStore {
       console.error('no pubkey', e);
     }
   };
+
+  checkIsProcessed = async (id: string) => {
+    try {
+      const { status } = await this.withLoader(() => {
+        return spotService.checkProcessingStatus(id);
+      })
+      return status === 'processed';
+
+    } catch (e) {
+      console.error('couldnt check status', e);
+      return false
+    }
+  }
 }

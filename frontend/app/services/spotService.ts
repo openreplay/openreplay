@@ -97,4 +97,10 @@ export default class SpotService extends BaseService {
       .then(r => r.json())
       .catch(console.error)
   }
+
+  async checkProcessingStatus(id: string) {
+    return this.client.get(`/v1/spots/${id}/status`)
+      .then(r => r.json())
+      .catch(console.error)
+  }
 }
