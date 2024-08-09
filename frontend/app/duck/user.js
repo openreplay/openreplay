@@ -27,7 +27,7 @@ const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 const UPDATE_ACCOUNT_MODULE = 'user/UPDATE_ACCOUNT_MODULE';
 const UPGRADE_ACCOUNT_SCOPE = new RequestTypes('user/UPGRADE_ACCOUNT_SCOPE');
-const DOWNGRADE_DEBUG = new RequestTypes('user/DOWNGRADE_DEBUG');
+const DOWNGRADE_ACCOUNT_SCOPE = new RequestTypes('user/DOWNGRADE_ACCOUNT_SCOPE');
 
 export const initialState = Map({
   account: Account(),
@@ -45,6 +45,7 @@ export const initialState = Map({
     errors: [],
   },
   scope: null,
+  scopeSetup: false,
 });
 
 const setClient = (state, data) => {
@@ -84,14 +85,17 @@ const reducer = (state = initialState, action = {}) => {
     case SIGNUP.SUCCESS:
       return state
         .set('account', Account(action.data.user))
-        .set('onboarding', true);
+        .set('scope', action.data.scope)
+        .set('scopeSetup', true);
     case UPGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scope', 'full')
+          .set('scopeSetup', false)
           .set('onboarding', true)
-    case DOWNGRADE_DEBUG.SUCCESS:
+    case DOWNGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scope', 'spot')
+          .set('scopeSetup', false)
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:
@@ -157,7 +161,7 @@ export const upgradeScope = () => ({
 })
 
 export const downgradeScope = () => ({
-  types: DOWNGRADE_DEBUG.toArray(),
+  types: DOWNGRADE_ACCOUNT_SCOPE.toArray(),
   call: (client) => client.post('/account/scope', { scope: 'spot' }),
 })
 
