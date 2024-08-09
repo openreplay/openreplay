@@ -29,9 +29,9 @@
     "web-vitals": "^4.2.2"
   },
   "devDependencies": {
-    "@wxt-dev/module-solid": "^1.1.1",
+    "@wxt-dev/module-solid": "^1.1.2",
     "daisyui": "^4.12.10",
     "typescript": "^5.4.5",
-    "wxt": "0.19.2"
+    "wxt": "0.19.4"
   }
 }

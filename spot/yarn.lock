@@ -1015,10 +1015,10 @@
   resolved "https://registry.npmjs.org/@webext-core/match-patterns/-/match-patterns-1.0.3.tgz"
   integrity sha512-NY39ACqCxdKBmHgw361M9pfJma8e4AZo20w9AY+5ZjIj1W2dvXC8J31G5fjfOGbulW9w4WKpT8fPooi0mLkn9A==
 
-"@wxt-dev/module-solid@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.npmjs.org/@wxt-dev/module-solid/-/module-solid-1.1.1.tgz"
-  integrity sha512-UC70kk826BvBeo3J8cL7gEAPqscx/sENhPsHbKCYhBpV3JioYJWAkK5/foQbqyKhve12CYJhrxR0qs/geqVLyA==
+"@wxt-dev/module-solid@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@wxt-dev/module-solid/-/module-solid-1.1.2.tgz#1b455effffc088a850d791ba8def6aa2dbd6940a"
+  integrity sha512-r0Vu9zLsRe5L1wrexSHHPvC/G/qaYiENNwacslfw8GJzSYFU2KmTUoCCZhBEmLxXgK+0ihICrNbPIK6Urllvaw==
   dependencies:
     vite-plugin-solid "^2.10.2"
 
@@ -5171,6 +5171,7 @@ winreg@0.0.12:
   integrity sha512-typ/+JRmi7RqP1NanzFULK36vczznSNN8kWVA9vIqXyv8GhghUlwhGp1Xj3Nms1FsPcNnsQrJOR10N58/nQ9hQ==
 
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
   version "7.0.0"
   resolved "https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-7.0.0.tgz"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
@@ -5225,10 +5226,10 @@ ws@8.18.0:
   resolved "https://registry.npmjs.org/ws/-/ws-8.18.0.tgz"
   integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
-wxt@0.19.2:
-  version "0.19.2"
-  resolved "https://registry.npmjs.org/wxt/-/wxt-0.19.2.tgz"
-  integrity sha512-pkBTSZfdEFUnm3N7f/7JPWrUHt/l5/aBgm9bp/uxwBREvbAmMJAp9QEkd0PAxHJqP6KBKiLzY1kzXVQpzniMpA==
+wxt@0.19.4:
+  version "0.19.4"
+  resolved "https://registry.yarnpkg.com/wxt/-/wxt-0.19.4.tgz#055a322259c3d12575ef6a9a80b3a5ed93ef7986"
+  integrity sha512-L77X9mTYEqJPbaKyT3UQ9zKtIYNsJ7FCNb6t/OT73aWDUD3w7ijqJ38485mlOwyDKKDcJ2AWcvsU9Z0tR8B8ZQ==
   dependencies:
     "@aklinker1/rollup-plugin-visualizer" "5.12.0"
     "@types/webextension-polyfill" "^0.10.7"
@@ -5240,6 +5241,7 @@ wxt@0.19.2:
     cac "^6.7.14"
     chokidar "^3.6.0"
     ci-info "^4.0.0"
+    consola "^3.2.3"
     defu "^6.1.4"
     dequal "^2.0.3"
     esbuild "^0.23.0"
