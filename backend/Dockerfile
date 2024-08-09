@@ -104,7 +104,7 @@ ENV TZ=UTC \
     # Set Access-Control-* headers for tracker requests if true
     USE_CORS=false \
     RECORD_CANVAS=true \
-    JWT_SECRET="my_secret" \
+    JWT_SECRET="SECRET" \
     BUCKET_NAME="spots"
 
 
