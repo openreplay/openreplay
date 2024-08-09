@@ -4,7 +4,7 @@ import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
-cache = TTLCache(maxsize=1, ttl=24 * 60 * 60)
+cache = TTLCache(maxsize=1000, ttl=60)
 
 
 @cached(cache)
