@@ -68,7 +68,7 @@ function SideMenu(props: Props) {
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
 
-  const [isModalVisible, setIsModalVisible] = useState(false); // Manage modal state
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
 
   const handleModalOpen = () => {
     setIsModalVisible(true);
