@@ -18,11 +18,11 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
   const _list = React.useRef<List>(null);
   const cache = useCellMeasurerCache();
-  const onTabClick = (tab: any) => {
-    setActiveTab(tab);
+  const onTabClick = (tab: string) => {
+    const newTab = TABS.find((t) => t.text === tab);
+    setActiveTab(newTab);
   };
   const logs = spotPlayerStore.logs;
-  console.log(logs)
   const filteredList = React.useMemo(() => {
     return logs.filter((log) => {
       const tabType = activeTab.text.toLowerCase();
@@ -31,7 +31,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
     });
   }, [activeTab]);
   const jump = (t: number) => {
-    spotPlayerStore.setTime(t);
+    spotPlayerStore.setTime(t / 1000);
   };
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
@@ -77,7 +77,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
       <BottomBlock.Content className={'overflow-y-auto'}>
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
+            <div className="capitalize flex items-center">
               <Icon name="info-circle" className="mr-2" size="18" />
               No Data
             </div>

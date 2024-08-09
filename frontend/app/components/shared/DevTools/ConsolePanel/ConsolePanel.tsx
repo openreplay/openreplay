@@ -31,14 +31,33 @@ const LEVEL_TAB = {
 
 export const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
 
+const urlRegex = /(https?:\/\/[^\s)]+)/g;
+
 export function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
-  return s.split('\n').map((line, i) => (
-    <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
-      {line}
-    </div>
-  ));
+
+  return s.split('\n').map((line, i) => {
+    const parts = line.split(urlRegex);
+
+    const formattedLine = parts.map((part, index) => {
+      if (urlRegex.test(part)) {
+        return (
+          <a key={`link-${index}`} className={'link text-main'} href={part} target="_blank" rel="noopener noreferrer">
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+
+    return (
+      <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
+        {formattedLine}
+      </div>
+    );
+  });
 }
+
 
 export const getIconProps = (level: LogLevel) => {
   switch (level) {

@@ -25,8 +25,8 @@ function Color_browser_whale(props: Props) {
 <path d="M15.9554 16.8819C15.4528 16.8819 15.0449 16.3989 15.0449 15.8033C15.0449 15.2076 15.4528 14.7246 15.9554 14.7246C16.4581 14.7246 16.8659 15.2076 16.8659 15.8033C16.8659 16.3989 16.4581 16.8819 15.9554 16.8819Z" fill="#004781"/>
 </g>
 <defs>
-<filter id="filter0_i_450_13811" x="5.44946" y="3.64941" width="24.7933" height="26.5266" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<filter id="filter0_i_450_13811" x="5.44946" y="3.64941" width="24.7933" height="26.5266" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+<feFlood floodOpacity="0" result="BackgroundImageFix"/>
 <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
 <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
 <feOffset dx="-4" dy="-4"/>

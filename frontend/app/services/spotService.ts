@@ -54,7 +54,6 @@ export default class SpotService extends BaseService {
   async fetchSpot(id: string, accessKey?: string): Promise<GetSpotResponse> {
     return this.client.get(`/spot/v1/spots/${id}${accessKey ? `?key=${accessKey}` : ''}`)
       .then(r => r.json())
-      .catch(console.error)
   }
 
   async updateSpot(id: string, filter: UpdateSpotRequest) {
@@ -71,8 +70,8 @@ export default class SpotService extends BaseService {
       .catch(console.error)
   }
 
-  async addComment(id: string, data: AddCommentRequest) {
-    return this.client.post(`/spot/v1/spots/${id}/comment`, data)
+  async addComment(id: string, data: AddCommentRequest, accessKey?: string) {
+    return this.client.post(`/spot/v1/spots/${id}/comment${accessKey ? `?key=${accessKey}` : ''}`, data)
       .then(r => r.json())
       .catch(console.error)
   }
@@ -95,6 +94,12 @@ export default class SpotService extends BaseService {
 
   async getKey(id: string): Promise<{ key: { value: string, expiration: number }}> {
     return this.client.get(`/spot/v1/spots/${id}/public-key`)
+      .then(r => r.json())
+      .catch(console.error)
+  }
+
+  async checkProcessingStatus(id: string) {
+    return this.client.get(`/spot/v1/spots/${id}/status`)
       .then(r => r.json())
       .catch(console.error)
   }

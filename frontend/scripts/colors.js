@@ -35,8 +35,5 @@ ${ Object.entries(flatColors).map(([name, value]) => `.hover-${ name.replace(/ /
 ${ Object.entries(flatColors).map(([name, value]) => `.border-${ name.replace(/ /g, '-') } { border-color: ${ value } }`).join('\n') }
 `;
 
-// Log the generated CSS to the console
-console.log(generatedCSS);
-
 // Write the generated CSS to a file
 fs.writeFileSync('app/styles/colors-autogen.css', generatedCSS);

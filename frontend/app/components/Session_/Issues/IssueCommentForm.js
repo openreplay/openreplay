@@ -6,7 +6,11 @@ import { addMessage } from 'Duck/assignments';
 class IssueCommentForm extends React.PureComponent {
   state = { comment: '' }
 
-  write = ({ target: { name, value } }) => this.setState({ comment: value });
+  write = (e) => {
+    e.stopPropagation();
+    const { target: { name, value } } = e
+    this.setState({ comment: value });
+  }
 
   addComment = () => {
     const { comment } = this.state;

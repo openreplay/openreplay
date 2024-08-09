@@ -95,6 +95,11 @@ function SpotPlayerControls() {
       <div className={'ml-auto'} />
 
       <ControlButton
+        label={'X-Ray'}
+        onClick={() => togglePanel(PANELS.OVERVIEW)}
+        active={spotPlayerStore.activePanel === PANELS.OVERVIEW}
+      />
+      <ControlButton
         label={'Console'}
         onClick={() => togglePanel(PANELS.CONSOLE)}
         active={spotPlayerStore.activePanel === PANELS.CONSOLE}

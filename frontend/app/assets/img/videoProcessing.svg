@@ -1,0 +1,27 @@
+<svg width="100px" height="100px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="#FFFFFF">
+    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+    <g id="SVGRepo_iconCarrier">
+        
+        <circle cx="50" cy="50" r="45" stroke="#FFFFFF" stroke-width="4" fill="rgba(44,29,184,0.3)"/>
+        <g transform="translate(26, 26) scale(2)">
+            <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+            <rect x="2" y="6" width="14" height="12" rx="2" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+        </g>
+        
+        <g id="dots">
+            <circle cx="50" cy="12" r="3" fill="#FFFFFF">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="88" r="3" fill="#FFFFFF" opacity="0.6">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="88" cy="50" r="3" fill="#FFFFFF" opacity="0.3">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="12" cy="50" r="3" fill="#FFFFFF" opacity="0.1">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
+            </circle>
+        </g>
+    </g>
+</svg>

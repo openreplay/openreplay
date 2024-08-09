@@ -144,6 +144,7 @@ export const usabilityTestingView = (id = ':testId', hash?: string | number): st
 
 export const spotsList = (): string => '/spots';
 export const spot = (id = ':spotId', hash?: string | number): string => hashed(`/view-spot/${id}`, hash);
+export const scopeSetup = (): string => '/scope-setup';
 
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),

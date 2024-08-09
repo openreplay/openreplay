@@ -70,7 +70,7 @@ interface IResource {
   time: number,
   type: ResourceType,
   url: string,
-  status: string,
+  status: string | number,
   method: string,
   duration: number,
   success: boolean,
@@ -81,6 +81,7 @@ interface IResource {
   encodedBodySize?: number,
   decodedBodySize?: number,
   responseBodySize?: number,
+  error?: string,
 }
 
 export interface IResourceTiming extends IResource {
@@ -110,7 +111,7 @@ export interface IResourceRequest extends IResource {
 export const Resource = (resource: IResource) => ({
   ...resource,
   name: getResourceName(resource.url),
-  isRed: !resource.success, //|| resource.score >= RED_BOUND,
+  isRed: !resource.success || resource.error, //|| resource.score >= RED_BOUND,
   isYellow: false, // resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
 })
 

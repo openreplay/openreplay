@@ -1,0 +1,50 @@
+.draggable-markers {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    left: 0;
+    top: 0;
+    z-index: 100;
+}
+
+.marker {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: #FCC100;
+    cursor: ew-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 10px;
+    z-index: 9999;
+}
+
+.marker.start {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+.marker.end {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.handle {
+    background-color: black;
+    height: 50%;
+    width: 1px;
+    margin: 0 1px;
+}
+
+.slider-body {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(252, 193, 0, 0.10);
+    border-top: 1px solid #FCC100;
+    border-bottom: 1px solid #FCC100;
+    cursor: grab;
+    z-index: 100;
+    pointer-events: none;
+}

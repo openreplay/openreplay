@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, Tooltip } from 'UI';
+import {Link2} from 'lucide-react';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
@@ -19,8 +20,8 @@ function SubHeader() {
       {location && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
-            <Icon size="20" name="event/link" className="mr-1" />
-            <Tooltip title="Open in new tab" delay={0}>
+          <Link2 className="mx-2" size={16} />
+            <Tooltip title="Open in new tab" delay={0} placement='bottom'>
               <a href={location} target="_blank">
                 {location}
               </a>

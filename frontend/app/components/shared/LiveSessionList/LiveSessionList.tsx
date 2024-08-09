@@ -41,7 +41,7 @@ function LiveSessionList(props: Props) {
   var timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-  const sortOptions = [{ label: 'Freshness', value: 'timestamp' }].concat(
+  const sortOptions = [{ label: 'Start Time', value: 'timestamp' }].concat(
     metaList
       .map((i: any) => ({
         label: capitalize(i),
