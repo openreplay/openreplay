@@ -29,6 +29,7 @@ import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
 
 function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
+  const [isReady, setIsReady] = React.useState(false)
   const defaultHeight = getDefaultPanelHeight();
   const history = useHistory();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
@@ -73,6 +74,9 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   };
   React.useEffect(() => {
     spotStore.fetchSpotById(spotId).then(async (spotInst) => {
+      spotStore.checkIsProcessed(spotId).then((isProcessed) => {
+        setIsReady(isProcessed);
+      })
       if (spotInst.mobURL) {
         try {
           void spotStore.getPubKey(spotId);
@@ -255,6 +259,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
               videoURL={spotStore.currentSpot.videoURL!}
               streamFile={spotStore.currentSpot.streamFile}
               thumbnail={spotStore.currentSpot.thumbnail}
+              isReady={isReady}
             />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (
