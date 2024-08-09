@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Menu, Tag, Typography } from 'antd';
+import { Button, Divider, Menu, Tag, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -19,10 +19,11 @@ import {
 } from 'App/routes';
 import { MODULES } from 'Components/Client/Modules';
 import { setActiveTab } from 'Duck/search';
-import { Divider, Icon } from 'UI';
+import { Icon } from 'UI';
 import SVG from 'UI/SVG';
-import { getScope } from "../duck/user";
 
+import { getScope } from '../duck/user';
+import SpotToOpenReplayPrompt from './SpotToOpenReplayPrompt';
 import {
   MENU,
   PREFERENCES_MENU,
@@ -66,6 +67,16 @@ function SideMenu(props: Props) {
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
 
+  const [isModalVisible, setIsModalVisible] = useState(false); // Manage modal state
+
+  const handleModalOpen = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
+
   let menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
 
@@ -80,46 +91,47 @@ function SideMenu(props: Props) {
         const updatedItems = category.items
           .filter((item) => {
             if (spotOnly) {
-              return spotOnlyCats.includes(item.key)
+              return spotOnlyCats.includes(item.key);
             }
             return true;
           })
           .map((item) => {
-          if (isEnterprise) {
-            if (item.key === MENU.BOOKMARKS) {
-              return { ...item, hidden: true };
-            }
+            if (isEnterprise) {
+              if (item.key === MENU.BOOKMARKS) {
+                return { ...item, hidden: true };
+              }
 
-            if (item.key === MENU.VAULT) {
-              return { ...item, hidden: false };
-            }
-          } else {
-            if (item.key === MENU.VAULT) {
-              return { ...item, hidden: true };
-            }
+              if (item.key === MENU.VAULT) {
+                return { ...item, hidden: false };
+              }
+            } else {
+              if (item.key === MENU.VAULT) {
+                return { ...item, hidden: true };
+              }
 
-            if (item.key === MENU.BOOKMARKS) {
-              return { ...item, hidden: false };
+              if (item.key === MENU.BOOKMARKS) {
+                return { ...item, hidden: false };
+              }
             }
-          }
-          if (item.hidden) return item;
+            if (item.hidden) return item;
 
-          const isHidden = [
-            item.key === MENU.RECOMMENDATIONS &&
-              modules.includes(MODULES.RECOMMENDATIONS),
-            item.key === MENU.FEATURE_FLAGS &&
-              modules.includes(MODULES.FEATURE_FLAGS),
-            item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
-            item.key === MENU.LIVE_SESSIONS && modules.includes(MODULES.ASSIST),
-            item.key === MENU.SESSIONS &&
-              modules.includes(MODULES.OFFLINE_RECORDINGS),
-            item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
-            item.isAdmin && !isAdmin,
-            item.isEnterprise && !isEnterprise,
-          ].some((cond) => cond);
+            const isHidden = [
+              item.key === MENU.RECOMMENDATIONS &&
+                modules.includes(MODULES.RECOMMENDATIONS),
+              item.key === MENU.FEATURE_FLAGS &&
+                modules.includes(MODULES.FEATURE_FLAGS),
+              item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
+              item.key === MENU.LIVE_SESSIONS &&
+                modules.includes(MODULES.ASSIST),
+              item.key === MENU.SESSIONS &&
+                modules.includes(MODULES.OFFLINE_RECORDINGS),
+              item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
+              item.isAdmin && !isAdmin,
+              item.isEnterprise && !isEnterprise,
+            ].some((cond) => cond);
 
-          return { ...item, hidden: isHidden };
-        });
+            return { ...item, hidden: isHidden };
+          });
 
         const allItemsHidden = updatedItems.every((item) => item.hidden);
 
@@ -131,7 +143,6 @@ function SideMenu(props: Props) {
       });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly]);
 
-  console.log(menu)
   React.useEffect(() => {
     const currentLocation = location.pathname;
     const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
@@ -339,13 +350,21 @@ function SideMenu(props: Props) {
           </React.Fragment>
         ))}
       </Menu>
-      {spotOnly && !isPreferencesActive ? <InitORCard /> : null}
+      {spotOnly && !isPreferencesActive ? (
+        <>
+          <InitORCard onOpenModal={handleModalOpen} />
+          <SpotToOpenReplayPrompt
+            isVisible={isModalVisible}
+            onCancel={handleModalClose}
+          />
+        </>
+      ) : null}
       <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </>
   );
 }
 
-function InitORCard() {
+function InitORCard({ onOpenModal }: { onOpenModal: () => void }) {
   return (
     <div
       className={
@@ -358,16 +377,17 @@ function InitORCard() {
         Discover the full potential of OpenReplay!
       </div>
       <div>
-        With features like Session Replay, Product Analytics, Co-Browsing, and
-        Usability Testing, to enable a stellar product experience.
+        Empower your product team with essential tools like Session Replay,
+        Product Analytics, Co-Browsing, and more.
       </div>
       <Button
         type="primary"
         ghost
         icon={<ArrowRightOutlined />}
         iconPosition={'end'}
+        onClick={onOpenModal}
       >
-        Setup your first project
+        Setup OpenReplay Tracker
       </Button>
     </div>
   );
