@@ -68,7 +68,9 @@ function SpotVideoContainer({
           });
           if (streamFile) {
             const hls = new Hls({
-              enableWorker: false,
+              // not needed for small videos (we have 3 min limit and 720 quality with half kbps)
+            enableWorker: false,
+            // = 1MB, should be enough
               maxBufferSize: 1000 * 1000,
             });
             const url = URL.createObjectURL(base64toblob(streamFile));
@@ -116,7 +118,7 @@ function SpotVideoContainer({
           }
         }
       });
-    }
+    })
     return () => {
       hlsRef.current?.destroy();
     };
