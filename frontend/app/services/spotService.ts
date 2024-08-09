@@ -99,7 +99,7 @@ export default class SpotService extends BaseService {
   }
 
   async checkProcessingStatus(id: string) {
-    return this.client.get(`/v1/spots/${id}/status`)
+    return this.client.get(`/spot/v1/spots/${id}/status`)
       .then(r => r.json())
       .catch(console.error)
   }
