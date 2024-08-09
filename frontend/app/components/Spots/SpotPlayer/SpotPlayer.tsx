@@ -1,3 +1,4 @@
+import { Button, Card } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -6,9 +7,9 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
 import { OverviewPanel } from 'Components/Session_/OverviewPanel';
-import { EscapeButton, Loader, Icon } from 'UI';
+import { EscapeButton, Icon, Loader } from 'UI';
+
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import {Button, Card} from 'antd';
 
 import {
   debounceUpdate,
@@ -29,7 +30,6 @@ import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
 
 function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
-  const [isReady, setIsReady] = React.useState(false)
   const defaultHeight = getDefaultPanelHeight();
   const history = useHistory();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
@@ -74,9 +74,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   };
   React.useEffect(() => {
     spotStore.fetchSpotById(spotId).then(async (spotInst) => {
-      spotStore.checkIsProcessed(spotId).then((isProcessed) => {
-        setIsReady(isProcessed);
-      })
       if (spotInst.mobURL) {
         try {
           void spotStore.getPubKey(spotId);
@@ -132,7 +129,10 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
       }
       if (e.key === 'ArrowRight') {
         spotPlayerStore.setTime(
-          Math.min(spotPlayerStore.duration, spotPlayerStore.time + spotPlayerStore.skipInterval)
+          Math.min(
+            spotPlayerStore.duration,
+            spotPlayerStore.time + spotPlayerStore.skipInterval
+          )
         );
       }
       if (e.key === 'ArrowLeft') {
@@ -158,34 +158,36 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
       >
         {spotStore.accessError ? (
           <>
-            <div className='w-full h-full block '> 
-            <div className='flex bg-white border-b text-center justify-center py-4'>
-            <a href="https://openreplay.com/spot" target="_blank">
-              <Button
-                type="text"
-                className="orSpotBranding flex gap-1 items-center"
-                size='large'
-              >
-                <Icon name={'orSpot'} size={28} />
-                <div className="flex flex-row gap-2 items-center text-start">
-                  <div className={'text-3xl font-semibold '}>Spot</div>
-                  <div className={'text-disabled-text text-xs mt-3'}>
-                    by OpenReplay
-                  </div>
-                </div>
-              </Button>
-            </a>
-            </div>
-            <Card className='w-1/2 mx-auto rounded-b-full shadow-sm text-center flex flex-col justify-center items-center z-50 min-h-60'>
-              <div className={'font-semibold text-xl'}>
-                The Spot link has expired.
+            <div className="w-full h-full block ">
+              <div className="flex bg-white border-b text-center justify-center py-4">
+                <a href="https://openreplay.com/spot" target="_blank">
+                  <Button
+                    type="text"
+                    className="orSpotBranding flex gap-1 items-center"
+                    size="large"
+                  >
+                    <Icon name={'orSpot'} size={28} />
+                    <div className="flex flex-row gap-2 items-center text-start">
+                      <div className={'text-3xl font-semibold '}>Spot</div>
+                      <div className={'text-disabled-text text-xs mt-3'}>
+                        by OpenReplay
+                      </div>
+                    </div>
+                  </Button>
+                </a>
               </div>
-              <p className='text-lg'>Contact the person who shared it to re-spot.</p>
-            </Card>
-            <div className='rotate-180 -z-10 w-fit mx-auto -mt-5 hover:mt-2 transition-all ease-in-out hover:rotate-0 hover:transition-all hover:ease-in-out duration-500 hover:duration-150'>
-              <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
+              <Card className="w-1/2 mx-auto rounded-b-full shadow-sm text-center flex flex-col justify-center items-center z-50 min-h-60">
+                <div className={'font-semibold text-xl'}>
+                  The Spot link has expired.
+                </div>
+                <p className="text-lg">
+                  Contact the person who shared it to re-spot.
+                </p>
+              </Card>
+              <div className="rotate-180 -z-10 w-fit mx-auto -mt-5 hover:mt-2 transition-all ease-in-out hover:rotate-0 hover:transition-all hover:ease-in-out duration-500 hover:duration-150">
+                <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
+              </div>
             </div>
-          </div>
           </>
         ) : (
           <Loader />
@@ -227,7 +229,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   //   }]
   // };
 
-
   return (
     <div
       className={cn(
@@ -259,7 +260,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
               videoURL={spotStore.currentSpot.videoURL!}
               streamFile={spotStore.currentSpot.streamFile}
               thumbnail={spotStore.currentSpot.thumbnail}
-              isReady={isReady}
+              checkReady={() => spotStore.checkIsProcessed(spotId)}
             />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (
@@ -310,13 +311,14 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
 }
 
 const SpotOverviewConnector = observer(() => {
-  const endTime = spotPlayerStore.duration * 1000
-  const time = spotPlayerStore.time * 1000
+  const endTime = spotPlayerStore.duration * 1000;
+  const time = spotPlayerStore.time * 1000;
   const resourceList = spotPlayerStore.network
     .filter((r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400))
-    .filter((i: any) => i.type === 'xhr')
-  const exceptionsList = spotPlayerStore.logs
-    .filter(l => l.level === 'error')
+    .filter((i: any) => i.type === 'xhr');
+  const exceptionsList = spotPlayerStore.logs.filter(
+    (l) => l.level === 'error'
+  );
 
   return (
     <SpotOverviewPanelCont
@@ -325,8 +327,8 @@ const SpotOverviewConnector = observer(() => {
       spotTime={time}
       spotEndTime={endTime}
     />
-  )
-})
+  );
+});
 
 function mapStateToProps(state: any) {
   const userEmail = state.getIn(['user', 'account', 'name']);

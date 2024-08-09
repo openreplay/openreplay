@@ -187,6 +187,7 @@ export default class SpotStore {
       const { status } = await this.withLoader(() => {
         return spotService.checkProcessingStatus(id);
       })
+      console.log(status === 'processed')
       return status === 'processed';
 
     } catch (e) {
