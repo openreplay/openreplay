@@ -1,13 +1,16 @@
 import React from 'react';
 import { Modal, Button, List, Divider } from 'antd';
 import { CircleDot, Play, TrendingUp, Radio, Sparkles, Plug, ArrowRight } from 'lucide-react';
+import { upgradeScope } from 'App/duck/user';
+import { connect } from 'react-redux';
 
 interface SpotToOpenReplayPromptProps {
   isVisible: boolean;
   onCancel: () => void;
+  upgradeScope: () => void;
 }
 
-const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ isVisible, onCancel }) => {
+const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgradeScope, isVisible, onCancel }) => {
 
   const features = [
     { icon: <CircleDot />, text: 'Spot', noBorder: true },
@@ -19,6 +22,11 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ isVisib
     { icon: <Plug />, text: 'Integrations & more' },
   ];
 
+  const onUpgrade = () => {
+    upgradeScope().then(() => {
+      onCancel();
+    })
+  }
   return (
     <Modal
       title="Setup OpenReplay"
@@ -28,7 +36,7 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ isVisib
         <Button key="cancel" onClick={onCancel}>
           Cancel
         </Button>,
-        <Button key="setup" type="primary" onClick={onCancel} className='gap-2'>
+        <Button key="setup" type="primary" onClick={onUpgrade} className='gap-2'>
           Setup OpenReplay Tracker <ArrowRight size={16}  />
         </Button>,
       ]}
@@ -56,4 +64,4 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ isVisib
   );
 };
 
-export default SpotToOpenReplayPrompt;
+export default connect(null, { upgradeScope })(SpotToOpenReplayPrompt);

@@ -1,5 +1,4 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Divider, Menu, Tag, Typography } from 'antd';
+import { Divider, Menu, Tag, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
