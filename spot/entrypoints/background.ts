@@ -1,6 +1,7 @@
 import { WebRequest } from "webextension-polyfill";
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
+  const PING_INT = 30 * 1000
   const messages = {
     popup: {
       from: {
@@ -203,6 +204,7 @@ export default defineBackground(() => {
     }
   };
   let refreshInt: any;
+  let pingInt: any;
   chrome.storage.local.get(["jwtToken", "settings"]).then(async (data: any) => {
     if (!data.settings) {
       chrome.storage.local.set({ settings });
@@ -230,8 +232,37 @@ export default defineBackground(() => {
       refreshInt = setInterval(() => {
         void refreshToken(url);
       }, CHECK_INT);
+
+      pingInt = setInterval(() => {
+        void pingJWT();
+      }, PING_INT)
     }
   });
+
+  async function pingJWT() {
+    if (!jwtToken) {
+      return;
+    }
+    const url = safeApiUrl(`${settings.ingestPoint}/spot/v1/spots/ping`);
+    try {
+      const r = await fetch(url)
+      if (!r.ok) {
+        chrome.storage.local.remove("jwtToken");
+        setJWTToken("");
+        void browser.runtime.sendMessage({
+          type: messages.popup.to.noLogin,
+        });
+        return false;
+      }
+    } catch (e) {
+      chrome.storage.local.remove("jwtToken");
+      setJWTToken("");
+      void browser.runtime.sendMessage({
+        type: messages.popup.to.noLogin,
+      });
+      return false;
+    }
+  }
 
   let lastReq: Record<string, any> | null = null;
   browser.runtime.onMessage.addListener((request, sender, respond) => {
@@ -417,11 +448,17 @@ export default defineBackground(() => {
         refreshInt = setInterval(() => {
           void refreshToken(url);
         }, CHECK_INT);
+        pingInt = setInterval(() => {
+          void pingJWT();
+        }, PING_INT)
       });
     }
     if (request.type === messages.content.from.invalidateToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
+      }
+      if (pingInt) {
+        clearInterval(pingInt)
       }
       setJWTToken("");
     }
