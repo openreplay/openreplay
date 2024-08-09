@@ -48,6 +48,7 @@ interface RouterProps
   setJwt: (jwt: string) => any;
   fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
+  scopeSetup: boolean;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
@@ -64,6 +65,7 @@ const Router: React.FC<RouterProps> = (props) => {
       params: { siteId: siteIdFromPath },
     },
     setSessionPath,
+    scopeSetup,
   } = props;
   const params = new URLSearchParams(location.search)
   const spotCb = params.get('spotCallback');
@@ -169,8 +171,12 @@ const Router: React.FC<RouterProps> = (props) => {
       if (spotCb) {
         history.push(spotsList())
       }
+      if (scopeSetup) {
+        history.push(routes.scopeSetup())
+      }
     }
-  }, [isLoggedIn]);
+
+  }, [isLoggedIn, scopeSetup]);
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {
@@ -199,7 +205,8 @@ const Router: React.FC<RouterProps> = (props) => {
     location.pathname.includes('/assist/') ||
     location.pathname.includes('multiview') ||
     location.pathname.includes('/view-spot/') ||
-    location.pathname.includes('/spots/');
+    location.pathname.includes('/spots/') ||
+    location.pathname.includes('/scope-setup')
 
   if (isIframe) {
     return (
@@ -210,7 +217,7 @@ const Router: React.FC<RouterProps> = (props) => {
   return isLoggedIn ? (
     <NewModalProvider>
       <ModalProvider>
-        <Loader loading={loading || !siteId} className="flex-1">
+        <Loader loading={loading} className="flex-1">
           <Layout hideHeader={hideHeader} siteId={siteId}>
             <PrivateRoutes />
           </Layout>
@@ -232,14 +239,16 @@ const mapStateToProps = (state: Map<string, any>) => {
     'loading',
   ]);
   const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
-
+  const scopeSetup = state.getIn(['user', 'scopeSetup'])
+  const loading = Boolean(userInfoLoading) || Boolean(sitesLoading)
   return {
     siteId,
     changePassword,
     sites: state.getIn(['site', 'list']),
     jwt,
     isLoggedIn: jwt !== null && !changePassword,
-    loading: siteId === null || userInfoLoading || sitesLoading,
+    scopeSetup,
+    loading,
     email: state.getIn(['user', 'account', 'email']),
     account: state.getIn(['user', 'account']),
     organisation: state.getIn(['user', 'account', 'name']),
