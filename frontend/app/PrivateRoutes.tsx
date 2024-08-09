@@ -117,6 +117,18 @@ function PrivateRoutes(props: Props) {
           path={withSiteId(ONBOARDING_PATH, siteIdList)}
           component={enhancedComponents.Onboarding}
         />
+        <Route
+          exact
+          strict
+          path={withSiteId(SPOTS_LIST_PATH, siteIdList)}
+          component={enhancedComponents.SpotsList}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(SPOT_PATH, siteIdList)}
+          component={enhancedComponents.Spot}
+        />
         {props.spotOnly ? null : <>
           <Route
             path="/integrations/"
@@ -249,18 +261,6 @@ function PrivateRoutes(props: Props) {
           ))}
           <AdditionalRoutes redirect={withSiteId(routes.sessions(), siteId)} />
         </>}
-        <Route
-          exact
-          strict
-          path={withSiteId(SPOTS_LIST_PATH, siteIdList)}
-          component={enhancedComponents.SpotsList}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(SPOT_PATH, siteIdList)}
-          component={enhancedComponents.Spot}
-        />
         {props.spotOnly ? <Redirect to={withSiteId(SPOTS_LIST_PATH, siteId)} /> : null}
       </Switch>
     </Suspense>

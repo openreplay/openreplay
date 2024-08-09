@@ -1,8 +1,12 @@
-import React from 'react'
-import { Button } from 'antd'
-import { ArrowRightOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import React from 'react';
 
-function InitORCard({ onOpenModal }: { onOpenModal: () => void }) {
+function InitORCard({
+  onOpenModal,
+}: {
+  onOpenModal: () => void;
+}) {
   return (
     <div
       className={
