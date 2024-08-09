@@ -11,7 +11,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 def app_connection_string(name, port, path):
     namespace = config("POD_NAMESPACE", default="app")
     conn_string = config("CLUSTER_URL", default="svc.cluster.local")
-    return f"http://{'.'.join(filter(None,[name,namespace,conn_string]))}:{port}/{path}"
+    return f"http://{'.'.join(filter(None, [name, namespace, conn_string]))}:{port}/{path}"
 
 
 HEALTH_ENDPOINTS = {
@@ -174,7 +174,7 @@ def __get_sessions_stats(*_):
     }
 
 
-def get_health():
+def get_health(tenant_id=None):
     health_map = {
         "databases": {
             "postgres": __check_database_pg

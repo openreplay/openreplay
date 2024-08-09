@@ -1,17 +1,20 @@
 from decouple import config
+from fastapi import Depends
 from fastapi import HTTPException, status
 
+import schemas
 from chalicelib.core import health, tenants
+from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
 
 
 @app.get('/healthz', tags=["health-check"])
-def get_global_health_status():
+def get_global_health_status(context: schemas.CurrentContext = Depends(OR_context)):
     if config("LOCAL_DEV", cast=bool, default=False):
         return {"data": ""}
-    return {"data": health.get_health()}
+    return {"data": health.get_health(context.tenant_id)}
 
 
 if not tenants.tenants_exists_sync(use_pool=False):
