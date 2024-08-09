@@ -105,6 +105,7 @@ ENV TZ=UTC \
     USE_CORS=false \
     RECORD_CANVAS=true \
     JWT_SECRET="SECRET" \
+    JWT_SPOT_SECRET="SECRET" \
     BUCKET_NAME="spots"
 
 

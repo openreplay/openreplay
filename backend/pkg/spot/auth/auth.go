@@ -11,20 +11,22 @@ import (
 )
 
 type Auth interface {
-	IsAuthorized(authHeader string, permissions []string) (*User, error)
+	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*User, error)
 }
 
 type authImpl struct {
-	log    logger.Logger
-	secret string
-	pgconn pool.Pool
+	log        logger.Logger
+	secret     string
+	spotSecret string
+	pgconn     pool.Pool
 }
 
-func NewAuth(log logger.Logger, jwtSecret string, conn pool.Pool) Auth {
+func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool) Auth {
 	return &authImpl{
-		log:    log,
-		secret: jwtSecret,
-		pgconn: conn,
+		log:        log,
+		secret:     jwtSecret,
+		spotSecret: jwtSpotSecret,
+		pgconn:     conn,
 	}
 }
 

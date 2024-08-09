@@ -63,7 +63,7 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.getPublicKey).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/public-key", e.updatePublicKey).Methods("PATCH", "OPTIONS")
 	e.router.HandleFunc("/v1/spots/{id}/status", e.spotStatus).Methods("GET", "OPTIONS")
-	e.router.HandleFunc("/v1/spots/ping", e.ping).Methods("GET", "OPTIONS")
+	e.router.HandleFunc("/v1/ping", e.ping).Methods("GET", "OPTIONS")
 
 	// CORS middleware
 	e.router.Use(e.corsMiddleware)
@@ -104,9 +104,20 @@ func (e *Router) authMiddleware(next http.Handler) http.Handler {
 		if r.URL.Path == "/" {
 			next.ServeHTTP(w, r)
 		}
+		isExtension := false
+		pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
+		if err != nil {
+			e.log.Error(r.Context(), "failed to get path template: %s", err)
+		} else {
+			if pathTemplate == "/v1/ping" ||
+				(pathTemplate == "/v1/spots" && r.Method == "POST") ||
+				(pathTemplate == "/v1/spots/{id}/uploaded" && r.Method == "POST") {
+				isExtension = true
+			}
+		}
 
 		// Check if the request is authorized
-		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path))
+		user, err := e.services.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path), isExtension)
 		if err != nil {
 			e.log.Warn(r.Context(), "Unauthorized request: %s", err)
 			if !isSpotWithKeyRequest(r) {

@@ -25,6 +25,7 @@ type Config struct {
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	JWTSecret               string        `env:"JWT_SECRET,required"`
+	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET,required"`
 	WorkerID                uint16
 }
 
