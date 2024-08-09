@@ -164,7 +164,10 @@ export default defineBackground(() => {
 
   let slackChannels: { name: string; webhookId: number }[] = [];
   const refreshToken = async (ingest: string) => {
-    if (!isTokenExpired(jwtToken)) {
+    if (!isTokenExpired(jwtToken) || !jwtToken) {
+      if (refreshInt) {
+        clearInterval(refreshInt);
+      }
       return true;
     }
     const resp = await fetch(`${ingest}/spot/refresh`, {
@@ -241,11 +244,19 @@ export default defineBackground(() => {
 
   async function pingJWT() {
     if (!jwtToken) {
+      if (pingInt) {
+        clearInterval(pingInt);
+      }
       return;
     }
     const url = safeApiUrl(`${settings.ingestPoint}/spot/v1/spots/ping`);
     try {
-      const r = await fetch(url)
+      const r = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      })
       if (!r.ok) {
         chrome.storage.local.remove("jwtToken");
         setJWTToken("");
