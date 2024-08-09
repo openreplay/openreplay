@@ -34,7 +34,7 @@ func parseJWT(authHeader, secret string) (*JWTClaims, error) {
 	}
 	tokenParts := strings.Split(authHeader, "Bearer ")
 	if len(tokenParts) != 2 {
-		return nil, fmt.Errorf("invalid token")
+		return nil, fmt.Errorf("invalid authorization header")
 	}
 	tokenString := tokenParts[1]
 
