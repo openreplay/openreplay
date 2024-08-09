@@ -354,6 +354,14 @@ function AudioPicker(props: IAudioPicker) {
       props.toggleMic();
     }
   };
+
+  const onMicToggle = () => {
+    if (!props.selectedAudioDevice() && props.audioDevices().length) {
+      onSelect(props.audioDevices()[0].id);
+    } else {
+      props.toggleMic();
+    }
+  }
   return (
     <div class={"inline-flex items-center gap-1 text-xs"}>
       <div
@@ -361,7 +369,7 @@ function AudioPicker(props: IAudioPicker) {
           "p-1 cursor-pointer btn btn-xs bg-white hover:bg-indigo-50 pointer-events-auto tooltip tooltip-right text-sm font-normal"
         }
         data-tip={props.mic() ? "Switch Off Mic" : "Switch On Mic"}
-        onClick={props.toggleMic}
+        onClick={onMicToggle}
       >
         <img
           src={props.mic() ? micOn : micOff}
