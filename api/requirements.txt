@@ -12,7 +12,7 @@ cachetools==5.4.0
 
 
 fastapi==0.112.0
-uvicorn[standard]==0.30.3
+uvicorn[standard]==0.30.5
 python-decouple==3.8
 pydantic[email]==2.3.0
 apscheduler==3.10.4
