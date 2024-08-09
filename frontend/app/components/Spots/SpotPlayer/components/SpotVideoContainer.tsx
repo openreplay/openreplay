@@ -1,6 +1,8 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { Skeleton } from 'antd';
+import { VideoCameraOutlined } from '@ant-design/icons';
 
 import { useStore } from 'App/mstore';
 
@@ -56,9 +58,6 @@ function SpotVideoContainer({
       if (streamFile) {
         const hls = new Hls({
           enableWorker: false,
-          // no need for small videos (for now?)
-          // workerPath: '/hls-worker.js',
-          // 1MB buffer -- we have small videos anyways
           maxBufferSize: 1000 * 1000,
         });
         const url = URL.createObjectURL(base64toblob(streamFile));
@@ -150,8 +149,18 @@ function SpotVideoContainer({
       videoRef.current.playbackRate = spotPlayerStore.playbackRate;
     }
   }, [spotPlayerStore.playbackRate]);
+
   return (
     <>
+      {!isLoaded && (
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 from-10%  to-emerald-500/50 to-90%">
+            <img src={'../assets/img/videoProcessing.svg'} alt={'Optimizing video..'} width={75} className='mb-5' />
+            <div className={'text-2xl font-bold color-white '}>
+            Optimizing Spot Recording
+            </div>
+
+        </div>
+      )}
       <video
         ref={videoRef}
         poster={thumbnail}
@@ -160,20 +169,8 @@ function SpotVideoContainer({
           'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
         }
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
+        style={{ display: isLoaded ? 'block' : 'none' }}
       />
-      {isLoaded ? null : (
-        <div className={ 'z-20 absolute top-0 left-0 w-full h-full flex items-center justify-center bg-indigo-500/50'}>
-
-          <div className='flex flex-col gap5 text-center items-center'>
-          <img src={'../assets/img/videoProcessing.svg'} alt={'Optimizing video..'} width={100} />
-          <div className={'text-6xl font-black color-white'}>
-          Optimizing Spot Recording
-          </div>
-          </div>
-
-         
-        </div>
-      )}
     </>
   );
 }

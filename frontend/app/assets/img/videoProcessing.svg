@@ -2,16 +2,13 @@
     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
     <g id="SVGRepo_iconCarrier">
-        <!-- Outer Circle -->
-        <circle cx="50" cy="50" r="45" stroke="#FFFFFF" stroke-width="4" fill="none"/>
-
-        <!-- Video Icon, No Nested SVG -->
-        <g transform="translate(28,28) scale(1.6)">
-            <rect x="2" y="-2" width="22" height="30" rx="4" ry="4" fill="none" stroke="#FFFFFF" stroke-width="2"/>
-            <polygon points="10,8 16,12 10,16" fill="#FFFFFF"/>
+        
+        <circle cx="50" cy="50" r="45" stroke="#FFFFFF" stroke-width="4" fill="rgba(44,29,184,0.3)"/>
+        <g transform="translate(26, 26) scale(2)">
+            <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+            <rect x="2" y="6" width="14" height="12" rx="2" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
         </g>
         
-        <!-- Animated Dots Around -->
         <g id="dots">
             <circle cx="50" cy="12" r="3" fill="#FFFFFF">
                 <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="2s" repeatCount="indefinite"/>
