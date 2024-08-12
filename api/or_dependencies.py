@@ -34,7 +34,7 @@ class ORRoute(APIRoute):
                 response: Response = await original_route_handler(request)
             except RequestValidationError as exc:
                 # 422 validation exception
-                logger.warning(f"422 exception when calling: {request.method} {request.url}")
+                logger.warning(f"!!! 422 exception when calling: {request.method} {request.url}")
                 logger.warning(exc.errors())
                 raise exc
             except HTTPException as e:

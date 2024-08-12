@@ -141,6 +141,10 @@ def __get_table_of_referrers(project_id: int, data: schemas.CardTable, user_id: 
     return __get_table_of_series(project_id=project_id, data=data)
 
 
+def __get_table_of_requests(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project_id, data=data)
+
+
 def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
@@ -152,6 +156,7 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.USER_COUNTRY: __get_table_of_countries,
         schemas.MetricOfTable.VISITED_URL: __get_table_of_urls,
         schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
+        schemas.MetricOfTable.FETCH: __get_table_of_requests
     }
     return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
