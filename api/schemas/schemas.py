@@ -1009,6 +1009,7 @@ class MetricOfTable(str, Enum):
     SESSIONS = "sessions"
     ERRORS = "jsException"
     REFERRER = "referrer"
+    FETCH = EventType.REQUEST_DETAILS.value
 
 
 class MetricOfTimeseries(str, Enum):
