@@ -16,9 +16,9 @@ python-decouple = "==3.8"
 apscheduler = "==3.10.4"
 redis = "==5.1.0b6"
 cachetools = "==5.4.0"
-psycopg = {extras = ["binary", "pool"], version = "==3.2.1"}
+psycopg = {extras = ["pool", "binary"], version = "==3.2.1"}
 uvicorn = {extras = ["standard"], version = "==0.30.5"}
-pydantic = {extras = ["email"], version = "==2.3.0"}
+pydantic = {extras = ["email"], version = "==2.8.2"}
 
 [dev-packages]
 
