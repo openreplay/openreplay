@@ -157,16 +157,21 @@ def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int =
     return __get_table_of_series(project_id=project_id, data=data)
 
 
+def __get_table_of_referrers(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project_id, data=data)
+
+
 def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
         schemas.MetricOfTable.ERRORS: __get_table_of_errors,
         schemas.MetricOfTable.USER_ID: __get_table_of_user_ids,
         schemas.MetricOfTable.ISSUES: __get_table_of_issues,
-        schemas.MetricOfTable.user_browser: __get_table_of_browsers,
+        schemas.MetricOfTable.USER_BROWSER: __get_table_of_browsers,
         schemas.MetricOfTable.USER_DEVICE: __get_table_of_devises,
         schemas.MetricOfTable.USER_COUNTRY: __get_table_of_countries,
         schemas.MetricOfTable.VISITED_URL: __get_table_of_urls,
+        schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
     }
     return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 

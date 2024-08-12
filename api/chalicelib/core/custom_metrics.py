@@ -538,7 +538,8 @@ def delete_card(project_id, metric_id, user_id):
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
-              AND (user_id = %(user_id)s OR is_public);""",
+              AND (user_id = %(user_id)s OR is_public)
+            RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
 
