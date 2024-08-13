@@ -998,7 +998,7 @@ class MetricOfWebVitals(str, Enum):
     AVG_VISITED_PAGES = "avgVisitedPages"
     COUNT_REQUESTS = "countRequests"
     COUNT_SESSIONS = "countSessions"
-    COUNT_USERS = "countUsers"
+    COUNT_USERS = "userCount"
 
 
 class MetricOfTable(str, Enum):
@@ -1024,7 +1024,6 @@ class MetricOfTimeseries(str, Enum):
 
 class MetricOfFunnels(str, Enum):
     SESSION_COUNT = MetricOfTimeseries.SESSION_COUNT.value
-    USER_COUNT = MetricOfTimeseries.USER_COUNT.value
 
 
 class MetricOfHeatMap(str, Enum):
@@ -1189,6 +1188,7 @@ class CardFunnel(__CardSchema):
     metric_type: Literal[MetricType.FUNNEL]
     metric_of: MetricOfFunnels = Field(default=MetricOfFunnels.SESSION_COUNT)
     view_type: MetricOtherViewType = Field(...)
+    metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
 
     @model_validator(mode="before")
     @classmethod
