@@ -276,3 +276,5 @@ Pipfile.lock
 /routers/subs/spot.py
 /chalicelib/utils/or_cache/
 /routers/subs/health.py
+/chalicelib/core/spot.py
+/chalicelib/core/unprocessed_sessions.py

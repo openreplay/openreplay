@@ -28,7 +28,7 @@ class TimeUTC:
             .astimezone(UTC_ZI)
 
     @staticmethod
-    def now(delta_days=0, delta_minutes=0, delta_seconds=0):
+    def now(delta_days: int = 0, delta_minutes: int = 0, delta_seconds: int = 0) -> int:
         return int(TimeUTC.__now(delta_days=delta_days, delta_minutes=delta_minutes,
                                  delta_seconds=delta_seconds).timestamp() * 1000)
 

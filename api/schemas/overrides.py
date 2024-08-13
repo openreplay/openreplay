@@ -34,6 +34,6 @@ T = TypeVar('T')
 
 
 class ORUnion:
-    def __new__(self, union_types: Union[AnyType], discriminator: str) -> T:
+    def __new__(cls, union_types: Union[AnyType], discriminator: str) -> T:
         return lambda **args: TypeAdapter(Annotated[union_types, Field(discriminator=discriminator)]) \
             .validate_python(args)

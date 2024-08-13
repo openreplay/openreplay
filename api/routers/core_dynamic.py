@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Union
 
 from decouple import config
@@ -6,12 +7,13 @@ from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
+from chalicelib.core import scope
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
     sessions_favorite, assist, sessions_notes, sessions_replay, signup, feature_flags
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
+from chalicelib.core import unprocessed_sessions
 from chalicelib.core import webhook
-from chalicelib.core import scope
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
@@ -19,6 +21,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 
+logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
 
 COOKIE_PATH = "/api/refresh"
@@ -249,7 +252,7 @@ def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema
 
 
 @app.get('/{projectId}/sessions/{sessionId}/first-mob', tags=["sessions", "replay"])
-def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+def get_first_mob_file(projectId: int, sessionId: Union[int, str],
                        context: schemas.CurrentContext = Depends(OR_context)):
     if not sessionId.isnumeric():
         return {"errors": ["session not found"]}
@@ -368,16 +371,10 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
-    if not sessionId.isnumeric():
-        return not_found
-    else:
-        sessionId = int(sessionId)
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
-        print(f"{projectId}/{sessionId} not found in DB.")
-        if not assist.session_exists(project_id=projectId, session_id=sessionId):
-            print(f"{projectId}/{sessionId} not found in Assist.")
-            return not_found
-
+    sessionId, err = unprocessed_sessions.check_exists(project_id=projectId, session_id=sessionId,
+                                                       not_found_response=not_found)
+    if err is not None:
+        return err
     path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
         return not_found
@@ -389,19 +386,13 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}
-    if not sessionId.isnumeric():
-        return not_found
-    else:
-        sessionId = int(sessionId)
-    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
-        print(f"{projectId}/{sessionId} not found in DB.")
-        if not assist.session_exists(project_id=projectId, session_id=sessionId):
-            print(f"{projectId}/{sessionId} not found in Assist.")
-            return not_found
-
+    sessionId, err = unprocessed_sessions.check_exists(project_id=projectId, session_id=sessionId,
+                                                       not_found_response=not_found)
+    if err is not None:
+        return err
     path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
-        return {"errors": ["Devtools file not found"]}
+        return not_found
 
     return FileResponse(path=path, media_type="application/octet-stream")
 

@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from psycopg import AsyncConnection
+from psycopg.rows import dict_row
 from starlette import status
 from starlette.responses import StreamingResponse, JSONResponse
 
@@ -17,20 +18,18 @@ from chalicelib.core import traces
 from chalicelib.utils import events_queue
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
+from crons import core_crons, ee_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers import ee
+from routers.subs import insights, metrics, v1_api, health, usability_tests, spot
+from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
-from crons import core_crons, ee_crons, core_dynamic_crons
-from routers.subs import insights, metrics, v1_api, health, usability_tests, spot
-from routers.subs import v1_api_ee
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-
-from psycopg.rows import dict_row
 
 
 class ORPYAsyncConnection(AsyncConnection):

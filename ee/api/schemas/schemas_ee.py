@@ -32,7 +32,7 @@ class CurrentContext(schemas.CurrentContext):
     service_account: bool = Field(default=False)
 
     @model_validator(mode="before")
-    def remove_unsupported_perms(cls, values):
+    def remove_unsupported_perms(self, values):
         if values.get("permissions") is not None:
             perms = []
             for p in values["permissions"]:
@@ -94,7 +94,7 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
     order: schemas.SortOrderType = Field(default=schemas.SortOrderType.DESC)
 
     @model_validator(mode="before")
-    def transform_order(cls, values):
+    def transform_order(self, values):
         if values.get("order") is None:
             values["order"] = schemas.SortOrderType.DESC
         else:
@@ -154,7 +154,7 @@ class CardInsights(schemas.CardInsights):
     metric_value: List[InsightCategories] = Field(default=[])
 
     @model_validator(mode='after')
-    def restrictions(cls, values):
+    def restrictions(self, values):
         return values
 
 
