@@ -19,9 +19,9 @@ python3-saml = "==1.16.0"
 redis = "==5.1.0b6"
 azure-storage-blob = "==12.22.0"
 cachetools = "==5.4.0"
-psycopg = {extras = ["pool", "binary"], version = "==3.2.1"}
+psycopg = {extras = ["binary", "pool"], version = "==3.2.1"}
 uvicorn = {extras = ["standard"], version = "==0.30.5"}
-pydantic = {extras = ["email"], version = "==2.3.0"}
+pydantic = {extras = ["email"], version = "==2.8.2"}
 clickhouse-driver = {extras = ["lz4"], version = "==0.2.8"}
 
 [dev-packages]
