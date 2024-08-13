@@ -103,7 +103,8 @@ CREATE TABLE public.tenants
     t_sessions     bigint                      NOT NULL DEFAULT 0,
     t_users        integer                     NOT NULL DEFAULT 1,
     t_integrations integer                     NOT NULL DEFAULT 0,
-    last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT)
+    last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT),
+    scope          text                        NOT NULL DEFAULT 'full'
 );
 
 
@@ -1303,6 +1304,17 @@ CREATE TABLE public.projects_conditions
     name         varchar(255) NOT NULL,
     capture_rate integer      NOT NULL CHECK (capture_rate >= 0 AND capture_rate <= 100),
     filters      jsonb        NOT NULL DEFAULT '[]'::jsonb
+);
+
+CREATE TABLE or_cache.autocomplete_top_values
+(
+    project_id     integer                                        NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    event_type     text                                           NOT NULL,
+    event_key      text                                           NULL,
+    result         jsonb                                          NULL,
+    execution_time integer                                        NULL,
+    created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
 
 COMMIT;

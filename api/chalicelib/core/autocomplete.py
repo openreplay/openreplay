@@ -4,6 +4,7 @@ from chalicelib.core import countries, events, metadata
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.event_filter_definition import Event
+from chalicelib.utils.or_cache import CachedResponse
 
 logger = logging.getLogger(__name__)
 TABLE = "public.autocomplete"
@@ -336,10 +337,10 @@ def __search_metadata(project_id, value, key=None, source=None):
 TYPE_TO_COLUMN = {
     schemas.EventType.CLICK: "label",
     schemas.EventType.INPUT: "label",
-    schemas.EventType.LOCATION: "url_path",
+    schemas.EventType.LOCATION: "path",
     schemas.EventType.CUSTOM: "name",
-    schemas.EventType.REQUEST: "url_path",
-    schemas.EventType.GRAPHQL: "name",
+    schemas.FetchFilterType.FETCH_URL: "path",
+    schemas.GraphqlFilterType.GRAPHQL_NAME: "name",
     schemas.EventType.STATE_ACTION: "name",
     # For ERROR, sessions search is happening over name OR message,
     # for simplicity top 10 is using name only
@@ -365,12 +366,17 @@ TYPE_TO_TABLE = {
     schemas.EventType.INPUT: "events.inputs",
     schemas.EventType.LOCATION: "events.pages",
     schemas.EventType.CUSTOM: "events_common.customs",
-    schemas.EventType.REQUEST: "events_common.requests",
-    schemas.EventType.GRAPHQL: "events.graphql",
+    schemas.FetchFilterType.FETCH_URL: "events_common.requests",
+    schemas.GraphqlFilterType.GRAPHQL_NAME: "events.graphql",
     schemas.EventType.STATE_ACTION: "events.state_actions",
 }
 
 
+def is_top_supported(event_type):
+    return TYPE_TO_COLUMN.get(event_type, False)
+
+
+@CachedResponse(table="or_cache.autocomplete_top_values", ttl=5 * 60)
 def get_top_values(project_id, event_type, event_key=None):
     with pg_client.PostgresClient() as cur:
         if schemas.FilterType.has_value(event_type):
@@ -393,7 +399,7 @@ def get_top_values(project_id, event_type, event_key=None):
                                      LIMIT 10)
                         SELECT c_value AS value, row_count, trunc(row_count * 100 / total_count, 2) AS row_percentage
                         FROM raw;"""
-        elif event_type==schemas.EventType.ERROR:
+        elif event_type == schemas.EventType.ERROR:
             colname = TYPE_TO_COLUMN.get(event_type)
             query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
                                                                  COUNT(1) OVER (PARTITION BY {colname}) AS row_count,

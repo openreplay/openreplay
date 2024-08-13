@@ -218,7 +218,7 @@ class CreateMemberSchema(BaseModel):
     user_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     email: EmailStr = Field(...)
-    admin: bool = Field(default=False)
+    admin: Optional[bool] = Field(default=False)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
@@ -1008,6 +1008,8 @@ class MetricOfTable(str, Enum):
     VISITED_URL = "location"
     SESSIONS = "sessions"
     ERRORS = "jsException"
+    REFERRER = "referrer"
+    FETCH = EventType.REQUEST_DETAILS.value
 
 
 class MetricOfTimeseries(str, Enum):
@@ -1651,3 +1653,12 @@ class TagCreate(TagUpdate):
     selector: str = Field(..., min_length=1, max_length=255)
     ignoreClickRage: bool = Field(default=False)
     ignoreDeadClick: bool = Field(default=False)
+
+
+class ScopeType(str, Enum):
+    FULL_OR = "full"
+    SPOT_ONLY = "spot"
+
+
+class ScopeSchema(BaseModel):
+    scope: ScopeType = Field(default=ScopeType.FULL_OR)

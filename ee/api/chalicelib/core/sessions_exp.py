@@ -382,6 +382,29 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                     if v not in extra_conditions[e.operator].value:
                         extra_conditions[e.operator].value.append(v)
         extra_conditions = list(extra_conditions.values())
+    elif metric_of == schemas.MetricOfTable.FETCH:
+        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
+                            FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                            WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
+                              AND ev.datetime <= toDateTime(%(endDate)s / 1000)
+                              AND ev.project_id = %(project_id)s
+                              AND ev.event_type = 'REQUEST'"""
+        extra_deduplication.append("url_path")
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.REQUEST_DETAILS:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
 
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
@@ -400,20 +423,20 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             full_args["limit_e"] = data.page * data.limit
 
             main_col = "user_id"
-            extra_col = "s.user_id"
+            extra_col = ", s.user_id"
             extra_where = ""
             if metric_of == schemas.MetricOfTable.USER_COUNTRY:
                 main_col = "user_country"
-                extra_col = "s.user_country"
+                extra_col = ", s.user_country"
             elif metric_of == schemas.MetricOfTable.USER_DEVICE:
                 main_col = "user_device"
-                extra_col = "s.user_device"
-            elif metric_of == schemas.MetricOfTable.user_browser:
+                extra_col = ", s.user_device"
+            elif metric_of == schemas.MetricOfTable.USER_BROWSER:
                 main_col = "user_browser"
-                extra_col = "s.user_browser"
+                extra_col = ", s.user_browser"
             elif metric_of == schemas.MetricOfTable.ISSUES:
                 main_col = "issue"
-                extra_col = f"arrayJoin(s.issue_types) AS {main_col}"
+                extra_col = f", arrayJoin(s.issue_types) AS {main_col}"
                 if len(metric_value) > 0:
                     extra_where = []
                     for i in range(len(metric_value)):
@@ -423,15 +446,20 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                     extra_where = f"WHERE ({' OR '.join(extra_where)})"
             elif metric_of == schemas.MetricOfTable.VISITED_URL:
                 main_col = "url_path"
-                extra_col = "s.url_path"
+                extra_col = ", s.url_path"
+            elif metric_of == schemas.MetricOfTable.REFERRER:
+                main_col = "referrer"
+                extra_col = ", referrer"
+            elif metric_of == schemas.MetricOfTable.FETCH:
+                main_col = "url_path"
+                extra_col = ", s.url_path"
 
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
                                      count(DISTINCT session_id) AS session_count,
                                      COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_sessions
-                                FROM (SELECT s.session_id AS session_id, 
-                                            {extra_col}
+                                FROM (SELECT s.session_id AS session_id {extra_col}
                                 {query_part}) AS filtred_sessions
                                 {extra_where}
                                 GROUP BY {main_col}

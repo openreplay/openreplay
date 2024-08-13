@@ -11,6 +11,8 @@ kind: ConfigMap
 metadata:
   name: db-migration-script
   namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "openreplay.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
     "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
@@ -24,6 +26,8 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: databases
+    or.workload/type: db-migrate
+    {{- include "openreplay.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
     "helm.sh/hook-weight": "-5"
@@ -129,6 +133,60 @@ spec:
           mountPath: /opt/openreplay
         - name: datadir
           mountPath: /mnt/efs
+      - name: postgres-check
+        image: bitnami/postgresql
+        env:
+          - name: PGHOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGUSER
+            value: "{{ .Values.global.postgresql.postgresqlUsername }}"
+          - name: PGPASSWORD
+            {{- if .Values.global.postgresql.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.postgresql.existingSecret }}
+                key: postgresql-postgres-password
+            {{- else }}
+            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            {{- end}}
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            exit_count=0
+            error_connection=1
+
+            while [ $exit_count -le 20 ];do
+              nc -zv $POSTGRESQL_HOST $POSTGRESQL_PORT -w 1
+              if [ $? -ne 0 ]; then
+                echo "[info] postgresql is not up; retrying in 5 seconds"
+                sleep 4
+                exit_count=$(($exit_count+1))
+                echo $exit_count
+              else
+                error_connection=0
+                break
+              fi
+            done
+
+            if [ $error_connection -eq 1 ]; then
+              echo "[error] postgresql is not running. Exiting."
+              exit 100
+            fi
+
+            pg_version=$(psql -c "SHOW server_version;" | grep -oP '\d\d+')
+            if [ $pg_version -le 14 ]; then
+              echo "[error] postgresql version is $pg_version which is <= 15. Exiting."
+              exit 101
+            fi
+        volumeMounts:
+          - name: shared
+            mountPath: /opt/openreplay
+          - name: datadir
+            mountPath: /mnt/efs
       containers:
       - name: postgres
         env:

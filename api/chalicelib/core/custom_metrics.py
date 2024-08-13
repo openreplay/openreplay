@@ -137,6 +137,14 @@ def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int =
     return __get_table_of_series(project_id=project_id, data=data)
 
 
+def __get_table_of_referrers(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project_id, data=data)
+
+
+def __get_table_of_requests(project_id: int, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project_id, data=data)
+
+
 def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
@@ -147,6 +155,8 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.USER_DEVICE: __get_table_of_devises,
         schemas.MetricOfTable.USER_COUNTRY: __get_table_of_countries,
         schemas.MetricOfTable.VISITED_URL: __get_table_of_urls,
+        schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
+        schemas.MetricOfTable.FETCH: __get_table_of_requests
     }
     return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
@@ -533,7 +543,8 @@ def delete_card(project_id, metric_id, user_id):
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
-              AND (user_id = %(user_id)s OR is_public);""",
+              AND (user_id = %(user_id)s OR is_public)
+            RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
 

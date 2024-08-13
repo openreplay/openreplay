@@ -57,6 +57,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: openreplay-tracker-ingress
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
   annotations:
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}

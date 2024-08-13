@@ -274,3 +274,5 @@ Pipfile.lock
 /NOTES.md
 /chalicelib/core/db_request_handler.py
 /routers/subs/spot.py
+/chalicelib/utils/or_cache/
+/routers/subs/health.py

@@ -8,6 +8,8 @@ kind: CronJob
 metadata:
   name: efs-cleaner
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "utilities.labels" . | nindent 4 }}
 spec:
   schedule: "{{ .Values.cron }}"
   failedJobsHistoryLimit: 1

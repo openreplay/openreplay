@@ -319,6 +319,23 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                     if v not in extra_conditions[e.operator].value:
                         extra_conditions[e.operator].value.append(v)
         extra_conditions = list(extra_conditions.values())
+    elif metric_of == schemas.MetricOfTable.FETCH:
+        extra_event = "events_common.requests"
+        extra_conditions = {}
+        for e in data.events:
+            if e.type == schemas.EventType.REQUEST_DETAILS:
+                if e.operator not in extra_conditions:
+                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
+                        "type": e.type,
+                        "isEvent": True,
+                        "value": [],
+                        "operator": e.operator,
+                        "filters": []
+                    })
+                for v in e.value:
+                    if v not in extra_conditions[e.operator].value:
+                        extra_conditions[e.operator].value.append(v)
+        extra_conditions = list(extra_conditions.values())
 
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
@@ -357,9 +374,17 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_col = "path"
                 extra_col = ", path"
                 distinct_on += ",path"
+            elif metric_of == schemas.MetricOfTable.REFERRER:
+                main_col = "referrer"
+                extra_col = ", referrer"
+            elif metric_of == schemas.MetricOfTable.FETCH:
+                main_col = "path"
+                extra_col = ", path"
+                distinct_on += ",path"
+
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(*) AS count,
-                                    COALESCE(SUM(users_sessions.session_count),0) AS count,
+                                    COALESCE(SUM(users_sessions.total),0) AS total,
                                     COALESCE(JSONB_AGG(users_sessions) 
                                             FILTER ( WHERE rn > %(limit_s)s 
                                                         AND rn <= %(limit_e)s ), '[]'::JSONB) AS values
@@ -376,7 +401,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                             ) AS full_sessions
                                  {extra_where}
                                  GROUP BY {main_col}
-                                 ORDER BY session_count DESC) AS users_sessions;"""
+                                 ORDER BY total DESC) AS users_sessions;"""
             else:
                 main_query = f"""SELECT COUNT(*) AS count,
                                     COALESCE(SUM(users_sessions.user_count),0) AS count,

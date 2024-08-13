@@ -759,13 +759,14 @@ def authenticate(email, password, for_change_password=False, include_spot=False)
         if include_spot:
             response = {**response,
                         "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                            iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE),
+                                                            iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
                         "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
                                                                              tenant_id=r['tenantId'],
                                                                              iat=j_r.spot_jwt_refresh_iat,
                                                                              aud=spot.AUDIENCE,
-                                                                             jwt_jti=j_r.spot_jwt_refresh_jti),
-                        "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
+                                                                             jwt_jti=j_r.spot_jwt_refresh_jti,
+                                                                             for_spot=True),
+                        "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int),
                         }
         return response
     if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
@@ -905,7 +906,7 @@ def authenticate_sso(email: str, internal_id: str, include_spot: bool = False):
                                                                      iat=j_r.spot_jwt_refresh_iat,
                                                                      aud=spot.AUDIENCE,
                                                                      jwt_jti=j_r.spot_jwt_refresh_jti),
-                "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
+                "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)
             }
         return response
     logger.warning(f"SSO user not found with email: {email} and internal_id: {internal_id}")

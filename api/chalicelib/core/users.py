@@ -647,13 +647,14 @@ def authenticate(email, password, for_change_password=False, include_spot=False)
             response = {
                 **response,
                 "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                    iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE),
+                                                    iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
                 "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
                                                                      tenant_id=r['tenantId'],
                                                                      iat=j_r.spot_jwt_refresh_iat,
                                                                      aud=spot.AUDIENCE,
-                                                                     jwt_jti=j_r.spot_jwt_refresh_jti),
-                "spotRefreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int)
+                                                                     jwt_jti=j_r.spot_jwt_refresh_jti,
+                                                                     for_spot=True),
+                "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)
             }
         return response
     return None

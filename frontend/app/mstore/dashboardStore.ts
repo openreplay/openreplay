@@ -424,6 +424,10 @@ export default class DashboardStore {
     return new Promise(async (resolve, reject) => {
       this.pendingRequests += 1;
 
+      if (metric.metricType === 'table' && metric.metricOf === 'jsException') {
+        params.limit = 5;
+      }
+
       try {
         const data = await metricService.getMetricChartData(metric, params, isSaved);
         resolve(metric.setData(data, period));

@@ -41,6 +41,7 @@ minio:
   forceInit: false
 
 global:
+  appLabels: {}
   vault: *vault
   redis: *redis
   clusterDomain: "svc.cluster.local"
