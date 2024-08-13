@@ -1151,10 +1151,10 @@ class CardTimeSeries(__CardSchema):
         values["metricValue"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfTimeseries(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfTimeseries(self.metric_of)
+        return self
 
 
 class CardTable(__CardSchema):
@@ -1170,10 +1170,10 @@ class CardTable(__CardSchema):
             values["metricValue"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfTable(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfTable(self.metric_of)
+        return self
 
     @model_validator(mode="after")
     def __validator(self):
@@ -1200,10 +1200,10 @@ class CardFunnel(__CardSchema):
             values["series"] = [values["series"][0]]
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfFunnels(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfFunnels(self.metric_of)
+        return self
 
 
 class CardErrors(__CardSchema):
@@ -1217,10 +1217,10 @@ class CardErrors(__CardSchema):
         values["series"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfErrors(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfErrors(self.metric_of)
+        return self
 
 
 class CardPerformance(__CardSchema):
@@ -1234,10 +1234,10 @@ class CardPerformance(__CardSchema):
         values["series"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfPerformance(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfPerformance(self.metric_of)
+        return self
 
 
 class CardResources(__CardSchema):
@@ -1251,10 +1251,10 @@ class CardResources(__CardSchema):
         values["series"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfResources(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfResources(self.metric_of)
+        return self
 
 
 class CardWebVital(__CardSchema):
@@ -1268,10 +1268,10 @@ class CardWebVital(__CardSchema):
         values["series"] = []
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfWebVitals(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfWebVitals(self.metric_of)
+        return self
 
 
 class CardHeatMap(__CardSchema):
@@ -1284,10 +1284,10 @@ class CardHeatMap(__CardSchema):
     def __enforce_default(cls, values):
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfHeatMap(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfHeatMap(self.metric_of)
+        return self
 
 
 class MetricOfInsights(str, Enum):
@@ -1305,10 +1305,10 @@ class CardInsights(__CardSchema):
         values["view_type"] = MetricOtherViewType.LIST_CHART
         return values
 
-    # @model_validator(mode="after")
-    # def __transform(self):
-    #     self.metric_of = MetricOfInsights(self.metric_of)
-    #     return self
+    @model_validator(mode="after")
+    def __transform(self):
+        self.metric_of = MetricOfInsights(self.metric_of)
+        return self
 
     @model_validator(mode="after")
     def restrictions(self):
