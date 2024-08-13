@@ -61,8 +61,8 @@ export class SessionsByRow {
     const { nameFormatter, iconProvider } = this.getFormatters(metricType);
     this.name = json.name;
     this.displayName = nameFormatter.format(json.name) || 'Unidentified';
-    this.sessionCount = numberWithCommas(json.sessionCount);
-    this.progress = Math.round((json.sessionCount / totalSessions) * 100);
+    this.sessionCount = numberWithCommas(json.total);
+    this.progress = Math.round((json.total / totalSessions) * 100);
     this.icon = iconProvider.getIcon(json);
     return this;
   }

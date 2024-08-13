@@ -303,7 +303,7 @@ export default class Widget {
         } else if (this.metricType === INSIGHTS) {
             _data['issues'] = data
                 .filter((i: any) => i.change > 0 || i.change < 0)
-                .map(
+x                .map(
                     (i: any) =>
                         new InsightIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
                 );
