@@ -2,10 +2,10 @@ from typing import Optional, List, Union, Literal
 
 from pydantic import Field, EmailStr, field_validator, model_validator
 
-from . import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
+from . import schemas
 from .overrides import BaseModel, Enum, ORUnion
-from .transformers_validators import remove_whitespace, remove_duplicate_values
+from .transformers_validators import remove_whitespace
 
 
 class Permissions(str, Enum):

@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from pydantic import Field, field_validator
 
-from .overrides import BaseModel, Enum, ORUnion
+from .overrides import BaseModel
 
 
 class AssistStatsAverage(BaseModel):
@@ -60,13 +60,15 @@ class AssistStatsSessionsRequest(BaseModel):
     userId: Optional[int] = Field(default=None)
 
     @field_validator("sort")
-    def validate_sort(self, v):
+    @classmethod
+    def validate_sort(cls, v):
         if v not in assist_sort_options:
             raise ValueError(f"Invalid sort option. Allowed options: {', '.join(assist_sort_options)}")
         return v
 
     @field_validator("order")
-    def validate_order(self, v):
+    @classmethod
+    def validate_order(cls, v):
         if v not in ["desc", "asc"]:
             raise ValueError("Invalid order option. Must be 'desc' or 'asc'.")
         return v
