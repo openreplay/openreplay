@@ -190,11 +190,6 @@ function WidgetChart(props: Props) {
                         onClick={onChartClick}
                         isTemplate={isTemplate}
                     />
-                    // <CustomMetricTable
-                    //     metric={metric} data={data[0]}
-                    //     onClick={onChartClick}
-                    //     isTemplate={isTemplate}
-                    // />
                 );
             } else if (viewType === 'pieChart') {
                 return (
