@@ -1,9 +1,6 @@
 import logging
 from typing import Union
 
-import logging
-from typing import Union
-
 import schemas
 from chalicelib.core import metrics
 
@@ -30,7 +27,7 @@ def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
                  schemas.MetricOfWebVitals.COUNT_REQUESTS: metrics.get_top_metrics_count_requests,
                  schemas.MetricOfWebVitals.AVG_TIME_TO_RENDER: metrics.get_time_to_render,
                  schemas.MetricOfWebVitals.AVG_USED_JS_HEAP_SIZE: metrics.get_memory_consumption,
-                 schemas.MetricOfWebVitals.avg_cpu: metrics.get_avg_cpu,
+                 schemas.MetricOfWebVitals.AVG_CPU: metrics.get_avg_cpu,
                  schemas.MetricOfWebVitals.AVG_FPS: metrics.get_avg_fps,
                  schemas.MetricOfErrors.IMPACTED_SESSIONS_BY_JS_ERRORS: metrics.get_impacted_sessions_by_js_errors,
                  schemas.MetricOfErrors.DOMAINS_ERRORS_4XX: metrics.get_domains_errors_4xx,

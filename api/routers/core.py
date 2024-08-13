@@ -4,13 +4,11 @@ from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
-from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
-    alerts, issues, integrations_manager, metadata, \
-    log_tool_elasticsearch, log_tool_datadog, \
-    log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
-    log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, mobile, tenants, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global, tags, autocomplete
+from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, alerts, issues, \
+    integrations_manager, metadata, log_tool_elasticsearch, log_tool_datadog, log_tool_stackdriver, reset_password, \
+    log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, log_tool_newrelic, announcements, \
+    log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, assist, mobile, tenants, boarding, \
+    notifications, webhook, users, custom_metrics, saved_search, integrations_global, tags, autocomplete
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from or_dependencies import OR_context, OR_role
@@ -556,7 +554,7 @@ def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_
 
 @app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
 def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get_predefined_values() \
+    return {"data": alerts.get_predefined_values()
                     + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
@@ -839,8 +837,8 @@ def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSche
         if old["endpoint"] != data.url.unicode_string():
             if not MSTeams.say_hello(data.url.unicode_string()):
                 return {
-                    "errors": [
-                        "We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
+                    "errors": ["We couldn't send you a test message on your Microsoft Teams channel. "
+                               "Please verify your webhook url."]
                 }
     return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=webhookId,
                                    changes={"name": data.name, "endpoint": data.url.unicode_string()})}

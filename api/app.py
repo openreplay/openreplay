@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from psycopg import AsyncConnection
+from psycopg.rows import dict_row
 from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
@@ -20,7 +21,7 @@ from routers.subs import insights, metrics, v1_api, health, usability_tests, spo
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-from psycopg.rows import dict_row
+
 
 
 class ORPYAsyncConnection(AsyncConnection):

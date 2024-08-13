@@ -60,13 +60,13 @@ class AssistStatsSessionsRequest(BaseModel):
     userId: Optional[int] = Field(default=None)
 
     @field_validator("sort")
-    def validate_sort(cls, v):
+    def validate_sort(self, v):
         if v not in assist_sort_options:
             raise ValueError(f"Invalid sort option. Allowed options: {', '.join(assist_sort_options)}")
         return v
 
     @field_validator("order")
-    def validate_order(cls, v):
+    def validate_order(self, v):
         if v not in ["desc", "asc"]:
             raise ValueError("Invalid order option. Must be 'desc' or 'asc'.")
         return v

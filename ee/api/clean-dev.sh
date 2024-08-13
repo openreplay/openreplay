@@ -97,3 +97,5 @@ rm -rf ./chalicelib/core/db_request_handler.py
 rm -rf ./routers/subs/spot.py
 rm -rf ./chalicelib/utils/or_cache
 rm -rf ./routers/subs/health.py
+rm -rf ./chalicelib/core/spot.py
+rm -rf ./chalicelib/core/unprocessed_sessions.py

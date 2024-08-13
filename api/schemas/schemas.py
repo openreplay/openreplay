@@ -1,14 +1,14 @@
 from typing import Annotated, Any
 from typing import Optional, List, Union, Literal
 
-from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl, validator
+from pydantic import Field, EmailStr, HttpUrl, SecretStr, AnyHttpUrl
 from pydantic import field_validator, model_validator, computed_field
+from pydantic.functional_validators import BeforeValidator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
     force_is_event, NAME_PATTERN, int_to_string
-from pydantic.functional_validators import BeforeValidator
 
 
 def transform_old_filter_type(cls, values):
@@ -162,7 +162,7 @@ class _TimedSchema(BaseModel):
     endTimestamp: int = Field(default=None)
 
     @model_validator(mode='before')
-    def transform_time(cls, values):
+    def transform_time(self, values):
         if values.get("startTimestamp") is None and values.get("startDate") is not None:
             values["startTimestamp"] = values["startDate"]
         if values.get("endTimestamp") is None and values.get("endDate") is not None:
@@ -170,7 +170,7 @@ class _TimedSchema(BaseModel):
         return values
 
     @model_validator(mode='after')
-    def __time_validator(cls, values):
+    def __time_validator(self, values):
         if values.startTimestamp is not None:
             assert 0 <= values.startTimestamp, "startTimestamp must be greater or equal to 0"
         if values.endTimestamp is not None:
@@ -435,7 +435,7 @@ class AlertSchema(BaseModel):
     series_id: Optional[int] = Field(default=None, doc_hidden=True)
 
     @model_validator(mode="after")
-    def transform_alert(cls, values):
+    def transform_alert(self, values):
         values.series_id = None
         if isinstance(values.query.left, int):
             values.series_id = values.query.left
@@ -626,7 +626,7 @@ class SessionSearchEventSchema2(BaseModel):
     _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
-    def event_validator(cls, values):
+    def event_validator(self, values):
         if isinstance(values.type, PerformanceEventType):
             if values.type == PerformanceEventType.FETCH_FAILED:
                 return values
@@ -666,7 +666,7 @@ class SessionSearchFilterSchema(BaseModel):
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
     @model_validator(mode='before')
-    def _transform_data(cls, values):
+    def _transform_data(self, values):
         if values.get("source") is not None:
             if isinstance(values["source"], list):
                 if len(values["source"]) == 0:
@@ -678,20 +678,20 @@ class SessionSearchFilterSchema(BaseModel):
         return values
 
     @model_validator(mode='after')
-    def filter_validator(cls, values):
+    def filter_validator(self, values):
         if values.type == FilterType.METADATA:
             assert values.source is not None and len(values.source) > 0, \
                 "must specify a valid 'source' for metadata filter"
         elif values.type == FilterType.ISSUE:
-            for v in values.value:
+            for i, v in enumerate(values.value):
                 if IssueType.has_value(v):
-                    v = IssueType(v)
+                    values.value[i] = IssueType(v)
                 else:
                     raise ValueError(f"value should be of type IssueType for {values.type} filter")
         elif values.type == FilterType.PLATFORM:
-            for v in values.value:
+            for i, v in enumerate(values.value):
                 if PlatformType.has_value(v):
-                    v = PlatformType(v)
+                    values.value[i] = PlatformType(v)
                 else:
                     raise ValueError(f"value should be of type PlatformType for {values.type} filter")
         elif values.type == FilterType.EVENTS_COUNT:
@@ -730,8 +730,8 @@ def add_missing_is_event(values: dict):
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator
-GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2], \
-    Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
+GroupedFilterType = Annotated[Union[SessionSearchFilterSchema, SessionSearchEventSchema2],
+Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
@@ -744,7 +744,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
     bookmarked: bool = Field(default=False)
 
     @model_validator(mode="before")
-    def transform_order(cls, values):
+    def transform_order(self, values):
         if values.get("sort") is None:
             values["sort"] = "startTs"
 
@@ -755,7 +755,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="before")
-    def add_missing_attributes(cls, values):
+    def add_missing_attributes(self, values):
         # in case isEvent is wrong:
         for f in values.get("filters") or []:
             if EventType.has_value(f["type"]) and not f.get("isEvent"):
@@ -770,7 +770,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="before")
-    def remove_wrong_filter_values(cls, values):
+    def remove_wrong_filter_values(self, values):
         for f in values.get("filters", []):
             vals = []
             for v in f.get("value", []):
@@ -780,7 +780,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="after")
-    def split_filters_events(cls, values):
+    def split_filters_events(self, values):
         n_filters = []
         n_events = []
         for v in values.filters:
@@ -793,7 +793,7 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @field_validator("filters", mode="after")
-    def merge_identical_filters(cls, values):
+    def merge_identical_filters(self, values):
         # ignore 'issue' type as it could be used for step-filters and tab-filters at the same time
         i = 0
         while i < len(values):
@@ -853,7 +853,7 @@ class PathAnalysisSubFilterSchema(BaseModel):
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
 
     @model_validator(mode="before")
-    def __force_is_event(cls, values):
+    def __force_is_event(self, values):
         values["isEvent"] = True
         return values
 
@@ -879,8 +879,8 @@ class _ProductAnalyticsEventFilter(BaseModel):
 
 
 # this type is created to allow mixing events&filters and specifying a discriminator for PathAnalysis series filter
-ProductAnalyticsFilter = Annotated[Union[_ProductAnalyticsFilter, _ProductAnalyticsEventFilter], \
-    Field(discriminator='is_event')]
+ProductAnalyticsFilter = Annotated[Union[_ProductAnalyticsFilter, _ProductAnalyticsEventFilter],
+Field(discriminator='is_event')]
 
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
@@ -1033,7 +1033,7 @@ class MetricOfPathAnalysis(str, Enum):
 # class CardSessionsSchema(SessionsSearchPayloadSchema):
 class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
-    endTimestamp: int = Field(defautl=TimeUTC.now())
+    endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7, ge=1, le=200)
     series: List[CardSeriesSchema] = Field(default=[])
 
@@ -1047,7 +1047,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         (force_is_event(events_enum=[EventType, PerformanceEventType]))
 
     @model_validator(mode="before")
-    def remove_wrong_filter_values(cls, values):
+    def remove_wrong_filter_values(self, values):
         for f in values.get("filters", []):
             vals = []
             for v in f.get("value", []):
@@ -1057,7 +1057,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         if values.get("startTimestamp") is None:
             values["startTimestamp"] = TimeUTC.now(-7)
 
@@ -1067,7 +1067,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="after")
-    def __enforce_default_after(cls, values):
+    def __enforce_default_after(self, values):
         for s in values.series:
             if s.filter is not None:
                 s.filter.limit = values.limit
@@ -1078,7 +1078,7 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @model_validator(mode="after")
-    def __merge_out_filters_with_series(cls, values):
+    def __merge_out_filters_with_series(self, values):
         if len(values.filters) > 0:
             for f in values.filters:
                 for s in values.series:
@@ -1140,12 +1140,12 @@ class CardTimeSeries(__CardSchema):
     view_type: MetricTimeseriesViewType
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["metricValue"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfTimeseries(values.metric_of)
         return values
 
@@ -1157,18 +1157,18 @@ class CardTable(__CardSchema):
     metric_format: MetricExtendedFormatType = Field(default=MetricExtendedFormatType.SESSION_COUNT)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         if values.get("metricOf") is not None and values.get("metricOf") != MetricOfTable.ISSUES:
             values["metricValue"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfTable(values.metric_of)
         return values
 
     @model_validator(mode="after")
-    def __validator(cls, values):
+    def __validator(self, values):
         if values.metric_of not in (MetricOfTable.ISSUES, MetricOfTable.USER_BROWSER,
                                     MetricOfTable.USER_DEVICE, MetricOfTable.USER_COUNTRY,
                                     MetricOfTable.VISITED_URL):
@@ -1183,7 +1183,7 @@ class CardFunnel(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
             values["metricOf"] = MetricOfFunnels.SESSION_COUNT
         values["viewType"] = MetricOtherViewType.OTHER_CHART
@@ -1192,7 +1192,7 @@ class CardFunnel(__CardSchema):
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfTimeseries(values.metric_of)
         return values
 
@@ -1203,12 +1203,12 @@ class CardErrors(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["series"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfErrors(values.metric_of)
         return values
 
@@ -1219,12 +1219,12 @@ class CardPerformance(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["series"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfPerformance(values.metric_of)
         return values
 
@@ -1235,12 +1235,12 @@ class CardResources(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["series"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfResources(values.metric_of)
         return values
 
@@ -1251,12 +1251,12 @@ class CardWebVital(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["series"] = []
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfWebVitals(values.metric_of)
         return values
 
@@ -1267,11 +1267,11 @@ class CardHeatMap(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfHeatMap(values.metric_of)
         return values
 
@@ -1286,17 +1286,17 @@ class CardInsights(__CardSchema):
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["view_type"] = MetricOtherViewType.LIST_CHART
         return values
 
     @model_validator(mode="after")
-    def __transform(cls, values):
+    def __transform(self, values):
         values.metric_of = MetricOfInsights(values.metric_of)
         return values
 
     @model_validator(mode='after')
-    def restrictions(cls, values):
+    def restrictions(self, values):
         raise ValueError(f"metricType:{MetricType.INSIGHTS} not supported yet.")
 
 
@@ -1306,7 +1306,7 @@ class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     density: int = Field(default=4, ge=2, le=10)
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         if values.get("filter") is None and values.get("startTimestamp") and values.get("endTimestamp"):
             values["filter"] = PathAnalysisSchema(startTimestamp=values["startTimestamp"],
                                                   endTimestamp=values["endTimestamp"],
@@ -1328,14 +1328,14 @@ class CardPathAnalysis(__CardSchema):
     series: List[CardPathAnalysisSeriesSchema] = Field(default=[])
 
     @model_validator(mode="before")
-    def __enforce_default(cls, values):
+    def __enforce_default(self, values):
         values["viewType"] = MetricOtherViewType.OTHER_CHART.value
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values
 
     @model_validator(mode="after")
-    def __clean_start_point_and_enforce_metric_value(cls, values):
+    def __clean_start_point_and_enforce_metric_value(self, values):
         start_point = []
         for s in values.start_point:
             if len(s.value) == 0:
@@ -1349,7 +1349,7 @@ class CardPathAnalysis(__CardSchema):
         return values
 
     @model_validator(mode='after')
-    def __validator(cls, values):
+    def __validator(self, values):
         s_e_values = {}
         exclude_values = {}
         for f in values.start_point:
@@ -1359,7 +1359,8 @@ class CardPathAnalysis(__CardSchema):
             exclude_values[f.type] = exclude_values.get(f.type, []) + f.value
 
         assert len(
-            values.start_point) <= 1, f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
+            values.start_point) <= 1, \
+            f"Only 1 startPoint with multiple values OR 1 endPoint with multiple values is allowed"
         for t in exclude_values:
             for v in t:
                 assert v not in s_e_values.get(t, []), f"startPoint and endPoint cannot be excluded, value: {v}"
@@ -1452,13 +1453,13 @@ class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(default=None)
-    operator: Literal[SearchEventOperator.IS, \
-        SearchEventOperator.CONTAINS] = Field(default=SearchEventOperator.CONTAINS)
+    operator: Literal[SearchEventOperator.IS, SearchEventOperator.CONTAINS] \
+        = Field(default=SearchEventOperator.CONTAINS)
 
     _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode='after')
-    def __validator(cls, values):
+    def __validator(self, values):
         if values.type is not None and values.type == LiveFilterType.METADATA:
             assert values.source is not None, "source should not be null for METADATA type"
             assert len(values.source) > 0, "source should not be empty for METADATA type"
@@ -1471,7 +1472,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     order: SortOrderType = Field(default=SortOrderType.DESC)
 
     @model_validator(mode="before")
-    def __transform(cls, values):
+    def __transform(self, values):
         if values.get("order") is not None:
             values["order"] = values["order"].upper()
         if values.get("filters") is not None:
@@ -1527,8 +1528,9 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
     is_public: Optional[bool] = Field(default=None)
 
     @model_validator(mode='after')
-    def __validator(cls, values):
-        assert values.message is not None or values.timestamp is not None or values.is_public is not None, "at least 1 attribute should be provided for update"
+    def __validator(self, values):
+        assert values.message is not None or values.timestamp is not None or values.is_public is not None, \
+            "at least 1 attribute should be provided for update"
         return values
 
 
@@ -1555,7 +1557,7 @@ class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
     filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default=[])
 
     @model_validator(mode="before")
-    def __transform(cls, values):
+    def __transform(self, values):
         for f in values.get("filters", []):
             if f.get("type") == FilterType.DURATION:
                 return values
@@ -1598,7 +1600,7 @@ class FeatureFlagConditionFilterSchema(BaseModel):
     sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
 
     @model_validator(mode="before")
-    def __force_is_event(cls, values):
+    def __force_is_event(self, values):
         values["isEvent"] = False
         return values
 
@@ -1638,10 +1640,19 @@ class FeatureFlagSchema(BaseModel):
     variants: List[FeatureFlagVariant] = Field(default=[])
 
 
+class ModuleType(str, Enum):
+    ASSIST = "assist"
+    NOTES = "notes"
+    BUG_REPORTS = "bug-reports"
+    OFFLINE_RECORDINGS = "offline-recordings"
+    ALERTS = "alerts"
+    ASSIST_STATTS = "assist-statts"
+    RECOMMENDATIONS = "recommendations"
+    FEATURE_FLAGS = "feature-flags"
+
+
 class ModuleStatus(BaseModel):
-    module: Literal["assist", "notes", "bug-reports",
-    "offline-recordings", "alerts", "assist-statts", "recommendations", "feature-flags"] = Field(...,
-                                                                                                 description="Possible values: assist, notes, bug-reports, offline-recordings, alerts, assist-statts, recommendations, feature-flags")
+    module: ModuleType = Field(...)
     status: bool = Field(...)
 
 
