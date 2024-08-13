@@ -793,7 +793,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
     @field_validator("filters", mode="after")
-    def merge_identical_filters(self, values):
+    @classmethod
+    def merge_identical_filters(cls, values):
         # ignore 'issue' type as it could be used for step-filters and tab-filters at the same time
         i = 0
         while i < len(values):
