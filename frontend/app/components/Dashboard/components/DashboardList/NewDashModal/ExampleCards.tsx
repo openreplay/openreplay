@@ -35,6 +35,7 @@ import SpeedIndexByLocationExample
   from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
 import HeatmapsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/HeatmapsExample';
 import ByReferrer from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByRferrer';
+import ByFetch from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByFecth';
 
 export const CARD_CATEGORY = {
   PRODUCT_ANALYTICS: 'product-analytics',
@@ -425,6 +426,15 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.REFERRER,
     category: CARD_CATEGORIES[2].key,
     example: ByReferrer
+  },
+
+  {
+    title: 'Sessions by Fetch',
+    key: FilterKey.FETCH,
+    cardType: TABLE,
+    metricOf: FilterKey.FETCH,
+    category: CARD_CATEGORIES[2].key,
+    example: ByFetch
   },
 
   // Errors Tracking
