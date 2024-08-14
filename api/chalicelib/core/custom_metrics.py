@@ -48,7 +48,7 @@ def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int =
 
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
                                                       data=data.series[0].filter,
-                                                      metric_of=data.metric_of)
+                                                      metric_format=data.metric_format)
 
 
 def __get_errors_list(project_id, user_id, data: schemas.CardSchema):

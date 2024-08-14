@@ -431,9 +431,10 @@ def count_users(rows, n_stages, user_key="user_uuid"):
     return users_count
 
 
-def get_stages(stages, rows, metric_of=schemas.MetricOfFunnels.SESSION_COUNT):
+def get_stages(stages, rows,
+               metric_format: schemas.MetricExtendedFormatType = schemas.MetricExtendedFormatType.SESSION_COUNT):
     n_stages = len(stages)
-    if metric_of == "sessionCount":
+    if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
         base_counts = count_sessions(rows, n_stages)
     else:
         base_counts = count_users(rows, n_stages, user_key="user_id")
@@ -456,7 +457,7 @@ def get_stages(stages, rows, metric_of=schemas.MetricOfFunnels.SESSION_COUNT):
              "dropDueToIssues": 0
              }
         )
-        if metric_of == "sessionCount":
+        if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
             stages_list[-1]["sessionsCount"] = base_counts[i + 1]
         else:
             stages_list[-1]["usersCount"] = base_counts[i + 1]
@@ -543,7 +544,8 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id, metric_of: schemas.MetricOfFunnels):
+def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id,
+                     metric_format: schemas.MetricExtendedFormatType):
     output = []
     stages = filter_d.events
 
@@ -554,7 +556,7 @@ def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id, metri
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
     # Obtain the first part of the output
-    stages_list = get_stages(stages, rows, metric_of=metric_of)
+    stages_list = get_stages(stages, rows, metric_format=metric_format)
     if len(rows) == 0:
         return stages_list, 0
 

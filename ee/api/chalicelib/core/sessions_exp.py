@@ -469,8 +469,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
                                      count(DISTINCT user_id) AS user_count
-                                FROM (SELECT s.user_id AS user_id, 
-                                            {extra_col}
+                                FROM (SELECT s.user_id AS user_id {extra_col}
                                 {query_part}
                                 WHERE isNotNull(user_id)
                                     AND user_id != '') AS filtred_sessions
