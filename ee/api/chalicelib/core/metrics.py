@@ -1,13 +1,16 @@
+import logging
 import math
+from math import isnan
 
 import schemas
-from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import args_transformer
+from chalicelib.utils import ch_client
+from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils import ch_client
-from math import isnan
 from chalicelib.utils.metrics_helper import __get_step_size
+
+logger = logging.getLogger(__name__)
 
 
 def __get_basic_constraints(table_name=None, time_constraint=True, round_start=False, data={}, identifier="project_id"):
@@ -1655,28 +1658,44 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
-def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
     ch_sub_query.append("requests.event_type = 'REQUEST'")
     ch_sub_query.append("requests.success = 0")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-
+    params = {"project_id": project_id,
+              "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp,
+              **__get_constraint_values(args),
+              "limit_s": (page - 1) * limit,
+              "limit": limit}
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT
                             requests.url_host AS domain,
-                            COUNT(1) AS errors_count
+                            COUNT(1) AS errors_count,
+                            COUNT(1) OVER ()          AS total,
+                            SUM(errors_count) OVER () AS count
                         FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS requests
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY requests.url_host
                         ORDER BY errors_count DESC
-                        LIMIT 5;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+                        LIMIT %(limit)s OFFSET %(limit_s)s;"""
+        logger.debug("-----------")
+        logger.debug(ch.format(query=ch_query, params=params))
+        logger.debug("-----------")
         rows = ch.execute(query=ch_query, params=params)
-    return helper.list_to_camel_case(rows)
+        response = {"count": 0, "total": 0, "values": []}
+        if len(rows) > 0:
+            response["count"] = rows[0]["count"]
+            response["total"] = rows[0]["total"]
+            rows = helper.list_to_camel_case(rows)
+            for r in rows:
+                r.pop("count")
+                r.pop("total")
+
+    return response
 
 
 def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
@@ -2801,8 +2820,8 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
 
 
 def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(),
-                           density=7, **args):
+                     endTimestamp=TimeUTC.now(),
+                     density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)

@@ -1,3 +1,4 @@
+import logging
 import math
 
 import schemas
@@ -7,6 +8,8 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
+
+logger = logging.getLogger(__name__)
 
 
 # Written by David Aznaurov, inspired by numpy.quantile
@@ -1716,25 +1719,41 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
 
 
-def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("requests.success = FALSE")
+    params = {"project_id": project_id,
+              "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp,
+              "limit_s": (page - 1) * limit,
+              "limit_e": page * limit,
+              **__get_constraint_values(args)}
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT
-                            requests.host AS domain,
-                            COUNT(requests.session_id) AS errors_count
-                        FROM events_common.requests INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY requests.host
-                        ORDER BY errors_count DESC
-                        LIMIT 5;"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
+        pg_query = f"""SELECT SUM(errors_count) AS count,
+                              COUNT(raw.domain) AS total,
+                              jsonb_agg(raw) FILTER ( WHERE rn > %(limit_s)s 
+                                                        AND rn <= %(limit_e)s ) AS values
+                        FROM (SELECT requests.host                                                 AS domain,
+                                     COUNT(requests.session_id)                                    AS errors_count,
+                                     row_number() over (ORDER BY COUNT(requests.session_id) DESC ) AS rn
+                              FROM events_common.requests
+                                       INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(pg_sub_query)}
+                              GROUP BY requests.host
+                              ORDER BY errors_count DESC) AS raw;"""
+        pg_query = cur.mogrify(pg_query, params)
+        logger.debug("-----------")
+        logger.debug(pg_query)
+        logger.debug("-----------")
+        cur.execute(pg_query)
+        row = cur.fetchone()
+        if row:
+            for r in row["values"]:
+                r.pop("rn")
+
+    return helper.dict_to_camel_case(row)
 
 
 def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
