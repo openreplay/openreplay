@@ -1178,7 +1178,8 @@ class CardTable(__CardSchema):
     def __validator(self):
         if self.metric_of not in (MetricOfTable.ISSUES, MetricOfTable.USER_BROWSER,
                                   MetricOfTable.USER_DEVICE, MetricOfTable.USER_COUNTRY,
-                                  MetricOfTable.VISITED_URL):
+                                  MetricOfTable.VISITED_URL, MetricOfTable.REFERRER,
+                                  MetricOfTable.FETCH):
             assert self.metric_format == MetricExtendedFormatType.SESSION_COUNT, \
                 f'metricFormat:{MetricExtendedFormatType.USER_COUNT.value} is not supported for this metricOf'
         return self
