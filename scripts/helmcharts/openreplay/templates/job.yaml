@@ -3,8 +3,8 @@ Don't have to trigger migration if there is no version change
 Don't have to trigger migration if skipMigration is set
 Have to trigger migration if forceMigration is set
 */}}
-{{- $versionChange := and (eq .Values.fromVersion .Chart.AppVersion) (.Release.IsUpgrade) }}
-{{- if or (not (or .Values.skipMigration $versionChange)) .Values.forceMigration }}
+{{- $versionChange := (or .Values.deployment.argo (and (not (eq .Values.fromVersion .Chart.AppVersion)) .Release.IsUpgrade)) }}
+{{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -99,6 +99,12 @@ spec:
       containers:
       - name: postgres
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
@@ -145,6 +151,12 @@ spec:
       - name: minio
         image: bitnami/minio:2023.11.20
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -268,6 +280,12 @@ spec:
       - name: clickhouse
         image: clickhouse/clickhouse-server:22.12-alpine
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -303,6 +321,12 @@ spec:
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
