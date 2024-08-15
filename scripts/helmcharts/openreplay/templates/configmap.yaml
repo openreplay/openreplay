@@ -28,6 +28,6 @@ data:
   PGPASSWORD: "{{ .Values.global.postgresql.postgresqlPassword | b64enc }}"
   CLICKHOUSE_USER: "{{ .Values.global.clickhouse.username | b64enc }}"
   CLICKHOUSE_PASSWORD: "{{ .Values.global.clickhouse.password | b64enc }}"
-  MINIO_HOST: "{{ .Values.global.minio.minioHost | b64enc }}"
+  MINIO_HOST: "{{ .Values.global.s3.endpoint | b64enc }}"
   MINIO_ACCESS_KEY: "{{ .Values.global.s3.accessKey | b64enc }}"
   MINIO_SECRET_KEY: "{{ .Values.global.s3.secretKey | b64enc }}"
