@@ -34,7 +34,7 @@ function ConsoleRow(props: Props) {
     <div
       style={style}
       className={cn(
-        'border-b flex items-start py-1 px-4 pe-8 overflow-hidden group relative select-none',
+        'border-b flex items-start py-1 px-4 pe-8 overflow-hidden group relative',
         {
           info: !log.isYellow && !log.isRed,
           warn: log.isYellow,
