@@ -190,6 +190,7 @@ function status() {
     return
 }
 
+# Create OR version patch with gith sha
 function patch_version() {
     # Patching config version for console
     version=$(/var/lib/openreplay/yq '.fromVersion' vars.yaml)-$(sudo git rev-parse --short HEAD)
@@ -369,15 +370,15 @@ function upgrade() {
 
     time_now=$(date +%m-%d-%Y-%I%M%S)
     # Creating backup dir of current installation
-    [[ -d "$OR_DIR/openreplay" ]] && sudo mv "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"/}_${time_now}"
+    [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rf "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"/}_${time_now}"
 
     clone_repo
     err_cd openreplay/scripts/helmcharts
     install_packages
     [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
 
-    # Merge prefrerences
-    cp $OR_DIR/vars.yaml old_vars.yaml
+    # Merge preferences
+    cp "$OR_DIR/vars.yaml" old_vars.yaml
     or_new_version=$(awk '/fromVersion/{print $2}' <"vars.yaml")
     yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml >new_vars.yaml
     mv new_vars.yaml vars.yaml
@@ -389,7 +390,8 @@ function upgrade() {
     sudo mv ./openreplay-cli /bin/openreplay
     sudo chmod +x /bin/openreplay
     sudo mv ./vars.yaml "$OR_DIR"
-    sudo cp -rf ../../../openreplay $OR_DIR/
+    sudo rm -rf "$OR_DIR/openreplay" || true
+    sudo cp -rf "${tmp_dir}/openreplay" "$OR_DIR/"
     log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
     log info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
 

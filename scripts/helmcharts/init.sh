@@ -110,16 +110,16 @@ function install_openreplay_actions() {
     sudo cp -f openreplay-cli /bin/openreplay
     install_openreplay
 
-    local openreplay_dir="/var/lib/openreplay/openreplay"
-    if [[ -d $openreplay_dir ]]; then
+    local openreplay_code_dir="/var/lib/openreplay/openreplay"
+    local openreplay_home_dir="/var/lib/openreplay"
+    if [[ -d $openreplay_code_dir ]]; then
         local versions_file="/var/lib/openreplay/or_versions.txt"
         date +%m-%d-%Y-%H%M%S | sudo tee -a $versions_file
         sudo git log -1 2>&1 | sudo tee -a $versions_file
-        sudo rm -rf $openreplay_dir
+        sudo rm -rf $openreplay_code_dir
     fi
-    sudo mkdir -p $openreplay_dir
-    sudo cp -rfb ./vars.yaml $openreplay_dir/../
-    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_dir
+    sudo cp -rfb ./vars.yaml $openreplay_home_dir
+    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_home_dir
 }
 
 function main() {
