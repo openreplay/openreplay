@@ -59,15 +59,16 @@ spec:
             set -x
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
 
-            # Function to check if GitHub is available
             check_github() {
-              for i in {1..10}; do
-                if ping -c 1 github.com &> /dev/null; then
+              i=0
+              while [ $i -lt 10 ]; do
+                if ping -c 1 github.com >/dev/null 2>&1; then
                   echo "GitHub is available."
                   git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
                   break
                 else
                   echo "GitHub is not available. Retrying in 3 seconds..."
+                  i=$((i+1))
                   sleep 3
                 fi
               done
