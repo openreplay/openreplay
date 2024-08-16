@@ -70,9 +70,26 @@ spec:
           - |
             set -x
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
-            git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
+
+            # Function to check if GitHub is available
+            check_github() {
+              for i in {1..10}; do
+                if ping -c 1 github.com &> /dev/null; then
+                  echo "GitHub is available."
+                  git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
+                  break
+                else
+                  echo "GitHub is not available. Retrying in 3 seconds..."
+                  sleep 3
+                fi
+              done
+            }
+
+            check_github
+
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
+            git log -1
             {{ .Values.global.dbMigrationPreCommand | default "" }}
 
             exit_count=0
@@ -92,7 +109,7 @@ spec:
             done
 
             if [ $error_connection -eq 1 ]; then
-              echo "[error] clickhouse is not running. Check kubectl get po -n db; exiting"
+              echo "[error] postgres is not running. Check kubectl get po -n db; exiting"
               exit 100
             fi
 
