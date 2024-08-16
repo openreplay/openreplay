@@ -5,6 +5,11 @@ migrationJob:
 migration:
   env: {}
 
+deployment:
+  argo: false
+forceMigration: false
+skipMigration: false
+
 redis: &redis
   tls:
     enabled: false
