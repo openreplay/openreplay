@@ -1,8 +1,12 @@
 import json
 import logging
 
+from decouple import config
 from fastapi import HTTPException, Request, Response, status
+from onelogin.saml2.auth import OneLogin_Saml2_Logout_Request
+from starlette.responses import RedirectResponse
 
+from chalicelib.core import users, tenants, roles
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 from routers.base import get_routers
@@ -10,12 +14,6 @@ from routers.base import get_routers
 logger = logging.getLogger(__name__)
 
 public_app, app, app_apikey = get_routers()
-from decouple import config
-
-from onelogin.saml2.auth import OneLogin_Saml2_Logout_Request
-
-from chalicelib.core import users, tenants, roles
-from starlette.responses import RedirectResponse
 
 
 @public_app.get("/sso/saml2", tags=["saml2"])
@@ -28,7 +26,7 @@ async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
     return RedirectResponse(url=sso_built_url)
 
 
-async def __process_assertion(request: Request, tenant_key=None):
+async def __process_assertion(request: Request, tenant_key=None) -> Response | dict:
     req = await prepare_request(request=request)
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
@@ -91,45 +89,71 @@ async def __process_assertion(request: Request, tenant_key=None):
         if t is None:
             logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-    existing = users.get_by_email_only(auth.get_nameid())
+    existing = users.get_by_email_only(email)
+    role_names = user_data.get("role", [])
+    if len(role_names) == 0:
+        logger.info("No role specified, setting role to member")
+        role_names = ["member"]
+    role = None
+    for r in role_names:
+        if r.lower() == existing["roleName"].lower():
+            role = {"roleId": existing["roleId"], "name": r}
+        else:
+            role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)
+
+        if role is not None:
+            break
+
+    if role is None:
+        return {"errors": [f"role '{role_names}' not found, please create it in OpenReplay first"]}
+    logger.info(f"received roles:{role_names}; using:{role['name']}")
+    admin_privileges = user_data.get("adminPrivileges", [])
+    admin_privileges = not (len(admin_privileges) == 0
+                            or admin_privileges[0] is None
+                            or admin_privileges[0].lower() == "false")
+
     internal_id = next(iter(user_data.get("internalId", [])), None)
-
+    full_name = " ".join(user_data.get("firstName", []) + user_data.get("lastName", []))
     if existing is None:
-        role_name = user_data.get("role", [])
-        if len(role_name) == 0:
-            logger.info("No role specified, setting role to member")
-            role_name = ["member"]
-        role_name = role_name[0]
-        role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
-        if role is None:
-            return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
-
-        admin_privileges = user_data.get("adminPrivileges", [])
-        admin_privileges = not (len(admin_privileges) == 0
-                                or admin_privileges[0] is None
-                                or admin_privileges[0].lower() == "false")
-
         deleted = users.get_deleted_user_by_email(auth.get_nameid())
         if deleted is not None:
             logger.info("== restore deleted user ==")
             users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
                                    admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
-                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                                   internal_id=internal_id, role_id=role["roleId"])
+                                   name=full_name, internal_id=internal_id, role_id=role["roleId"])
         else:
             logger.info("== new user ==")
             users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
                                   origin=SAML2_helper.get_saml2_provider(),
-                                  name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                                  internal_id=internal_id, role_id=role["roleId"])
+                                  name=full_name, internal_id=internal_id, role_id=role["roleId"])
     else:
         if t['tenantId'] != existing["tenantId"]:
             logger.warning("user exists for a different tenant")
             return {"errors": ["user exists for a different tenant"]}
-        if existing.get("origin") is None:
-            logger.info(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing["userId"],
-                         changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
+        # Check difference between existing user and received data
+        received_data = {
+            "role": "admin" if admin_privileges else "member",
+            "origin": SAML2_helper.get_saml2_provider(),
+            "name": full_name,
+            "internal_id": internal_id,
+            "role_id": role["roleId"]
+        }
+        existing_data = {
+            "role": "admin" if existing["admin"] else "member",
+            "origin": existing["origin"],
+            "name": existing["name"],
+            "internal_id": existing["internalId"],
+            "role_id": existing["roleId"]
+        }
+        to_update = {}
+        for k in existing_data.keys():
+            if (k != "role" or not existing["superAdmin"]) and existing_data[k] != received_data[k]:
+                to_update[k] = received_data[k]
+
+        if len(to_update.keys()) > 0:
+            logger.info(f"== Updating user:{existing['userId']}: {to_update} ==")
+            users.update(tenant_id=t['tenantId'], user_id=existing["userId"], changes=to_update)
+
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, include_spot=spot)
     if jwt is None:
         return {"errors": ["null JWT"]}
@@ -150,13 +174,13 @@ async def __process_assertion(request: Request, tenant_key=None):
 @public_app.post('/sso/saml2/acs', tags=["saml2"])
 @public_app.post('/sso/saml2/acs/', tags=["saml2"])
 async def process_sso_assertion(request: Request):
-    return await __process_assertion(request)
+    return await __process_assertion(request=request)
 
 
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
 @public_app.post('/sso/saml2/acs/{tenantKey}/', tags=["saml2"])
 async def process_sso_assertion_tk(tenantKey: str, request: Request):
-    return await __process_assertion(request, tenantKey)
+    return await __process_assertion(request=request, tenant_key=tenantKey)
 
 
 @public_app.get('/sso/saml2/sls', tags=["saml2"])

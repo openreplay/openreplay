@@ -11,7 +11,11 @@ from starlette.datastructures import FormData
 if config("ENABLE_SSO", cast=bool, default=True):
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
 
-API_PREFIX = "/api"
+if config("LOCAL_DEV", default=False, cast=bool):
+    API_PREFIX = ""
+else:
+    API_PREFIX = "/api"
+
 SAML2 = {
     "strict": config("saml_strict", cast=bool, default=True),
     "debug": config("saml_debug", cast=bool, default=True),
