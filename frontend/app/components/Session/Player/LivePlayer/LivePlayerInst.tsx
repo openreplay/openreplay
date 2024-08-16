@@ -83,9 +83,8 @@ function Player(props: IProps) {
           <div
             onMouseDown={handleResize}
             className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
-          >
+          />
             <ConsolePanel isLive />
-          </div>
         </div>
       ) : null}
       {!fullView && !isMultiview ? <LiveControls jump={playerContext.player.jump} /> : null}

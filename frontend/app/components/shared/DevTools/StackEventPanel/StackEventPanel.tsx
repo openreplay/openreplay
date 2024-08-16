@@ -26,7 +26,7 @@ const ALL = 'ALL';
 const TAB_KEYS = [ALL, ...typeList] as const;
 const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 
-type EventsList = Array<Timed & { name: string; source: string; key: string }>;
+type EventsList = Array<Timed & { name: string; source: string; key: string; payload?: string[] }>;
 
 const WebStackEventPanelComp = observer(
   ({
@@ -96,7 +96,7 @@ export const MobileStackEventPanel = connect((state: Record<string, any>) => ({
   zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
 }))(MobileStackEventPanelComp);
 
-function EventsPanel({
+const EventsPanel = observer(({
   list,
   listNow,
   jump,
@@ -110,7 +110,7 @@ function EventsPanel({
   zoomEnabled: boolean;
   zoomStartTs: number;
   zoomEndTs: number;
-}) {
+}) => {
   const {
     sessionStore: { devTools },
   } = useStore();
@@ -127,13 +127,19 @@ function EventsPanel({
     zoomEnabled ? zoomStartTs <= time && time <= zoomEndTs : true
   );
 
-  let filteredList = useRegExListFilterMemo(inZoomRangeList, (it) => it.name, filter);
+  let filteredList = useRegExListFilterMemo(inZoomRangeList, (it) => {
+    const searchBy = [it.name]
+    if (it.payload) {
+    const payload = Array.isArray(it.payload) ? it.payload.join(',') : JSON.stringify(it.payload);
+      searchBy.push(payload);
+    }
+    return searchBy
+  }, filter);
   filteredList = useTabListFilterMemo(filteredList, (it) => it.source, ALL, activeTab);
 
   const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) =>
     devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
-    devTools.update(INDEX_KEY, { filter: value });
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value });
   const tabs = useMemo(
     () => TABS.filter(({ key }) => key === ALL || inZoomRangeList.some(({ source }) => key === source)),
     [inZoomRangeList.length]
@@ -254,4 +260,4 @@ function EventsPanel({
       </BottomBlock.Content>
     </BottomBlock>
   );
-}
+});

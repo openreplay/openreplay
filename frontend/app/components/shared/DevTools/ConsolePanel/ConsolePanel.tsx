@@ -98,7 +98,7 @@ function ConsolePanel({
     exceptionsList = [],
     logListNow = [],
     exceptionsListNow = [],
-  } = tabStates[currentTab];
+  } = tabStates[currentTab] ?? {};
 
   const list = isLive
     ? (useMemo(
