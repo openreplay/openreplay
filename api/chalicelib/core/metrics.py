@@ -1731,7 +1731,7 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
               **__get_constraint_values(args)}
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT SUM(errors_count) AS count,
+        pg_query = f"""SELECT COALESCE(SUM(errors_count),0)::INT AS count,
                               COUNT(raw.domain) AS total,
                               jsonb_agg(raw) FILTER ( WHERE rn > %(limit_s)s 
                                                         AND rn <= %(limit_e)s ) AS values
@@ -1750,6 +1750,7 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
         cur.execute(pg_query)
         row = cur.fetchone()
         if row:
+            row["values"] = row["values"] or []
             for r in row["values"]:
                 r.pop("rn")
 
