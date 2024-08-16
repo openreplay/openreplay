@@ -379,8 +379,12 @@ def get_by_email_only(email):
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         origin,
-                        basic_authentication.password IS NOT NULL AS has_password
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
+                        basic_authentication.password IS NOT NULL AS has_password,
+                        role_id,
+                        internal_id,
+                        roles.name AS role_name
+                    FROM public.users LEFT JOIN public.basic_authentication USING(user_id)
+                                      INNER JOIN public.roles USING(role_id)
                     WHERE users.email = %(email)s                     
                      AND users.deleted_at IS NULL
                     LIMIT 1;""",
