@@ -108,6 +108,12 @@ func (t *transcoderImpl) process(task *Task) error {
 	}
 	path += strconv.FormatUint(spotID, 10) + "/"
 
+	defer func() {
+		if err := os.RemoveAll(path); err != nil {
+			t.log.Error(context.Background(), "Error removing directory: %v", err)
+		}
+	}()
+
 	// Download video from S3
 	if err := t.downloadSpotVideo(spotID, path); err != nil {
 		return fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error())
