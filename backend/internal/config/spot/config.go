@@ -21,11 +21,12 @@ type Config struct {
 	HTTPHost                string        `env:"HTTP_HOST,default="`
 	HTTPPort                string        `env:"HTTP_PORT,required"`
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
-	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=1000"`
+	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=131072"` // 128KB
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	JWTSecret               string        `env:"JWT_SECRET,required"`
 	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET,required"`
+	MinimumStreamDuration   int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
 	WorkerID                uint16
 }
 

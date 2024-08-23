@@ -18,7 +18,7 @@ type Pool interface {
 	QueryRow(sql string, args ...interface{}) pgx.Row
 	Exec(sql string, arguments ...interface{}) error
 	SendBatch(b *pgx.Batch) pgx.BatchResults
-	Begin() (*_Tx, error)
+	Begin() (*Tx, error)
 	Close()
 }
 
@@ -62,12 +62,12 @@ func (p *poolImpl) SendBatch(b *pgx.Batch) pgx.BatchResults {
 	return res
 }
 
-func (p *poolImpl) Begin() (*_Tx, error) {
+func (p *poolImpl) Begin() (*Tx, error) {
 	start := time.Now()
 	tx, err := p.conn.Begin(context.Background())
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
 	database.IncreaseTotalRequests("begin", "")
-	return &_Tx{tx}, err
+	return &Tx{tx}, err
 }
 
 func (p *poolImpl) Close() {
@@ -91,11 +91,11 @@ func New(url string) (Pool, error) {
 
 // TX - start
 
-type _Tx struct {
+type Tx struct {
 	pgx.Tx
 }
 
-func (tx *_Tx) exec(sql string, args ...interface{}) error {
+func (tx *Tx) TxExec(sql string, args ...interface{}) error {
 	start := time.Now()
 	_, err := tx.Exec(context.Background(), sql, args...)
 	method, table := methodName(sql)
@@ -104,7 +104,16 @@ func (tx *_Tx) exec(sql string, args ...interface{}) error {
 	return err
 }
 
-func (tx *_Tx) rollback() error {
+func (tx *Tx) TxQueryRow(sql string, args ...interface{}) pgx.Row {
+	start := time.Now()
+	res := tx.QueryRow(context.Background(), sql, args...)
+	method, table := methodName(sql)
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	database.IncreaseTotalRequests(method, table)
+	return res
+}
+
+func (tx *Tx) TxRollback() error {
 	start := time.Now()
 	err := tx.Rollback(context.Background())
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "rollback", "")
@@ -112,7 +121,7 @@ func (tx *_Tx) rollback() error {
 	return err
 }
 
-func (tx *_Tx) commit() error {
+func (tx *Tx) TxCommit() error {
 	start := time.Now()
 	err := tx.Commit(context.Background())
 	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "commit", "")

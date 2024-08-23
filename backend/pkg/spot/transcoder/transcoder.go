@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,7 +22,7 @@ import (
 )
 
 type Transcoder interface {
-	Transcode(spot *service.Spot) error
+	Process(spot *service.Spot) error
 	GetSpotStreamPlaylist(spotID uint64) ([]byte, error)
 	Close()
 }
@@ -29,9 +30,10 @@ type Transcoder interface {
 type transcoderImpl struct {
 	cfg        *spot.Config
 	log        logger.Logger
-	queue      chan *service.Spot // in-memory queue for transcoding
+	close      chan interface{}
 	objStorage objectstorage.ObjectStorage
 	conn       pool.Pool
+	tasks      Tasks
 	streams    Streams
 	spots      service.Spots
 }
@@ -40,9 +42,10 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 	tnsc := &transcoderImpl{
 		cfg:        cfg,
 		log:        log,
-		queue:      make(chan *service.Spot, 100),
+		close:      make(chan interface{}, 1),
 		objStorage: objStorage,
 		conn:       conn,
+		tasks:      NewTasks(conn),
 		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
 	}
@@ -50,31 +53,49 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 	return tnsc
 }
 
-func (t *transcoderImpl) Transcode(spot *service.Spot) error {
-	t.queue <- spot
-	return nil
+func (t *transcoderImpl) Process(spot *service.Spot) error {
+	if spot.Crop == nil && spot.Duration < t.cfg.MinimumStreamDuration {
+		// Skip this spot and set processed status
+		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
+		if err := t.spots.SetStatus(spot.ID, "processed"); err != nil {
+			t.log.Error(context.Background(), "Error updating spot status: %v", err)
+		}
+		return nil
+	}
+	return t.tasks.Add(spot.ID, spot.Crop, spot.Duration)
 }
 
 func (t *transcoderImpl) mainLoop() {
 	for {
 		select {
-		case spot := <-t.queue:
+		case closeEvent := <-t.close:
+			t.log.Info(context.Background(), "Transcoder is closing: %v", closeEvent)
+			return
+		default:
+			task, err := t.tasks.Get()
+			if err != nil {
+				if errors.Is(err, NoTasksError{}) {
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				t.log.Error(context.Background(), "Error getting task: %v", err)
+				continue
+			}
 			start := time.Now()
-			t.transcode(spot)
-			t.log.Info(context.Background(), "total time for transcoding spot %d - %v sec", spot.ID, time.Since(start).Seconds())
+			if err := t.process(task); err != nil {
+				t.tasks.Failed(task, err)
+			} else {
+				t.tasks.Done(task)
+			}
+			t.log.Info(context.Background(), "total time for transcoding spot %d - %v sec", task.SpotID, time.Since(start).Seconds())
 		}
 	}
 }
 
-func (t *transcoderImpl) transcode(spot *service.Spot) {
+func (t *transcoderImpl) process(task *Task) error {
 	metrics.IncreaseVideosTotal()
-	spotID := spot.ID
+	spotID := task.SpotID
 	t.log.Info(context.Background(), "Processing spot %s", spotID)
-
-	if spot.Crop == nil && spot.Duration < 15000 {
-		t.log.Info(context.Background(), "Spot video %+v is too short for transcoding and without crop values", spot)
-		return
-	}
 
 	// Prepare path for spot video
 	path := t.cfg.FSDir + "/"
@@ -84,38 +105,41 @@ func (t *transcoderImpl) transcode(spot *service.Spot) {
 	path += strconv.FormatUint(spotID, 10) + "/"
 
 	// Download video from S3
-	t.downloadSpotVideo(spotID, path)
-
-	// Crop video if needed
-	if spot.Crop != nil && len(spot.Crop) == 2 {
-		t.cropSpotVideo(spotID, spot.Crop, path)
+	if err := t.downloadSpotVideo(spotID, path); err != nil {
+		return fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error())
 	}
 
-	if spot.Duration < 15000 {
+	if task.HasToTrim() {
+		if err := t.cropSpotVideo(spotID, task.Crop, path); err != nil {
+			return fmt.Errorf("can't crop video, spot: %d, err: %s", task.SpotID, err.Error())
+		}
+	}
+
+	if !task.HasToTranscode() {
 		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", spotID)
-		return
+		return nil
 	}
 
 	// Transcode spot video to HLS format
 	streamPlaylist, err := t.transcodeSpotVideo(spotID, path)
 	if err != nil {
-		t.log.Error(context.Background(), "Error transcoding spot %d: %v", spotID, err)
-		return
+		return fmt.Errorf("can't transcode video, spot: %d, err: %s", task.SpotID, err.Error())
 	}
 
 	// Save stream playlist to DB
 	if err := t.streams.Add(spotID, streamPlaylist); err != nil {
-		t.log.Error(context.Background(), "Error adding spot stream to DB: %v", err)
-		return
+		return fmt.Errorf("can't insert playlist to DB, spot: %d, err: %s", task.SpotID, err.Error())
 	}
 
 	if err := t.spots.SetStatus(spotID, "processed"); err != nil {
 		t.log.Error(context.Background(), "Error updating spot status: %v", err)
 	}
+
 	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
+	return nil
 }
 
-func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) {
+func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) error {
 	start := time.Now()
 
 	// Ensure the directory exists
@@ -125,20 +149,17 @@ func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) {
 
 	video, err := t.objStorage.Get(fmt.Sprintf("%d/video.webm", spotID))
 	if err != nil {
-		t.log.Error(context.Background(), "Failed to download spot %s: %s", spotID, err)
-		return
+		return err
 	}
 	defer video.Close()
 
 	// Save file to disk
 	originVideo, err := os.Create(path + "origin.webm")
 	if err != nil {
-		t.log.Error(context.Background(), "can't create file: %s", err.Error())
-		return
+		return fmt.Errorf("can't create file: %s", err.Error())
 	}
 	if _, err := io.Copy(originVideo, video); err != nil {
-		t.log.Error(context.Background(), "can't copy file: %s", err.Error())
-		return
+		return fmt.Errorf("can't copy file: %s", err.Error())
 	}
 	if fileInfo, err := originVideo.Stat(); err != nil {
 		t.log.Error(context.Background(), "Failed to get file info: %v", err)
@@ -150,9 +171,10 @@ func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) {
 	metrics.RecordOriginalVideoDownloadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Saved origin video to disk, spot: %d in %v sec", spotID, time.Since(start).Seconds())
+	return nil
 }
 
-func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) {
+func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) error {
 	// Crop video
 	// ffmpeg -i input.webm -ss 5 -to 20 -c copy output.webm
 
@@ -167,8 +189,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) {
 
 	err := cmd.Run()
 	if err != nil {
-		t.log.Error(context.Background(), "Failed to execute command: %v, stderr: %v", err, stderr.String())
-		return
+		return fmt.Errorf("failed to execute command: %v, stderr: %v", err, stderr.String())
 	}
 	metrics.IncreaseVideosCropped()
 	metrics.RecordCroppingDuration(time.Since(start).Seconds())
@@ -182,8 +203,7 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) {
 	start = time.Now()
 	video, err := os.Open(path + "origin.webm")
 	if err != nil {
-		t.log.Error(context.Background(), "Failed to open cropped video: %v", err)
-		return
+		return fmt.Errorf("failed to open cropped video: %v", err)
 	}
 	defer video.Close()
 
@@ -195,13 +215,13 @@ func (t *transcoderImpl) cropSpotVideo(spotID uint64, crop []int, path string) {
 
 	err = t.objStorage.Upload(video, fmt.Sprintf("%d/video.webm", spotID), "video/webm", objectstorage.NoCompression)
 	if err != nil {
-		t.log.Error(context.Background(), "Failed to upload cropped video: %v", err)
-		return
+		return fmt.Errorf("failed to upload cropped video: %v", err)
 	}
 
 	metrics.RecordCroppedVideoUploadDuration(time.Since(start).Seconds())
 
 	t.log.Info(context.Background(), "Uploaded cropped spot %d in %v", spotID, time.Since(start).Seconds())
+	return nil
 }
 
 func (t *transcoderImpl) transcodeSpotVideo(spotID uint64, path string) (string, error) {
@@ -282,5 +302,5 @@ func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
 }
 
 func (t *transcoderImpl) Close() {
-	close(t.queue)
+	t.close <- nil
 }

@@ -405,7 +405,7 @@ func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e.log.Info(r.Context(), "uploaded spot %+v, from user: %+v", spot, user)
-	if err := e.services.Transcoder.Transcode(spot); err != nil {
+	if err := e.services.Transcoder.Process(spot); err != nil {
 		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
 	}
 
