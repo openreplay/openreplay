@@ -53,14 +53,18 @@ func (NoTasksError) Error() string {
 	return "no tasks"
 }
 
-func (t *tasksImpl) Get() (*Task, error) {
-	var task Task
+func (t *tasksImpl) Get() (task *Task, err error) {
 	tx, err := t.conn.Begin()
 	if err != nil {
 		return nil, err
 	}
-	defer tx.TxRollback()
+	defer func() {
+		if err != nil {
+			tx.TxRollback()
+		}
+	}()
 
+	task = &Task{tx: pool.Tx{Tx: tx}}
 	sql := `SELECT id, crop, duration FROM spot_tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
 	err = tx.TxQueryRow(sql).Scan(&task.SpotID, &task.Crop, &task.Duration)
 	if err != nil {
@@ -69,8 +73,7 @@ func (t *tasksImpl) Get() (*Task, error) {
 		}
 		return nil, err
 	}
-	task.tx = pool.Tx{Tx: tx}
-	return &task, nil
+	return task, nil
 }
 
 func (t *tasksImpl) Done(task *Task) error {
