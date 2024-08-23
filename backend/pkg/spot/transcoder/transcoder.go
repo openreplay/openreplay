@@ -82,10 +82,14 @@ func (t *transcoderImpl) mainLoop() {
 				continue
 			}
 			start := time.Now()
-			if err := t.process(task); err != nil {
-				t.tasks.Failed(task, err)
+			if proccessingError := t.process(task); err != nil {
+				if err := t.tasks.Failed(task, proccessingError); err != nil {
+					t.log.Error(context.Background(), "Error marking task as failed: %v", err)
+				}
 			} else {
-				t.tasks.Done(task)
+				if err := t.tasks.Done(task); err != nil {
+					t.log.Error(context.Background(), "Error marking task as done: %v", err)
+				}
 			}
 			t.log.Info(context.Background(), "total time for transcoding spot %d - %v sec", task.SpotID, time.Since(start).Seconds())
 		}
