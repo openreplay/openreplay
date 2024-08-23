@@ -77,7 +77,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 }
 
 func (t *tasksImpl) Done(task *Task) error {
-	sql := `UPDATE spot_tasks SET status = 'processed' WHERE id = $1`
+	sql := `DELETE FROM spot_tasks WHERE id = $1`
 	err := task.tx.TxExec(sql, task.SpotID)
 	if err != nil {
 		task.tx.TxRollback()
@@ -88,8 +88,8 @@ func (t *tasksImpl) Done(task *Task) error {
 }
 
 func (t *tasksImpl) Failed(task *Task, taskErr error) error {
-	sql := `UPDATE spot_tasks SET status = 'failed' WHERE id = $1`
-	err := task.tx.TxExec(sql, task.SpotID)
+	sql := `UPDATE spot_tasks SET status = 'failed', error = $2 WHERE id = $1`
+	err := task.tx.TxExec(sql, task.SpotID, taskErr.Error())
 	if err != nil {
 		task.tx.TxRollback()
 		return err
