@@ -1,18 +1,11 @@
 import { App, Messages } from '@openreplay/tracker';
 import Observable from 'zen-observable';
 import { Sanitizer } from './types';
-
-type Operation = {
-  query: Record<string, any>;
-  variables: Record<string, any>;
-  operationName: string;
-  extensions: Record<string, any>;
-};
-type NextLink = (operation: Operation) => Observable<Record<string, any>>;
+import type { NextLink, Operation, RequestHandler } from '@apollo/client';
 
 export const createTrackerLink = (
   sanitizer?: Sanitizer<Record<string, any> | undefined | null>,
-) => {
+): ((app: App | null) => RequestHandler) => {
   return (app: App | null) => {
     if (!app) {
       return (operation: Operation, forward: NextLink) => forward(operation);
