@@ -22,17 +22,23 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@openreplay/tracker": ">=14.0.0"
+    "@openreplay/tracker": ">=14.0.0",
+    "@apollo/client": ">=3.0.0"
   },
   "devDependencies": {
+    "@apollo/client": "^3.9.5",
     "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@apollo/client": "^3.9.5",
     "@types/zen-observable": "^0.8.7",
     "zen-observable": "^0.10.0"
+  },
+  "peerDependenciesMeta": {
+    "@apollo/client": {
+      "optional": true
+    }
   }
 }
