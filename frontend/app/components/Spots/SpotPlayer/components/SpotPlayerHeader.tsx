@@ -4,8 +4,11 @@ import {
   CopyOutlined,
   SettingOutlined,
   UserSwitchOutlined,
+  MoreOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import { Button, Popover, Tooltip, message } from 'antd';
+import { Button, Badge, Popover, Tooltip, message, Dropdown, Menu } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
@@ -54,6 +57,18 @@ function SpotPlayerHeader({
   const navigateToSpotsList = () => {
     history.push(spotLink);
   };
+
+  // Create menu for dropdown
+  const menu = (
+    <Menu>
+      <Menu.Item key="download" icon={<DownloadOutlined />}>
+        Download Video
+      </Menu.Item>
+      <Menu.Item key="delete" icon={<DeleteOutlined />}>
+        Delete
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <div
@@ -131,7 +146,7 @@ function SpotPlayerHeader({
             type={'default'}
             icon={<CopyOutlined />}
           >
-            Copy Link
+            Copy
           </Button>
           {hasShareAccess ? (
             <Popover
@@ -147,6 +162,13 @@ function SpotPlayerHeader({
               </Button>
             </Popover>
           ) : null}
+
+            <Dropdown overlay={menu} placement="bottomRight">
+                    <Button
+                      size={'small'}
+                      icon={<MoreOutlined />}
+                    />
+            </Dropdown>
           <div
             className={'h-full rounded-xl border-l mx-2'}
             style={{ width: 1 }}
@@ -157,18 +179,26 @@ function SpotPlayerHeader({
         size={'small'}
         disabled={activeTab === TABS.ACTIVITY}
         onClick={() => setActiveTab(TABS.ACTIVITY)}
-        icon={<UserSwitchOutlined />}
+        icon={<UserSwitchOutlined />
+        }
       >
         Activity
       </Button>
+      
+      <Badge count={5} className='mr-2 text-xs'>
+        
       <Button
         size={'small'}
         disabled={activeTab === TABS.COMMENTS}
         onClick={() => setActiveTab(TABS.COMMENTS)}
         icon={<CommentOutlined />}
+        className='mr-.25'
       >
         Comments
       </Button>
+      </Badge>
+
+
     </div>
   );
 }

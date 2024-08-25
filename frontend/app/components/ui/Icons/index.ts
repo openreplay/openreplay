@@ -435,6 +435,7 @@ export { default as No_metrics_chart } from './no_metrics_chart';
 export { default as No_metrics } from './no_metrics';
 export { default as No_recordings } from './no_recordings';
 export { default as Orspot } from './orSpot';
+export { default as Or_spot_outline } from './Or_spot_outline';
 export { default as Os_android } from './os_android';
 export { default as Os_chrome_os } from './os_chrome_os';
 export { default as Os_fedora } from './os_fedora';

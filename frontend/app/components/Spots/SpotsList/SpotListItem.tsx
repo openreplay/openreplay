@@ -201,7 +201,7 @@ function SpotListItem({
           <Checkbox
             checked={isSelected} // Use isSelected prop to control the checkbox state
             onChange={({ target: { checked } }) => onSelect(checked)}
-            className="flex cursor-pointer capitalize w-full"
+            className={`flex cursor-pointer capitalize w-full hover:text-teal ${isSelected ? 'text-teal' : ''}`}
           >
             <span className="capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
               {spot.title}
