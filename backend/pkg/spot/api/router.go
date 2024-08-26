@@ -164,12 +164,38 @@ func (e *Router) rateLimitMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+type statusWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *statusWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.statusCode == 0 {
+		w.statusCode = http.StatusOK // Default status code is 200
+	}
+	return w.ResponseWriter.Write(b)
+}
+
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		e.log.Info(r.Context(), "request received: %s", r.URL.Path)
+		// Wrap the original ResponseWriter
+		sw := &statusWriter{ResponseWriter: w}
+
+		// Parse request data
 		rData := e.requestParser(r)
 		e.log.Info(r.Context(), "request data: %v", rData)
-		next.ServeHTTP(w, r)
+
+		// Call the next handler
+		next.ServeHTTP(sw, r)
+
+		// Log the status code
+		e.log.Info(r.Context(), "response status: %d", sw.statusCode)
 	})
 }
 
