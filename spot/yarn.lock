@@ -853,6 +853,11 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.18.1.tgz#0cb240c147c0dfd0e3eaff4cc060a772d39e155c"
   integrity sha512-yjk2MAkQmoaPYCSu35RLJ62+dz358nE83VfTePJRp8CG7aMg25mEJYpXFiD+NcevhX8LxD5OP5tktPXnXN7GDw==
 
+"@sec-ant/readable-stream@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@sec-ant/readable-stream/-/readable-stream-0.4.1.tgz#60de891bb126abfdc5410fdc6166aca065f10a0c"
+  integrity sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==
+
 "@sigstore/bundle@^2.3.2":
   version "2.3.2"
   resolved "https://registry.npmjs.org/@sigstore/bundle/-/bundle-2.3.2.tgz"
@@ -903,6 +908,11 @@
   version "5.6.0"
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-5.6.0.tgz"
   integrity sha512-TV7t8GKYaJWsn00tFDqBw8+Uqmr8A0fRU1tvTQhyZzGv0sJCGRQL3JGMI3ucuKo3XIZdUP+Lx7/gh2t3lewy7g==
+
+"@sindresorhus/merge-streams@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@sindresorhus/merge-streams/-/merge-streams-4.0.0.tgz#abb11d99aeb6d27f1b563c38147a72d50058e339"
+  integrity sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==
 
 "@szmarczak/http-timer@^5.0.1":
   version "5.0.1"
@@ -2100,6 +2110,24 @@ execa@^8.0.1:
     signal-exit "^4.1.0"
     strip-final-newline "^3.0.0"
 
+execa@^9.3.0:
+  version "9.3.1"
+  resolved "https://registry.yarnpkg.com/execa/-/execa-9.3.1.tgz#09c86ab4dc2ef3de6d34f6568f4bad76ded4fded"
+  integrity sha512-gdhefCCNy/8tpH/2+ajP9IQc14vXchNdd0weyzSJEFURhRMGncQ+zKFxwjAufIewPEJm9BPOaJnvg2UtlH2gPQ==
+  dependencies:
+    "@sindresorhus/merge-streams" "^4.0.0"
+    cross-spawn "^7.0.3"
+    figures "^6.1.0"
+    get-stream "^9.0.0"
+    human-signals "^8.0.0"
+    is-plain-obj "^4.1.0"
+    is-stream "^4.0.1"
+    npm-run-path "^5.2.0"
+    pretty-ms "^9.0.0"
+    signal-exit "^4.1.0"
+    strip-final-newline "^4.0.0"
+    yoctocolors "^2.0.0"
+
 exponential-backoff@^3.1.1:
   version "3.1.1"
   resolved "https://registry.npmjs.org/exponential-backoff/-/exponential-backoff-3.1.1.tgz"
@@ -2150,6 +2178,13 @@ fd-slicer@~1.1.0:
   integrity sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==
   dependencies:
     pend "~1.2.0"
+
+figures@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/figures/-/figures-6.1.0.tgz#935479f51865fa7479f6fa94fc6fc7ac14e62c4a"
+  integrity sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==
+  dependencies:
+    is-unicode-supported "^2.0.0"
 
 filesize@^10.1.4:
   version "10.1.4"
@@ -2288,6 +2323,14 @@ get-stream@^8.0.1:
   version "8.0.1"
   resolved "https://registry.npmjs.org/get-stream/-/get-stream-8.0.1.tgz"
   integrity sha512-VaUJspBffn/LMCJVoMvSAdmscJyS1auj5Zulnn5UoYcY531UWmdwhRWkcGKnGU93m5HSXP9LP2usOryrBtQowA==
+
+get-stream@^9.0.0:
+  version "9.0.1"
+  resolved "https://registry.yarnpkg.com/get-stream/-/get-stream-9.0.1.tgz#95157d21df8eb90d1647102b63039b1df60ebd27"
+  integrity sha512-kVCxPF3vQM/N0B1PmoqVUqgHP+EeVjmZSQn+1oCRPxd2P21P2F19lIgbR3HBosbB1PUhOAoctJnfEn2GbN2eZA==
+  dependencies:
+    "@sec-ant/readable-stream" "^0.4.1"
+    is-stream "^4.0.1"
 
 giget@^1.2.3:
   version "1.2.3"
@@ -2496,6 +2539,11 @@ human-signals@^5.0.0:
   version "5.0.0"
   resolved "https://registry.npmjs.org/human-signals/-/human-signals-5.0.0.tgz"
   integrity sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==
+
+human-signals@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-8.0.0.tgz#2d3d63481c7c2319f0373428b01ffe30da6df852"
+  integrity sha512-/1/GPCpDUCCYwlERiYjxoczfP0zfvZMU/OWgQPMya9AbAE24vseigFdhAMObpc8Q4lc/kjutPfUddDYyAmejnA==
 
 iconv-lite@^0.6.2:
   version "0.6.3"
@@ -2719,6 +2767,11 @@ is-path-inside@^3.0.2:
   resolved "https://registry.npmjs.org/is-path-inside/-/is-path-inside-3.0.3.tgz"
   integrity sha512-Fd4gABb+ycGAmKou8eMftCupSir5lRxqf4aD/vd0cD2qc4HL07OjCeuHMr8Ro4CoMaeCKDB0/ECBOVWjTwUvPQ==
 
+is-plain-obj@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/is-plain-obj/-/is-plain-obj-4.1.0.tgz#d65025edec3657ce032fd7db63c97883eaed71f0"
+  integrity sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==
+
 is-plain-object@^2.0.4:
   version "2.0.4"
   resolved "https://registry.npmjs.org/is-plain-object/-/is-plain-object-2.0.4.tgz"
@@ -2750,6 +2803,11 @@ is-stream@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/is-stream/-/is-stream-3.0.0.tgz"
   integrity sha512-LnQR4bZ9IADDRSkvpqMGvt/tEJWclzklNgSw48V5EAaAeDd6qGvN8ei6k5p0tvxSR171VmGyHuTiAOfxAbr8kA==
+
+is-stream@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/is-stream/-/is-stream-4.0.1.tgz#375cf891e16d2e4baec250b85926cffc14720d9b"
+  integrity sha512-Dnz92NInDqYckGEUJv689RbRiTSEHCQ7wOVeALbkOz999YpqT46yMRIGtSNl2iCL1waAZSx40+h59NV/EwzV/A==
 
 is-typedarray@^1.0.0:
   version "1.0.0"
@@ -3606,7 +3664,7 @@ npm-run-path@^4.0.1:
   dependencies:
     path-key "^3.0.0"
 
-npm-run-path@^5.1.0:
+npm-run-path@^5.1.0, npm-run-path@^5.2.0:
   version "5.3.0"
   resolved "https://registry.npmjs.org/npm-run-path/-/npm-run-path-5.3.0.tgz"
   integrity sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==
@@ -3895,6 +3953,11 @@ parse-json@7.1.1:
     lines-and-columns "^2.0.3"
     type-fest "^3.8.0"
 
+parse-ms@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/parse-ms/-/parse-ms-4.0.0.tgz#c0c058edd47c2a590151a718990533fd62803df4"
+  integrity sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==
+
 parse5-htmlparser2-tree-adapter@^6.0.0:
   version "6.0.1"
   resolved "https://registry.npmjs.org/parse5-htmlparser2-tree-adapter/-/parse5-htmlparser2-tree-adapter-6.0.1.tgz"
@@ -4041,6 +4104,13 @@ prettier@^3.3.2:
   version "3.3.3"
   resolved "https://registry.npmjs.org/prettier/-/prettier-3.3.3.tgz"
   integrity sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==
+
+pretty-ms@^9.0.0:
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/pretty-ms/-/pretty-ms-9.1.0.tgz#0ad44de6086454f48a168e5abb3c26f8db1b3253"
+  integrity sha512-o1piW0n3tgKIKCwk2vpM/vOV13zjJzvP37Ioze54YlTHE06m4tjEbzg9WsKkvTuyYln2DHjo5pY4qrZGI0otpw==
+  dependencies:
+    parse-ms "^4.0.0"
 
 proc-log@^4.0.0, proc-log@^4.1.0, proc-log@^4.2.0:
   version "4.2.0"
@@ -4680,6 +4750,11 @@ strip-final-newline@^3.0.0:
   resolved "https://registry.npmjs.org/strip-final-newline/-/strip-final-newline-3.0.0.tgz"
   integrity sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==
 
+strip-final-newline@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/strip-final-newline/-/strip-final-newline-4.0.0.tgz#35a369ec2ac43df356e3edd5dcebb6429aa1fa5c"
+  integrity sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==
+
 strip-json-comments@5.0.1:
   version "5.0.1"
   resolved "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-5.0.1.tgz"
@@ -5226,10 +5301,10 @@ ws@8.18.0:
   resolved "https://registry.npmjs.org/ws/-/ws-8.18.0.tgz"
   integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
-wxt@0.19.4:
-  version "0.19.4"
-  resolved "https://registry.yarnpkg.com/wxt/-/wxt-0.19.4.tgz#055a322259c3d12575ef6a9a80b3a5ed93ef7986"
-  integrity sha512-L77X9mTYEqJPbaKyT3UQ9zKtIYNsJ7FCNb6t/OT73aWDUD3w7ijqJ38485mlOwyDKKDcJ2AWcvsU9Z0tR8B8ZQ==
+wxt@0.19.7:
+  version "0.19.7"
+  resolved "https://registry.yarnpkg.com/wxt/-/wxt-0.19.7.tgz#df6f230a103b9b10f52672dcf69d66d2b7a121e0"
+  integrity sha512-nAoEYodA6Tgc93m0C4H64rUZe3WpR8aIL04L3BbmEnLfAfaLARKIELHBCOTr0m+6maMsAlppKVvX9O7n0Lg2/Q==
   dependencies:
     "@aklinker1/rollup-plugin-visualizer" "5.12.0"
     "@types/webextension-polyfill" "^0.10.7"
@@ -5245,6 +5320,7 @@ wxt@0.19.4:
     defu "^6.1.4"
     dequal "^2.0.3"
     esbuild "^0.23.0"
+    execa "^9.3.0"
     fast-glob "^3.3.2"
     filesize "^10.1.4"
     fs-extra "^11.2.0"
@@ -5354,6 +5430,11 @@ yauzl@^2.10.0:
   dependencies:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
+
+yoctocolors@^2.0.0:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/yoctocolors/-/yoctocolors-2.1.1.tgz#e0167474e9fbb9e8b3ecca738deaa61dd12e56fc"
+  integrity sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==
 
 zip-dir@2.0.0:
   version "2.0.0"

@@ -46,7 +46,6 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
   const [startPos, setStartPos] = createSignal(0);
   const [endPos, setEndPos] = createSignal(100);
   const [dragging, setDragging] = createSignal<string | null>(null);
-  const [openInNewTab, setOpenInNewTab] = createSignal(true);
   const [isTyping, setIsTyping] = createSignal(false);
   const [errorEvents, setErrorEvents] = createSignal([])
 
@@ -55,13 +54,6 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
     getErrorEvents().then(r => {
       setErrorEvents(r)
     })
-    browser.runtime
-      .sendMessage({
-        type: "ort:check-new-tab",
-      })
-      .then((r) => {
-        setOpenInNewTab(r);
-      });
   });
 
   const spacePressed = (e: KeyboardEvent) => {
@@ -276,16 +268,6 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
     videoRef.removeEventListener("ended", onVideoEnd);
   });
 
-  const toggleOpenInNewTab = (e: Event) => {
-    e.stopPropagation();
-    const value = openInNewTab();
-    setOpenInNewTab(!value);
-    chrome.runtime.sendMessage({
-      type: "ort:settings",
-      settings: { openInNewTab: !value },
-    });
-  };
-
   return (
     <dialog
       ref={(el) => (dialogRef = el)}
@@ -497,23 +479,6 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                   >
                     Cancel
                   </div>
-                </div>
-
-                <div
-                  class={"flex items-center gap-2 mt-2 tooltip tooltip-bottom"}
-                  data-tip="Recordings open in a new tab by default. Enable to spot issues back-to-back."
-                >
-                  <label class="label cursor-pointer">
-                    <input
-                      type="checkbox"
-                      class="toggle toggle-primary toggle-xs cursor-pointer"
-                      checked={openInNewTab()}
-                      onChange={toggleOpenInNewTab}
-                    />
-                    <span class="text-sm label-text ms-1">
-                      Take me to Spot.
-                    </span>
-                  </label>
                 </div>
 
                 <p class="text-xs">
