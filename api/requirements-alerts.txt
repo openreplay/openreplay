@@ -10,7 +10,7 @@ jira==3.8.0
 
 
 
-fastapi==0.112.0
+fastapi==0.112.2
 uvicorn[standard]==0.30.5
 python-decouple==3.8
 pydantic[email]==2.8.2
