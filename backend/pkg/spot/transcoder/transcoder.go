@@ -18,6 +18,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	metrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/objectstorage"
+	workers "openreplay/backend/pkg/pool"
 	"openreplay/backend/pkg/spot/service"
 )
 
@@ -28,14 +29,16 @@ type Transcoder interface {
 }
 
 type transcoderImpl struct {
-	cfg        *spot.Config
-	log        logger.Logger
-	close      chan interface{}
-	objStorage objectstorage.ObjectStorage
-	conn       pool.Pool
-	tasks      Tasks
-	streams    Streams
-	spots      service.Spots
+	cfg              *spot.Config
+	log              logger.Logger
+	close            chan interface{}
+	objStorage       objectstorage.ObjectStorage
+	conn             pool.Pool
+	tasks            Tasks
+	streams          Streams
+	spots            service.Spots
+	prepareWorkers   workers.WorkerPool
+	transcodeWorkers workers.WorkerPool
 }
 
 func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage.ObjectStorage, conn pool.Pool, spots service.Spots) Transcoder {
@@ -49,6 +52,8 @@ func NewTranscoder(cfg *spot.Config, log logger.Logger, objStorage objectstorage
 		streams:    NewStreams(log, conn, objStorage),
 		spots:      spots,
 	}
+	tnsc.prepareWorkers = workers.NewPool(2, 4, tnsc.prepare)
+	tnsc.transcodeWorkers = workers.NewPool(2, 4, tnsc.transcode)
 	go tnsc.mainLoop()
 	return tnsc
 }
@@ -76,77 +81,98 @@ func (t *transcoderImpl) mainLoop() {
 			if err != nil {
 				if errors.Is(err, NoTasksError{}) {
 					time.Sleep(1 * time.Second)
-					continue
+				} else {
+					t.log.Error(context.Background(), "Error getting task: %v", err)
 				}
-				t.log.Error(context.Background(), "Error getting task: %v", err)
 				continue
 			}
-			start := time.Now()
-			if proccessingError := t.process(task); err != nil {
-				if err := t.tasks.Failed(task, proccessingError); err != nil {
-					t.log.Error(context.Background(), "Error marking task as failed: %v", err)
-				}
-			} else {
-				if err := t.tasks.Done(task); err != nil {
-					t.log.Error(context.Background(), "Error marking task as done: %v", err)
-				}
-			}
-			t.log.Info(context.Background(), "total time for transcoding spot %d - %v sec", task.SpotID, time.Since(start).Seconds())
+			t.process(task)
 		}
 	}
 }
 
-func (t *transcoderImpl) process(task *Task) error {
+func (t *transcoderImpl) failedTask(task *Task, err error) {
+	t.log.Error(context.Background(), "Task failed: %v", err)
+	if err := t.tasks.Failed(task, err); err != nil {
+		t.log.Error(context.Background(), "Error marking task as failed: %v", err)
+	}
+	if err := os.RemoveAll(task.Path); err != nil {
+		t.log.Error(context.Background(), "Error removing directory: %v", err)
+	}
+}
+
+func (t *transcoderImpl) doneTask(task *Task) {
+	if err := t.tasks.Done(task); err != nil {
+		t.log.Error(context.Background(), "Error marking task as done: %v", err)
+	}
+	if err := os.RemoveAll(task.Path); err != nil {
+		t.log.Error(context.Background(), "Error removing directory: %v", err)
+	}
+}
+
+func (t *transcoderImpl) process(task *Task) {
 	metrics.IncreaseVideosTotal()
-	spotID := task.SpotID
-	t.log.Info(context.Background(), "Processing spot %s", spotID)
+	//spotID := task.SpotID
+	t.log.Info(context.Background(), "Processing spot %s", task.SpotID)
 
 	// Prepare path for spot video
 	path := t.cfg.FSDir + "/"
 	if t.cfg.SpotsDir != "" {
 		path += t.cfg.SpotsDir + "/"
 	}
-	path += strconv.FormatUint(spotID, 10) + "/"
+	task.Path += strconv.FormatUint(task.SpotID, 10) + "/"
 
-	defer func() {
-		if err := os.RemoveAll(path); err != nil {
-			t.log.Error(context.Background(), "Error removing directory: %v", err)
-		}
-	}()
+	t.prepareWorkers.Submit(task)
+}
+
+// Download original video, crop if needed (and upload cropped).
+func (t *transcoderImpl) prepare(payload interface{}) {
+	task := payload.(*Task)
 
 	// Download video from S3
-	if err := t.downloadSpotVideo(spotID, path); err != nil {
-		return fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error())
+	if err := t.downloadSpotVideo(task.SpotID, task.Path); err != nil {
+		t.failedTask(task, fmt.Errorf("can't download video, spot: %d, err: %s", task.SpotID, err.Error()))
+		return
 	}
 
 	if task.HasToTrim() {
-		if err := t.cropSpotVideo(spotID, task.Crop, path); err != nil {
-			return fmt.Errorf("can't crop video, spot: %d, err: %s", task.SpotID, err.Error())
+		if err := t.cropSpotVideo(task.SpotID, task.Crop, task.Path); err != nil {
+			t.failedTask(task, fmt.Errorf("can't crop video, spot: %d, err: %s", task.SpotID, err.Error()))
+			return
 		}
 	}
 
 	if !task.HasToTranscode() {
-		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", spotID)
-		return nil
+		t.log.Info(context.Background(), "Spot video %d is too short for transcoding", task.SpotID)
+		t.doneTask(task)
+	} else {
+		t.transcodeWorkers.Submit(task)
 	}
+}
+
+// Transcode video, upload to S3, save playlist to DB, delete local files.
+func (t *transcoderImpl) transcode(payload interface{}) {
+	task := payload.(*Task)
 
 	// Transcode spot video to HLS format
-	streamPlaylist, err := t.transcodeSpotVideo(spotID, path)
+	streamPlaylist, err := t.transcodeSpotVideo(task.SpotID, task.Path)
 	if err != nil {
-		return fmt.Errorf("can't transcode video, spot: %d, err: %s", task.SpotID, err.Error())
+		t.failedTask(task, fmt.Errorf("can't transcode video, spot: %d, err: %s", task.SpotID, err.Error()))
+		return
 	}
 
 	// Save stream playlist to DB
-	if err := t.streams.Add(spotID, streamPlaylist); err != nil {
-		return fmt.Errorf("can't insert playlist to DB, spot: %d, err: %s", task.SpotID, err.Error())
+	if err := t.streams.Add(task.SpotID, streamPlaylist); err != nil {
+		t.failedTask(task, fmt.Errorf("can't insert playlist to DB, spot: %d, err: %s", task.SpotID, err.Error()))
+		return
 	}
 
-	if err := t.spots.SetStatus(spotID, "processed"); err != nil {
+	if err := t.spots.SetStatus(task.SpotID, "processed"); err != nil {
 		t.log.Error(context.Background(), "Error updating spot status: %v", err)
 	}
+	t.doneTask(task)
 
-	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", spotID)
-	return nil
+	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", task.SpotID)
 }
 
 func (t *transcoderImpl) downloadSpotVideo(spotID uint64, path string) error {
@@ -311,6 +337,13 @@ func (t *transcoderImpl) GetSpotStreamPlaylist(spotID uint64) ([]byte, error) {
 	return t.streams.Get(spotID)
 }
 
+func (t *transcoderImpl) Wait() {
+	t.prepareWorkers.Pause()
+	t.transcodeWorkers.Pause()
+}
+
 func (t *transcoderImpl) Close() {
 	t.close <- nil
+	t.prepareWorkers.Stop()
+	t.transcodeWorkers.Stop()
 }

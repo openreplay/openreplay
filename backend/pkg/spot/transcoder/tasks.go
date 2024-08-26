@@ -28,6 +28,7 @@ type Task struct {
 	Crop     []int
 	Duration int
 	Status   string
+	Path     string
 	tx       pool.Tx
 }
 
