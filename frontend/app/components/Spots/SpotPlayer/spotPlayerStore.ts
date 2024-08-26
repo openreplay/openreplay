@@ -190,9 +190,9 @@ class SpotPlayerStore {
     this.locations = locations.map((location) => ({
       ...location,
       time: location.time - this.startTs,
-      fcpTime: location.navTiming.fcpTime,
-      timeToInteractive: location.navTiming.timeToInteractive,
-      visuallyComplete: location.navTiming.visuallyComplete,
+      fcpTime: location.navTiming.fcpTime ? Math.round(location.navTiming.fcpTime) : null,
+      timeToInteractive: location.navTiming.timeToInteractive ? Math.round(location.navTiming.timeToInteractive) : null,
+      visuallyComplete: location.navTiming.visuallyComplete ? Math.round(location.navTiming.visuallyComplete) : null,
     }));
 
     this.clicks = clicks.map((click) => ({

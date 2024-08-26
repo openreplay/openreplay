@@ -320,12 +320,16 @@ const SpotOverviewConnector = observer(() => {
     (l) => l.level === 'error'
   );
 
+  const onClose = () => {
+    spotPlayerStore.setActivePanel(null);
+  }
   return (
     <SpotOverviewPanelCont
       exceptionsList={exceptionsList}
       resourceList={resourceList}
       spotTime={time}
       spotEndTime={endTime}
+      onClose={onClose}
     />
   );
 });
