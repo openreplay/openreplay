@@ -68,7 +68,7 @@ const Router: React.FC<RouterProps> = (props) => {
   } = props;
   const params = new URLSearchParams(location.search)
   const spotCb = params.get('spotCallback');
-
+  const spotReqSent = React.useRef(false)
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
   const handleJwtFromUrl = () => {
@@ -84,6 +84,11 @@ const Router: React.FC<RouterProps> = (props) => {
   };
 
   const handleSpotLogin = (jwt: string) => {
+    if (spotReqSent.current) {
+      return;
+    } else {
+      spotReqSent.current = true;
+    }
     let tries = 0;
     if (!jwt) {
       return;
