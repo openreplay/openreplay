@@ -8,6 +8,7 @@ import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker';
 
 import WidgetWrapper from '../WidgetWrapper';
+import WidgetOptions from 'Components/Dashboard/components/WidgetOptions';
 
 interface Props {
   className?: string;
@@ -28,22 +29,24 @@ function WidgetPreview(props: Props) {
         <div className="flex items-center justify-between px-4 pt-2">
           <h2 className="text-xl">{props.name}</h2>
           <div className="flex items-center">
-            {metric.metricType === USER_PATH && (
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  metric.update({ hideExcess: !metric.hideExcess });
-                }}
-              >
-                <Space>
-                  <Switch checked={metric.hideExcess} size="small" />
-                  <span className="mr-4 color-gray-medium">
-                    Hide Minor Paths
-                  </span>
-                </Space>
-              </a>
-            )}
+            <WidgetOptions />
+            {/*{metric.metricType === USER_PATH && (*/}
+            {/*  <a*/}
+            {/*    href="#"*/}
+            {/*    onClick={(e) => {*/}
+            {/*      e.preventDefault();*/}
+            {/*      metric.update({ hideExcess: !metric.hideExcess });*/}
+            {/*    }}*/}
+            {/*  >*/}
+            {/*    <Space>*/}
+            {/*      <Switch checked={metric.hideExcess} size="small" />*/}
+            {/*      <span className="mr-4 color-gray-medium">*/}
+            {/*        Hide Minor Paths*/}
+            {/*      </span>*/}
+            {/*    </Space>*/}
+            {/*  </a>*/}
+            {/*)}*/}
+
 
             {/*{isTimeSeries && (*/}
             {/*    <>*/}
@@ -101,10 +104,7 @@ function WidgetPreview(props: Props) {
             {/*</>*/}
             {/*)}*/}
 
-            <div className="mx-4" />
-            {metric.metricType === HEATMAP ? (
-                <ClickMapRagePicker />
-            ) : null}
+
 
             {/* add to dashboard */}
             {/*{metric.exists() && (*/}
