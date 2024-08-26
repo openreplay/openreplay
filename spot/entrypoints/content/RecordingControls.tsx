@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, createEffect } from "solid-js";
 import { STATES, formatMsToTime } from "@/entrypoints/content/utils";
-import micOn from "@/assets/mic-on-animated.svg";
+import micOn from "@/assets/mic-on.svg";
 import { createDraggable } from "@neodrag/solid";
 
 interface IRControls {

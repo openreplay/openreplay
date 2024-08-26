@@ -34,7 +34,7 @@ const base64ToBlob = (base64: string) => {
 };
 
 function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingControls) {
-  const [name, setName] = createSignal(document.title);
+  const [name, setName] = createSignal(`Issues in — ${document.title}`); 
   const [description, setDescription] = createSignal("");
   const [currentTime, setCurrentTime] = createSignal(0);
   const [duration, setDuration] = createSignal(0);
@@ -79,6 +79,10 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
     window.addEventListener("keydown", spacePressed);
     onCleanup(() => window.removeEventListener("keydown", spacePressed));
   });
+
+  const handleNameChange = (inputValue: string) => {
+    setName(inputValue); 
+  };
 
   const convertToPercentage = (clientX: number, element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
@@ -274,7 +278,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
       id="editRecording"
       class="modal save-controls"
     >
-      <div class="modal-box bg-slate-50 p-0 w-10/12	 max-w-7xl">
+      <div class="modal-box bg-slate-50 p-0 max-w-[85%]">
         <div class={"savingcontainer flex xl:flex-row flex-col"}>
           {processing() ? (
             <div class={"processingloader"}>
@@ -443,7 +447,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                     value={name()}
                     onFocus={() => setIsTyping(true)}
                     onBlur={() => setIsTyping(false)}
-                    onInput={(e) => setName(e.currentTarget.value)}
+                    onInput={(e) => handleNameChange(e.currentTarget.value)}
                     class="input input-bordered w-full input-sm text-base mt-1"
                   />
                 </div>
