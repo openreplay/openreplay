@@ -5,6 +5,7 @@ import arrowLeft from "@/assets/arrow-left.svg";
 function Settings({ goBack }: { goBack: () => void }) {
   // State signals for various settings
   const [includeDevTools, setIncludeDevTools] = createSignal(true);
+  const [openInNewTab, setOpenInNewTab] = createSignal(true);
   const [showIngest, setShowIngest] = createSignal(true);
   const [ingest, setIngest] = createSignal("https://app.openreplay.com");
   const [editIngest, setEditIngest] = createSignal(false);
@@ -16,6 +17,7 @@ function Settings({ goBack }: { goBack: () => void }) {
       if (data.settings) {
         const devToolsEnabled =
           data.settings.consoleLogs && data.settings.networkLogs;
+        setOpenInNewTab(data.settings.openInNewTab ?? false);
         setIncludeDevTools(devToolsEnabled);
         setShowIngest(data.settings.showIngest ?? true);
         setIngest(data.settings.ingestPoint || "https://app.openreplay.com");
@@ -80,6 +82,16 @@ function Settings({ goBack }: { goBack: () => void }) {
     }
   };
 
+  const toggleOpenInNewTab = (e: Event) => {
+    e.stopPropagation();
+    const value = openInNewTab();
+    setOpenInNewTab(!value);
+    chrome.runtime.sendMessage({
+      type: "ort:settings",
+      settings: { openInNewTab: !value },
+    });
+  };
+
   return (
     <div class={"flex flex-col"}>
       <div class={"flex gap-2 items-center justify-between p-4"}>
@@ -97,17 +109,34 @@ function Settings({ goBack }: { goBack: () => void }) {
         </span>
       </div>
 
-      <div class="flex flex-col">
-        <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
-          <div class="flex flex-row justify-between items-center">
+      <div className="flex flex-col">
+        <div
+          className={"flex items-center gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50"}
+          data-tip="Recordings open in a new tab by default. Enable to spot issues back-to-back."
+        >
+          <label className="label cursor-pointer">
+            <input
+              type="checkbox"
+              className="toggle toggle-primary toggle-xs cursor-pointer"
+              checked={openInNewTab()}
+              onChange={toggleOpenInNewTab}
+            />
+            <span className="text-sm label-text ms-1">
+              Take me to Spot tab after save
+            </span>
+          </label>
+        </div>
+
+        <div className="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
+          <div className="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">
               <span>Include DevTools</span>
             </p>
             <div>
-              <label class="cursor-pointer">
+              <label className="cursor-pointer">
                 <input
                   type="checkbox"
-                  class="toggle toggle-primary toggle-sm"
+                  className="toggle toggle-primary toggle-sm"
                   checked={includeDevTools()}
                   onChange={toggleIncludeDevTools}
                 />
@@ -120,14 +149,14 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
         </div>
 
-        <div class="p-4 hover:bg-indigo-50 cursor-default">
-          <div class="flex flex-row justify-between">
+        <div className="p-4 hover:bg-indigo-50 cursor-default">
+          <div className="flex flex-row justify-between">
             <p class="font-semibold mb-1">Ingest Point</p>
             <div>
-              <label class="cursor-pointer">
+              <label className="cursor-pointer">
                 <input
                   type="checkbox"
-                  class="toggle toggle-primary toggle-sm"
+                  className="toggle toggle-primary toggle-sm"
                   checked={showIngest()}
                   onChange={toggleShowIngest}
                 />
@@ -140,18 +169,18 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
 
           {showIngest() && (
-            <div class="flex flex-col justify-start py-4 cursor-default">
+            <div className="flex flex-col justify-start py-4 cursor-default">
               {editIngest() ? (
-                <div class={"flex flex-col items-start gap-2"}>
+                <div className={"flex flex-col items-start gap-2"}>
                   <input
-                    class={"input input-bordered input-sm w-full max-w-xs"}
+                    className={"input input-bordered input-sm w-full max-w-xs"}
                     type="text"
                     value={tempIngest()}
                     onChange={(e) => setTempIngest(e.currentTarget.value)}
                     autofocus
                   />
 
-                  <div class="flex gap-2 justify-start items-center">
+                  <div className="flex gap-2 justify-start items-center">
                     <button
                       class="btn btn-sm btn-primary text-white hover:bg-primary hover:text-white"
                       onClick={applyIngest}
@@ -168,16 +197,16 @@ function Settings({ goBack }: { goBack: () => void }) {
                   </div>
                 </div>
               ) : (
-                <div class={"flex items-center gap-2"}>
-                  <span class={"text-gray-700"}>{ingest()}</span>
-                  <button
-                    class="btn btn-sm btn-link font-normal no-underline hover:no-underline hover:opacity-75"
-                    onClick={() => toggleEditIngest(true)}
-                  >
-                    Edit
-                  </button>
-                </div>
-              )}
+                 <div className={"flex items-center gap-2"}>
+                   <span className={"text-gray-700"}>{ingest()}</span>
+                   <button
+                     class="btn btn-sm btn-link font-normal no-underline hover:no-underline hover:opacity-75"
+                     onClick={() => toggleEditIngest(true)}
+                   >
+                     Edit
+                   </button>
+                 </div>
+               )}
             </div>
           )}
         </div>
