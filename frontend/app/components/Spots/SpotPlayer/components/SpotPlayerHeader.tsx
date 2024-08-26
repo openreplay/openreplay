@@ -4,8 +4,11 @@ import {
   CopyOutlined,
   SettingOutlined,
   UserSwitchOutlined,
+  MoreOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import { Button, Popover, Tooltip, message } from 'antd';
+import { Button, Popover, Tooltip, message, Dropdown, Menu, MenuProps, Badge } from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
@@ -55,10 +58,26 @@ function SpotPlayerHeader({
     history.push(spotLink);
   };
 
+
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      icon: <DownloadOutlined />,
+      label: (
+        'Download Video'
+      ),
+    },
+    {
+      key: '2',
+      icon: <DeleteOutlined />,
+      label: (
+        'Delete'
+      ),
+    },
+  ];
+
   return (
-    <div
-      className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}
-    >
+    <div className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}>
       <div>
         {isLoggedIn ? (
           <Button
@@ -131,7 +150,7 @@ function SpotPlayerHeader({
             type={'default'}
             icon={<CopyOutlined />}
           >
-            Copy Link
+            Copy
           </Button>
           {hasShareAccess ? (
             <Popover
@@ -147,6 +166,11 @@ function SpotPlayerHeader({
               </Button>
             </Popover>
           ) : null}
+          
+          <Dropdown menu={{ items }} placement="bottomRight">
+            <Button icon={<MoreOutlined />} size={'small'}></Button>
+          </Dropdown>
+          
           <div
             className={'h-full rounded-xl border-l mx-2'}
             style={{ width: 1 }}
@@ -161,14 +185,17 @@ function SpotPlayerHeader({
       >
         Activity
       </Button>
-      <Button
-        size={'small'}
-        disabled={activeTab === TABS.COMMENTS}
-        onClick={() => setActiveTab(TABS.COMMENTS)}
-        icon={<CommentOutlined />}
-      >
-        Comments
-      </Button>
+
+      <Badge count={5} className='mr-2'>
+          <Button
+            size={'small'}
+            disabled={activeTab === TABS.COMMENTS}
+            onClick={() => setActiveTab(TABS.COMMENTS)}
+            icon={<CommentOutlined />}
+          >
+            Comments
+          </Button>
+        </Badge>
     </div>
   );
 }
