@@ -84,10 +84,10 @@ function BottomSection({
     setCommentText('');
   };
 
+  const unlogged = userName.trim().length === 0 && unloggedLimit
   const disableSubmit =
     commentText.trim().length === 0 ||
-    (userName.trim().length === 0 && unloggedLimit) ||
-    loggedLimit;
+    unlogged || loggedLimit;
   return (
     <div
       className={cn(
@@ -122,9 +122,9 @@ function BottomSection({
         </div>
         <Tooltip
           title={
-            !disableComments
+            !disableSubmit
               ? ''
-              : 'Limited to 5 Messages. Join team to send more.'
+              : unlogged ? 'Limited to 5 Messages. Join team to send more.' : 'Limited to 25 Messages.'
           }
         >
           <Button
