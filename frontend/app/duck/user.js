@@ -39,6 +39,7 @@ export const initialState = Map({
   onboarding: false,
   sites: List(),
   jwt: null,
+  spotJwt: null,
   errors: List(),
   loginRequest: {
     loading: false,
@@ -70,13 +71,16 @@ const reducer = (state = initialState, action = {}) => {
     case RESET_ERRORS:
       return state.set('requestResetPassowrd', List());
     case UPDATE_JWT:
-      return state.set('jwt', action.data);
+      return state
+        .set('jwt', action.data.jwt)
+        .set('spotJwt', action.data.spotJwt);
     case LOGIN.REQUEST:
       return state.set('loginRequest', { loading: true, errors: [] });
     case RESET_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return state
         .set('account', Account({ ...action.data.user }))
+        .set('spotJwt', action.data.spotJwt)
         .set('scope', action.data.scope)
         .set('loginRequest', { loading: false, errors: [] });
     case UPDATE_PASSWORD.REQUEST:
