@@ -120,7 +120,7 @@ func (t *transcoderImpl) process(task *Task) {
 	if t.cfg.SpotsDir != "" {
 		path += t.cfg.SpotsDir + "/"
 	}
-	task.Path += strconv.FormatUint(task.SpotID, 10) + "/"
+	task.Path = path + strconv.FormatUint(task.SpotID, 10) + "/"
 
 	t.prepareWorkers.Submit(task)
 }
