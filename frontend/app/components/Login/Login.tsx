@@ -126,8 +126,8 @@ const Login: React.FC<LoginProps> = ({
       .generateJWT()
       .then((resp) => {
         if (resp) {
-          loginSuccess({ ...resp, spotJwt: resp.spotJwt });
-          setJwt(resp.jwt);
+          loginSuccess({ ...resp, spotJwt: resp.spotJwt ?? null });
+          setJwt({ jwt: resp.jwt, spotJwt: resp.spotJwt ?? null });
           handleSpotLogin(resp.spotJwt);
         }
       })
