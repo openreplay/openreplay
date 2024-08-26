@@ -32,6 +32,6 @@
     "@wxt-dev/module-solid": "^1.1.2",
     "daisyui": "^4.12.10",
     "typescript": "^5.4.5",
-    "wxt": "0.19.4"
+    "wxt": "0.19.7"
   }
 }
