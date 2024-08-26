@@ -51,7 +51,10 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
           </div>
         ))}
 
-        <BottomSectionContainer disableComments={comments.length > 5} />
+        <BottomSectionContainer
+          unloggedLimit={comments.length > 5}
+          loggedLimit={comments.length > 25}
+        />
       </div>
     </div>
   );
@@ -60,9 +63,11 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
 function BottomSection({
   loggedIn,
   userEmail,
-  disableComments,
+  unloggedLimit,
+  loggedLimit,
 }: {
-  disableComments: boolean;
+  loggedLimit: boolean;
+  unloggedLimit: boolean;
   loggedIn?: boolean;
   userEmail?: string;
 }) {
@@ -81,8 +86,8 @@ function BottomSection({
 
   const disableSubmit =
     commentText.trim().length === 0 ||
-    userName.trim().length === 0 ||
-    disableComments;
+    (userName.trim().length === 0 && unloggedLimit) ||
+    loggedLimit;
   return (
     <div
       className={cn(
@@ -110,7 +115,7 @@ function BottomSection({
             onChange={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setCommentText(e.target.value)
+              setCommentText(e.target.value);
             }}
             placeholder="Add a comment..."
           />
