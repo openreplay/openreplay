@@ -208,6 +208,7 @@ const Router: React.FC<RouterProps> = (props) => {
     location.pathname.includes('/spots/') ||
     location.pathname.includes('/scope-setup')
 
+
   if (isIframe) {
     return (
       <IFrameRoutes isJwt={isJwt} isLoggedIn={isLoggedIn} loading={loading} />

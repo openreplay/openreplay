@@ -143,7 +143,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
     const trim =
       bounds[0] + bounds[1] === 0
         ? null
-        : (trimBounds().map((i) => i * 1000) as [number, number]);
+        : (bounds.map((i: number) => Math.round(i * 1000)) as [number, number]);
     const dataObj = {
       blob: videoBlob(),
       name: name(),
