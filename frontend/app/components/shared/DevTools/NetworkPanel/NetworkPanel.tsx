@@ -309,6 +309,7 @@ interface Props {
   zoomEndTs?: number;
   panelHeight: number;
   onClose?: () => void;
+  activeOutsideIndex?: number;
 }
 
 export const NetworkPanelComp = observer(
@@ -329,6 +330,7 @@ export const NetworkPanelComp = observer(
     zoomStartTs,
     zoomEndTs,
     onClose,
+    activeOutsideIndex,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -341,7 +343,7 @@ export const NetworkPanelComp = observer(
     } = useStore();
     const filter = devTools[INDEX_KEY].filter;
     const activeTab = devTools[INDEX_KEY].activeTab;
-    const activeIndex = devTools[INDEX_KEY].index;
+    const activeIndex = activeOutsideIndex ?? devTools[INDEX_KEY].index;
 
     const socketList = useMemo(
       () =>
