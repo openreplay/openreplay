@@ -45,10 +45,11 @@ interface RouterProps
     };
   };
   mstore: any;
-  setJwt: (jwt: string) => any;
+  setJwt: (params: { jwt: string, spotJwt: string | null }) => any;
   fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
   scopeSetup: boolean;
+  localSpotJwt: string | null;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
@@ -61,11 +62,9 @@ const Router: React.FC<RouterProps> = (props) => {
     fetchUserInfo,
     fetchSiteList,
     history,
-    match: {
-      params: { siteId: siteIdFromPath },
-    },
     setSessionPath,
     scopeSetup,
+    localSpotJwt,
   } = props;
   const params = new URLSearchParams(location.search)
   const spotCb = params.get('spotCallback');
@@ -80,7 +79,7 @@ const Router: React.FC<RouterProps> = (props) => {
       handleSpotLogin(spotJwt);
     }
     if (urlJWT) {
-      props.setJwt(urlJWT);
+      props.setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? null });
     }
   };
 
@@ -175,8 +174,13 @@ const Router: React.FC<RouterProps> = (props) => {
         history.push(routes.scopeSetup())
       }
     }
-
   }, [isLoggedIn, scopeSetup]);
+
+  useEffect(() => {
+    if (isLoggedIn && location && localSpotJwt) {
+      handleSpotLogin(localSpotJwt);
+    }
+  }, [location, isLoggedIn])
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {
@@ -247,6 +251,7 @@ const mapStateToProps = (state: Map<string, any>) => {
     changePassword,
     sites: state.getIn(['site', 'list']),
     jwt,
+    localSpotJwt: state.getIn(['user', 'spotJwt']),
     isLoggedIn: jwt !== null && !changePassword,
     scopeSetup,
     loading,
