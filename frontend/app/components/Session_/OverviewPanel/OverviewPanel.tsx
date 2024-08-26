@@ -214,7 +214,8 @@ export function SpotOverviewPanelCont({
   resourceList,
   exceptionsList,
   spotTime,
-  spotEndTime
+  spotEndTime,
+  onClose,
 }: any) {
   const selectedFeatures = ['ERRORS', 'NETWORK'];
   const fetchPresented = false; // TODO
@@ -233,6 +234,7 @@ export function SpotOverviewPanelCont({
       isSpot
       spotTime={spotTime}
       spotEndTime={spotEndTime}
+      onClose={onClose}
     />
   );
 }
@@ -253,12 +255,13 @@ function PanelComponent({
   setZoomTab,
   isSpot,
   spotTime,
-  spotEndTime
+  spotEndTime,
+  onClose,
 }: any) {
   return (
     <React.Fragment>
       <BottomBlock style={{ height: '100%' }}>
-        <BottomBlock.Header>
+        <BottomBlock.Header customClose={onClose}>
           <div className="mr-4 flex items-center gap-2">
             <span className={'font-semibold text-black'}>X-Ray</span>
             {showSummary ? (
