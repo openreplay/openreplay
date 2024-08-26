@@ -177,10 +177,10 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isLoggedIn, scopeSetup]);
 
   useEffect(() => {
-    if (isLoggedIn && location && localSpotJwt) {
+    if (isLoggedIn && location.pathname.includes('login') && localSpotJwt) {
       handleSpotLogin(localSpotJwt);
     }
-  }, [location, isLoggedIn])
+  }, [location, isLoggedIn, localSpotJwt])
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {
