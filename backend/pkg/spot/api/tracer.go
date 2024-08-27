@@ -2,9 +2,6 @@ package api
 
 import (
 	"net/http"
-	"openreplay/backend/pkg/spot/service"
 )
 
-func (e *Router) requestParser(r *http.Request) *service.RequestData {
-	return nil
-}
+func (e *Router) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {}

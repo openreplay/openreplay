@@ -41,10 +41,6 @@ func parseJWT(authHeader, secret string) (*JWTClaims, error) {
 	tokenString := tokenParts[1]
 
 	claims := &JWTClaims{}
-	// DEBUG
-	fmt.Printf("tokenString: %s\n", tokenString)
-	fmt.Printf("secret: %s\n", secret)
-	// END DEBUG
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil

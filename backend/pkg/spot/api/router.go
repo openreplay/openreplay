@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"openreplay/backend/pkg/spot"
 	"openreplay/backend/pkg/spot/auth"
@@ -183,19 +185,18 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		e.log.Info(r.Context(), "request received: %s", r.URL.Path)
-		// Wrap the original ResponseWriter
+		// Read body and restore the io.ReadCloser to its original state
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "can't read body", http.StatusBadRequest)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		// Use custom response writer to get the status code
 		sw := &statusWriter{ResponseWriter: w}
-
-		// Parse request data
-		rData := e.requestParser(r)
-		e.log.Info(r.Context(), "request data: %v", rData)
-
-		// Call the next handler
+		// Serve the request
 		next.ServeHTTP(sw, r)
-
-		// Log the status code
-		e.log.Info(r.Context(), "response status: %d", sw.statusCode)
+		e.logRequest(r, bodyBytes, sw.statusCode)
 	})
 }
 
