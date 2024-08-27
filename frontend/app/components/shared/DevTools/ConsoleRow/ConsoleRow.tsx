@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import { Icon, TextEllipsis } from 'UI';
+import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
 interface Props {
@@ -9,22 +9,14 @@ interface Props {
   jump?: any;
   renderWithNL?: any;
   style?: any;
-  recalcHeight?: () => void;
   onClick?: () => void;
 }
 function ConsoleRow(props: Props) {
-  const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
+  const { log, iconProps, jump, renderWithNL, style } = props;
   const [expanded, setExpanded] = useState(false);
   const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
   const canExpand = lines.length > 1;
   const clickable = canExpand || !!log.errorId;
-
-  React.useEffect(() => {
-    recalcHeight?.();
-  }, [expanded])
-  React.useEffect(() => {
-    recalcHeight?.();
-  }, [])
 
   const toggleExpand = () => {
     setExpanded(!expanded);

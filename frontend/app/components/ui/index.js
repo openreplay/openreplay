@@ -3,7 +3,6 @@ export { default as Link } from './Link';
 // export { default as Dropdown } from './Dropdown';
 export { default as Button } from './Button';
 export { default as Label } from './Label';
-export { default as Progress } from './Progress';
 export { default as SlideModal } from './SlideModal';
 export { default as NoContent } from './NoContent';
 export { default as LinkStyledInput } from './LinkStyledInput';
@@ -59,3 +58,4 @@ export { default as Message } from './Message';
 export { default as Popover } from './Popover';
 export { default as Switch } from './Switch';
 export { default as Divider } from './Divider';
+export { default as CodeBlock } from './CodeBlock'

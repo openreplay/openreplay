@@ -1,9 +1,10 @@
-import React from 'react';
-import stl from './installDocs.module.css';
 import cn from 'classnames';
-import Highlight from 'react-highlight';
+import React from 'react';
+
+import { CodeBlock, CopyButton } from 'UI';
+
 import CircleNumber from '../../CircleNumber';
-import { CopyButton } from 'UI';
+import stl from './installDocs.module.css';
 
 export const installationCommand = `// Add it in your root build.gradle at the end of repositories:
 dependencyResolutionManagement {
@@ -50,111 +51,117 @@ let wifiOnly: Bool`;
 const touches = `class MainActivity : ComponentActivity() {
     // ...
     OpenReplay.setupGestureDetector(this)
-}`
+}`;
 
 const sensitive = `import com.openreplay.tracker.OpenReplay
 
 OpenReplay.addIgnoredView(view)
-`
+`;
 
 const inputs = `import com.openreplay.tracker.OpenReplay
 
 val passwordEditText = binding.password
-passwordEditText.trackTextInput(label = "password", masked = true)`
+passwordEditText.trackTextInput(label = "password", masked = true)`;
 
 function AndroidInstallDocs({ site, ingestPoint }: any) {
-    let _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey).replace('INGEST_POINT', ingestPoint);
+  let _usageCode = usageCode
+    .replace('PROJECT_KEY', site.projectKey)
+    .replace('INGEST_POINT', ingestPoint);
 
-    return (
-        <div>
-            <div className="mb-4">
-                <div className="font-semibold mb-2 flex items-center">
-                    <CircleNumber text="1" />
-                    Install the SDK
-                </div>
-                <div className={cn(stl.snippetWrapper, 'ml-10')}>
-                    <div className="absolute mt-1 mr-2 right-0">
-                        <CopyButton content={installationCommand} />
-                    </div>
-                    <Highlight className="cli">{installationCommand}</Highlight>
-                </div>
-            </div>
-
-            <div className="font-semibold mb-2 flex items-center">
-                <CircleNumber text="2" />
-                Add to your app
-            </div>
-            <div className="flex ml-10 mt-4">
-                <div className="w-full">
-                    <div className={cn(stl.snippetWrapper)}>
-                        <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={_usageCode} />
-                        </div>
-                        <Highlight className="swift">{_usageCode}</Highlight>
-                    </div>
-                </div>
-            </div>
-
-            <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="3" />
-                Configuration
-            </div>
-            <div className="flex ml-10 mt-4">
-                <div className="w-full">
-                    <div className={cn(stl.snippetWrapper)}>
-                        <Highlight className="swift">{configuration}</Highlight>
-                        <div className={"mt-2"}>By default, all options equals <code
-                            className={'p-1 text-red rounded bg-gray-lightest'}>true</code></div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="4" />
-                Set up touch events listener
-            </div>
-            <div className="flex ml-10 mt-4">
-                <div className="w-full">
-                    <div className={cn(stl.snippetWrapper)}>
-                        <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={touches} />
-                        </div>
-                        <Highlight className="swift">{touches}</Highlight>
-                    </div>
-                </div>
-            </div>
-
-            <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="5" />
-                Hide sensitive views
-            </div>
-            <div className="flex ml-10 mt-4">
-                <div className="w-full">
-                    <div className={cn(stl.snippetWrapper)}>
-                        <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={sensitive} />
-                        </div>
-                        <Highlight className="swift">{sensitive}</Highlight>
-                    </div>
-                </div>
-            </div>
-
-            <div className="font-semibold mb-2 mt-4 flex items-center">
-                <CircleNumber text="6" />
-                Track inputs
-            </div>
-            <div className="flex ml-10 mt-4">
-                <div className="w-full">
-                    <div className={cn(stl.snippetWrapper)}>
-                        <div className="absolute mt-1 mr-2 right-0">
-                            <CopyButton content={inputs} />
-                        </div>
-                        <Highlight className="swift">{inputs}</Highlight>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div>
+      <div className="mb-4">
+        <div className="font-semibold mb-2 flex items-center">
+          <CircleNumber text="1" />
+          Install the SDK
         </div>
-    );
+        <div className={cn(stl.snippetWrapper, 'ml-10')}>
+          <div className="absolute mt-1 mr-2 right-0">
+            <CopyButton content={installationCommand} />
+          </div>
+          <CodeBlock code={installationCommand} language="bash" />
+        </div>
+      </div>
+
+      <div className="font-semibold mb-2 flex items-center">
+        <CircleNumber text="2" />
+        Add to your app
+      </div>
+      <div className="flex ml-10 mt-4">
+        <div className="w-full">
+          <div className={cn(stl.snippetWrapper)}>
+            <div className="absolute mt-1 mr-2 right-0">
+              <CopyButton content={_usageCode} />
+            </div>
+            <CodeBlock language={'kt'} code={_usageCode} />
+          </div>
+        </div>
+      </div>
+
+      <div className="font-semibold mb-2 mt-4 flex items-center">
+        <CircleNumber text="3" />
+        Configuration
+      </div>
+      <div className="flex ml-10 mt-4">
+        <div className="w-full">
+          <div className={cn(stl.snippetWrapper)}>
+            <CodeBlock code={configuration} language={'kt'} />
+            <div className={'mt-2'}>
+              By default, all options equals{' '}
+              <code className={'p-1 text-red rounded bg-gray-lightest'}>
+                true
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="font-semibold mb-2 mt-4 flex items-center">
+        <CircleNumber text="4" />
+        Set up touch events listener
+      </div>
+      <div className="flex ml-10 mt-4">
+        <div className="w-full">
+          <div className={cn(stl.snippetWrapper)}>
+            <div className="absolute mt-1 mr-2 right-0">
+              <CopyButton content={touches} />
+            </div>
+            <CodeBlock code={touches} language={'kt'} />
+          </div>
+        </div>
+      </div>
+
+      <div className="font-semibold mb-2 mt-4 flex items-center">
+        <CircleNumber text="5" />
+        Hide sensitive views
+      </div>
+      <div className="flex ml-10 mt-4">
+        <div className="w-full">
+          <div className={cn(stl.snippetWrapper)}>
+            <div className="absolute mt-1 mr-2 right-0">
+              <CopyButton content={sensitive} />
+            </div>
+            <CodeBlock code={sensitive} language={'kt'} />
+          </div>
+        </div>
+      </div>
+
+      <div className="font-semibold mb-2 mt-4 flex items-center">
+        <CircleNumber text="6" />
+        Track inputs
+      </div>
+      <div className="flex ml-10 mt-4">
+        <div className="w-full">
+          <div className={cn(stl.snippetWrapper)}>
+            <div className="absolute mt-1 mr-2 right-0">
+              <CopyButton content={inputs} />
+            </div>
+            <CodeBlock code={inputs} language={'kt'} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default AndroidInstallDocs;

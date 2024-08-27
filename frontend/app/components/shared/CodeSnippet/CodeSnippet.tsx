@@ -1,6 +1,5 @@
 import React from 'react';
-import { CopyButton } from 'UI';
-import Highlight from 'react-highlight';
+import { CopyButton, CodeBlock } from 'UI';
 
 const inputModeOptions = [
     { label: 'Record all inputs', value: 'plain' },
@@ -53,9 +52,7 @@ function CodeSnippet(props: Props) {
             <div className="absolute top-0 right-0 mt-2 mr-2">                
                 <CopyButton content={codeSnippet} className="uppercase" />
             </div>
-            <Highlight className="html">
-                {codeSnippet}
-            </Highlight>
+          <CodeBlock code={codeSnippet} language={'js'} />
         </div>
     );
 }

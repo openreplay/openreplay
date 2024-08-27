@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
 import stl from './installDocs.module.css';
 import cn from 'classnames';
-import Highlight from 'react-highlight';
 import CircleNumber from '../../CircleNumber';
-import { CopyButton } from 'UI';
+import { CopyButton, CodeBlock } from 'UI';
 import { Toggler } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker';
@@ -47,7 +45,7 @@ function InstallDocs({ site }) {
           <div className="absolute mt-1 mr-2 right-0">
             <CopyButton content={installationCommand} />
           </div>
-          <Highlight className="cli">{installationCommand}</Highlight>
+          <CodeBlock code={installationCommand} language={'bash'} />
         </div>
       </div>
       <div className={'mb-6'}>
@@ -80,7 +78,7 @@ function InstallDocs({ site }) {
                   <div className="absolute mt-1 mr-2 right-0">
                     <CopyButton content={_usageCode} />
                   </div>
-                  <Highlight className="js">{_usageCode}</Highlight>
+                  <CodeBlock code={_usageCode} language={'js'} />
                 </div>
               </div>
             )}
@@ -97,7 +95,7 @@ function InstallDocs({ site }) {
                   <div className="absolute mt-1 mr-2 right-0">
                     <CopyButton content={_usageCodeSST} />
                   </div>
-                  <Highlight className="js">{_usageCodeSST}</Highlight>
+                  <CodeBlock code={_usageCodeSST} language={'js'} />
                 </div>
               </div>
             )}
@@ -120,7 +118,7 @@ function InstallDocs({ site }) {
                 <div className="absolute mt-1 mr-2 right-0">
                   <CopyButton content={`npm i @openreplay/tracker-assist`} />
                 </div>
-                <Highlight className="js">{`$ npm i @openreplay/tracker-assist`}</Highlight>
+                <CodeBlock code={`npm i @openreplay/tracker-assist`} language={'bash'} />
               </div>
             </div>
             <div>
@@ -131,7 +129,7 @@ function InstallDocs({ site }) {
                 <div className="absolute mt-1 mr-2 right-0">
                   <CopyButton content={`tracker.use(trackerAssist(options));`} />
                 </div>
-                <Highlight className="js">{`tracker.use(trackerAssist(options));`}</Highlight>
+                <CodeBlock code={`tracker.use(trackerAssist(options));`} language={'js'} />
               </div>
               <div className={'text-sm'}>Read more about available options <a
                 className={'text-main'}

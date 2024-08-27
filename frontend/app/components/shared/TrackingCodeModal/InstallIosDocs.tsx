@@ -1,8 +1,7 @@
 import React from 'react'
 import cn from 'classnames'
 import { Segmented } from 'antd';
-import { CopyButton } from 'UI';
-import Highlight from 'react-highlight'
+import { CopyButton, CodeBlock } from 'UI';
 import stl from './InstallDocs/installDocs.module.css'
 import { usageCode as iosUsageCode, installationCommand as iosInstallCommand } from "../../Onboarding/components/OnboardingTabs/InstallDocs/MobileInstallDocs";
 import { usageCode as androidUsageCode, installationCommand as androidInstallCommand } from "../../Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs";
@@ -32,9 +31,7 @@ function InstallMobileDocs({ site, ingestPoint }: any) {
         <div className={ '' }>
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={installationCommand} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
-            <Highlight className="cli">
-              {installationCommand}
-            </Highlight>
+            <CodeBlock code={installationCommand} language={'bash'} />
           </div>
         </div>
       </div>
@@ -43,9 +40,7 @@ function InstallMobileDocs({ site, ingestPoint }: any) {
         <div className={ '' }>
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={_usageCode} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
-            <Highlight className="cli">
-              {_usageCode}
-            </Highlight>
+            <CodeBlock code={_usageCode} language={isIos ? 'swift' : 'kt'} />
           </div>
         </div>
       </div>

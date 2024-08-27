@@ -1,6 +1,6 @@
 import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'antd'
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { SessionRecordingStatus } from 'Player';

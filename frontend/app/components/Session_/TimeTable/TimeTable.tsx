@@ -1,14 +1,16 @@
-import React from 'react';
-import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
-import { Duration } from "luxon";
-import { NoContent, Button } from 'UI';
-import { percentOf } from 'App/utils';
+import { Duration } from 'luxon';
+import React from 'react';
+import { VList, VListHandle } from 'virtua';
 
+import { percentOf } from 'App/utils';
+import { Button, NoContent } from 'UI';
+
+import autoscrollStl from '../autoscroll.module.css';
 import BarRow from './BarRow';
 import stl from './timeTable.module.css';
 
-import autoscrollStl from '../autoscroll.module.css'; //aaa
+//aaa
 
 type Timed = {
   time: number;
@@ -24,7 +26,8 @@ type CanBeRed = {
 };
 
 interface Row extends Timed, Durationed, CanBeRed {
-  [key: string]: any, key: string
+  [key: string]: any;
+  key: string;
 }
 
 type Line = {
@@ -37,7 +40,7 @@ type Column = {
   label: string;
   width: number;
   dataKey?: string;
-  render?: (row: any) => void
+  render?: (row: any) => void;
   referenceLines?: Array<Line>;
   style?: React.CSSProperties;
 } & RenderOrKey;
@@ -49,25 +52,25 @@ type Column = {
 // }
 type RenderOrKey =
   | {
-    render?: (row: Row) => React.ReactNode;
-    key?: string;
-  }
+      render?: (row: Row) => React.ReactNode;
+      key?: string;
+    }
   | {
-    dataKey: string;
-  };
+      dataKey: string;
+    };
 
 type Props = {
   className?: string;
   rows: Array<Row>;
   children: Array<Column>;
-  tableHeight?: number
-  activeIndex?: number
-  renderPopup?: boolean
-  navigation?: boolean
-  referenceLines?: any[]
-  additionalHeight?: number
-  hoverable?: boolean
-  onRowClick?: (row: any, index: number) => void
+  tableHeight?: number;
+  activeIndex?: number;
+  renderPopup?: boolean;
+  navigation?: boolean;
+  referenceLines?: any[];
+  additionalHeight?: number;
+  hoverable?: boolean;
+  onRowClick?: (row: any, index: number) => void;
 };
 
 type TimeLineInfo = {
@@ -86,15 +89,26 @@ const TIME_SECTIONS_COUNT = 8;
 const ZERO_TIMEWIDTH = 1000;
 function formatTime(ms: number) {
   if (ms < 0) return '';
-  if (ms < 1000) return Duration.fromMillis(ms).toFormat('0.SSS')
+  if (ms < 1000) return Duration.fromMillis(ms).toFormat('0.SSS');
   return Duration.fromMillis(ms).toFormat('mm:ss');
 }
 
-function computeTimeLine(rows: Array<Row>, firstVisibleRowIndex: number, visibleCount: number): TimeLineInfo {
-  const visibleRows = rows.slice(firstVisibleRowIndex, firstVisibleRowIndex + visibleCount + _additionalHeight);
-  let timestart = visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
+function computeTimeLine(
+  rows: Array<Row>,
+  firstVisibleRowIndex: number,
+  visibleCount: number
+): TimeLineInfo {
+  const visibleRows = rows.slice(
+    firstVisibleRowIndex,
+    firstVisibleRowIndex + visibleCount + _additionalHeight
+  );
+  let timestart =
+    visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
   // TODO: GraphQL requests do not have a duration, so their timeline is borked. Assume a duration of 0.2s for every GraphQL request
-  const timeend = visibleRows.length > 0 ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200))) : 0;
+  const timeend =
+    visibleRows.length > 0
+      ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200)))
+      : 0;
   let timewidth = timeend - timestart;
   const offset = timewidth / 70;
   if (timestart >= offset) {
@@ -116,7 +130,11 @@ const initialState = {
 
 export default class TimeTable extends React.PureComponent<Props, State> {
   state = {
-    ...computeTimeLine(this.props.rows, initialState.firstVisibleRowIndex, this.visibleCount),
+    ...computeTimeLine(
+      this.props.rows,
+      initialState.firstVisibleRowIndex,
+      this.visibleCount
+    ),
     ...initialState,
   };
 
@@ -128,47 +146,70 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     return Math.ceil(this.tableHeight / ROW_HEIGHT);
   }
 
-  scroller = React.createRef<List>();
+  scroller = React.createRef<VListHandle>();
   autoScroll = true;
 
   componentDidMount() {
     if (this.scroller.current) {
-      this.scroller.current.scrollToRow(this.props.activeIndex);
+      this.scroller.current.scrollToIndex(this.props.activeIndex);
     }
   }
 
   componentDidUpdate(prevProps: any, prevState: any) {
     if (
       prevState.firstVisibleRowIndex !== this.state.firstVisibleRowIndex ||
-      (this.props.rows.length <= this.visibleCount + _additionalHeight && prevProps.rows.length !== this.props.rows.length)
+      (this.props.rows.length <= this.visibleCount + _additionalHeight &&
+        prevProps.rows.length !== this.props.rows.length)
     ) {
       this.setState({
-        ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
+        ...computeTimeLine(
+          this.props.rows,
+          this.state.firstVisibleRowIndex,
+          this.visibleCount
+        ),
       });
     }
-    if (this.props.activeIndex && this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current) {
-      this.scroller.current.scrollToRow(this.props.activeIndex);
+    if (
+      this.props.activeIndex &&
+      this.props.activeIndex >= 0 &&
+      prevProps.activeIndex !== this.props.activeIndex &&
+      this.scroller.current
+    ) {
+      this.scroller.current.scrollToIndex(this.props.activeIndex);
     }
   }
 
-  onScroll = ({ scrollTop, scrollHeight, clientHeight }: { scrollTop: number; scrollHeight: number; clientHeight: number }): void => {
+  onScroll = ({
+    scrollTop,
+    scrollHeight,
+    clientHeight,
+  }: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }): void => {
     const firstVisibleRowIndex = Math.floor(scrollTop / ROW_HEIGHT + 0.33);
 
     if (this.state.firstVisibleRowIndex !== firstVisibleRowIndex) {
-      this.autoScroll = scrollHeight - clientHeight - scrollTop < ROW_HEIGHT / 2;
+      this.autoScroll =
+        scrollHeight - clientHeight - scrollTop < ROW_HEIGHT / 2;
       this.setState({ firstVisibleRowIndex });
     }
   };
 
-  renderRow = ({ index, key, style: rowStyle }: any) => {
+  renderRow = (index: number) => {
     const { activeIndex } = this.props;
-    const { children: columns, rows, renderPopup, hoverable, onRowClick } = this.props;
+    const {
+      children: columns,
+      rows,
+      renderPopup,
+      hoverable,
+      onRowClick,
+    } = this.props;
     const { timestart, timewidth } = this.state;
     const row = rows[index];
     return (
       <div
-        style={rowStyle}
-        key={key}
         className={cn('border-b border-color-gray-light-shade', stl.row, {
           [stl.hoverable]: hoverable,
           'error color-red': !!row.isRed && row.isRed,
@@ -176,16 +217,33 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           [stl.activeRow]: activeIndex === index,
           // [stl.inactiveRow]: !activeIndex || index > activeIndex,
         })}
-        onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}
+        onClick={
+          typeof onRowClick === 'function'
+            ? () => onRowClick(row, index)
+            : undefined
+        }
         id="table-row"
       >
         {columns.map((column, key) => (
-          <div key={column.label.replace(' ', '')} className={stl.cell} style={{ width: `${column.width}px` }}>
-            {column.render ? column.render(row) : row[column.dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
+          <div
+            key={column.label.replace(' ', '')}
+            className={stl.cell}
+            style={{ width: `${column.width}px` }}
+          >
+            {column.render
+              ? column.render(row)
+              : row[column.dataKey || ''] || (
+                  <i className="color-gray-light">{'empty'}</i>
+                )}
           </div>
         ))}
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
-          <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
+          <BarRow
+            resource={row}
+            timestart={timestart}
+            timewidth={timewidth}
+            popup={renderPopup}
+          />
         </div>
       </div>
     );
@@ -200,25 +258,37 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       }
     }
     if (this.scroller.current != null) {
-      this.scroller.current.scrollToRow(prevRedIndex);
+      this.scroller.current.scrollToIndex(prevRedIndex);
     }
   };
 
   onNextClick = () => {
     let prevRedIndex = -1;
-    for (let i = this.state.firstVisibleRowIndex + 1; i < this.props.rows.length; i++) {
+    for (
+      let i = this.state.firstVisibleRowIndex + 1;
+      i < this.props.rows.length;
+      i++
+    ) {
       if (this.props.rows[i].isRed) {
         prevRedIndex = i;
         break;
       }
     }
     if (this.scroller.current != null) {
-      this.scroller.current.scrollToRow(prevRedIndex);
+      this.scroller.current.scrollToIndex(prevRedIndex);
     }
   };
 
   render() {
-    const { className, rows, children: columns, navigation = false, referenceLines = [], additionalHeight = 0, activeIndex } = this.props;
+    const {
+      className,
+      rows,
+      children: columns,
+      navigation = false,
+      referenceLines = [],
+      additionalHeight = 0,
+      activeIndex,
+    } = this.props;
     const { timewidth, timestart } = this.state;
 
     _additionalHeight = additionalHeight;
@@ -231,7 +301,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       }
     }
 
-    const visibleRefLines = referenceLines.filter(({ time }) => time > timestart && time < timestart + timewidth);
+    const visibleRefLines = referenceLines.filter(
+      ({ time }) => time > timestart && time < timestart + timewidth
+    );
 
     const columnsSumWidth = columns.reduce((sum, { width }) => sum + width, 0);
 
@@ -262,7 +334,11 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         <div className={stl.headers}>
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width }) => (
-              <div key={label.replace(' ', '')} className={stl.headerCell} style={{ width: `${width}px` }}>
+              <div
+                key={label.replace(' ', '')}
+                className={stl.headerCell}
+                style={{ width: `${width}px` }}
+              >
                 {label}
               </div>
             ))}
@@ -278,39 +354,34 @@ export default class TimeTable extends React.PureComponent<Props, State> {
 
         <NoContent size="small" show={rows.length === 0}>
           <div className="relative">
-            <div className={stl.timePart} style={{ left: `${columnsSumWidth}px` }}>
+            <div
+              className={stl.timePart}
+              style={{ left: `${columnsSumWidth}px` }}
+            >
               {timeColumns.map((_, index) => (
                 <div key={`tc-${index}`} className={stl.timeCell} />
               ))}
               {visibleRefLines.map((line, key) => (
                 <div
-                  key={line.time+key}
+                  key={line.time + key}
                   className={cn(stl.refLine, `bg-${line.color}`)}
                   style={{
                     left: `${percentOf(line.time - timestart, timewidth)}%`,
-                    cursor: typeof line.onClick === 'function' ? 'click' : 'auto',
+                    cursor:
+                      typeof line.onClick === 'function' ? 'click' : 'auto',
                   }}
                   onClick={line.onClick}
                 />
               ))}
             </div>
-            <AutoSizer disableHeight>
-              {({ width }: { width: number }) => (
-                <List
-                  ref={this.scroller}
-                  className={stl.list}
-                  height={this.tableHeight + additionalHeight}
-                  width={width}
-                  overscanRowCount={20}
-                  rowCount={rows.length}
-                  rowHeight={ROW_HEIGHT}
-                  rowRenderer={this.renderRow}
-                  onScroll={this.onScroll}
-                  scrollToAlignment="start"
-                  forceUpdateProp={timestart | timewidth | (activeIndex || 0)}
-                />
-              )}
-            </AutoSizer>
+            <VList
+              ref={this.scroller}
+              className={stl.list}
+              count={rows.length}
+              itemSize={ROW_HEIGHT}
+            >
+              {this.props.rows.map((_, i) => this.renderRow(i))}
+            </VList>
           </div>
         </NoContent>
       </div>

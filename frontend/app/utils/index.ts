@@ -1,5 +1,4 @@
 // @ts-nocheck
-import JSBI from 'jsbi';
 import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';
 import { SESSION_FILTER } from 'App/constants/storageKeys';
@@ -213,23 +212,6 @@ export const titleize = (str) => {
     upper = false;
   }
   return newStr;
-};
-
-/**
- * (BigInt('2783377641436327') * BigInt(id) % BigInt('4503599627370496') + BigInt('4503599627370496')).toString()
- * Replacing the above line of BigInt with JSBI since the BigInt not supportiing the some of the browser (i.e Safari (< 14), Opera).
- */
-export const hashProjectID = (id) => {
-  if (!!id) {
-    return JSBI.add(
-      JSBI.remainder(
-        JSBI.multiply(JSBI.BigInt('2783377641436327'), JSBI.BigInt(id)),
-        JSBI.BigInt('4503599627370496')
-      ),
-      JSBI.BigInt('4503599627370496')
-    ).toString();
-  }
-  return '';
 };
 
 export const colorScale = (values, colors) => {

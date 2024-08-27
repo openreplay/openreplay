@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { convertElementToImage } from 'App/utils';
-import { jsPDF } from 'jspdf';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { connect } from 'react-redux';
@@ -50,90 +49,92 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
 
     const processReport = () => {
       document.body.scrollIntoView();
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const now = new Date().toISOString();
+      import('jspdf').then(({ jsPDF }) => {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const now = new Date().toISOString();
 
-      doc.addMetadata('Author', 'OpenReplay');
-      doc.addMetadata('Title', 'OpenReplay Report');
-      doc.addMetadata('Subject', 'OpenReplay Report');
-      doc.addMetadata('Keywords', 'OpenReplay Report');
-      doc.addMetadata('Creator', 'OpenReplay');
-      doc.addMetadata('Producer', 'OpenReplay');
-      doc.addMetadata('CreationDate', now);
+        doc.addMetadata('Author', 'OpenReplay');
+        doc.addMetadata('Title', 'OpenReplay Report');
+        doc.addMetadata('Subject', 'OpenReplay Report');
+        doc.addMetadata('Keywords', 'OpenReplay Report');
+        doc.addMetadata('Creator', 'OpenReplay');
+        doc.addMetadata('Producer', 'OpenReplay');
+        doc.addMetadata('CreationDate', now);
 
-      const parentElement = document.getElementById('report') as HTMLElement;
-      const pageHeight = 1200;
-      const pagesCount = parentElement.offsetHeight / pageHeight;
-      const pages: Array<any> = [];
-      for (let i = 0; i < pagesCount; i++) {
-        const page = document.createElement('div');
-        page.classList.add('page');
-        page.style.height = `${pageHeight}px`;
-        page.style.whiteSpace = 'no-wrap !important';
+        const parentElement = document.getElementById('report') as HTMLElement;
+        const pageHeight = 1200;
+        const pagesCount = parentElement.offsetHeight / pageHeight;
+        const pages: Array<any> = [];
+        for (let i = 0; i < pagesCount; i++) {
+          const page = document.createElement('div');
+          page.classList.add('page');
+          page.style.height = `${pageHeight}px`;
+          page.style.whiteSpace = 'no-wrap !important';
 
-        const childrens = Array.from(parentElement.children).filter((child) => {
-          const rect = child.getBoundingClientRect();
-          const parentRect = parentElement.getBoundingClientRect();
-          const top = rect.top - parentRect.top;
-          return top >= i * pageHeight && top < (i + 1) * pageHeight;
-        });
-        if (childrens.length > 0) {
-          pages.push(childrens);
-        }
-      }
-
-      const rportLayer = document.getElementById('report-layer');
-
-      pages.forEach(async (page, index) => {
-        const pageDiv = document.createElement('div');
-        pageDiv.classList.add(
-          'grid',
-          'gap-4',
-          'grid-cols-4',
-          'items-start',
-          'pb-10',
-          'auto-rows-min',
-          'printable-report'
-        );
-        pageDiv.id = `page-${index}`;
-        pageDiv.style.backgroundColor = '#f6f6f6';
-        pageDiv.style.gridAutoRows = 'min-content';
-        pageDiv.style.padding = '50px';
-        pageDiv.style.height = '490mm';
-
-        if (index > 0) {
-          pageDiv.style.paddingTop = '100px';
-        }
-
-        if (index === 0) {
-          const header = document.getElementById('report-header')?.cloneNode(true) as HTMLElement;
-          header.classList.add('col-span-4');
-          header.style.display = 'block';
-          pageDiv.appendChild(header);
-        }
-        page.forEach((child: any) => {
-          pageDiv.appendChild(child.cloneNode(true));
-        });
-        rportLayer?.appendChild(pageDiv);
-      });
-
-      setTimeout(async () => {
-        for (let i = 0; i < pages.length; i++) {
-          const pageDiv = document.getElementById(`page-${i}`) as HTMLElement;
-          const pageImage = await convertElementToImage(pageDiv);
-          doc.addImage(pageImage, 'PNG', 0, 0, 210, 0);
-          if (i === pages.length - 1) {
-            addFooters(doc);
-            doc.save(fileNameFormat(dashboard.name + '_Report_' + Date.now(), '.pdf'));
-            rportLayer!.innerHTML = '';
-            setRendering(false);
-            toast.dismiss();
-            toast.success(TEXT_SUCCESS);
-          } else {
-            doc.addPage();
+          const childrens = Array.from(parentElement.children).filter((child) => {
+            const rect = child.getBoundingClientRect();
+            const parentRect = parentElement.getBoundingClientRect();
+            const top = rect.top - parentRect.top;
+            return top >= i * pageHeight && top < (i + 1) * pageHeight;
+          });
+          if (childrens.length > 0) {
+            pages.push(childrens);
           }
         }
-      }, 100);
+
+        const rportLayer = document.getElementById('report-layer');
+
+        pages.forEach(async (page, index) => {
+          const pageDiv = document.createElement('div');
+          pageDiv.classList.add(
+            'grid',
+            'gap-4',
+            'grid-cols-4',
+            'items-start',
+            'pb-10',
+            'auto-rows-min',
+            'printable-report'
+          );
+          pageDiv.id = `page-${index}`;
+          pageDiv.style.backgroundColor = '#f6f6f6';
+          pageDiv.style.gridAutoRows = 'min-content';
+          pageDiv.style.padding = '50px';
+          pageDiv.style.height = '490mm';
+
+          if (index > 0) {
+            pageDiv.style.paddingTop = '100px';
+          }
+
+          if (index === 0) {
+            const header = document.getElementById('report-header')?.cloneNode(true) as HTMLElement;
+            header.classList.add('col-span-4');
+            header.style.display = 'block';
+            pageDiv.appendChild(header);
+          }
+          page.forEach((child: any) => {
+            pageDiv.appendChild(child.cloneNode(true));
+          });
+          rportLayer?.appendChild(pageDiv);
+        });
+
+        setTimeout(async () => {
+          for (let i = 0; i < pages.length; i++) {
+            const pageDiv = document.getElementById(`page-${i}`) as HTMLElement;
+            const pageImage = await convertElementToImage(pageDiv);
+            doc.addImage(pageImage, 'PNG', 0, 0, 210, 0);
+            if (i === pages.length - 1) {
+              addFooters(doc);
+              doc.save(fileNameFormat(dashboard.name + '_Report_' + Date.now(), '.pdf'));
+              rportLayer!.innerHTML = '';
+              setRendering(false);
+              toast.dismiss();
+              toast.success(TEXT_SUCCESS);
+            } else {
+              doc.addPage();
+            }
+          }
+        }, 100);
+      })
     };
 
     return (
@@ -155,9 +156,9 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
             <div className="font-semibold">
               {period &&
-                period.range.start.format('MMM Do YY') +
+                period.range.start.toFormat('MMM Do YY') +
                   ' - ' +
-                  period.range.end.format('MMM Do YY')}
+                  period.range.end.toFormat('MMM Do YY')}
             </div>
           </div>
           {dashboard && dashboard.description && (

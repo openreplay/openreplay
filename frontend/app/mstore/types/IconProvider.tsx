@@ -116,6 +116,18 @@ class UserIconProvider implements IconProvider {
   }
 }
 
+class ReferrerIconProvider implements IconProvider {
+  getIcon(obj: any): React.ReactNode {
+    return <Icon name="referrer" size={24} />;
+  }
+}
+
+class FetchIconProvider implements IconProvider {
+  getIcon(obj: any): React.ReactNode {
+    return <Icon name="fetch-request" size={24} />;
+  }
+}
+
 export {
   BrowserIconProvider,
   CountryIconProvider,
@@ -123,7 +135,9 @@ export {
   UrlIconProvider,
   DeviceIconProvider,
   OsIconProvider,
-  UserIconProvider
+  UserIconProvider,
+  ReferrerIconProvider,
+  FetchIconProvider
 };
 export type { IconProvider };
 

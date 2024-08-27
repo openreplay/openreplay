@@ -1,7 +1,6 @@
 import React from 'react'
-import Highlight from 'react-highlight'
 import stl from './highlightCode.module.css'
-import { CopyButton } from 'UI'
+import { CopyButton, CodeBlock } from 'UI'
 
 function HighlightCode({ className = 'js', text = ''}) {
   return (
@@ -9,9 +8,7 @@ function HighlightCode({ className = 'js', text = ''}) {
       <div className="absolute mt-1 mr-2 right-0">
         <CopyButton content={text} />
       </div>
-      <Highlight className={className}>
-        {text}
-      </Highlight>
+      <CodeBlock code={text} language={className} />
     </div>
   )
 }

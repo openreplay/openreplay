@@ -20,6 +20,7 @@ function ByComponent({ title, rows, lineWidth, onCard, type }: {
     displayName: r.label,
     sessionCount: r.value
   })).slice(0, 4);
+
   return (
     <ExCard
       title={title}

@@ -407,6 +407,14 @@ export default class DashboardStore {
     this.showAlertModal = val;
   }
 
+  upPendingRequests = () => {
+    this.pendingRequests += 1;
+  }
+
+  downPendingRequests = () => {
+    this.pendingRequests -= 1;
+  }
+
   fetchMetricChartData(
     metric: Widget,
     data: any,
@@ -422,7 +430,7 @@ export default class DashboardStore {
     }
 
     return new Promise(async (resolve, reject) => {
-      this.pendingRequests += 1;
+      this.upPendingRequests()
 
       if (metric.metricType === 'table' && metric.metricOf === 'jsException') {
         params.limit = 5;
@@ -435,7 +443,7 @@ export default class DashboardStore {
         reject(error);
       } finally {
         setTimeout(() => {
-          this.pendingRequests -= 1;
+          this.downPendingRequests()
         }, 100);
       }
     });

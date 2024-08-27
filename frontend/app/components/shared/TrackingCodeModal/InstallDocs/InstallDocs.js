@@ -1,8 +1,7 @@
 import React from 'react'
 import stl from './installDocs.module.css'
 import cn from 'classnames'
-import { CopyButton } from 'UI';
-import Highlight from 'react-highlight'
+import { CopyButton, CodeBlock } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker'
 const usageCode = `import Tracker from '@openreplay/tracker';
@@ -40,9 +39,7 @@ function InstallDocs({ site }) {
           {/* <CopyButton content={installationCommand} className={cn(stl.codeCopy, 'mt-2 mr-2')} /> */}
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={installationCommand} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
-            <Highlight className="cli">
-              {installationCommand}
-            </Highlight>
+            <CodeBlock code={installationCommand} language={'bash'} />
           </div>  
         </div>
       </div>
@@ -51,9 +48,7 @@ function InstallDocs({ site }) {
         <div className={ '' }>
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={_usageCode} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
-            <Highlight className="cli">
-              {_usageCode}
-            </Highlight>
+            <CodeBlock code={_usageCode} language={'js'} />
           </div>  
         </div>
       </div>

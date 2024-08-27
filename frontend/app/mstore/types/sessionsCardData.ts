@@ -1,13 +1,20 @@
-import { numberWithCommas } from 'App/utils';
+import React from 'react';
+
 import { countries } from 'App/constants';
+import { numberWithCommas } from 'App/utils';
+
 import {
   BrowserIconProvider,
-  CountryIconProvider, DeviceIconProvider,
+  CountryIconProvider,
+  DeviceIconProvider,
   IconProvider,
-  IssueIconProvider, OsIconProvider,
-  UrlIconProvider, UserIconProvider
+  IssueIconProvider,
+  OsIconProvider,
+  ReferrerIconProvider,
+  UrlIconProvider,
+  UserIconProvider,
+  FetchIconProvider,
 } from './IconProvider';
-import React from 'react';
 
 interface NameFormatter {
   format(name: string): string;
@@ -15,7 +22,10 @@ interface NameFormatter {
 
 class BaseFormatter implements NameFormatter {
   format(name: string): string {
-    return name?.replace(/_/g, ' ').replace(/\w\S*/g, (w) => (w.replace(/^\w/, (c) => c.toUpperCase()))).trim();
+    return name
+      ?.replace(/_/g, ' ')
+      .replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase()))
+      .trim();
   }
 }
 
@@ -42,7 +52,13 @@ class IssueFormatter extends BaseFormatter {
 
 class UserNameFormatter extends BaseFormatter {
   format(name: string): string {
-    if (name === null || name === undefined || name === '' || name === 'null' || name === 'undefined') {
+    if (
+      name === null ||
+      name === undefined ||
+      name === '' ||
+      name === 'null' ||
+      name === 'undefined'
+    ) {
       return 'Anonymous';
     }
 
@@ -67,26 +83,55 @@ export class SessionsByRow {
     return this;
   }
 
-  private getFormatters(metricType: string): { nameFormatter: NameFormatter; iconProvider: IconProvider } {
+  private getFormatters(metricType: string): {
+    nameFormatter: NameFormatter;
+    iconProvider: IconProvider;
+  } {
     switch (metricType) {
       case 'userBrowser':
-        return { nameFormatter: new BrowserFormatter(), iconProvider: new BrowserIconProvider() };
+        return {
+          nameFormatter: new BrowserFormatter(),
+          iconProvider: new BrowserIconProvider(),
+        };
       case 'userCountry':
-        return { nameFormatter: new CountryFormatter(), iconProvider: new CountryIconProvider() };
+        return {
+          nameFormatter: new CountryFormatter(),
+          iconProvider: new CountryIconProvider(),
+        };
       case 'issue':
-        return { nameFormatter: new IssueFormatter(), iconProvider: new IssueIconProvider() };
+        return {
+          nameFormatter: new IssueFormatter(),
+          iconProvider: new IssueIconProvider(),
+        };
       case 'location':
-        return { nameFormatter: new BaseFormatter(), iconProvider: new UrlIconProvider() };
+        return {
+          nameFormatter: new BaseFormatter(),
+          iconProvider: new UrlIconProvider(),
+        };
       case 'userDevice':
-        return { nameFormatter: new BaseFormatter(), iconProvider: new DeviceIconProvider() };
+        return {
+          nameFormatter: new BaseFormatter(),
+          iconProvider: new DeviceIconProvider(),
+        };
       case 'platform':
-        return { nameFormatter: new BaseFormatter(), iconProvider: new OsIconProvider() };
+        return {
+          nameFormatter: new BaseFormatter(),
+          iconProvider: new OsIconProvider(),
+        };
       case 'userId':
         return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
       case 'referrer':
         return { nameFormatter: new BaseFormatter(), iconProvider: new UrlIconProvider() };
+      case 'fetch':
+        return {
+          nameFormatter: new BaseFormatter(),
+          iconProvider: new FetchIconProvider(),
+        };
       default:
-        return { nameFormatter: new BaseFormatter(), iconProvider: new DefaultIconProvider() };
+        return {
+          nameFormatter: new BaseFormatter(),
+          iconProvider: new DefaultIconProvider(),
+        };
     }
   }
 }

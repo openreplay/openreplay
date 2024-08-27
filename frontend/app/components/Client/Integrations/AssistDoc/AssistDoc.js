@@ -1,9 +1,8 @@
 import React from 'react';
-import Highlight from 'react-highlight';
 import DocLink from 'Shared/DocLink/DocLink';
 import AssistScript from './AssistScript';
 import AssistNpm from './AssistNpm';
-import { Tabs } from 'UI';
+import { Tabs, CodeBlock } from 'UI';
 import { useState } from 'react';
 import { connect } from 'react-redux';
 
@@ -38,7 +37,7 @@ const AssistDoc = (props) => {
                 </div>
 
                 <div className="font-bold my-2">Installation</div>
-                <Highlight className="js">{`npm i @openreplay/tracker-assist`}</Highlight>
+                <CodeBlock language={'bash'} code={`npm i @openreplay/tracker-assist`} />
                 <div className="mb-4" />
 
                 <div className="font-bold my-2">Usage</div>

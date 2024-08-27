@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { InfoCircleOutlined } from '@ant-design/icons'
 import styles from './noContent.module.css';
 
 interface Props {
@@ -21,7 +20,7 @@ export default function NoContent(props: Props) {
         children
     ) : (
         <div className={`${styles.wrapper} ${size && styles[size]}`} style={style}>
-            {icon && <Icon icon={icon} size={iconSize} />}
+            {icon && <Icon name={icon} size={iconSize} />}
             {title && <div className='flex'>{title}</div>}
             {subtext && <div className={styles.subtext}>{subtext}</div>}
             {image && <div className="mt-4 flex justify-center">{image} </div>}

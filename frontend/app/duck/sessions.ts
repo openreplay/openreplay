@@ -60,11 +60,12 @@ const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION';
 const PREFETCH_SESSION = 'sessions/PREFETCH_SESSION';
 
 const range = getDateRangeFromValue(LAST_7_DAYS);
+
 const defaultDateFilters = {
   url: '',
   rangeValue: LAST_7_DAYS,
-  startDate: range.start.unix() * 1000,
-  endDate: range.end.unix() * 1000,
+  startDate: range.start.ts,
+  endDate: range.end.ts,
 };
 
 const initObj = {
