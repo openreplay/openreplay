@@ -183,8 +183,6 @@ function SpotPlayerHeader({
               </Button>
             </Popover>
           ) : null}
-          //@nikita you can make the dropdown options work by implementing the
-          logic
           <Dropdown
             menu={{ items, onClick: onMenuClick }}
             placement="bottomRight"
