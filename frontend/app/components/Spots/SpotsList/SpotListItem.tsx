@@ -199,11 +199,11 @@ function SpotListItem({
       <div className={'px-4 py-4 w-full border-t'}>
         <div className={'flex items-center gap-2'}>
           <Checkbox
-            checked={isSelected} // Use isSelected prop to control the checkbox state
+            checked={isSelected} 
             onChange={({ target: { checked } }) => onSelect(checked)}
-            className="flex cursor-pointer capitalize w-full"
+            className={`flex cursor-pointer w-full hover:text-teal ${isSelected ? 'text-teal' : ''}`}
           >
-            <span className="capitalize w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
+            <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
               {spot.title}
             </span>
           </Checkbox>
