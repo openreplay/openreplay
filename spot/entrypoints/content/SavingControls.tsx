@@ -80,9 +80,6 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
     onCleanup(() => window.removeEventListener("keydown", spacePressed));
   });
 
-  const handleNameChange = (inputValue: string) => {
-    setName(inputValue); 
-  };
 
   const convertToPercentage = (clientX: number, element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
@@ -447,7 +444,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                     value={name()}
                     onFocus={() => setIsTyping(true)}
                     onBlur={() => setIsTyping(false)}
-                    onInput={(e) => handleNameChange(e.currentTarget.value)}
+                    onInput={(e) => setName(e.currentTarget.value)}
                     class="input input-bordered w-full input-sm text-base mt-1"
                   />
                 </div>

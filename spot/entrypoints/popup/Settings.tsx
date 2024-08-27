@@ -110,14 +110,9 @@ function Settings({ goBack }: { goBack: () => void }) {
       </div>
 
       <div class="flex flex-col">
-        <div
-          class={"flex items-center justify-between gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50"}
-          data-tip="Recordings open in a new tab by default. Enable to spot issues back-to-back."
-        >
-          <p class="font-normal mb-1 flex items-center">
-          Go to Spot tab after save
-            </p>
-          <label class="label cursor-pointer">
+        <div class="flex items-center justify-between gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50">
+          <p class="font-normal mb-1 flex items-center">Go to Spot tab after save</p>
+          <label class="label cursor-pointer pr-0">
             <input
               type="checkbox"
               class="toggle toggle-primary toggle-sm cursor-pointer"
@@ -174,7 +169,7 @@ function Settings({ goBack }: { goBack: () => void }) {
               {editIngest() ? (
                 <div class={"flex flex-col items-start gap-2"}>
                   <input
-                    class={"input input-bordered input-sm w-full max-w-xs"}
+                    class={"input input-bordered input-sm w-full max-w-xs mb-2"}
                     type="text"
                     value={tempIngest()}
                     onChange={(e) => setTempIngest(e.currentTarget.value)}
