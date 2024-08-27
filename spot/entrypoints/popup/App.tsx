@@ -194,8 +194,9 @@ function App() {
       area: reqTab,
       mic: mic(),
       audioId: selectedAudioDevice(),
+      permissions: audioDevices().length > 0,
     });
-    window.close(); // Close the popup after starting the recording
+    window.close();
   };
 
   const stopRecording = () => {
@@ -341,6 +342,12 @@ interface IAudioPicker {
 function AudioPicker(props: IAudioPicker) {
   const [checkAudioDevices, setCheckAudioDevices] = createSignal(false);
 
+  createEffect(() => {
+    if (props.audioDevices().length) {
+      onSelect(props.audioDevices()[0].id);
+    }
+  })
+
   const checkAudio = async () => {
     if (checkAudioDevices()) {
       return;
@@ -355,13 +362,17 @@ function AudioPicker(props: IAudioPicker) {
     }
   };
 
-  const onMicToggle = () => {
+  const onMicToggle = async () => {
+    if (!props.audioDevices().length) {
+      return await props.checkAudioDevices();
+    }
     if (!props.selectedAudioDevice() && props.audioDevices().length) {
       onSelect(props.audioDevices()[0].id);
     } else {
       props.toggleMic();
     }
   }
+
   return (
     <div class={"inline-flex items-center gap-1 text-xs"}>
       <div

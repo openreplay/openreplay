@@ -38,6 +38,7 @@ export default defineContentScript({
               callRecording={countEnd}
               onRestart={onRestart}
               getErrorEvents={getErrorEvents}
+              getAudioPerm={getAudioPerm}
             />
           ),
           container,
@@ -62,6 +63,9 @@ export default defineContentScript({
         }, 200);
       });
     };
+    // no perm - muted - unmuted
+    let audioPerm = 0;
+    const getAudioPerm = () => audioPerm
     let clockStart = 0;
     let recState = "stopped";
     const getClockStart = () => {
@@ -305,6 +309,7 @@ export default defineContentScript({
           mic: message.mic,
           audioId: message.audioId,
         };
+        audioPerm = message.audioPerm;
         ui.mount();
       }
       if (message.type === "content:start") {
