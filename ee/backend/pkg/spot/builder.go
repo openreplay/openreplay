@@ -28,7 +28,7 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*
 		return nil, err
 	}
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
-	tracer, err := NewTracer(log, pgconn)
+	tracer, err := service.NewTracer(log, pgconn)
 	if err != nil {
 		return nil, err
 	}
