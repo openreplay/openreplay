@@ -167,6 +167,8 @@ function SpotPlayerHeader({
             </Popover>
           ) : null}
           
+
+          //@nikita you can make the dropdown options work by implementing the logic
           <Dropdown menu={{ items }} placement="bottomRight">
             <Button icon={<MoreOutlined />} size={'small'}></Button>
           </Dropdown>
@@ -186,6 +188,7 @@ function SpotPlayerHeader({
         Activity
       </Button>
 
+      //@nikita you can implement the badge count logic here
       <Badge count={5} className='mr-2'>
           <Button
             size={'small'}
