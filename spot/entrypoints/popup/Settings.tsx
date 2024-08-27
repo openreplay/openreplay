@@ -109,34 +109,30 @@ function Settings({ goBack }: { goBack: () => void }) {
         </span>
       </div>
 
-      <div className="flex flex-col">
-        <div
-          className={"flex items-center gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50"}
-          data-tip="Recordings open in a new tab by default. Enable to spot issues back-to-back."
-        >
-          <label className="label cursor-pointer">
+      <div class="flex flex-col">
+        <div class="flex items-center justify-between gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50">
+          <p class="font-normal mb-1 flex items-center">Go to Spot tab after save</p>
+          <label class="label cursor-pointer pr-0">
             <input
               type="checkbox"
-              className="toggle toggle-primary toggle-xs cursor-pointer"
+              class="toggle toggle-primary toggle-sm cursor-pointer"
               checked={openInNewTab()}
               onChange={toggleOpenInNewTab}
             />
-            <span className="text-sm label-text ms-1">
-              Take me to Spot tab after save
-            </span>
+            
           </label>
         </div>
 
-        <div className="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
-          <div className="flex flex-row justify-between items-center">
+        <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
+          <div class="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">
               <span>Include DevTools</span>
             </p>
             <div>
-              <label className="cursor-pointer">
+              <label class="cursor-pointer">
                 <input
                   type="checkbox"
-                  className="toggle toggle-primary toggle-sm"
+                  class="toggle toggle-primary toggle-sm"
                   checked={includeDevTools()}
                   onChange={toggleIncludeDevTools}
                 />
@@ -149,14 +145,14 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
         </div>
 
-        <div className="p-4 hover:bg-indigo-50 cursor-default">
-          <div className="flex flex-row justify-between">
+        <div class="p-4 hover:bg-indigo-50 cursor-default">
+          <div class="flex flex-row justify-between">
             <p class="font-semibold mb-1">Ingest Point</p>
             <div>
-              <label className="cursor-pointer">
+              <label class="cursor-pointer">
                 <input
                   type="checkbox"
-                  className="toggle toggle-primary toggle-sm"
+                  class="toggle toggle-primary toggle-sm"
                   checked={showIngest()}
                   onChange={toggleShowIngest}
                 />
@@ -169,18 +165,18 @@ function Settings({ goBack }: { goBack: () => void }) {
           </p>
 
           {showIngest() && (
-            <div className="flex flex-col justify-start py-4 cursor-default">
+            <div class="flex flex-col justify-start py-4 cursor-default">
               {editIngest() ? (
-                <div className={"flex flex-col items-start gap-2"}>
+                <div class={"flex flex-col items-start gap-2"}>
                   <input
-                    className={"input input-bordered input-sm w-full max-w-xs"}
+                    class={"input input-bordered input-sm w-full max-w-xs mb-2"}
                     type="text"
                     value={tempIngest()}
                     onChange={(e) => setTempIngest(e.currentTarget.value)}
                     autofocus
                   />
 
-                  <div className="flex gap-2 justify-start items-center">
+                  <div class="flex gap-2 justify-start items-center">
                     <button
                       class="btn btn-sm btn-primary text-white hover:bg-primary hover:text-white"
                       onClick={applyIngest}
@@ -197,8 +193,8 @@ function Settings({ goBack }: { goBack: () => void }) {
                   </div>
                 </div>
               ) : (
-                 <div className={"flex items-center gap-2"}>
-                   <span className={"text-gray-700"}>{ingest()}</span>
+                 <div class={"flex items-center gap-2"}>
+                   <span class={"text-gray-700"}>{ingest()}</span>
                    <button
                      class="btn btn-sm btn-link font-normal no-underline hover:no-underline hover:opacity-75"
                      onClick={() => toggleEditIngest(true)}

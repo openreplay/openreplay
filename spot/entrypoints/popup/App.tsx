@@ -1,6 +1,6 @@
 import orLogo from "@/assets/orSpot.svg";
 import micOff from "@/assets/mic-off-red.svg";
-import micOn from "@/assets/mic-on.svg";
+import micOn from "@/assets/mic-on-dark.svg";
 import Login from "@/entrypoints/popup/Login";
 import Settings from "@/entrypoints/popup/Settings";
 import { createSignal, createEffect, onMount } from "solid-js";
