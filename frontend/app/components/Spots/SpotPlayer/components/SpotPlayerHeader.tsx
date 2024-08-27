@@ -2,18 +2,28 @@ import {
   ArrowLeftOutlined,
   CommentOutlined,
   CopyOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  MoreOutlined,
   SettingOutlined,
   UserSwitchOutlined,
-  MoreOutlined,
-  DownloadOutlined,
-  DeleteOutlined,
 } from '@ant-design/icons';
-import { Button, Popover, Tooltip, message, Dropdown, Menu, MenuProps, Badge } from 'antd';
+import {
+  Badge,
+  Button,
+  Dropdown,
+  MenuProps,
+  Popover,
+  Tooltip,
+  message,
+} from 'antd';
 import copy from 'copy-to-clipboard';
+import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
+import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
 import { Avatar, Icon } from 'UI';
@@ -46,6 +56,9 @@ function SpotPlayerHeader({
   platform: string | null;
   hasShareAccess: boolean;
 }) {
+  const { spotStore } = useStore();
+  const comments = spotStore.currentSpot?.comments ?? [];
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const history = useHistory();
 
@@ -58,26 +71,33 @@ function SpotPlayerHeader({
     history.push(spotLink);
   };
 
-
   const items: MenuProps['items'] = [
     {
       key: '1',
       icon: <DownloadOutlined />,
-      label: (
-        'Download Video'
-      ),
+      label: 'Download Video',
     },
     {
       key: '2',
       icon: <DeleteOutlined />,
-      label: (
-        'Delete'
-      ),
+      label: 'Delete',
     },
   ];
 
+  const onMenuClick = ({ key }: { key: string }) => {
+    if (key === '1') {
+      void spotStore.getVideo(spotStore.currentSpot!.spotId);
+    } else if (key === '2') {
+      spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
+        history.push(spotsList());
+      });
+    }
+  };
+
   return (
-    <div className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}>
+    <div
+      className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}
+    >
       <div>
         {isLoggedIn ? (
           <Button
@@ -153,10 +173,7 @@ function SpotPlayerHeader({
             Copy
           </Button>
           {hasShareAccess ? (
-            <Popover
-              trigger={'click'}
-              content={<AccessModal onClose={() => setDropdownOpen(false)} />}
-            >
+            <Popover trigger={'click'} content={<AccessModal />}>
               <Button
                 size={'small'}
                 icon={<SettingOutlined />}
@@ -166,13 +183,14 @@ function SpotPlayerHeader({
               </Button>
             </Popover>
           ) : null}
-          
-
-          //@nikita you can make the dropdown options work by implementing the logic
-          <Dropdown menu={{ items }} placement="bottomRight">
+          //@nikita you can make the dropdown options work by implementing the
+          logic
+          <Dropdown
+            menu={{ items, onClick: onMenuClick }}
+            placement="bottomRight"
+          >
             <Button icon={<MoreOutlined />} size={'small'}></Button>
           </Dropdown>
-          
           <div
             className={'h-full rounded-xl border-l mx-2'}
             style={{ width: 1 }}
@@ -188,17 +206,16 @@ function SpotPlayerHeader({
         Activity
       </Button>
 
-      //@nikita you can implement the badge count logic here
-      <Badge count={5} className='mr-2'>
-          <Button
-            size={'small'}
-            disabled={activeTab === TABS.COMMENTS}
-            onClick={() => setActiveTab(TABS.COMMENTS)}
-            icon={<CommentOutlined />}
-          >
-            Comments
-          </Button>
-        </Badge>
+      <Badge count={comments.length} className="mr-2">
+        <Button
+          size={'small'}
+          disabled={activeTab === TABS.COMMENTS}
+          onClick={() => setActiveTab(TABS.COMMENTS)}
+          icon={<CommentOutlined />}
+        >
+          Comments
+        </Button>
+      </Badge>
     </div>
   );
 }
@@ -211,4 +228,4 @@ export default connect((state: any) => {
 
   const hasShareAccess = isEE ? permissions.includes('SPOT_PUBLIC') : true;
   return { isLoggedIn: !!jwt, hasShareAccess };
-})(SpotPlayerHeader);
+})(observer(SpotPlayerHeader));
