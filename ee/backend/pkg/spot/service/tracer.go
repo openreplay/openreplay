@@ -73,8 +73,8 @@ type RequestData struct {
 	Method     string
 	PathFormat string
 	Endpoint   string
-	Payload    map[string]string
-	Parameters map[string]string
+	Payload    []byte
+	Parameters []byte
 	Status     int
 }
 

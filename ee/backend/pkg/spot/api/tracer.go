@@ -21,7 +21,7 @@ var routeMatch = map[string]string{
 	"PATCH" + "/v1/spots/{id}/public-key": "updatePublicKey",
 }
 
-func (e *Router) requestParser(r *http.Request, bodyBytes []byte, statusCode int) {
+func (e *Router) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {
 	pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
 	if err != nil {
 		e.log.Error(r.Context(), "failed to get path template: %s", err)
