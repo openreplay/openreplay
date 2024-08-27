@@ -13,80 +13,21 @@ export default defineUnlistedScript(() => {
 
   function injectCSS() {
     const cssText = `
-      #or-notification{
-        font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    .flex{display:flex}
+    .items-center {align-items:center}
+    .gap-3 {gap: .25rem}
+    .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #394dfe;
+        animation: spin 0.6s linear infinite;
       }
-      .or-flex {
-        display:flex;
-      }
-      .or-items-center{
-        align-items: center;
-      }
-      .or-gap-3{
-        gap: 0.25rem;
-      }
-      .or-checkbox {
-        appearance: none;
-        width: 1.5rem;
-        height: 1.5rem;
-        background-color: #FFFFFF;
-        border: 1px solid #394dfe;
-        border-radius: 2rem;
-        display: inline-block;
-        position: relative;
-        cursor: pointer;
-      }
-      .or-checkbox:checked {
-        background-color: #394dfe;
-        border: 1px solid #394dfe;
-      }
-      .or-checkbox:checked::after {
-        content: '';
-        position: absolute;
-        top: 45%;
-        left: 50%;
-        width: 0.4rem;
-        height: 0.8rem;
-        border: solid #FFFFFF;
-        border-width: 0 3px 3px 0;
-        border-radius: .1rem;
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-      .or-mb-3{
-        margin-bottom: 0.75rem 
-      }
-      .or-mb-5{
-        margin-bottom: 1.25rem 
-      }
-      .or-ms-1{
-        margin-inline-start: 0.25rem;
-      }
-      .or-progress-bar-container {
-        width: 100%;
-        height: 3px;
-        background-color: #f3f3f3;
-        overflow: hidden;
-        position: relative;
-      }
-      .or-progress-bar {
-        width: 100%;
-        height: 100%;
-        background-color: #394dfe;
-        position: absolute;
-        animation: or-loading .5s infinite;
-      }
-      @keyframes or-loading {
-        0% {
-          left: -100%;
-          width: 0%;
-        }
-        50% {
-          left: 25%;
-          width: 50%;
-        }
-        100% {
-          left: 100%;
-          width: 0%;
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
       }
     `;
@@ -99,24 +40,9 @@ export default defineUnlistedScript(() => {
     const message = event.data.message || "Recording has started successfully.";
 
     const notificationContent = `
-      <div id="or-notification">
-        <div class="or-progress-bar-container or-mb-5">
-          <div class="or-progress-bar"></div>
-        </div>
-        <div id="or-item1" class="or-flex or-items-center or-mb-3 or-gap-3">
-          <input type="checkbox" id="or-checkbox1" class="or-checkbox">
-          <span>Save Spot</span>
-        </div>
-        <div id="or-item2" class="or-flex or-items-center or-mb-3 or-gap-3">
-          <input type="checkbox" id="or-checkbox2" class="or-checkbox">
-          <span>Open Spot in new tab</span>
-        </div>
-        <div id="or-item3" class="or-flex or-items-center or-mb-3 or-gap-3">
-          <input type="checkbox" id="or-checkbox3" class="or-checkbox">
-          <span>${message}</span>
-        </div>
-        
-        
+    <div class="flex gap-3 items-center">
+      <div class="spinner"></div>          
+      <span>${message}</span>
       </div>
     `;
 
@@ -142,23 +68,6 @@ export default defineUnlistedScript(() => {
     // Force reflow to ensure styles are applied
     notification.offsetHeight; // Trigger reflow
 
-    // Update the checkboxes based on the events
-    function updateCheckbox(itemId, checkboxId, delay) {
-      setTimeout(() => {
-        document.getElementById(checkboxId).checked = true;
-      }, delay);
-    }
-
-    const items = [
-      { itemId: 'or-item1', checkboxId: 'or-checkbox1', delay: 1000 },
-      { itemId: 'or-item2', checkboxId: 'or-checkbox2', delay: 2000 },
-      { itemId: 'or-item3', checkboxId: 'or-checkbox3', delay: 3000 }
-    ];
-
-    items.forEach(item => {
-      updateCheckbox(item.itemId, item.checkboxId, item.delay);
-    });
-
     setTimeout(() => {
       notification.style.opacity = "0";
       setTimeout(() => {
@@ -176,7 +85,7 @@ export default defineUnlistedScript(() => {
         copyToTheClipboard(event.data.url)
           .then(() => {
             createNotification({
-              data: { message: 'URL copied to clipboard' }
+              data: { message: 'Recording opened in a new tab. Link is copied to clipboard.' }
             });
           })
           .catch((e) => {
