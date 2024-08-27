@@ -16,7 +16,7 @@ import spotPlayerStore from '../../spotPlayerStore';
 function SpotConsole({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = React.useState(TABS[0]);
   const _list = React.useRef<VListHandle>(null);
-  const cache = useCellMeasurerCache();
+
   const onTabClick = (tab: string) => {
     const newTab = TABS.find((t) => t.text === tab);
     setActiveTab(newTab);

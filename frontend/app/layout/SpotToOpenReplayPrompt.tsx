@@ -3,6 +3,8 @@ import { Modal, Button, List, Divider } from 'antd';
 import { CircleDot, Play, TrendingUp, Radio, Sparkles, Plug, ArrowRight } from 'lucide-react';
 import { upgradeScope } from 'App/duck/user';
 import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import { onboarding } from 'App/routes';
 
 interface SpotToOpenReplayPromptProps {
   isVisible: boolean;
@@ -10,8 +12,12 @@ interface SpotToOpenReplayPromptProps {
   upgradeScope: () => void;
 }
 
-const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgradeScope, isVisible, onCancel }) => {
-
+const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgradeScope, isVisible, onCancel }: {
+  upgradeScope: () => Promise<void>;
+  isVisible: boolean;
+  onCancel: () => void;
+}) => {
+  const history = useHistory();
   const features = [
     { icon: <CircleDot />, text: 'Spot', noBorder: true },
     { isDivider: true }, 
@@ -24,6 +30,7 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgrade
 
   const onUpgrade = () => {
     upgradeScope().then(() => {
+      history.push(onboarding());
       onCancel();
     })
   }
