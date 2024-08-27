@@ -1864,7 +1864,7 @@ const SVG = (props: Props) => {
     case 'zoom-in': return <Zoom_in width={ width } height={ height } fill={ fill } />;
   
 default:
-        throw new Error('Unknown icon name ' + name);
+        console.trace('Unknown icon name ' + name);
     }
 }
 SVG.displayName = 'SVG';

@@ -136,7 +136,7 @@ ${iconPaths.map(icon => {
   `}
 ).join('')}
 default:
-        throw new Error('Unknown icon name ' + name);
+        console.trace('Unknown icon name ' + name);
     }
 }
 SVG.displayName = 'SVG';
