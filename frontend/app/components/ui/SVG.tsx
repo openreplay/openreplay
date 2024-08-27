@@ -3,12 +3,8 @@
 import React from 'react';
 import {
   Activity,
-  Alarm_clock,
-  Alarm_plus,
-  All_sessions,
   Analytics,
   Anchor,
-  Arrow_alt_square_right,
   Arrow_bar_left,
   Arrow_clockwise,
   Arrow_counterclockwise,
@@ -17,11 +13,8 @@ import {
   Arrow_down,
   Arrow_repeat,
   Arrow_right_short,
-  Arrow_square_left,
-  Arrow_square_right,
   Arrow_up_short,
   Arrow_up,
-  Arrows_angle_extend,
   Avatar_icn_avatar1,
   Avatar_icn_avatar10,
   Avatar_icn_avatar11,
@@ -50,12 +43,10 @@ import {
   Bar_pencil,
   Battery_charging,
   Battery,
-  Bell_fill,
   Bell_plus,
   Bell_slash,
   Bell,
   Binoculars,
-  Book_doc,
   Book,
   Bookmark,
   Broadcast,
@@ -70,32 +61,19 @@ import {
   Browser_safari,
   Buildings,
   Bullhorn,
-  Business_time,
-  Calendar_alt,
-  Calendar_check,
-  Calendar_day,
   Calendar,
   Call,
-  Camera_alt,
   Camera_video_off,
   Camera_video,
   Camera,
-  Card_checklist,
-  Card_list,
   Card_text,
   Caret_down_fill,
-  Caret_left_fill,
   Caret_right_fill,
-  Caret_up_fill,
-  Chat_dots,
   Chat_left_text,
-  Chat_right_text,
   Chat_square_quote,
   Check_circle_fill,
   Check_circle,
   Check,
-  Chevron_double_left,
-  Chevron_double_right,
   Chevron_down,
   Chevron_left,
   Chevron_right,
@@ -105,44 +83,24 @@ import {
   Click_hesitation,
   Click_rage,
   Clipboard_check,
-  Clipboard_list_check,
   Clock_history,
   Clock,
   Close,
-  Cloud_fog2_fill,
   Code,
   Cog,
   Cogs,
   Collection_play,
   Collection,
   Color_apple,
-  Color_browser_tor,
-  Color_browser_applebot,
   Color_browser_chrome,
-  Color_browser_chrome_mobile,
-  Color_browser_chrome_mobile_ios,
-  Color_browser_duck_duck_go,
-  Color_browser_duckduckgo_mobile,
   Color_browser_edge,
-  Color_browser_edge_mobile,
   Color_browser_facebook,
   Color_browser_firefox,
-  Color_browser_firefox_ios,
-  Color_browser_firefox_mobile,
   Color_browser_google,
-  Color_browser_googlebot,
-  Color_browser_huawei_browser,
-  Color_browser_internet_explorer,
-  Color_browser_miui_browser,
-  Color_browser_mobile_safari,
-  Color_browser_mobile_safari_ui,
   Color_browser_opera,
   Color_browser_safari,
-  Color_browser_samsung_internet,
-  Color_browser_uc_browser,
   Color_browser_unknown,
   Color_browser_whale,
-  Color_browser_yandex_browser,
   Color_chrome,
   Color_country_de,
   Color_country_fr,
@@ -152,7 +110,6 @@ import {
   Color_de,
   Color_device_desktop,
   Color_device_mobile,
-  Color_device_other_phone,
   Color_device_tablet,
   Color_device_unkown,
   Color_edge,
@@ -178,15 +135,10 @@ import {
   Color_opera,
   Color_os_android,
   Color_os_apple,
-  Color_os_blackberry,
-  Color_os_chrome_os,
   Color_os_elementary,
   Color_os_fedora,
-  Color_os_freebsd,
-  Color_os_gnome,
   Color_os_ios,
   Color_os_linux,
-  Color_os_linux_mint,
   Color_os_macos,
   Color_os_microsoft,
   Color_os_ubuntu,
@@ -194,7 +146,6 @@ import {
   Color_safari,
   Color_ubuntu,
   Color_us,
-  Columns_gap_filled,
   Columns_gap,
   Console_error,
   Console_exception,
@@ -205,7 +156,6 @@ import {
   Cookies,
   Copy,
   Credit_card_2_back,
-  Credit_card_front,
   Cross,
   Cubes,
   Cursor_trash,
@@ -227,10 +177,8 @@ import {
   Desktop,
   Device,
   Diagram_3,
-  Dice_3,
   Dizzy,
   Door_closed,
-  Doublecheck,
   Download,
   Drag,
   Edit,
@@ -257,7 +205,6 @@ import {
   Exclamation_circle_fill,
   Exclamation_circle,
   Exclamation_triangle,
-  Expand_wide,
   Explosion,
   External_link_alt,
   Eye_slash_fill,
@@ -340,27 +287,16 @@ import {
   Funnel_patch_exclamation_fill,
   Funnel_sd_card,
   Funnel_fill,
-  Funnel_new,
   Funnel,
-  Gear_fill,
   Gear,
-  Geo_alt_fill_custom,
   Github,
-  Graph_up_arrow,
   Graph_up,
-  Grid_1x2,
   Grid_3x3,
   Grid_check,
-  Grid_horizontal,
   Grid,
-  Grip_horizontal,
   Hash,
-  Hdd_stack,
   Headset,
-  Heart_rate,
-  High_engagement,
   History,
-  Hourglass_start,
   Ic_errors,
   Ic_network,
   Ic_rage,
@@ -409,16 +345,13 @@ import {
   Journal_code,
   Key,
   Keyboard,
-  Layer_group,
   Layers_half,
   Lightbulb_on,
   Lightbulb,
   Link_45deg,
   List_alt,
-  List_arrow,
   List_ul,
   List,
-  Lock_alt,
   Low_disc_space,
   Magic,
   Map_marker_alt,
@@ -470,33 +403,24 @@ import {
   Play,
   Plug,
   Plus_circle,
-  Plus_lg,
   Plus,
-  Pointer_sessions_search,
   Prev1,
   Pulse,
   Puzzle_piece,
   Puzzle,
   Question_circle,
   Question_lg,
-  Quote_left,
-  Quote_right,
   Quotes,
-  Record_btn,
   Record_circle_fill,
   Record_circle,
   Record2,
-  Redo_back,
   Redo,
   Redux,
   Remote_control,
-  Replay_10,
   Resources_icon,
-  Safe_fill,
   Safe,
   Sandglass,
   Search,
-  Search_notification,
   Server,
   Share_alt,
   Shield_lock,
@@ -504,8 +428,6 @@ import {
   Side_menu_open,
   Signpost_split,
   Signup,
-  Skip_forward_fill,
-  Skip_forward,
   Slack,
   Slash_circle,
   Sleep,
@@ -515,7 +437,6 @@ import {
   Sparkles,
   Speedometer2,
   Spinner,
-  Star_solid,
   Star,
   Step_forward,
   Stickies,
@@ -523,17 +444,9 @@ import {
   Stopwatch,
   Store,
   Sync_alt,
-  Table_new,
   Table,
-  Tablet_android,
-  Tachometer_slow,
-  Tachometer_slowest,
   Tags,
-  Team_funnel,
-  Telephone_fill,
-  Telephone,
   Terminal,
-  Text_paragraph,
   Thermometer_sun,
   Toggles,
   Tools,
@@ -545,20 +458,14 @@ import {
   User_switch,
   Users,
   Vendors_graphql,
-  Vendors_mobx,
-  Vendors_ngrx,
-  Vendors_redux,
-  Vendors_vuex,
   Web_vitals,
   Wifi,
-  Window_alt,
-  Window_restore,
   Window_x,
   Window,
   Zoom_in
 } from './Icons'
 
-export type IconNames = 'activity' | 'alarm-clock' | 'alarm-plus' | 'all-sessions' | 'analytics' | 'anchor' | 'arrow-alt-square-right' | 'arrow-bar-left' | 'arrow-clockwise' | 'arrow-counterclockwise' | 'arrow-down-short' | 'arrow-down-up' | 'arrow-down' | 'arrow-repeat' | 'arrow-right-short' | 'arrow-square-left' | 'arrow-square-right' | 'arrow-up-short' | 'arrow-up' | 'arrows-angle-extend' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar-chart-line' | 'bar-pencil' | 'battery-charging' | 'battery' | 'bell-fill' | 'bell-plus' | 'bell-slash' | 'bell' | 'binoculars' | 'book-doc' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'business-time' | 'calendar-alt' | 'calendar-check' | 'calendar-day' | 'calendar' | 'call' | 'camera-alt' | 'camera-video-off' | 'camera-video' | 'camera' | 'card-checklist' | 'card-list' | 'card-text' | 'caret-down-fill' | 'caret-left-fill' | 'caret-right-fill' | 'caret-up-fill' | 'chat-dots' | 'chat-left-text' | 'chat-right-text' | 'chat-square-quote' | 'check-circle-fill' | 'check-circle' | 'check' | 'chevron-double-left' | 'chevron-double-right' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'circle-fill' | 'circle' | 'click-hesitation' | 'click-rage' | 'clipboard-check' | 'clipboard-list-check' | 'clock-history' | 'clock' | 'close' | 'cloud-fog2-fill' | 'code' | 'cog' | 'cogs' | 'collection-play' | 'collection' | 'color/apple' | 'color/browser/Tor' | 'color/browser/applebot' | 'color/browser/chrome' | 'color/browser/chrome_mobile' | 'color/browser/chrome_mobile_ios' | 'color/browser/duck_duck_go' | 'color/browser/duckduckgo_mobile' | 'color/browser/edge' | 'color/browser/edge_mobile' | 'color/browser/facebook' | 'color/browser/firefox' | 'color/browser/firefox_ios' | 'color/browser/firefox_mobile' | 'color/browser/google' | 'color/browser/googlebot' | 'color/browser/huawei_browser' | 'color/browser/internet_explorer' | 'color/browser/miui_browser' | 'color/browser/mobile_safari' | 'color/browser/mobile_safari_ui' | 'color/browser/opera' | 'color/browser/safari' | 'color/browser/samsung_internet' | 'color/browser/uc_browser' | 'color/browser/unknown' | 'color/browser/whale' | 'color/browser/yandex_browser' | 'color/chrome' | 'color/country/de' | 'color/country/fr' | 'color/country/gb' | 'color/country/in' | 'color/country/us' | 'color/de' | 'color/device/desktop' | 'color/device/mobile' | 'color/device/other_phone' | 'color/device/tablet' | 'color/device/unkown' | 'color/edge' | 'color/fedora' | 'color/firefox' | 'color/fr' | 'color/gb' | 'color/in' | 'color/issues/bad_request' | 'color/issues/click_rage' | 'color/issues/cpu' | 'color/issues/crash' | 'color/issues/custom' | 'color/issues/dead_click' | 'color/issues/errors' | 'color/issues/excessive_scrolling' | 'color/issues/js_exception' | 'color/issues/memory' | 'color/issues/missing_resource' | 'color/issues/mouse_thrashing' | 'color/issues/slow_page_load' | 'color/microsoft' | 'color/opera' | 'color/os/android' | 'color/os/apple' | 'color/os/blackberry' | 'color/os/chrome_os' | 'color/os/elementary' | 'color/os/fedora' | 'color/os/freebsd' | 'color/os/gnome' | 'color/os/ios' | 'color/os/linux' | 'color/os/linux_mint' | 'color/os/macos' | 'color/os/microsoft' | 'color/os/ubuntu' | 'color/os/unkown' | 'color/safari' | 'color/ubuntu' | 'color/us' | 'columns-gap-filled' | 'columns-gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit-card-2-back' | 'credit-card-front' | 'cross' | 'cubes' | 'cursor-trash' | 'dash' | 'dashboard-icn' | 'db-icons/icn-card-clickMap' | 'db-icons/icn-card-errors' | 'db-icons/icn-card-funnel' | 'db-icons/icn-card-funnels' | 'db-icons/icn-card-insights' | 'db-icons/icn-card-library' | 'db-icons/icn-card-mapchart' | 'db-icons/icn-card-pathAnalysis' | 'db-icons/icn-card-performance' | 'db-icons/icn-card-resources' | 'db-icons/icn-card-table' | 'db-icons/icn-card-timeseries' | 'db-icons/icn-card-webVitals' | 'desktop' | 'device' | 'diagram-3' | 'dice-3' | 'dizzy' | 'door-closed' | 'doublecheck' | 'download' | 'drag' | 'edit' | 'ellipsis-v' | 'emoji-dizzy' | 'enter' | 'envelope-check' | 'envelope-paper' | 'envelope-x' | 'envelope' | 'errors-icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i-cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation-circle-fill' | 'exclamation-circle' | 'exclamation-triangle' | 'expand-wide' | 'explosion' | 'external-link-alt' | 'eye-slash-fill' | 'eye-slash' | 'eye' | 'fetch' | 'fflag-multi' | 'fflag-single' | 'file-bar-graph' | 'file-code' | 'file-medical-alt' | 'file-pdf' | 'file' | 'files' | 'filetype-js' | 'filetype-pdf' | 'filter' | 'filters/arrow-return-right' | 'filters/browser' | 'filters/chevrons-up-down' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu-load' | 'filters/custom' | 'filters/device' | 'filters/dom-complete' | 'filters/duration' | 'filters/error' | 'filters/fetch-failed' | 'filters/fetch' | 'filters/file-code' | 'filters/graphql' | 'filters/i-cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory-load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance-network-request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev-id' | 'filters/screen' | 'filters/state-action' | 'filters/tag-element' | 'filters/ttfb' | 'filters/user-alt' | 'filters/userid' | 'filters/view' | 'flag-na' | 'folder-plus' | 'folder2' | 'fullscreen' | 'funnel/cpu-fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji-angry-fill' | 'funnel/emoji-angry' | 'funnel/emoji-dizzy-fill' | 'funnel/exclamation-circle-fill' | 'funnel/exclamation-circle' | 'funnel/file-earmark-break-fill' | 'funnel/file-earmark-break' | 'funnel/file-earmark-minus-fill' | 'funnel/file-earmark-minus' | 'funnel/file-medical-alt' | 'funnel/file-x' | 'funnel/hdd-fill' | 'funnel/hourglass-top' | 'funnel/image-fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch-exclamation-fill' | 'funnel/sd-card' | 'funnel-fill' | 'funnel-new' | 'funnel' | 'gear-fill' | 'gear' | 'geo-alt-fill-custom' | 'github' | 'graph-up-arrow' | 'graph-up' | 'grid-1x2' | 'grid-3x3' | 'grid-check' | 'grid-horizontal' | 'grid' | 'grip-horizontal' | 'hash' | 'hdd-stack' | 'headset' | 'heart-rate' | 'high-engagement' | 'history' | 'hourglass-start' | 'ic-errors' | 'ic-network' | 'ic-rage' | 'ic-resources' | 'id-card' | 'image' | 'info-circle-fill' | 'info-circle' | 'info-square' | 'info' | 'input-hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag-text' | 'integrations/bugsnag' | 'integrations/cloudwatch-text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch-text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira-text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic-text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay-text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar-text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry-text' | 'integrations/sentry' | 'integrations/slack-bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic-text' | 'integrations/sumologic' | 'integrations/teams-white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal-code' | 'key' | 'keyboard' | 'layer-group' | 'layers-half' | 'lightbulb-on' | 'lightbulb' | 'link-45deg' | 'list-alt' | 'list-arrow' | 'list-ul' | 'list' | 'lock-alt' | 'low-disc-space' | 'magic' | 'map-marker-alt' | 'memory-ios' | 'memory' | 'mic-mute' | 'mic' | 'minus' | 'mobile' | 'mouse-alt' | 'mouse-pointer-click' | 'network' | 'next1' | 'no-dashboard' | 'no-metrics-chart' | 'no-metrics' | 'no-recordings' | 'orSpot' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause-circle-fill' | 'pause-fill' | 'pause' | 'pdf-download' | 'pencil-stop' | 'pencil' | 'people' | 'percent' | 'performance-icon' | 'person-border' | 'person-fill' | 'person' | 'pie-chart-fill' | 'pin-fill' | 'play-circle-bold' | 'play-circle-light' | 'play-circle' | 'play-fill-new' | 'play-fill' | 'play-hover' | 'play' | 'plug' | 'plus-circle' | 'plus-lg' | 'plus' | 'pointer-sessions-search' | 'prev1' | 'pulse' | 'puzzle-piece' | 'puzzle' | 'question-circle' | 'question-lg' | 'quote-left' | 'quote-right' | 'quotes' | 'record-btn' | 'record-circle-fill' | 'record-circle' | 'record2' | 'redo-back' | 'redo' | 'redux' | 'remote-control' | 'replay-10' | 'resources-icon' | 'safe-fill' | 'safe' | 'sandglass' | 'search' | 'search_notification' | 'server' | 'share-alt' | 'shield-lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost-split' | 'signup' | 'skip-forward-fill' | 'skip-forward' | 'slack' | 'slash-circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'sparkles' | 'speedometer2' | 'spinner' | 'star-solid' | 'star' | 'step-forward' | 'stickies' | 'stop-record-circle' | 'stopwatch' | 'store' | 'sync-alt' | 'table-new' | 'table' | 'tablet-android' | 'tachometer-slow' | 'tachometer-slowest' | 'tags' | 'team-funnel' | 'telephone-fill' | 'telephone' | 'terminal' | 'text-paragraph' | 'thermometer-sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user-alt' | 'user-circle' | 'user-friends' | 'user-switch' | 'users' | 'vendors/graphql' | 'vendors/mobx' | 'vendors/ngrx' | 'vendors/redux' | 'vendors/vuex' | 'web-vitals' | 'wifi' | 'window-alt' | 'window-restore' | 'window-x' | 'window' | 'zoom-in';
+export type IconNames = 'activity' | 'analytics' | 'anchor' | 'arrow-bar-left' | 'arrow-clockwise' | 'arrow-counterclockwise' | 'arrow-down-short' | 'arrow-down-up' | 'arrow-down' | 'arrow-repeat' | 'arrow-right-short' | 'arrow-up-short' | 'arrow-up' | 'avatar/icn_avatar1' | 'avatar/icn_avatar10' | 'avatar/icn_avatar11' | 'avatar/icn_avatar12' | 'avatar/icn_avatar13' | 'avatar/icn_avatar14' | 'avatar/icn_avatar15' | 'avatar/icn_avatar16' | 'avatar/icn_avatar17' | 'avatar/icn_avatar18' | 'avatar/icn_avatar19' | 'avatar/icn_avatar2' | 'avatar/icn_avatar20' | 'avatar/icn_avatar21' | 'avatar/icn_avatar22' | 'avatar/icn_avatar23' | 'avatar/icn_avatar3' | 'avatar/icn_avatar4' | 'avatar/icn_avatar5' | 'avatar/icn_avatar6' | 'avatar/icn_avatar7' | 'avatar/icn_avatar8' | 'avatar/icn_avatar9' | 'ban' | 'bar-chart-line' | 'bar-pencil' | 'battery-charging' | 'battery' | 'bell-plus' | 'bell-slash' | 'bell' | 'binoculars' | 'book' | 'bookmark' | 'broadcast' | 'browser/browser' | 'browser/chrome' | 'browser/edge' | 'browser/electron' | 'browser/facebook' | 'browser/firefox' | 'browser/ie' | 'browser/opera' | 'browser/safari' | 'buildings' | 'bullhorn' | 'calendar' | 'call' | 'camera-video-off' | 'camera-video' | 'camera' | 'card-text' | 'caret-down-fill' | 'caret-right-fill' | 'chat-left-text' | 'chat-square-quote' | 'check-circle-fill' | 'check-circle' | 'check' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'chevron-up' | 'circle-fill' | 'circle' | 'click-hesitation' | 'click-rage' | 'clipboard-check' | 'clock-history' | 'clock' | 'close' | 'code' | 'cog' | 'cogs' | 'collection-play' | 'collection' | 'color/apple' | 'color/browser/chrome' | 'color/browser/edge' | 'color/browser/facebook' | 'color/browser/firefox' | 'color/browser/google' | 'color/browser/opera' | 'color/browser/safari' | 'color/browser/unknown' | 'color/browser/whale' | 'color/chrome' | 'color/country/de' | 'color/country/fr' | 'color/country/gb' | 'color/country/in' | 'color/country/us' | 'color/de' | 'color/device/desktop' | 'color/device/mobile' | 'color/device/tablet' | 'color/device/unkown' | 'color/edge' | 'color/fedora' | 'color/firefox' | 'color/fr' | 'color/gb' | 'color/in' | 'color/issues/bad_request' | 'color/issues/click_rage' | 'color/issues/cpu' | 'color/issues/crash' | 'color/issues/custom' | 'color/issues/dead_click' | 'color/issues/errors' | 'color/issues/excessive_scrolling' | 'color/issues/js_exception' | 'color/issues/memory' | 'color/issues/missing_resource' | 'color/issues/mouse_thrashing' | 'color/issues/slow_page_load' | 'color/microsoft' | 'color/opera' | 'color/os/android' | 'color/os/apple' | 'color/os/elementary' | 'color/os/fedora' | 'color/os/ios' | 'color/os/linux' | 'color/os/macos' | 'color/os/microsoft' | 'color/os/ubuntu' | 'color/os/unkown' | 'color/safari' | 'color/ubuntu' | 'color/us' | 'columns-gap' | 'console/error' | 'console/exception' | 'console/info' | 'console/warning' | 'console' | 'controller' | 'cookies' | 'copy' | 'credit-card-2-back' | 'cross' | 'cubes' | 'cursor-trash' | 'dash' | 'dashboard-icn' | 'db-icons/icn-card-clickMap' | 'db-icons/icn-card-errors' | 'db-icons/icn-card-funnel' | 'db-icons/icn-card-funnels' | 'db-icons/icn-card-insights' | 'db-icons/icn-card-library' | 'db-icons/icn-card-mapchart' | 'db-icons/icn-card-pathAnalysis' | 'db-icons/icn-card-performance' | 'db-icons/icn-card-resources' | 'db-icons/icn-card-table' | 'db-icons/icn-card-timeseries' | 'db-icons/icn-card-webVitals' | 'desktop' | 'device' | 'diagram-3' | 'dizzy' | 'door-closed' | 'download' | 'drag' | 'edit' | 'ellipsis-v' | 'emoji-dizzy' | 'enter' | 'envelope-check' | 'envelope-paper' | 'envelope-x' | 'envelope' | 'errors-icon' | 'event/click' | 'event/click_hesitation' | 'event/clickrage' | 'event/code' | 'event/i-cursor' | 'event/input' | 'event/input_hesitation' | 'event/link' | 'event/location' | 'event/mouse_thrashing' | 'event/resize' | 'event/view' | 'exclamation-circle-fill' | 'exclamation-circle' | 'exclamation-triangle' | 'explosion' | 'external-link-alt' | 'eye-slash-fill' | 'eye-slash' | 'eye' | 'fetch' | 'fflag-multi' | 'fflag-single' | 'file-bar-graph' | 'file-code' | 'file-medical-alt' | 'file-pdf' | 'file' | 'files' | 'filetype-js' | 'filetype-pdf' | 'filter' | 'filters/arrow-return-right' | 'filters/browser' | 'filters/chevrons-up-down' | 'filters/click' | 'filters/clickrage' | 'filters/code' | 'filters/console' | 'filters/country' | 'filters/cpu-load' | 'filters/custom' | 'filters/device' | 'filters/dom-complete' | 'filters/duration' | 'filters/error' | 'filters/fetch-failed' | 'filters/fetch' | 'filters/file-code' | 'filters/graphql' | 'filters/i-cursor' | 'filters/input' | 'filters/lcpt' | 'filters/link' | 'filters/location' | 'filters/memory-load' | 'filters/metadata' | 'filters/os' | 'filters/perfromance-network-request' | 'filters/platform' | 'filters/referrer' | 'filters/resize' | 'filters/rev-id' | 'filters/screen' | 'filters/state-action' | 'filters/tag-element' | 'filters/ttfb' | 'filters/user-alt' | 'filters/userid' | 'filters/view' | 'flag-na' | 'folder-plus' | 'folder2' | 'fullscreen' | 'funnel/cpu-fill' | 'funnel/cpu' | 'funnel/dizzy' | 'funnel/emoji-angry-fill' | 'funnel/emoji-angry' | 'funnel/emoji-dizzy-fill' | 'funnel/exclamation-circle-fill' | 'funnel/exclamation-circle' | 'funnel/file-earmark-break-fill' | 'funnel/file-earmark-break' | 'funnel/file-earmark-minus-fill' | 'funnel/file-earmark-minus' | 'funnel/file-medical-alt' | 'funnel/file-x' | 'funnel/hdd-fill' | 'funnel/hourglass-top' | 'funnel/image-fill' | 'funnel/image' | 'funnel/microchip' | 'funnel/mouse' | 'funnel/patch-exclamation-fill' | 'funnel/sd-card' | 'funnel-fill' | 'funnel' | 'gear' | 'github' | 'graph-up' | 'grid-3x3' | 'grid-check' | 'grid' | 'hash' | 'headset' | 'history' | 'ic-errors' | 'ic-network' | 'ic-rage' | 'ic-resources' | 'id-card' | 'image' | 'info-circle-fill' | 'info-circle' | 'info-square' | 'info' | 'input-hesitation' | 'inspect' | 'integrations/assist' | 'integrations/bugsnag-text' | 'integrations/bugsnag' | 'integrations/cloudwatch-text' | 'integrations/cloudwatch' | 'integrations/datadog' | 'integrations/elasticsearch-text' | 'integrations/elasticsearch' | 'integrations/github' | 'integrations/graphql' | 'integrations/jira-text' | 'integrations/jira' | 'integrations/mobx' | 'integrations/newrelic-text' | 'integrations/newrelic' | 'integrations/ngrx' | 'integrations/openreplay-text' | 'integrations/openreplay' | 'integrations/redux' | 'integrations/rollbar-text' | 'integrations/rollbar' | 'integrations/segment' | 'integrations/sentry-text' | 'integrations/sentry' | 'integrations/slack-bw' | 'integrations/slack' | 'integrations/stackdriver' | 'integrations/sumologic-text' | 'integrations/sumologic' | 'integrations/teams-white' | 'integrations/teams' | 'integrations/vuejs' | 'integrations/zustand' | 'journal-code' | 'key' | 'keyboard' | 'layers-half' | 'lightbulb-on' | 'lightbulb' | 'link-45deg' | 'list-alt' | 'list-ul' | 'list' | 'low-disc-space' | 'magic' | 'map-marker-alt' | 'memory-ios' | 'memory' | 'mic-mute' | 'mic' | 'minus' | 'mobile' | 'mouse-alt' | 'mouse-pointer-click' | 'network' | 'next1' | 'no-dashboard' | 'no-metrics-chart' | 'no-metrics' | 'no-recordings' | 'orSpot' | 'os/android' | 'os/chrome_os' | 'os/fedora' | 'os/ios' | 'os/linux' | 'os/mac_os_x' | 'os/other' | 'os/ubuntu' | 'os/windows' | 'os' | 'pause-circle-fill' | 'pause-fill' | 'pause' | 'pdf-download' | 'pencil-stop' | 'pencil' | 'people' | 'percent' | 'performance-icon' | 'person-border' | 'person-fill' | 'person' | 'pie-chart-fill' | 'pin-fill' | 'play-circle-bold' | 'play-circle-light' | 'play-circle' | 'play-fill-new' | 'play-fill' | 'play-hover' | 'play' | 'plug' | 'plus-circle' | 'plus' | 'prev1' | 'pulse' | 'puzzle-piece' | 'puzzle' | 'question-circle' | 'question-lg' | 'quotes' | 'record-circle-fill' | 'record-circle' | 'record2' | 'redo' | 'redux' | 'remote-control' | 'resources-icon' | 'safe' | 'sandglass' | 'search' | 'server' | 'share-alt' | 'shield-lock' | 'side_menu_closed' | 'side_menu_open' | 'signpost-split' | 'signup' | 'slack' | 'slash-circle' | 'sleep' | 'sliders' | 'social/slack' | 'social/trello' | 'sparkles' | 'speedometer2' | 'spinner' | 'star' | 'step-forward' | 'stickies' | 'stop-record-circle' | 'stopwatch' | 'store' | 'sync-alt' | 'table' | 'tags' | 'terminal' | 'thermometer-sun' | 'toggles' | 'tools' | 'trash' | 'turtle' | 'user-alt' | 'user-circle' | 'user-friends' | 'user-switch' | 'users' | 'vendors/graphql' | 'web-vitals' | 'wifi' | 'window-x' | 'window' | 'zoom-in';
 
 interface Props {
     name: IconNames;
@@ -576,23 +483,11 @@ const SVG = (props: Props) => {
     
     case 'activity': return <Activity width={ width } height={ height } fill={ fill } />;
   
-    // case 'alarm-clock':
-    case 'alarm-clock': return <Alarm_clock width={ width } height={ height } fill={ fill } />;
-  
-    // case 'alarm-plus':
-    case 'alarm-plus': return <Alarm_plus width={ width } height={ height } fill={ fill } />;
-  
-    // case 'all-sessions':
-    case 'all-sessions': return <All_sessions width={ width } height={ height } fill={ fill } />;
-  
     
     case 'analytics': return <Analytics width={ width } height={ height } fill={ fill } />;
   
     
     case 'anchor': return <Anchor width={ width } height={ height } fill={ fill } />;
-  
-    // case 'arrow-alt-square-right':
-    case 'arrow-alt-square-right': return <Arrow_alt_square_right width={ width } height={ height } fill={ fill } />;
   
     // case 'arrow-bar-left':
     case 'arrow-bar-left': return <Arrow_bar_left width={ width } height={ height } fill={ fill } />;
@@ -618,20 +513,11 @@ const SVG = (props: Props) => {
     // case 'arrow-right-short':
     case 'arrow-right-short': return <Arrow_right_short width={ width } height={ height } fill={ fill } />;
   
-    // case 'arrow-square-left':
-    case 'arrow-square-left': return <Arrow_square_left width={ width } height={ height } fill={ fill } />;
-  
-    // case 'arrow-square-right':
-    case 'arrow-square-right': return <Arrow_square_right width={ width } height={ height } fill={ fill } />;
-  
     // case 'arrow-up-short':
     case 'arrow-up-short': return <Arrow_up_short width={ width } height={ height } fill={ fill } />;
   
     // case 'arrow-up':
     case 'arrow-up': return <Arrow_up width={ width } height={ height } fill={ fill } />;
-  
-    // case 'arrows-angle-extend':
-    case 'arrows-angle-extend': return <Arrows_angle_extend width={ width } height={ height } fill={ fill } />;
   
     // case 'avatar/icn_avatar1':
     case 'avatar/icn_avatar1': return <Avatar_icn_avatar1 width={ width } height={ height } fill={ fill } />;
@@ -717,9 +603,6 @@ const SVG = (props: Props) => {
     
     case 'battery': return <Battery width={ width } height={ height } fill={ fill } />;
   
-    // case 'bell-fill':
-    case 'bell-fill': return <Bell_fill width={ width } height={ height } fill={ fill } />;
-  
     // case 'bell-plus':
     case 'bell-plus': return <Bell_plus width={ width } height={ height } fill={ fill } />;
   
@@ -731,9 +614,6 @@ const SVG = (props: Props) => {
   
     
     case 'binoculars': return <Binoculars width={ width } height={ height } fill={ fill } />;
-  
-    // case 'book-doc':
-    case 'book-doc': return <Book_doc width={ width } height={ height } fill={ fill } />;
   
     
     case 'book': return <Book width={ width } height={ height } fill={ fill } />;
@@ -777,26 +657,11 @@ const SVG = (props: Props) => {
     
     case 'bullhorn': return <Bullhorn width={ width } height={ height } fill={ fill } />;
   
-    // case 'business-time':
-    case 'business-time': return <Business_time width={ width } height={ height } fill={ fill } />;
-  
-    // case 'calendar-alt':
-    case 'calendar-alt': return <Calendar_alt width={ width } height={ height } fill={ fill } />;
-  
-    // case 'calendar-check':
-    case 'calendar-check': return <Calendar_check width={ width } height={ height } fill={ fill } />;
-  
-    // case 'calendar-day':
-    case 'calendar-day': return <Calendar_day width={ width } height={ height } fill={ fill } />;
-  
     
     case 'calendar': return <Calendar width={ width } height={ height } fill={ fill } />;
   
     
     case 'call': return <Call width={ width } height={ height } fill={ fill } />;
-  
-    // case 'camera-alt':
-    case 'camera-alt': return <Camera_alt width={ width } height={ height } fill={ fill } />;
   
     // case 'camera-video-off':
     case 'camera-video-off': return <Camera_video_off width={ width } height={ height } fill={ fill } />;
@@ -807,35 +672,17 @@ const SVG = (props: Props) => {
     
     case 'camera': return <Camera width={ width } height={ height } fill={ fill } />;
   
-    // case 'card-checklist':
-    case 'card-checklist': return <Card_checklist width={ width } height={ height } fill={ fill } />;
-  
-    // case 'card-list':
-    case 'card-list': return <Card_list width={ width } height={ height } fill={ fill } />;
-  
     // case 'card-text':
     case 'card-text': return <Card_text width={ width } height={ height } fill={ fill } />;
   
     // case 'caret-down-fill':
     case 'caret-down-fill': return <Caret_down_fill width={ width } height={ height } fill={ fill } />;
   
-    // case 'caret-left-fill':
-    case 'caret-left-fill': return <Caret_left_fill width={ width } height={ height } fill={ fill } />;
-  
     // case 'caret-right-fill':
     case 'caret-right-fill': return <Caret_right_fill width={ width } height={ height } fill={ fill } />;
   
-    // case 'caret-up-fill':
-    case 'caret-up-fill': return <Caret_up_fill width={ width } height={ height } fill={ fill } />;
-  
-    // case 'chat-dots':
-    case 'chat-dots': return <Chat_dots width={ width } height={ height } fill={ fill } />;
-  
     // case 'chat-left-text':
     case 'chat-left-text': return <Chat_left_text width={ width } height={ height } fill={ fill } />;
-  
-    // case 'chat-right-text':
-    case 'chat-right-text': return <Chat_right_text width={ width } height={ height } fill={ fill } />;
   
     // case 'chat-square-quote':
     case 'chat-square-quote': return <Chat_square_quote width={ width } height={ height } fill={ fill } />;
@@ -848,12 +695,6 @@ const SVG = (props: Props) => {
   
     
     case 'check': return <Check width={ width } height={ height } fill={ fill } />;
-  
-    // case 'chevron-double-left':
-    case 'chevron-double-left': return <Chevron_double_left width={ width } height={ height } fill={ fill } />;
-  
-    // case 'chevron-double-right':
-    case 'chevron-double-right': return <Chevron_double_right width={ width } height={ height } fill={ fill } />;
   
     // case 'chevron-down':
     case 'chevron-down': return <Chevron_down width={ width } height={ height } fill={ fill } />;
@@ -882,9 +723,6 @@ const SVG = (props: Props) => {
     // case 'clipboard-check':
     case 'clipboard-check': return <Clipboard_check width={ width } height={ height } fill={ fill } />;
   
-    // case 'clipboard-list-check':
-    case 'clipboard-list-check': return <Clipboard_list_check width={ width } height={ height } fill={ fill } />;
-  
     // case 'clock-history':
     case 'clock-history': return <Clock_history width={ width } height={ height } fill={ fill } />;
   
@@ -893,9 +731,6 @@ const SVG = (props: Props) => {
   
     
     case 'close': return <Close width={ width } height={ height } fill={ fill } />;
-  
-    // case 'cloud-fog2-fill':
-    case 'cloud-fog2-fill': return <Cloud_fog2_fill width={ width } height={ height } fill={ fill } />;
   
     
     case 'code': return <Code width={ width } height={ height } fill={ fill } />;
@@ -915,32 +750,11 @@ const SVG = (props: Props) => {
     // case 'color/apple':
     case 'color/apple': return <Color_apple width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/browser/Tor':
-    case 'color/browser/Tor': return <Color_browser_tor width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/applebot':
-    case 'color/browser/applebot': return <Color_browser_applebot width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/browser/chrome':
     case 'color/browser/chrome': return <Color_browser_chrome width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/browser/chrome_mobile':
-    case 'color/browser/chrome_mobile': return <Color_browser_chrome_mobile width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/chrome_mobile_ios':
-    case 'color/browser/chrome_mobile_ios': return <Color_browser_chrome_mobile_ios width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/duck_duck_go':
-    case 'color/browser/duck_duck_go': return <Color_browser_duck_duck_go width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/duckduckgo_mobile':
-    case 'color/browser/duckduckgo_mobile': return <Color_browser_duckduckgo_mobile width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/browser/edge':
     case 'color/browser/edge': return <Color_browser_edge width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/edge_mobile':
-    case 'color/browser/edge_mobile': return <Color_browser_edge_mobile width={ width } height={ height } fill={ fill } />;
   
     // case 'color/browser/facebook':
     case 'color/browser/facebook': return <Color_browser_facebook width={ width } height={ height } fill={ fill } />;
@@ -948,32 +762,8 @@ const SVG = (props: Props) => {
     // case 'color/browser/firefox':
     case 'color/browser/firefox': return <Color_browser_firefox width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/browser/firefox_ios':
-    case 'color/browser/firefox_ios': return <Color_browser_firefox_ios width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/firefox_mobile':
-    case 'color/browser/firefox_mobile': return <Color_browser_firefox_mobile width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/browser/google':
     case 'color/browser/google': return <Color_browser_google width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/googlebot':
-    case 'color/browser/googlebot': return <Color_browser_googlebot width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/huawei_browser':
-    case 'color/browser/huawei_browser': return <Color_browser_huawei_browser width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/internet_explorer':
-    case 'color/browser/internet_explorer': return <Color_browser_internet_explorer width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/miui_browser':
-    case 'color/browser/miui_browser': return <Color_browser_miui_browser width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/mobile_safari':
-    case 'color/browser/mobile_safari': return <Color_browser_mobile_safari width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/mobile_safari_ui':
-    case 'color/browser/mobile_safari_ui': return <Color_browser_mobile_safari_ui width={ width } height={ height } fill={ fill } />;
   
     // case 'color/browser/opera':
     case 'color/browser/opera': return <Color_browser_opera width={ width } height={ height } fill={ fill } />;
@@ -981,20 +771,11 @@ const SVG = (props: Props) => {
     // case 'color/browser/safari':
     case 'color/browser/safari': return <Color_browser_safari width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/browser/samsung_internet':
-    case 'color/browser/samsung_internet': return <Color_browser_samsung_internet width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/uc_browser':
-    case 'color/browser/uc_browser': return <Color_browser_uc_browser width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/browser/unknown':
     case 'color/browser/unknown': return <Color_browser_unknown width={ width } height={ height } fill={ fill } />;
   
     // case 'color/browser/whale':
     case 'color/browser/whale': return <Color_browser_whale width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/browser/yandex_browser':
-    case 'color/browser/yandex_browser': return <Color_browser_yandex_browser width={ width } height={ height } fill={ fill } />;
   
     // case 'color/chrome':
     case 'color/chrome': return <Color_chrome width={ width } height={ height } fill={ fill } />;
@@ -1022,9 +803,6 @@ const SVG = (props: Props) => {
   
     // case 'color/device/mobile':
     case 'color/device/mobile': return <Color_device_mobile width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/device/other_phone':
-    case 'color/device/other_phone': return <Color_device_other_phone width={ width } height={ height } fill={ fill } />;
   
     // case 'color/device/tablet':
     case 'color/device/tablet': return <Color_device_tablet width={ width } height={ height } fill={ fill } />;
@@ -1101,32 +879,17 @@ const SVG = (props: Props) => {
     // case 'color/os/apple':
     case 'color/os/apple': return <Color_os_apple width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/os/blackberry':
-    case 'color/os/blackberry': return <Color_os_blackberry width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/os/chrome_os':
-    case 'color/os/chrome_os': return <Color_os_chrome_os width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/os/elementary':
     case 'color/os/elementary': return <Color_os_elementary width={ width } height={ height } fill={ fill } />;
   
     // case 'color/os/fedora':
     case 'color/os/fedora': return <Color_os_fedora width={ width } height={ height } fill={ fill } />;
   
-    // case 'color/os/freebsd':
-    case 'color/os/freebsd': return <Color_os_freebsd width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/os/gnome':
-    case 'color/os/gnome': return <Color_os_gnome width={ width } height={ height } fill={ fill } />;
-  
     // case 'color/os/ios':
     case 'color/os/ios': return <Color_os_ios width={ width } height={ height } fill={ fill } />;
   
     // case 'color/os/linux':
     case 'color/os/linux': return <Color_os_linux width={ width } height={ height } fill={ fill } />;
-  
-    // case 'color/os/linux_mint':
-    case 'color/os/linux_mint': return <Color_os_linux_mint width={ width } height={ height } fill={ fill } />;
   
     // case 'color/os/macos':
     case 'color/os/macos': return <Color_os_macos width={ width } height={ height } fill={ fill } />;
@@ -1148,9 +911,6 @@ const SVG = (props: Props) => {
   
     // case 'color/us':
     case 'color/us': return <Color_us width={ width } height={ height } fill={ fill } />;
-  
-    // case 'columns-gap-filled':
-    case 'columns-gap-filled': return <Columns_gap_filled width={ width } height={ height } fill={ fill } />;
   
     // case 'columns-gap':
     case 'columns-gap': return <Columns_gap width={ width } height={ height } fill={ fill } />;
@@ -1181,9 +941,6 @@ const SVG = (props: Props) => {
   
     // case 'credit-card-2-back':
     case 'credit-card-2-back': return <Credit_card_2_back width={ width } height={ height } fill={ fill } />;
-  
-    // case 'credit-card-front':
-    case 'credit-card-front': return <Credit_card_front width={ width } height={ height } fill={ fill } />;
   
     
     case 'cross': return <Cross width={ width } height={ height } fill={ fill } />;
@@ -1248,17 +1005,11 @@ const SVG = (props: Props) => {
     // case 'diagram-3':
     case 'diagram-3': return <Diagram_3 width={ width } height={ height } fill={ fill } />;
   
-    // case 'dice-3':
-    case 'dice-3': return <Dice_3 width={ width } height={ height } fill={ fill } />;
-  
     
     case 'dizzy': return <Dizzy width={ width } height={ height } fill={ fill } />;
   
     // case 'door-closed':
     case 'door-closed': return <Door_closed width={ width } height={ height } fill={ fill } />;
-  
-    
-    case 'doublecheck': return <Doublecheck width={ width } height={ height } fill={ fill } />;
   
     
     case 'download': return <Download width={ width } height={ height } fill={ fill } />;
@@ -1337,9 +1088,6 @@ const SVG = (props: Props) => {
   
     // case 'exclamation-triangle':
     case 'exclamation-triangle': return <Exclamation_triangle width={ width } height={ height } fill={ fill } />;
-  
-    // case 'expand-wide':
-    case 'expand-wide': return <Expand_wide width={ width } height={ height } fill={ fill } />;
   
     
     case 'explosion': return <Explosion width={ width } height={ height } fill={ fill } />;
@@ -1587,32 +1335,17 @@ const SVG = (props: Props) => {
     // case 'funnel-fill':
     case 'funnel-fill': return <Funnel_fill width={ width } height={ height } fill={ fill } />;
   
-    // case 'funnel-new':
-    case 'funnel-new': return <Funnel_new width={ width } height={ height } fill={ fill } />;
-  
     
     case 'funnel': return <Funnel width={ width } height={ height } fill={ fill } />;
-  
-    // case 'gear-fill':
-    case 'gear-fill': return <Gear_fill width={ width } height={ height } fill={ fill } />;
   
     
     case 'gear': return <Gear width={ width } height={ height } fill={ fill } />;
   
-    // case 'geo-alt-fill-custom':
-    case 'geo-alt-fill-custom': return <Geo_alt_fill_custom width={ width } height={ height } fill={ fill } />;
-  
     
     case 'github': return <Github width={ width } height={ height } fill={ fill } />;
   
-    // case 'graph-up-arrow':
-    case 'graph-up-arrow': return <Graph_up_arrow width={ width } height={ height } fill={ fill } />;
-  
     // case 'graph-up':
     case 'graph-up': return <Graph_up width={ width } height={ height } fill={ fill } />;
-  
-    // case 'grid-1x2':
-    case 'grid-1x2': return <Grid_1x2 width={ width } height={ height } fill={ fill } />;
   
     // case 'grid-3x3':
     case 'grid-3x3': return <Grid_3x3 width={ width } height={ height } fill={ fill } />;
@@ -1620,35 +1353,17 @@ const SVG = (props: Props) => {
     // case 'grid-check':
     case 'grid-check': return <Grid_check width={ width } height={ height } fill={ fill } />;
   
-    // case 'grid-horizontal':
-    case 'grid-horizontal': return <Grid_horizontal width={ width } height={ height } fill={ fill } />;
-  
     
     case 'grid': return <Grid width={ width } height={ height } fill={ fill } />;
-  
-    // case 'grip-horizontal':
-    case 'grip-horizontal': return <Grip_horizontal width={ width } height={ height } fill={ fill } />;
   
     
     case 'hash': return <Hash width={ width } height={ height } fill={ fill } />;
   
-    // case 'hdd-stack':
-    case 'hdd-stack': return <Hdd_stack width={ width } height={ height } fill={ fill } />;
-  
     
     case 'headset': return <Headset width={ width } height={ height } fill={ fill } />;
   
-    // case 'heart-rate':
-    case 'heart-rate': return <Heart_rate width={ width } height={ height } fill={ fill } />;
-  
-    // case 'high-engagement':
-    case 'high-engagement': return <High_engagement width={ width } height={ height } fill={ fill } />;
-  
     
     case 'history': return <History width={ width } height={ height } fill={ fill } />;
-  
-    // case 'hourglass-start':
-    case 'hourglass-start': return <Hourglass_start width={ width } height={ height } fill={ fill } />;
   
     // case 'ic-errors':
     case 'ic-errors': return <Ic_errors width={ width } height={ height } fill={ fill } />;
@@ -1794,9 +1509,6 @@ const SVG = (props: Props) => {
     
     case 'keyboard': return <Keyboard width={ width } height={ height } fill={ fill } />;
   
-    // case 'layer-group':
-    case 'layer-group': return <Layer_group width={ width } height={ height } fill={ fill } />;
-  
     // case 'layers-half':
     case 'layers-half': return <Layers_half width={ width } height={ height } fill={ fill } />;
   
@@ -1812,17 +1524,11 @@ const SVG = (props: Props) => {
     // case 'list-alt':
     case 'list-alt': return <List_alt width={ width } height={ height } fill={ fill } />;
   
-    // case 'list-arrow':
-    case 'list-arrow': return <List_arrow width={ width } height={ height } fill={ fill } />;
-  
     // case 'list-ul':
     case 'list-ul': return <List_ul width={ width } height={ height } fill={ fill } />;
   
     
     case 'list': return <List width={ width } height={ height } fill={ fill } />;
-  
-    // case 'lock-alt':
-    case 'lock-alt': return <Lock_alt width={ width } height={ height } fill={ fill } />;
   
     // case 'low-disc-space':
     case 'low-disc-space': return <Low_disc_space width={ width } height={ height } fill={ fill } />;
@@ -1977,14 +1683,8 @@ const SVG = (props: Props) => {
     // case 'plus-circle':
     case 'plus-circle': return <Plus_circle width={ width } height={ height } fill={ fill } />;
   
-    // case 'plus-lg':
-    case 'plus-lg': return <Plus_lg width={ width } height={ height } fill={ fill } />;
-  
     
     case 'plus': return <Plus width={ width } height={ height } fill={ fill } />;
-  
-    // case 'pointer-sessions-search':
-    case 'pointer-sessions-search': return <Pointer_sessions_search width={ width } height={ height } fill={ fill } />;
   
     
     case 'prev1': return <Prev1 width={ width } height={ height } fill={ fill } />;
@@ -2004,17 +1704,8 @@ const SVG = (props: Props) => {
     // case 'question-lg':
     case 'question-lg': return <Question_lg width={ width } height={ height } fill={ fill } />;
   
-    // case 'quote-left':
-    case 'quote-left': return <Quote_left width={ width } height={ height } fill={ fill } />;
-  
-    // case 'quote-right':
-    case 'quote-right': return <Quote_right width={ width } height={ height } fill={ fill } />;
-  
     
     case 'quotes': return <Quotes width={ width } height={ height } fill={ fill } />;
-  
-    // case 'record-btn':
-    case 'record-btn': return <Record_btn width={ width } height={ height } fill={ fill } />;
   
     // case 'record-circle-fill':
     case 'record-circle-fill': return <Record_circle_fill width={ width } height={ height } fill={ fill } />;
@@ -2025,9 +1716,6 @@ const SVG = (props: Props) => {
     
     case 'record2': return <Record2 width={ width } height={ height } fill={ fill } />;
   
-    // case 'redo-back':
-    case 'redo-back': return <Redo_back width={ width } height={ height } fill={ fill } />;
-  
     
     case 'redo': return <Redo width={ width } height={ height } fill={ fill } />;
   
@@ -2037,14 +1725,8 @@ const SVG = (props: Props) => {
     // case 'remote-control':
     case 'remote-control': return <Remote_control width={ width } height={ height } fill={ fill } />;
   
-    // case 'replay-10':
-    case 'replay-10': return <Replay_10 width={ width } height={ height } fill={ fill } />;
-  
     // case 'resources-icon':
     case 'resources-icon': return <Resources_icon width={ width } height={ height } fill={ fill } />;
-  
-    // case 'safe-fill':
-    case 'safe-fill': return <Safe_fill width={ width } height={ height } fill={ fill } />;
   
     
     case 'safe': return <Safe width={ width } height={ height } fill={ fill } />;
@@ -2054,9 +1736,6 @@ const SVG = (props: Props) => {
   
     
     case 'search': return <Search width={ width } height={ height } fill={ fill } />;
-  
-    
-    case 'search_notification': return <Search_notification width={ width } height={ height } fill={ fill } />;
   
     
     case 'server': return <Server width={ width } height={ height } fill={ fill } />;
@@ -2078,12 +1757,6 @@ const SVG = (props: Props) => {
   
     
     case 'signup': return <Signup width={ width } height={ height } fill={ fill } />;
-  
-    // case 'skip-forward-fill':
-    case 'skip-forward-fill': return <Skip_forward_fill width={ width } height={ height } fill={ fill } />;
-  
-    // case 'skip-forward':
-    case 'skip-forward': return <Skip_forward width={ width } height={ height } fill={ fill } />;
   
     
     case 'slack': return <Slack width={ width } height={ height } fill={ fill } />;
@@ -2112,9 +1785,6 @@ const SVG = (props: Props) => {
     
     case 'spinner': return <Spinner width={ width } height={ height } fill={ fill } />;
   
-    // case 'star-solid':
-    case 'star-solid': return <Star_solid width={ width } height={ height } fill={ fill } />;
-  
     
     case 'star': return <Star width={ width } height={ height } fill={ fill } />;
   
@@ -2136,38 +1806,14 @@ const SVG = (props: Props) => {
     // case 'sync-alt':
     case 'sync-alt': return <Sync_alt width={ width } height={ height } fill={ fill } />;
   
-    // case 'table-new':
-    case 'table-new': return <Table_new width={ width } height={ height } fill={ fill } />;
-  
     
     case 'table': return <Table width={ width } height={ height } fill={ fill } />;
-  
-    // case 'tablet-android':
-    case 'tablet-android': return <Tablet_android width={ width } height={ height } fill={ fill } />;
-  
-    // case 'tachometer-slow':
-    case 'tachometer-slow': return <Tachometer_slow width={ width } height={ height } fill={ fill } />;
-  
-    // case 'tachometer-slowest':
-    case 'tachometer-slowest': return <Tachometer_slowest width={ width } height={ height } fill={ fill } />;
   
     
     case 'tags': return <Tags width={ width } height={ height } fill={ fill } />;
   
-    // case 'team-funnel':
-    case 'team-funnel': return <Team_funnel width={ width } height={ height } fill={ fill } />;
-  
-    // case 'telephone-fill':
-    case 'telephone-fill': return <Telephone_fill width={ width } height={ height } fill={ fill } />;
-  
-    
-    case 'telephone': return <Telephone width={ width } height={ height } fill={ fill } />;
-  
     
     case 'terminal': return <Terminal width={ width } height={ height } fill={ fill } />;
-  
-    // case 'text-paragraph':
-    case 'text-paragraph': return <Text_paragraph width={ width } height={ height } fill={ fill } />;
   
     // case 'thermometer-sun':
     case 'thermometer-sun': return <Thermometer_sun width={ width } height={ height } fill={ fill } />;
@@ -2202,29 +1848,11 @@ const SVG = (props: Props) => {
     // case 'vendors/graphql':
     case 'vendors/graphql': return <Vendors_graphql width={ width } height={ height } fill={ fill } />;
   
-    // case 'vendors/mobx':
-    case 'vendors/mobx': return <Vendors_mobx width={ width } height={ height } fill={ fill } />;
-  
-    // case 'vendors/ngrx':
-    case 'vendors/ngrx': return <Vendors_ngrx width={ width } height={ height } fill={ fill } />;
-  
-    // case 'vendors/redux':
-    case 'vendors/redux': return <Vendors_redux width={ width } height={ height } fill={ fill } />;
-  
-    // case 'vendors/vuex':
-    case 'vendors/vuex': return <Vendors_vuex width={ width } height={ height } fill={ fill } />;
-  
     // case 'web-vitals':
     case 'web-vitals': return <Web_vitals width={ width } height={ height } fill={ fill } />;
   
     
     case 'wifi': return <Wifi width={ width } height={ height } fill={ fill } />;
-  
-    // case 'window-alt':
-    case 'window-alt': return <Window_alt width={ width } height={ height } fill={ fill } />;
-  
-    // case 'window-restore':
-    case 'window-restore': return <Window_restore width={ width } height={ height } fill={ fill } />;
   
     // case 'window-x':
     case 'window-x': return <Window_x width={ width } height={ height } fill={ fill } />;
@@ -2236,9 +1864,7 @@ const SVG = (props: Props) => {
     case 'zoom-in': return <Zoom_in width={ width } height={ height } fill={ fill } />;
   
 default:
-        return <svg width={ width } height={ height } />;
-            // if (window.ENV.PRODUCTION) return null;
-            // throw "unknown icon name " + name;
+        throw new Error('Unknown icon name ' + name);
     }
 }
 SVG.displayName = 'SVG';
