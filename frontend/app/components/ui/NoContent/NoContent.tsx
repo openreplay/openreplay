@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { InfoCircleOutlined } from '@ant-design/icons'
 import styles from './noContent.module.css';
 
 interface Props {

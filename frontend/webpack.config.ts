@@ -11,8 +11,6 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 const stylesHandler = MiniCssExtractPlugin.loader;
 const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
 import pathAlias from './path-alias';
-// @ts-ignore
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration
@@ -111,7 +109,6 @@ const config: Configuration = {
     },
   },
   plugins: [
-    new BundleAnalyzerPlugin(),
     new CompressionPlugin(),
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
