@@ -2,8 +2,12 @@ package auth
 
 import "fmt"
 
-func (a *authImpl) IsAuthorized(authHeader string, permissions []string) (*User, error) {
-	jwtInfo, err := parseJWT(authHeader, a.secret)
+func (a *authImpl) IsAuthorized(authHeader string, permissions []string, isExtension bool) (*User, error) {
+	secret := a.secret
+	if isExtension {
+		secret = a.spotSecret
+	}
+	jwtInfo, err := parseJWT(authHeader, secret)
 	if err != nil {
 		return nil, err
 	}
