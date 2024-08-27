@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Spot"
+  },
+  "extDescription": {
+    "message": "Spot enables a super-fast way to report bugs, providing engineers with all the context they need to fix them."
+  },
+  "someAppText": {
+    "message": "Some translated text"
+  }
+}
