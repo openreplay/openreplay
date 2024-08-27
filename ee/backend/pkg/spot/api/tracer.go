@@ -53,5 +53,5 @@ func (e *Router) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {
 	userData := r.Context().Value("userData").(*auth.User)
 	e.services.Tracer.Trace(userData, requestData)
 	// DEBUG
-	e.log.Info(r.Context(), "request data: %v", data)
+	e.log.Info(r.Context(), "request data: %v", requestData)
 }
