@@ -136,9 +136,7 @@ ${iconPaths.map(icon => {
   `}
 ).join('')}
 default:
-        return <svg width={ width } height={ height } />;
-            // if (window.ENV.PRODUCTION) return null;
-            // throw "unknown icon name " + name;
+        throw new Error('Unknown icon name ' + name);
     }
 }
 SVG.displayName = 'SVG';
