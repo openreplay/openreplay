@@ -2,6 +2,7 @@ import { message } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
+import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'App/components/hocs/withPermissions';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -162,4 +163,5 @@ function SpotsList() {
   );
 }
 
-export default withPermissions(['SPOT'])(observer(SpotsList));
+export default withPermissions(['SPOT'])(withPageTitle('Spot List - OpenReplay')(observer(SpotsList)));
+

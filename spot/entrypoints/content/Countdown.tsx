@@ -37,9 +37,9 @@ function Countdown(props: {
   const audioPerm = props.getAudioPerm();
 
   const audioPrompt = {
-    0: "Microphone permission isn't granted yet",
-    1: "Microphone access is enabled. Unmute anytime to add voice over",
-    2: "Microphone is enabled"
+    0: "Microphone permission isn't granted yet.",
+    1: "Microphone access is enabled. Unmute anytime to add voice over.",
+    2: "Microphone is enabled."
   }
 
   return (
