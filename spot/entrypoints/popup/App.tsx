@@ -3,7 +3,7 @@ import micOff from "@/assets/mic-off-red.svg";
 import micOn from "@/assets/mic-on.svg";
 import Login from "@/entrypoints/popup/Login";
 import Settings from "@/entrypoints/popup/Settings";
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, createEffect, onMount } from "solid-js";
 import Dropdown from "@/entrypoints/popup/Dropdown";
 import Button from "@/entrypoints/popup/Button";
 
@@ -161,8 +161,12 @@ function App() {
   const [mic, setMic] = createSignal(false);
   const [selectedAudioDevice, setSelectedAudioDevice] = createSignal("");
 
-  createEffect(() => {
-    // void checkAudioDevices();
+  onMount(() => {
+    chrome.storage.local.get("audioPerm", (data) => {
+      if (data.audioPerm) {
+        void checkAudioDevices();
+      }
+    })
     browser.runtime.onMessage.addListener((message) => {
       console.log(message);
       if (message.type === "popup:no-login") {
@@ -181,9 +185,6 @@ function App() {
         setMic(message.status);
       }
     });
-  });
-
-  createEffect(() => {
     void browser.runtime.sendMessage({ type: "popup:check-status" });
   });
 
@@ -209,6 +210,7 @@ function App() {
 
   const checkAudioDevices = async () => {
     const { granted, audioDevices, denied } = await getAudioDevices();
+    chrome.storage.local.set({ audioPerm: granted });
     if (!granted && !denied) {
       void browser.runtime.sendMessage({
         type: "popup:get-audio-perm",
@@ -341,12 +343,6 @@ interface IAudioPicker {
 }
 function AudioPicker(props: IAudioPicker) {
   const [checkAudioDevices, setCheckAudioDevices] = createSignal(false);
-
-  createEffect(() => {
-    if (props.audioDevices().length) {
-      onSelect(props.audioDevices()[0].id);
-    }
-  })
 
   const checkAudio = async () => {
     if (checkAudioDevices()) {
