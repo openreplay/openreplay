@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 import orLogo from "@/assets/orSpot.svg";
 import arrowLeft from "@/assets/arrow-left.svg";
 
@@ -12,7 +12,7 @@ function Settings({ goBack }: { goBack: () => void }) {
   const [tempIngest, setTempIngest] = createSignal("");
 
   // Fetch settings from Chrome local storage when the component mounts
-  createEffect(() => {
+  onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
         const devToolsEnabled =
