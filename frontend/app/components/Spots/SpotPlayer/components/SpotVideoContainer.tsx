@@ -171,15 +171,15 @@ function SpotVideoContainer({
         <div>This video is being processed</div>
       ) : null}
       {!isLoaded && (
-        <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 from-10%  to-emerald-500/50 to-90%">
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">
           <img
             src={'../assets/img/videoProcessing.svg'}
-            alt={'Optimizing video..'}
+            alt={'Processing video..'}
             width={75}
             className="mb-5"
           />
-          <div className={'text-2xl font-bold color-white '}>
-            Optimizing Spot Recording
+          <div className={'text-2xl font-bold'}>
+            Processing Spot Recording
           </div>
         </div>
       )}
