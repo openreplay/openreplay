@@ -29,6 +29,7 @@ interface IControlsBox {
   getInitState: () => string;
   onRestart: () => void;
   getErrorEvents: () => Promise<any>;
+  getAudioPerm: () => boolean,
 }
 
 function ControlsBox({
@@ -45,6 +46,7 @@ function ControlsBox({
   callRecording,
   onRestart,
   getErrorEvents,
+  getAudioPerm,
 }: IControlsBox) {
   const initialState =
     getInitState() === "recording" ? STATES.recording : STATES.count;
@@ -74,7 +76,7 @@ function ControlsBox({
       {boxState() === STATES.saving ? (
         <SavingControls getErrorEvents={getErrorEvents} getVideoData={getVideoData} onClose={onClose} />
       ) : null}
-      {boxState() === STATES.count ? <Countdown onEnd={onTimerEnd} /> : null}
+      {boxState() === STATES.count ? <Countdown getAudioPerm={getAudioPerm} onEnd={onTimerEnd} /> : null}
       {boxState() === STATES.recording ? (
         <RecordingControls
           getMicStatus={getMicStatus}

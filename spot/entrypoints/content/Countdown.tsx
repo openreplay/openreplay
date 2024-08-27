@@ -1,6 +1,9 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 
-function Countdown(props: { onEnd: (proceed?: boolean) => void }) {
+function Countdown(props: {
+  onEnd: (proceed?: boolean) => void;
+  getAudioPerm: () => number;
+}) {
   const [count, setCount] = createSignal(3);
 
   let interval: any;
@@ -8,9 +11,9 @@ function Countdown(props: { onEnd: (proceed?: boolean) => void }) {
   const escHandler = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
       clearInterval(interval);
-      props.onEnd(false)
+      props.onEnd(false);
     }
-  }
+  };
 
   onMount(() => {
     interval = setInterval(() => {
@@ -27,9 +30,17 @@ function Countdown(props: { onEnd: (proceed?: boolean) => void }) {
   });
 
   onCleanup(() => {
-    clearInterval(interval)
+    clearInterval(interval);
     window.removeEventListener("keydown", escHandler);
   });
+
+  const audioPerm = props.getAudioPerm();
+
+  const audioPrompt = {
+    0: "Microphone permission isn't granted yet.",
+    1: "Microphone access is enabled. Unmute anytime to add voice over",
+    2: "Microphone is enabled"
+  }
 
   return (
     <div class="modal-overlay">
@@ -94,10 +105,11 @@ function Countdown(props: { onEnd: (proceed?: boolean) => void }) {
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                 <line x1="12" x2="12" y1="19" y2="22" />
               </svg>{" "}
-              Unmute anytime to add voice memos.
+              {audioPrompt[audioPerm]}
             </span>
             <span class="text-base text-white/70 flex gap-2 items-center">
-              <span class="px-1 rounded-lg bg-white/30 text-inherit">ESC</span> to cancel.
+              <span class="px-1 rounded-lg bg-white/30 text-inherit">ESC</span>{" "}
+              to cancel.
             </span>
           </div>
         </div>

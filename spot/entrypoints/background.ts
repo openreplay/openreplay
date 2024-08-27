@@ -133,6 +133,7 @@ export default defineBackground(() => {
     activeTabId: null,
     area: null,
     recording: REC_STATE.stopped,
+    audioPerm: 0,
   } as Record<string, any>;
   let jwtToken = "";
 
@@ -232,17 +233,21 @@ export default defineBackground(() => {
         void refreshToken(url);
       });
 
-      refreshInt = setInterval(() => {
-        void refreshToken(url);
-      }, CHECK_INT);
+      if (!refreshInt) {
+        refreshInt = setInterval(() => {
+          void refreshToken(url);
+        }, CHECK_INT);
+      }
 
-      pingInt = setInterval(() => {
-        void pingJWT();
-      }, PING_INT)
+      if (!pingInt) {
+        pingInt = setInterval(() => {
+          void pingJWT(url);
+        }, PING_INT)
+      }
     }
   });
 
-  async function pingJWT() {
+  async function pingJWT(refreshUrl: string): Promise<void> {
     if (!jwtToken) {
       if (pingInt) {
         clearInterval(pingInt);
@@ -258,20 +263,10 @@ export default defineBackground(() => {
         },
       })
       if (!r.ok) {
-        chrome.storage.local.remove("jwtToken");
-        setJWTToken("");
-        void browser.runtime.sendMessage({
-          type: messages.popup.to.noLogin,
-        });
-        return false;
+        void refreshToken(refreshUrl)
       }
     } catch (e) {
-      chrome.storage.local.remove("jwtToken");
-      setJWTToken("");
-      void browser.runtime.sendMessage({
-        type: messages.popup.to.noLogin,
-      });
-      return false;
+      void refreshToken(refreshUrl)
     }
   }
 
@@ -294,6 +289,7 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
+        audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
       };
       if (request.area === "tab") {
         browser.tabs
@@ -311,6 +307,7 @@ export default defineBackground(() => {
               area: request.area,
               mic: request.mic,
               audioId: request.selectedAudioDevice,
+              audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
             });
           });
       } else {
@@ -319,6 +316,7 @@ export default defineBackground(() => {
           area: request.area,
           mic: request.mic,
           audioId: request.selectedAudioDevice,
+          audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
         });
       }
     }
@@ -456,12 +454,16 @@ export default defineBackground(() => {
           return;
         }
         const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
-        refreshInt = setInterval(() => {
-          void refreshToken(url);
-        }, CHECK_INT);
-        pingInt = setInterval(() => {
-          void pingJWT();
-        }, PING_INT)
+        if (!refreshInt)  {
+          refreshInt = setInterval(() => {
+            void refreshToken(url);
+          }, CHECK_INT);
+        }
+        if (!pingInt) {
+          pingInt = setInterval(() => {
+            void pingJWT();
+          }, PING_INT)
+        }
       });
     }
     if (request.type === messages.content.from.invalidateToken) {
@@ -565,12 +567,14 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
+        audioPerm: lastReq.permissions,
       };
       void sendToActiveTab({
         type: "content:mount",
         area: lastReq.area,
         mic: lastReq.mic,
         audioId: lastReq.selectedAudioDevice,
+        audioPerm: lastReq.permissions,
       });
     }
     if (request.type === messages.content.from.getErrorEvents) {
