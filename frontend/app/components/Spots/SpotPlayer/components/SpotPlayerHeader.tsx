@@ -1,35 +1,23 @@
-import {
-  ArrowLeftOutlined,
-  CommentOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  DownloadOutlined,
-  MoreOutlined,
-  SettingOutlined,
-  UserSwitchOutlined,
-} from '@ant-design/icons';
-import {
-  Badge,
-  Button,
-  Dropdown,
-  MenuProps,
-  Popover,
-  Tooltip,
-  message,
-} from 'antd';
+import { ArrowLeftOutlined, CommentOutlined, CopyOutlined, DeleteOutlined, DownloadOutlined, MoreOutlined, SettingOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import { Badge, Button, Dropdown, MenuProps, Popover, Tooltip, message } from 'antd';
 import copy from 'copy-to-clipboard';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
+
+
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
 import { Avatar, Icon } from 'UI';
 
+
+
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
+
 
 const spotLink = spotsList();
 
@@ -84,9 +72,10 @@ function SpotPlayerHeader({
     },
   ];
 
-  const onMenuClick = ({ key }: { key: string }) => {
+  const onMenuClick = async ({ key }: { key: string }) => {
     if (key === '1') {
-      void spotStore.getVideo(spotStore.currentSpot!.spotId);
+      const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
+      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`)
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
@@ -216,6 +205,28 @@ function SpotPlayerHeader({
       </Badge>
     </div>
   );
+}
+
+async function downloadFile(url: string, fileName: string) {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+  }
 }
 
 export default connect((state: any) => {
