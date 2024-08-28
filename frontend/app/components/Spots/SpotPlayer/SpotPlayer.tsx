@@ -6,7 +6,6 @@ import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
-import { OverviewPanel } from 'Components/Session_/OverviewPanel';
 import { EscapeButton, Icon, Loader } from 'UI';
 
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -37,6 +36,11 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   const { spotId } = useParams<{ spotId: string }>();
   const [activeTab, setActiveTab] = React.useState<Tab | null>(null);
 
+  React.useEffect(() => {
+    if (spotStore.currentSpot) {
+      document.title = spotStore.currentSpot.title + ' - OpenReplay'
+    }
+  }, [spotStore.currentSpot])
   React.useEffect(() => {
     if (!loggedIn) {
       const query = new URLSearchParams(window.location.search);
