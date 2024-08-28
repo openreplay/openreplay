@@ -17,11 +17,7 @@ function ScopeForm({
 }: any) {
   const [scope, setScope] = React.useState(Scope.FULL);
   const history = useHistory();
-  const onContinue = (skip?: boolean) => {
-    if (skip) {
-      upgradeScope();
-      history.replace(routes.onboarding())
-    }
+  const onContinue = () => {
     if (scope === Scope.FULL) {
       upgradeScope();
       history.replace(routes.onboarding())
@@ -64,9 +60,6 @@ function ScopeForm({
       </Radio.Group>
 
       <div className={'self-end'}>
-        <Button type={'text'} onClick={() => onContinue(true)}>
-          Skip
-        </Button>
         <Button
           type={'primary'}
           onClick={() => onContinue()}

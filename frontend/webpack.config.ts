@@ -28,16 +28,8 @@ const config: Configuration = {
   },
   entry: "./app/initialize.tsx",
   optimization: {
-    moduleIds: isDevelopment ? 'named' : 'deterministic',
     splitChunks: {
       chunks: 'all',
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all',
-        },
-      },
     },
   },
   module: {
@@ -49,8 +41,6 @@ const config: Configuration = {
         use: {
           loader: "babel-loader",
           options: {
-            cacheCompression: false,
-            cacheDirectory: true,
             presets: [
               "@babel/preset-env",
               "@babel/preset-react",
