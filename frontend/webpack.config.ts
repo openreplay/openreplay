@@ -109,9 +109,7 @@ const config: Configuration = {
     },
   },
   plugins: [
-    new CompressionPlugin({
-      algorithm: 'brotliCompress',
-    }),
+    new CompressionPlugin(),
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,

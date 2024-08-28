@@ -5,6 +5,7 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
+import { toast } from 'react-toastify';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -76,12 +77,16 @@ function BottomSection({
   const { spotStore } = useStore();
 
   const addComment = async () => {
-    await spotStore.addComment(
-      spotStore.currentSpot!.spotId,
-      commentText,
-      userName
-    );
-    setCommentText('');
+    try {
+      await spotStore.addComment(
+        spotStore.currentSpot!.spotId,
+        commentText,
+        userName
+      );
+      setCommentText('');
+    } catch (e) {
+      toast.error('Failed to add comment; Try again later');
+    }
   };
 
   const unlogged = userName.trim().length === 0 && unloggedLimit
