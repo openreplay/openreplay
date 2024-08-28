@@ -153,22 +153,12 @@ const STATE = {
 
 function App() {
   const [state, setState] = createSignal(STATE.empty);
-
   const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
-  const [audioDevices, setAudioDevices] = createSignal(
-    [] as { label: string; id: string }[],
-  );
   const [mic, setMic] = createSignal(false);
   const [selectedAudioDevice, setSelectedAudioDevice] = createSignal("");
 
   onMount(() => {
-    chrome.storage.local.get("audioPerm", (data) => {
-      if (data.audioPerm) {
-        void checkAudioDevices();
-      }
-    });
     browser.runtime.onMessage.addListener((message) => {
-      console.log(message);
       if (message.type === "popup:no-login") {
         setState(STATE.login);
       }
@@ -206,24 +196,6 @@ function App() {
       mic: mic(),
       audioId: selectedAudioDevice(),
     });
-  };
-
-  const checkAudioDevices = async () => {
-    const { granted, audioDevices, denied } = await getAudioDevices();
-    chrome.storage.local.set({ audioPerm: granted });
-    if (!granted && !denied) {
-      void browser.runtime.sendMessage({
-        type: "popup:get-audio-perm",
-      });
-      browser.runtime.onMessage.addListener((message) => {
-        if (message.type === "popup:audio-perm") {
-          void checkAudioDevices();
-        }
-      });
-    } else {
-      setAudioDevices(audioDevices);
-      setSelectedAudioDevice(audioDevices[0]?.id || "");
-    }
   };
 
   const toggleMic = async () => {
@@ -272,22 +244,7 @@ function App() {
                       name="Record Tab"
                       onClick={() => startRecording("tab")}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="lucide lucide-app-window"
-                      >
-                        <rect x="2" y="4" width="20" height="16" rx="2" />{" "}
-                        <path d="M10 4v4" /> <path d="M2 8h20" />{" "}
-                        <path d="M6 4v4" />
-                      </svg>
+                      <RecordTabSvg />
                       Record Tab
                     </button>
 
@@ -296,31 +253,13 @@ function App() {
                       name={"Record Desktop"}
                       onClick={() => startRecording("desktop")}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="lucide lucide-monitor-dot"
-                      >
-                        <circle cx="19" cy="6" r="3" />
-                        <path d="M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
-                        <path d="M12 17v4" />
-                        <path d="M8 21h8" />
-                      </svg>
+                      <RecordDesktopSvg />
                       Record Desktop
                     </button>
                   </div>
                   <AudioPicker
                     mic={mic}
-                    checkAudioDevices={checkAudioDevices}
                     toggleMic={toggleMic}
-                    audioDevices={audioDevices}
                     selectedAudioDevice={selectedAudioDevice}
                     setSelectedAudioDevice={setSelectedAudioDevice}
                   />
@@ -337,20 +276,50 @@ function App() {
 interface IAudioPicker {
   mic: () => boolean;
   toggleMic: () => void;
-  audioDevices: () => { label: string; id: string }[];
   selectedAudioDevice: () => string;
   setSelectedAudioDevice: (value: string) => void;
-  checkAudioDevices: () => Promise<any>;
 }
 function AudioPicker(props: IAudioPicker) {
-  const [checkAudioDevices, setCheckAudioDevices] = createSignal(false);
+  const [audioDevices, setAudioDevices] = createSignal(
+    [] as { label: string; id: string }[],
+  );
+  const [checkedAudioDevices, setCheckedAudioDevices] = createSignal(0);
 
+  createEffect(() => {
+    console.log('audioDevices', audioDevices());
+    chrome.storage.local.get("audioPerm", (data) => {
+      console.log('audioPerm', data.audioPerm);
+      if (data.audioPerm && audioDevices().length === 0) {
+        void checkAudioDevices();
+      }
+    });
+  });
+
+  const checkAudioDevices = async () => {
+    const { granted, audioDevices, denied } = await getAudioDevices();
+    if (!granted && !denied) {
+      void browser.runtime.sendMessage({
+        type: "popup:get-audio-perm",
+      });
+      browser.runtime.onMessage.addListener((message) => {
+        if (message.type === "popup:audio-perm") {
+          void checkAudioDevices();
+        }
+      });
+    } else if (audioDevices.length > 0) {
+      chrome.storage.local.set({ audioPerm: granted });
+      setAudioDevices(audioDevices);
+      props.setSelectedAudioDevice(audioDevices[0]?.id || "");
+    }
+  };
+  
   const checkAudio = async () => {
-    if (checkAudioDevices()) {
+    if (checkedAudioDevices() > 0) {
       return;
     }
-    await props.checkAudioDevices();
-    setCheckAudioDevices(true);
+    setCheckedAudioDevices(1);
+    await checkAudioDevices();
+    setCheckedAudioDevices(2);
   };
   const onSelect = (value) => {
     props.setSelectedAudioDevice(value);
@@ -360,15 +329,17 @@ function AudioPicker(props: IAudioPicker) {
   };
 
   const onMicToggle = async () => {
-    if (!props.audioDevices().length) {
-      return await props.checkAudioDevices();
+    if (!audioDevices().length) {
+      return await checkAudioDevices();
     }
-    if (!props.selectedAudioDevice() && props.audioDevices().length) {
-      onSelect(props.audioDevices()[0].id);
+    if (!props.selectedAudioDevice() && audioDevices().length) {
+      onSelect(audioDevices()[0].id);
     } else {
       props.toggleMic();
     }
   };
+
+  console.log('checkedAudioDevices', checkedAudioDevices(), audioDevices());
 
   return (
     <div class={"inline-flex items-center gap-1 text-xs"}>
@@ -392,28 +363,84 @@ function AudioPicker(props: IAudioPicker) {
         }
         onClick={checkAudio}
       >
-        <Dropdown
-          options={props.audioDevices()}
-          selected={props.selectedAudioDevice()}
-          onChange={onSelect}
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-chevron-down"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        {audioDevices().length === 0 ? (
+          <div class="max-w-64 block leading-tight cursor-pointer whitespace-nowrap overflow-hidden font-normal">
+            {checkedAudioDevices() === 1 ? 'Loading audio devices' : 'Grant microphone access'}
+          </div>
+        ) : (
+          <Dropdown
+            options={audioDevices()}
+            selected={props.selectedAudioDevice()}
+            onChange={onSelect}
+          />
+        )}
+        <ChevronSvg />
       </div>
     </div>
   );
+}
+
+function ChevronSvg() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      className="lucide lucide-chevron-down"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function RecordDesktopSvg() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      className="lucide lucide-monitor-dot"
+    >
+      <circle cx="19" cy="6" r="3" />
+      <path d="M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
+      <path d="M12 17v4" />
+      <path d="M8 21h8" />
+    </svg>
+  );
+}
+
+function RecordTabSvg() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      className="lucide lucide-app-window"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M10 4v4" />
+      <path d="M2 8h20" />
+      <path d="M6 4v4" />
+    </svg>
+  )
 }
 
 export default App;
