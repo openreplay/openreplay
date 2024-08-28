@@ -285,15 +285,17 @@ func (s *spotsImpl) AddComment(user *auth.User, spotID uint64, comment *Comment)
 
 func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *auth.User) (*Spot, error) {
 	sql := `WITH updated AS (
-		UPDATE spots SET comments = array_append(comments, $1), updated_at = $2 
-		WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL RETURNING *)
+		UPDATE spots 
+			SET comments = array_append(comments, $1), updated_at = $2 
+			WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND array_length(comments, 1) < $5 
+			RETURNING *)
 		SELECT COUNT(*) FROM updated`
 	encodedComment := s.encodeComment(newComment)
 	if encodedComment == "" {
 		return nil, fmt.Errorf("failed to encode comment")
 	}
 	updated := 0
-	if err := s.pgconn.QueryRow(sql, encodedComment, time.Now(), spotID, user.TenantID).Scan(&updated); err != nil {
+	if err := s.pgconn.QueryRow(sql, encodedComment, time.Now(), spotID, user.TenantID, MaxNumberOfComments).Scan(&updated); err != nil {
 		return nil, err
 	}
 	if updated == 0 {
