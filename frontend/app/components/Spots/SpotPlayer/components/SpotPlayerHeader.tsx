@@ -79,6 +79,7 @@ function SpotPlayerHeader({
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
+        message.success('Spot deleted successfully'); 
       });
     }
   };
@@ -192,17 +193,18 @@ function SpotPlayerHeader({
       >
         Activity
       </Button>
-
-      <Badge count={comments.length} className="mr-2">
-        <Button
-          size={'small'}
-          disabled={activeTab === TABS.COMMENTS}
-          onClick={() => setActiveTab(TABS.COMMENTS)}
-          icon={<CommentOutlined />}
-        >
-          Comments
-        </Button>
-      </Badge>
+      
+      <Button
+        size={'small'}
+        disabled={activeTab === TABS.COMMENTS}
+        onClick={() => setActiveTab(TABS.COMMENTS)}
+        icon={<CommentOutlined />}
+      >
+        Comments 
+        {comments.length > 0 && (
+          <Badge count={comments.length} className="mr-2" style={{ fontSize: '10px' }} size='small' color='#454545' />
+        )}
+      </Button>
     </div>
   );
 }
