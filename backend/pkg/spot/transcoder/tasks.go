@@ -66,7 +66,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 	}()
 
 	task = &Task{tx: pool.Tx{Tx: tx}}
-	sql := `SELECT id, crop, duration FROM spot_tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
+	sql := `SELECT id, crop, duration FROM spots_tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
 	err = tx.TxQueryRow(sql).Scan(&task.SpotID, &task.Crop, &task.Duration)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -78,7 +78,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 }
 
 func (t *tasksImpl) Done(task *Task) error {
-	sql := `DELETE FROM spot_tasks WHERE id = $1`
+	sql := `DELETE FROM spots_tasks WHERE id = $1`
 	err := task.tx.TxExec(sql, task.SpotID)
 	if err != nil {
 		task.tx.TxRollback()
@@ -89,7 +89,7 @@ func (t *tasksImpl) Done(task *Task) error {
 }
 
 func (t *tasksImpl) Failed(task *Task, taskErr error) error {
-	sql := `UPDATE spot_tasks SET status = 'failed', error = $2 WHERE id = $1`
+	sql := `UPDATE spots_tasks SET status = 'failed', error = $2 WHERE id = $1`
 	err := task.tx.TxExec(sql, task.SpotID, taskErr.Error())
 	if err != nil {
 		task.tx.TxRollback()
