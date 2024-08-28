@@ -99,7 +99,6 @@ const Router: React.FC<RouterProps> = (props) => {
       if (event.data.type === 'orspot:logged') {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);
-        toast.success('You have been logged into Spot successfully');
       }
     };
     window.addEventListener('message', onSpotMsg);
