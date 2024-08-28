@@ -53,21 +53,7 @@ function Header({ openSettings }: { openSettings: () => void }) {
         <div class="text-sm tooltip tooltip-bottom" data-tip="My Spots">
           <div onClick={openHomePage}>
             <div class={"cursor-pointer p-2 hover:bg-indigo-50 rounded-full"}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-house"
-              >
-                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-                <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              </svg>
+              <HomePageSvg />
             </div>
           </div>
         </div>
@@ -83,22 +69,7 @@ function Header({ openSettings }: { openSettings: () => void }) {
             target={"_blank"}
           >
             <div class={"cursor-pointer p-2 hover:bg-indigo-50 rounded-full"}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-circle-help"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <path d="M12 17h.01" />
-              </svg>
+              <SlackSvg />
             </div>
           </a>
         </div>
@@ -156,7 +127,8 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
   const [mic, setMic] = createSignal(false);
   const [selectedAudioDevice, setSelectedAudioDevice] = createSignal("");
-
+  const [hasPermissions, setHasPermissions] = createSignal(false);
+  
   onMount(() => {
     browser.runtime.onMessage.addListener((message) => {
       if (message.type === "popup:no-login") {
@@ -185,7 +157,7 @@ function App() {
       area: reqTab,
       mic: mic(),
       audioId: selectedAudioDevice(),
-      permissions: audioDevices().length > 0,
+      permissions: hasPermissions(),
     });
     window.close();
   };
@@ -262,6 +234,7 @@ function App() {
                     toggleMic={toggleMic}
                     selectedAudioDevice={selectedAudioDevice}
                     setSelectedAudioDevice={setSelectedAudioDevice}
+                    setHasPermissions={setHasPermissions}
                   />
                 </>
               ) : null}
@@ -278,6 +251,7 @@ interface IAudioPicker {
   toggleMic: () => void;
   selectedAudioDevice: () => string;
   setSelectedAudioDevice: (value: string) => void;
+  setHasPermissions: (value: boolean) => void;
 }
 function AudioPicker(props: IAudioPicker) {
   const [audioDevices, setAudioDevices] = createSignal(
@@ -286,10 +260,10 @@ function AudioPicker(props: IAudioPicker) {
   const [checkedAudioDevices, setCheckedAudioDevices] = createSignal(0);
 
   createEffect(() => {
-    console.log('audioDevices', audioDevices());
     chrome.storage.local.get("audioPerm", (data) => {
       console.log('audioPerm', data.audioPerm);
       if (data.audioPerm && audioDevices().length === 0) {
+        props.setHasPermissions(true);
         void checkAudioDevices();
       }
     });
@@ -338,8 +312,6 @@ function AudioPicker(props: IAudioPicker) {
       props.toggleMic();
     }
   };
-
-  console.log('checkedAudioDevices', checkedAudioDevices(), audioDevices());
 
   return (
     <div class={"inline-flex items-center gap-1 text-xs"}>
@@ -441,6 +413,47 @@ function RecordTabSvg() {
       <path d="M6 4v4" />
     </svg>
   )
+}
+
+function HomePageSvg() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="lucide lucide-house"
+    >
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  );
+}
+
+function SlackSvg() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="lucide lucide-circle-help"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
 }
 
 export default App;
