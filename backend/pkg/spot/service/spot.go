@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+const MaxCommentLength = 120
+const MaxNumberOfComments = 20
+
 type Spot struct {
 	ID        uint64    `json:"id"`
 	Name      string    `json:"name"`
@@ -273,8 +276,8 @@ func (s *spotsImpl) AddComment(user *auth.User, spotID uint64, comment *Comment)
 	case comment.Text == "":
 		return nil, fmt.Errorf("comment text is required")
 	}
-	if len(comment.Text) > 120 {
-		comment.Text = comment.Text[:120]
+	if len(comment.Text) > MaxCommentLength {
+		comment.Text = comment.Text[:MaxCommentLength]
 	}
 	comment.CreatedAt = time.Now()
 	return s.addComment(spotID, comment, user)
