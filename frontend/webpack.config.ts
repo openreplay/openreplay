@@ -115,14 +115,16 @@ const config: Configuration = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js", '.jsx'],
+    extensions: [".tsx", ".ts", ".js"],
     alias: pathAlias,
     fallback: {
       assert: false,
     },
   },
   plugins: [
-    new CompressionPlugin(),
+    new CompressionPlugin({
+      algorithm: 'brotliCompress',
+    }),
     new webpack.DefinePlugin({
       // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
