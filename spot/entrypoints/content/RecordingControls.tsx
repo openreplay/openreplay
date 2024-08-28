@@ -14,6 +14,7 @@ interface IRControls {
   unmute: () => void;
   getInitState: () => string;
   onRestart: () => void;
+  getAudioPerm: () => number;
 }
 
 function RecordingControls({
@@ -27,6 +28,7 @@ function RecordingControls({
   unmute,
   getInitState,
   onRestart,
+  getAudioPerm,
 }: IRControls) {
   const { draggable } = createDraggable();
 
@@ -125,6 +127,8 @@ function RecordingControls({
   setTimeout(() => {
     handleRef.classList.remove("popupanimated");
   }, 250);
+
+  const audioPerm = getAudioPerm()
   return (
     <div
       class={"rec-controls popupanimated cursor-grab"}
@@ -198,8 +202,8 @@ function RecordingControls({
             class={`btn btn-sm btn-circle btn-ghost tooltip tooltip-top flex items-center ${
               mic() ? "bg-black/20" : "bg-black"
             }`}
-            data-tip={mic() ? "Switch Off Mic" : "Switch On Mic"}
-            onClick={toggleMic}
+            data-tip={audioPerm > 0 ? mic() ? "Switch Off Mic" : "Switch On Mic" : "Microphone disabled"}
+            onClick={audioPerm > 0 ? toggleMic : undefined}
           >
             {mic() ? (
               <img src={micOn} />

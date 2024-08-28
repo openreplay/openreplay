@@ -79,6 +79,7 @@ function ControlsBox({
       {boxState() === STATES.count ? <Countdown getAudioPerm={getAudioPerm} onEnd={onTimerEnd} /> : null}
       {boxState() === STATES.recording ? (
         <RecordingControls
+          getAudioPerm={getAudioPerm}
           getMicStatus={getMicStatus}
           changeState={changeState}
           pause={pause}

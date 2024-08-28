@@ -166,7 +166,7 @@ function App() {
       if (data.audioPerm) {
         void checkAudioDevices();
       }
-    })
+    });
     browser.runtime.onMessage.addListener((message) => {
       console.log(message);
       if (message.type === "popup:no-login") {
@@ -265,66 +265,67 @@ function App() {
                 </div>
               ) : null}
               {state() === STATE.ready ? (
-                <div class="flex flex-row items-center gap-2 w-full justify-center">
-                  <button
-                    class="btn bg-indigo-100  text-base hover:bg-primary hover:text-white w-6/12"
-                    name="Record Tab"
-                    onClick={() => startRecording("tab")}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="lucide lucide-app-window"
+                <>
+                  <div class="flex flex-row items-center gap-2 w-full justify-center">
+                    <button
+                      class="btn bg-indigo-100  text-base hover:bg-primary hover:text-white w-6/12"
+                      name="Record Tab"
+                      onClick={() => startRecording("tab")}
                     >
-                      <rect x="2" y="4" width="20" height="16" rx="2" />{" "}
-                      <path d="M10 4v4" /> <path d="M2 8h20" />{" "}
-                      <path d="M6 4v4" />
-                    </svg>
-                    Record Tab
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-app-window"
+                      >
+                        <rect x="2" y="4" width="20" height="16" rx="2" />{" "}
+                        <path d="M10 4v4" /> <path d="M2 8h20" />{" "}
+                        <path d="M6 4v4" />
+                      </svg>
+                      Record Tab
+                    </button>
 
-                  <button
-                    class="btn bg-teal-50 text-base hover:bg-primary hover:text-white"
-                    name={"Record Desktop"}
-                    onClick={() => startRecording("desktop")}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="lucide lucide-monitor-dot"
+                    <button
+                      class="btn bg-teal-50 text-base hover:bg-primary hover:text-white"
+                      name={"Record Desktop"}
+                      onClick={() => startRecording("desktop")}
                     >
-                      <circle cx="19" cy="6" r="3" />
-                      <path d="M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
-                      <path d="M12 17v4" />
-                      <path d="M8 21h8" />
-                    </svg>
-                    Record Desktop
-                  </button>
-                </div>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-monitor-dot"
+                      >
+                        <circle cx="19" cy="6" r="3" />
+                        <path d="M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" />
+                        <path d="M12 17v4" />
+                        <path d="M8 21h8" />
+                      </svg>
+                      Record Desktop
+                    </button>
+                  </div>
+                  <AudioPicker
+                    mic={mic}
+                    checkAudioDevices={checkAudioDevices}
+                    toggleMic={toggleMic}
+                    audioDevices={audioDevices}
+                    selectedAudioDevice={selectedAudioDevice}
+                    setSelectedAudioDevice={setSelectedAudioDevice}
+                  />
+                </>
               ) : null}
-
-              <AudioPicker
-                mic={mic}
-                checkAudioDevices={checkAudioDevices}
-                toggleMic={toggleMic}
-                audioDevices={audioDevices}
-                selectedAudioDevice={selectedAudioDevice}
-                setSelectedAudioDevice={setSelectedAudioDevice}
-              />
             </>
           )}
         </div>
@@ -367,7 +368,7 @@ function AudioPicker(props: IAudioPicker) {
     } else {
       props.toggleMic();
     }
-  }
+  };
 
   return (
     <div class={"inline-flex items-center gap-1 text-xs"}>
