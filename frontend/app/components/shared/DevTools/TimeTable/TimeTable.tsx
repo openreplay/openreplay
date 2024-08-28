@@ -338,7 +338,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         </div>
 
         <NoContent size="small" show={rows.length === 0}>
-          <div className="relative">
+          <div className="relative" style={{ height: this.tableHeight }}>
             <div className={stl.timePart} style={{ left: `${columnsSumWidth}px` }}>
               {timeColumns.map((_, index) => (
                 <div key={`tc-${index}`} className={stl.timeCell} />

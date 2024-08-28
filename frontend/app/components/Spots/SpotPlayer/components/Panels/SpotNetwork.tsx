@@ -13,7 +13,6 @@ function SpotNetwork({ panelHeight, onClose }: { panelHeight: number, onClose: (
   );
   const listNow = list.slice(0, index);
 
-  console.log(index, listNow, list, spotPlayerStore.time)
   return (
       <NetworkPanelComp
         panelHeight={panelHeight}

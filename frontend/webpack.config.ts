@@ -17,9 +17,6 @@ interface Configuration extends WebpackConfiguration {
 }
 
 const config: Configuration = {
-  cache: {
-    type: 'filesystem',
-  },
   // mode: isDevelopment ? "development" : "production",
   output: {
     publicPath: "/",
