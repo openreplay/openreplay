@@ -38,7 +38,7 @@ export function getDateRangeLabel(value) {
 
 export function getDateRangeFromValue(value) {
   const tz = JSON.parse(localStorage.getItem(TIMEZONE));
-  const offset = tz.value
+  const offset = tz ? tz.value : undefined
 
   const now = DateTime.now().setZone(offset);
 
