@@ -1,3 +1,4 @@
+import { Button, Card } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -5,12 +6,15 @@ import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
-import { EscapeButton, Loader } from 'UI';
+import { EscapeButton, Icon, Loader } from 'UI';
+
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from '../../Session/Player/ReplayPlayer/PlayerInst';
+import { SpotOverviewPanelCont } from '../../Session_/OverviewPanel/OverviewPanel';
 import withPermissions from '../../hocs/withPermissions';
 import SpotConsole from './components/Panels/SpotConsole';
 import SpotNetwork from './components/Panels/SpotNetwork';
@@ -32,6 +36,11 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   const { spotId } = useParams<{ spotId: string }>();
   const [activeTab, setActiveTab] = React.useState<Tab | null>(null);
 
+  React.useEffect(() => {
+    if (spotStore.currentSpot) {
+      document.title = spotStore.currentSpot.title + ' - OpenReplay'
+    }
+  }, [spotStore.currentSpot])
   React.useEffect(() => {
     if (!loggedIn) {
       const query = new URLSearchParams(window.location.search);
@@ -98,6 +107,12 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     });
 
     const ev = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return false;
+      }
       if (e.key === 'Escape') {
         spotPlayerStore.setIsFullScreen(false);
       }
@@ -116,6 +131,19 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
         const highest = 16;
         spotPlayerStore.setPlaybackRate(Math.min(highest, current * 2));
       }
+      if (e.key === 'ArrowRight') {
+        spotPlayerStore.setTime(
+          Math.min(
+            spotPlayerStore.duration,
+            spotPlayerStore.time + spotPlayerStore.skipInterval
+          )
+        );
+      }
+      if (e.key === 'ArrowLeft') {
+        spotPlayerStore.setTime(
+          Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval)
+        );
+      }
     };
 
     document.addEventListener('keydown', ev);
@@ -127,8 +155,47 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   }, []);
   if (!spotStore.currentSpot) {
     return (
-      <div className={'w-screen h-screen flex items-center justify-center'}>
-        <Loader />
+      <div
+        className={
+          'w-screen h-screen flex items-center justify-center flex-col gap-2'
+        }
+      >
+        {spotStore.accessError ? (
+          <>
+            <div className="w-full h-full block ">
+              <div className="flex bg-white border-b text-center justify-center py-4">
+                <a href="https://openreplay.com/spot" target="_blank">
+                  <Button
+                    type="text"
+                    className="orSpotBranding flex gap-1 items-center"
+                    size="large"
+                  >
+                    <Icon name={'orSpot'} size={28} />
+                    <div className="flex flex-row gap-2 items-center text-start">
+                      <div className={'text-3xl font-semibold '}>Spot</div>
+                      <div className={'text-disabled-text text-xs mt-3'}>
+                        by OpenReplay
+                      </div>
+                    </div>
+                  </Button>
+                </a>
+              </div>
+              <Card className="w-1/2 mx-auto rounded-b-full shadow-sm text-center flex flex-col justify-center items-center z-50 min-h-60">
+                <div className={'font-semibold text-xl'}>
+                  The Spot link has expired.
+                </div>
+                <p className="text-lg">
+                  Contact the person who shared it to re-spot.
+                </p>
+              </Card>
+              <div className="rotate-180 -z-10 w-fit mx-auto -mt-5 hover:mt-2 transition-all ease-in-out hover:rotate-0 hover:transition-all hover:ease-in-out duration-500 hover:duration-150">
+                <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <Loader />
+        )}
       </div>
     );
   }
@@ -166,7 +233,6 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
   //   }]
   // };
 
-  console.log(spotStore.currentSpot)
   return (
     <div
       className={cn(
@@ -198,6 +264,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
               videoURL={spotStore.currentSpot.videoURL!}
               streamFile={spotStore.currentSpot.streamFile}
               thumbnail={spotStore.currentSpot.thumbnail}
+              checkReady={() => spotStore.checkIsProcessed(spotId)}
             />
           </div>
           {!isFullScreen && spotPlayerStore.activePanel ? (
@@ -227,6 +294,9 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
                       panelHeight={panelHeight}
                     />
                   ) : null}
+                  {spotPlayerStore.activePanel === PANELS.OVERVIEW ? (
+                    <SpotOverviewConnector />
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -243,6 +313,30 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
     </div>
   );
 }
+
+const SpotOverviewConnector = observer(() => {
+  const endTime = spotPlayerStore.duration * 1000;
+  const time = spotPlayerStore.time * 1000;
+  const resourceList = spotPlayerStore.network
+    .filter((r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400))
+    .filter((i: any) => i.type === 'xhr');
+  const exceptionsList = spotPlayerStore.logs.filter(
+    (l) => l.level === 'error'
+  );
+
+  const onClose = () => {
+    spotPlayerStore.setActivePanel(null);
+  }
+  return (
+    <SpotOverviewPanelCont
+      exceptionsList={exceptionsList}
+      resourceList={resourceList}
+      spotTime={time}
+      spotEndTime={endTime}
+      onClose={onClose}
+    />
+  );
+});
 
 function mapStateToProps(state: any) {
   const userEmail = state.getIn(['user', 'account', 'name']);

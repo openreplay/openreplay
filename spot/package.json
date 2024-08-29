@@ -1,0 +1,37 @@
+{
+  "name": "wxt-starter",
+  "description": "manifest.json description",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare",
+    "prettier": "prettier --write ."
+  },
+  "dependencies": {
+    "@neodrag/solid": "^2.0.4",
+    "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
+    "autoprefixer": "^10.4.19",
+    "install": "^0.13.0",
+    "lucide-solid": "^0.408.0",
+    "npm": "^10.8.1",
+    "postcss": "^8.4.38",
+    "prettier": "^3.3.2",
+    "solid-js": "^1.8.17",
+    "tailwindcss": "^3.4.4",
+    "web-vitals": "^4.2.2"
+  },
+  "devDependencies": {
+    "@wxt-dev/module-solid": "^1.1.2",
+    "daisyui": "^4.12.10",
+    "typescript": "^5.4.5",
+    "wxt": "0.19.7"
+  }
+}

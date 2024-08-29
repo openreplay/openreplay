@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useStore } from 'App/mstore';
 import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import { Icon } from 'UI';
+import {Link2} from 'lucide-react';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
@@ -141,8 +142,8 @@ function SubHeader(props) {
       {locationTruncated && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
-            <Icon size="20" name="event/link" className="mr-1" />
-            <Tooltip title="Open in new tab" delay={0}>
+          <Link2 className="mx-2" size={16} />
+            <Tooltip title="Open in new tab" delay={0} placement='bottom'>
               <a href={currentLocation} target="_blank" className="truncate">
                 {locationTruncated}
               </a>

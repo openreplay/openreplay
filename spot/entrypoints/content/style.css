@@ -1,0 +1,307 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:host {
+  all: initial;
+  contain: content; /* Boom. CSS containment FTW. */
+}
+
+
+.body {
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.savingcontainer {
+  display: flex;
+  overflow: hidden;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0px 2px 0px 0px rgba(0, 0, 0, 0.04);
+}
+
+.controlsarea > input {
+  width: 100%;
+}
+
+.container {
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 34px;
+  gap: 6px;
+  padding: 8px 10px;
+  color: white;
+  border-radius: 6px;
+}
+
+.redcircle {
+  width: 14px;
+  height: 14px;
+  background-color: red;
+  border-radius: 50%;
+  border: 1px solid white;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #ff4d4d;
+  }
+}
+
+.control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+.whitetriangle {
+  width: 0;
+  height: 0;
+  border-left: 10px solid white;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-radius: 4px;
+}
+
+.bluetriangle {
+  width: 0;
+  height: 0;
+  border-left: 16px solid #394eff;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bluesquare {
+  min-width: 18px;
+  min-height: 18px;
+  background-color: #394eff;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.timerarea {
+  min-width: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+}
+
+.whitestripe {
+  width: 3px;
+  height: 14px;
+  background-color: white;
+  border-radius: 4px;
+}
+
+/* .inputlabel {
+    font-size: 16px;
+    font-weight: 500;
+    color: black;
+} */
+
+.bluebutton {
+  border-radius: 4px;
+  border: 1px solid #394eff;
+  background: #394eff;
+
+  box-shadow: 0px 2px 0px 0px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 15px;
+}
+
+.bluebutton:hover {
+  background: #2338df;
+}
+
+.clearbutton {
+  display: flex;
+  padding: 4px 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  position: absolute;
+  top: 7px;
+  z-index: 999;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background-color: #d0d4f2;
+  border-radius: 0.5rem;
+  height: 0.5rem;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -0.6rem;
+  background-color: #394eff;
+  border-radius: 2px;
+  height: 1.8rem;
+  width: 0.2rem;
+}
+
+input[type="range"]::-moz-range-track {
+  background-color: #d0d4f2;
+  border-radius: 0.5rem;
+  height: 0.5rem;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background-color: #394eff;
+  border: 2px solid #303f9f;
+  border-radius: 2px;
+  height: 2rem;
+  width: 0.2rem;
+}
+
+textarea {
+  border: 1px solid #d0d4f2;
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  min-height: 100px;
+}
+
+.processingloader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.play-icon {
+  position: relative;
+  width: 0;
+  height: 0;
+  border-left: 11px solid blue;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-radius: 3px;
+}
+
+.pause-icon {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+
+.pause-icon::before,
+.pause-icon::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 12px;
+  background: blue;
+  border-radius: 3px;
+}
+
+.pause-icon::before {
+  left: 0;
+}
+
+.pause-icon::after {
+  right: 0;
+}
+
+/* style.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  transition: all 0.25s ease-in-out;
+}
+
+.modal-content {
+  background: transparent;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  transition: all 0.25s ease-in-out;
+}
+
+/* style.css */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.rec-controls {
+  position: fixed;
+  bottom: 5%;
+  left: 45%;
+  transform: translateX(-50%);
+  z-index: 999999;
+
+}
+
+.popupanimated {
+  animation: slideInUp 0.25s ease-in-out forwards;
+}

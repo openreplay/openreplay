@@ -201,11 +201,11 @@ export default class APIClient {
 
       const data = await response.json();
       const refreshedJwt = data.jwt;
-      store.dispatch(setJwt(refreshedJwt));
+      store.dispatch(setJwt({ jwt: refreshedJwt, }));
       return refreshedJwt;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      store.dispatch(setJwt(null));
+      store.dispatch(setJwt({ jwt: null }));
       throw error;
     }
   }

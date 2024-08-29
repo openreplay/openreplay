@@ -5,6 +5,7 @@ import { Loader } from 'UI';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 
 import APIClient from './api_client';
+import { getScope } from "./duck/user";
 import * as routes from './routes';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
@@ -28,6 +29,7 @@ const components: any = {
   UsabilityTestOverviewPure: lazy(() => import('Components/UsabilityTesting/TestOverview')),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
+  ScopeSetup: lazy(() => import('Components/ScopeForm')),
 };
 
 const enhancedComponents: any = {
@@ -47,6 +49,7 @@ const enhancedComponents: any = {
   UsabilityTestOverview: withSiteIdUpdater(components.UsabilityTestOverviewPure),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
+  ScopeSetup: components.ScopeSetup
 };
 
 const withSiteId = routes.withSiteId;
@@ -92,6 +95,7 @@ const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
+const SCOPE_SETUP = routes.scopeSetup();
 
 interface Props {
   isEnterprise: boolean;
@@ -100,6 +104,7 @@ interface Props {
   jwt: string;
   sites: Map<string, any>;
   onboarding: boolean;
+  spotOnly?: boolean;
 }
 
 function PrivateRoutes(props: Props) {
@@ -107,6 +112,7 @@ function PrivateRoutes(props: Props) {
   const redirectToOnboarding =
     !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
   const siteIdList: any = sites.map(({ id }) => id).toJS();
+
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
@@ -116,148 +122,156 @@ function PrivateRoutes(props: Props) {
           component={enhancedComponents.Onboarding}
         />
         <Route
-          path="/integrations/"
-          render={({ location }) => {
-            const client = new APIClient();
-            switch (location.pathname) {
-              case '/integrations/slack':
-                client.post('integrations/slack/add', {
-                  code: location.search.split('=')[1],
-                  state: props.tenantId,
-                });
-                break;
-              case '/integrations/msteams':
-                client.post('integrations/msteams/add', {
-                  code: location.search.split('=')[1],
-                  state: props.tenantId,
-                });
-                break;
-            }
-            return <Redirect to={CLIENT_PATH} />;
-          }}
-        />
-        {redirectToOnboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
-
-        {/* DASHBOARD and Metrics */}
-        <Route
           exact
           strict
-          path={[
-            withSiteId(ALERTS_PATH, siteIdList),
-            withSiteId(ALERT_EDIT_PATH, siteIdList),
-            withSiteId(ALERT_CREATE_PATH, siteIdList),
-            withSiteId(METRICS_PATH, siteIdList),
-            withSiteId(METRICS_DETAILS, siteIdList),
-            withSiteId(METRICS_DETAILS_SUB, siteIdList),
-            withSiteId(DASHBOARD_PATH, siteIdList),
-            withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
-            withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList),
-          ]}
-          component={enhancedComponents.Dashboard}
-        />
-
-        <Route
-          exact
-          strict
-          path={withSiteId(USABILITY_TESTING_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTesting}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(USABILITY_TESTING_EDIT_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestEdit}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(USABILITY_TESTING_VIEW_PATH, siteIdList)}
-          component={enhancedComponents.UsabilityTestOverview}
-        />
-
-        <Route
-          exact
-          path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
-        />
-        <Route
-          path={withSiteId(MULTIVIEW_PATH, siteIdList)}
-          component={enhancedComponents.Multiview}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(ASSIST_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(RECORDINGS_PATH, siteIdList)}
-          component={enhancedComponents.Assist}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_PATH, siteIdList)}
-          component={enhancedComponents.FunnelPage}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelsDetails}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelIssue}
-        />
-        <Route
-          exact
-          strict
-          path={[
-            withSiteId(SESSIONS_PATH, siteIdList),
-            withSiteId(FFLAGS_PATH, siteIdList),
-            withSiteId(FFLAG_PATH, siteIdList),
-            withSiteId(FFLAG_READ_PATH, siteIdList),
-            withSiteId(FFLAG_CREATE_PATH, siteIdList),
-            withSiteId(NOTES_PATH, siteIdList),
-            withSiteId(BOOKMARKS_PATH, siteIdList),
-          ]}
-          component={enhancedComponents.SessionsOverview}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(SESSION_PATH, siteIdList)}
-          component={enhancedComponents.Session}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-          component={enhancedComponents.LiveSession}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(SPOTS_LIST_PATH, siteIdList)}
+          path={SPOTS_LIST_PATH}
           component={enhancedComponents.SpotsList}
         />
         <Route
           exact
           strict
-          path={withSiteId(SPOT_PATH, siteIdList)}
+          path={SPOT_PATH}
           component={enhancedComponents.Spot}
         />
+        <Route
+          exact
+          strict
+          path={SCOPE_SETUP}
+          component={enhancedComponents.ScopeSetup}
+        />
+        {props.spotOnly ? null : <>
+          <Route
+            path="/integrations/"
+            render={({ location }) => {
+              const client = new APIClient();
+              switch (location.pathname) {
+                case "/integrations/slack":
+                  client.post("integrations/slack/add", {
+                    code: location.search.split("=")[1],
+                    state: props.tenantId
+                  });
+                  break;
+                case "/integrations/msteams":
+                  client.post("integrations/msteams/add", {
+                    code: location.search.split("=")[1],
+                    state: props.tenantId
+                  });
+                  break;
+              }
+              return <Redirect to={CLIENT_PATH} />;
+            }}
+          />
+          {redirectToOnboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
 
-        {Object.entries(routes.redirects).map(([fr, to]) => (
-          <Redirect key={fr} exact strict from={fr} to={to} />
-        ))}
-        <AdditionalRoutes redirect={withSiteId(routes.sessions(), siteId)} />
+          {/* DASHBOARD and Metrics */}
+          <Route
+            exact
+            strict
+            path={[
+              withSiteId(ALERTS_PATH, siteIdList),
+              withSiteId(ALERT_EDIT_PATH, siteIdList),
+              withSiteId(ALERT_CREATE_PATH, siteIdList),
+              withSiteId(METRICS_PATH, siteIdList),
+              withSiteId(METRICS_DETAILS, siteIdList),
+              withSiteId(METRICS_DETAILS_SUB, siteIdList),
+              withSiteId(DASHBOARD_PATH, siteIdList),
+              withSiteId(DASHBOARD_SELECT_PATH, siteIdList),
+              withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList),
+              withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)
+            ]}
+            component={enhancedComponents.Dashboard}
+          />
+
+          <Route
+            exact
+            strict
+            path={withSiteId(USABILITY_TESTING_PATH, siteIdList)}
+            component={enhancedComponents.UsabilityTesting}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(USABILITY_TESTING_EDIT_PATH, siteIdList)}
+            component={enhancedComponents.UsabilityTestEdit}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(USABILITY_TESTING_VIEW_PATH, siteIdList)}
+            component={enhancedComponents.UsabilityTestOverview}
+          />
+
+          <Route
+            exact
+            path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)}
+            component={enhancedComponents.Multiview}
+          />
+          <Route
+            path={withSiteId(MULTIVIEW_PATH, siteIdList)}
+            component={enhancedComponents.Multiview}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(ASSIST_PATH, siteIdList)}
+            component={enhancedComponents.Assist}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(RECORDINGS_PATH, siteIdList)}
+            component={enhancedComponents.Assist}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(FUNNEL_PATH, siteIdList)}
+            component={enhancedComponents.FunnelPage}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)}
+            component={enhancedComponents.FunnelsDetails}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
+            component={enhancedComponents.FunnelIssue}
+          />
+          <Route
+            exact
+            strict
+            path={[
+              withSiteId(SESSIONS_PATH, siteIdList),
+              withSiteId(FFLAGS_PATH, siteIdList),
+              withSiteId(FFLAG_PATH, siteIdList),
+              withSiteId(FFLAG_READ_PATH, siteIdList),
+              withSiteId(FFLAG_CREATE_PATH, siteIdList),
+              withSiteId(NOTES_PATH, siteIdList),
+              withSiteId(BOOKMARKS_PATH, siteIdList)
+            ]}
+            component={enhancedComponents.SessionsOverview}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(SESSION_PATH, siteIdList)}
+            component={enhancedComponents.Session}
+          />
+          <Route
+            exact
+            strict
+            path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
+            component={enhancedComponents.LiveSession}
+          />
+          {Object.entries(routes.redirects).map(([fr, to]) => (
+            <Redirect key={fr} exact strict from={fr} to={to} />
+          ))}
+          <AdditionalRoutes redirect={withSiteId(routes.sessions(), siteId)} />
+        </>}
+        {props.spotOnly ? <Redirect to={withSiteId(SPOTS_LIST_PATH, siteId)} /> : null}
       </Switch>
     </Suspense>
   );
@@ -269,6 +283,7 @@ export default connect((state: any) => ({
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
   jwt: state.getIn(['user', 'jwt']),
+  spotOnly: getScope(state) === 'spot',
   tenantId: state.getIn(['user', 'account', 'tenantId']),
   isEnterprise:
     state.getIn(['user', 'account', 'edition']) === 'ee' ||

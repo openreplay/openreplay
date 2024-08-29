@@ -150,3 +150,14 @@ export const preferences: Category[] = [
     ]
   }
 ];
+
+export const spotOnlyCats = [
+  'spot',
+  'other',
+  PREFERENCES_MENU.TEAM,
+  PREFERENCES_MENU.ACCOUNT,
+  MENU.EXIT,
+  MENU.PREFERENCES,
+  MENU.SUPPORT,
+  MENU.SPOTS,
+]

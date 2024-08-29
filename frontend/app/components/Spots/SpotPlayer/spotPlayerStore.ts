@@ -70,6 +70,7 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
 export const PANELS = {
   CONSOLE: 'CONSOLE',
   NETWORK: 'NETWORK',
+  OVERVIEW: 'OVERVIEW',
 } as const;
 
 export type PanelType = keyof typeof PANELS;
@@ -78,13 +79,13 @@ class SpotPlayerStore {
   time = 0;
   duration = 0;
   durationString = '';
-  isPlaying = false;
-  state = PlayingState.Paused
+  isPlaying = true;
+  state = PlayingState.Playing;
   isMuted = false;
   volume = 1;
   playbackRate = 1;
   isFullScreen = false;
-  logs: typeof PLog[] = [];
+  logs: ReturnType<typeof PLog>[] = [];
   locations: Location[] = [];
   clicks: Click[] = [];
   network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
@@ -103,7 +104,8 @@ class SpotPlayerStore {
     this.time = 0;
     this.duration = 0;
     this.durationString = '';
-    this.isPlaying = false;
+    this.isPlaying = true;
+    this.state = PlayingState.Playing;
     this.isMuted = false;
     this.volume = 1;
     this.playbackRate = 1;
@@ -188,9 +190,9 @@ class SpotPlayerStore {
     this.locations = locations.map((location) => ({
       ...location,
       time: location.time - this.startTs,
-      fcpTime: location.navTiming.fcpTime,
-      timeToInteractive: location.navTiming.timeToInteractive,
-      visuallyComplete: location.navTiming.visuallyComplete,
+      fcpTime: location.navTiming.fcpTime ? Math.round(location.navTiming.fcpTime) : null,
+      timeToInteractive: location.navTiming.timeToInteractive ? Math.round(location.navTiming.timeToInteractive) : null,
+      visuallyComplete: location.navTiming.visuallyComplete ? Math.round(location.navTiming.visuallyComplete) : null,
     }));
 
     this.clicks = clicks.map((click) => ({

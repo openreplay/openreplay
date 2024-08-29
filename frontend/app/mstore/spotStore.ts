@@ -17,9 +17,14 @@ export default class SpotStore {
   accessKey: string | undefined = undefined;
   pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
+  accessError = false;
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setAccessError(error: boolean) {
+    this.accessError = error;
   }
 
   clearCurrent = () => {
@@ -67,7 +72,7 @@ export default class SpotStore {
     this.total = total;
   }
 
-  async fetchSpots() {
+  fetchSpots = async () => {
     const filters = {
       page: this.page,
       filterBy: this.filter,
@@ -81,22 +86,33 @@ export default class SpotStore {
     );
     this.setSpots(response.spots.map((spot: any) => new Spot(spot)));
     this.setTotal(response.total);
-  }
+  };
 
   async fetchSpotById(id: string) {
-    const response = await this.withLoader(() =>
-      spotService.fetchSpot(id, this.accessKey)
-    );
+    try {
+      const response = await this.withLoader(() =>
+        spotService.fetchSpot(id, this.accessKey)
+      );
 
-    const spotInst = new Spot({ ...response.spot, id });
-    this.setCurrentSpot(spotInst);
+      const spotInst = new Spot({ ...response.spot, id });
+      this.setCurrentSpot(spotInst);
 
-    return spotInst;
+      return spotInst;
+    } catch (e) {
+      if (e.response.status === 401 || e.response.status === 403) {
+        this.setAccessError(true);
+      }
+      throw e;
+    }
   }
 
   async addComment(spotId: string, comment: string, userName: string) {
     await this.withLoader(async () => {
-      await spotService.addComment(spotId, { comment, userName });
+      await spotService.addComment(
+        spotId,
+        { comment, userName },
+        this.accessKey
+      );
       const spot = this.currentSpot;
       if (spot) {
         spot.comments!.push({
@@ -143,24 +159,40 @@ export default class SpotStore {
    * @param expiration - in seconds
    * @param id - spot id string
    * */
-  async generateKey(id: string, expiration: number) {
+  generateKey = async (id: string, expiration: number) => {
     try {
-    const { key } = await this.withLoader(() =>
-      spotService.generateKey(id, expiration)
-    );
-    this.setPubKey(key);
-    return key;
+      const { key } = await this.withLoader(() => {
+        return spotService.generateKey(id, expiration);
+      });
+      this.setPubKey(key);
+      return key;
     } catch (e) {
-      console.error('couldnt generate pubkey')
+      console.error('couldnt generate pubkey');
     }
-  }
+  };
 
-  async getPubKey(id: string) {
+  getPubKey = async (id: string) => {
     try {
-      const { key } = await this.withLoader(() => spotService.getKey(id));
+      const { key } = await this.withLoader(() => {
+        return spotService.getKey(id);
+      });
       this.setPubKey(key);
     } catch (e) {
-      console.error('no pubkey', e)
+      console.error('no pubkey', e);
+    }
+  };
+
+  checkIsProcessed = async (id: string) => {
+    try {
+      const { status } = await this.withLoader(() => {
+        return spotService.checkProcessingStatus(id);
+      })
+
+      return status === 'processed';
+
+    } catch (e) {
+      console.error('couldnt check status', e);
+      return false
     }
   }
 }

@@ -29,7 +29,7 @@ function PublicRoutes(props: Props) {
       <Switch>
         <Route exact strict path={SPOT_PATH} component={Spot} />
         <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
-        <Route exact strict path={LOGIN_PATH} component={props.changePassword ? UpdatePassword : Login} />
+        <Route exact strict path={LOGIN_PATH} component={Login} />
         <Route exact strict path={SIGNUP_PATH} component={Signup} />
         <Redirect to={LOGIN_PATH} />
       </Switch>

@@ -14,7 +14,11 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ && window.e
   ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ : compose;
 
 const storageState = storage.state();
-const initialState = Map({ user: initUserState.update('jwt', () => storageState.user?.jwt || null) });
+const initialState = Map({ user:
+    initUserState
+      .update('jwt', () => storageState.user?.jwt || null)
+      .update('spotJwt', () => storageState.user?.spotJwt || null)
+});
 
 const store = createStore(indexReducer, initialState, composeEnhancers(applyMiddleware(thunk, apiMiddleware)));
 store.subscribe(() => {

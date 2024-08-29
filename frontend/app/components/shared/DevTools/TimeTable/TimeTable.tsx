@@ -215,7 +215,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         {columns
           .filter((i: any) => !i.hidden)
           .map(({ dataKey, render, width, label }) => (
-            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={stl.cell} style={{ width: `${width}px` }}>
+            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={cn(stl.cell, 'overflow-ellipsis overflow-hidden')} style={{ width: `${width}px` }}>
               {render
                 ? render(row)
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
@@ -338,7 +338,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         </div>
 
         <NoContent size="small" show={rows.length === 0}>
-          <div className="relative">
+          <div className="relative" style={{ height: this.tableHeight }}>
             <div className={stl.timePart} style={{ left: `${columnsSumWidth}px` }}>
               {timeColumns.map((_, index) => (
                 <div key={`tc-${index}`} className={stl.timeCell} />

@@ -1,19 +1,28 @@
-import { CopyOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, GlobalOutlined, MessageOutlined, MoreOutlined, SlackOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Dropdown } from 'antd';
+import {
+  ClockCircleOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  MoreOutlined,
+  PlayCircleOutlined,
+  SlackOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { Button, Checkbox, Dropdown, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
-import React from 'react';
+import { Link2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
-
 
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
 
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
+import EditItemModal from './EditItemModal';
 
-import EditItemModal from "./EditItemModal";
-
+const backgroundUrl = '/assets/img/spotThumbBg.svg';
 
 interface ISpotListItem {
   spot: Spot;
@@ -21,12 +30,23 @@ interface ISpotListItem {
   onDelete: () => void;
   onVideo: (id: string) => Promise<{ url: string }>;
   onSelect: (selected: boolean) => void;
+  isSelected: boolean;
 }
 
-function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotListItem) {
-  const [isEdit, setIsEdit] = React.useState(false)
+function SpotListItem({
+  spot,
+  onRename,
+  onDelete,
+  onVideo,
+  onSelect,
+  isSelected,
+}: ISpotListItem) {
+  const [isEdit, setIsEdit] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tooltipText, setTooltipText] = useState('Copy link to clipboard');
   const history = useHistory();
   const { siteId } = useParams<{ siteId: string }>();
+
   const menuItems = [
     {
       key: 'rename',
@@ -39,16 +59,12 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
       icon: <DownloadOutlined />,
     },
     {
-      key: 'copy',
-      label: 'Copy Spot URL',
-      icon: <CopyOutlined />,
-    },
-    {
       key: 'delete',
       icon: <DeleteOutlined />,
       label: 'Delete',
     },
   ];
+
   React.useEffect(() => {
     menuItems.splice(1, 0, {
       key: 'slack',
@@ -59,13 +75,18 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
   const onMenuClick = async ({ key }: any) => {
     switch (key) {
       case 'rename':
-        return setIsEdit(true)
+        return setIsEdit(true);
       case 'download':
-        const { url } = await onVideo(spot.spotId)
-        await downloadFile(url, `${spot.title}.webm`)
+        const { url } = await onVideo(spot.spotId);
+        await downloadFile(url, `${spot.title}.webm`);
         return;
       case 'copy':
-        copy(`${window.location.origin}${withSiteId(spotUrl(spot.spotId.toString()), siteId)}`);
+        copy(
+          `${window.location.origin}${withSiteId(
+            spotUrl(spot.spotId.toString()),
+            siteId
+          )}`
+        );
         return toast.success('Spot URL copied to clipboard');
       case 'delete':
         return onDelete();
@@ -75,6 +96,7 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
         break;
     }
   };
+
   const onSpotClick = (e: any) => {
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
       const spotLink = withSiteId(spotUrl(spot.spotId.toString()), siteId);
@@ -85,50 +107,114 @@ function SpotListItem({ spot, onRename, onDelete, onVideo, onSelect }: ISpotList
     }
   };
 
+  const copyToClipboard = () => {
+    const spotLink = withSiteId(spotUrl(spot.spotId.toString()), siteId);
+    const fullLink = `${window.location.origin}${spotLink}`;
+    navigator.clipboard
+      .writeText(fullLink)
+      .then(() => {
+        setTooltipText('Link copied to clipboard!');
+        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+      })
+      .catch(() => {
+        setTooltipText('Failed to copy URL');
+        setTimeout(() => setTooltipText('Copy link to clipboard'), 2000); // Reset tooltip text after 2 seconds
+      });
+  };
+
   const onSave = (newName: string) => {
     onRename(spot.spotId, newName);
     setIsEdit(false);
-  }
+  };
+
   return (
     <div
-      className={
-        'border rounded-xl overflow-hidden flex flex-col items-start hover:shadow'
-      }
+      className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
+        isSelected ? 'border-teal/30' : 'border-transparent'
+      } transition flex flex-col items-start hover:border-teal`}
     >
       {isEdit ? (
-        <EditItemModal onSave={onSave} onClose={() => setIsEdit(false)} itemName={spot.title} />
-      ) : null}
-      <div style={{ cursor: 'pointer', width: '100%', height: 180, position: 'relative' }} onClick={onSpotClick}>
-        <img
-          src={spot.thumbnail}
-          alt={spot.title}
-          className={'w-full h-full object-cover'}
+        <EditItemModal
+          onSave={onSave}
+          onClose={() => setIsEdit(false)}
+          itemName={spot.title}
         />
+      ) : null}
+      <div
+        className="relative group overflow-hidden"
+        style={{
+          width: '100%',
+          height: 180,
+          backgroundImage: `url(${backgroundUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <AnimatedSVG name={ICONS.LOADER} size={32} />
+          </div>
+        )}
         <div
-          className={
-            'absolute bottom-4 right-4 bg-black text-white p-1 rounded'
-          }
+          className="block w-full h-full cursor-pointer transition hover:bg-teal/70 relative"
+          onClick={onSpotClick}
         >
-          {spot.duration}
+          <img
+            src={spot.thumbnail}
+            alt={spot.title}
+            className={'w-full h-full object-cover opacity-80'}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
+            style={{ display: loading ? 'none' : 'block' }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all hover:scale-100 hover:transition-all group-hover:opacity-100 transition-opacity ">
+            <PlayCircleOutlined
+              style={{ fontSize: '48px', color: 'white' }}
+              className="bg-teal/50 rounded-full"
+            />
+          </div>
+        </div>
+
+        <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
+          <Tooltip title={tooltipText}>
+            <div
+              className={
+                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
+              }
+              onClick={copyToClipboard}
+              style={{ cursor: 'pointer' }}
+            >
+              <Link2 size={16} strokeWidth={1} />
+            </div>
+          </Tooltip>
+          <div
+            className={
+              'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal'
+            }
+          >
+            {spot.duration}
+          </div>
         </div>
       </div>
-      <div className={'px-2 py-4 w-full'}>
+      <div className={'px-4 py-4 w-full border-t'}>
         <div className={'flex items-center gap-2'}>
-          <div>
-            <Checkbox onChange={({ target: { checked }}) => onSelect(checked)} />
-          </div>
-          <div className={'cursor-pointer'} onClick={onSpotClick}>{spot.title}</div>
+          <Checkbox
+            checked={isSelected} 
+            onChange={({ target: { checked } }) => onSelect(checked)}
+            className={`flex cursor-pointer w-full hover:text-teal ${isSelected ? 'text-teal' : ''}`}
+          >
+            <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
+              {spot.title}
+            </span>
+          </Checkbox>
         </div>
-        <div
-          className={'flex items-center gap-2 text-disabled-text leading-4'}
-          style={{ fontSize: 12 }}
-        >
+        <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
           <div>
-            <GlobalOutlined />
+            <UserOutlined />
           </div>
           <div>{spot.user}</div>
-          <div>
-            <MessageOutlined />
+          <div className="ms-4">
+            <ClockCircleOutlined />
           </div>
           <div>{spot.createdAt}</div>
           <div className={'ml-auto'}>
