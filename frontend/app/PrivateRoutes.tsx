@@ -98,17 +98,15 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 interface Props {
-  isEnterprise: boolean;
   tenantId: string;
   siteId: string;
-  jwt: string;
   sites: Map<string, any>;
   onboarding: boolean;
   spotOnly?: boolean;
 }
 
 function PrivateRoutes(props: Props) {
-  const { onboarding, sites, siteId, jwt } = props;
+  const { onboarding, sites, siteId } = props;
   const redirectToOnboarding =
     !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
   const siteIdList: any = sites.map(({ id }) => id).toJS();
@@ -266,26 +264,21 @@ function PrivateRoutes(props: Props) {
             path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
             component={enhancedComponents.LiveSession}
           />
-          {Object.entries(routes.redirects).map(([fr, to]) => (
-            <Redirect key={fr} exact strict from={fr} to={to} />
-          ))}
-          <AdditionalRoutes redirect={withSiteId(routes.sessions(), siteId)} />
+          {/*{Object.entries(routes.redirects).map(([fr, to]) => (*/}
+          {/*  <Redirect key={fr} exact strict from={fr} to={to} />*/}
+          {/*))}*/}
+          {/*<Redirect to={withSiteId(routes.sessions(), siteId)} />*/}
         </>}
-        {props.spotOnly ? <Redirect to={withSiteId(SPOTS_LIST_PATH, siteId)} /> : null}
+        {props.spotOnly ? <Redirect to={SPOTS_LIST_PATH} /> : null}
       </Switch>
     </Suspense>
   );
 }
 
 export default connect((state: any) => ({
-  changePassword: state.getIn(['user', 'account', 'changePassword']),
   onboarding: state.getIn(['user', 'onboarding']),
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
-  jwt: state.getIn(['user', 'jwt']),
   spotOnly: getScope(state) === 'spot',
   tenantId: state.getIn(['user', 'account', 'tenantId']),
-  isEnterprise:
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'authDetails', 'edition']) === 'ee',
 }))(PrivateRoutes);
