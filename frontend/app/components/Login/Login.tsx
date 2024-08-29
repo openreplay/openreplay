@@ -150,6 +150,7 @@ const Login: React.FC<LoginProps> = ({
       ? `${window.location.origin}/api/sso/saml2?iFrame=true&spot=true`
       : `${window.location.origin}/api/sso/saml2?spot=true`;
 
+  console.log(authDetails.enforceSSO)
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center">
@@ -160,7 +161,7 @@ const Login: React.FC<LoginProps> = ({
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             Login to your account
           </h2>
-          <div className={cn({ hidden: authDetails.enforceSSO })}>
+          <div className={cn(authDetails.enforceSSO ? '!hidden' : '')}>
             <Form
               onSubmit={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
@@ -285,7 +286,7 @@ const Login: React.FC<LoginProps> = ({
           </div>
           <div
             className={cn('flex items-center w-96 justify-center my-8', {
-              hidden: !authDetails.enforceSSO,
+              '!hidden': !authDetails.enforceSSO,
             })}
           >
             <a href={ssoLink} rel="noopener noreferrer">

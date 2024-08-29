@@ -1,6 +1,12 @@
-import { makeAutoObservable, observable, action } from 'mobx';
-import { FilterKey, FilterType, FilterCategory }                          from 'Types/filter/filterType';
-import { filtersMap, conditionalFiltersMap, mobileConditionalFiltersMap } from 'Types/filter/newFilter';
+import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
+import {
+  conditionalFiltersMap,
+  filtersMap,
+  mobileConditionalFiltersMap,
+} from 'Types/filter/newFilter';
+import { action, makeAutoObservable, observable } from 'mobx';
+
+import { pageUrlOperators } from '../../constants/filterOptions';
 
 export default class FilterItem {
   type: string = '';
@@ -25,7 +31,7 @@ export default class FilterItem {
     data: any = {},
     private readonly isConditional?: boolean,
     private readonly isMobile?: boolean
-) {
+  ) {
     makeAutoObservable(this, {
       type: observable,
       key: observable,
@@ -62,35 +68,41 @@ export default class FilterItem {
   }
 
   fromData(data: any) {
-    Object.assign(this, data)
-    this.type = data.type
-    this.key = data.key
-    this.label = data.label
-    this.operatorOptions = data.operatorOptions
-    this.hasSource = data.hasSource
-    this.category = data.category
-    this.sourceOperatorOptions = data.sourceOperatorOptions
-    this.value = data.value
-    this.isEvent = Boolean(data.isEvent)
-    this.operator = data.operator
-    this.source = data.source
-    this.sourceOperator = data.sourceOperator
-    this.filters = data.filters
-    this.isActive = Boolean(data.isActive)
-    this.completed = data.completed
-    this.dropped = data.dropped
-    this.options = data.options
-    return this
+    Object.assign(this, data);
+    this.type = data.type;
+    this.key = data.key;
+    this.label = data.label;
+    this.operatorOptions = data.operatorOptions;
+    this.hasSource = data.hasSource;
+    this.category = data.category;
+    this.sourceOperatorOptions = data.sourceOperatorOptions;
+    this.value = data.value;
+    this.isEvent = Boolean(data.isEvent);
+    this.operator = data.operator;
+    this.source = data.source;
+    this.sourceOperator = data.sourceOperator;
+    this.filters = data.filters;
+    this.isActive = Boolean(data.isActive);
+    this.completed = data.completed;
+    this.dropped = data.dropped;
+    this.options = data.options;
+    return this;
   }
 
-  fromJson(json: any, mainFilterKey = '') {
+  fromJson(json: any, mainFilterKey = '', isHeatmap?: boolean) {
     const isMetadata = json.type === FilterKey.METADATA;
-    let _filter: any = (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) || {};
+    let _filter: any =
+      (isMetadata ? filtersMap['_' + json.source] : filtersMap[json.type]) ||
+      {};
     if (this.isConditional) {
       if (this.isMobile) {
-        _filter = mobileConditionalFiltersMap[json.type] || mobileConditionalFiltersMap[json.source];
+        _filter =
+          mobileConditionalFiltersMap[json.type] ||
+          mobileConditionalFiltersMap[json.source];
       } else {
-        _filter = conditionalFiltersMap[json.type] || conditionalFiltersMap[json.source];
+        _filter =
+          conditionalFiltersMap[json.type] ||
+          conditionalFiltersMap[json.source];
       }
     }
     if (mainFilterKey) {
@@ -110,6 +122,9 @@ export default class FilterItem {
     this.hasSource = _filter.hasSource;
     this.category = _filter.category;
     this.sourceOperatorOptions = _filter.sourceOperatorOptions;
+    if (isHeatmap && this.type === FilterKey.LOCATION) {
+      this.sourceOperatorOptions = pageUrlOperators;
+    }
     this.options = _filter.options;
     this.isEvent = Boolean(_filter.isEvent);
 
@@ -138,7 +153,9 @@ export default class FilterItem {
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,
-      filters: Array.isArray(this.filters) ? this.filters.map((i) => i.toJson()) : [],
+      filters: Array.isArray(this.filters)
+        ? this.filters.map((i) => i.toJson())
+        : [],
     };
     if (this.type === FilterKey.DURATION) {
       json.value = this.value.map((i: any) => (!i ? 0 : i));

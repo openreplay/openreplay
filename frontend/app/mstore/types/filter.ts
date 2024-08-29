@@ -71,10 +71,10 @@ export default class Filter {
         this.filters.splice(index, 1)
     }
 
-    fromJson(json: any) {
+    fromJson(json: any, isHeatmap?: boolean) {
         this.name = json.name
         this.filters = json.filters.map((i: Record<string, any>) =>
-            new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i)
+            new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i, undefined, isHeatmap)
         );
         this.eventsOrder = json.eventsOrder
         return this

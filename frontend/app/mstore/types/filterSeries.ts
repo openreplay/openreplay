@@ -21,10 +21,10 @@ export default class FilterSeries {
         this[key] = value
     }
 
-    fromJson(json) {
+    fromJson(json, isHeatmap = false) {
         this.seriesId = json.seriesId
         this.name = json.name
-        this.filter = new Filter().fromJson(json.filter || { filters: [] })
+        this.filter = new Filter().fromJson(json.filter || { filters: [] }, isHeatmap)
         return this
     }
 

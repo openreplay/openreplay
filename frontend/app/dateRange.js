@@ -58,11 +58,6 @@ export function getDateRangeFromValue(value) {
     case DATE_RANGE_VALUES.LAST_24_HOURS:
       return Interval.fromDateTimes(now.minus({ hours: 24 }), now);
     case DATE_RANGE_VALUES.LAST_7_DAYS:
-      const range = Interval.fromDateTimes(
-        now.minus({ days: 7 }).startOf('day'),
-        now.endOf('day')
-      );
-        console.log(range, now.minus({ days: 7}))
       return Interval.fromDateTimes(
         now.minus({ days: 7 }).startOf('day'),
         now.endOf('day')

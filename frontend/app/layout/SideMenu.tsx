@@ -210,6 +210,10 @@ function SideMenu(props: Props) {
     props.history.push(path);
   };
 
+  const RenderDivider = (props: {index: number}) => {
+    if (props.index === 0) return null;
+    return <Divider style={{ margin: '6px 0' }} />;
+  }
   return (
     <>
       <Menu
@@ -226,7 +230,7 @@ function SideMenu(props: Props) {
           <React.Fragment key={category.key}>
             {!category.hidden && (
               <>
-                {index > 0 && <Divider style={{ margin: '6px 0' }} />}
+                <RenderDivider index={index} />
 
                 {category.items
                   .filter((item: any) => !item.hidden)

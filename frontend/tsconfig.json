@@ -9,8 +9,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-//     "module": "es6",
-//    "module": "es2020",
     "target": "es6",
     "allowJs": true,
     "isolatedModules": true,

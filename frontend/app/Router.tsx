@@ -66,6 +66,7 @@ const Router: React.FC<RouterProps> = (props) => {
     scopeSetup,
     localSpotJwt,
   } = props;
+
   const params = new URLSearchParams(location.search)
   const spotCb = params.get('spotCallback');
   const spotReqSent = React.useRef(false)
@@ -162,7 +163,6 @@ const Router: React.FC<RouterProps> = (props) => {
   }, []);
 
   useEffect(() => {
-    // handleJwtFromUrl();
     handleDestinationPath();
 
     setSessionPath(previousLocation ? previousLocation : location);
@@ -227,7 +227,7 @@ const Router: React.FC<RouterProps> = (props) => {
     <NewModalProvider>
       <ModalProvider>
         <Loader loading={loading} className="flex-1">
-          <Layout hideHeader={hideHeader} siteId={siteId}>
+          <Layout hideHeader={hideHeader}>
             <PrivateRoutes />
           </Layout>
         </Loader>
@@ -249,7 +249,7 @@ const mapStateToProps = (state: Map<string, any>) => {
   ]);
   const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
   const scopeSetup = state.getIn(['user', 'scopeSetup'])
-  const loading = Boolean(userInfoLoading) || Boolean(sitesLoading)
+  const loading = Boolean(userInfoLoading) || Boolean(sitesLoading) || (!scopeSetup && !siteId);
   return {
     siteId,
     changePassword,
