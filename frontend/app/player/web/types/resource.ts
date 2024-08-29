@@ -1,4 +1,4 @@
-import type {ResourceTiming, NetworkRequest, Fetch, IosNetworkCall} from '../messages'
+import type {ResourceTiming, NetworkRequest, Fetch, MobileNetworkCall} from '../messages'
 
 export const enum ResourceType {
   XHR = 'xhr',
@@ -59,11 +59,6 @@ export function getResourceName(url: string) {
     .filter((s) => s !== '')
     .pop();
 }
-
-
-const YELLOW_BOUND = 10;
-const RED_BOUND = 80;
-
 
 interface IResource {
   //index: number,
@@ -129,7 +124,7 @@ export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: nu
   })
 }
 
-export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | IosNetworkCall, sessStart: number) {
+export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | MobileNetworkCall, sessStart: number) {
   return Resource({
     ...msg,
     // @ts-ignore

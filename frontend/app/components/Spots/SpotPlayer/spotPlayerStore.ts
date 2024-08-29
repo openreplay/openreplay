@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
 import { getResourceFromNetworkRequest } from 'App/player';
-import { Log as PLog, ILog } from "App/player";
+import { Log as PLog } from "App/player";
 import { PlayingState } from 'App/player-ui'
 
 interface Event {

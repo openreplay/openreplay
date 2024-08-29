@@ -55,7 +55,6 @@ describe('Resource', () => {
     const expectedResult = {
       ...testResource,
       name: 'script.js',
-      isRed: false,
       isYellow: false,
     };
     expect(Resource(testResource)).toEqual(expectedResult);
