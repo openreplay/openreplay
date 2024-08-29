@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { upgradeScope, downgradeScope } from "App/duck/user";
 import { useHistory } from 'react-router-dom';
 import * as routes from 'App/routes'
+import { SPOT_ONBOARDING } from "../../constants/storageKeys";
 
 const Scope = {
   FULL: 'full',
@@ -16,6 +17,13 @@ function ScopeForm({
   downgradeScope,
 }: any) {
   const [scope, setScope] = React.useState(Scope.FULL);
+  React.useEffect(() => {
+    const isSpotSetup = localStorage.getItem(SPOT_ONBOARDING)
+    if (isSpotSetup) {
+      setScope(Scope.SPOT)
+      localStorage.removeItem(SPOT_ONBOARDING)
+    }
+  }, [])
   const history = useHistory();
   const onContinue = () => {
     if (scope === Scope.FULL) {

@@ -9,8 +9,8 @@ import PublicRoutes from 'App/PublicRoutes';
 import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
-  JWT_PARAM,
-} from 'App/constants/storageKeys';
+  JWT_PARAM, SPOT_ONBOARDING
+} from "App/constants/storageKeys";
 import Layout from 'App/layout/Layout';
 import { withStore } from "App/mstore";
 import { checkParam } from 'App/utils';
@@ -171,11 +171,11 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     if (prevIsLoggedIn !== isLoggedIn && isLoggedIn) {
       handleUserLogin();
-      if (spotCb) {
-        history.push(spotsList())
-      }
       if (scopeSetup) {
         history.push(routes.scopeSetup())
+      } else if (spotCb) {
+        history.push(spotsList())
+        localStorage.setItem(SPOT_ONBOARDING, 'true')
       }
     }
   }, [isLoggedIn, scopeSetup]);
