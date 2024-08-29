@@ -171,7 +171,7 @@ export default defineBackground(() => {
       }
       return true;
     }
-    const resp = await fetch(`${ingest}/api/spot/refresh`, {
+    const resp = await fetch(`${ingest}/spot/refresh`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwtToken}`,
@@ -461,7 +461,7 @@ export default defineBackground(() => {
         }
         if (!pingInt) {
           pingInt = setInterval(() => {
-            void pingJWT();
+            void pingJWT(url);
           }, PING_INT)
         }
       });
