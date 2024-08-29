@@ -171,7 +171,7 @@ export default defineBackground(() => {
       }
       return true;
     }
-    const resp = await fetch(`${ingest}/spot/refresh`, {
+    const resp = await fetch(`${ingest}/api/spot/refresh`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwtToken}`,
