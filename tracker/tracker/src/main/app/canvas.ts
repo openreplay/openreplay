@@ -115,9 +115,15 @@ class CanvasRecorder {
     const int = setInterval(() => {
       const cid = this.app.nodes.getID(node)
       const canvas = cid ? this.app.nodes.getNode(cid) : undefined
+      if (!this.snapshots[id]) {
+        this.app.debug.log('Canvas is not present in {snapshots}')
+        clearInterval(int)
+        return
+      }
       if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
         this.app.debug.log('Canvas element not in sync')
         clearInterval(int)
+        return
       } else {
         if (!this.snapshots[id].paused) {
           if (this.options.useAnimationFrame) {
