@@ -122,8 +122,8 @@ export default class FilterItem {
     this.hasSource = _filter.hasSource;
     this.category = _filter.category;
     this.sourceOperatorOptions = _filter.sourceOperatorOptions;
-    if (isHeatmap && this.type === FilterKey.LOCATION) {
-      this.sourceOperatorOptions = pageUrlOperators;
+    if (isHeatmap && this.key === FilterKey.LOCATION) {
+      this.operatorOptions = pageUrlOperators;
     }
     this.options = _filter.options;
     this.isEvent = Boolean(_filter.isEvent);
