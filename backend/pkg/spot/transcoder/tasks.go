@@ -41,7 +41,7 @@ func (t *Task) HasToTranscode() bool {
 }
 
 func (t *tasksImpl) Add(spotID uint64, crop []int, duration int) error {
-	sql := `INSERT INTO spot_tasks (id, crop, duration, status, added_time) VALUES ($1, $2, $3, $4, $5)`
+	sql := `INSERT INTO spots_tasks (id, crop, duration, status, added_time) VALUES ($1, $2, $3, $4, $5)`
 	if err := t.conn.Exec(sql, spotID, crop, duration, "pending", time.Now()); err != nil {
 		return err
 	}
