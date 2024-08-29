@@ -103,7 +103,10 @@ ENV TZ=UTC \
     COMPRESSION_THRESHOLD="20000" \
     # Set Access-Control-* headers for tracker requests if true
     USE_CORS=false \
-    RECORD_CANVAS=true
+    RECORD_CANVAS=true \
+    JWT_SECRET="SECRET" \
+    JWT_SPOT_SECRET="SECRET" \
+    BUCKET_NAME="spots"
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
@@ -113,7 +116,7 @@ RUN if [ "$SERVICE_NAME" = "http" ]; then \
       apk add --no-cache zstd; \
     elif [ "$SERVICE_NAME" = "canvas-handler" ]; then \
           apk add --no-cache zstd; \
-    elif [ "$SERVICE_NAME" = "canvas-maker" ]; then \
+    elif [ "$SERVICE_NAME" = "spot" ]; then \
           apk add --no-cache ffmpeg; \
     fi
 

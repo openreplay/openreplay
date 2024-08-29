@@ -7,11 +7,11 @@ type task struct {
 	toStop  bool
 }
 
-func NewTask(payload interface{}) *task {
+func newTask(payload interface{}) *task {
 	return &task{Payload: payload}
 }
 
-func NewStopSignal() *task {
+func newStopSignal() *task {
 	return &task{toStop: true}
 }
 
@@ -28,7 +28,7 @@ type WorkerPool interface {
 	Stop()
 }
 
-func NewPool(numberOfWorkers, queueSize int, handler func(payload interface{})) *workerPoolImpl {
+func NewPool(numberOfWorkers, queueSize int, handler func(payload interface{})) WorkerPool {
 	pool := &workerPoolImpl{
 		wg:              &sync.WaitGroup{},
 		tasks:           make(chan *task, queueSize),
@@ -47,12 +47,12 @@ func (p *workerPoolImpl) runWorkers() {
 }
 
 func (p *workerPoolImpl) Submit(payload interface{}) {
-	p.tasks <- NewTask(payload)
+	p.tasks <- newTask(payload)
 }
 
 func (p *workerPoolImpl) stop() {
 	for i := 0; i < p.numberOfWorkers; i++ {
-		p.tasks <- NewStopSignal()
+		p.tasks <- newStopSignal()
 	}
 	p.wg.Wait()
 }

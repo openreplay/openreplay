@@ -17,6 +17,7 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/elastic/go-elasticsearch/v8 v8.13.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgconn v1.14.3
@@ -29,6 +30,7 @@ require (
 	github.com/oschwald/maxminddb-golang v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.16.0
+	github.com/rs/xid v1.2.1
 	github.com/sethvargo/go-envconfig v0.7.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
