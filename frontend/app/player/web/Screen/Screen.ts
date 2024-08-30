@@ -88,6 +88,9 @@ export default class Screen {
   addMobileStyles() {
     this.iframe.className = styles.mobileIframe;
     this.screen.className = styles.mobileScreen;
+    if (this.document) {
+      Object.assign(this.document?.body.style, { margin: 0, overflow: 'hidden' })
+    }
   }
 
   addFullscreenBoundary() {
