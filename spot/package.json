@@ -20,7 +20,6 @@
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "autoprefixer": "^10.4.19",
     "install": "^0.13.0",
-    "lucide-solid": "^0.408.0",
     "npm": "^10.8.1",
     "postcss": "^8.4.38",
     "prettier": "^3.3.2",
@@ -32,6 +31,6 @@
     "@wxt-dev/module-solid": "^1.1.2",
     "daisyui": "^4.12.10",
     "typescript": "^5.4.5",
-    "wxt": "0.19.7"
+    "wxt": "0.19.8"
   }
 }
