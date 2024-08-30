@@ -275,7 +275,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
       id="editRecording"
       class="modal save-controls"
     >
-      <div class="modal-box bg-slate-50 p-0 max-w-[85%]">
+      <div class="modal-box bg-slate-50 p-0 max-w-[82%]">
         <div class={"savingcontainer flex xl:flex-row flex-col"}>
           {processing() ? (
             <div class={"processingloader"}>
@@ -322,7 +322,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                 src={videoData()}
               />
             </div>
-            <div class={"card p-1"}>
+            <div class={"card py-1 px-2"}>
               {errorEvents().length ? (
                 <div class={'relative w-full h-4'}>
                   {errorEvents().map(e => (
@@ -375,7 +375,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                     <div
                       class="marker start"
                       onMouseDown={startDrag("start")}
-                      style={{ left: `${startPos()}%` }}
+                      style={{ left: `calc(${startPos()}% - 1.4%)` }}
                     >
                       <div class="handle"></div>
                       <div class="handle"></div>
@@ -384,7 +384,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                       class="slider-body"
                       // onMouseDown={startDrag("body")}
                       style={{
-                        left: `calc(${startPos()}% + 3px)`,
+                        left: `calc(${startPos()}%)`,
                         width: `calc(${endPos() - startPos()}% - 0px)`,
                       }}
                     />
