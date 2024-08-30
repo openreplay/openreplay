@@ -512,7 +512,6 @@ export default defineBackground(() => {
     }
     if (request.type === messages.injected.from.bumpLogs) {
       finalSpotObj.logs.push(...request.logs);
-      console.log("log bump", finalSpotObj.logs);
       return "pong";
     }
     if (request.type === messages.content.from.bumpClicks) {
@@ -1235,7 +1234,6 @@ export default defineBackground(() => {
               target: "offscreen",
             })
             .then((r) => {
-              console.log(r);
               const msg = {
                 ...mountMsg,
                 ...r,

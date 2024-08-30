@@ -243,7 +243,6 @@ function AudioPicker(props: IAudioPicker) {
 
   createEffect(() => {
     chrome.storage.local.get("audioPerm", (data) => {
-      console.log("audioPerm", data.audioPerm);
       if (data.audioPerm && audioDevices().length === 0) {
         props.setHasPermissions(true);
         void checkAudioDevices();
