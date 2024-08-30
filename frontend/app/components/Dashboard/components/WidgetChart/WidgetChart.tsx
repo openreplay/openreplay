@@ -117,7 +117,7 @@ function WidgetChart(props: Props) {
     useEffect(() => {
         _metric.updateKey('page', 1);
         loadPage();
-    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue, metric.startType]);
+    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue, metric.startType, metric.metricFormat]);
     useEffect(loadPage, [_metric.page]);
 
 
@@ -178,7 +178,6 @@ function WidgetChart(props: Props) {
                         data={data}
                         // isTemplate={isTemplate}
                         isEdit={!isSaved && !isTemplate}
-
                     />
                 );
             }

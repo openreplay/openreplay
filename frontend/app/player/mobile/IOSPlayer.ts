@@ -108,6 +108,7 @@ export default class IOSPlayer extends Player {
   injectPlayer = (player: HTMLElement) => {
     this.screen.addToBody(player);
     this.screen.addMobileStyles();
+
     window.addEventListener('resize', () =>
       this.customScale(this.customConstrains.width, this.customConstrains.height)
     );

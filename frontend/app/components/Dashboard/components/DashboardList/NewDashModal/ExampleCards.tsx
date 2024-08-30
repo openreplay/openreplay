@@ -36,6 +36,7 @@ import SpeedIndexByLocationExample
 import HeatmapsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/HeatmapsExample';
 import ByReferrer from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByRferrer';
 import ByFetch from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByFecth';
+import TableOfErrors from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/TableOfErrors';
 
 export const CARD_CATEGORY = {
   PRODUCT_ANALYTICS: 'product-analytics',
@@ -438,6 +439,22 @@ export const CARD_LIST: CardType[] = [
   },
 
   // Errors Tracking
+  // CustomMetricTableErrors
+  {
+    title: 'Table of Errors',
+    key: FilterKey.ERRORS,
+    cardType: TABLE,
+    metricOf: FilterKey.ERRORS,
+    category: CARD_CATEGORIES[3].key,
+    data: {
+      chart: generateBarChartData(),
+      hideLegend: true,
+      label: 'Number of Sessions'
+    },
+    width: 4,
+    height: 336,
+    example: TableOfErrors
+  },
   {
     title: 'Sessions Impacted by JS Errors',
     key: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
