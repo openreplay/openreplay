@@ -247,14 +247,15 @@ export default defineBackground(() => {
     }
   });
 
-  async function pingJWT(refreshUrl: string): Promise<void> {
+  async function pingJWT(ingest: string): Promise<void> {
+    const refreshUrl = safeApiUrl(`${ingest}/api/refresh`);
     if (!jwtToken) {
       if (pingInt) {
         clearInterval(pingInt);
       }
       return;
     }
-    const url = safeApiUrl(`${settings.ingestPoint}/spot/v1/ping`);
+    const url = safeApiUrl(`${ingest}/spot/v1/ping`);
     try {
       const r = await fetch(url, {
         method: "GET",
@@ -461,7 +462,7 @@ export default defineBackground(() => {
         }
         if (!pingInt) {
           pingInt = setInterval(() => {
-            void pingJWT(url);
+            void pingJWT(data.settings.ingestPoint);
           }, PING_INT)
         }
       });
@@ -762,7 +763,7 @@ export default defineBackground(() => {
           const ingestUrl = safeApiUrl(settings.ingestPoint);
 
           const dataUrl = `${ingestUrl}/spot/v1/spots`;
-          refreshToken(ingestUrl).then((r) => {
+          refreshToken(ingestUrl + '/api').then((r) => {
             if (!r) {
               void sendToActiveTab({
                 type: messages.content.to.notification,

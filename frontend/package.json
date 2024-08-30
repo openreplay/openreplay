@@ -155,11 +155,11 @@
     "svg-inline-loader": "^0.8.2",
     "svgo": "^2.8.0",
     "tailwindcss": "^3.3.5",
+    "thread-loader": "^4.0.2",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4",
     "webpack": "^5.92.1",
-    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
   },
