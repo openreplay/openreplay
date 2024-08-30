@@ -110,17 +110,23 @@ function Settings({ goBack }: { goBack: () => void }) {
       </div>
 
       <div class="flex flex-col">
-        <div class="flex items-center justify-between gap-2 tooltip tooltip-bottom  p-4 border-b border-slate-300 hover:bg-indigo-50">
-          <p class="font-normal mb-1 flex items-center">Go to Spot tab after save</p>
-          <label class="label cursor-pointer pr-0">
+        <div class="p-4 border-b border-slate-300 hover:bg-indigo-50">
+        <div class="flex flex-row justify-between items-center">
+            <p class="font-semibold mb-1 flex items-center">
+             View Recording
+            </p>
+
+            <label class="label cursor-pointer pr-0">
             <input
               type="checkbox"
               class="toggle toggle-primary toggle-sm cursor-pointer"
               checked={openInNewTab()}
               onChange={toggleOpenInNewTab}
             />
-            
           </label>
+
+          </div>
+          <p class="text-xs">Go to Spot tab after saving a recording.</p>
         </div>
 
         <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
@@ -140,8 +146,7 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            Include console logs, network calls and other debugging information
-            for developers.
+            Include console logs, network calls and other debugging information in recordings for developers.
           </p>
         </div>
 

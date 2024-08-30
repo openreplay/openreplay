@@ -175,40 +175,38 @@ function SpotVideoContainer({
 
   const reloadPage = () => { window.location.reload();  };
 
-  // const warnText = isProcessing ? 'You’re viewing the entire recording. The trimmed Spot is on its way.' : 'Your trimmed Spot is ready!'
   return (
     <>
-      {isProcessing ? (
-        <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
-          <Alert
-            className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
-            message="You’re viewing the entire recording. The trimmed Spot is on its way."
-            showIcon
-            type="info"
-            closable
-            icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
-          />
+      <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
+          {isProcessing ? (
+            <Alert
+              className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
+              message="You’re viewing the entire recording. The trimmed Spot is on its way."
+              showIcon
+              type="info"
+              closable
+              icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
+            />
+          ) : prevIsProcessing ? (
+            <Alert
+              className='trimIsReady rounded-lg shadow-sm border-0'
+              message="Your trimmed Spot is ready!"
+              showIcon
+              type="success"
+              action={
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<PlayCircleOutlined />}
+                  onClick={reloadPage}
+                >
+                  Play Now
+                </Button>
+              }
+            />
+          ) : null}
         </div>
-      ) : prevIsProcessing ? (
-        <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
-          <Alert
-            className='trimIsReady rounded-lg shadow-sm border-0'
-            message="Your trimmed Spot is ready!"
-            showIcon
-            type="success"
-            action={
-              <Button
-                size="small"
-                type="text"
-                icon={<PlayCircleOutlined />}
-                onClick={reloadPage}
-              >
-                Play Now
-              </Button>
-            }
-          />
-        </div>
-      ) : null}
+
 
       {!isLoaded && (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">

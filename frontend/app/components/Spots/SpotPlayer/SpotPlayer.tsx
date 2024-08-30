@@ -170,7 +170,7 @@ function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
                     className="orSpotBranding flex gap-1 items-center"
                     size="large"
                   >
-                    <img src={'/assets/integrations/openreplay.svg'} width={40} />
+                    <img src={'/assets/openreplay.svg'} width={40} alt='OpenReplay Spot' />
                     <div className="flex flex-row gap-2 items-center text-start">
                       <div className={'text-3xl font-semibold '}>OpenReplay Spot</div>
                     </div>
