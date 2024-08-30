@@ -32,6 +32,7 @@ class JWTAuth(HTTPBearer):
         super(JWTAuth, self).__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request) -> Optional[schemas.CurrentContext]:
+        logger.info(request.url.path)
         if request.url.path in ["/refresh", "/api/refresh"]:
             return await self.__process_refresh_call(request)
 
@@ -45,6 +46,8 @@ class JWTAuth(HTTPBearer):
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
+                logger.info("------ jwt_payload ------")
+                logger.info(jwt_payload)
                 auth_exists = jwt_payload is not None and users.auth_exists(user_id=jwt_payload.get("userId", -1),
                                                                             jwt_iat=jwt_payload.get("iat", 100))
                 if jwt_payload is None \
