@@ -20,7 +20,7 @@ def is_spot_token(token: str) -> bool:
         audience = decoded_token.get("aud")
         return audience == spot.AUDIENCE
     except jwt.InvalidTokenError:
-        logger.error(f"Invalid token: {token}")
+        logger.error(f"Invalid token for is_spot_token: {token}")
         raise
 
 
@@ -49,7 +49,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
     try:
         payload = jwt.decode(jwt=token,
                              key=config("JWT_REFRESH_SECRET") if not is_spot_token(token) \
-                                 else config("JWT_SPOT_SECRET"),
+                                 else config("JWT_SPOT_REFRESH_SECRET"),
                              algorithms=config("jwt_algorithm"),
                              audience=get_supported_audience())
     except jwt.ExpiredSignatureError:

@@ -29,14 +29,14 @@ def refresh(user_id: int, tenant_id: int = -1) -> dict:
     spot_jwt_iat, spot_jwt_r_jti, spot_jwt_r_iat = refresh_spot_jwt_iat_jti(user_id=user_id)
     return {
         "jwt": authorizers.generate_jwt(user_id=user_id, tenant_id=tenant_id, iat=spot_jwt_iat,
-                                        aud=AUDIENCE),
+                                        aud=AUDIENCE, for_spot=True),
         "refreshToken": authorizers.generate_jwt_refresh(user_id=user_id, tenant_id=tenant_id, iat=spot_jwt_r_iat,
-                                                         aud=AUDIENCE, jwt_jti=spot_jwt_r_jti),
+                                                         aud=AUDIENCE, jwt_jti=spot_jwt_r_jti, for_spot=True),
         "refreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int) - (spot_jwt_iat - spot_jwt_r_iat)
     }
 
 
-def refresh_auth_exists(user_id, jwt_jti=None):
+def refresh_auth_exists(user_id, jwt_jti):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id 

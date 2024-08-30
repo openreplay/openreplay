@@ -160,7 +160,7 @@ function Color_safari(props: Props) {
 <stop offset="1" stopColor="#3375F8"/>
 </radialGradient>
 <linearGradient id="paint2_linear_716_8465" x1="11.8729" y1="9.2146" x2="7.33972" y2="17.3477" gradientUnits="userSpaceOnUse">
-<stop stop-opacity="0"/>
+<stop stopOpacity="0"/>
 <stop offset="1"/>
 </linearGradient>
 </defs>

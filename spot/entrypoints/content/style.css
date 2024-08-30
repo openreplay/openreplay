@@ -6,9 +6,12 @@
 
 :host {
   all: initial;
-  contain: content; /* Boom. CSS containment FTW. */
 }
 
+spot-ui {
+  visibility: visible!important;
+  display: block!important;
+}
 
 .body {
   width: 100vw;
@@ -31,6 +34,10 @@
 
 .controlsarea > input {
   width: 100%;
+}
+
+.save-controls {
+  contain: content;
 }
 
 .container {
@@ -299,7 +306,7 @@ textarea {
   left: 45%;
   transform: translateX(-50%);
   z-index: 999999;
-
+  contain: content;
 }
 
 .popupanimated {

@@ -248,7 +248,7 @@ export default defineBackground(() => {
   });
 
   async function pingJWT(ingest: string): Promise<void> {
-    const refreshUrl = safeApiUrl(`${ingest}/api/refresh`);
+    const refreshUrl = safeApiUrl(`${ingest}/api`);
     if (!jwtToken) {
       if (pingInt) {
         clearInterval(pingInt);

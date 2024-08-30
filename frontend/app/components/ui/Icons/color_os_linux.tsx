@@ -38,8 +38,8 @@ function Color_os_linux(props: Props) {
 <path d="M14.8439 10.7893C14.9749 10.6668 15.3875 10.3333 15.9312 10.6736C16.0491 10.7416 16.167 10.8165 16.3373 10.9186C16.6845 11.1296 16.5142 11.4358 16.0949 11.6264C15.905 11.7081 15.5906 11.885 15.3548 11.8714C15.0928 11.8442 14.9159 11.6672 14.7456 11.5515C14.4246 11.3338 14.4443 11.15 14.5949 11.0071C14.7063 10.8982 14.8308 10.7961 14.8439 10.7893Z" fill="url(#paint15_linear_1_13597)"/>
 <defs>
 <linearGradient id="paint0_linear_1_13597" x1="16.0581" y1="6.30635" x2="15.8367" y2="9.30617" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.8"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.8"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint1_linear_1_13597" x1="12.8966" y1="22.6723" x2="11.2506" y2="17.2717" gradientUnits="userSpaceOnUse">
 <stop stopColor="#FFEED7"/>
@@ -50,28 +50,28 @@ function Color_os_linux(props: Props) {
 <stop offset="1" stopColor="#BDBFC2"/>
 </linearGradient>
 <linearGradient id="paint3_linear_1_13597" x1="16.6683" y1="9.65564" x2="16.575" y2="10.3544" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint4_linear_1_13597" x1="14.4338" y1="9.78294" x2="14.5342" y2="10.3483" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint5_linear_1_13597" x1="15.7615" y1="15.6308" x2="15.7781" y2="19.6274" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.8"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.8"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint6_linear_1_13597" x1="15.85" y1="13.1247" x2="15.8684" y2="14.7138" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint7_linear_1_13597" x1="11.7196" y1="14.1055" x2="11.7196" y2="19.9372" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint8_linear_1_13597" x1="21.0329" y1="13.5359" x2="21.0306" y2="18.8051" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint9_linear_1_13597" x1="11.4281" y1="22.4373" x2="10.535" y2="25.4213" gradientUnits="userSpaceOnUse">
 <stop stopColor="#FFA63F"/>
@@ -82,24 +82,24 @@ function Color_os_linux(props: Props) {
 <stop offset="1" stopColor="#FFFF00"/>
 </linearGradient>
 <linearGradient id="paint11_linear_1_13597" x1="20.5202" y1="18.9332" x2="19.6866" y2="22.8604" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint12_linear_1_13597" x1="11.2461" y1="19.9044" x2="11.4114" y2="24.3241" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint13_linear_1_13597" x1="20.3754" y1="18.8617" x2="20.5687" y2="20.1823" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 <linearGradient id="paint14_linear_1_13597" x1="15.7647" y1="10.7838" x2="15.7809" y2="13.1096" gradientUnits="userSpaceOnUse">
 <stop stopColor="#FFA63F"/>
 <stop offset="1" stopColor="#FFFF00"/>
 </linearGradient>
 <linearGradient id="paint15_linear_1_13597" x1="15.5103" y1="10.5638" x2="15.5059" y2="11.7936" gradientUnits="userSpaceOnUse">
-<stop stopColor="white" stop-opacity="0.65"/>
-<stop offset="1" stopColor="white" stop-opacity="0"/>
+<stop stopColor="white" stopOpacity="0.65"/>
+<stop offset="1" stopColor="white" stopOpacity="0"/>
 </linearGradient>
 </defs>
 </svg>

@@ -22,7 +22,7 @@ function Color_device_mobile(props: Props) {
 <linearGradient id="paint0_linear_451_13943" x1="16" y1="0" x2="16" y2="32" gradientUnits="userSpaceOnUse">
 <stop stopColor="#E2E4F6"/>
 <stop offset="0.415" stopColor="#FFF0F8"/>
-<stop offset="1" stopColor="#FDFAC4" stop-opacity="0.8"/>
+<stop offset="1" stopColor="#FDFAC4" stopOpacity="0.8"/>
 </linearGradient>
 <clipPath id="clip0_451_13943">
 <rect width="15" height="22" fill="white" transform="translate(8.5 5)"/>

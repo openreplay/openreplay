@@ -31,13 +31,13 @@ function Color_browser_edge(props: Props) {
 </linearGradient>
 <radialGradient id="paint2_radial_449_13031" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(10.9396 18.9909) rotate(59.2143) scale(9.48152 9.49698)">
 <stop stopColor="#1284D8"/>
-<stop offset="0.813899" stopColor="#1170B2" stop-opacity="0.767762"/>
-<stop offset="1" stopColor="#0E649B" stop-opacity="0.65"/>
+<stop offset="0.813899" stopColor="#1170B2" stopOpacity="0.767762"/>
+<stop offset="1" stopColor="#0E649B" stopOpacity="0.65"/>
 </radialGradient>
 <radialGradient id="paint3_radial_449_13031" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(18.666 21.6) rotate(77.9982) scale(7.6769 8.28824)">
 <stop stopColor="#104890"/>
-<stop offset="0.69943" stopColor="#12529E" stop-opacity="0.70624"/>
-<stop offset="1" stopColor="#0E4584" stop-opacity="0.58"/>
+<stop offset="0.69943" stopColor="#12529E" stopOpacity="0.70624"/>
+<stop offset="1" stopColor="#0E4584" stopOpacity="0.58"/>
 </radialGradient>
 </defs>
 </svg>
