@@ -56,8 +56,10 @@ export default class APIClient {
   private init: RequestInit;
   private readonly siteId: string | undefined;
   private refreshingTokenPromise: Promise<string> | null = null;
+  private cacheManager = new CacheManager();
 
   constructor() {
+    this.cacheManager.init();
     const jwt = store.getState().getIn(['user', 'jwt']);
     const siteId = store.getState().getIn(['site', 'siteId']);
     this.init = {
@@ -233,5 +235,116 @@ export default class APIClient {
   patch(path: string, params?: any, options?: any): Promise<Response> {
     this.init.method = 'PATCH';
     return this.fetch(path, params, 'PATCH');
+  }
+
+  async cachedPost(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
+    if (params.startTimestamp) {
+      params.startTimestamp = roundToFiveMinutes(params.startTimestamp);
+    }
+    if (params.endTimestamp) {
+      params.endTimestamp = roundToFiveMinutes(params.endTimestamp);
+    }
+    const bodyHash = params ? simpleHash(JSON.stringify(params)) : 0;
+    const cacheKey = `${path}-${bodyHash}`;
+
+    const cachedResponse = await this.cacheManager.get(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    const response = await this.post(path, params, options, headers);
+    if (response.ok) {
+      this.cacheManager.set(cacheKey, response.clone());
+    }
+
+    return response;
+  }
+
+  async cachedGet(path: string, params?: any, options?: any, headers?: Record<string, any>): Promise<Response> {
+    if (params.startTimestamp) {
+      params.startTimestamp = roundToFiveMinutes(params.startTimestamp);
+    }
+    if (params.endTimestamp) {
+      params.endTimestamp = roundToFiveMinutes(params.endTimestamp);
+    }
+    const bodyHash = params ? simpleHash(JSON.stringify(params)) : 0;
+    const cacheKey = `${path}-${bodyHash}`;
+
+    const cachedResponse = await this.cacheManager.get(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    const response = await this.post(path, params, options, headers);
+    if (response.ok) {
+      this.cacheManager.set(cacheKey, response.clone());
+    }
+
+    return response;
+  }
+}
+
+function simpleHash(str: string): number {
+  let hash = 5381;
+  let i = str.length;
+
+  while (i) {
+    hash = (hash * 33) ^ str.charCodeAt(--i);
+  }
+
+  return hash >>> 0;
+}
+
+function roundToFiveMinutes(timestamp: number): number {
+  const minutes = 5 * 60 * 1000;
+  return Math.floor(timestamp / minutes) * minutes;
+}
+
+class CacheManager {
+  private cache: Cache | null = null;
+  private invalidationTracker = new Map<string, number>();
+  async init() {
+    this.cache = await caches.open('or-req-cache');
+    this.restoreInvalidationTracker();
+  }
+
+  saveInvalidationTracker() {
+    localStorage.setItem('invalidationTracker', JSON.stringify(Array.from(this.invalidationTracker.entries())));
+  }
+
+  restoreInvalidationTracker() {
+    const tracker = localStorage.getItem('invalidationTracker');
+    if (tracker) {
+      this.invalidationTracker = new Map(JSON.parse(tracker));
+    }
+  }
+
+  async get(key: string): Promise<Response | null> {
+    if (!this.cache) {
+      return null;
+    }
+    if (this.invalidationTracker.has(key)) {
+      const ts = this.invalidationTracker.get(key);
+      if (!ts) {
+        return null;
+      }
+      if (Date.now() - ts > 5 * 60 * 1000) {
+        this.cache.delete(key);
+        this.invalidationTracker.delete(key);
+        this.saveInvalidationTracker();
+        return null;
+      }
+    }
+
+    const result = await this.cache.match(key)
+    return result ?? null;
+  }
+
+  async set(key: string, response: Response) {
+    if (!this.cache) {
+      return;
+    }
+    this.invalidationTracker.set(key, Date.now());
+    this.saveInvalidationTracker();
+    this.cache.put(key, response.clone());
   }
 }
