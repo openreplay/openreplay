@@ -35,7 +35,7 @@ const config: Configuration = {
       {
         test: /\.(ts|js)x?$/i,
         exclude: /node_modules/,
-        use: {
+        use: ['thread-loader', {
           loader: "babel-loader",
           options: {
             presets: [
@@ -44,7 +44,7 @@ const config: Configuration = {
               "@babel/preset-typescript",
             ],
           },
-        },
+        }],
       },
       {
         test: /\.s[ac]ss$/i,
