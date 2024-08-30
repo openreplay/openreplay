@@ -9,6 +9,14 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
 
+logger.info("--------- authorizer config ---------")
+logger.info(f'JWT_REFRESH_EXPIRATION:{config("JWT_REFRESH_EXPIRATION", cast=int)}')
+logger.info(f'JWT_SPOT_REFRESH_EXPIRATION:{config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)}')
+logger.info(f'JWT_ISSUER:{config("JWT_ISSUER")}')
+logger.info(f'JWT_REFRESH_SECRET:{config("JWT_REFRESH_SECRET")}')
+logger.info(f'JWT_SPOT_REFRESH_SECRET:{config("JWT_SPOT_REFRESH_SECRET")}')
+logger.info("--------- authorizer config ---------")
+
 
 def get_supported_audience():
     return [users.AUDIENCE, spot.AUDIENCE]
