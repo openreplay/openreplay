@@ -38,7 +38,7 @@ function WidgetOptions(props: Props) {
         </a>
       )}
 
-      {metric.metricType === TABLE && metric.metricOf != FilterKey.USERID && (
+      {metric.metricType === TABLE && metric.metricOf != FilterKey.USERID && metric.metricOf != FilterKey.ERRORS &&  (
         <Select
           defaultValue={metric.metricFormat}
           style={{ width: 120 }}
