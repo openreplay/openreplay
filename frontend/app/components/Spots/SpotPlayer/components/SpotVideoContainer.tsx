@@ -7,7 +7,6 @@ import {PlayCircleOutlined, InfoCircleOutlined} from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 
 import spotPlayerStore from '../spotPlayerStore';
-import { color } from 'html2canvas/dist/types/css/types/color';
 
 const base64toblob = (str: string) => {
   const byteCharacters = atob(str);
