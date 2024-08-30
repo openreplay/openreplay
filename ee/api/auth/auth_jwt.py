@@ -43,7 +43,7 @@ class JWTAuth(HTTPBearer):
         if request.url.path in ["/refresh", "/api/refresh"]:
             return await self.__process_refresh_call(request)
 
-        elif request.url.path in ["/spot/refresh", "/spot/api/refresh"]:
+        elif request.url.path in ["/spot/refresh", "/api/spot/refresh"]:
             return await self.__process_spot_refresh_call(request)
 
         else:
