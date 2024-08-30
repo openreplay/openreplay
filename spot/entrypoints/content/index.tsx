@@ -21,7 +21,9 @@ export default defineContentScript({
       position: "inline",
       anchor: "body",
       append: "first",
-      onMount: (container) => {
+      onMount: (container,s,host) => {
+        Object.assign(host.style, { visibility: 'visible', display: 'block' });
+
         return render(
           () => (
             <ControlsBox

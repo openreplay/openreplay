@@ -8,6 +8,10 @@
   all: initial;
 }
 
+spot-ui {
+  visibility: visible!important;
+  display: block!important;
+}
 
 .body {
   width: 100vw;

@@ -29,7 +29,7 @@ interface IControlsBox {
   getInitState: () => string;
   onRestart: () => void;
   getErrorEvents: () => Promise<any>;
-  getAudioPerm: () => boolean,
+  getAudioPerm: () => number,
 }
 
 function ControlsBox({
