@@ -32,7 +32,6 @@ class JWTAuth(HTTPBearer):
         super(JWTAuth, self).__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request) -> Optional[schemas.CurrentContext]:
-        logger.info(request.url.path)
         if request.url.path in ["/refresh", "/api/refresh"]:
             return await self.__process_refresh_call(request)
 
@@ -121,6 +120,7 @@ class JWTAuth(HTTPBearer):
             jwt_payload = None
         else:
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["spotRefreshToken"])
+        logger.info("__process_spot_refresh_call")
         logger.info(jwt_payload)
         if jwt_payload is None or jwt_payload.get("jti") is None:
             logger.warning("Null spotRefreshToken's payload, or null JTI.")
