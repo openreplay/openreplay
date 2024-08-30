@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "OpenReplay Spot"
+    "message": "OpenReplay Spot - Record & Report Bugs"
   },
   "extDescription": {
-    "message": "Spot enables a super-fast way to report bugs, providing engineers with all the context they need to fix them."
+    "message": "Record bugs directly from your browser, with all the context developers need to fix them."
   },
   "someAppText": {
     "message": "Some translated text"

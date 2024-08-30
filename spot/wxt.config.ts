@@ -32,7 +32,6 @@ export default defineConfig({
       "offscreen",
       "unlimitedStorage",
       "webRequest",
-      "identity",
     ],
   },
 });
