@@ -1,18 +1,9 @@
 import { Button, Input, Segmented } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
-
-import { downgradeScope } from 'App/duck/user';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import { Icon } from 'UI';
-
-const DebugDowngrade = connect(null, { downgradeScope })(
-  ({ downgradeScope }: any) => (
-    <Button onClick={downgradeScope}>DEBUG: downgrade account scope</Button>
-  )
-);
 
 const SpotsListHeader = observer(
   ({
@@ -20,15 +11,11 @@ const SpotsListHeader = observer(
     selectedCount,
     onClearSelection,
     isEmpty,
-    toggleEmptyState,
-    isEmptyState,
   }: {
     onDelete: () => void;
     selectedCount: number;
     onClearSelection: () => void;
     isEmpty?: boolean;
-    toggleEmptyState?: () => void;
-    isEmptyState?: boolean;
   }) => {
     const { spotStore } = useStore();
 
@@ -61,10 +48,6 @@ const SpotsListHeader = observer(
         <div className="flex gap-1 items-center">
           <Icon name={'orSpot'} size={24} />
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
-          <Button onClick={toggleEmptyState}>
-            DEBUG: empty state {isEmptyState ? 'ON' : 'OFF'}
-          </Button>
-          <DebugDowngrade />
         </div>
 
         {isEmpty ? null : (

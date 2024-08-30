@@ -1,8 +1,8 @@
+import withPageTitle from 'HOCs/withPageTitle';
 import { message } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
-import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'App/components/hocs/withPermissions';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
@@ -16,7 +16,6 @@ import SpotsListHeader from './SpotsListHeader';
 
 function SpotsList() {
   const [selectedSpots, setSelectedSpots] = React.useState<string[]>([]);
-  const [isEmptyState, setIsEmpty] = React.useState(false);
   const { spotStore } = useStore();
 
   React.useEffect(() => {
@@ -74,7 +73,7 @@ function SpotsList() {
   };
 
   const isLoading = spotStore.isLoading;
-  const isEmpty = isEmptyState || spotStore.total === 0 && spotStore.query === ''
+  const isEmpty = spotStore.total === 0 && spotStore.query === '';
   return (
     <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
       <div
@@ -87,8 +86,6 @@ function SpotsList() {
           selectedCount={selectedSpots.length}
           onClearSelection={clearSelection}
           isEmpty={isEmpty}
-          isEmptyState={isEmptyState}
-          toggleEmptyState={() => setIsEmpty(!isEmptyState)}
         />
       </div>
 
@@ -163,5 +160,6 @@ function SpotsList() {
   );
 }
 
-export default withPermissions(['SPOT'])(withPageTitle('Spot List - OpenReplay')(observer(SpotsList)));
-
+export default withPermissions(['SPOT'])(
+  withPageTitle('Spot List - OpenReplay')(observer(SpotsList))
+);
