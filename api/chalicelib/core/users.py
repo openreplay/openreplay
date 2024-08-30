@@ -525,7 +525,7 @@ def get_by_invitation_token(token, pass_token=None):
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, jwt_iat):
+def auth_exists(user_id, jwt_iat) -> bool:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT user_id, EXTRACT(epoch FROM jwt_iat)::BIGINT AS jwt_iat 
