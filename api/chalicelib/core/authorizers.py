@@ -17,6 +17,7 @@ def get_supported_audience():
 def is_spot_token(token: str) -> bool:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False, "verify_exp": False})
+        logger.info(decoded_token)
         audience = decoded_token.get("aud")
         return audience == spot.AUDIENCE
     except jwt.InvalidTokenError:
