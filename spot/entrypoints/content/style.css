@@ -6,7 +6,6 @@
 
 :host {
   all: initial;
-  contain: content; /* Boom. CSS containment FTW. */
 }
 
 
@@ -31,6 +30,10 @@
 
 .controlsarea > input {
   width: 100%;
+}
+
+.save-controls {
+  contain: content;
 }
 
 .container {
@@ -299,7 +302,7 @@ textarea {
   left: 45%;
   transform: translateX(-50%);
   z-index: 999999;
-
+  contain: content;
 }
 
 .popupanimated {
