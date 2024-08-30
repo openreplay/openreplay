@@ -125,6 +125,7 @@ function ${titleCase(fileName)}(props: Props) {
         .replaceAll(/stroke-miterlimit/g, 'strokeMiterlimit')
         .replaceAll(/xml:space="preserve"/g, '')
         .replaceAll(/flood-opacity/g, 'floodOpacity')
+        .replaceAll(/stop-opacity/g, 'stopOpacity')
         .replaceAll(
           /color-interpolation-filters/g,
           'colorInterpolationFilters'

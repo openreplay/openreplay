@@ -49,10 +49,10 @@ function Color_browser_firefox(props: Props) {
 </radialGradient>
 <radialGradient id="paint2_radial_449_13012" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.3806 16.1925) scale(29.2246 29.2888)">
 <stop offset="0.3" stopColor="#960E18"/>
-<stop offset="0.35" stopColor="#B11927" stop-opacity="0.74"/>
-<stop offset="0.43" stopColor="#DB293D" stop-opacity="0.34"/>
-<stop offset="0.5" stopColor="#F5334B" stop-opacity="0.09"/>
-<stop offset="0.53" stopColor="#FF3750" stop-opacity="0"/>
+<stop offset="0.35" stopColor="#B11927" stopOpacity="0.74"/>
+<stop offset="0.43" stopColor="#DB293D" stopOpacity="0.34"/>
+<stop offset="0.5" stopColor="#F5334B" stopOpacity="0.09"/>
+<stop offset="0.53" stopColor="#FF3750" stopOpacity="0"/>
 </radialGradient>
 <radialGradient id="paint3_radial_449_13012" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(18.9045 -2.42803) scale(21.172 21.2184)">
 <stop offset="0.13" stopColor="#FFF44F"/>
@@ -67,10 +67,10 @@ function Color_browser_firefox(props: Props) {
 <stop offset="1" stopColor="#C139E6"/>
 </radialGradient>
 <radialGradient id="paint5_radial_449_13012" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.8004 12.7116) rotate(-13.9265) scale(7.37316 8.67852)">
-<stop offset="0.21" stopColor="#9059FF" stop-opacity="0"/>
-<stop offset="0.28" stopColor="#8C4FF3" stop-opacity="0.06"/>
-<stop offset="0.75" stopColor="#7716A8" stop-opacity="0.45"/>
-<stop offset="0.97" stopColor="#6E008B" stop-opacity="0.6"/>
+<stop offset="0.21" stopColor="#9059FF" stopOpacity="0"/>
+<stop offset="0.28" stopColor="#8C4FF3" stopOpacity="0.06"/>
+<stop offset="0.75" stopColor="#7716A8" stopOpacity="0.45"/>
+<stop offset="0.97" stopColor="#6E008B" stopOpacity="0.6"/>
 </radialGradient>
 <radialGradient id="paint6_radial_449_13012" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.0114 3.02041) scale(10.0108 10.0328)">
 <stop stopColor="#FFE226"/>
@@ -111,10 +111,10 @@ function Color_browser_firefox(props: Props) {
 <stop offset="0.63" stopColor="#FF980E"/>
 </radialGradient>
 <linearGradient id="paint11_linear_449_13012" x1="26.855" y1="5.37218" x2="7.01043" y2="25.1739" gradientUnits="userSpaceOnUse">
-<stop offset="0.17" stopColor="#FFF44F" stop-opacity="0.8"/>
-<stop offset="0.27" stopColor="#FFF44F" stop-opacity="0.63"/>
-<stop offset="0.49" stopColor="#FFF44F" stop-opacity="0.22"/>
-<stop offset="0.6" stopColor="#FFF44F" stop-opacity="0"/>
+<stop offset="0.17" stopColor="#FFF44F" stopOpacity="0.8"/>
+<stop offset="0.27" stopColor="#FFF44F" stopOpacity="0.63"/>
+<stop offset="0.49" stopColor="#FFF44F" stopOpacity="0.22"/>
+<stop offset="0.6" stopColor="#FFF44F" stopOpacity="0"/>
 </linearGradient>
 </defs>
 </svg>
