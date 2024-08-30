@@ -287,7 +287,7 @@ func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *auth.Us
 	sql := `WITH updated AS (
 		UPDATE spots 
 			SET comments = array_append(comments, $1), updated_at = $2 
-			WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND array_length(comments, 1) < $5 
+			WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND COALESCE(array_length(comments, 1), 0) < $5 
 			RETURNING *)
 		SELECT COUNT(*) FROM updated`
 	encodedComment := s.encodeComment(newComment)
