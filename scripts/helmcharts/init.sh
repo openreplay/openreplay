@@ -117,7 +117,6 @@ function install_openreplay_actions() {
         sudo git log -1 2>&1 | sudo tee -a $versions_file
         sudo rm -rf $openreplay_dir
     fi
-    sudo mkdir -p $openreplay_dir
     sudo cp -rfb ./vars.yaml $openreplay_dir/../
     sudo cp -rf "$(cd ../.. && pwd)" $openreplay_dir
 }
