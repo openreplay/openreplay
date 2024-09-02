@@ -96,7 +96,7 @@ spec:
             done
 
             if [ $error_connection -eq 1 ]; then
-              echo "[error] clickhouse is not running. Check kubectl get po -n db; exiting"
+              echo "[error] postgres is not running. Check kubectl get po -n db; exiting"
               exit 100
             fi
 
@@ -152,33 +152,12 @@ spec:
             value: '{{ .Values.global.postgresql.postgresqlPassword }}'
             {{- end}}
         command:
-          - /bin/sh
+          - /bin/bash
           - -c
         args:
           - |
-            exit_count=0
-            error_connection=1
-
-            while [ $exit_count -le 20 ];do
-              nc -zv $POSTGRESQL_HOST $POSTGRESQL_PORT -w 1
-              if [ $? -ne 0 ]; then
-                echo "[info] postgresql is not up; retrying in 5 seconds"
-                sleep 4
-                exit_count=$(($exit_count+1))
-                echo $exit_count
-              else
-                error_connection=0
-                break
-              fi
-            done
-
-            if [ $error_connection -eq 1 ]; then
-              echo "[error] postgresql is not running. Exiting."
-              exit 100
-            fi
-
             pg_version=$(psql -c "SHOW server_version;" | grep -oP '\d\d+')
-            if [ $pg_version -le 14 ]; then
+            if [[ $pg_version -le 14 ]]; then
               echo "[error] postgresql version is $pg_version which is <= 15. Exiting."
               exit 101
             fi
