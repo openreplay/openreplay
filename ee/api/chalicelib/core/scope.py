@@ -1,6 +1,5 @@
 from cachetools import cached, TTLCache
 
-import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
@@ -8,22 +7,22 @@ cache = TTLCache(maxsize=1000, ttl=60)
 
 
 @cached(cache)
-def get_scope(tenant_id) -> schemas.ScopeType:
+def get_scope(tenant_id) -> int:
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT scope 
+        query = cur.mogrify(f"""SELECT scope_state
                                 FROM public.tenants
                                 WHERE tenant_id=%(tenant_id)s;""",
                             {"tenant_id": tenant_id})
         cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())["scope"]
+        return helper.dict_to_camel_case(cur.fetchone())["scope_state"]
 
 
-def update_scope(tenant_id, scope: schemas.ScopeType):
+def update_scope(tenant_id, scope: int):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.tenants
-                                SET scope = %(scope)s
+                                SET scope_state = %(scope_state)s
                                 WHERE tenant_id=%(tenant_id)s;""",
-                            {"scope": scope, "tenant_id": tenant_id})
+                            {"scope_state": scope, "tenant_id": tenant_id})
         cur.execute(query)
         if tenant_id in cache:
             cache.pop(tenant_id)

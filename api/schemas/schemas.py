@@ -1687,10 +1687,5 @@ class TagCreate(TagUpdate):
     ignoreDeadClick: bool = Field(default=False)
 
 
-class ScopeType(str, Enum):
-    FULL_OR = "full"
-    SPOT_ONLY = "spot"
-
-
 class ScopeSchema(BaseModel):
-    scope: ScopeType = Field(default=ScopeType.FULL_OR)
+    scope: int = Field(default=1, ge=1, le=2)

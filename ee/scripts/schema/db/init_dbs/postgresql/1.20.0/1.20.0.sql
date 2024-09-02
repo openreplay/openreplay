@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
 );
 
 ALTER TABLE IF EXISTS public.tenants
-    ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT 'full';
+    ADD COLUMN IF NOT EXISTS scope_state smallint NOT NULL DEFAULT 2;
 
 COMMIT;
 
