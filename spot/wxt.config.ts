@@ -21,13 +21,8 @@ export default defineConfig({
       },
     ],
     permissions: [
-      "activeTab",
       "storage",
-      "desktopCapture",
-      "pageCapture",
-      "system.memory",
       "tabCapture",
-      "scripting",
       "tabs",
       "offscreen",
       "unlimitedStorage",
