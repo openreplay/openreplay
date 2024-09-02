@@ -141,7 +141,7 @@ spec:
           - name: PGPORT
             value: "{{ .Values.global.postgresql.postgresqlPort }}"
           - name: PGUSER
-            value: "{{ .Values.global.postgresql.postgresqlUsername }}"
+            value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             {{- if .Values.global.postgresql.existingSecret }}
             valueFrom:
