@@ -109,6 +109,7 @@ env:
   idp_tenantKey: ''
   assist_secret: ''
   iceServers: ''
+  LOGLEVEL: INFO
 
 
 nodeSelector: {}

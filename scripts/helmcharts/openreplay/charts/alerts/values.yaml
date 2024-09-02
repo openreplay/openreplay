@@ -99,6 +99,7 @@ autoscaling:
 
 env:
   PYTHONUNBUFFERED: '0'
+  LOGLEVEL: INFO
 
 
 
