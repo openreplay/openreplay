@@ -1,6 +1,8 @@
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import {Alert, Button} from 'antd';
+import {PlayCircleOutlined, InfoCircleOutlined} from '@ant-design/icons';
 
 import { useStore } from 'App/mstore';
 
@@ -170,24 +172,41 @@ function SpotVideoContainer({
     }
   }, [spotPlayerStore.playbackRate]);
 
-  const warnText = isProcessing ? 'You’re viewing the entire recording. The trimmed Spot is on its way.' : 'Your trimmed Spot is ready! Please reload the page.'
+  const reloadPage = () => { window.location.reload();  };
+
   return (
     <>
-      {isProcessing || prevIsProcessing
-       ? <div
-         className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-         style={{
-           zIndex: 999,
-           position: 'absolute',
-           left: '50%',
-           top: '-24px',
-           transform: 'translate(-50%, 0)',
-           fontWeight: 500
-         }}
-       >
-         {warnText}
-       </div>
-       : null}
+      <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
+          {isProcessing ? (
+            <Alert
+              className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
+              message="You’re viewing the entire recording. The trimmed Spot is on its way."
+              showIcon
+              type="info"
+              closable
+              icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
+            />
+          ) : prevIsProcessing ? (
+            <Alert
+              className='trimIsReady rounded-lg shadow-sm border-0'
+              message="Your trimmed Spot is ready!"
+              showIcon
+              type="success"
+              action={
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<PlayCircleOutlined />}
+                  onClick={reloadPage}
+                >
+                  Play Now
+                </Button>
+              }
+            />
+          ) : null}
+        </div>
+
+
       {!isLoaded && (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">
           <img

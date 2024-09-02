@@ -52,8 +52,7 @@ function Header({ openSettings }: { openSettings: () => void }) {
       >
         <img src={orLogo} class="w-5" alt={"OpenReplay Spot"} />
         <div class={"text-neutral-600"}>
-          <span class={"text-lg font-semibold text-black"}>Spot</span>
-          <span class={"text-xs ml-2"}>by OpenReplay</span>
+          <span class={"text-lg font-semibold text-black"}>OpenReplay Spot</span>
         </div>
       </div>
 

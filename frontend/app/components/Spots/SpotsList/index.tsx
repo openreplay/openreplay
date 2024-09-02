@@ -78,7 +78,7 @@ function SpotsList() {
     <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
       <div
         className={
-          'flex mx-auto p-2 px-4 bg-white rounded-t-lg shadow-sm w-full z-50 border-b'
+          'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b'
         }
       >
         <SpotsListHeader

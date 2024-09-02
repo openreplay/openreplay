@@ -46,7 +46,6 @@ const SpotsListHeader = observer(
     return (
       <div className={'flex items-center justify-between w-full'}>
         <div className="flex gap-1 items-center">
-          <Icon name={'orSpot'} size={24} />
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
         </div>
 
