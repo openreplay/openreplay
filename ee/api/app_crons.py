@@ -1,9 +1,11 @@
 print("============= CRONS =============")
 import asyncio
+import logging
 import sys
 
 from crons import core_dynamic_crons, ee_crons
 
+logger = logging.getLogger(__name__)
 ACTIONS = {
     "TELEMETRY": core_dynamic_crons.telemetry_cron,
     "JOB": core_dynamic_crons.run_scheduled_jobs,
@@ -16,9 +18,9 @@ ACTIONS = {
 
 def default_action(action):
     async def _func():
-        print(f"{action} not found in crons-definitions")
-        print("possible actions:")
-        print(list(ACTIONS.keys()))
+        logger.warning(f"{action} not found in crons-definitions")
+        logger.warning("possible actions:")
+        logger.warning(list(ACTIONS.keys()))
 
     return _func
 
@@ -29,8 +31,8 @@ async def process(action):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2 or len(sys.argv[1]) < 1:
-        print("please provide actions as argument\npossible actions:")
-        print(list(ACTIONS.keys()))
+        logger.warning("please provide actions as argument\npossible actions:")
+        logger.warning(list(ACTIONS.keys()))
     else:
-        print(f"action: {sys.argv[1]}")
+        logger.info(f"action: {sys.argv[1]}")
         asyncio.run(process(sys.argv[1]))

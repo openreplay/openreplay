@@ -1,6 +1,5 @@
 import logging
 
-from decouple import config
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
@@ -10,7 +9,7 @@ from chalicelib.core import sessions_exp as sessions
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
-logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logger = logging.getLogger(__name__)
 
 LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
@@ -128,8 +127,8 @@ def Build(a):
         try:
             data = schemas.SessionsSearchPayloadSchema.model_validate(a["filter"])
         except ValidationError:
-            logging.warning("Validation error for:")
-            logging.warning(a["filter"])
+            logger.warning("Validation error for:")
+            logger.warning(a["filter"])
             raise
 
         full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=None, errors_only=False,
@@ -211,24 +210,24 @@ def process():
                 try:
                     query = ch_cur.format(query, params)
                 except Exception as e:
-                    logging.error(
+                    logger.error(
                         f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
-                    logging.error(e)
+                    logger.error(e)
                     continue
-                logging.debug(alert)
-                logging.debug(query)
+                logger.debug(alert)
+                logger.debug(query)
                 try:
                     result = ch_cur.execute(query)
                     if len(result) > 0:
                         result = result[0]
 
                     if result["valid"]:
-                        logging.info("Valid alert, notifying users")
+                        logger.info("Valid alert, notifying users")
                         notifications.append(alerts_processor.generate_notification(alert, result))
                 except Exception as e:
-                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
-                    logging.error(str(e))
-                    logging.error(query)
+                    logger.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
+                    logger.error(str(e))
+                    logger.error(query)
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.alerts 
