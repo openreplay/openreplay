@@ -17,6 +17,7 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS events_common;
 CREATE SCHEMA IF NOT EXISTS events;
 CREATE SCHEMA IF NOT EXISTS events_ios;
+CREATE SCHEMA IF NOT EXISTS or_cache;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -1316,5 +1317,6 @@ CREATE TABLE or_cache.autocomplete_top_values
     created_at     timestamp DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
+
 
 COMMIT;
