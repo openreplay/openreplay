@@ -157,6 +157,7 @@ spec:
           - -c
         args:
           - |
+            set -x
             pg_version=$(psql -c "SHOW server_version;" | grep -oP '\d\d+')
             if [[ $pg_version -le 14 ]]; then
               echo "[error] postgresql version is $pg_version which is <= 15. Exiting."
