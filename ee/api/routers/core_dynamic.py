@@ -81,7 +81,7 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
     content = {
         'jwt': r.pop('jwt'),
         'data': {
-            "scope": scope.get_scope(r["tenantId"]),
+            "scopeState": scope.get_scope(r["tenantId"]),
             "user": r
         }
     }

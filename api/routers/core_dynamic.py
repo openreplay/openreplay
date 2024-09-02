@@ -77,7 +77,7 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "scope": scope.get_scope(-1)
+            "scopeState": scope.get_scope(-1)
         }
     }
     response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
