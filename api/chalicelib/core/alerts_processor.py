@@ -1,7 +1,6 @@
 import decimal
 import logging
 
-from decouple import config
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
@@ -11,8 +10,7 @@ from chalicelib.core import sessions
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
-logging.basicConfig(level=config("LOGLEVEL", default=logger.info))
-
+logger = logging.getLogger(__name__)
 LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
         "table": "events.pages INNER JOIN public.sessions USING(session_id)",

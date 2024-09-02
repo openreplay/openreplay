@@ -1,4 +1,4 @@
-from urllib.parse import urlparse
+import logging
 
 import redis
 import requests
@@ -7,11 +7,13 @@ from decouple import config
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+logger = logging.getLogger(__name__)
+
 
 def app_connection_string(name, port, path):
     namespace = config("POD_NAMESPACE", default="app")
     conn_string = config("CLUSTER_URL", default="svc.cluster.local")
-    return f"http://{'.'.join(filter(None, [name, namespace, conn_string]))}:{port}/{path}"
+    return f"http://{name}.{namespace}.{conn_string}:{port}/{path}"
 
 
 HEALTH_ENDPOINTS = {
@@ -44,17 +46,17 @@ def __check_database_pg(*_):
     with pg_client.PostgresClient() as cur:
         try:
             cur.execute("SHOW server_version;")
-            server_version = cur.fetchone()
+            # server_version = cur.fetchone()
         except Exception as e:
-            print("!! health failed: postgres not responding")
-            print(str(e))
+            logger.error("!! health failed: postgres not responding")
+            logger.exception(e)
             return fail_response
         try:
             cur.execute("SELECT openreplay_version() AS version;")
-            schema_version = cur.fetchone()
+            # schema_version = cur.fetchone()
         except Exception as e:
-            print("!! health failed: openreplay_version not defined")
-            print(str(e))
+            logger.error("!! health failed: openreplay_version not defined")
+            logger.exception(e)
             return fail_response
     return {
         "health": True,
@@ -87,22 +89,22 @@ def __check_be_service(service_name):
         try:
             results = requests.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
             if results.status_code != 200:
-                print(f"!! issue with the {service_name}-health code:{results.status_code}")
-                print(results.text)
+                logger.error(f"!! issue with the {service_name}-health code:{results.status_code}")
+                logger.error(results.text)
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
         except requests.exceptions.Timeout:
-            print(f"!! Timeout getting {service_name}-health")
+            logger.error(f"!! Timeout getting {service_name}-health")
             # fail_response["details"]["errors"].append("timeout")
             return fail_response
         except Exception as e:
-            print(f"!! Issue getting {service_name}-health response")
-            print(str(e))
+            logger.error(f"!! Issue getting {service_name}-health response")
+            logger.exception(e)
             try:
-                print(results.text)
+                logger.error(results.text)
                 # fail_response["details"]["errors"].append(results.text)
             except Exception:
-                print("couldn't get response")
+                logger.error("couldn't get response")
                 # fail_response["details"]["errors"].append(str(e))
             return fail_response
         return {
@@ -123,11 +125,11 @@ def __check_redis(*_):
         return fail_response
 
     try:
-        r = redis.from_url(config("REDIS_STRING"))
+        r = redis.from_url(config("REDIS_STRING"), socket_timeout=2)
         r.ping()
     except Exception as e:
-        print("!! Issue getting redis-health response")
-        print(str(e))
+        logger.error("!! Issue getting redis-health response")
+        logger.exception(e)
         # fail_response["details"]["errors"].append(str(e))
         return fail_response
 
@@ -149,8 +151,8 @@ def __check_SSL(*_):
     try:
         requests.get(config("SITE_URL"), verify=True, allow_redirects=True)
     except Exception as e:
-        print("!! health failed: SSL Certificate")
-        print(str(e))
+        logger.error("!! health failed: SSL Certificate")
+        logger.exception(e)
         return fail_response
     return {
         "health": True,

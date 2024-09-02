@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from decouple import config
@@ -5,6 +7,8 @@ from decouple import config
 from chalicelib.core import jobs
 from chalicelib.core import telemetry, unlock
 from chalicelib.core import weekly_report as weekly_report_script, health
+
+logger = logging.getLogger(__name__)
 
 
 async def run_scheduled_jobs() -> None:
@@ -20,9 +24,9 @@ async def telemetry_cron() -> None:
 
 
 async def unlock_cron() -> None:
-    print("validating license")
+    logger.info("validating license")
     unlock.check()
-    print(f"valid: {unlock.is_valid()}")
+    logger.info(f"valid: {unlock.is_valid()}")
 
 
 async def health_cron() -> None:
