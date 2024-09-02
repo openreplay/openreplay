@@ -278,3 +278,4 @@ Pipfile.lock
 /routers/subs/health.py
 /chalicelib/core/spot.py
 /chalicelib/core/unprocessed_sessions.py
+/run-db_init-dev.sh
