@@ -118,8 +118,9 @@ interface Props {
 
 function PrivateRoutes(props: Props) {
   const { onboarding, sites, siteId } = props;
+  const hasRecordings = sites.some(s => s.recorded);
   const redirectToOnboarding =
-    !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true';
+    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || !hasRecordings);
   const siteIdList: any = sites.map(({ id }) => id).toJS();
 
   return (
