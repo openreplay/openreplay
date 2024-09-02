@@ -77,6 +77,7 @@ spec:
             git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
+            git log -1
             {{ .Values.global.dbMigrationPreCommand | default "" }}
 
             exit_count=0
