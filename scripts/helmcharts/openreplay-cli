@@ -382,6 +382,7 @@ function upgrade() {
     or_new_version=$(awk '/fromVersion/{print $2}' <"vars.yaml")
     yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml >new_vars.yaml
     mv new_vars.yaml vars.yaml
+    templater -i vars.yaml -o vars.yaml
     or_helm_upgrade
 
     # Update the version
