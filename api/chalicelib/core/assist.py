@@ -106,7 +106,7 @@ def __get_agent_token(project_id, project_key, session_id):
             "aud": f"openreplay:agent"
         },
         key=config("ASSIST_JWT_SECRET"),
-        algorithm=config("jwt_algorithm")
+        algorithm=config("JWT_ALGORITHM")
     )
 
 

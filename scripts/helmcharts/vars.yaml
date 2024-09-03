@@ -122,6 +122,8 @@ global:
   # secret key to inject to assist and peers service
   assistKey: "{{ randAlphaNum 20}}"
   assistJWTSecret: "{{ randAlphaNum 20}}"
+  jwtSecret: "{{ randAlphaNum 20}}"
+  jwtSpotSecret: "{{ randAlphaNum 20}}"
   # In case of multiple nodes in the kubernetes cluster,
   # we'll have to create an RWX PVC for shared components.
   # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
@@ -157,7 +159,8 @@ global:
 
 chalice:
   env:
-    jwt_secret: "{{ randAlphaNum 20}}"
+    JWT_REFRESH_SECRET: "{{ randAlphaNum 20}}"
+    JWT_SPOT_REFRESH_SECRET: "{{ randAlphaNum 20}}"
     # captcha_server: ''
     # captcha_key: ''
     # SAML2_MD_URL: ''

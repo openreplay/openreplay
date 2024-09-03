@@ -29,8 +29,8 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
         return None
     try:
         payload = jwt.decode(jwt=token,
-                             key=config("jwt_secret") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
-                             algorithms=config("jwt_algorithm"),
+                             key=config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
+                             algorithms=config("JWT_ALGORITHM"),
                              audience=get_supported_audience(),
                              leeway=leeway)
     except jwt.ExpiredSignatureError:
@@ -50,7 +50,7 @@ def jwt_refresh_authorizer(scheme: str, token: str):
         payload = jwt.decode(jwt=token,
                              key=config("JWT_REFRESH_SECRET") if not is_spot_token(token) \
                                  else config("JWT_SPOT_REFRESH_SECRET"),
-                             algorithms=config("jwt_algorithm"),
+                             algorithms=config("JWT_ALGORITHM"),
                              audience=get_supported_audience())
     except jwt.ExpiredSignatureError:
         logger.debug("! JWT-refresh Expired signature")
@@ -73,8 +73,8 @@ def generate_jwt(user_id, tenant_id, iat, aud, for_spot=False):
             "iat": iat,
             "aud": aud
         },
-        key=config("jwt_secret") if not for_spot else config("JWT_SPOT_SECRET"),
-        algorithm=config("jwt_algorithm")
+        key=config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"),
+        algorithm=config("JWT_ALGORITHM")
     )
     return token
 
@@ -92,7 +92,7 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti, for_spot=False):
             "jti": jwt_jti
         },
         key=config("JWT_REFRESH_SECRET") if not for_spot else config("JWT_SPOT_REFRESH_SECRET"),
-        algorithm=config("jwt_algorithm")
+        algorithm=config("JWT_ALGORITHM")
     )
     return token
 
