@@ -159,12 +159,12 @@ export default withRequestState(
 
 export const upgradeScope = () => ({
   types: UPGRADE_ACCOUNT_SCOPE.toArray(),
-  call: (client) => client.post('/account/scope', { scope: 'full' }),
+  call: (client) => client.post('/account/scope', { scope: 2 }),
 })
 
 export const downgradeScope = () => ({
   types: DOWNGRADE_ACCOUNT_SCOPE.toArray(),
-  call: (client) => client.post('/account/scope', { scope: 'spot' }),
+  call: (client) => client.post('/account/scope', { scope: 1 }),
 })
 
 export const login = (params) => ({
