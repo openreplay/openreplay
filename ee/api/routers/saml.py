@@ -160,7 +160,7 @@ async def process_sso_assertion(request: Request):
         status_code=status.HTTP_302_FOUND,
         headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
+                        max_age=refresh_token_max_age, secure=True, httponly=True, samesite="Strict")
     return response
 
 
@@ -294,7 +294,7 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
         status_code=status.HTTP_302_FOUND,
         headers={'Location': SAML2_helper.get_landing_URL(jwt["jwt"], redirect_to_link2=redirect_to_link2)})
     response.set_cookie(key="refreshToken", value=refresh_token, path="/api/refresh",
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
+                        max_age=refresh_token_max_age, secure=True, httponly=True, samesite="Strict")
     return response
 
 
