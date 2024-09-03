@@ -37,10 +37,10 @@ runs:
       run: |
         cd scripts/helmcharts/
         yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
-        yq e -i '.global.assistKey = strenv(JWT_SECRET)' vars.yaml
-        yq e -i '.global.assistJWTSecret = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.global.assistKey = strenv(ASSIST_KEY)' vars.yaml
+        yq e -i '.global.assistJWTSecret = strenv(ASSIST_JWT_SECRET)' vars.yaml
         yq e -i '.global.jwtSecret = strenv(JWT_SECRET)' vars.yaml
-        yq e -i '.global.jwtSpotSecret = strenv(JWT_SECRET)' vars.yaml
+        yq e -i '.global.jwtSpotSecret = strenv(JWT_SPOT_SECRET)' vars.yaml
         yq e -i '.global.enterpriseEditionLicense = strenv(LICENSE_KEY)' vars.yaml
         yq e -i '.global.s3.accessKey = strenv(MINIO_ACCESS_KEY)' vars.yaml
         yq e -i '.global.s3.secretKey = strenv(MINIO_SECRET_KEY)' vars.yaml
