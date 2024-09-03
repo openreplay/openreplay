@@ -64,7 +64,7 @@ window.getJWT = () => {
   }
 }
 window.setJWT = (jwt) => {
-  store.dispatch({ type: UPDATE_JWT, data: jwt })
+  store.dispatch({ type: UPDATE_JWT, data: { jwt } })
 }
 
 export default store;

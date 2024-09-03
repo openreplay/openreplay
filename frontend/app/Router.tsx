@@ -170,15 +170,19 @@ const Router: React.FC<RouterProps> = (props) => {
 
   useEffect(() => {
     if (prevIsLoggedIn !== isLoggedIn && isLoggedIn) {
-      handleUserLogin();
-      if (scopeSetup) {
-        history.push(routes.scopeSetup())
-      } else if (spotCb) {
+      void handleUserLogin();
+      if (spotCb) {
         history.push(spotsList())
         localStorage.setItem(SPOT_ONBOARDING, 'true')
       }
     }
-  }, [isLoggedIn, scopeSetup]);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (scopeSetup) {
+      history.push(routes.scopeSetup())
+    }
+  }, [scopeSetup])
 
   useEffect(() => {
     if (isLoggedIn && location.pathname.includes('login') && localSpotJwt) {
