@@ -60,6 +60,10 @@ spec:
               value: "http://assist-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9001/assist/%s"
             - name: ASSIST_JWT_SECRET
               value: {{ .Values.global.assistJWTSecret }}
+            - name: JWT_SECRET
+              value: {{ .Values.global.jwtSecret }}
+            - name: JWT_SPOT_SECRET
+              value: {{ .Values.global.jwtSpotSecret }}
             - name: ASSIST_KEY
               value: {{ .Values.global.assistKey }}
             - name: LICENSE_KEY
