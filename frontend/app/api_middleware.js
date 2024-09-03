@@ -22,7 +22,7 @@ export default () => (next) => (action) => {
       }
       return response.json();
     })
-    .then((json) => json || {}) // TEMP  TODO on server: no empty responces
+    .then((json) => json || {}) // TEMP  TODO on server: no empty responses
     .then(({ jwt, errors, data }) => {
       if (errors) {
         next({ type: FAILURE, errors, data });
@@ -30,7 +30,7 @@ export default () => (next) => (action) => {
         next({ type: SUCCESS, data, ...rest });
       }
       if (jwt) {
-        next({ type: UPDATE_JWT, data: jwt });
+        next({ type: UPDATE_JWT, data: { jwt } });
       }
     })
     .catch(async (e) => {

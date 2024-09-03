@@ -169,6 +169,7 @@ export default class APIClient {
         path.includes('login')
       || path.includes('refresh')
       || path.includes('logout')
+      || path.includes('reset')
       ) && window.env.NODE_ENV !== 'development'
     ) {
       init.credentials = 'include';
