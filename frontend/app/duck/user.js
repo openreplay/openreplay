@@ -76,7 +76,7 @@ const reducer = (state = initialState, action = {}) => {
     case LOGIN.REQUEST:
       return state.set('loginRequest', { loading: true, errors: [] });
     case LOGIN.SUCCESS:
-      console.log(action)
+      return state
         .set('account', Account({ ...action.data.data.user }))
         .set('spotJwt', action.data.spotJwt)
         .set('scope', action.data.data.scopeState)
