@@ -147,7 +147,10 @@ func isSpotWithKeyRequest(r *http.Request) bool {
 	}
 	getSpotPrefix := "/v1/spots/{id}"            // GET
 	addCommentPrefix := "/v1/spots/{id}/comment" // POST
-	if (pathTemplate == getSpotPrefix && r.Method == "GET") || (pathTemplate == addCommentPrefix && r.Method == "POST") {
+	getStatusPrefix := "/v1/spots/{id}/status"   // GET
+	if (pathTemplate == getSpotPrefix && r.Method == "GET") ||
+		(pathTemplate == addCommentPrefix && r.Method == "POST") ||
+		(pathTemplate == getStatusPrefix && r.Method == "GET") {
 		return true
 	}
 	return false
