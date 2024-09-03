@@ -9,5 +9,5 @@ func (a *authImpl) IsAuthorized(authHeader string, permissions []string, isExten
 	if err != nil {
 		return nil, err
 	}
-	return authUser(a.pgconn, jwtInfo.UserId, jwtInfo.TenantID, int(jwtInfo.ExpiresAt.Unix()))
+	return authUser(a.pgconn, jwtInfo.UserId, jwtInfo.TenantID, int(jwtInfo.IssuedAt.Unix()), isExtension)
 }
