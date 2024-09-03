@@ -147,7 +147,7 @@ def edit_account(data: schemas.EditAccountSchema = Body(...),
 @app.post('/account/scope', tags=["account"])
 def change_scope(data: schemas.ScopeSchema = Body(),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    data = scope.update_scope(tenant_id=-1, scope=data.scope)
+    data = scope.update_scope(tenant_id=context.tenant_id, scope=data.scope)
     return {'data': data}
 
 
