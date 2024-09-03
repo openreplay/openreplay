@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS or_cache.autocomplete_top_values
 ALTER TABLE IF EXISTS public.tenants
     ADD COLUMN IF NOT EXISTS scope_state smallint NOT NULL DEFAULT 2;
 
+ALTER TABLE IF EXISTS public.users
+    ALTER COLUMN settings SET DEFAULT '{
+      "modules": [
+        "usability-tests",
+        "feature-flags"
+      ]
+    }'::jsonb;
+
 COMMIT;
 
 \elif :is_next

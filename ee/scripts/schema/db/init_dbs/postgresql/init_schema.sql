@@ -143,7 +143,12 @@ CREATE TABLE public.users
     spot_jwt_refresh_iat timestamp without time zone NULL     DEFAULT NULL,
     data                 jsonb                       NOT NULL DEFAULT '{}'::jsonb,
     weekly_report        boolean                     NOT NULL DEFAULT TRUE,
-    settings             jsonb                                DEFAULT NULL,
+    settings             jsonb                                DEFAULT '{
+      "modules": [
+        "usability-tests",
+        "feature-flags"
+      ]
+    }'::jsonb,
     origin               text                        NULL     DEFAULT NULL,
     role_id              integer                     REFERENCES public.roles (role_id) ON DELETE SET NULL,
     internal_id          text                        NULL     DEFAULT NULL,
