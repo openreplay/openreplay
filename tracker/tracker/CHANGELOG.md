@@ -1,3 +1,11 @@
+# 14.0.6
+
+- support feature off toggle for feature flags and usability testing
+
+# 14.0.5
+
+- remove canvas snapshot interval if canvas is gone
+
 # 14.0.4
 
 - remove reject from start

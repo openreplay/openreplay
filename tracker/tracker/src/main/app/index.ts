@@ -238,6 +238,10 @@ export default class App {
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
   private readonly initialHostName = location.hostname
+  private features = {
+    'feature-flags': true,
+    'usability-test': true,
+  }
 
   constructor(
     projectKey: string,
@@ -978,7 +982,9 @@ export default class App {
       userOS,
       userState,
       projectID,
+      features,
     } = await r.json()
+    this.features = features ? features : this.features
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -991,9 +997,11 @@ export default class App {
     const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
     this.startCallbacks.forEach((cb) => cb(onStartInfo))
     await this.conditionsManager?.fetchConditions(projectID as string, token as string)
-    await this.featureFlags.reloadFlags(token as string)
+    if (this.features['feature-flags']) {
+      await this.featureFlags.reloadFlags(token as string)
+      this.conditionsManager?.processFlags(this.featureFlags.flags)
+    }
     await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
-    this.conditionsManager?.processFlags(this.featureFlags.flags)
   }
 
   onSessionSent = () => {
@@ -1253,8 +1261,9 @@ export default class App {
         canvasQuality,
         canvasFPS,
         assistOnly: socketOnly,
+        features,
       } = await r.json()
-
+      this.features = features ? features : this.features
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||
@@ -1311,7 +1320,9 @@ export default class App {
       // TODO: start as early as possible (before receiving the token)
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-      void this.featureFlags.reloadFlags()
+      if (this.features['feature-flags']) {
+        void this.featureFlags.reloadFlags()
+      }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
 
@@ -1349,31 +1360,33 @@ export default class App {
         this.ticker.start()
       }
 
-      this.uxtManager = this.uxtManager ? this.uxtManager : new UserTestManager(this, uxtStorageKey)
-      let uxtId: number | undefined
-      const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
-      if (savedUxtTag) {
-        uxtId = parseInt(savedUxtTag, 10)
-      }
-      if (location?.search) {
-        const query = new URLSearchParams(location.search)
-        if (query.has('oruxt')) {
-          const qId = query.get('oruxt')
-          uxtId = qId ? parseInt(qId, 10) : undefined
+      if (this.features['usability-test']) {
+        this.uxtManager = this.uxtManager ? this.uxtManager : new UserTestManager(this, uxtStorageKey)
+        let uxtId: number | undefined
+        const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
+        if (savedUxtTag) {
+          uxtId = parseInt(savedUxtTag, 10)
         }
-      }
+        if (location?.search) {
+          const query = new URLSearchParams(location.search)
+          if (query.has('oruxt')) {
+            const qId = query.get('oruxt')
+            uxtId = qId ? parseInt(qId, 10) : undefined
+          }
+        }
 
-      if (uxtId) {
-        if (!this.uxtManager.isActive) {
-          // eslint-disable-next-line
-          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
-            if (id) {
-              this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
-            }
-          })
-        } else {
-          // @ts-ignore
-          this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
+        if (uxtId) {
+          if (!this.uxtManager.isActive) {
+            // eslint-disable-next-line
+            this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
+              if (id) {
+                this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
+              }
+            })
+          } else {
+            // @ts-ignore
+            this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
+          }
         }
       }
 
