@@ -45,7 +45,7 @@ export const initialState = Map({
     loading: false,
     errors: [],
   },
-  scope: null,
+  scopeState: null,
 });
 
 const setClient = (state, data) => {
@@ -63,7 +63,7 @@ export function setJwt(data) {
   };
 }
 
-export const getScope = (state) => state.getIn(['user', 'scope']);
+export const getScope = (state) => state.getIn(['user', 'scopeState']);
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
@@ -76,10 +76,10 @@ const reducer = (state = initialState, action = {}) => {
     case LOGIN.REQUEST:
       return state.set('loginRequest', { loading: true, errors: [] });
     case LOGIN.SUCCESS:
-      return state
+      console.log(action)
         .set('account', Account({ ...action.data.data.user }))
         .set('spotJwt', action.data.spotJwt)
-        .set('scope', action.data.data.scope)
+        .set('scope', action.data.data.scopeState)
         .set('loginRequest', { loading: false, errors: [] });
     case RESET_PASSWORD.SUCCESS:
       return state
@@ -90,21 +90,21 @@ const reducer = (state = initialState, action = {}) => {
     case SIGNUP.SUCCESS:
       return state
         .set('account', Account(action.data.user))
-        .set('scope', action.data.scope)
+        .set('scope', action.data.scopeState)
     case UPGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
-          .set('scope', 'full')
+          .set('scopeState', 2)
           .set('onboarding', true)
     case DOWNGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
-          .set('scope', 'spot')
+          .set('scopeState', 1)
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:
     case FETCH_ACCOUNT.SUCCESS:
       return state
         .set('account', Account(action.data))
-        .set('scope', action.data.scope)
+        .set('scopeState', action.data.scopeState)
         .set('passwordErrors', List());
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
