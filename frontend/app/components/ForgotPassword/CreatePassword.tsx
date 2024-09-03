@@ -126,7 +126,7 @@ function CreatePassword(props: Props) {
               <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
                 <Icon name="check" size="30" color="tealx" />
               </div>
-              <span>{'Your password has been updated sucessfully.'}</span>
+              <span>{'Your password has been updated successfully.'}</span>
             </div>
           </div>
 
