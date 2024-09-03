@@ -375,7 +375,7 @@ export default withRouter(
       activeTab: state.getIn(['search', 'activeTab', 'type']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       account: state.getIn(['user', 'account']),
-      spotOnly: getScope(state) === 'spot',
+      spotOnly: getScope(state) === 1,
     }),
     { setActiveTab }
   )(SideMenu)

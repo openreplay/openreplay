@@ -20,7 +20,7 @@ import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { setSessionPath } from 'Duck/sessions';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { init as initSite } from 'Duck/site';
-import { fetchUserInfo, setJwt } from 'Duck/user';
+import { fetchUserInfo, getScope, setJwt } from "Duck/user";
 import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
 import { spotsList } from "./routes";
@@ -248,7 +248,7 @@ const mapStateToProps = (state: Map<string, any>) => {
     'loading',
   ]);
   const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
-  const scopeSetup = state.getIn(['user', 'scopeSetup'])
+  const scopeSetup = getScope(state) === 0
   const loading = Boolean(userInfoLoading) || Boolean(sitesLoading) || (!scopeSetup && !siteId);
   return {
     siteId,

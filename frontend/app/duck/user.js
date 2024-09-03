@@ -46,7 +46,6 @@ export const initialState = Map({
     errors: [],
   },
   scope: null,
-  scopeSetup: false,
 });
 
 const setClient = (state, data) => {
@@ -92,16 +91,13 @@ const reducer = (state = initialState, action = {}) => {
       return state
         .set('account', Account(action.data.user))
         .set('scope', action.data.scope)
-        .set('scopeSetup', true);
     case UPGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scope', 'full')
-          .set('scopeSetup', false)
           .set('onboarding', true)
     case DOWNGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scope', 'spot')
-          .set('scopeSetup', false)
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:

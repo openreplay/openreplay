@@ -291,6 +291,6 @@ export default connect((state: any) => ({
   onboarding: state.getIn(['user', 'onboarding']),
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
-  spotOnly: getScope(state) === 'spot',
+  spotOnly: getScope(state) === 1,
   tenantId: state.getIn(['user', 'account', 'tenantId']),
 }))(PrivateRoutes);

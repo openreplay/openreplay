@@ -52,7 +52,7 @@ function TopRight(props: Props) {
 function mapStateToProps(state: any) {
   return {
     account: state.getIn(['user', 'account']),
-    spotOnly: getScope(state) === 'spot',
+    spotOnly: getScope(state) === 1,
     siteId: state.getIn(['site', 'siteId']),
     sites: state.getIn(['site', 'list']),
     boardingCompletion: state.getIn(['dashboard', 'boardingCompletion']),

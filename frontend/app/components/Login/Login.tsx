@@ -150,7 +150,6 @@ const Login: React.FC<LoginProps> = ({
       ? `${window.location.origin}/api/sso/saml2?iFrame=true&spot=true`
       : `${window.location.origin}/api/sso/saml2?spot=true`;
 
-  console.log(authDetails.enforceSSO)
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center">
