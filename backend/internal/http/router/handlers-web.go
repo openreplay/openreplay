@@ -281,6 +281,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		CanvasEnabled:        e.cfg.RecordCanvas,
 		CanvasImageQuality:   e.cfg.CanvasQuality,
 		CanvasFrameRate:      e.cfg.CanvasFps,
+		Features:             e.features,
 	}
 	modifyResponse(req, startResponse)
 

@@ -37,6 +37,8 @@ type Config struct {
 	CanvasFps               int           `env:"CANVAS_FPS,default=1"`
 	MobileQuality           string        `env:"MOBILE_QUALITY,default=low"` // (low, standard, high)
 	MobileFps               int           `env:"MOBILE_FPS,default=1"`
+	IsFeatureFlagEnabled    bool          `env:"IS_FEATURE_FLAG_ENABLED,default=false"`
+	IsUsabilityTestEnabled  bool          `env:"IS_USABILITY_TEST_ENABLED,default=false"`
 	WorkerID                uint16
 }
 

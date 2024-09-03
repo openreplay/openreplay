@@ -164,6 +164,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 		ImageQuality:    e.cfg.MobileQuality,
 		FrameRate:       e.cfg.MobileFps,
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
+		Features:        e.features,
 	}, startTime, r.URL.Path, 0)
 }
 

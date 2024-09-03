@@ -106,7 +106,9 @@ ENV TZ=UTC \
     RECORD_CANVAS=true \
     JWT_SECRET="SECRET" \
     JWT_SPOT_SECRET="SECRET" \
-    BUCKET_NAME="spots"
+    BUCKET_NAME="spots" \
+    IS_FEATURE_FLAG_ENABLED=false \
+    IS_USABILITY_TEST_ENABLED=false
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \

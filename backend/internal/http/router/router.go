@@ -30,6 +30,7 @@ type Router struct {
 	services             *http2.ServicesBuilder
 	beaconSizeCache      map[uint64]*BeaconSize // Cache for session's beaconSize
 	compressionThreshold int64
+	features             map[string]bool
 }
 
 func NewRouter(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (*Router, error) {
@@ -48,6 +49,10 @@ func NewRouter(cfg *http3.Config, log logger.Logger, services *http2.ServicesBui
 		services:             services,
 		beaconSizeCache:      make(map[uint64]*BeaconSize),
 		compressionThreshold: cfg.CompressionThreshold,
+		features: map[string]bool{
+			"feature-flags":  cfg.IsFeatureFlagEnabled,
+			"usability-test": cfg.IsUsabilityTestEnabled,
+		},
 	}
 	e.init()
 	go e.clearBeaconSizes()
