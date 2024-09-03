@@ -79,9 +79,9 @@ const reducer = (state = initialState, action = {}) => {
     case RESET_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return state
-        .set('account', Account({ ...action.data.data.user }))
+        .set('account', Account({ ...action.data.user }))
         .set('spotJwt', action.data.spotJwt)
-        .set('scope', action.data.data.scope)
+        .set('scope', action.data.scope)
         .set('loginRequest', { loading: false, errors: [] });
     case UPDATE_PASSWORD.REQUEST:
     case UPDATE_PASSWORD.SUCCESS:
