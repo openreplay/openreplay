@@ -32,7 +32,7 @@ def get_by_tenant_id(tenant_id):
                                         openreplay_version() AS version_number,
                                         tenants.opt_out,
                                         tenants.tenant_key,
-                                        scope
+                                        scope_state
                                 FROM public.tenants
                                 WHERE tenants.tenant_id = %(tenantId)s 
                                     AND tenants.deleted_at ISNULL
