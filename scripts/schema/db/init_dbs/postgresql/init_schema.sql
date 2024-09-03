@@ -127,7 +127,12 @@ CREATE TABLE public.users
     spot_jwt_refresh_iat timestamp without time zone NULL     DEFAULT NULL,
     data                 jsonb                       NOT NULL DEFAULT '{}'::jsonb,
     weekly_report        boolean                     NOT NULL DEFAULT TRUE,
-    settings             jsonb                                DEFAULT NULL
+    settings             jsonb                                DEFAULT '{
+      "modules": [
+        "usability-tests",
+        "feature-flags"
+      ]
+    }'::jsonb
 );
 
 CREATE TABLE public.basic_authentication

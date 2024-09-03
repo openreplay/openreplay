@@ -25,6 +25,9 @@ ALTER TABLE IF EXISTS public.users
 
 DROP SCHEMA or_cache CASCADE;
 
+ALTER TABLE IF EXISTS public.tenants
+    DROP COLUMN IF EXISTS scope_state;
+
 COMMIT;
 
 \elif :is_next
