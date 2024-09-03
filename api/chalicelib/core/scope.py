@@ -12,7 +12,7 @@ def get_scope(tenant_id) -> int:
         query = cur.mogrify(f"""SELECT scope_state 
                                 FROM public.tenants;""")
         cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())["scope_state"]
+        return cur.fetchone()["scope_state"]
 
 
 def update_scope(tenant_id, scope: int):

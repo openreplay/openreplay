@@ -14,7 +14,7 @@ def get_scope(tenant_id) -> int:
                                 WHERE tenant_id=%(tenant_id)s;""",
                             {"tenant_id": tenant_id})
         cur.execute(query)
-        return helper.dict_to_camel_case(cur.fetchone())["scope_state"]
+        return cur.fetchone()["scope_state"]
 
 
 def update_scope(tenant_id, scope: int):
