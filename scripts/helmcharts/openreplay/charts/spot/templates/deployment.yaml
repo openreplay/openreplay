@@ -79,6 +79,10 @@ spec:
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: JWT_SECRET
+              value: {{ .Values.global.jwtSecret }}
+            - name: JWT_SPOT_SECRET
+              value: {{ .Values.global.jwtSpotSecret }}
             - name: pg_password
               {{- if .Values.global.postgresql.existingSecret }}
               valueFrom:
