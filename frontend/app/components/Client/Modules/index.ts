@@ -9,6 +9,7 @@ export const enum MODULES {
   ASSIST_STATS = 'assist-stats',
   FEATURE_FLAGS = 'feature-flags',
   RECOMMENDATIONS = 'recommendations',
+  USABILITY_TESTS = 'usability-tests',
 }
 
 export interface Module {
@@ -66,5 +67,11 @@ export const modules = [
     key: MODULES.RECOMMENDATIONS,
     icon: 'magic',
     hidden: true
+  },
+  {
+    label: 'Usability Tests',
+    description: 'Get feedback from your users by creating usability tests and sharing them with your team.',
+    key: MODULES.USABILITY_TESTS,
+    icon: 'clipboard-check',
   },
 ];

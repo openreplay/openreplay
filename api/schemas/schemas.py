@@ -1670,6 +1670,7 @@ class ModuleType(str, Enum):
     ASSIST_STATTS = "assist-statts"
     RECOMMENDATIONS = "recommendations"
     FEATURE_FLAGS = "feature-flags"
+    USABILITY_TESTS = "usability-tests"
 
 
 class ModuleStatus(BaseModel):

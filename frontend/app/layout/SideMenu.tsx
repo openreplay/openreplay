@@ -126,6 +126,7 @@ function SideMenu(props: Props) {
               item.key === MENU.SESSIONS &&
                 modules.includes(MODULES.OFFLINE_RECORDINGS),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
+              item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
             ].some((cond) => cond);
