@@ -97,8 +97,8 @@ export default class SpotService extends BaseService {
       .catch(console.error)
   }
 
-  async checkProcessingStatus(id: string) {
-    return this.client.get(`/spot/v1/spots/${id}/status`)
+  async checkProcessingStatus(id: string, accessKey?: string) {
+    return this.client.get(`/spot/v1/spots/${id}/status${accessKey ? `?key=${accessKey}` : ''}`)
       .then(r => r.json())
       .catch(console.error)
   }

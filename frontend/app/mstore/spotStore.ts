@@ -185,7 +185,7 @@ export default class SpotStore {
   checkIsProcessed = async (id: string) => {
     try {
       const { status } = await this.withLoader(() => {
-        return spotService.checkProcessingStatus(id);
+        return spotService.checkProcessingStatus(id, this.accessKey);
       })
 
       return status === 'processed';

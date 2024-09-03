@@ -113,14 +113,14 @@ interface Props {
   siteId: string;
   sites: Map<string, any>;
   onboarding: boolean;
-  spotOnly?: boolean;
+  scope: number;
 }
 
 function PrivateRoutes(props: Props) {
   const { onboarding, sites, siteId } = props;
   const hasRecordings = sites.some(s => s.recorded);
   const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || !hasRecordings);
+    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || !hasRecordings) && props.scope > 0;
   const siteIdList: any = sites.map(({ id }) => id).toJS();
 
   return (
@@ -149,7 +149,7 @@ function PrivateRoutes(props: Props) {
           path={SCOPE_SETUP}
           component={enhancedComponents.ScopeSetup}
         />
-        {props.spotOnly ? <Redirect to={SPOTS_LIST_PATH} /> : null}
+        {props.scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
         <Route
           path="/integrations/"
           render={({ location }) => {
@@ -289,8 +289,8 @@ function PrivateRoutes(props: Props) {
 
 export default connect((state: any) => ({
   onboarding: state.getIn(['user', 'onboarding']),
+  scope: getScope(state),
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
-  spotOnly: getScope(state) === 1,
   tenantId: state.getIn(['user', 'account', 'tenantId']),
 }))(PrivateRoutes);
