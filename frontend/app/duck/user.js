@@ -94,7 +94,6 @@ const reducer = (state = initialState, action = {}) => {
     case UPGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scopeState', 2)
-          .set('onboarding', true)
     case DOWNGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scopeState', 1)
