@@ -106,7 +106,7 @@ postgresql:
   fullnameOverride: postgresql
   postgresqlSharedPreloadLibraries: "pgaudit,pg_stat_statements"
   image:
-    tag: 16.2.0
+    tag: 16.3.0
   resources:
     limits:
       cpu: 1

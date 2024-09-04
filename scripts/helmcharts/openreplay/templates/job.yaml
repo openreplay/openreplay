@@ -135,7 +135,7 @@ spec:
         - name: datadir
           mountPath: /mnt/efs
       - name: postgres-check
-        image: bitnami/postgresql:16.2.0
+        image: bitnami/postgresql:16.3.0
         env:
           - name: PGHOST
             value: "{{ .Values.global.postgresql.postgresqlHost }}"
@@ -201,7 +201,7 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
-        image: bitnami/postgresql:16.2.0
+        image: bitnami/postgresql:16.3.0
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
