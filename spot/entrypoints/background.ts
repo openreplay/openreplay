@@ -241,13 +241,19 @@ export default defineBackground(() => {
 
       if (!pingInt) {
         pingInt = setInterval(() => {
-          void pingJWT(url);
+          void pingJWT();
         }, PING_INT)
       }
     }
   });
 
-  async function pingJWT(ingest: string): Promise<void> {
+  async function pingJWT(): Promise<void> {
+    const data = await chrome.storage.local.get(["jwtToken", "settings"])
+    if (!data.settings) {
+      return;
+    }
+    const { jwtToken, settings } = data;
+    const ingest = safeApiUrl(settings.ingestPoint);
     const refreshUrl = safeApiUrl(`${ingest}/api`);
     if (!jwtToken) {
       if (pingInt) {
@@ -462,7 +468,7 @@ export default defineBackground(() => {
         }
         if (!pingInt) {
           pingInt = setInterval(() => {
-            void pingJWT(data.settings.ingestPoint);
+            void pingJWT();
           }, PING_INT)
         }
       });
