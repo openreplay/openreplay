@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/spot/auth"
-	"time"
 )
 
+const MaxNameLength = 64
 const MaxCommentLength = 120
-const MaxNumberOfComments = 20
+const MaxNumberOfComments = 25
 
 type Spot struct {
 	ID        uint64    `json:"id"`
@@ -83,6 +85,9 @@ func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int, cro
 	case duration <= 0:
 		return nil, fmt.Errorf("duration should be greater than 0")
 	}
+	if len(name) > MaxNameLength {
+		name = name[:MaxNameLength]
+	}
 
 	createdAt := time.Now()
 	spotID, err := s.flaker.Compose(uint64(createdAt.UnixMilli()))
@@ -122,16 +127,15 @@ func (s *spotsImpl) encodeComment(comment *Comment) string {
 }
 
 func (s *spotsImpl) add(spot *Spot) error {
-	sql := `INSERT INTO spots (spot_id, name, user_id, user_email, tenant_id, duration, crop, comments, status, created_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+	sql := `INSERT INTO spots (spot_id, name, user_id, tenant_id, duration, crop, comments, created_at) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	var comments []string
 	for _, comment := range spot.Comments {
 		if encodedComment := s.encodeComment(&comment); encodedComment != "" {
 			comments = append(comments, encodedComment)
 		}
 	}
-	err := s.pgconn.Exec(sql, spot.ID, spot.Name, spot.UserID, spot.UserEmail, spot.TenantID, spot.Duration, spot.Crop,
-		comments, "pending", spot.CreatedAt)
+	err := s.pgconn.Exec(sql, spot.ID, spot.Name, spot.UserID, spot.TenantID, spot.Duration, spot.Crop, comments, spot.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -149,8 +153,10 @@ func (s *spotsImpl) GetByID(user *auth.User, spotID uint64) (*Spot, error) {
 }
 
 func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
-	sql := `SELECT name, user_email, duration, crop, comments, created_at FROM spots 
-            WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
+	sql := `SELECT s.name, u.email, s.duration, s.crop, s.comments, s.created_at 
+			FROM spots s 
+            JOIN users u ON s.user_id = u.user_id
+            WHERE s.spot_id = $1 AND s.tenant_id = $2 AND s.deleted_at IS NULL`
 	spot := &Spot{ID: spotID}
 	var comments []string
 	err := s.pgconn.QueryRow(sql, spotID, user.TenantID).Scan(&spot.Name, &spot.UserEmail, &spot.Duration, &spot.Crop,
@@ -195,8 +201,10 @@ func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
 }
 
 func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
-	sql := `SELECT COUNT(1) OVER () AS total, spot_id, name, user_email, duration, created_at FROM spots 
-			WHERE tenant_id = $1 AND deleted_at IS NULL`
+	sql := `SELECT COUNT(1) OVER () AS total, s.spot_id, s.name, u.email, s.duration, s.created_at 
+			FROM spots s
+			JOIN users u ON s.user_id = u.user_id
+			WHERE s.tenant_id = $1 AND s.deleted_at IS NULL`
 	args := []interface{}{user.TenantID}
 	if opts.UserID != 0 {
 		sql += ` AND user_id = ` + fmt.Sprintf("$%d", len(args)+1)
@@ -217,7 +225,6 @@ func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, err
 		sql += ` OFFSET ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, opts.Offset)
 	}
-	//s.log.Info(context.Background(), "sql: %s, args: %v", sql, args)
 	rows, err := s.pgconn.Query(sql, args...)
 	if err != nil {
 		return nil, 0, err
@@ -244,6 +251,9 @@ func (s *spotsImpl) UpdateName(user *auth.User, spotID uint64, newName string) (
 		return nil, fmt.Errorf("spot id is required")
 	case newName == "":
 		return nil, fmt.Errorf("new name is required")
+	}
+	if len(newName) > MaxNameLength {
+		newName = newName[:MaxNameLength]
 	}
 	return s.updateName(spotID, newName, user)
 }

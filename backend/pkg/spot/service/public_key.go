@@ -3,18 +3,19 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/rs/xid"
-	"openreplay/backend/pkg/spot/auth"
 	"time"
+
+	"github.com/rs/xid"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/spot/auth"
 )
 
 type Key struct {
 	SpotID     uint64    `json:"-"`
 	UserID     uint64    `json:"-"` // to track who generated the key
-	TenantID   uint64    `json:"-"` // to check availability
+	TenantID   uint64    `json:"-"` // to check spot availability
 	Value      string    `json:"value"`
 	Expiration uint64    `json:"expiration"` // in seconds
 	ExpiredAt  time.Time `json:"-"`
@@ -40,6 +41,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
 	}
+
 	now := time.Now()
 	if expiration == 0 {
 		sql := `UPDATE spots_keys SET expired_at = $1, expiration = 0 WHERE spot_id = $2`
@@ -68,7 +70,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	),
 	
 	inserted AS (
-		INSERT INTO spots_keys (spot_key, spot_id, user_id, tenant_id, expiration, created_at, expired_at)
+		INSERT INTO spots_keys (spot_key, spot_id, user_id, expiration, created_at, expired_at)
 		SELECT $2, $6, $3, $7, $4, $1, $5
 		WHERE NOT EXISTS (SELECT 1 FROM updated)
 		RETURNING spot_key, expiration, expired_at
@@ -79,7 +81,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	SELECT spot_key, expiration, expired_at FROM inserted;
 	`
 	key := &Key{}
-	if err := k.conn.QueryRow(sql, now, newKey, user.ID, expiration, expiredAt, spotID, user.TenantID).
+	if err := k.conn.QueryRow(sql, now, newKey, user.ID, expiration, expiredAt, spotID).
 		Scan(&key.Value, &key.Expiration, &key.ExpiredAt); err != nil {
 		k.log.Error(context.Background(), "failed to set key: %v", err)
 		return nil, fmt.Errorf("key not updated")
@@ -94,9 +96,12 @@ func (k *keysImpl) Get(spotID uint64, user *auth.User) (*Key, error) {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
 	}
-	//
+
 	key := &Key{}
-	sql := `SELECT spot_key, expiration, expired_at FROM spots_keys WHERE spot_id = $1 AND tenant_id = $2`
+	sql := `SELECT k.spot_key, k.expiration, k.expired_at 
+			FROM spots_keys k
+			JOIN spots s ON s.spot_id = k.spot_id
+			WHERE k.spot_id = $1 AND s.tenant_id = $2`
 	if err := k.conn.QueryRow(sql, spotID, user.TenantID).Scan(&key.Value, &key.Expiration, &key.ExpiredAt); err != nil {
 		k.log.Error(context.Background(), "failed to get key: %v", err)
 		return nil, fmt.Errorf("key not found")
