@@ -1,23 +1,36 @@
-import { ArrowLeftOutlined, CommentOutlined, CopyOutlined, DeleteOutlined, DownloadOutlined, MoreOutlined, SettingOutlined, UserSwitchOutlined } from '@ant-design/icons';
-import { Badge, Button, Dropdown, MenuProps, Popover, Tooltip, message } from 'antd';
+import {
+  ArrowLeftOutlined,
+  CommentOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  MoreOutlined,
+  SettingOutlined,
+  UserSwitchOutlined,
+} from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Dropdown,
+  MenuProps,
+  Popover,
+  Tooltip,
+  message,
+} from 'antd';
 import copy from 'copy-to-clipboard';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
-
-
+import Tabs from 'App/components/Session/Tabs';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { hashString } from 'App/types/session/session';
 import { Avatar, Icon } from 'UI';
 
-
-
 import { TABS, Tab } from '../consts';
 import AccessModal from './AccessModal';
-
 
 const spotLink = spotsList();
 
@@ -75,11 +88,11 @@ function SpotPlayerHeader({
   const onMenuClick = async ({ key }: { key: string }) => {
     if (key === '1') {
       const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
-      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`)
+      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`);
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
-        message.success('Spot deleted successfully'); 
+        message.success('Spot deleted successfully');
       });
     }
   };
@@ -185,26 +198,38 @@ function SpotPlayerHeader({
           />
         </>
       ) : null}
-      <Button
-        size={'small'}
-        disabled={activeTab === TABS.ACTIVITY}
-        onClick={() => setActiveTab(TABS.ACTIVITY)}
-        icon={<UserSwitchOutlined />}
-      >
-        Activity
-      </Button>
-      
-      <Button
-        size={'small'}
-        disabled={activeTab === TABS.COMMENTS}
-        onClick={() => setActiveTab(TABS.COMMENTS)}
-        icon={<CommentOutlined />}
-      >
-        Comments 
-        {comments.length > 0 && (
-          <Badge count={comments.length} className="mr-2" style={{ fontSize: '10px' }} size='small' color='#454545' />
-        )}
-      </Button>
+      <Tabs
+        className={'!w-fit !border-b-0'}
+        tabs={[
+          {
+            key: TABS.ACTIVITY,
+            text: 'Activity',
+            iconComp: <div className={'mr-1'}><UserSwitchOutlined /></div>,
+              },
+              {
+            key: TABS.COMMENTS,
+            iconComp: <div className={'mr-1'}><CommentOutlined /></div>,
+            text: (
+              <div>
+                Comments{' '}
+                {comments.length > 0 && (
+                  <Badge
+                    count={comments.length}
+                    className="mr-2"
+                    style={{ fontSize: '10px' }}
+                    size="small"
+                    color="#454545"
+                  />
+                )}
+              </div>
+            ),
+          },
+        ]}
+        active={activeTab}
+        onClick={(k) =>
+          k === activeTab ? setActiveTab(null) : setActiveTab(k)
+        }
+      />
     </div>
   );
 }

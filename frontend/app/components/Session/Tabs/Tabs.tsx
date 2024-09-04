@@ -23,7 +23,7 @@ const Tabs = ({ tabs, active, onClick, border = true, className }: Props) => {
     <div className={cn(stl.tabs, className, { [stl.bordered]: border })} role="tablist">
       <Segmented
         value={active}
-        options={tabs.map(({ key, text, hidden = false, disabled = false }) => ({
+        options={tabs.map(({ key, text, hidden = false, disabled = false, iconComp = null }) => ({
           label: (
             <div
               onClick={() => {
@@ -31,7 +31,7 @@ const Tabs = ({ tabs, active, onClick, border = true, className }: Props) => {
               }}
               className={'font-semibold flex gap-1 items-center'}
             >
-              <Icon size={16} color={'black'} name={iconMap[key as keyof typeof iconMap]} />
+              {iconComp ? iconComp : <Icon size={16} color={'black'} name={iconMap[key as keyof typeof iconMap]} />}
               <span>{text}</span>
             </div>
           ),
