@@ -22,6 +22,7 @@ clickhouse-driver[lz4]==0.2.9
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
 python3-saml==1.16.0 --no-binary=lxml
+python-multipart==0.0.9
 
 redis==5.1.0b6
 #confluent-kafka==2.1.0

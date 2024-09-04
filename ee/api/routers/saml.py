@@ -8,7 +8,6 @@ from starlette.responses import RedirectResponse
 
 from chalicelib.core import users, tenants, roles
 from chalicelib.utils import SAML2_helper
-from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 from routers.base import get_routers
 
 logger = logging.getLogger(__name__)
@@ -20,16 +19,16 @@ public_app, app, app_apikey = get_routers()
 @public_app.get("/sso/saml2/", tags=["saml2"])
 async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
     request.path = ''
-    req = await prepare_request(request=request)
-    auth = init_saml_auth(req)
+    req = await SAML2_helper.prepare_request(request=request)
+    auth = SAML2_helper.init_saml_auth(req)
     sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame, 'spot': spot}))
     return RedirectResponse(url=sso_built_url)
 
 
 async def __process_assertion(request: Request, tenant_key=None) -> Response | dict:
-    req = await prepare_request(request=request)
+    req = await SAML2_helper.prepare_request(request=request)
     session = req["cookie"]["session"]
-    auth = init_saml_auth(req)
+    auth = SAML2_helper.init_saml_auth(req)
 
     post_data = req.get("post_data")
     if post_data is None:
@@ -186,9 +185,9 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
 @public_app.get('/sso/saml2/sls', tags=["saml2"])
 @public_app.get('/sso/saml2/sls/', tags=["saml2"])
 async def process_sls_assertion(request: Request):
-    req = await prepare_request(request=request)
+    req = await SAML2_helper.prepare_request(request=request)
     session = req["cookie"]["session"]
-    auth = init_saml_auth(req)
+    auth = SAML2_helper.init_saml_auth(req)
     request_id = None
     if 'LogoutRequestID' in session:
         request_id = session['LogoutRequestID']
@@ -222,8 +221,8 @@ async def process_sls_assertion(request: Request):
 @public_app.get('/sso/saml2/metadata', tags=["saml2"])
 @public_app.get('/sso/saml2/metadata/', tags=["saml2"])
 async def saml2_metadata(request: Request):
-    req = await prepare_request(request=request)
-    auth = init_saml_auth(req)
+    req = await SAML2_helper.prepare_request(request=request)
+    auth = SAML2_helper.init_saml_auth(req)
     settings = auth.get_settings()
     metadata = settings.get_sp_metadata()
     errors = settings.validate_metadata(metadata)
