@@ -491,6 +491,9 @@ export default defineBackground(() => {
     if (request.type === messages.popup.from.updateSettings) {
       const updatedObject = Object.assign(settings, request.settings);
       settings = updatedObject;
+      if ('ingestPoint' in request.settings) {
+        setJWTToken("")
+      }
       chrome.storage.local.set({ settings: updatedObject });
     }
     if (request.type === messages.content.from.checkRecStatus) {

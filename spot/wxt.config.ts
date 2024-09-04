@@ -23,7 +23,6 @@ export default defineConfig({
     permissions: [
       "storage",
       "tabCapture",
-      "tabs",
       "offscreen",
       "unlimitedStorage",
       "webRequest",
