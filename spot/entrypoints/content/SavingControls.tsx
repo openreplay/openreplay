@@ -18,7 +18,7 @@ interface ISavingControls {
     },
   ) => void;
   getVideoData: () => Promise<any>;
-  getErrorEvents: () => Promise<{title:string,time:number}>
+  getErrorEvents: () => Promise<{title:string,time:number}[]>
 }
 
 const base64ToBlob = (base64: string) => {
@@ -51,7 +51,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
 
   createEffect(() => {
     setTrimBounds([0, 0]);
-    getErrorEvents().then(r => {
+    getErrorEvents().then((r) => {
       setErrorEvents(r)
     })
   });
@@ -219,6 +219,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
       videoDuration = await getDuration();
     }
     setDuration(videoDuration);
+    setErrorEvents(errorEvents.filter((ev: { time: number }) => ev.time < videoDuration))
     void generateThumbnail();
   };
 
@@ -324,15 +325,7 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
             </div>
             <div class={"card py-1 px-2"}>
               {errorEvents().length ? (
-                <div class={'relative w-full h-4'}>
-                  {errorEvents().map(e => (
-                    <div
-                      class={'w-3 h-3 rounded-full bg-red-600 absolute tooltip'}
-                      style={{ top: '2px', left: `${(e.time/duration()) * 100}%` }}
-                      data-tip={e.title}
-                    />
-                  ))}
-                </div>
+                <div class={'relative w-full h-4'} />
               ) : null}
               <div class={"flex items-center gap-2"}>
                 <div
@@ -372,6 +365,15 @@ function SavingControls({ onClose, getVideoData, getErrorEvents }: ISavingContro
                     onMouseMove={onDrag}
                     onMouseUp={endDrag}
                   >
+                    <div class={"absolute h-4 w-full"} style="top:-20px;">
+                      {errorEvents().map(e => (
+                        <div
+                          class={'w-3 h-3 rounded-full bg-red-600 absolute tooltip'}
+                          style={{ top: '2px', left: `${(e.time/duration()) * 100}%` }}
+                          data-tip={e.title}
+                        />
+                      ))}
+                    </div>
                     <div
                       class="marker start"
                       onMouseDown={startDrag("start")}
