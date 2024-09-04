@@ -38,3 +38,10 @@ uploadDir(api_key, project_key, sourcemap_dir_path, js_dir_url, [server])
 ```
 
 Both functions return Promise with a result value to be the list of files for which sourcemaps were uploaded.
+
+## Dev
+
+```
+npm install
+bash run-dev.sh
+```

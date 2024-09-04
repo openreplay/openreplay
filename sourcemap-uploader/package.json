@@ -9,17 +9,18 @@
   },
   "author": "Alex Tsokurov",
   "contributors": [
-    "Aleksandr K <alex@openreplay.com>"
+    "Aleksandr K <alex@openreplay.com>",
+    "Taha Yassine K <tahayk2@gmail.com>"
   ],
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^8.28.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "prettier": "^2.4.1"
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3"
   },
   "dependencies": {
     "argparse": "^2.0.1",
-    "glob-promise": "^5.0.0"
+    "glob-promise": "^6.0.7"
   }
 }
