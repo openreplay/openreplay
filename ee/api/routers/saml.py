@@ -12,11 +12,11 @@ from routers.base import get_routers
 
 logger = logging.getLogger(__name__)
 
-public_app, app, app_apikey = get_routers()
+public_app, app, app_apikey = get_routers(prefix="/sso/saml2")
 
 
-@public_app.get("/sso/saml2", tags=["saml2"])
-@public_app.get("/sso/saml2/", tags=["saml2"])
+@public_app.get("", tags=["saml2"])
+@public_app.get("/", tags=["saml2"])
 async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
     request.path = ''
     req = await SAML2_helper.prepare_request(request=request)
@@ -170,20 +170,20 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
     return response
 
 
-@public_app.post('/sso/saml2/acs', tags=["saml2"])
-@public_app.post('/sso/saml2/acs/', tags=["saml2"])
+@public_app.post('/acs', tags=["saml2"])
+@public_app.post('/acs/', tags=["saml2"])
 async def process_sso_assertion(request: Request):
     return await __process_assertion(request=request)
 
 
-@public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
-@public_app.post('/sso/saml2/acs/{tenantKey}/', tags=["saml2"])
+@public_app.post('/acs/{tenantKey}', tags=["saml2"])
+@public_app.post('/acs/{tenantKey}/', tags=["saml2"])
 async def process_sso_assertion_tk(tenantKey: str, request: Request):
     return await __process_assertion(request=request, tenant_key=tenantKey)
 
 
-@public_app.get('/sso/saml2/sls', tags=["saml2"])
-@public_app.get('/sso/saml2/sls/', tags=["saml2"])
+@public_app.get('/sls', tags=["saml2"])
+@public_app.get('/sls/', tags=["saml2"])
 async def process_sls_assertion(request: Request):
     req = await SAML2_helper.prepare_request(request=request)
     session = req["cookie"]["session"]
@@ -218,8 +218,8 @@ async def process_sls_assertion(request: Request):
     return RedirectResponse(url=config("SITE_URL"))
 
 
-@public_app.get('/sso/saml2/metadata', tags=["saml2"])
-@public_app.get('/sso/saml2/metadata/', tags=["saml2"])
+@public_app.get('/metadata', tags=["saml2"])
+@public_app.get('/metadata/', tags=["saml2"])
 async def saml2_metadata(request: Request):
     req = await SAML2_helper.prepare_request(request=request)
     auth = SAML2_helper.init_saml_auth(req)
