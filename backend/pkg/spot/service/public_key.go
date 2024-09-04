@@ -71,7 +71,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	
 	inserted AS (
 		INSERT INTO spots_keys (spot_key, spot_id, user_id, expiration, created_at, expired_at)
-		SELECT $2, $6, $3, $7, $4, $1, $5
+		SELECT $2, $6, $3, $4, $1, $5
 		WHERE NOT EXISTS (SELECT 1 FROM updated)
 		RETURNING spot_key, expiration, expired_at
 	)
