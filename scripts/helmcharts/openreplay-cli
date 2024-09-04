@@ -47,6 +47,19 @@ YELLOW='\033[0;33m'
 BWHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
+## Helper func
+err_check_failed_pod_logs() {
+    echo "${RED}Error occurred in function."
+    for pod in $(kubectl get pods -n ${APP_NS} --field-selector=status.phase=Failed -o jsonpath='{.items[*].metadata.name}'); do
+        for container in $(kubectl get pod $pod -n ${APP_NS} -o jsonpath='{.status.containerStatuses[?(@.state.terminated.reason=="Error")].name} {.status.initContainerStatuses[?(@.state.terminated.reason=="Error")].name}'); do
+            echo "Error logs for Pod: $pod, Container: $container"
+            kubectl logs -n ${APP_NS} $pod -c $container
+        done
+    done
+    echo "${NC}"
+    return
+}
+
 # Checking whether the app exists or we do have to upgade.
 function exists() {
     which "${1}" &>/dev/null
@@ -224,14 +237,16 @@ function or_helm_upgrade() {
         [[ -z $OR_VERSION ]] || HELM_OPTIONS="${HELM_OPTIONS} --set dbMigrationUpstreamBranch=${OR_VERSION}"
         log info "Upgrading chart: $chart"
         if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS 2>&1 | tee -a "${log_file}"; then
+            pod_log=$(err_check_failed_pod_logs)
             log err "
         Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
 
         If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
 
         If pods are in a failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
+
+        \n$pod_log
         "
-            kubectl logs -l or.workload/type=db-migrate
         fi
     done
     set +o pipefail
