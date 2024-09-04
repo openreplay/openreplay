@@ -5,7 +5,7 @@ from os import environ
 from urllib.parse import urlparse
 
 from decouple import config
-from fastapi import Request
+from fastapi import Request, HTTPException
 from starlette.datastructures import FormData
 
 if config("ENABLE_SSO", cast=bool, default=True):
@@ -84,6 +84,8 @@ def init_saml_auth(req):
 
 
 async def prepare_request(request: Request):
+    if not is_saml2_available():
+        raise HTTPException(status_code=401, detail="SSO configuration not available.")
     request.args = dict(request.query_params).copy() if request.query_params else {}
     form: FormData = await request.form()
     request.form = dict(form)
