@@ -164,14 +164,21 @@ export default defineBackground(() => {
   }
 
   let slackChannels: { name: string; webhookId: number }[] = [];
-  const refreshToken = async (ingest: string) => {
+  const refreshToken = async () => {
+    const data = await chrome.storage.local.get(["jwtToken", "settings"])
+    if (!data.settings) {
+      return;
+    }
+    const { jwtToken, settings } = data;
+    const ingest = safeApiUrl(settings.ingestPoint);
+    const refreshUrl = safeApiUrl(`${ingest}/api`);
     if (!isTokenExpired(jwtToken) || !jwtToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
       }
       return true;
     }
-    const resp = await fetch(`${ingest}/spot/refresh`, {
+    const resp = await fetch(`${refreshUrl}/spot/refresh`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwtToken}`,
@@ -192,7 +199,7 @@ export default defineBackground(() => {
   };
 
   const fetchSlackChannels = async (token: string, ingest: string) => {
-    await refreshToken(ingest);
+    await refreshToken();
     const resp = await fetch(`${ingest}/spot/integrations/slack/channels`, {
       method: "GET",
       headers: {
@@ -226,16 +233,16 @@ export default defineBackground(() => {
     }
 
     const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
-    const ok = await refreshToken(url);
+    const ok = await refreshToken();
     if (ok) {
       fetchSlackChannels(data.jwtToken, url).catch((e) => {
         console.error(e);
-        void refreshToken(url);
+        void refreshToken();
       });
 
       if (!refreshInt) {
         refreshInt = setInterval(() => {
-          void refreshToken(url);
+          void refreshToken();
         }, CHECK_INT);
       }
 
@@ -254,7 +261,6 @@ export default defineBackground(() => {
     }
     const { jwtToken, settings } = data;
     const ingest = safeApiUrl(settings.ingestPoint);
-    const refreshUrl = safeApiUrl(`${ingest}/api`);
     if (!jwtToken) {
       if (pingInt) {
         clearInterval(pingInt);
@@ -270,10 +276,10 @@ export default defineBackground(() => {
         },
       })
       if (!r.ok) {
-        void refreshToken(refreshUrl)
+        void refreshToken()
       }
     } catch (e) {
-      void refreshToken(refreshUrl)
+      void refreshToken()
     }
   }
 
@@ -463,7 +469,7 @@ export default defineBackground(() => {
         const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
         if (!refreshInt)  {
           refreshInt = setInterval(() => {
-            void refreshToken(url);
+            void refreshToken();
           }, CHECK_INT);
         }
         if (!pingInt) {
@@ -772,7 +778,7 @@ export default defineBackground(() => {
           const ingestUrl = safeApiUrl(settings.ingestPoint);
 
           const dataUrl = `${ingestUrl}/spot/v1/spots`;
-          refreshToken(ingestUrl + '/api').then((r) => {
+          refreshToken().then((r) => {
             if (!r) {
               void sendToActiveTab({
                 type: messages.content.to.notification,
