@@ -192,8 +192,8 @@ export default defineBackground(() => {
       });
       return false;
     }
-    const data = await resp.json();
-    const refreshedJwt = data.jwt;
+    const dataObj = await resp.json();
+    const refreshedJwt = dataObj.jwt;
     setJWTToken(refreshedJwt);
     return true;
   };
@@ -256,6 +256,7 @@ export default defineBackground(() => {
 
   async function pingJWT(): Promise<void> {
     const data = await chrome.storage.local.get(["jwtToken", "settings"])
+    console.log(data, 'ping')
     if (!data.settings) {
       return;
     }
@@ -466,7 +467,6 @@ export default defineBackground(() => {
           chrome.storage.local.set({ settings });
           return;
         }
-        const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
         if (!refreshInt)  {
           refreshInt = setInterval(() => {
             void refreshToken();
@@ -519,10 +519,14 @@ export default defineBackground(() => {
       return true;
     }
     if (request.type === messages.content.from.checkLogin) {
-      if (jwtToken) {
+      if (jwtToken && jwtToken.length) {
         void sendToActiveTab({
           type: messages.content.to.setJWT,
           jwtToken,
+        });
+      } else {
+        void browser.runtime.sendMessage({
+          type: messages.popup.to.noLogin,
         });
       }
     }
