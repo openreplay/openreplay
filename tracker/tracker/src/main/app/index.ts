@@ -161,6 +161,7 @@ type AppOptions = {
   }
 
   network?: NetworkOptions
+  verbose?: boolean
 } & WebworkerOptions &
   SessOptions
 
