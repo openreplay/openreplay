@@ -353,7 +353,7 @@ func (s *spotsImpl) SetStatus(spotID uint64, status string) error {
 	case status == "":
 		return fmt.Errorf("status is required")
 	}
-	sql := `UPDATE spots SET status = $1, updated_at = $2 WHERE spot_id = $3 AND deleted_at IS NULL`
+	sql := `UPDATE spots.spots SET status = $1, updated_at = $2 WHERE spot_id = $3 AND deleted_at IS NULL`
 	if err := s.pgconn.Exec(sql, status, time.Now(), spotID); err != nil {
 		return err
 	}
