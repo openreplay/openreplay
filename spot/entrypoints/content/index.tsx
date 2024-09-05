@@ -21,8 +21,8 @@ export default defineContentScript({
       position: "inline",
       anchor: "body",
       append: "first",
-      onMount: (container,s,host) => {
-        Object.assign(host.style, { visibility: 'visible', display: 'block' });
+      onMount: (container, s, host) => {
+        Object.assign(host.style, { visibility: "visible", display: "block" });
 
         return render(
           () => (
@@ -66,8 +66,9 @@ export default defineContentScript({
       });
     };
     // no perm - muted - unmuted
-    let audioPerm = 0;
-    const getAudioPerm = () => audioPerm
+    type AudioPermState = 0 | 1 | 2;
+    let audioPerm: AudioPermState = 0;
+    const getAudioPerm = (): AudioPermState => audioPerm;
     let clockStart = 0;
     let recState = "stopped";
     const getClockStart = () => {
@@ -186,7 +187,7 @@ export default defineContentScript({
         return;
       }
       const { name, comment, useHook, thumbnail, crop, blob } = spotObj;
-      const videoData = await convertBlobToBase64(blob);
+      const videoData = await convertBlobToBase64(blob!);
       const resolution = `${window.screen.width}x${window.screen.height}`;
       const browserVersion = getChromeFullVersion();
       const spot = {
@@ -302,6 +303,7 @@ export default defineContentScript({
     }
 
     void browser.runtime.sendMessage({ type: "ort:content-ready" });
+    // @ts-ignore false positive
     browser.runtime.onMessage.addListener((message: any, resp) => {
       if (message.type === "content:mount") {
         if (recState === "count") return;

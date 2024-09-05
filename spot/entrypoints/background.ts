@@ -1,7 +1,8 @@
 import { WebRequest } from "webextension-polyfill";
+
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
-  const PING_INT = 30 * 1000
+  const PING_INT = 30 * 1000;
   const messages = {
     popup: {
       from: {
@@ -45,7 +46,7 @@ export default defineBackground(() => {
         micStatus: "content:mic-status",
         unmount: "content:unmount",
         notification: "notif:display",
-        updateErrorEvents: "content:error-events"
+        updateErrorEvents: "content:error-events",
       },
     },
     injected: {
@@ -140,12 +141,12 @@ export default defineBackground(() => {
   function setJWTToken(token: string) {
     jwtToken = token;
     if (token && token.length) {
-      chrome.storage.local.set({ jwtToken: token });
+      void browser.storage.local.set({ jwtToken: token });
       void browser.runtime.sendMessage({
         type: messages.popup.loginExist,
       });
     } else {
-      chrome.storage.local.remove("jwtToken");
+      void browser.storage.local.remove("jwtToken");
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
       });
@@ -165,7 +166,7 @@ export default defineBackground(() => {
 
   let slackChannels: { name: string; webhookId: number }[] = [];
   const refreshToken = async () => {
-    const data = await chrome.storage.local.get(["jwtToken", "settings"])
+    const data = await browser.storage.local.get(["jwtToken", "settings"]);
     if (!data.settings) {
       return;
     }
@@ -185,7 +186,7 @@ export default defineBackground(() => {
       },
     });
     if (!resp.ok) {
-      chrome.storage.local.remove("jwtToken");
+      void browser.storage.local.remove("jwtToken");
       setJWTToken("");
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
@@ -216,47 +217,47 @@ export default defineBackground(() => {
   };
   let refreshInt: any;
   let pingInt: any;
-  chrome.storage.local.get(["jwtToken", "settings"]).then(async (data: any) => {
-    if (!data.settings) {
-      chrome.storage.local.set({ settings });
-      return;
-    }
-    const newObj = Object.assign(settings, data.settings);
-    settings = newObj;
+  browser.storage.local
+    .get(["jwtToken", "settings"])
+    .then(async (data: any) => {
+      if (!data.settings) {
+        void browser.storage.local.set({ settings });
+        return;
+      }
+      settings = Object.assign(settings, data.settings);
 
-    if (!data.jwtToken) {
-      console.error("No JWT token found in storage");
-      void browser.runtime.sendMessage({
-        type: messages.popup.to.noLogin,
-      });
-      return;
-    }
+      if (!data.jwtToken) {
+        console.error("No JWT token found in storage");
+        void browser.runtime.sendMessage({
+          type: messages.popup.to.noLogin,
+        });
+        return;
+      }
 
-    const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
-    const ok = await refreshToken();
-    if (ok) {
-      fetchSlackChannels(data.jwtToken, url).catch((e) => {
-        console.error(e);
-        void refreshToken();
-      });
-
-      if (!refreshInt) {
-        refreshInt = setInterval(() => {
+      const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
+      const ok = await refreshToken();
+      if (ok) {
+        fetchSlackChannels(data.jwtToken, url).catch((e) => {
+          console.error(e);
           void refreshToken();
-        }, CHECK_INT);
-      }
+        });
 
-      if (!pingInt) {
-        pingInt = setInterval(() => {
-          void pingJWT();
-        }, PING_INT)
+        if (!refreshInt) {
+          refreshInt = setInterval(() => {
+            void refreshToken();
+          }, CHECK_INT);
+        }
+
+        if (!pingInt) {
+          pingInt = setInterval(() => {
+            void pingJWT();
+          }, PING_INT);
+        }
       }
-    }
-  });
+    });
 
   async function pingJWT(): Promise<void> {
-    const data = await chrome.storage.local.get(["jwtToken", "settings"])
-    console.log(data, 'ping')
+    const data = await browser.storage.local.get(["jwtToken", "settings"]);
     if (!data.settings) {
       return;
     }
@@ -275,16 +276,17 @@ export default defineBackground(() => {
         headers: {
           Authorization: `Bearer ${jwtToken}`,
         },
-      })
+      });
       if (!r.ok) {
-        void refreshToken()
+        void refreshToken();
       }
     } catch (e) {
-      void refreshToken()
+      void refreshToken();
     }
   }
 
   let lastReq: Record<string, any> | null = null;
+  // @ts-ignore
   browser.runtime.onMessage.addListener((request, sender, respond) => {
     if (request.type === messages.content.from.contentReady) {
       if (sender?.tab?.id) {
@@ -303,7 +305,7 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
-        audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
+        audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
       };
       if (request.area === "tab") {
         browser.tabs
@@ -321,7 +323,7 @@ export default defineBackground(() => {
               area: request.area,
               mic: request.mic,
               audioId: request.selectedAudioDevice,
-              audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
+              audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
             });
           });
       } else {
@@ -330,13 +332,13 @@ export default defineBackground(() => {
           area: request.area,
           mic: request.mic,
           audioId: request.selectedAudioDevice,
-          audioPerm: request.permissions ? request.mic ? 2 : 1 : 0,
+          audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
         });
       }
     }
     if (request.type === messages.content.from.countEnd) {
       if (!jwtToken) {
-        chrome.storage.local.get("jwtToken", (data: any) => {
+        browser.storage.local.get("jwtToken").then((data: any) => {
           if (!data.jwtToken) {
             console.error("No JWT token found");
             void browser.runtime.sendMessage({
@@ -369,6 +371,7 @@ export default defineBackground(() => {
             settings.consoleLogs,
             () => recordingState.recording,
           );
+          // @ts-ignore  this is false positive
           respond(true);
         }
         if (!recordingState.activeTabId) {
@@ -407,6 +410,7 @@ export default defineBackground(() => {
             onStop = hook;
           },
         ).then(() => {
+          // @ts-ignore  this is false positive
           respond(true);
         });
         return true;
@@ -433,7 +437,8 @@ export default defineBackground(() => {
       });
     }
     if (request.type === messages.content.from.checkNewTab) {
-      chrome.storage.local.get("settings", (data: any) => {
+      browser.storage.local.get("settings").then((data: any) => {
+        // @ts-ignore  this is false positive
         respond(Boolean(data.settings.openInNewTab));
       });
 
@@ -462,12 +467,12 @@ export default defineBackground(() => {
     }
     if (request.type === messages.content.from.setLoginToken) {
       setJWTToken(request.token);
-      chrome.storage.local.get("settings", (data: any) => {
+      browser.storage.local.get("settings").then((data: any) => {
         if (!data.settings) {
-          chrome.storage.local.set({ settings });
+          void browser.storage.local.set({ settings });
           return;
         }
-        if (!refreshInt)  {
+        if (!refreshInt) {
           refreshInt = setInterval(() => {
             void refreshToken();
           }, CHECK_INT);
@@ -475,7 +480,7 @@ export default defineBackground(() => {
         if (!pingInt) {
           pingInt = setInterval(() => {
             void pingJWT();
-          }, PING_INT)
+          }, PING_INT);
         }
       });
     }
@@ -484,7 +489,7 @@ export default defineBackground(() => {
         clearInterval(refreshInt);
       }
       if (pingInt) {
-        clearInterval(pingInt)
+        clearInterval(pingInt);
       }
       setJWTToken("");
     }
@@ -497,14 +502,15 @@ export default defineBackground(() => {
     if (request.type === messages.popup.from.updateSettings) {
       const updatedObject = Object.assign(settings, request.settings);
       settings = updatedObject;
-      if ('ingestPoint' in request.settings) {
-        setJWTToken("")
+      if ("ingestPoint" in request.settings) {
+        setJWTToken("");
       }
-      chrome.storage.local.set({ settings: updatedObject });
+      void browser.storage.local.set({ settings: updatedObject });
     }
     if (request.type === messages.content.from.checkRecStatus) {
       const id = request.tabId;
       if (recordingState.area === "tab" && id !== recordingState.activeTabId) {
+        // @ts-ignore  this is false positive
         respond({ status: false });
       } else {
         browser.runtime
@@ -513,6 +519,7 @@ export default defineBackground(() => {
             target: "offscreen",
           })
           .then((r) => {
+            // @ts-ignore  this is false positive
             respond({ ...r, state: recordingState.recording });
           });
       }
@@ -586,31 +593,36 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
-        audioPerm: lastReq.permissions,
+        audioPerm: lastReq!.permissions,
       };
       void sendToActiveTab({
         type: "content:mount",
-        area: lastReq.area,
-        mic: lastReq.mic,
-        audioId: lastReq.selectedAudioDevice,
-        audioPerm: lastReq.permissions,
+        area: lastReq!.area,
+        mic: lastReq!.mic,
+        audioId: lastReq!.selectedAudioDevice,
+        audioPerm: lastReq!.permissions,
       });
     }
     if (request.type === messages.content.from.getErrorEvents) {
-      const logs = finalSpotObj.logs.filter(
-        (log) => log.level === "error",
-      ).map(l => ({ title: 'JS Error', time: (l.time - finalSpotObj.startTs)/1000 }))
-      const network = finalSpotObj.network.filter(
-        (net) => net.statusCode >= 400 || net.error,
-      ).map(n => ({ title: 'Network Error', time: (n.time - finalSpotObj.startTs)/1000 }))
+      const logs = finalSpotObj.logs
+        .filter((log) => log.level === "error")
+        .map((l) => ({
+          title: "JS Error",
+          time: (l.time - finalSpotObj.startTs) / 1000,
+        }));
+      const network = finalSpotObj.network
+        .filter((net) => net.statusCode >= 400 || net.error)
+        .map((n) => ({
+          title: "Network Error",
+          time: (n.time - finalSpotObj.startTs) / 1000,
+        }));
 
-      const errorData = [...logs, ...network]
-        .sort((a, b) => a.time - b.time)
+      const errorData = [...logs, ...network].sort((a, b) => a.time - b.time);
 
       void sendToActiveTab({
         type: messages.content.to.updateErrorEvents,
         errorData,
-      })
+      });
     }
     if (request.type === "ort:stop") {
       browser.runtime
@@ -621,8 +633,10 @@ export default defineBackground(() => {
         .then((r) => {
           if (r.status === "full") {
             finalSpotObj.duration = r.duration;
+            // @ts-ignore  this is false positive
             respond(r);
           } else {
+            // @ts-ignore  this is false positive
             respond({ status: r.status });
           }
         });
@@ -633,7 +647,7 @@ export default defineBackground(() => {
     }
     if (request.type === "offscr:video-data-chunk") {
       finalSpotObj.duration = request.duration;
-      sendToActiveTab({
+      void sendToActiveTab({
         type: "content:video-chunk",
         data: request.data,
         index: request.index,
@@ -666,7 +680,7 @@ export default defineBackground(() => {
         type: "content:mic-status",
         micStatus: micStatus === "on",
       });
-      chrome.runtime.sendMessage({
+      void browser.runtime.sendMessage({
         type: messages.popup.to.micStatus,
         status: false,
       });
@@ -681,7 +695,7 @@ export default defineBackground(() => {
         type: "content:mic-status",
         micStatus: micStatus === "on",
       });
-      chrome.runtime.sendMessage({
+      void browser.runtime.sendMessage({
         type: messages.popup.to.micStatus,
         status: true,
       });
@@ -712,7 +726,7 @@ export default defineBackground(() => {
       finalVideoBase64 += request.part;
       finalReady = request.index === request.total - 1;
       const getPlatformData = async () => {
-        const vendor = await chrome.runtime.getPlatformInfo();
+        const vendor = await browser.runtime.getPlatformInfo();
         const platform = `${vendor.os} ${vendor.arch}`;
         return { platform };
       };
@@ -782,102 +796,105 @@ export default defineBackground(() => {
           const ingestUrl = safeApiUrl(settings.ingestPoint);
 
           const dataUrl = `${ingestUrl}/spot/v1/spots`;
-          refreshToken().then((r) => {
-            if (!r) {
-              void sendToActiveTab({
-                type: messages.content.to.notification,
-                message: `Error saving Spot: couldn't get active login`,
-              });
-            }
-            fetch(dataUrl, {
-              method: "POST",
-              body: JSON.stringify(dataObj),
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${jwtToken}`,
-              },
-            })
-              .then((r) => {
-                if (r.ok) {
-                  return r.json();
-                } else {
-                  if (r.status === 401) {
-                    throw new Error(
-                      "Not authorized or no permissions to create Spot",
-                    );
-                  }
-                }
-              })
-              .then(async (resp) => {
-                recordingState = {
-                  activeTabId: null,
-                  area: null,
-                  recording: REC_STATE.stopped,
-                };
-                // id of spot, mobURL - for events, videoURL - for video
-                if (!resp || !resp.id) {
-                  return sendToActiveTab({
-                    type: messages.content.to.notification,
-                    message: "Couldn't save Spot",
-                  });
-                }
-                const { id, mobURL, videoURL } = resp;
-                const link = settings.ingestPoint.includes("api.openreplay.com")
-                  ? "https://app.openreplay.com"
-                  : settings.ingestPoint;
-                chrome.tabs.create({
-                  url: `${link}/view-spot/${id}`,
-                  active: settings.openInNewTab,
-                });
-                void sendToActiveTab({
-                  type: "content:spot-saved",
-                  url: `${link}/view-spot/${id}`,
-                });
-                const blob = base64ToBlob(videoData);
-
-                const mPromise = fetch(mobURL, {
-                  method: "PUT",
-                  body: JSON.stringify(mobData),
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                });
-                const vPromise = fetch(videoURL, {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "video/webm",
-                  },
-                  body: blob,
-                });
-                Promise.all([mPromise, vPromise])
-                  .then(async (r) => {
-                    const uploadedUrl = `${safeApiUrl(settings.ingestPoint)}/spot/v1/spots/${id}/uploaded`;
-                    void fetch(uploadedUrl, {
-                      method: "POST",
-                      headers: {
-                        Authorization: `Bearer ${jwtToken}`,
-                      },
-                    });
-                  })
-                  .catch(console.error);
-              })
-              .catch((e) => {
-                console.error(e);
+          refreshToken()
+            .then((r) => {
+              if (!r) {
                 void sendToActiveTab({
                   type: messages.content.to.notification,
-                  message: `Error saving Spot: ${e.message}`,
+                  message: `Error saving Spot: couldn't get active login`,
                 });
+              }
+              fetch(dataUrl, {
+                method: "POST",
+                body: JSON.stringify(dataObj),
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${jwtToken}`,
+                },
               })
-              .finally(() => {
-                finalSpotObj = defaultSpotObj;
-              });
-          })
-            .catch(e => {
+                .then((r) => {
+                  if (r.ok) {
+                    return r.json();
+                  } else {
+                    if (r.status === 401) {
+                      throw new Error(
+                        "Not authorized or no permissions to create Spot",
+                      );
+                    }
+                  }
+                })
+                .then(async (resp) => {
+                  recordingState = {
+                    activeTabId: null,
+                    area: null,
+                    recording: REC_STATE.stopped,
+                  };
+                  // id of spot, mobURL - for events, videoURL - for video
+                  if (!resp || !resp.id) {
+                    return sendToActiveTab({
+                      type: messages.content.to.notification,
+                      message: "Couldn't save Spot",
+                    });
+                  }
+                  const { id, mobURL, videoURL } = resp;
+                  const link = settings.ingestPoint.includes(
+                    "api.openreplay.com",
+                  )
+                    ? "https://app.openreplay.com"
+                    : settings.ingestPoint;
+                  void browser.tabs.create({
+                    url: `${link}/view-spot/${id}`,
+                    active: settings.openInNewTab,
+                  });
+                  void sendToActiveTab({
+                    type: "content:spot-saved",
+                    url: `${link}/view-spot/${id}`,
+                  });
+                  const blob = base64ToBlob(videoData);
+
+                  const mPromise = fetch(mobURL, {
+                    method: "PUT",
+                    body: JSON.stringify(mobData),
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  });
+                  const vPromise = fetch(videoURL, {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "video/webm",
+                    },
+                    body: blob,
+                  });
+                  Promise.all([mPromise, vPromise])
+                    .then(async () => {
+                      const uploadedUrl = `${safeApiUrl(settings.ingestPoint)}/spot/v1/spots/${id}/uploaded`;
+                      void fetch(uploadedUrl, {
+                        method: "POST",
+                        headers: {
+                          Authorization: `Bearer ${jwtToken}`,
+                        },
+                      });
+                    })
+                    .catch(console.error);
+                })
+                .catch((e) => {
+                  console.error(e);
+                  void sendToActiveTab({
+                    type: messages.content.to.notification,
+                    message: `Error saving Spot: ${e.message}`,
+                  });
+                })
+                .finally(() => {
+                  finalSpotObj = defaultSpotObj;
+                });
+            })
+            .catch((e) => {
               void sendToActiveTab({
                 type: messages.content.to.notification,
                 message: `Error saving Spot: ${e.message}`,
               });
-            })
+            });
         });
       }
 
@@ -897,11 +914,17 @@ export default defineBackground(() => {
   });
   void initializeOffscreenDocument();
 
-  type TrackedRequest =
+  type TrackedRequest = {
+    statusCode: number;
+    requestHeaders: Record<string, string>;
+    responseHeaders: Record<string, string>;
+  } & (
     | WebRequest.OnBeforeRequestDetailsType
     | WebRequest.OnBeforeSendHeadersDetailsType
     | WebRequest.OnCompletedDetailsType
-    | WebRequest.OnErrorOccurredDetailsType;
+    | WebRequest.OnErrorOccurredDetailsType
+    | WebRequest.OnResponseStartedDetailsType
+  );
 
   interface SpotNetworkRequest {
     encodedBodySize: number;
@@ -922,20 +945,6 @@ export default defineBackground(() => {
     startTs: number;
     duration: number;
   })[] = [];
-  const processedRequests: SpotNetworkRequest[] = [];
-  function parseBody(body: any): string {
-    if (body instanceof ArrayBuffer) {
-      return "Binary ArrayBuffer omitted";
-    }
-    if (body instanceof Blob) {
-      return "Binary Blob omitted";
-    }
-    try {
-      return JSON.stringify(body);
-    } catch (e) {
-      return "Failed to parse request body";
-    }
-  }
   function filterHeaders(headers: Record<string, string>) {
     const filteredHeaders: Record<string, string> = {};
     const privateHs = [
@@ -1065,7 +1074,6 @@ export default defineBackground(() => {
   };
   function startTrackingNetwork() {
     rawRequests.length = 0;
-    processedRequests.length = 0;
     browser.webRequest.onBeforeRequest.addListener(
       // @ts-ignore
       trackOnBefore,
@@ -1159,8 +1167,7 @@ export default defineBackground(() => {
     [key: string]: any;
   }) {
     try {
-      const resp = await browser.runtime.sendMessage(message);
-      return resp;
+      return await browser.runtime.sendMessage(message);
     } catch (e) {
       console.error("Sending to offscreen", e);
     }
@@ -1366,7 +1373,7 @@ export default defineBackground(() => {
   const decodeJwt = (jwt: string): any => {
     const base64Url = jwt.split(".")[1];
     if (!base64Url) {
-      return { exp: 0 }
+      return { exp: 0 };
     }
     const base64 = base64Url.replace("-", "+").replace("_", "/");
     return JSON.parse(atob(base64));
@@ -1383,7 +1390,7 @@ export default defineBackground(() => {
       return request.statusCode;
     }
     if (request.error) {
-      return 0
+      return 0;
     }
     return 200;
   }

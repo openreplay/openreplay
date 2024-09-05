@@ -14,7 +14,7 @@ interface ISavingControls {
       comment?: string;
       useHook?: boolean;
       thumbnail?: string;
-      crop?: [number, number];
+      crop: [number, number] | null;
     },
   ) => void;
   getVideoData: () => Promise<any>;
@@ -51,7 +51,9 @@ function SavingControls({
   const [endPos, setEndPos] = createSignal(100);
   const [dragging, setDragging] = createSignal<string | null>(null);
   const [isTyping, setIsTyping] = createSignal(false);
-  const [errorEvents, setErrorEvents] = createSignal([]);
+  const [errorEvents, setErrorEvents] = createSignal<
+    { title: string; time: number }[]
+  >([]);
 
   createEffect(() => {
     setTrimBounds([0, 0]);
@@ -226,7 +228,7 @@ function SavingControls({
     }
     setDuration(videoDuration);
     setErrorEvents(
-      errorEvents.filter((ev: { time: number }) => ev.time < videoDuration),
+      errorEvents().filter((ev: { time: number }) => ev.time < videoDuration),
     );
     void generateThumbnail();
   };

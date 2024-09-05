@@ -29,7 +29,7 @@ interface IControlsBox {
   getInitState: () => string;
   onRestart: () => void;
   getErrorEvents: () => Promise<any>;
-  getAudioPerm: () => number,
+  getAudioPerm: () => 0 | 1 | 2;
 }
 
 function ControlsBox({
@@ -59,24 +59,37 @@ function ControlsBox({
   const onTimerEnd = async (proceed?: boolean) => {
     if (!proceed) {
       onClose(false);
-      return changeState(STATES.idle)
+      return changeState(STATES.idle);
     }
+    let tries = 0;
+    // changeState(STATES.idle);
     await callRecording();
     let int = setInterval(() => {
       const state = getInitState();
+      tries++;
+      if (tries > 200) {
+        clearInterval(int);
+        changeState(STATES.idle);
+      }
       if (state !== "count") {
         clearInterval(int);
         changeState(STATES.recording);
       }
-    }, 100);
+    }, 50);
   };
 
   return (
     <div class={"controls"}>
       {boxState() === STATES.saving ? (
-        <SavingControls getErrorEvents={getErrorEvents} getVideoData={getVideoData} onClose={onClose} />
+        <SavingControls
+          getErrorEvents={getErrorEvents}
+          getVideoData={getVideoData}
+          onClose={onClose}
+        />
       ) : null}
-      {boxState() === STATES.count ? <Countdown getAudioPerm={getAudioPerm} onEnd={onTimerEnd} /> : null}
+      {boxState() === STATES.count ? (
+        <Countdown getAudioPerm={getAudioPerm} onEnd={onTimerEnd} />
+      ) : null}
       {boxState() === STATES.recording ? (
         <RecordingControls
           getAudioPerm={getAudioPerm}

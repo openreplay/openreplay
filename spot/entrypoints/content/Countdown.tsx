@@ -2,7 +2,7 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 
 function Countdown(props: {
   onEnd: (proceed?: boolean) => void;
-  getAudioPerm: () => number;
+  getAudioPerm: () => 0 | 1 | 2;
 }) {
   const [count, setCount] = createSignal(3);
 
@@ -39,8 +39,8 @@ function Countdown(props: {
   const audioPrompt = {
     0: "Microphone permission isn't granted yet.",
     1: "Microphone access is enabled. Unmute anytime to add voice over.",
-    2: "Microphone is enabled."
-  }
+    2: "Microphone is enabled.",
+  };
 
   return (
     <div class="modal-overlay">
