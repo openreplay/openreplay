@@ -28,6 +28,8 @@ DROP SCHEMA or_cache CASCADE;
 ALTER TABLE IF EXISTS public.tenants
     DROP COLUMN IF EXISTS scope_state;
 
+DROP SCHEMA IF EXISTS spots CASCADE;
+
 COMMIT;
 
 \elif :is_next
