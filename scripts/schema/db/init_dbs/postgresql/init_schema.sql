@@ -1208,7 +1208,9 @@ CREATE TABLE or_cache.autocomplete_top_values
     UNIQUE NULLS NOT DISTINCT (project_id, event_type, event_key)
 );
 
-CREATE TABLE IF NOT EXISTS spots
+CREATE SCHEMA IF NOT EXISTS spots;
+
+CREATE TABLE IF NOT EXISTS spots.spots
 (
     spot_id    BIGINT NOT NULL PRIMARY KEY,
     name       TEXT NOT NULL,
@@ -1223,10 +1225,10 @@ CREATE TABLE IF NOT EXISTS spots
     deleted_at timestamp DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS spots_keys
+CREATE TABLE IF NOT EXISTS spots.keys
 (
     spot_key   TEXT NOT NULL PRIMARY KEY,
-    spot_id    BIGINT NOT NULL UNIQUE REFERENCES spots (spot_id) ON DELETE CASCADE,
+    spot_id    BIGINT NOT NULL UNIQUE REFERENCES spots.spots (spot_id) ON DELETE CASCADE,
     user_id    BIGINT NOT NULL,
     expiration BIGINT NOT NULL,
     expired_at timestamp NOT NULL,
@@ -1234,18 +1236,18 @@ CREATE TABLE IF NOT EXISTS spots_keys
     updated_at timestamp DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS spots_streams
+CREATE TABLE IF NOT EXISTS spots.streams
 (
-    spot_id           BIGINT NOT NULL PRIMARY KEY REFERENCES spots (spot_id) ON DELETE CASCADE,
+    spot_id           BIGINT NOT NULL PRIMARY KEY REFERENCES spots.spots (spot_id) ON DELETE CASCADE,
     original_playlist TEXT NOT NULL,
     modified_playlist TEXT NOT NULL,
     created_at        timestamp NOT NULL,
     expired_at        timestamp NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS spots_tasks
+CREATE TABLE IF NOT EXISTS spots.tasks
 (
-    spot_id    BIGINT NOT NULL PRIMARY KEY REFERENCES spots (spot_id) ON DELETE CASCADE,
+    spot_id    BIGINT NOT NULL PRIMARY KEY REFERENCES spots.spots (spot_id) ON DELETE CASCADE,
     duration   INT NOT NULL,
     crop       INT[],
     status     TEXT NOT NULL,
