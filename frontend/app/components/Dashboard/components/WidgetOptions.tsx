@@ -4,6 +4,7 @@ import { Select, Space, Switch } from 'antd';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
 import { FilterKey } from 'Types/filter/filterType';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
 
@@ -57,4 +58,4 @@ function WidgetOptions(props: Props) {
   );
 }
 
-export default WidgetOptions;
+export default observer(WidgetOptions);
