@@ -386,9 +386,9 @@ export const OverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   {
     toggleBottomBlock,
@@ -400,10 +400,10 @@ export const MobileOverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-    zoomTab: state.getIn(['components', 'player']).zoomTab,
+    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
+    zoomTab: state.getIn(['player']).zoomTab,
   }),
   {
     toggleBottomBlock,

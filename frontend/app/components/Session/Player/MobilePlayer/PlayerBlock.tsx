@@ -9,7 +9,6 @@ import styles from 'Components/Session_/playerBlock.module.css';
 interface IProps {
   fullscreen: boolean;
   sessionId: string;
-  disabled: boolean;
   activeTab: string;
   jiraConfig: Record<string, any>
   fullView?: boolean
@@ -20,7 +19,6 @@ function PlayerBlock(props: IProps) {
   const {
     fullscreen,
     sessionId,
-    disabled,
     activeTab,
     jiraConfig,
     fullView = false,
@@ -33,7 +31,7 @@ function PlayerBlock(props: IProps) {
       className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
     >
       {shouldShowSubHeader ? (
-        <MobilePlayerSubheader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
+        <MobilePlayerSubheader sessionId={sessionId} jiraConfig={jiraConfig} />
       ) : null}
       <Player
         setActiveTab={setActiveTab}
@@ -45,8 +43,7 @@ function PlayerBlock(props: IProps) {
 }
 
 export default connect((state: any) => ({
-  fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+  fullscreen: state.getIn(['player', 'fullscreen']),
   sessionId: state.getIn(['sessions', 'current']).sessionId,
-  disabled: state.getIn(['components', 'targetDefiner', 'inspectorMode']),
   jiraConfig: state.getIn(['issues', 'list'])[0],
 }))(PlayerBlock)

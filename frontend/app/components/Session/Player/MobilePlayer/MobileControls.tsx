@@ -287,23 +287,21 @@ export default connect(
     const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
     return {
       disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS')),
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+      fullscreen: state.getIn(['player', 'fullscreen']),
+      bottomBlock: state.getIn(['player', 'bottomBlock']),
       showStorageRedux: !state.getIn([
-        'components',
         'player',
         'hiddenHints',
         'storage',
       ]),
       showStackRedux: !state.getIn([
-        'components',
         'player',
         'hiddenHints',
         'stack',
       ]),
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+      skipInterval: state.getIn(['player', 'skipInterval']),
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
       siteId: state.getIn(['site', 'siteId']),

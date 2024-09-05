@@ -169,12 +169,12 @@ function Player(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+    fullscreen: state.getIn(['player', 'fullscreen']),
     nextId: state.getIn(['sessions', 'nextId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
     userDevice: state.getIn(['sessions', 'current']).userDevice,
     videoURL: state.getIn(['sessions', 'current']).videoURL,
-    bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+    bottomBlock: state.getIn(['player', 'bottomBlock']),
     platform: state.getIn(['sessions', 'current']).platform,
     screenWidth: state.getIn(['sessions', 'current']).screenWidth,
     screenHeight: state.getIn(['sessions', 'current']).screenHeight,

@@ -680,16 +680,16 @@ export const NetworkPanelComp = observer(
 
 const WebNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(observer(NetworkPanelCont));
 
 const MobileNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(observer(MobileNetworkPanelCont));
 
 export { WebNetworkPanel, MobileNetworkPanel };

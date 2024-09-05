@@ -197,9 +197,9 @@ const DraggableMarkers = ({
 
 export default connect(
   (state: Record<string, any>) => ({
-    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom
+    timelineZoomStartTs: state.getIn(['player']).timelineZoom
       .startTs,
-    timelineZoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+    timelineZoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   { toggleZoom }
 )(DraggableMarkers);

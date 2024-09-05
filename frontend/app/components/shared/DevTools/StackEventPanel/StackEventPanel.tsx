@@ -57,9 +57,9 @@ const WebStackEventPanelComp = observer(
 );
 
 export const WebStackEventPanel = connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(WebStackEventPanelComp);
 
 const MobileStackEventPanelComp = observer(
@@ -90,9 +90,9 @@ const MobileStackEventPanelComp = observer(
 );
 
 export const MobileStackEventPanel = connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(MobileStackEventPanelComp);
 
 const EventsPanel = observer(({
