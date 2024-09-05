@@ -198,7 +198,7 @@ const FilterAutoComplete: React.FC<Props> = ({
     try {
       const response = await new APIClient()[method.toLowerCase()](endpoint, { ..._params, q: inputValue });
       const data = await response.json();
-      const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+      const _options = data.data.map((i: any) => ({ value: i.value, label: i.value })) || [];
       setOptions(_options);
       callback(_options);
     } catch (e) {
