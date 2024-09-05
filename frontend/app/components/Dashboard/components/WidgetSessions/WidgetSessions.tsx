@@ -12,6 +12,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import { HEATMAP } from 'App/constants/card';
 import { connect } from 'react-redux';
+import { Tag } from "antd";
 
 interface Props {
   className?: string;
@@ -32,6 +33,7 @@ function WidgetSessions(props: Props) {
   const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm');
   const [seriesOptions, setSeriesOptions] = useState([{ label: 'All', value: 'all' }]);
   const hasFilters = filter.filters.length > 0 || (filter.startTimestamp !== dashboardStore.drillDownPeriod.start || filter.endTimestamp !== dashboardStore.drillDownPeriod.end);
+  const filterText = filter.filters.length > 0 ? filter.filters[0].value : '';
 
   const writeOption = ({ value }: any) => setActiveSeries(value.value);
   useEffect(() => {
@@ -117,13 +119,16 @@ function WidgetSessions(props: Props) {
   return (
     <div className={cn(className, 'bg-white p-3 pb-0 rounded-lg shadow-sm border mt-3')}>
       <div className='flex items-center justify-between'>
-        <div className='flex items-baseline'>
-          <h2 className='text-xl'>{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
-          <div className='ml-2 color-gray-medium'>
-            {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
-            between <span className='font-medium color-gray-darkest'>{startTime}</span> and{' '}
-            <span className='font-medium color-gray-darkest'>{endTime}</span>{' '}
+        <div>
+          <div className='flex items-baseline'>
+            <h2 className='text-xl'>{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
+            <div className='ml-2 color-gray-medium'>
+              {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
+              between <span className='font-medium color-gray-darkest'>{startTime}</span> and{' '}
+              <span className='font-medium color-gray-darkest'>{endTime}</span>{' '}
+            </div>
           </div>
+          {hasFilters && widget.metricType === 'table' && <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
         </div>
 
         <div className='flex items-center gap-4'>
