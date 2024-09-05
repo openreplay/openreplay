@@ -41,7 +41,7 @@ func (t *Task) HasToTranscode() bool {
 }
 
 func (t *tasksImpl) Add(spotID uint64, crop []int, duration int) error {
-	sql := `INSERT INTO spots_tasks (spot_id, crop, duration, status, added_time) VALUES ($1, $2, $3, $4, $5)`
+	sql := `INSERT INTO spots.tasks (spot_id, crop, duration, status, added_time) VALUES ($1, $2, $3, $4, $5)`
 	if err := t.conn.Exec(sql, spotID, crop, duration, "pending", time.Now()); err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 	}()
 
 	task = &Task{tx: pool.Tx{Tx: tx}}
-	sql := `SELECT spot_id, crop, duration FROM spots_tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
+	sql := `SELECT spot_id, crop, duration FROM spots.tasks WHERE status = 'pending' ORDER BY added_time FOR UPDATE SKIP LOCKED LIMIT 1`
 	err = tx.TxQueryRow(sql).Scan(&task.SpotID, &task.Crop, &task.Duration)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -78,7 +78,7 @@ func (t *tasksImpl) Get() (task *Task, err error) {
 }
 
 func (t *tasksImpl) Done(task *Task) error {
-	sql := `DELETE FROM spots_tasks WHERE spot_id = $1`
+	sql := `DELETE FROM spots.tasks WHERE spot_id = $1`
 	err := task.tx.TxExec(sql, task.SpotID)
 	if err != nil {
 		task.tx.TxRollback()
@@ -89,7 +89,7 @@ func (t *tasksImpl) Done(task *Task) error {
 }
 
 func (t *tasksImpl) Failed(task *Task, taskErr error) error {
-	sql := `UPDATE spots_tasks SET status = 'failed', error = $2 WHERE spot_id = $1`
+	sql := `UPDATE spots.tasks SET status = 'failed', error = $2 WHERE spot_id = $1`
 	err := task.tx.TxExec(sql, task.SpotID, taskErr.Error())
 	if err != nil {
 		task.tx.TxRollback()
