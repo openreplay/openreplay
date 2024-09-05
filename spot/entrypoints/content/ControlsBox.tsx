@@ -62,7 +62,7 @@ function ControlsBox({
       return changeState(STATES.idle);
     }
     let tries = 0;
-    // changeState(STATES.idle);
+    changeState(STATES.idle);
     await callRecording();
     let int = setInterval(() => {
       const state = getInitState();

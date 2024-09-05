@@ -4,7 +4,6 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import Openreplay from '@openreplay/react-native';
 
 export default function App() {
-  // const [result, setResult] = React.useState<number | undefined>();
   const [number, onChangeNumber] = React.useState('');
 
   const start = () => {
