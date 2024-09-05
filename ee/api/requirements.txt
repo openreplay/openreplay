@@ -27,3 +27,4 @@ python-multipart==0.0.9
 redis==5.1.0b6
 #confluent-kafka==2.1.0
 azure-storage-blob==12.22.0
+httpx==0.23.0

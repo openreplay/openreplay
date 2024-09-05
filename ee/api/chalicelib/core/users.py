@@ -1020,3 +1020,15 @@ def update_user_settings(user_id, settings):
                 {"user_id": user_id, "settings": json.dumps(settings)})
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_user_internal_id(email, internal_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""UPDATE public.users
+                    SET internal_id = %(internal_id)s
+                    WHERE email = %(email)s
+                            AND deleted_at IS NULL;""",
+                {"email": email, "internal_id": internal_id})
+        )
