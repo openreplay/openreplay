@@ -1218,7 +1218,7 @@ CREATE TABLE IF NOT EXISTS spots
     crop       INT[],
     comments   TEXT[],
     status     TEXT DEFAULT 'pending',
-    created_at timestamp NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at timestamp DEFAULT NULL,
     deleted_at timestamp DEFAULT NULL
 );

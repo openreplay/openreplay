@@ -66,12 +66,12 @@ CREATE TABLE IF NOT EXISTS spots
     spot_id    BIGINT NOT NULL PRIMARY KEY,
     name       TEXT NOT NULL,
     user_id    BIGINT NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
-    tenant_id  BIGINT NOT NULL,
+    tenant_id  BIGINT NOT NULL REFERENCES public.tenants (tenant_id) ON DELETE CASCADE,
     duration   INT NOT NULL,
     crop       INT[],
     comments   TEXT[],
     status     TEXT DEFAULT 'pending',
-    created_at timestamp NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at timestamp DEFAULT NULL,
     deleted_at timestamp DEFAULT NULL
 );
