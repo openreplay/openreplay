@@ -55,7 +55,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	expiredAt := now.Add(time.Duration(expiration) * time.Second)
 	sql := `
 	WITH updated AS (
-    	UPDATE spots_keys
+    	UPDATE spots.keys
 		SET
 			spot_key = CASE
 				WHEN expired_at < $1 THEN $2
@@ -70,7 +70,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	),
 	
 	inserted AS (
-		INSERT INTO spots_keys (spot_key, spot_id, user_id, expiration, created_at, expired_at)
+		INSERT INTO spots.keys (spot_key, spot_id, user_id, expiration, created_at, expired_at)
 		SELECT $2, $6, $3, $4, $1, $5
 		WHERE NOT EXISTS (SELECT 1 FROM updated)
 		RETURNING spot_key, expiration, expired_at
@@ -99,8 +99,8 @@ func (k *keysImpl) Get(spotID uint64, user *auth.User) (*Key, error) {
 
 	key := &Key{}
 	sql := `SELECT k.spot_key, k.expiration, k.expired_at 
-			FROM spots_keys k
-			JOIN spots s ON s.spot_id = k.spot_id
+			FROM spots.keys k
+			JOIN spots.spots s ON s.spot_id = k.spot_id
 			WHERE k.spot_id = $1 AND s.tenant_id = $2`
 	if err := k.conn.QueryRow(sql, spotID, user.TenantID).Scan(&key.Value, &key.Expiration, &key.ExpiredAt); err != nil {
 		k.log.Error(context.Background(), "failed to get key: %v", err)
@@ -123,7 +123,7 @@ func (k *keysImpl) IsValid(key string) (*auth.User, error) {
 		expiredAt time.Time
 	)
 	// Get userID if key is valid
-	sql := `SELECT user_id, expired_at FROM spots_keys WHERE spot_key = $1`
+	sql := `SELECT user_id, expired_at FROM spots.keys WHERE spot_key = $1`
 	if err := k.conn.QueryRow(sql, key).Scan(&userID, &expiredAt); err != nil {
 		k.log.Error(context.Background(), "failed to get key: %v", err)
 		return nil, fmt.Errorf("key not found")

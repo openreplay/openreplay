@@ -41,7 +41,7 @@ func (s *streamsImpl) Add(spotID uint64, originalStream string) error {
 	modifiedContent := strings.Join(lines, "\n")
 	now := time.Now()
 	// Insert playlist to DB
-	sql := `INSERT INTO spots_streams (spot_id, original_playlist, modified_playlist, created_at, expired_at) 
+	sql := `INSERT INTO spots.streams (spot_id, original_playlist, modified_playlist, created_at, expired_at) 
 		VALUES ($1, $2, $3, $4, $5) ON CONFLICT (spot_id) DO UPDATE SET original_playlist = $2, modified_playlist = $3, 
 		created_at = $4, expired_at = $5`
 	if err := s.conn.Exec(sql, spotID, originalStream, modifiedContent, now, now.Add(10*time.Minute)); err != nil {
@@ -63,7 +63,7 @@ func (s *streamsImpl) Get(spotID uint64) ([]byte, error) {
         	WHEN expired_at > $2 THEN 'modified'
         	ELSE 'original'
         	END AS playlist_type
-	FROM spots_streams
+	FROM spots.streams
     WHERE spot_id = $1`
 	var playlist, flag string
 	if err := s.conn.QueryRow(sql, spotID, time.Now()).Scan(&playlist, &flag); err != nil {
@@ -90,7 +90,7 @@ func (s *streamsImpl) Get(spotID uint64) ([]byte, error) {
 	modifiedPlaylist := strings.Join(lines, "\n")
 
 	// Save modified playlist to DB
-	sql = `UPDATE spots_streams SET modified_playlist = $1, expired_at = $2 WHERE spot_id = $3`
+	sql = `UPDATE spots.streams SET modified_playlist = $1, expired_at = $2 WHERE spot_id = $3`
 	if err := s.conn.Exec(sql, modifiedPlaylist, time.Now().Add(10*time.Minute), spotID); err != nil {
 		s.log.Warn(context.Background(), "Error updating modified playlist: %v", err)
 	}
