@@ -346,7 +346,7 @@ function Storage(props: Props) {
 
 export default connect(
   (state: any) => ({
-    hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'storage']),
+    hintIsHidden: state.getIn(['player', 'hiddenHints', 'storage']),
   }),
   {
     hideHint,

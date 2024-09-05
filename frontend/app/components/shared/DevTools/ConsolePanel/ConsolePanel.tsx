@@ -225,7 +225,7 @@ function ConsolePanel({
 }
 
 export default connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(observer(ConsolePanel));

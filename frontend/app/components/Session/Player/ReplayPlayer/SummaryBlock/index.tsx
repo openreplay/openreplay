@@ -155,9 +155,9 @@ const summaryBlockStyle: React.CSSProperties = {
 };
 
 export default connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  zoomTab: state.getIn(['components', 'player']).zoomTab,
+  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
+  zoomTab: state.getIn(['player']).zoomTab,
   duration: state.getIn(['sessions', 'current']).durationSeconds,
 }))(observer(SummaryBlock));

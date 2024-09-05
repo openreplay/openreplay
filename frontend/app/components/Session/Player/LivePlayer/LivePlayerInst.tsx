@@ -97,7 +97,7 @@ export default connect((state: any) => {
   const isAssist = window.location.pathname.includes('/assist/');
   return {
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+    bottomBlock: state.getIn(['player', 'bottomBlock']),
     closedLive:
       !!state.getIn(['sessions', 'errors']) ||
       (isAssist && !state.getIn(['sessions', 'current']).live),

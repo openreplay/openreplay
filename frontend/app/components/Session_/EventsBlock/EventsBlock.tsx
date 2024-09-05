@@ -275,9 +275,9 @@ export default connect(
     filteredEvents: state.getIn(['sessions', 'filteredEvents']),
     query: state.getIn(['sessions', 'eventsQuery']),
     eventsIndex: state.getIn(['sessions', 'eventsIndex']),
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
+    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
+    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   {
     setEventFilter,

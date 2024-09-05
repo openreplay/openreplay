@@ -43,9 +43,9 @@ function TimelineZoomButton({ enabled, toggleZoom }: Props) {
 
 export default connect(
   (state: Record<string, any>) => ({
-    enabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    startTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    endTs: state.getIn(['components', 'player']).timelineZoom.endTs,
+    enabled: state.getIn(['player']).timelineZoom.enabled,
+    startTs: state.getIn(['player']).timelineZoom.startTs,
+    endTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   { toggleZoom }
 )(observer(TimelineZoomButton));

@@ -1,42 +1,44 @@
-import { createStore, applyMiddleware, compose } from 'redux';
-import { thunk } from 'redux-thunk';
+import { configureStore } from '@reduxjs/toolkit';
 import { Map } from 'immutable';
-import indexReducer from './duck';
+
 import apiMiddleware from './api_middleware';
+import indexReducer from './duck';
+import { UPDATE_JWT, initialState as initUserState } from './duck/user';
 import LocalStorage from './local_storage';
-import { initialState as initUserState, UPDATE_JWT } from './duck/user'
 
 const storage = new LocalStorage({
   user: Object,
 });
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ && window.env.NODE_ENV === "development" 
-  ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ : compose;
-
 const storageState = storage.state();
-const initialState = Map({ user:
-    initUserState
-      .update('jwt', () => storageState.user?.jwt || null)
-      .update('spotJwt', () => storageState.user?.spotJwt || null)
+const initialState = Map({
+  user: initUserState
+    .update('jwt', () => storageState.user?.jwt || null)
+    .update('spotJwt', () => storageState.user?.spotJwt || null),
 });
 
-const store = createStore(indexReducer, initialState, composeEnhancers(applyMiddleware(thunk, apiMiddleware)));
+const store = configureStore({
+  reducer: indexReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(apiMiddleware),
+  preloadedState: initialState,
+  devTools: window.env.NODE_ENV === 'development',
+});
+
 store.subscribe(() => {
   const state = store.getState();
-
   storage.sync({
-    user: state.get('user')
+    user: state.get('user'),
   });
 });
 
 function copyToClipboard(text) {
-  const textArea = document.createElement("textarea");
+  const textArea = document.createElement('textarea');
   textArea.value = text;
 
-  // Avoid scrolling to bottom
-  textArea.style.top = "0";
-  textArea.style.left = "0";
-  textArea.style.position = "fixed";
+  textArea.style.top = '0';
+  textArea.style.left = '0';
+  textArea.style.position = 'fixed';
 
   document.body.appendChild(textArea);
   textArea.focus();
@@ -53,18 +55,20 @@ function copyToClipboard(text) {
   document.body.removeChild(textArea);
 }
 
-
 window.getJWT = () => {
-  const jwtToken = storage.state().user?.jwt ? JSON.stringify(storage.state().user?.jwt) : null
+  const jwtToken = storage.state().user?.jwt
+    ? JSON.stringify(storage.state().user?.jwt)
+    : null;
   if (jwtToken) {
     console.log(jwtToken);
-    copyToClipboard(jwtToken)
+    copyToClipboard(jwtToken);
   } else {
-    console.log('not logged in')
+    console.log('not logged in');
   }
-}
+};
+
 window.setJWT = (jwt) => {
-  store.dispatch({ type: UPDATE_JWT, data: { jwt } })
-}
+  store.dispatch({ type: UPDATE_JWT, data: { jwt } });
+};
 
 export default store;

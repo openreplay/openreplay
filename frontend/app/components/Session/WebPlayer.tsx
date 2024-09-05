@@ -255,7 +255,7 @@ export default connect(
     prefetched: state.getIn(['sessions', 'prefetched']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+    fullscreen: state.getIn(['player', 'fullscreen']),
     showEvents: state.get('showEvents'),
     members: state.getIn(['members', 'list']),
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,

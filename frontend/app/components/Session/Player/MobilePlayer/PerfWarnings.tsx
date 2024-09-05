@@ -106,5 +106,5 @@ function PerfWarnings({ userDevice, bottomBlock }: { userDevice: string; bottomB
 }
 
 export default connect((state: any) => ({
-  bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+  bottomBlock: state.getIn(['player', 'bottomBlock']),
 }))(observer(PerfWarnings));

@@ -163,10 +163,10 @@ function Player(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+    fullscreen: state.getIn(['player', 'fullscreen']),
     nextId: state.getIn(['sessions', 'nextId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+    bottomBlock: state.getIn(['player', 'bottomBlock']),
   }),
   {
     fullscreenOff,
