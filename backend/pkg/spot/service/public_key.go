@@ -44,7 +44,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 
 	now := time.Now()
 	if expiration == 0 {
-		sql := `UPDATE spots_keys SET expired_at = $1, expiration = 0 WHERE spot_id = $2`
+		sql := `UPDATE spots.keys SET expired_at = $1, expiration = 0 WHERE spot_id = $2`
 		if err := k.conn.Exec(sql, now, spotID); err != nil {
 			k.log.Error(context.Background(), "failed to set key: %v", err)
 			return nil, fmt.Errorf("key not updated")

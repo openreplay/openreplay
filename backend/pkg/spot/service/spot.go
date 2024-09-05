@@ -367,7 +367,7 @@ func (s *spotsImpl) GetStatus(user *auth.User, spotID uint64) (string, error) {
 	case spotID == 0:
 		return "", fmt.Errorf("spot id is required")
 	}
-	sql := `SELECT status FROM spots WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
+	sql := `SELECT status FROM spots.spots WHERE spot_id = $1 AND tenant_id = $2 AND deleted_at IS NULL`
 	var status string
 	if err := s.pgconn.QueryRow(sql, spotID, user.TenantID).Scan(&status); err != nil {
 		return "", err
