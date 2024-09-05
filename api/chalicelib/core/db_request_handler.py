@@ -1,5 +1,8 @@
 import logging
-from chalicelib.utils import helper, pg_client
+
+from chalicelib.utils import pg_client
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseRequestHandler:
