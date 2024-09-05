@@ -3,9 +3,9 @@ import { filters } from 'Types/filter/newFilter';
 import { filterService } from 'App/services';
 
 interface TopValue {
-  rowCount: number;
-  rowPercentage: number;
-  value: string;
+  rowCount?: number;
+  rowPercentage?: number;
+  value?: string;
 }
 
 interface TopValues {
@@ -27,7 +27,7 @@ export default class FilterStore {
     if (this.topValues.hasOwnProperty(key)) {
       return Promise.resolve(this.topValues[key]);
     }
-    return filterService.fetchTopValues(key, source).then((response: TopValue[]) => {
+    return filterService.fetchTopValues(key, source).then((response: []) => {
       this.setTopValues(`${key}${source || ''}`, response);
     });
   };
