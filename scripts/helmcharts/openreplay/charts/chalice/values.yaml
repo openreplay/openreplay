@@ -95,7 +95,6 @@ env:
   captcha_key: ''
   async_Token: ''
   announcement_url: ''
-  jwt_secret: "SetARandomStringHere"
   jwt_algorithm: HS512
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
