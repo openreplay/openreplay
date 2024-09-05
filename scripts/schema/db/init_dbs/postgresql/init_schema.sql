@@ -1212,13 +1212,12 @@ CREATE TABLE IF NOT EXISTS spots
 (
     spot_id    BIGINT NOT NULL PRIMARY KEY,
     name       TEXT NOT NULL,
-    user_id    BIGINT NOT NULL,
-    user_email BIGINT NOT NULL,
+    user_id    BIGINT NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
     tenant_id  BIGINT NOT NULL,
     duration   INT NOT NULL,
     crop       INT[],
     comments   TEXT[],
-    status     TEXT,
+    status     TEXT DEFAULT 'pending',
     created_at timestamp NOT NULL,
     updated_at timestamp DEFAULT NULL,
     deleted_at timestamp DEFAULT NULL
@@ -1227,18 +1226,17 @@ CREATE TABLE IF NOT EXISTS spots
 CREATE TABLE IF NOT EXISTS spots_keys
 (
     spot_key   TEXT NOT NULL PRIMARY KEY,
-    spot_id    BIGINT NOT NULL UNIQUE,
+    spot_id    BIGINT NOT NULL UNIQUE REFERENCES spots (spot_id) ON DELETE CASCADE,
     user_id    BIGINT NOT NULL,
-    tenant_id  BIGINT NOT NULL,
     expiration BIGINT NOT NULL,
     expired_at timestamp NOT NULL,
     created_at timestamp NOT NULL,
-    updated_at timestamp
+    updated_at timestamp DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS spots_streams
 (
-    spot_id           BIGINT NOT NULL PRIMARY KEY,
+    spot_id           BIGINT NOT NULL PRIMARY KEY REFERENCES spots (spot_id) ON DELETE CASCADE,
     original_playlist TEXT NOT NULL,
     modified_playlist TEXT NOT NULL,
     created_at        timestamp NOT NULL,
@@ -1247,11 +1245,11 @@ CREATE TABLE IF NOT EXISTS spots_streams
 
 CREATE TABLE IF NOT EXISTS spots_tasks
 (
-    id         BIGINT NOT NULL PRIMARY KEY,
+    spot_id    BIGINT NOT NULL PRIMARY KEY REFERENCES spots (spot_id) ON DELETE CASCADE,
     duration   INT NOT NULL,
     crop       INT[],
     status     TEXT NOT NULL,
-    error      TEXT,
+    error      TEXT DEFAULT NULL,
     added_time timestamp NOT NULL
 );
 
