@@ -37,7 +37,6 @@ const featLabels = {
 }
 
 function FeatureSelection(props: Props) {
-  const [isOpen, setIsOpen] = React.useState(false);
   const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
 
   const toggleFeatureInList = (feat: string) => {
@@ -58,7 +57,7 @@ function FeatureSelection(props: Props) {
   return (
     <React.Fragment>
       <Popover
-        open={isOpen}
+        trigger="click"
         content={
           <div>
             <div
@@ -82,7 +81,7 @@ function FeatureSelection(props: Props) {
           </div>
         }
       >
-        <div onClick={() => setIsOpen(!isOpen)} className={'font-semibold flex items-center gap-2 text-main cursor-pointer'}>
+        <div className={'font-semibold flex items-center gap-2 text-main cursor-pointer'}>
           <Icon size={16} name={'funnel'} color={'main'} />
           <div>X-Ray Events</div>
         </div>
