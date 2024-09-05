@@ -78,7 +78,6 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         logger.debug("---------")
         try:
             rows = cur.execute(query)
-
         except Exception as err:
             logger.warning("--------- HEATMAP 2 SEARCH QUERY EXCEPTION CH -----------")
             logger.warning(query)
@@ -270,7 +269,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                         message_id,
                         timestamp,
                         host,
-                        path
+                        path,
                         path AS value,
                         path AS url,
                         'LOCATION' AS type
