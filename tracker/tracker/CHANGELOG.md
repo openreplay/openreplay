@@ -1,3 +1,7 @@
+# 14.0.7
+
+- check for stopping status during restarts
+
 # 14.0.6
 
 - support feature off toggle for feature flags and usability testing

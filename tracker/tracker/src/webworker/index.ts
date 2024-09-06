@@ -66,7 +66,7 @@ function reset(): Promise<any> {
 }
 
 function initiateRestart(): void {
-  if (workerStatus === WorkerStatus.Stopped) return
+  if ([WorkerStatus.Stopped, WorkerStatus.Stopping].includes(workerStatus)) return
   postMessage('a_stop')
   // eslint-disable-next-line
   reset().then(() => {
