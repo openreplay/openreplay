@@ -48,10 +48,7 @@ if config("MULTI_TENANTS", cast=bool, default=False) or not tenants.tenants_exis
         content = await signup.create_tenant(data)
         if "errors" in content:
             return content
-        refresh_token = content.pop("refreshToken")
-        refresh_token_max_age = content.pop("refreshTokenMaxAge")
-        response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
-                            max_age=refresh_token_max_age, secure=True, httponly=True)
+        content = __process_authentication_response(response=response, data=content)
         return content
 
 

@@ -80,11 +80,14 @@ async def create_tenant(data: schemas.UserSignupSchema):
     r["smtp"] = smtp.has_smtp()
 
     return {
-        'jwt': r.pop('jwt'),
-        'refreshToken': r.pop('refreshToken'),
-        'refreshTokenMaxAge': r.pop('refreshTokenMaxAge'),
+        "jwt": r.pop("jwt"),
+        "refreshToken": r.pop("refreshToken"),
+        "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
+        "spotJwt": r.pop("spotJwt"),
+        "spotRefreshToken": r.pop("spotRefreshToken"),
+        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         'data': {
-            "scope": "full",
+            "scopeState": 0,
             "user": r
         }
     }
