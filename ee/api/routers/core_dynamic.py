@@ -103,7 +103,7 @@ def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)
 def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     users.logout(user_id=context.user_id)
     response.delete_cookie(key="refreshToken", path=COOKIE_PATH)
-    response.delete_cookie(key="spotRefreshToken", path="/api/spot/refresh")
+    response.delete_cookie(key="spotRefreshToken", path=spot.COOKIE_PATH)
     return {"data": "success"}
 
 
