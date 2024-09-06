@@ -1,7 +1,7 @@
 # Keep this version to not have conflicts between requests and boto3
 urllib3==1.26.16
 requests==2.32.3
-boto3==1.35.10
+boto3==1.35.13
 pyjwt==2.9.0
 psycopg2-binary==2.9.9
 psycopg[pool,binary]==3.2.1
@@ -10,7 +10,7 @@ jira==3.8.0
 
 
 
-fastapi==0.112.2
+fastapi==0.113.0
 uvicorn[standard]==0.30.6
 python-decouple==3.8
 pydantic[email]==2.8.2
