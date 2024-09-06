@@ -229,6 +229,11 @@ class ScreenRecorder {
       this.audioTrack = this.createPlaceholderAudioTrack();
     }
 
+    const existingAudioTracks = this.videoStream.getAudioTracks();
+    if (existingAudioTracks.length > 0) {
+      existingAudioTracks.forEach(track => track.enabled = true);
+    }
+
     return new MediaStream([
       ...this.videoStream.getVideoTracks(),
       this.audioTrack,

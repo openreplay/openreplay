@@ -88,6 +88,7 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_PASSWORD.SUCCESS:
       return state.set('passwordErrors', List());
     case SIGNUP.SUCCESS:
+      console.log(action.data)
       return state
         .set('account', Account(action.data.user))
         .set('scope', action.data.scopeState)

@@ -181,8 +181,6 @@ export default class APIClient {
       _path = _path.replace('PROJECT_ID', this.siteId + '');
     }
 
-    console.log(edp, _path, init)
-
     return fetch(edp + _path, init).then((response) => {
       if (response.ok) {
         return response;
