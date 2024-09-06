@@ -8,7 +8,9 @@ from starlette.responses import RedirectResponse
 
 from chalicelib.core import users, tenants, roles
 from chalicelib.utils import SAML2_helper
+from routers import core_dynamic
 from routers.base import get_routers
+from routers.subs import spot
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +19,11 @@ public_app, app, app_apikey = get_routers(prefix="/sso/saml2")
 
 @public_app.get("", tags=["saml2"])
 @public_app.get("/", tags=["saml2"])
-async def start_sso(request: Request, iFrame: bool = False, spot: bool = False):
+async def start_sso(request: Request, iFrame: bool = False):
     request.path = ''
     req = await SAML2_helper.prepare_request(request=request)
     auth = SAML2_helper.init_saml_auth(req)
-    sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame, 'spot': spot}))
+    sso_built_url = auth.login(return_to=json.dumps({'iFrame': iFrame}))
     return RedirectResponse(url=sso_built_url)
 
 
@@ -42,7 +44,6 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         post_data = {}
 
     redirect_to_link2 = None
-    spot = False
     relay_state = post_data.get('RelayState')
     if relay_state:
         if isinstance(relay_state, str):
@@ -53,7 +54,6 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             logger.error(relay_state)
             relay_state = {}
         redirect_to_link2 = relay_state.get("iFrame")
-        spot = relay_state.get("spot")
 
     request_id = None
     if 'AuthNRequestID' in session:
@@ -153,17 +153,15 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             logger.info(f"== Updating user:{existing['userId']}: {to_update} ==")
             users.update(tenant_id=t['tenantId'], user_id=existing["userId"], changes=to_update)
 
-    jwt = users.authenticate_sso(email=email, internal_id=internal_id, include_spot=spot)
+    jwt = users.authenticate_sso(email=email, internal_id=internal_id)
     if jwt is None:
         return {"errors": ["null JWT"]}
     response = Response(status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path="/api/refresh",
+    response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path=core_dynamic.COOKIE_PATH,
                         max_age=jwt["refreshTokenMaxAge"], secure=True, httponly=True)
-    query_params = {"jwt": jwt["jwt"]}
-    if spot:
-        response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path="/api/spot/refresh",
-                            max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
-        query_params["spotJwt"] = jwt["spotJwt"]
+    query_params = {"jwt": jwt["jwt"], "spotJwt": jwt["spotJwt"]}
+    response.set_cookie(key="spotRefreshToken", value=jwt["spotRefreshToken"], path=spot.COOKIE_PATH,
+                        max_age=jwt["spotRefreshTokenMaxAge"], secure=True, httponly=True)
 
     headers = {'Location': SAML2_helper.get_landing_URL(query_params=query_params, redirect_to_link2=redirect_to_link2)}
     response.init_headers(headers)

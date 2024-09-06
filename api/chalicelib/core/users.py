@@ -6,9 +6,9 @@ from fastapi import BackgroundTasks
 from pydantic import BaseModel
 
 import schemas
-from chalicelib.core import authorizers, metadata, projects
-from chalicelib.core import tenants, assist, spot
-from chalicelib.utils import email_helper, smtp
+from chalicelib.core import authorizers, metadata
+from chalicelib.core import tenants, spot, scope
+from chalicelib.utils import email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -209,7 +209,7 @@ def get(user_id, tenant_id):
                         users.user_id,
                         email, 
                         role, 
-                        name,
+                        users.name,
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -458,16 +458,16 @@ def set_password_invitation(user_id, new_password):
         "projects": -1,
         "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
 
-    c = tenants.get_by_tenant_id(tenant_id)
-    c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recorded=True)
-    c["smtp"] = smtp.has_smtp()
-    c["iceServers"] = assist.get_ice_servers()
     return {
-        'jwt': r.pop('jwt'),
+        "jwt": r.pop("jwt"),
+        "refreshToken": r.pop("refreshToken"),
+        "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
+        "spotJwt": r.pop("spotJwt"),
+        "spotRefreshToken": r.pop("spotRefreshToken"),
+        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         'data': {
-            "user": r,
-            "client": c
+            "scopeState": scope.get_scope(-1),
+            "user": r
         }
     }
 
@@ -560,32 +560,27 @@ class ChangeJwt(BaseModel):
     jwt_iat: int
     jwt_refresh_jti: int
     jwt_refresh_iat: int
-    spot_jwt_iat: int | None = None
-    spot_jwt_refresh_jti: int | None = None
-    spot_jwt_refresh_iat: int | None = None
+    spot_jwt_iat: int
+    spot_jwt_refresh_jti: int
+    spot_jwt_refresh_iat: int
 
 
-def change_jwt_iat_jti(user_id, include_spot: bool = False):
-    sub_query = ""
-    sub_result = ""
-    if include_spot:
-        sub_query = """,spot_jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
-                        spot_jwt_refresh_jti = 0, 
-                        spot_jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')"""
-        sub_result = """,EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, 
-                         spot_jwt_refresh_jti, 
-                         EXTRACT (epoch FROM spot_jwt_refresh_iat)::BIGINT AS spot_jwt_refresh_iat"""
+def change_jwt_iat_jti(user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE public.users
                                 SET jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
                                     jwt_refresh_jti = 0, 
-                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')
-                                    {sub_query} 
+                                    jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s'),
+                                    spot_jwt_iat = timezone('utc'::text, now()-INTERVAL '10s'),
+                                    spot_jwt_refresh_jti = 0, 
+                                    spot_jwt_refresh_iat = timezone('utc'::text, now()-INTERVAL '10s')
                                 WHERE user_id = %(user_id)s 
                                 RETURNING EXTRACT (epoch FROM jwt_iat)::BIGINT AS jwt_iat, 
                                           jwt_refresh_jti, 
-                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat
-                                          {sub_result};""",
+                                          EXTRACT (epoch FROM jwt_refresh_iat)::BIGINT AS jwt_refresh_iat,
+                                          EXTRACT (epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, 
+                                          spot_jwt_refresh_jti, 
+                                          EXTRACT (epoch FROM spot_jwt_refresh_iat)::BIGINT AS spot_jwt_refresh_iat;""",
                             {"user_id": user_id})
         cur.execute(query)
         row = cur.fetchone()
@@ -607,7 +602,7 @@ def refresh_jwt_iat_jti(user_id):
         return row.get("jwt_iat"), row.get("jwt_refresh_jti"), row.get("jwt_refresh_iat")
 
 
-def authenticate(email, password, for_change_password=False, include_spot=False) -> dict | bool | None:
+def authenticate(email, password, for_change_password=False) -> dict | bool | None:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -632,7 +627,7 @@ def authenticate(email, password, for_change_password=False, include_spot=False)
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        j_r = change_jwt_iat_jti(user_id=r['userId'], include_spot=include_spot)
+        j_r = change_jwt_iat_jti(user_id=r['userId'])
         response = {
             "jwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'], iat=j_r.jwt_iat,
                                             aud=AUDIENCE),
@@ -641,22 +636,19 @@ def authenticate(email, password, for_change_password=False, include_spot=False)
                                                              jwt_jti=j_r.jwt_refresh_jti),
             "refreshTokenMaxAge": config("JWT_REFRESH_EXPIRATION", cast=int),
             "email": email,
+            "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
+                                                iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
+            "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
+                                                                 tenant_id=r['tenantId'],
+                                                                 iat=j_r.spot_jwt_refresh_iat,
+                                                                 aud=spot.AUDIENCE,
+                                                                 jwt_jti=j_r.spot_jwt_refresh_jti,
+                                                                 for_spot=True),
+            "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int),
             **r
         }
-        if include_spot:
-            response = {
-                **response,
-                "spotJwt": authorizers.generate_jwt(user_id=r['userId'], tenant_id=r['tenantId'],
-                                                    iat=j_r.spot_jwt_iat, aud=spot.AUDIENCE, for_spot=True),
-                "spotRefreshToken": authorizers.generate_jwt_refresh(user_id=r['userId'],
-                                                                     tenant_id=r['tenantId'],
-                                                                     iat=j_r.spot_jwt_refresh_iat,
-                                                                     aud=spot.AUDIENCE,
-                                                                     jwt_jti=j_r.spot_jwt_refresh_jti,
-                                                                     for_spot=True),
-                "spotRefreshTokenMaxAge": config("JWT_SPOT_REFRESH_EXPIRATION", cast=int)
-            }
         return response
+
     return None
 
 

@@ -20,6 +20,7 @@ from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
+from routers.subs import spot
 
 logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
@@ -50,15 +51,36 @@ if not tenants.tenants_exists_sync(use_pool=False):
         return content
 
 
+def __process_authentication_response(response: JSONResponse, data: dict) -> dict:
+    data["smtp"] = smtp.has_smtp()
+    refresh_token = data.pop("refreshToken")
+    refresh_token_max_age = data.pop("refreshTokenMaxAge")
+    spot_refresh_token = data.pop("spotRefreshToken")
+    spot_refresh_token_max_age = data.pop("spotRefreshTokenMaxAge")
+    data = {
+        'jwt': data.pop('jwt'),
+        "spotJwt": data.pop("spotJwt"),
+        'data': {
+            "scopeState": scope.get_scope(-1),
+            "user": data
+        }
+    }
+    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
+                        max_age=refresh_token_max_age, secure=True, httponly=True)
+    response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path=spot.COOKIE_PATH,
+                        max_age=spot_refresh_token_max_age, secure=True, httponly=True)
+    return data
+
+
 @public_app.post('/login', tags=["authentication"])
-def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schemas.UserLoginSchema = Body(...)):
+def login_user(response: JSONResponse, data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid captcha."
         )
 
-    r = users.authenticate(email=data.email, password=data.password.get_secret_value(), include_spot=spot)
+    r = users.authenticate(email=data.email, password=data.password.get_secret_value())
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -69,26 +91,8 @@ def login_user(response: JSONResponse, spot: Optional[bool] = False, data: schem
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=r["errors"][0]
         )
-
-    r["smtp"] = smtp.has_smtp()
-    refresh_token = r.pop("refreshToken")
-    refresh_token_max_age = r.pop("refreshTokenMaxAge")
-    content = {
-        'jwt': r.pop('jwt'),
-        'data': {
-            "user": r,
-            "scopeState": scope.get_scope(-1)
-        }
-    }
-    response.set_cookie(key="refreshToken", value=refresh_token, path=COOKIE_PATH,
-                        max_age=refresh_token_max_age, secure=True, httponly=True)
-    if spot:
-        content["spotJwt"] = r.pop("spotJwt")
-        spot_refresh_token = r.pop("spotRefreshToken")
-        spot_refresh_token_max_age = r.pop("spotRefreshTokenMaxAge")
-        response.set_cookie(key="spotRefreshToken", value=spot_refresh_token, path="/api/spot/refresh",
-                            max_age=spot_refresh_token_max_age, secure=True, httponly=True)
-    return content
+    r = __process_authentication_response(response=response, data=r)
+    return r
 
 
 @app.get('/logout', tags=["login"])
@@ -125,6 +129,7 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
             **r,
             **t,
             **license.get_status(context.tenant_id),
+            "settings": users.get_user_settings(context.user_id)["settings"],
             "smtp": smtp.has_smtp()
         }
     }
@@ -197,7 +202,7 @@ def process_invitation_link(token: str):
 
 
 @public_app.post('/password/reset', tags=["users"])
-def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
+def change_password_by_invitation(response: JSONResponse, data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
     user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
@@ -206,7 +211,9 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
+    r = users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
+    r = __process_authentication_response(response=response, data=r)
+    return r
 
 
 @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
