@@ -764,14 +764,6 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
-@app.post('/account/password', tags=["account"])
-def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
-    return users.change_password(email=context.email, old_password=data.old_password.get_secret_value(),
-                                 new_password=data.new_password.get_secret_value(), tenant_id=context.tenant_id,
-                                 user_id=context.user_id)
-
-
 @app.post('/{projectId}/saved_search', tags=["savedSearch"])
 def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):

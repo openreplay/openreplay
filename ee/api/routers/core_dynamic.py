@@ -153,6 +153,16 @@ def change_scope(data: schemas.ScopeSchema = Body(),
     return {'data': data}
 
 
+@app.post('/account/password', tags=["account"])
+def change_client_password(resqponse: JSONResponse, data: schemas.EditUserPasswordSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
+    r = users.change_password(email=context.email, old_password=data.old_password.get_secret_value(),
+                              new_password=data.new_password.get_secret_value(), tenant_id=context.tenant_id,
+                              user_id=context.user_id)
+    r = __process_authentication_response(response=resqponse, data=r)
+    return r
+
+
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
 def add_slack_integration(data: schemas.AddCollaborationSchema,
