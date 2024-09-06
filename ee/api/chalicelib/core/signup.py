@@ -98,7 +98,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         "tenantId": t["tenant_id"],
         'data': {
-            "scope": "full",
+            "scopeState": 0,
             "user": r
         }
     }
