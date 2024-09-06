@@ -79,7 +79,7 @@ export default class DateRangePopup extends React.PureComponent {
                 </div>
               ))}
           </div>
-          <div className='flex justify-center h-[294px] dateRangeContainer'>
+          <div className='flex justify-center h-fit dateRangeContainer'>
             <DateRangePicker
               name="dateRangePicker"
               // onSelect={this.selectCustomRange} -> onChange
