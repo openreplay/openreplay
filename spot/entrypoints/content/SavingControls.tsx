@@ -506,7 +506,7 @@ function SavingControls({
                 <p class="text-xs">
                   Spots are saved to your{" "}
                   <a
-                    href="https://foss.openreplay.com/spots"
+                    href="https://app.openreplay.com/spots"
                     class="text-primary no-underline"
                     target="blank"
                   >

@@ -501,3 +501,39 @@ export function truncateStringToFit(string: string, screenWidth: number, charWid
 
   return string.slice(0, frontLen) + ellipsis + string.slice(-backLen);
 }
+
+let sendingRequest = false;
+export const handleSpotJWT = (jwt: string) => {
+  console.log(jwt, sendingRequest)
+  let tries = 0;
+  if (!jwt || sendingRequest) {
+    return;
+  }
+  sendingRequest = true;
+  let int: ReturnType<typeof setInterval>;
+  const onSpotMsg = (event: any) => {
+    if (event.data.type === 'orspot:logged') {
+      clearInterval(int);
+      sendingRequest = false;
+      window.removeEventListener('message', onSpotMsg);
+    }
+  };
+  window.addEventListener('message', onSpotMsg);
+
+  int = setInterval(() => {
+    if (tries > 20) {
+      sendingRequest = false;
+      clearInterval(int);
+      window.removeEventListener('message', onSpotMsg);
+      return;
+    }
+    window.postMessage(
+      {
+        type: 'orspot:token',
+        token: jwt,
+      },
+      '*'
+    );
+    tries += 1;
+  }, 250)
+}

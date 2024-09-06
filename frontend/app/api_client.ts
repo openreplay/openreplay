@@ -151,7 +151,7 @@ export default class APIClient {
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
     const spotService = path.includes('/spot') && !path.includes('/login')
-    if (spotService) {
+    if (spotService && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '')
     }
     if (
@@ -180,6 +180,8 @@ export default class APIClient {
     if (path.includes('PROJECT_ID')) {
       _path = _path.replace('PROJECT_ID', this.siteId + '');
     }
+
+    console.log(edp, _path, init)
 
     return fetch(edp + _path, init).then((response) => {
       if (response.ok) {
