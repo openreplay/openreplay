@@ -65,7 +65,7 @@ export default class DateRangePopup extends React.PureComponent {
 
     return (
       <div className={styles.wrapper}>
-        <div className={styles.body}>
+        <div className={`${styles.body} h-fit`}>
           <div className={styles.preSelections}>
             {dateRangeValues
               .filter(
@@ -79,19 +79,21 @@ export default class DateRangePopup extends React.PureComponent {
                 </div>
               ))}
           </div>
-          <DateRangePicker
-            name="dateRangePicker"
-            // onSelect={this.selectCustomRange} -> onChange
-            // numberOfCalendars={2}
-            // selectionType="range"
-            // maximumDate={new Date()}
-            // singleDateRange={true}
-            onChange={this.selectCustomRange}
-            shouldCloseCalendar={() => false}
-            isOpen
-            maxDate={new Date()}
-            value={rangeForDisplay}
-          />
+          <div className='flex justify-center h-fit dateRangeContainer'>
+            <DateRangePicker
+              name="dateRangePicker"
+              // onSelect={this.selectCustomRange} -> onChange
+              // numberOfCalendars={2}
+              // selectionType="range"
+              // maximumDate={new Date()}
+              // singleDateRange={true}
+              onChange={this.selectCustomRange}
+              shouldCloseCalendar={() => false}
+              isOpen
+              maxDate={new Date()}
+              value={rangeForDisplay}
+            />
+          </div>
         </div>
         <div className="flex items-center justify-between py-2 px-3">
           <div className="flex items-center gap-2">

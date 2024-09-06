@@ -89,7 +89,8 @@ function SelectDateRange(props: Props) {
           <OutsideClickDetectingDiv
             onClickOutside={(e: any) => {
               if (
-                e.target.parentElement.parentElement.classList.contains(
+                e.target.className.includes('react-calendar')
+                || e.target.parentElement.parentElement.classList.contains(
                   'rc-time-picker-panel-select'
                 ) ||
                 e.target.parentElement.parentElement.classList[0]?.includes(
@@ -115,6 +116,7 @@ function SelectDateRange(props: Props) {
                 onApply={onApplyDateRange}
                 onCancel={() => setIsCustom(false)}
                 selectedDateRange={period.range}
+                className='h-fit'
               />
             </div>
           </OutsideClickDetectingDiv>

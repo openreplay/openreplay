@@ -820,6 +820,7 @@ export default defineBackground(() => {
                     return r.json();
                   } else {
                     if (r.status === 401) {
+                      setJWTToken("");
                       throw new Error(
                         "Not authorized or no permissions to create Spot",
                       );
