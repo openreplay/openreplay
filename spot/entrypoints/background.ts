@@ -3,6 +3,8 @@ import { WebRequest } from "webextension-polyfill";
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
+  const VER = '1.0.0';
+
   const messages = {
     popup: {
       from: {
@@ -275,6 +277,7 @@ export default defineBackground(() => {
         method: "GET",
         headers: {
           Authorization: `Bearer ${jwtToken}`,
+          'Ext-Version': VER
         },
       });
       if (!r.ok) {
@@ -738,7 +741,6 @@ export default defineBackground(() => {
           name: finalSpotObj.name,
           comment: finalSpotObj.comment,
           preview: finalSpotObj.preview,
-          // duration: finalSpotObj.duration,
           duration: duration,
           crop: finalSpotObj.crop,
           vitals: finalSpotObj.vitals,
@@ -810,6 +812,7 @@ export default defineBackground(() => {
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${jwtToken}`,
+                  'Ext-Version': VER
                 },
               })
                 .then((r) => {
