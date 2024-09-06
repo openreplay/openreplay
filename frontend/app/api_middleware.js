@@ -1,6 +1,7 @@
 import logger from 'App/logger';
 import APIClient from './api_client';
 import { FETCH_ACCOUNT, UPDATE_JWT } from './duck/user';
+import { handleSpotJWT } from "App/utils";
 
 export default () => (next) => (action) => {
   const { types, call, ...rest } = action;
@@ -23,7 +24,7 @@ export default () => (next) => (action) => {
       return response.json();
     })
     .then((json) => json || {}) // TEMP  TODO on server: no empty responses
-    .then(({ jwt, errors, data }) => {
+    .then(({ jwt, spotJwt, errors, data }) => {
       if (errors) {
         next({ type: FAILURE, errors, data });
       } else {
@@ -31,6 +32,9 @@ export default () => (next) => (action) => {
       }
       if (jwt) {
         next({ type: UPDATE_JWT, data: { jwt } });
+      }
+      if (spotJwt) {
+        handleSpotJWT(spotJwt);
       }
     })
     .catch(async (e) => {

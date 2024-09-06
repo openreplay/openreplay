@@ -168,7 +168,7 @@ export const downgradeScope = () => ({
 
 export const login = (params) => ({
   types: LOGIN.toArray(),
-  call: (client) => client.post('/login', params),
+  call: (client) => client.post('/login?spot=true', params),
 });
 
 export const loadingLogin = () => ({

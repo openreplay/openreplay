@@ -9,11 +9,12 @@ import PublicRoutes from 'App/PublicRoutes';
 import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
-  JWT_PARAM, SPOT_ONBOARDING
+  JWT_PARAM,
+  SPOT_ONBOARDING
 } from "App/constants/storageKeys";
 import Layout from 'App/layout/Layout';
 import { withStore } from "App/mstore";
-import { checkParam } from 'App/utils';
+import { checkParam, handleSpotJWT } from "App/utils";
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
@@ -25,7 +26,6 @@ import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
 import { spotsList } from "./routes";
 import * as routes from './routes';
-import { toast } from 'react-toastify'
 
 interface RouterProps
   extends RouteComponentProps,
@@ -72,6 +72,7 @@ const Router: React.FC<RouterProps> = (props) => {
   const spotReqSent = React.useRef(false)
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
+
   const handleJwtFromUrl = () => {
     const params = new URLSearchParams(location.search)
     const urlJWT = params.get('jwt');
@@ -90,35 +91,7 @@ const Router: React.FC<RouterProps> = (props) => {
     } else {
       spotReqSent.current = true;
     }
-    let tries = 0;
-    if (!jwt) {
-      return;
-    }
-    let int: ReturnType<typeof setInterval>;
-
-    const onSpotMsg = (event: any) => {
-      if (event.data.type === 'orspot:logged') {
-        clearInterval(int);
-        window.removeEventListener('message', onSpotMsg);
-      }
-    };
-    window.addEventListener('message', onSpotMsg);
-
-    int = setInterval(() => {
-      if (tries > 20) {
-        clearInterval(int);
-        window.removeEventListener('message', onSpotMsg);
-        return;
-      }
-      window.postMessage(
-        {
-          type: 'orspot:token',
-          token: jwt,
-        },
-        '*'
-      );
-      tries += 1;
-    }, 250);
+    handleSpotJWT(jwt);
   };
 
   const handleDestinationPath = () => {

@@ -130,7 +130,7 @@ export default defineBackground(() => {
     openInNewTab: true,
     consoleLogs: true,
     networkLogs: true,
-    ingestPoint: "https://foss.openreplay.com",
+    ingestPoint: "https://app.openreplay.com",
   };
   let recordingState = {
     activeTabId: null,
@@ -161,7 +161,7 @@ export default defineBackground(() => {
       str = str.slice(0, -1);
     }
     if (str.includes("app.openreplay.com")) {
-      str = "https://api.openreplay.com";
+      str = str.replace("app.openreplay.com", "api.openreplay.com");
     }
     return str;
   }
@@ -747,7 +747,7 @@ export default defineBackground(() => {
         };
         const videoData = finalVideoBase64;
 
-        getPlatformData().then(({ platform }) => {
+        getPlatformData().then(async ({ platform }) => {
           const cropped =
             finalSpotObj.crop &&
             finalSpotObj.crop[0] + finalSpotObj.crop[1] > 0;
@@ -795,7 +795,14 @@ export default defineBackground(() => {
             },
           );
 
-          const ingestUrl = safeApiUrl(settings.ingestPoint);
+          const data = await browser.storage.local.get("settings");
+          if (!data.settings) {
+            return void sendToActiveTab({
+              type: messages.content.to.notification,
+              message: "Error saving Spot: can't retrieve spot ingest",
+            });
+          }
+          const ingestUrl = safeApiUrl(data.settings.ingestPoint);
 
           const dataUrl = `${ingestUrl}/spot/v1/spots`;
           refreshToken()
