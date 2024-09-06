@@ -530,7 +530,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
         "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
         "spotJwt": r.pop("spotJwt"),
         "spotRefreshToken": r.pop("spotRefreshToken"),
-        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge")
+        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
+        "tenantId": tenant_id
     }
 
 

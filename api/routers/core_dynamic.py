@@ -154,7 +154,8 @@ def change_client_password(resqponse: JSONResponse, data: schemas.EditUserPasswo
     r = users.change_password(email=context.email, old_password=data.old_password.get_secret_value(),
                               new_password=data.new_password.get_secret_value(), tenant_id=context.tenant_id,
                               user_id=context.user_id)
-    r = __process_authentication_response(response=resqponse, data=r)
+    if "errors" not in r:
+        r = __process_authentication_response(response=resqponse, data=r)
     return r
 
 
