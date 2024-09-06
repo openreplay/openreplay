@@ -1,6 +1,7 @@
 # 14.0.6
 
 - support feature off toggle for feature flags and usability testing
+- additional checks for canvas snapshots
 
 # 14.0.5
 

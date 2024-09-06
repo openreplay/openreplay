@@ -104,6 +104,13 @@ class CanvasRecorder {
         this.fileExt,
         (blob) => {
           if (!blob) return
+          if (!this.snapshots[id]) {
+            return this.app.debug.warn(
+              'Canvas not present in snapshots after capture:',
+              this.snapshots,
+              id,
+            )
+          }
           this.snapshots[id].images.push({ id: this.app.timestamp(), data: blob })
           if (this.snapshots[id].images.length > 9) {
             this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
