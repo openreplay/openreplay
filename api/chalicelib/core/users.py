@@ -443,7 +443,12 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     r = authenticate(user['email'], new_password)
 
     return {
-        'jwt': r.pop('jwt')
+        "jwt": r.pop("jwt"),
+        "refreshToken": r.pop("refreshToken"),
+        "refreshTokenMaxAge": r.pop("refreshTokenMaxAge"),
+        "spotJwt": r.pop("spotJwt"),
+        "spotRefreshToken": r.pop("spotRefreshToken"),
+        "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge")
     }
 
 
