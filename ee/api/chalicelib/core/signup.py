@@ -96,6 +96,7 @@ async def create_tenant(data: schemas.UserSignupSchema):
         "spotJwt": r.pop("spotJwt"),
         "spotRefreshToken": r.pop("spotRefreshToken"),
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
+        "tenantId": t["tenant_id"],
         'data': {
             "scope": "full",
             "user": r
