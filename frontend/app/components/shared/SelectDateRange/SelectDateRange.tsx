@@ -115,6 +115,7 @@ function SelectDateRange(props: Props) {
                 onApply={onApplyDateRange}
                 onCancel={() => setIsCustom(false)}
                 selectedDateRange={period.range}
+                className='h-fit'
               />
             </div>
           </OutsideClickDetectingDiv>
