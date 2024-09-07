@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12.0a1-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
 
