@@ -554,7 +554,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
         "spotRefreshToken": r.pop("spotRefreshToken"),
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         'data': {
-            "scopeState": scope.get_scope(r["tenantId"]),
+            "scopeState": scope.get_scope(tenant_id),
             "user": r
         }
     }
