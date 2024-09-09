@@ -1,4 +1,4 @@
-import Site from 'Types/site';
+import Site from "Types/site";
 import GDPR from 'Types/site/gdpr';
 import {
   mergeReducers,
@@ -164,4 +164,3 @@ export default mergeReducers(
     ...getCRUDRequestTypes(name)
   })
 );
-

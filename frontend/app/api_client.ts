@@ -59,7 +59,7 @@ export default class APIClient {
 
   constructor() {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    const siteId = store.getState().getIn(['site', 'siteId']);
+    const siteId = store.getState().site.siteId;
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
