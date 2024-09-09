@@ -64,11 +64,12 @@ function SelectDateRange(props: Props) {
         label: opt.label,
         key: opt.value,
       })),
-      defaultSelectedKeys: selectedValue?.value ? [selectedValue.value] : undefined,
+      selectedKeys: selectedValue?.value ? [selectedValue.value] : undefined,
       onClick: (e: any) => {
         onChange(e.key);
       },
     };
+
 
     return (
       <div className={'relative'}>
