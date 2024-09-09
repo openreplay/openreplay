@@ -31,9 +31,7 @@ function AddCardSelectionModal(props: Props) {
   };
 
   const originStr = window.env.ORIGIN || window.location.origin;
-  const testingKey = localStorage.getItem('__mauricio_testing_access') === 'true';
-
-  const isSaas = testingKey && /app\.openreplay\.com/.test(originStr);
+  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <>
       <Modal
