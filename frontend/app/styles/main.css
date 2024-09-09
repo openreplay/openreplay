@@ -378,4 +378,8 @@ svg {
     border:none;
 }
 
+.react-daterange-picker__calendar--open {
+    display: unset!important;
+    height: 100%!important;
+}
   
