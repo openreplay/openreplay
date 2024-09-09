@@ -33,7 +33,7 @@ export default () => {
       }
 
       if (jwt) {
-        next({ type: UPDATE_JWT, data: jwt });
+        next({ type: UPDATE_JWT, data: { jwt } });
       }
       if (spotJwt) {
         handleSpotJWT(spotJwt);
