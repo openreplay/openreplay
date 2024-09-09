@@ -7,7 +7,6 @@ import CustomFilter, { KEYS } from 'Types/filter/customFilter';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
-import { editType } from './funcTools/crud/types';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -16,7 +15,7 @@ const FETCH_FILTER_OPTIONS = new RequestTypes('filters/FETCH_FILTER_OPTIONS');
 const SET_FILTER_OPTIONS = 'filters/SET_FILTER_OPTIONS';
 const SAVE = new RequestTypes('filters/SAVE');
 const REMOVE = new RequestTypes('filters/REMOVE');
-const EDIT = editType('funnel/EDIT');
+const EDIT = 'funnel/EDIT'
 
 const SET_SEARCH_QUERY = 'filters/SET_SEARCH_QUERY';
 const SET_ACTIVE = 'filters/SET_ACTIVE';

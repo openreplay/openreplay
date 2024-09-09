@@ -15,7 +15,6 @@ interface Props {
   account: any;
   siteId: any;
   sites: any;
-  boardingCompletion: any;
   spotOnly?: boolean;
 }
 
@@ -55,7 +54,6 @@ function mapStateToProps(state: any) {
     spotOnly: getScope(state) === 1,
     siteId: state.getIn(['site', 'siteId']),
     sites: state.getIn(['site', 'list']),
-    boardingCompletion: state.getIn(['dashboard', 'boardingCompletion']),
   };
 }
 
