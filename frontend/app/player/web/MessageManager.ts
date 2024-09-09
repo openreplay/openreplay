@@ -114,6 +114,7 @@ export default class MessageManager {
   private lastMessageTime: number = 0;
   private firstVisualEventSet = false;
   public readonly tabs: Record<string, TabSessionManager> = {};
+  private tabsAmount = 0;
   private tabChangeEvents: TabChangeEvent[] = [];
   private activeTab = '';
 
@@ -197,6 +198,13 @@ export default class MessageManager {
    * */
   public createTabCloseEvents = () => {
     const lastMsgArr: [string, number][] = []
+    if (this.tabsAmount === 1) {
+      return this.tabCloseManager.append({
+        tabId: Object.keys(this.tabs)[0],
+        time: this.session.durationMs - 100
+      })
+    }
+
     for (const [tabId, tab] of Object.entries(this.tabs)) {
       const { lastMessageTs } = tab
       if (lastMessageTs && tabId) {
@@ -205,13 +213,9 @@ export default class MessageManager {
     }
 
     lastMsgArr.sort((a, b) => a[1] - b[1])
-    if (Object.keys(this.tabs).length === 1) {
-      this.tabCloseManager.append({ tabId: lastMsgArr[0][0], time: this.session.durationMs - 250 })
-    } else {
-      lastMsgArr.forEach(([tabId, lastMessageTs]) => {
-        this.tabCloseManager.append({ tabId, time: lastMessageTs })
-      })
-    }
+    lastMsgArr.forEach(([tabId, lastMessageTs]) => {
+      this.tabCloseManager.append({ tabId, time: lastMessageTs })
+    })
   }
 
   public startLoading = () => {
@@ -223,7 +227,7 @@ export default class MessageManager {
   resetMessageManagers() {
     this.clickManager = new ListWalker();
     this.mouseMoveManager = new MouseMoveManager(this.screen);
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds);
+    this.activityManager = new ActivityManager(this.session.durationMs);
     this.activeTabManager = new ActiveTabManager();
 
     Object.values(this.tabs).forEach((tab) => tab.resetMessageManagers());
@@ -236,7 +240,13 @@ export default class MessageManager {
       const closeMessage = await this.tabCloseManager.moveReady(t)
       if (closeMessage) {
         const closedTabs = this.tabCloseManager.closedTabs
-        this.state.update({ closedTabs: Array.from(closedTabs) })
+        if (closedTabs.size === this.tabsAmount) {
+          if (this.session.durationMs - t < 250) {
+            this.state.update({ closedTabs: Array.from(closedTabs) })
+          }
+        } else {
+          this.state.update({ closedTabs: Array.from(closedTabs) })
+        }
       }
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
@@ -303,7 +313,10 @@ export default class MessageManager {
   }
 
   distributeMessage = (msg: Message & { tabId: string }): void => {
+    // @ts-ignore placeholder msg for timestamps
+    if (msg.tp === 9999) return;
     if (!this.tabs[msg.tabId]) {
+      this.tabsAmount++;
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
         this.state,
