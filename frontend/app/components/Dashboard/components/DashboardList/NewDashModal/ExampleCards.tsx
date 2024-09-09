@@ -157,18 +157,6 @@ export const CARD_LIST: CardType[] = [
     example: ByIssues
   },
 
-
-  {
-    title: 'Insights',
-    key: INSIGHTS,
-    cardType: INSIGHTS,
-    metricOf: 'issueCategories',
-    category: CARD_CATEGORIES[0].key,
-    width: 4,
-    isEnterprise: true,
-    example: InsightsExample
-  },
-
   // Performance Monitoring
   {
     title: 'CPU Load',
@@ -454,6 +442,16 @@ export const CARD_LIST: CardType[] = [
     width: 4,
     height: 336,
     example: TableOfErrors
+  },
+  {
+    title: 'Insights',
+    key: INSIGHTS,
+    cardType: INSIGHTS,
+    metricOf: 'issueCategories',
+    category: CARD_CATEGORIES[3].key,
+    width: 4,
+    isEnterprise: true,
+    example: InsightsExample
   },
   {
     title: 'Sessions Impacted by JS Errors',
