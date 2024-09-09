@@ -49,7 +49,7 @@ function CustomMetricLineChart(props: Props) {
                         value: label || "Number of Sessions"
                     }}
                 />
-                {!hideLegend && <Legend/>}
+                {!hideLegend && <Legend />}
                 <Tooltip {...Styles.tooltip} />
                 {Array.isArray(data.namesMap) && data.namesMap.map((key, index) => (
                     <Line
@@ -60,8 +60,9 @@ function CustomMetricLineChart(props: Props) {
                         stroke={colors[index]}
                         fillOpacity={1}
                         strokeWidth={2}
-                        strokeOpacity={0.6}
+                        strokeOpacity={key === 'Total' ? 0 : 0.6}
                         // fill="url(#colorCount)"
+                        legendType={key === 'Total' ? 'none' : 'line'}
                         dot={false}
                     />
                 ))}
