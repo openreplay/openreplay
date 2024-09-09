@@ -6,7 +6,6 @@ import sessions from './sessions';
 import assignments from './assignments';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
-import dashboard from './dashboard';
 import player from './components/player'
 import sources from './sources';
 import members from './member';
@@ -26,8 +25,6 @@ const rootReducer = combineReducers({
   assignments,
   filters,
   funnelFilters,
-
-  dashboard,
   player,
   members,  
   site,
