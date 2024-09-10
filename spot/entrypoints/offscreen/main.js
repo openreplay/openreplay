@@ -16,11 +16,13 @@ function getRecordingSettings(qualityValue) {
   const duration = 3 * 60 * 1000; // 3 minutes
 
   const mimeTypes = [
+    // fastest trimming and HLS
     "video/webm;codecs=h264",
     "video/webm;codecs=avc1",
     "video/webm;codecs=av1",
     "video/mp4;codecs=avc1",
     "video/webm;codecs=vp8,opus",
+    // best performance
     "video/webm;codecs=vp9,opus",
   ];
 
