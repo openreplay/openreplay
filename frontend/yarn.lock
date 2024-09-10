@@ -5170,7 +5170,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/luxon@npm:^3.0.0":
+"@types/luxon@npm:^3.4.2":
   version: 3.4.2
   resolution: "@types/luxon@npm:3.4.2"
   checksum: d835467de3daf7e17ba78b50bb5a14efd94272439ca067990d71332a54b311544459c69623eddd243b511b28d70194c9591a9ee8cf9c038962c965f991affd7e
@@ -16311,10 +16311,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"luxon@npm:^1.24.1":
-  version: 1.28.1
-  resolution: "luxon@npm:1.28.1"
-  checksum: 5c561ce4364bb2301ca5811c74d11a9e087f82164109c7997dc8f0959e64d51259d8e630914dca2edc6702525ce5ab066a4b85caa19d04be71f10e79ffe2bc84
+"luxon@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "luxon@npm:3.5.0"
+  checksum: 335789bba95077db831ef99894edadeb23023b3eb2137a1b56acd0d290082b691cf793143d69e30bc069ec95f0b49f36419f48e951c68014f19ffe12045e3494
   languageName: node
   linkType: hard
 
@@ -18162,7 +18162,7 @@ __metadata:
     "@svg-maps/world": ^1.0.1
     "@svgr/webpack": ^6.2.1
     "@trivago/prettier-plugin-sort-imports": ^4.3.0
-    "@types/luxon": ^3.0.0
+    "@types/luxon": ^3.4.2
     "@types/prismjs": ^1
     "@types/react": ^18.0.9
     "@types/react-confirm": ^0.2.3
@@ -18209,7 +18209,7 @@ __metadata:
     jspdf: ^2.5.1
     lottie-react: ^2.4.0
     lucide-react: ^0.396.0
-    luxon: ^1.24.1
+    luxon: ^3.5.0
     microdiff: ^1.4.0
     mini-css-extract-plugin: ^2.6.0
     minio: ^7.1.3

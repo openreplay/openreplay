@@ -83,8 +83,7 @@ export default class SessionSettings {
 
     const savedTz = localStorage.getItem(TIMEZONE)
     this.timezone = savedTz ? JSON.parse(savedTz) : defaultTimezone;
-    // @ts-ignore
-    Settings.defaultZoneName = this.timezone.value;
+    Settings.defaultZone = this.timezone.value;
     if (localStorage.getItem(MOUSE_TRAIL) === null) {
       localStorage.setItem(MOUSE_TRAIL, 'true');
     }
@@ -113,8 +112,7 @@ export default class SessionSettings {
 
   updateTimezone = (value: Timezone) => {
     this.timezone = value;
-    // @ts-ignore
-    Settings.defaultZoneName = value.value;
+    Settings.defaultZone = value.value;
     localStorage.setItem(`__$session-timezone$__`, JSON.stringify(value));
   }
 
