@@ -37,8 +37,9 @@ function WidgetFormNew() {
   return isPredefined ? <PredefinedMessage /> : (
     <Space direction="vertical" className="w-full">
       <AdditionalFilters />
-      {!hasFilters && (<DefineSteps metric={metric} excludeFilterKeys={excludeFilterKeys} />)}
-      {hasFilters && (<FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />)}
+      {/*{!hasFilters && (<DefineSteps metric={metric} excludeFilterKeys={excludeFilterKeys} />)}*/}
+      {/*{hasFilters && (<FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />)}*/}
+      <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />
     </Space>
   );
 }
