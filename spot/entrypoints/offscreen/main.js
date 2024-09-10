@@ -112,6 +112,7 @@ class ScreenRecorder {
       mimeType: this.settings.mimeType,
       audioBitsPerSecond: this.settings.audioBitsPerSecond,
       videoBitsPerSecond: this.settings.videoBitsPerSecond,
+      videoKeyFrameIntervalDuration: 1000,
     });
 
     this.mRecorder.ondataavailable = this._handleDataAvailable;
@@ -296,7 +297,6 @@ class ScreenRecorder {
 
 let recorder = new ScreenRecorder();
 recorder.init(getRecordingSettings("720p"));
-
 browser.runtime.onMessage.addListener((message, _, respond) => {
   if (message.target === "offscreen") {
     if (message.type === "offscr:start-recording") {

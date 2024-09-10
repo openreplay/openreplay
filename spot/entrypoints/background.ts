@@ -3,7 +3,7 @@ import { WebRequest } from "webextension-polyfill";
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = '1.0.0';
+  const VER = '1.0.3';
 
   const messages = {
     popup: {
@@ -1126,15 +1126,16 @@ export default defineBackground(() => {
       (c: { contextType: string }) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
 
-    if (!offscreenDocument) {
-      await browser.offscreen.createDocument({
-        url: "offscreen.html",
-        reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
-        justification: "Recording from chrome.tabCapture API",
-      });
-    } else {
-      recording = offscreenDocument.documentUrl.endsWith("#recording");
+    if (offscreenDocument) {
+      await browser.offscreen.closeDocument()
     }
+
+    await browser.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
+      justification: "Recording from chrome.tabCapture API",
+    });
+
     return recording;
   }
   async function sendToActiveTab(message: {
