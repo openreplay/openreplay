@@ -3,7 +3,8 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import Player from './PlayerInst';
 import MobilePlayerSubheader from './MobilePlayerSubheader';
-
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite';
 import styles from 'Components/Session_/playerBlock.module.css';
 
 interface IProps {
@@ -17,14 +18,14 @@ interface IProps {
 
 function PlayerBlock(props: IProps) {
   const {
-    fullscreen,
     sessionId,
     activeTab,
     jiraConfig,
     fullView = false,
     setActiveTab,
   } = props;
-
+  const { uiPlayerStore } = useStore();
+  const fullscreen = uiPlayerStore.fullscreen;
   const shouldShowSubHeader = !fullscreen && !fullView
   return (
     <div
@@ -43,7 +44,6 @@ function PlayerBlock(props: IProps) {
 }
 
 export default connect((state: any) => ({
-  fullscreen: state.getIn(['player', 'fullscreen']),
   sessionId: state.getIn(['sessions', 'current']).sessionId,
   jiraConfig: state.getIn(['issues', 'list'])[0],
-}))(PlayerBlock)
+}))(observer(PlayerBlock))

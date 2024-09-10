@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Modal, Loader } from 'UI';
-import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
 import { createIOSPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
@@ -24,14 +23,16 @@ const TABS = {
 let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
-  const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList } = props;
-
-  const { notesStore, sessionStore } = useStore();
+  const { session, fetchList } = props;
+  const { notesStore, sessionStore, uiPlayerStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
+  const fullscreen = uiPlayerStore.fullscreen
+  const toggleFullscreen = uiPlayerStore.toggleFullscreen
+  const closeBottomBlock = uiPlayerStore.closeBottomBlock
 
   useEffect(() => {
     playerInst = undefined;
@@ -147,12 +148,9 @@ export default connect(
     session: state.getIn(['sessions', 'current']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
-    fullscreen: state.getIn(['player']).fullcreen,
     showEvents: state.get('showEvents'),
   }),
   {
-    toggleFullscreen,
-    closeBottomBlock,
     fetchList,
   }
 )(withLocationHandlers()(observer(MobilePlayer)));

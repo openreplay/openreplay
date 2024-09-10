@@ -1,12 +1,13 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
+import { useStore } from "App/mstore";
 import LiveTag from './LiveTag';
 import AssistSessionsTabs from './AssistSessionsTabs';
 
 import {
-  CONSOLE, toggleBottomBlock,
-} from 'Duck/components/player';
+  CONSOLE,
+} from 'App/mstore/uiPlayerStore';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
@@ -18,6 +19,10 @@ import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls'
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
 
 function Controls(props: any) {
+  const { uiPlayerStore } = useStore();
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const skipInterval = uiPlayerStore.skipInterval;
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
   const [noControls, setNoControls] = React.useState(false);
@@ -35,10 +40,7 @@ function Controls(props: any) {
   const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
   const showExceptions = exceptionsList.length > 0;
   const {
-    bottomBlock,
-    toggleBottomBlock,
     closedLive,
-    skipInterval,
     session,
     fetchSessions: fetchAssistSessions,
     totalAssistSessions,
@@ -141,6 +143,5 @@ export default connect(
   },
   {
     fetchSessions,
-    toggleBottomBlock
   }
 )(ControlPlayer);

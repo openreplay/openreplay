@@ -19,22 +19,18 @@ function isTitleLine(line: string): boolean {
 
 function SummaryBlock({
   sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  zoomTab,
   duration,
 }: {
   sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
   duration: any;
 }) {
   const { store } = React.useContext(PlayerContext)
   const { tabStates } = store.get();
-  const { aiSummaryStore } = useStore();
+  const { aiSummaryStore, uiPlayerStore } = useStore();
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const zoomTab = uiPlayerStore.zoomTab;
 
   React.useEffect(() => {
     debounceUpdate = debounce(
@@ -155,9 +151,5 @@ const summaryBlockStyle: React.CSSProperties = {
 };
 
 export default connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
-  zoomTab: state.getIn(['player']).zoomTab,
   duration: state.getIn(['sessions', 'current']).durationSeconds,
 }))(observer(SummaryBlock));

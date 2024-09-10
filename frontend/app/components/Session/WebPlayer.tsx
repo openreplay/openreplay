@@ -9,7 +9,6 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Note } from 'App/services/NotesService';
-import { closeBottomBlock, toggleFullscreen } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
 import { Loader, Modal } from 'UI';
 
@@ -37,13 +36,13 @@ let playerInst: IPlayerContext['player'] | undefined;
 function WebPlayer(props: any) {
   const {
     session,
-    toggleFullscreen,
-    closeBottomBlock,
-    fullscreen,
     fetchList,
     startedAt,
   } = props;
-  const { notesStore, sessionStore, uxtestingStore } = useStore();
+  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore } = useStore();
+  const fullscreen = uiPlayerStore.fullscreen;
+  const toggleFullscreen = uiPlayerStore.toggleFullscreen;
+  const closeBottomBlock = uiPlayerStore.closeBottomBlock;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
@@ -255,13 +254,9 @@ export default connect(
     prefetched: state.getIn(['sessions', 'prefetched']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
-    fullscreen: state.getIn(['player', 'fullscreen']),
-    showEvents: state.get('showEvents'),
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
   }),
   {
-    toggleFullscreen,
-    closeBottomBlock,
     fetchList,
   }
 )(withLocationHandlers()(observer(WebPlayer)));

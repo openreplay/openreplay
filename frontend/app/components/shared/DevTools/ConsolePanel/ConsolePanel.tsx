@@ -11,7 +11,6 @@ import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorD
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import { connect } from 'react-redux';
 import { VList, VListHandle } from "virtua";
 
 const ALL = 'ALL';
@@ -87,18 +86,16 @@ const INDEX_KEY = 'console';
 
 function ConsolePanel({
   isLive,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
 }: {
   isLive?: boolean;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
 }) {
   const {
     sessionStore: { devTools },
+    uiPlayerStore,
   } = useStore();
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
 
   const _list = useRef<VListHandle>(null);
   const filter = devTools[INDEX_KEY].filter;
@@ -224,8 +221,4 @@ function ConsolePanel({
   );
 }
 
-export default connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
-}))(observer(ConsolePanel));
+export default observer(ConsolePanel);

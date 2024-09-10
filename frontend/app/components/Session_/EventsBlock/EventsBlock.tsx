@@ -27,16 +27,15 @@ interface IProps {
   filterOutNote: (id: string) => void;
   eventsIndex: number[];
   uxtVideo: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
 }
 
 function EventsBlock(props: IProps) {
-  const { notesStore, uxtestingStore } = useStore();
+  const { notesStore, uxtestingStore, uiPlayerStore } = useStore();
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
-
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
 
   const {
@@ -88,9 +87,9 @@ function EventsBlock(props: IProps) {
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents
     ).filter((e) =>
-      props.zoomEnabled
+      zoomEnabled
         ? 'time' in e
-          ? e.time >= props.zoomStartTs && e.time <= props.zoomEndTs
+          ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
         : true
     );
@@ -98,9 +97,9 @@ function EventsBlock(props: IProps) {
     filteredLength,
     notesWithEvtsLength,
     notesLength,
-    props.zoomEnabled,
-    props.zoomStartTs,
-    props.zoomEndTs,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
   ]);
   const findLastFitting = React.useCallback(
     (time: number) => {
@@ -275,9 +274,6 @@ export default connect(
     filteredEvents: state.getIn(['sessions', 'filteredEvents']),
     query: state.getIn(['sessions', 'eventsQuery']),
     eventsIndex: state.getIn(['sessions', 'eventsIndex']),
-    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   {
     setEventFilter,

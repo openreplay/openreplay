@@ -182,15 +182,9 @@ function renderStatus({
 function NetworkPanelCont({
   startedAt,
   panelHeight,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
 }: {
   startedAt: number;
   panelHeight: number;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
 }) {
   const { player, store } = React.useContext(PlayerContext);
   const {
@@ -230,18 +224,15 @@ function NetworkPanelCont({
 function MobileNetworkPanelCont({
   startedAt,
   panelHeight,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
 }: {
   startedAt: number;
   panelHeight: number;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
 }) {
   const { player, store } = React.useContext(MobilePlayerContext);
-
+  const { uiPlayerStore } = useStore();
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const domContentLoadedTime = undefined;
   const loadTime = undefined;
   const domBuildingTime = undefined;
@@ -305,7 +296,7 @@ interface Props {
   player: WebPlayer | MobilePlayer;
   startedAt: number;
   isMobile?: boolean;
-  zoomEnabled: boolean;
+  zoomEnabled?: boolean;
   zoomStartTs?: number;
   zoomEndTs?: number;
   panelHeight: number;
@@ -680,16 +671,10 @@ export const NetworkPanelComp = observer(
 
 const WebNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(observer(NetworkPanelCont));
 
 const MobileNetworkPanel = connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current']).startedAt,
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
 }))(observer(MobileNetworkPanelCont));
 
 export { WebNetworkPanel, MobileNetworkPanel };

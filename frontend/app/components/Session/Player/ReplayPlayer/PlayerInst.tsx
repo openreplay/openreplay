@@ -16,8 +16,7 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-  fullscreenOff,
-} from 'Duck/components/player';
+} from 'App/mstore/uiPlayerStore';
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
@@ -34,13 +33,11 @@ import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 interface IProps {
   fullView: boolean;
   isMultiview?: boolean;
-  bottomBlock: number;
-  fullscreen: boolean;
-  fullscreenOff: () => any;
   nextId: string;
   sessionId: string;
   activeTab: string;
@@ -63,9 +60,13 @@ export const getDefaultPanelHeight = () => {
 }
 
 function Player(props: IProps) {
+  const { uiPlayerStore } = useStore();
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const fullscreen = uiPlayerStore.fullscreen;
   const defaultHeight = getDefaultPanelHeight()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const { fullscreen, fullscreenOff, nextId, bottomBlock, activeTab, fullView } = props;
+  const { nextId, activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
   const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
@@ -83,7 +84,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
+  }, [bottomBlock, fullscreen, playerContext.player, activeTab, fullView]);
 
   if (!playerContext.player) return null;
 
@@ -163,13 +164,10 @@ function Player(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    fullscreen: state.getIn(['player', 'fullscreen']),
     nextId: state.getIn(['sessions', 'nextId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    bottomBlock: state.getIn(['player', 'bottomBlock']),
   }),
   {
-    fullscreenOff,
     updateLastPlayedSession,
   }
 )(observer(Player));

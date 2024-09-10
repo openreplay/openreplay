@@ -6,29 +6,31 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
+import { useStore } from "App/mstore";
 import LiveControls from './LiveControls';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import { observer } from 'mobx-react-lite';
 import Overlay from './Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
-import { CONSOLE } from 'Duck/components/player';
+import { CONSOLE } from 'App/mstore/uiPlayerStore';
 
 interface IProps {
   closedLive: boolean;
   fullView: boolean;
   isMultiview?: boolean;
-  bottomBlock: number;
 }
 
 function Player(props: IProps) {
+  const { uiPlayerStore } = useStore()
   const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const { closedLive, fullView, isMultiview, bottomBlock } = props;
+  const { closedLive, fullView, isMultiview } = props;
   // @ts-ignore TODO
   const playerContext = React.useContext<ILivePlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const ready = playerContext.store.get().ready;
+  const bottomBlock = uiPlayerStore.bottomBlock
 
   React.useEffect(() => {
     if (!props.closedLive || isMultiview) {
@@ -96,7 +98,6 @@ export default connect((state: any) => {
   const isAssist = window.location.pathname.includes('/assist/');
   return {
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    bottomBlock: state.getIn(['player', 'bottomBlock']),
     closedLive:
       !!state.getIn(['sessions', 'errors']) ||
       (isAssist && !state.getIn(['sessions', 'current']).live),

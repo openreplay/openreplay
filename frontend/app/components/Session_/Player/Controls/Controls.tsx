@@ -30,11 +30,7 @@ import {
   PROFILER,
   STACKEVENTS,
   STORAGE,
-  changeSkipInterval,
-  fullscreenOff,
-  fullscreenOn,
-  toggleBottomBlock,
-} from 'Duck/components/player';
+} from 'App/mstore/uiPlayerStore';
 import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
 
@@ -74,7 +70,15 @@ function getStorageName(type: any) {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore } = useStore();
+  const { uxtestingStore, uiPlayerStore } = useStore();
+  const fullscreen = uiPlayerStore.fullscreen;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const fullscreenOn = uiPlayerStore.fullscreenOn;
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const changeSkipInterval = uiPlayerStore.changeSkipInterval;
+  const skipInterval = uiPlayerStore.skipInterval;
+  const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
   const history = useHistory();
   const {
     playing,
@@ -87,13 +91,7 @@ function Controls(props: any) {
   } = store.get();
 
   const {
-    bottomBlock,
-    toggleBottomBlock,
-    fullscreen,
-    changeSkipInterval,
-    skipInterval,
     disableDevtools,
-    showStorageRedux,
     session,
     previousSessionId,
     nextSessionId,
@@ -115,8 +113,8 @@ function Controls(props: any) {
 
   useShortcuts({
     skipInterval,
-    fullScreenOn: props.fullscreenOn,
-    fullScreenOff: props.fullscreenOff,
+    fullScreenOn: fullscreenOn,
+    fullScreenOff: fullscreenOff,
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
@@ -189,7 +187,7 @@ function Controls(props: any) {
 
             <FullScreenButton
               size={16}
-              onClick={props.fullscreenOn}
+              onClick={fullscreenOn}
               customClasses={
                 'rounded hover:bg-gray-light-shade color-gray-medium'
               }
@@ -438,32 +436,15 @@ export default connect(
           permissions.includes('DEV_TOOLS') ||
           permissions.includes('SERVICE_DEV_TOOLS')
         ),
-      fullscreen: state.getIn(['player', 'fullscreen']),
-      bottomBlock: state.getIn(['player', 'bottomBlock']),
-      showStorageRedux: !state.getIn([
-        'player',
-        'hiddenHints',
-        'storage',
-      ]),
-      showStackRedux: !state.getIn([
-        'player',
-        'hiddenHints',
-        'stack',
-      ]),
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      skipInterval: state.getIn(['player', 'skipInterval']),
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
       siteId: state.getIn(['site', 'siteId']),
     };
   },
   {
-    fullscreenOn,
-    fullscreenOff,
-    toggleBottomBlock,
     fetchSessions,
-    changeSkipInterval,
   }
 )(ControlPlayer);
 

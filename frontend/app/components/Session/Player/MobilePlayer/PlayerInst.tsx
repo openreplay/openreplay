@@ -11,8 +11,7 @@ import {
   PERFORMANCE,
   EXCEPTIONS,
   OVERVIEW,
-  fullscreenOff,
-} from 'Duck/components/player';
+} from 'App/mstore/uiPlayerStore';
 import { MobileNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import { MobilePerformance } from 'Components/Session_/Performance';
 import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
@@ -27,13 +26,12 @@ import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
 import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
 import PerfWarnings from "Components/Session/Player/MobilePlayer/PerfWarnings";
 import { debounceUpdate, getDefaultPanelHeight } from "Components/Session/Player/ReplayPlayer/PlayerInst";
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 interface IProps {
   fullView: boolean;
   isMultiview?: boolean;
-  bottomBlock: number;
-  fullscreen: boolean;
-  fullscreenOff: () => any;
   nextId: string;
   sessionId: string;
   activeTab: string;
@@ -50,10 +48,7 @@ function Player(props: IProps) {
   const defaultHeight = getDefaultPanelHeight()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const {
-    fullscreen,
-    fullscreenOff,
     nextId,
-    bottomBlock,
     activeTab,
     fullView,
     videoURL,
@@ -62,6 +57,10 @@ function Player(props: IProps) {
     screenHeight,
     platform,
   } = props;
+  const { uiPlayerStore } = useStore();
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const fullscreen = uiPlayerStore.fullscreen;
+  const bottomBlock = uiPlayerStore.bottomBlock;
   const playerContext = React.useContext(MobilePlayerContext);
   const isReady = playerContext.store.get().ready
   const screenWrapper = React.useRef<HTMLDivElement>(null);
@@ -169,18 +168,15 @@ function Player(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    fullscreen: state.getIn(['player', 'fullscreen']),
     nextId: state.getIn(['sessions', 'nextId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
     userDevice: state.getIn(['sessions', 'current']).userDevice,
     videoURL: state.getIn(['sessions', 'current']).videoURL,
-    bottomBlock: state.getIn(['player', 'bottomBlock']),
     platform: state.getIn(['sessions', 'current']).platform,
     screenWidth: state.getIn(['sessions', 'current']).screenWidth,
     screenHeight: state.getIn(['sessions', 'current']).screenHeight,
   }),
   {
-    fullscreenOff,
     updateLastPlayedSession,
   }
-)(Player);
+)(observer(Player));

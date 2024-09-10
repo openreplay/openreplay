@@ -1,6 +1,5 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { hideHint } from 'Duck/components/player';
+import { useStore } from 'App/mstore'
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { JSONTree, NoContent, Tooltip } from 'UI';
@@ -33,12 +32,11 @@ const storageDecodeKeys = {
   [STORAGE_TYPES.MOBX]: ['payload'],
   [STORAGE_TYPES.NONE]: ['state, action', 'payload', 'mutation'],
 }
-interface Props {
-  hideHint: (args: string) => void;
-  hintIsHidden: boolean;
-}
 
-function Storage(props: Props) {
+function Storage() {
+  const { uiPlayerStore } = useStore();
+  const hintIsHidden = uiPlayerStore.hiddenHints.storage;
+  const hideHint = uiPlayerStore.hideHint;
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
   const [stateObject, setState] = React.useState({});
@@ -223,8 +221,6 @@ function Storage(props: Props) {
     );
   };
 
-  const { hintIsHidden } = props;
-
   if (type === STORAGE_TYPES.REDUX) {
     return <ReduxViewer />
   }
@@ -311,7 +307,7 @@ function Storage(props: Props) {
                   .
                   <br />
                   <br />
-                  <button className="color-teal" onClick={() => props.hideHint('storage')}>
+                  <button className="color-teal" onClick={() => hideHint('storage')}>
                     Got It!
                   </button>
                 </>
@@ -344,14 +340,7 @@ function Storage(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    hintIsHidden: state.getIn(['player', 'hiddenHints', 'storage']),
-  }),
-  {
-    hideHint,
-  }
-)(observer(Storage));
+export default observer(Storage);
 
 
 /**
