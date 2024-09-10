@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
-function NotesList({ members }: { members: Array<Record<string, any>> }) {
+function NotesList() {
   const { notesStore } = useStore();
 
   React.useEffect(() => {

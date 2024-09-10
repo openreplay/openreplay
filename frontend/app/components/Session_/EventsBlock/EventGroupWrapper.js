@@ -9,7 +9,6 @@ import NoteEvent from './NoteEvent';
 
 @connect(
   (state) => ({
-    members: state.getIn(['members', 'list']),
     currentUserId: state.getIn(['user', 'account', 'id'])
   }),
 )

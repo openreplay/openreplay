@@ -8,7 +8,6 @@ import filters from './filters';
 import funnelFilters from './funnelFilters';
 import player from './components/player'
 import sources from './sources';
-import members from './member';
 import site from './site';
 import customFields from './customField';
 import integrations from './integrations';
@@ -25,7 +24,6 @@ const rootReducer = combineReducers({
   filters,
   funnelFilters,
   player,
-  members,  
   site,
   customFields,
   errors,
