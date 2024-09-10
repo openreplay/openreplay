@@ -15,6 +15,7 @@ import {
   UserIconProvider,
   FetchIconProvider,
 } from './IconProvider';
+import { FilterKey } from 'Types/filter/filterType';
 
 interface NameFormatter {
   format(name: string): string;
@@ -103,7 +104,7 @@ export class SessionsByRow {
           nameFormatter: new IssueFormatter(),
           iconProvider: new IssueIconProvider(),
         };
-      case 'location':
+      case FilterKey.LOCATION:
         return {
           nameFormatter: new BaseFormatter(),
           iconProvider: new UrlIconProvider(),
@@ -120,9 +121,9 @@ export class SessionsByRow {
         };
       case 'userId':
         return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
-      case 'referrer':
-        return { nameFormatter: new BaseFormatter(), iconProvider: new UrlIconProvider() };
-      case 'fetch':
+      case FilterKey.REFERRER:
+        return { nameFormatter: new BaseFormatter(), iconProvider: new ReferrerIconProvider() };
+      case FilterKey.FETCH:
         return {
           nameFormatter: new BaseFormatter(),
           iconProvider: new FetchIconProvider(),

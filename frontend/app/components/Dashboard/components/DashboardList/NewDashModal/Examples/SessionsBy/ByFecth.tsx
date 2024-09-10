@@ -10,28 +10,28 @@ function ByFetch(props: any) {
       ptitle: 'Dresses',
       value: '500',
       progress: 75,
-      icon: <Icon name='link-45deg' size={24} />
+      icon: <Icon name='icn_fetch-request' size={24} />
     },
     {
       label: 'https://www.reddit.com',
       ptitle: 'Search: summer dresses',
       value: '306',
       progress: 60,
-      icon: <Icon name='link-45deg' size={24} />
+      icon: <Icon name='icn_fetch-request' size={24} />
     },
     {
       label: 'https://www.company.com/account/orders',
       ptitle: 'Account: Orders',
       value: '198',
       progress: 30,
-      icon: <Icon name='link-45deg' size={24} />
+      icon: <Icon name='icn_fetch-request' size={24} />
     },
     {
       label: 'android-app://com.slack/',
       ptitle: 'Checkout: Confirmation',
       value: '47',
       progress: 15,
-      icon: <Icon name='link-45deg' size={24} />
+      icon: <Icon name='icn_fetch-request' size={24} />
     }
   ];
 

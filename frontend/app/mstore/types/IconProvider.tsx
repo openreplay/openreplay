@@ -69,7 +69,7 @@ class IssueIconProvider implements IconProvider {
 
 class UrlIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    return <Icon name="link-45deg" size={24} />;
+    return <Icon name="icn_url" size={24} />;
   }
 }
 
@@ -118,13 +118,13 @@ class UserIconProvider implements IconProvider {
 
 class ReferrerIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    return <Icon name="referrer" size={24} />;
+    return <Icon name="icn_referrer" size={24} />;
   }
 }
 
 class FetchIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    return <Icon name="fetch-request" size={24} />;
+    return <Icon name="icn_fetch-request" size={24} />;
   }
 }
 
