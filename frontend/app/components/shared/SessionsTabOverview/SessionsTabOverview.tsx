@@ -12,10 +12,8 @@ import SessionList from './components/SessionList';
 function SessionsTabOverview({
   activeTab,
   appliedFilter,
-  members,
 }: {
   activeTab: string;
-  members: object[];
   sites: object[];
   siteId: string;
   appliedFilter: any;
@@ -50,7 +48,7 @@ function SessionsTabOverview({
       {activeTab !== 'notes' ? (
         <SessionList />
       ) : (
-        <NotesList members={members} />
+        <NotesList />
       )}
     </div>
   );

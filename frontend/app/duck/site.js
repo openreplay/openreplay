@@ -2,7 +2,6 @@ import Site from "Types/site";
 import GDPR from 'Types/site/gdpr';
 import {
   mergeReducers,
-  createItemInListUpdater,
   success,
   array,
   createListUpdater
@@ -24,7 +23,6 @@ const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
 
 const name = 'project';
 const idKey = 'id';
-const itemInListUpdater = createItemInListUpdater(idKey);
 const updateItemInList = createListUpdater(idKey);
 
 const EDIT_GDPR = 'sites/EDIT_GDPR';

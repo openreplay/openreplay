@@ -12,7 +12,6 @@ import NoteEvent from './NoteEvent';
 @withToggle('showLoadInfo', 'toggleLoadInfo')
 @connect(
   (state) => ({
-    members: state.getIn(['members', 'list']),
     currentUserId: state.getIn(['user', 'account', 'id'])
   }),
 )

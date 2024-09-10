@@ -257,7 +257,6 @@ export default connect(
     jwt: state.getIn(['user', 'jwt']),
     fullscreen: state.getIn(['player', 'fullscreen']),
     showEvents: state.get('showEvents'),
-    members: state.getIn(['members', 'list']),
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
   }),
   {
