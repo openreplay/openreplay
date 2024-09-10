@@ -42,8 +42,8 @@ function WidgetOptions(props: Props) {
       {metric.metricType === TABLE && metric.metricOf != FilterKey.USERID && metric.metricOf != FilterKey.ERRORS &&  (
         <Select
           defaultValue={metric.metricFormat}
-          style={{ width: 120 }}
           onChange={handleChange}
+          variant="borderless"
           options={[
             { value: 'sessionCount', label: 'Sessions' },
             { value: 'userCount', label: 'Users' }
