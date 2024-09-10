@@ -28,15 +28,11 @@ const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }));
 type EventsList = Array<Timed & { name: string; source: string; key: string }>;
 
 const WebStackEventPanelComp = observer(
-  ({
-    zoomEnabled,
-    zoomStartTs,
-    zoomEndTs,
-  }: {
-    zoomEnabled: boolean;
-    zoomStartTs: number;
-    zoomEndTs: number;
-  }) => {
+  () => {
+    const { uiPlayerStore } = useStore();
+    const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+    const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+    const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
     const { player, store } = React.useContext(PlayerContext);
     const jump = (t: number) => player.jump(t);
     const { currentTab, tabStates } = store.get();
@@ -56,22 +52,14 @@ const WebStackEventPanelComp = observer(
   }
 );
 
-export const WebStackEventPanel = connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
-}))(WebStackEventPanelComp);
+export const WebStackEventPanel = WebStackEventPanelComp;
 
 const MobileStackEventPanelComp = observer(
-  ({
-    zoomEnabled,
-    zoomStartTs,
-    zoomEndTs,
-  }: {
-    zoomEnabled: boolean;
-    zoomStartTs: number;
-    zoomEndTs: number;
-  }) => {
+  () => {
+    const { uiPlayerStore } = useStore();
+    const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+    const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+    const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
     const { player, store } = React.useContext(MobilePlayerContext);
     const jump = (t: number) => player.jump(t);
     const { eventList: list = [], eventListNow: listNow = [] } = store.get();
@@ -89,11 +77,7 @@ const MobileStackEventPanelComp = observer(
   }
 );
 
-export const MobileStackEventPanel = connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
-}))(MobileStackEventPanelComp);
+export const MobileStackEventPanel = MobileStackEventPanelComp;
 
 function EventsPanel({
   list,

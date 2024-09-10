@@ -23,18 +23,16 @@ interface IProps {
   tooltipVisible: boolean;
   timezone?: string;
   isMobile?: boolean;
-  timelineZoomEnabled: boolean;
-  timelineZoomStartTs: number;
-  timelineZoomEndTs: number;
 }
 
 function Timeline(props: IProps) {
   const { player, store } = useContext(PlayerContext);
   const [wasPlaying, setWasPlaying] = useState(false);
   const [maxWidth, setMaxWidth] = useState(0);
-  const { settingsStore } = useStore();
+  const { settingsStore, uiPlayerStore } = useStore();
+  const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
-  const { issues, timezone, timelineZoomEnabled } = props;
+  const { issues, timezone } = props;
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -185,9 +183,6 @@ export default connect(
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
     timezone: state.getIn(['sessions', 'current']).timezone,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
-    timelineZoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-    timelineZoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-    timelineZoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
   { setTimelinePointer, setTimelineHoverTime }
 )(observer(Timeline));

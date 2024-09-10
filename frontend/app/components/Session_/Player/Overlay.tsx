@@ -14,8 +14,7 @@ import {
   PERFORMANCE,
   STACKEVENTS,
   STORAGE,
-  toggleBottomBlock,
-} from 'Duck/components/player';
+} from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 
 import { useModal } from '../../Modal';
@@ -24,12 +23,12 @@ import AutoplayTimer from './Overlay/AutoplayTimer';
 import ElementsMarker from './Overlay/ElementsMarker';
 import Loader from './Overlay/Loader';
 import PlayIconLayer from './Overlay/PlayIconLayer';
+import { useStore } from 'App/mstore'
 
 interface Props {
   nextId?: string;
   closedLive?: boolean;
   isClickmap?: boolean;
-  toggleBottomBlock: (block: number) => void;
 }
 
 enum ItemKey {
@@ -87,9 +86,10 @@ const menuItems: MenuProps['items'] = [
   },
 ];
 
-function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
+function Overlay({ nextId, isClickmap }: Props) {
   const { player, store } = React.useContext(PlayerContext);
-
+  const { uiPlayerStore } = useStore();
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
   const togglePlay = () => player.togglePlay();
   const {
     playing,
@@ -178,6 +178,4 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
   );
 }
 
-export default connect(null, {
-  toggleBottomBlock,
-})(observer(Overlay));
+export default observer(Overlay);

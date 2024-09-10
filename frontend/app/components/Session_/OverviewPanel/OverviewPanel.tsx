@@ -12,7 +12,6 @@ import { useStore } from 'App/mstore';
 import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
-import { setZoomTab, toggleBottomBlock } from 'Duck/components/player';
 import { Icon, NoContent } from 'UI';
 
 import BottomBlock from '../BottomBlock';
@@ -28,21 +27,16 @@ import VerticalPointerLine, { VerticalPointerLineComp } from './components/Verti
 function MobileOverviewPanelCont({
   issuesList,
   sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  setZoomTab,
-  zoomTab,
 }: {
   issuesList: Record<string, any>[];
   sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  setZoomTab: (tab: string) => void;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
 }) {
-  const { aiSummaryStore } = useStore();
+  const { aiSummaryStore, uiPlayerStore } = useStore();
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const setZoomTab = uiPlayerStore.setZoomTab;
+  const zoomTab = uiPlayerStore.zoomTab;
   const { store, player } = React.useContext(MobilePlayerContext);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
@@ -131,20 +125,15 @@ function MobileOverviewPanelCont({
 
 function WebOverviewPanelCont({
   sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  setZoomTab,
-  zoomTab,
 }: {
   sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  setZoomTab: (tab: string) => void;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
 }) {
-  const { aiSummaryStore } = useStore();
+  const { aiSummaryStore, uiPlayerStore } = useStore();
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const setZoomTab = uiPlayerStore.setZoomTab;
+  const zoomTab = uiPlayerStore.zoomTab;
   const { store } = React.useContext(PlayerContext);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -386,27 +375,12 @@ export const OverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
   }),
-  {
-    toggleBottomBlock,
-    setZoomTab,
-  }
 )(observer(WebOverviewPanelCont));
 
 export const MobileOverviewPanel = connect(
   (state: Record<string, any>) => ({
     issuesList: state.getIn(['sessions', 'current']).issues,
     sessionId: state.getIn(['sessions', 'current']).sessionId,
-    zoomEnabled: state.getIn(['player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['player']).timelineZoom.endTs,
-    zoomTab: state.getIn(['player']).zoomTab,
-  }),
-  {
-    toggleBottomBlock,
-    setZoomTab,
-  }
+  })
 )(observer(MobileOverviewPanelCont));

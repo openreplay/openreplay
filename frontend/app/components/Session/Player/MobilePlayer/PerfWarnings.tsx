@@ -1,12 +1,12 @@
-import {IosPerformanceEvent} from "Player/web/messages";
+import { MobilePerformanceEvent } from "Player/web/messages";
 import React from 'react';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { Icon } from 'UI';
 import { mapIphoneModel } from 'Player/mobile/utils';
 import cn from 'classnames';
-import { connect } from 'react-redux';
-import { NONE } from 'Duck/components/player';
+import { NONE } from 'App/mstore/uiPlayerStore';
+import { useStore } from "App/mstore";
 
 type warningsType =
   | 'thermalState'
@@ -38,13 +38,14 @@ const elements = {
   },
 } as const;
 
-function PerfWarnings({ userDevice, bottomBlock }: { userDevice: string; bottomBlock: number }) {
+function PerfWarnings({ userDevice }: { userDevice: string }) {
   const { store } = React.useContext(MobilePlayerContext);
+  const { uiPlayerStore } = useStore();
   const { scale, performanceListNow, performanceList } = store.get()
-
+  const bottomBlock = uiPlayerStore.bottomBlock;
   const allElements = Object.keys(elements) as warningsType[];
   const list = React.useMemo(() => allElements
-    .filter(el => performanceList.findIndex((pw: IosPerformanceEvent & { techName: warningsType }) => pw.techName === el) !== -1)
+    .filter(el => performanceList.findIndex((pw: MobilePerformanceEvent & { techName: warningsType }) => pw.techName === el) !== -1)
   , [performanceList.length])
 
   const contStyles = {
@@ -105,6 +106,4 @@ function PerfWarnings({ userDevice, bottomBlock }: { userDevice: string; bottomB
   );
 }
 
-export default connect((state: any) => ({
-  bottomBlock: state.getIn(['player', 'bottomBlock']),
-}))(observer(PerfWarnings));
+export default observer(PerfWarnings);
