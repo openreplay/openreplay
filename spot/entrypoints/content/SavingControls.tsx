@@ -152,7 +152,7 @@ function SavingControls({
     const trim =
       bounds[0] + bounds[1] === 0
         ? null
-        : (bounds.map((i: number) => Math.round(i * 1000)) as [number, number]);
+        : [Math.floor(bounds[0] * 1000), Math.ceil(bounds[1] * 1000)]
     const dataObj = {
       blob: videoBlob(),
       name: name(),
