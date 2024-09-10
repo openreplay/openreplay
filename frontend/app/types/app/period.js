@@ -1,4 +1,4 @@
-import { DateTime, Interval } from "luxon";
+import { DateTime, Interval, Settings } from "luxon";
 import Record from "Types/Record";
 
 export const LAST_30_MINUTES = "LAST_30_MINUTES";
@@ -61,11 +61,13 @@ export default Record(
   },
   {
       fromJS: (period) => {
-          const offset = period.timezoneOffset || 'local';
+          const offset = period.timezoneOffset || DateTime.now().offset;
           if (!period.rangeName || period.rangeName === CUSTOM_RANGE) {
               const isLuxon = DateTime.isDateTime(period.start);
-              const start = isLuxon ? period.start : DateTime.fromMillis(period.start || 0);
-              const end = isLuxon ? period.end : DateTime.fromMillis(period.end || 0);
+              const start = isLuxon
+                ? period.start : DateTime.fromMillis(period.start || 0, { zone: Settings.defaultZone });
+              const end = isLuxon
+                ? period.end : DateTime.fromMillis(period.end || 0, { zone: Settings.defaultZone });
               const range = Interval.fromDateTimes(start, end);
               return {
                   ...period,

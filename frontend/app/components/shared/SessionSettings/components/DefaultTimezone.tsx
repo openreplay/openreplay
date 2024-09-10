@@ -48,7 +48,7 @@ function DefaultTimezone() {
     const selectedTimezone = getCurrentTimezone();
     if (selectedTimezone) {
       setTimezone(selectedTimezone);
-      sessionSettings.updateKey('timezone', selectedTimezone);
+      sessionSettings.updateTimezone(selectedTimezone);
       toast.success('Default timezone saved successfully');
     }
   };
@@ -60,7 +60,7 @@ function DefaultTimezone() {
 
   const onTimezoneSave = () => {
     setChanged(false);
-    sessionSettings.updateKey('timezone', timezone);
+    sessionSettings.updateTimezone(timezone);
     toast.success('Default timezone saved successfully');
   };
 

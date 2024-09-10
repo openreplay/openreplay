@@ -5,7 +5,6 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { components } from 'react-select';
-
 import { CUSTOM_RANGE, DATE_RANGE_OPTIONS } from 'App/dateRange';
 
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
