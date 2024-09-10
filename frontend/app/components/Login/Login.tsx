@@ -147,8 +147,8 @@ const Login: React.FC<LoginProps> = ({
 
   const ssoLink =
     window !== window.top
-      ? `${window.location.origin}/api/sso/saml2?iFrame=true&spot=true`
-      : `${window.location.origin}/api/sso/saml2?spot=true`;
+      ? `${window.location.origin}/api/sso/saml2?iFrame=true`
+      : `${window.location.origin}/api/sso/saml2`;
 
   return (
     <div className="flex items-center justify-center h-screen">
