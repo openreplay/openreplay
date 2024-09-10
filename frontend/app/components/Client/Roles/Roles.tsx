@@ -4,12 +4,12 @@ import { Loader, NoContent, Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import stl from './roles.module.css';
 import RoleForm from './components/RoleForm';
-import { init, edit, fetchList, remove as deleteRole, resetErrors } from 'Duck/roles';
 import RoleItem from './components/RoleItem';
 import { confirm } from 'UI';
-import { toast } from 'react-toastify';
 import withPageTitle from 'HOCs/withPageTitle';
 import { useModal } from 'App/components/Modal';
+import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
 
 interface Props {
     loading: boolean;
@@ -27,24 +27,22 @@ interface Props {
 }
 
 function Roles(props: Props) {
-    const { loading, roles, init, edit, deleteRole, account, permissionsMap, projectsMap, removeErrors } = props;
+    const { roleStore } = useStore();
+    const roles = roleStore.list;
+    const loading = roleStore.loading;
+    const init = roleStore.init;
+    const deleteRole = roleStore.deleteRole;
+    const permissionsMap: any = {};
+    roleStore.permissions.forEach((p: any) => {
+        permissionsMap[p.value] = p.text;
+    });
+    const { account, projectsMap } = props;
     const { showModal, hideModal } = useModal();
     const isAdmin = account.admin || account.superAdmin;
 
     useEffect(() => {
-        props.fetchList();
+        void roleStore.fetchRoles();
     }, []);
-
-    useEffect(() => {
-        if (removeErrors && removeErrors.size > 0) {
-            removeErrors.forEach((e: any) => {
-                toast.error(e);
-            });
-        }
-        return () => {
-            props.resetErrors();
-        };
-    }, [removeErrors]);
 
     const editHandler = (role: any) => {
         init(role);
@@ -110,24 +108,13 @@ function Roles(props: Props) {
 
 export default connect(
     (state: any) => {
-        const permissions = state.getIn(['roles', 'permissions']);
-        const permissionsMap: any = {};
-        permissions.forEach((p: any) => {
-            permissionsMap[p.value] = p.text;
-        });
         const projects = state.getIn(['site', 'list']);
         return {
-            instance: state.getIn(['roles', 'instance']) || null,
-            permissionsMap: permissionsMap,
-            roles: state.getIn(['roles', 'list']),
-            removeErrors: state.getIn(['roles', 'removeRequest', 'errors']),
-            loading: state.getIn(['roles', 'fetchRequest', 'loading']),
             account: state.getIn(['user', 'account']),
             projectsMap: projects.reduce((acc: any, p: any) => {
-                acc[p.get('id')] = p.get('name');
+                acc[p.id] = p.name;
                 return acc;
             }, {}),
         };
-    },
-    { init, edit, fetchList, deleteRole, resetErrors }
-)(withPageTitle('Roles & Access - OpenReplay Preferences')(Roles));
+    }
+)(withPageTitle('Roles & Access - OpenReplay Preferences')(observer(Roles)));

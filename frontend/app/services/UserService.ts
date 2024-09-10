@@ -58,6 +58,21 @@ export default class UserService {
             .then((response: { data: any; }) => response.data || []);
     }
 
+    createRole(role: any) {
+        return this.client.post('/client/roles/', role)
+          .then(r => r.json())
+    }
+
+    modifyRole(role: any) {
+        return this.client.put(`/client/roles/${role.roleId}`, role)
+          .then(r => r.json())
+    }
+
+    deleteRole(roleId: string) {
+        return this.client.delete(`/client/roles/${roleId}`)
+          .then(r => r.json())
+    }
+
     getLimits() {
         return this.client.get('/limits')
             .then((response: { json: () => any; }) => response.json())

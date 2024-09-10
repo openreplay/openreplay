@@ -14,7 +14,6 @@ import customFields from './customField';
 import integrations from './integrations';
 import errors from './errors';
 import funnels from './funnels';
-import roles from './roles';
 import customMetrics from './customMetrics';
 import search from './search';
 import liveSearch from './liveSearch';
@@ -31,7 +30,6 @@ const rootReducer = combineReducers({
   customFields,
   errors,
   funnels,
-  roles,
   customMetrics,
   search,
   liveSearch,

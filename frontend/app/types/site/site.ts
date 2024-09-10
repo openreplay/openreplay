@@ -1,7 +1,7 @@
 import GDPR, { IGDPR } from './gdpr';
 
 export interface ISite {
-  id?: number;
+  id?: string;
   name: string;
   host: string;
   platform: string;
@@ -37,7 +37,8 @@ export default function Site(data: Partial<ISite>): ISite {
 
   return Object.assign({}, defaults, {
     ...data,
-    gdpr: GDPR(data.gdpr),
-    host: data.name,
+    id: data?.projectId?.toString(),
+    gdpr: GDPR(data ? data.gdpr : undefined),
+    host: data ? data.name : '',
   });
 }
