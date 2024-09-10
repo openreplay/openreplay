@@ -21,6 +21,12 @@ interface NameFormatter {
   format(name: string): string;
 }
 
+class DefaultFormatter implements NameFormatter {
+  format(name: string): string {
+    return name;
+  }
+}
+
 class BaseFormatter implements NameFormatter {
   format(name: string): string {
     return name
@@ -106,7 +112,7 @@ export class SessionsByRow {
         };
       case FilterKey.LOCATION:
         return {
-          nameFormatter: new BaseFormatter(),
+          nameFormatter: new DefaultFormatter(),
           iconProvider: new UrlIconProvider(),
         };
       case 'userDevice':
@@ -122,10 +128,10 @@ export class SessionsByRow {
       case 'userId':
         return { nameFormatter: new UserNameFormatter(), iconProvider: new UserIconProvider() };
       case FilterKey.REFERRER:
-        return { nameFormatter: new BaseFormatter(), iconProvider: new ReferrerIconProvider() };
+        return { nameFormatter: new DefaultFormatter(), iconProvider: new ReferrerIconProvider() };
       case FilterKey.FETCH:
         return {
-          nameFormatter: new BaseFormatter(),
+          nameFormatter: new DefaultFormatter(),
           iconProvider: new FetchIconProvider(),
         };
       default:
