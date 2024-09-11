@@ -457,25 +457,26 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
-                                     count(DISTINCT session_id) AS session_count,
-                                     COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_sessions
+                                     count(DISTINCT session_id) AS total,
+                                     COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_count
                                 FROM (SELECT s.session_id AS session_id {extra_col}
                                 {query_part}) AS filtred_sessions
                                 {extra_where}
                                 GROUP BY {main_col}
-                                ORDER BY session_count DESC
+                                ORDER BY total_count DESC
                                 LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
             else:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
-                                     count(DISTINCT user_id) AS user_count
+                                     count(DISTINCT user_id) AS total,
+                                     COALESCE(SUM(count(DISTINCT user_id)) OVER (), 0) AS total_count
                                 FROM (SELECT s.user_id AS user_id {extra_col}
                                 {query_part}
                                 WHERE isNotNull(user_id)
                                     AND user_id != '') AS filtred_sessions
                                 {extra_where}
                                 GROUP BY {main_col}
-                                ORDER BY user_count DESC
+                                ORDER BY total_count DESC
                                 LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
 
             main_query = cur.format(main_query, full_args)
@@ -484,14 +485,14 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             logging.debug("--------------------")
             sessions = cur.execute(main_query)
             count = 0
-            total_sessions = 0
+            total = 0
             if len(sessions) > 0:
                 count = sessions[0]["main_count"]
-                total_sessions = sessions[0]["total_sessions"]
+                total = sessions[0]["total_count"]
                 for s in sessions:
                     s.pop("main_count")
-                    s.pop("total_sessions")
-            sessions = {"total": count, "count": total_sessions, "values": helper.list_to_camel_case(sessions)}
+                    s.pop("total_count")
+            sessions = {"total": count, "count": total, "values": helper.list_to_camel_case(sessions)}
 
         return sessions
 
