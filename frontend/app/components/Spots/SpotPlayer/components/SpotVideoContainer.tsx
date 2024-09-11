@@ -105,6 +105,7 @@ function SpotVideoContainer({
                     videoRef.current.src = '';
                     setTimeout(() => {
                       videoRef.current!.src = videoURL;
+                      startPlaying();
                     }, 0);
                   }
 
@@ -117,8 +118,6 @@ function SpotVideoContainer({
               });
             };
             check();
-            videoRef.current.src = videoURL;
-            startPlaying();
           }
         } else if (streamFile && videoRef.current && videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
           setLoaded(true);
@@ -224,7 +223,7 @@ function SpotVideoContainer({
             width={75}
             className="mb-5"
           />
-          <div className={'text-2xl font-bold'}>Loading Spot Recording</div>
+          <div className={'text-2xl font-bold'}>Loading Spot Recording...</div>
         </div>
       )}
       <video
