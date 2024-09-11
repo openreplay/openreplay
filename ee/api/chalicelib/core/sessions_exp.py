@@ -457,7 +457,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
-                                     count(DISTINCT session_id) AS session_count,
+                                     count(DISTINCT session_id) AS total,
                                      COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_count
                                 FROM (SELECT s.session_id AS session_id {extra_col}
                                 {query_part}) AS filtred_sessions
@@ -468,7 +468,8 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             else:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
-                                     count(DISTINCT user_id) AS total_count
+                                     count(DISTINCT user_id) AS total,
+                                     COALESCE(SUM(count(DISTINCT user_id)) OVER (), 0) AS total_count
                                 FROM (SELECT s.user_id AS user_id {extra_col}
                                 {query_part}
                                 WHERE isNotNull(user_id)
