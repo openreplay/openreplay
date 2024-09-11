@@ -135,8 +135,7 @@ func (k *keysImpl) IsValid(key string) (*auth.User, error) {
 	// Get user info by userID
 	user := &auth.User{ID: userID, AuthMethod: "public-key"}
 	// We don't need tenantID here
-	sql = `SELECT 1, name, email FROM public.users WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1`
-	if err := k.conn.QueryRow(sql, userID).Scan(&user.TenantID, &user.Name, &user.Email); err != nil {
+	if err := k.conn.QueryRow(getUserSQL, userID).Scan(&user.TenantID, &user.Name, &user.Email); err != nil {
 		k.log.Error(context.Background(), "failed to get user: %v", err)
 		return nil, fmt.Errorf("user not found")
 	}
