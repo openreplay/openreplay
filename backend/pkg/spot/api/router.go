@@ -51,7 +51,7 @@ func (e *Router) init() {
 	e.router = mux.NewRouter()
 
 	// Root route
-	e.router.HandleFunc("/", e.root)
+	e.router.HandleFunc("/", e.ping)
 
 	// Spot routes
 	e.router.HandleFunc("/v1/spots", e.createSpot).Methods("POST", "OPTIONS")
@@ -74,16 +74,15 @@ func (e *Router) init() {
 	e.router.Use(e.actionMiddleware)
 }
 
-func (e *Router) root(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
 func (e *Router) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+		}
 		if e.cfg.UseAccessControlHeaders {
 			// Prepare headers for preflight requests
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -158,6 +157,9 @@ func isSpotWithKeyRequest(r *http.Request) bool {
 
 func (e *Router) rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+		}
 		user := r.Context().Value("userData").(*auth.User)
 		rl := e.limiter.GetRateLimiter(user.ID)
 
@@ -188,6 +190,9 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 func (e *Router) actionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+		}
 		// Read body and restore the io.ReadCloser to its original state
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
