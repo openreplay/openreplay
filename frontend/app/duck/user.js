@@ -91,6 +91,7 @@ const reducer = (state = initialState, action = {}) => {
       return state
         .set('account', Account(action.data.user))
         .set('scope', action.data.scopeState)
+        .set('spotJwt', action.data.spotJwt)
     case UPGRADE_ACCOUNT_SCOPE.SUCCESS:
         return state
           .set('scopeState', 2)
