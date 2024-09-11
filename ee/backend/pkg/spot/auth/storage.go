@@ -3,15 +3,18 @@ package auth
 import (
 	"fmt"
 	"openreplay/backend/pkg/db/postgres/pool"
+	"strings"
 )
 
-func authUser(conn pool.Pool, userID, tenantID, jwtIAT int) (*User, error) {
+func authUser(conn pool.Pool, userID, tenantID, jwtIAT int, isExtension bool) (*User, error) {
 	sql := `SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, roles.permissions
 		FROM users
 		JOIN tenants on users.tenant_id = tenants.tenant_id
 		JOIN roles on users.role_id = roles.role_id
 		WHERE users.user_id = $1 AND users.tenant_id = $2 AND users.deleted_at IS NULL ;`
-
+	if !isExtension {
+		sql = strings.ReplaceAll(sql, "spot_jwt_iat", "jwt_iat")
+	}
 	user := &User{}
 	var permissions []string
 	if err := conn.QueryRow(sql, userID, tenantID).

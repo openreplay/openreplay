@@ -12,7 +12,7 @@ func (a *authImpl) IsAuthorized(authHeader string, permissions []string, isExten
 		return nil, err
 	}
 
-	user, err := authUser(a.pgconn, jwtInfo.UserId, jwtInfo.TenantID, int(jwtInfo.IssuedAt.Unix()))
+	user, err := authUser(a.pgconn, jwtInfo.UserId, jwtInfo.TenantID, int(jwtInfo.IssuedAt.Unix()), isExtension)
 	if err != nil {
 		return nil, err
 	}
