@@ -490,7 +490,7 @@ function SavingControls({
                         : "btn-disabled btn btn-sm text-white text-base"
                     }
                   >
-                    Create
+                    Save Spot
                   </div>
 
                   <div
