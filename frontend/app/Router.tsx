@@ -167,10 +167,12 @@ const Router: React.FC<RouterProps> = (props) => {
 
   useEffect(() => {
     if (isLoggedIn && (location.pathname.includes('login') || isSpotCb)) {
-      if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
-        handleSpotLogin(localSpotJwt);
-      } else {
-        logout();
+      if (localSpotJwt) {
+        if (!isTokenExpired(localSpotJwt)) {
+          handleSpotLogin(localSpotJwt);
+        } else {
+          logout();
+        }
       }
     }
   }, [isSpotCb, location, isLoggedIn, localSpotJwt])
