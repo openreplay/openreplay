@@ -70,9 +70,14 @@ function SpotVideoContainer({
       }
       import('hls.js').then(({ default: Hls }) => {
         if (Hls.isSupported() && videoRef.current) {
-          videoRef.current.addEventListener('loadeddata', () => {
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (isSafari) {
             setLoaded(true);
-          });
+          } else {
+            videoRef.current.addEventListener('loadeddata', () => {
+              setLoaded(true);
+            });
+          }
           if (streamFile) {
             const hls = new Hls({
               // not needed for small videos (we have 3 min limit and 720 quality with half kbps)
@@ -115,6 +120,10 @@ function SpotVideoContainer({
             videoRef.current.src = videoURL;
             startPlaying();
           }
+        } else if (streamFile && videoRef.current && videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+          setLoaded(true);
+          videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
+          startPlaying();
         } else {
           if (videoRef.current) {
             videoRef.current.addEventListener('loadeddata', () => {
@@ -222,6 +231,7 @@ function SpotVideoContainer({
         ref={videoRef}
         poster={thumbnail}
         autoPlay
+        playsInline
         className={
           'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
         }
