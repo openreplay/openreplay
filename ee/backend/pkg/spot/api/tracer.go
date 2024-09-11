@@ -27,6 +27,10 @@ func (e *Router) logRequest(r *http.Request, bodyBytes []byte, statusCode int) {
 		e.log.Error(r.Context(), "failed to get path template: %s", err)
 	}
 	e.log.Info(r.Context(), "path template: %s", pathTemplate)
+	if _, ok := routeMatch[r.Method+pathTemplate]; !ok {
+		e.log.Debug(r.Context(), "no match for route: %s %s", r.Method, pathTemplate)
+		return
+	}
 	// Convert the parameters to json
 	query := r.URL.Query()
 	params := make(map[string]interface{})
