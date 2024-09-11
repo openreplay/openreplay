@@ -102,6 +102,9 @@ func (t *transcoderImpl) failedTask(task *Task, err error) {
 }
 
 func (t *transcoderImpl) doneTask(task *Task) {
+	if err := t.spots.SetStatus(task.SpotID, "processed"); err != nil {
+		t.log.Error(context.Background(), "Error updating spot status: %v", err)
+	}
 	if err := t.tasks.Done(task); err != nil {
 		t.log.Error(context.Background(), "Error marking task as done: %v", err)
 	}
@@ -167,9 +170,6 @@ func (t *transcoderImpl) transcode(payload interface{}) {
 		return
 	}
 
-	if err := t.spots.SetStatus(task.SpotID, "processed"); err != nil {
-		t.log.Error(context.Background(), "Error updating spot status: %v", err)
-	}
 	t.doneTask(task)
 
 	t.log.Info(context.Background(), "Transcoded spot %d, have to upload chunks to S3", task.SpotID)
