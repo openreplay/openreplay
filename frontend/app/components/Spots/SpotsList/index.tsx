@@ -11,6 +11,7 @@ import { Loader, NoContent, Pagination } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import EmptyPage from './EmptyPage';
+import InstallCTA from "./InstallCTA";
 import SpotListItem from './SpotListItem';
 import SpotsListHeader from './SpotsListHeader';
 
@@ -76,6 +77,7 @@ function SpotsList() {
   const isEmpty = spotStore.total === 0 && spotStore.query === '';
   return (
     <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
+      <InstallCTA />
       <div
         className={
           'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b'
