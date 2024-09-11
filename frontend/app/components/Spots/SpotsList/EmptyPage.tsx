@@ -1,11 +1,13 @@
 import { ChromeOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Alert, Badge, Button } from 'antd';
+import { Alert, Badge, Button, Modal } from 'antd';
 import { ArrowUpRight, CirclePlay } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 function EmptyPage() {
   const extKey = '__$spot_ext_exist$__';
   const [extExist, setExtExist] = React.useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false); 
+
   React.useEffect(() => {
     let int: any;
     const v = localStorage.getItem(extKey);
@@ -32,59 +34,75 @@ function EmptyPage() {
       }
     };
   }, []);
+
+  const handleWatchClick = () => {
+    setIsModalVisible(true); 
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false); 
+  };
+
   return (
     <div>
       <div
         className={
-          'flex flex-col gap-4 items-center w-full p-8 bg-white rounded-b-lg shadow-sm'
+          'flex flex-col gap-4 items-center w-full p-8 bg-white rounded-lg shadow-sm mt-2'
         }
       >
-        <div className={'font-semibold text-2xl'}>Spot your first bug.</div>
-        <Button type="link">
-          <CirclePlay /> Watch How
-        </Button>
-        <div>Your recordings will appear here.</div>
-      </div>
-      <div
-        className={
-          'bg-white shadow-sm rounded-lg p-8 mt-4 w-full flex flex-col gap-4 items-center'
-        }
-      >
-        {extExist ? null : (
-          <Alert
-            message="It looks like you haven’t installed the Spot extension yet."
-            type="warning"
-            action={
-              <Button
-                type="primary"
-                icon={<ChromeOutlined />}
-                className="text-lg"
-              >
-                Get Chrome Extension <ArrowUpRight />
-              </Button>
-            }
-            className="w-3/4 justify-between font-medium text-lg rounded-lg"
-          />
-        )}
-        <div className={'flex gap-4 w-full justify-center'}>
-          <div className={'border rounded bg-cyan-50'}>
-            <img src={'assets/img/spot1.svg'} alt={'pin spot'} width={400} />
-            <div className={'flex items-center gap-2 text-lg p-4 justify-center'}>
-              <Badge count={1} color="cyan" /> Pin Spot extension
-            </div>
-          </div>
-          <div className={'border rounded bg-indigo-50'}>
-            <img
-              src={'assets/img/spot2.svg'}
-              alt={'start recording'}
-              width={400}
-            />
-            <div className={'flex items-center gap-2 text-lg p-4  justify-center'}>
-              <Badge count={2} color="cyan" /> Capture and share a bug
-            </div>
-          </div>
+
+<div className='w-3/4 flex flex-col gap-3 justify-center items-center '>
+            {extExist ? null : (
+                      <Alert
+                        message="It looks like you haven’t installed the Spot extension yet."
+                        type="warning"
+                        action={
+                          <Button
+                            type="primary"
+                            icon={<ChromeOutlined />}
+                            className="text-lg"
+                            onClick={() => window.open('https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1', '_blank')}
+                          >
+                            Get Chrome Extension <ArrowUpRight />
+                          </Button>
+                        }
+                        className="w-full justify-between font-medium text-lg rounded-lg border-0"
+                      />
+          )}
+        
+        <a href="#" onClick={handleWatchClick} className='rounded-xl overflow-hidden block hover:opacity-75'>
+          <img src='/assets/img/spot-demo-cta.jpg' alt='Learn how to use OpenReplay Spot' />
+        </a>
+
+        <p>Your recordings will appear here.</p>
         </div>
       </div>
+
+      <Modal
+        title="Learn How to Spot Your First Bug"
+        visible={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        centered
+        className='aspect-video px-0 m-auto'
+        destroyOnClose={true} 
+        width={'820'}
+      >
+        {isModalVisible && (
+          <iframe
+            width='800'
+            height='450'
+            src="https://www.youtube.com/embed/A8IzN9MuIYY?autoplay=1"
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className='aspect-video m-auto'
+            style={{margin:'auto'}}
+          />
+        )}
+      </Modal>
+
     </div>
   );
 }

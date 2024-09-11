@@ -180,10 +180,9 @@ function SpotVideoContainer({
           {isProcessing ? (
             <Alert
               className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
-              message="You’re viewing the entire recording. The trimmed Spot is on its way."
+              message="You’re viewing the entire recording. Trimmed Spot will be available here shortly."
               showIcon
               type="info"
-              closable
               icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
             />
           ) : prevIsProcessing ? (
@@ -195,9 +194,10 @@ function SpotVideoContainer({
               action={
                 <Button
                   size="small"
-                  type="text"
+                  type="default"
                   icon={<PlayCircleOutlined />}
                   onClick={reloadPage}
+                  className='ml-2'
                 >
                   Play Now
                 </Button>
