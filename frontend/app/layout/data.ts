@@ -72,7 +72,7 @@ export const categories: Category[] = [
     title: '',
     key: 'spot',
     items: [
-      { label: 'Spot', key: MENU.SPOTS, icon: 'orspotOutline' },
+      { label: 'Spots', key: MENU.SPOTS, icon: 'orspotOutline' },
     ]
   },
   {

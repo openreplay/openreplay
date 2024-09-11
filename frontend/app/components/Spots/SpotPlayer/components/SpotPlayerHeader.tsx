@@ -92,7 +92,7 @@ function SpotPlayerHeader({
     } else if (key === '2') {
       spotStore.deleteSpot([spotStore.currentSpot!.spotId]).then(() => {
         history.push(spotsList());
-        message.success('Spot deleted successfully');
+        message.success('Spot successfully deleted');
       });
     }
   };

@@ -445,7 +445,7 @@ function SavingControls({
             <div class="flex flex-col ">
               <div>
                 <div class="flex justify-between items-center">
-                  <h4 class="text-lg font-medium mb-4">Save Spot</h4>
+                  <h4 class="text-lg font-medium mb-4">New Spot</h4>
                   <form method="dialog">
                     <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3.5">
                       ✕
@@ -490,7 +490,7 @@ function SavingControls({
                         : "btn-disabled btn btn-sm text-white text-base"
                     }
                   >
-                    Save Spot
+                    Create
                   </div>
 
                   <div

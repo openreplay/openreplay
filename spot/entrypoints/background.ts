@@ -844,7 +844,7 @@ export default defineBackground(() => {
                   if (!resp || !resp.id) {
                     return sendToActiveTab({
                       type: messages.content.to.notification,
-                      message: "Couldn't save Spot",
+                      message: "Couldn't create Spot",
                     });
                   }
                   const { id, mobURL, videoURL } = resp;
