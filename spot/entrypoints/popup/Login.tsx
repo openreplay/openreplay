@@ -29,7 +29,7 @@ function getLink(url: string) {
 }
 
 function openSignupPage(instanceUrl: string) {
-  const signupUrl = `${getLink(instanceUrl)}/singup?spotCallback=true`;
+  const signupUrl = `${getLink(instanceUrl)}/signup?spotCallback=true`;
 
   chrome.tabs.create({
     url: signupUrl,
