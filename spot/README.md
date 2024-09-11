@@ -7,3 +7,11 @@ Be sure to install [nvm](https://github.com/nvm-sh/nvm) or [n](https://www.npmjs
 
 Running `yarn dev` will start new chrome instance with spot extension installed already, but you need to change ingest point to your local dev env if you don't have account on app.openreplay.com.
 
+## Building
+
+If you wish to compile your own version of the extension:
+
+- run `yarn build` 
+- open chrome://extensions/ in your browser
+- enable developer mode
+- click on "Load unpacked" and select the `chrome-mv3` folder inside `spot/.output`
