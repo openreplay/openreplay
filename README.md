@@ -55,6 +55,7 @@ OpenReplay is an open-source session replay suite you can host yourself, that le
 ## Features
 
 - **Session replay:** Lets you relive your users' experience, see where they struggle and how it affects their behavior. Each session replay is automatically analyzed based on heuristics, for easy triage.
+- **Spot:** A Chrome extension that lets record bugs directly from your browser — each recording includes all the technical details developers need to fix them.
 - **DevTools:** It's like debugging in your own browser. OpenReplay provides you with the full context (network activity, JS errors, store actions/state and 40+ metrics) so you can instantly reproduce bugs and understand performance issues.
 - **Assist:** Helps you support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.
 - **Omni-search:** Search and filter by almost any user action/criteria, session attribute or technical event, so you can answer any question. No instrumentation required.
