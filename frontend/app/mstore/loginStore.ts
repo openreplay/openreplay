@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { loginService } from "../services";
+import { isTokenExpired } from "../utils";
 
 const spotTokenKey = "___$or_spotToken$___"
 
@@ -12,7 +13,7 @@ class LoginStore {
   constructor() {
     makeAutoObservable(this);
     const token = localStorage.getItem(spotTokenKey);
-    if (token) {
+    if (token && !isTokenExpired(token)) {
       this.spotJWT = token;
     }
   }

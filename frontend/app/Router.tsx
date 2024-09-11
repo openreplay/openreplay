@@ -14,14 +14,14 @@ import {
 } from "App/constants/storageKeys";
 import Layout from 'App/layout/Layout';
 import { withStore } from "App/mstore";
-import { checkParam, handleSpotJWT } from "App/utils";
+import { checkParam, handleSpotJWT, isTokenExpired } from "App/utils";
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { setSessionPath } from 'Duck/sessions';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { init as initSite } from 'Duck/site';
-import { fetchUserInfo, getScope, setJwt } from "Duck/user";
+import { fetchUserInfo, getScope, setJwt, logout } from "Duck/user";
 import { fetchTenants } from 'Duck/user';
 import { Loader } from 'UI';
 import { spotsList } from "./routes";
@@ -65,11 +65,13 @@ const Router: React.FC<RouterProps> = (props) => {
     setSessionPath,
     scopeSetup,
     localSpotJwt,
+    logout,
   } = props;
 
   const params = new URLSearchParams(location.search)
   const spotCb = params.get('spotCallback');
   const spotReqSent = React.useRef(false)
+  const [isSpotCb, setIsSpotCb] = React.useState(false);
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
 
@@ -136,6 +138,12 @@ const Router: React.FC<RouterProps> = (props) => {
   }, []);
 
   useEffect(() => {
+    if (spotCb) {
+      setIsSpotCb(true);
+    }
+  }, [spotCb])
+
+  useEffect(() => {
     handleDestinationPath();
 
     setSessionPath(previousLocation ? previousLocation : location);
@@ -159,9 +167,13 @@ const Router: React.FC<RouterProps> = (props) => {
 
   useEffect(() => {
     if (isLoggedIn && location.pathname.includes('login') && localSpotJwt) {
-      handleSpotLogin(localSpotJwt);
+      if (!isTokenExpired(localSpotJwt)) {
+        handleSpotLogin(localSpotJwt);
+      } else if (isSpotCb) {
+        logout();
+      }
     }
-  }, [location, isLoggedIn, localSpotJwt])
+  }, [isSpotCb, location, isLoggedIn, localSpotJwt])
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {
@@ -255,6 +267,7 @@ const mapDispatchToProps = {
   setJwt,
   fetchMetadata,
   initSite,
+  logout,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
