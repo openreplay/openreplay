@@ -12,7 +12,7 @@ function EmptyPage() {
     let int: any;
     const v = localStorage.getItem(extKey);
     if (v) {
-      setExtExist(false);
+      setExtExist(true);
     } else {
       int = setInterval(() => {
         window.postMessage({ type: 'orspot:ping' }, '*');
