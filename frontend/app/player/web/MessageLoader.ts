@@ -38,7 +38,6 @@ export default class MessageLoader {
     private isClickmap: boolean,
     private uiErrorHandler?: { error: (msg: string) => void }
   ) {}
-
   setSession(session: SessionFilesInfo) {
     this.session = session
   }
