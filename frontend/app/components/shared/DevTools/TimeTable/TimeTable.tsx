@@ -71,7 +71,7 @@ type Props = {
   additionalHeight?: number;
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
-  onJump?: (time: any) => void;
+  onJump?: (time: number) => void;
 };
 
 type TimeLineInfo = {
@@ -221,7 +221,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
             </div>
           ))}
-        <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
+        <div className={cn('relative flex-1 flex', stl.timeBarWrapper)} style={{ height: 15 }}>
           <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
         </div>
         <JumpButton onClick={() => this.onJump(index)} />

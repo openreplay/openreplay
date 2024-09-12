@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { NoContent, Input, SlideModal, CloseButton, Button } from 'UI';
 import { getRE } from 'App/utils';
 import BottomBlock from '../BottomBlock';
-import TimeTable from '../TimeTable';
+import TimeTable from 'Components/shared/DevTools/TimeTable'
 import GQLDetails from './GQLDetails';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -31,7 +31,9 @@ function renderDefaultStatus() {
   return '2xx-3xx';
 }
 
-function GraphQL() {
+function GraphQL({
+  panelHeight
+}: { panelHeight: number }) {
   const { player, store } = React.useContext(PlayerContext);
   const { time, livePlay, tabStates, currentTab } = store.get();
   const { graphqlList: list = [], graphqlListNow: listNow = [] } = tabStates[currentTab]
@@ -55,16 +57,6 @@ function GraphQL() {
     return (
       <div className="flex justify-between items-center grow-0 w-full">
         <div>{r.operationName}</div>
-        <Button
-          variant="text"
-          className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            player.jump(r.time);
-          }}
-        >
-          Jump
-        </Button>
       </div>
     );
   }
@@ -93,12 +85,15 @@ function GraphQL() {
   };
 
   const setCurrent = (item: any, index: number) => {
-    if (!livePlay) {
-      player.pause();
-      player.jump(item.time);
-    }
     setState((prevState) => ({ ...prevState, current: item, currentIndex: index }));
   };
+
+  const onJump = (time: number) => {
+    if (!livePlay) {
+      player.pause();
+      player.jump(time);
+    }
+  }
 
   const closeModal = () =>
     setState((prevState) => ({ ...prevState, current: null, showFetchDetails: false }));
@@ -155,8 +150,10 @@ function GraphQL() {
             <TimeTable
               rows={filteredList}
               onRowClick={setCurrent}
+              tableHeight={panelHeight - 102}
               hoverable
               activeIndex={lastActiveItem}
+              onJump={onJump}
             >
               {[
                 {
@@ -165,18 +162,13 @@ function GraphQL() {
                   render: renderStart,
                 },
                 {
-                  label: 'Status',
-                  width: 70,
-                  render: renderDefaultStatus,
-                },
-                {
                   label: 'Type',
                   dataKey: 'operationKind',
-                  width: 60,
+                  width: 80,
                 },
                 {
                   label: 'Name',
-                  width: 240,
+                  width: 300,
                   render: renderName,
                 },
               ]}
