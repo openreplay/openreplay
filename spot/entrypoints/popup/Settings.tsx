@@ -3,15 +3,13 @@ import orLogo from "@/assets/orSpot.svg";
 import arrowLeft from "@/assets/arrow-left.svg";
 
 function Settings({ goBack }: { goBack: () => void }) {
-  // State signals for various settings
   const [includeDevTools, setIncludeDevTools] = createSignal(true);
   const [openInNewTab, setOpenInNewTab] = createSignal(true);
-  const [showIngest, setShowIngest] = createSignal(true);
+  const [showIngest, setShowIngest] = createSignal(false);
   const [ingest, setIngest] = createSignal("https://app.openreplay.com");
   const [editIngest, setEditIngest] = createSignal(false);
   const [tempIngest, setTempIngest] = createSignal("");
 
-  // Fetch settings from Chrome local storage when the component mounts
   onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
@@ -24,12 +22,11 @@ function Settings({ goBack }: { goBack: () => void }) {
         setTempIngest(
           data.settings.ingestPoint || "https://app.openreplay.com",
         );
-        setEditIngest(!data.settings.ingestPoint); // Enter edit mode if no ingest point is configured
+        setEditIngest(!data.settings.ingestPoint);
       }
     });
   });
 
-  // Toggle for including DevTools (both Console Logs and Network Calls)
   const toggleIncludeDevTools = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
@@ -41,7 +38,6 @@ function Settings({ goBack }: { goBack: () => void }) {
     });
   };
 
-  // Toggle for showing/hiding Ingest Point
   const toggleShowIngest = (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
@@ -53,7 +49,6 @@ function Settings({ goBack }: { goBack: () => void }) {
     });
   };
 
-  // Apply changes to the ingest point
   const applyIngest = () => {
     const val = tempIngest();
     if (isValidUrl(val)) {
@@ -111,7 +106,7 @@ function Settings({ goBack }: { goBack: () => void }) {
 
       <div class="flex flex-col">
         <div class="p-4 border-b border-slate-300 hover:bg-indigo-50">
-        <div class="flex flex-row justify-between items-center">
+          <div class="flex flex-row justify-between items-center">
             <p class="font-semibold mb-1 flex items-center">
              View Recording
             </p>
@@ -165,8 +160,7 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            The URL for sending website activity data, saving videos, sending
-            events, and opening the login screen.
+            Change this URL if you are using a self-hosted OpenReplay instance.
           </p>
 
           {showIngest() && (
