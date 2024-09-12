@@ -1,6 +1,6 @@
 module openreplay/backend
 
-go 1.21
+go 1.23
 
 require (
 	cloud.google.com/go/logging v1.9.0
