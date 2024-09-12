@@ -1,8 +1,8 @@
 # General utils
-pydantic==2.3.0
-requests==2.31.0
+pydantic==2.4.0
+requests==2.32.2
 python-decouple==3.8
-certifi==2023.7.22
+certifi==2024.7.4
 
 # AWS utils
 awscli==1.29.53
@@ -13,7 +13,7 @@ fairscale==0.4.13
 sentencepiece==0.1.99
 
 # Serving modules
-fastapi==0.103.1
+fastapi==0.109.1
 httpx==0.25.0
 apscheduler==3.10.4
 uvicorn==0.23.2
