@@ -145,7 +145,7 @@ function Player(props: IProps) {
           {bottomBlock === STORAGE && <Storage />}
           {bottomBlock === PROFILER && <ProfilerPanel panelHeight={panelHeight} />}
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
-          {bottomBlock === GRAPHQL && <GraphQL />}
+          {bottomBlock === GRAPHQL && <GraphQL panelHeight={panelHeight} />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}
         </div>
       )}
