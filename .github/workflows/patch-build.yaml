@@ -111,7 +111,7 @@ jobs:
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
           else 
-            [[ $SERVICE == 'chalice' ]] && cd $working_dir/api || cd $SERVICE
+            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
             ee_build_args="ee"
           fi  
           version=$(image_version $SERVICE)
