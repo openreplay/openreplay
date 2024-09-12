@@ -71,7 +71,7 @@ type Props = {
   additionalHeight?: number;
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
-  onJump?: (time: number) => void;
+  onJump?: (obj: { time: number }) => void;
 };
 
 type TimeLineInfo = {
