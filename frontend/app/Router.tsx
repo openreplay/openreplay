@@ -106,6 +106,9 @@ const Router: React.FC<RouterProps> = (props) => {
   };
 
   const handleUserLogin = async () => {
+    if (isSpotCb) {
+      localStorage.setItem(SPOT_ONBOARDING, 'true')
+    }
     await fetchUserInfo();
     const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
     await fetchSiteList(siteIdFromPath);
@@ -114,8 +117,8 @@ const Router: React.FC<RouterProps> = (props) => {
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
       destinationPath &&
-      destinationPath !== routes.login() &&
-      destinationPath !== routes.signup() &&
+      !destinationPath.includes(routes.login()) &&
+      !destinationPath.includes(routes.signup()) &&
       destinationPath !== '/'
     ) {
       const url = new URL(destinationPath, window.location.origin);
@@ -152,10 +155,6 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     if (prevIsLoggedIn !== isLoggedIn && isLoggedIn) {
       void handleUserLogin();
-      if (spotCb) {
-        history.push(spotsList())
-        localStorage.setItem(SPOT_ONBOARDING, 'true')
-      }
     }
   }, [isLoggedIn]);
 
