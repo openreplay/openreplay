@@ -85,6 +85,7 @@ function SpotsList() {
       >
         <SpotsListHeader
           onDelete={batchDelete}
+          onRefresh={spotStore.fetchSpots}
           selectedCount={selectedSpots.length}
           onClearSelection={clearSelection}
           isEmpty={isEmpty}
