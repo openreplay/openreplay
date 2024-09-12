@@ -3,9 +3,6 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import {Alert, Button} from 'antd';
 import {PlayCircleOutlined, InfoCircleOutlined} from '@ant-design/icons';
-
-import { useStore } from 'App/mstore';
-
 import spotPlayerStore from '../spotPlayerStore';
 
 const base64toblob = (str: string) => {
@@ -17,6 +14,12 @@ const base64toblob = (str: string) => {
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray]);
 };
+
+enum ProcessingState {
+  Unchecked,
+  Processing,
+  Ready,
+}
 
 function SpotVideoContainer({
   videoURL,
@@ -30,7 +33,7 @@ function SpotVideoContainer({
   checkReady: () => Promise<boolean>;
 }) {
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [processingState, setProcessingState] = React.useState<ProcessingState>(ProcessingState.Unchecked);
   const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
@@ -57,16 +60,18 @@ function SpotVideoContainer({
     };
     checkReady().then((isReady) => {
       if (!isReady) {
-        setIsProcessing(true);
+        setProcessingState(ProcessingState.Processing);
         setPrevIsProcessing(true);
         const int = setInterval(() => {
           checkReady().then((r) => {
             if (r) {
-              setIsProcessing(false);
+              setProcessingState(ProcessingState.Ready);
               clearInterval(int);
             }
           });
         }, 5000)
+      } else {
+        setProcessingState(ProcessingState.Ready);
       }
       import('hls.js').then(({ default: Hls }) => {
         if (Hls.isSupported() && videoRef.current) {
@@ -185,7 +190,7 @@ function SpotVideoContainer({
   return (
     <>
       <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
-          {isProcessing ? (
+          {processingState === ProcessingState.Processing ? (
             <Alert
               className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
               message="You’re viewing the original recording. Processed Spot will be available here shortly."

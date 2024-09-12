@@ -1,12 +1,14 @@
-import {Duration} from "luxon";
-import React, { useEffect } from 'react';
-import { NoContent, Input, SlideModal, CloseButton, Button } from 'UI';
-import { getRE } from 'App/utils';
-import BottomBlock from '../BottomBlock';
-import TimeTable from 'Components/shared/DevTools/TimeTable'
-import GQLDetails from './GQLDetails';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { getRE } from 'App/utils';
+import TimeTable from 'Components/shared/DevTools/TimeTable';
+import { CloseButton, Input, NoContent, SlideModal } from 'UI';
+
+import BottomBlock from '../BottomBlock';
+import GQLDetails from './GQLDetails';
 
 export function renderStart(r) {
   return (
@@ -26,17 +28,15 @@ export function renderStart(r) {
   );
 }
 
-
 function renderDefaultStatus() {
   return '2xx-3xx';
 }
 
-function GraphQL({
-  panelHeight
-}: { panelHeight: number }) {
+function GraphQL({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(PlayerContext);
   const { time, livePlay, tabStates, currentTab } = store.get();
-  const { graphqlList: list = [], graphqlListNow: listNow = [] } = tabStates[currentTab]
+  const { graphqlList: list = [], graphqlListNow: listNow = [] } =
+    tabStates[currentTab];
 
   const defaultState = {
     filter: '',
@@ -74,7 +74,9 @@ function GraphQL({
       : list;
   };
 
-  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+  const onFilterChange = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = filterList(list, value);
     setState((prevState) => ({
       ...prevState,
@@ -85,23 +87,34 @@ function GraphQL({
   };
 
   const setCurrent = (item: any, index: number) => {
-    setState((prevState) => ({ ...prevState, current: item, currentIndex: index }));
+    setState((prevState) => ({
+      ...prevState,
+      current: item,
+      currentIndex: index,
+    }));
   };
 
-  const onJump = (time: number) => {
+  const onJump = ({ time }: { time: number }) => {
     if (!livePlay) {
       player.pause();
       player.jump(time);
     }
-  }
+  };
 
   const closeModal = () =>
-    setState((prevState) => ({ ...prevState, current: null, showFetchDetails: false }));
+    setState((prevState) => ({
+      ...prevState,
+      current: null,
+      showFetchDetails: false,
+    }));
 
   useEffect(() => {
     const filtered = filterList(listNow, state.filter);
     if (filtered.length !== lastActiveItem) {
-      setState((prevState) => ({ ...prevState, lastActiveItem: listNow.length }));
+      setState((prevState) => ({
+        ...prevState,
+        lastActiveItem: listNow.length,
+      }));
     }
   }, [time]);
 
@@ -146,7 +159,11 @@ function GraphQL({
           </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
-          <NoContent size="small" title="No recordings found" show={filteredList.length === 0}>
+          <NoContent
+            size="small"
+            title="No recordings found"
+            show={filteredList.length === 0}
+          >
             <TimeTable
               rows={filteredList}
               onRowClick={setCurrent}
