@@ -188,7 +188,7 @@ function SpotVideoContainer({
           {isProcessing ? (
             <Alert
               className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
-              message="You’re viewing the entire recording. The trimmed Spot will be available here shortly."
+              message="You’re viewing the original recording. Processed Spot will be available here shortly."
               showIcon
               type="info"
               icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
@@ -196,7 +196,7 @@ function SpotVideoContainer({
           ) : prevIsProcessing ? (
             <Alert
               className='trimIsReady rounded-lg shadow-sm border-0'
-              message="Your trimmed Spot is available!"
+              message="Your processed Spot is ready!"
               showIcon
               type="success"
               action={

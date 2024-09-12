@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
-import { Icon } from 'UI';
+import ReloadButton from 'Shared/ReloadButton';
 
 const SpotsListHeader = observer(
   ({
@@ -11,10 +11,12 @@ const SpotsListHeader = observer(
     selectedCount,
     onClearSelection,
     isEmpty,
+    onRefresh,
   }: {
     onDelete: () => void;
     selectedCount: number;
     onClearSelection: () => void;
+    onRefresh: () => void;
     isEmpty?: boolean;
   }) => {
     const { spotStore } = useStore();
@@ -47,6 +49,7 @@ const SpotsListHeader = observer(
       <div className={'flex items-center justify-between w-full'}>
         <div className="flex gap-1 items-center">
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
+          <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={16} />
         </div>
 
         {isEmpty ? null : (
