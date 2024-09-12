@@ -69,6 +69,8 @@ spec:
               {{- else }}
               value: {{ .Values.global.s3.secretKey }}
               {{- end }}
+            - name: BUCKET_NAME
+              value: '{{ .Values.global.s3.spotsBucket }}'
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: AWS_ENDPOINT

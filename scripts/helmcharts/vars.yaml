@@ -134,6 +134,7 @@ global:
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
+    spotsBucket: "spots"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
     assistRecordsBucket: "records"
