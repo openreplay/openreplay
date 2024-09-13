@@ -23,10 +23,9 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
     <div>
       <div className="flex items-start py-1">
         <div className="font-medium w-36">Name</div>
-        <Tag
-          className="text-base max-w-80 rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer word-break"
-          bordered={false}>
-          <CopyText content={resource.url}>{resource.url}</CopyText>
+        <Tag className="text-base rounded-lg bg-indigo-50 whitespace-normal break-words" bordered={false}
+             style={{ maxWidth: '300px'}}>
+          <div>{resource.url}</div>
         </Tag>
       </div>
 
