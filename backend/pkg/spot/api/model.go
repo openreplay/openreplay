@@ -53,8 +53,9 @@ type ShortInfo struct {
 }
 
 type GetSpotsResponse struct {
-	Spots []ShortInfo `json:"spots"`
-	Total uint64      `json:"total"`
+	Spots          []ShortInfo `json:"spots"`
+	Total          uint64      `json:"total"`
+	TenantHasSpots bool        `json:"tenantHasSpots"`
 }
 
 type UpdateSpotRequest struct {

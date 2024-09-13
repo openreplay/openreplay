@@ -278,7 +278,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 	default:
 		opts.TenantID = user.TenantID
 	}
-	spots, total, err := e.services.Spots.Get(user, opts)
+	spots, total, tenantHasSpots, err := e.services.Spots.Get(user, opts)
 	if err != nil {
 		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -298,7 +298,7 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 			PreviewURL: previewUrl,
 		})
 	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: total}, startTime, r.URL.Path, bodySize)
+	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: total, TenantHasSpots: tenantHasSpots}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
