@@ -33,6 +33,7 @@ interface AddCommentRequest {
 interface GetSpotsResponse {
   spots: SpotInfo[];
   total: number;
+  tenantHasSpots: boolean;
 }
 
 interface GetSpotsRequest {

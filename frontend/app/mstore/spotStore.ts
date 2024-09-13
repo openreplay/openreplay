@@ -1,9 +1,14 @@
 import { makeAutoObservable } from 'mobx';
 
+
+
 import { spotService } from 'App/services';
 import { UpdateSpotRequest } from 'App/services/spotService';
 
+
+
 import { Spot } from './types/spot';
+
 
 export default class SpotStore {
   isLoading: boolean = false;
@@ -18,6 +23,7 @@ export default class SpotStore {
   pubKey: { value: string; expiration: number } | null = null;
   readonly order = 'desc';
   accessError = false;
+  tenantHasSpots = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -81,12 +87,17 @@ export default class SpotStore {
       limit: this.limit,
     } as const;
 
-    const response = await this.withLoader(() =>
+    const { spots, tenantHasSpots, total } = await this.withLoader(() =>
       spotService.fetchSpots(filters)
     );
-    this.setSpots(response.spots.map((spot: any) => new Spot(spot)));
-    this.setTotal(response.total);
+    this.setSpots(spots.map((spot: any) => new Spot(spot)));
+    this.setTotal(total);
+    this.setTenantHasSpots(tenantHasSpots);
   };
+
+  setTenantHasSpots(hasSpots: boolean) {
+    this.tenantHasSpots = hasSpots;
+  }
 
   async fetchSpotById(id: string) {
     try {

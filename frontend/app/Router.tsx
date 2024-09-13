@@ -10,21 +10,19 @@ import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
   JWT_PARAM,
-  SPOT_ONBOARDING
-} from "App/constants/storageKeys";
+  SPOT_ONBOARDING,
+} from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
-import { withStore } from "App/mstore";
-import { checkParam, handleSpotJWT, isTokenExpired } from "App/utils";
+import { withStore } from 'App/mstore';
+import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { setSessionPath } from 'Duck/sessions';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { init as initSite } from 'Duck/site';
-import { fetchUserInfo, getScope, setJwt, logout } from "Duck/user";
-import { fetchTenants } from 'Duck/user';
+import { fetchUserInfo, getScope, logout, setJwt } from 'Duck/user';
 import { Loader } from 'UI';
-import { spotsList } from "./routes";
 import * as routes from './routes';
 
 interface RouterProps
@@ -36,7 +34,6 @@ interface RouterProps
   changePassword: boolean;
   isEnterprise: boolean;
   fetchUserInfo: () => any;
-  fetchTenants: () => any;
   setSessionPath: (path: any) => any;
   fetchSiteList: (siteId?: number) => any;
   match: {
@@ -45,7 +42,7 @@ interface RouterProps
     };
   };
   mstore: any;
-  setJwt: (params: { jwt: string, spotJwt: string | null }) => any;
+  setJwt: (params: { jwt: string; spotJwt: string | null }) => any;
   fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
   scopeSetup: boolean;
@@ -68,15 +65,16 @@ const Router: React.FC<RouterProps> = (props) => {
     logout,
   } = props;
 
-  const params = new URLSearchParams(location.search)
+  const params = new URLSearchParams(location.search);
   const spotCb = params.get('spotCallback');
-  const spotReqSent = React.useRef(false)
+  const spotReqSent = React.useRef(false);
   const [isSpotCb, setIsSpotCb] = React.useState(false);
+  const [isSignup, setIsSignup] = React.useState(false);
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
 
   const handleJwtFromUrl = () => {
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(location.search);
     const urlJWT = params.get('jwt');
     const spotJwt = params.get('spotJwt');
     if (spotJwt) {
@@ -92,6 +90,7 @@ const Router: React.FC<RouterProps> = (props) => {
       return;
     } else {
       spotReqSent.current = true;
+      setIsSpotCb(false);
     }
     handleSpotJWT(jwt);
   };
@@ -107,12 +106,16 @@ const Router: React.FC<RouterProps> = (props) => {
 
   const handleUserLogin = async () => {
     if (isSpotCb) {
-      localStorage.setItem(SPOT_ONBOARDING, 'true')
+      localStorage.setItem(SPOT_ONBOARDING, 'true');
     }
     await fetchUserInfo();
     const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
     await fetchSiteList(siteIdFromPath);
     props.mstore.initClient();
+
+    if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
+      handleSpotLogin(localSpotJwt);
+    }
 
     const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
     if (
@@ -144,7 +147,10 @@ const Router: React.FC<RouterProps> = (props) => {
     if (spotCb) {
       setIsSpotCb(true);
     }
-  }, [spotCb])
+    if (location.pathname.includes('signup')) {
+      setIsSignup(true);
+    }
+  }, [spotCb]);
 
   useEffect(() => {
     handleDestinationPath();
@@ -159,22 +165,14 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (scopeSetup) {
-      history.push(routes.scopeSetup())
-    }
-  }, [scopeSetup])
-
-  useEffect(() => {
-    if (isLoggedIn && (location.pathname.includes('login') || isSpotCb)) {
-      if (localSpotJwt) {
-        if (!isTokenExpired(localSpotJwt)) {
-          handleSpotLogin(localSpotJwt);
-        } else {
-          logout();
-        }
+    if (isLoggedIn && isSpotCb && !isSignup) {
+      if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
+        handleSpotLogin(localSpotJwt);
+      } else {
+        logout();
       }
     }
-  }, [isSpotCb, location, isLoggedIn, localSpotJwt])
+  }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {
@@ -204,8 +202,7 @@ const Router: React.FC<RouterProps> = (props) => {
     location.pathname.includes('multiview') ||
     location.pathname.includes('/view-spot/') ||
     location.pathname.includes('/spots/') ||
-    location.pathname.includes('/scope-setup')
-
+    location.pathname.includes('/scope-setup');
 
   if (isIframe) {
     return (
@@ -238,8 +235,11 @@ const mapStateToProps = (state: Map<string, any>) => {
     'loading',
   ]);
   const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
-  const scopeSetup = getScope(state) === 0
-  const loading = Boolean(userInfoLoading) || Boolean(sitesLoading) || (!scopeSetup && !siteId);
+  const scopeSetup = getScope(state) === 0;
+  const loading =
+    Boolean(userInfoLoading) ||
+    Boolean(sitesLoading) ||
+    (!scopeSetup && !siteId);
   return {
     siteId,
     changePassword,
@@ -262,7 +262,6 @@ const mapStateToProps = (state: Map<string, any>) => {
 
 const mapDispatchToProps = {
   fetchUserInfo,
-  fetchTenants,
   setSessionPath,
   fetchSiteList,
   setJwt,
