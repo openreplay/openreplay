@@ -1,1 +1,1 @@
-export { default } from './FunnelIssueDetails'
+//export { default } from './FunnelIssueDetails'

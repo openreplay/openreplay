@@ -4,12 +4,11 @@ import { combineReducers } from 'redux-immutable';
 import user from './user';
 import sessions from './sessions';
 import filters from './filters';
-import funnelFilters from './funnelFilters';
 import sources from './sources';
 import site from './site';
 import customFields from './customField';
 import integrations from './integrations';
-import funnels from './funnels';
+import errors from './errors';
 import customMetrics from './customMetrics';
 import search from './search';
 import liveSearch from './liveSearch';
@@ -18,10 +17,9 @@ const rootReducer = combineReducers({
   user,
   sessions,
   filters,
-  funnelFilters,
   site,
   customFields,
-  funnels,
+  errors,
   customMetrics,
   search,
   liveSearch,
