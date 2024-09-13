@@ -69,6 +69,7 @@ const Router: React.FC<RouterProps> = (props) => {
   const spotCb = params.get('spotCallback');
   const spotReqSent = React.useRef(false);
   const [isSpotCb, setIsSpotCb] = React.useState(false);
+  const [isSignup, setIsSignup] = React.useState(false);
   const [isIframe, setIsIframe] = React.useState(false);
   const [isJwt, setIsJwt] = React.useState(false);
 
@@ -146,6 +147,9 @@ const Router: React.FC<RouterProps> = (props) => {
     if (spotCb) {
       setIsSpotCb(true);
     }
+    if (location.pathname.includes('signup')) {
+      setIsSignup(true);
+    }
   }, [spotCb]);
 
   useEffect(() => {
@@ -161,20 +165,14 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (scopeSetup) {
-      history.push(routes.scopeSetup());
-    }
-  }, [scopeSetup]);
-
-  useEffect(() => {
-    if (isLoggedIn && isSpotCb) {
+    if (isLoggedIn && isSpotCb && !isSignup) {
       if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
         handleSpotLogin(localSpotJwt);
       } else {
         logout();
       }
     }
-  }, [isSpotCb, location, isLoggedIn, localSpotJwt]);
+  }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
     if (siteId && siteId !== lastFetchedSiteIdRef.current) {

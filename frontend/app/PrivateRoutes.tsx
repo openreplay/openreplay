@@ -119,6 +119,7 @@ interface Props {
 function PrivateRoutes(props: Props) {
   const { onboarding, sites, siteId } = props;
   const hasRecordings = sites.some(s => s.recorded);
+  const redirectToSetup = props.scope === 0;
   const redirectToOnboarding =
     !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || !hasRecordings) && props.scope > 0;
   const siteIdList: any = sites.map(({ id }) => id).toJS();
@@ -126,6 +127,13 @@ function PrivateRoutes(props: Props) {
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
+        <Route
+          exact
+          strict
+          path={SCOPE_SETUP}
+          component={enhancedComponents.ScopeSetup}
+        />
+        {redirectToSetup ? <Redirect to={SCOPE_SETUP} /> : null}
         <Route path={CLIENT_PATH} component={enhancedComponents.Client} />
         <Route
           path={withSiteId(ONBOARDING_PATH, siteIdList)}
@@ -142,12 +150,6 @@ function PrivateRoutes(props: Props) {
           strict
           path={SPOT_PATH}
           component={enhancedComponents.Spot}
-        />
-        <Route
-          exact
-          strict
-          path={SCOPE_SETUP}
-          component={enhancedComponents.ScopeSetup}
         />
         {props.scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
         <Route
