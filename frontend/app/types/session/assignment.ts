@@ -2,11 +2,10 @@ import Activity, { IActivity } from './activity';
 import { DateTime } from 'luxon';
 import {  notEmptyString } from 'App/validate';
 
-interface IAssignment {
+interface IReportedIssue {
   id: string;
   title: string;
   timestamp: number;
-  creatorId: string;
   sessionId: string;
   projectId: string;
   siteId: string;
@@ -22,23 +21,21 @@ interface IAssignment {
   users: { id: string }[]
 }
 
-export default class Assignment {
-  id: IAssignment["id"];
-  title: IAssignment["title"] = '';
-  timestamp: IAssignment["timestamp"];
-  creatorId: IAssignment["creatorId"];
-  sessionId: IAssignment["sessionId"];
-  projectId: IAssignment["projectId"] = '';
-  siteId: IAssignment["siteId"];
-  activities: IAssignment["activities"];
-  closed: IAssignment["closed"];
-  assignee: IAssignment["assignee"] = '';
-  commentsCount: IAssignment["commentsCount"];
-  issueType: IAssignment["issueType"] = '';
-  description: IAssignment["description"] = '';
-  iconUrl: IAssignment["iconUrl"] = '';
+export default class ReportedIssue {
+  id: IReportedIssue["id"];
+  title: IReportedIssue["title"] = '';
+  timestamp: IReportedIssue["timestamp"];
+  sessionId: IReportedIssue["sessionId"];
+  projectId: IReportedIssue["projectId"] = '';
+  siteId: IReportedIssue["siteId"];
+  activities: IReportedIssue["activities"];
+  closed: IReportedIssue["closed"];
+  assignee: IReportedIssue["assignee"] = '';
+  issueType: IReportedIssue["issueType"] = '';
+  description: IReportedIssue["description"] = '';
+  iconUrl: IReportedIssue["iconUrl"] = '';
 
-  constructor(assignment?: IAssignment) {
+  constructor(assignment?: IReportedIssue) {
     if (assignment) {
       Object.assign(this, {
         ...assignment,

@@ -1,182 +1,178 @@
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
-import { Form, Input, Button, CircularLoader, Loader } from 'UI';
-import { addActivity, init, edit, fetchAssignments, fetchMeta } from 'Duck/assignments';
+
+import { useStore } from 'App/mstore';
+import { Button, CircularLoader, Form, Input, Loader } from 'UI';
+
 import Select from 'Shared/Select';
 
 const SelectedValue = ({ icon, text }) => {
   return (
     <div className="flex items-center">
-      {/* <img className="mr-2" src={ icon } width="13" height="13" /> */}
       {icon}
       <span>{text}</span>
     </div>
   );
 };
 
-class IssueForm extends React.PureComponent {
-  componentDidMount() {
-    const { projects, issueTypes } = this.props;
-    this.props.init({
+function IssueForm(props) {
+  const { closeHandler } = props;
+  const { issueReportingStore } = useStore();
+  const creating = issueReportingStore.createLoading;
+  const projects = issueReportingStore.projects;
+  const projectsLoading = issueReportingStore.projectsLoading;
+  const users = issueReportingStore.users;
+  const instance = issueReportingStore.instance;
+  const metaLoading = issueReportingStore.metaLoading;
+  const issueTypes = issueReportingStore.issueTypes;
+  const addActivity = issueReportingStore.saveIssue;
+  const init = issueReportingStore.init;
+  const edit = issueReportingStore.editInstance;
+  const fetchMeta = issueReportingStore.fetchMeta;
+
+  console.log(users, instance, projects, issueTypes)
+  React.useEffect(() => {
+    init({
       projectId: projects[0] ? projects[0].id : '',
       issueType: issueTypes[0] ? issueTypes[0].id : '',
     });
-  }
+  }, []);
 
-  componentWillReceiveProps(newProps) {
-    const { instance } = this.props;
-    if (newProps.instance.projectId && newProps.instance.projectId != instance.projectId) {
-      this.props.fetchMeta(newProps.instance.projectId).then(() => {
-        this.props.edit({ issueType: '', assignee: '', projectId: newProps.instance.projectId });
+  React.useEffect(() => {
+    if (instance?.projectId) {
+      fetchMeta(instance?.projectId).then(() => {
+        edit({
+          issueType: '',
+          assignee: '',
+          projectId: instance?.projectId,
+        });
       });
     }
-  }
+  }, [instance?.projectId]);
 
-  onSubmit = () => {
-    const { sessionId, addActivity } = this.props;
-    const { instance } = this.props;
-
-    addActivity(sessionId, instance.toJS()).then(() => {
-      const { errors } = this.props;
+  const onSubmit = () => {
+    const { sessionId } = props;
+    addActivity(sessionId, instance).then(() => {
+      const { errors } = props;
       if (!errors || errors.length === 0) {
-        this.props.init({ projectId: instance.projectId });
-        this.props.fetchAssignments(sessionId);
-        this.props.closeHandler();
+        init({ projectId: instance?.projectId });
+        closeHandler();
       }
     });
   };
 
-  write = (e) => {
+  const write = (e) => {
     const {
       target: { name, value },
     } = e;
-    this.props.edit({ [name]: value });
+    edit({ [name]: value });
   };
-  writeOption = ({ name, value }) => this.props.edit({ [name]: value.value });
 
-  render() {
-    const {
-      creating,
-      projects,
-      users,
-      issueTypes,
-      instance,
-      closeHandler,
-      metaLoading,
-      projectsLoading,
-    } = this.props;
-    const projectOptions = projects.map(({ name, id }) => ({ label: name, value: id })).toArray();
-    const userOptions = users.map(({ name, id }) => ({ label: name, value: id })).toArray();
+  const writeOption = ({ name, value }) => edit({ [name]: value.value });
+  const projectOptions = projects.map(({ name, id }) => ({
+    label: name,
+    value: id,
+  }));
+  const userOptions = users.map(({ name, id }) => ({ label: name, value: id }));
 
-    const issueTypeOptions = issueTypes.map(({ name, id, iconUrl, color }) => {
-      return { label: name, value: id, iconUrl, color };
-    });
+  const issueTypeOptions = issueTypes.map(({ name, id, iconUrl, color }) => {
+    return { label: name, value: id, iconUrl, color };
+  });
 
-    const selectedIssueType = issueTypes.filter((issue) => issue.id == instance.issueType)[0];
+  const selectedIssueType = issueTypes.filter(
+    (issue) => issue.id == instance?.issueType
+  )[0];
 
-    return (
-      <Loader loading={projectsLoading} size={40}>
-        <Form onSubmit={this.onSubmit} className="text-left">
-          <Form.Field className="mb-15-imp">
-            <label htmlFor="issueType" className="flex items-center">
-              <span className="mr-2">Project</span>
-              <CircularLoader loading={metaLoading} />
-            </label>
-            <Select
-              name="projectId"
-              options={projectOptions}
-              defaultValue={instance.projectId}
-              fluid
-              onChange={this.writeOption}
-              placeholder="Project"
-            />
-          </Form.Field>
-          <Form.Field className="mb-15-imp">
-            <label htmlFor="issueType">Issue Type</label>
-            <Select
-              selection
-              name="issueType"
-              labeled
-              options={issueTypeOptions}
-              defaultValue={instance.issueType}
-              fluid
-              onChange={this.writeOption}
-              placeholder="Select issue type"
-              text={
-                selectedIssueType ? (
-                  <SelectedValue icon={selectedIssueType.iconUrl} text={selectedIssueType.name} />
-                ) : (
-                  ''
-                )
-              }
-            />
-          </Form.Field>
+  return (
+    <Loader loading={projectsLoading} size={40}>
+      <Form onSubmit={onSubmit} className="text-left">
+        <Form.Field className="mb-15-imp">
+          <label htmlFor="issueType" className="flex items-center">
+            <span className="mr-2">Project</span>
+            <CircularLoader loading={metaLoading} />
+          </label>
+          <Select
+            name="projectId"
+            options={projectOptions}
+            defaultValue={instance?.projectId}
+            fluid
+            onChange={writeOption}
+            placeholder="Project"
+          />
+        </Form.Field>
+        <Form.Field className="mb-15-imp">
+          <label htmlFor="issueType">Issue Type</label>
+          <Select
+            selection
+            name="issueType"
+            labeled
+            options={issueTypeOptions}
+            defaultValue={instance?.issueType}
+            fluid
+            onChange={writeOption}
+            placeholder="Select issue type"
+            text={
+              selectedIssueType ? (
+                <SelectedValue
+                  icon={selectedIssueType.iconUrl}
+                  text={selectedIssueType.name}
+                />
+              ) : (
+                ''
+              )
+            }
+          />
+        </Form.Field>
 
-          <Form.Field className="mb-15-imp">
-            <label htmlFor="assignee">Assignee</label>
-            <Select
-              selection
-              name="assignee"
-              options={userOptions}
-              fluid
-              onChange={this.writeOption}
-              placeholder="Select a user"
-            />
-          </Form.Field>
+        <Form.Field className="mb-15-imp">
+          <label htmlFor="assignee">Assignee</label>
+          <Select
+            selection
+            name="assignee"
+            options={userOptions}
+            fluid
+            onChange={writeOption}
+            placeholder="Select a user"
+          />
+        </Form.Field>
 
-          <Form.Field className="mb-15-imp">
-            <label htmlFor="title">Summary</label>
-            <Input
-              name="title"
-              value={instance.title}
-              placeholder="Issue Title / Summary"
-              onChange={this.write}
-            />
-          </Form.Field>
+        <Form.Field className="mb-15-imp">
+          <label htmlFor="title">Summary</label>
+          <Input
+            name="title"
+            value={instance?.title}
+            placeholder="Issue Title / Summary"
+            onChange={write}
+          />
+        </Form.Field>
 
-          <Form.Field className="mb-15-imp">
-            <label htmlFor="description">
-              Description
-              {/* <span className="text-sm text-gray-500">(Optional)</span> */}
-            </label>
-            <textarea
-              name="description"
-              rows="2"
-              value={instance.description}
-              placeholder="E.g. Found this issue at 3:29secs"
-              onChange={this.write}
-              className="text-area"
-            />
-          </Form.Field>
+        <Form.Field className="mb-15-imp">
+          <label htmlFor="description">Description</label>
+          <textarea
+            name="description"
+            rows="2"
+            value={instance?.description}
+            placeholder="E.g. Found this issue at 3:29secs"
+            onChange={write}
+            className="text-area"
+          />
+        </Form.Field>
 
-          <Button
-            loading={creating}
-            variant="primary"
-            disabled={!instance.isValid}
-            className="float-left mr-2"
-            type="submit"
-          >
-            {'Create'}
-          </Button>
-          <Button type="button" onClick={closeHandler}>
-            {'Cancel'}
-          </Button>
-        </Form>
-      </Loader>
-    );
-  }
+        <Button
+          loading={creating}
+          variant="primary"
+          disabled={!instance?.isValid}
+          className="float-left mr-2"
+          type="submit"
+        >
+          {'Create'}
+        </Button>
+        <Button type="button" onClick={closeHandler}>
+          {'Cancel'}
+        </Button>
+      </Form>
+    </Loader>
+  );
 }
 
-export default connect(
-  (state) => ({
-    creating: state.getIn(['assignments', 'addActivity', 'loading']),
-    projects: state.getIn(['assignments', 'projects']),
-    projectsLoading: state.getIn(['assignments', 'fetchProjects', 'loading']),
-    users: state.getIn(['assignments', 'users']),
-    instance: state.getIn(['assignments', 'instance']),
-    metaLoading: state.getIn(['assignments', 'fetchMeta', 'loading']),
-    issueTypes: state.getIn(['assignments', 'issueTypes']),
-    errors: state.getIn(['assignments', 'addActivity', 'errors']),
-  }),
-  { addActivity, init, edit, fetchAssignments, fetchMeta }
-)(IssueForm);
+export default observer(IssueForm);

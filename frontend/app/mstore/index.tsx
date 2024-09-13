@@ -25,6 +25,7 @@ import SpotStore from "./spotStore";
 import LoginStore from "./loginStore";
 import FilterStore from "./filterStore";
 import UiPlayerStore from './uiPlayerStore';
+import IssueReportingStore from './issueReportingStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -51,6 +52,7 @@ export class RootStore {
   loginStore: LoginStore;
   filterStore: FilterStore;
   uiPlayerStore: UiPlayerStore;
+  issueReportingStore: IssueReportingStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -77,6 +79,7 @@ export class RootStore {
     this.loginStore = new LoginStore();
     this.filterStore = new FilterStore();
     this.uiPlayerStore = new UiPlayerStore();
+    this.issueReportingStore = new IssueReportingStore();
   }
 
   initClient() {

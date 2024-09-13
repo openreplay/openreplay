@@ -20,6 +20,7 @@ import WebhookService from './WebhookService';
 import SpotService from './spotService';
 import LoginService from "./loginService";
 import FilterService from "./FilterService";
+import IssueReportsService from "./IssueReportsService";
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -42,6 +43,7 @@ export const aiService = new AiService();
 export const spotService = new SpotService();
 export const loginService = new LoginService();
 export const filterService = new FilterService();
+export const issueReportsService = new IssueReportsService();
 
 export const services = [
   dashboardService,
@@ -65,4 +67,5 @@ export const services = [
   spotService,
   loginService,
   filterService,
+  issueReportsService,
 ];
