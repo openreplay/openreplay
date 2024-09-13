@@ -24,6 +24,7 @@ function SpotNetwork({ panelHeight, onClose }: { panelHeight: number, onClose: (
         resourceListNow={[]}
         websocketList={[]}
         websocketListNow={[]}
+        isSpot
         /* @ts-ignore */
         player={{ jump: (t) => spotPlayerStore.setTime(t) }}
         activeOutsideIndex={index}

@@ -71,8 +71,9 @@ function parseRequestResponse(
 
 interface Props {
   resource: { request: string, response: string };
+  isSpot?: boolean;
 }
-function FetchTabs({ resource }: Props) {
+function FetchTabs({ resource, isSpot }: Props) {
   const [activeTab, setActiveTab] = useState(HEADERS);
   const onTabClick = (tab: string) => setActiveTab(tab);
   const [jsonRequest, setJsonRequest] = useState<Object | null>(null);
@@ -118,7 +119,7 @@ function FetchTabs({ resource }: Props) {
               </div>
             }
             size="small"
-            show={!jsonRequest && !stringRequest}
+            show={!isSpot && !jsonRequest && !stringRequest}
             // animatedIcon="no-results"
           >
             <div>
@@ -150,7 +151,7 @@ function FetchTabs({ resource }: Props) {
               </div>
             }
             size="small"
-            show={!jsonResponse && !stringResponse}
+            show={!isSpot && !jsonResponse && !stringResponse}
             // animatedIcon="no-results"
           >
             <div>
