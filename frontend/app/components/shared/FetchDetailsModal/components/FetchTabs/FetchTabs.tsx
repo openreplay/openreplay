@@ -84,7 +84,6 @@ function FetchTabs({ resource }: Props) {
 
   useEffect(() => {
     const { request, response } = resource;
-    console.log(resource, request, response)
     parseRequestResponse(
       request,
       setRequestHeaders,

@@ -157,7 +157,6 @@ function EventsBlock(props: IProps) {
   React.useEffect(() => {
     if (scroller.current) {
       if (!mouseOver) {
-        console.log('scrolling to index', currentTimeEventIndex, scroller.current);
         scroller.current.scrollToIndex(currentTimeEventIndex, { align: 'center' });
       }
     }
