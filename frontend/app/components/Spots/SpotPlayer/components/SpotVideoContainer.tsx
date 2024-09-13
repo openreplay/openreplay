@@ -1,8 +1,9 @@
+import { InfoCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Alert, Button } from 'antd';
 import Hls from 'hls.js';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import {Alert, Button} from 'antd';
-import {PlayCircleOutlined, InfoCircleOutlined} from '@ant-design/icons';
+
 import spotPlayerStore from '../spotPlayerStore';
 
 const base64toblob = (str: string) => {
@@ -33,7 +34,9 @@ function SpotVideoContainer({
   checkReady: () => Promise<boolean>;
 }) {
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
-  const [processingState, setProcessingState] = React.useState<ProcessingState>(ProcessingState.Unchecked);
+  const [processingState, setProcessingState] = React.useState<ProcessingState>(
+    ProcessingState.Unchecked
+  );
   const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
@@ -69,13 +72,15 @@ function SpotVideoContainer({
               clearInterval(int);
             }
           });
-        }, 5000)
+        }, 5000);
       } else {
         setProcessingState(ProcessingState.Ready);
       }
       import('hls.js').then(({ default: Hls }) => {
         if (Hls.isSupported() && videoRef.current) {
-          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          const isSafari = /^((?!chrome|android).)*safari/i.test(
+            navigator.userAgent
+          );
           if (isSafari) {
             setLoaded(true);
           } else {
@@ -85,9 +90,7 @@ function SpotVideoContainer({
           }
           if (streamFile) {
             const hls = new Hls({
-              // not needed for small videos (we have 3 min limit and 720 quality with half kbps)
-              enableWorker: false,
-              // = 1MB, should be enough
+              enableWorker: true,
               maxBufferSize: 1000 * 1000,
             });
             const url = URL.createObjectURL(base64toblob(streamFile));
@@ -124,7 +127,11 @@ function SpotVideoContainer({
             };
             check();
           }
-        } else if (streamFile && videoRef.current && videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        } else if (
+          streamFile &&
+          videoRef.current &&
+          videoRef.current.canPlayType('application/vnd.apple.mpegurl')
+        ) {
           setLoaded(true);
           videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
           startPlaying();
@@ -185,40 +192,44 @@ function SpotVideoContainer({
     }
   }, [spotPlayerStore.playbackRate]);
 
-  const reloadPage = () => { window.location.reload();  };
+  const reloadPage = () => {
+    window.location.reload();
+  };
 
   return (
     <>
-      <div className="absolute z-20 left-2/4 -top-6" style={{ transform: 'translate(-50%, 0)' }}>
-          {processingState === ProcessingState.Processing ? (
-            <Alert
-              className='trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50'
-              message="You’re viewing the original recording. Processed Spot will be available here shortly."
-              showIcon
-              type="info"
-              icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
-            />
-          ) : prevIsProcessing ? (
-            <Alert
-              className='trimIsReady rounded-lg shadow-sm border-0'
-              message="Your processed Spot is ready!"
-              showIcon
-              type="success"
-              action={
-                <Button
-                  size="small"
-                  type="default"
-                  icon={<PlayCircleOutlined />}
-                  onClick={reloadPage}
-                  className='ml-2'
-                >
-                  Play Now
-                </Button>
-              }
-            />
-          ) : null}
-        </div>
-
+      <div
+        className="absolute z-20 left-2/4 -top-6"
+        style={{ transform: 'translate(-50%, 0)' }}
+      >
+        {processingState === ProcessingState.Processing ? (
+          <Alert
+            className="trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-50"
+            message="You’re viewing the original recording. Processed Spot will be available here shortly."
+            showIcon
+            type="info"
+            icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
+          />
+        ) : prevIsProcessing ? (
+          <Alert
+            className="trimIsReady rounded-lg shadow-sm border-0"
+            message="Your processed Spot is ready!"
+            showIcon
+            type="success"
+            action={
+              <Button
+                size="small"
+                type="default"
+                icon={<PlayCircleOutlined />}
+                onClick={reloadPage}
+                className="ml-2"
+              >
+                Play Now
+              </Button>
+            }
+          />
+        ) : null}
+      </div>
 
       {!isLoaded && (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">
