@@ -16,7 +16,6 @@ function WidgetOptions(props: Props) {
   const metric: any = metricStore.instance;
 
   const handleChange = (value: any) => {
-    console.log(`selected ${value}`);
     metric.update({ metricFormat: value });
   };
 

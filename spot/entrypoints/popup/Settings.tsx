@@ -13,15 +13,14 @@ function Settings({ goBack }: { goBack: () => void }) {
   onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
+        const ingest = data.settings.ingestPoint || "https://app.openreplay.com";
         const devToolsEnabled =
           data.settings.consoleLogs && data.settings.networkLogs;
         setOpenInNewTab(data.settings.openInNewTab ?? false);
         setIncludeDevTools(devToolsEnabled);
-        setShowIngest(data.settings.showIngest ?? true);
-        setIngest(data.settings.ingestPoint || "https://app.openreplay.com");
-        setTempIngest(
-          data.settings.ingestPoint || "https://app.openreplay.com",
-        );
+        setIngest(ingest);
+        setTempIngest(ingest);
+        setShowIngest(ingest !== "https://app.openreplay.com");
         setEditIngest(!data.settings.ingestPoint);
       }
     });

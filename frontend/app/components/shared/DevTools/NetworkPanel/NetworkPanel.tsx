@@ -310,6 +310,7 @@ interface Props {
   panelHeight: number;
   onClose?: () => void;
   activeOutsideIndex?: number;
+  isSpot?: boolean;
 }
 
 export const NetworkPanelComp = observer(
@@ -331,6 +332,7 @@ export const NetworkPanelComp = observer(
     zoomEndTs,
     onClose,
     activeOutsideIndex,
+    isSpot,
   }: Props) => {
     const { showModal } = useModal();
     const [sortBy, setSortBy] = useState('time');
@@ -500,6 +502,7 @@ export const NetworkPanelComp = observer(
       setIsDetailsModalActive(true);
       showModal(
         <FetchDetailsModal
+          isSpot={isSpot}
           time={item.time + startedAt}
           resource={item}
           rows={filteredList}

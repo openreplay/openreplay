@@ -24,23 +24,16 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       <div className="flex items-start py-1">
         <div className="font-medium w-36">Name</div>
         <Tag
-          className="text-base max-w-96 rounded-lg text-clip bg-indigo-50 whitespace-nowrap overflow-hidden text-clip cursor-pointer word-break"
+          className="text-base max-w-80 rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer word-break"
           bordered={false}>
           <CopyText content={resource.url}>{resource.url}</CopyText>
-        </Tag>
-      </div>
-
-      <div className="flex items-center py-1">
-        <div className="font-medium w-36">Type</div>
-        <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip" bordered={false}>
-          {resource.type}
         </Tag>
       </div>
 
       {resource.method && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Request Method</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
                bordered={false}>
             {resource.method}
           </Tag>
@@ -53,7 +46,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
           <Tag
             bordered={false}
             className={cn(
-              'text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip flex items-center',
+              'text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis flex items-center',
               { 'error color-red': !resource.success }
             )}
           >
@@ -64,7 +57,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
 
       <div className="flex items-center py-1">
         <div className="font-medium w-36">Type</div>
-        <Tag className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+        <Tag className="text-base capitalize rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
              bordered={false}>
           {resource.type}
         </Tag>
@@ -73,7 +66,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {!!resource.decodedBodySize && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Size</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
                bordered={false}>
             {formatBytes(resource.decodedBodySize)}
           </Tag>
@@ -84,7 +77,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {!!_duration && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Duration</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
                bordered={false}>
             {_duration} ms
           </Tag>
@@ -94,7 +87,7 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
       {timestamp && (
         <div className="flex items-center py-1">
           <div className="font-medium w-36">Time</div>
-          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-clip"
+          <Tag className="text-base rounded-lg bg-indigo-50 whitespace-nowrap overflow-hidden text-ellipsis"
                bordered={false}>
             {timestamp}
           </Tag>

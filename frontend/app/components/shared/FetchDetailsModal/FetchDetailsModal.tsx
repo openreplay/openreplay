@@ -12,9 +12,10 @@ interface Props {
   time?: number;
   rows?: any;
   fetchPresented?: boolean;
+  isSpot?: boolean;
 }
 function FetchDetailsModal(props: Props) {
-  const { rows = [], fetchPresented = false } = props;
+  const { rows = [], fetchPresented = false, isSpot } = props;
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
@@ -57,7 +58,7 @@ function FetchDetailsModal(props: Props) {
       <h5 className="mb-4 text-2xl ">Network Request</h5>
       <FetchBasicDetails resource={resource} timestamp={props.time ? DateTime.fromMillis(props.time).setZone(timezone.value).toFormat(`hh:mm:ss a`) : undefined} />
 
-      {isXHR && <FetchTabs resource={resource} />}
+      {isXHR && <FetchTabs isSpot={isSpot} resource={resource} />}
 
       {rows && rows.length > 0 && (
         <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
