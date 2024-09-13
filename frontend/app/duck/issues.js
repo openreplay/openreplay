@@ -1,4 +1,4 @@
-import Assignment from 'Types/session/assignment';
+import ReportedIssue from 'Types/session/assignment';
 import Activity from 'Types/session/activity';
 import { List, Map, Set } from 'immutable';
 import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
@@ -22,8 +22,8 @@ const RESET_ACTIVE_ISSUE = 'assignment/RESET_ACTIVE_ISSUE';
 
 const initialState = Map({
   list: List(),
-  instance: new Assignment(),
-  activeIssue: new Assignment(),
+  instance: new ReportedIssue(),
+  activeIssue: new ReportedIssue(),
   issueTypes: List(),
   issueTypeIcons: Set(),
   users: List(),
@@ -38,9 +38,9 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_PROJECTS.SUCCESS:
       return state.set('projects', List(action.data));
     case FETCH_ASSIGNMENTS.SUCCESS:
-      return state.set('list', action.data.map(as => new Assignment(as)));
+      return state.set('list', action.data.map(as => new ReportedIssue(as)));
     case ADD_ACTIVITY.SUCCESS:
-      const instance = new Assignment(action.data);
+      const instance = new ReportedIssue(action.data);
       return listUpdater(state, instance);
     case FETCH_META.SUCCESS:
       issueTypes = action.data.issueTypes;
@@ -52,16 +52,16 @@ const reducer = (state = initialState, action = {}) => {
         .set('users', List(action.data.users))
         .set('issueTypeIcons', issueTypeIcons)
     case FETCH_ISSUE.SUCCESS:
-      return state.set('activeIssue', new Assignment({ ...action.data, users}));
+      return state.set('activeIssue', new ReportedIssue({ ...action.data, users}));
     case RESET_ACTIVE_ISSUE:
-      return state.set('activeIssue', new Assignment());
+      return state.set('activeIssue', new ReportedIssue());
     case ADD_MESSAGE.SUCCESS:
       const user = users.filter(user => user.id === action.data.author).first();
       const activity = new Activity({ type: 'message', user, ...action.data,});
       return state.updateIn([ 'activeIssue', 'activities' ], list => list.push(activity));
     case INIT:
       action.instance.issueType = issueTypes.length > 0 ? issueTypes[0].id : '';
-      return state.set('instance', new Assignment(action.instance));
+      return state.set('instance', new ReportedIssue(action.instance));
     case EDIT:
       return state.mergeIn([ 'instance' ], action.instance);
     default:
@@ -79,13 +79,6 @@ export default withRequestState({
 
 export const init = createInit(name);
 export const edit = createEdit(name);
-
-export function fetchAssignments(sessionId) {
-  return {
-    types: FETCH_ASSIGNMENTS.toArray(),
-    call: client => client.get(`/sessions/${ sessionId }/assign`)
-  }
-}
 
 export function resetActiveIsue() {
   return {
