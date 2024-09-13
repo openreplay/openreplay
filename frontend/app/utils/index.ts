@@ -504,7 +504,6 @@ export function truncateStringToFit(string: string, screenWidth: number, charWid
 
 let sendingRequest = false;
 export const handleSpotJWT = (jwt: string) => {
-  console.log(jwt, sendingRequest)
   let tries = 0;
   if (!jwt || sendingRequest) {
     return;

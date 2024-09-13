@@ -10,7 +10,7 @@ const SpotsListHeader = observer(
     onDelete,
     selectedCount,
     onClearSelection,
-    isEmpty,
+    tenantHasSpots,
     onRefresh,
   }: {
     onDelete: () => void;
@@ -18,6 +18,7 @@ const SpotsListHeader = observer(
     onClearSelection: () => void;
     onRefresh: () => void;
     isEmpty?: boolean;
+    tenantHasSpots: boolean;
   }) => {
     const { spotStore } = useStore();
 
@@ -52,7 +53,7 @@ const SpotsListHeader = observer(
           <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={16} />
         </div>
 
-        {isEmpty ? null : (
+        {tenantHasSpots ? null : (
           <div className="flex gap-2 items-center">
             <div className={'ml-auto'}>
               {selectedCount > 0 && (

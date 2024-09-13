@@ -89,6 +89,7 @@ function SpotsList() {
           selectedCount={selectedSpots.length}
           onClearSelection={clearSelection}
           isEmpty={isEmpty}
+          tenantHasSpots={spotStore.tenantHasSpots}
         />
       </div>
 
