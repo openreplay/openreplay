@@ -34,7 +34,9 @@ function SpotVideoContainer({
   checkReady: () => Promise<boolean>;
 }) {
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
-  const [processingState, setProcessingState] = React.useState<ProcessingState>(ProcessingState.Unchecked);
+  const [processingState, setProcessingState] = React.useState<ProcessingState>(
+    ProcessingState.Unchecked
+  );
   const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const playbackTime = React.useRef(0);
