@@ -60,7 +60,7 @@ type Update struct {
 type Spots interface {
 	Add(user *auth.User, name, comment string, duration int, crop []int) (*Spot, error)
 	GetByID(user *auth.User, spotID uint64) (*Spot, error)
-	Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
+	Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error)
 	UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error)
 	AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error)
 	Delete(user *auth.User, spotIds []uint64) error
@@ -176,14 +176,14 @@ func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
 	return spot, nil
 }
 
-func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
+func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
 	switch {
 	case user == nil:
-		return nil, 0, fmt.Errorf("user is required")
+		return nil, 0, false, fmt.Errorf("user is required")
 	case opts == nil:
-		return nil, 0, fmt.Errorf("get options are required")
+		return nil, 0, false, fmt.Errorf("get options are required")
 	case user.TenantID == 0: // Tenant ID is required even for public get functions
-		return nil, 0, fmt.Errorf("tenant id is required")
+		return nil, 0, false, fmt.Errorf("tenant id is required")
 	}
 
 	// Show the latest spots first by default
@@ -200,22 +200,22 @@ func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error)
 	return s.getAll(user, opts)
 }
 
-func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, error) {
+func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
 	sql := `SELECT COUNT(1) OVER () AS total, s.spot_id, s.name, u.email, s.duration, s.created_at 
 			FROM spots.spots s
 			JOIN public.users u ON s.user_id = u.user_id
 			WHERE s.tenant_id = $1 AND s.deleted_at IS NULL`
 	args := []interface{}{user.TenantID}
 	if opts.UserID != 0 {
-		sql += ` AND user_id = ` + fmt.Sprintf("$%d", len(args)+1)
+		sql += ` AND s.user_id = ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, opts.UserID)
 	}
 	if opts.NameFilter != "" {
-		sql += ` AND name ILIKE ` + fmt.Sprintf("$%d", len(args)+1)
+		sql += ` AND s.name ILIKE ` + fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, "%"+opts.NameFilter+"%")
 	}
 	if opts.Order != "" {
-		sql += ` ORDER BY created_at ` + opts.Order
+		sql += ` ORDER BY s.created_at ` + opts.Order
 	}
 	if opts.Limit != 0 {
 		sql += ` LIMIT ` + fmt.Sprintf("$%d", len(args)+1)
@@ -227,20 +227,38 @@ func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, err
 	}
 	rows, err := s.pgconn.Query(sql, args...)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, false, err
 	}
 	defer rows.Close()
 
-	var total uint64
-	var spots []*Spot
+	var (
+		total    uint64
+		spots    []*Spot
+		hasSpots bool
+	)
 	for rows.Next() {
 		spot := &Spot{}
 		if err = rows.Scan(&total, &spot.ID, &spot.Name, &spot.UserEmail, &spot.Duration, &spot.CreatedAt); err != nil {
-			return nil, 0, err
+			return nil, 0, false, err
 		}
 		spots = append(spots, spot)
 	}
-	return spots, total, nil
+	if len(spots) == 0 {
+		hasSpots = s.doesTenantHasSpots(user.TenantID)
+	} else {
+		hasSpots = true
+	}
+	return spots, total, hasSpots, nil
+}
+
+func (s *spotsImpl) doesTenantHasSpots(tenantID uint64) bool {
+	sql := `SELECT 1 FROM spots.spots s WHERE s.tenant_id = $1 AND s.deleted_at IS NULL LIMIT 1;`
+	var count uint64
+	if err := s.pgconn.QueryRow(sql, tenantID).Scan(&count); err != nil {
+		s.log.Info(context.Background(), "failed to check if tenant has spots: %s", err)
+		return false
+	}
+	return count > 0
 }
 
 func (s *spotsImpl) UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error) {
