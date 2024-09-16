@@ -7,7 +7,7 @@ export default class IssueReportsService extends BaseService {
     return await r.json();
   }
 
-  fetchMeta = async (projectId: number) => {
+  fetchMeta = async (projectId?: number) => {
     const r = await this.client.get(`/integrations/issues/${projectId}`)
 
     return await r.json();
@@ -15,6 +15,12 @@ export default class IssueReportsService extends BaseService {
 
   saveIssue = async (sessionId: string, data: any) => {
     const r = await this.client.post(`/sessions/${ sessionId }/assign/projects/${data.projectId}`, data)
+
+    return await r.json();
+  }
+
+  fetchIssueIntegrations = async (sessionId: string) => {
+    const r = await this.client.get(`/sessions/${ sessionId }/assign`)
 
     return await r.json();
   }

@@ -5,9 +5,11 @@ import { issueReportsService } from "App/services";
 export default class issueReportingStore {
   instance: ReportedIssue
   issueTypes: any[] = []
+  list: any[] = []
   issueTypeIcons: {}
   users: any[] = []
   projects: any[] = []
+  issuesFetched = false
   projectsFetched = false
   projectsLoading = false
   metaLoading = false
@@ -27,6 +29,11 @@ export default class issueReportingStore {
   editInstance = (data: any) => {
     const inst = this.instance
     this.instance = new ReportedIssue({ ...inst, ...data })
+  }
+
+  setList = (list: any[]) => {
+    this.list = list;
+    this.issuesFetched = true
   }
 
   setProjects = (projects: any[]) => {
@@ -85,6 +92,15 @@ export default class issueReportingStore {
       console.error(e)
     } finally {
       this.createLoading = false;
+    }
+  }
+
+  fetchList = async (sessionId: string) => {
+    try {
+      const { data } = await issueReportsService.fetchIssueIntegrations(sessionId);
+      this.setList(data);
+    } catch (e) {
+      console.error(e)
     }
   }
 }

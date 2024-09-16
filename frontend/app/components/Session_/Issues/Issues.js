@@ -3,11 +3,11 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { Icon, Popover } from 'UI';
-import { connect } from 'react-redux';
 import IssuesModal from './IssuesModal';
 
 function Issues(props) {
   const { issueReportingStore } = useStore();
+  const issuesIntegration = issueReportingStore.list
 
   const handleOpen = () => {
     issueReportingStore.init();
@@ -20,10 +20,8 @@ function Issues(props) {
     }
   };
 
-  const { sessionId, issuesIntegration } = props;
+  const { sessionId } = props;
   const provider = issuesIntegration[0]?.provider || '';
-
-  console.log(provider, sessionId, issuesIntegration)
   return (
     <Popover
       onOpen={handleOpen}
@@ -50,7 +48,4 @@ function Issues(props) {
   );
 }
 
-export default connect((state) => ({
-  issuesIntegration: state.getIn(['issues', 'list']) || {},
-  issuesFetched: state.getIn(['issues', 'issuesFetched']),
-}))(observer(Issues));
+export default observer(Issues);

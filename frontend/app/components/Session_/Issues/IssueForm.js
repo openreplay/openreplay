@@ -30,7 +30,6 @@ function IssueForm(props) {
   const edit = issueReportingStore.editInstance;
   const fetchMeta = issueReportingStore.fetchMeta;
 
-  console.log(users, instance, projects, issueTypes)
   React.useEffect(() => {
     init({
       projectId: projects[0] ? projects[0].id : '',
@@ -56,6 +55,7 @@ function IssueForm(props) {
       const { errors } = props;
       if (!errors || errors.length === 0) {
         init({ projectId: instance?.projectId });
+        void issueReportingStore.fetchList(sessionId);
         closeHandler();
       }
     });
