@@ -53,7 +53,7 @@ const SpotsListHeader = observer(
           <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={16} />
         </div>
 
-        {tenantHasSpots ? null : (
+        {tenantHasSpots ? (
           <div className="flex gap-2 items-center">
             <div className={'ml-auto'}>
               {selectedCount > 0 && (
@@ -91,7 +91,7 @@ const SpotsListHeader = observer(
               />
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
   }
