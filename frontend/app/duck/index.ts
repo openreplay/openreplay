@@ -9,7 +9,6 @@ import sources from './sources';
 import site from './site';
 import customFields from './customField';
 import integrations from './integrations';
-import errors from './errors';
 import funnels from './funnels';
 import customMetrics from './customMetrics';
 import search from './search';
@@ -22,7 +21,6 @@ const rootReducer = combineReducers({
   funnelFilters,
   site,
   customFields,
-  errors,
   funnels,
   customMetrics,
   search,

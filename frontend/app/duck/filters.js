@@ -6,7 +6,6 @@ import Event from 'Types/filter/event';
 import CustomFilter, { KEYS } from 'Types/filter/customFilter';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { fetchList as fetchSessionList } from './sessions';
-import { fetchList as fetchErrorsList } from './errors';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -85,7 +84,7 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_LIST.SUCCESS:
       const flows = List(action.data).map(SavedFilter)
       let _state = state.set('list', flows)
-      
+
       if (!hasFilterOptions) {
         const tmp = {}
         flows.forEach(i => {
@@ -119,8 +118,8 @@ const reducer = (state = initialState, action = {}) => {
     case SET_ACTIVE_KEY:
       return state.set('activeFilterKey', action.filterKey);
     case APPLY:
-      return action.fromUrl 
-        ? state.set('appliedFilter', 
+      return action.fromUrl
+        ? state.set('appliedFilter',
             Filter(action.filter)
             .set('events', state.getIn([ 'appliedFilter', 'events' ]))
           )
@@ -148,7 +147,7 @@ const reducer = (state = initialState, action = {}) => {
       if (action.index >= 0) // replacing an event
         return state.setIn([ 'appliedFilter', 'events', action.index ], event)
       else
-        return state.updateIn([ 'appliedFilter', 'events' ], list => action.single 
+        return state.updateIn([ 'appliedFilter', 'events' ], list => action.single
           ? List([ event ])
           : list.push(event));
     case REMOVE_EVENT:
@@ -166,7 +165,7 @@ const reducer = (state = initialState, action = {}) => {
       return state.setIn([ 'appliedFilter', 'events' ], List())
         .setIn([ 'appliedFilter', 'filters' ], List())
         .set('searchQuery', '');
-    
+
     case ADD_ATTRIBUTE:
       const filter = CustomFilter(action.filter);
 
@@ -174,7 +173,7 @@ const reducer = (state = initialState, action = {}) => {
         return state.setIn([ 'appliedFilter', 'filters', action.index], filter);
       else
         return state.updateIn([ 'appliedFilter', 'filters'], filters => filters.push(filter));
-        
+
     case EDIT_ATTRIBUTE:
       return state.setIn([ 'appliedFilter', 'filters', action.index, action.key ], action.value );
     case REMOVE_ATTRIBUTE:
@@ -209,7 +208,7 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
 
     // Hello AGILE!
   return isRoute(ERRORS_ROUTE, window.location.pathname)
-    ? dispatch(fetchErrorsList(filter))
+  ? null
     : dispatch(fetchSessionList(filter));
 }
 
@@ -386,7 +385,7 @@ export const edit = instance => {
 export const updateValue  = (filterType, index, value) => {
   return {
     type: UPDATE_VALUE,
-    filterType, 
+    filterType,
     index,
     value
   }

@@ -2,7 +2,7 @@ import { List, Map } from 'immutable';
 import Record from 'Types/Record';
 import { KEYS } from 'Types/filter/customFilter';
 import { TYPES } from 'Types/filter/event';
-import { 
+import {
   DATE_RANGE_VALUES,
   CUSTOM_RANGE,
   getDateRangeFromValue
@@ -52,7 +52,7 @@ export default Record({
       const js = this.toJS();
       js.filters = js.filters.map(filter => {
         filter.type = filter.key
-        
+
         delete filter.category
         delete filter.icon
         delete filter.operatorOptions
@@ -156,7 +156,6 @@ export const defaultFilters = [
       { label: 'UTM Source', key: KEYS.UTM_SOURCE, type: KEYS.UTM_SOURCE, filterKey: KEYS.UTM_SOURCE, icon: 'exclamation-circle', isFilter: true },
       { label: 'UTM Medium', key: KEYS.UTM_MEDIUM, type: KEYS.UTM_MEDIUM, filterKey: KEYS.UTM_MEDIUM, icon: 'exclamation-circle', isFilter: true },
       { label: 'UTM Campaign', key: KEYS.UTM_CAMPAIGN, type: KEYS.UTM_CAMPAIGN, filterKey: KEYS.UTM_CAMPAIGN, icon: 'exclamation-circle', isFilter: true },
-      
       { label: 'Fetch Requests', key: KEYS.FETCH, type: KEYS.FETCH, filterKey: KEYS.FETCH, icon: 'fetch', isFilter: false },
       { label: 'GraphQL Queries', key: KEYS.GRAPHQL, type: KEYS.GRAPHQL, filterKey: KEYS.GRAPHQL, icon: 'vendors/graphql', isFilter: false },
       { label: 'Store Actions', key: KEYS.STATEACTION, type: KEYS.STATEACTION, filterKey: KEYS.STATEACTION, icon: 'store', isFilter: false },
