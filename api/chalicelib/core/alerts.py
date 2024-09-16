@@ -12,6 +12,8 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 
+logger = logging.getLogger(__name__)
+
 
 def get(id):
     with pg_client.PostgresClient() as cur:
