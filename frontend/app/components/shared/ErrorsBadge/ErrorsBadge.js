@@ -1,34 +1,40 @@
-import React, { useEffect } from 'react'
-import { fetchNewErrorsCount } from 'Duck/errors'
-import { connect } from 'react-redux'
-import stl from './errorsBadge.module.css'
-import {
-  getDateRangeFromValue,
-  DATE_RANGE_VALUES,
-} from 'App/dateRange';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
+
+import { DATE_RANGE_VALUES, getDateRangeFromValue } from 'App/dateRange';
+import { useStore } from 'App/mstore';
+
+import stl from './errorsBadge.module.css';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 const weekRange = getDateRangeFromValue(DATE_RANGE_VALUES.LAST_7_DAYS);
-let intervalId = null
+let intervalId = null;
 
-function ErrorsBadge({ errorsStats = {}, fetchNewErrorsCount, projects }) {
+function ErrorsBadge({ projects }) {
+  const { errorsStore } = useStore();
+  const errorsStats = errorsStore.stats;
   useEffect(() => {
     if (projects.size === 0 || !!intervalId) return;
-    
-    const params = { startTimestamp: weekRange.start.ts, endTimestamp: weekRange.end.ts };
-    fetchNewErrorsCount(params)
+
+    const params = {
+      startTimestamp: weekRange.start.ts,
+      endTimestamp: weekRange.end.ts,
+    };
+    errorsStore.fetchNewErrorsCount(params);
 
     intervalId = setInterval(() => {
-      fetchNewErrorsCount(params);
+      errorsStore.fetchNewErrorsCount(params);
     }, AUTOREFRESH_INTERVAL);
-  }, [projects])
-  
+  }, [projects]);
+
   return errorsStats.unresolvedAndUnviewed > 0 ? (
-    <div>{<div className={stl.badge} />  }</div>
-  ) : ''
+    <div>{<div className={stl.badge} />}</div>
+  ) : (
+    ''
+  );
 }
 
-export default connect(state => ({
-  errorsStats: state.getIn([ 'errors', 'stats' ]),
-  projects: state.getIn([ 'site', 'list' ]),
-}), { fetchNewErrorsCount })(ErrorsBadge)
+export default connect((state) => ({
+  projects: state.getIn(['site', 'list']),
+}))(observer(ErrorsBadge));

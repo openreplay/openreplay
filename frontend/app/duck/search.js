@@ -14,7 +14,6 @@ import { List, Map } from 'immutable';
 import { DURATION_FILTER } from 'App/constants/storageKeys';
 import { errors as errorsRoute, isRoute } from 'App/routes';
 
-import { fetchList as fetchErrorsList } from './errors';
 import {
   editType,
   fetchListType,
@@ -252,7 +251,7 @@ export const reduceThenFetchResource =
 
     dispatch(updateLatestRequestTime());
     return isRoute(ERRORS_ROUTE, window.location.pathname)
-      ? dispatch(fetchErrorsList(filter))
+      ? null
       : dispatch(fetchSessionList(filter, forceFetch));
   };
 
@@ -470,7 +469,7 @@ export const refreshFilterOptions = () => (dispatch, getState) => {
   const currentProject = getState().getIn(['site', 'instance']);
   return dispatch({
     type: REFRESH_FILTER_OPTIONS,
-    isMobile: currentProject?.platform === 'ios'
+    isMobile: currentProject?.platform === 'ios',
   });
 };
 
