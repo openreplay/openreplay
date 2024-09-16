@@ -18,14 +18,15 @@ import WeeklyReportStore from './weeklyReportConfigStore';
 import AlertStore from './alertsStore';
 import FeatureFlagsStore from './featureFlagsStore';
 import UxtestingStore from './uxtestingStore';
-import TagWatchStore  from './tagWatchStore';
-import AiSummaryStore from "./aiSummaryStore";
-import AiFiltersStore from "./aiFiltersStore";
-import SpotStore from "./spotStore";
-import LoginStore from "./loginStore";
-import FilterStore from "./filterStore";
+import TagWatchStore from './tagWatchStore';
+import AiSummaryStore from './aiSummaryStore';
+import AiFiltersStore from './aiFiltersStore';
+import SpotStore from './spotStore';
+import LoginStore from './loginStore';
+import FilterStore from './filterStore';
 import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
+import CustomFieldStore from './customFieldStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -53,6 +54,7 @@ export class RootStore {
   filterStore: FilterStore;
   uiPlayerStore: UiPlayerStore;
   issueReportingStore: IssueReportingStore;
+  customFieldStore: CustomFieldStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -80,6 +82,7 @@ export class RootStore {
     this.filterStore = new FilterStore();
     this.uiPlayerStore = new UiPlayerStore();
     this.issueReportingStore = new IssueReportingStore();
+    this.customFieldStore = new CustomFieldStore();
   }
 
   initClient() {
