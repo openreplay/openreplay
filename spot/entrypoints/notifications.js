@@ -85,7 +85,7 @@ export default defineUnlistedScript(() => {
         copyToTheClipboard(event.data.url)
           .then(() => {
             createNotification({
-              data: { message: 'Recording opened in a new tab. Link is copied to clipboard.' }
+              data: { message: 'Link copied to clipboard and new tab opened' }
             });
           })
           .catch((e) => {
