@@ -1,13 +1,13 @@
 import { makeAutoObservable } from 'mobx';
 
 import apiClient from 'App/api_client';
-import { errorService } from 'App/services';
+import { errorService, sessionService } from 'App/services';
 
 import { ErrorInfo } from './types/error';
 
 export default class ErrorStore {
   instance: ErrorInfo | null = null;
-  instanceTrace: Record<string, any> = [];
+  instanceTrace: Record<string, any>[] = [];
   stats: Record<string, any> = {};
   sourcemapUploaded = false;
   isLoading = false;
@@ -65,8 +65,8 @@ export default class ErrorStore {
 
     try {
       const response = await errorService.fetchErrorTrace(id);
-      this.setInstanceTrace(response.data.trace);
-      this.setSourcemapUploaded(response.data.sourcemapUploaded);
+      this.setInstanceTrace(response.trace);
+      this.setSourcemapUploaded(response.sourcemapUploaded);
     } catch (error) {
       this.setErrorState(actionKey, error);
     } finally {

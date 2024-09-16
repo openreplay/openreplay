@@ -28,7 +28,7 @@ function MainSection(props) {
 
   const findSessions = () => {
     addFilterByKeyAndValue(FilterKey.ERROR, error.message);
-    this.props.history.push(sessionsRoute());
+    props.history.push(sessionsRoute());
   };
   return (
     <div

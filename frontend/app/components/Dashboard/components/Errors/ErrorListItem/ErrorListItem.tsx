@@ -17,10 +17,7 @@ function ErrorListItem(props: Props) {
     const { error, className = '' } = props;
 	// const { showModal } = useModal();
 
-	// const onClick = () => {
-	// 	alert('test')
-	// 	showModal(<ErrorDetailsModal />, { right: true });
-	// }
+
     return (
         <div
 			className={ cn("p-3 grid grid-cols-12 gap-4 cursor-pointer py-4 hover:bg-active-blue", className) }
@@ -49,7 +46,7 @@ function ErrorListItem(props: Props) {
 					<Bar name="Sessions" minPointSize={1} dataKey="count" fill="#A8E0DA" />
 				</BarChart>
 			</div>
-			<ErrorLabel 
+			<ErrorLabel
 				// className={stl.sessions}
 				topValue={ error.sessions }
 				bottomValue="Sessions"
@@ -84,6 +81,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         </div>
       );
     }
-  
+
     return null;
   };
