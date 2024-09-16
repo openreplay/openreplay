@@ -5,7 +5,7 @@ from decouple import config
 from . import smtp
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=config("LOGLEVEL", default=logging.info))
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 if smtp.has_smtp():
     logger.info("valid SMTP configuration found")
