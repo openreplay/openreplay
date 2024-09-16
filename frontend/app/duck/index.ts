@@ -9,7 +9,6 @@ import site from './site';
 import customFields from './customField';
 import integrations from './integrations';
 import errors from './errors';
-import customMetrics from './customMetrics';
 import search from './search';
 import liveSearch from './liveSearch';
 
@@ -20,13 +19,12 @@ const rootReducer = combineReducers({
   site,
   customFields,
   errors,
-  customMetrics,
   search,
   liveSearch,
   ...integrations,
-  ...sources,
+  ...sources
 });
 
 export type RootStore = ReturnType<typeof rootReducer>
 
-export default rootReducer
+export default rootReducer;
