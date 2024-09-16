@@ -28,9 +28,9 @@ function SubHeader(props) {
   const { store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
-  const { uxtestingStore } = useStore();
+  const { uxtestingStore, issueReportingStore } = useStore();
   const [hideTools, setHideTools] = React.useState(false);
-
+  const integrations = issueReportingStore.list;
   React.useEffect(() => {
     const hideDevtools = checkParam('hideTools');
     if (hideDevtools) {
@@ -39,7 +39,6 @@ function SubHeader(props) {
   }, []);
 
   const enabledIntegration = useMemo(() => {
-    const { integrations } = props;
     if (!integrations || !integrations.size) {
       return false;
     }
@@ -157,6 +156,5 @@ function SubHeader(props) {
 
 export default connect((state) => ({
   siteId: state.getIn(['site', 'siteId']),
-  integrations: state.getIn(['issues', 'list']),
   modules: state.getIn(['user', 'account', 'modules']) || []
 }))(observer(SubHeader));
