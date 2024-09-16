@@ -1,4 +1,3 @@
-import filters from 'App/duck/filters';
 import Filter from 'App/mstore/types/filter';
 import { FilterKey } from 'App/types/filter/filterType';
 import { observer } from 'mobx-react-lite';
