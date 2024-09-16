@@ -72,9 +72,9 @@ function ScopeForm({
           className={'flex flex-col gap-2 mt-4 '}
         >
           <Radio value={'full'}>
-            Session Replay & Debugging, Customer Support and more
+            Session Replay with DevTools, Co-browsing and Product Analytics
           </Radio>
-          <Radio value={'spot'}>Report bugs via Spot</Radio>
+          <Radio value={'spot'}>Bug reporting via Spot</Radio>
         </Radio.Group>
 
         <div className={'self-end'}>
