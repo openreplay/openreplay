@@ -11,14 +11,14 @@ import SideSection from './SideSection';
 
 function ErrorInfo(props) {
   const { errorStore } = useStore();
-
+  const instance = errorStore.instance;
   const ensureInstance = () => {
     if (errorStore.isLoading) return;
-    errorStore.fetch(props.errorId);
-    errorStore.fetchTrace(props.errorId);
+    errorStore.fetchError(props.errorId);
+    errorStore.fetchErrorTrace(props.errorId);
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     ensureInstance();
   }, [props.errorId]);
 
@@ -36,7 +36,7 @@ function ErrorInfo(props) {
       show={!loading && errorIdInStore == null}
     >
       <div className="flex w-full">
-        <Loader loading={loading} className="w-full">
+        <Loader loading={loading || !instance} className="w-full">
           <MainSection className="w-9/12" />
           <SideSection className="w-3/12" />
         </Loader>

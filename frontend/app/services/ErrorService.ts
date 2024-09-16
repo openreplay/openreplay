@@ -1,4 +1,5 @@
 import BaseService from './BaseService';
+import { IErrorStack } from 'Types/session/errorStack';
 
 export default class ErrorService extends BaseService {
   fetchError = async (id: string) => {
@@ -13,10 +14,11 @@ export default class ErrorService extends BaseService {
     return await r.json();
   };
 
-  fetchErrorTrace = async (id: string) => {
+  fetchErrorTrace = async (id: string): Promise<{ trace: IErrorStack[], sourcemapUploaded: boolean }> => {
     const r = await this.client.get(`/errors/${id}/sourcemaps`);
+    const { data } = await r.json()
 
-    return await r.json();
+    return data;
   };
 
   fetchNewErrorsCount = async (params: any) => {
@@ -24,4 +26,10 @@ export default class ErrorService extends BaseService {
 
     return await r.json();
   };
+
+  fetchErrorStats = async (errorId: string) => {
+    const r = await this.client.get(`/errors/${errorId}/stats`);
+
+    return await r.json();
+  }
 }
