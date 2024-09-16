@@ -1,3 +1,4 @@
+import chalicelib.utils.exp_ch_helper
 import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import ch_client
@@ -325,12 +326,13 @@ def get_top_values(project_id, event_type, event_key=None):
                         FROM raw;"""
         else:
             colname = TYPE_TO_COLUMN.get(event_type)
+            event_type = exp_ch_helper.get_event_type(event_type)
             query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
                                                      COUNT(1) OVER (PARTITION BY c_value) AS row_count,
                                                      COUNT(1) OVER ()                   AS total_count
                                      FROM experimental.events
                                      WHERE project_id = %(project_id)s
-                                       AND event_type = '{event_type.upper()}'
+                                       AND event_type = '{event_type}'
                                        AND isNotNull(c_value)
                                        AND notEmpty(c_value)
                                      ORDER BY row_count DESC

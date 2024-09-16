@@ -394,7 +394,10 @@ def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR
                                                               user_id=context.user_id)
     if error is not None:
         return error
-    data = integration.issue_handler.get_projects()
+    data = integration.issue_handler
+    if "errors" in data:
+        return data
+    data = data.get_projects()
     if "errors" in data:
         return data
     return {"data": data}
@@ -406,8 +409,11 @@ def get_integration_metadata(integrationProjectId: int, context: schemas.Current
                                                               user_id=context.user_id)
     if error is not None:
         return error
-    data = integration.issue_handler.get_metas(integrationProjectId)
-    if "errors" in data.keys():
+    data = integration
+    if "errors" in data:
+        return data
+    data = data.issue_handler.get_metas(integrationProjectId)
+    if "errors" in data:
         return data
     return {"data": data}
 
