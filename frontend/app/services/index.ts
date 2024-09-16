@@ -21,6 +21,7 @@ import SpotService from './spotService';
 import LoginService from "./loginService";
 import FilterService from "./FilterService";
 import IssueReportsService from "./IssueReportsService";
+import IntegrationsService from './IntegrationsService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -44,6 +45,7 @@ export const spotService = new SpotService();
 export const loginService = new LoginService();
 export const filterService = new FilterService();
 export const issueReportsService = new IssueReportsService();
+export const integrationsService = new IntegrationsService();
 
 export const services = [
   dashboardService,
@@ -68,4 +70,5 @@ export const services = [
   loginService,
   filterService,
   issueReportsService,
+  integrationsService,
 ];
