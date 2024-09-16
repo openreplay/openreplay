@@ -23,9 +23,9 @@ function PlayerBlock(props: IProps) {
     activeTab,
     fullView = false,
     setActiveTab,
+    jiraConfig
   } = props;
-  const { uiPlayerStore, issueReportingStore } = useStore();
-  const jiraConfig = issueReportingStore.list[0]
+  const { uiPlayerStore, } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
@@ -46,4 +46,5 @@ function PlayerBlock(props: IProps) {
 
 export default connect((state: Record<string, any>) => ({
   sessionId: state.getIn(['sessions', 'current']).sessionId,
+jiraConfig: state.getIn(['issues', 'list'])[0]
 }))(observer(PlayerBlock));

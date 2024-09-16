@@ -9,11 +9,9 @@ import { Tag } from 'antd'
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Popover } from 'antd';
 import SharePopup from 'Components/shared/SharePopup/SharePopup';
-import { useStore } from "App/mstore";
 
 function SubHeader(props: any) {
-  const { issueReportingStore } = useStore()
-  const integrations = issueReportingStore.list
+  const integrations = props.integrations;
 
   const enabledIntegration = useMemo(() => {
     if (!integrations || !integrations.length) {
@@ -60,5 +58,6 @@ function SubHeader(props: any) {
 export default connect((state: any) => ({
   siteId: state.getIn(['site', 'siteId']),
   modules: state.getIn(['user', 'account', 'modules']) || [],
+  integrations: state.getIn(['issues', 'list']),
   isIOS: state.getIn(['sessions', 'current']).platform === 'ios',
 }))(observer(SubHeader));
