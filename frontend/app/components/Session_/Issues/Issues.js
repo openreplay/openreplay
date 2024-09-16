@@ -1,5 +1,5 @@
 import { Button, Tooltip } from 'antd';
-import { observer } from 'mobx-react-lite';
+import { connect } from 'react-redux';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { Icon, Popover } from 'UI';
@@ -7,7 +7,6 @@ import IssuesModal from './IssuesModal';
 
 function Issues(props) {
   const { issueReportingStore } = useStore();
-  const issuesIntegration = issueReportingStore.list
 
   const handleOpen = () => {
     issueReportingStore.init();
@@ -20,8 +19,9 @@ function Issues(props) {
     }
   };
 
-  const { sessionId } = props;
-  const provider = issuesIntegration[0]?.provider || '';
+  const { sessionId, issuesIntegration } = props;
+  const provider = issuesIntegration?.first().provider || '';
+
   return (
     <Popover
       onOpen={handleOpen}
@@ -39,7 +39,7 @@ function Issues(props) {
         <Tooltip title={'Create Issue'} placement="bottom">
           <Button size={'small'} className={'flex items-center justify-center'}>
             <Icon
-              name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`}
+              name={`integrations/${provider ?? 'github'}`}
             />
           </Button>
         </Tooltip>
@@ -48,4 +48,7 @@ function Issues(props) {
   );
 }
 
-export default observer(Issues);
+export default connect((state) => ({
+  issuesIntegration: state.getIn(['issues', 'list']) || {},
+  issuesFetched: state.getIn(['issues', 'issuesFetched']),
+}))(Issues);
