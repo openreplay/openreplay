@@ -41,6 +41,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
             except Exception as e:
                 self._issue_handler = None
                 self.integration["valid"] = False
+                return {"errors": ["Something went wrong, please check your JIRA credentials."]}
         return self._issue_handler
 
     # TODO: remove this once jira-oauth is done
