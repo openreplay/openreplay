@@ -93,8 +93,6 @@ export function remove(id) {
     };
 }
 
-// https://api.openreplay.com/5587/integrations/msteams/notify/315/sessions/7856803626558104
-//
 export function sendMsTeamsMsg({ integrationId, entity, entityId, data }) {
     return {
         types: SEND_MSG.toArray(),

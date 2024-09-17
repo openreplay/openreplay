@@ -2,10 +2,21 @@ import { makeAutoObservable } from 'mobx';
 
 import { validateURL } from 'App/validate';
 
+import {
+  ACCESS_KEY_ID_LENGTH,
+  API_KEY_ID_LENGTH,
+  API_KEY_LENGTH,
+  SECRET_ACCESS_KEY_LENGTH,
+  awsRegionLabels,
+  sumoRegionLabels,
+  tokenRE,
+} from './consts';
+
 export interface Integration {
   validate(): boolean;
   exists(): boolean;
   toData(): Record<string, any>;
+  edit(data: Record<string, any>): void;
 }
 
 export class SentryInt implements Integration {
@@ -17,9 +28,16 @@ export class SentryInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(this.organizationSlug && this.projectSlug && this.token);
@@ -47,9 +65,16 @@ export class DatadogInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(this.apiKey && this.applicationKey);
@@ -76,9 +101,16 @@ export class StackDriverInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(
@@ -106,9 +138,16 @@ export class RollbarInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(this.accessToken);
@@ -135,9 +174,16 @@ export class NewRelicInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(this.applicationId && this.xQueryKey);
@@ -165,9 +211,16 @@ export class Bugsnag implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(
@@ -198,9 +251,16 @@ export class Cloudwatch implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(
@@ -237,9 +297,16 @@ export class ElasticSearchInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   private validateKeys() {
     return Boolean(
@@ -285,9 +352,16 @@ export class SumoLogic implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return Boolean(this.accessKey && this.accessId);
@@ -316,9 +390,16 @@ export class JiraInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validateFetchProjects() {
     return this.username !== '' && this.token !== '' && validateURL(this.url);
@@ -350,9 +431,16 @@ export class GithubInt implements Integration {
   constructor(config: any) {
     Object.assign(this, {
       ...config,
-      projectId: config.projectId || -1,
+      projectId: config?.projectId ?? -1,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validate() {
     return this.token !== '';
@@ -381,7 +469,14 @@ export class IssueTracker implements Integration {
     Object.assign(this, {
       ...config,
     });
+    makeAutoObservable(this);
   }
+
+  edit = (data: Record<string, any>) => {
+    Object.keys(data).forEach((key) => {
+      this[key] = data[key];
+    });
+  };
 
   validateFetchProjects() {
     return this.username !== '' && this.token !== '' && validateURL(this.url);
@@ -404,41 +499,3 @@ export class IssueTracker implements Integration {
     };
   }
 }
-
-export const sumoRegionLabels = {
-  au: 'Asia Pacific (Sydney)',
-  ca: 'Canada (Central)',
-  de: 'EU (Frankfurt)',
-  eu: 'EU (Ireland)',
-  fed: 'US East (N. Virginia)',
-  in: 'Asia Pacific (Mumbai)',
-  jp: 'Asia Pacific (Tokyo)',
-  us1: 'US East (N. Virginia)',
-  us2: 'US West (Oregon)',
-};
-export const API_KEY_ID_LENGTH = 5;
-export const API_KEY_LENGTH = 5;
-export const SECRET_ACCESS_KEY_LENGTH = 40;
-export const ACCESS_KEY_ID_LENGTH = 20;
-export const tokenRE =
-  /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/i;
-export const awsRegionLabels = {
-  'us-east-1': 'US East (N. Virginia)',
-  'us-east-2': 'US East (Ohio)',
-  'us-west-1': 'US West (N. California)',
-  'us-west-2': 'US West (Oregon)',
-  'ap-east-1': 'Asia Pacific (Hong Kong)',
-  'ap-south-1': 'Asia Pacific (Mumbai)',
-  'ap-northeast-2': 'Asia Pacific (Seoul)',
-  'ap-southeast-1': 'Asia Pacific (Singapore)',
-  'ap-southeast-2': 'Asia Pacific (Sydney)',
-  'ap-northeast-1': 'Asia Pacific (Tokyo)',
-  'ca-central-1': 'Canada (Central)',
-  'eu-central-1': 'EU (Frankfurt)',
-  'eu-west-1': 'EU (Ireland)',
-  'eu-west-2': 'EU (London)',
-  'eu-west-3': 'EU (Paris)',
-  'eu-north-1': 'EU (Stockholm)',
-  'me-south-1': 'Middle East (Bahrain)',
-  'sa-east-1': 'South America (São Paulo)',
-};

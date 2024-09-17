@@ -9,7 +9,6 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Note } from 'App/services/NotesService';
-import { fetchList } from 'Duck/integrations';
 import { Loader, Modal } from 'UI';
 
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
@@ -36,10 +35,9 @@ let playerInst: IPlayerContext['player'] | undefined;
 function WebPlayer(props: any) {
   const {
     session,
-    fetchList,
     startedAt,
   } = props;
-  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore } = useStore();
+  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const toggleFullscreen = uiPlayerStore.toggleFullscreen;
   const closeBottomBlock = uiPlayerStore.closeBottomBlock;
@@ -72,7 +70,7 @@ function WebPlayer(props: any) {
       | Record<string, any>
       | undefined;
     const usePrefetched = props.prefetched && mobData?.data;
-    fetchList('issues');
+    void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone);
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
@@ -256,7 +254,5 @@ export default connect(
     jwt: state.getIn(['user', 'jwt']),
     startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
   }),
-  {
-    fetchList,
-  }
+
 )(withLocationHandlers()(observer(WebPlayer)));
