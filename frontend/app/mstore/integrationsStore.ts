@@ -52,30 +52,30 @@ class NamedIntegrationStore<T extends Integration> {
     makeAutoObservable(this);
   }
 
-  setInstance(instance: T) {
+  setInstance(instance: T): void {
     this.instance = instance;
   }
 
-  setList(list: T[]) {
+  setList(list: T[]): void {
     this.list = list;
   }
 
-  setFetched(fetched: boolean) {
+  setFetched(fetched: boolean): void {
     this.fetched = fetched;
   }
 
-  setIssuesFetched(issuesFetched: boolean) {
+  setIssuesFetched(issuesFetched: boolean): void {
     this.issuesFetched = issuesFetched;
   }
 
-  fetchIntegrations = async () => {
+  fetchIntegrations = async (): Promise<void> => {
     const { data } = await integrationsService.fetchList(this.name);
     this.setList(
       data.map((config: Record<string, any>) => new this.NamedType(config))
     );
   };
 
-  fetchIntegration = async (siteId: string) => {
+  fetchIntegration = async (siteId: string): void => {
     const { data } = await integrationsService.fetchIntegration(
       this.name,
       siteId
@@ -83,7 +83,7 @@ class NamedIntegrationStore<T extends Integration> {
     this.setInstance(new this.NamedType(data));
   };
 
-  saveIntegration(name: string, siteId: string) {
+  saveIntegration(name: string, siteId: string): void {
     if (!this.instance) return;
     const response = integrationsService.saveIntegration(
       name,
@@ -93,16 +93,16 @@ class NamedIntegrationStore<T extends Integration> {
     return;
   }
 
-  edit(data: T) {
+  edit(data: T): void {
     this.setInstance(data);
   }
 
   deleteIntegration(siteId: string) {
     if (!this.instance) return;
-    integrationsService.removeIntegration(this.name, siteId);
+    return integrationsService.removeIntegration(this.name, siteId);
   }
 
-  init(config: Record<string, any>) {
+  init(config: Record<string, any>): void {
     this.instance = new this.NamedType(config);
   }
 }
