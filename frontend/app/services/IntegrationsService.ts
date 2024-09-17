@@ -1,7 +1,7 @@
 import BaseService from "./BaseService";
 
 export default class IntegrationsService extends BaseService {
-  fetchList = async (name) => {
+  fetchList = async (name: string) => {
     const r = await this.client.get(`/integrations/${name}`)
     const data = await r.json()
 
@@ -30,4 +30,5 @@ export default class IntegrationsService extends BaseService {
     const res = await r.json()
 
     return res
+  }
 }
