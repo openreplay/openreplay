@@ -11,7 +11,6 @@ import { KEYS } from 'Types/filter/customFilter';
 import { capitalize } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { fetchList as fetchMeta } from 'Duck/customField';
 import AssistSearchField from 'App/components/Assist/AssistSearchField';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
@@ -19,7 +18,9 @@ import Session from 'App/mstore/types/session';
 
 const PER_PAGE = 10;
 
-interface OwnProps {}
+interface OwnProps {
+}
+
 interface ConnectProps {
   loading: boolean;
   metaListLoading: boolean;
@@ -34,30 +35,30 @@ interface ConnectProps {
   updateCurrentPage: (page: number) => void;
   applyFilter: (filter: any) => void;
   onAdd: () => void;
-  fetchMeta: () => void;
 }
 
 type Props = OwnProps & ConnectProps;
 
 function AssistSessionsModal(props: Props) {
-  const { assistMultiviewStore } = useStore();
-  const { loading, list, metaList = [], filter, currentPage, total, onAdd, fetchMeta } = props;
+  const { assistMultiviewStore, customFieldStore } = useStore();
+  const { loading, list, filter, currentPage, total, onAdd } = props;
   const onUserClick = () => false;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
+  const metaList = customFieldStore.list;
 
   const sortOptions = metaList
     .map((i: any) => ({
       label: capitalize(i),
-      value: i,
-    }))
-    .toJS();
+      value: i
+    }));
 
   React.useEffect(() => {
     if (total === 0) {
       reloadSessions();
     }
-    fetchMeta();
+    // fetchMeta();
+    customFieldStore.fetchList();
   }, []);
   const reloadSessions = () => props.applyFilter({ ...filter });
   const onSortChange = ({ value }: any) => {
@@ -109,37 +110,37 @@ function AssistSessionsModal(props: Props) {
       <LiveSessionSearch />
       <div className="my-4" />
       <Loader loading={loading}>
-        <div className={'overflow-y-scroll'} style={{ maxHeight: '85vh'}}>
-        {list.map((session) => (
-          <React.Fragment key={session.sessionId}>
-            <div
-              className={cn(
-                'rounded bg-white mb-2 overflow-hidden border',
-                assistMultiviewStore.sessions.findIndex(
-                  (s: Record<string, any>) => s.sessionId === session.sessionId
-                ) !== -1
-                  ? 'cursor-not-allowed opacity-60'
-                  : ''
-              )}
-            >
-              <SessionItem
-                key={session.sessionId}
-                session={session}
-                live
-                hasUserFilter={hasUserFilter}
-                onUserClick={onUserClick}
-                metaList={metaList}
-                isDisabled={
+        <div className={'overflow-y-scroll'} style={{ maxHeight: '85vh' }}>
+          {list.map((session) => (
+            <React.Fragment key={session.sessionId}>
+              <div
+                className={cn(
+                  'rounded bg-white mb-2 overflow-hidden border',
                   assistMultiviewStore.sessions.findIndex(
                     (s: Record<string, any>) => s.sessionId === session.sessionId
                   ) !== -1
-                }
-                isAdd
-                onClick={() => onSessionAdd(session)}
-              />
-            </div>
-          </React.Fragment>
-        ))}
+                    ? 'cursor-not-allowed opacity-60'
+                    : ''
+                )}
+              >
+                <SessionItem
+                  key={session.sessionId}
+                  session={session}
+                  live
+                  hasUserFilter={hasUserFilter}
+                  onUserClick={onUserClick}
+                  metaList={metaList}
+                  isDisabled={
+                    assistMultiviewStore.sessions.findIndex(
+                      (s: Record<string, any>) => s.sessionId === session.sessionId
+                    ) !== -1
+                  }
+                  isAdd
+                  onClick={() => onSessionAdd(session)}
+                />
+              </div>
+            </React.Fragment>
+          ))}
         </div>
       </Loader>
 
@@ -166,12 +167,11 @@ export default connect(
     total: state.getIn(['liveSearch', 'total']),
     currentPage: state.getIn(['liveSearch', 'currentPage']),
     metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    sort: state.getIn(['liveSearch', 'sort']),
+    sort: state.getIn(['liveSearch', 'sort'])
   }),
   {
     applyFilter,
     addFilterByKeyAndValue,
-    updateCurrentPage,
-    fetchMeta,
+    updateCurrentPage
   }
 )(observer(AssistSessionsModal));

@@ -8,11 +8,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { withStore } from 'App/mstore';
+import { useStore, withStore } from 'App/mstore';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { clearSearch } from 'Duck/search';
 import { setSiteId } from 'Duck/site';
@@ -31,7 +30,6 @@ interface Props extends RouteComponentProps {
   sites: Site[];
   siteId: string;
   setSiteId: (siteId: string) => void;
-  fetchMetadata: () => void;
   clearSearch: (isSession: boolean) => void;
   clearSearchLive: () => void;
   initProject: (data: any) => void;
@@ -46,10 +44,11 @@ function ProjectDropdown(props: Props) {
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
+  const { customFieldStore } = useStore();
 
-  const handleSiteChange = (newSiteId: string) => {
+  const handleSiteChange = async (newSiteId: string) => {
     props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    props.fetchMetadata();
+    await customFieldStore.fetchList(newSiteId)
     props.clearSearch(location.pathname.includes('/sessions'));
     props.clearSearchLive();
 
@@ -151,7 +150,6 @@ const mapStateToProps = (state: any) => ({
 export default withRouter(
   connect(mapStateToProps, {
     setSiteId,
-    fetchMetadata,
     clearSearch,
     clearSearchLive,
     initProject,

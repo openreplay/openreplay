@@ -15,8 +15,10 @@ import customFields from 'Components/Client/CustomFields';
 
 class CustomFieldStore {
   isLoading: boolean = false;
+  isAllLoading: boolean = false;
   isSaving: boolean = false;
   list: CustomField[] = [];
+  allList: CustomField[] = [];
   instance: CustomField = new CustomField();
   sources: CustomField[] = [];
   fetchedMetadata: boolean = false;
@@ -43,7 +45,7 @@ class CustomFieldStore {
   async fetchListActive(siteId?: string): Promise<any> {
     this.isLoading = true;
     try {
-      const response = await customFieldService.get(siteId);
+      const response = await customFieldService.fetchList(siteId);
       clearMetaFilters();
       response.forEach((item: any) => {
         addElementToFiltersMap(FilterCategory.METADATA, '_' + item.key);

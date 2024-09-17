@@ -13,7 +13,6 @@ import {
   checkForLatestSessions
 } from 'Duck/search';
 import { numberWithCommas } from 'App/utils';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { toggleFavorite } from 'Duck/sessions';
 import SessionDateRange from './SessionDateRange';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
@@ -51,7 +50,6 @@ interface Props extends RouteComponentProps {
   updateCurrentPage: (page: number) => void;
   setScrollPosition: (scrollPosition: number) => void;
   fetchSessions: (filters: any, force: boolean) => void;
-  fetchMetadata: () => void;
   updateProjectRecordingStatus: (siteId: string, status: boolean) => void;
   activeTab: any;
   isEnterprise?: boolean;
@@ -86,6 +84,7 @@ function SessionList(props: Props) {
   const isVault = isBookmark && isEnterprise;
   const activeSite: any = sites.find((s: any) => s.id === siteId);
   const hasNoRecordings = !activeSite || !activeSite.recorded;
+
 
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
@@ -165,7 +164,6 @@ function SessionList(props: Props) {
         props.fetchSessions(null, true);
       }, 300);
     }
-    // props.fetchMetadata();
 
     return () => {
       props.setScrollPosition(window.scrollY);
@@ -304,7 +302,6 @@ export default connect(
     addFilterByKeyAndValue,
     setScrollPosition,
     fetchSessions,
-    fetchMetadata,
     checkForLatestSessions,
     toggleFavorite,
     updateProjectRecordingStatus
