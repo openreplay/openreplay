@@ -8,7 +8,6 @@ import usePageTitle from 'App/hooks/usePageTitle';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute } from 'App/routes';
 import MobilePlayer from 'Components/Session/MobilePlayer';
-import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { clearCurrentSession, fetchV2 } from 'Duck/sessions';
 import { Link, Loader, NoContent } from 'UI';
 
@@ -89,7 +88,6 @@ export default withPermissions(
       };
     },
     {
-      fetchSlackList,
       fetchV2,
       clearCurrentSession,
     }

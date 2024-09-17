@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Modal, Loader } from 'UI';
-import { fetchList } from 'Duck/integrations';
 import { createIOSPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
@@ -24,7 +23,7 @@ let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
   const { session, fetchList } = props;
-  const { notesStore, sessionStore, uiPlayerStore } = useStore();
+  const { notesStore, sessionStore, uiPlayerStore, integrationsStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
@@ -37,7 +36,7 @@ function MobilePlayer(props: any) {
   useEffect(() => {
     playerInst = undefined;
     if (!session.sessionId || contextValue.player !== undefined) return;
-    fetchList('issues');
+    void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone);
     const [IOSPlayerInst, PlayerStore] = createIOSPlayer(
       session,
