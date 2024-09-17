@@ -65,15 +65,14 @@ export default defineUnlistedScript(() => {
     notification.innerHTML = notificationContent;
     document.body.appendChild(notification);
 
-    // Force reflow to ensure styles are applied
-    notification.offsetHeight; // Trigger reflow
+    notification.offsetHeight;
 
     setTimeout(() => {
       notification.style.opacity = "0";
       setTimeout(() => {
         document.body.removeChild(notification);
       }, 300);
-    }, 4000);
+    }, 4500);
   }
 
   function initNotificationListener() {
