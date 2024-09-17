@@ -9,14 +9,12 @@ import { INDEXES } from 'App/constants/zindex';
 import { connect } from 'react-redux';
 import { logout } from 'Duck/user';
 import { init as initSite } from 'Duck/site';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 const { Header } = Layout;
 
 interface Props {
   account: any;
   siteId: string;
-  fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
 }
 
@@ -49,7 +47,7 @@ function TopHeader(props: Props) {
         alignItems: 'center',
         height: '60px'
       }}
-      className='justify-between'
+      className="justify-between"
     >
       <Space>
         <div
@@ -57,14 +55,14 @@ function TopHeader(props: Props) {
             settingsStore.updateMenuCollapsed(!settingsStore.menuCollapsed);
           }}
           style={{ paddingTop: '4px' }}
-          className='cursor-pointer'
+          className="cursor-pointer"
         >
           <Tooltip title={settingsStore.menuCollapsed ? 'Show Menu' : 'Hide Menu'} mouseEnterDelay={1}>
             <Icon name={settingsStore.menuCollapsed ? 'side_menu_closed' : 'side_menu_open'} size={20} />
           </Tooltip>
         </div>
 
-        <div className='flex items-center'>
+        <div className="flex items-center">
           <Logo siteId={siteId} />
         </div>
       </Space>
@@ -81,8 +79,7 @@ const mapStateToProps = (state: any) => ({
 
 const mapDispatchToProps = {
   onLogoutClick: logout,
-  initSite,
-  fetchMetadata
+  initSite
 };
 
 export default connect(

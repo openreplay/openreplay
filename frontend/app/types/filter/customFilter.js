@@ -108,7 +108,6 @@ export default Record({
   key: '',
   operator: 'is',
   label: '',
-  icon: '',
   type: '',
   value: [""],
   custom: '',

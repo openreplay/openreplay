@@ -10,14 +10,13 @@ import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
   JWT_PARAM,
-  SPOT_ONBOARDING,
+  SPOT_ONBOARDING
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
-import { withStore } from 'App/mstore';
+import { useStore, withStore } from 'App/mstore';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { setSessionPath } from 'Duck/sessions';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { init as initSite } from 'Duck/site';
@@ -43,7 +42,6 @@ interface RouterProps
   };
   mstore: any;
   setJwt: (params: { jwt: string; spotJwt: string | null }) => any;
-  fetchMetadata: (siteId: string) => void;
   initSite: (site: any) => void;
   scopeSetup: boolean;
   localSpotJwt: string | null;
@@ -62,8 +60,9 @@ const Router: React.FC<RouterProps> = (props) => {
     setSessionPath,
     scopeSetup,
     localSpotJwt,
-    logout,
+    logout
   } = props;
+  const { customFieldStore } = useStore();
 
   const params = new URLSearchParams(location.search);
   const spotCb = params.get('spotCallback');
@@ -175,12 +174,16 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
-    if (siteId && siteId !== lastFetchedSiteIdRef.current) {
-      const activeSite = sites.find((s) => s.id == siteId);
-      props.initSite(activeSite);
-      props.fetchMetadata(siteId);
-      lastFetchedSiteIdRef.current = siteId;
-    }
+    const fetchData = async () => {
+      if (siteId && siteId !== lastFetchedSiteIdRef.current) {
+        const activeSite = sites.find((s) => s.id == siteId);
+        props.initSite(activeSite);
+        lastFetchedSiteIdRef.current = activeSite.id;
+        await customFieldStore.fetchListActive(siteId + '');
+      }
+    };
+
+    fetchData();
   }, [siteId]);
 
   const lastFetchedSiteIdRef = useRef<any>(null);
@@ -232,7 +235,7 @@ const mapStateToProps = (state: Map<string, any>) => {
   const userInfoLoading = state.getIn([
     'user',
     'fetchUserInfoRequest',
-    'loading',
+    'loading'
   ]);
   const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
   const scopeSetup = getScope(state) === 0;
@@ -256,7 +259,7 @@ const mapStateToProps = (state: Map<string, any>) => {
     tenants: state.getIn(['user', 'tenants']),
     isEnterprise:
       state.getIn(['user', 'account', 'edition']) === 'ee' ||
-      state.getIn(['user', 'authDetails', 'edition']) === 'ee',
+      state.getIn(['user', 'authDetails', 'edition']) === 'ee'
   };
 };
 
@@ -265,9 +268,8 @@ const mapDispatchToProps = {
   setSessionPath,
   fetchSiteList,
   setJwt,
-  fetchMetadata,
   initSite,
-  logout,
+  logout
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

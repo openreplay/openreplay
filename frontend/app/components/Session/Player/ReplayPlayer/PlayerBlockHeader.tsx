@@ -16,7 +16,6 @@ import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from './playerBlockHeader.module.css';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { IFRAME } from 'App/constants/storageKeys';
 
 const SESSIONS_ROUTE = sessionsRoute();
@@ -25,7 +24,7 @@ const SESSIONS_ROUTE = sessionsRoute();
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore } = useStore()
+  const { uxtestingStore, customFieldStore } = useStore()
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
   const { width = 0, height = 0, showEvents = false } = playerState
 
@@ -39,14 +38,13 @@ function PlayerBlockHeader(props: any) {
     activeTab,
     history,
     sessionPath,
-    fetchMetadata,
   } = props;
 
   React.useEffect(() => {
     const iframe = localStorage.getItem(IFRAME) || false;
     setHideBack(!!iframe && iframe === 'true');
 
-    if (metaList.size === 0) fetchMetadata();
+    if (metaList.size === 0) customFieldStore.fetchList();
   }, []);
 
   const backHandler = () => {
@@ -146,7 +144,6 @@ const PlayerHeaderCont = connect(
   {
     toggleFavorite,
     setSessionPath,
-    fetchMetadata,
   }
 )(observer(PlayerBlockHeader));
 
