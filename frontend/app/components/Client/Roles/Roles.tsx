@@ -23,11 +23,14 @@ interface Props {
     permissionsMap: any;
     removeErrors: any;
     resetErrors: () => void;
-    projectsMap: any;
 }
 
 function Roles(props: Props) {
-    const { roleStore } = useStore();
+    const { roleStore, projectsStore } = useStore();
+    const projectsMap = projectsStore.list.reduce((acc: any, p: any) => {
+        acc[p.id] = p.name;
+        return acc;
+    }, {})
     const roles = roleStore.list;
     const loading = roleStore.loading;
     const init = roleStore.init;
@@ -36,7 +39,7 @@ function Roles(props: Props) {
     roleStore.permissions.forEach((p: any) => {
         permissionsMap[p.value] = p.text;
     });
-    const { account, projectsMap } = props;
+    const { account } = props;
     const { showModal, hideModal } = useModal();
     const isAdmin = account.admin || account.superAdmin;
 
@@ -108,13 +111,8 @@ function Roles(props: Props) {
 
 export default connect(
     (state: any) => {
-        const projects = state.getIn(['site', 'list']);
         return {
             account: state.getIn(['user', 'account']),
-            projectsMap: projects.reduce((acc: any, p: any) => {
-                acc[p.id] = p.name;
-                return acc;
-            }, {}),
         };
     }
 )(withPageTitle('Roles & Access - OpenReplay Preferences')(observer(Roles)));

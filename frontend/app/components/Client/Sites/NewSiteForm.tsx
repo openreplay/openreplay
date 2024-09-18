@@ -3,22 +3,18 @@ import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
-import { withStore } from 'App/mstore';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { clearSearch } from 'Duck/search';
-import { edit, fetchList, remove, save, update } from 'Duck/site';
-import { setSiteId } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { Button, Form, Icon, Input, SegmentSelection } from 'UI';
 import { confirm } from 'UI';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 import styles from './siteForm.module.css';
 
 type OwnProps = {
   onClose: (arg: any) => void;
-  mstore: any;
-  canDelete: boolean;
 };
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
@@ -26,36 +22,35 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & RouteComponentProps & OwnProps;
 
 const NewSiteForm = ({
-  site,
-  loading,
-  save,
-  remove,
-  edit,
-  update,
   pushNewSite,
-  fetchList,
-  setSiteId,
   clearSearch,
   clearSearchLive,
   location: { pathname },
   onClose,
-  mstore,
-  activeSiteId,
-  canDelete,
 }: Props) => {
+  const mstore = useStore();
+  const { projectsStore } = mstore;
+  const activeSiteId = projectsStore.active?.id
+  const site = projectsStore.instance;
+  const siteList = projectsStore.list;
+  const loading = projectsStore.loading;
+  const canDelete = siteList.length > 1;
+  const setSiteId = projectsStore.setSiteId;
+  const saveProject = projectsStore.save;
+  const fetchList = projectsStore.fetchList;
   const [existsError, setExistsError] = useState(false);
 
   useEffect(() => {
-    if (pathname.includes('onboarding')) {
+    if (pathname.includes('onboarding') && site?.id) {
       setSiteId(site.id);
     }
+    if (!site) projectsStore.initProject({});
   }, []);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-
-    if (site.exists()) {
-      update(site, site.id).then((response: any) => {
+    if (site?.id && site.exists()) {
+      projectsStore.updateProject( site.id, site.toData()).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           if (!pathname.includes('onboarding')) {
@@ -67,7 +62,7 @@ const NewSiteForm = ({
         }
       });
     } else {
-      save(site).then((response: any) => {
+      saveProject(site!).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           clearSearch();
@@ -89,8 +84,9 @@ const NewSiteForm = ({
         confirmButton: 'Yes, delete',
         cancelButton: 'Cancel',
       })
+      && site?.id
     ) {
-      remove(site.id).then(() => {
+      projectsStore.removeProject(site.id).then(() => {
         onClose(null);
         if (site.id === activeSiteId) {
           setSiteId(null);
@@ -103,9 +99,12 @@ const NewSiteForm = ({
     target: { name, value },
   }: ChangeEvent<HTMLInputElement>) => {
     setExistsError(false);
-    edit({ [name]: value });
+    projectsStore.editInstance({ [name]: value });
   };
 
+  if (!site) {
+    return null
+  }
   return (
     <div
       className="bg-white h-screen overflow-y-auto"
@@ -116,7 +115,7 @@ const NewSiteForm = ({
       </h3>
       <Form
         className={styles.formWrapper}
-        onSubmit={site.validate() && onSubmit}
+        onSubmit={site.validate && onSubmit}
       >
         <div className={styles.content}>
           <Form.Field>
@@ -146,7 +145,7 @@ const NewSiteForm = ({
                 ]}
                 value={site.platform}
                 onChange={(value) => {
-                  edit({ platform: value });
+                  projectsStore.editInstance({ platform: value });
                 }}
               />
             </div>
@@ -157,9 +156,9 @@ const NewSiteForm = ({
               type="submit"
               className="float-left mr-2"
               loading={loading}
-              disabled={!site.validate()}
+              disabled={!site.validate}
             >
-              {site.exists() ? 'Update' : 'Add'}
+              {site?.exists() ? 'Update' : 'Add'}
             </Button>
             {site.exists() && (
               <Button
@@ -183,26 +182,11 @@ const NewSiteForm = ({
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  activeSiteId: state.getIn(['site', 'active', 'id']),
-  site: state.getIn(['site', 'instance']),
-  siteList: state.getIn(['site', 'list']),
-  loading:
-    state.getIn(['site', 'save', 'loading']) ||
-    state.getIn(['site', 'remove', 'loading']),
-  canDelete: state.getIn(['site', 'list']).size > 1,
-});
-
+const mapStateToProps = null;
 const connector = connect(mapStateToProps, {
-  save,
-  remove,
-  edit,
-  update,
   pushNewSite,
-  fetchList,
-  setSiteId,
   clearSearch,
   clearSearchLive,
 });
 
-export default connector(withRouter(withStore(NewSiteForm)));
+export default connector(withRouter(observer(NewSiteForm)));

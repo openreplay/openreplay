@@ -17,7 +17,8 @@ import { toggleFavorite } from 'Duck/sessions';
 import SessionDateRange from './SessionDateRange';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
 import { sessionService } from 'App/services';
-import { updateProjectRecordingStatus } from 'Duck/site';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 enum NoContentType {
   Bookmarked,
@@ -50,17 +51,18 @@ interface Props extends RouteComponentProps {
   updateCurrentPage: (page: number) => void;
   setScrollPosition: (scrollPosition: number) => void;
   fetchSessions: (filters: any, force: boolean) => void;
-  updateProjectRecordingStatus: (siteId: string, status: boolean) => void;
   activeTab: any;
   isEnterprise?: boolean;
   checkForLatestSessions: () => void;
   toggleFavorite: (sessionId: string) => Promise<void>;
-  sites: object[];
   isLoggedIn: boolean;
-  siteId: string;
 }
 
 function SessionList(props: Props) {
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
   const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
   const {
     loading,
@@ -73,9 +75,7 @@ function SessionList(props: Props) {
     metaList,
     activeTab,
     isEnterprise = false,
-    sites,
     isLoggedIn,
-    siteId
   } = props;
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
@@ -139,7 +139,7 @@ function SessionList(props: Props) {
     }
 
     if (statusData.status === 2 && activeSite) { // recording && processed
-      props.updateProjectRecordingStatus(activeSite.id, true);
+      updateProjectRecordingStatus(activeSite.id, true);
       props.fetchSessions(null, true);
       clearInterval(sessionStatusTimeOut);
     }
@@ -293,8 +293,6 @@ export default connect(
     activeTab: state.getIn(['search', 'activeTab']),
     pageSize: state.getIn(['search', 'pageSize']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list']),
     isLoggedIn: Boolean(state.getIn(['user', 'jwt'])),
   }),
   {
@@ -304,6 +302,5 @@ export default connect(
     fetchSessions,
     checkForLatestSessions,
     toggleFavorite,
-    updateProjectRecordingStatus
   }
-)(withRouter(SessionList));
+)(withRouter(observer(SessionList)));

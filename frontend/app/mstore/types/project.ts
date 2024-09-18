@@ -25,6 +25,14 @@ export default class Project {
     makeAutoObservable(this);
   }
 
+  exists = () => {
+    return !!this.id;
+  }
+
+  get validate() {
+    return this.name.length > 0;
+  }
+
   edit = (data: Partial<Project>) => {
     Object.keys(data).forEach((key) => {
       if (key in this) {
