@@ -7,7 +7,9 @@ import {
 } from "../utils/networkTracking";
 import {
   isTokenExpired
-} from '../utils/jwt'
+} from '../utils/jwt';
+
+let checkBusy = false;
 
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
@@ -217,7 +219,6 @@ export default defineBackground(() => {
     }
     const { jwtToken, settings } = data;
     const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`
-    console.log(settings.ingestPoint, refreshUrl);
     if (!isTokenExpired(jwtToken) || !jwtToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
@@ -296,18 +297,20 @@ export default defineBackground(() => {
   }
 
   let lastReq: Record<string, any> | null = null;
-
   async function checkTokenValidity() {
+    if (checkBusy) return;
+    checkBusy = true;
     const data = await browser.storage.local.get("jwtToken");
-    console.log(data)
     if (!data.jwtToken) {
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
       });
+      checkBusy = false
       return;
     }
     const ok = await refreshToken();
     if (ok) {
+      setJWTToken(data.jwtToken)
       if (!refreshInt) {
         refreshInt = setInterval(() => {
           void refreshToken();
@@ -319,6 +322,7 @@ export default defineBackground(() => {
         }, PING_INT);
       }
     }
+    checkBusy = false
   }
   // @ts-ignore
   browser.runtime.onMessage.addListener((request, sender, respond) => {
@@ -884,14 +888,16 @@ export default defineBackground(() => {
                   )
                     ? "https://app.openreplay.com"
                     : settings.ingestPoint;
-                  void browser.tabs.create({
-                    url: `${link}/view-spot/${id}`,
-                    active: settings.openInNewTab,
-                  });
                   void sendToActiveTab({
                     type: "content:spot-saved",
                     url: `${link}/view-spot/${id}`,
                   });
+                  setTimeout(() => {
+                    void browser.tabs.create({
+                      url: `${link}/view-spot/${id}`,
+                      active: settings.openInNewTab,
+                    });
+                  }, 250)
                   const blob = base64ToBlob(videoData);
 
                   const mPromise = fetch(mobURL, {
@@ -967,23 +973,34 @@ export default defineBackground(() => {
   void initializeOffscreenDocument();
 
   async function initializeOffscreenDocument() {
-    const existingContexts = await browser.runtime.getContexts({});
-    let recording = false;
+    const existingContexts = await browser.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT'],
+    });
 
     const offscreenDocument = existingContexts.find(
       (c: { contextType: string }) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
     if (offscreenDocument) {
-      await browser.offscreen.closeDocument();
+      return;
+      // TODO: check manifestv3 for reloading context
+      // try {
+      //   await browser.offscreen.closeDocument();
+      // } catch (e) {
+      //   console.trace(e)
+      // }
     }
 
-    await browser.offscreen.createDocument({
-      url: "offscreen.html",
-      reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
-      justification: "Recording from chrome.tabCapture API",
-    });
+    try {
+      await browser.offscreen.createDocument({
+        url: "offscreen.html",
+        reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
+        justification: "Recording from chrome.tabCapture API",
+      });
+    } catch (e) {
+      console.log('cant create new offscreen document', e)
+    }
 
-    return recording;
+    return;
   }
   async function sendToActiveTab(message: {
     type: string;
@@ -1008,7 +1025,8 @@ export default defineBackground(() => {
     if (contentArmy[sendTo]) {
       await browser.tabs.sendMessage(sendTo, message);
     } else {
-      console.error("Content script not ready in tab", sendTo);
+      console.error("Content script might not be ready in tab", sendTo);
+      await browser.tabs.sendMessage(sendTo, message);
     }
   }
 

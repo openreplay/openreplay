@@ -41,7 +41,7 @@ export default defineUnlistedScript(() => {
 
     const notificationContent = `
     <div class="flex gap-3 items-center">
-      <div class="spinner"></div>          
+      <div class="spinner"></div>
       <span>${message}</span>
       </div>
     `;
