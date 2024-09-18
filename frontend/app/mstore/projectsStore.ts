@@ -41,13 +41,13 @@ export default class ProjectsStore {
     this.loading = loading;
   }
 
-  setSiteId(siteId: string) {
+  setSiteId = (siteId: string) => {
     this.siteId = siteId;
     localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString());
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
   }
 
-  editGDPR(gdprData: Partial<GDPR>) {
+  editGDPR = (gdprData: Partial<GDPR>) => {
     if (this.instance) {
       this.instance.gdpr.edit(gdprData);
     }
@@ -58,7 +58,7 @@ export default class ProjectsStore {
     this.instance.edit(instance);
   }
 
-  async fetchGDPR(siteId: string) {
+  fetchGDPR = async (siteId: string) => {
     try {
       const response = await projectsService.fetchGDPR(siteId)
       runInAction(() => {
