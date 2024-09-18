@@ -10,11 +10,16 @@ export default class ProjectsStore {
   siteId: string | null = null;
   active: Project | null = null;
   sitesLoading = false;
+  loading = false;
 
   constructor() {
     const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
     this.siteId = storedSiteId ?? null;
     makeAutoObservable(this);
+  }
+
+  get isMobile() {
+    return this.instance ? ['ios', 'android'].includes(this.instance.platform) : false;
   }
 
   getSiteId = () => {
@@ -30,6 +35,10 @@ export default class ProjectsStore {
 
   setSitesLoading = (loading: boolean) => {
     this.sitesLoading = loading;
+  }
+
+  setLoading = (loading: boolean) => {
+    this.loading = loading;
   }
 
   setSiteId(siteId: string) {
@@ -73,7 +82,7 @@ export default class ProjectsStore {
     }
   }
 
-  fetchList = async (siteIdFromPath: string) =>{
+  fetchList = async (siteIdFromPath?: string) => {
     this.setSitesLoading(true);
     try {
       const response = await projectsService.fetchList();
@@ -87,8 +96,8 @@ export default class ProjectsStore {
           siteId = siteIdFromPath;
         } else if (!siteId || !siteExists) {
           siteId = siteIds.includes(this.siteId)
-                   ? this.siteId
-                   : response.data[0].projectId;
+            ? this.siteId
+            : response.data[0].projectId;
         }
 
         const hasRecordings = this.list.some(site => site.recorded);
@@ -109,6 +118,7 @@ export default class ProjectsStore {
   }
 
   save = async (projectData: Partial<Project>) => {
+    this.setLoading(true);
     try {
       const response = await projectsService.saveProject(projectData);
       runInAction(() => {
@@ -124,6 +134,8 @@ export default class ProjectsStore {
       });
     } catch (error) {
       console.error('Failed to save site:', error);
+    } finally {
+      this.setLoading(false);
     }
   }
 
@@ -139,5 +151,39 @@ export default class ProjectsStore {
       }
     }
   }
-}
 
+  removeProject = async (projectId: string) => {
+    this.setLoading(true);
+    try {
+      await projectsService.removeProject(projectId);
+      runInAction(() => {
+        this.list = this.list.filter(site => site.id !== projectId);
+        if (this.siteId === projectId) {
+          this.setSiteId(this.list[0].id!);
+        }
+      })
+    } catch (e) {
+      console.error('Failed to remove project:', e);
+    } finally {
+      this.setLoading(false);
+    }
+  }
+
+  updateProject = async (projectId: string, projectData: Partial<Project>) => {
+    this.setLoading(true);
+    try {
+      const response = await projectsService.updateProject(projectId, projectData);
+      runInAction(() => {
+        const updatedSite = new Project(response.data);
+        const index = this.list.findIndex(site => site.id === updatedSite.id);
+        if (index !== -1) {
+          this.list[index] = updatedSite;
+        }
+      });
+    } catch (error) {
+      console.error('Failed to update site:', error);
+    } finally {
+      this.setLoading
+    }
+  }
+}

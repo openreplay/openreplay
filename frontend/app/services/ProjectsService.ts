@@ -24,4 +24,16 @@ export default class ProjectsService extends BaseService {
 
     return await r.json();
   }
+
+  removeProject = async (projectId: string) => {
+    const r = await this.client.delete(`/projects/${projectId}`)
+
+    return await r.json();
+  }
+
+  updateProject = async (projectId: string, projectData: any) => {
+    const r = await this.client.put(`/projects/${projectId}`, projectData);
+
+    return await r.json();
+  }
 }

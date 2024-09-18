@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { convertElementToImage } from 'App/utils';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';
 import { forceVisible } from 'react-lazyload';
@@ -15,11 +14,11 @@ interface Props {
 export default function withReport<P extends Props>(WrappedComponent: React.ComponentType<P>) {
   const ComponentWithReport = (props: P) => {
     const [rendering, setRendering] = React.useState(false);
-    const { site } = props;
-    const { dashboardStore } = useStore();
-    const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
-    const period = useObserver(() => dashboardStore.period);
-    const pendingRequests = useObserver(() => dashboardStore.pendingRequests);
+    const { dashboardStore, projectsStore } = useStore();
+    const site = projectsStore.instance;
+    const dashboard: any = dashboardStore.selectedDashboard;
+    const period = dashboardStore.period;
+    const pendingRequests = dashboardStore.pendingRequests;
 
     useEffect(() => {
       if (rendering && pendingRequests <= 0) {
@@ -181,7 +180,5 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     );
   };
 
-  return connect((state: any) => ({
-    site: state.getIn(['site', 'instance']),
-  }))(ComponentWithReport);
+  return observer(ComponentWithReport);
 }
