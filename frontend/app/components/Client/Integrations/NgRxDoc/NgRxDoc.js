@@ -1,11 +1,16 @@
+import { useStore } from "App/mstore";
 import React from 'react';
 import { CodeBlock } from "UI";
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite'
 
 const NgRxDoc = (props) => {
-    const { projectKey } = props;
+  const { integrationsStore } = useStore();
+  const sites = props.sites ? props.sites.toJS() : []
+  const siteId = integrationsStore.integrations.siteId
+  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
     const usage = `import { StoreModule } from '@ngrx/store';
 import { reducers } from './reducers';
 import OpenReplay from '@openreplay/tracker';
@@ -81,9 +86,8 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
 NgRxDoc.displayName = 'NgRxDoc';
 
 export default connect((state) => {
-  const siteId = state.getIn(['integrations', 'siteId']);
   const sites = state.getIn(['site', 'list']);
   return {
-    projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
+    sites,
   };
-})(NgRxDoc);
+})(observer(NgRxDoc));

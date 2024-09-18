@@ -6,7 +6,6 @@ import sessions from './sessions';
 import sources from './sources';
 import site from './site';
 import customFields from './customField';
-import integrations from './integrations';
 import search from './search';
 import liveSearch from './liveSearch';
 
@@ -17,7 +16,6 @@ const rootReducer = combineReducers({
   customFields,
   search,
   liveSearch,
-  ...integrations,
   ...sources
 });
 

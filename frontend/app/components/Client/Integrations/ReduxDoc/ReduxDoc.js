@@ -1,11 +1,16 @@
+import { useStore } from "App/mstore";
 import React from 'react';
 import { CodeBlock } from 'UI'
-import ToggleContent from '../../../shared/ToggleContent';
+import ToggleContent from 'Components/shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite'
 
 const ReduxDoc = (props) => {
-    const { projectKey } = props;
+  const { integrationsStore } = useStore();
+  const sites = props.sites ? props.sites.toJS() : []
+  const siteId = integrationsStore.integrations.siteId
+  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
     const usage = `import { applyMiddleware, createStore } from 'redux';
 import OpenReplay from '@openreplay/tracker';
@@ -75,9 +80,8 @@ const store = createStore(
 ReduxDoc.displayName = 'ReduxDoc';
 
 export default connect((state) => {
-  const siteId = state.getIn(['integrations', 'siteId']);
   const sites = state.getIn(['site', 'list']);
   return {
-    projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
+    sites
   };
-})(ReduxDoc);
+})(observer(ReduxDoc));
