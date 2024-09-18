@@ -1,77 +1,93 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ACCESS_KEY_ID_LENGTH, SECRET_ACCESS_KEY_LENGTH } from 'Types/integrations/cloudwatchConfig';
-import { edit } from 'Duck/integrations/actions';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import Select from 'Shared/Select';
-import { withRequest } from 'HOCs';
+import { integrationsService } from "App/services";
 
-@connect(state => ({
-	config: state.getIn([ 'cloudwatch', 'instance' ])
-}), { edit })
-@withRequest({
-	dataName: "values",
-	initialData: [],
-	resetBeforeRequest: true,
-	requestName: "fetchLogGroups",
-	endpoint: '/integrations/cloudwatch/list_groups',
-	method: 'POST',
-})
-export default class LogGroupDropdown extends React.PureComponent {
-	constructor(props) {
-		super(props);
-		this.fetchLogGroups()
-	}
-	fetchLogGroups() {
-		const { config } = this.props;
-		if (config.region === "" ||
-			config.awsSecretAccessKey.length !== SECRET_ACCESS_KEY_LENGTH ||
-			config.awsAccessKeyId.length !== ACCESS_KEY_ID_LENGTH
-		) return;
-		this.props.fetchLogGroups({
-			region: config.region,
-			awsSecretAccessKey: config.awsSecretAccessKey,
-			awsAccessKeyId: config.awsAccessKeyId,
-		}).then(() => {
-			const { value, values, name } = this.props;
-			if (!values.includes(value) && values.length > 0) {
-				this.props.edit("cloudwatch", {
-					[ name ]: values[0],
-				});
-			}
-		});
-	}
-	componentDidUpdate(prevProps) {
-		const { config } = this.props;
-		if (prevProps.config.region !== config.region ||
-			prevProps.config.awsSecretAccessKey !== config.awsSecretAccessKey ||
-			prevProps.config.awsAccessKeyId !== config.awsAccessKeyId) {
-			this.fetchLogGroups();
+const LogGroupDropdown = (props) => {
+	const { integrationsStore } = useStore();
+	const config = integrationsStore.cloudwatch.instance;
+	const edit = integrationsStore.cloudwatch.edit;
+	const {
+		value,
+		name,
+		placeholder,
+		onChange,
+	} = props;
+
+	const [values, setValues] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(false);
+
+	const { region, awsSecretAccessKey, awsAccessKeyId } = config;
+
+	const fetchLogGroups = useCallback(() => {
+		if (
+			region === '' ||
+			awsSecretAccessKey.length !== SECRET_ACCESS_KEY_LENGTH ||
+			awsAccessKeyId.length !== ACCESS_KEY_ID_LENGTH
+		) {
+			return;
 		}
-	}
-	onChange = (target) => {
-		if (typeof this.props.onChange === 'function') {
-			this.props.onChange({ target });
+
+		setLoading(true);
+		setError(false);
+		setValues([]); // Reset values before request
+
+		const params = {
+			region: region,
+			awsSecretAccessKey: awsSecretAccessKey,
+			awsAccessKeyId: awsAccessKeyId,
+		};
+
+		integrationsService.client
+			.post('/integrations/cloudwatch/list_groups', params)
+			.then((response) => response.json())
+			.then(({ errors, data }) => {
+				if (errors) {
+					setError(true);
+					setLoading(false);
+					return;
+				}
+				setValues(data);
+				setLoading(false);
+
+				// If current value is not in the new values list, update it
+				if (!data.includes(value) && data.length > 0) {
+					edit({
+						[name]: data[0],
+					});
+				}
+			})
+			.catch(() => {
+				setError(true);
+				setLoading(false);
+			});
+	}, [region, awsSecretAccessKey, awsAccessKeyId, value, name, edit]);
+
+	// Fetch log groups on mount and when config changes
+	useEffect(() => {
+		fetchLogGroups();
+	}, [fetchLogGroups]);
+
+	const handleChange = (target) => {
+		if (typeof onChange === 'function') {
+			onChange({ target });
 		}
-	}
-	render() {
-		const { 
-			values,
-			name,
-			value,
-			placeholder,
-			loading,
-		} = this.props;
-		const options = values.map(g => ({ text: g, value: g }));
-		return (
-			<Select
-				// selection
-				options={ options }
-				name={ name }
-				value={ options.find(o => o.value === value) }
-				placeholder={ placeholder }
-				onChange={ this.onChange }
-				loading={ loading }
-			/>
-		);
-	}
-}
+	};
+
+	const options = values.map((g) => ({ text: g, value: g }));
+	return (
+		<Select
+			options={options}
+			name={name}
+			value={options.find((o) => o.value === value)}
+			placeholder={placeholder}
+			onChange={handleChange}
+			loading={loading}
+		/>
+	);
+};
+
+export default observer(LogGroupDropdown);
