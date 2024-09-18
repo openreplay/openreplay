@@ -41,11 +41,11 @@ interface Props {
 }
 
 function Integrations(props: Props) {
-  const { integrationsStore } = useStore();
-
+  const { integrationsStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
-  const { siteId, hideHeader = false } = props;
+  const { hideHeader = false } = props;
   const { showModal } = useModal();
   const [integratedList, setIntegratedList] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -162,11 +162,7 @@ function Integrations(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  siteId: state.getIn(['site', 'siteId']),
-}))(
-  withPageTitle('Integrations - OpenReplay Preferences')(observer(Integrations))
-);
+export default withPageTitle('Integrations - OpenReplay Preferences')(observer(Integrations))
 
 const integrations = [
   {

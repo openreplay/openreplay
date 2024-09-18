@@ -98,6 +98,7 @@ export class RootStore {
     services.forEach((service) => {
       service.initClient(client);
     });
+    client.setSiteIdCheck(this.projectsStore.getSiteId)
   }
 }
 

@@ -3,8 +3,8 @@ import { Map } from 'immutable';
 import React, { Suspense, lazy } from 'react';
 import { connect } from 'react-redux';
 import { Redirect, Route, Switch } from 'react-router-dom';
-
-import AdditionalRoutes from 'App/AdditionalRoutes';
+import { observer } from 'mobx-react-lite'
+import { useStore } from "./mstore";
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
@@ -110,20 +110,20 @@ const SCOPE_SETUP = routes.scopeSetup();
 
 interface Props {
   tenantId: string;
-  siteId: string;
-  sites: Map<string, any>;
   onboarding: boolean;
   scope: number;
 }
 
 function PrivateRoutes(props: Props) {
-  const { onboarding, sites, siteId } = props;
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const { onboarding } = props;
   const hasRecordings = sites.some(s => s.recorded);
   const redirectToSetup = props.scope === 0;
   const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || !hasRecordings) && props.scope > 0;
-  const siteIdList: any = sites.map(({ id }) => id).toJS();
-
+    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && props.scope > 0;
+  const siteIdList: any = sites.map(({ id }) => id);
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
@@ -292,7 +292,5 @@ function PrivateRoutes(props: Props) {
 export default connect((state: any) => ({
   onboarding: state.getIn(['user', 'onboarding']),
   scope: getScope(state),
-  sites: state.getIn(['site', 'list']),
-  siteId: state.getIn(['site', 'siteId']),
   tenantId: state.getIn(['user', 'account', 'tenantId']),
-}))(PrivateRoutes);
+}))(observer(PrivateRoutes));
