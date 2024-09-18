@@ -2,7 +2,7 @@ import BaseService from "./BaseService";
 
 export default class IntegrationsService extends BaseService {
   fetchList = async (name?: string, siteId?: string) => {
-    const r = await this.client.get(`${siteId ? `/${siteId}` : ''}/integrations/${name}`)
+    const r = await this.client.get(`${siteId ? `/${siteId}` : ''}/integrations${name ? `/${name}` : ''}`)
     const data = await r.json()
 
     return data

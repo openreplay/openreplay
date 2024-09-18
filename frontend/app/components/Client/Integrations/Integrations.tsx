@@ -112,6 +112,11 @@ function Integrations(props: Props) {
   const allIntegrations = filteredIntegrations.flatMap(
     (cat) => cat.integrations
   );
+
+  console.log(
+    allIntegrations,
+  integratedList
+  )
   return (
     <>
       <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">

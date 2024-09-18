@@ -43,7 +43,7 @@ class GenericIntegrationsStore {
   fetchIntegrations = async (siteId?: string) => {
     this.setLoading(true);
     try {
-      const { data } = await integrationsService.fetchList(siteId);
+      const { data } = await integrationsService.fetchList(undefined, siteId);
       this.setList(data);
     } catch (e) {
       console.log(e);
