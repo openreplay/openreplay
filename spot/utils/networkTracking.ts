@@ -26,7 +26,7 @@ export interface SpotNetworkRequest {
   requestHeaders: Record<string, string>;
   responseHeaders: Record<string, string>;
 }
-const rawRequests: (TrackedRequest & {
+export const rawRequests: (TrackedRequest & {
   startTs: number;
   duration: number;
 })[] = [];
