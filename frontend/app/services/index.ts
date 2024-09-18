@@ -23,6 +23,7 @@ import FilterService from "./FilterService";
 import IssueReportsService from "./IssueReportsService";
 import CustomFieldService from './CustomFieldService';
 import IntegrationsService from './IntegrationsService';
+import ProjectsService from './ProjectsService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -48,6 +49,7 @@ export const filterService = new FilterService();
 export const issueReportsService = new IssueReportsService();
 export const customFieldService = new CustomFieldService();
 export const integrationsService = new IntegrationsService();
+export const projectsService = new ProjectsService();
 
 export const services = [
   dashboardService,
@@ -74,4 +76,5 @@ export const services = [
   issueReportsService,
   customFieldService,
   integrationsService,
+  projectsService,
 ];
