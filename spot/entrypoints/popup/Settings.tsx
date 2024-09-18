@@ -120,7 +120,7 @@ function Settings({ goBack }: { goBack: () => void }) {
           </label>
 
           </div>
-          <p class="text-xs">Go to Spot tab after saving a recording.</p>
+          <p class="text-xs">Take me to newly created Spot tab after saving a recording.</p>
         </div>
 
         <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
@@ -140,7 +140,7 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            Include console logs, network calls and other debugging information in recordings for developers.
+            Include console logs, network calls and other useful debugging information for developers.
           </p>
         </div>
 
@@ -159,7 +159,7 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            Change this URL if you are using a self-hosted OpenReplay instance.
+            Set this URL if you are self-hosting OpenReplay so it points to your instance.
           </p>
 
           {showIngest() && (
