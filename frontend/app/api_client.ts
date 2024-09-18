@@ -1,6 +1,7 @@
 import store from 'App/store';
 import { queried } from './routes';
 import { setJwt } from 'Duck/user';
+import { projectStore } from 'App/mstore';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -59,7 +60,7 @@ export default class APIClient {
 
   constructor() {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    const siteId = store.getState().getIn(['site', 'siteId']);
+    const { siteId } = projectStore.getSiteId();
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
@@ -69,7 +70,7 @@ export default class APIClient {
     if (jwt !== null) {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
-    this.siteId = siteId;
+    this.siteId = siteId || undefined;
   }
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {

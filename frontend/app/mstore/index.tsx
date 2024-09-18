@@ -28,6 +28,9 @@ import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
 import CustomFieldStore from './customFieldStore';
 import { IntegrationsStore } from "./integrationsStore";
+import ProjectsStore from './projectsStore';
+
+export const projectStore = new ProjectsStore();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -57,6 +60,7 @@ export class RootStore {
   issueReportingStore: IssueReportingStore;
   customFieldStore: CustomFieldStore;
   integrationsStore: IntegrationsStore
+  projectsStore: ProjectsStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -86,6 +90,7 @@ export class RootStore {
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
     this.integrationsStore = new IntegrationsStore();
+    this.projectsStore = projectStore;
   }
 
   initClient() {
