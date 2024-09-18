@@ -1,28 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Logo from 'App/layout/Logo';
 import TopRight from 'App/layout/TopRight';
 import { Layout, Space, Tooltip } from 'antd';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { INDEXES } from 'App/constants/zindex';
 import { connect } from 'react-redux';
 import { logout } from 'Duck/user';
-import { init as initSite } from 'Duck/site';
 
 const { Header } = Layout;
 
 interface Props {
   account: any;
-  siteId: string;
-  initSite: (site: any) => void;
 }
 
 function TopHeader(props: Props) {
   const { settingsStore } = useStore();
 
-  const { account, siteId } = props;
-  const { userStore, notificationStore } = useStore();
+  const { account } = props;
+  const { userStore, notificationStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
   const initialDataFetched = userStore.initialDataFetched;
 
   useEffect(() => {
@@ -74,12 +72,10 @@ function TopHeader(props: Props) {
 
 const mapStateToProps = (state: any) => ({
   account: state.getIn(['user', 'account']),
-  siteId: state.getIn(['site', 'siteId'])
 });
 
 const mapDispatchToProps = {
   onLogoutClick: logout,
-  initSite
 };
 
 export default connect(

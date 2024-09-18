@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Button, Loader, NoContent, Icon, Tooltip, Divider } from 'UI';
 import SiteDropdown from 'Shared/SiteDropdown';
@@ -12,20 +11,17 @@ import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-interface CustomFieldsProps {
-  sites: any;
-}
-
-const CustomFields: React.FC<CustomFieldsProps> = (props) => {
-  const [currentSite, setCurrentSite] = useState(props.sites.get(0));
+const CustomFields = () => {
+  const { customFieldStore: store, projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const [currentSite, setCurrentSite] = useState(sites[0]);
   const [deletingItem, setDeletingItem] = useState<number | null>(null);
   const { showModal, hideModal } = useModal();
-  const { customFieldStore: store } = useStore();
   const fields = store.list;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const activeSite = props.sites.get(0);
+    const activeSite = sites[0];
     if (!activeSite) return;
 
     setCurrentSite(activeSite);
@@ -34,7 +30,7 @@ const CustomFields: React.FC<CustomFieldsProps> = (props) => {
     store.fetchList(activeSite.id).finally(() => {
       setLoading(false);
     });
-  }, [props.sites]);
+  }, [sites]);
 
   const handleInit = (field?: any) => {
     console.log('field', field);
@@ -45,7 +41,7 @@ const CustomFields: React.FC<CustomFieldsProps> = (props) => {
   };
 
   const onChangeSelect = ({ value }: { value: { value: number } }) => {
-    const site = props.sites.find((s: any) => s.id === value.value);
+    const site = sites.find((s: any) => s.id === value.value);
     setCurrentSite(site);
 
     setLoading(true);
@@ -109,6 +105,4 @@ const CustomFields: React.FC<CustomFieldsProps> = (props) => {
   );
 };
 
-export default connect((state: any) => ({
-  sites: state.getIn(['site', 'list'])
-}))(withPageTitle('Metadata - OpenReplay Preferences')(observer(CustomFields)));
+export default withPageTitle('Metadata - OpenReplay Preferences')(observer(CustomFields));

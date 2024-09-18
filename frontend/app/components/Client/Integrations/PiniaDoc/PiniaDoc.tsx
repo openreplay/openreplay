@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
 import ToggleContent from 'Components/shared/ToggleContent';
@@ -8,9 +7,9 @@ import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 
-const PiniaDoc = (props) => {
-  const { integrationsStore } = useStore();
-  const sites = props.sites ? props.sites.toJS() : [];
+const PiniaDoc = () => {
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
   const siteId = integrationsStore.integrations.siteId;
   const projectKey = siteId
     ? sites.find((site) => site.id === siteId)?.projectKey
@@ -110,9 +109,4 @@ piniaStorePlugin(examplePiniaStore)
 
 PiniaDoc.displayName = 'PiniaDoc';
 
-export default connect((state: any) => {
-  const sites = state.getIn(['site', 'list']);
-  return {
-    sites,
-  };
-})(observer(PiniaDoc));
+export default observer(PiniaDoc);
