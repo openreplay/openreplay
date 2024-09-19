@@ -2,12 +2,12 @@ import { issues_types, types } from 'Types/session/issue';
 import { Segmented } from 'antd';
 import cn from 'classnames';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React, { memo } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 
+import { useStore } from 'App/mstore';
 import { setActiveTab } from 'Duck/search';
 import { Icon } from 'UI';
 
@@ -34,63 +34,61 @@ const tagIcons = {
   [types.BAD_REQUEST]: <WifiOff size={14} />,
   [types.CLICK_RAGE]: <Angry size={14} />,
   [types.CRASH]: <Skull size={14} />,
-} as Record<string, any>
+} as Record<string, any>;
 
-const SessionTags: React.FC<Props> = memo(
-  ({ activeTab, total, setActiveTab }) => {
-    const { projectsStore } = useStore();
-    const platform = projectsStore.active?.platform || '';
-    const tags = issues_types.filter(
-      (tag) =>
-        tag.type !== 'mouse_thrashing' &&
-        (platform === 'web'
-         ? tag.type !== types.TAP_RAGE
-         : tag.type !== types.CLICK_RAGE)
-    );
-    const disable = activeTab.type === 'all' && total === 0;
+const SessionTags: React.FC<Props> = ({ activeTab, total, setActiveTab }) => {
+  const { projectsStore } = useStore();
+  const platform = projectsStore.active?.platform || '';
+  const tags = issues_types.filter(
+    (tag) =>
+      tag.type !== 'mouse_thrashing' &&
+      (platform === 'web'
+        ? tag.type !== types.TAP_RAGE
+        : tag.type !== types.CLICK_RAGE)
+  );
+  const disable = activeTab.type === 'all' && total === 0;
 
-    const options = tags.map((tag, i) => ({
-      label: (
-        <div className={'flex items-center gap-2'}>
-          {tag.icon ? (
-            tagIcons[tag.type] ? (
-              tagIcons[tag.type]
-            ) : (
-              <Icon
-                name={tag.icon}
-                color={activeTab.type === tag.type ? 'main' : undefined}
-                size="14"
-                className={cn('group-hover:fill-teal')}
-              />
-            )
-          ) : null}
-          <div className={activeTab.type === tag.type ? 'text-main' : ''}>
-            {tag.name}
-          </div>
+  const options = tags.map((tag, i) => ({
+    label: (
+      <div className={'flex items-center gap-2'}>
+        {tag.icon ? (
+          tagIcons[tag.type] ? (
+            tagIcons[tag.type]
+          ) : (
+            <Icon
+              name={tag.icon}
+              color={activeTab.type === tag.type ? 'main' : undefined}
+              size="14"
+              className={cn('group-hover:fill-teal')}
+            />
+          )
+        ) : null}
+        <div className={activeTab.type === tag.type ? 'text-main' : ''}>
+          {tag.name}
         </div>
-      ),
-      value: tag.type,
-      disabled: disable && tag.type !== 'all',
-    }));
-
-    const onPick = (tabValue: string) => {
-      const tab = tags.find((t) => t.type === tabValue);
-      if (tab) {
-        setActiveTab(tab);
-      }
-    };
-    return (
-      <div className="flex items-center">
-        <Segmented
-          options={options}
-          value={activeTab.type}
-          onChange={onPick}
-          size={'small'}
-        />
       </div>
-    );
-  }
-);
+    ),
+    value: tag.type,
+    disabled: disable && tag.type !== 'all',
+  }));
+
+  const onPick = (tabValue: string) => {
+    const tab = tags.find((t) => t.type === tabValue);
+    if (tab) {
+      setActiveTab(tab);
+    }
+  };
+  return (
+    <div className="flex items-center">
+      <Segmented
+        options={options}
+        value={activeTab.type}
+        onChange={onPick}
+        size={'small'}
+      />
+    </div>
+  );
+};
 
 // Separate the TagItem into its own memoized component.
 export const TagItem: React.FC<{
@@ -138,4 +136,7 @@ const mapDispatchToProps = (dispatch: any): DispatchProps =>
     dispatch
   );
 
-export default connect(mapStateToProps, mapDispatchToProps)(observer(SessionTags));
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(observer(SessionTags));
