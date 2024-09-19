@@ -13,7 +13,6 @@ import {
   checkForLatestSessions
 } from 'Duck/search';
 import { numberWithCommas } from 'App/utils';
-import { toggleFavorite } from 'Duck/sessions';
 import SessionDateRange from './SessionDateRange';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
 import { sessionService } from 'App/services';
@@ -38,13 +37,9 @@ let sessionStatusTimeOut: any = null;
 const STATUS_FREQUENCY = 5000;
 
 interface Props extends RouteComponentProps {
-  loading: boolean;
-  list: any;
   currentPage: number;
   pageSize: number;
-  total: number;
   filters: any;
-  lastPlayedSessionId: string;
   metaList: any;
   scrollY: number;
   addFilterByKeyAndValue: (key: string, value: any, operator?: string) => void;
@@ -54,24 +49,24 @@ interface Props extends RouteComponentProps {
   activeTab: any;
   isEnterprise?: boolean;
   checkForLatestSessions: () => void;
-  toggleFavorite: (sessionId: string) => Promise<void>;
   isLoggedIn: boolean;
 }
 
 function SessionList(props: Props) {
-  const { projectsStore } = useStore();
+  const { projectsStore, sessionStore } = useStore();
+  const list = sessionStore.list;
+  const lastPlayedSessionId = sessionStore.lastPlayedSessionId;
+  const loading = sessionStore.loadingSessions;
+  const total = sessionStore.total;
+  const onToggleFavorite = sessionStore.toggleFavorite;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
   const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
   const {
-    loading,
-    list,
     currentPage,
     pageSize,
-    total,
     filters,
-    lastPlayedSessionId,
     metaList,
     activeTab,
     isEnterprise = false,
@@ -199,7 +194,7 @@ function SessionList(props: Props) {
   };
 
   const toggleFavorite = (sessionId: string) => {
-    props.toggleFavorite(sessionId).then(() => {
+    onToggleFavorite(sessionId).then(() => {
       props.fetchSessions(null, true);
     });
   };
@@ -282,13 +277,9 @@ function SessionList(props: Props) {
 
 export default connect(
   (state: any) => ({
-    list: state.getIn(['sessions', 'list']),
     filters: state.getIn(['search', 'instance', 'filters']),
-    lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
     metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    loading: state.getIn(['sessions', 'loading']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
-    total: state.getIn(['sessions', 'total']) || 0,
     scrollY: state.getIn(['search', 'scrollY']),
     activeTab: state.getIn(['search', 'activeTab']),
     pageSize: state.getIn(['search', 'pageSize']),
@@ -301,6 +292,5 @@ export default connect(
     setScrollPosition,
     fetchSessions,
     checkForLatestSessions,
-    toggleFavorite,
   }
 )(withRouter(observer(SessionList)));

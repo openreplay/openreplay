@@ -4,7 +4,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { applyFilter } from 'Duck/search';
-import { sort } from 'Duck/sessions';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const sortOptionsMap = {
   'startTs-desc': 'Newest',
@@ -32,7 +33,6 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
   sortOptions: any,
   current: string
 }) {
-
   return (
     <Dropdown
       menu={{
@@ -55,12 +55,14 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
 }
 
 function SessionSort(props: Props) {
+  const { sessionStore } = useStore();
+  const onSessionSort = sessionStore.sortSessions;
   const { sort, order } = props.filter;
   const onSort = ({ key }: { key: string }) => {
     const [sort, order] = key.split('-');
     const sign = order === 'desc' ? -1 : 1;
     props.applyFilter({ order, sort });
-    props.sort(sort, sign);
+    onSessionSort(sort, sign);
   };
 
   const defaultOption = `${sort}-${order}`;
@@ -79,5 +81,5 @@ export default connect(
   (state: any) => ({
     filter: state.getIn(['search', 'instance']),
   }),
-  { sort, applyFilter }
-)(SessionSort);
+  {  applyFilter }
+)(observer(SessionSort));

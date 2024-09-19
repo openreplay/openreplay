@@ -17,7 +17,6 @@ import { useStore } from 'App/mstore';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
-import { setSessionPath } from 'Duck/sessions';
 import { fetchUserInfo, getScope, logout, setJwt } from 'Duck/user';
 import { Loader } from 'UI';
 import * as routes from './routes';
@@ -30,7 +29,6 @@ interface RouterProps
   changePassword: boolean;
   isEnterprise: boolean;
   fetchUserInfo: () => any;
-  setSessionPath: (path: any) => any;
   match: {
     params: {
       siteId: string;
@@ -47,15 +45,15 @@ const Router: React.FC<RouterProps> = (props) => {
     location,
     fetchUserInfo,
     history,
-    setSessionPath,
     localSpotJwt,
     logout,
     scopeSetup,
     setJwt,
   } = props;
   const mstore = useStore();
-  const { customFieldStore, projectsStore } = mstore;
+  const { customFieldStore, projectsStore, sessionStore } = mstore;
 
+  const setSessionPath = sessionStore.setSessionPath;
   const siteId = projectsStore.siteId;
   const sitesLoading = projectsStore.sitesLoading;
   const sites = projectsStore.list;
@@ -256,7 +254,6 @@ const mapStateToProps = (state: Map<string, any>) => {
 
 const mapDispatchToProps = {
   fetchUserInfo,
-  setSessionPath,
   setJwt,
   logout
 };

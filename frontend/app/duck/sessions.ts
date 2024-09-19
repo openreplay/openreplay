@@ -36,12 +36,9 @@ const FETCH_ERROR_STACK = new RequestTypes('sessions/FETCH_ERROR_STACK');
 const FETCH_INSIGHTS = new RequestTypes('sessions/FETCH_INSIGHTS');
 const FETCH_SESSION_CLICKMAP = new RequestTypes('sessions/FETCH_SESSION_CLICKMAP');
 const SORT = 'sessions/SORT';
-const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
-const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
-const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
 const SET_TIMELINE_HOVER_POINTER = 'sessions/SET_TIMELINE_HOVER_POINTER';
 
@@ -75,8 +72,6 @@ const initObj = {
   prefetched: false,
   eventsAsked: false,
   total: 0,
-  keyMap: Map(),
-  wdTypeCount: Map(),
   favoriteList: List(),
   activeTab: Watchdog({ name: 'All', type: 'all' }),
   timezone: 'local',
@@ -85,13 +80,11 @@ const initObj = {
   sourcemapUploaded: true,
   filteredEvents: null,
   eventsQuery: '',
-  showChatWindow: false,
   liveSessions: [],
   visitedEvents: List(),
   insights: List(),
   insightFilters: defaultDateFilters,
   host: '',
-  funnelPage: Map(),
   timelinePointer: null,
   sessionPath: {},
   lastPlayedSessionId: null,
@@ -374,18 +367,11 @@ const reducer = (state = initialState, action: IAction) => {
       );
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone);
-    case TOGGLE_CHAT_WINDOW:
-      return state.set('showChatWindow', action.state);
     case FETCH_SESSION_CLICKMAP.SUCCESS:
     case FETCH_INSIGHTS.SUCCESS:
       return state.set(
         'insights',
         List(action.data).sort((a, b) => b.count - a.count)
-      );
-    case SET_FUNNEL_PAGE_FLAG:
-      return state.set(
-        'funnelPage',
-        action.funnelPage ? Map(action.funnelPage) : false
       );
     case SET_TIMELINE_POINTER:
       return state.set('timelinePointer', action.pointer);
@@ -605,13 +591,6 @@ export function fetchLiveList(params = {}) {
   };
 }
 
-export function toggleChatWindow(state) {
-  return {
-    type: TOGGLE_CHAT_WINDOW,
-    state,
-  };
-}
-
 export function sort(sortKey, sign = 1, listName = 'list') {
   return {
     type: SORT,
@@ -644,13 +623,6 @@ export function setEventFilter(filter) {
   return {
     type: SET_EVENT_QUERY,
     filter,
-  };
-}
-
-export function setFunnelPage(funnelPage) {
-  return {
-    type: SET_FUNNEL_PAGE_FLAG,
-    funnelPage,
   };
 }
 

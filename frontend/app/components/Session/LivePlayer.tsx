@@ -142,7 +142,6 @@ export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true,
   connect((state: any) => {
     return {
       session: state.getIn(['sessions', 'current']),
-      showAssist: state.getIn(['sessions', 'showChatWindow']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       userEmail: state.getIn(['user', 'account', 'email']),
       userName: state.getIn(['user', 'account', 'name']),
