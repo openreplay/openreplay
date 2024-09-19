@@ -3,12 +3,11 @@ import React from 'react';
 import { CodeBlock } from "UI";
 import ToggleContent from 'Components//shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
-import { connect } from 'react-redux';
 import { observer } from 'mobx-react-lite'
 
 const ZustandDoc = (props) => {
-  const { integrationsStore } = useStore();
-  const sites = props.sites ? props.sites.toJS() : []
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
   const siteId = integrationsStore.integrations.siteId
   const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
@@ -102,9 +101,4 @@ const useBearStore = create(
 
 ZustandDoc.displayName = 'ZustandDoc';
 
-export default connect((state) => {
-  const sites = state.getIn(['site', 'list']);
-  return {
-   sites,
-  };
-})(observer(ZustandDoc));
+export default observer(ZustandDoc);

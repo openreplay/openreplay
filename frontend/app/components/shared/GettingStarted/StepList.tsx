@@ -5,7 +5,6 @@ import { Step } from 'App/mstore/types/gettingStarted';
 import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
 
 interface StepListProps extends RouteComponentProps {
@@ -13,7 +12,6 @@ interface StepListProps extends RouteComponentProps {
   steps: Step[];
   status: 'pending' | 'completed';
   docsLink?: string;
-  siteId: string;
 }
 
 const StepItem = React.memo(
@@ -63,11 +61,12 @@ const StepItem = React.memo(
 );
 
 const StepList = React.memo((props: StepListProps) => {
-  const { title, steps, status } = props;
+  const { title, steps } = props;
   const { hideModal } = useModal();
 
   const {
     settingsStore: { gettingStarted },
+    projectsStore,
   } = useStore();
 
   const onIgnore = (e: React.MouseEvent<HTMLAnchorElement>, step: any) => {
@@ -80,7 +79,8 @@ const StepList = React.memo((props: StepListProps) => {
   }
 
   const onClick = (step: any) => {
-    const { siteId, history } = props;
+    const { history } = props;
+    const siteId = projectsStore.getSiteId().siteId!;
     hideModal();
     history.push(withSiteId(onboardingRoute(step.url), siteId));
   };
@@ -97,6 +97,4 @@ const StepList = React.memo((props: StepListProps) => {
   );
 });
 
-export default connect((state: any) => ({
-  siteId: state.getIn(['site', 'siteId']),
-}))(withRouter(StepList));
+export default withRouter(StepList);

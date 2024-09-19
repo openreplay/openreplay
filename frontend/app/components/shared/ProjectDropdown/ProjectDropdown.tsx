@@ -15,8 +15,6 @@ import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { clearSearch } from 'Duck/search';
-import { setSiteId } from 'Duck/site';
-import { init as initProject } from 'Duck/site';
 import { Icon } from 'UI';
 
 const { Text } = Typography;

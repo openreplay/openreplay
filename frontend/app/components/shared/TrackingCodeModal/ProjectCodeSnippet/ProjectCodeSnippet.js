@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux';
-import { editGDPR, saveGDPR } from 'Duck/site';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'Project/mstore'
 import { Checkbox } from 'UI';
 import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
@@ -18,21 +18,25 @@ inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 
 
 const ProjectCodeSnippet = props  => {
-  const { gdpr, site } = props;
+  const { projectsStore } = useStore();
+  const site = props.site;
+  const gdpr = projectsStore.instance.gdpr;
+  const saveGdpr = projectsStore.saveGDPR;
+  const editGdpr = projectsStore.editGDPR;
   const [changed, setChanged] = useState(false)
 
   const saveGDPR = () => {
     setChanged(true)
-    props.saveGDPR(site.id);
+    saveGdpr(site.id);
   }
 
   const onChangeSelect = ({ name, value }) => {
-    props.editGDPR({ [ name ]: value });
+    editGdpr({ [ name ]: value });
     saveGDPR();
   };
 
   const onChangeOption = ({ target: { name, checked }}) => {
-    props.editGDPR({ [ name ]: checked });
+    editGdpr({ [ name ]: checked });
     saveGDPR()
   }
   
@@ -94,7 +98,4 @@ const ProjectCodeSnippet = props  => {
   )
 }
 
-export default connect(state => ({
-  gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
-  saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
-}), { editGDPR, saveGDPR })(ProjectCodeSnippet)
+export default observer(ProjectCodeSnippet)

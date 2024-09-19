@@ -5,6 +5,8 @@ import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import React, { memo } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 import { setActiveTab } from 'Duck/search';
 import { Icon } from 'UI';
@@ -17,7 +19,6 @@ interface Tag {
 
 interface StateProps {
   activeTab: { type: string };
-  tags: Tag[];
   total: number;
 }
 
@@ -36,7 +37,16 @@ const tagIcons = {
 } as Record<string, any>
 
 const SessionTags: React.FC<Props> = memo(
-  ({ activeTab, tags, total, setActiveTab }) => {
+  ({ activeTab, total, setActiveTab }) => {
+    const { projectsStore } = useStore();
+    const platform = projectsStore.active?.platform || '';
+    const tags = issues_types.filter(
+      (tag) =>
+        tag.type !== 'mouse_thrashing' &&
+        (platform === 'web'
+         ? tag.type !== types.TAP_RAGE
+         : tag.type !== types.CLICK_RAGE)
+    );
     const disable = activeTab.type === 'all' && total === 0;
 
     const options = tags.map((tag, i) => ({
@@ -114,18 +124,10 @@ export const TagItem: React.FC<{
 ));
 
 const mapStateToProps = (state: any): StateProps => {
-  const platform = state.getIn(['site', 'active'])?.platform || '';
   const activeTab = state.getIn(['search', 'activeTab']);
-  const filteredTags = issues_types.filter(
-    (tag) =>
-      tag.type !== 'mouse_thrashing' &&
-      (platform === 'web'
-        ? tag.type !== types.TAP_RAGE
-        : tag.type !== types.CLICK_RAGE)
-  );
   const total = state.getIn(['sessions', 'total']) || 0;
 
-  return { activeTab, tags: filteredTags, total };
+  return { activeTab, total };
 };
 
 const mapDispatchToProps = (dispatch: any): DispatchProps =>
@@ -136,4 +138,4 @@ const mapDispatchToProps = (dispatch: any): DispatchProps =>
     dispatch
   );
 
-export default connect(mapStateToProps, mapDispatchToProps)(SessionTags);
+export default connect(mapStateToProps, mapDispatchToProps)(observer(SessionTags));

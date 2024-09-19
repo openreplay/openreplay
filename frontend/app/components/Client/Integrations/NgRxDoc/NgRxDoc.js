@@ -3,12 +3,11 @@ import React from 'react';
 import { CodeBlock } from "UI";
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
-import { connect } from 'react-redux';
 import { observer } from 'mobx-react-lite'
 
-const NgRxDoc = (props) => {
-  const { integrationsStore } = useStore();
-  const sites = props.sites ? props.sites.toJS() : []
+const NgRxDoc = () => {
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
   const siteId = integrationsStore.integrations.siteId
   const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
     const usage = `import { StoreModule } from '@ngrx/store';
@@ -85,9 +84,4 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
 
 NgRxDoc.displayName = 'NgRxDoc';
 
-export default connect((state) => {
-  const sites = state.getIn(['site', 'list']);
-  return {
-    sites,
-  };
-})(observer(NgRxDoc));
+export default observer(NgRxDoc);
