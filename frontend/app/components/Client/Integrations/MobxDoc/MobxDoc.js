@@ -1,14 +1,13 @@
 import React from 'react';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
-import { connect } from 'react-redux';
 import { CodeBlock } from "UI";
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-const MobxDoc = (props) => {
-    const { integrationsStore } = useStore();
-    const sites = props.sites ? props.sites.toJS() : []
+const MobxDoc = () => {
+    const { integrationsStore, projectsStore } = useStore();
+    const sites = projectsStore.list;
     const siteId = integrationsStore.integrations.siteId
     const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
@@ -72,9 +71,4 @@ function SomeFunctionalComponent() {
 
 MobxDoc.displayName = 'MobxDoc';
 
-export default connect((state) => {
-    const sites = state.getIn(['site', 'list']);
-    return {
-        sites,
-    };
-})(observer(MobxDoc))
+export default observer(MobxDoc)

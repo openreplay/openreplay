@@ -4,15 +4,18 @@ import FilterSelection from 'Shared/Filters/FilterSelection';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/liveSearch';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 interface Props {
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
-  saveRequestPayloads: boolean;
 }
 function LiveSessionSearch(props: Props) {
-  const { appliedFilter, saveRequestPayloads = false } = props;
+  const { appliedFilter } = props;
+  const { projectsStore } = useStore();
+  const saveRequestPayloads = projectsStore.active?.saveRequestPayloads
   const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
 
@@ -89,6 +92,5 @@ function LiveSessionSearch(props: Props) {
 }
 
 export default connect(state => ({
-  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
-}), { edit, addFilter })(LiveSessionSearch);
+}), { edit, addFilter })(observer(LiveSessionSearch));

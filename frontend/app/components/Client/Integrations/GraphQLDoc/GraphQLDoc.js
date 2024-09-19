@@ -3,12 +3,11 @@ import React from 'react';
 import { CodeBlock } from "UI";
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
-import { connect } from 'react-redux';
 import { observer } from 'mobx-react-lite'
 
-const GraphQLDoc = (props) => {
-    const { integrationsStore } = useStore();
-    const sites = props.sites ? props.sites.toJS() : []
+const GraphQLDoc = () => {
+    const { integrationsStore, projectsStore } = useStore();
+    const sites = projectsStore.list;
     const siteId = integrationsStore.integrations.siteId
     const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
     const usage = `import OpenReplay from '@openreplay/tracker';
@@ -75,9 +74,4 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`
 
 GraphQLDoc.displayName = 'GraphQLDoc';
 
-export default connect((state) => {
-    const sites = state.getIn(['site', 'list']);
-    return {
-      sites,
-    };
-})(observer(GraphQLDoc));
+export default observer(GraphQLDoc);

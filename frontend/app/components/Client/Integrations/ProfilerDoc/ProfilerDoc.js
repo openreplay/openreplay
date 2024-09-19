@@ -1,15 +1,14 @@
 import { useStore } from "App/mstore";
 import React from 'react';
-import { connect } from 'react-redux';
 import { observer } from 'mobx-react-lite';
 import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
 
-const ProfilerDoc = (props) => {
-  const { integrationsStore } = useStore();
-  const sites = props.sites ? props.sites.toJS() : []
+const ProfilerDoc = () => {
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
   const siteId = integrationsStore.integrations.siteId
   const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
@@ -91,9 +90,4 @@ const fn = profiler('call_name')(() => {
 
 ProfilerDoc.displayName = 'ProfilerDoc';
 
-export default connect((state) => {
-  const sites = state.getIn(['site', 'list']);
-  return {
-    sites
-  };
-})(observer(ProfilerDoc));
+export default observer(ProfilerDoc);

@@ -8,11 +8,11 @@ import cn from 'classnames';
 import { fetchAutoplaySessions } from 'Duck/search';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd'
+import { useStore } from "App/mstore";
 
 const PER_PAGE = 10;
 
 interface Props extends RouteComponentProps {
-  siteId: string;
   previousId: string;
   nextId: string;
   defaultList: any;
@@ -24,8 +24,8 @@ interface Props extends RouteComponentProps {
   fetchAutoplaySessions: (page: number) => Promise<void>;
 }
 function QueueControls(props: Props) {
+  const { projectsStore } = useStore();
   const {
-    siteId,
     previousId,
     nextId,
     currentPage,
@@ -54,10 +54,12 @@ function QueueControls(props: Props) {
   }, []);
 
   const nextHandler = () => {
+    const siteId = projectsStore.getSiteId().siteId!;
     props.history.push(withSiteId(sessionRoute(nextId), siteId));
   };
 
   const prevHandler = () => {
+    const siteId = projectsStore.getSiteId().siteId!;
     props.history.push(withSiteId(sessionRoute(previousId), siteId));
   };
 
@@ -106,7 +108,6 @@ export default connect(
   (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
-    siteId: state.getIn(['site', 'siteId']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
     total: state.getIn(['sessions', 'total']) || 0,
     sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
