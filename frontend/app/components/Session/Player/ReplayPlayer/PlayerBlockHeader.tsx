@@ -24,7 +24,8 @@ const SESSIONS_ROUTE = sessionsRoute();
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, customFieldStore } = useStore()
+  const { uxtestingStore, customFieldStore, projectsStore } = useStore()
+  const siteId = projectsStore.siteId!;
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
   const { width = 0, height = 0, showEvents = false } = playerState
 
@@ -33,7 +34,6 @@ function PlayerBlockHeader(props: any) {
     fullscreen,
     metaList,
     closedLive = false,
-    siteId,
     setActiveTab,
     activeTab,
     history,
@@ -135,9 +135,7 @@ const PlayerHeaderCont = connect(
     return {
       session,
       sessionPath: state.getIn(['sessions', 'sessionPath']),
-      local: state.getIn(['sessions', 'timezone']),
       funnelRef: state.getIn(['funnels', 'navRef']),
-      siteId: state.getIn(['site', 'siteId']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     };
   },

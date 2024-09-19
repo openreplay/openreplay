@@ -3,7 +3,6 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
-import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import { addOptionsToFilter } from 'Types/filter/newFilter';
 import { Button, Loader } from 'UI';
@@ -21,13 +20,12 @@ interface Props {
 }
 
 function SessionSearch(props: Props) {
-  const { tagWatchStore, aiFiltersStore, searchStore, customFieldStore } = useStore();
+  const { tagWatchStore, aiFiltersStore, searchStore, customFieldStore, projectsStore } = useStore();
   const appliedFilter = searchStore.instance;
   const metaLoading = customFieldStore.isLoading;
-  const { saveRequestPayloads = false } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
-  console.log('appliedFilter', appliedFilter)
+  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false
 
   useSessionSearchQueryHandler({
     appliedFilter,
@@ -148,8 +146,4 @@ function SessionSearch(props: Props) {
   ) : null;
 }
 
-export default connect(
-  (state: any) => ({
-    saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads'])
-  })
-)(observer(SessionSearch));
+export default observer(SessionSearch);

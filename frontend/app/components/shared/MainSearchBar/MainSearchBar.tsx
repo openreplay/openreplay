@@ -9,15 +9,15 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
-  site: any;
+
 }
 
 const MainSearchBar = (props: Props) => {
-  const { site } = props;
-  const { searchStore } = useStore();
+  const { searchStore, projectsStore } = useStore();
   const appliedFilter = searchStore.instance;
   const savedSearch = searchStore.savedSearch;
-  const currSite = React.useRef(site);
+  const projectId = projectsStore.siteId;
+  const currSite = React.useRef(projectId);
   const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
   const hasSavedSearch = savedSearch && savedSearch.exists();
   const hasSearch = hasFilters || hasSavedSearch;
@@ -27,12 +27,12 @@ const MainSearchBar = (props: Props) => {
   const isSaas = /app\.openreplay\.com/.test(originStr);
 
   React.useEffect(() => {
-    if (site !== currSite.current && currSite.current !== undefined) {
+    if (projectId !== currSite.current && currSite.current !== undefined) {
       console.debug('clearing filters due to project change');
       searchStore.clearSearch();
-      currSite.current = site;
+      currSite.current = projectId;
     }
-  }, [site]);
+  }, [projectId]);
   return (
     <div className="flex items-center flex-wrap">
       <div style={{ flex: 3, marginRight: '10px' }}>
@@ -56,8 +56,4 @@ const MainSearchBar = (props: Props) => {
   );
 };
 
-export default connect(
-  (state: any) => ({
-    site: state.getIn(['site', 'siteId'])
-  })
-)(observer(MainSearchBar));
+export default observer(MainSearchBar);

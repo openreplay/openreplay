@@ -23,13 +23,12 @@ function PlayerBlockHeader(props: any) {
 
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
   const { width = 0, height = 0, showEvents = false } = playerState;
-  const { customFieldStore } = useStore();
-
+  const { customFieldStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId!;
   const {
     session,
     fullscreen,
     metaList,
-    siteId,
     setActiveTab,
     activeTab,
     history,
@@ -106,9 +105,7 @@ const PlayerHeaderCont = connect(
     return {
       session,
       sessionPath: state.getIn(['sessions', 'sessionPath']),
-      local: state.getIn(['sessions', 'timezone']),
       funnelRef: state.getIn(['funnels', 'navRef']),
-      siteId: state.getIn(['site', 'siteId']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     };
   },

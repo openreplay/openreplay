@@ -14,6 +14,7 @@ import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useStore } from 'App/mstore';
 
 interface Props {
   session: Session;
@@ -26,7 +27,6 @@ interface Props {
   query?: Record<string, (key: string) => any>;
   request: () => void;
   userId: number;
-  siteId: number;
 }
 
 let playerInst: ILivePlayerContext['player'] | undefined;
@@ -40,7 +40,6 @@ function LivePlayer({
   query,
   isEnterprise,
   userId,
-  siteId,
 }: Props) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
@@ -48,8 +47,10 @@ function LivePlayer({
   const openedFromMultiview = query?.get('multi') === 'true';
   const usedSession = isMultiview ? customSession! : session;
   const location = useLocation();
+  const { projectsStore } = useStore();
 
   useEffect(() => {
+    const projectId = projectsStore.getSiteId();
     playerInst = undefined;
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
     console.debug('creating live player for', usedSession.sessionId);
@@ -69,7 +70,7 @@ function LivePlayer({
             sessionWithAgentData,
             data,
             userId,
-            siteId,
+            projectId,
             (state) => makeAutoObservable(state),
             toast
           );
@@ -81,7 +82,7 @@ function LivePlayer({
         sessionWithAgentData,
         null,
         userId,
-        siteId,
+        projectId,
         (state) => makeAutoObservable(state),
         toast
       );
@@ -140,9 +141,7 @@ function LivePlayer({
 export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
   connect((state: any) => {
     return {
-      siteId: state.getIn([ 'site', 'siteId' ]),
       session: state.getIn(['sessions', 'current']),
-      showAssist: state.getIn(['sessions', 'showChatWindow']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       userEmail: state.getIn(['user', 'account', 'email']),
       userName: state.getIn(['user', 'account', 'name']),

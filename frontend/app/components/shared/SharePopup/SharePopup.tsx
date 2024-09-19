@@ -7,11 +7,10 @@ import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
 import Select from 'Shared/Select';
-import { fetchList as fetchSlack, sendSlackMsg } from 'Duck/integrations/slack';
-import { fetchList as fetchTeams, sendMsTeamsMsg } from 'Duck/integrations/teams';
 import { Button, Segmented } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 interface Msg {
   integrationId: string;
@@ -51,15 +50,7 @@ const SharePopup = ({
 
 interface Props {
   sessionId: string;
-  channels: { webhookId: string; name: string }[];
-  slackLoaded: boolean;
-  msTeamsChannels: { webhookId: string; name: string }[];
-  msTeamsLoaded: boolean;
   tenantId: string;
-  fetchSlack: () => void;
-  fetchTeams: () => void;
-  sendSlackMsg: (msg: Msg) => any;
-  sendMsTeamsMsg: (msg: Msg) => any;
   showCopyLink?: boolean;
   hideModal: () => void;
   time: number;
@@ -67,18 +58,20 @@ interface Props {
 
 function ShareModalComp({
   sessionId,
-  sendSlackMsg,
-  sendMsTeamsMsg,
   showCopyLink,
-  channels,
-  slackLoaded,
-  msTeamsChannels,
-  msTeamsLoaded,
-  fetchSlack,
-  fetchTeams,
   hideModal,
   time,
 }: Props) {
+  const { integrationsStore } = useStore();
+  const channels = integrationsStore.slack.list;
+  const slackLoaded = integrationsStore.slack.loaded;
+  const msTeamsChannels = integrationsStore.msteams.list;
+  const msTeamsLoaded = integrationsStore.msteams.loaded;
+  const fetchSlack = integrationsStore.slack.fetchIntegrations;
+  const fetchTeams = integrationsStore.msteams.fetchIntegrations;
+  const sendSlackMsg = integrationsStore.slack.sendMessage;
+  const sendMsTeamsMsg = integrationsStore.msteams.sendMessage;
+
   const [shareTo, setShareTo] = useState('slack');
   const [comment, setComment] = useState('');
   // @ts-ignore
@@ -104,7 +97,7 @@ function ShareModalComp({
   const editMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value);
   const shareToSlack = () => {
     setLoadingSlack(true);
-    sendSlackMsg({
+    void sendSlackMsg({
       integrationId: channelId,
       entity: 'sessions',
       entityId: sessionId,
@@ -140,16 +133,12 @@ function ShareModalComp({
       value: webhookId,
       label: name,
     }))
-    // @ts-ignore
-    .toJS();
 
   const msTeamsOptions = msTeamsChannels
     .map(({ webhookId, name }) => ({
       value: webhookId,
       label: name,
     }))
-    // @ts-ignore
-    .toJS();
 
   const sendMsg = () => {
     if (shareTo === 'slack') {
@@ -279,18 +268,9 @@ function ShareModalComp({
 
 const mapStateToProps = (state: Record<string, any>) => ({
   sessionId: state.getIn(['sessions', 'current']).sessionId,
-  channels: state.getIn(['slack', 'list']),
-  slackLoaded: state.getIn(['slack', 'loaded']),
-  msTeamsChannels: state.getIn(['teams', 'list']),
-  msTeamsLoaded: state.getIn(['teams', 'loaded']),
   tenantId: state.getIn(['user', 'account', 'tenantId']),
 });
 
-const ShareModal = connect(mapStateToProps, {
-  fetchSlack,
-  fetchTeams,
-  sendSlackMsg,
-  sendMsTeamsMsg,
-})(ShareModalComp);
+const ShareModal = connect(mapStateToProps)(ShareModalComp);
 
 export default observer(SharePopup);

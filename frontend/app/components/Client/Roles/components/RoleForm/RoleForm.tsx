@@ -23,16 +23,16 @@ interface Permission {
 
 interface Props {
   closeModal: (toastMessage?: string) => void;
-  projects: any[];
   permissionsMap: any;
   deleteHandler: (id: any) => Promise<void>;
 }
 
 const RoleForm = (props: Props) => {
-  const { roleStore } = useStore();
+  const { roleStore, projectsStore } = useStore();
+  const projects = projectsStore.list;
   const role = roleStore.instance;
   const saving = roleStore.loading;
-  const { closeModal, permissionsMap, projects } = props;
+  const { closeModal, permissionsMap } = props;
   const projectOptions = projects
     .filter(({ value }) => !role.projects.includes(value))
     .map((p: any) => ({
@@ -217,12 +217,7 @@ const RoleForm = (props: Props) => {
   );
 };
 
-export default connect((state: any) => {
-  const projects = state.getIn(['site', 'list']);
-  return {
-    projects,
-  };
-})(observer(RoleForm));
+export default observer(RoleForm);
 
 function OptionLabel(nameMap: any, p: any, onChangeOption: (e: any) => void) {
   return (

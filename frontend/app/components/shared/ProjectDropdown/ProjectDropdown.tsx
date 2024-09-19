@@ -9,12 +9,11 @@ import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { useStore, withStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { setSiteId } from 'Duck/site';
-import { init as initProject } from 'Duck/site';
 import { Icon } from 'UI';
 
 const { Text } = Typography;
@@ -26,17 +25,18 @@ interface Site {
 }
 
 interface Props extends RouteComponentProps {
-  sites: Site[];
-  siteId: string;
-  setSiteId: (siteId: string) => void;
   clearSearchLive: () => void;
-  initProject: (data: any) => void;
-  mstore: any;
   account: any;
 }
 
 function ProjectDropdown(props: Props) {
-  const { sites, siteId, location, account } = props;
+  const mstore = useStore();
+  const { projectsStore } = mstore;
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const setSiteId = projectsStore.setSiteId;
+  const initProject = projectsStore.initProject;
+  const { location, account } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
@@ -45,22 +45,21 @@ function ProjectDropdown(props: Props) {
   const { customFieldStore, searchStore } = useStore();
 
   const handleSiteChange = async (newSiteId: string) => {
-    props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
+    setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
     await customFieldStore.fetchList(newSiteId);
     // searchStore.clearSearch(location.pathname.includes('/sessions'));
     searchStore.clearSearch();
     props.clearSearchLive();
 
-    props.mstore.initClient();
+    mstore.initClient();
   };
 
   const addProjectClickHandler = () => {
-    props.initProject({});
+    initProject({});
     showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
 
-  // @ts-ignore immutable
-  const menuItems = sites.toJS().map((site) => ({
+  const menuItems = sites.map((site) => ({
     key: site.id,
     label: (
       <div
@@ -141,15 +140,11 @@ function ProjectDropdown(props: Props) {
 }
 
 const mapStateToProps = (state: any) => ({
-  sites: state.getIn(['site', 'list']),
-  siteId: state.getIn(['site', 'siteId']),
   account: state.getIn(['user', 'account'])
 });
 
 export default withRouter(
   connect(mapStateToProps, {
-    setSiteId,
     clearSearchLive,
-    initProject
-  })(withStore(ProjectDropdown))
+  })(observer(ProjectDropdown))
 );

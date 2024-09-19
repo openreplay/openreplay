@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { editGDPR, saveGDPR, init } from 'Duck/site';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 import { Checkbox, Loader, Toggler } from 'UI';
-import GDPR from 'Types/site/gdpr';
+import GDPR from 'App/mstore/types/gdpr';
 import cn from 'classnames';
 import stl from './projectCodeSnippet.module.css';
 import CircleNumber from '../../CircleNumber';
@@ -18,37 +18,39 @@ const inputModeOptions = [
 const inputModeOptionsMap = {};
 inputModeOptions.forEach((o, i) => (inputModeOptionsMap[o.value] = i));
 
-const ProjectCodeSnippet = (props) => {
-  const { site } = props;
-  const { gdpr } = props.site;
+const ProjectCodeSnippet = () => {
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
+  const site = projectsStore.instance;
+  const gdpr = site.gdpr;
+  const sites = projectsStore.list;
+  const editGDPR = projectsStore.editGDPR;
+  const onSaveGDPR = projectsStore.saveGDPR;
+  const init = projectsStore.initProject;
   const [changed, setChanged] = useState(false);
   const [isAssistEnabled, setAssistEnabled] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
-    const site = props.sites.find((s) => s.id === props.siteId);
+    const site = sites.find((s) => s.id === siteId);
     if (site) {
-      props.init(site);
+      init(site);
     }
   }, []);
 
-  const saveGDPR = (value) => {
+  const saveGDPR = () => {
     setChanged(true);
-    props.saveGDPR(site.id, GDPR({ ...value }));
+    void onSaveGDPR(site.id);
   };
 
   const onChangeSelect = ({ name, value }) => {
-    const _gdpr = { ...gdpr.toData() };
-    _gdpr[name] = value;
-    props.editGDPR({ [name]: value });
-    saveGDPR(_gdpr);
+    editGDPR({ [name]: value });
+    saveGDPR();
   };
 
   const onChangeOption = ({ target: { name, checked } }) => {
-    const _gdpr = { ...gdpr.toData() };
-    _gdpr[name] = checked;
-    props.editGDPR({ [name]: checked });
-    saveGDPR(_gdpr);
+    editGDPR({ [name]: checked });
+    saveGDPR();
   };
 
   useEffect(() => {
@@ -159,12 +161,4 @@ const ProjectCodeSnippet = (props) => {
   );
 };
 
-export default connect(
-  (state) => ({
-    siteId: state.getIn(['site', 'siteId']),
-    site: state.getIn(['site', 'instance']),
-    sites: state.getIn(['site', 'list']),
-    saving: state.getIn(['site', 'saveGDPR', 'loading']),
-  }),
-  { editGDPR, saveGDPR, init }
-)(ProjectCodeSnippet);
+export default observer(ProjectCodeSnippet);

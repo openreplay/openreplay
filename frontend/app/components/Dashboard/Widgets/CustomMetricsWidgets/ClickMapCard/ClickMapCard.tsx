@@ -81,7 +81,6 @@ export default connect(
         insightsFilters: state.getIn(['sessions', 'insightFilters']),
         visitedEvents: state.getIn(['sessions', 'visitedEvents']),
         insights: state.getIn(['sessions', 'insights']),
-        host: state.getIn(['sessions', 'host']),
     }),
     { fetchInsights, }
 )

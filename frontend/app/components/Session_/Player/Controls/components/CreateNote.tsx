@@ -1,10 +1,9 @@
 import { Tag } from 'antd';
-import { List } from 'immutable';
 import { Duration } from 'luxon';
 import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import {
   Note,
@@ -13,8 +12,6 @@ import {
   iTag,
   tagProps,
 } from 'App/services/NotesService';
-import { fetchList as fetchSlack } from 'Duck/integrations/slack';
-import { fetchList as fetchTeams } from 'Duck/integrations/teams';
 import { addNote, updateNote } from 'Duck/sessions';
 import { Button, Checkbox, Icon } from 'UI';
 
@@ -27,10 +24,6 @@ interface Props {
   sessionId: string;
   isEdit?: boolean;
   editNote?: WriteNote;
-  slackChannels: List<Record<string, any>>;
-  teamsChannels: List<Record<string, any>>;
-  fetchSlack: () => void;
-  fetchTeams: () => void;
   hideModal: () => void;
 }
 
@@ -40,12 +33,13 @@ function CreateNote({
   isEdit,
   editNote,
   updateNote,
-  slackChannels,
-  fetchSlack,
-  teamsChannels,
-  fetchTeams,
   hideModal,
 }: Props) {
+  const { notesStore, integrationsStore } = useStore();
+  const slackChannels = integrationsStore.slack.list;
+  const fetchSlack = integrationsStore.slack.fetchIntegrations;
+  const teamsChannels = integrationsStore.msteams.list;
+  const fetchTeams = integrationsStore.msteams.fetchIntegrations;
   const [text, setText] = React.useState('');
   const [slackChannel, setSlackChannel] = React.useState('');
   const [teamsChannel, setTeamsChannel] = React.useState('');
@@ -56,7 +50,6 @@ function CreateNote({
   const [useTeams, setTeams] = React.useState(false);
 
   const inputRef = React.createRef<HTMLTextAreaElement>();
-  const { notesStore } = useStore();
 
   React.useEffect(() => {
     if (isEdit && editNote) {
@@ -151,14 +144,12 @@ function CreateNote({
     .map(({ webhookId, name }) => ({
       value: webhookId,
       label: name,
-    }))
-    .toJS() as unknown as { value: string; label: string }[];
+    })) as unknown as { value: string; label: string }[];
   const teamsChannelsOptions = teamsChannels
     .map(({ webhookId, name }) => ({
       value: webhookId,
       label: name,
-    }))
-    .toJS() as unknown as { value: string; label: string }[];
+    })) as unknown as { value: string; label: string }[];
 
   slackChannelsOptions.unshift({
     // @ts-ignore
@@ -334,10 +325,8 @@ function CreateNote({
 
 export default connect(
   (state: any) => {
-    const slackChannels = state.getIn(['slack', 'list']);
-    const teamsChannels = state.getIn(['teams', 'list']);
     const sessionId = state.getIn(['sessions', 'current']).sessionId;
-    return { sessionId, slackChannels, teamsChannels };
+    return { sessionId };
   },
-  { addNote, updateNote, fetchSlack, fetchTeams }
-)(CreateNote);
+  { addNote, updateNote,}
+)(observer(CreateNote));

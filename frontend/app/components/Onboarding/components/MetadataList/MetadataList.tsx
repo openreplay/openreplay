@@ -1,29 +1,26 @@
 import React, { useEffect } from 'react';
 import { Button, TagBadge } from 'UI';
-import { connect } from 'react-redux';
 import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
 import { confirm } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
-interface MetadataListProps {
-  site: { id: string };
-}
-
-const MetadataList: React.FC<MetadataListProps> = (props) => {
-  const { site } = props;
-  const { customFieldStore } = useStore();
+const MetadataList = () => {
+  const { customFieldStore, projectsStore } = useStore();
+  const site = projectsStore.instance;
   const fields = customFieldStore.list;
 
   const { showModal, hideModal } = useModal();
 
   useEffect(() => {
-    customFieldStore.fetchList(site.id);
-  }, [site.id]);
+    customFieldStore.fetchList(site?.id);
+  }, [site?.id]);
 
   const save = (field: any) => {
-    customFieldStore.save(site.id, field).then((response) => {
+    if (!site) return;
+    customFieldStore.save(site.id!, field).then((response) => {
       if (!response || !response.errors || response.errors.size === 0) {
         hideModal();
         toast.success('Metadata added successfully!');
@@ -62,11 +59,4 @@ const MetadataList: React.FC<MetadataListProps> = (props) => {
   );
 };
 
-export default connect(
-  (state: any) => ({
-    site: state.getIn(['site', 'instance']),
-    fields: state.getIn(['customFields', 'list']).sortBy((i: any) => i.index),
-    field: state.getIn(['customFields', 'instance']),
-    loading: state.getIn(['customFields', 'fetchRequest', 'loading'])
-  })
-)(MetadataList);
+export default observer(MetadataList);

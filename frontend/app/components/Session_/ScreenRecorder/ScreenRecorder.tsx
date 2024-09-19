@@ -11,6 +11,7 @@ import { formatTimeOrDate } from 'App/date';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { useStore } from 'App/mstore';
 
 /**
  * "edge" || "edg/"   chromium based edge (dev or canary)
@@ -32,16 +33,16 @@ const supportedBrowsers = ['Chrome v91+', 'Edge v90+'];
 const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 
 function ScreenRecorder({
-  siteId,
   sessionId,
   agentId,
   isEnterprise,
 }: {
-  siteId: string;
   sessionId: string;
   isEnterprise: boolean;
   agentId: number,
 }) {
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
   const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
   const recordingState = store.get().recordingState;
 
@@ -144,7 +145,6 @@ function ScreenRecorder({
 export default connect((state: any) => ({
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
     state.getIn(['user', 'account', 'edition']) === 'msaas',
-  siteId: state.getIn(['site', 'siteId']),
   sessionId: state.getIn(['sessions', 'current']).sessionId,
   agentId: state.getIn(['user', 'account', 'id']),
 }))(observer(ScreenRecorder));

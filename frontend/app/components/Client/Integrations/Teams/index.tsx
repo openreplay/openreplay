@@ -1,17 +1,15 @@
 import React, { useEffect } from 'react';
 import TeamsChannelList from './TeamsChannelList';
-import { fetchList, init } from 'Duck/integrations/teams';
-import { connect } from 'react-redux';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
+
 import TeamsAddForm from './TeamsAddForm';
 import { Button } from 'UI';
 
-interface Props {
-    onEdit?: (integration: any) => void;
-    istance: any;
-    fetchList: any;
-    init: any;
-}
-const MSTeams = (props: Props) => {
+const MSTeams = () => {
+    const { integrationsStore } = useStore();
+    const fetchList = integrationsStore.msteams.fetchIntegrations;
+    const init = integrationsStore.msteams.init;
     const [active, setActive] = React.useState(false);
 
     const onEdit = () => {
@@ -20,11 +18,11 @@ const MSTeams = (props: Props) => {
 
     const onNew = () => {
         setActive(true);
-        props.init({});
+        init({});
     }
 
     useEffect(() => {
-        props.fetchList();
+        void fetchList();
     }, []);
 
     return (
@@ -47,9 +45,4 @@ const MSTeams = (props: Props) => {
 
 MSTeams.displayName = 'MSTeams';
 
-export default connect(
-    (state: any) => ({
-        istance: state.getIn(['teams', 'instance']),
-    }),
-    { fetchList, init }
-)(MSTeams);
+export default observer(MSTeams);

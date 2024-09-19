@@ -3,7 +3,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Tag } from 'antd';
 import cn from 'classnames';
 import { Loader, Button, TextLink, NoContent, Pagination, PageTitle, Divider, Icon } from 'UI';
-import { init, remove, fetchGDPR, setSiteId } from 'Duck/site';
 import withPageTitle from 'HOCs/withPageTitle';
 import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
@@ -16,9 +15,11 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import CaptureRate from 'Shared/SessionSettings/components/CaptureRate';
 import { BranchesOutlined } from '@ant-design/icons';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore'
 
 type Project = {
-  id: number;
+  id: string;
   name: string;
   conditionsCount: number;
   platform: 'web' | 'mobile';
@@ -29,7 +30,11 @@ type Project = {
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
+const Sites = ({ user }: PropsFromRedux) => {
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const loading = projectsStore.sitesLoading;
+  const init = projectsStore.initProject
   const [searchQuery, setSearchQuery] = useState('');
   const [showCaptureRate, setShowCaptureRate] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -140,7 +145,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
               </div>
             }
             size="small"
-            show={!loading && filteredSites.size === 0}
+            show={!loading && filteredSites.length === 0}
           >
             <div className="grid grid-cols-12 gap-2 w-full items-center px-5 py-3 font-medium">
               <div className="col-span-4">Project Name</div>
@@ -160,7 +165,7 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
             <div className="w-full flex items-center justify-center py-10">
               <Pagination
                 page={page}
-                total={filteredSites.size}
+                total={filteredSites.length}
                 onPageChange={(page) => updatePage(page)}
                 limit={pageSize}
               />
@@ -181,18 +186,10 @@ const Sites = ({ loading, sites, user, init }: PropsFromRedux) => {
 };
 
 const mapStateToProps = (state: any) => ({
-  site: state.getIn(['site', 'instance']),
-  sites: state.getIn(['site', 'list']),
-  loading: state.getIn(['site', 'loading']),
   user: state.getIn(['user', 'account']),
   account: state.getIn(['user', 'account']),
 });
 
-const connector = connect(mapStateToProps, {
-  init,
-  remove,
-  fetchGDPR,
-  setSiteId,
-});
+const connector = connect(mapStateToProps, null);
 
-export default connector(withPageTitle('Projects - OpenReplay Preferences')(Sites));
+export default connector(withPageTitle('Projects - OpenReplay Preferences')(observer(Sites)));

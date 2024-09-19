@@ -1,11 +1,15 @@
+import { useStore } from "App/mstore";
 import React from 'react';
 import { CodeBlock } from "UI";
-import ToggleContent from '../../../shared/ToggleContent';
+import ToggleContent from 'Components/shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 
-const VueDoc = (props) => {
-  const { projectKey, siteId } = props;
+const VueDoc = () => {
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = integrationsStore.integrations.siteId
+  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
   const usage = `import Vuex from 'vuex'
 import OpenReplay from '@openreplay/tracker';
@@ -81,10 +85,4 @@ const store = new Vuex.Store({
 
 VueDoc.displayName = 'VueDoc';
 
-export default connect((state) => {
-  const siteId = state.getIn(['integrations', 'siteId']);
-  const sites = state.getIn(['site', 'list']);
-  return {
-    projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
-  };
-})(VueDoc);
+export default observer(VueDoc);

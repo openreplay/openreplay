@@ -6,11 +6,10 @@ import { NoContent, Loader, Pagination, Button } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
-import { toggleFavorite } from 'Duck/sessions';
 import SessionDateRange from './SessionDateRange';
 import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStatus';
 import { sessionService } from 'App/services';
-import { updateProjectRecordingStatus } from 'Duck/site';
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 enum NoContentType {
@@ -31,37 +30,25 @@ let sessionStatusTimeOut: any = null;
 const STATUS_FREQUENCY = 5000;
 
 interface Props extends RouteComponentProps {
-  loading: boolean;
-  list: any;
-  currentPage: number;
-  pageSize: number;
-  total: number;
-  filters: any;
-  lastPlayedSessionId: string;
-  metaList: any;
-  scrollY: number;
-  updateProjectRecordingStatus: (siteId: string, status: boolean) => void;
-  activeTab: any;
   isEnterprise?: boolean;
-  toggleFavorite: (sessionId: string) => Promise<void>;
-  sites: object[];
   isLoggedIn: boolean;
-  siteId: string;
 }
 
 function SessionList(props: Props) {
+  const { projectsStore, sessionStore, customFieldStore } = useStore();
+  const list = sessionStore.list;
+  const lastPlayedSessionId = sessionStore.lastPlayedSessionId;
+  const loading = sessionStore.loadingSessions;
+  const total = sessionStore.total;
+  const onToggleFavorite = sessionStore.toggleFavorite;
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
   const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
   const { searchStore } = useStore();
   const {
-    loading,
-    list,
-    total,
-    lastPlayedSessionId,
-    metaList,
     isEnterprise = false,
-    sites,
     isLoggedIn,
-    siteId
   } = props;
   const { currentPage, scrollY, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
@@ -72,6 +59,7 @@ function SessionList(props: Props) {
   const isVault = isBookmark && isEnterprise;
   const activeSite: any = sites.find((s: any) => s.id === siteId);
   const hasNoRecordings = !activeSite || !activeSite.recorded;
+  const metaList = customFieldStore.list;
 
 
   const NO_CONTENT = React.useMemo(() => {
@@ -127,7 +115,7 @@ function SessionList(props: Props) {
     }
 
     if (statusData.status === 2 && activeSite) { // recording && processed
-      props.updateProjectRecordingStatus(activeSite.id, true);
+      updateProjectRecordingStatus(activeSite.id, true);
       searchStore.fetchSessions(true);
       clearInterval(sessionStatusTimeOut);
     }
@@ -144,7 +132,7 @@ function SessionList(props: Props) {
 
   useEffect(() => {
     // handle scroll position
-    const { scrollY } = props;
+    const { scrollY } = searchStore;
     window.scrollTo(0, scrollY);
 
     if (total === 0 && !loading && !hasNoRecordings) {
@@ -187,7 +175,7 @@ function SessionList(props: Props) {
   };
 
   const toggleFavorite = (sessionId: string) => {
-    props.toggleFavorite(sessionId).then(() => {
+    onToggleFavorite(sessionId).then(() => {
       searchStore.fetchSessions(true);
     });
   };
@@ -270,18 +258,6 @@ function SessionList(props: Props) {
 
 export default connect(
   (state: any) => ({
-    list: state.getIn(['sessions', 'list']),
-    lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
-    metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    loading: state.getIn(['sessions', 'loading']),
-    total: state.getIn(['sessions', 'total']) || 0,
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list']),
-    isLoggedIn: Boolean(state.getIn(['user', 'jwt']))
-  }),
-  {
-    toggleFavorite,
-    updateProjectRecordingStatus
-  }
-)(withRouter(SessionList));
+    isLoggedIn: Boolean(state.getIn(['user', 'jwt'])),
+  }))(withRouter(observer(SessionList)));

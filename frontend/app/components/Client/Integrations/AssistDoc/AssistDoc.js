@@ -1,10 +1,11 @@
+import { useStore } from "App/mstore";
 import React from 'react';
 import DocLink from 'Shared/DocLink/DocLink';
 import AssistScript from './AssistScript';
 import AssistNpm from './AssistNpm';
 import { Tabs, CodeBlock } from 'UI';
 import { useState } from 'react';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite'
 
 const NPM = 'NPM';
 const SCRIPT = 'SCRIPT';
@@ -13,8 +14,11 @@ const TABS = [
     { key: NPM, text: NPM },
 ];
 
-const AssistDoc = (props) => {
-    const { projectKey } = props;
+const AssistDoc = () => {
+    const { integrationsStore, projectsStore } = useStore();
+    const sites = projectsStore.list;
+    const siteId = integrationsStore.integrations.siteId
+    const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
     const [activeTab, setActiveTab] = useState(SCRIPT);
 
     const renderActiveTab = () => {
@@ -53,10 +57,4 @@ const AssistDoc = (props) => {
 
 AssistDoc.displayName = 'AssistDoc';
 
-export default connect((state) => {
-    const siteId = state.getIn(['integrations', 'siteId']);
-    const sites = state.getIn(['site', 'list']);
-    return {
-      projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
-    };
-})(AssistDoc);
+export default observer(AssistDoc);

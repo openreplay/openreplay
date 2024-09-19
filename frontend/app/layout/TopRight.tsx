@@ -10,17 +10,17 @@ import UserMenu from 'Components/Header/UserMenu/UserMenu';
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 import ProjectDropdown from 'Shared/ProjectDropdown';
 import { getScope } from "../duck/user";
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   account: any;
-  siteId: any;
-  sites: any;
   spotOnly?: boolean;
 }
 
 function TopRight(props: Props) {
+  const { projectsStore } = useStore();
   const { account } = props;
-  // @ts-ignore
   return (
     <Space style={{ lineHeight: '0' }}>
       {props.spotOnly ? null : (
@@ -52,9 +52,7 @@ function mapStateToProps(state: any) {
   return {
     account: state.getIn(['user', 'account']),
     spotOnly: getScope(state) === 1,
-    siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list']),
   };
 }
 
-export default connect(mapStateToProps)(TopRight);
+export default connect(mapStateToProps)(observer(TopRight));

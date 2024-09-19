@@ -10,6 +10,8 @@ import NotFoundPage from 'Shared/NotFoundPage';
 import { ModalProvider } from 'Components/Modal';
 import Layout from 'App/layout/Layout';
 import PublicRoutes from 'App/PublicRoutes';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -41,8 +43,11 @@ interface Props {
 }
 
 function IFrameRoutes(props: Props) {
-  const { isJwt = false, isLoggedIn = false, loading, onboarding, sites, siteId, jwt } = props;
-  const siteIdList: any = sites.map(({ id }) => id).toJS();
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const { isJwt = false, isLoggedIn = false, loading, onboarding, jwt } = props;
+  const siteIdList: any = sites.map(({ id }) => id);
 
   if (isLoggedIn) {
     return (
@@ -75,11 +80,9 @@ function IFrameRoutes(props: Props) {
 export default connect((state: any) => ({
   changePassword: state.getIn(['user', 'account', 'changePassword']),
   onboarding: state.getIn(['user', 'onboarding']),
-  sites: state.getIn(['site', 'list']),
-  siteId: state.getIn(['site', 'siteId']),
   jwt: state.getIn(['user', 'jwt']),
   tenantId: state.getIn(['user', 'account', 'tenantId']),
   isEnterprise:
     state.getIn(['user', 'account', 'edition']) === 'ee' ||
     state.getIn(['user', 'authDetails', 'edition']) === 'ee'
-}))(IFrameRoutes);
+}))(observer(IFrameRoutes));

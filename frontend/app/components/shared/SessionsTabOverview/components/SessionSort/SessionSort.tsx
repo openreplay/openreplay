@@ -1,8 +1,7 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import React from 'react';
-import { connect } from 'react-redux';
-import { sort } from 'Duck/sessions';
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 const sortOptionsMap = {
@@ -30,7 +29,6 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
   sortOptions: any,
   current: string
 }) {
-
   return (
     <Dropdown
       menu={{
@@ -53,13 +51,14 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
 }
 
 function SessionSort(props: Props) {
-  const { searchStore } = useStore();
+  const { searchStore, sessionStore } = useStore();
+  const onSessionSort = sessionStore.sortSessions;
   const { sort, order } = searchStore.instance;
   const onSort = ({ key }: { key: string }) => {
     const [sort, order] = key.split('-');
     const sign = order === 'desc' ? -1 : 1;
     searchStore.applyFilter({ order, sort });
-    props.sort(sort, sign);
+    onSessionSort(sort, sign);
   };
 
   const defaultOption = `${sort}-${order}`;
@@ -74,9 +73,4 @@ function SessionSort(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    // filter: state.getIn(['search', 'instance'])
-  }),
-  { sort }
-)(SessionSort);
+export default observer(SessionSort);

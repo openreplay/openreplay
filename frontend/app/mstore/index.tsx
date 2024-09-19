@@ -28,6 +28,11 @@ import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
 import CustomFieldStore from './customFieldStore';
 import SearchStore from './searchStore';
+import { IntegrationsStore } from "./integrationsStore";
+import ProjectsStore from './projectsStore';
+
+export const projectStore = new ProjectsStore();
+export const sessionStore = new SessionStore();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -57,6 +62,8 @@ export class RootStore {
   issueReportingStore: IssueReportingStore;
   customFieldStore: CustomFieldStore;
   searchStore: SearchStore;
+  integrationsStore: IntegrationsStore
+  projectsStore: ProjectsStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -68,7 +75,7 @@ export class RootStore {
     this.auditStore = new AuditStore();
     this.errorStore = new ErrorStore();
     this.notificationStore = new NotificationStore();
-    this.sessionStore = new SessionStore();
+    this.sessionStore = sessionStore;
     this.notesStore = new NotesStore();
     this.recordingsStore = new RecordingsStore();
     this.assistMultiviewStore = new AssistMultiviewStore();
@@ -86,6 +93,8 @@ export class RootStore {
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
     this.searchStore = new SearchStore();
+    this.integrationsStore = new IntegrationsStore();
+    this.projectsStore = projectStore;
   }
 
   initClient() {
@@ -93,6 +102,7 @@ export class RootStore {
     services.forEach((service) => {
       service.initClient(client);
     });
+    client.setSiteIdCheck(this.projectsStore.getSiteId)
   }
 }
 

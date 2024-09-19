@@ -1,22 +1,12 @@
 import Dashboard from "App/mstore/types/dashboard";
-import APIClient from 'App/api_client';
+import BaseService from "./BaseService";
 import Widget from "App/mstore/types/widget";
 
-export default class DashboardService {
-    private client: APIClient;
-
-    constructor(client?: APIClient) {
-        this.client = client ? client : new APIClient();
-    }
-
-    initClient(client?: APIClient) {
-        this.client = client || new APIClient();
-    }
-
+export default class DashboardService  extends BaseService {
     /**
      * Get all widgets from a dashboard.
      * @param dashboardId Required
-     * @returns 
+     * @returns
      */
     getWidgets(dashboardId: string): Promise<any> {
         return this.client.get(`/dashboards/${dashboardId}/widgets`)
@@ -34,10 +24,10 @@ export default class DashboardService {
             .then(response => response.json())
             .then(response => response.data || []);
     }
-    
+
     /**
      * Get a dashboard by dashboardId.
-     * @param dashboardId 
+     * @param dashboardId
      * @returns {Promise<any>}
      */
     getDashboard(dashboardId: string): Promise<any> {
@@ -66,9 +56,9 @@ export default class DashboardService {
 
     /**
      * Add a widget to a dashboard.
-     * @param dashboard 
-     * @param metricIds 
-     * @returns 
+     * @param dashboard
+     * @param metricIds
+     * @returns
      */
     addWidget(dashboard: Dashboard, metricIds: any): Promise<any> {
         const data = dashboard.toJson()
@@ -80,7 +70,7 @@ export default class DashboardService {
 
     /**
      * Delete a dashboard.
-     * @param dashboardId 
+     * @param dashboardId
      * @returns {Promise<any>}
      */
     deleteDashboard(dashboardId: string): Promise<any> {
@@ -89,7 +79,7 @@ export default class DashboardService {
 
 
     /**
-     * Create a new Meitrc, if the dashboardId is not provided, 
+     * Create a new Meitrc, if the dashboardId is not provided,
      * it will add the metric to the dashboard.
      * @param metric Required
      * @param dashboardId Optional

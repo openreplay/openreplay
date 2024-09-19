@@ -54,12 +54,12 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
 
 export default class APIClient {
   private init: RequestInit;
-  private readonly siteId: string | undefined;
+  private siteId: string | undefined;
+  private siteIdCheck: (() => { siteId: string | null }) | undefined;
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
     const jwt = store.getState().getIn(['user', 'jwt']);
-    const siteId = store.getState().getIn(['site', 'siteId']);
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
@@ -69,7 +69,10 @@ export default class APIClient {
     if (jwt !== null) {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
-    this.siteId = siteId;
+  }
+
+  setSiteIdCheck(checker: () => { siteId: string | null }): void {
+    this.siteIdCheck = checker
   }
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
@@ -101,6 +104,7 @@ export default class APIClient {
       delete init.body; // GET requests shouldn't have a body
     }
 
+    this.siteId = this.siteIdCheck?.().siteId ?? undefined;
     return init;
   }
 
