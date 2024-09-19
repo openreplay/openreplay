@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { setAutoplayValues } from 'Duck/sessions';
 import { withSiteId, session as sessionRoute } from 'App/routes';
 import AutoplayToggle from "Shared/AutoplayToggle/AutoplayToggle";
 import { withRouter, RouteComponentProps } from 'react-router-dom';
@@ -13,24 +12,21 @@ import { useStore } from "App/mstore";
 const PER_PAGE = 10;
 
 interface Props extends RouteComponentProps {
-  previousId: string;
-  nextId: string;
   defaultList: any;
   currentPage: number;
-  total: number;
-  setAutoplayValues: () => void;
   latestRequestTime: any;
   sessionIds: any;
   fetchAutoplaySessions: (page: number) => Promise<void>;
 }
 function QueueControls(props: Props) {
-  const { projectsStore } = useStore();
+  const { projectsStore, sessionStore } = useStore();
+  const previousId = sessionStore.previousId;
+  const nextId = sessionStore.nextId;
+  const total = sessionStore.total;
+  const sessionIds = sessionStore.sessionIds ?? [];
+  const setAutoplayValues = sessionStore.setAutoplayValues;
   const {
-    previousId,
-    nextId,
     currentPage,
-    total,
-    sessionIds,
     latestRequestTime,
     match: {
       // @ts-ignore
@@ -38,17 +34,15 @@ function QueueControls(props: Props) {
     },
   } = props;
 
-  const disabled = sessionIds.length === 0;
-
   useEffect(() => {
     if (latestRequestTime) {
-      props.setAutoplayValues();
+      setAutoplayValues();
       const totalPages = Math.ceil(total / PER_PAGE);
       const index = sessionIds.indexOf(sessionId);
 
       // check for the last page and load the next
       if (currentPage !== totalPages && index === sessionIds.length - 1) {
-        props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
+        props.fetchAutoplaySessions(currentPage + 1).then(setAutoplayValues);
       }
     }
   }, []);
@@ -106,12 +100,8 @@ function QueueControls(props: Props) {
 
 export default connect(
   (state: any) => ({
-    previousId: state.getIn(['sessions', 'previousId']),
-    nextId: state.getIn(['sessions', 'nextId']),
     currentPage: state.getIn(['search', 'currentPage']) || 1,
-    total: state.getIn(['sessions', 'total']) || 0,
-    sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
-  { setAutoplayValues, fetchAutoplaySessions }
+  { fetchAutoplaySessions }
 )(withRouter(QueueControls));
