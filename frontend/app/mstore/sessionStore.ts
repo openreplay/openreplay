@@ -13,7 +13,47 @@ import {
 } from 'App/utils';
 import { loadFile } from 'App/player/web/network/loadFiles';
 
+class UserFilter {
+  endDate: number = new Date().getTime();
+  startDate: number = new Date().getTime() - 24 * 60 * 60 * 1000;
+  rangeName: string = LAST_7_DAYS;
+  filters: any = [];
+  page: number = 1;
+  limit: number = 10;
+  period: any = Record({ rangeName: LAST_7_DAYS });
+  constructor() {
+    makeAutoObservable(this, {
+      page: observable,
+      update: action,
+    });
+  }
+  update(key: string, value: any) {
+    // @ts-ignore
+    this[key] = value;
+    if (key === 'period') {
+      this.startDate = this.period.start;
+      this.endDate = this.period.end;
+    }
+  }
+  setFilters(filters: any[]) {
+    this.filters = filters;
+  }
+  setPage(page: number) {
+    this.page = page;
+  }
+  toJson() {
+    return {
+      endDate: this.period.end,
+      startDate: this.period.start,
+      filters: this.filters.map(filterMap),
+      page: this.page,
+      limit: this.limit,
+    };
+  }
+}
+
 export default class SessionStore {
+  userFilter: UserFilter = new UserFilter();
   list: Session[] = [];
   sessionIds: string[] = [];
   current = new Session();
