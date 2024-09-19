@@ -12,22 +12,20 @@ import { sessions as sessionsRoute } from 'App/routes';
 import Divider from 'Components/Errors/ui/Divider';
 import ErrorName from 'Components/Errors/ui/ErrorName';
 import Label from 'Components/Errors/ui/Label';
-import { addFilterByKeyAndValue } from 'Duck/search';
 import { Button, ErrorDetails, Icon, Loader } from 'UI';
 
 import SessionBar from './SessionBar';
 
 function MainSection(props) {
-  const { errorStore } = useStore();
+  const { errorStore, searchStore } = useStore();
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
   const sourcemapUploaded = errorStore.sourcemapUploaded;
   const loading = errorStore.isLoading;
-  const addFilterByKeyAndValue = props.addFilterByKeyAndValue;
   const className = props.className;
 
   const findSessions = () => {
-    addFilterByKeyAndValue(FilterKey.ERROR, error.message);
+    searchStore.addFilterByKeyAndValue(FilterKey.ERROR, error.message);
     props.history.push(sessionsRoute());
   };
   return (
@@ -103,7 +101,8 @@ function MainSection(props) {
                 <div className="flex items-center rounded overflow-hidden bg-gray-lightest">
                   <div className="bg-gray-light-shade py-1 px-2 text-disabled-text">
                     {Object.entries(tag)[0][0]}
-                  </div>{' '}
+                  </div>
+                  {' '}
                   <div className="py-1 px-2 text-gray-dark">
                     {Object.entries(tag)[0][1]}
                   </div>
@@ -130,5 +129,5 @@ function MainSection(props) {
 }
 
 export default withRouter(
-  connect(null, { addFilterByKeyAndValue })(observer(MainSection))
+  connect(null)(observer(MainSection))
 );

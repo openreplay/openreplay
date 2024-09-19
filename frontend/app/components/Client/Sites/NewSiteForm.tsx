@@ -4,9 +4,8 @@ import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { withStore } from 'App/mstore';
+import { useStore, withStore } from 'App/mstore';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { clearSearch } from 'Duck/search';
 import { edit, fetchList, remove, save, update } from 'Duck/site';
 import { setSiteId } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
@@ -35,7 +34,6 @@ const NewSiteForm = ({
   pushNewSite,
   fetchList,
   setSiteId,
-  clearSearch,
   clearSearchLive,
   location: { pathname },
   onClose,
@@ -44,6 +42,7 @@ const NewSiteForm = ({
   canDelete,
 }: Props) => {
   const [existsError, setExistsError] = useState(false);
+  const { searchStore } = useStore();
 
   useEffect(() => {
     if (pathname.includes('onboarding')) {
@@ -70,7 +69,7 @@ const NewSiteForm = ({
       save(site).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
-          clearSearch();
+          searchStore.clearSearch();
           clearSearchLive();
           mstore.initClient();
           toast.success('Project added successfully');
@@ -201,7 +200,6 @@ const connector = connect(mapStateToProps, {
   pushNewSite,
   fetchList,
   setSiteId,
-  clearSearch,
   clearSearchLive,
 });
 

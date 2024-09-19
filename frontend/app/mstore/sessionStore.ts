@@ -16,9 +16,9 @@ import {
   getSessionFilter,
   setSessionFilter,
 } from 'App/utils';
-import { filterMap } from 'Duck/search';
 
 import { loadFile } from '../player/web/network/loadFiles';
+import { filterMap } from 'App/mstore/searchStore';
 
 class UserFilter {
   endDate: number = new Date().getTime();

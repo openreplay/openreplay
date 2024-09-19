@@ -18,11 +18,12 @@ import UserService from './UserService';
 import UxtestingService from './UxtestingService';
 import WebhookService from './WebhookService';
 import SpotService from './spotService';
-import LoginService from "./loginService";
-import FilterService from "./FilterService";
-import IssueReportsService from "./IssueReportsService";
+import LoginService from './loginService';
+import FilterService from './FilterService';
+import IssueReportsService from './IssueReportsService';
 import CustomFieldService from './CustomFieldService';
 import IntegrationsService from './IntegrationsService';
+import SearchService from 'App/services/SearchService';
 
 export const dashboardService = new DashboardService();
 export const metricService = new MetricService();
@@ -48,6 +49,7 @@ export const filterService = new FilterService();
 export const issueReportsService = new IssueReportsService();
 export const customFieldService = new CustomFieldService();
 export const integrationsService = new IntegrationsService();
+export const searchService = new SearchService();
 
 export const services = [
   dashboardService,
@@ -74,4 +76,5 @@ export const services = [
   issueReportsService,
   customFieldService,
   integrationsService,
+  searchService
 ];

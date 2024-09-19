@@ -27,6 +27,7 @@ import FilterStore from './filterStore';
 import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
 import CustomFieldStore from './customFieldStore';
+import SearchStore from './searchStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -55,6 +56,7 @@ export class RootStore {
   uiPlayerStore: UiPlayerStore;
   issueReportingStore: IssueReportingStore;
   customFieldStore: CustomFieldStore;
+  searchStore: SearchStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -83,6 +85,7 @@ export class RootStore {
     this.uiPlayerStore = new UiPlayerStore();
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
+    this.searchStore = new SearchStore();
   }
 
   initClient() {

@@ -30,11 +30,11 @@ function Overview({ match: { params } }: IProps) {
     <Switch>
       <Route exact strict
              path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
-        <div className='mb-5 w-full mx-auto' style={{ maxWidth: '1360px' }}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <NoSessionsMessage siteId={siteId} />
           <MainSearchBar />
           <SessionSearch />
-          <div className='my-4' />
+          <div className="my-4" />
           <SessionsTabOverview />
         </div>
       </Route>

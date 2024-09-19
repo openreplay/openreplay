@@ -4,10 +4,8 @@ import cn from 'classnames';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import React, { memo } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-
-import { setActiveTab } from 'Duck/search';
 import { Icon } from 'UI';
+import { useStore } from 'App/mstore';
 
 interface Tag {
   name: string;
@@ -16,28 +14,25 @@ interface Tag {
 }
 
 interface StateProps {
-  activeTab: { type: string };
   tags: Tag[];
   total: number;
 }
 
-interface DispatchProps {
-  setActiveTab: typeof setActiveTab;
-}
-
-type Props = StateProps & DispatchProps;
+type Props = StateProps;
 
 const tagIcons = {
   [types.ALL]: undefined,
   [types.JS_EXCEPTION]: <CircleAlert size={14} />,
   [types.BAD_REQUEST]: <WifiOff size={14} />,
   [types.CLICK_RAGE]: <Angry size={14} />,
-  [types.CRASH]: <Skull size={14} />,
-} as Record<string, any>
+  [types.CRASH]: <Skull size={14} />
+} as Record<string, any>;
 
 const SessionTags: React.FC<Props> = memo(
-  ({ activeTab, tags, total, setActiveTab }) => {
-    const disable = activeTab.type === 'all' && total === 0;
+  ({ tags, total }) => {
+    const { searchStore } = useStore();
+    const disable = searchStore.activeTab.type === 'all' && total === 0;
+    const activeTab = searchStore.activeTab;
 
     const options = tags.map((tag, i) => ({
       label: (
@@ -60,13 +55,13 @@ const SessionTags: React.FC<Props> = memo(
         </div>
       ),
       value: tag.type,
-      disabled: disable && tag.type !== 'all',
+      disabled: disable && tag.type !== 'all'
     }));
 
     const onPick = (tabValue: string) => {
       const tab = tags.find((t) => t.type === tabValue);
       if (tab) {
-        setActiveTab(tab);
+        searchStore.setActiveTab(tab);
       }
     };
     return (
@@ -96,7 +91,7 @@ export const TagItem: React.FC<{
       'transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal',
       {
         'bg-active-blue text-teal': isActive,
-        disabled: disabled,
+        disabled: disabled
       }
     )}
     style={{ height: '36px' }}
@@ -115,7 +110,6 @@ export const TagItem: React.FC<{
 
 const mapStateToProps = (state: any): StateProps => {
   const platform = state.getIn(['site', 'active'])?.platform || '';
-  const activeTab = state.getIn(['search', 'activeTab']);
   const filteredTags = issues_types.filter(
     (tag) =>
       tag.type !== 'mouse_thrashing' &&
@@ -125,15 +119,7 @@ const mapStateToProps = (state: any): StateProps => {
   );
   const total = state.getIn(['sessions', 'total']) || 0;
 
-  return { activeTab, tags: filteredTags, total };
+  return { tags: filteredTags, total };
 };
 
-const mapDispatchToProps = (dispatch: any): DispatchProps =>
-  bindActionCreators(
-    {
-      setActiveTab,
-    },
-    dispatch
-  );
-
-export default connect(mapStateToProps, mapDispatchToProps)(SessionTags);
+export default connect(mapStateToProps)(SessionTags);

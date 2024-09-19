@@ -1,6 +1,6 @@
 import {
   CaretDownOutlined,
-  FolderAddOutlined,
+  FolderAddOutlined
 } from '@ant-design/icons';
 import { Button, Divider, Dropdown, Space, Typography } from 'antd';
 import cn from 'classnames';
@@ -13,7 +13,6 @@ import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { clearSearch } from 'Duck/search';
 import { setSiteId } from 'Duck/site';
 import { init as initProject } from 'Duck/site';
 import { Icon } from 'UI';
@@ -30,7 +29,6 @@ interface Props extends RouteComponentProps {
   sites: Site[];
   siteId: string;
   setSiteId: (siteId: string) => void;
-  clearSearch: (isSession: boolean) => void;
   clearSearchLive: () => void;
   initProject: (data: any) => void;
   mstore: any;
@@ -44,12 +42,13 @@ function ProjectDropdown(props: Props) {
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
-  const { customFieldStore } = useStore();
+  const { customFieldStore, searchStore } = useStore();
 
   const handleSiteChange = async (newSiteId: string) => {
     props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    await customFieldStore.fetchList(newSiteId)
-    props.clearSearch(location.pathname.includes('/sessions'));
+    await customFieldStore.fetchList(newSiteId);
+    // searchStore.clearSearch(location.pathname.includes('/sessions'));
+    searchStore.clearSearch();
     props.clearSearchLive();
 
     props.mstore.initClient();
@@ -82,7 +81,7 @@ function ProjectDropdown(props: Props) {
           {site.host}
         </Text>
       </div>
-    ),
+    )
   }));
   if (isAdmin) {
     menuItems.unshift({
@@ -99,7 +98,7 @@ function ProjectDropdown(props: Props) {
           </div>
           <Divider style={{ marginTop: 4, marginBottom: 0 }} />
         </>
-      ),
+      )
     });
   }
 
@@ -111,8 +110,8 @@ function ProjectDropdown(props: Props) {
         defaultSelectedKeys: [siteId],
         style: {
           maxHeight: 500,
-          overflowY: 'auto',
-        },
+          overflowY: 'auto'
+        }
       }}
       placement="bottomLeft"
     >
@@ -144,14 +143,13 @@ function ProjectDropdown(props: Props) {
 const mapStateToProps = (state: any) => ({
   sites: state.getIn(['site', 'list']),
   siteId: state.getIn(['site', 'siteId']),
-  account: state.getIn(['user', 'account']),
+  account: state.getIn(['user', 'account'])
 });
 
 export default withRouter(
   connect(mapStateToProps, {
     setSiteId,
-    clearSearch,
     clearSearchLive,
-    initProject,
+    initProject
   })(withStore(ProjectDropdown))
 );

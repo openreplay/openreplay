@@ -9,14 +9,8 @@ import { assist as assistRoute, isRoute } from 'App/routes';
 import { debounce } from 'App/utils';
 import {
   addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
-  fetchFilterSearch as liveFetchFilterSearch,
+  fetchFilterSearch as liveFetchFilterSearch
 } from 'Duck/liveSearch';
-import {
-  addFilterByKeyAndValue,
-  clearSearch,
-  edit,
-  fetchFilterSearch,
-} from 'Duck/search';
 import { Icon, Input } from 'UI';
 
 import FilterModal from 'Shared/Filters/FilterModal';
@@ -26,23 +20,20 @@ import OutsideClickDetectingDiv from '../OutsideClickDetectingDiv';
 const ASSIST_ROUTE = assistRoute();
 
 interface Props {
-  fetchFilterSearch: (query: any) => void;
-  addFilterByKeyAndValue: (key: string, value: string) => void;
   liveAddFilterByKeyAndValue: (key: string, value: string) => void;
   liveFetchFilterSearch: any;
   appliedFilter: any;
-  edit: typeof edit;
-  clearSearch: typeof clearSearch;
   setFocused?: (focused: boolean) => void;
 }
 
 function SessionSearchField(props: Props) {
+  const { searchStore } = useStore();
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
   const debounceFetchFilterSearch = React.useCallback(
     debounce(
-      isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch,
+      isLive ? props.liveFetchFilterSearch : searchStore.fetchFilterSearch,
       1000
     ),
     []
@@ -59,7 +50,7 @@ function SessionSearchField(props: Props) {
   const onAddFilter = (filter: any) => {
     isLive
       ? props.liveAddFilterByKeyAndValue(filter.key, filter.value)
-      : props.addFilterByKeyAndValue(filter.key, filter.value);
+      : searchStore.addFilterByKeyAndValue(filter.key, filter.value);
   };
 
   const onFocus = () => {
@@ -102,12 +93,14 @@ function SessionSearchField(props: Props) {
   );
 }
 
-const AiSearchField = observer(
-  ({ edit, appliedFilter, clearSearch }: Props) => {
+const AiSearchField = observer(() => {
+    const { searchStore } = useStore();
+    const appliedFilter = searchStore.instance;
     const hasFilters =
-      appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+      appliedFilter && appliedFilter.filters && appliedFilter.filters.length > 0;
     const { aiFiltersStore } = useStore();
     const [searchQuery, setSearchQuery] = useState('');
+
 
     const onSearchChange = ({ target: { value } }: any) => {
       setSearchQuery(value);
@@ -126,13 +119,13 @@ const AiSearchField = observer(
     };
 
     const clearAll = () => {
-      clearSearch();
+      searchStore.clearSearch();
       setSearchQuery('');
     };
 
     React.useEffect(() => {
       if (aiFiltersStore.filtersSetKey !== 0) {
-        edit(aiFiltersStore.filters);
+        searchStore.edit(aiFiltersStore.filters);
       }
     }, [aiFiltersStore.filters, aiFiltersStore.filtersSetKey]);
 
@@ -186,8 +179,8 @@ function AiSessionSearchField(props: Props) {
   };
 
   const boxStyle = tab === 'ask'
-                   ? gradientBox
-                   : isFocused ? regularBoxFocused : regularBoxUnfocused;
+    ? gradientBox
+    : isFocused ? regularBoxFocused : regularBoxUnfocused;
   return (
     <div className={'bg-white rounded-full shadow-sm'}>
       <div
@@ -242,9 +235,9 @@ function AiSessionSearchField(props: Props) {
                 onClick: () => {
                   changeValue('ask');
                   closeTour();
-                },
-              },
-            },
+                }
+              }
+            }
           ]}
         />
       </div>
@@ -253,10 +246,10 @@ function AiSessionSearchField(props: Props) {
 }
 
 export const AskAiSwitchToggle = ({
-  enabled,
-  setEnabled,
-  loading,
-}: {
+                                    enabled,
+                                    setEnabled,
+                                    loading
+                                  }: {
   enabled: boolean;
   loading: boolean;
   setEnabled: () => void;
@@ -279,7 +272,7 @@ export const AskAiSwitchToggle = ({
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
         border: 0,
-        verticalAlign: 'middle',
+        verticalAlign: 'middle'
       }}
     >
       <div
@@ -293,7 +286,7 @@ export const AskAiSwitchToggle = ({
           transition: 'all 0.2s ease-in-out',
           background: '#fff',
           borderRadius: 100,
-          verticalAlign: 'middle',
+          verticalAlign: 'middle'
         }}
       />
       <div
@@ -304,7 +297,7 @@ export const AskAiSwitchToggle = ({
           height: '100%',
           transition: 'all 0.2s ease-in-out',
           paddingInline: !enabled ? '30px 0px' : '10px 24px',
-          width: 88,
+          width: 88
         }}
       >
         <div style={{ color: 'white', fontSize: 16 }}>Ask AI</div>
@@ -324,7 +317,7 @@ export const gradientBox = {
   display: 'flex',
   gap: '0.25rem',
   alignItems: 'center',
-  width: '100%',
+  width: '100%'
 };
 
 const regularBoxUnfocused = {
@@ -334,7 +327,7 @@ const regularBoxUnfocused = {
   display: 'flex',
   gap: '0.25rem',
   alignItems: 'center',
-  width: '100%',
+  width: '100%'
 };
 
 const regularBoxFocused = {
@@ -344,19 +337,13 @@ const regularBoxFocused = {
   display: 'flex',
   gap: '0.25rem',
   alignItems: 'center',
-  width: '100%',
-}
+  width: '100%'
+};
 
 export default connect(
-  (state: any) => ({
-    appliedFilter: state.getIn(['search', 'instance']),
-  }),
+  (state: any) => ({}),
   {
-    addFilterByKeyAndValue,
-    fetchFilterSearch,
     liveFetchFilterSearch,
-    liveAddFilterByKeyAndValue,
-    edit,
-    clearSearch,
+    liveAddFilterByKeyAndValue
   }
 )(observer(AiSessionSearchField));
