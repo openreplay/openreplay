@@ -70,7 +70,7 @@ export default class SessionStore {
   visitedEvents: Location[] = [];
   insights: any[] = [];
   host = '';
-  sessionPath = {};
+  sessionPath: Record<string, any> = {};
   lastPlayedSessionId: string = '';
   timeLineTooltip = {
     time: 0,
@@ -421,16 +421,6 @@ export default class SessionStore {
     });
   }
 
-  // Add Note
-  addNote(note: Note) {
-    this.current.notesWithEvents.push(note);
-    this.current.notesWithEvents.sort((a, b) => {
-      const aTs = a.time || a.timestamp;
-      const bTs = b.time || b.timestamp;
-      return aTs - bTs;
-    });
-  }
-
   // Update Note
   updateNote(note: Note) {
     const noteIndex = this.current.notesWithEvents.findIndex((item) => {
@@ -450,7 +440,6 @@ export default class SessionStore {
     this.sessionPath = path;
   }
 
-  // Update Last Played Session
   updateLastPlayedSession(sessionId: string) {
     const sIndex = this.list.findIndex((s) => s.sessionId === sessionId);
     if (sIndex !== -1) {

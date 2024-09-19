@@ -1,9 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { sessions as sessionsRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { BackLink, Link } from 'UI';
-import { toggleFavorite, setSessionPath } from 'Duck/sessions';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { BackLink } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
@@ -23,10 +22,10 @@ function PlayerBlockHeader(props: any) {
 
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
   const { width = 0, height = 0, showEvents = false } = playerState;
-  const { customFieldStore, projectsStore } = useStore();
+  const { customFieldStore, projectsStore, sessionStore } = useStore();
+  const session = sessionStore.current;
   const siteId = projectsStore.siteId!;
   const {
-    session,
     fullscreen,
     metaList,
     setActiveTab,
@@ -100,18 +99,12 @@ function PlayerBlockHeader(props: any) {
 
 const PlayerHeaderCont = connect(
   (state: any) => {
-    const session = state.getIn(['sessions', 'current']);
-
     return {
-      session,
-      sessionPath: state.getIn(['sessions', 'sessionPath']),
       funnelRef: state.getIn(['funnels', 'navRef']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     };
   },
   {
-    toggleFavorite,
-    setSessionPath,
   }
 )(observer(PlayerBlockHeader));
 

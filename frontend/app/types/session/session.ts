@@ -174,6 +174,7 @@ export default class Session {
   duration: Duration;
   durationMs: ISession['durationMs'];
   events: ISession['events'];
+  uxtVideo?: any;
   stackEvents: ISession['stackEvents'];
   metadata: ISession['metadata'];
   favorite: ISession['favorite'];
@@ -228,6 +229,9 @@ export default class Session {
   fileKey: ISession['fileKey'];
   durationSeconds: number;
   liveOnly: boolean;
+  videoURL: string[]
+  screenWidth?: number
+  screenHeight?: number
 
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession);

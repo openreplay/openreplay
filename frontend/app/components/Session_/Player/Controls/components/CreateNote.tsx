@@ -12,16 +12,13 @@ import {
   iTag,
   tagProps,
 } from 'App/services/NotesService';
-import { addNote, updateNote } from 'Duck/sessions';
 import { Button, Checkbox, Icon } from 'UI';
 
 import Select from 'Shared/Select';
 
 interface Props {
   time: number;
-  addNote: (note: Note) => void;
   updateNote: (note: Note) => void;
-  sessionId: string;
   isEdit?: boolean;
   editNote?: WriteNote;
   hideModal: () => void;
@@ -29,13 +26,13 @@ interface Props {
 
 function CreateNote({
   time,
-  sessionId,
   isEdit,
   editNote,
-  updateNote,
   hideModal,
 }: Props) {
-  const { notesStore, integrationsStore } = useStore();
+  const { notesStore, integrationsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const updateNote = sessionStore.updateNote;
   const slackChannels = integrationsStore.slack.list;
   const fetchSlack = integrationsStore.slack.fetchIntegrations;
   const teamsChannels = integrationsStore.msteams.list;
@@ -323,10 +320,4 @@ function CreateNote({
   );
 }
 
-export default connect(
-  (state: any) => {
-    const sessionId = state.getIn(['sessions', 'current']).sessionId;
-    return { sessionId };
-  },
-  { addNote, updateNote,}
-)(observer(CreateNote));
+export default observer(CreateNote);
