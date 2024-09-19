@@ -11,7 +11,7 @@ import ConditionalRecordingSettings from 'Shared/SessionSettings/components/Cond
 type Props = {
   isAdmin: boolean;
   isEnterprise?: boolean;
-  projectId?: number;
+  projectId?: string;
   setShowCaptureRate: (show: boolean) => void;
   open: boolean;
   showCaptureRate: boolean;

@@ -28,8 +28,9 @@ interface Props {
 }
 
 function SessionSearch(props: Props) {
-  const { tagWatchStore, aiFiltersStore } = useStore();
-  const { appliedFilter, saveRequestPayloads = false, metaLoading = false } = props;
+  const { tagWatchStore, aiFiltersStore, projectsStore } = useStore();
+  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false
+  const { appliedFilter, metaLoading = false } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
@@ -154,7 +155,6 @@ function SessionSearch(props: Props) {
 
 export default connect(
   (state: any) => ({
-    saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
     appliedFilter: state.getIn(['search', 'instance']),
     metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
   }),

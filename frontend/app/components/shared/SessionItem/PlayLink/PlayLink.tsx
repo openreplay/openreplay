@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import {
@@ -8,6 +7,7 @@ import {
   withSiteId,
 } from 'App/routes';
 import { Icon, Link } from 'UI';
+import { useStore } from 'App/mstore';
 
 const PLAY_ICON_NAMES = {
   notPlayed: 'play-fill',
@@ -30,6 +30,7 @@ interface Props {
   siteId?: string;
 }
 function PlayLink(props: Props) {
+  const { projectsStore } = useStore();
   const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
   const history = useHistory();
   const defaultIconName = getDefaultIconName(viewed);
@@ -47,9 +48,10 @@ function PlayLink(props: Props) {
     : sessionRoute(sessionId);
 
   const handleBeforeOpen = (e: any) => {
+    const projectId = props.siteId ?? projectsStore.getSiteId().siteId!;
     const replayLink = withSiteId(
       link + (props.query ? props.query : ''),
-      props.siteId
+      projectId
     );
     if (props.beforeOpen) {
       // check for ctrl or shift
@@ -86,6 +88,4 @@ function PlayLink(props: Props) {
   );
 }
 
-export default connect((state: any, props: Props) => ({
-  siteId: props.siteId || state.getIn(['site', 'siteId']),
-}))(PlayLink);
+export default PlayLink

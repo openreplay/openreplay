@@ -3,7 +3,6 @@ import QueueControls from 'Components/Session_/QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import Issues from 'Components/Session_/Issues/Issues';
 import NotePopup from 'Components/Session_/components/NotePopup';
-import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import { Tag } from 'antd'
 import { ShareAltOutlined } from '@ant-design/icons';
@@ -56,8 +55,7 @@ function SubHeader(props: any) {
 }
 
 export default connect((state: any) => ({
-  siteId: state.getIn(['site', 'siteId']),
   modules: state.getIn(['user', 'account', 'modules']) || [],
   integrations: state.getIn(['issues', 'list']),
   isIOS: state.getIn(['sessions', 'current']).platform === 'ios',
-}))(observer(SubHeader));
+}))(SubHeader);

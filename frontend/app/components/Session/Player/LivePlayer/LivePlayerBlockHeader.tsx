@@ -22,7 +22,8 @@ const ASSIST_ROUTE = assistRoute();
 function LivePlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
   const history = useHistory();
   const { width, height } = store.get();
 
@@ -30,7 +31,6 @@ function LivePlayerBlockHeader(props: any) {
     session,
     metaList,
     closedLive = false,
-    siteId,
     isMultiview,
   } = props;
 
@@ -109,7 +109,6 @@ const PlayerHeaderCont = connect(
       isAssist,
       session,
       sessionPath: state.getIn(['sessions', 'sessionPath']),
-      siteId: state.getIn(['site', 'siteId']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
       closedLive: !!state.getIn(['sessions', 'errors']) || (isAssist && !session.live),
     };
