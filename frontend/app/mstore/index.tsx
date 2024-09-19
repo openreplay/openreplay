@@ -31,6 +31,7 @@ import { IntegrationsStore } from "./integrationsStore";
 import ProjectsStore from './projectsStore';
 
 export const projectStore = new ProjectsStore();
+export const sessionStore = new SessionStore();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -72,7 +73,7 @@ export class RootStore {
     this.auditStore = new AuditStore();
     this.errorStore = new ErrorStore();
     this.notificationStore = new NotificationStore();
-    this.sessionStore = new SessionStore();
+    this.sessionStore = sessionStore;
     this.notesStore = new NotesStore();
     this.recordingsStore = new RecordingsStore();
     this.assistMultiviewStore = new AssistMultiviewStore();
