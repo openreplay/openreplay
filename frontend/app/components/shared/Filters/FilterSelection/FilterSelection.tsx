@@ -14,7 +14,6 @@ interface Props {
   filterListLive: any;
   onFilterClick: (filter: any) => void;
   children?: any;
-  isLive?: boolean;
   excludeFilterKeys?: Array<string>;
   allowedFilterKeys?: Array<string>;
   disabled?: boolean;
@@ -81,7 +80,6 @@ export default connect(
   (state: any) => ({
     filterList: state.getIn(['search', 'filterList']),
     filterListLive: state.getIn(['search', 'filterListLive']),
-    isLive: state.getIn(['sessions', 'activeTab']).type === 'live'
   }),
   {}
 )(FilterSelection);

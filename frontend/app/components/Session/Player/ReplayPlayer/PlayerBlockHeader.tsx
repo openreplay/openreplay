@@ -135,7 +135,6 @@ const PlayerHeaderCont = connect(
     return {
       session,
       sessionPath: state.getIn(['sessions', 'sessionPath']),
-      local: state.getIn(['sessions', 'timezone']),
       funnelRef: state.getIn(['funnels', 'navRef']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     };
