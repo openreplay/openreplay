@@ -46,7 +46,7 @@ function Controls(props: any) {
   const { player, store } = React.useContext(MobilePlayerContext);
   const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, projectsStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const toggleBottomBlock = uiPlayerStore.toggleBottomBlock
@@ -54,12 +54,12 @@ function Controls(props: any) {
   const fullscreenOff = uiPlayerStore.fullscreenOff;
   const changeSkipInterval = uiPlayerStore.changeSkipInterval;
   const skipInterval = uiPlayerStore.skipInterval;
+  const siteId = projectsStore.siteId;
   const {
     session,
     setActiveTab,
     previousSessionId,
     nextSessionId,
-    siteId,
     disableDevtools,
   } = props;
 
@@ -289,7 +289,6 @@ export default connect(
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
-      siteId: state.getIn(['site', 'siteId']),
     };
   },
   {

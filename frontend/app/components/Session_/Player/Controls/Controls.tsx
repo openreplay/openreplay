@@ -70,7 +70,7 @@ function getStorageName(type: any) {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, uiPlayerStore } = useStore();
+  const { uxtestingStore, uiPlayerStore, projectsStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
@@ -80,6 +80,7 @@ function Controls(props: any) {
   const skipInterval = uiPlayerStore.skipInterval;
   const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
   const history = useHistory();
+  const siteId = projectsStore.siteId;
   const {
     playing,
     completed,
@@ -95,7 +96,6 @@ function Controls(props: any) {
     session,
     previousSessionId,
     nextSessionId,
-    siteId,
     setActiveTab,
   } = props;
 
@@ -440,7 +440,6 @@ export default connect(
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
       previousSessionId: state.getIn(['sessions', 'previousId']),
       nextSessionId: state.getIn(['sessions', 'nextId']),
-      siteId: state.getIn(['site', 'siteId']),
     };
   },
   {

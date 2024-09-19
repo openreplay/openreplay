@@ -15,20 +15,19 @@ import SessionTileFooter from './SessionTileFooter'
 function Multiview({
   total,
   fetchSessions,
-  siteId,
   assistCredentials,
   customSetSessions,
 }: {
   total: number;
   customSetSessions: (data: any) => void;
   fetchSessions: (filter: any) => void;
-  siteId: string;
   assistCredentials: any;
   list: Record<string, any>[];
 }) {
   const { showModal, hideModal } = useModal();
 
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId!;
   const history = useHistory();
   // @ts-ignore
   const { sessionsquery } = useParams();
@@ -128,7 +127,6 @@ function Multiview({
 export default connect(
   (state: any) => ({
     total: state.getIn(['liveSearch', 'total']),
-    siteId: state.getIn(['site', 'siteId']),
   }),
   {
     fetchSessions,
