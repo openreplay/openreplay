@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { observer } from 'mobx-react-lite'
-import { useStore } from 'Project/mstore'
+import { useStore } from 'App/mstore'
 import { Checkbox } from 'UI';
 import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
