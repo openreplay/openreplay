@@ -27,11 +27,13 @@ import FilterStore from './filterStore';
 import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
 import CustomFieldStore from './customFieldStore';
+import SearchStore from './searchStore';
 import { IntegrationsStore } from "./integrationsStore";
 import ProjectsStore from './projectsStore';
 
 export const projectStore = new ProjectsStore();
 export const sessionStore = new SessionStore();
+export const searchStore = new SearchStore();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -60,6 +62,7 @@ export class RootStore {
   uiPlayerStore: UiPlayerStore;
   issueReportingStore: IssueReportingStore;
   customFieldStore: CustomFieldStore;
+  searchStore: SearchStore;
   integrationsStore: IntegrationsStore
   projectsStore: ProjectsStore;
 
@@ -90,6 +93,7 @@ export class RootStore {
     this.uiPlayerStore = new UiPlayerStore();
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
+    this.searchStore = searchStore;
     this.integrationsStore = new IntegrationsStore();
     this.projectsStore = projectStore;
   }

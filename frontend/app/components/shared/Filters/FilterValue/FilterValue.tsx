@@ -165,7 +165,7 @@ function FilterValue(props: Props) {
                         onAddValue={onAddValue}
                         onRemoveValue={() => onRemoveValue(valueIndex)}
                         method={'GET'}
-                        endpoint="/events/search"
+                        endpoint="/PROJECT_ID/events/search"
                         params={getParms(filter.key)}
                         headerText={''}
                         placeholder={filter.placeholder}

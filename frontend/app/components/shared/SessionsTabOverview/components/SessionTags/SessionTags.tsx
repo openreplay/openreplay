@@ -18,14 +18,10 @@ interface Tag {
 }
 
 interface StateProps {
-  activeTab: { type: string };
+
 }
 
-interface DispatchProps {
-  setActiveTab: typeof setActiveTab;
-}
-
-type Props = StateProps & DispatchProps;
+type Props = StateProps;
 
 const tagIcons = {
   [types.ALL]: undefined,
@@ -39,6 +35,8 @@ const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { projectsStore, sessionStore } = useStore();
   const total = sessionStore.total;
   const platform = projectsStore.active?.platform || '';
+  const disable = searchStore.activeTab.type === 'all' && total === 0;
+  const activeTab = searchStore.activeTab;
   const tags = issues_types.filter(
     (tag) =>
       tag.type !== 'mouse_thrashing' &&
@@ -46,7 +44,6 @@ const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
         ? tag.type !== types.TAP_RAGE
         : tag.type !== types.CLICK_RAGE)
   );
-  const disable = activeTab.type === 'all' && total === 0;
 
   const options = tags.map((tag, i) => ({
     label: (
@@ -75,7 +72,7 @@ const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const onPick = (tabValue: string) => {
     const tab = tags.find((t) => t.type === tabValue);
     if (tab) {
-      setActiveTab(tab);
+      searchStore.setActiveTab(tab);
     }
   };
   return (
@@ -104,7 +101,7 @@ export const TagItem: React.FC<{
       'transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal',
       {
         'bg-active-blue text-teal': isActive,
-        disabled: disabled,
+        disabled: disabled
       }
     )}
     style={{ height: '36px' }}
@@ -121,21 +118,4 @@ export const TagItem: React.FC<{
   </button>
 ));
 
-const mapStateToProps = (state: any): StateProps => {
-  const activeTab = state.getIn(['search', 'activeTab']);
-
-  return { activeTab };
-};
-
-const mapDispatchToProps = (dispatch: any): DispatchProps =>
-  bindActionCreators(
-    {
-      setActiveTab,
-    },
-    dispatch
-  );
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(observer(SessionTags));
+export default observer(SessionTags);

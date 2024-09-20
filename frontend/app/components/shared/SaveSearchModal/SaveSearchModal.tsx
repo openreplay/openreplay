@@ -1,36 +1,33 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { editSavedSearch as edit, save, remove } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
 import { confirm } from 'UI';
 import stl from './SaveSearchModal.module.css';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
+import { useStore } from 'App/mstore';
 
 interface Props {
     filter: any;
     loading: boolean;
-    edit: (filter: any) => void;
-    save: (searchId: any, rename: boolean) => Promise<void>;
     show: boolean;
     closeHandler: () => void;
     savedSearch: any;
-    remove: (filterId: number) => Promise<void>;
     userId: number;
     rename: boolean;
 }
 function SaveSearchModal(props: Props) {
     const { savedSearch, loading, show, closeHandler, rename = false } = props;
+    const { searchStore } = useStore();
 
     const onNameChange = ({ target: { value } }: any) => {
-        props.edit({ name: value });
+      searchStore.edit({ name: value });
     };
 
     const onSave = () => {
         const { closeHandler } = props;
 
-        props
-            .save(savedSearch.exists() ? savedSearch.searchId : null, rename)
+      searchStore.save(savedSearch.exists() ? savedSearch.searchId : null, rename)
             .then(() => {
                 toast.success(`${savedSearch.exists() ? 'Updated' : 'Saved'} Successfully`);
                 closeHandler();
@@ -48,13 +45,13 @@ function SaveSearchModal(props: Props) {
                 confirmation: `Are you sure you want to permanently delete this Saved search?`,
             })
         ) {
-            props.remove(savedSearch.searchId).then(() => {
+          searchStore.remove(savedSearch.searchId).then(() => {
                 closeHandler();
             });
         }
     };
 
-    const onChangeOption = ({ target: { checked, name } }: any) => props.edit({ [name]: checked });
+    const onChangeOption = ({ target: { checked, name } }: any) => searchStore.edit({ [name]: checked });
 
     return (
         <Modal size="small" open={show} onClose={closeHandler}>
@@ -88,7 +85,7 @@ function SaveSearchModal(props: Props) {
                             />
                             <div
                                 className="flex items-center cursor-pointer select-none"
-                                onClick={() => props.edit({ isPublic: !savedSearch.isPublic })}
+                                onClick={() => searchStore.edit({ isPublic: !savedSearch.isPublic })}
                             >
                                 <Icon name="user-friends" size="16" />
                                 <span className="ml-2"> Team Visible</span>
@@ -122,5 +119,4 @@ export default connect(
         filter: state.getIn(['search', 'instance']),
         loading: state.getIn(['search', 'saveRequest', 'loading']) || state.getIn(['search', 'updateRequest', 'loading']),
     }),
-    { edit, save, remove }
 )(SaveSearchModal);

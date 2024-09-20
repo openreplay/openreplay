@@ -1,12 +1,11 @@
 import React from 'react';
 import { SideMenuitem } from 'UI';
 import { connect } from 'react-redux';
-import { setActiveTab } from 'Duck/search';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { sessions, fflags, withSiteId, notes, bookmarks } from 'App/routes';
+import { useStore } from 'App/mstore';
 
 interface Props {
-  setActiveTab: (tab: any) => void;
   activeTab: string;
   isEnterprise: boolean;
 }
@@ -21,12 +20,13 @@ const TabToUrlMap = {
 function OverviewMenu(props: Props & RouteComponentProps) {
   // @ts-ignore
   const { activeTab, isEnterprise, history, match: { params: { siteId } }, location } = props;
+  const { searchStore } = useStore();
 
   React.useEffect(() => {
     const currentLocation = location.pathname;
     const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) => currentLocation.includes(TabToUrlMap[tab]));
     if (tab && tab !== activeTab) {
-      props.setActiveTab({ type: tab });
+      searchStore.setActiveTab({ type: tab });
     }
   }, [location.pathname]);
 
@@ -39,7 +39,7 @@ function OverviewMenu(props: Props & RouteComponentProps) {
           title='Sessions'
           iconName='play-circle-bold'
           onClick={() => {
-            props.setActiveTab({ type: 'all' });
+            searchStore.setActiveTab({ type: 'all' });
             !location.pathname.includes(sessions()) && history.push(withSiteId(sessions(), siteId));
           }}
         />
@@ -63,7 +63,7 @@ function OverviewMenu(props: Props & RouteComponentProps) {
           title='Notes'
           iconName='stickies'
           onClick={() => {
-            props.setActiveTab({ type: 'notes' });
+            searchStore.setActiveTab({ type: 'notes' });
             !location.pathname.includes(notes()) && history.push(withSiteId(notes(), siteId));
           }}
         />
@@ -75,7 +75,7 @@ function OverviewMenu(props: Props & RouteComponentProps) {
           title='Feature Flags'
           iconName='toggles'
           onClick={() => {
-            props.setActiveTab({ type: 'flags' });
+            searchStore.setActiveTab({ type: 'flags' });
             !location.pathname.includes(fflags()) && history.push(withSiteId(fflags(), siteId));
           }}
         />
@@ -87,4 +87,4 @@ function OverviewMenu(props: Props & RouteComponentProps) {
 export default connect((state: any) => ({
   activeTab: state.getIn(['search', 'activeTab', 'type']),
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
-}), { setActiveTab })(withRouter(OverviewMenu));
+}), )(withRouter(OverviewMenu));

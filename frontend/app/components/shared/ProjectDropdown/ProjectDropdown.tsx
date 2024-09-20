@@ -1,6 +1,6 @@
 import {
   CaretDownOutlined,
-  FolderAddOutlined,
+  FolderAddOutlined
 } from '@ant-design/icons';
 import { Button, Divider, Dropdown, Space, Typography } from 'antd';
 import cn from 'classnames';
@@ -8,13 +8,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { useStore } from 'App/mstore';
+import { useStore, withStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { clearSearch } from 'Duck/search';
 import { Icon } from 'UI';
 
 const { Text } = Typography;
@@ -26,7 +25,6 @@ interface Site {
 }
 
 interface Props extends RouteComponentProps {
-  clearSearch: (isSession: boolean) => void;
   clearSearchLive: () => void;
   account: any;
 }
@@ -44,12 +42,13 @@ function ProjectDropdown(props: Props) {
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
-  const { customFieldStore } = useStore();
+  const { customFieldStore, searchStore } = useStore();
 
   const handleSiteChange = async (newSiteId: string) => {
     setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    await customFieldStore.fetchList(newSiteId)
-    props.clearSearch(location.pathname.includes('/sessions'));
+    await customFieldStore.fetchList(newSiteId);
+    // searchStore.clearSearch(location.pathname.includes('/sessions'));
+    searchStore.clearSearch();
     props.clearSearchLive();
 
     mstore.initClient();
@@ -81,7 +80,7 @@ function ProjectDropdown(props: Props) {
           {site.host}
         </Text>
       </div>
-    ),
+    )
   }));
   if (isAdmin) {
     menuItems.unshift({
@@ -98,7 +97,7 @@ function ProjectDropdown(props: Props) {
           </div>
           <Divider style={{ marginTop: 4, marginBottom: 0 }} />
         </>
-      ),
+      )
     });
   }
 
@@ -110,8 +109,8 @@ function ProjectDropdown(props: Props) {
         defaultSelectedKeys: [siteId],
         style: {
           maxHeight: 500,
-          overflowY: 'auto',
-        },
+          overflowY: 'auto'
+        }
       }}
       placement="bottomLeft"
     >
@@ -141,12 +140,11 @@ function ProjectDropdown(props: Props) {
 }
 
 const mapStateToProps = (state: any) => ({
-  account: state.getIn(['user', 'account']),
+  account: state.getIn(['user', 'account'])
 });
 
 export default withRouter(
   connect(mapStateToProps, {
-    clearSearch,
     clearSearchLive,
   })(observer(ProjectDropdown))
 );

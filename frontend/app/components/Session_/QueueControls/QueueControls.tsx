@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { withSiteId, session as sessionRoute } from 'App/routes';
-import AutoplayToggle from "Shared/AutoplayToggle/AutoplayToggle";
+import AutoplayToggle from 'Shared/AutoplayToggle/AutoplayToggle';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
-import { fetchAutoplaySessions } from 'Duck/search';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Popover } from 'antd'
-import { useStore } from "App/mstore";
+import { Button, Popover } from 'antd';
+import { useStore } from 'App/mstore';
 
 const PER_PAGE = 10;
 
@@ -16,10 +15,10 @@ interface Props extends RouteComponentProps {
   currentPage: number;
   latestRequestTime: any;
   sessionIds: any;
-  fetchAutoplaySessions: (page: number) => Promise<void>;
 }
+
 function QueueControls(props: Props) {
-  const { projectsStore, sessionStore } = useStore();
+  const { projectsStore, sessionStore, searchStore } = useStore();
   const previousId = sessionStore.previousId;
   const nextId = sessionStore.nextId;
   const total = sessionStore.total;
@@ -30,8 +29,8 @@ function QueueControls(props: Props) {
     latestRequestTime,
     match: {
       // @ts-ignore
-      params: { sessionId },
-    },
+      params: { sessionId }
+    }
   } = props;
 
   useEffect(() => {
@@ -42,7 +41,7 @@ function QueueControls(props: Props) {
 
       // check for the last page and load the next
       if (currentPage !== totalPages && index === sessionIds.length - 1) {
-        props.fetchAutoplaySessions(currentPage + 1).then(setAutoplayValues);
+        searchStore.fetchAutoplaySessions(currentPage + 1).then(setAutoplayValues);
       }
     }
   }, []);
@@ -63,7 +62,7 @@ function QueueControls(props: Props) {
         onClick={prevHandler}
         className={cn('p-1 group rounded-full', {
           'pointer-events-none opacity-50': !previousId,
-          'cursor-pointer': !!previousId,
+          'cursor-pointer': !!previousId
         })}
       >
         <Popover
@@ -81,7 +80,7 @@ function QueueControls(props: Props) {
         onClick={nextHandler}
         className={cn('p-1 group ml-1 rounded-full', {
           'pointer-events-none opacity-50': !nextId,
-          'cursor-pointer': !!nextId,
+          'cursor-pointer': !!nextId
         })}
       >
         <Popover
@@ -101,7 +100,6 @@ function QueueControls(props: Props) {
 export default connect(
   (state: any) => ({
     currentPage: state.getIn(['search', 'currentPage']) || 1,
-    latestRequestTime: state.getIn(['search', 'latestRequestTime']),
+    latestRequestTime: state.getIn(['search', 'latestRequestTime'])
   }),
-  { fetchAutoplaySessions }
 )(withRouter(QueueControls));

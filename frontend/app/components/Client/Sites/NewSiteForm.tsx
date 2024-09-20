@@ -3,12 +3,11 @@ import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useStore } from 'App/mstore';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { clearSearch } from 'Duck/search';
 import { pushNewSite } from 'Duck/user';
 import { Button, Form, Icon, Input, SegmentSelection } from 'UI';
 import { confirm } from 'UI';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 import styles from './siteForm.module.css';
@@ -22,8 +21,6 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & RouteComponentProps & OwnProps;
 
 const NewSiteForm = ({
-  pushNewSite,
-  clearSearch,
   clearSearchLive,
   location: { pathname },
   onClose,
@@ -39,6 +36,7 @@ const NewSiteForm = ({
   const saveProject = projectsStore.save;
   const fetchList = projectsStore.fetchList;
   const [existsError, setExistsError] = useState(false);
+  const { searchStore } = useStore();
 
   useEffect(() => {
     if (pathname.includes('onboarding') && site?.id) {
@@ -65,7 +63,7 @@ const NewSiteForm = ({
       saveProject(site!).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
-          clearSearch();
+          searchStore.clearSearch();
           clearSearchLive();
           mstore.initClient();
           toast.success('Project added successfully');
@@ -184,8 +182,6 @@ const NewSiteForm = ({
 
 const mapStateToProps = null;
 const connector = connect(mapStateToProps, {
-  pushNewSite,
-  clearSearch,
   clearSearchLive,
 });
 

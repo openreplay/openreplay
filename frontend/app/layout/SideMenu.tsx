@@ -14,10 +14,9 @@ import {
   fflags,
   notes,
   sessions,
-  withSiteId,
+  withSiteId
 } from 'App/routes';
 import { MODULES } from 'Components/Client/Modules';
-import { setActiveTab } from 'Duck/search';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
 
@@ -29,8 +28,9 @@ import {
   PREFERENCES_MENU,
   categories as main_menu,
   preferences,
-  spotOnlyCats,
+  spotOnlyCats
 } from './data';
+import { useStore } from 'App/mstore';
 
 const { Text } = Typography;
 
@@ -38,14 +38,12 @@ const TabToUrlMap = {
   all: sessions() as '/sessions',
   bookmark: bookmarks() as '/bookmarks',
   notes: notes() as '/notes',
-  flags: fflags() as '/feature-flags',
+  flags: fflags() as '/feature-flags'
 };
 
 interface Props extends RouteComponentProps {
   siteId?: string;
   modules: string[];
-  setActiveTab: (tab: any) => void;
-  activeTab: string;
   isEnterprise: boolean;
   isCollapsed?: boolean;
   spotOnly?: boolean;
@@ -54,18 +52,18 @@ interface Props extends RouteComponentProps {
 
 function SideMenu(props: Props) {
   const {
-    activeTab,
     siteId,
     modules,
     location,
     account,
     isEnterprise,
     isCollapsed,
-    spotOnly,
+    spotOnly
   } = props;
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
+  const { searchStore } = useStore();
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
@@ -117,18 +115,18 @@ function SideMenu(props: Props) {
 
             const isHidden = [
               item.key === MENU.RECOMMENDATIONS &&
-                modules.includes(MODULES.RECOMMENDATIONS),
+              modules.includes(MODULES.RECOMMENDATIONS),
               item.key === MENU.FEATURE_FLAGS &&
-                modules.includes(MODULES.FEATURE_FLAGS),
+              modules.includes(MODULES.FEATURE_FLAGS),
               item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
               item.key === MENU.LIVE_SESSIONS &&
-                modules.includes(MODULES.ASSIST),
+              modules.includes(MODULES.ASSIST),
               item.key === MENU.SESSIONS &&
-                modules.includes(MODULES.OFFLINE_RECORDINGS),
+              modules.includes(MODULES.OFFLINE_RECORDINGS),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
-              item.isEnterprise && !isEnterprise,
+              item.isEnterprise && !isEnterprise
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
@@ -139,7 +137,7 @@ function SideMenu(props: Props) {
         return {
           ...category,
           items: updatedItems,
-          hidden: allItemsHidden,
+          hidden: allItemsHidden
         };
       });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly]);
@@ -149,8 +147,8 @@ function SideMenu(props: Props) {
     const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
       currentLocation.includes(TabToUrlMap[tab])
     );
-    if (tab && tab !== activeTab) {
-      props.setActiveTab({ type: tab });
+    if (tab && tab !== searchStore.activeTab) {
+      searchStore.setActiveTab({ type: tab });
     }
   }, [location.pathname]);
 
@@ -181,7 +179,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
-    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
+    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES)
   };
 
   const handleClick = (item: any) => {
@@ -211,10 +209,10 @@ function SideMenu(props: Props) {
     props.history.push(path);
   };
 
-  const RenderDivider = (props: {index: number}) => {
+  const RenderDivider = (props: { index: number }) => {
     if (props.index === 0) return null;
     return <Divider style={{ margin: '6px 0' }} />;
-  }
+  };
   return (
     <>
       <Menu
@@ -284,7 +282,7 @@ function SideMenu(props: Props) {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              alignItems: 'center',
+                              alignItems: 'center'
                             }}
                           >
                             {item.label}
@@ -315,7 +313,7 @@ function SideMenu(props: Props) {
                           <Menu.Item
                             className={cn('ml-8', {
                               'ant-menu-item-selected !bg-active-dark-blue':
-                                isMenuItemActive(child.key),
+                                isMenuItemActive(child.key)
                             })}
                             key={child.key}
                           >
@@ -373,11 +371,9 @@ export default withRouter(
   connect(
     (state: any) => ({
       modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
-      activeTab: state.getIn(['search', 'activeTab', 'type']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       account: state.getIn(['user', 'account']),
-      spotOnly: getScope(state) === 1,
-    }),
-    { setActiveTab }
+      spotOnly: getScope(state) === 1
+    })
   )(SideMenu)
 );

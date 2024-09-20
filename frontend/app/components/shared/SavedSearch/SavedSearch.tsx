@@ -2,43 +2,43 @@ import React, { useEffect } from 'react';
 import { Icon } from 'UI';
 import { Button } from 'antd';
 import { connect } from 'react-redux';
-import { fetchList as fetchListSavedSearch } from 'Duck/search';
 import cn from 'classnames';
 import stl from './SavedSearch.module.css';
 import { useModal } from 'App/components/Modal';
-import SavedSearchModal from './components/SavedSearchModal'
+import SavedSearchModal from './components/SavedSearchModal';
+import { useStore } from 'App/mstore';
 
 interface Props {
-  fetchListSavedSearch: () => void;
-  list: any;
-  savedSearch: any;
-  fetchedMeta: boolean
+
 }
+
 function SavedSearch(props: Props) {
-  const { list } = props;
-  const { savedSearch }  = props;
   const { showModal } = useModal();
+  const { searchStore, customFieldStore } = useStore();
+  const savedSearch = searchStore.savedSearch;
+  const list = searchStore.list;
+  const fetchedMeta = customFieldStore.fetchedMetadata;
 
   useEffect(() => {
-    if (list.size === 0 && props.fetchedMeta) {
-      props.fetchListSavedSearch()
+    if (list.size === 0 && fetchedMeta) {
+      searchStore.fetchSavedSearchList(); // TODO check this call
     }
-  }, [props.fetchedMeta])
+  }, [fetchedMeta]);
 
   return (
-    <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
+    <div className={cn('flex items-center', { [stl.disabled]: list.size === 0 })}>
       <Button
         // variant="outline"
-        type='primary'
+        type="primary"
         ghost
         onClick={() => showModal(<SavedSearchModal />, { right: true, width: 450 })}
-        className='flex gap-1'
+        className="flex gap-1"
       >
         <span className="mr-1">Saved Search</span>
         <span className="font-meidum">{list.size}</span>
         <Icon name="ellipsis-v" color="teal" size="14" />
       </Button>
-      { savedSearch.exists() && (
+      {savedSearch.exists() && (
         <div className="flex items-center ml-2">
           <Icon name="search" size="14" />
           <span className="color-gray-medium px-1">Viewing:</span>
@@ -51,8 +51,4 @@ function SavedSearch(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  list: state.getIn([ 'search', 'list' ]),
-  savedSearch: state.getIn([ 'search', 'savedSearch' ]),
-  fetchedMeta: state.getIn(['customFields', 'fetchedMetadata'])
-}), { fetchListSavedSearch })(SavedSearch);
+export default connect((state: any) => ({}))(SavedSearch);

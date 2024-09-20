@@ -8,6 +8,7 @@ import Select from 'react-select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { searchService} from 'App/services';
 
 const dropdownStyles = {
   option: (provided: any, state: any) => ({
@@ -196,8 +197,9 @@ const FilterAutoComplete: React.FC<Props> = ({
     }
 
     try {
-      const response = await new APIClient()[method.toLowerCase()](endpoint, { ..._params, q: inputValue });
-      const data = await response.json();
+      // const response = await new APIClient()[method.toLowerCase()](endpoint, { ..._params, q: inputValue });
+      const data = await searchService.fetchAutoCompleteValues({ ..._params, q: inputValue })
+      // const data = await response.json();
       const _options = data.data.map((i: any) => ({ value: i.value, label: i.value })) || [];
       setOptions(_options);
       callback(_options);

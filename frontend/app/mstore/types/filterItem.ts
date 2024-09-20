@@ -32,19 +32,7 @@ export default class FilterItem {
     private readonly isConditional?: boolean,
     private readonly isMobile?: boolean
   ) {
-    makeAutoObservable(this, {
-      type: observable,
-      key: observable,
-      value: observable,
-      operator: observable,
-      source: observable,
-      filters: observable,
-      isActive: observable,
-      sourceOperator: observable,
-      category: observable,
-
-      merge: action,
-    });
+    makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
       data.filters = data.filters.map(function (i: Record<string, any>) {
