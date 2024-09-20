@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { EscapeButton } from 'UI';
@@ -18,7 +17,6 @@ import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
 import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
-import { updateLastPlayedSession } from 'Duck/sessions';
 import { MobileOverviewPanel } from 'Components/Session_/OverviewPanel';
 import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
@@ -32,32 +30,28 @@ import { useStore } from 'App/mstore';
 interface IProps {
   fullView: boolean;
   isMultiview?: boolean;
-  nextId: string;
-  sessionId: string;
   activeTab: string;
-  updateLastPlayedSession: (id: string) => void
-  videoURL: string[];
   setActiveTab: (tab: string) => void;
-  userDevice: string;
-  screenWidth: number;
-  screenHeight: number;
-  platform: string;
+  bottomBlock: any;
+  fullscreen?: boolean;
 }
 
 function Player(props: IProps) {
   const defaultHeight = getDefaultPanelHeight()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const {
-    nextId,
     activeTab,
     fullView,
-    videoURL,
-    userDevice,
-    screenWidth,
-    screenHeight,
-    platform,
   } = props;
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, sessionStore } = useStore();
+  const nextId = sessionStore.nextId;
+  const sessionId = sessionStore.current.sessionId;
+  const userDevice = sessionStore.current.userDevice;
+  const videoURL = sessionStore.current.videoURL;
+  const platform = sessionStore.current.platform;
+  const screenWidth = sessionStore.current.screenWidth!;
+  const screenHeight = sessionStore.current.screenHeight!;
+  const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
   const fullscreenOff = uiPlayerStore.fullscreenOff;
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
@@ -68,7 +62,7 @@ function Player(props: IProps) {
   const [isAttached, setAttached] = React.useState(false);
 
   React.useEffect(() => {
-    props.updateLastPlayedSession(props.sessionId);
+    updateLastPlayedSession(sessionId);
     const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
     if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
@@ -166,17 +160,4 @@ function Player(props: IProps) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    nextId: state.getIn(['sessions', 'nextId']),
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-    userDevice: state.getIn(['sessions', 'current']).userDevice,
-    videoURL: state.getIn(['sessions', 'current']).videoURL,
-    platform: state.getIn(['sessions', 'current']).platform,
-    screenWidth: state.getIn(['sessions', 'current']).screenWidth,
-    screenHeight: state.getIn(['sessions', 'current']).screenHeight,
-  }),
-  {
-    updateLastPlayedSession,
-  }
-)(observer(Player));
+export default observer(Player);

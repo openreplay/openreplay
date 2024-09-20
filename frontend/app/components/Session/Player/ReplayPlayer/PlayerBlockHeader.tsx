@@ -8,7 +8,6 @@ import {
   withSiteId,
 } from 'App/routes';
 import { BackLink, Link } from 'UI';
-import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import UserCard from './EventsBlock/UserCard';
@@ -20,24 +19,23 @@ import { IFRAME } from 'App/constants/storageKeys';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
-// TODO props
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, customFieldStore, projectsStore } = useStore()
+  const { uxtestingStore, customFieldStore, projectsStore, sessionStore } = useStore()
+  const session = sessionStore.current;
+  const sessionPath = sessionStore.sessionPath;
   const siteId = projectsStore.siteId!;
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
   const { width = 0, height = 0, showEvents = false } = playerState
 
   const {
-    session,
     fullscreen,
     metaList,
     closedLive = false,
     setActiveTab,
     activeTab,
     history,
-    sessionPath,
   } = props;
 
   React.useEffect(() => {
@@ -130,19 +128,12 @@ function PlayerBlockHeader(props: any) {
 
 const PlayerHeaderCont = connect(
   (state: any) => {
-    const session = state.getIn(['sessions', 'current']);
 
     return {
-      session,
-      sessionPath: state.getIn(['sessions', 'sessionPath']),
       funnelRef: state.getIn(['funnels', 'navRef']),
       metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     };
   },
-  {
-    toggleFavorite,
-    setSessionPath,
-  }
 )(observer(PlayerBlockHeader));
 
 export default withRouter(PlayerHeaderCont);
