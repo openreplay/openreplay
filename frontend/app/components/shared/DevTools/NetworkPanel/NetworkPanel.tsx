@@ -180,13 +180,13 @@ function renderStatus({
 }
 
 function NetworkPanelCont({
-  startedAt,
   panelHeight,
 }: {
-  startedAt: number;
   panelHeight: number;
 }) {
   const { player, store } = React.useContext(PlayerContext);
+  const { sessionStore } = useStore();
+  const startedAt = sessionStore.current.startedAt;
   const {
     domContentLoadedTime,
     loadTime,
@@ -222,14 +222,13 @@ function NetworkPanelCont({
 }
 
 function MobileNetworkPanelCont({
-  startedAt,
   panelHeight,
 }: {
-  startedAt: number;
   panelHeight: number;
 }) {
   const { player, store } = React.useContext(MobilePlayerContext);
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, sessionStore } = useStore();
+  const startedAt = sessionStore.current.startedAt;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -669,12 +668,8 @@ export const NetworkPanelComp = observer(
   }
 );
 
-const WebNetworkPanel = connect((state: any) => ({
-  startedAt: state.getIn(['sessions', 'current']).startedAt,
-}))(observer(NetworkPanelCont));
+const WebNetworkPanel = observer(NetworkPanelCont);
 
-const MobileNetworkPanel = connect((state: any) => ({
-  startedAt: state.getIn(['sessions', 'current']).startedAt,
-}))(observer(MobileNetworkPanelCont));
+const MobileNetworkPanel = observer(MobileNetworkPanelCont);
 
 export { WebNetworkPanel, MobileNetworkPanel };

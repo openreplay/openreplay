@@ -15,6 +15,15 @@ import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { filterMap } from 'App/mstore/searchStore';
 import { searchStore, searchStoreLive } from "./index";
+import { getDateRangeFromValue } from 'App/dateRange';
+const range = getDateRangeFromValue(LAST_7_DAYS);
+
+const defaultDateFilters = {
+  url: '',
+  rangeValue: LAST_7_DAYS,
+  startDate: range.start?.toMillis(),
+  endDate: range.end?.toMillis(),
+};
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -70,6 +79,7 @@ export default class SessionStore {
   liveSessions: Session[] = [];
   visitedEvents: Location[] = [];
   insights: any[] = [];
+  insightsFilters = defaultDateFilters;
   host = '';
   sessionPath: Record<string, any> = {};
   lastPlayedSessionId: string = '';

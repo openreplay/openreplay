@@ -24,14 +24,10 @@ import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
 import VerticalPointerLine, { VerticalPointerLineComp } from './components/VerticalPointerLine';
 
-function MobileOverviewPanelCont({
-  issuesList,
-  sessionId,
-}: {
-  issuesList: Record<string, any>[];
-  sessionId: string;
-}) {
-  const { aiSummaryStore, uiPlayerStore } = useStore();
+function MobileOverviewPanelCont() {
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const issuesList = sessionStore.current.issues;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -123,12 +119,9 @@ function MobileOverviewPanelCont({
   );
 }
 
-function WebOverviewPanelCont({
-  sessionId,
-}: {
-  sessionId: string;
-}) {
-  const { aiSummaryStore, uiPlayerStore } = useStore();
+function WebOverviewPanelCont() {
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -371,16 +364,6 @@ function PanelComponent({
   );
 }
 
-export const OverviewPanel = connect(
-  (state: Record<string, any>) => ({
-    issuesList: state.getIn(['sessions', 'current']).issues,
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-  }),
-)(observer(WebOverviewPanelCont));
+export const OverviewPanel = observer(WebOverviewPanelCont);
 
-export const MobileOverviewPanel = connect(
-  (state: Record<string, any>) => ({
-    issuesList: state.getIn(['sessions', 'current']).issues,
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-  })
-)(observer(MobileOverviewPanelCont));
+export const MobileOverviewPanel = observer(MobileOverviewPanelCont);

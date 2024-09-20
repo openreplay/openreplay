@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { getRE } from 'App/utils';
 import {
   NoContent,
@@ -12,6 +11,7 @@ import {
   QuestionMarkHint,
 } from 'UI';
 import { error as errorRoute } from 'App/routes';
+import { useStore } from "App/mstore";
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
 import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
@@ -68,7 +68,11 @@ function MobileExceptionsCont() {
   );
 }
 
-function ExceptionsCont({ errorStack, sourcemapUploaded, loading }: IProps) {
+function ExceptionsCont() {
+  const { sessionStore } = useStore();
+  const errorStack = sessionStore.errorStack;
+  const sourcemapUploaded = sessionStore.sourcemapUploaded;
+  const loading = sessionStore.loadingSessionData;
   const { player, store } = React.useContext(PlayerContext);
   const { tabStates, currentTab } = store.get();
   const { logListNow: logs = [], exceptionsList: exceptions = [] } = tabStates[currentTab]
@@ -164,10 +168,6 @@ function ExceptionsCont({ errorStack, sourcemapUploaded, loading }: IProps) {
   );
 }
 
-export const Exceptions = connect((state: any) => ({
-  errorStack: state.getIn(['sessions', 'errorStack']),
-  sourcemapUploaded: state.getIn(['sessions', 'sourcemapUploaded']),
-  loading: state.getIn(['sessions', 'fetchErrorStackList', 'loading']),
-}))(observer(ExceptionsCont));
+export const Exceptions = observer(ExceptionsCont);
 
 export const MobileExceptions = observer(MobileExceptionsCont)

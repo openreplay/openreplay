@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { List } from 'immutable';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
@@ -11,9 +10,11 @@ import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
+import { observer } from 'mobx-react-lite';
 
-function UserCard({ className, request, session, width, height, similarSessions, loading }) {
-    const { settingsStore } = useStore();
+function UserCard({ className, width, height }) {
+    const { settingsStore, sessionStore } = useStore();
+    const session = sessionStore.current;
     const { timezone } = settingsStore.sessionSettings;
 
     const {
@@ -53,7 +54,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
                     <TextEllipsis
                         noHint
                         className={cn('font-medium', { 'color-teal cursor-pointer': hasUserDetails })}
-                        // onClick={hasUserDetails ? showSimilarSessions : undefined}
                     >
                         <UserName name={userDisplayName} userId={userId} hash={userNumericHash} />
                     </TextEllipsis>
@@ -104,14 +104,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
     );
 }
 
-const component = React.memo(connect((state) => ({ session: state.getIn(['sessions', 'current']) }))(UserCard));
-
-export default withRequest({
-    initialData: List(),
-    endpoint: '/metadata/session_search',
-    dataWrapper: (data) => Object.values(data),
-    dataName: 'similarSessions',
-})(component);
+export default observer(UserCard);
 
 // inner component
 function UserName({ name, userId, hash }) {

@@ -33,7 +33,6 @@ const supportedBrowsers = ['Chrome v91+', 'Edge v90+'];
 const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 
 function ScreenRecorder({
-  sessionId,
   agentId,
   isEnterprise,
 }: {
@@ -41,7 +40,8 @@ function ScreenRecorder({
   isEnterprise: boolean;
   agentId: number,
 }) {
-  const { projectsStore } = useStore();
+  const { projectsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
   const siteId = projectsStore.siteId;
   const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
   const recordingState = store.get().recordingState;
@@ -145,6 +145,5 @@ function ScreenRecorder({
 export default connect((state: any) => ({
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
     state.getIn(['user', 'account', 'edition']) === 'msaas',
-  sessionId: state.getIn(['sessions', 'current']).sessionId,
   agentId: state.getIn(['user', 'account', 'id']),
 }))(observer(ScreenRecorder));

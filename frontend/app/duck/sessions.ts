@@ -1,4 +1,3 @@
-import { LAST_7_DAYS } from 'Types/app/period';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { EventData, Location } from 'Types/session/event';
@@ -8,7 +7,7 @@ import { List, Map } from 'immutable';
 import { clean as cleanParams } from 'App/api_client';
 import APIClient from 'App/api_client';
 import { parseError } from 'App/api_middleware';
-import { getDateRangeFromValue } from 'App/dateRange';
+
 import logger from 'App/logger';
 import {
   cleanSessionFilters,
@@ -56,14 +55,6 @@ const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION';
 
 const PREFETCH_SESSION = 'sessions/PREFETCH_SESSION';
 
-const range = getDateRangeFromValue(LAST_7_DAYS);
-
-const defaultDateFilters = {
-  url: '',
-  rangeValue: LAST_7_DAYS,
-  startDate: range.start.ts,
-  endDate: range.end.ts,
-};
 
 const initObj = {
   list: [],

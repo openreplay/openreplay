@@ -23,7 +23,7 @@ import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import { toJS } from "mobx";
+import { useStore } from 'App/mstore'
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -222,9 +222,7 @@ function generateMobileChart(data: PerformanceChartPoint[], biggestMemSpike: num
   }))
 }
 
-export const MobilePerformance = connect((state: any) => ({
-  userDeviceMemorySize: state.getIn(['sessions', 'current']).userDeviceMemorySize || 0,
-}))(observer(({ userDeviceMemorySize }:  { userDeviceMemorySize: number }) => {
+export const MobilePerformance = observer(() => {
   const { player, store } = React.useContext(MobilePlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([])
   const [_data, setData] = React.useState<any[]>([])
@@ -407,14 +405,12 @@ export const MobilePerformance = connect((state: any) => ({
         </BottomBlock.Content>
       </BottomBlock>
   );
-}));
+});
 
 
-function Performance({
-  userDeviceHeapSize,
-}: {
-  userDeviceHeapSize: number;
-}) {
+function Performance() {
+  const { sessionStore } = useStore();
+  const userDeviceHeapSize = sessionStore.current.userDeviceHeapSize || 0;
   const { player, store } = React.useContext(PlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([])
   const [_data, setData] = React.useState<any[]>([])
@@ -721,6 +717,4 @@ function Performance({
   );
 }
 
-export const ConnectedPerformance = connect((state: any) => ({
-  userDeviceHeapSize: state.getIn(['sessions', 'current']).userDeviceHeapSize || 0,
-}))(observer(Performance));
+export const ConnectedPerformance = observer(Performance);

@@ -6,7 +6,7 @@ import NoteTags from '../Notes/NoteTags';
 import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { Space } from 'antd';
-import { sessionStore, useStore } from 'App/mstore';
+import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
 }
 
 function SessionHeader(props: Props) {
-  const { searchStore } = useStore();
+  const { searchStore, sessionStore } = useStore();
   const activeTab = searchStore.activeTab;
   const { startDate, endDate, rangeValue } = searchStore.instance;
   const { isEnterprise } = props;
@@ -66,7 +66,6 @@ function SessionHeader(props: Props) {
 
 export default connect(
   (state: any) => ({
-    listCount: state.getIn(['sessions', 'total']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
   })
 )(observer(SessionHeader));

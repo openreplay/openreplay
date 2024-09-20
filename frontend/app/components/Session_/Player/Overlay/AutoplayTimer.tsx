@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
+import { withRouter } from 'react-router-dom';
 import { Button, Link } from 'UI';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import stl from './AutoplayTimer.module.css';
@@ -9,15 +9,12 @@ import clsOv from './overlay.module.css';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { useStore } from 'App/mstore';
 
-interface IProps extends RouteComponentProps {
-  nextId: number;
-}
-
-function AutoplayTimer({ nextId, history }: IProps) {
+function AutoplayTimer({ history }: any) {
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
-  const { projectsStore } = useStore();
+  const { projectsStore, sessionStore } = useStore();
+  const nextId = sessionStore.nextId;
 
   useEffect(() => {
     if (counter > 0) {
@@ -71,7 +68,5 @@ function AutoplayTimer({ nextId, history }: IProps) {
 }
 
 export default withRouter(
-  connect((state: any) => ({
-    nextId: state.getIn(['sessions', 'nextId']),
-  }))(AutoplayTimer)
+  observer(AutoplayTimer)
 );

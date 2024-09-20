@@ -12,6 +12,7 @@ import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 import { audioContextManager } from 'App/utils/screenRecorder';
+import { useStore } from "App/mstore";
 
 function onReject() {
   toast.info(`Call was rejected.`);
@@ -56,11 +57,12 @@ function AssistActions({
   isEnterprise,
   isCallActive,
   agentIds,
-  userDisplayName,
   agentId,
 }: Props) {
   // @ts-ignore ???
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
+  const { sessionStore } = useStore();
+  const userDisplayName = sessionStore.current.userDisplayName;
 
   const {
     assistManager: {
@@ -294,7 +296,6 @@ const con = connect((state: any) => {
   return {
     hasPermission: permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL'),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
     agentId: state.getIn(['user', 'account', 'id'])
   };
 });

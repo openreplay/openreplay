@@ -18,7 +18,6 @@ import Select from 'Shared/Select';
 
 interface Props {
   time: number;
-  updateNote: (note: Note) => void;
   isEdit?: boolean;
   editNote?: WriteNote;
   hideModal: () => void;
