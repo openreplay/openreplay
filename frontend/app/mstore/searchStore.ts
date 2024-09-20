@@ -278,7 +278,8 @@ class SearchStore {
       ...this.instance.toSearch(),
       page: this.currentPage,
       perPage: this.pageSize,
-      tab: this.activeTab.type
+      tab: this.activeTab.type,
+      bookmarked: this.activeTab.type === 'bookmark' ? true : undefined
     });
   };
 }

@@ -152,8 +152,8 @@ export default class SessionStore {
       this.loadingLiveSessions = true;
     })
     try {
-      const data = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.sessions.map((session) => new Session({ ...session, live: true }));
+      const data: any = await sessionService.getLiveSessions(params);
+      this.liveSessions = data.sessions.map((session: any) => new Session({ ...session, live: true }));
       this.totalLiveSessions = data.total;
     } catch (e) {
       console.error(e);
