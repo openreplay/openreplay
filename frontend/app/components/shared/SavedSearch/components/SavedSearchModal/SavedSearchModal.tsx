@@ -1,14 +1,13 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
 import { Icon, Input } from 'UI';
-import { List } from 'immutable';
 import { confirm, Tooltip } from 'UI';
-import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search';
 import SaveSearchModal from 'Shared/SaveSearchModal';
 import stl from './savedSearchModal.module.css';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface ITooltipIcon {
   title: string;
@@ -28,7 +27,6 @@ function TooltipIcon(props: ITooltipIcon) {
 }
 
 interface Props {
-  list: List<SavedSearch>;
   applySavedSearch: (item: SavedSearch) => void;
   remove: (itemId: number) => void;
   editSavedSearch: (item: SavedSearch) => void;
@@ -39,6 +37,7 @@ function SavedSearchModal(props: Props) {
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
   const { searchStore } = useStore();
+  const list = searchStore.list;
 
   const onClick = (item: SavedSearch, e) => {
     e.stopPropagation();
@@ -53,7 +52,7 @@ function SavedSearchModal(props: Props) {
       confirmation: 'Are you sure you want to permanently delete this search?'
     });
     if (confirmation) {
-      searchStore.remove(item.searchId + '');
+      searchStore.removeSavedSearch(item.searchId + '');
     }
   };
   const onEdit = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
@@ -62,16 +61,16 @@ function SavedSearchModal(props: Props) {
     setTimeout(() => setshowModal(true), 0);
   };
 
-  const shownItems = props.list.filter((item) => item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()));
+  const shownItems = searchStore.list.filter((item) => item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()));
 
   return (
     <div className="bg-white box-shadow h-screen">
       <div className="p-6">
         <h1 className="text-2xl">
-          Saved Search <span className="color-gray-medium">{props.list.size}</span>
+          Saved Search <span className="color-gray-medium">{searchStore.list.size}</span>
         </h1>
       </div>
-      {props.list.size > 1 && (
+      {searchStore.list.size > 1 && (
         <div className="mb-6 w-full px-4">
           <Input
             icon="search"
@@ -113,4 +112,4 @@ function SavedSearchModal(props: Props) {
   );
 }
 
-export default connect((state: any) => ({ list: state.getIn(['search', 'list']) }))(SavedSearchModal);
+export default observer(SavedSearchModal);

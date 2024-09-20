@@ -46,6 +46,10 @@ class SavedSearch {
     this.isPublic = isPublic;
   }
 
+  exists(): boolean {
+    return !!this.searchId;
+  }
+
   validate(): boolean {
     return notEmptyString(this.name);
   }

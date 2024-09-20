@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
 import { Button } from 'UI';
 import SaveSearchModal from 'Shared/SaveSearchModal';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-interface Props {
-  savedSearch: any;
-}
 
-function SaveFilterButton(props: Props) {
-  const { savedSearch } = props;
+function SaveFilterButton() {
+  const { searchStore } = useStore();
+  const savedSearch = searchStore.savedSearch;
   const [showModal, setshowModal] = useState(false);
   return (
     <div>
@@ -24,6 +23,4 @@ function SaveFilterButton(props: Props) {
   );
 }
 
-export default connect(state => ({
-  savedSearch: state.getIn(['search', 'savedSearch'])
-}))(SaveFilterButton);
+export default observer(SaveFilterButton);

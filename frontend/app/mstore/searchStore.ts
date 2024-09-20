@@ -14,6 +14,7 @@ import Search from 'App/mstore/types/search';
 import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
+import SavedSearch from 'App/mstore/types/savedSearch';
 
 const PER_PAGE = 10;
 
@@ -58,7 +59,7 @@ class SearchStore {
   alertMetricId: number | null = null;
   instance = new Search();
   instanceLive = new Search();
-  savedSearch = new Search();
+  savedSearch = new SavedSearch();
   filterSearchList: any = {};
   currentPage = 1;
   pageSize = PER_PAGE;
@@ -67,6 +68,7 @@ class SearchStore {
   sessions = List();
   total: number = 0;
   loadingFilterSearch = false;
+  isSaving: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -76,10 +78,6 @@ class SearchStore {
     this.savedSearch = savedSearch;
     this.instance = new Search(savedSearch.filter);
     this.currentPage = 1;
-  }
-
-  editSavedSearch(savedSearch: any) {
-    this.savedSearch = savedSearch;
   }
 
   async fetchList() {
@@ -97,6 +95,10 @@ class SearchStore {
     this.currentPage = 1;
   }
 
+  editSavedSearch(instance: Partial<SavedSearch>) {
+    this.savedSearch = new SavedSearch(Object.assign(this.instance.toData(), instance));
+    this.currentPage = 1;
+  }
 
   apply(filter: any, fromUrl: boolean) {
     if (fromUrl) {
@@ -137,13 +139,13 @@ class SearchStore {
     this.fetchSessions();
   }
 
-  async remove(id: string): Promise<void> {
+  async removeSavedSearch(id: string): Promise<void> {
     await searchService.deleteSavedSearch(id);
-    this.savedSearch = new Search({});
+    this.savedSearch = new SavedSearch({});
     await this.fetchList();
   }
 
-  async save(id: string, rename = false): Promise<void> {
+  async save(id?: string | null, rename = false): Promise<void> {
     const filter = this.instance.toData();
     const isNew = !id;
     const instance = this.savedSearch.toData();

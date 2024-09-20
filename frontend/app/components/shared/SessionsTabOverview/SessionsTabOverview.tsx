@@ -1,25 +1,18 @@
 import { Input } from 'antd';
 import React from 'react';
-import { connect } from 'react-redux';
-
 import { useStore } from 'App/mstore';
 
 import LatestSessionsMessage from './components/LatestSessionsMessage';
 import NotesList from './components/Notes/NoteList';
 import SessionHeader from './components/SessionHeader';
 import SessionList from './components/SessionList';
+import { observer } from 'mobx-react-lite';
 
-function SessionsTabOverview({
-  activeTab,
-  appliedFilter,
-}: {
-  activeTab: string;
-  sites: object[];
-  siteId: string;
-  appliedFilter: any;
-}) {
+function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
-  const { aiFiltersStore } = useStore();
+  const { aiFiltersStore, searchStore } = useStore();
+  const appliedFilter = searchStore.instance;
+  const activeTab = searchStore.activeTab.type;
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
@@ -54,10 +47,4 @@ function SessionsTabOverview({
   );
 }
 
-export default connect((state: any) => ({
-  // @ts-ignore
-  activeTab: state.getIn(['search', 'activeTab', 'type']),
-  // @ts-ignore
-  members: state.getIn(['members', 'list']),
-  appliedFilter: state.getIn(['search', 'instance']),
-}))(SessionsTabOverview);
+export default observer(SessionsTabOverview);
