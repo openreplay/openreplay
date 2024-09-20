@@ -130,6 +130,23 @@ function obscureSensitiveData(obj: Record<string, any> | any[]) {
   }
 }
 
+function tryFilterUrl(url: string) {
+  if (!url) return ''
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.searchParams) {
+      for (const key of urlObj.searchParams.keys()) {
+        if (sensitiveParams.has(key.toLowerCase())) {
+          urlObj.searchParams.set(key, "******");
+        }
+      }
+    }
+    return urlObj.toString();
+  } catch (e) {
+    return url;
+  }
+}
+
 export function createSpotNetworkRequest(
   trackedRequest: TrackedRequest,
   trackedTab?: number,
@@ -185,7 +202,7 @@ export function createSpotNetworkRequest(
     time: trackedRequest.timeStamp,
     statusCode: status,
     error: trackedRequest.error,
-    url: trackedRequest.url,
+    url: tryFilterUrl(trackedRequest.url),
     fromCache: trackedRequest.fromCache || false,
     encodedBodySize: reqSize,
     responseBodySize: trackedRequest.responseSize,
