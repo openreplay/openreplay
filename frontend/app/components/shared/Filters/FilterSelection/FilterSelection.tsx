@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import FilterModal from '../FilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Icon } from 'UI';
-import { connect } from 'react-redux';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 
 const ASSIST_ROUTE = assistRoute();
 
 interface Props {
   filter?: any; // event/filter
-  filterList: any;
-  filterListLive: any;
   onFilterClick: (filter: any) => void;
   children?: any;
   excludeFilterKeys?: Array<string>;
@@ -22,13 +20,22 @@ interface Props {
 }
 
 function FilterSelection(props: Props) {
-  const { filter, onFilterClick, children, excludeFilterKeys = [], allowedFilterKeys = [], disabled = false, isConditional, isMobile } = props;
+  const {
+    filter,
+    onFilterClick,
+    children,
+    excludeFilterKeys = [],
+    allowedFilterKeys = [],
+    disabled = false,
+    isConditional,
+    isMobile
+  } = props;
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <div className='relative flex-shrink-0'>
+    <div className="relative flex-shrink-0">
       <OutsideClickDetectingDiv
-        className='relative'
+        className="relative"
         onClickOutside={() =>
           setTimeout(function() {
             setShowModal(false);
@@ -51,17 +58,17 @@ function FilterSelection(props: Props) {
             onClick={() => setShowModal(true)}
           >
             <div
-              className='overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate'
+              className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
               style={{ textOverflow: 'ellipsis' }}
             >
               {filter.label}
             </div>
-            <Icon name='chevron-down' size='14' />
+            <Icon name="chevron-down" size="14" />
           </div>
         )}
       </OutsideClickDetectingDiv>
       {showModal && (
-        <div className='absolute left-0 rounded-lg shadow bg-white z-50'>
+        <div className="absolute left-0 rounded-lg shadow bg-white z-50">
           <FilterModal
             isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
             onFilterClick={onFilterClick}
@@ -76,10 +83,4 @@ function FilterSelection(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    filterList: state.getIn(['search', 'filterList']),
-    filterListLive: state.getIn(['search', 'filterListLive']),
-  }),
-  {}
-)(FilterSelection);
+export default observer(FilterSelection);

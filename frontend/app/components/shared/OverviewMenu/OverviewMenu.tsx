@@ -19,8 +19,9 @@ const TabToUrlMap = {
 
 function OverviewMenu(props: Props & RouteComponentProps) {
   // @ts-ignore
-  const { activeTab, isEnterprise, history, match: { params: { siteId } }, location } = props;
+  const { isEnterprise, history, match: { params: { siteId } }, location } = props;
   const { searchStore } = useStore();
+  const activeTab = searchStore.activeTab.type;
 
   React.useEffect(() => {
     const currentLocation = location.pathname;
@@ -32,22 +33,22 @@ function OverviewMenu(props: Props & RouteComponentProps) {
 
   return (
     <div className={'flex flex-col gap-2 w-full'}>
-      <div className='w-full'>
+      <div className="w-full">
         <SideMenuitem
           active={activeTab === 'all'}
-          id='menu-sessions'
-          title='Sessions'
-          iconName='play-circle-bold'
+          id="menu-sessions"
+          title="Sessions"
+          iconName="play-circle-bold"
           onClick={() => {
             searchStore.setActiveTab({ type: 'all' });
             !location.pathname.includes(sessions()) && history.push(withSiteId(sessions(), siteId));
           }}
         />
       </div>
-      <div className='w-full'>
+      <div className="w-full">
         <SideMenuitem
           active={activeTab === 'bookmark'}
-          id='menu-bookmarks'
+          id="menu-bookmarks"
           title={`${isEnterprise ? 'Vault' : 'Bookmarks'}`}
           iconName={isEnterprise ? 'safe' : 'star'}
           onClick={() => {
@@ -56,24 +57,24 @@ function OverviewMenu(props: Props & RouteComponentProps) {
           }}
         />
       </div>
-      <div className='w-full'>
+      <div className="w-full">
         <SideMenuitem
           active={activeTab === 'notes'}
-          id='menu-notes'
-          title='Notes'
-          iconName='stickies'
+          id="menu-notes"
+          title="Notes"
+          iconName="stickies"
           onClick={() => {
             searchStore.setActiveTab({ type: 'notes' });
             !location.pathname.includes(notes()) && history.push(withSiteId(notes(), siteId));
           }}
         />
       </div>
-      <div className='w-full'>
+      <div className="w-full">
         <SideMenuitem
           active={activeTab === 'flags'}
-          id='menu-flags'
-          title='Feature Flags'
-          iconName='toggles'
+          id="menu-flags"
+          title="Feature Flags"
+          iconName="toggles"
           onClick={() => {
             searchStore.setActiveTab({ type: 'flags' });
             !location.pathname.includes(fflags()) && history.push(withSiteId(fflags(), siteId));
@@ -85,6 +86,5 @@ function OverviewMenu(props: Props & RouteComponentProps) {
 }
 
 export default connect((state: any) => ({
-  activeTab: state.getIn(['search', 'activeTab', 'type']),
   isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
-}), )(withRouter(OverviewMenu));
+}))(withRouter(OverviewMenu));

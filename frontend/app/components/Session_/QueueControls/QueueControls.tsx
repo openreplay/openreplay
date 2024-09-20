@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import { withSiteId, session as sessionRoute } from 'App/routes';
 import AutoplayToggle from 'Shared/AutoplayToggle/AutoplayToggle';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
@@ -7,6 +6,7 @@ import cn from 'classnames';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 const PER_PAGE = 10;
 
@@ -25,13 +25,14 @@ function QueueControls(props: Props) {
   const sessionIds = sessionStore.sessionIds ?? [];
   const setAutoplayValues = sessionStore.setAutoplayValues;
   const {
-    currentPage,
-    latestRequestTime,
     match: {
       // @ts-ignore
       params: { sessionId }
     }
   } = props;
+
+  const currentPage = searchStore.currentPage;
+  const latestRequestTime = searchStore.latestRequestTime;
 
   useEffect(() => {
     if (latestRequestTime) {
@@ -97,9 +98,4 @@ function QueueControls(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    currentPage: state.getIn(['search', 'currentPage']) || 1,
-    latestRequestTime: state.getIn(['search', 'latestRequestTime'])
-  }),
-)(withRouter(QueueControls));
+export default withRouter(observer(QueueControls));

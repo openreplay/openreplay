@@ -181,6 +181,7 @@ class SearchStore {
     }
     searchService.checkLatestSessions(filter).then((response: any) => {
       this.latestList = response;
+      this.latestRequestTime = Date.now();
     });
   }
 
