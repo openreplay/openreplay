@@ -3,7 +3,6 @@ import { useStore } from 'App/mstore';
 import { BackLink } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
-import { customSetSessions } from 'Duck/liveSearch';
 import { useHistory, useParams } from 'react-router-dom';
 import { liveSession, assist, withSiteId, multiview } from 'App/routes';
 import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
@@ -13,10 +12,8 @@ import EmptyTile from './EmptyTile';
 import SessionTileFooter from './SessionTileFooter';
 
 function Multiview({
-                     assistCredentials,
-                     customSetSessions
+                     assistCredentials
                    }: {
-  customSetSessions: (data: any) => void;
   assistCredentials: any;
   list: Record<string, any>[];
 }) {
@@ -40,7 +37,7 @@ function Multiview({
       const sessionIds = decodeURIComponent(sessionsquery).split(',');
       // preset
       assistMultiviewStore.presetSessions(sessionIds).then((data) => {
-        customSetSessions(data);
+        sessionStore.customSetSessions(data);
       });
     } else {
       searchStoreLive.fetchSessions();
@@ -120,9 +117,4 @@ function Multiview({
   );
 }
 
-export default connect(
-  null,
-  {
-    customSetSessions
-  }
-)(observer(Multiview));
+export default observer(Multiview);

@@ -13,7 +13,7 @@ import {
 } from 'App/utils';
 import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
-import { Record } from 'immutable';
+import { List, Record } from 'immutable';
 import { filterMap } from 'App/mstore/searchStore';
 
 class UserFilter {
@@ -468,6 +468,11 @@ export default class SessionStore {
   setCustomSession(session: Session) {
     this.current = session;
     // If additional filter logic is needed, implement here
+  }
+
+  customSetSessions(data: any) {
+    this.liveSessions = data.sessions.map((s: any) => new Session(s));
+    this.totalLiveSessions = data.total
   }
 }
 
