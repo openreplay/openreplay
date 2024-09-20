@@ -4,8 +4,6 @@ import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
 import SessionSearch from 'Shared/SessionSearch';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
-import cn from 'classnames';
-import OverviewMenu from 'Shared/OverviewMenu';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
 import { Switch, Route } from 'react-router';

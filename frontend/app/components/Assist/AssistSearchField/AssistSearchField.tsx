@@ -8,6 +8,7 @@ import { MODULES } from 'Components/Client/Modules';
 import AssistStats from '../../AssistStats';
 import Recordings from '../RecordingsList/Recordings';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   isEnterprise: boolean;
@@ -58,4 +59,4 @@ export default connect(
       state.getIn(['user', 'account', 'edition']) === 'ee' ||
       state.getIn(['user', 'authDetails', 'edition']) === 'ee'
   })
-)(AssistSearchField);
+)(observer(AssistSearchField));
