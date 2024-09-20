@@ -125,14 +125,11 @@ export const getMatchingEntries = (
 };
 
 interface Props {
-  // filters: any;
   isLive: boolean;
   conditionalFilters: any;
   mobileConditionalFilters: any;
   onFilterClick?: (filter: any) => void;
-  filterSearchList: any;
   isMainSearch?: boolean;
-  fetchingFilterSearchList: boolean;
   searchQuery?: string;
   excludeFilterKeys?: Array<string>;
   allowedFilterKeys?: Array<string>;
@@ -144,20 +141,20 @@ function FilterModal(props: Props) {
   const {
     isLive,
     onFilterClick = () => null,
-    filterSearchList,
     isMainSearch = false,
-    fetchingFilterSearchList,
     searchQuery = '',
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
     isMobile
   } = props;
-  const { searchStore } = useStore();
-  const filters = isLive ? searchStore.filterListLive : searchStore.filterList;
+  const { searchStore, searchStoreLive } = useStore();
+  const filters = isLive ? searchStoreLive.filterList : searchStore.filterList;
   const conditionalFilters = searchStore.filterListConditional;
   const mobileConditionalFilters = searchStore.filterListMobileConditional;
   const showSearchList = isMainSearch && searchQuery.length > 0;
+  const filterSearchList = isLive ? searchStoreLive.filterSearchList : searchStore.filterSearchList;
+  const fetchingFilterSearchList = isLive ? searchStoreLive.loadingFilterSearch : searchStore.loadingFilterSearch;
 
   const onFilterSearchClick = (filter: any) => {
     const _filter = { ...filtersMap[filter.type] };
@@ -280,17 +277,6 @@ function FilterModal(props: Props) {
 
 export default connect((state: any, props: any) => {
   return {
-    // filters: props.isLive
-    //   ? state.getIn(['search', 'filterListLive'])
-    //   : state.getIn(['search', 'filterList']),
-    isLive: props.isLive,
-    // conditionalFilters: state.getIn(['search', 'filterListConditional']),
-    // mobileConditionalFilters: state.getIn(['search', 'filterListMobileConditional']),
-    filterSearchList: props.isLive
-      ? state.getIn(['liveSearch', 'filterSearchList'])
-      : state.getIn(['search', 'filterSearchList']),
-    fetchingFilterSearchList: props.isLive
-      ? state.getIn(['liveSearch', 'fetchFilterSearch', 'loading'])
-      : state.getIn(['search', 'fetchFilterSearch', 'loading'])
+    isLive: props.isLive
   };
 })(observer(FilterModal));

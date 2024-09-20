@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -18,7 +17,7 @@ import {
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
   LaunchStateShortcut,
-  LaunchXRaShortcut,
+  LaunchXRaShortcut
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import {
   CONSOLE,
@@ -29,9 +28,8 @@ import {
   PERFORMANCE,
   PROFILER,
   STACKEVENTS,
-  STORAGE,
+  STORAGE
 } from 'App/mstore/uiPlayerStore';
-import { fetchSessions } from 'Duck/liveSearch';
 import { Icon } from 'UI';
 
 import ControlButton from './ControlButton';
@@ -46,7 +44,7 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4,
+  60: 6e4
 };
 
 function getStorageName(type: any) {
@@ -70,7 +68,7 @@ function getStorageName(type: any) {
 
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, uiPlayerStore, projectsStore } = useStore();
+  const { uxtestingStore, uiPlayerStore, projectsStore, sessionStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
@@ -88,16 +86,16 @@ function Controls(props: any) {
     speed,
     messagesLoading,
     markedTargets,
-    inspectorMode,
+    inspectorMode
   } = store.get();
 
   const {
     disableDevtools,
-    session,
-    previousSessionId,
-    nextSessionId,
-    setActiveTab,
+    setActiveTab
   } = props;
+  const session = sessionStore.current;
+  const previousSessionId = sessionStore.previousId;
+  const nextSessionId = sessionStore.nextId;
 
   const disabled =
     disableDevtools || messagesLoading || inspectorMode || markedTargets;
@@ -119,7 +117,7 @@ function Controls(props: any) {
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
     setActiveTab,
-    disableDevtools,
+    disableDevtools
   });
 
   const forthTenSeconds = () => {
@@ -140,8 +138,8 @@ function Controls(props: any) {
   const state = completed
     ? PlayingState.Completed
     : playing
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+      ? PlayingState.Playing
+      : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
   return (
@@ -209,12 +207,12 @@ interface IDevtoolsButtons {
 
 const DevtoolsButtons = observer(
   ({
-    showStorageRedux,
-    toggleBottomTools,
-    bottomBlock,
-    disabled,
-    events,
-  }: IDevtoolsButtons) => {
+     showStorageRedux,
+     toggleBottomTools,
+     bottomBlock,
+     disabled,
+     events
+   }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
@@ -361,11 +359,11 @@ const DevtoolsButtons = observer(
 );
 
 export function SummaryButton({
-  onClick,
-  withToggle,
-  onToggle,
-  toggleValue,
-}: {
+                                onClick,
+                                withToggle,
+                                onToggle,
+                                toggleValue
+                              }: {
   onClick?: () => void;
   withToggle?: boolean;
   onToggle?: () => void;
@@ -401,7 +399,7 @@ export const gradientButton = {
   height: 24,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'center'
 };
 const onHoverFillStyle = {
   width: '100%',
@@ -411,7 +409,7 @@ const onHoverFillStyle = {
   gap: 2,
   alignItems: 'center',
   padding: '1px 8px',
-  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
+  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)'
 };
 const fillStyle = {
   width: '100%',
@@ -420,7 +418,7 @@ const fillStyle = {
   borderRadius: '60px',
   gap: 2,
   alignItems: 'center',
-  padding: '1px 8px',
+  padding: '1px 8px'
 };
 
 const ControlPlayer = observer(Controls);
@@ -435,52 +433,7 @@ export default connect(
         !(
           permissions.includes('DEV_TOOLS') ||
           permissions.includes('SERVICE_DEV_TOOLS')
-        ),
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      previousSessionId: state.getIn(['sessions', 'previousId']),
-      nextSessionId: state.getIn(['sessions', 'nextId']),
+        )
     };
-  },
-  {
-    fetchSessions,
   }
 )(ControlPlayer);
-
-// shouldComponentUpdate(nextProps) {
-//   if (
-//     nextProps.fullscreen !== props.fullscreen ||
-//     nextProps.bottomBlock !== props.bottomBlock ||
-//     nextProps.live !== props.live ||
-//     nextProps.livePlay !== props.livePlay ||
-//     nextProps.playing !== props.playing ||
-//     nextProps.completed !== props.completed ||
-//     nextProps.skip !== props.skip ||
-//     nextProps.skipToIssue !== props.skipToIssue ||
-//     nextProps.speed !== props.speed ||
-//     nextProps.disabled !== props.disabled ||
-//     nextProps.fullscreenDisabled !== props.fullscreenDisabled ||
-//     // nextProps.inspectorMode !== props.inspectorMode ||
-//     // nextProps.logCount !== props.logCount ||
-//     nextProps.logRedCount !== props.logRedCount ||
-//     nextProps.showExceptions !== props.showExceptions ||
-//     nextProps.resourceRedCount !== props.resourceRedCount ||
-//     nextProps.fetchRedCount !== props.fetchRedCount ||
-//     nextProps.showStack !== props.showStack ||
-//     nextProps.stackCount !== props.stackCount ||
-//     nextProps.stackRedCount !== props.stackRedCount ||
-//     nextProps.profilesCount !== props.profilesCount ||
-//     nextProps.storageCount !== props.storageCount ||
-//     nextProps.storageType !== props.storageType ||
-//     nextProps.showStorage !== props.showStorage ||
-//     nextProps.showProfiler !== props.showProfiler ||
-//     nextProps.showGraphql !== props.showGraphql ||
-//     nextProps.showFetch !== props.showFetch ||
-//     nextProps.fetchCount !== props.fetchCount ||
-//     nextProps.graphqlCount !== props.graphqlCount ||
-//     nextProps.liveTimeTravel !== props.liveTimeTravel ||
-//     nextProps.skipInterval !== props.skipInterval
-//   )
-//     return true;
-//   return false;
-// }

@@ -28,8 +28,10 @@ import UiPlayerStore from './uiPlayerStore';
 import IssueReportingStore from './issueReportingStore';
 import CustomFieldStore from './customFieldStore';
 import SearchStore from './searchStore';
-import { IntegrationsStore } from "./integrationsStore";
+import SearchStoreLive from './searchStoreLive';
+import { IntegrationsStore } from './integrationsStore';
 import ProjectsStore from './projectsStore';
+import searchStoreLive from './searchStoreLive';
 
 export const projectStore = new ProjectsStore();
 export const sessionStore = new SessionStore();
@@ -63,7 +65,8 @@ export class RootStore {
   issueReportingStore: IssueReportingStore;
   customFieldStore: CustomFieldStore;
   searchStore: SearchStore;
-  integrationsStore: IntegrationsStore
+  searchStoreLive: SearchStoreLive;
+  integrationsStore: IntegrationsStore;
   projectsStore: ProjectsStore;
 
   constructor() {
@@ -94,6 +97,7 @@ export class RootStore {
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
     this.searchStore = searchStore;
+    this.searchStoreLive = new SearchStoreLive();
     this.integrationsStore = new IntegrationsStore();
     this.projectsStore = projectStore;
   }
@@ -103,7 +107,7 @@ export class RootStore {
     services.forEach((service) => {
       service.initClient(client);
     });
-    client.setSiteIdCheck(this.projectsStore.getSiteId)
+    client.setSiteIdCheck(this.projectsStore.getSiteId);
   }
 }
 

@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
-import { connect } from 'react-redux';
+import React, { useState } from 'react';;
 import stl from './LiveSessionSearchField.module.css';
 import { Input } from 'UI';
 import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
 import { debounce } from 'App/utils';
-import { edit as editFilter, addFilterByKeyAndValue } from 'Duck/liveSearch';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
-  editFilter: typeof editFilter;
-  addFilterByKeyAndValue: (key: string, value: string) => void;
+
 }
 
 function LiveSessionSearchField(props: Props) {
-  const { searchStore } = useStore();
-  const debounceFetchFilterSearch = debounce(searchStore.fetchFilterSearch, 1000);
+  const { searchStoreLive } = useStore();
+  const debounceFetchFilterSearch = debounce(searchStoreLive.fetchFilterSearch, 1000);
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -24,7 +22,7 @@ function LiveSessionSearchField(props: Props) {
   };
 
   const onAddFilter = (filter) => {
-    props.addFilterByKeyAndValue(filter.key, filter.value);
+    searchStoreLive.addFilterByKeyAndValue(filter.key, filter.value);
   };
 
   return (
@@ -56,4 +54,4 @@ function LiveSessionSearchField(props: Props) {
   );
 }
 
-export default connect(null, { editFilter, addFilterByKeyAndValue })(LiveSessionSearchField);
+export default observer(LiveSessionSearchField);

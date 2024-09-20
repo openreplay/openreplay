@@ -61,6 +61,7 @@ export default class SessionStore {
   sessionIds: string[] = [];
   current = new Session();
   total = 0;
+  totalLiveSessions = 0;
   favoriteList: Session[] = [];
   activeTab = { name: 'All', type: 'all' }
   timezone = 'local';
@@ -155,7 +156,8 @@ export default class SessionStore {
     })
     try {
       const data = await sessionService.getLiveSessions(params);
-      this.liveSessions = data.map((session) => new Session({ ...session, live: true }));
+      this.liveSessions = data.sessions.map((session) => new Session({ ...session, live: true }));
+      this.totalLiveSessions = data.total;
     } catch (e) {
       console.error(e);
     } finally {

@@ -2,15 +2,9 @@ import { CloseOutlined, EnterOutlined } from '@ant-design/icons';
 import { Tour } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
-
 import { useStore } from 'App/mstore';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import { debounce } from 'App/utils';
-import {
-  addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
-  fetchFilterSearch as liveFetchFilterSearch
-} from 'Duck/liveSearch';
 import { Icon, Input } from 'UI';
 
 import FilterModal from 'Shared/Filters/FilterModal';
@@ -20,20 +14,17 @@ import OutsideClickDetectingDiv from '../OutsideClickDetectingDiv';
 const ASSIST_ROUTE = assistRoute();
 
 interface Props {
-  liveAddFilterByKeyAndValue: (key: string, value: string) => void;
-  liveFetchFilterSearch: any;
-  appliedFilter: any;
   setFocused?: (focused: boolean) => void;
 }
 
 function SessionSearchField(props: Props) {
-  const { searchStore } = useStore();
+  const { searchStore, searchStoreLive } = useStore();
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
   const debounceFetchFilterSearch = React.useCallback(
     debounce(
-      isLive ? props.liveFetchFilterSearch : searchStore.fetchFilterSearch,
+      isLive ? searchStoreLive.fetchFilterSearch : searchStore.fetchFilterSearch,
       1000
     ),
     []
@@ -49,7 +40,7 @@ function SessionSearchField(props: Props) {
 
   const onAddFilter = (filter: any) => {
     isLive
-      ? props.liveAddFilterByKeyAndValue(filter.key, filter.value)
+      ? searchStoreLive.addFilterByKeyAndValue(filter.key, filter.value)
       : searchStore.addFilterByKeyAndValue(filter.key, filter.value);
   };
 
@@ -340,10 +331,4 @@ const regularBoxFocused = {
   width: '100%'
 };
 
-export default connect(
-  (state: any) => ({}),
-  {
-    liveFetchFilterSearch,
-    liveAddFilterByKeyAndValue
-  }
-)(observer(AiSessionSearchField));
+export default observer(AiSessionSearchField);

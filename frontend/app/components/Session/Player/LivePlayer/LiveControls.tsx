@@ -1,25 +1,23 @@
 import React from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import LiveTag from './LiveTag';
 import AssistSessionsTabs from './AssistSessionsTabs';
 
 import {
-  CONSOLE,
+  CONSOLE
 } from 'App/mstore/uiPlayerStore';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { fetchSessions } from 'Duck/liveSearch';
-import { useLocation } from "react-router-dom";
+import { useLocation } from 'react-router-dom';
 import AssistDuration from './AssistDuration';
 import Timeline from './Timeline';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls'
+import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
 
 function Controls(props: any) {
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, searchStoreLive, sessionStore } = useStore();
   const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const skipInterval = uiPlayerStore.skipInterval;
@@ -39,12 +37,10 @@ function Controls(props: any) {
   const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
   const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
   const showExceptions = exceptionsList.length > 0;
-  const {
-    closedLive,
-    session,
-    fetchSessions: fetchAssistSessions,
-    totalAssistSessions,
-  } = props;
+  const session = sessionStore.current;
+  const fetchAssistSessions = sessionStore.fetchLiveSessions;
+  const totalAssistSessions = sessionStore.totalLiveSessions;
+  const closedLive = !!sessionStore.errorStack || !!sessionStore.current;
 
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -91,14 +87,14 @@ function Controls(props: any) {
   };
 
   const toggleBottomTools = (blockName: number) => {
-      toggleBottomBlock(blockName);
+    toggleBottomBlock(blockName);
   };
 
   return (
     <div className={styles.controls}>
       {session.liveOnly ? null : <Timeline />}
       {!noControls ?
-        <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live style={{ height: noGrid ? '40px' : ''}}>
+        <div className={cn(styles.buttons, '!px-5 !pt-0')} data-is-live style={{ height: noGrid ? '40px' : '' }}>
           <div className="flex items-center">
             {!closedLive && (
               <div className={styles.buttonsLeft}>
@@ -125,23 +121,11 @@ function Controls(props: any) {
             />
           </div>
         </div>
-      : null}
+        : null}
     </div>
   );
 }
 
 const ControlPlayer = observer(Controls);
 
-export default connect(
-  (state: any) => {
-    return {
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      closedLive:
-        !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current']).live,
-    };
-  },
-  {
-    fetchSessions,
-  }
-)(ControlPlayer);
+export default ControlPlayer;

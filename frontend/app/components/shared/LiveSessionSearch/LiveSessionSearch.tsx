@@ -1,58 +1,40 @@
 import React from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { connect } from 'react-redux';
 import { Button } from 'UI';
-import { edit, addFilter } from 'Duck/liveSearch';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-interface Props {
-  appliedFilter: any;
-  edit: typeof edit;
-  addFilter: typeof addFilter;
-}
-function LiveSessionSearch(props: Props) {
-  const { appliedFilter } = props;
-  const { projectsStore } = useStore();
-  const saveRequestPayloads = projectsStore.active?.saveRequestPayloads
-  const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
-  const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
+function LiveSessionSearch() {
+  const { projectsStore, searchStoreLive } = useStore();
+  const saveRequestPayloads = projectsStore.active?.saveRequestPayloads;
+  const appliedFilter = searchStoreLive.instance;
+  const hasEvents = appliedFilter.filters.filter(i => i.isEvent).length > 0;
+  const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).length > 0;
 
   const onAddFilter = (filter) => {
-    props.addFilter(filter);
-  }
+    searchStoreLive.addFilter(filter);
+  };
 
   const onUpdateFilter = (filterIndex, filter) => {
-    const newFilters = appliedFilter.filters.map((_filter, i) => {
-      if (i === filterIndex) {
-        return filter;
-      } else {
-        return _filter;
-      }
-    });
-
-    props.edit({
-        ...appliedFilter,
-        filters: newFilters,
-    });
-  }
+    searchStoreLive.updateFilter(filterIndex, filter);
+  };
 
   const onRemoveFilter = (filterIndex) => {
     const newFilters = appliedFilter.filters.filter((_filter, i) => {
       return i !== filterIndex;
     });
 
-    props.edit({
-      filters: newFilters,
+    searchStoreLive.edit({
+      filters: newFilters
     });
-  }
+  };
 
   const onChangeEventsOrder = (e, { name, value }) => {
-    props.edit({
-      eventsOrder: value,
+    searchStoreLive.edit({
+      eventsOrder: value
     });
-  }
+  };
 
   return (hasEvents || hasFilters) ? (
     <div className="border bg-white rounded mt-4">
@@ -78,7 +60,7 @@ function LiveSessionSearch(props: Props) {
               className="mr-2"
               // onClick={() => setshowModal(true)}
               icon="plus">
-                ADD STEP
+              ADD STEP
             </Button>
           </FilterSelection>
         </div>
@@ -91,6 +73,4 @@ function LiveSessionSearch(props: Props) {
   ) : <></>;
 }
 
-export default connect(state => ({
-  appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
-}), { edit, addFilter })(observer(LiveSessionSearch));
+export default observer(LiveSessionSearch);

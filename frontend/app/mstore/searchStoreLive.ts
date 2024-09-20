@@ -1,4 +1,3 @@
-import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
   conditionalFiltersMap,
@@ -8,12 +7,12 @@ import {
   mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
-import { makeAutoObservable, action, observable } from 'mobx';
-import { searchService } from 'App/services';
+import { makeAutoObservable } from 'mobx';
 import Search from 'App/mstore/types/search';
-import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
+import { checkFilterValue, IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
+import { searchService } from 'App/services';
 
 const PER_PAGE = 10;
 
@@ -47,7 +46,7 @@ export const filterMap = ({
   filters: filters ? filters.map(filterMap) : []
 });
 
-class SearchStore {
+class SearchStoreLive {
   filterList = generateFilterOptions(filtersMap);
   filterListLive = generateFilterOptions(liveFiltersMap);
   filterListConditional = generateFilterOptions(conditionalFiltersMap);
@@ -72,24 +71,19 @@ class SearchStore {
     makeAutoObservable(this);
   }
 
-  applySavedSearch(savedSearch: any) {
-    this.savedSearch = savedSearch;
-    this.instance = new Search(savedSearch.filter);
-    this.currentPage = 1;
-  }
-
-  editSavedSearch(savedSearch: any) {
-    this.savedSearch = savedSearch;
-  }
-
-  async fetchList() {
-    const response = await searchService.fetchSavedSearch();
-    this.list = List(response.map((item: any) => new Search(item)));
-  }
-
-  async fetchSavedSearchList() {
-    const response = await searchService.fetchSavedSearch();
-    this.list = List(response.map((item: any) => new Search(item)));
+  fetchFilterSearch(params: any) {
+    this.loadingFilterSearch = true;
+    searchService.fetchFilterSearch(params).then((response: any) => {
+      this.filterSearchList = response.reduce((acc: any, item: any) => {
+        const { projectId, type, value } = item;
+        const key = type;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push({ projectId, value });
+        return acc;
+      }, {}).finally(() => {
+        this.loadingFilterSearch = false;
+      });
+    });
   }
 
   edit(instance: Partial<Search>) {
@@ -111,52 +105,9 @@ class SearchStore {
     this.apply(filter, false);
   }
 
-  fetchFilterSearch(params: any) {
-    this.loadingFilterSearch = true;
-    searchService.fetchFilterSearch(params).then((response: any) => {
-      this.filterSearchList = response.reduce((acc: any, item: any) => {
-        const { projectId, type, value } = item;
-        const key = type;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push({ projectId, value });
-        return acc;
-      }, {}).finally(() => {
-        this.loadingFilterSearch = false;
-      });
-    });
-  }
-
   updateCurrentPage(page: number) {
     this.currentPage = page;
     this.fetchSessions();
-  }
-
-  setActiveTab(tab: any) {
-    this.activeTab = tab;
-    this.currentPage = 1;
-    this.fetchSessions();
-  }
-
-  async remove(id: string): Promise<void> {
-    await searchService.deleteSavedSearch(id);
-    this.savedSearch = new Search({});
-    await this.fetchList();
-  }
-
-  async save(id: string, rename = false): Promise<void> {
-    const filter = this.instance.toData();
-    const isNew = !id;
-    const instance = this.savedSearch.toData();
-    const newInstance = rename ? instance : { ...instance, filter };
-    newInstance.filter.filters = newInstance.filter.filters.map(filterMap);
-
-    await searchService.saveSavedSearch(newInstance, id);
-    await this.fetchList();
-
-    if (isNew) {
-      const lastSavedSearch = this.list.last();
-      this.applySavedSearch(lastSavedSearch);
-    }
   }
 
   clearSearch() {
@@ -169,19 +120,6 @@ class SearchStore {
     }));
 
     this.fetchSessions();
-  }
-
-  checkForLatestSessions() {
-    const filter = this.instance.toData();
-    if (this.latestRequestTime) {
-      const period = Period({ rangeName: CUSTOM_RANGE, start: this.latestRequestTime, end: Date.now() });
-      const newTimestamps: any = period.toJSON();
-      filter.startTimestamp = newTimestamps.startDate;
-      filter.endTimestamp = newTimestamps.endDate;
-    }
-    searchService.checkLatestSessions(filter).then((response: any) => {
-      this.latestList = response;
-    });
   }
 
   addFilter(filter: any) {
@@ -229,10 +167,6 @@ class SearchStore {
     this.addFilter(defaultFilter);
   }
 
-  refreshFilterOptions() {
-    // TODO
-  }
-
   updateFilter = (index: number, search: Partial<IFilter>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
@@ -259,17 +193,9 @@ class SearchStore {
     });
   };
 
-  setScrollPosition = (y: number) => {
-    this.scrollY = y;
-  };
-
-  async fetchAutoplaySessions(page: number): Promise<void> {
-    // TODO
-  }
-
   async fetchSessions() {
-    await sessionStore.fetchSessions(this.instance.toSearch());
+    await sessionStore.fetchLiveSessions(this.instance.toSearch());
   };
 }
 
-export default SearchStore;
+export default SearchStoreLive;
