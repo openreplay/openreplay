@@ -137,6 +137,7 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     checkParams();
     handleJwtFromUrl();
+    mstore.initClient();
   }, []);
 
   useEffect(() => {

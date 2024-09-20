@@ -111,7 +111,9 @@ function SessionList(props: Props) {
   }, [statusData, siteId]);
 
   useEffect(() => {
-    void searchStore.fetchSessions();
+    if (siteId) {
+      void searchStore.fetchSessions();
+    }
   }, [siteId])
 
   useEffect(() => {

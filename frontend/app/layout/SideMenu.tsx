@@ -52,7 +52,6 @@ interface Props extends RouteComponentProps {
 
 function SideMenu(props: Props) {
   const {
-    siteId,
     modules,
     location,
     account,
@@ -63,7 +62,8 @@ function SideMenu(props: Props) {
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const isAdmin = account.admin || account.superAdmin;
-  const { searchStore } = useStore();
+  const { searchStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
@@ -147,7 +147,7 @@ function SideMenu(props: Props) {
     const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
       currentLocation.includes(TabToUrlMap[tab])
     );
-    if (tab && tab !== searchStore.activeTab) {
+    if (tab && tab !== searchStore.activeTab && siteId) {
       searchStore.setActiveTab({ type: tab });
     }
   }, [location.pathname]);

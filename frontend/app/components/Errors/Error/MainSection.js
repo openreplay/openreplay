@@ -129,5 +129,5 @@ function MainSection(props) {
 }
 
 export default withRouter(
-  connect(null)(observer(MainSection))
+  (observer(MainSection))
 );

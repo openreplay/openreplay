@@ -1,4 +1,3 @@
-import { clearCurrentSession, fetch as fetchSession } from "Duck/sessions";
 import React from 'react';
 import { useEffect } from 'react';
 import usePageTitle from 'App/hooks/usePageTitle';
