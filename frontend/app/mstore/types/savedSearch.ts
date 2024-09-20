@@ -1,8 +1,9 @@
 import Filter from './filter';
 import { notEmptyString } from 'App/validate';
+import FilterItem from 'App/mstore/types/filterItem';
 
 interface FilterType {
-  filters: Array<{ value: any }>;
+  filters: FilterItem[];
 }
 
 export interface ISavedSearch {
@@ -14,6 +15,7 @@ export interface ISavedSearch {
   createdAt?: string;
   count: number;
   isPublic: boolean;
+  toData(): any;
 }
 
 class SavedSearch implements ISavedSearch{

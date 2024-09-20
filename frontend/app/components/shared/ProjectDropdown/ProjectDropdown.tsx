@@ -38,6 +38,7 @@ function ProjectDropdown(props: Props) {
     mstore.initClient();
     setSiteId(newSiteId);
     searchStore.clearSearch();
+    searchStore.clearList();
     searchStoreLive.clearSearch();
 
     await customFieldStore.fetchList(newSiteId);

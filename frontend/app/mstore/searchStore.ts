@@ -58,7 +58,6 @@ class SearchStore {
   latestList = List();
   alertMetricId: number | null = null;
   instance = new Search();
-  instanceLive = new Search();
   savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
   currentPage = 1;
@@ -76,9 +75,12 @@ class SearchStore {
 
   applySavedSearch(savedSearch: ISavedSearch) {
     this.savedSearch = savedSearch;
-    this.instance = new Search({
-      filters: savedSearch.filter.filters
-    });
+    // this.instance = new Search({
+    //   filters: savedSearch.filter.filters
+    // });
+    console.log('savedSearch.filter.filters', savedSearch.filter.filters);
+    // this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem(i).toJson()) : []});
+    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters : [] });
     this.currentPage = 1;
   }
 
@@ -157,6 +159,10 @@ class SearchStore {
     }
   }
 
+  clearList() {
+    this.list = List();
+  }
+
   clearSearch() {
     const instance = this.instance;
     this.edit(new Search({
@@ -167,8 +173,6 @@ class SearchStore {
     }));
 
     this.savedSearch = new SavedSearch({});
-    this.list = List();
-
     sessionStore.clearList();
   }
 
