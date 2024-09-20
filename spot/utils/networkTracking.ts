@@ -30,38 +30,106 @@ export const rawRequests: (TrackedRequest & {
   startTs: number;
   duration: number;
 })[] = [];
+
+const sensitiveParams = new Set([
+  "password",
+  "pass",
+  "pwd",
+  "mdp",
+  "token",
+  "bearer",
+  "key",
+  "secret",
+  "email",
+  "ssn",
+  "name",
+  "firstname",
+  "lastname",
+  "birthdate",
+  "dob",
+  "address",
+  "x-api-key",
+  "www-authenticate",
+  "x-csrf-token",
+  "x-requested-with",
+  "x-forwarded-for",
+  "x-real-ip",
+  "cookie",
+  "authorization",
+  "auth",
+  "proxy-authorization",
+  "set-cookie",
+]);
+
 function filterHeaders(headers: Record<string, string>) {
   const filteredHeaders: Record<string, string> = {};
-  const privateHs = [
-    "x-api-key",
-    "www-authenticate",
-    "x-csrf-token",
-    "x-requested-with",
-    "x-forwarded-for",
-    "x-real-ip",
-    "cookie",
-    "authorization",
-    "auth",
-    "proxy-authorization",
-    "set-cookie",
-  ];
   if (Array.isArray(headers)) {
     headers.forEach(({ name, value }) => {
-      if (privateHs.includes(name.toLowerCase())) {
-        return;
+      if (sensitiveParams.has(name.toLowerCase())) {
+        filteredHeaders[name] = "******";
       } else {
         filteredHeaders[name] = value;
       }
     });
   } else {
     for (const [key, value] of Object.entries(headers)) {
-      if (!privateHs.includes(key.toLowerCase())) {
+      if (sensitiveParams.has(key.toLowerCase())) {
+        filteredHeaders[key] = "******";
+      } else {
         filteredHeaders[key] = value;
       }
     }
   }
   return filteredHeaders;
 }
+
+// JSON or form data
+function filterBody(body: any) {
+  if (!body) {
+    return body;
+  }
+
+  let parsedBody;
+  let isJSON = false;
+
+  try {
+    parsedBody = JSON.parse(body);
+    isJSON = true;
+  } catch (e) {
+   // not json
+  }
+
+  if (isJSON) {
+    obscureSensitiveData(parsedBody);
+    return JSON.stringify(parsedBody);
+  } else {
+    const params = new URLSearchParams(body);
+    for (const key of params.keys()) {
+      if (sensitiveParams.has(key.toLowerCase())) {
+        params.set(key, "******");
+      }
+    }
+
+    return params.toString();
+  }
+}
+
+function obscureSensitiveData(obj: Record<string, any> | any[]) {
+  if (Array.isArray(obj)) {
+    obj.forEach(obscureSensitiveData);
+  } else if (obj && typeof obj === "object") {
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        if (sensitiveParams.has(key.toLowerCase())) {
+          obj[key] = "******";
+        } else if (obj[key] !== null && typeof obj[key] === "object") {
+          obscureSensitiveData(obj[key]);
+        }
+      }
+    }
+  }
+}
+
 export function createSpotNetworkRequest(
   trackedRequest: TrackedRequest,
   trackedTab?: number,
@@ -97,10 +165,11 @@ export function createSpotNetworkRequest(
     : 0;
 
   const status = getRequestStatus(trackedRequest);
+  const body = trackedRequest.reqBody ? filterBody(trackedRequest.reqBody) : "";
   const request: SpotNetworkRequest = {
     method: trackedRequest.method,
     type,
-    body: trackedRequest.reqBody,
+    body,
     requestHeaders,
     responseHeaders,
     time: trackedRequest.timeStamp,
