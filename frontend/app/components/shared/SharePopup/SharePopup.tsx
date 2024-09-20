@@ -28,7 +28,6 @@ const SharePopup = ({
 }) => {
   const { store } = React.useContext(PlayerContext);
   const { showModal, hideModal } = useModal();
-
   const openModal = () => {
     showModal(
       <ShareModal
@@ -49,7 +48,6 @@ const SharePopup = ({
 
 
 interface Props {
-  sessionId: string;
   tenantId: string;
   showCopyLink?: boolean;
   hideModal: () => void;
@@ -57,12 +55,12 @@ interface Props {
 }
 
 function ShareModalComp({
-  sessionId,
   showCopyLink,
   hideModal,
   time,
 }: Props) {
-  const { integrationsStore } = useStore();
+  const { integrationsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId
   const channels = integrationsStore.slack.list;
   const slackLoaded = integrationsStore.slack.loaded;
   const msTeamsChannels = integrationsStore.msteams.list;
@@ -267,10 +265,9 @@ function ShareModalComp({
 }
 
 const mapStateToProps = (state: Record<string, any>) => ({
-  sessionId: state.getIn(['sessions', 'current']).sessionId,
   tenantId: state.getIn(['user', 'account', 'tenantId']),
 });
 
-const ShareModal = connect(mapStateToProps)(ShareModalComp);
+const ShareModal = connect(mapStateToProps)(observer(ShareModalComp));
 
 export default observer(SharePopup);

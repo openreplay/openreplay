@@ -19,7 +19,6 @@ interface Tag {
 
 interface StateProps {
   activeTab: { type: string };
-  total: number;
 }
 
 interface DispatchProps {
@@ -36,8 +35,9 @@ const tagIcons = {
   [types.CRASH]: <Skull size={14} />,
 } as Record<string, any>;
 
-const SessionTags: React.FC<Props> = ({ activeTab, total, setActiveTab }) => {
-  const { projectsStore } = useStore();
+const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
+  const { projectsStore, sessionStore } = useStore();
+  const total = sessionStore.total;
   const platform = projectsStore.active?.platform || '';
   const tags = issues_types.filter(
     (tag) =>
@@ -123,9 +123,8 @@ export const TagItem: React.FC<{
 
 const mapStateToProps = (state: any): StateProps => {
   const activeTab = state.getIn(['search', 'activeTab']);
-  const total = state.getIn(['sessions', 'total']) || 0;
 
-  return { activeTab, total };
+  return { activeTab };
 };
 
 const mapDispatchToProps = (dispatch: any): DispatchProps =>

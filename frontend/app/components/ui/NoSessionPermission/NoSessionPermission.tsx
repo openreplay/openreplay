@@ -17,15 +17,16 @@ const SESSIONS_ROUTE = sessionsRoute();
 const ASSIST_ROUTE = assistRoute();
 
 interface Props extends RouteComponentProps {
-  session: any;
   history: any;
-  sessionPath: any;
-  isAssist: boolean;
+  isLive?: boolean;
 }
 function NoSessionPermission(props: Props) {
-  const { projectsStore } = useStore();
+  const { projectsStore, sessionStore } = useStore();
+  const session = sessionStore.current;
+  const sessionPath = sessionStore.sessionPath;
+  const isAssist = window.location.pathname.includes('/assist/');
   const siteId = projectsStore.siteId!;
-  const { session, history, sessionPath, isAssist } = props;
+  const { history } = props;
 
   const backHandler = () => {
     if (
@@ -70,12 +71,5 @@ function NoSessionPermission(props: Props) {
 }
 
 export default withRouter(
-  connect((state: any) => {
-    const isAssist = window.location.pathname.includes('/assist/');
-    return {
-      isAssist,
-      session: state.getIn(['sessions', 'current']),
-      sessionPath: state.getIn(['sessions', 'sessionPath']),
-    };
-  })(observer(NoSessionPermission))
+  observer(NoSessionPermission)
 );
