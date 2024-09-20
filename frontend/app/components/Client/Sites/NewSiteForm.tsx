@@ -1,12 +1,9 @@
 import { Segmented } from 'antd';
 import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
-import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { pushNewSite } from 'Duck/user';
-import { Button, Form, Icon, Input, SegmentSelection } from 'UI';
+import { Button, Form, Icon, Input } from 'UI';
 import { confirm } from 'UI';
 import { observer } from 'mobx-react-lite';
 
@@ -16,18 +13,15 @@ type OwnProps = {
   onClose: (arg: any) => void;
 };
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-type Props = PropsFromRedux & RouteComponentProps & OwnProps;
+type Props = RouteComponentProps & OwnProps;
 
 const NewSiteForm = ({
-  clearSearchLive,
-  location: { pathname },
-  onClose,
-}: Props) => {
+                       location: { pathname },
+                       onClose
+                     }: Props) => {
   const mstore = useStore();
   const { projectsStore } = mstore;
-  const activeSiteId = projectsStore.active?.id
+  const activeSiteId = projectsStore.active?.id;
   const site = projectsStore.instance;
   const siteList = projectsStore.list;
   const loading = projectsStore.loading;
@@ -48,7 +42,7 @@ const NewSiteForm = ({
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (site?.id && site.exists()) {
-      projectsStore.updateProject( site.id, site.toData()).then((response: any) => {
+      projectsStore.updateProject(site.id, site.toData()).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           if (!pathname.includes('onboarding')) {
@@ -64,7 +58,7 @@ const NewSiteForm = ({
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           searchStore.clearSearch();
-          clearSearchLive();
+          mstore.searchStoreLive.clearSearch();
           mstore.initClient();
           toast.success('Project added successfully');
         } else {
@@ -80,7 +74,7 @@ const NewSiteForm = ({
         header: 'Project Deletion Alert',
         confirmation: `Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.`,
         confirmButton: 'Yes, delete',
-        cancelButton: 'Cancel',
+        cancelButton: 'Cancel'
       })
       && site?.id
     ) {
@@ -94,14 +88,14 @@ const NewSiteForm = ({
   };
 
   const handleEdit = ({
-    target: { name, value },
-  }: ChangeEvent<HTMLInputElement>) => {
+                        target: { name, value }
+                      }: ChangeEvent<HTMLInputElement>) => {
     setExistsError(false);
     projectsStore.editInstance({ [name]: value });
   };
 
   if (!site) {
-    return null
+    return null;
   }
   return (
     <div
@@ -134,12 +128,12 @@ const NewSiteForm = ({
                 options={[
                   {
                     value: 'web',
-                    label: 'Web',
+                    label: 'Web'
                   },
                   {
                     value: 'ios',
-                    label: 'Mobile',
-                  },
+                    label: 'Mobile'
+                  }
                 ]}
                 value={site.platform}
                 onChange={(value) => {
@@ -180,9 +174,4 @@ const NewSiteForm = ({
   );
 };
 
-const mapStateToProps = null;
-const connector = connect(mapStateToProps, {
-  clearSearchLive,
-});
-
-export default connector(withRouter(observer(NewSiteForm)));
+export default withRouter(observer(NewSiteForm));

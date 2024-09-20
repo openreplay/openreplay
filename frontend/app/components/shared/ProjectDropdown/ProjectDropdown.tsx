@@ -7,13 +7,11 @@ import cn from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-
 import { useStore, withStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
-import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { Icon } from 'UI';
 
 const { Text } = Typography;
@@ -25,13 +23,12 @@ interface Site {
 }
 
 interface Props extends RouteComponentProps {
-  clearSearchLive: () => void;
   account: any;
 }
 
 function ProjectDropdown(props: Props) {
   const mstore = useStore();
-  const { projectsStore } = mstore;
+  const { projectsStore, searchStoreLive } = mstore;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const setSiteId = projectsStore.setSiteId;
@@ -49,7 +46,7 @@ function ProjectDropdown(props: Props) {
     await customFieldStore.fetchList(newSiteId);
     // searchStore.clearSearch(location.pathname.includes('/sessions'));
     searchStore.clearSearch();
-    props.clearSearchLive();
+    searchStoreLive.clearSearch();
 
     mstore.initClient();
   };
@@ -143,8 +140,6 @@ const mapStateToProps = (state: any) => ({
   account: state.getIn(['user', 'account'])
 });
 
-export default withRouter(
-  connect(mapStateToProps, {
-    clearSearchLive,
-  })(observer(ProjectDropdown))
-);
+export default withStore(withRouter(
+  connect(mapStateToProps, {})(observer(ProjectDropdown))
+));

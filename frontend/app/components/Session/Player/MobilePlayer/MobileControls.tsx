@@ -13,11 +13,10 @@ import {
   LaunchEventsShortcut,
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
-  LaunchXRaShortcut,
+  LaunchXRaShortcut
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import PlayerControls from 'Components/Session_/Player/Controls/components/PlayerControls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
-import { fetchSessions } from 'Duck/liveSearch';
 import { Tooltip } from 'UI';
 import {
   CONSOLE,
@@ -25,7 +24,7 @@ import {
   NETWORK,
   OVERVIEW,
   PERFORMANCE,
-  STACKEVENTS,
+  STACKEVENTS
 } from 'App/mstore/uiPlayerStore';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
@@ -39,29 +38,30 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4,
+  60: 6e4
 };
 
 function Controls(props: any) {
+  const { sessionStore, searchStoreLive } = useStore();
   const { player, store } = React.useContext(MobilePlayerContext);
   const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
   const { uiPlayerStore, projectsStore } = useStore();
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
   const fullscreenOn = uiPlayerStore.fullscreenOn;
   const fullscreenOff = uiPlayerStore.fullscreenOff;
   const changeSkipInterval = uiPlayerStore.changeSkipInterval;
   const skipInterval = uiPlayerStore.skipInterval;
   const siteId = projectsStore.siteId;
   const {
-    session,
     setActiveTab,
-    previousSessionId,
-    nextSessionId,
-    disableDevtools,
+    disableDevtools
   } = props;
+  const session = sessionStore.current;
+  const previousSessionId = sessionStore.previousId;
+  const nextSessionId = sessionStore.nextId;
 
   const disabled = messagesLoading;
   const sessionTz = session?.timezone;
@@ -100,10 +100,10 @@ function Controls(props: any) {
   };
 
   const state = completed
-                ? PlayingState.Completed
-                : playing
-                  ? PlayingState.Playing
-                  : PlayingState.Paused;
+    ? PlayingState.Completed
+    : playing
+      ? PlayingState.Playing
+      : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
@@ -167,9 +167,9 @@ interface DevtoolsButtonsProps {
 }
 
 const DevtoolsButtons = observer(({
-  toggleBottomTools,
-  bottomBlock,
-}: DevtoolsButtonsProps) => {
+                                    toggleBottomTools,
+                                    bottomBlock
+                                  }: DevtoolsButtonsProps) => {
   const { aiSummaryStore } = useStore();
 
   const { store, player } = React.useContext(MobilePlayerContext);
@@ -179,7 +179,7 @@ const DevtoolsButtons = observer(({
     logMarkedCountNow,
     messagesLoading,
     stackMarkedCountNow,
-    resourceMarkedCountNow,
+    resourceMarkedCountNow
   } = store.get();
 
   const showExceptions = exceptionsList.length > 0;
@@ -275,7 +275,7 @@ const DevtoolsButtons = observer(({
       />
     </>
   );
-})
+});
 
 const ControlPlayer = observer(Controls);
 
@@ -284,14 +284,7 @@ export default connect(
     const permissions = state.getIn(['user', 'account', 'permissions']) || [];
     const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
     return {
-      disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS')),
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      previousSessionId: state.getIn(['sessions', 'previousId']),
-      nextSessionId: state.getIn(['sessions', 'nextId']),
+      disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'))
     };
-  },
-  {
-    fetchSessions,
   }
 )(ControlPlayer);
