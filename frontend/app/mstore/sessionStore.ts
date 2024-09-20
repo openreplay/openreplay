@@ -14,6 +14,7 @@ import {
 import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { filterMap } from 'App/mstore/searchStore';
+import { clean as cleanParams } from "../api_client";
 import { searchStore, searchStoreLive } from "./index";
 import { getDateRangeFromValue } from 'App/dateRange';
 const range = getDateRangeFromValue(LAST_7_DAYS);
@@ -484,6 +485,18 @@ export default class SessionStore {
   customSetSessions(data: any) {
     this.liveSessions = data.sessions.map((s: any) => new Session(s));
     this.totalLiveSessions = data.total
+  }
+
+  fetchAutoplayList = async (params = {}) => {
+    try {
+      setSessionFilter(cleanSessionFilters(params));
+      const data = await sessionService.getAutoplayList(params);
+      this.sessionIds = this.sessionIds
+        .concat(data.map((i: any) => i.sessionId + ''))
+        .filter((i, index) => this.sessionIds.indexOf(i) === index);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   clearList() {
