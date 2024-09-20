@@ -13,7 +13,6 @@ import {
 } from 'App/utils';
 import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
-import { Record } from 'immutable';
 import { filterMap } from 'App/mstore/searchStore';
 import { searchStore, searchStoreLive } from "./index";
 
@@ -24,12 +23,9 @@ class UserFilter {
   filters: any = [];
   page: number = 1;
   limit: number = 10;
-  period: any = Record({ rangeName: LAST_7_DAYS });
+  period: any = { rangeName: LAST_7_DAYS };
   constructor() {
-    makeAutoObservable(this, {
-      page: observable,
-      update: action,
-    });
+    makeAutoObservable(this);
   }
   update(key: string, value: any) {
     // @ts-ignore

@@ -8,9 +8,13 @@ import { Tag } from 'antd'
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Popover } from 'antd';
 import SharePopup from 'Components/shared/SharePopup/SharePopup';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 function SubHeader(props: any) {
-  const integrations = props.integrations;
+  const { sessionStore, integrationsStore } = useStore();
+  const integrations = integrationsStore.issues.list;
+  const isIOS = sessionStore.current.platform === 'ios';
 
   const enabledIntegration = useMemo(() => {
     if (!integrations || !integrations.length) {
@@ -23,7 +27,7 @@ function SubHeader(props: any) {
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
-        <Tag color="green" bordered={false} className='rounded-full'>{props.isIOS ? 'iOS' : 'Android'} BETA</Tag>
+        <Tag color="green" bordered={false} className='rounded-full'>{isIOS ? 'iOS' : 'Android'} BETA</Tag>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
@@ -56,6 +60,4 @@ function SubHeader(props: any) {
 
 export default connect((state: any) => ({
   modules: state.getIn(['user', 'account', 'modules']) || [],
-  integrations: state.getIn(['issues', 'list']),
-  isIOS: state.getIn(['sessions', 'current']).platform === 'ios',
-}))(SubHeader);
+}))(observer(SubHeader));

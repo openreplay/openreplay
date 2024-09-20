@@ -15,6 +15,7 @@ import APIClient from 'App/api_client';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   session: Session;
@@ -32,7 +33,6 @@ interface Props {
 let playerInst: ILivePlayerContext['player'] | undefined;
 
 function LivePlayer({
-  session,
   userEmail,
   userName,
   isMultiview,
@@ -41,13 +41,14 @@ function LivePlayer({
   isEnterprise,
   userId,
 }: Props) {
+  const { projectsStore, sessionStore } = useStore();
+  const session = sessionStore.current;
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
   const [fullView, setFullView] = useState(false);
   const openedFromMultiview = query?.get('multi') === 'true';
   const usedSession = isMultiview ? customSession! : session;
   const location = useLocation();
-  const { projectsStore } = useStore();
 
   useEffect(() => {
     const projectId = projectsStore.getSiteId();
@@ -141,11 +142,10 @@ function LivePlayer({
 export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
   connect((state: any) => {
     return {
-      session: state.getIn(['sessions', 'current']),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       userEmail: state.getIn(['user', 'account', 'email']),
       userName: state.getIn(['user', 'account', 'name']),
       userId: state.getIn(['user', 'account', 'id']),
     };
-  })(withLocationHandlers()(React.memo(LivePlayer)))
+  })(withLocationHandlers()(observer(LivePlayer)))
 );

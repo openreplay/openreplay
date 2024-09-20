@@ -19,14 +19,13 @@ function isTitleLine(line: string): boolean {
 
 function SummaryBlock({
   sessionId,
-  duration,
 }: {
   sessionId: string;
-  duration: any;
 }) {
   const { store } = React.useContext(PlayerContext)
   const { tabStates } = store.get();
-  const { aiSummaryStore, uiPlayerStore } = useStore();
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const duration = sessionStore.current.durationSeconds;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -150,6 +149,4 @@ const summaryBlockStyle: React.CSSProperties = {
   padding: '1rem',
 };
 
-export default connect((state: Record<string, any>) => ({
-  duration: state.getIn(['sessions', 'current']).durationSeconds,
-}))(observer(SummaryBlock));
+export default observer(SummaryBlock);

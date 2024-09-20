@@ -7,11 +7,13 @@ import PlayerContent from './ThinPlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from '../../playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify'
+import { useStore } from 'App/mstore';
 
 function WebPlayer(props: any) {
+  const { sessionStore } = useStore();
+  const insights = sessionStore.insights;
   const {
     session,
-    insights,
     jumpTimestamp,
   } = props;
   // @ts-ignore
@@ -77,7 +79,6 @@ function WebPlayer(props: any) {
 
 export default connect(
   (state: any) => ({
-    insights: state.getIn(['sessions', 'insights']),
     jwt: state.getIn(['user', 'jwt']),
   })
 )(withLocationHandlers()(observer(WebPlayer)));

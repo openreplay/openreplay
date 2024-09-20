@@ -1,6 +1,5 @@
 import React from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux';
 import Player from './PlayerInst';
 import MobilePlayerSubheader from './MobilePlayerSubheader';
 import { useStore } from 'App/mstore'
@@ -18,13 +17,13 @@ interface IProps {
 
 function PlayerBlock(props: IProps) {
   const {
-    sessionId,
     activeTab,
     fullView = false,
     setActiveTab,
-    jiraConfig,
   } = props;
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, integrationsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const jiraConfig = integrationsStore.issues.list[0];
   const fullscreen = uiPlayerStore.fullscreen;
   const shouldShowSubHeader = !fullscreen && !fullView
   return (
@@ -43,7 +42,4 @@ function PlayerBlock(props: IProps) {
   );
 }
 
-export default connect((state: any) => ({
-  sessionId: state.getIn(['sessions', 'current']).sessionId,
-  jiraConfig: state.getIn(['issues', 'list'])[0],
-}))(observer(PlayerBlock))
+export default observer(PlayerBlock)
