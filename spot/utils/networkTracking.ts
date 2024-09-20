@@ -165,7 +165,17 @@ export function createSpotNetworkRequest(
     : 0;
 
   const status = getRequestStatus(trackedRequest);
-  const body = trackedRequest.reqBody ? filterBody(trackedRequest.reqBody) : "";
+  let body;
+  if (trackedRequest.reqBody) {
+    try {
+      body = filterBody(trackedRequest.reqBody)
+    } catch (e) {
+      body = "Error parsing body";
+      console.error(e)
+    }
+  } else {
+    body = "";
+  }
   const request: SpotNetworkRequest = {
     method: trackedRequest.method,
     type,
