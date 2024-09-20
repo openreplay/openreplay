@@ -78,6 +78,6 @@ export const services = [
   issueReportsService,
   customFieldService,
   integrationsService,
-  searchService
+  searchService,
   projectsService,
 ];

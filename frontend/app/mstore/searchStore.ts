@@ -8,11 +8,12 @@ import {
   mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
-import { makeAutoObservable, action } from 'mobx';
+import { makeAutoObservable, action, observable } from 'mobx';
 import { searchService } from 'App/services';
 import Search from 'App/mstore/types/search';
-import Filter, { checkFilterValue } from 'App/mstore/types/filter';
-import FilterItem from 'MOBX/types/filterItem';
+import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
+import FilterItem from 'App/mstore/types/filterItem';
+import { sessionStore } from 'App/mstore';
 
 const PER_PAGE = 10;
 
@@ -56,12 +57,15 @@ class SearchStore {
   latestList = List();
   alertMetricId: number | null = null;
   instance = new Search();
+  instanceLive = new Search();
   savedSearch = new Search();
   filterSearchList: any = {};
   currentPage = 1;
   pageSize = PER_PAGE;
   activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
+  sessions = List();
+  total: number = 0;
 
   constructor() {
     makeAutoObservable(this);
@@ -82,8 +86,13 @@ class SearchStore {
     this.list = List(response.map((item: any) => new Search(item)));
   }
 
-  edit(instance: any) {
-    this.instance = instance;
+  async fetchSavedSearchList() {
+    const response = await searchService.fetchSavedSearch();
+    this.list = List(response.map((item: any) => new Search(item)));
+  }
+
+  edit(instance: Partial<Search>) {
+    this.instance = new Search(Object.assign(this.instance.toData(), instance));
     this.currentPage = 1;
   }
 
@@ -99,17 +108,6 @@ class SearchStore {
 
   applyFilter(filter: any, force = false) {
     this.apply(filter, false);
-  }
-
-  fetchSessions(force = false) {
-    const filter = this.instance.toData();
-    if (this.activeTab === 'bookmark' || this.activeTab === 'vault') {
-      filter.bookmarked = true;
-    }
-    filter.filters = filter.filters.map(filterMap);
-    filter.limit = this.pageSize;
-    filter.page = this.currentPage;
-    // Further logic based on force, dispatching actions, etc.
   }
 
   fetchFilterSearch(params: any) {
@@ -165,6 +163,8 @@ class SearchStore {
       endDate: instance.endDate,
       filters: []
     }));
+
+    this.fetchSessions();
   }
 
   checkForLatestSessions() {
@@ -200,6 +200,13 @@ class SearchStore {
       oldFilter.merge(updatedFilter);
     } else {
       this.instance.filters.push(filter);
+      this.instance = new Search({
+        ...this.instance.toData()
+      });
+    }
+
+    if (filter.value && filter.value[0] && filter.value[0] !== '') {
+      this.fetchSessions();
     }
   }
 
@@ -222,17 +229,43 @@ class SearchStore {
     // TODO
   }
 
-  updateFilter = (index: number, search: Partial<Search>) => {
-    Object.assign(this.instance!, search);
+  updateFilter = (index: number, search: Partial<IFilter>) => {
+    const newFilters = this.instance.filters.map((_filter: any, i: any) => {
+      if (i === index) {
+        return search;
+      } else {
+        return _filter;
+      }
+    });
+
+    this.instance = new Search({
+      ...this.instance.toData(),
+      filters: newFilters
+    });
+  };
+
+  removeFilter = (index: number) => {
+    const newFilters = this.instance.filters.filter((_filter: any, i: any) => {
+      return i !== index;
+    });
+
+    this.instance = new Search({
+      ...this.instance.toData(),
+      filters: newFilters
+    });
   };
 
   setScrollPosition = (y: number) => {
-    // TODO
+    this.scrollY = y;
   };
 
   async fetchAutoplaySessions(page: number): Promise<void> {
     // TODO
   }
+
+  async fetchSessions() {
+    await sessionStore.fetchSessions(this.instance.toSearch());
+  };
 }
 
 export default SearchStore;

@@ -25,7 +25,7 @@ import {
   Timer,
   VenetianMask,
   Workflow,
-  Flag,
+  Flag
 } from 'lucide-react';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -34,6 +34,8 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import { FilterKey } from 'Types/filter/filterType';
 import stl from './FilterModal.module.css';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const IconMap = {
   [FilterKey.CLICK]: <Pointer size={18} />,
@@ -65,10 +67,10 @@ const IconMap = {
   [FilterKey.DURATION]: <Clock2 size={18} />,
   [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={18} />,
   [FilterKey.METADATA]: <ContactRound size={18} />,
-  [FilterKey.UTM_SOURCE]: <CornerDownRight size={18}/>,
-  [FilterKey.UTM_MEDIUM]: <Layers size={18}/>,
-  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18}/>,
-  [FilterKey.FEATURE_FLAG]: <Flag size={18}/>,
+  [FilterKey.UTM_SOURCE]: <CornerDownRight size={18} />,
+  [FilterKey.UTM_MEDIUM]: <Layers size={18} />,
+  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18} />,
+  [FilterKey.FEATURE_FLAG]: <Flag size={18} />
 };
 
 function filterJson(
@@ -102,7 +104,7 @@ export const getMatchingEntries = (
   if (lowerCaseQuery.length === 0)
     return {
       matchingCategories: Object.keys(filters),
-      matchingFilters: filters,
+      matchingFilters: filters
     };
 
   Object.keys(filters).forEach((name) => {
@@ -123,7 +125,8 @@ export const getMatchingEntries = (
 };
 
 interface Props {
-  filters: any;
+  // filters: any;
+  isLive: boolean;
   conditionalFilters: any;
   mobileConditionalFilters: any;
   onFilterClick?: (filter: any) => void;
@@ -139,9 +142,7 @@ interface Props {
 
 function FilterModal(props: Props) {
   const {
-    filters,
-    conditionalFilters,
-    mobileConditionalFilters,
+    isLive,
     onFilterClick = () => null,
     filterSearchList,
     isMainSearch = false,
@@ -150,8 +151,12 @@ function FilterModal(props: Props) {
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
-    isMobile,
+    isMobile
   } = props;
+  const { searchStore } = useStore();
+  const filters = isLive ? searchStore.filterListLive : searchStore.filterList;
+  const conditionalFilters = searchStore.filterListConditional;
+  const mobileConditionalFilters = searchStore.filterListMobileConditional;
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
   const onFilterSearchClick = (filter: any) => {
@@ -161,8 +166,8 @@ function FilterModal(props: Props) {
   };
 
   const filterJsonObj = isConditional
-                        ? isMobile ? mobileConditionalFilters : conditionalFilters
-                        : filters;
+    ? isMobile ? mobileConditionalFilters : conditionalFilters
+    : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
     filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys)
@@ -175,19 +180,18 @@ function FilterModal(props: Props) {
 
   const getNewIcon = (filter: Record<string, any>) => {
     if (filter.icon?.includes('metadata')) {
-      return IconMap[FilterKey.METADATA]
+      return IconMap[FilterKey.METADATA];
     }
     // @ts-ignore
     if (IconMap[filter.key]) {
       // @ts-ignore
-      return IconMap[filter.key]
-    }
-    else return <Icon name={filter.icon} size={16} />
-  }
+      return IconMap[filter.key];
+    } else return <Icon name={filter.icon} size={16} />;
+  };
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto', borderRadius:'.5rem', }}
+      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto', borderRadius: '.5rem' }}
     >
       <div
         className={searchQuery && !isResultEmpty ? 'mb-6' : ''}
@@ -276,16 +280,17 @@ function FilterModal(props: Props) {
 
 export default connect((state: any, props: any) => {
   return {
-    filters: props.isLive
-      ? state.getIn(['search', 'filterListLive'])
-      : state.getIn(['search', 'filterList']),
-    conditionalFilters: state.getIn(['search', 'filterListConditional']),
-    mobileConditionalFilters: state.getIn(['search', 'filterListMobileConditional']),
+    // filters: props.isLive
+    //   ? state.getIn(['search', 'filterListLive'])
+    //   : state.getIn(['search', 'filterList']),
+    isLive: props.isLive,
+    // conditionalFilters: state.getIn(['search', 'filterListConditional']),
+    // mobileConditionalFilters: state.getIn(['search', 'filterListMobileConditional']),
     filterSearchList: props.isLive
       ? state.getIn(['liveSearch', 'filterSearchList'])
       : state.getIn(['search', 'filterSearchList']),
     fetchingFilterSearchList: props.isLive
       ? state.getIn(['liveSearch', 'fetchFilterSearch', 'loading'])
-      : state.getIn(['search', 'fetchFilterSearch', 'loading']),
+      : state.getIn(['search', 'fetchFilterSearch', 'loading'])
   };
-})(FilterModal);
+})(observer(FilterModal));

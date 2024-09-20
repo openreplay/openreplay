@@ -37,7 +37,6 @@ function FilterList(props: Props) {
     } = props;
 
     const filters = filter.filters;
-    console.log('filters', filters)
     const hasEvents = filters.filter((i: any) => i.isEvent).length > 0;
     const hasFilters = filters.filter((i: any) => !i.isEvent).length > 0;
 

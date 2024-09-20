@@ -1,6 +1,7 @@
 import { DATE_RANGE_VALUES, CUSTOM_RANGE, getDateRangeFromValue } from 'App/dateRange';
-import Filter, { IFilter } from 'App/mstore/types/filter';
-import FilterItem from 'MOBX/types/filterItem';
+import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
+import FilterItem from 'App/mstore/types/filterItem';
+import { action, makeAutoObservable, observable } from 'mobx';
 
 // @ts-ignore
 const rangeValue = DATE_RANGE_VALUES.LAST_24_HOURS;
@@ -66,6 +67,10 @@ export default class Search {
   eventsOrder: string;
 
   constructor(initialData?: Partial<ISearch>) {
+    makeAutoObservable(this, {
+      filters: observable,
+      addFilter: action
+    });
     Object.assign(this, {
       name: '',
       searchId: undefined,
@@ -121,8 +126,19 @@ export default class Search {
 
   toData() {
     const js: any = { ...this };
-    js.filters = js.filters.map((filter: any) => {
-      return filter;
+    // js.filters = this.filters.map((filter: any) => {
+    //   return new FilterItem().fromJson(filter).toJson();
+    // });
+
+    delete js.createdAt;
+    delete js.key;
+    return js;
+  }
+
+  toSearch() {
+    const js: any = { ...this };
+    js.filters = this.filters.map((filter: any) => {
+      return new FilterItem(filter).toJson();
     });
 
     delete js.createdAt;

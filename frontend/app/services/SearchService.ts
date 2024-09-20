@@ -1,6 +1,12 @@
 import BaseService from 'App/services/BaseService';
 
 export default class SearchService extends BaseService {
+  async fetchSessions(params: any) {
+    const r = await this.client.post('/PROJECT_ID/sessions/search', params);
+    const j = await r.json();
+    return j.data;
+  }
+
   async fetchSavedSearchList() {
     const r = await this.client.get('/PROJECT_ID/saved_search');
     const j = await r.json();
@@ -26,13 +32,19 @@ export default class SearchService extends BaseService {
   }
 
   async fetchSavedSearch() {
-    const r = await this.client.get('/PROJECT_ID/search');
+    const r = await this.client.get('/PROJECT_ID/saved_search');
     const j = await r.json();
     return j.data;
   }
 
   async checkLatestSessions(filter: any) {
     const r = await this.client.post('/PROJECT_ID/search/check', filter);
+    const j = await r.json();
+    return j.data;
+  }
+
+  async fetchAutoCompleteValues(params: {}): Promise<any> {
+    const r = await this.client.get('/PROJECT_ID/events/search', params);
     const j = await r.json();
     return j.data;
   }

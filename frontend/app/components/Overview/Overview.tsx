@@ -12,6 +12,7 @@ import { Switch, Route } from 'react-router';
 import { sessions, fflags, withSiteId, newFFlag, fflag, notes, fflagRead, bookmarks } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
+import { observer } from 'mobx-react-lite';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -54,4 +55,4 @@ function Overview({ match: { params } }: IProps) {
   );
 }
 
-export default withPageTitle('Sessions - OpenReplay')(withRouter(Overview));
+export default withPageTitle('Sessions - OpenReplay')(withRouter(observer(Overview)));

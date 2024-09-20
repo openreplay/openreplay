@@ -18,7 +18,7 @@ const MainSearchBar = (props: Props) => {
   const savedSearch = searchStore.savedSearch;
   const projectId = projectsStore.siteId;
   const currSite = React.useRef(projectId);
-  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
+  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.length > 0;
   const hasSavedSearch = savedSearch && savedSearch.exists();
   const hasSearch = hasFilters || hasSavedSearch;
 

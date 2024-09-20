@@ -15,8 +15,7 @@ let debounceFetch: any = () => {
 };
 
 interface Props {
-  saveRequestPayloads: boolean;
-  metaLoading?: boolean;
+
 }
 
 function SessionSearch(props: Props) {
@@ -25,7 +24,7 @@ function SessionSearch(props: Props) {
   const metaLoading = customFieldStore.isLoading;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
-  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false
+  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false;
 
   useSessionSearchQueryHandler({
     appliedFilter,
@@ -55,24 +54,13 @@ function SessionSearch(props: Props) {
   };
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
-    const newFilters = appliedFilter.filters.map((_filter: any, i: any) => {
-      if (i === filterIndex) {
-        return filter;
-      } else {
-        return _filter;
-      }
-    });
-
-    searchStore.updateFilter({
-      ...appliedFilter,
-      filters: newFilters
-    });
+    searchStore.updateFilter(filterIndex, filter);
 
     debounceFetch();
   };
 
   const onFilterMove = (newFilters: any) => {
-    searchStore.updateFilter({
+    searchStore.updateFilter(0, {
       ...appliedFilter,
       filters: newFilters
     });
@@ -85,15 +73,13 @@ function SessionSearch(props: Props) {
       return i !== filterIndex;
     });
 
-    searchStore.updateFilter({
-      filters: newFilters
-    });
+    searchStore.removeFilter(filterIndex);
 
     debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
-    searchStore.updateFilter({
+    searchStore.edit({
       eventsOrder: value
     });
 

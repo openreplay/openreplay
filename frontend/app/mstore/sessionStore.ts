@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
 import { sessionService } from 'App/services';
 import { Note } from 'App/services/NotesService';
 import Session from 'Types/session';
@@ -12,6 +12,9 @@ import {
   setSessionFilter,
 } from 'App/utils';
 import { loadFile } from 'App/player/web/network/loadFiles';
+import { LAST_7_DAYS } from 'Types/app/period';
+import { Record } from 'immutable';
+import { filterMap } from 'App/mstore/searchStore';
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -437,7 +440,7 @@ export default class SessionStore {
 
   // Set Session Path
   setSessionPath(path = {}) {
-    this.sessionPath = path;
+    // this.sessionPath = path;
   }
 
   updateLastPlayedSession(sessionId: string) {
