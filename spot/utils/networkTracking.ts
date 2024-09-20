@@ -68,6 +68,7 @@ const sensitiveParams = new Set([
   "auth",
   "proxy-authorization",
   "set-cookie",
+  "account_key",
 ]);
 
 function filterHeaders(headers: Record<string, string>) {
@@ -105,7 +106,7 @@ function filterBody(body: any) {
     parsedBody = JSON.parse(body);
     isJSON = true;
   } catch (e) {
-   // not json
+    // not json
   }
 
   if (isJSON) {
@@ -140,7 +141,7 @@ function obscureSensitiveData(obj: Record<string, any> | any[]) {
 }
 
 function tryFilterUrl(url: string) {
-  if (!url) return ''
+  if (!url) return "";
   try {
     const urlObj = new URL(url);
     if (urlObj.searchParams) {
@@ -194,10 +195,10 @@ export function createSpotNetworkRequest(
   let body;
   if (trackedRequest.reqBody) {
     try {
-      body = filterBody(trackedRequest.reqBody)
+      body = filterBody(trackedRequest.reqBody);
     } catch (e) {
       body = "Error parsing body";
-      console.error(e)
+      console.error(e);
     }
   } else {
     body = "";
