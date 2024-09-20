@@ -274,7 +274,12 @@ class SearchStore {
   }
 
   async fetchSessions() {
-    await sessionStore.fetchSessions(this.instance.toSearch());
+    await sessionStore.fetchSessions({
+      ...this.instance.toSearch(),
+      page: this.currentPage,
+      perPage: this.pageSize,
+      tab: this.activeTab.type
+    });
   };
 }
 
