@@ -5,7 +5,7 @@ interface FilterType {
   filters: Array<{ value: any }>;
 }
 
-interface ISavedSearch {
+export interface ISavedSearch {
   searchId?: string;
   projectId?: string;
   userId?: string;
@@ -16,7 +16,7 @@ interface ISavedSearch {
   isPublic: boolean;
 }
 
-class SavedSearch {
+class SavedSearch implements ISavedSearch{
   searchId?: string;
   projectId?: string;
   userId?: string;

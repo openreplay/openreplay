@@ -69,7 +69,6 @@ export default class Search {
   constructor(initialData?: Partial<ISearch>) {
     makeAutoObservable(this, {
       filters: observable,
-      addFilter: action
     });
     Object.assign(this, {
       name: '',

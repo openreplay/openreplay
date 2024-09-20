@@ -474,6 +474,12 @@ export default class SessionStore {
     this.liveSessions = data.sessions.map((s: any) => new Session(s));
     this.totalLiveSessions = data.total
   }
+
+  clearList() {
+    this.list = [];
+    this.total = 0;
+    this.sessionIds = [];
+  }
 }
 
 // Helper function to simulate useReducerData

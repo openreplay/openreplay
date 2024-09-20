@@ -14,7 +14,7 @@ import Search from 'App/mstore/types/search';
 import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
-import SavedSearch from 'App/mstore/types/savedSearch';
+import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 
 const PER_PAGE = 10;
 
@@ -59,7 +59,7 @@ class SearchStore {
   alertMetricId: number | null = null;
   instance = new Search();
   instanceLive = new Search();
-  savedSearch = new SavedSearch();
+  savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
   currentPage = 1;
   pageSize = PER_PAGE;
@@ -74,9 +74,11 @@ class SearchStore {
     makeAutoObservable(this);
   }
 
-  applySavedSearch(savedSearch: any) {
+  applySavedSearch(savedSearch: ISavedSearch) {
     this.savedSearch = savedSearch;
-    this.instance = new Search(savedSearch.filter);
+    this.instance = new Search({
+      filters: savedSearch.filter.filters
+    });
     this.currentPage = 1;
   }
 
@@ -164,6 +166,10 @@ class SearchStore {
       filters: []
     }));
 
+    this.savedSearch = new SavedSearch({});
+    this.list = List();
+
+    sessionStore.clearList();
     this.fetchSessions();
   }
 

@@ -44,11 +44,11 @@ function ProjectDropdown(props: Props) {
   const handleSiteChange = async (newSiteId: string) => {
     setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
     await customFieldStore.fetchList(newSiteId);
-    // searchStore.clearSearch(location.pathname.includes('/sessions'));
     searchStore.clearSearch();
     searchStoreLive.clearSearch();
 
     mstore.initClient();
+    await searchStore.fetchSavedSearchList()
   };
 
   const addProjectClickHandler = () => {

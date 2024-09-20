@@ -37,7 +37,6 @@ function SavedSearchModal(props: Props) {
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
   const { searchStore } = useStore();
-  const list = searchStore.list;
 
   const onClick = (item: SavedSearch, e) => {
     e.stopPropagation();
