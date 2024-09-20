@@ -13,8 +13,9 @@ import {
 } from 'App/utils';
 import { loadFile } from 'App/player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
-import { List, Record } from 'immutable';
+import { Record } from 'immutable';
 import { filterMap } from 'App/mstore/searchStore';
+import { searchStore, searchStoreLive } from "./index";
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -92,6 +93,7 @@ export default class SessionStore {
   fetchFailed: boolean = false;
   loadingLiveSessions: boolean = false;
   loadingSessions: boolean = false;
+  loadingSessionData: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -113,7 +115,7 @@ export default class SessionStore {
   }
 
   // Set Prefetched Mobile URL
-  setPrefetchedMobUrl(sessionId: string, fileData: Uint8Array) {
+  setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array) => {
     const keys = Object.keys(this.prefetchedMobUrls);
     const toLimit = 10 - keys.length;
     if (toLimit < 0) {
@@ -133,8 +135,7 @@ export default class SessionStore {
     };
   }
 
-  // Get Sessions (Helper Function)
-  getSessions(filter: any): Promise<any> {
+  getSessions = (filter: any): Promise<any> => {
     return new Promise((resolve, reject) => {
       sessionService
         .getSessions(filter.toJson?.() || filter)
@@ -195,10 +196,14 @@ export default class SessionStore {
     }
   }
 
-  // Fetch Session Data (Info and Events)
+  clearAll = () => {
+    this.list = [];
+    this.clearCurrentSession();
+  }
+
   async fetchSessionData(sessionId: string, isLive = false) {
     try {
-      const filter = useReducerData('filters.appliedFilter');
+      const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
       this.current = new Session(data);
 
@@ -480,11 +485,4 @@ export default class SessionStore {
     this.total = 0;
     this.sessionIds = [];
   }
-}
-
-// Helper function to simulate useReducerData
-function useReducerData(path: string): any {
-  // Implement this function based on your application's context
-  // For now, we'll return an empty object
-  return {};
 }

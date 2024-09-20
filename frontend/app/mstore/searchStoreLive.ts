@@ -118,8 +118,6 @@ class SearchStoreLive {
       endDate: instance.endDate,
       filters: []
     }));
-
-    this.fetchSessions();
   }
 
   addFilter(filter: any) {

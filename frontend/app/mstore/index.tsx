@@ -31,11 +31,11 @@ import SearchStore from './searchStore';
 import SearchStoreLive from './searchStoreLive';
 import { IntegrationsStore } from './integrationsStore';
 import ProjectsStore from './projectsStore';
-import searchStoreLive from './searchStoreLive';
 
 export const projectStore = new ProjectsStore();
 export const sessionStore = new SessionStore();
 export const searchStore = new SearchStore();
+export const searchStoreLive = new SearchStoreLive();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -96,18 +96,18 @@ export class RootStore {
     this.uiPlayerStore = new UiPlayerStore();
     this.issueReportingStore = new IssueReportingStore();
     this.customFieldStore = new CustomFieldStore();
-    this.searchStore = searchStore;
-    this.searchStoreLive = new SearchStoreLive();
-    this.integrationsStore = new IntegrationsStore();
     this.projectsStore = projectStore;
+    this.searchStore = searchStore;
+    this.searchStoreLive = searchStoreLive;
+    this.integrationsStore = new IntegrationsStore();
   }
 
   initClient() {
     const client = new APIClient();
+    client.setSiteIdCheck(projectStore.getSiteId);
     services.forEach((service) => {
       service.initClient(client);
     });
-    client.setSiteIdCheck(this.projectsStore.getSiteId);
   }
 }
 

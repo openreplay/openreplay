@@ -12,11 +12,6 @@ import { sessionService } from 'App/services';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-enum NoContentType {
-  Bookmarked,
-  Vaulted,
-  ToDate,
-}
 
 type SessionStatus = {
   status: number;
@@ -41,42 +36,36 @@ function SessionList(props: Props) {
   const loading = sessionStore.loadingSessions;
   const total = sessionStore.total;
   const onToggleFavorite = sessionStore.toggleFavorite;
-  const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
-  const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
   const { searchStore } = useStore();
   const {
     isEnterprise = false,
     isLoggedIn,
   } = props;
-  const { currentPage, scrollY, activeTab, pageSize } = searchStore;
+  const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
     _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
   const isBookmark = activeTab.type === 'bookmark';
   const isVault = isBookmark && isEnterprise;
-  const activeSite: any = sites.find((s: any) => s.id === siteId);
+  const activeSite = projectsStore.active;
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
 
-
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
-      setNoContentType(NoContentType.Bookmarked);
       return {
         icon: ICONS.NO_BOOKMARKS,
         message: 'No sessions bookmarked'
       };
     } else if (isVault) {
-      setNoContentType(NoContentType.Vaulted);
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
         message: 'No sessions found in vault'
       };
     }
-    setNoContentType(NoContentType.ToDate);
     return {
       icon: ICONS.NO_SESSIONS,
       message: <SessionDateRange />
@@ -99,10 +88,10 @@ function SessionList(props: Props) {
       return;
     }
 
-    fetchStatus();
+    void fetchStatus();
 
     sessionStatusTimeOut = setInterval(() => {
-      fetchStatus();
+      void fetchStatus();
     }, STATUS_FREQUENCY);
 
     return () => clearInterval(sessionStatusTimeOut);
@@ -114,12 +103,16 @@ function SessionList(props: Props) {
       return;
     }
 
-    if (statusData.status === 2 && activeSite) { // recording && processed
-      updateProjectRecordingStatus(activeSite.id, true);
-      searchStore.fetchSessions(true);
+    // recording && processed
+    if (statusData.status === 2 && siteId) {
+      updateProjectRecordingStatus(siteId, true);
       clearInterval(sessionStatusTimeOut);
     }
-  }, [statusData, activeSite]);
+  }, [statusData, siteId]);
+
+  useEffect(() => {
+    void searchStore.fetchSessions();
+  }, [siteId])
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -137,8 +130,8 @@ function SessionList(props: Props) {
 
     if (total === 0 && !loading && !hasNoRecordings) {
       setTimeout(() => {
-        searchStore.fetchSessions(true);
-      }, 300);
+        void searchStore.fetchSessions();
+      }, 100);
     }
 
     return () => {
@@ -176,7 +169,7 @@ function SessionList(props: Props) {
 
   const toggleFavorite = (sessionId: string) => {
     onToggleFavorite(sessionId).then(() => {
-      searchStore.fetchSessions(true);
+      void searchStore.fetchSessions();
     });
   };
 

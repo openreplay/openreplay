@@ -56,9 +56,17 @@ export default class SettingsService {
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
     return this.client
-      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`)
+      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}/replay`)
       .then((r) => r.json())
       .then((j) => j.data || {})
+      .catch(console.error);
+  }
+
+  getSessionEvents = async (sessionId: string) => {
+    return this.client
+      .get(`/sessions/${sessionId}/events`)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
       .catch(console.error);
   }
 

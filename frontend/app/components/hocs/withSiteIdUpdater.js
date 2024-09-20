@@ -8,11 +8,11 @@ const withSiteIdUpdater = (BaseComponent) => {
     const siteId = projectsStore.siteId;
     const setSiteId = projectsStore.setSiteId;
     const urlSiteId = props.match.params.siteId
-    const prevSiteIdRef = useRef(props.siteId);
+    const prevSiteIdRef = useRef(siteId);
 
     useEffect(() => {
       if (urlSiteId && urlSiteId !== siteId) {
-        props.setSiteId(urlSiteId);
+        setSiteId(urlSiteId);
       }
     }, []);
 
@@ -27,7 +27,7 @@ const withSiteIdUpdater = (BaseComponent) => {
       prevSiteIdRef.current = siteId;
     }, [urlSiteId, siteId, props.location.pathname, props.history]);
 
-    const key = props.siteId;
+    const key = siteId;
 
     const passedProps = { ...props, siteId, setSiteId, urlSiteId };
     return <BaseComponent key={key} {...passedProps} />;

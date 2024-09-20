@@ -1,41 +1,33 @@
 import withPermissions from 'HOCs/withPermissions';
 import React from 'react';
 import { useEffect } from 'react';
-import { connect } from 'react-redux';
 
 import { clearLogs } from 'App/dev/console';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute } from 'App/routes';
 import MobilePlayer from 'Components/Session/MobilePlayer';
-import { clearCurrentSession, fetchV2 } from 'Duck/sessions';
 import { Link, Loader, NoContent } from 'UI';
-
+import { observer } from 'mobx-react-lite';
 import WebPlayer from './WebPlayer';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
-interface Props {
-  sessionId: string;
-  loading: boolean;
-  hasErrors: boolean;
-  fetchV2: (sessionId: string) => void;
-  clearCurrentSession: () => void;
-  session: Record<string, any>;
-}
-
 function Session({
-  sessionId,
-  hasErrors,
-  fetchV2,
-  clearCurrentSession,
-  session,
-}: Props) {
+  match: {
+    params: { sessionId },
+  },
+}: { match: any }) {
   usePageTitle('OpenReplay Session Player');
   const { sessionStore } = useStore();
+  const hasErrors = sessionStore.fetchFailed
+  const session = sessionStore.current;
+  const fetchV2 = sessionStore.fetchSessionData;
+  const clearCurrentSession = sessionStore.clearCurrentSession;
+
   useEffect(() => {
     if (sessionId != null) {
-      fetchV2(sessionId);
+      void fetchV2(sessionId);
     } else {
       console.error('No sessionID in route.');
     }
@@ -72,24 +64,4 @@ function Session({
 
 export default withPermissions(
   ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', true, false
-)(
-  connect(
-    (state: any, props: any) => {
-      const {
-        match: {
-          params: { sessionId },
-        },
-      } = props;
-      return {
-        sessionId,
-        loading: state.getIn(['sessions', 'loading']),
-        hasErrors: !!state.getIn(['sessions', 'errors']),
-        session: state.getIn(['sessions', 'current']),
-      };
-    },
-    {
-      fetchV2,
-      clearCurrentSession,
-    }
-  )(Session)
-);
+)(observer(Session));

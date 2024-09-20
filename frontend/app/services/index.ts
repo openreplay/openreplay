@@ -54,6 +54,7 @@ export const searchService = new SearchService();
 export const projectsService = new ProjectsService();
 
 export const services = [
+  projectsService,
   dashboardService,
   metricService,
   sessionService,
@@ -79,5 +80,4 @@ export const services = [
   customFieldService,
   integrationsService,
   searchService,
-  projectsService,
 ];

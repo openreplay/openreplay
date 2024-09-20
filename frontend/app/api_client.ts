@@ -104,6 +104,8 @@ export default class APIClient {
       delete init.body; // GET requests shouldn't have a body
     }
 
+    // /:id/path
+    // const idFromPath = window.location.pathname.split('/')[1];
     this.siteId = this.siteIdCheck?.().siteId ?? undefined;
     return init;
   }
@@ -162,9 +164,9 @@ export default class APIClient {
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
       !path.includes('/assist/credentials') &&
-      !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
+      if (!this.siteId) console.trace('no id', path)
       edp = `${edp}/${this.siteId}`;
     }
 

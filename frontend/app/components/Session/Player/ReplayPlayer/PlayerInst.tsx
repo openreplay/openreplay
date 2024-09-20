@@ -38,10 +38,7 @@ import { useStore } from 'App/mstore';
 interface IProps {
   fullView: boolean;
   isMultiview?: boolean;
-  nextId: string;
-  sessionId: string;
   activeTab: string;
-  updateLastPlayedSession: (id: string) => void;
   setActiveTab: (tab: string) => void;
 }
 
@@ -60,13 +57,16 @@ export const getDefaultPanelHeight = () => {
 }
 
 function Player(props: IProps) {
-  const { uiPlayerStore } = useStore();
+  const { uiPlayerStore, sessionStore } = useStore();
+  const nextId = sessionStore.nextId;
+  const sessionId = sessionStore.current.sessionId;
+  const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
   const fullscreenOff = uiPlayerStore.fullscreenOff;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const fullscreen = uiPlayerStore.fullscreen;
   const defaultHeight = getDefaultPanelHeight()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const { nextId, activeTab, fullView } = props;
+  const { activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
   const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
@@ -74,7 +74,7 @@ function Player(props: IProps) {
   const [isAttached, setAttached] = React.useState(false);
 
   React.useEffect(() => {
-    props.updateLastPlayedSession(props.sessionId);
+    updateLastPlayedSession(sessionId);
     const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
     if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
@@ -162,12 +162,4 @@ function Player(props: IProps) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    nextId: state.getIn(['sessions', 'nextId']),
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-  }),
-  {
-    updateLastPlayedSession,
-  }
-)(observer(Player));
+export default observer(Player);

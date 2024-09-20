@@ -19,13 +19,13 @@ interface IProps {
 
 function PlayerBlock(props: IProps) {
   const {
-    sessionId,
     activeTab,
     fullView = false,
     setActiveTab,
-    jiraConfig
   } = props;
-  const { uiPlayerStore, } = useStore();
+  const { uiPlayerStore, sessionStore, integrationsStore } = useStore();
+  const jiraConfig = integrationsStore.issues.list[0];
+  const sessionId = sessionStore.current.sessionId;
   const fullscreen = uiPlayerStore.fullscreen;
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
@@ -44,7 +44,4 @@ function PlayerBlock(props: IProps) {
   );
 }
 
-export default connect((state: Record<string, any>) => ({
-  sessionId: state.getIn(['sessions', 'current']).sessionId,
-jiraConfig: state.getIn(['issues', 'list'])[0]
-}))(observer(PlayerBlock));
+export default observer(PlayerBlock);

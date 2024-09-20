@@ -33,11 +33,10 @@ const UXTTABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const {
-    session,
-    startedAt,
-  } = props;
   const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore } = useStore();
+  const session = sessionStore.current;
+  const prefetched = sessionStore.prefetched;
+  const startedAt = sessionStore.current.startedAt || 0;
   const fullscreen = uiPlayerStore.fullscreen;
   const toggleFullscreen = uiPlayerStore.toggleFullscreen;
   const closeBottomBlock = uiPlayerStore.closeBottomBlock;
@@ -69,14 +68,14 @@ function WebPlayer(props: any) {
     const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as
       | Record<string, any>
       | undefined;
-    const usePrefetched = props.prefetched && mobData?.data;
+    const usePrefetched = prefetched && mobData?.data;
     void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone);
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
       (state) => makeAutoObservable(state),
       toast,
-      props.prefetched
+      prefetched
     );
     if (usePrefetched) {
       if (mobData?.data) {
@@ -102,10 +101,10 @@ function WebPlayer(props: any) {
 
   const domFiles = session?.domURL?.length ?? 0
   useEffect(() => {
-    if (!props.prefetched && domFiles > 0) {
+    if (!prefetched && domFiles > 0) {
       playerInst?.reinit(session);
     }
-  }, [session, domFiles, props.prefetched]);
+  }, [session, domFiles, prefetched]);
 
   const {
     firstVisualEvent: visualOffset,
@@ -247,12 +246,7 @@ function WebPlayer(props: any) {
 
 export default connect(
   (state: any) => ({
-    session: state.getIn(['sessions', 'current']),
-    insights: state.getIn(['sessions', 'insights']),
-    prefetched: state.getIn(['sessions', 'prefetched']),
-    visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     jwt: state.getIn(['user', 'jwt']),
-    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
   }),
 
 )(withLocationHandlers()(observer(WebPlayer)));

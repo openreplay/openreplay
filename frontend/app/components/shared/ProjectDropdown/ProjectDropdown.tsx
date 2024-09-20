@@ -16,19 +16,13 @@ import { Icon } from 'UI';
 
 const { Text } = Typography;
 
-interface Site {
-  id: string;
-  host: string;
-  platform: 'web' | 'mobile';
-}
-
 interface Props extends RouteComponentProps {
   account: any;
 }
 
 function ProjectDropdown(props: Props) {
   const mstore = useStore();
-  const { projectsStore, searchStoreLive } = mstore;
+  const { customFieldStore, projectsStore, sessionStore, searchStore, searchStoreLive } = mstore;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const setSiteId = projectsStore.setSiteId;
@@ -39,15 +33,14 @@ function ProjectDropdown(props: Props) {
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
-  const { customFieldStore, searchStore } = useStore();
 
   const handleSiteChange = async (newSiteId: string) => {
-    setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    await customFieldStore.fetchList(newSiteId);
+    mstore.initClient();
+    setSiteId(newSiteId);
     searchStore.clearSearch();
     searchStoreLive.clearSearch();
 
-    mstore.initClient();
+    await customFieldStore.fetchList(newSiteId);
     await searchStore.fetchSavedSearchList()
   };
 

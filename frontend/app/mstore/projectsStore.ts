@@ -42,8 +42,8 @@ export default class ProjectsStore {
   }
 
   setSiteId = (siteId: string) => {
-    this.siteId = siteId;
     localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString());
+    this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
   }
 

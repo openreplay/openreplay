@@ -65,6 +65,7 @@ export default class Search {
   consoleLevel?: string;
   strict: boolean;
   eventsOrder: string;
+  limit: number;
 
   constructor(initialData?: Partial<ISearch>) {
     makeAutoObservable(this, {
@@ -97,6 +98,7 @@ export default class Search {
       consoleLevel: undefined,
       strict: false,
       eventsOrder: 'then',
+      limit: 10,
       ...initialData
     });
   }

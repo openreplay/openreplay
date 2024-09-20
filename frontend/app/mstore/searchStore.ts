@@ -126,7 +126,7 @@ class SearchStore {
 
   updateCurrentPage(page: number) {
     this.currentPage = page;
-    this.fetchSessions();
+    void this.fetchSessions();
   }
 
   setActiveTab(tab: any) {
@@ -170,7 +170,6 @@ class SearchStore {
     this.list = List();
 
     sessionStore.clearList();
-    this.fetchSessions();
   }
 
   checkForLatestSessions() {

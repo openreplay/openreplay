@@ -17,11 +17,7 @@ import { observer } from 'mobx-react-lite';
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
-interface Props {
-
-}
-
-function LiveSessionList(props: Props) {
+function LiveSessionList() {
   const { searchStoreLive, sessionStore, customFieldStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
