@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { BackLink } from 'UI';
@@ -27,17 +26,17 @@ function PlayerBlockHeader(props: any) {
   const siteId = projectsStore.siteId!;
   const {
     fullscreen,
-    metaList,
     setActiveTab,
     activeTab,
     history,
   } = props;
+  const metaList = customFieldStore.list.map((i: any) => i.key)
 
   React.useEffect(() => {
     const iframe = localStorage.getItem(IFRAME) || false;
     setHideBack(!!iframe && iframe === 'true');
 
-    if (metaList.size === 0) customFieldStore.fetchList();
+    if (metaList.length === 0) customFieldStore.fetchList();
   }, []);
 
   const backHandler = () => {
@@ -97,15 +96,6 @@ function PlayerBlockHeader(props: any) {
   );
 }
 
-const PlayerHeaderCont = connect(
-  (state: any) => {
-    return {
-      funnelRef: state.getIn(['funnels', 'navRef']),
-      metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    };
-  },
-  {
-  }
-)(observer(PlayerBlockHeader));
+const PlayerHeaderCont = observer(PlayerBlockHeader);
 
 export default withRouter(PlayerHeaderCont);

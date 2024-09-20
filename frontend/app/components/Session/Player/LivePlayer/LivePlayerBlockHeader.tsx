@@ -22,17 +22,18 @@ const ASSIST_ROUTE = assistRoute();
 function LivePlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const { assistMultiviewStore, projectsStore } = useStore();
+  const { assistMultiviewStore, projectsStore, customFieldStore } = useStore();
   const siteId = projectsStore.siteId;
   const history = useHistory();
   const { width, height } = store.get();
 
   const {
     session,
-    metaList,
     closedLive = false,
     isMultiview,
   } = props;
+
+  const metaList = customFieldStore.list.map((i: any) => i.key)
 
   React.useEffect(() => {
     const queryParams = new URLSearchParams(document.location.search);
@@ -109,7 +110,6 @@ const PlayerHeaderCont = connect(
       isAssist,
       session,
       sessionPath: state.getIn(['sessions', 'sessionPath']),
-      metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
       closedLive: !!state.getIn(['sessions', 'errors']) || (isAssist && !session.live),
     };
   }
