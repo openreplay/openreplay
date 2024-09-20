@@ -18,7 +18,7 @@ interface Tag {
 }
 
 interface StateProps {
-  total: number;
+
 }
 
 type Props = StateProps;
@@ -31,8 +31,9 @@ const tagIcons = {
   [types.CRASH]: <Skull size={14} />,
 } as Record<string, any>;
 
-const SessionTags: React.FC<Props> = ({ total }) => {
-  const { projectsStore, searchStore } = useStore();
+const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
+  const { projectsStore, sessionStore } = useStore();
+  const total = sessionStore.total;
   const platform = projectsStore.active?.platform || '';
   const disable = searchStore.activeTab.type === 'all' && total === 0;
   const activeTab = searchStore.activeTab;
@@ -117,11 +118,4 @@ export const TagItem: React.FC<{
   </button>
 ));
 
-const mapStateToProps = (state: any): StateProps => {
-  const total = state.getIn(['sessions', 'total']) || 0;
-  return { total };
-};
-
-export default connect(
-  mapStateToProps
-)(observer(SessionTags));
+export default observer(SessionTags);
