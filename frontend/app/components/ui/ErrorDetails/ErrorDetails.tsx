@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
 import { Button, Icon } from 'UI';
-import { connect } from 'react-redux';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -12,13 +11,13 @@ interface Props {
     sourcemapUploaded?: boolean;
     errorStack?: any;
     message?: string;
-    sessionId: string;
     error: any;
 }
 function ErrorDetails(props: Props) {
-    const { errorStore } = useStore();
+    const { errorStore, sessionStore } = useStore();
+    const sessionId = sessionStore.current.sessionId;
     const errorStack = errorStore.instanceTrace;
-    const { error, sessionId, message = '', sourcemapUploaded = false } = props;
+    const { error, message = '', sourcemapUploaded = false } = props;
     const [showRaw, setShowRaw] = useState(false);
     const firstFunc = errorStack[0] && errorStack[0].function;
 
@@ -72,8 +71,4 @@ function ErrorDetails(props: Props) {
 }
 
 ErrorDetails.displayName = 'ErrorDetails';
-export default connect(
-    (state: any) => ({
-        sessionId: state.getIn(['sessions', 'current']).sessionId,
-    })
-)(observer(ErrorDetails));
+export default observer(ErrorDetails);
