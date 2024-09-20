@@ -8,7 +8,7 @@ import { Button, InputNumber, Popover } from 'antd';
 import { Slider } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-
+import cn from 'classnames';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function DropdownAudioPlayer({
@@ -24,17 +24,27 @@ function DropdownAudioPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const lastPlayerTime = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
-
+  const fileLengths = useRef<Record<string, number>>({});
   const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {};
 
-  const files = audioEvents.map((pa) => {
+  const files = React.useMemo(() => audioEvents.map((pa) => {
     const data = pa.payload;
     return {
       url: data.url,
       timestamp: data.timestamp,
       start: pa.timestamp - sessionStart,
     };
-  });
+  }), [audioEvents, sessionStart])
+
+  React.useEffect(() => {
+    Object.entries(audioRefs.current).forEach(([url, audio]) => {
+      if (audio) {
+        audio.addEventListener('loadedmetadata', () => {
+          fileLengths.current[url] = audio.duration;
+        })
+      }
+    })
+  }, [audioRefs.current])
 
   const toggleMute = () => {
     Object.values(audioRefs.current).forEach((audio) => {
@@ -114,6 +124,9 @@ function DropdownAudioPlayer({
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
         const file = files.find((f) => f.url === url);
+        if (audio.ended && fileLengths.current[url] < time) {
+          return;
+        }
         if (file && time >= file.start) {
           if (audio.paused && playing) {
             audio.play();
@@ -121,13 +134,18 @@ function DropdownAudioPlayer({
         } else {
           audio.pause();
         }
-        if (audio.muted !== isMuted) {
-          audio.muted = isMuted;
-        }
       }
     });
     lastPlayerTime.current = time + deltaMs;
   }, [time, delta]);
+
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach((audio) => {
+      if (audio) {
+        audio.muted = isMuted;
+      }
+    })
+  }, [isMuted])
 
   useEffect(() => {
     changePlaybackSpeed(speed);
@@ -147,12 +165,12 @@ function DropdownAudioPlayer({
     setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
+  const buttonIcon = 'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit'
   return (
     <div className={'relative'}>
       <div className={'flex items-center'} style={{ height: 24 }}>
         <Popover
           trigger={'click'}
-          className={'h-full'}
           content={
             <div
               className={'flex flex-col gap-2 rounded'}
@@ -171,7 +189,7 @@ function DropdownAudioPlayer({
         >
           <div
             className={
-              'px-2 h-full cursor-pointer border rounded-l border-gray-light  hover:border-main hover:text-main hover:z-10'
+              cn(buttonIcon, 'rounded-l')
             }
           >
             {isMuted ? <MutedOutlined /> : <SoundOutlined />}
@@ -181,7 +199,7 @@ function DropdownAudioPlayer({
           onClick={toggleVisible}
           style={{ marginLeft: -1 }}
           className={
-            'px-2 h-full border rounded-r border-gray-light cursor-pointer hover:border-main hover:text-main hover:z-10'
+            cn(buttonIcon, 'rounded-r')
           }
         >
           <CaretDownOutlined />
@@ -236,6 +254,7 @@ function DropdownAudioPlayer({
       <div style={{ display: 'none' }}>
         {files.map((file) => (
           <audio
+            loop={false}
             key={file.url}
             ref={(el) => (audioRefs.current[file.url] = el)}
             controls
