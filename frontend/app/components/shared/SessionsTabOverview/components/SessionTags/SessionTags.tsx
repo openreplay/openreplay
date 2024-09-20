@@ -4,11 +4,8 @@ import cn from 'classnames';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { memo } from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 
 import { useStore } from 'App/mstore';
-import { setActiveTab } from 'Duck/search';
 import { Icon } from 'UI';
 
 interface Tag {
@@ -31,8 +28,8 @@ const tagIcons = {
   [types.CRASH]: <Skull size={14} />,
 } as Record<string, any>;
 
-const SessionTags: React.FC<Props> = ({ activeTab, setActiveTab }) => {
-  const { projectsStore, sessionStore } = useStore();
+const SessionTags: React.FC<Props> = () => {
+  const { projectsStore, sessionStore, searchStore } = useStore();
   const total = sessionStore.total;
   const platform = projectsStore.active?.platform || '';
   const disable = searchStore.activeTab.type === 'all' && total === 0;
