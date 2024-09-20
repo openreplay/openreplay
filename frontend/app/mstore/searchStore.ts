@@ -80,14 +80,9 @@ class SearchStore {
     this.currentPage = 1;
   }
 
-  async fetchList() {
-    const response = await searchService.fetchSavedSearch();
-    this.list = List(response.map((item: any) => new Search(item)));
-  }
-
   async fetchSavedSearchList() {
     const response = await searchService.fetchSavedSearch();
-    this.list = List(response.map((item: any) => new Search(item)));
+    this.list = List(response.map((item: any) => new SavedSearch(item)));
   }
 
   edit(instance: Partial<Search>) {
@@ -96,8 +91,7 @@ class SearchStore {
   }
 
   editSavedSearch(instance: Partial<SavedSearch>) {
-    this.savedSearch = new SavedSearch(Object.assign(this.instance.toData(), instance));
-    this.currentPage = 1;
+    this.savedSearch = new SavedSearch(Object.assign(this.savedSearch.toData(), instance));
   }
 
   apply(filter: any, fromUrl: boolean) {
@@ -142,7 +136,7 @@ class SearchStore {
   async removeSavedSearch(id: string): Promise<void> {
     await searchService.deleteSavedSearch(id);
     this.savedSearch = new SavedSearch({});
-    await this.fetchList();
+    await this.fetchSavedSearchList();
   }
 
   async save(id?: string | null, rename = false): Promise<void> {
@@ -153,7 +147,7 @@ class SearchStore {
     newInstance.filter.filters = newInstance.filter.filters.map(filterMap);
 
     await searchService.saveSavedSearch(newInstance, id);
-    await this.fetchList();
+    await this.fetchSavedSearchList();
 
     if (isNew) {
       const lastSavedSearch = this.list.last();

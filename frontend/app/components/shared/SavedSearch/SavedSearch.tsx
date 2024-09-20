@@ -1,18 +1,14 @@
 import React, { useEffect } from 'react';
 import { Icon } from 'UI';
 import { Button } from 'antd';
-import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './SavedSearch.module.css';
 import { useModal } from 'App/components/Modal';
 import SavedSearchModal from './components/SavedSearchModal';
 import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
-interface Props {
-
-}
-
-function SavedSearch(props: Props) {
+function SavedSearch() {
   const { showModal } = useModal();
   const { searchStore, customFieldStore } = useStore();
   const savedSearch = searchStore.savedSearch;
@@ -51,4 +47,4 @@ function SavedSearch(props: Props) {
   );
 }
 
-export default connect((state: any) => ({}))(SavedSearch);
+export default observer(SavedSearch);

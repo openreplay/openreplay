@@ -22,7 +22,7 @@ function SaveSearchModal(props: Props) {
   const loading = searchStore.isSaving;
 
   const onNameChange = ({ target: { value } }: any) => {
-    searchStore.edit({ name: value });
+    searchStore.editSavedSearch({ name: value });
   };
 
   const onSave = () => {
@@ -52,7 +52,7 @@ function SaveSearchModal(props: Props) {
     }
   };
 
-  const onChangeOption = ({ target: { checked, name } }: any) => searchStore.edit({ [name]: checked });
+  const onChangeOption = ({ target: { checked, name } }: any) => searchStore.editSavedSearch({ [name]: checked });
 
   return (
     <Modal size="small" open={show} onClose={closeHandler}>
