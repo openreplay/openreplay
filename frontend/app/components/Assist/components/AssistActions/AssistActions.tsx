@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Tooltip } from 'UI';
-import { connect } from 'react-redux';
 import cn from 'classnames';
 import ChatWindow from '../../ChatWindow';
 import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
@@ -32,12 +31,9 @@ function onError(e: any) {
 
 interface Props {
   userId: string;
-  hasPermission: boolean;
-  isEnterprise: boolean;
   isCallActive: boolean;
   agentIds: string[];
   userDisplayName: string;
-  agentId: number,
 }
 
 const AssistActionsPing = {
@@ -53,15 +49,16 @@ const AssistActionsPing = {
 
 function AssistActions({
   userId,
-  hasPermission,
-  isEnterprise,
   isCallActive,
   agentIds,
-  agentId,
 }: Props) {
   // @ts-ignore ???
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
-  const { sessionStore } = useStore();
+  const { sessionStore, userStore } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const hasPermission = permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL');
+  const isEnterprise = userStore.isEnterprise;
+  const agentId = userStore.account.id;
   const userDisplayName = sessionStore.current.userDisplayName;
 
   const {
@@ -291,13 +288,4 @@ function AssistActions({
   );
 }
 
-const con = connect((state: any) => {
-  const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-  return {
-    hasPermission: permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL'),
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    agentId: state.getIn(['user', 'account', 'id'])
-  };
-});
-
-export default con(observer(AssistActions));
+export default observer(AssistActions);

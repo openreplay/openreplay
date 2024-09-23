@@ -3,7 +3,6 @@ import QueueControls from 'Components/Session_/QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import Issues from 'Components/Session_/Issues/Issues';
 import NotePopup from 'Components/Session_/components/NotePopup';
-import { connect } from 'react-redux';
 import { Tag } from 'antd'
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Popover } from 'antd';
@@ -12,7 +11,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 function SubHeader(props: any) {
-  const { sessionStore, integrationsStore } = useStore();
+  const { sessionStore, integrationsStore} = useStore();
   const integrations = integrationsStore.issues.list;
   const isIOS = sessionStore.current.platform === 'ios';
 
@@ -58,6 +57,4 @@ function SubHeader(props: any) {
   );
 }
 
-export default connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'modules']) || [],
-}))(observer(SubHeader));
+export default observer(SubHeader);

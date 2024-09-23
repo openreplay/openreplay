@@ -2,11 +2,13 @@ import Account from 'Types/account';
 import Client from 'Types/client';
 import copy from 'copy-to-clipboard';
 import { makeAutoObservable, runInAction } from 'mobx';
+import { makePersistable } from 'mobx-persist-store';
 import { toast } from 'react-toastify';
+
 import { userService } from 'App/services';
 import { deleteCookie } from 'App/utils';
+
 import User from './types/user';
-import { makePersistable } from 'mobx-persist-store';
 
 export default class UserStore {
   list: User[] = [];
@@ -46,28 +48,53 @@ export default class UserStore {
   updatePasswordRequest = {
     loading: false,
     errors: [] as string[],
-  }
+  };
   scopeState: number | null = null;
   client = new Client();
 
   constructor() {
     makeAutoObservable(this);
 
-    makePersistable(this, {
-      name: 'UserStore',
-      properties: ['siteId', 'tenants', 'jwt', 'spotJwt', 'scopeState', 'authDetails', 'onboarding', {
-        key: 'account',
-        serialize: (acc) => {
-          return acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({});
-        },
-        deserialize: (json) => {
-          return new Account(json);
-        }
-      }],
-      storage: window.localStorage,
-    }, {
-      delay: 200,
-    })
+    makePersistable(
+      this,
+      {
+        name: 'UserStore',
+        properties: [
+          'siteId',
+          'tenants',
+          'jwt',
+          'spotJwt',
+          'scopeState',
+          'authDetails',
+          'onboarding',
+          {
+            key: 'account',
+            serialize: (acc) => {
+              return acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({});
+            },
+            deserialize: (json) => {
+              return new Account(json);
+            },
+          },
+        ],
+        storage: window.localStorage,
+      },
+      {
+        delay: 200,
+      }
+    );
+  }
+
+  get isEnterprise() {
+    return (
+      this.account.edition === 'ee' ||
+      this.account.edition === 'msaas' ||
+      this.authDetails.edition === 'ee'
+    );
+  }
+
+  get isLoggedIn() {
+    return Boolean(this.jwt);
   }
 
   fetchLimits = (): Promise<any> => {
@@ -290,7 +317,7 @@ export default class UserStore {
     this.spotJwt = data.spotJwt;
     this.scopeState = data.scopeState;
     this.loginRequest = { loading: false, errors: [] };
-  }
+  };
 
   syntheticLoginError = (errors: any) => {
     deleteCookie('jwt', '/', 'openreplay.com');
@@ -298,7 +325,7 @@ export default class UserStore {
       loading: false,
       errors: errors || [],
     };
-  }
+  };
 
   login = async (params: any) => {
     this.loginRequest = { loading: true, errors: [] };
@@ -326,7 +353,7 @@ export default class UserStore {
   signup = async (params: any) => {
     runInAction(() => {
       this.signUpRequest = { loading: true, errors: [] };
-    })
+    });
     try {
       const response = await userService.signup(params);
       runInAction(() => {
@@ -338,8 +365,11 @@ export default class UserStore {
       });
     } catch (error) {
       runInAction(() => {
-        this.signUpRequest = { loading: false, errors: error.response?.errors || [] };
-      })
+        this.signUpRequest = {
+          loading: false,
+          errors: error.response?.errors || [],
+        };
+      });
       toast.error('Error signing up; please check your data and try again');
     } finally {
       runInAction(() => {
@@ -351,7 +381,7 @@ export default class UserStore {
   resetPassword = async (params: any) => {
     runInAction(() => {
       this.loading = true;
-    })
+    });
     try {
       const response = await userService.resetPassword(params);
       runInAction(() => {
@@ -363,14 +393,14 @@ export default class UserStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 
   requestResetPassword = async (params: any) => {
     runInAction(() => {
       this.loading = true;
-    })
+    });
     try {
       await userService.requestResetPassword(params);
     } catch (error) {
@@ -379,7 +409,7 @@ export default class UserStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 
@@ -453,7 +483,7 @@ export default class UserStore {
   updateClient = async (params: any) => {
     runInAction(() => {
       this.loading = true;
-    })
+    });
     try {
       await userService.updateClient(params);
       runInAction(() => {
@@ -464,11 +494,11 @@ export default class UserStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 
-  updateJwt = ({ jwt, spotJwt }: { jwt?: string, spotJwt?: string | null }) => {
+  updateJwt = ({ jwt, spotJwt }: { jwt?: string; spotJwt?: string | null }) => {
     this.jwt = jwt ?? null;
     this.spotJwt = spotJwt ?? null;
   };
@@ -480,7 +510,7 @@ export default class UserStore {
   updateAccount = async (params: any) => {
     runInAction(() => {
       this.loading = true;
-    })
+    });
     try {
       const response = await userService.updateAccount(params);
       runInAction(() => {
@@ -493,7 +523,7 @@ export default class UserStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 

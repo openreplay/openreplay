@@ -18,30 +18,23 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
-  session: Session;
-  assistCredentials: RTCIceServer[];
-  isEnterprise: boolean;
-  userEmail: string;
-  userName: string;
   customSession?: Session;
   isMultiview?: boolean;
   query?: Record<string, (key: string) => any>;
-  request: () => void;
-  userId: number;
 }
 
 let playerInst: ILivePlayerContext['player'] | undefined;
 
 function LivePlayer({
-  userEmail,
-  userName,
   isMultiview,
   customSession,
   query,
-  isEnterprise,
-  userId,
 }: Props) {
-  const { projectsStore, sessionStore } = useStore();
+  const { projectsStore, sessionStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const userEmail = userStore.account.email;
+  const userName = userStore.account.name;
+  const userId = userStore.account.id;
   const session = sessionStore.current;
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
@@ -140,12 +133,5 @@ function LivePlayer({
 }
 
 export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-  connect((state: any) => {
-    return {
-      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      userEmail: state.getIn(['user', 'account', 'email']),
-      userName: state.getIn(['user', 'account', 'name']),
-      userId: state.getIn(['user', 'account', 'id']),
-    };
-  })(withLocationHandlers()(observer(LivePlayer)))
+  withLocationHandlers()(observer(LivePlayer))
 );

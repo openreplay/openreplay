@@ -1,6 +1,5 @@
 import { Modal } from 'antd';
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import colors from 'tailwindcss/colors';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -19,9 +18,9 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   onClose,
   open,
   isAddingFromLibrary = false,
-  isEnterprise = false,
 }) => {
-  const { projectsStore } = useStore();
+  const { projectsStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
   const isMobile = projectsStore.isMobile;
   const [step, setStep] = React.useState<number>(0);
   const [selectedCategory, setSelectedCategory] =
@@ -75,10 +74,4 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  isEnterprise:
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'account', 'edition']) === 'msaas',
-});
-
-export default connect(mapStateToProps)(observer(NewDashboardModal));
+export default observer(NewDashboardModal);

@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
@@ -42,7 +41,9 @@ export const SKIP_INTERVALS = {
 };
 
 function Controls(props: any) {
-  const { sessionStore, searchStoreLive } = useStore();
+  const { sessionStore, userStore } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
   const { player, store } = React.useContext(MobilePlayerContext);
   const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
@@ -57,7 +58,6 @@ function Controls(props: any) {
   const siteId = projectsStore.siteId;
   const {
     setActiveTab,
-    disableDevtools
   } = props;
   const session = sessionStore.current;
   const previousSessionId = sessionStore.previousId;
@@ -279,12 +279,4 @@ const DevtoolsButtons = observer(({
 
 const ControlPlayer = observer(Controls);
 
-export default connect(
-  (state: any) => {
-    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
-    return {
-      disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'))
-    };
-  }
-)(ControlPlayer);
+export default ControlPlayer

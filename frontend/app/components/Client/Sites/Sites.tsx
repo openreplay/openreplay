@@ -28,10 +28,9 @@ type Project = {
   sampleRate: number;
 };
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-const Sites = ({ user }: PropsFromRedux) => {
-  const { projectsStore } = useStore();
+const Sites = () => {
+  const { projectsStore, userStore } = useStore();
+  const user = userStore.account;
   const sites = projectsStore.list;
   const loading = projectsStore.sitesLoading;
   const init = projectsStore.initProject
@@ -185,11 +184,4 @@ const Sites = ({ user }: PropsFromRedux) => {
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  user: state.getIn(['user', 'account']),
-  account: state.getIn(['user', 'account']),
-});
-
-const connector = connect(mapStateToProps, null);
-
-export default connector(withPageTitle('Projects - OpenReplay Preferences')(observer(Sites)));
+export default withPageTitle('Projects - OpenReplay Preferences')(observer(Sites));

@@ -22,7 +22,7 @@ const TABS = {
 let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
-  const { notesStore, sessionStore, uiPlayerStore, integrationsStore } = useStore();
+  const { notesStore, sessionStore, uiPlayerStore, integrationsStore, userStore } = useStore();
   const session = sessionStore.current;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
@@ -142,8 +142,4 @@ function MobilePlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    jwt: state.getIn(['user', 'jwt']),
-  }),
-)(withLocationHandlers()(observer(MobilePlayer)));
+export default withLocationHandlers()(observer(MobilePlayer));

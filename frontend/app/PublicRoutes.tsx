@@ -3,7 +3,8 @@ import { Loader } from 'UI';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import Signup from 'Components/Signup/Signup';
 import SupportCallout from 'Shared/SupportCallout';
-import { connect } from 'react-redux';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 import * as routes from 'App/routes';
 
 
@@ -14,16 +15,12 @@ const SPOT_PATH = routes.spot();
 
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
-const UpdatePassword = lazy(() => import('Components/UpdatePassword/UpdatePassword'));
 const Spot = lazy(() => import('Components/Spots/SpotPlayer/SpotPlayer'));
 
-interface Props {
-  isEnterprise: boolean;
-  changePassword: boolean;
-}
-
-function PublicRoutes(props: Props) {
-  const hideSupport = props.isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot')
+function PublicRoutes() {
+  const { userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot')
   return (
     <Suspense fallback={<Loader loading={true} className='flex-1' />}>
       <Switch>
@@ -39,9 +36,4 @@ function PublicRoutes(props: Props) {
 }
 
 
-export default connect((state: any) => ({
-  changePassword: state.getIn(['user', 'account', 'changePassword']),
-  isEnterprise:
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'authDetails', 'edition']) === 'ee'
-}))(PublicRoutes);
+export default observer(PublicRoutes)

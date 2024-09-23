@@ -77,8 +77,4 @@ function WebPlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    jwt: state.getIn(['user', 'jwt']),
-  })
-)(withLocationHandlers()(observer(WebPlayer)));
+export default withLocationHandlers()(observer(WebPlayer));

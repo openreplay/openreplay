@@ -1,11 +1,9 @@
 import React, { lazy, Suspense } from 'react';
 import { Switch, Route } from 'react-router-dom';
-import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 
 import * as routes from './routes';
-import { Map } from 'immutable';
 import NotFoundPage from 'Shared/NotFoundPage';
 import { ModalProvider } from 'Components/Modal';
 import Layout from 'App/layout/Layout';
@@ -31,12 +29,6 @@ const LIVE_SESSION_PATH = routes.liveSession();
 
 
 interface Props {
-  isEnterprise: boolean;
-  tenantId: string;
-  siteId: string;
-  jwt: string;
-  sites: Map<string, any>;
-  onboarding: boolean;
   isJwt?: boolean;
   isLoggedIn?: boolean;
   loading: boolean;
@@ -45,8 +37,7 @@ interface Props {
 function IFrameRoutes(props: Props) {
   const { projectsStore } = useStore();
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const { isJwt = false, isLoggedIn = false, loading, onboarding, jwt } = props;
+  const { isJwt = false, isLoggedIn = false, loading } = props;
   const siteIdList: any = sites.map(({ id }) => id);
 
   if (isLoggedIn) {
@@ -77,12 +68,4 @@ function IFrameRoutes(props: Props) {
 }
 
 
-export default connect((state: any) => ({
-  changePassword: state.getIn(['user', 'account', 'changePassword']),
-  onboarding: state.getIn(['user', 'onboarding']),
-  jwt: state.getIn(['user', 'jwt']),
-  tenantId: state.getIn(['user', 'account', 'tenantId']),
-  isEnterprise:
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'authDetails', 'edition']) === 'ee'
-}))(observer(IFrameRoutes));
+export default observer(IFrameRoutes);

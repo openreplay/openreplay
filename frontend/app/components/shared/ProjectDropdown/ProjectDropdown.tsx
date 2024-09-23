@@ -5,9 +5,8 @@ import {
 import { Button, Divider, Dropdown, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useStore, withStore } from 'App/mstore';
+import { withRouter } from 'react-router-dom';
+import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
@@ -16,18 +15,15 @@ import { Icon } from 'UI';
 
 const { Text } = Typography;
 
-interface Props extends RouteComponentProps {
-  account: any;
-}
-
-function ProjectDropdown(props: Props) {
+function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
-  const { customFieldStore, projectsStore, sessionStore, searchStore, searchStoreLive } = mstore;
+  const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
+  const account = userStore.account;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const setSiteId = projectsStore.setSiteId;
   const initProject = projectsStore.initProject;
-  const { location, account } = props;
+  const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
@@ -130,10 +126,6 @@ function ProjectDropdown(props: Props) {
   );
 }
 
-const mapStateToProps = (state: any) => ({
-  account: state.getIn(['user', 'account'])
-});
-
-export default withStore(withRouter(
-  connect(mapStateToProps, {})(observer(ProjectDropdown))
-));
+export default withRouter(
+  observer(ProjectDropdown)
+);

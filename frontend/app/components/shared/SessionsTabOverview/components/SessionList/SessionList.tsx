@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Button } from 'UI';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import SessionDateRange from './SessionDateRange';
@@ -11,7 +10,6 @@ import RecordingStatus from 'Shared/SessionsTabOverview/components/RecordingStat
 import { sessionService } from 'App/services';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-
 
 type SessionStatus = {
   status: number;
@@ -24,13 +22,10 @@ let sessionStatusTimeOut: any = null;
 
 const STATUS_FREQUENCY = 5000;
 
-interface Props extends RouteComponentProps {
-  isEnterprise?: boolean;
-  isLoggedIn: boolean;
-}
-
-function SessionList(props: Props) {
-  const { projectsStore, sessionStore, customFieldStore } = useStore();
+function SessionList() {
+  const { projectsStore, sessionStore, customFieldStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const isLoggedIn = userStore.isLoggedIn;
   const list = sessionStore.list;
   const lastPlayedSessionId = sessionStore.lastPlayedSessionId;
   const loading = sessionStore.loadingSessions;
@@ -39,10 +34,6 @@ function SessionList(props: Props) {
   const siteId = projectsStore.siteId;
   const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
   const { searchStore } = useStore();
-  const {
-    isEnterprise = false,
-    isLoggedIn,
-  } = props;
   const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
@@ -251,8 +242,4 @@ function SessionList(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    isLoggedIn: Boolean(state.getIn(['user', 'jwt'])),
-  }))(withRouter(observer(SessionList)));
+export default withRouter(observer(SessionList));
