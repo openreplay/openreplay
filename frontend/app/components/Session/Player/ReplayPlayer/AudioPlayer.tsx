@@ -29,10 +29,11 @@ function DropdownAudioPlayer({
 
   const files = React.useMemo(() => audioEvents.map((pa) => {
     const data = pa.payload;
+    const nativeTs = data.timestamp
     return {
       url: data.url,
       timestamp: data.timestamp,
-      start: pa.timestamp - sessionStart,
+      start: nativeTs ? nativeTs : pa.timestamp - sessionStart,
     };
   }), [audioEvents.length, sessionStart])
 
