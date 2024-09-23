@@ -1,25 +1,19 @@
+import { Layout, Space, Tooltip } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+
+import { INDEXES } from 'App/constants/zindex';
 import Logo from 'App/layout/Logo';
 import TopRight from 'App/layout/TopRight';
-import { Layout, Space, Tooltip } from 'antd';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-import { observer } from 'mobx-react-lite';
-import { INDEXES } from 'App/constants/zindex';
-import { connect } from 'react-redux';
-import { logout } from 'Duck/user';
 
 const { Header } = Layout;
 
-interface Props {
-  account: any;
-}
-
-function TopHeader(props: Props) {
-  const { settingsStore } = useStore();
-
-  const { account } = props;
-  const { userStore, notificationStore, projectsStore } = useStore();
+function TopHeader() {
+  const { userStore, notificationStore, projectsStore, settingsStore } =
+    useStore();
+  const account = userStore.account;
   const siteId = projectsStore.siteId;
   const initialDataFetched = userStore.initialDataFetched;
 
@@ -27,8 +21,7 @@ function TopHeader(props: Props) {
     if (!account.id || initialDataFetched) return;
     Promise.all([
       userStore.fetchLimits(),
-      notificationStore.fetchNotificationsCount()
-
+      notificationStore.fetchNotificationsCount(),
     ]).then(() => {
       userStore.updateKey('initialDataFetched', true);
     });
@@ -43,7 +36,7 @@ function TopHeader(props: Props) {
         padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
-        height: '60px'
+        height: '60px',
       }}
       className="justify-between"
     >
@@ -55,8 +48,18 @@ function TopHeader(props: Props) {
           style={{ paddingTop: '4px' }}
           className="cursor-pointer"
         >
-          <Tooltip title={settingsStore.menuCollapsed ? 'Show Menu' : 'Hide Menu'} mouseEnterDelay={1}>
-            <Icon name={settingsStore.menuCollapsed ? 'side_menu_closed' : 'side_menu_open'} size={20} />
+          <Tooltip
+            title={settingsStore.menuCollapsed ? 'Show Menu' : 'Hide Menu'}
+            mouseEnterDelay={1}
+          >
+            <Icon
+              name={
+                settingsStore.menuCollapsed
+                  ? 'side_menu_closed'
+                  : 'side_menu_open'
+              }
+              size={20}
+            />
           </Tooltip>
         </div>
 
@@ -70,15 +73,4 @@ function TopHeader(props: Props) {
   );
 }
 
-const mapStateToProps = (state: any) => ({
-  account: state.getIn(['user', 'account']),
-});
-
-const mapDispatchToProps = {
-  onLogoutClick: logout,
-};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(observer(TopHeader));
+export default observer(TopHeader);

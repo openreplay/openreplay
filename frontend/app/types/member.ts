@@ -1,4 +1,4 @@
-import Record from 'Types/Record';
+import { makeAutoObservable } from 'mobx';
 import { DateTime } from 'luxon';
 import { validateEmail, validateName } from 'App/validate';
 
@@ -30,35 +30,41 @@ export interface IMemberApiRes {
   invitationLink: string
 }
 
-export default Record({
-  id: undefined,
-  name: '',
-  email: '',
-  createdAt: undefined,
-  admin: false,
-  superAdmin: false,
-  joined: false,
-  expiredInvitation: false,
-  roleId: undefined,
-  roleName: undefined,
-  invitationLink: '',
-}, {
-  idKey: 'id',
-  methods: {
-    validate() {
-      return validateEmail(this.email) && validateName(this.name, { diacritics: true });
-    },
+export default class Member {
+  id: string
+  name: string
+  email: string
+  createdAt: DateTime
+  admin: boolean
+  superAdmin: boolean
+  joined: boolean
+  expiredInvitation: boolean
+  roleId: string
+  roleName: string
+  invitationLink: string
 
-    toData() {
-      const js = this.toJS();
+  constructor(data: Partial<IMemberApiRes> = {}) {
+    Object.assign(this, data);
+    makeAutoObservable(this);
+  }
 
-      delete js.createdAt;
-      return js;
-    },
-  },
-  fromJS: ({ createdAt, ...rest }: IMemberApiRes) => ({
-    ...rest,
-    createdAt: createdAt && DateTime.fromISO(createdAt || '0'),
-    id: rest.userId,
-  }),
-});
+  validate = () => {
+    return validateEmail(this.email) && validateName(this.name, { diacritics: true });
+  }
+
+  toData = () => {
+    return {
+      id: this.id,
+      name: this.name,
+      email: this.email,
+      roleId: this.roleId,
+      roleName: this.roleName,
+      admin: this.admin,
+      superAdmin: this.superAdmin,
+      joined: this.joined,
+      expiredInvitation: this.expiredInvitation,
+      invitationLink: this.invitationLink,
+    }
+  }
+}
+

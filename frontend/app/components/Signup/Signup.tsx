@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { connect, ConnectedProps } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 import SignupForm from './SignupForm';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
 import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
-import { fetchTenants } from 'Duck/user';
 import withPageTitle from 'HOCs/withPageTitle';
 import { login } from 'App/routes';
 import Copyright from 'Shared/Copyright';
@@ -22,22 +22,12 @@ const BulletItem: React.FC<{ text: string }> = ({ text }) => (
 
 const healthStatusCheck_key = '__or__healthStatusCheck_key';
 
-const mapStateToProps = (state: any) => ({
-  loading: state.getIn(['user', 'loginRequest', 'loading']),
-  authDetails: state.getIn(['user', 'authDetails'])
-});
+type SignupProps = RouteComponentProps;
 
-const mapDispatchToProps = {
-  fetchTenants
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-type SignupProps = PropsFromRedux & RouteComponentProps;
-
-const Signup: React.FC<SignupProps> = ({ loading, authDetails, fetchTenants, history }) => {
+const Signup: React.FC<SignupProps> = ({ history }) => {
+  const { userStore } = useStore();
+  const authDetails = userStore.authDetails;
+  const fetchTenants = userStore.fetchTenants;
   const [healthModalPassed, setHealthModalPassed] = useState<boolean>(localStorage.getItem(healthStatusCheck_key) === 'true');
   const [healthStatusLoading, setHealthStatusLoading] = useState<boolean>(true);
   const [healthStatus, setHealthStatus] = useState<any>(null);
@@ -88,4 +78,4 @@ const Signup: React.FC<SignupProps> = ({ loading, authDetails, fetchTenants, his
   );
 };
 
-export default connector(withRouter(withPageTitle('Signup - OpenReplay')(Signup)));
+export default withRouter(withPageTitle('Signup - OpenReplay')(observer(Signup)));

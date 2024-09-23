@@ -1,7 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { loginService } from "../services";
-import { isTokenExpired } from "../utils";
-
+import { handleSpotJWT, isTokenExpired } from 'App/utils';
 const spotTokenKey = "___$or_spotToken$___"
 
 class LoginStore {
@@ -16,25 +15,6 @@ class LoginStore {
     if (token && !isTokenExpired(token)) {
       this.spotJWT = token;
     }
-  }
-
-  getSpotJWT = async (): Promise<string | null> => {
-    if (this.spotJwtPending) {
-      let tries = 0
-      return new Promise<string | null>((resolve) => {
-        const interval = setInterval(() => {
-          if (!this.spotJwtPending && this.spotJWT) {
-            clearInterval(interval)
-            resolve(this.spotJWT)
-          }
-          if (tries > 50) {
-            clearInterval(interval)
-            resolve(null)
-          }
-        }, 100)
-      })
-    }
-    return this.spotJWT ?? null
   }
 
   setEmail = (email: string) => {
@@ -52,6 +32,7 @@ class LoginStore {
   setSpotJWT = (spotJWT: string) => {
     this.spotJWT = spotJWT;
     localStorage.setItem(spotTokenKey, spotJWT);
+    handleSpotJWT(spotJWT);
   }
 
   spotJwtPending = false

@@ -1,8 +1,8 @@
 import { Divider, Menu, Tag, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
 
 import SupportModal from 'App/layout/SupportModal';
 import * as routes from 'App/routes';
@@ -20,7 +20,6 @@ import { MODULES } from 'Components/Client/Modules';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
 
-import { getScope } from 'App/duck/user';
 import InitORCard from './InitORCard';
 import SpotToOpenReplayPrompt from './SpotToOpenReplayPrompt';
 import {
@@ -43,26 +42,22 @@ const TabToUrlMap = {
 
 interface Props extends RouteComponentProps {
   siteId?: string;
-  modules: string[];
-  isEnterprise: boolean;
   isCollapsed?: boolean;
-  spotOnly?: boolean;
-  account: any;
 }
 
 function SideMenu(props: Props) {
   const {
-    modules,
     location,
-    account,
-    isEnterprise,
-    isCollapsed,
-    spotOnly
   } = props;
+
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
+  const { searchStore, projectsStore, userStore } = useStore();
+  const spotOnly = userStore.scopeState === 1;
+  const account = userStore.account;
+  const modules = account.settings.modules;
   const isAdmin = account.admin || account.superAdmin;
-  const { searchStore, projectsStore } = useStore();
+  const isEnterprise = account.edition === 'ee';
   const siteId = projectsStore.siteId
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -367,13 +362,4 @@ function SideMenu(props: Props) {
   );
 }
 
-export default withRouter(
-  connect(
-    (state: any) => ({
-      modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
-      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      account: state.getIn(['user', 'account']),
-      spotOnly: getScope(state) === 1
-    })
-  )(SideMenu)
-);
+export default withRouter(observer(SideMenu));

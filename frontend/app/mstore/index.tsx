@@ -1,41 +1,81 @@
 import React from 'react';
-import DashboardStore from './dashboardStore';
-import MetricStore from './metricStore';
-import UserStore from './userStore';
-import RoleStore from './roleStore';
+
 import APIClient from 'App/api_client';
-import FunnelStore from './funnelStore';
 import { services } from 'App/services';
-import SettingsStore from './settingsStore';
-import AuditStore from './auditStore';
-import NotificationStore from './notificationStore';
-import ErrorStore from './errorStore';
-import SessionStore from './sessionStore';
-import NotesStore from './notesStore';
-import RecordingsStore from './recordingsStore';
-import AssistMultiviewStore from './assistMultiviewStore';
-import WeeklyReportStore from './weeklyReportConfigStore';
-import AlertStore from './alertsStore';
-import FeatureFlagsStore from './featureFlagsStore';
-import UxtestingStore from './uxtestingStore';
-import TagWatchStore from './tagWatchStore';
-import AiSummaryStore from './aiSummaryStore';
+
 import AiFiltersStore from './aiFiltersStore';
-import SpotStore from './spotStore';
-import LoginStore from './loginStore';
-import FilterStore from './filterStore';
-import UiPlayerStore from './uiPlayerStore';
-import IssueReportingStore from './issueReportingStore';
+import AiSummaryStore from './aiSummaryStore';
+import AlertStore from './alertsStore';
+import AssistMultiviewStore from './assistMultiviewStore';
+import AuditStore from './auditStore';
 import CustomFieldStore from './customFieldStore';
+import DashboardStore from './dashboardStore';
+import ErrorStore from './errorStore';
+import FeatureFlagsStore from './featureFlagsStore';
+import FilterStore from './filterStore';
+import FunnelStore from './funnelStore';
+import { IntegrationsStore } from './integrationsStore';
+import IssueReportingStore from './issueReportingStore';
+import LoginStore from './loginStore';
+import MetricStore from './metricStore';
+import NotesStore from './notesStore';
+import NotificationStore from './notificationStore';
+import ProjectsStore from './projectsStore';
+import RecordingsStore from './recordingsStore';
+import RoleStore from './roleStore';
 import SearchStore from './searchStore';
 import SearchStoreLive from './searchStoreLive';
-import { IntegrationsStore } from './integrationsStore';
-import ProjectsStore from './projectsStore';
+import SessionStore from './sessionStore';
+import SettingsStore from './settingsStore';
+import SpotStore from './spotStore';
+import TagWatchStore from './tagWatchStore';
+import UiPlayerStore from './uiPlayerStore';
+import UserStore from './userStore';
+import UxtestingStore from './uxtestingStore';
+import WeeklyReportStore from './weeklyReportConfigStore';
 
 export const projectStore = new ProjectsStore();
 export const sessionStore = new SessionStore();
 export const searchStore = new SearchStore();
 export const searchStoreLive = new SearchStoreLive();
+export const userStore = new UserStore();
+
+function copyToClipboard(text: string) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+
+  textArea.style.top = '0';
+  textArea.style.left = '0';
+  textArea.style.position = 'fixed';
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const successful = document.execCommand('copy');
+    const msg = successful ? 'successful' : 'unsuccessful';
+    console.log('Token copy ' + msg);
+  } catch (err) {
+    console.error('unable to copy', err);
+  }
+
+  document.body.removeChild(textArea);
+}
+
+window.getJWT = () => {
+  const jwtToken = userStore.getJwt() ?? null;
+  if (jwtToken) {
+    console.log(jwtToken);
+    copyToClipboard(jwtToken);
+  } else {
+    console.log('not logged in');
+  }
+};
+
+window.setJWT = (jwt) => {
+  userStore.updateJwt(jwt);
+};
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -74,7 +114,7 @@ export class RootStore {
     this.metricStore = new MetricStore();
     this.funnelStore = new FunnelStore();
     this.settingsStore = new SettingsStore();
-    this.userStore = new UserStore();
+    this.userStore = userStore;
     this.roleStore = new RoleStore();
     this.auditStore = new AuditStore();
     this.errorStore = new ErrorStore();
@@ -114,7 +154,9 @@ export class RootStore {
 const StoreContext = React.createContext<RootStore>({} as RootStore);
 
 export const StoreProvider = ({ children, store }: any) => {
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+  return (
+    <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
+  );
 };
 
 export const useStore = () => React.useContext(StoreContext);

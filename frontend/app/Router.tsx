@@ -1,6 +1,4 @@
-import { Map } from 'immutable';
 import React, { useEffect, useRef } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import IFrameRoutes from 'App/IFrameRoutes';
@@ -17,41 +15,40 @@ import { useStore } from 'App/mstore';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
-import { fetchUserInfo, getScope, logout, setJwt } from 'Duck/user';
 import { Loader } from 'UI';
 import * as routes from './routes';
 import { observer } from 'mobx-react-lite'
 
-interface RouterProps
-  extends RouteComponentProps,
-    ConnectedProps<typeof connector> {
-  isLoggedIn: boolean;
-  changePassword: boolean;
-  isEnterprise: boolean;
-  fetchUserInfo: () => any;
+interface RouterProps extends RouteComponentProps {
   match: {
     params: {
       siteId: string;
     };
   };
-  setJwt: (params: { jwt: string; spotJwt: string | null }) => any;
-  localSpotJwt: string | null;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
   const {
-    isLoggedIn,
-    userInfoLoading,
     location,
-    fetchUserInfo,
     history,
-    localSpotJwt,
-    logout,
-    scopeSetup,
-    setJwt,
   } = props;
   const mstore = useStore();
-  const { customFieldStore, projectsStore, sessionStore, searchStore } = mstore;
+  const { customFieldStore, projectsStore, sessionStore, searchStore, userStore } = mstore;
+  const jwt = userStore.jwt;
+  const changePassword = userStore.account.changePassword;
+  const userInfoLoading = userStore.fetchInfoRequest.loading;
+  const scopeSetup = userStore.scopeState === 0;
+  const localSpotJwt = userStore.spotJwt;
+  const isLoggedIn = Boolean(jwt && !changePassword);
+  const email = userStore.account.email;
+  const account = userStore.account;
+  const organisation = userStore.account.name;
+  const tenantId = userStore.account.tenantId;
+  const tenants = userStore.tenants;
+  const isEnterprise = userStore.account.edition === 'ee' || userStore.authDetails.edition === 'ee';
+  const fetchUserInfo = userStore.fetchUserInfo;
+  const setJwt = userStore.updateJwt;
+  const logout = userStore.logout;
 
   const setSessionPath = sessionStore.setSessionPath;
   const siteId = projectsStore.siteId;
@@ -227,39 +224,4 @@ const Router: React.FC<RouterProps> = (props) => {
   );
 };
 
-const mapStateToProps = (state: Map<string, any>) => {
-  const jwt = state.getIn(['user', 'jwt']);
-  const changePassword = state.getIn(['user', 'account', 'changePassword']);
-  const userInfoLoading = state.getIn([
-    'user',
-    'fetchUserInfoRequest',
-    'loading'
-  ]);
-  const scopeSetup = getScope(state) === 0;
-  return {
-    changePassword,
-    jwt,
-    scopeSetup,
-    localSpotJwt: state.getIn(['user', 'spotJwt']),
-    isLoggedIn: jwt !== null && !changePassword,
-    userInfoLoading,
-    email: state.getIn(['user', 'account', 'email']),
-    account: state.getIn(['user', 'account']),
-    organisation: state.getIn(['user', 'account', 'name']),
-    tenantId: state.getIn(['user', 'account', 'tenantId']),
-    tenants: state.getIn(['user', 'tenants']),
-    isEnterprise:
-      state.getIn(['user', 'account', 'edition']) === 'ee' ||
-      state.getIn(['user', 'authDetails', 'edition']) === 'ee'
-  };
-};
-
-const mapDispatchToProps = {
-  fetchUserInfo,
-  setJwt,
-  logout
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export default withRouter(connector(observer(Router)));
+export default withRouter(observer(Router));

@@ -1,6 +1,6 @@
-import store from 'App/store';
 import { queried } from './routes';
-import { setJwt } from 'Duck/user';
+import { userStore } from "./mstore";
+import { handleSpotJWT } from "App/utils";
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -59,7 +59,7 @@ export default class APIClient {
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
-    const jwt = store.getState().getIn(['user', 'jwt']);
+    const jwt = userStore.getJwt();
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
@@ -77,7 +77,7 @@ export default class APIClient {
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = store.getState().getIn(['user', 'jwt']);
+    const jwt = userStore.getJwt();
     const headers = new Headers({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default class APIClient {
     clean?: boolean
   } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
     let _path = path;
-    let jwt = store.getState().getIn(['user', 'jwt']);
+    let jwt = userStore.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       jwt = await this.handleTokenRefresh();
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
@@ -208,11 +208,11 @@ export default class APIClient {
 
       const data = await response.json();
       const refreshedJwt = data.jwt;
-      store.dispatch(setJwt({ jwt: refreshedJwt, }));
+      userStore.updateJwt({ jwt: refreshedJwt });
       return refreshedJwt;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      store.dispatch(setJwt({ jwt: null }));
+      userStore.updateJwt({ jwt: null });
       throw error;
     }
   }

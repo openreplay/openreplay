@@ -1,7 +1,5 @@
 import { Popover, Space } from 'antd';
 import React from 'react';
-import { connect } from 'react-redux';
-
 import { getInitials } from 'App/utils';
 import Notifications from 'Components/Alerts/Notifications/Notifications';
 import HealthStatus from 'Components/Header/HealthStatus';
@@ -9,7 +7,6 @@ import UserMenu from 'Components/Header/UserMenu/UserMenu';
 
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 import ProjectDropdown from 'Shared/ProjectDropdown';
-import { getScope } from "../duck/user";
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
@@ -19,8 +16,9 @@ interface Props {
 }
 
 function TopRight(props: Props) {
-  const { projectsStore } = useStore();
-  const { account } = props;
+  const { userStore } = useStore();
+  const spotOnly = userStore.scopeState === 1;
+  const account = userStore.account;
   return (
     <Space style={{ lineHeight: '0' }}>
       {props.spotOnly ? null : (
@@ -48,11 +46,4 @@ function TopRight(props: Props) {
   );
 }
 
-function mapStateToProps(state: any) {
-  return {
-    account: state.getIn(['user', 'account']),
-    spotOnly: getScope(state) === 1,
-  };
-}
-
-export default connect(mapStateToProps)(observer(TopRight));
+export default observer(TopRight);

@@ -1,7 +1,5 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import { Map } from 'immutable';
 import React, { Suspense, lazy } from 'react';
-import { connect } from 'react-redux';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import { observer } from 'mobx-react-lite'
 import { useStore } from "./mstore";
@@ -10,7 +8,6 @@ import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
 
 import APIClient from './api_client';
-import { getScope } from './duck/user';
 import * as routes from './routes';
 
 const components: any = {
@@ -108,22 +105,19 @@ const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
-interface Props {
-  tenantId: string;
-  onboarding: boolean;
-  scope: number;
-}
-
-function PrivateRoutes(props: Props) {
-  const { projectsStore } = useStore();
+function PrivateRoutes() {
+  const { projectsStore, userStore } = useStore();
+  const onboarding = userStore.onboarding;
+  const scope = userStore.scopeState;
+  const tenantId = userStore.account.tenantId;
   const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
-  const { onboarding } = props;
   const hasRecordings = sites.some(s => s.recorded);
-  const redirectToSetup = props.scope === 0;
+  const redirectToSetup = scope === 0;
   const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && props.scope > 0;
+    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
+
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
@@ -151,7 +145,7 @@ function PrivateRoutes(props: Props) {
           path={SPOT_PATH}
           component={enhancedComponents.Spot}
         />
-        {props.scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
+        {scope === 1 ? <Redirect to={SPOTS_LIST_PATH} /> : null}
         <Route
           path="/integrations/"
           render={({ location }) => {
@@ -160,13 +154,13 @@ function PrivateRoutes(props: Props) {
               case '/integrations/slack':
                 client.post('integrations/slack/add', {
                   code: location.search.split('=')[1],
-                  state: props.tenantId,
+                  state: tenantId,
                 });
                 break;
               case '/integrations/msteams':
                 client.post('integrations/msteams/add', {
                   code: location.search.split('=')[1],
-                  state: props.tenantId,
+                  state: tenantId,
                 });
                 break;
             }
@@ -289,8 +283,4 @@ function PrivateRoutes(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  onboarding: state.getIn(['user', 'onboarding']),
-  scope: getScope(state),
-  tenantId: state.getIn(['user', 'account', 'tenantId']),
-}))(observer(PrivateRoutes));
+export default observer(PrivateRoutes);
