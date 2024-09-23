@@ -34,7 +34,7 @@ function DropdownAudioPlayer({
       timestamp: data.timestamp,
       start: pa.timestamp - sessionStart,
     };
-  }), [audioEvents, sessionStart])
+  }), [audioEvents.length, sessionStart])
 
   React.useEffect(() => {
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
@@ -118,7 +118,8 @@ function DropdownAudioPlayer({
 
   useEffect(() => {
     const deltaMs = delta * 1000;
-    if (Math.abs(lastPlayerTime.current - time - deltaMs) >= 250) {
+    const deltaTime = Math.abs(lastPlayerTime.current - time - deltaMs)
+    if (deltaTime >= 250) {
       handleSeek(time);
     }
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
