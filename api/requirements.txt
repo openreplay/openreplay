@@ -1,5 +1,5 @@
 # Keep this version to not have conflicts between requests and boto3
-urllib3==1.26.16
+urllib3==2.2.3
 requests==2.32.3
 boto3==1.35.13
 pyjwt==2.9.0
