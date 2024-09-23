@@ -106,22 +106,19 @@ export default class SessionStore {
     makeAutoObservable(this);
   }
 
-  // Set User Timezone
-  setUserTimezone(timezone: string) {
+  setUserTimezone = (timezone: string) => {
     this.userTimezone = timezone;
   }
 
-  resetUserFilter() {
+  resetUserFilter = () => {
     this.userFilter = new UserFilter();
   }
 
-  // Get First Mob (Mobile) File
-  async getFirstMob(sessionId: string) {
+  getFirstMob = async (sessionId: string) => {
     const { domURL } = await sessionService.getFirstMobUrl(sessionId);
     await loadFile(domURL[0], (data) => this.setPrefetchedMobUrl(sessionId, data));
   }
 
-  // Set Prefetched Mobile URL
   setPrefetchedMobUrl = (sessionId: string, fileData: Uint8Array) => {
     const keys = Object.keys(this.prefetchedMobUrls);
     const toLimit = 10 - keys.length;
@@ -158,7 +155,7 @@ export default class SessionStore {
     });
   }
 
-  async fetchLiveSessions(params = {}) {
+  fetchLiveSessions = async (params = {}) => {
     runInAction(() => {
       this.loadingLiveSessions = true;
     })
@@ -175,7 +172,7 @@ export default class SessionStore {
     }
   }
 
-  async fetchSessions(params = {}, force = false) {
+  fetchSessions = async (params = {}, force = false) => {
     runInAction(() => {
       this.loadingSessions = true;
     })
@@ -208,7 +205,7 @@ export default class SessionStore {
     this.clearCurrentSession();
   }
 
-  async fetchSessionData(sessionId: string, isLive = false) {
+  fetchSessionData = async (sessionId: string, isLive = false) => {
     try {
       const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
@@ -273,8 +270,7 @@ export default class SessionStore {
     }
   }
 
-  // Fetch Notes
-  async fetchNotes(sessionId: string) {
+  fetchNotes = async (sessionId: string) => {
     try {
       const notes = await sessionService.getSessionNotes(sessionId);
       if (notes.length > 0) {
@@ -285,8 +281,7 @@ export default class SessionStore {
     }
   }
 
-  // Fetch Favorite List
-  async fetchFavoriteList() {
+  fetchFavoriteList = async () => {
     try {
       const data = await sessionService.getFavoriteSessions();
       this.favoriteList = data.map((s: any) => new Session(s));
@@ -295,8 +290,7 @@ export default class SessionStore {
     }
   }
 
-  // Fetch Session Clickmap
-  async fetchSessionClickmap(sessionId: string, params: any) {
+  fetchSessionClickmap = async (sessionId: string, params: any) => {
     try {
       const data = await sessionService.getSessionClickmap(sessionId, params);
       this.insights = data;
@@ -305,8 +299,7 @@ export default class SessionStore {
     }
   }
 
-  // Set Autoplay Values
-  setAutoplayValues() {
+  setAutoplayValues = () => {
     const currentId = this.current.sessionId;
     const currentIndex = this.sessionIds.indexOf(currentId);
 
@@ -314,8 +307,7 @@ export default class SessionStore {
     this.nextId = this.sessionIds[currentIndex + 1] || '';
   }
 
-  // Set Event Query
-  setEventQuery(filter: { query: string }) {
+  setEventQuery = (filter: { query: string }) => {
     const events = this.current.events;
     const query = filter.query;
     const searchRe = getRE(query, 'i');
@@ -335,8 +327,7 @@ export default class SessionStore {
     this.eventsQuery = query;
   }
 
-  // Toggle Favorite
-  async toggleFavorite(id: string) {
+   toggleFavorite = async (id: string) => {
     try {
       const r = await sessionService.toggleFavorite(id);
       if (r.success) {
@@ -370,7 +361,7 @@ export default class SessionStore {
     }
   }
 
-  sortSessions(sortKey: string, sign: number = 1) {
+  sortSessions = (sortKey: string, sign: number = 1) => {
     const comparator = (s1: Session, s2: Session) => {
       // @ts-ignore
       let diff = s1[sortKey] - s2[sortKey];
@@ -382,8 +373,7 @@ export default class SessionStore {
     this.favoriteList = this.favoriteList.slice().sort(comparator);
   }
 
-  // Set Active Tab
-  setActiveTab(tab: { type: string, name: string }) {
+  setActiveTab = (tab: { type: string, name: string }) => {
     const list =
       tab.type === 'all'
       ? this.list
@@ -393,13 +383,11 @@ export default class SessionStore {
     this.sessionIds = list.map((s) => s.sessionId);
   }
 
-  // Set Timezone
-  setTimezone(tz: string) {
+  setTimezone = (tz: string) => {
     this.timezone = tz;
   }
 
-  // Fetch Insights
-  async fetchInsights(params = {}) {
+  fetchInsights = async (params = {}) => {
     try {
       const data = await sessionService.getClickMap(params);
       this.insights = data.sort((a: any, b: any) => b.count - a.count);
@@ -408,28 +396,25 @@ export default class SessionStore {
     }
   }
 
-  setTimelineTooltip(tp: {
+  setTimelineTooltip = (tp: {
     time: number;
     offset: number;
     isVisible: boolean;
     localTime: string;
     userTime?: string;
-  }) {
+  }) => {
     this.timeLineTooltip = tp;
   }
 
-  // Set Create Note Tooltip
-  setCreateNoteTooltip(noteTooltip: any) {
+  setCreateNoteTooltip = (noteTooltip: any) => {
     this.createNoteTooltip = noteTooltip;
   }
 
-  // Set Edit Note Tooltip
-  setEditNoteTooltip(noteTooltip: any) {
+  setEditNoteTooltip = (noteTooltip: any) => {
     this.createNoteTooltip = noteTooltip;
   }
 
-  // Filter Out Note
-  filterOutNote(noteId: string) {
+  filterOutNote = (noteId: string) => {
     this.current.notesWithEvents = this.current.notesWithEvents.filter((item) => {
       if ('noteId' in item) {
         return item.noteId !== noteId;
@@ -438,8 +423,7 @@ export default class SessionStore {
     });
   }
 
-  // Update Note
-  updateNote(note: Note) {
+  updateNote = (note: Note) => {
     const noteIndex = this.current.notesWithEvents.findIndex((item) => {
       if ('noteId' in item) {
         return item.noteId === note.noteId;
@@ -463,7 +447,6 @@ export default class SessionStore {
     }
   }
 
-  // Clear Current Session
   clearCurrentSession = () => {
     this.current = new Session();
     this.eventsIndex = [];
@@ -478,7 +461,6 @@ export default class SessionStore {
 
   setCustomSession(session: Session) {
     this.current = session;
-    // If additional filter logic is needed, implement here
   }
 
   customSetSessions = (data: any) => {
