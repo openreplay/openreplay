@@ -92,9 +92,13 @@ class NamedIntegrationStore<T extends Integration> {
     this.setLoading(true);
     try {
       const { data } = await integrationsService.fetchList(this.name);
-      this.setList(
-        data.map((config: Record<string, any>) => this.namedTypeCreator(config))
-      );
+      if (Array.isArray(data)) {
+        this.setList(
+          data.map((config: Record<string, any>) => this.namedTypeCreator(config))
+        );
+      } else {
+        this.setList([this.namedTypeCreator(data)]);
+      }
     } catch (e) {
       console.log(e);
     } finally {

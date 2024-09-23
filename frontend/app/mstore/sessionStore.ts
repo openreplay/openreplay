@@ -452,12 +452,11 @@ export default class SessionStore {
     }
   }
 
-  // Set Session Path
-  setSessionPath(path = {}) {
-    // this.sessionPath = path;
+  setSessionPath = (path = {}) => {
+    this.sessionPath = path;
   }
 
-  updateLastPlayedSession(sessionId: string) {
+  updateLastPlayedSession = (sessionId: string) => {
     const sIndex = this.list.findIndex((s) => s.sessionId === sessionId);
     if (sIndex !== -1) {
       this.list[sIndex].viewed = true;
@@ -465,14 +464,14 @@ export default class SessionStore {
   }
 
   // Clear Current Session
-  clearCurrentSession() {
+  clearCurrentSession = () => {
     this.current = new Session();
     this.eventsIndex = [];
     this.visitedEvents = [];
     this.host = '';
   }
 
-  prefetchSession(sessionData: Session) {
+  prefetchSession = (sessionData: Session) => {
     this.current = sessionData;
     this.prefetched = true;
   }
@@ -482,7 +481,7 @@ export default class SessionStore {
     // If additional filter logic is needed, implement here
   }
 
-  customSetSessions(data: any) {
+  customSetSessions = (data: any) => {
     this.liveSessions = data.sessions.map((s: any) => new Session(s));
     this.totalLiveSessions = data.total
   }
@@ -499,7 +498,7 @@ export default class SessionStore {
     }
   }
 
-  clearList() {
+  clearList = () => {
     this.list = [];
     this.total = 0;
     this.sessionIds = [];
