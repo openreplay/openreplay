@@ -41,8 +41,8 @@ function ProjectDropdown(props: Props) {
     searchStore.clearList();
     searchStoreLive.clearSearch();
 
-    await customFieldStore.fetchList(newSiteId);
-    await searchStore.fetchSavedSearchList()
+    // await customFieldStore.fetchList(newSiteId);
+    // await searchStore.fetchSavedSearchList()
   };
 
   const addProjectClickHandler = () => {

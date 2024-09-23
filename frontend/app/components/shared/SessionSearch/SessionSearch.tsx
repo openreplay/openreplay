@@ -47,6 +47,7 @@ function SessionSearch(props: Props) {
 
   useEffect(() => {
     debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
+    void searchStore.fetchSessions(true)
   }, []);
 
   const onAddFilter = (filter: any) => {

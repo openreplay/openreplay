@@ -15,11 +15,11 @@ function SavedSearch() {
   const list = searchStore.list;
   const fetchedMeta = customFieldStore.fetchedMetadata;
 
-  useEffect(() => {
-    if (list.size === 0 && fetchedMeta) {
-      void searchStore.fetchSavedSearchList();
-    }
-  }, [fetchedMeta]);
+  // useEffect(() => {
+  //   if (list.size === 0 && !fetchedMeta) {
+  //     void searchStore.fetchSavedSearchList();
+  //   }
+  // }, [fetchedMeta]);
 
   return (
     <div className={cn('flex items-center', { [stl.disabled]: list.size === 0 })}>

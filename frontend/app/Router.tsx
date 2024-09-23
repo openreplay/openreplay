@@ -51,7 +51,7 @@ const Router: React.FC<RouterProps> = (props) => {
     setJwt,
   } = props;
   const mstore = useStore();
-  const { customFieldStore, projectsStore, sessionStore } = mstore;
+  const { customFieldStore, projectsStore, sessionStore, searchStore } = mstore;
 
   const setSessionPath = sessionStore.setSessionPath;
   const siteId = projectsStore.siteId;
@@ -178,6 +178,7 @@ const Router: React.FC<RouterProps> = (props) => {
         initSite(activeSite ?? {});
         lastFetchedSiteIdRef.current = activeSite?.id;
         await customFieldStore.fetchListActive(siteId + '');
+        await searchStore.fetchSavedSearchList()
       }
     };
 
