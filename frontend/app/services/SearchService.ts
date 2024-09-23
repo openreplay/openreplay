@@ -38,7 +38,7 @@ export default class SearchService extends BaseService {
   }
 
   async checkLatestSessions(filter: any) {
-    const r = await this.client.post('/PROJECT_ID/search/check', filter);
+    const r = await this.client.post('/PROJECT_ID/sessions/search/ids', filter);
     const j = await r.json();
     return j.data;
   }
