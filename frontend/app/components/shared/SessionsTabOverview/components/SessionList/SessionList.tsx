@@ -205,7 +205,7 @@ function SessionList(props: Props) {
                   className="mt-4"
                   icon="arrow-repeat"
                   iconSize={20}
-                  onClick={() => searchStore.fetchSessions()}
+                  onClick={() => searchStore.fetchSessions(true)}
                 >
                   Refresh
                 </Button>

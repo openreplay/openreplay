@@ -16,6 +16,7 @@ export interface ISavedSearch {
   count: number;
   isPublic: boolean;
   toData(): any;
+  exists(): boolean;
 }
 
 class SavedSearch implements ISavedSearch{

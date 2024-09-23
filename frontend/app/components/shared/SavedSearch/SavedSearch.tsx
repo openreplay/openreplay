@@ -17,7 +17,7 @@ function SavedSearch() {
 
   useEffect(() => {
     if (list.size === 0 && fetchedMeta) {
-      searchStore.fetchSavedSearchList(); // TODO check this call
+      void searchStore.fetchSavedSearchList();
     }
   }, [fetchedMeta]);
 

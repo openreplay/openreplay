@@ -79,8 +79,8 @@ class SearchStore {
     //   filters: savedSearch.filter.filters
     // });
     console.log('savedSearch.filter.filters', savedSearch.filter.filters);
-    // this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem(i).toJson()) : []});
-    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters : [] });
+    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i)) : []});
+    // this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters : [] });
     this.currentPage = 1;
   }
 
@@ -134,7 +134,7 @@ class SearchStore {
   setActiveTab(tab: any) {
     this.activeTab = tab;
     this.currentPage = 1;
-    this.fetchSessions();
+    // this.fetchSessions();
   }
 
   async removeSavedSearch(id: string): Promise<void> {
@@ -273,14 +273,14 @@ class SearchStore {
     // TODO
   }
 
-  async fetchSessions() {
+  async fetchSessions(force: boolean = false): Promise<void> {
     await sessionStore.fetchSessions({
       ...this.instance.toSearch(),
       page: this.currentPage,
       perPage: this.pageSize,
       tab: this.activeTab.type,
       bookmarked: this.activeTab.type === 'bookmark' ? true : undefined
-    });
+    }, force);
   };
 }
 

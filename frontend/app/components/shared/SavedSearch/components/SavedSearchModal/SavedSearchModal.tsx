@@ -8,6 +8,7 @@ import SaveSearchModal from 'Shared/SaveSearchModal';
 import stl from './savedSearchModal.module.css';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { ISavedSearch } from 'App/mstore/types/savedSearch';
 
 interface ITooltipIcon {
   title: string;
@@ -38,7 +39,7 @@ function SavedSearchModal(props: Props) {
   const [filterQuery, setFilterQuery] = useState('');
   const { searchStore } = useStore();
 
-  const onClick = (item: SavedSearch, e) => {
+  const onClick = (item: ISavedSearch, e: any) => {
     e.stopPropagation();
     searchStore.applySavedSearch(item);
     hideModal();
