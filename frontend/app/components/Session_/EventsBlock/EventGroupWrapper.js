@@ -1,7 +1,7 @@
 import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import React from 'react';
-
+import { observer } from 'mobx-react-lite'
 import { useStore } from 'App/mstore';
 import UxtEvent from 'Components/Session_/EventsBlock/UxtEvent';
 import { Icon, TextEllipsis } from 'UI';

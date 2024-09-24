@@ -8,8 +8,8 @@ import { Icon, Popover } from 'UI';
 import IssuesModal from './IssuesModal';
 
 function Issues({ sessionId }) {
-  const { issueReportingStore } = useStore();
-  const issuesIntegration = issueReportingStore.list;
+  const { issueReportingStore, integrationsStore } = useStore();
+  const issuesIntegration = integrationsStore.issues.list;
   const handleOpen = () => {
     issueReportingStore.init();
     if (!issueReportingStore.projectsFetched) {
@@ -21,7 +21,7 @@ function Issues({ sessionId }) {
     }
   };
 
-  const provider = issuesIntegration?.[0].provider || '';
+  const provider = issuesIntegration[0]?.provider || '';
 
   return (
     <Popover
