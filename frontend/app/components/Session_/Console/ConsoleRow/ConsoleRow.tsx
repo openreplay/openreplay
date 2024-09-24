@@ -19,7 +19,7 @@ function ConsoleRow(props: Props) {
 
   return (
     <div
-      className={cn(stl.line, 'flex py-2 px-4 overflow-hidden group relative select-none', {
+      className={cn(stl.line, 'flex py-2 px-4 overflow-hidden group relative', {
         info: !log.isYellow && !log.isRed,
         warn: log.isYellow,
         error: log.isRed,
