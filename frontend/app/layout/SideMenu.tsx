@@ -55,7 +55,6 @@ function SideMenu(props: Props) {
   const { searchStore, projectsStore, userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
   const account = userStore.account;
-  console.log(account)
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
