@@ -10,14 +10,12 @@ const mockFflagsService = {
     getFlag: jest.fn(),
 };
 
-// not working
 jest.mock('App/services', () => {
     return {
         fflagsService: mockFflagsService,
     };
 });
 
-// working fine?
 jest.mock('App/mstore/types/FeatureFlag', () => {
     class FakeClass {
         constructor(data) {
