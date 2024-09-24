@@ -40,6 +40,7 @@ function DropdownAudioPlayer({
   React.useEffect(() => {
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
+        audio.loop = false;
         audio.addEventListener('loadedmetadata', () => {
           fileLengths.current[url] = audio.duration;
         })
@@ -100,10 +101,14 @@ function DropdownAudioPlayer({
       if (audio) {
         const file = files.find((f) => f.url === key);
         if (file) {
-          audio.currentTime = Math.max(
-            (timeMs + delta * 1000 - file.start) / 1000,
-            0
-          );
+          const targetTime = (timeMs + delta * 1000 - file.start) / 1000;
+          const fileLength = fileLengths.current[key];
+          if (targetTime < 0 || (fileLength && targetTime > fileLength)) {
+            audio.pause();
+            return;
+          } else {
+            audio.currentTime = targetTime;
+          }
         }
       }
     });
@@ -126,15 +131,18 @@ function DropdownAudioPlayer({
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
         const file = files.find((f) => f.url === url);
-        if (audio.ended && fileLengths.current[url] < time) {
-          return;
-        }
-        if (file && time >= file.start) {
-          if (audio.paused && playing) {
-            audio.play();
+        const fileLength = fileLengths.current[url];
+        if (file) {
+          if (fileLength && (fileLength*1000)+file.start < time) {
+            return;
           }
-        } else {
-          audio.pause();
+          if (time >= file.start) {
+            if (audio.paused && playing) {
+              audio.play();
+            }
+          } else {
+            audio.pause();
+          }
         }
       }
     });
@@ -157,10 +165,17 @@ function DropdownAudioPlayer({
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
       if (audio) {
         const file = files.find((f) => f.url === url);
-        if (file && playing && time >= file.start) {
-          audio.play();
-        } else {
-          audio.pause();
+        const fileLength = fileLengths.current[url];
+        if (file) {
+          if (fileLength && (fileLength*1000)+file.start < time) {
+            audio.pause();
+            return;
+          }
+          if (playing && time >= file.start) {
+            audio.play();
+          } else {
+            audio.pause();
+          }
         }
       }
     });
