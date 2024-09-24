@@ -233,6 +233,8 @@ export default class Session {
   screenWidth?: number
   screenHeight?: number
 
+  addedEvents = false;
+
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession);
     const {
@@ -427,6 +429,7 @@ export default class Session {
     // @ts-ignore
     this.frustrations = frustrationList;
     this.crashes = crashes || [];
+    this.addedEvents = true;
     return this;
   }
 

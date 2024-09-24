@@ -21,9 +21,9 @@ export default class FeatureFlagsStore {
   readonly pageSize: number = 10;
   client: typeof fflagsService
 
-  constructor(customClient?: typeof fflagsService) {
+  constructor() {
     makeAutoObservable(this);
-    this.client = customClient ?? fflagsService
+    this.client = fflagsService
   }
 
 

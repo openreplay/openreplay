@@ -2,7 +2,7 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   moduleNameMapper: {
-    '^Types/session/(.+)$': '<rootDir>/app/types/session/$1',
+    '^Types/(.+)$': '<rootDir>/app/types/$1',
     '^App/(.+)$': '<rootDir>/app/$1',
     "\\.(css|less)$": "<rootDir>/tests/mocks/style.mock.js",
   },

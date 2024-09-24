@@ -1,7 +1,7 @@
 // @flow
 
 import { DateTime, Duration } from 'luxon'; // TODO
-import { Timezone } from 'MOBX/types/sessionSettings';
+import { Timezone } from 'App/mstore/types/sessionSettings';
 
 /**
  * Formats a given duration.

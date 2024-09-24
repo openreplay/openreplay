@@ -54,7 +54,7 @@ export default class APIClient {
   private init: RequestInit;
   private siteId: string | undefined;
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
-  private getJwt: () => string | null;
+  private getJwt: () => string | null = () => null;
   private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
 

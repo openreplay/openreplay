@@ -6,18 +6,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
+
+
 import { useStore } from 'App/mstore';
 import { Note } from 'App/services/NotesService';
 import { Loader, Modal } from 'UI';
 
+
+
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
-import {
-  IPlayerContext,
-  PlayerContext,
-  defaultContextValue,
-} from './playerContext';
+import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
+
 
 const TABS = {
   EVENTS: 'Activity',
@@ -119,11 +120,14 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (
       messagesProcessed &&
-      (session.events.length > 0 || session.errors.length > 0)
+      (session.events.length > 0 ||
+        session.errors.length > 0 ||
+        session.stackEvents.length > 0 ||
+        session.addedEvents)
     ) {
       contextValue.player?.updateLists?.(session);
     }
-  }, [session.events, session.errors, contextValue.player, messagesProcessed]);
+  }, [session.events, session.errors, session.addedEvents, contextValue.player, messagesProcessed]);
 
   React.useEffect(() => {
     if (noteItem === undefined) {

@@ -62,8 +62,43 @@ class UserFilter {
   }
 }
 
+interface BaseDevState {
+  index: number;
+  filter: string;
+  activeTab: string;
+  isError: boolean;
+}
+
+class DevTools {
+  network: BaseDevState;
+  stackEvent: BaseDevState;
+  console: BaseDevState;
+
+  constructor() {
+    this.network = { index: 0, filter: '', activeTab: 'ALL', isError: false };
+    this.stackEvent = {
+      index: 0,
+      filter: '',
+      activeTab: 'ALL',
+      isError: false,
+    };
+    this.console = { index: 0, filter: '', activeTab: 'ALL', isError: false };
+    makeAutoObservable(this, {
+      update: action,
+    });
+  }
+
+  update(key: string, value: any) {
+    // @ts-ignore
+    this[key] = Object.assign(this[key], value);
+  }
+}
+
+
+
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
+  devTools: DevTools = new DevTools();
   list: Session[] = [];
   sessionIds: string[] = [];
   current = new Session();
@@ -209,8 +244,6 @@ export default class SessionStore {
     try {
       const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
-      this.current = new Session(data);
-
       const eventsData = await sessionService.getSessionEvents(sessionId);
 
       const {
@@ -251,19 +284,24 @@ export default class SessionStore {
         });
       });
 
-      this.current = this.current.addEvents(
-        events,
-        crashes,
-        errors,
-        issues,
-        resources,
-        userEvents,
-        stackEvents,
-        userTesting
-      );
-      this.eventsIndex = matching;
-      this.visitedEvents = visitedEvents;
-      this.host = visitedEvents[0]?.host || '';
+      runInAction(() => {
+        const session = new Session(data);
+        session.addEvents(
+          events,
+          crashes,
+          errors,
+          issues,
+          resources,
+          userEvents,
+          stackEvents,
+          userTesting
+        );
+        this.current = session;
+        this.eventsIndex = matching;
+        this.visitedEvents = visitedEvents;
+        this.host = visitedEvents[0]?.host || '';
+        this.prefetched = false;
+      })
     } catch (e) {
       console.error(e);
       this.fetchFailed = true;
@@ -457,10 +495,6 @@ export default class SessionStore {
   prefetchSession = (sessionData: Session) => {
     this.current = sessionData;
     this.prefetched = true;
-  }
-
-  setCustomSession(session: Session) {
-    this.current = session;
   }
 
   customSetSessions = (data: any) => {

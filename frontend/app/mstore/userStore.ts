@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { userService } from 'App/services';
 import { deleteCookie } from 'App/utils';
 
-import User from './types/user';
+import User from 'App/mstore/types/user';
 
 class UserStore {
   list: User[] = [];

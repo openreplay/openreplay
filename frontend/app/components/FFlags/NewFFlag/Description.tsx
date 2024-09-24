@@ -2,7 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from 'UI';
 import cn from 'classnames';
-import FeatureFlag from 'MOBX/types/FeatureFlag';
+import FeatureFlag from 'App/mstore/types/FeatureFlag';
 
 function Description({
   isDescrEditing,

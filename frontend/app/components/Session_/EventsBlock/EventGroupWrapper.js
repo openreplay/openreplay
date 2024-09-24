@@ -126,7 +126,7 @@ function EventGroupWrapper(props) {
             zIndex: 98,
           }}
         />
-        {this.props.isCurrent ? (
+        {props.isCurrent ? (
           <div
             style={{
               position: 'absolute',
