@@ -40,12 +40,6 @@ const Router: React.FC<RouterProps> = (props) => {
   const scopeSetup = userStore.scopeState === 0;
   const localSpotJwt = userStore.spotJwt;
   const isLoggedIn = Boolean(jwt && !changePassword);
-  const email = userStore.account.email;
-  const account = userStore.account;
-  const organisation = userStore.account.name;
-  const tenantId = userStore.account.tenantId;
-  const tenants = userStore.tenants;
-  const isEnterprise = userStore.account.edition === 'ee' || userStore.authDetails.edition === 'ee';
   const fetchUserInfo = userStore.fetchUserInfo;
   const setJwt = userStore.updateJwt;
   const logout = userStore.logout;

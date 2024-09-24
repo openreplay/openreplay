@@ -7,7 +7,6 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { Icon } from 'UI';
-import { connect } from 'react-redux';
 
 interface Props {
   query: Record<string, (key: string) => any>;

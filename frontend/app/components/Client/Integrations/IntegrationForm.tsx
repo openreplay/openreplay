@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
@@ -9,7 +8,6 @@ import { Button, Checkbox, Form, Input, Loader } from 'UI';
 function IntegrationForm(props: any) {
   const { formFields, name, integrated } = props;
   const { integrationsStore, projectsStore } = useStore();
-  const sites = projectsStore.list;
   const initialSiteId = projectsStore.siteId;
   const integrationStore = integrationsStore[name as unknown as namedStore];
   const config = integrationStore.instance;

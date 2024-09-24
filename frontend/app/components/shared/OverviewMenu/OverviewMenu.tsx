@@ -1,13 +1,11 @@
 import React from 'react';
 import { SideMenuitem } from 'UI';
-import { connect } from 'react-redux';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { sessions, fflags, withSiteId, notes, bookmarks } from 'App/routes';
 import { useStore } from 'App/mstore';
 
 interface Props {
   activeTab: string;
-  isEnterprise: boolean;
 }
 
 const TabToUrlMap = {
@@ -19,8 +17,9 @@ const TabToUrlMap = {
 
 function OverviewMenu(props: Props & RouteComponentProps) {
   // @ts-ignore
-  const { isEnterprise, history, match: { params: { siteId } }, location } = props;
-  const { searchStore } = useStore();
+  const { history, match: { params: { siteId } }, location } = props;
+  const { searchStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
   const activeTab = searchStore.activeTab.type;
 
   React.useEffect(() => {
@@ -85,6 +84,4 @@ function OverviewMenu(props: Props & RouteComponentProps) {
   );
 }
 
-export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
-}))(withRouter(OverviewMenu));
+export default withRouter(OverviewMenu);

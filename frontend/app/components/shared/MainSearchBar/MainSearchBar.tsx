@@ -3,7 +3,6 @@ import SessionSearchField from 'Shared/SessionSearchField';
 import AiSessionSearchField from 'Shared/SessionSearchField/AiSessionSearchField';
 import SavedSearch from 'Shared/SavedSearch';
 import { Button } from 'antd';
-import { connect } from 'react-redux';
 import TagList from './components/TagList';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';

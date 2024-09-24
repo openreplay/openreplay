@@ -23,12 +23,14 @@ interface LoginProps {
   location: Location;
 }
 
-const Login: React.FC<LoginProps> = ({
+const Login = ({
   location,
-}) => {
+}: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const CAPTCHA_ENABLED = React.useMemo(() => window.env.CAPTCHA_ENABLED === 'true', []);
+  const CAPTCHA_ENABLED = React.useMemo(() => {
+    return window.env.CAPTCHA_ENABLED === 'true'
+  }, []);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
   const errors = userStore.loginRequest.errors;
@@ -139,7 +141,7 @@ const Login: React.FC<LoginProps> = ({
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             Login to your account
           </h2>
-          <div className={cn(authDetails.enforceSSO ? '!hidden' : '')}>
+          <div className={cn(authDetails?.enforceSSO ? '!hidden' : '')}>
             <Form
               onSubmit={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
@@ -264,7 +266,7 @@ const Login: React.FC<LoginProps> = ({
           </div>
           <div
             className={cn('flex items-center w-96 justify-center my-8', {
-              '!hidden': !authDetails.enforceSSO,
+              '!hidden': !authDetails?.enforceSSO,
             })}
           >
             <a href={ssoLink} rel="noopener noreferrer">

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
 import { Tag } from 'antd';
 import cn from 'classnames';
 import { Loader, Button, TextLink, NoContent, Pagination, PageTitle, Divider, Icon } from 'UI';

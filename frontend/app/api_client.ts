@@ -1,6 +1,4 @@
 import { queried } from './routes';
-import { userStore } from "./mstore";
-import { handleSpotJWT } from "App/utils";
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -56,19 +54,31 @@ export default class APIClient {
   private init: RequestInit;
   private siteId: string | undefined;
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
+  private getJwt: () => string | null;
+  private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
-    const jwt = userStore.getJwt();
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
         'Content-Type': 'application/json'
       })
     };
+  }
+
+  setJwt(jwt: string | null): void {
     if (jwt !== null) {
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
     }
+  }
+
+  setOnUpdateJwt(onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void): void {
+    this.onUpdateJwt = onUpdateJwt;
+  }
+
+  setJwtChecker(checker: () => string | null): void {
+    this.getJwt = checker;
   }
 
   setSiteIdCheck(checker: () => { siteId: string | null }): void {
@@ -77,7 +87,7 @@ export default class APIClient {
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = userStore.getJwt();
+    const jwt = this.getJwt()
     const headers = new Headers({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -137,7 +147,7 @@ export default class APIClient {
     clean?: boolean
   } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
     let _path = path;
-    let jwt = userStore.getJwt();
+    let jwt = this.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
       jwt = await this.handleTokenRefresh();
       (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
@@ -208,11 +218,11 @@ export default class APIClient {
 
       const data = await response.json();
       const refreshedJwt = data.jwt;
-      userStore.updateJwt({ jwt: refreshedJwt });
+      this.onUpdateJwt({ jwt: refreshedJwt });
       return refreshedJwt;
     } catch (error) {
       console.error('Error refreshing token:', error);
-      userStore.updateJwt({ jwt: null });
+      this.onUpdateJwt({ jwt: undefined });
       throw error;
     }
   }

@@ -1,7 +1,6 @@
 import {Timed} from "Player";
 import {PerformanceChartPoint} from "Player/mobile/managers/IOSPerformanceTrackManager";
 import React from 'react';
-import { connect } from 'react-redux';
 import {MobilePlayerContext, PlayerContext} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import {

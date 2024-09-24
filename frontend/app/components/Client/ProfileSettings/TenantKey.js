@@ -1,51 +1,43 @@
-// TODO this can be deleted
 import React from 'react';
 import copy from 'copy-to-clipboard';
-import { connect } from 'react-redux';
-import styles from './profileSettings.module.css';
 import { Form, Input, Button } from "UI";
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-@connect(state => ({
-  tenantKey: state.getIn([ 'user', 'account', 'tenantKey' ]),
-}))
-export default class TenantKey extends React.PureComponent {
-  state = { copied: false }
 
-  copyHandler = () => {
-    const { tenantKey } = this.props;
-    this.setState({ copied: true });
+function TenantKey() {
+  const [ copied, setCopied ] = React.useState(false);
+  const { userStore } = useStore();
+  const tenantKey = userStore.account.tenantKey;
+
+  const copyHandler = () => {
+    setCopied(true);
     copy(tenantKey);
     setTimeout(() => {
-      this.setState({ copied: false });
+      setCopied(false);
     }, 1000);
-  };
-
-  render() {
-    const { tenantKey } = this.props;
-    const { copied } = this.state;
-
-    return (
-      <Form onSubmit={ this.handleSubmit } className={ styles.form }>
-        <Form.Field>
-          <label htmlFor="tenantKey">{ 'Tenant Key' }</label>
-            <Input
-              name="tenantKey"
-              id="tenantKey"
-              type="text"
-              readOnly={ true }
-              value={ tenantKey }
-              leadingButton={
-                <Button
-                  variant="text-primary"
-                  role="button"
-                  onClick={ this.copyHandler }
-                >
-                  { copied ? 'Copied' : 'Copy' }
-                </Button>
-              }
-            />
-        </Form.Field>
-      </Form>
-    );
   }
+  return (
+      <Form.Field>
+        <label htmlFor="tenantKey">{ 'Tenant Key' }</label>
+          <Input
+            name="tenantKey"
+            id="tenantKey"
+            type="text"
+            readOnly={ true }
+            value={ tenantKey }
+            leadingButton={
+              <Button
+                variant="text-primary"
+                role="button"
+                onClick={ copyHandler }
+              >
+                { copied ? 'Copied' : 'Copy' }
+              </Button>
+            }
+          />
+      </Form.Field>
+  );
 }
+
+export default observer(TenantKey);

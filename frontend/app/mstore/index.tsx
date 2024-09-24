@@ -30,15 +30,14 @@ import SettingsStore from './settingsStore';
 import SpotStore from './spotStore';
 import TagWatchStore from './tagWatchStore';
 import UiPlayerStore from './uiPlayerStore';
-import UserStore from './userStore';
+import userStore from './userStore';
 import UxtestingStore from './uxtestingStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
 
-export const projectStore = new ProjectsStore();
-export const sessionStore = new SessionStore();
-export const searchStore = new SearchStore();
-export const searchStoreLive = new SearchStoreLive();
-export const userStore = new UserStore();
+const projectStore = new ProjectsStore();
+const sessionStore = new SessionStore();
+const searchStore = new SearchStore();
+const searchStoreLive = new SearchStoreLive();
 
 function copyToClipboard(text: string) {
   const textArea = document.createElement('textarea');
@@ -82,7 +81,7 @@ export class RootStore {
   metricStore: MetricStore;
   funnelStore: FunnelStore;
   settingsStore: SettingsStore;
-  userStore: UserStore;
+  userStore: typeof userStore;
   roleStore: RoleStore;
   auditStore: AuditStore;
   errorStore: ErrorStore;
@@ -145,6 +144,9 @@ export class RootStore {
   initClient() {
     const client = new APIClient();
     client.setSiteIdCheck(projectStore.getSiteId);
+    client.setJwt(userStore.getJwt());
+    client.setJwtChecker(userStore.getJwt);
+    client.setOnUpdateJwt(userStore.updateJwt);
     services.forEach((service) => {
       service.initClient(client);
     });
@@ -164,3 +166,5 @@ export const useStore = () => React.useContext(StoreContext);
 export const withStore = (Component: any) => (props: any) => {
   return <Component {...props} mstore={useStore()} />;
 };
+
+export { userStore, sessionStore, searchStore, searchStoreLive, projectStore };

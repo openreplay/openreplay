@@ -3,7 +3,6 @@ import { FilterKey } from 'Types/filter/filterType';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
 import { resentOrDate } from 'App/date';

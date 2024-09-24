@@ -3,14 +3,11 @@ import { Conditions } from 'App/mstore/types/FeatureFlag';
 import { Icon, Input, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { connect } from 'react-redux';
 import cn from 'classnames';
 import { Switch, Drawer, Button, Tooltip } from 'antd';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
 
 type Props = {
-  isAdmin: boolean;
-  isEnterprise?: boolean;
   projectId?: string;
   setShowCaptureRate: (show: boolean) => void;
   open: boolean;
@@ -20,8 +17,10 @@ type Props = {
 
 function CaptureRate(props: Props) {
   const [conditions, setConditions] = React.useState<Conditions[]>([]);
-  const { isAdmin, projectId, isEnterprise, isMobile } = props;
-  const { settingsStore } = useStore();
+  const { projectId, isMobile } = props;
+  const { settingsStore, userStore } = useStore();
+  const isAdmin = userStore.account.admin || userStore.account.superAdmin;
+  const isEnterprise = userStore.isEnterprise;
   const [changed, setChanged] = useState(false);
   const {
     sessionSettings: {
@@ -147,12 +146,4 @@ function CaptureRate(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  isAdmin:
-    state.getIn(['user', 'account', 'admin']) || state.getIn(['user', 'account', 'superAdmin']),
-  isEnterprise: !document.location.href.includes('app.openreplay.com') && (
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'account', 'edition']) === 'msaas' ||
-    state.getIn(['user', 'authDetails', 'edition']) === 'ee'
-  )
-}))(observer(CaptureRate));
+export default observer(CaptureRate);

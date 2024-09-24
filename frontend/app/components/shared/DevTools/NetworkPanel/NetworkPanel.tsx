@@ -4,7 +4,6 @@ import WebPlayer from 'Player/web/WebPlayer';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
-import { connect } from 'react-redux';
 
 import { useModal } from 'App/components/Modal';
 import {

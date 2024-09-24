@@ -2,7 +2,6 @@ import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';

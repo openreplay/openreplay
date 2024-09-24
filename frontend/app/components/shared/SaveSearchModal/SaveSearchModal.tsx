@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
 import { confirm } from 'UI';
 import stl from './SaveSearchModal.module.css';
@@ -11,13 +10,12 @@ import { observer } from 'mobx-react-lite';
 interface Props {
   show: boolean;
   closeHandler: () => void;
-  userId: number;
   rename?: boolean;
 }
 
-function SaveSearchModal(props: Props) {
-  const { show, closeHandler, rename = false } = props;
-  const { searchStore } = useStore();
+function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
+  const { searchStore, userStore } = useStore();
+  const userId = userStore.account.id;
   const savedSearch = searchStore.savedSearch;
   const loading = searchStore.isSaving;
 
@@ -26,8 +24,6 @@ function SaveSearchModal(props: Props) {
   };
 
   const onSave = () => {
-    const { closeHandler } = props;
-
     searchStore.save(savedSearch.exists() ? savedSearch.searchId : null, rename)
       .then(() => {
         toast.success(`${savedSearch.exists() ? 'Updated' : 'Saved'} Successfully`);
@@ -77,7 +73,7 @@ function SaveSearchModal(props: Props) {
 
           <Form.Field>
             <div
-              className={cn('flex items-center', { disabled: savedSearch.exists() && savedSearch.userId !== props.userId })}>
+              className={cn('flex items-center', { disabled: savedSearch.exists() && savedSearch.userId !== userId })}>
               <Checkbox
                 name="isPublic"
                 className="font-medium mr-3"
@@ -115,8 +111,4 @@ function SaveSearchModal(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    userId: state.getIn(['user', 'account', 'id'])
-  })
-)(observer(SaveSearchModal));
+export default observer(SaveSearchModal);

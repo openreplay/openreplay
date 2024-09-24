@@ -1,25 +1,12 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
-import { connect } from 'react-redux';
-
-
 
 import { useStore } from 'App/mstore';
 import { Button, Checkbox, Form, Icon, Input } from 'UI';
 
-
-
 import Select from 'Shared/Select';
 
-
-
 import stl from './roleForm.module.css';
-
-
-interface Permission {
-  name: string;
-  value: string;
-}
 
 interface Props {
   closeModal: (toastMessage?: string) => void;
@@ -59,7 +46,8 @@ const RoleForm = (props: Props) => {
     });
   };
 
-  const write = ({ target: { value, name } }: any) => roleStore.editRole({ [name]: value });
+  const write = ({ target: { value, name } }: any) =>
+    roleStore.editRole({ [name]: value });
 
   const onChangePermissions = (e: any) => {
     const { permissions } = role;
@@ -79,10 +67,10 @@ const RoleForm = (props: Props) => {
     const index = projects.indexOf(e);
     let _projects;
     if (index === -1) {
-      _projects = projects.concat(e)
+      _projects = projects.concat(e);
     } else {
-      projects.splice(index, 1)
-      _projects = projects
+      projects.splice(index, 1);
+      _projects = projects;
     }
     roleStore.editRole({ projects: _projects });
   };

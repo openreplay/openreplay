@@ -1,4 +1,4 @@
-import Member, { IMember } from 'Types/member';
+import { IMember } from 'Types/member';
 import Limit, { ILimits } from './limit';
 import { DateTime } from 'luxon';
 import { makeAutoObservable } from 'mobx';
@@ -24,7 +24,7 @@ export interface IAccount extends IMember {
   versionNumber: string
 }
 
-export default class Account extends Member {
+export default class Account {
   changePassword: boolean
   limits: Limit[] = []
   banner: boolean
@@ -34,9 +34,9 @@ export default class Account extends Member {
   smtp: false
   license: string
   expirationDate: DateTime
-  permissions: []
-  settings: Record<string, any>
-  iceServers: any[]
+  permissions: string[] = []
+  settings: Record<string, any> = {}
+  iceServers: any[] = []
   hasPassword: boolean
   apiKey: string
   tenantKey: string
@@ -45,10 +45,17 @@ export default class Account extends Member {
   optOut: boolean
   versionNumber: string
   tenantId: string
+  name: string
+  createdAt: DateTime
+  admin: boolean
+  superAdmin: boolean
+  joined: boolean
+  expiredInvitation: boolean
+  roleId: string
+  roleName: string
+  invitationLink: string
 
   constructor(account: Partial<IAccount> = {}) {
-    super(account);
-
     Object.assign(this, {
       ...account,
       id: account.id || account.userId,
@@ -60,7 +67,6 @@ export default class Account extends Member {
 
   toData = () => {
     return {
-      ...super.toData(),
       id: this.id,
       email: this.email,
       verifiedEmail: this.verifiedEmail,
@@ -76,6 +82,15 @@ export default class Account extends Member {
       edition: this.edition,
       optOut: this.optOut,
       versionNumber: this.versionNumber,
+      name: this.name,
+      createdAt: this.createdAt,
+      admin: this.admin,
+      superAdmin: this.superAdmin,
+      joined: this.joined,
+      expiredInvitation: this.expiredInvitation,
+      roleId: this.roleId,
+      roleName: this.roleName,
+      invitationLink: this.invitationLink,
     }
   }
 }

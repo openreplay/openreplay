@@ -12,7 +12,6 @@ import StackEventRow from 'Shared/DevTools/StackEventRow';
 import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import { connect } from 'react-redux';
 import { VList, VListHandle } from 'virtua';
 
 const mapNames = (type: string) => {

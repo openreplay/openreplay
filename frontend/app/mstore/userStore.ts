@@ -10,7 +10,7 @@ import { deleteCookie } from 'App/utils';
 
 import User from './types/user';
 
-export default class UserStore {
+class UserStore {
   list: User[] = [];
   instance: User | null = null;
   page: number = 1;
@@ -27,7 +27,7 @@ export default class UserStore {
   passwordRequestError: boolean = false;
   passwordErrors: string[] = [];
   tenants: any[] = [];
-  authDetails: any = {};
+  authDetails: Record<string, any> = {};
   onboarding: boolean = false;
   sites: any[] = [];
   jwt: string | null = null;
@@ -73,7 +73,16 @@ export default class UserStore {
               return acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({});
             },
             deserialize: (json) => {
-              return new Account(json);
+              return new Account(JSON.parse(json));
+            },
+          },
+          {
+            key: 'authDetails',
+            serialize: (ad) => {
+              return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
+            },
+            deserialize: (json) => {
+              return JSON.parse(json)
             },
           },
         ],
@@ -87,9 +96,9 @@ export default class UserStore {
 
   get isEnterprise() {
     return (
-      this.account.edition === 'ee' ||
-      this.account.edition === 'msaas' ||
-      this.authDetails.edition === 'ee'
+      this.account?.edition === 'ee' ||
+      this.account?.edition === 'msaas' ||
+      this.authDetails?.edition === 'ee'
     );
   }
 
@@ -149,11 +158,11 @@ export default class UserStore {
     return new Promise((resolve, reject) => {
       userService
         .one(userId)
-        .then((response) => {
+        .then((data) => {
           runInAction(() => {
-            this.instance = new User().fromJson(response.data);
+            this.instance = new User().fromJson(data);
           });
-          resolve(response);
+          resolve(data);
         })
         .catch((error) => {
           runInAction(() => {
@@ -330,12 +339,12 @@ export default class UserStore {
   login = async (params: any) => {
     this.loginRequest = { loading: true, errors: [] };
     try {
-      const response = await userService.login(params);
+      const data = await userService.login(params);
       runInAction(() => {
-        this.account = new Account(response.data.user);
-        this.jwt = response.data.jwt;
-        this.spotJwt = response.data.spotJwt;
-        this.scopeState = response.data.scopeState;
+        this.account = new Account(data.user);
+        this.jwt = data.jwt;
+        this.spotJwt = data.spotJwt;
+        this.scopeState = data.scopeState;
         this.loginRequest = { loading: false, errors: [] };
       });
     } catch (error: any) {
@@ -355,12 +364,12 @@ export default class UserStore {
       this.signUpRequest = { loading: true, errors: [] };
     });
     try {
-      const response = await userService.signup(params);
+      const data = await userService.signup(params);
       runInAction(() => {
-        this.account = new Account(response.data.user);
-        this.scopeState = response.data.scopeState;
-        this.spotJwt = response.data.spotJwt;
-        this.jwt = response.data.jwt;
+        this.account = new Account(data.user);
+        this.scopeState = data.scopeState;
+        this.spotJwt = data.spotJwt;
+        this.jwt = data.jwt;
         this.signUpRequest = { loading: false, errors: [] };
       });
     } catch (error) {
@@ -383,9 +392,9 @@ export default class UserStore {
       this.loading = true;
     });
     try {
-      const response = await userService.resetPassword(params);
+      const data = await userService.resetPassword(params);
       runInAction(() => {
-        this.account = new Account(response.data.user);
+        this.account = new Account(data.user);
       });
     } catch (error) {
       toast.error('Error resetting your password; please try again');
@@ -438,7 +447,7 @@ export default class UserStore {
     try {
       const response = await userService.fetchTenants();
       runInAction(() => {
-        this.authDetails = response.data;
+        this.authDetails = response;
       });
     } catch (error) {
       // TODO error handling
@@ -450,10 +459,10 @@ export default class UserStore {
       this.fetchInfoRequest = { loading: true, errors: [] };
     });
     try {
-      const response = await userService.fetchUserInfo();
+      const data = await userService.fetchUserInfo();
       runInAction(() => {
-        this.account = new Account(response.data);
-        this.scopeState = response.data.scopeState;
+        this.account = new Account(data);
+        this.scopeState = data.scopeState;
         this.passwordErrors = [];
       });
     } catch (error) {
@@ -498,7 +507,7 @@ export default class UserStore {
     }
   };
 
-  updateJwt = ({ jwt, spotJwt }: { jwt?: string; spotJwt?: string | null }) => {
+  updateJwt = ({ jwt, spotJwt }: { jwt?: string; spotJwt?: string }) => {
     this.jwt = jwt ?? null;
     this.spotJwt = spotJwt ?? null;
   };
@@ -512,10 +521,10 @@ export default class UserStore {
       this.loading = true;
     });
     try {
-      const response = await userService.updateAccount(params);
+      const data = await userService.updateAccount(params);
       runInAction(() => {
-        this.account = new Account(response.data);
-        this.scopeState = response.data.scopeState;
+        this.account = new Account(data);
+        this.scopeState = data.scopeState;
         this.passwordErrors = [];
       });
     } catch (error) {
@@ -612,3 +621,7 @@ export default class UserStore {
     this.initialDataFetched = false;
   };
 }
+
+const userStore = new UserStore();
+
+export default userStore;

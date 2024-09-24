@@ -1,10 +1,9 @@
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton, Popover, Switch, Tooltip } from 'antd';
+import { Button as AntButton, Switch, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { connect } from 'react-redux';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { IFRAME } from 'App/constants/storageKeys';
@@ -25,7 +24,8 @@ const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
-  const { uxtestingStore, projectsStore } = useStore();
+  const { uxtestingStore, projectsStore, userStore, integrationsStore } = useStore();
+  const integrations = integrationsStore.issues.list;
   const defaultLocalhostWarn = React.useMemo(() => {
     const siteId = projectsStore.siteId;
     const localhostWarnKey = localhostWarn(siteId);
@@ -44,13 +44,12 @@ function SubHeader(props) {
   }, []);
 
   const enabledIntegration = useMemo(() => {
-    const { integrations } = props;
-    if (!integrations || !integrations.size) {
+    if (!integrations || !integrations.length) {
       return false;
     }
 
     return integrations.some((i) => i.token);
-  }, [props.integrations]);
+  }, [integrations]);
 
   const locationTruncated = truncateStringToFit(
     currentLocation,
@@ -172,7 +171,4 @@ function SubHeader(props) {
   );
 }
 
-export default connect((state) => ({
-  integrations: state.getIn(['issues', 'list']),
-  modules: state.getIn(['user', 'account', 'modules']) || [],
-}))(observer(SubHeader));
+export default observer(SubHeader);

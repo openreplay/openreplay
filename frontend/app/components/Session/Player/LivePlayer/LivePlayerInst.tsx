@@ -2,25 +2,23 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { findDOMNode } from 'react-dom';
-import { connect } from 'react-redux';
 
-
-
-import { ILivePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
-import { useStore } from "App/mstore";
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 import { CONSOLE } from 'App/mstore/uiPlayerStore';
-import { debounceUpdate, getDefaultPanelHeight } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+import {
+  debounceUpdate,
+  getDefaultPanelHeight,
+} from 'Components/Session/Player/ReplayPlayer/PlayerInst';
 import stl from 'Components/Session_/Player/player.module.css';
-
-
 
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 
-
-
 import LiveControls from './LiveControls';
 import Overlay from './Overlay';
-
 
 interface IProps {
   fullView: boolean;

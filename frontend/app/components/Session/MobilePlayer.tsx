@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { Modal, Loader } from 'UI';
 import { createIOSPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';

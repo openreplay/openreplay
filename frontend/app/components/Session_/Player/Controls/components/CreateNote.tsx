@@ -1,7 +1,6 @@
 import { Tag } from 'antd';
 import { Duration } from 'luxon';
 import React from 'react';
-import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';

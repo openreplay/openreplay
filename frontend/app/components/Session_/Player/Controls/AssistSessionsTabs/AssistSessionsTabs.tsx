@@ -5,7 +5,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useHistory } from 'react-router-dom';
 import { multiview, liveSession, withSiteId } from 'App/routes';
-import { connect } from 'react-redux';
 
 interface ITab {
   onClick?: () => void;

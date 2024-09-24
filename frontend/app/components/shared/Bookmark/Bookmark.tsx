@@ -1,21 +1,19 @@
 import { Button, Tooltip } from 'antd';
 import { BookmarkCheck, Bookmark as BookmarkIcn, Vault } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
   sessionId: any;
-  isEnterprise: boolean;
 }
 
-function Bookmark(props: Props) {
-  const { sessionStore } = useStore();
+function Bookmark({ sessionId }: Props) {
+  const { sessionStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
   const favorite = sessionStore.current.favorite;
   const onToggleFavorite = sessionStore.toggleFavorite;
-  const { sessionId, isEnterprise } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
 
   const ADDED_MESSAGE = isEnterprise
@@ -64,8 +62,4 @@ function Bookmark(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-      isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    }),
-)(observer(Bookmark));
+export default observer(Bookmark);

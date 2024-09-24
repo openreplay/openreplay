@@ -28,7 +28,6 @@ import {
   Flag
 } from 'lucide-react';
 import React from 'react';
-import { connect } from 'react-redux';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
@@ -275,8 +274,4 @@ function FilterModal(props: Props) {
   );
 }
 
-export default connect((state: any, props: any) => {
-  return {
-    isLive: props.isLive
-  };
-})(observer(FilterModal));
+export default observer(FilterModal);

@@ -4,6 +4,10 @@ import { tokenRE } from 'Types/integrations/bugsnagConfig';
 import Select from 'Shared/Select';
 import { withRequest } from 'HOCs';
 
+function ProjectListDropdown(props) {
+
+}
+
 @connect(state => ({
 	token: state.getIn([ 'bugsnag', 'instance', 'authorizationToken' ])
 }))

@@ -3,21 +3,16 @@ import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
 import SessionTags from '../SessionTags';
 import NoteTags from '../Notes/NoteTags';
-import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import { Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-interface Props {
-  isEnterprise: boolean;
-}
-
-function SessionHeader(props: Props) {
-  const { searchStore, sessionStore } = useStore();
+function SessionHeader() {
+  const { searchStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
   const activeTab = searchStore.activeTab;
   const { startDate, endDate, rangeValue } = searchStore.instance;
-  const { isEnterprise } = props;
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
@@ -64,8 +59,4 @@ function SessionHeader(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
-  })
-)(observer(SessionHeader));
+export default observer(SessionHeader);

@@ -3,7 +3,6 @@ import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -33,7 +32,7 @@ const UXTTABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore } = useStore();
+  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore, userStore } = useStore();
   const session = sessionStore.current;
   const prefetched = sessionStore.prefetched;
   const startedAt = sessionStore.current.startedAt || 0;
@@ -244,9 +243,4 @@ function WebPlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    jwt: state.getIn(['user', 'jwt']),
-  }),
-
-)(withLocationHandlers()(observer(WebPlayer)));
+export default withLocationHandlers()(observer(WebPlayer));

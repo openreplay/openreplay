@@ -1,7 +1,6 @@
 import { audioContextManager } from 'App/utils/screenRecorder';
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 import { makeAutoObservable } from 'mobx';

@@ -4,14 +4,15 @@ import { useModal } from 'App/components/Modal';
 import GettingStartedModal from './GettingStartedModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { connect } from "react-redux";
 
-const GettingStartedProgress = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
+const GettingStartedProgress = () => {
   const { showModal } = useModal();
 
   const {
     settingsStore: { gettingStarted },
+    userStore
   } = useStore();
+  const isLoggedIn = userStore.isLoggedIn;
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -40,5 +41,5 @@ const GettingStartedProgress = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   );
 };
 
-export default connect((state: any) => ({ isLoggedIn: Boolean(state.getIn(['user', 'jwt'])), }))(observer(GettingStartedProgress));
+export default observer(GettingStartedProgress);
 

@@ -10,7 +10,6 @@ import {
 } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import { checkForRecent } from 'App/date';

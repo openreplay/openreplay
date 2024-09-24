@@ -1,14 +1,11 @@
-import Session, { mergeEventLists, sortEvents } from 'Types/session';
+import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
-import { InjectedEvent } from 'Types/session/event';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { VList, VListHandle } from 'virtua';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { RootStore } from 'App/duck';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 

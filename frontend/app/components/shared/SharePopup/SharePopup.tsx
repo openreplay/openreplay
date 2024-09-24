@@ -1,6 +1,5 @@
 import { useModal } from 'Components/Modal';
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { Icon, Loader } from 'UI';
 import styles from './sharePopup.module.css';
@@ -48,7 +47,6 @@ const SharePopup = ({
 
 
 interface Props {
-  tenantId: string;
   showCopyLink?: boolean;
   hideModal: () => void;
   time: number;
@@ -59,7 +57,7 @@ function ShareModalComp({
   hideModal,
   time,
 }: Props) {
-  const { integrationsStore, sessionStore } = useStore();
+  const { integrationsStore, sessionStore, userStore } = useStore();
   const sessionId = sessionStore.current.sessionId
   const channels = integrationsStore.slack.list;
   const slackLoaded = integrationsStore.slack.loaded;
@@ -264,10 +262,6 @@ function ShareModalComp({
   );
 }
 
-const mapStateToProps = (state: Record<string, any>) => ({
-  tenantId: state.getIn(['user', 'account', 'tenantId']),
-});
-
-const ShareModal = connect(mapStateToProps)(observer(ShareModalComp));
+const ShareModal = observer(ShareModalComp);
 
 export default observer(SharePopup);

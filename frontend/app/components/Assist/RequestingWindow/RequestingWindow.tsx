@@ -1,6 +1,5 @@
 import React from 'react';
 import { INDEXES } from 'App/constants/zindex';
-import { connect } from 'react-redux';
 import { Button, Loader, Icon } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from "App/mstore";

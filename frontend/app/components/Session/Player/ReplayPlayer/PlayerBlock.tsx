@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
 import SubHeader from 'Components/Session_/Subheader';

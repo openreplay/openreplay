@@ -2,7 +2,6 @@ import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { Link2 } from 'lucide-react';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';

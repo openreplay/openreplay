@@ -4,14 +4,15 @@ import { Button, Input, Tooltip } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 
 function CommentsSection({ onClose }: { onClose?: () => void }) {
-  const { spotStore } = useStore();
+  const { spotStore, userStore } = useStore();
+  const userEmail = userStore.account.name;
+  const loggedIn = !!userEmail;
   const comments = spotStore.currentSpot?.comments ?? [];
   return (
     <div
@@ -52,9 +53,11 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
           </div>
         ))}
 
-        <BottomSectionContainer
+        <BottomSection
           unloggedLimit={comments.length > 5}
           loggedLimit={comments.length > 25}
+          loggedIn={loggedIn}
+          userEmail={userEmail}
         />
       </div>
     </div>
@@ -144,17 +147,6 @@ function BottomSection({
     </div>
   );
 }
-
-function mapStateToProps(state: any) {
-  const userEmail = state.getIn(['user', 'account', 'name']);
-  const loggedIn = !!userEmail;
-  return {
-    userEmail,
-    loggedIn,
-  };
-}
-
-const BottomSectionContainer = connect(mapStateToProps)(BottomSection);
 
 // const promoTitles = ['Found this Spot helpful?', 'Enjoyed this recording?'];
 //

@@ -2,7 +2,6 @@ import React from 'react';
 import { Tooltip, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
 import NewSiteForm from '../NewSiteForm';
 

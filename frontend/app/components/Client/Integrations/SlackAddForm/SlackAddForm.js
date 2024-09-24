@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { Form, Input, Button, Message } from 'UI';
 import { confirm } from 'UI';
 import { observer } from 'mobx-react-lite'

@@ -13,7 +13,6 @@ module.exports = {
     UI: path.resolve(__dirname, 'app/components/ui'),
     'UI/*': path.resolve(__dirname, 'app/components/ui/*'),
     Duck: path.resolve(__dirname, 'app/duck'),
-    'Duck/*': path.resolve(__dirname, 'app/duck/*'),
     HOCs: path.resolve(__dirname, 'app/components/hocs'),
     'HOCs/*': path.resolve(__dirname, 'app/components/hocs/*'),
     Shared: path.resolve(__dirname, 'app/components/shared'),

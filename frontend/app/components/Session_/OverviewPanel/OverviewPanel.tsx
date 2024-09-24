@@ -2,7 +2,6 @@ import { Segmented } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 
 import {
   MobilePlayerContext,

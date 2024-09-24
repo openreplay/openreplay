@@ -1,7 +1,6 @@
 import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
 import { Tooltip } from 'antd'
-import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { SessionRecordingStatus } from 'Player';
 let stopRecorderCb: () => void;
@@ -32,15 +31,10 @@ function isSupported() {
 const supportedBrowsers = ['Chrome v91+', 'Edge v90+'];
 const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 
-function ScreenRecorder({
-  agentId,
-  isEnterprise,
-}: {
-  sessionId: string;
-  isEnterprise: boolean;
-  agentId: number,
-}) {
-  const { projectsStore, sessionStore } = useStore();
+function ScreenRecorder() {
+  const { projectsStore, sessionStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const agentId = userStore.account.id;
   const sessionId = sessionStore.current.sessionId;
   const siteId = projectsStore.siteId;
   const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
@@ -142,8 +136,4 @@ function ScreenRecorder({
   );
 }
 
-export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'account', 'edition']) === 'msaas',
-  agentId: state.getIn(['user', 'account', 'id']),
-}))(observer(ScreenRecorder));
+export default observer(ScreenRecorder);
