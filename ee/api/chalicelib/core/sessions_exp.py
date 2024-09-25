@@ -450,6 +450,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
             elif metric_of == schemas.MetricOfTable.REFERRER:
                 main_col = "referrer"
                 extra_col = ", referrer"
+                extra_where = "WHERE isNotNull(referrer)"
             elif metric_of == schemas.MetricOfTable.FETCH:
                 main_col = "url_path"
                 extra_col = ", s.url_path"
