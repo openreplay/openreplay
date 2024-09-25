@@ -17,6 +17,7 @@ import { formatBytes } from 'App/utils';
 import { Icon, Input, NoContent, Tabs, Toggler, Tooltip } from 'UI';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
+import { WsChannel } from "App/player/web/messages";
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
@@ -24,6 +25,7 @@ import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import WSModal from './WSModal';
+import WSPanel from './WSPanel';
 
 const INDEX_KEY = 'network';
 
@@ -191,7 +193,6 @@ function NetworkPanelCont({
   zoomEndTs: number;
 }) {
   const { player, store } = React.useContext(PlayerContext);
-
   const {
     domContentLoadedTime,
     loadTime,
@@ -334,9 +335,8 @@ export const NetworkPanelComp = observer(
     activeOutsideIndex,
     isSpot,
   }: Props) => {
+    const [selectedWsChannel, setSelectedWsChannel] = React.useState<WsChannel[] | null>(null)
     const { showModal } = useModal();
-    const [sortBy, setSortBy] = useState('time');
-    const [sortAscending, setSortAscending] = useState(true);
     const [showOnlyErrors, setShowOnlyErrors] = useState(false);
 
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
@@ -491,13 +491,10 @@ export const NetworkPanelComp = observer(
     const showDetailsModal = (item: any) => {
       if (item.type === 'websocket') {
         const socketMsgList = websocketList.filter(
-          (ws) => ws.channelName === item.channelName
-        );
+            (ws) => ws.channelName === item.channelName
+          );
 
-        return showModal(<WSModal socketMsgList={socketMsgList} />, {
-          right: true,
-          width: 700,
-        });
+        return setSelectedWsChannel(socketMsgList)
       }
       setIsDetailsModalActive(true);
       showModal(
@@ -617,8 +614,8 @@ export const NetworkPanelComp = observer(
               referenceLines={referenceLines}
               renderPopup
               onRowClick={showDetailsModal}
-              sortBy={sortBy}
-              sortAscending={sortAscending}
+              sortBy={'time'}
+              sortAscending
               onJump={(row: any) => {
                 devTools.update(INDEX_KEY, {
                   index: filteredList.indexOf(row),
@@ -671,6 +668,9 @@ export const NetworkPanelComp = observer(
                 },
               ]}
             </TimeTable>
+            {selectedWsChannel ? (
+              <WSPanel socketMsgList={selectedWsChannel} onClose={() => setSelectedWsChannel(null)} />
+            ) : null}
           </NoContent>
         </BottomBlock.Content>
       </BottomBlock>

@@ -13,6 +13,7 @@ interface IProps {
   style?: object
   marginRight?: number
   inline?: boolean
+  onClick?: () => void
 }
 
 const Icon: React.FunctionComponent<IProps> = ({
