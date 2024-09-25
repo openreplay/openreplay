@@ -336,10 +336,13 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                     if v not in extra_conditions[e.operator].value:
                         extra_conditions[e.operator].value.append(v)
         extra_conditions = list(extra_conditions.values())
-
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
+    elif metric_of == schemas.MetricOfTable.REFERRER:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.REFERRER,
+                                                              operator=schemas.SearchEventOperator.IS_ANY))
+
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
                                                favorite_only=False, issue=None, project_id=project_id,
                                                user_id=None, extra_event=extra_event, extra_conditions=extra_conditions)

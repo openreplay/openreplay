@@ -26,17 +26,23 @@ class MSTeams(BaseCollaboration):
 
     @classmethod
     def say_hello(cls, url):
-        r = requests.post(
-            url=url,
-            json={
-                "@type": "MessageCard",
-                "@context": "https://schema.org/extensions",
-                "summary": "Welcome to OpenReplay",
-                "title": "Welcome to OpenReplay"
-            })
-        if r.status_code != 200:
-            logger.warning("MSTeams integration failed")
-            logger.warning(r.text)
+        try:
+            r = requests.post(
+                url=url,
+                json={
+                    "@type": "MessageCard",
+                    "@context": "https://schema.org/extensions",
+                    "summary": "Welcome to OpenReplay",
+                    "title": "Welcome to OpenReplay"
+                },
+                timeout=3)
+            if r.status_code != 200:
+                logger.warning("MSTeams integration failed")
+                logger.warning(r.text)
+                return False
+        except Exception as e:
+            logger.warning("!!! MSTeams integration failed")
+            logger.exception(e)
             return False
         return True
 
