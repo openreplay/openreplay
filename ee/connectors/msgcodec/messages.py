@@ -859,6 +859,16 @@ class GraphQL(Message):
         self.duration = duration
 
 
+class WebVitals(Message):
+    __id__ = 124
+
+    def __init__(self, name, value, delta, rating):
+        self.name = name
+        self.value = value
+        self.delta = delta
+        self.rating = rating
+
+
 class IssueEvent(Message):
     __id__ = 125
 
