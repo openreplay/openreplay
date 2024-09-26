@@ -5,10 +5,9 @@
  * we can intercept the network requests
  * in not-so-hacky way
  * */
-import NetworkMessage, { RequestState } from './networkMessage.js'
-import { formatByteSize, genStringBody, getStringResponseByType, getURL } from './utils.js'
-import { RequestResponseData } from './types.js'
-import { NetworkRequest } from '../../../common/messages.gen.js'
+import NetworkMessage from './networkMessage'
+import { RequestState, INetworkMessage, RequestResponseData } from './types';
+import { formatByteSize, genStringBody, getStringResponseByType, getURL } from './utils'
 
 export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T> {
   public resp: Response
@@ -123,7 +122,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    private readonly sendMessage: (item: NetworkRequest) => void,
+    private readonly sendMessage: (item: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
   ) {}
@@ -311,7 +310,7 @@ export default class FetchProxy {
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    sendMessage: (item: NetworkRequest) => void,
+    sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
   ) {

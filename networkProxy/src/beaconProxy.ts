@@ -1,7 +1,6 @@
-import { NetworkRequest } from '../../../common/messages.gen.js'
-import NetworkMessage from './networkMessage.js'
-import { RequestResponseData } from './types.js'
-import { genStringBody, getURL } from './utils.js'
+import NetworkMessage from './networkMessage'
+import { RequestState, INetworkMessage, RequestResponseData } from './types';
+import { genStringBody, getURL } from './utils'
 
 // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
 const getContentType = (data?: BodyInit) => {
@@ -22,7 +21,7 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    private readonly sendMessage: (item: NetworkRequest) => void,
+    private readonly sendMessage: (item: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
   ) {}
 
@@ -85,7 +84,7 @@ export default class BeaconProxy {
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    sendMessage: (item: NetworkRequest) => void,
+    sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
   ) {
     if (!BeaconProxy.hasSendBeacon()) {
