@@ -34,6 +34,7 @@ export default class Session {
   private projectID: string | undefined
   private tabId: string
   public userInfo: UserInfo
+  private token: string | undefined
 
   constructor(
     private readonly app: App,
@@ -109,10 +110,12 @@ export default class Session {
   }
 
   getSessionToken(): string | undefined {
-    return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
+    const token = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
+    return token || undefined
   }
 
   setSessionToken(token: string): void {
+    this.token = token
     this.app.sessionStorage.setItem(this.options.session_token_key, token)
   }
 

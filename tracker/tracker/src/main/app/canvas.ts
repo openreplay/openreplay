@@ -128,7 +128,7 @@ class CanvasRecorder {
         return
       }
       if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
-        this.app.debug.log('Canvas element not in sync')
+        this.app.debug.log('Canvas element not in sync', canvas, node)
         clearInterval(int)
         return
       } else {
@@ -160,6 +160,14 @@ class CanvasRecorder {
       }
     })
 
+    const initRestart = () => {
+      this.app.debug.log('Restarting tracker; token expired')
+      this.app.stop(false)
+      setTimeout(() => {
+        void this.app.start({}, true)
+      }, 250)
+    }
+
     fetch(this.app.options.ingestPoint + '/v1/web/images', {
       method: 'POST',
       headers: {
@@ -167,7 +175,10 @@ class CanvasRecorder {
       },
       body: formData,
     })
-      .then(() => {
+      .then((r) => {
+        if (r.status === 401) {
+          return initRestart()
+        }
         return true
       })
       .catch((e) => {

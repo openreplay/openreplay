@@ -1,6 +1,7 @@
 # 14.0.7
 
 - check for stopping status during restarts
+- restart if token expired during canvas fetch
 
 # 14.0.6
 
