@@ -67,6 +67,7 @@ export const TP_MAP = {
   121: MType.Redux,
   122: MType.SetPageLocation,
   123: MType.GraphQl,
+  124: MType.WebVitals,
   93: MType.MobileEvent,
   96: MType.MobileScreenChanges,
   100: MType.MobileClickEvent,

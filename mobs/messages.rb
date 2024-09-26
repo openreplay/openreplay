@@ -556,6 +556,13 @@ message 123, 'GraphQL', :replayer => :devtools do
   uint 'Duration'
 end
 
+message 124, 'WebVitals', :replayer => :devtools do
+    string 'Name'
+    uint 'Value'
+    uint 'Delta'
+    string 'Rating'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

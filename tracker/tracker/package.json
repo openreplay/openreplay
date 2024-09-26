@@ -52,7 +52,8 @@
     "@medv/finder": "^3.2.0",
     "@openreplay/network-proxy": "^1.0.3",
     "error-stack-parser": "^2.0.6",
-    "fflate": "^0.8.2"
+    "fflate": "^0.8.2",
+    "web-vitals": "^4.2.3"
   },
   "engines": {
     "node": ">=14.0"

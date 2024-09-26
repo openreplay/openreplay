@@ -68,6 +68,7 @@ import type {
   RawRedux,
   RawSetPageLocation,
   RawGraphQl,
+  RawWebVitals,
   RawMobileEvent,
   RawMobileScreenChanges,
   RawMobileClickEvent,
@@ -210,6 +211,8 @@ export type Redux = RawRedux & Timed
 export type SetPageLocation = RawSetPageLocation & Timed
 
 export type GraphQl = RawGraphQl & Timed
+
+export type WebVitals = RawWebVitals & Timed
 
 export type MobileEvent = RawMobileEvent & Timed
 

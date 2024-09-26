@@ -1,7 +1,8 @@
 import type App from '../app/index.js'
 import { hasTag } from '../app/guards.js'
 import { isURL, getTimeOrigin } from '../utils.js'
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../app/messages.gen.js'
+import { ResourceTiming, PageLoadTiming, PageRenderTiming, WebVitals } from '../app/messages.gen.js'
+import { onCLS, onINP, onLCP, onTTFB, Metric } from 'web-vitals'
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -139,6 +140,12 @@ export default function (app: App, opts: Partial<Options>): void {
 
   const observer = new PerformanceObserver((list) => list.getEntries().forEach(resourceTiming))
 
+  function onVitalsSignal<T extends Metric>(msg: T) {
+    if (app.active()) {
+      return app.send(WebVitals(msg.name, msg.value, msg.delta, msg.rating))
+    }
+  }
+
   let prevSessionID: string | undefined
   app.attachStartCallback(function ({ sessionID }) {
     if (sessionID !== prevSessionID) {
@@ -147,6 +154,18 @@ export default function (app: App, opts: Partial<Options>): void {
       prevSessionID = sessionID
     }
     observer.observe({ entryTypes: ['resource'] })
+    // browser support:
+    // onCLS(): Chromium
+    // onFCP(): Chromium, Firefox, Safari
+    // onFID(): Chromium, Firefox (Deprecated)
+    // onINP(): Chromium
+    // onLCP(): Chromium, Firefox
+    // onTTFB(): Chromium, Firefox, Safari
+
+    onCLS(onVitalsSignal)
+    onINP(onVitalsSignal)
+    onLCP(onVitalsSignal)
+    onTTFB(onVitalsSignal)
   })
 
   app.attachStopCallback(function () {

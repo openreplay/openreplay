@@ -1494,6 +1494,24 @@ func DecodeGraphQL(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeWebVitals(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &WebVitals{}
+	if msg.Name, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Delta, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Rating, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -2136,6 +2154,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSetPageLocation(reader)
 	case 123:
 		return DecodeGraphQL(reader)
+	case 124:
+		return DecodeWebVitals(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

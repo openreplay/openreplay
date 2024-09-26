@@ -91,6 +91,7 @@ const (
 	MsgRedux                       = 121
 	MsgSetPageLocation             = 122
 	MsgGraphQL                     = 123
+	MsgWebVitals                   = 124
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2441,6 +2442,33 @@ func (msg *GraphQL) Decode() Message {
 
 func (msg *GraphQL) TypeID() int {
 	return 123
+}
+
+type WebVitals struct {
+	message
+	Name   string
+	Value  uint64
+	Delta  uint64
+	Rating string
+}
+
+func (msg *WebVitals) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Name)+len(msg.Rating))
+	buf[0] = 124
+	p := 1
+	p = WriteString(msg.Name, buf, p)
+	p = WriteUint(msg.Value, buf, p)
+	p = WriteUint(msg.Delta, buf, p)
+	p = WriteString(msg.Rating, buf, p)
+	return buf[:p]
+}
+
+func (msg *WebVitals) Decode() Message {
+	return msg
+}
+
+func (msg *WebVitals) TypeID() int {
+	return 124
 }
 
 type IssueEvent struct {
