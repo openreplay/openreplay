@@ -83,6 +83,8 @@ jobs:
           [ -d $MSAAS_REPO_FOLDER ] || {
           git clone -b dev --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
           cd $MSAAS_REPO_FOLDER
+          cd openreplay && git fetch all && git checkout main # This have to be changed to specific tag
+          cd $MSAAS_REPO_FOLDER
           bash git-init.sh
           git checkout
           }
