@@ -777,10 +777,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         for f in values.get("filters", []):
             vals = []
             for v in f.get("value", []):
-                if f.get("type", "") == FilterType.DURATION.value \
-                        and not v.isnumeric():
-                    continue
-                if v is not None:
+                if v is not None and (f.get("type", "") != FilterType.DURATION.value
+                                      or str(v).isnumeric()):
                     vals.append(v)
             f["value"] = vals
         return values
