@@ -32,7 +32,7 @@ export function startNetwork() {
   );
 }
 
-function getBody(req: { body?: string | Record<string, any> }) {
+function getBody(req: { body?: string | Record<string, any> }): string {
   let body;
 
   if (req.body) {
@@ -58,9 +58,14 @@ export function createSpotNetworkRequest(
   const resHeaders = response.headers ? filterHeaders(response.headers) : {};
   const responseBodySize = msg.responseSize || 0;
   const reqSize = msg.request ? msg.request.length : 0;
-  const status = msg.status || 0;
   const body = getBody(request);
   const responseBody = getBody(response);
+  const isGraphql = msg.url.includes("/graphql");
+  let status = msg.status || 0;
+  if (isGraphql) {
+    const isError = responseBody.includes("errors");
+    status = isError ? 400 : 200;
+  }
 
   return {
     method: msg.method,

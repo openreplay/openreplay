@@ -104,7 +104,7 @@ export function filterHeaders(headers: Record<string, string>) {
 }
 
 // JSON or form data
-export function filterBody(body: any) {
+export function filterBody(body: any): string {
   if (!body) {
     return body;
   }
