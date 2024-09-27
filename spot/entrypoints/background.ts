@@ -400,6 +400,9 @@ export default defineBackground(() => {
             settings.networkLogs,
             settings.consoleLogs,
             () => recordingState.recording,
+            (hook) => {
+              onStop = hook;
+            },
           );
           // @ts-ignore  this is false positive
           respond(true);
@@ -572,7 +575,6 @@ export default defineBackground(() => {
       return "pong";
     }
     if (request.type === messages.injected.from.bumpNetwork) {
-      console.log(request);
       finalSpotObj.network.push(request.event);
       return "pong";
     }
@@ -736,19 +738,6 @@ export default defineBackground(() => {
       });
     }
     if (request.type === messages.content.from.saveSpotData) {
-      // stopTrackingNetwork();
-      // const finalNetwork: SpotNetworkRequest[] = [];
-      // const tab =
-      //   recordingState.area === "tab" ? recordingState.activeTabId : undefined;
-      // try {
-      //   finalNetwork.concat(getFinalRequests(tab));
-      // } catch (e) {
-      //   console.error("cant parse network", e);
-      // }
-      // Object.assign(finalSpotObj, request.spot, {
-      //   network: finalNetwork,
-      // });
-      console.log(request.spot, finalSpotObj);
       Object.assign(finalSpotObj, request.spot);
       return "pong";
     }
@@ -821,7 +810,6 @@ export default defineBackground(() => {
               platform,
             },
           );
-          console.log(mobData);
 
           const data = await browser.storage.local.get("settings");
           if (!data.settings) {
@@ -1018,7 +1006,7 @@ export default defineBackground(() => {
     if (contentArmy[sendTo]) {
       await browser.tabs.sendMessage(sendTo, message);
     } else {
-      console.error(
+      console.trace(
         "Content script might not be ready in tab",
         sendTo,
         contentArmy,
@@ -1061,7 +1049,7 @@ export default defineBackground(() => {
     withNetwork: boolean,
     withConsole: boolean,
     getRecState: () => string,
-    setOnStop?: (hook: any) => void,
+    setOnStop: (hook: any) => void,
   ) {
     let activeTabs = await browser.tabs.query({
       active: true,
@@ -1106,17 +1094,16 @@ export default defineBackground(() => {
         slackChannels,
         activeTabId,
         withConsole,
+        withNetwork,
         state: "recording",
         // by default this is already handled by :start event
         // that triggers mount with countdown
         shouldMount: false,
       };
       void sendToActiveTab(mountMsg);
-      // if (withNetwork) {
-      //   startTrackingNetwork();
-      // }
-
       let previousTab: number | null = usedTab ?? null;
+
+      /** moves ui to active tab when screen recording */
       function tabActivatedListener({ tabId }: { tabId: number }) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
@@ -1145,14 +1132,17 @@ export default defineBackground(() => {
           previousTab = tabId;
         }
       }
+      /** moves ui to active tab when screen recording */
       function startTabActivationListening() {
         browser.tabs.onActivated.addListener(tabActivatedListener);
       }
+      /** moves ui to active tab when screen recording */
       function stopTabActivationListening() {
         browser.tabs.onActivated.removeListener(tabActivatedListener);
       }
 
       const trackedTab: number | null = usedTab ?? null;
+      /** reloads ui on currently active tab once its reloads itself */
       function tabUpdateListener(tabId: number, changeInfo: any) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
@@ -1184,6 +1174,7 @@ export default defineBackground(() => {
           });
       }
 
+      /** discards recording if was recording single tab and its now closed */
       function tabRemovedListener(tabId: number) {
         if (tabId === trackedTab) {
           void browser.runtime.sendMessage({
@@ -1219,12 +1210,14 @@ export default defineBackground(() => {
 
       startTabListening();
       if (area === "desktop") {
+        // if desktop, watch for tab change events
         startTabActivationListening();
       }
       if (area === "tab") {
+        // if tab, watch for tab remove changes to discard recording
         startRemovedListening();
       }
-      setOnStop?.(() => {
+      setOnStop(() => {
         stopTabListening();
         if (area === "desktop") {
           stopTabActivationListening();

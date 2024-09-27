@@ -261,18 +261,33 @@ export default defineContentScript({
       }
     });
 
-    function startConsoleTracking() {
+    let injected = false;
+    function injectScript() {
+      if (injected) return;
+      injected = true;
       const scriptEl = document.createElement("script");
       scriptEl.src = browser.runtime.getURL("/injected.js");
       document.head.appendChild(scriptEl);
-
+    }
+    function startConsoleTracking() {
+      injectScript()
       setTimeout(() => {
-        window.postMessage({ type: "injected:start" });
+        window.postMessage({ type: "injected:c-start" });
       }, 100);
+    }
+    function startNetworkTracking() {
+      injectScript()
+      setTimeout(() => {
+        window.postMessage({ type: "injected:n-start" });
+      }, 100)
     }
 
     function stopConsoleTracking() {
-      window.postMessage({ type: "injected:stop" });
+      window.postMessage({ type: "injected:c-stop" });
+    }
+
+    function stopNetworkTracking() {
+      window.postMessage({ type: "injected:n-stop" });
     }
 
     function onRestart() {
@@ -329,7 +344,12 @@ export default defineContentScript({
         micResponse = null;
         startClickRecording();
         startLocationRecording();
-        startConsoleTracking();
+        if (message.withConsole) {
+          startConsoleTracking();
+        }
+        if (message.withNetwork) {
+          startNetworkTracking();
+        }
         browser.runtime.sendMessage({ type: "ort:started" });
         if (message.shouldMount) {
           ui.mount();
@@ -349,6 +369,7 @@ export default defineContentScript({
         stopClickRecording();
         stopLocationRecording();
         stopConsoleTracking();
+        stopNetworkTracking();
         recState = "stopped";
         ui.remove();
         return "unmounted";
