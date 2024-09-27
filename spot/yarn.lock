@@ -707,10 +707,10 @@
     proc-log "^4.0.0"
     which "^4.0.0"
 
-"@openreplay/network-proxy@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@openreplay/network-proxy/-/network-proxy-1.0.2.tgz#29eacbbc191a61ae2b099451e52eaf5ae0cb85ae"
-  integrity sha512-cOPuIFCiFpXUAkdlBlSRCip6TVMN/xkR/C7xkPTN3ThR8wJSyEFQ0RqX9+25+ZM/kKG0LlesL1u9DMTZXagglQ==
+"@openreplay/network-proxy@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@openreplay/network-proxy/-/network-proxy-1.0.3.tgz#82c07f0742db01456f3764bae6c0b5ff280557a9"
+  integrity sha512-vm/x8Ioo1BKJIyZf58tK44CgtzHA0tIwu2uZ2WdIzrBOODF+A2qV4mELC8Zdp9WqV1O7uxXGaA4J38HU3th14g==
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"

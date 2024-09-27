@@ -43,6 +43,8 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
         return 'xhr';
       case 'fetch':
         return 'fetch';
+      case 'graphql':
+        return 'graphql';
       case 'resource':
         return 'resource';
       default:

@@ -13,7 +13,7 @@ export interface RequestResponseData {
 }
 
 export interface INetworkMessage {
-  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon',
+  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon' | 'graphql',
   method: httpMethod,
   url: string,
   /** stringified JSON { headers: {}, body: {} } */

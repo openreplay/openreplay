@@ -23,7 +23,6 @@ export function startNetwork() {
     (reqRes) => reqRes,
     (msg) => {
       const event = createSpotNetworkRequest(msg);
-      console.log(event, msg);
       window.postMessage({ type: "ort:bump-network", event }, "*");
     },
     (url) =>
