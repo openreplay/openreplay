@@ -253,6 +253,12 @@ export default defineContentScript({
           logs: event.data.logs,
         });
       }
+      if (event.data.type === "ort:bump-network") {
+        void chrome.runtime.sendMessage({
+          type: "ort:bump-network",
+          event: event.data.event,
+        });
+      }
     });
 
     function startConsoleTracking() {

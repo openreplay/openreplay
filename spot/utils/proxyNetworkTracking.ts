@@ -2,30 +2,14 @@ import createNetworkProxy, { INetworkMessage } from "@openreplay/network-proxy";
 import {
   SpotNetworkRequest,
   filterBody,
-  sensitiveParams,
   filterHeaders,
-  obscureSensitiveData,
   tryFilterUrl,
-} from "./networkTracking";
-
-function getTopWindow(): Window {
-  let currentWindow = window;
-  try {
-    while (currentWindow !== currentWindow.parent) {
-      currentWindow = currentWindow.parent;
-    }
-  } catch (e) {
-    // Accessing currentWindow.parent threw an exception due to cross-origin policy
-    // currentWindow is the topmost accessible window
-  }
-  return currentWindow;
-}
+  getTopWindow,
+} from "./networkTrackingUtils";
 
 let defaultFetch: typeof fetch | undefined;
 let defaultXhr: typeof XMLHttpRequest | undefined;
 let defaultBeacon: typeof navigator.sendBeacon | undefined;
-
-const events: INetworkMessage[] = [];
 
 export function startNetwork() {
   const context = getTopWindow();
@@ -37,8 +21,13 @@ export function startNetwork() {
     [], // headers
     () => null,
     (reqRes) => reqRes,
-    (msg) => events.push(msg),
-    (url) => url.includes("/spot/"),
+    (msg) => {
+      const event = createSpotNetworkRequest(msg);
+      console.log(event, msg);
+      window.postMessage({ type: "ort:bump-network", event }, "*");
+    },
+    (url) =>
+      url.includes("/spot/") || url.includes(".mob?") || url.includes(".mobe?"),
     { xhr: true, fetch: true, beacon: true },
   );
 }
@@ -74,8 +63,8 @@ export function createSpotNetworkRequest(
   const responseBody = getBody(response);
 
   return {
-    method: request.method,
-    type: request.type,
+    method: msg.method,
+    type: msg.requestType,
     body,
     responseBody,
     requestHeaders: reqHeaders,
@@ -83,7 +72,7 @@ export function createSpotNetworkRequest(
     time: msg.startTime,
     statusCode: status,
     error: undefined,
-    url: tryFilterUrl(request.url),
+    url: tryFilterUrl(msg.url),
     fromCache: false,
     encodedBodySize: reqSize,
     responseBodySize,
@@ -95,13 +84,13 @@ export function stopNetwork() {
   if (!defaultFetch || !defaultXhr || !defaultBeacon) {
     return;
   }
-  window.fetch = defaultFetch;
-  window.XMLHttpRequest = defaultXhr;
-  window.navigator.sendBeacon = defaultBeacon;
-}
-
-export function getFinalRequests() {
-  const finalRequests = events.map(createSpotNetworkRequest);
-  events.length = 0;
-  return finalRequests;
+  if (defaultFetch) {
+    window.fetch = defaultFetch;
+  }
+  if (defaultXhr) {
+    window.XMLHttpRequest = defaultXhr;
+  }
+  if (defaultBeacon) {
+    window.navigator.sendBeacon = defaultBeacon;
+  }
 }

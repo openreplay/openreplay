@@ -1,10 +1,3 @@
-import {
-  stopTrackingNetwork,
-  startTrackingNetwork,
-  SpotNetworkRequest,
-  rawRequests,
-  getFinalRequests,
-} from "~/utils/networkTracking";
 import { isTokenExpired } from "~/utils/jwt";
 
 let checkBusy = false;
@@ -63,6 +56,7 @@ export default defineBackground(() => {
     injected: {
       from: {
         bumpLogs: "ort:bump-logs",
+        bumpNetwork: "ort:bump-network",
       },
     },
     offscreen: {
@@ -577,6 +571,11 @@ export default defineBackground(() => {
       finalSpotObj.logs.push(...request.logs);
       return "pong";
     }
+    if (request.type === messages.injected.from.bumpNetwork) {
+      console.log(request);
+      finalSpotObj.network.push(request.event);
+      return "pong";
+    }
     if (request.type === messages.content.from.bumpClicks) {
       finalSpotObj.clicks.push(...request.clicks);
       return "pong";
@@ -737,18 +736,20 @@ export default defineBackground(() => {
       });
     }
     if (request.type === messages.content.from.saveSpotData) {
-      stopTrackingNetwork();
-      const finalNetwork: SpotNetworkRequest[] = [];
-      const tab =
-        recordingState.area === "tab" ? recordingState.activeTabId : undefined;
-      try {
-        finalNetwork.concat(getFinalRequests(tab));
-      } catch (e) {
-        console.error("cant parse network", e);
-      }
-      Object.assign(finalSpotObj, request.spot, {
-        network: finalNetwork,
-      });
+      // stopTrackingNetwork();
+      // const finalNetwork: SpotNetworkRequest[] = [];
+      // const tab =
+      //   recordingState.area === "tab" ? recordingState.activeTabId : undefined;
+      // try {
+      //   finalNetwork.concat(getFinalRequests(tab));
+      // } catch (e) {
+      //   console.error("cant parse network", e);
+      // }
+      // Object.assign(finalSpotObj, request.spot, {
+      //   network: finalNetwork,
+      // });
+      console.log(request.spot, finalSpotObj);
+      Object.assign(finalSpotObj, request.spot);
       return "pong";
     }
     if (request.type === messages.content.from.saveSpotVidChunk) {
@@ -820,6 +821,7 @@ export default defineBackground(() => {
               platform,
             },
           );
+          console.log(mobData);
 
           const data = await browser.storage.local.get("settings");
           if (!data.settings) {
@@ -1016,7 +1018,12 @@ export default defineBackground(() => {
     if (contentArmy[sendTo]) {
       await browser.tabs.sendMessage(sendTo, message);
     } else {
-      console.error("Content script might not be ready in tab", sendTo);
+      console.error(
+        "Content script might not be ready in tab",
+        sendTo,
+        contentArmy,
+        message,
+      );
       await browser.tabs.sendMessage(sendTo, message);
     }
   }
@@ -1105,9 +1112,9 @@ export default defineBackground(() => {
         shouldMount: false,
       };
       void sendToActiveTab(mountMsg);
-      if (withNetwork) {
-        startTrackingNetwork();
-      }
+      // if (withNetwork) {
+      //   startTrackingNetwork();
+      // }
 
       let previousTab: number | null = usedTab ?? null;
       function tabActivatedListener({ tabId }: { tabId: number }) {
