@@ -18,7 +18,6 @@ export default defineUnlistedScript(() => {
       if (window.__or_revokeSpotPatch) {
         window.__or_revokeSpotPatch();
         window.__or_revokeSpotPatch = null;
-        stopNetwork();
       }
     }
   });

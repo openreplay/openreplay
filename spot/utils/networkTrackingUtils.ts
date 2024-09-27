@@ -81,7 +81,7 @@ export const sensitiveParams = new Set([
   "account_key",
 ]);
 
-export function filterHeaders(headers: Record<string, string>) {
+export function filterHeaders(headers: Record<string, string> | { name: string; value: string }[]) {
   const filteredHeaders: Record<string, string> = {};
   if (Array.isArray(headers)) {
     headers.forEach(({ name, value }) => {
@@ -139,7 +139,7 @@ export function obscureSensitiveData(obj: Record<string, any> | any[]) {
     obj.forEach(obscureSensitiveData);
   } else if (obj && typeof obj === "object") {
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.hasOwn(obj, key)) {
         if (sensitiveParams.has(key.toLowerCase())) {
           obj[key] = "******";
         } else if (obj[key] !== null && typeof obj[key] === "object") {

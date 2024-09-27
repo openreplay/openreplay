@@ -52,8 +52,18 @@ function getBody(req: { body?: string | Record<string, any> }): string {
 export function createSpotNetworkRequest(
   msg: INetworkMessage,
 ): SpotNetworkRequest {
-  const request = JSON.parse(msg.request);
-  const response = JSON.parse(msg.response);
+  let request: Record<string, any> = {}
+  let response: Record<string, any> = {};
+  try {
+    request = JSON.parse(msg.request);
+  } catch (e) {
+    console.error("Error parsing request", e);
+  }
+  try {
+    response = JSON.parse(msg.response);
+  } catch (e) {
+    console.error("Error parsing response", e);
+  }
   const reqHeaders = request.headers ? filterHeaders(request.headers) : {};
   const resHeaders = response.headers ? filterHeaders(response.headers) : {};
   const responseBodySize = msg.responseSize || 0;
@@ -86,9 +96,6 @@ export function createSpotNetworkRequest(
 }
 
 export function stopNetwork() {
-  if (!defaultFetch || !defaultXhr || !defaultBeacon) {
-    return;
-  }
   if (defaultFetch) {
     window.fetch = defaultFetch;
   }

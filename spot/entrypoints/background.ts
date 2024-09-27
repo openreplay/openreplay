@@ -978,7 +978,7 @@ export default defineBackground(() => {
         justification: "Recording from chrome.tabCapture API",
       });
     } catch (e) {
-      console.log("cant create new offscreen document", e);
+      console.error("cant create new offscreen document", e);
     }
 
     return;
