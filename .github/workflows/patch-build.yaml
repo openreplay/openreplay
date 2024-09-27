@@ -88,6 +88,7 @@ jobs:
           cd $MSAAS_REPO_FOLDER
           bash git-init.sh
           git checkout
+          git --git-dir=./openreplay/.git status
           }
         }
         function build_managed() {
@@ -100,7 +101,7 @@ jobs:
           else
             cd $MSAAS_REPO_FOLDER/openreplay/$service
           fi
-          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash build.sh >> /tmp/arm.txt
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=arm64 DOCKER_REPO=$DOCKER_REPO_ARM PUSH_IMAGE=0 bash -x build.sh >> /tmp/arm.txt
         }
         # Checking for backend images
         ls backend/cmd >> /tmp/backend.txt
