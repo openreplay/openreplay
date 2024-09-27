@@ -88,6 +88,7 @@ jobs:
           cd $MSAAS_REPO_FOLDER
           bash git-init.sh
           git checkout
+          git --git-dir=./openreplay/.git status
           }
         }
         function build_managed() {
