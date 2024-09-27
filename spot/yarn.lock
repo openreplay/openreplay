@@ -707,6 +707,11 @@
     proc-log "^4.0.0"
     which "^4.0.0"
 
+"@openreplay/network-proxy@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@openreplay/network-proxy/-/network-proxy-1.0.0.tgz#d42deafd95b6f9f23ca04093730ea41b770d8a3f"
+  integrity sha512-tOurzyqA/oE2ebzyAJZpMuf4WDfd4qIVDgShT31tyTSxWREqlyNwn2cmcKbqJUPedCRI9XhmNOdlDTmf0Hww2g==
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"

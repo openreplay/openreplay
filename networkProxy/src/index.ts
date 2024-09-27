@@ -16,6 +16,17 @@ const getWarning = (api: string) => {
   console.warn(str);
 };
 
+/**
+ * creates network proxy for XHR, fetch and beacon
+ * @param context - global context (globalThis, window, etc)
+ * @param ignoredHeaders - headers to ignore from request
+ * @param setSessionTokenHeader - function to set session token header -- used to mark tracked sessions
+ * @param sanitize - function to sanitize request and response data
+ * @param sendMessage - function to send message
+ * @param isServiceUrl - function to check if url is service url and should be ignored
+ * @param modules - modules to apply proxy to
+ * @param tokenUrlMatcher - will not apply session token header unless request match this function
+ * */
 export default function createNetworkProxy(
   context: typeof globalThis,
   ignoredHeaders: boolean | string[],

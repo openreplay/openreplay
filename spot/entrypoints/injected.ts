@@ -1,3 +1,5 @@
+import { startNetwork, stopNetwork } from "~/utils/networkTrackingV2";
+
 export default defineUnlistedScript(() => {
   const printError =
     "InstallTrigger" in window // detect Firefox
@@ -140,6 +142,7 @@ export default defineUnlistedScript(() => {
   window.addEventListener("message", (event) => {
     if (event.data.type === "injected:start") {
       if (!window.__or_revokeSpotPatch) {
+        startNetwork();
         window.__or_revokeSpotPatch = patchConsole(console, window);
       }
     }
@@ -147,6 +150,7 @@ export default defineUnlistedScript(() => {
       if (window.__or_revokeSpotPatch) {
         window.__or_revokeSpotPatch();
         window.__or_revokeSpotPatch = null;
+        stopNetwork();
       }
     }
   });

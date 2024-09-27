@@ -1,11 +1,11 @@
-import orLogo from "@/assets/orSpot.svg";
-import micOff from "@/assets/mic-off-red.svg";
-import micOn from "@/assets/mic-on-dark.svg";
-import Login from "@/entrypoints/popup/Login";
-import Settings from "@/entrypoints/popup/Settings";
+import orLogo from "~/assets/orSpot.svg";
+import micOff from "~/assets/mic-off-red.svg";
+import micOn from "~/assets/mic-on-dark.svg";
+import Login from "~/entrypoints/popup/Login";
+import Settings from "~/entrypoints/popup/Settings";
 import { createSignal, createEffect, onMount } from "solid-js";
-import Dropdown from "@/entrypoints/popup/Dropdown";
-import Button from "@/entrypoints/popup/Button";
+import Dropdown from "~/entrypoints/popup/Dropdown";
+import Button from "~/entrypoints/popup/Button";
 import {
   ChevronSvg,
   RecordDesktopSvg,

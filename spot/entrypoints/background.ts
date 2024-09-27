@@ -1,13 +1,11 @@
-// import {
-//   createSpotNetworkRequest,
-//   stopTrackingNetwork,
-//   startTrackingNetwork,
-//   SpotNetworkRequest,
-//   rawRequests,
-// } from "../utils/networkTracking";
 import {
-  isTokenExpired
-} from '../utils/jwt';
+  stopTrackingNetwork,
+  startTrackingNetwork,
+  SpotNetworkRequest,
+  rawRequests,
+  getFinalRequests,
+} from "~/utils/networkTracking";
+import { isTokenExpired } from "~/utils/jwt";
 
 let checkBusy = false;
 
@@ -218,7 +216,7 @@ export default defineBackground(() => {
       setJWTToken("");
     }
     const { jwtToken, settings } = data;
-    const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`
+    const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`;
     if (!isTokenExpired(jwtToken) || !jwtToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
@@ -305,12 +303,12 @@ export default defineBackground(() => {
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
       });
-      checkBusy = false
+      checkBusy = false;
       return;
     }
     const ok = await refreshToken();
     if (ok) {
-      setJWTToken(data.jwtToken)
+      setJWTToken(data.jwtToken);
       if (!refreshInt) {
         refreshInt = setInterval(() => {
           void refreshToken();
@@ -322,7 +320,7 @@ export default defineBackground(() => {
         }, PING_INT);
       }
     }
-    checkBusy = false
+    checkBusy = false;
   }
   // @ts-ignore
   browser.runtime.onMessage.addListener((request, sender, respond) => {
@@ -743,17 +741,10 @@ export default defineBackground(() => {
       const finalNetwork: SpotNetworkRequest[] = [];
       const tab =
         recordingState.area === "tab" ? recordingState.activeTabId : undefined;
-      let lastIn = 0;
       try {
-        rawRequests.forEach((r, i) => {
-          lastIn = i;
-          const spotNetworkRequest = createSpotNetworkRequest(r, tab);
-          if (spotNetworkRequest) {
-            finalNetwork.push(spotNetworkRequest);
-          }
-        });
+        finalNetwork.concat(getFinalRequests(tab));
       } catch (e) {
-        console.error("cant parse network", e, rawRequests[lastIn]);
+        console.error("cant parse network", e);
       }
       Object.assign(finalSpotObj, request.spot, {
         network: finalNetwork,
@@ -897,7 +888,7 @@ export default defineBackground(() => {
                       url: `${link}/view-spot/${id}`,
                       active: settings.openInNewTab,
                     });
-                  }, 250)
+                  }, 250);
                   const blob = base64ToBlob(videoData);
 
                   const mPromise = fetch(mobURL, {
@@ -974,7 +965,7 @@ export default defineBackground(() => {
 
   async function initializeOffscreenDocument() {
     const existingContexts = await browser.runtime.getContexts({
-      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
     });
 
     const offscreenDocument = existingContexts.find(
@@ -997,7 +988,7 @@ export default defineBackground(() => {
         justification: "Recording from chrome.tabCapture API",
       });
     } catch (e) {
-      console.log('cant create new offscreen document', e)
+      console.log("cant create new offscreen document", e);
     }
 
     return;

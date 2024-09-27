@@ -23,6 +23,7 @@ export interface SpotNetworkRequest {
   url: TrackedRequest["url"];
   fromCache: boolean;
   body: string;
+  responseBody: string;
   requestHeaders: Record<string, string>;
   responseHeaders: Record<string, string>;
 }
@@ -31,7 +32,7 @@ export const rawRequests: (TrackedRequest & {
   duration: number;
 })[] = [];
 
-const sensitiveParams = new Set([
+export const sensitiveParams = new Set([
   "password",
   "pass",
   "pwd",
@@ -71,7 +72,7 @@ const sensitiveParams = new Set([
   "account_key",
 ]);
 
-function filterHeaders(headers: Record<string, string>) {
+export function filterHeaders(headers: Record<string, string>) {
   const filteredHeaders: Record<string, string> = {};
   if (Array.isArray(headers)) {
     headers.forEach(({ name, value }) => {
@@ -94,7 +95,7 @@ function filterHeaders(headers: Record<string, string>) {
 }
 
 // JSON or form data
-function filterBody(body: any) {
+export function filterBody(body: any) {
   if (!body) {
     return body;
   }
@@ -124,7 +125,7 @@ function filterBody(body: any) {
   }
 }
 
-function obscureSensitiveData(obj: Record<string, any> | any[]) {
+export function obscureSensitiveData(obj: Record<string, any> | any[]) {
   if (Array.isArray(obj)) {
     obj.forEach(obscureSensitiveData);
   } else if (obj && typeof obj === "object") {
@@ -140,7 +141,7 @@ function obscureSensitiveData(obj: Record<string, any> | any[]) {
   }
 }
 
-function tryFilterUrl(url: string) {
+export function tryFilterUrl(url: string) {
   if (!url) return "";
   try {
     const urlObj = new URL(url);
@@ -207,6 +208,7 @@ export function createSpotNetworkRequest(
     method: trackedRequest.method,
     type,
     body,
+    responseBody: "",
     requestHeaders,
     responseHeaders,
     time: trackedRequest.timeStamp,
@@ -302,4 +304,13 @@ function getRequestStatus(request: any): number {
     return 0;
   }
   return 200;
+}
+
+export function getFinalRequests(tabId: number): SpotNetworkRequest[] {
+  const finalRequests = rawRequests
+    .map((r) => createSpotNetworkRequest(r, tabId))
+    .filter((r) => r !== undefined);
+  rawRequests.length = 0;
+
+  return finalRequests;
 }

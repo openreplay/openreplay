@@ -5,7 +5,7 @@ import {
   startClickRecording,
   stopClickRecording,
 } from "./eventTrackers";
-import ControlsBox from "@/entrypoints/content/ControlsBox";
+import ControlsBox from "~/entrypoints/content/ControlsBox";
 
 import { convertBlobToBase64, getChromeFullVersion } from "./utils";
 import "./style.css";

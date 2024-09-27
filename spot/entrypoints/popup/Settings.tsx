@@ -1,6 +1,6 @@
 import { createSignal, onMount } from "solid-js";
-import orLogo from "@/assets/orSpot.svg";
-import arrowLeft from "@/assets/arrow-left.svg";
+import orLogo from "~/assets/orSpot.svg";
+import arrowLeft from "~/assets/arrow-left.svg";
 
 function Settings({ goBack }: { goBack: () => void }) {
   const [includeDevTools, setIncludeDevTools] = createSignal(true);
@@ -13,7 +13,8 @@ function Settings({ goBack }: { goBack: () => void }) {
   onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
-        const ingest = data.settings.ingestPoint || "https://app.openreplay.com";
+        const ingest =
+          data.settings.ingestPoint || "https://app.openreplay.com";
         const devToolsEnabled =
           data.settings.consoleLogs && data.settings.networkLogs;
         setOpenInNewTab(data.settings.openInNewTab ?? false);
@@ -89,7 +90,8 @@ function Settings({ goBack }: { goBack: () => void }) {
   return (
     <div class={"flex flex-col"}>
       <div class={"flex gap-2 items-center justify-between p-4"}>
-        <button class="btn btn-xs btn-circle bg-white hover:bg-indigo-50"
+        <button
+          class="btn btn-xs btn-circle bg-white hover:bg-indigo-50"
           onClick={goBack}
         >
           <img src={arrowLeft} alt={"Go back"} />
@@ -106,21 +108,20 @@ function Settings({ goBack }: { goBack: () => void }) {
       <div class="flex flex-col">
         <div class="p-4 border-b border-slate-300 hover:bg-indigo-50">
           <div class="flex flex-row justify-between items-center">
-            <p class="font-semibold mb-1 flex items-center">
-             View Recording
-            </p>
+            <p class="font-semibold mb-1 flex items-center">View Recording</p>
 
             <label class="label cursor-pointer pr-0">
-            <input
-              type="checkbox"
-              class="toggle toggle-primary toggle-sm cursor-pointer"
-              checked={openInNewTab()}
-              onChange={toggleOpenInNewTab}
-            />
-          </label>
-
+              <input
+                type="checkbox"
+                class="toggle toggle-primary toggle-sm cursor-pointer"
+                checked={openInNewTab()}
+                onChange={toggleOpenInNewTab}
+              />
+            </label>
           </div>
-          <p class="text-xs">Take me to newly created Spot tab after saving a recording.</p>
+          <p class="text-xs">
+            Take me to newly created Spot tab after saving a recording.
+          </p>
         </div>
 
         <div class="flex flex-col border-b border-slate-300 cursor-default justify-between p-4 hover:bg-indigo-50">
@@ -140,7 +141,8 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            Include console logs, network calls and other useful debugging information for developers.
+            Include console logs, network calls and other useful debugging
+            information for developers.
           </p>
         </div>
 
@@ -159,7 +161,8 @@ function Settings({ goBack }: { goBack: () => void }) {
             </div>
           </div>
           <p class="text-xs">
-            Set this URL if you are self-hosting OpenReplay so it points to your instance.
+            Set this URL if you are self-hosting OpenReplay so it points to your
+            instance.
           </p>
 
           {showIngest() && (
@@ -191,16 +194,16 @@ function Settings({ goBack }: { goBack: () => void }) {
                   </div>
                 </div>
               ) : (
-                 <div class={"flex items-center gap-2"}>
-                   <span class={"text-gray-700"}>{ingest()}</span>
-                   <button
-                     class="btn btn-sm btn-link font-normal no-underline hover:no-underline hover:opacity-75"
-                     onClick={() => toggleEditIngest(true)}
-                   >
-                     Edit
-                   </button>
-                 </div>
-               )}
+                <div class={"flex items-center gap-2"}>
+                  <span class={"text-gray-700"}>{ingest()}</span>
+                  <button
+                    class="btn btn-sm btn-link font-normal no-underline hover:no-underline hover:opacity-75"
+                    onClick={() => toggleEditIngest(true)}
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

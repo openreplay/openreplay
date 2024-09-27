@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, createEffect } from "solid-js";
-import { STATES, formatMsToTime } from "@/entrypoints/content/utils";
-import micOn from "@/assets/mic-on.svg";
+import { STATES, formatMsToTime } from "~/entrypoints/content/utils";
+import micOn from "~/assets/mic-on.svg";
 import { createDraggable } from "@neodrag/solid";
 
 interface IRControls {
@@ -128,7 +128,7 @@ function RecordingControls({
     handleRef.classList.remove("popupanimated");
   }, 250);
 
-  const audioPerm = getAudioPerm()
+  const audioPerm = getAudioPerm();
   return (
     <div
       class={"rec-controls popupanimated cursor-grab"}
@@ -202,7 +202,13 @@ function RecordingControls({
             class={`btn btn-sm btn-circle btn-ghost tooltip tooltip-top flex items-center ${
               mic() ? "bg-black/20" : "bg-black"
             }`}
-            data-tip={audioPerm > 0 ? mic() ? "Switch Off Mic" : "Switch On Mic" : "Microphone disabled"}
+            data-tip={
+              audioPerm > 0
+                ? mic()
+                  ? "Switch Off Mic"
+                  : "Switch On Mic"
+                : "Microphone disabled"
+            }
             onClick={audioPerm > 0 ? toggleMic : undefined}
           >
             {mic() ? (
