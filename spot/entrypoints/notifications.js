@@ -41,7 +41,7 @@ export default defineUnlistedScript(() => {
 
     const notificationContent = `
     <div class="or-flex or-gap-3 or-items-center">
-      <div class="or-spinner"></div>          
+      <div class="or-spinner"></div>
       <span>${message}</span>
      </div>
     `;
