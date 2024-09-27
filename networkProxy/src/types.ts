@@ -1,5 +1,5 @@
 export interface RequestResponseData {
-  readonly status: number
+  status: number
   readonly method: string
   url: string
   request: {

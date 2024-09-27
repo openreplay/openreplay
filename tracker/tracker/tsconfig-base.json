@@ -9,8 +9,8 @@
     "alwaysStrict": true,
     "target": "es2020",
     "module": "es6",
-    "moduleResolution": "nodenext",
-    "esModuleInterop": true
+    "moduleResolution":  "node",
+    "esModuleInterop": true,
   },
   "exclude": ["**/*.test.ts"]
 }

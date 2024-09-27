@@ -22,7 +22,7 @@ export default class NetworkMessage {
   responseType: XMLHttpRequest['responseType'] = ''
   requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon' = 'xhr'
   requestHeader: HeadersInit = {}
-  response: any
+  response: string
   responseSize = 0 // bytes
   responseSizeText = ''
   startTime = 0
@@ -54,6 +54,12 @@ export default class NetworkMessage {
     })
 
     if (!messageInfo) return null;
+
+    const isGraphql = messageInfo.url.includes("/graphql");
+    if (isGraphql && messageInfo.response.body && typeof messageInfo.response.body === 'string') {
+      const isError = messageInfo.response.body.includes("errors");
+      messageInfo.status = isError ? 400 : 200;
+    }
 
     return {
       requestType: this.requestType,

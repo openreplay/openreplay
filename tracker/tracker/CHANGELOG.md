@@ -1,3 +1,7 @@
+# 14.0.8
+
+- use separate library to handle network requests ([@openreplay/network-proxy](https://www.npmjs.com/package/@openreplay/network-proxy))
+
 # 14.0.7
 
 - check for stopping status during restarts

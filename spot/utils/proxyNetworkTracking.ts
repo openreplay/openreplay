@@ -70,12 +70,6 @@ export function createSpotNetworkRequest(
   const reqSize = msg.request ? msg.request.length : 0;
   const body = getBody(request);
   const responseBody = getBody(response);
-  const isGraphql = msg.url.includes("/graphql");
-  let status = msg.status || 0;
-  if (isGraphql) {
-    const isError = responseBody.includes("errors");
-    status = isError ? 400 : 200;
-  }
 
   return {
     method: msg.method,
@@ -85,7 +79,7 @@ export function createSpotNetworkRequest(
     requestHeaders: reqHeaders,
     responseHeaders: resHeaders,
     time: msg.startTime,
-    statusCode: status,
+    statusCode: msg.status || 0,
     error: undefined,
     url: tryFilterUrl(msg.url),
     fromCache: false,

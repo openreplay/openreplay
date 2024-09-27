@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@neodrag/solid": "^2.0.4",
-    "@openreplay/network-proxy": "^1.0.1",
+    "@openreplay/network-proxy": "^1.0.2",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "autoprefixer": "^10.4.19",
     "install": "^0.13.0",
