@@ -553,7 +553,7 @@ type TrGraphQL = [
 type TrWebVitals = [
   type: 124,
   name: string,
-  value: number,
+  value: string,
 ]
 
 

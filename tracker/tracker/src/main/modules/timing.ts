@@ -142,7 +142,8 @@ export default function (app: App, opts: Partial<Options>): void {
 
   function onVitalsSignal<T extends Metric>(msg: T) {
     if (app.active()) {
-      return app.send(WebVitals(msg.name, msg.value))
+      app.debug.log('WebVitals', msg)
+      return app.send(WebVitals(msg.name, String(msg.value)))
     }
   }
 

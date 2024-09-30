@@ -1560,7 +1560,7 @@ func DecodeWebVitals(reader BytesReader) (Message, error) {
 	if msg.Name, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadUint(); err != nil {
+	if msg.Value, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err

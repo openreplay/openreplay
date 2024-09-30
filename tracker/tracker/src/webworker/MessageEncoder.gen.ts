@@ -315,7 +315,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.WebVitals:
-      return  this.string(msg[1]) && this.uint(msg[2])
+      return  this.string(msg[1]) && this.string(msg[2])
     break
 
     }

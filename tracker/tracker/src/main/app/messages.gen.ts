@@ -1021,7 +1021,7 @@ export function GraphQL(
 
 export function WebVitals(
   name: string,
-  value: number,
+  value: string,
 ): Messages.WebVitals {
   return [
     Messages.Type.WebVitals,

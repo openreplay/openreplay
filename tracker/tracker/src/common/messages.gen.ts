@@ -630,7 +630,7 @@ export type GraphQL = [
 export type WebVitals = [
   /*type:*/ Type.WebVitals,
   /*name:*/ string,
-  /*value:*/ number,
+  /*value:*/ string,
 ]
 
 

@@ -1317,9 +1317,9 @@ cdef class GraphQL(PyMessage):
 cdef class WebVitals(PyMessage):
     cdef public int __id__
     cdef public str name
-    cdef public unsigned long value
+    cdef public str value
 
-    def __init__(self, str name, unsigned long value):
+    def __init__(self, str name, str value):
         self.__id__ = 124
         self.name = name
         self.value = value

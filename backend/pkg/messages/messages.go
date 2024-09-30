@@ -2503,15 +2503,15 @@ func (msg *GraphQL) TypeID() int {
 type WebVitals struct {
 	message
 	Name  string
-	Value uint64
+	Value string
 }
 
 func (msg *WebVitals) Encode() []byte {
-	buf := make([]byte, 21+len(msg.Name))
+	buf := make([]byte, 21+len(msg.Name)+len(msg.Value))
 	buf[0] = 124
 	p := 1
 	p = WriteString(msg.Name, buf, p)
-	p = WriteUint(msg.Value, buf, p)
+	p = WriteString(msg.Value, buf, p)
 	return buf[:p]
 }
 

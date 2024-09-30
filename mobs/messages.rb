@@ -580,7 +580,7 @@ end
 
 message 124, 'WebVitals', :replayer => false do
     string 'Name'
-    uint 'Value'
+    string 'Value'
 end
 
 ## Backend-only
