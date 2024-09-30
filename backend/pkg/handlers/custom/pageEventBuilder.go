@@ -1,6 +1,8 @@
 package custom
 
 import (
+	"encoding/json"
+	"fmt"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -9,6 +11,7 @@ const PageEventTimeout = 1 * 60 * 1000
 type pageEventBuilder struct {
 	pageEvent          *PageEvent
 	firstTimingHandled bool
+	webVitals          map[string]uint64
 }
 
 func NewPageEventBuilder() *pageEventBuilder {
@@ -69,7 +72,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		if msg.FirstContentfulPaint <= 30000 {
 			b.pageEvent.FirstContentfulPaint = msg.FirstContentfulPaint
 		}
-		return b.buildIfTimingsComplete()
+		return nil //b.buildIfTimingsComplete()
 	case *PageRenderTiming:
 		if b.pageEvent == nil {
 			break
@@ -77,8 +80,12 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		b.pageEvent.SpeedIndex = msg.SpeedIndex
 		b.pageEvent.VisuallyComplete = msg.VisuallyComplete
 		b.pageEvent.TimeToInteractive = msg.TimeToInteractive
-		return b.buildIfTimingsComplete()
-
+		return nil //b.buildIfTimingsComplete()
+	case *WebVitals:
+		if b.webVitals == nil {
+			b.webVitals = make(map[string]uint64)
+		}
+		b.webVitals[msg.Name] = msg.Value
 	}
 
 	if b.pageEvent != nil && b.pageEvent.Timestamp+PageEventTimeout < timestamp {
@@ -94,13 +101,21 @@ func (b *pageEventBuilder) Build() Message {
 	pageEvent := b.pageEvent
 	b.pageEvent = nil
 	b.firstTimingHandled = false
+	if b.webVitals != nil {
+		if vitals, err := json.Marshal(b.webVitals); err != nil {
+			pageEvent.WebVitals = string(vitals)
+		} else {
+			// DEBUG
+			fmt.Printf("Error marshalling web vitals: %v\n", err)
+		}
+	}
 	return pageEvent
 }
 
-func (b *pageEventBuilder) buildIfTimingsComplete() Message {
-	if b.firstTimingHandled {
-		return b.Build()
-	}
-	b.firstTimingHandled = true
-	return nil
-}
+//func (b *pageEventBuilder) buildIfTimingsComplete() Message {
+//	if b.firstTimingHandled {
+//		return b.Build()
+//	}
+//	b.firstTimingHandled = true
+//	return nil
+//}

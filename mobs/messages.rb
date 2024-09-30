@@ -163,7 +163,7 @@ message 30, 'Metadata', :replayer => false do
   string 'Key'
   string 'Value'
 end
-message 31, 'PageEvent', :tracker => false, :replayer => false do
+message 31, 'PageEventDeprecated', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'URL'
@@ -182,12 +182,34 @@ message 31, 'PageEvent', :tracker => false, :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
+
 message 32, 'InputEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Value'
   boolean 'ValueMasked'
   string 'Label'
+end
+
+message 33, 'PageEvent', :tracker => false, :replayer => false do
+  uint 'MessageID'
+  uint 'Timestamp'
+  string 'URL'
+  string 'Referrer'
+  boolean 'Loaded'
+  uint 'RequestStart'
+  uint 'ResponseStart'
+  uint 'ResponseEnd'
+  uint 'DomContentLoadedEventStart'
+  uint 'DomContentLoadedEventEnd'
+  uint 'LoadEventStart'
+  uint 'LoadEventEnd'
+  uint 'FirstPaint'
+  uint 'FirstContentfulPaint'
+  uint 'SpeedIndex'
+  uint 'VisuallyComplete'
+  uint 'TimeToInteractive'
+  string 'WebVitals'
 end
 
 # DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
@@ -556,7 +578,7 @@ message 123, 'GraphQL', :replayer => :devtools do
   uint 'Duration'
 end
 
-message 124, 'WebVitals', :replayer => :devtools do
+message 124, 'WebVitals', :replayer => false do
     string 'Name'
     uint 'Value'
 end

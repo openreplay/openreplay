@@ -1126,14 +1126,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 124: {
-      return {
-        tp: MType.WebVitals,
-        name: tMsg[1],
-        value: tMsg[2],
-      }
-    }
-    
     default:
       return null
   }

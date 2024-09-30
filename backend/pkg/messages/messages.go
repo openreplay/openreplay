@@ -32,8 +32,9 @@ const (
 	MsgUserID                      = 28
 	MsgUserAnonymousID             = 29
 	MsgMetadata                    = 30
-	MsgPageEvent                   = 31
+	MsgPageEventDeprecated         = 31
 	MsgInputEvent                  = 32
+	MsgPageEvent                   = 33
 	MsgCSSInsertRule               = 37
 	MsgCSSDeleteRule               = 38
 	MsgFetch                       = 39
@@ -875,7 +876,7 @@ func (msg *Metadata) TypeID() int {
 	return 30
 }
 
-type PageEvent struct {
+type PageEventDeprecated struct {
 	message
 	MessageID                  uint64
 	Timestamp                  uint64
@@ -896,7 +897,7 @@ type PageEvent struct {
 	TimeToInteractive          uint64
 }
 
-func (msg *PageEvent) Encode() []byte {
+func (msg *PageEventDeprecated) Encode() []byte {
 	buf := make([]byte, 171+len(msg.URL)+len(msg.Referrer))
 	buf[0] = 31
 	p := 1
@@ -920,11 +921,11 @@ func (msg *PageEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *PageEvent) Decode() Message {
+func (msg *PageEventDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *PageEvent) TypeID() int {
+func (msg *PageEventDeprecated) TypeID() int {
 	return 31
 }
 
@@ -955,6 +956,61 @@ func (msg *InputEvent) Decode() Message {
 
 func (msg *InputEvent) TypeID() int {
 	return 32
+}
+
+type PageEvent struct {
+	message
+	MessageID                  uint64
+	Timestamp                  uint64
+	URL                        string
+	Referrer                   string
+	Loaded                     bool
+	RequestStart               uint64
+	ResponseStart              uint64
+	ResponseEnd                uint64
+	DomContentLoadedEventStart uint64
+	DomContentLoadedEventEnd   uint64
+	LoadEventStart             uint64
+	LoadEventEnd               uint64
+	FirstPaint                 uint64
+	FirstContentfulPaint       uint64
+	SpeedIndex                 uint64
+	VisuallyComplete           uint64
+	TimeToInteractive          uint64
+	WebVitals                  string
+}
+
+func (msg *PageEvent) Encode() []byte {
+	buf := make([]byte, 181+len(msg.URL)+len(msg.Referrer)+len(msg.WebVitals))
+	buf[0] = 33
+	p := 1
+	p = WriteUint(msg.MessageID, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Referrer, buf, p)
+	p = WriteBoolean(msg.Loaded, buf, p)
+	p = WriteUint(msg.RequestStart, buf, p)
+	p = WriteUint(msg.ResponseStart, buf, p)
+	p = WriteUint(msg.ResponseEnd, buf, p)
+	p = WriteUint(msg.DomContentLoadedEventStart, buf, p)
+	p = WriteUint(msg.DomContentLoadedEventEnd, buf, p)
+	p = WriteUint(msg.LoadEventStart, buf, p)
+	p = WriteUint(msg.LoadEventEnd, buf, p)
+	p = WriteUint(msg.FirstPaint, buf, p)
+	p = WriteUint(msg.FirstContentfulPaint, buf, p)
+	p = WriteUint(msg.SpeedIndex, buf, p)
+	p = WriteUint(msg.VisuallyComplete, buf, p)
+	p = WriteUint(msg.TimeToInteractive, buf, p)
+	p = WriteString(msg.WebVitals, buf, p)
+	return buf[:p]
+}
+
+func (msg *PageEvent) Decode() Message {
+	return msg
+}
+
+func (msg *PageEvent) TypeID() int {
+	return 33
 }
 
 type CSSInsertRule struct {

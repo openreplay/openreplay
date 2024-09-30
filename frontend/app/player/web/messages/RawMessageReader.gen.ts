@@ -813,16 +813,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
-    case 124: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readUint(); if (value === null) { return resetPointer() }
-      return {
-        tp: MType.WebVitals,
-        name,
-        value,
-      };
-    }
-
     case 93: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const length = this.readUint(); if (length === null) { return resetPointer() }

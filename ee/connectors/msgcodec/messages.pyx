@@ -410,7 +410,7 @@ cdef class Metadata(PyMessage):
         self.value = value
 
 
-cdef class PageEvent(PyMessage):
+cdef class PageEventDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long message_id
     cdef public unsigned long timestamp
@@ -466,6 +466,49 @@ cdef class InputEvent(PyMessage):
         self.value = value
         self.value_masked = value_masked
         self.label = label
+
+
+cdef class PageEvent(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long message_id
+    cdef public unsigned long timestamp
+    cdef public str url
+    cdef public str referrer
+    cdef public bint loaded
+    cdef public unsigned long request_start
+    cdef public unsigned long response_start
+    cdef public unsigned long response_end
+    cdef public unsigned long dom_content_loaded_event_start
+    cdef public unsigned long dom_content_loaded_event_end
+    cdef public unsigned long load_event_start
+    cdef public unsigned long load_event_end
+    cdef public unsigned long first_paint
+    cdef public unsigned long first_contentful_paint
+    cdef public unsigned long speed_index
+    cdef public unsigned long visually_complete
+    cdef public unsigned long time_to_interactive
+    cdef public str web_vitals
+
+    def __init__(self, unsigned long message_id, unsigned long timestamp, str url, str referrer, bint loaded, unsigned long request_start, unsigned long response_start, unsigned long response_end, unsigned long dom_content_loaded_event_start, unsigned long dom_content_loaded_event_end, unsigned long load_event_start, unsigned long load_event_end, unsigned long first_paint, unsigned long first_contentful_paint, unsigned long speed_index, unsigned long visually_complete, unsigned long time_to_interactive, str web_vitals):
+        self.__id__ = 33
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.url = url
+        self.referrer = referrer
+        self.loaded = loaded
+        self.request_start = request_start
+        self.response_start = response_start
+        self.response_end = response_end
+        self.dom_content_loaded_event_start = dom_content_loaded_event_start
+        self.dom_content_loaded_event_end = dom_content_loaded_event_end
+        self.load_event_start = load_event_start
+        self.load_event_end = load_event_end
+        self.first_paint = first_paint
+        self.first_contentful_paint = first_contentful_paint
+        self.speed_index = speed_index
+        self.visually_complete = visually_complete
+        self.time_to_interactive = time_to_interactive
+        self.web_vitals = web_vitals
 
 
 cdef class CSSInsertRule(PyMessage):
