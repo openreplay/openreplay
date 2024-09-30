@@ -25,7 +25,6 @@ type Props = {
   isCurrent?: boolean;
   onClick?: () => void;
   showSelection?: boolean;
-  showLoadInfo?: boolean;
   toggleLoadInfo?: () => void;
   isRed?: boolean;
   presentInSearch?: boolean;
@@ -52,7 +51,6 @@ const Event: React.FC<Props> = ({
   isCurrent = false,
   onClick,
   showSelection = false,
-  showLoadInfo,
   toggleLoadInfo,
   isRed = false,
   presentInSearch = false,
@@ -251,25 +249,26 @@ const Event: React.FC<Props> = ({
         {renderBody()}
       </div>
       {isLocation &&
-        (event.fcpTime ||
-          event.visuallyComplete ||
-          event.timeToInteractive) && (
-          <LoadInfo
-            showInfo={showLoadInfo}
-            onClick={toggleLoadInfo}
-            event={event}
-            prorata={prorata({
-              parts: 100,
-              elements: {
-                a: event.fcpTime,
-                b: event.visuallyComplete,
-                c: event.timeToInteractive,
-              },
-              startDivisorFn: (elements) => elements / 1.2,
-              divisorFn: (elements, parts) => elements / (2 * parts + 1),
-            })}
-          />
-        )}
+      (event.fcpTime ||
+        event.visuallyComplete ||
+        event.timeToInteractive ||
+        event.webvitals) ? (
+        <LoadInfo
+          onClick={toggleLoadInfo}
+          event={event}
+          webvitals={event.webvitals}
+          prorata={prorata({
+            parts: 100,
+            elements: {
+              a: event.fcpTime,
+              b: event.visuallyComplete,
+              c: event.timeToInteractive,
+            },
+            startDivisorFn: (elements) => elements / 1.2,
+            divisorFn: (elements, parts) => elements / (2 * parts + 1),
+          })}
+        />
+      ) : null}
     </div>
   );
 };

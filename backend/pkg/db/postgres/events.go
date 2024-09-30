@@ -116,7 +116,8 @@ func (conn *Conn) InsertWebPageEvent(sess *sessions.Session, e *messages.PageEve
 	// base_path is deprecated
 	if err = conn.bulks.Get("webPageEvents").Append(sess.SessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
-		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
+		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e),
+		e.WebVitals); err != nil {
 		sessCtx := context.WithValue(context.Background(), "sessionID", sess.SessionID)
 		conn.log.Error(sessCtx, "insert web page event in bulk err: %s", err)
 	}

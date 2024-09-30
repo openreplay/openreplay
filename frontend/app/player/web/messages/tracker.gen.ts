@@ -550,8 +550,14 @@ type TrGraphQL = [
   duration: number,
 ]
 
+type TrWebVitals = [
+  type: 124,
+  name: string,
+  value: string,
+]
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL
+
+export type TrackerMessage = TrTimestamp | TrSetPageLocationDeprecated | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequestDeprecated | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrReduxDeprecated | TrVuex | TrMobX | TrNgRx | TrGraphQLDeprecated | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrMouseClickDeprecated | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrNetworkRequest | TrWSChannel | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming | TrTabChange | TrTabData | TrCanvasNode | TrTagTrigger | TrRedux | TrSetPageLocation | TrGraphQL | TrWebVitals
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {

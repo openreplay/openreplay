@@ -1019,3 +1019,14 @@ export function GraphQL(
   ]
 }
 
+export function WebVitals(
+  name: string,
+  value: string,
+): Messages.WebVitals {
+  return [
+    Messages.Type.WebVitals,
+    name,
+    value,
+  ]
+}
+

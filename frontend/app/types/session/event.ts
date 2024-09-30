@@ -80,6 +80,7 @@ export interface LocationEvent extends IEvent {
   referrer: string;
   firstContentfulPaintTime: number;
   firstPaintTime: number;
+  webVitals: string | null;
 }
 
 export type EventData = ConsoleEvent | ClickEvent | InputEvent | LocationEvent | IEvent;
@@ -192,12 +193,19 @@ export class Location extends Event {
   visuallyComplete: LocationEvent['visuallyComplete'];
   timeToInteractive: LocationEvent['timeToInteractive'];
   referrer: LocationEvent['referrer'];
+  webvitals: {
+    cls?: number;
+    lcp?: number;
+    inp?: number;
+    ttfb?: number;
+  } | null;
 
   constructor(evt: LocationEvent) {
     super(evt);
     Object.assign(this, {
       ...evt,
       fcpTime: evt.firstContentfulPaintTime || evt.firstPaintTime,
+      webvitals: evt.webVitals ? JSON.parse(evt.webVitals) : null,
     });
   }
 }

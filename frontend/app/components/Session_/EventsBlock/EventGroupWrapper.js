@@ -2,14 +2,11 @@ import UxtEvent from "Components/Session_/EventsBlock/UxtEvent";
 import React from 'react';
 import { connect } from 'react-redux';
 import { TextEllipsis, Icon } from 'UI';
-import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import Event from './Event';
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
 
-// TODO: incapsulate toggler in LocationEvent
-@withToggle('showLoadInfo', 'toggleLoadInfo')
 @connect(
   (state) => ({
     members: state.getIn(['members', 'list']),
@@ -17,14 +14,6 @@ import NoteEvent from './NoteEvent';
   }),
 )
 class EventGroupWrapper extends React.Component {
-  toggleLoadInfo = (e) => {
-    e.stopPropagation();
-    this.props.toggleLoadInfo();
-  };
-
-  componentDidMount() {
-    this.props.toggleLoadInfo(this.props.isFirst);
-  }
 
   onEventClick = (e) => this.props.onEventClick(e, this.props.event);
 
@@ -39,7 +28,6 @@ class EventGroupWrapper extends React.Component {
       isCurrent,
       isEditing,
       showSelection,
-      showLoadInfo,
       isFirst,
       presentInSearch,
       isNote,
@@ -77,8 +65,6 @@ class EventGroupWrapper extends React.Component {
             event={event}
             onClick={this.onEventClick}
             selected={isSelected}
-            showLoadInfo={showLoadInfo}
-            toggleLoadInfo={this.toggleLoadInfo}
             isCurrent={isCurrent}
             presentInSearch={presentInSearch}
             isLastInGroup={isLastInGroup}
