@@ -10,13 +10,15 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "test:ci": "vitest --coverage"
   },
   "author": "Nikita <nikita@openreplay.com>",
   "license": "MIT",
   "devDependencies": {
+    "@vitest/coverage-istanbul": "^2.1.1",
     "jsdom": "^25.0.1",
-    "vitest": "^2.1.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
   }
 }
