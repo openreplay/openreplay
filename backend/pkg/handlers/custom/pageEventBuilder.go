@@ -11,7 +11,7 @@ const PageEventTimeout = 1 * 60 * 1000
 type pageEventBuilder struct {
 	pageEvent          *PageEvent
 	firstTimingHandled bool
-	webVitals          map[string]uint64
+	webVitals          map[string]string
 }
 
 func NewPageEventBuilder() *pageEventBuilder {
@@ -83,7 +83,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		return nil //b.buildIfTimingsComplete()
 	case *WebVitals:
 		if b.webVitals == nil {
-			b.webVitals = make(map[string]uint64)
+			b.webVitals = make(map[string]string)
 		}
 		b.webVitals[msg.Name] = msg.Value
 	}
