@@ -129,7 +129,7 @@ func (conn *BulkSet) initBulks() {
 			"time_to_interactive, response_time, dom_building_time, web_vitals)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), "+
 			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
-			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0)), NULLIF($%d, '')",
+			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, ''))",
 		19, 200)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webPageEvents bulk: %s", err)
