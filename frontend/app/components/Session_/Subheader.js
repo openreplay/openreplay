@@ -1,5 +1,5 @@
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton, Switch, Tooltip } from 'antd';
+import { Button as AntButton, Popover, Switch, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -82,32 +82,11 @@ function SubHeader(props) {
             : undefined,
         }}
       >
-        {showWarning ? (
-          <div
-            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-            style={{
-              zIndex: 999,
-              position: 'absolute',
-              left: '50%',
-              bottom: '-24px',
-              transform: 'translate(-50%, 0)',
-              fontWeight: 500,
-            }}
-          >
-            Some assets may load incorrectly on localhost.
-            <a
-              href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
-              target="_blank"
-              rel="noreferrer"
-              className="link ml-1"
-            >
-              Learn More
-            </a>
-            <div className="py-1 ml-3 cursor-pointer" onClick={closeWarning}>
-              <Icon name="close" size={16} color="black" />
-            </div>
-          </div>
-        ) : null}
+        <WarnBadge
+          siteId={props.siteId}
+          currentLocation={currentLocation}
+          version={props.currentSession?.trackerVersion ?? '1.0.0'}
+        />
 
         <SessionTabs />
 
@@ -170,5 +149,117 @@ function SubHeader(props) {
     </>
   );
 }
+
+const VersionComparison = {
+  Lower: -1,
+  Same: 0,
+  Higher: 1,
+};
+
+function compareVersions(suppliedVersion, currentVersion) {
+  function parseVersion(version) {
+    const cleanVersion = version.split(/[-+]/)[0];
+    return cleanVersion.split('.').map(Number);
+  }
+
+  const v1 = parseVersion(suppliedVersion);
+  const v2 = parseVersion(currentVersion);
+
+  const length = Math.max(v1.length, v2.length);
+  while (v1.length < length) v1.push(0);
+  while (v2.length < length) v2.push(0);
+
+  for (let i = 0; i < length; i++) {
+    if (v1[i] < v2[i]) return VersionComparison.Lower;
+    if (v1[i] > v2[i]) return VersionComparison.Higher;
+  }
+
+  return VersionComparison.Same;
+}
+
+function WarnBadge({ currentLocation, version, siteId }) {
+  const localhostWarnSiteKey = localhostWarn(siteId);
+  const defaultLocalhostWarn =
+    localStorage.getItem(localhostWarnSiteKey) !== '1';
+  const localhostWarnActive =
+    currentLocation &&
+    defaultLocalhostWarn &&
+    /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
+  const trackerVersion = window.env.TRACKER_VERSION ?? '1.0.0';
+  const trackerVerDiff = compareVersions(version, trackerVersion);
+  const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
+
+  const [showWarningModal, setWarning] = React.useState(localhostWarnActive || trackerWarnActive);
+
+  const closeWarning = () => {
+    if (localhostWarnActive) {
+      localStorage.setItem(localhostWarnSiteKey, '1');
+    }
+    setWarning(false);
+  };
+
+  if (!showWarningModal) return null;
+
+  const yTranslate = localhostWarnActive && trackerWarnActive ? '25%' : '10%';
+  return (
+    <div
+      className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
+      style={{
+        zIndex: 999,
+        position: 'absolute',
+        left: '50%',
+        bottom: '-32px',
+        transform: `translate(-50%, ${yTranslate})`,
+        fontWeight: 500,
+      }}
+    >
+      <div>
+        {localhostWarnActive ? (
+          <div>
+            <span>Some assets may load incorrectly on localhost.</span>
+            <a
+              href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
+              target="_blank"
+              rel="noreferrer"
+              className="link ml-1"
+            >
+              Learn More
+            </a>
+          </div>
+        ) : null}
+        {trackerWarnActive ? (
+          <>
+            <div>
+              <div>
+                Tracker version({version}) for this recording is{' '}
+                {trackerVerDiff === VersionComparison.Lower
+                  ? 'lower '
+                  : 'ahead of '}
+                the current({trackerVersion}) version.
+              </div>
+              <div>
+                <span>Some recording might display incorrectly.</span>
+                <a
+                  href={
+                    'https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility'
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="link ml-1"
+                >
+                  Learn More
+                </a>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
+      <div className="py-1 ml-3 cursor-pointer" onClick={closeWarning}>
+        <Icon name="close" size={16} color="black" />
+      </div>
+    </div>
+  );
+}
+
 
 export default observer(SubHeader);

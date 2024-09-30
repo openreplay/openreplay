@@ -225,6 +225,7 @@ export default class Session {
   platform: ISession['platform'];
   isMobileNative?: ISession['isMobileNative'];
   audio?: ISession['audio'];
+  trackerVersion?: string;
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
