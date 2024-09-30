@@ -631,8 +631,6 @@ export type WebVitals = [
   /*type:*/ Type.WebVitals,
   /*name:*/ string,
   /*value:*/ number,
-  /*delta:*/ number,
-  /*rating:*/ string,
 ]
 
 

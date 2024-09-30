@@ -545,8 +545,6 @@ export interface RawWebVitals {
   tp: MType.WebVitals,
   name: string,
   value: number,
-  delta: number,
-  rating: string,
 }
 
 export interface RawMobileEvent {

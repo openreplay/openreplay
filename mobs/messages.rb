@@ -559,8 +559,6 @@ end
 message 124, 'WebVitals', :replayer => :devtools do
     string 'Name'
     uint 'Value'
-    uint 'Delta'
-    string 'Rating'
 end
 
 ## Backend-only

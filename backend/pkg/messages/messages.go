@@ -2446,20 +2446,16 @@ func (msg *GraphQL) TypeID() int {
 
 type WebVitals struct {
 	message
-	Name   string
-	Value  uint64
-	Delta  uint64
-	Rating string
+	Name  string
+	Value uint64
 }
 
 func (msg *WebVitals) Encode() []byte {
-	buf := make([]byte, 41+len(msg.Name)+len(msg.Rating))
+	buf := make([]byte, 21+len(msg.Name))
 	buf[0] = 124
 	p := 1
 	p = WriteString(msg.Name, buf, p)
 	p = WriteUint(msg.Value, buf, p)
-	p = WriteUint(msg.Delta, buf, p)
-	p = WriteString(msg.Rating, buf, p)
 	return buf[:p]
 }
 

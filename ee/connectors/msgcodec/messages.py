@@ -862,11 +862,9 @@ class GraphQL(Message):
 class WebVitals(Message):
     __id__ = 124
 
-    def __init__(self, name, value, delta, rating):
+    def __init__(self, name, value):
         self.name = name
         self.value = value
-        self.delta = delta
-        self.rating = rating
 
 
 class IssueEvent(Message):

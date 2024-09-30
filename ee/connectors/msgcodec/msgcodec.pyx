@@ -869,9 +869,7 @@ cdef class MessageCodec:
         if message_id == 124:
             return WebVitals(
                 name=self.read_string(reader),
-                value=self.read_uint(reader),
-                delta=self.read_uint(reader),
-                rating=self.read_string(reader)
+                value=self.read_uint(reader)
             )
 
         if message_id == 125:

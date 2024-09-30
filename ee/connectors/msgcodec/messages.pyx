@@ -1275,15 +1275,11 @@ cdef class WebVitals(PyMessage):
     cdef public int __id__
     cdef public str name
     cdef public unsigned long value
-    cdef public unsigned long delta
-    cdef public str rating
 
-    def __init__(self, str name, unsigned long value, unsigned long delta, str rating):
+    def __init__(self, str name, unsigned long value):
         self.__id__ = 124
         self.name = name
         self.value = value
-        self.delta = delta
-        self.rating = rating
 
 
 cdef class IssueEvent(PyMessage):

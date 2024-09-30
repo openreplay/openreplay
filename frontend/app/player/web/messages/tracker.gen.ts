@@ -554,8 +554,6 @@ type TrWebVitals = [
   type: 124,
   name: string,
   value: number,
-  delta: number,
-  rating: string,
 ]
 
 
@@ -1133,8 +1131,6 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         tp: MType.WebVitals,
         name: tMsg[1],
         value: tMsg[2],
-        delta: tMsg[3],
-        rating: tMsg[4],
       }
     }
     
