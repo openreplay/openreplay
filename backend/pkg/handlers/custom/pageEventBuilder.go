@@ -102,7 +102,7 @@ func (b *pageEventBuilder) Build() Message {
 	b.pageEvent = nil
 	b.firstTimingHandled = false
 	if b.webVitals != nil {
-		if vitals, err := json.Marshal(b.webVitals); err != nil {
+		if vitals, err := json.Marshal(b.webVitals); err == nil {
 			pageEvent.WebVitals = string(vitals)
 		} else {
 			// DEBUG
