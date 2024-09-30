@@ -261,7 +261,6 @@ export default class Session {
     const isMobile = ['console', 'mobile', 'tablet'].includes(userDeviceType);
 
     const events: InjectedEvent[] = [];
-    const rawEvents: (EventData & { key: number })[] = [];
 
     if (session.events?.length) {
       (session.events as EventData[]).forEach((event: EventData, k) => {
@@ -271,7 +270,6 @@ export default class Session {
           if (EventClass) {
             events.push(EventClass);
           }
-          rawEvents.push({ ...event, time, key: k });
         }
       });
     }
@@ -306,7 +304,7 @@ export default class Session {
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
-      mergeEventLists(rawEvents, rawNotes),
+      mergeEventLists(events, rawNotes),
       frustrationIssues
     ).sort(sortEvents)
 
@@ -377,7 +375,6 @@ export default class Session {
 
     const events: InjectedEvent[] = [];
     const uxtDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }))
-    const rawEvents: (EventData & { key: number })[] = [];
 
     let uxtIndexNum = 0;
     if (sessionEvents.length) {
@@ -394,7 +391,6 @@ export default class Session {
           if (EventClass) {
             events.push(EventClass);
           }
-          rawEvents.push({ ...event, time, key: k,  });
         }
       });
     }
@@ -412,7 +408,7 @@ export default class Session {
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
-      rawEvents,
+      events,
       frustrationIssues.filter(i => i.type !== issueTypes.DEAD_CLICK)
     )
 
