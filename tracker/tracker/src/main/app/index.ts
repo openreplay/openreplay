@@ -360,6 +360,7 @@ export default class App {
       let crossdomainFrameCount = 0
       const catchIframeMessage = (event: MessageEvent) => {
         const { data } = event
+        if (!data) return
         if (data.line === proto.iframeSignal) {
           const childIframeDomain = data.domain
           const pageIframes = Array.from(document.querySelectorAll('iframe'))
@@ -453,6 +454,7 @@ export default class App {
     } else {
       const catchParentMessage = (event: MessageEvent) => {
         const { data } = event
+        if (!data) return
         if (data.line !== proto.iframeId) {
           return
         }

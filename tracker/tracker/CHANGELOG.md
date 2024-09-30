@@ -1,6 +1,7 @@
 # 14.0.8
 
 - use separate library to handle network requests ([@openreplay/network-proxy](https://www.npmjs.com/package/@openreplay/network-proxy))
+- fixes for window.message listeners
 
 # 14.0.7
 
