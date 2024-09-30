@@ -2,7 +2,7 @@
   "name": "wxt-starter",
   "description": "manifest.json description",
   "private": true,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@neodrag/solid": "^2.0.4",
+    "@openreplay/network-proxy": "^1.0.3",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "autoprefixer": "^10.4.19",
     "install": "^0.13.0",
@@ -31,6 +32,6 @@
     "@wxt-dev/module-solid": "^1.1.2",
     "daisyui": "^4.12.10",
     "typescript": "^5.4.5",
-    "wxt": "0.19.9"
+    "wxt": "0.19.10"
   }
 }

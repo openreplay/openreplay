@@ -707,6 +707,11 @@
     proc-log "^4.0.0"
     which "^4.0.0"
 
+"@openreplay/network-proxy@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@openreplay/network-proxy/-/network-proxy-1.0.3.tgz#82c07f0742db01456f3764bae6c0b5ff280557a9"
+  integrity sha512-vm/x8Ioo1BKJIyZf58tK44CgtzHA0tIwu2uZ2WdIzrBOODF+A2qV4mELC8Zdp9WqV1O7uxXGaA4J38HU3th14g==
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
@@ -5331,10 +5336,10 @@ ws@8.18.0:
   resolved "https://registry.npmjs.org/ws/-/ws-8.18.0.tgz"
   integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
-wxt@0.19.9:
-  version "0.19.9"
-  resolved "https://registry.yarnpkg.com/wxt/-/wxt-0.19.9.tgz#b8f7f838cab00d66f4ee22f483c49ad8f6527af8"
-  integrity sha512-XUbF4JNyx2jTDpXwx2c/esaJcUD2Dr482C2GGenkGRMH2UnerzOIchGCtaa1hb2U8eAed7Akda0yRoMJU0uxUw==
+wxt@0.19.10:
+  version "0.19.10"
+  resolved "https://registry.yarnpkg.com/wxt/-/wxt-0.19.10.tgz#557d57e63ab5fcf3b026791aae3706c400b5f7cb"
+  integrity sha512-lX/dzAaau79SDsU7QZKUgxJUf9nBsaQXMiqsDNgGoqZO1wrRpFq0kijcN3/mNjGbXM989VJhEl7B6f3ttxKAnQ==
   dependencies:
     "@aklinker1/rollup-plugin-visualizer" "5.12.0"
     "@types/chrome" "^0.0.269"
@@ -5350,6 +5355,7 @@ wxt@0.19.9:
     consola "^3.2.3"
     defu "^6.1.4"
     dequal "^2.0.3"
+    dotenv "^16.4.5"
     esbuild "^0.23.0"
     execa "^9.3.1"
     fast-glob "^3.3.2"
@@ -5371,6 +5377,7 @@ wxt@0.19.9:
     ohash "^1.1.3"
     open "^10.1.0"
     ora "^8.1.0"
+    perfect-debounce "^1.0.0"
     picocolors "^1.0.1"
     prompts "^2.4.2"
     publish-browser-extension "^2.1.3"

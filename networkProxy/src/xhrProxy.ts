@@ -6,10 +6,9 @@
  * in not-so-hacky way
  * */
 
-import NetworkMessage, { RequestState } from './networkMessage.js'
-import { genGetDataByUrl, formatByteSize, genStringBody, getStringResponseByType } from './utils.js'
-import { RequestResponseData } from './types.js'
-import { NetworkRequest } from '../../../common/messages.gen.js'
+import NetworkMessage from './networkMessage'
+import { RequestState, INetworkMessage, RequestResponseData } from './types';
+import { genGetDataByUrl, formatByteSize, genStringBody, getStringResponseByType } from './utils'
 
 export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T> {
   public XMLReq: XMLHttpRequest
@@ -20,7 +19,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest> implements ProxyHandler<T
     private readonly ignoredHeaders: boolean | string[],
     private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    private readonly sendMessage: (message: NetworkRequest) => void,
+    private readonly sendMessage: (message: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
   ) {
@@ -239,7 +238,7 @@ export default class XHRProxy {
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    sendMessage: (data: NetworkRequest) => void,
+    sendMessage: (data: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
   ) {

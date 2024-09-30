@@ -10,6 +10,7 @@ export const enum ResourceType {
   IMG = 'img',
   MEDIA = 'media',
   WS = 'websocket',
+  GRAPHQL = 'graphql',
   OTHER = 'other',
 }
 
@@ -47,6 +48,8 @@ export function getResourceType(initiator: string, url: string): ResourceType {
     case "avi":
     case "mp3":
       return ResourceType.MEDIA
+    case "graphql":
+      return ResourceType.GRAPHQL
     default:
       return ResourceType.OTHER
     }

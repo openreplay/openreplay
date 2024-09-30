@@ -1,19 +1,9 @@
-import { NetworkRequest } from '../../app/messages.gen.js'
-import { RequestResponseData } from './types.js'
-import { getTimeOrigin } from '../../utils.js'
-
-export type httpMethod =
-  // '' is a rare case of error
-  '' | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH'
-
-export enum RequestState {
-  UNSENT = 0,
-  OPENED = 1,
-  HEADERS_RECEIVED = 2,
-  LOADING = 3,
-  DONE = 4,
-}
-
+import {
+  RequestResponseData,
+  INetworkMessage,
+  httpMethod,
+  RequestState,
+} from './types'
 /**
  * I know we're not using most of the information from this class
  * but it can be useful in the future if we will decide to display more stuff in our ui
@@ -30,9 +20,9 @@ export default class NetworkMessage {
   readyState?: RequestState = 0
   header: { [key: string]: string } = {}
   responseType: XMLHttpRequest['responseType'] = ''
-  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon'
+  requestType: 'xhr' | 'fetch' | 'ping' | 'custom' | 'beacon' | 'graphql' = 'xhr'
   requestHeader: HeadersInit = {}
-  response: any
+  response: string
   responseSize = 0 // bytes
   responseSizeText = ''
   startTime = 0
@@ -47,7 +37,7 @@ export default class NetworkMessage {
     private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
   ) {}
 
-  getMessage() {
+  getMessage(): INetworkMessage | null {
     const { reqHs, resHs } = this.writeHeaders()
     const request = {
       headers: reqHs,
@@ -63,19 +53,26 @@ export default class NetworkMessage {
       response,
     })
 
-    if (!messageInfo) return
+    if (!messageInfo) return null;
 
-    return NetworkRequest(
-      this.requestType,
-      messageInfo.method,
-      messageInfo.url,
-      JSON.stringify(messageInfo.request),
-      JSON.stringify(messageInfo.response),
-      messageInfo.status,
-      this.startTime + getTimeOrigin(),
-      this.duration,
-      this.responseSize,
-    )
+    const isGraphql = messageInfo.url.includes("/graphql");
+    if (isGraphql && messageInfo.response.body && typeof messageInfo.response.body === 'string') {
+      const isError = messageInfo.response.body.includes("errors");
+      messageInfo.status = isError ? 400 : 200;
+      this.requestType = 'graphql';
+    }
+
+    return {
+      requestType: this.requestType,
+      method: messageInfo.method as httpMethod,
+      url: messageInfo.url,
+      request: JSON.stringify(messageInfo.request),
+      response: JSON.stringify(messageInfo.response),
+      status: messageInfo.status,
+      startTime: this.startTime,
+      duration: this.duration,
+      responseSize: this.responseSize,
+    }
   }
 
   writeHeaders() {

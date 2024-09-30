@@ -1,13 +1,4 @@
-import {
-  createSpotNetworkRequest,
-  stopTrackingNetwork,
-  startTrackingNetwork,
-  SpotNetworkRequest,
-  rawRequests,
-} from "../utils/networkTracking";
-import {
-  isTokenExpired
-} from '../utils/jwt';
+import { isTokenExpired } from "~/utils/jwt";
 
 let checkBusy = false;
 
@@ -65,6 +56,7 @@ export default defineBackground(() => {
     injected: {
       from: {
         bumpLogs: "ort:bump-logs",
+        bumpNetwork: "ort:bump-network",
       },
     },
     offscreen: {
@@ -218,7 +210,7 @@ export default defineBackground(() => {
       setJWTToken("");
     }
     const { jwtToken, settings } = data;
-    const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`
+    const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`;
     if (!isTokenExpired(jwtToken) || !jwtToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
@@ -305,12 +297,12 @@ export default defineBackground(() => {
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
       });
-      checkBusy = false
+      checkBusy = false;
       return;
     }
     const ok = await refreshToken();
     if (ok) {
-      setJWTToken(data.jwtToken)
+      setJWTToken(data.jwtToken);
       if (!refreshInt) {
         refreshInt = setInterval(() => {
           void refreshToken();
@@ -322,7 +314,7 @@ export default defineBackground(() => {
         }, PING_INT);
       }
     }
-    checkBusy = false
+    checkBusy = false;
   }
   // @ts-ignore
   browser.runtime.onMessage.addListener((request, sender, respond) => {
@@ -408,6 +400,9 @@ export default defineBackground(() => {
             settings.networkLogs,
             settings.consoleLogs,
             () => recordingState.recording,
+            (hook) => {
+              onStop = hook;
+            },
           );
           // @ts-ignore  this is false positive
           respond(true);
@@ -579,6 +574,10 @@ export default defineBackground(() => {
       finalSpotObj.logs.push(...request.logs);
       return "pong";
     }
+    if (request.type === messages.injected.from.bumpNetwork) {
+      finalSpotObj.network.push(request.event);
+      return "pong";
+    }
     if (request.type === messages.content.from.bumpClicks) {
       finalSpotObj.clicks.push(...request.clicks);
       return "pong";
@@ -739,25 +738,7 @@ export default defineBackground(() => {
       });
     }
     if (request.type === messages.content.from.saveSpotData) {
-      stopTrackingNetwork();
-      const finalNetwork: SpotNetworkRequest[] = [];
-      const tab =
-        recordingState.area === "tab" ? recordingState.activeTabId : undefined;
-      let lastIn = 0;
-      try {
-        rawRequests.forEach((r, i) => {
-          lastIn = i;
-          const spotNetworkRequest = createSpotNetworkRequest(r, tab);
-          if (spotNetworkRequest) {
-            finalNetwork.push(spotNetworkRequest);
-          }
-        });
-      } catch (e) {
-        console.error("cant parse network", e, rawRequests[lastIn]);
-      }
-      Object.assign(finalSpotObj, request.spot, {
-        network: finalNetwork,
-      });
+      Object.assign(finalSpotObj, request.spot);
       return "pong";
     }
     if (request.type === messages.content.from.saveSpotVidChunk) {
@@ -897,7 +878,7 @@ export default defineBackground(() => {
                       url: `${link}/view-spot/${id}`,
                       active: settings.openInNewTab,
                     });
-                  }, 250)
+                  }, 250);
                   const blob = base64ToBlob(videoData);
 
                   const mPromise = fetch(mobURL, {
@@ -974,7 +955,7 @@ export default defineBackground(() => {
 
   async function initializeOffscreenDocument() {
     const existingContexts = await browser.runtime.getContexts({
-      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
     });
 
     const offscreenDocument = existingContexts.find(
@@ -997,7 +978,7 @@ export default defineBackground(() => {
         justification: "Recording from chrome.tabCapture API",
       });
     } catch (e) {
-      console.log('cant create new offscreen document', e)
+      console.error("cant create new offscreen document", e);
     }
 
     return;
@@ -1025,7 +1006,12 @@ export default defineBackground(() => {
     if (contentArmy[sendTo]) {
       await browser.tabs.sendMessage(sendTo, message);
     } else {
-      console.error("Content script might not be ready in tab", sendTo);
+      console.trace(
+        "Content script might not be ready in tab",
+        sendTo,
+        contentArmy,
+        message,
+      );
       await browser.tabs.sendMessage(sendTo, message);
     }
   }
@@ -1063,7 +1049,7 @@ export default defineBackground(() => {
     withNetwork: boolean,
     withConsole: boolean,
     getRecState: () => string,
-    setOnStop?: (hook: any) => void,
+    setOnStop: (hook: any) => void,
   ) {
     let activeTabs = await browser.tabs.query({
       active: true,
@@ -1108,17 +1094,16 @@ export default defineBackground(() => {
         slackChannels,
         activeTabId,
         withConsole,
+        withNetwork,
         state: "recording",
         // by default this is already handled by :start event
         // that triggers mount with countdown
         shouldMount: false,
       };
       void sendToActiveTab(mountMsg);
-      if (withNetwork) {
-        startTrackingNetwork();
-      }
-
       let previousTab: number | null = usedTab ?? null;
+
+      /** moves ui to active tab when screen recording */
       function tabActivatedListener({ tabId }: { tabId: number }) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
@@ -1147,14 +1132,17 @@ export default defineBackground(() => {
           previousTab = tabId;
         }
       }
+      /** moves ui to active tab when screen recording */
       function startTabActivationListening() {
         browser.tabs.onActivated.addListener(tabActivatedListener);
       }
+      /** moves ui to active tab when screen recording */
       function stopTabActivationListening() {
         browser.tabs.onActivated.removeListener(tabActivatedListener);
       }
 
       const trackedTab: number | null = usedTab ?? null;
+      /** reloads ui on currently active tab once its reloads itself */
       function tabUpdateListener(tabId: number, changeInfo: any) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
@@ -1186,6 +1174,7 @@ export default defineBackground(() => {
           });
       }
 
+      /** discards recording if was recording single tab and its now closed */
       function tabRemovedListener(tabId: number) {
         if (tabId === trackedTab) {
           void browser.runtime.sendMessage({
@@ -1221,12 +1210,14 @@ export default defineBackground(() => {
 
       startTabListening();
       if (area === "desktop") {
+        // if desktop, watch for tab change events
         startTabActivationListening();
       }
       if (area === "tab") {
+        // if tab, watch for tab remove changes to discard recording
         startRemovedListening();
       }
-      setOnStop?.(() => {
+      setOnStop(() => {
         stopTabListening();
         if (area === "desktop") {
           stopTabActivationListening();
