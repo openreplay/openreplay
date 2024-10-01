@@ -43,15 +43,27 @@ function BackendLogsPanel() {
 
   const tabs = [
     {
-      label: 'Dynatrace',
+      label: (
+        <div className={'flex items-center gap-2'}>
+          <Icon size={14} name={'integrations/dynatrace'} /> <div>Dynatrace</div>
+        </div>
+      ),
       value: 'dynatrace',
     },
     {
-      label: 'Elastic',
+      label: (
+        <div className={'flex items-center gap-2'}>
+          <Icon size={14} name={'integrations/elasticsearch'} /> <div>Elastic</div>
+        </div>
+      ),
       value: 'elastic',
     },
     {
-      label: 'Datadog',
+      label: (
+        <div className={'flex items-center gap-2'}>
+          <Icon size={14} name={'integrations/datadog'} /> <div>Datadog</div>
+        </div>
+      ),
       value: 'datadog',
     },
   ];
@@ -59,7 +71,7 @@ function BackendLogsPanel() {
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
         <div className={'flex gap-2 items-center w-full'}>
-          <div>Traces</div>
+          <div className={'font-semibold'}>Traces</div>
           <div>
             <Segmented options={tabs} value={tab} onChange={setTab} />
           </div>
@@ -77,7 +89,7 @@ function BackendLogsPanel() {
         </div>
       </BottomBlock.Header>
 
-      <BottomBlock.Content>
+      <BottomBlock.Content className="overflow-y-auto">
         {isPending ? (
           <div
             className={
@@ -102,7 +114,7 @@ function BackendLogsPanel() {
             <div>Check configuration</div>
           </div>
         ) : null}
-        <TableHeader />
+        <TableHeader size={data.length} />
         <VList ref={_list} count={testLogs.length}>
           {data.map((log, index) => (
             <LogRow key={index} log={log} />
@@ -132,14 +144,14 @@ const testLogs = [
   },
 ];
 
-function TableHeader() {
+function TableHeader({ size }: { size: number }) {
   return (
     <div className={'grid grid-cols-12 items-center py-2 px-4 bg-gray-lighter'}>
-      <div className={'col-span-1 pl-2'}>timestamp</div>
-      <div className={'col-span-1'}>status</div>
+      <div className={'col-span-1'}>timestamp</div>
+      <div className={'col-span-1 pl-2'}>status</div>
       <div className={'col-span-10 flex items-center justify-between'}>
         <div>content</div>
-        <div>123 Records</div>
+        <div><span className={'font-semibold'}>{size}</span> Records</div>
       </div>
     </div>
   );
@@ -161,11 +173,24 @@ function LogRow({
     }
     return 'bg-white';
   };
+
+  const border = (status: string) => {
+    //types: warn error info none
+    if (status === 'WARN') {
+      return 'border-l border-l-4 border-l-amber-500';
+    }
+    if (status === 'ERROR') {
+      return 'border-l border-l-4 border-l-red';
+    }
+    return 'border-l border-l-4 border-gray-lighter';
+  }
   return (
-    <div>
+    <div className={'code-font'}>
       <div
         className={cn(
-          'text-sm grid grid-cols-12 items-center py-2 px-4 cursor-pointer code-font border-b border-b-gray-light last:border-0',
+          'text-sm grid grid-cols-12 items-center py-2 px-4',
+          'cursor-pointer border-b border-b-gray-light last:border-b-0',
+          border(log.status),
           bg(log.status)
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
