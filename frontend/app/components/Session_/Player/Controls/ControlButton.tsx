@@ -17,6 +17,7 @@ interface IProps {
   containerClassName?: string;
   noIcon?: boolean;
   popover?: React.ReactNode;
+  customTags?: React.ReactNode;
 }
 
 const ControlButton = ({
@@ -26,6 +27,7 @@ const ControlButton = ({
   hasErrors = false,
   active = false,
   popover = undefined,
+  customTags,
 }: IProps) => (
   <Popover content={popover} open={popover ? undefined : false}>
     <Button
@@ -34,6 +36,7 @@ const ControlButton = ({
       id={'control-button-' + label.toLowerCase()}
       disabled={disabled}
     >
+      {customTags}
       {hasErrors && <div className={stl.labels}><div className={stl.errorSymbol} /></div>}
       <span className={cn('font-semibold hover:text-main', active ? 'color-main' : 'color-gray-darkest')}>
         {label}

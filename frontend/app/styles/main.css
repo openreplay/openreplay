@@ -382,4 +382,8 @@ svg {
     display: unset!important;
     height: 100%!important;
 }
-  
+
+.code-font {
+    font-family: Menlo, Monaco, Consolas, serif;
+    letter-spacing: -0.025rem
+}

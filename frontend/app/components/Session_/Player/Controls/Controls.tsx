@@ -27,9 +27,11 @@ import {
   PERFORMANCE,
   PROFILER,
   STACKEVENTS,
-  STORAGE
+  STORAGE,
+  BACKENDLOGS
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
+import LogsButton from "App/components/Session/Player/SharedComponents/BackendLogs/LogsButton";
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
@@ -349,6 +351,10 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
+        <LogsButton
+          integrated={['Datadog']}
+          onClick={() => toggleBottomTools(BACKENDLOGS)}
+        />
         {possibleAudio.length ? (
           <DropdownAudioPlayer audioEvents={possibleAudio} />
         ) : null}
