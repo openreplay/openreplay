@@ -86,7 +86,7 @@ export default class MetricService {
       data.metricOf = 'sessionCount';
     }
     try {
-      const r = await this.client.post(path, data);
+      const r = await this.client.cachedPost(path, data);
       const response = await r.json();
       return response.data || {};
     } catch (e) {
@@ -114,7 +114,7 @@ export default class MetricService {
       filter.filters = drillDownFilter;
     }
 
-    let resp: Response = await this.client.post(`/cards/try/issues`, filter);
+    let resp: Response = await this.client.cachedPost(`/cards/try/issues`, filter);
     const json: any = await resp.json();
     return await json.data || {};
   }
