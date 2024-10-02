@@ -35,10 +35,8 @@ class CanvasRecorder {
   startTracking() {
     setTimeout(() => {
       this.app.nodes.scanTree(this.captureCanvas)
-      this.app.nodes.attachNodeCallback((node: Node): void => {
-        this.captureCanvas(node)
-      })
-    }, 500)
+      this.app.nodes.attachNodeCallback(this.captureCanvas)
+    }, 250)
   }
 
   restartTracking = () => {
