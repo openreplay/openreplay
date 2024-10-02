@@ -354,6 +354,7 @@ export default class App {
 
     const thisTab = this.session.getTabId()
     const catchParentMessage = (event: MessageEvent) => {
+      if (!this.active()) return
       const { data } = event
       if (!data) return
       if (data.line === proto.parentAlive) {
@@ -370,9 +371,6 @@ export default class App {
     }
 
     window.addEventListener('message', catchParentMessage)
-    this.attachStopCallback(() => {
-      window.removeEventListener('message', catchParentMessage)
-    })
 
     if (this.bc !== null) {
       this.bc.postMessage({
@@ -429,6 +427,7 @@ export default class App {
        * */
       let crossdomainFrameCount = 0
       const catchIframeMessage = (event: MessageEvent) => {
+        if (!this.active()) return;
         const { data } = event
         if (!data) return
         if (data.line === proto.iframeSignal) {
@@ -514,9 +513,6 @@ export default class App {
         }
       }
       window.addEventListener('message', catchIframeMessage)
-      this.attachStopCallback(() => {
-        window.removeEventListener('message', catchIframeMessage)
-      })
     }
   }
 
@@ -711,7 +707,6 @@ export default class App {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
         this.messages.unshift(Timestamp(this.timestamp()))
-        // why I need to add opt chaining?
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -1441,6 +1436,11 @@ export default class App {
     } catch (reason) {
       this.stop()
       this.session.reset()
+      if (!reason) {
+        console.error('Unknown error during start')
+        this.signalError('Unknown error', [])
+        return UnsuccessfulStart('Unknown error')
+      }
       if (reason === CANCELED) {
         this.signalError(CANCELED, [])
         return UnsuccessfulStart(CANCELED)
@@ -1595,6 +1595,7 @@ export default class App {
           this.worker.postMessage('stop')
         }
         this.canvasRecorder?.clear()
+        this.messages.length = 0
       } finally {
         this.activityState = ActivityState.NotActive
       }
