@@ -354,7 +354,6 @@ export default class App {
 
     const thisTab = this.session.getTabId()
     const catchParentMessage = (event: MessageEvent) => {
-      if (!this.active()) return
       const { data } = event
       if (!data) return
       if (data.line === proto.parentAlive) {
@@ -371,6 +370,9 @@ export default class App {
     }
 
     window.addEventListener('message', catchParentMessage)
+    this.attachStopCallback(() => {
+      window.removeEventListener('message', catchParentMessage)
+    })
 
     if (this.bc !== null) {
       this.bc.postMessage({
@@ -427,7 +429,6 @@ export default class App {
        * */
       let crossdomainFrameCount = 0
       const catchIframeMessage = (event: MessageEvent) => {
-        if (!this.active()) return;
         const { data } = event
         if (!data) return
         if (data.line === proto.iframeSignal) {
@@ -513,6 +514,9 @@ export default class App {
         }
       }
       window.addEventListener('message', catchIframeMessage)
+      this.attachStopCallback(() => {
+        window.removeEventListener('message', catchIframeMessage)
+      })
     }
   }
 
