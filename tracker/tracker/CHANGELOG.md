@@ -1,3 +1,8 @@
+# 14.0.9
+
+- more stable crossdomain iframe tracking (refactored child/parent process discovery)
+- checks for bad start error
+
 # 14.0.8
 
 - use separate library to handle network requests ([@openreplay/network-proxy](https://www.npmjs.com/package/@openreplay/network-proxy))
