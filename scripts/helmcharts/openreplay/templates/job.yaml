@@ -78,7 +78,7 @@ spec:
             # Function to check if GitHub is available
             check_github() {
               for i in {1..10}; do
-                if ping -c 1 github.com &> /dev/null; then
+                if ping -c 1 github.com &> /dev/null || wget -q --spider https://github.com; then
                   echo "GitHub is available."
                   git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
                   break
