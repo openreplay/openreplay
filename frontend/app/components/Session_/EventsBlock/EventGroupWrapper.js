@@ -1,4 +1,3 @@
-import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import React from 'react';
 import { observer } from 'mobx-react-lite'
@@ -14,15 +13,6 @@ function EventGroupWrapper(props) {
   const { userStore } = useStore();
   const currentUserId = userStore.account.id;
 
-  const toggleLoadInfo = (e) => {
-    e.stopPropagation();
-    props.toggleLoadInfo();
-  };
-
-  React.useEffect(() => {
-    props.toggleLoadInfo(props.isFirst);
-  }, []);
-
   const onEventClick = (e) => props.onEventClick(e, props.event);
 
   const onCheckboxClick = (e) => props.onCheckboxClick(e, props.event);
@@ -35,7 +25,6 @@ function EventGroupWrapper(props) {
     isCurrent,
     isEditing,
     showSelection,
-    showLoadInfo,
     isFirst,
     presentInSearch,
     isNote,
@@ -72,7 +61,6 @@ function EventGroupWrapper(props) {
           onClick={onEventClick}
           selected={isSelected}
           showLoadInfo={showLoadInfo}
-          toggleLoadInfo={toggleLoadInfo}
           isCurrent={isCurrent}
           presentInSearch={presentInSearch}
           isLastInGroup={isLastInGroup}
@@ -184,7 +172,4 @@ function TabChange({ from, to, activeUrl, onClick }) {
   );
 }
 
-export default withToggle(
-  'showLoadInfo',
-  'toggleLoadInfo'
-)(observer(EventGroupWrapper));
+export default observer(EventGroupWrapper);
