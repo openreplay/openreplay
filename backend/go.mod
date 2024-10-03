@@ -7,8 +7,9 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
+	github.com/DataDog/datadog-api-client-go/v2 v2.30.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/andybalholm/brotli v1.0.5
+	github.com/andybalholm/brotli v1.1.0
 	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/confluentinc/confluent-kafka-go/v2 v2.4.0
@@ -16,6 +17,7 @@ require (
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/elastic/go-elasticsearch/v8 v8.13.0
+	github.com/getsentry/sentry-go v0.29.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
@@ -24,7 +26,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.2
-	github.com/klauspost/compress v1.17.4
+	github.com/klauspost/compress v1.17.7
 	github.com/klauspost/pgzip v1.2.5
 	github.com/lib/pq v1.10.2
 	github.com/oschwald/maxminddb-golang v1.7.0
@@ -35,7 +37,7 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
 	go.uber.org/zap v1.17.0
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	google.golang.org/api v0.169.0
 )
 
@@ -47,6 +49,7 @@ require (
 	cloud.google.com/go/longrunning v0.5.6 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.2.0 // indirect
+	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
@@ -54,6 +57,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
