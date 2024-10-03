@@ -167,7 +167,8 @@ export default class APIClient {
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
     const spotService = path.includes('/spot') && !path.includes('/login')
-    if (spotService && !edp.includes('api.openreplay.com')) {
+    const integrationsService = path.includes('/integrations/v1')
+    if ((integrationsService || spotService) && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '')
     }
     if (
