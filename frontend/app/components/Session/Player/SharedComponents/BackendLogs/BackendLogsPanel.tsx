@@ -5,14 +5,16 @@ import cn from 'classnames';
 import copy from 'copy-to-clipboard';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
+import { processLog, UnifiedLog } from './utils';
 
 import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
 import { capitalize } from 'App/utils';
 import { Icon, Input } from 'UI';
 
-function fetchLogs(tab: string): Promise<typeof testLogs> {
+function fetchLogs(tab: string): Promise<UnifiedLog[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
+      //processLog
       resolve(testLogs);
     }, 1000);
   });
@@ -24,8 +26,9 @@ function BackendLogsPanel() {
     data = [],
     isError,
     isPending,
-  } = useQuery<typeof testLogs>({
+  } = useQuery<UnifiedLog[]>({
     queryKey: ['integrationLogs', tab],
+    staleTime: 3 * 1000 * 60,
     queryFn: () => fetchLogs(tab),
   });
   const [filter, setFilter] = React.useState('');
@@ -127,16 +130,19 @@ function BackendLogsPanel() {
 
 const testLogs = [
   {
+    key: 1,
     timestamp: '2021-09-01 12:00:00',
     status: 'INFO',
     content: 'This is a test log',
   },
   {
+    key: 2,
     timestamp: '2021-09-01 12:00:00',
     status: 'WARN',
     content: 'This is a test log',
   },
   {
+    key: 3,
     timestamp: '2021-09-01 12:00:00',
     status: 'ERROR',
     content:

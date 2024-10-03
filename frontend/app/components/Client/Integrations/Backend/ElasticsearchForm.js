@@ -3,7 +3,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 
 import DocLink from 'Shared/DocLink/DocLink';
 
-import IntegrationForm from './IntegrationForm';
+import IntegrationForm from '../IntegrationForm';
 
 const ElasticsearchForm = (props) => {
   return (
