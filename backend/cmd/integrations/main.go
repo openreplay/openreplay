@@ -46,6 +46,7 @@ func main() {
 			log.Fatal(ctx, "http server error: %s", err)
 		}
 	}()
+	log.Info(ctx, "server successfully started on port %s", cfg.HTTPPort)
 
 	// Wait stop signal to shut down server gracefully
 	sigchan := make(chan os.Signal, 1)
