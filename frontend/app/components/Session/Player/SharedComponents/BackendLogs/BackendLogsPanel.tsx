@@ -6,30 +6,34 @@ import copy from 'copy-to-clipboard';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
 import { processLog, UnifiedLog } from './utils';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
 import { capitalize } from 'App/utils';
 import { Icon, Input } from 'UI';
 
-function fetchLogs(tab: string): Promise<UnifiedLog[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      //processLog
-      resolve(testLogs);
-    }, 1000);
-  });
+async function fetchLogs(tab: string, projectId: string, sessionId: string): Promise<UnifiedLog[]> {
+  const data = await fetch(`/v1/integrations/${tab}/${projectId}/${sessionId}/data`)
+  const json = await data.json()
+
+  return json.map(processLog);
 }
 
 function BackendLogsPanel() {
+  const { projectsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.currentId;
+  const projectId = projectsStore.siteId!;
   const [tab, setTab] = React.useState('dynatrace');
   const {
-    data = [],
+    data,
     isError,
     isPending,
   } = useQuery<UnifiedLog[]>({
     queryKey: ['integrationLogs', tab],
     staleTime: 3 * 1000 * 60,
-    queryFn: () => fetchLogs(tab),
+    queryFn: () => fetchLogs(tab, projectId, sessionId),
+    initialData: []
   });
   const [filter, setFilter] = React.useState('');
   const _list = React.useRef<VListHandle>(null);
@@ -238,4 +242,4 @@ function LogRow({
   );
 }
 
-export default BackendLogsPanel;
+export default observer(BackendLogsPanel);

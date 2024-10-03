@@ -141,6 +141,10 @@ export default class SessionStore {
     makeAutoObservable(this);
   }
 
+  get currentId() {
+    return this.current.sessionId;
+  }
+
   setUserTimezone = (timezone: string) => {
     this.userTimezone = timezone;
   }

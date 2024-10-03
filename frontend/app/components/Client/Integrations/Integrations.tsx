@@ -13,7 +13,8 @@ import SiteDropdown from 'Shared/SiteDropdown';
 
 import BugsnagForm from './Backend/BugsnagForm';
 import CloudwatchForm from './Backend/CloudwatchForm';
-import DatadogForm from './Backend/DatadogForm';
+import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
+import DynatraceFormModal from "./Backend/DynatraceForm/DynatraceFormModal";
 import ElasticsearchForm from './Backend/ElasticsearchForm';
 import NewrelicForm from './Backend/NewrelicForm';
 import RollbarForm from './Backend/RollbarForm';
@@ -142,10 +143,11 @@ function Integrations(props: Props) {
       <div
         className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
       >
-        {allIntegrations.map((integration: any) => (
+        {allIntegrations.map((integration) => (
           <IntegrationItem
             integrated={integratedList.includes(integration.slug)}
             integration={integration}
+            useIcon={integration.useIcon}
             onClick={() =>
               onClick(
                 integration,
@@ -292,6 +294,14 @@ const integrations = [
         icon: 'integrations/newrelic',
         component: <NewrelicForm />,
       },
+      {
+        title: 'Dynatrace',
+        subtitle: "Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.",
+        slug: 'dynatrace',
+        icon: 'integrations/dynatrace',
+        useIcon: true,
+        component: <DynatraceFormModal />,
+      }
     ],
   },
   {

@@ -77,6 +77,8 @@ window.setJWT = (jwt) => {
 };
 export const client = new APIClient();
 
+const client = new APIClient();
+
 export class RootStore {
   dashboardStore: DashboardStore;
   metricStore: MetricStore;
@@ -167,4 +169,4 @@ export const withStore = (Component: any) => (props: any) => {
   return <Component {...props} mstore={useStore()} />;
 };
 
-export { userStore, sessionStore, searchStore, searchStoreLive, projectStore };
+export { userStore, sessionStore, searchStore, searchStoreLive, projectStore, client };
