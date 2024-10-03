@@ -9,30 +9,31 @@ import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilter
 import { PageTitle } from 'UI';
 
 import DocCard from 'Shared/DocCard/DocCard';
+import SiteDropdown from 'Shared/SiteDropdown';
 
-import AssistDoc from './AssistDoc';
-import BugsnagForm from './BugsnagForm';
-import CloudwatchForm from './CloudwatchForm';
-import DatadogForm from './DatadogForm';
-import ElasticsearchForm from './ElasticsearchForm';
+import BugsnagForm from './Backend/BugsnagForm';
+import CloudwatchForm from './Backend/CloudwatchForm';
+import DatadogForm from './Backend/DatadogForm';
+import ElasticsearchForm from './Backend/ElasticsearchForm';
+import NewrelicForm from './Backend/NewrelicForm';
+import RollbarForm from './Backend/RollbarForm';
+import SentryForm from './Backend/SentryForm';
+import StackdriverForm from './Backend/StackdriverForm';
+import SumoLogicForm from './Backend/SumoLogicForm';
 import GithubForm from './GithubForm';
-import GraphQLDoc from './GraphQLDoc';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
-import MobxDoc from './MobxDoc';
-import NewrelicForm from './NewrelicForm';
-import NgRxDoc from './NgRxDoc';
-import PiniaDoc from './PiniaDoc';
 import ProfilerDoc from './ProfilerDoc';
-import ReduxDoc from './ReduxDoc';
-import RollbarForm from './RollbarForm';
-import SentryForm from './SentryForm';
 import SlackForm from './SlackForm';
-import StackdriverForm from './StackdriverForm';
-import SumoLogicForm from './SumoLogicForm';
 import MSTeams from './Teams';
-import VueDoc from './VueDoc';
-import ZustandDoc from './ZustandDoc';
+import AssistDoc from './Tracker/AssistDoc';
+import GraphQLDoc from './Tracker/GraphQLDoc';
+import MobxDoc from './Tracker/MobxDoc';
+import NgRxDoc from './Tracker/NgRxDoc';
+import PiniaDoc from './Tracker/PiniaDoc';
+import ReduxDoc from './Tracker/ReduxDoc';
+import VueDoc from './Tracker/VueDoc';
+import ZustandDoc from './Tracker/ZustandDoc';
 
 interface Props {
   siteId: string;
@@ -41,7 +42,8 @@ interface Props {
 
 function Integrations(props: Props) {
   const { integrationsStore, projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const initialSiteId = projectsStore.siteId;
+  const siteId = integrationsStore.integrations.siteId;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { hideHeader = false } = props;
@@ -57,7 +59,11 @@ function Integrations(props: Props) {
   }, [storeIntegratedList]);
 
   useEffect(() => {
-    void fetchIntegrationList(siteId);
+    if (siteId) {
+      void fetchIntegrationList(siteId);
+    } else if (initialSiteId) {
+      integrationsStore.integrations.setSiteId(initialSiteId);
+    }
   }, [siteId]);
 
   const onClick = (integration: any, width: number) => {
@@ -84,6 +90,7 @@ function Integrations(props: Props) {
     showModal(
       React.cloneElement(integration.component, {
         integrated: integratedList.includes(integration.slug),
+        siteId,
       }),
       { right: true, width }
     );
@@ -112,15 +119,17 @@ function Integrations(props: Props) {
     (cat) => cat.integrations
   );
 
-  console.log(
-    allIntegrations,
-  integratedList
-  )
+  const onChangeSelect = (siteId: string) => {
+    integrationsStore.integrations.setSiteId(siteId);
+  }
+
   return (
     <>
       <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
-        {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
-
+        <div className={'flex items-center gap-4 mb-2'}>
+          {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
+          <SiteDropdown value={siteId} onChange={onChangeSelect} />
+        </div>
         <IntegrationFilters
           onChange={onChange}
           activeItem={activeFilter}
@@ -131,9 +140,7 @@ function Integrations(props: Props) {
       <div className="mb-4" />
 
       <div
-        className={cn(`
-    mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
-`)}
+        className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
       >
         {allIntegrations.map((integration: any) => (
           <IntegrationItem
@@ -144,7 +151,7 @@ function Integrations(props: Props) {
                 integration,
                 filteredIntegrations.find((cat) =>
                   cat.integrations.includes(integration)
-                ).title === 'Plugins'
+                )?.title === 'Plugins'
                   ? 500
                   : 350
               )
@@ -161,7 +168,9 @@ function Integrations(props: Props) {
   );
 }
 
-export default withPageTitle('Integrations - OpenReplay Preferences')(observer(Integrations))
+export default withPageTitle('Integrations - OpenReplay Preferences')(
+  observer(Integrations)
+);
 
 const integrations = [
   {

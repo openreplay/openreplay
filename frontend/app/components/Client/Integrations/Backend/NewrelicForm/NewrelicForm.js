@@ -1,5 +1,5 @@
 import React from 'react';
-import IntegrationForm from '../IntegrationForm';
+import IntegrationForm from '../../IntegrationForm';
 import DocLink from 'Shared/DocLink/DocLink';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
 
