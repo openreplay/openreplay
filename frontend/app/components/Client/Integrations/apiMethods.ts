@@ -16,7 +16,7 @@ export async function saveIntegration<T>(
   const method = exists ? 'patch' : 'post';
   const r = await client[method](
     `/integrations/v1/integrations/${name}/${projectId}`,
-    data
+    { data }
   );
   return r.json();
 }
