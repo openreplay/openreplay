@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -66,14 +66,23 @@ const DynatraceFormModal = ({
       required: true,
     },
   });
-  const exists = false;
+  const exists = Boolean(data.client_id);
+
+  const saveMutation = useMutation({
+    mutationFn: ({ values, siteId, exists }: any) =>
+      saveIntegration('dynatrace', values, siteId, exists),
+  });
+  const removeMutation = useMutation({
+    mutationFn: ({ siteId }: any) => removeIntegration('dynatrace', siteId),
+  });
 
   const save = async () => {
-    await saveIntegration<DynatraceConfig>('dynatrace', values, siteId, exists);
+    await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };
+
   const remove = async () => {
-    await removeIntegration('dynatrace', siteId);
+    await removeMutation.mutateAsync({ siteId });
     onClose();
   };
   return (
@@ -141,14 +150,14 @@ const DynatraceFormModal = ({
             <Button
               onClick={save}
               disabled={hasErrors}
-              loading={isPending}
+              loading={saveMutation.isPending}
               type="primary"
             >
               {exists ? 'Update' : 'Add'}
             </Button>
 
             {integrated && (
-              <Button loading={isPending} onClick={remove}>
+              <Button loading={removeMutation.isPending} onClick={remove}>
                 {'Delete'}
               </Button>
             )}

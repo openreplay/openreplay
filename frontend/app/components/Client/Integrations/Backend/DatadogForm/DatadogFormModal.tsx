@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -59,18 +59,25 @@ const DatadogFormModal = ({
       required: true,
     },
   });
-  const exists = false;
+  const exists = Boolean(data.api_key);
+
+  const saveMutation = useMutation({
+    mutationFn: ({ values, siteId, exists }: any) =>
+      saveIntegration('datadog', values, siteId, exists),
+  });
+  const removeMutation = useMutation({
+    mutationFn: ({ siteId }: any) => removeIntegration('datadog', siteId),
+  });
 
   const save = async () => {
-    await saveIntegration('datadog', values, siteId, exists);
-    onClose();
-  };
-  const remove = async () => {
-    await removeIntegration('datadog', siteId);
+    await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };
 
-  console.log(errors);
+  const remove = async () => {
+    await removeMutation.mutateAsync({ siteId });
+    onClose();
+  };
   return (
     <div
       className="bg-white h-screen overflow-y-auto"
@@ -120,14 +127,14 @@ const DatadogFormModal = ({
             <Button
               onClick={save}
               disabled={hasErrors}
-              loading={isPending}
+              loading={saveMutation.isPending}
               type="primary"
             >
               {exists ? 'Update' : 'Add'}
             </Button>
 
             {integrated && (
-              <Button loading={isPending} onClick={remove}>
+              <Button loading={removeMutation.isPending} onClick={remove}>
                 {'Delete'}
               </Button>
             )}
