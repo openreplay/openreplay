@@ -12,9 +12,21 @@ export function processLog(log: any): UnifiedLog {
     return processElasticLog(log);
   } else if (isSentryLog(log)) {
     return processSentryLog(log);
+  } else if (isDynatraceLog(log)) {
+    return processDynatraceLog(log);
   } else {
     throw new Error("Unknown log format");
   }
+}
+
+function isDynatraceLog(log: any): boolean {
+  return (
+    log &&
+    log.results &&
+    Array.isArray(log.results) &&
+    log.results.length > 0 &&
+    log.results[0].eventType === "LOG"
+  );
 }
 
 function isDatadogLog(log: any): boolean {
@@ -27,6 +39,30 @@ function isElasticLog(log: any): boolean {
 
 function isSentryLog(log: any): boolean {
   return log && log.eventID && Array.isArray(log.tags);
+}
+
+function processDynatraceLog(log: any): UnifiedLog {
+  const result = log.results[0];
+
+  const key =
+    result.additionalColumns?.["trace_id"]?.[0] ||
+    result.additionalColumns?.["span_id"]?.[0] ||
+    String(result.timestamp);
+
+  const timestamp = new Date(result.timestamp).toISOString();
+
+  let message = result.content || "";
+  let level = result.status?.toLowerCase() || "info";
+
+  const contentPattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+\|(\w+)\|.*?\| (.*)$/;
+  const contentMatch = message.match(contentPattern);
+
+  if (contentMatch) {
+    level = contentMatch[1].toLowerCase();
+    message = contentMatch[2];
+  }
+
+  return { key, timestamp, content: message, status: level };
 }
 
 function processDatadogLog(log: any): UnifiedLog {
