@@ -277,7 +277,9 @@ function PrivateRoutes() {
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}
-        <Redirect to={withSiteId(routes.sessions(), siteId)} />
+        <Route path={"*"}>
+          <Redirect to={withSiteId(routes.sessions(), siteId)} />
+        </Route>
       </Switch>
     </Suspense>
   );

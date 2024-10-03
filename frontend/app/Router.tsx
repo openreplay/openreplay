@@ -157,7 +157,7 @@ const Router: React.FC<RouterProps> = (props) => {
       if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
         handleSpotLogin(localSpotJwt);
       } else {
-        logout();
+        void logout();
       }
     }
   }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);

@@ -9,7 +9,7 @@ export default class ProjectsStore {
   instance: Project | null = null;
   siteId: string | null = null;
   active: Project | null = null;
-  sitesLoading = false;
+  sitesLoading = true;
   loading = false;
 
   constructor() {
