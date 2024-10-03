@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
@@ -13,28 +12,22 @@ import {
   LaunchEventsShortcut,
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
-  LaunchXRaShortcut,
+  LaunchXRaShortcut
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import PlayerControls from 'Components/Session_/Player/Controls/components/PlayerControls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
+import { Tooltip } from 'UI';
 import {
   CONSOLE,
   EXCEPTIONS,
   NETWORK,
   OVERVIEW,
   PERFORMANCE,
-  STACKEVENTS,
-  changeSkipInterval,
-  fullscreenOff,
-  fullscreenOn,
-  toggleBottomBlock,
-} from 'Duck/components/player';
-import { fetchSessions } from 'Duck/liveSearch';
-import { Tooltip } from 'UI';
-
-import { useStore } from '../../../../mstore';
-import { session as sessionRoute, withSiteId } from '../../../../routes';
-import { SummaryButton } from '../../../Session_/Player/Controls/Controls';
+  STACKEVENTS
+} from 'App/mstore/uiPlayerStore';
+import { useStore } from 'App/mstore';
+import { session as sessionRoute, withSiteId } from 'App/routes';
+import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
 import useShortcuts from '../ReplayPlayer/useShortcuts';
 
 export const SKIP_INTERVALS = {
@@ -44,27 +37,31 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4,
+  60: 6e4
 };
 
 function Controls(props: any) {
+  const { sessionStore, userStore } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
   const { player, store } = React.useContext(MobilePlayerContext);
   const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
-
+  const { uiPlayerStore, projectsStore } = useStore();
+  const fullscreen = uiPlayerStore.fullscreen;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const fullscreenOn = uiPlayerStore.fullscreenOn;
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const changeSkipInterval = uiPlayerStore.changeSkipInterval;
+  const skipInterval = uiPlayerStore.skipInterval;
+  const siteId = projectsStore.siteId;
   const {
-    bottomBlock,
-    toggleBottomBlock,
-    fullscreen,
-    changeSkipInterval,
-    skipInterval,
-    session,
     setActiveTab,
-    previousSessionId,
-    nextSessionId,
-    siteId,
-    disableDevtools,
   } = props;
+  const session = sessionStore.current;
+  const previousSessionId = sessionStore.previousId;
+  const nextSessionId = sessionStore.nextId;
 
   const disabled = messagesLoading;
   const sessionTz = session?.timezone;
@@ -79,8 +76,8 @@ function Controls(props: any) {
 
   useShortcuts({
     skipInterval,
-    fullScreenOn: props.fullscreenOn,
-    fullScreenOff: props.fullscreenOff,
+    fullScreenOn: fullscreenOn,
+    fullScreenOff: fullscreenOff,
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
@@ -103,10 +100,10 @@ function Controls(props: any) {
   };
 
   const state = completed
-                ? PlayingState.Completed
-                : playing
-                  ? PlayingState.Playing
-                  : PlayingState.Paused;
+    ? PlayingState.Completed
+    : playing
+      ? PlayingState.Playing
+      : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
@@ -151,7 +148,7 @@ function Controls(props: any) {
             >
               <FullScreenButton
                 size={16}
-                onClick={props.fullscreenOn}
+                onClick={fullscreenOn}
                 customClasses={
                   'rounded hover:bg-gray-light-shade color-gray-medium'
                 }
@@ -170,10 +167,11 @@ interface DevtoolsButtonsProps {
 }
 
 const DevtoolsButtons = observer(({
-  toggleBottomTools,
-  bottomBlock,
-}: DevtoolsButtonsProps) => {
+                                    toggleBottomTools,
+                                    bottomBlock
+                                  }: DevtoolsButtonsProps) => {
   const { aiSummaryStore } = useStore();
+
   const { store, player } = React.useContext(MobilePlayerContext);
 
   const {
@@ -181,7 +179,7 @@ const DevtoolsButtons = observer(({
     logMarkedCountNow,
     messagesLoading,
     stackMarkedCountNow,
-    resourceMarkedCountNow,
+    resourceMarkedCountNow
   } = store.get();
 
   const showExceptions = exceptionsList.length > 0;
@@ -277,43 +275,8 @@ const DevtoolsButtons = observer(({
       />
     </>
   );
-})
+});
 
 const ControlPlayer = observer(Controls);
 
-export default connect(
-  (state: any) => {
-    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
-    return {
-      disableDevtools: isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS')),
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
-      showStorageRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'storage',
-      ]),
-      showStackRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'stack',
-      ]),
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
-      previousSessionId: state.getIn(['sessions', 'previousId']),
-      nextSessionId: state.getIn(['sessions', 'nextId']),
-      siteId: state.getIn(['site', 'siteId']),
-    };
-  },
-  {
-    fullscreenOn,
-    fullscreenOff,
-    toggleBottomBlock,
-    fetchSessions,
-    changeSkipInterval,
-  }
-)(ControlPlayer);
+export default ControlPlayer

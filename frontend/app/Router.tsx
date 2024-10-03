@@ -1,6 +1,4 @@
-import { Map } from 'immutable';
 import React, { useEffect, useRef } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import IFrameRoutes from 'App/IFrameRoutes';
@@ -10,60 +8,49 @@ import {
   GLOBAL_DESTINATION_PATH,
   IFRAME,
   JWT_PARAM,
-  SPOT_ONBOARDING,
+  SPOT_ONBOARDING
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
-import { withStore } from 'App/mstore';
+import { useStore } from 'App/mstore';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
-import { setSessionPath } from 'Duck/sessions';
-import { fetchList as fetchSiteList } from 'Duck/site';
-import { init as initSite } from 'Duck/site';
-import { fetchUserInfo, getScope, logout, setJwt } from 'Duck/user';
 import { Loader } from 'UI';
 import * as routes from './routes';
+import { observer } from 'mobx-react-lite'
 
-interface RouterProps
-  extends RouteComponentProps,
-    ConnectedProps<typeof connector> {
-  isLoggedIn: boolean;
-  sites: Map<string, any>;
-  loading: boolean;
-  changePassword: boolean;
-  isEnterprise: boolean;
-  fetchUserInfo: () => any;
-  setSessionPath: (path: any) => any;
-  fetchSiteList: (siteId?: number) => any;
+interface RouterProps extends RouteComponentProps {
   match: {
     params: {
       siteId: string;
     };
   };
-  mstore: any;
-  setJwt: (params: { jwt: string; spotJwt: string | null }) => any;
-  fetchMetadata: (siteId: string) => void;
-  initSite: (site: any) => void;
-  scopeSetup: boolean;
-  localSpotJwt: string | null;
 }
 
 const Router: React.FC<RouterProps> = (props) => {
   const {
-    isLoggedIn,
-    siteId,
-    sites,
-    loading,
     location,
-    fetchUserInfo,
-    fetchSiteList,
     history,
-    setSessionPath,
-    scopeSetup,
-    localSpotJwt,
-    logout,
   } = props;
+  const mstore = useStore();
+  const { customFieldStore, projectsStore, sessionStore, searchStore, userStore } = mstore;
+  const jwt = userStore.jwt;
+  const changePassword = userStore.account.changePassword;
+  const userInfoLoading = userStore.fetchInfoRequest.loading;
+  const scopeSetup = userStore.scopeState === 0;
+  const localSpotJwt = userStore.spotJwt;
+  const isLoggedIn = Boolean(jwt && !changePassword);
+  const fetchUserInfo = userStore.fetchUserInfo;
+  const setJwt = userStore.updateJwt;
+  const logout = userStore.logout;
+
+  const setSessionPath = sessionStore.setSessionPath;
+  const siteId = projectsStore.siteId;
+  const sitesLoading = projectsStore.sitesLoading;
+  const sites = projectsStore.list;
+  const loading = Boolean(userInfoLoading || (!scopeSetup && !siteId) || sitesLoading);
+  const initSite = projectsStore.initProject;
+  const fetchSiteList = projectsStore.fetchList;
 
   const params = new URLSearchParams(location.search);
   const spotCb = params.get('spotCallback');
@@ -81,7 +68,7 @@ const Router: React.FC<RouterProps> = (props) => {
       handleSpotLogin(spotJwt);
     }
     if (urlJWT) {
-      props.setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? null });
+      setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? null });
     }
   };
 
@@ -109,9 +96,9 @@ const Router: React.FC<RouterProps> = (props) => {
       localStorage.setItem(SPOT_ONBOARDING, 'true');
     }
     await fetchUserInfo();
-    const siteIdFromPath = parseInt(location.pathname.split('/')[1]);
+    const siteIdFromPath = location.pathname.split('/')[1];
     await fetchSiteList(siteIdFromPath);
-    props.mstore.initClient();
+    mstore.initClient();
 
     if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
       handleSpotLogin(localSpotJwt);
@@ -141,6 +128,7 @@ const Router: React.FC<RouterProps> = (props) => {
   useEffect(() => {
     checkParams();
     handleJwtFromUrl();
+    mstore.initClient();
   }, []);
 
   useEffect(() => {
@@ -169,18 +157,23 @@ const Router: React.FC<RouterProps> = (props) => {
       if (localSpotJwt && !isTokenExpired(localSpotJwt)) {
         handleSpotLogin(localSpotJwt);
       } else {
-        logout();
+        void logout();
       }
     }
   }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
-    if (siteId && siteId !== lastFetchedSiteIdRef.current) {
-      const activeSite = sites.find((s) => s.id == siteId);
-      props.initSite(activeSite);
-      props.fetchMetadata(siteId);
-      lastFetchedSiteIdRef.current = siteId;
-    }
+    const fetchData = async () => {
+      if (siteId && siteId !== lastFetchedSiteIdRef.current) {
+        const activeSite = sites.find((s) => s.id == siteId);
+        initSite(activeSite ?? {});
+        lastFetchedSiteIdRef.current = activeSite?.id;
+        await customFieldStore.fetchListActive(siteId + '');
+        await searchStore.fetchSavedSearchList()
+      }
+    };
+
+    void fetchData();
   }, [siteId]);
 
   const lastFetchedSiteIdRef = useRef<any>(null);
@@ -225,51 +218,4 @@ const Router: React.FC<RouterProps> = (props) => {
   );
 };
 
-const mapStateToProps = (state: Map<string, any>) => {
-  const siteId = state.getIn(['site', 'siteId']);
-  const jwt = state.getIn(['user', 'jwt']);
-  const changePassword = state.getIn(['user', 'account', 'changePassword']);
-  const userInfoLoading = state.getIn([
-    'user',
-    'fetchUserInfoRequest',
-    'loading',
-  ]);
-  const sitesLoading = state.getIn(['site', 'fetchListRequest', 'loading']);
-  const scopeSetup = getScope(state) === 0;
-  const loading =
-    Boolean(userInfoLoading) ||
-    Boolean(sitesLoading) ||
-    (!scopeSetup && !siteId);
-  return {
-    siteId,
-    changePassword,
-    sites: state.getIn(['site', 'list']),
-    jwt,
-    localSpotJwt: state.getIn(['user', 'spotJwt']),
-    isLoggedIn: jwt !== null && !changePassword,
-    scopeSetup,
-    loading,
-    email: state.getIn(['user', 'account', 'email']),
-    account: state.getIn(['user', 'account']),
-    organisation: state.getIn(['user', 'account', 'name']),
-    tenantId: state.getIn(['user', 'account', 'tenantId']),
-    tenants: state.getIn(['user', 'tenants']),
-    isEnterprise:
-      state.getIn(['user', 'account', 'edition']) === 'ee' ||
-      state.getIn(['user', 'authDetails', 'edition']) === 'ee',
-  };
-};
-
-const mapDispatchToProps = {
-  fetchUserInfo,
-  setSessionPath,
-  fetchSiteList,
-  setJwt,
-  fetchMetadata,
-  initSite,
-  logout,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export default withStore(withRouter(connector(Router)));
+export default withRouter(observer(Router));

@@ -1,31 +1,24 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
 import { Input } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
 import { debounce } from 'App/utils';
 import { assist as assistRoute, isRoute } from 'App/routes';
-import { addFilterByKeyAndValue, fetchFilterSearch } from 'Duck/search';
-import {
-  addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
-  fetchFilterSearch as liveFetchFilterSearch,
-} from 'Duck/liveSearch';
 
 const ASSIST_ROUTE = assistRoute();
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 interface Props {
-  fetchFilterSearch: (query: any) => void;
-  addFilterByKeyAndValue: (key: string, value: string) => void;
-  liveAddFilterByKeyAndValue: (key: string, value: string) => void;
-  liveFetchFilterSearch: any;
+
 }
 
 function SessionSearchField(props: Props) {
+  const { searchStore, searchStoreLive } = useStore();
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
   const debounceFetchFilterSearch = React.useCallback(
-    debounce(isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch, 1000),
+    debounce(isLive ? searchStoreLive.fetchFilterSearch : searchStore.fetchFilterSearch, 1000),
     []
   );
   const [showModal, setShowModal] = useState(false);
@@ -38,8 +31,8 @@ function SessionSearchField(props: Props) {
 
   const onAddFilter = (filter: any) => {
     isLive
-      ? props.liveAddFilterByKeyAndValue(filter.key, filter.value)
-      : props.addFilterByKeyAndValue(filter.key, filter.value);
+      ? searchStoreLive.addFilterByKeyAndValue(filter.key, filter.value)
+      : searchStore.addFilterByKeyAndValue(filter.key, filter.value);
   };
 
   return (
@@ -71,9 +64,4 @@ function SessionSearchField(props: Props) {
   );
 }
 
-export default connect(null, {
-  addFilterByKeyAndValue,
-  fetchFilterSearch,
-  liveFetchFilterSearch,
-  liveAddFilterByKeyAndValue,
-})(observer(SessionSearchField));
+export default observer(SessionSearchField);

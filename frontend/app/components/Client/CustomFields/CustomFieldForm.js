@@ -55,7 +55,7 @@ const CustomFieldForm = ({ field, saving, errors, edit, save, onSave, onClose, o
 const mapStateToProps = (state) => ({
   field: state.getIn(['customFields', 'instance']),
   saving: state.getIn(['customFields', 'saveRequest', 'loading']),
-  errors: state.getIn(['customFields', 'saveRequest', 'errors']),
+  errors: state.getIn(['customFields', 'saveRequest', 'errors'])
 });
 
 export default connect(mapStateToProps, { edit, save })(CustomFieldForm);

@@ -1,22 +1,21 @@
 import { Button, Tooltip } from 'antd';
 import { BookmarkCheck, Bookmark as BookmarkIcn, Vault } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-
-import { toggleFavorite } from 'Duck/sessions';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
-  toggleFavorite: (sessionId: string) => Promise<void>;
-  favorite: boolean;
   sessionId: any;
-  isEnterprise: boolean;
-  noMargin?: boolean;
 }
 
-function Bookmark(props: Props) {
-  const { sessionId, favorite, isEnterprise, noMargin } = props;
+function Bookmark({ sessionId }: Props) {
+  const { sessionStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const favorite = sessionStore.current.favorite;
+  const onToggleFavorite = sessionStore.toggleFavorite;
   const [isFavorite, setIsFavorite] = useState(favorite);
+
   const ADDED_MESSAGE = isEnterprise
     ? 'Session added to vault'
     : 'Session added to your bookmarks';
@@ -33,7 +32,7 @@ function Bookmark(props: Props) {
   }, [favorite]);
 
   const toggleFavorite = async () => {
-    props.toggleFavorite(sessionId).then(() => {
+    onToggleFavorite(sessionId).then(() => {
       toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
       setIsFavorite(!isFavorite);
     });
@@ -63,10 +62,4 @@ function Bookmark(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    favorite: state.getIn(['sessions', 'current']).favorite,
-  }),
-  { toggleFavorite }
-)(Bookmark);
+export default observer(Bookmark);

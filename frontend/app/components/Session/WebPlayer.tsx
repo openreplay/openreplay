@@ -3,24 +3,22 @@ import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
+
+
 import { useStore } from 'App/mstore';
 import { Note } from 'App/services/NotesService';
-import { closeBottomBlock, toggleFullscreen } from 'Duck/components/player';
-import { fetchList } from 'Duck/integrations';
 import { Loader, Modal } from 'UI';
+
+
 
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
-import {
-  IPlayerContext,
-  PlayerContext,
-  defaultContextValue,
-} from './playerContext';
+import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
+
 
 const TABS = {
   EVENTS: 'Activity',
@@ -35,15 +33,13 @@ const UXTTABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const {
-    session,
-    toggleFullscreen,
-    closeBottomBlock,
-    fullscreen,
-    fetchList,
-    startedAt,
-  } = props;
-  const { notesStore, sessionStore, uxtestingStore } = useStore();
+  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore, userStore } = useStore();
+  const session = sessionStore.current;
+  const prefetched = sessionStore.prefetched;
+  const startedAt = sessionStore.current.startedAt || 0;
+  const fullscreen = uiPlayerStore.fullscreen;
+  const toggleFullscreen = uiPlayerStore.toggleFullscreen;
+  const closeBottomBlock = uiPlayerStore.closeBottomBlock;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
@@ -72,14 +68,14 @@ function WebPlayer(props: any) {
     const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as
       | Record<string, any>
       | undefined;
-    const usePrefetched = props.prefetched && mobData?.data;
-    fetchList('issues');
+    const usePrefetched = prefetched && mobData?.data;
+    void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone);
     const [WebPlayerInst, PlayerStore] = createWebPlayer(
       session,
       (state) => makeAutoObservable(state),
       toast,
-      props.prefetched
+      prefetched
     );
     if (usePrefetched) {
       if (mobData?.data) {
@@ -105,10 +101,10 @@ function WebPlayer(props: any) {
 
   const domFiles = session?.domURL?.length ?? 0
   useEffect(() => {
-    if (!props.prefetched && domFiles > 0) {
+    if (!prefetched && domFiles > 0) {
       playerInst?.reinit(session);
     }
-  }, [session, domFiles, props.prefetched]);
+  }, [session, domFiles, prefetched]);
 
   const {
     firstVisualEvent: visualOffset,
@@ -124,11 +120,14 @@ function WebPlayer(props: any) {
   React.useEffect(() => {
     if (
       messagesProcessed &&
-      (session.events.length > 0 || session.errors.length > 0)
+      (session.events.length > 0 ||
+        session.errors.length > 0 ||
+        session.stackEvents.length > 0 ||
+        session.addedEvents)
     ) {
       contextValue.player?.updateLists?.(session);
     }
-  }, [session.events, session.errors, contextValue.player, messagesProcessed]);
+  }, [session.events, session.errors, session.addedEvents, contextValue.player, messagesProcessed]);
 
   React.useEffect(() => {
     if (noteItem === undefined) {
@@ -248,21 +247,4 @@ function WebPlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    session: state.getIn(['sessions', 'current']),
-    insights: state.getIn(['sessions', 'insights']),
-    prefetched: state.getIn(['sessions', 'prefetched']),
-    visitedEvents: state.getIn(['sessions', 'visitedEvents']),
-    jwt: state.getIn(['user', 'jwt']),
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-    showEvents: state.get('showEvents'),
-    members: state.getIn(['members', 'list']),
-    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
-  }),
-  {
-    toggleFullscreen,
-    closeBottomBlock,
-    fetchList,
-  }
-)(withLocationHandlers()(observer(WebPlayer)));
+export default withLocationHandlers()(observer(WebPlayer));

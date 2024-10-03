@@ -3,20 +3,13 @@ import cn from 'classnames';
 import React, { useEffect, useRef, useState } from 'react';
 // Consider using a different approach for titles in functional components
 import ReCAPTCHA from 'react-google-recaptcha';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
-import { forgotPassword, signup, spotsList } from 'App/routes';
-import {
-  fetchTenants,
-  loadingLogin,
-  loginFailure,
-  loginSuccess,
-  setJwt,
-} from 'Duck/user';
+import { forgotPassword, signup } from 'App/routes';
 import { Button, Form, Icon, Input, Link, Loader, Tooltip } from 'UI';
 
 import Copyright from 'Shared/Copyright';
@@ -27,35 +20,24 @@ const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 
 interface LoginProps {
-  errors: any; // Adjust the type based on your state shape
-  loading: boolean;
-  authDetails: any; // Adjust the type based on your state shape
-  loginSuccess: typeof loginSuccess;
-  setJwt: typeof setJwt;
-  fetchTenants: typeof fetchTenants;
-  loadingLogin: typeof loadingLogin;
-  loginFailure: typeof loginFailure;
   location: Location;
 }
 
-const Login: React.FC<LoginProps> = ({
-  errors,
-  loading,
-  authDetails,
-  loginSuccess,
-  setJwt,
-  fetchTenants,
+const Login = ({
   location,
-  loadingLogin,
-  loginFailure,
-}) => {
+}: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [CAPTCHA_ENABLED, setCAPTCHA_ENABLED] = useState(
-    window.env.CAPTCHA_ENABLED === 'true'
-  );
+  const CAPTCHA_ENABLED = React.useMemo(() => {
+    return window.env.CAPTCHA_ENABLED === 'true'
+  }, []);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const { loginStore } = useStore();
+  const { loginStore, userStore } = useStore();
+  const errors = userStore.loginRequest.errors;
+  const loading = userStore.loginRequest.loading;
+  const authDetails = userStore.authDetails;
+  const setJwt = userStore.updateJwt;
+  const fetchTenants = userStore.fetchTenants;
   const history = useHistory();
   const params = new URLSearchParams(location.search);
 
@@ -68,7 +50,7 @@ const Login: React.FC<LoginProps> = ({
   }, [authDetails]);
 
   useEffect(() => {
-    fetchTenants();
+    void fetchTenants();
     const jwt = params.get('jwt');
     const spotJwt = params.get('spotJwt');
     if (spotJwt) {
@@ -116,7 +98,6 @@ const Login: React.FC<LoginProps> = ({
     if (!email || !password) {
       return;
     }
-    loadingLogin();
     loginStore.setEmail(email.trim());
     loginStore.setPassword(password);
     if (token) {
@@ -126,13 +107,13 @@ const Login: React.FC<LoginProps> = ({
       .generateJWT()
       .then((resp) => {
         if (resp) {
-          loginSuccess({ ...resp, spotJwt: resp.spotJwt ?? null });
+          userStore.syntheticLogin(resp)
           setJwt({ jwt: resp.jwt, spotJwt: resp.spotJwt ?? null });
           handleSpotLogin(resp.spotJwt);
         }
       })
       .catch((e) => {
-        loginFailure(e);
+        userStore.syntheticLoginError(e.errors)
       });
   };
 
@@ -160,7 +141,7 @@ const Login: React.FC<LoginProps> = ({
           <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
             Login to your account
           </h2>
-          <div className={cn(authDetails.enforceSSO ? '!hidden' : '')}>
+          <div className={cn(authDetails?.enforceSSO ? '!hidden' : '')}>
             <Form
               onSubmit={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
@@ -285,7 +266,7 @@ const Login: React.FC<LoginProps> = ({
           </div>
           <div
             className={cn('flex items-center w-96 justify-center my-8', {
-              '!hidden': !authDetails.enforceSSO,
+              '!hidden': !authDetails?.enforceSSO,
             })}
           >
             <a href={ssoLink} rel="noopener noreferrer">
@@ -302,21 +283,4 @@ const Login: React.FC<LoginProps> = ({
   );
 };
 
-const mapStateToProps = (state: any, ownProps: any) => ({
-  errors: state.getIn(['user', 'loginRequest', 'errors']),
-  loading: state.getIn(['user', 'loginRequest', 'loading']),
-  authDetails: state.getIn(['user', 'authDetails']),
-  params: new URLSearchParams(ownProps.location.search),
-});
-
-const mapDispatchToProps = {
-  loginSuccess,
-  setJwt,
-  fetchTenants,
-  loadingLogin,
-  loginFailure,
-};
-
-export default withPageTitle('Login - OpenReplay')(
-  connect(mapStateToProps, mapDispatchToProps)(Login)
-);
+export default withPageTitle('Login - OpenReplay')(observer(Login));

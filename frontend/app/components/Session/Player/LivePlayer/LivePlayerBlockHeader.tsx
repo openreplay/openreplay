@@ -1,8 +1,6 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import {
-  assist as assistRoute,
   withSiteId,
   multiview,
 } from 'App/routes';
@@ -16,23 +14,20 @@ import { useStore } from 'App/mstore'
 import stl from '../ReplayPlayer/playerBlockHeader.module.css';
 import AssistActions from 'Components/Assist/components/AssistActions';
 
-const ASSIST_ROUTE = assistRoute();
-
-// TODO props
-function LivePlayerBlockHeader(props: any) {
+function LivePlayerBlockHeader({
+  isMultiview,
+}: { isMultiview?: boolean }) {
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore, customFieldStore, sessionStore } = useStore();
+  const isAssist = window.location.pathname.includes('/assist/');
+  const session = sessionStore.current;
+  const closedLive = sessionStore.fetchFailed || (isAssist && !session.live);
+  const siteId = projectsStore.siteId;
   const history = useHistory();
   const { width, height } = store.get();
 
-  const {
-    session,
-    metaList,
-    closedLive = false,
-    siteId,
-    isMultiview,
-  } = props;
+  const metaList = customFieldStore.list.map((i: any) => i.key)
 
   React.useEffect(() => {
     const queryParams = new URLSearchParams(document.location.search);
@@ -41,7 +36,6 @@ function LivePlayerBlockHeader(props: any) {
 
   const backHandler = () => {
     history.goBack();
-    // history.push(withSiteId(ASSIST_ROUTE, siteId));
   };
 
   const { userId, metadata, isCallActive, agentIds } = session;
@@ -100,20 +94,6 @@ function LivePlayerBlockHeader(props: any) {
   );
 }
 
-const PlayerHeaderCont = connect(
-  (state: any) => {
-    const isAssist = window.location.pathname.includes('/assist/');
-    const session = state.getIn(['sessions', 'current']);
-
-    return {
-      isAssist,
-      session,
-      sessionPath: state.getIn(['sessions', 'sessionPath']),
-      siteId: state.getIn(['site', 'siteId']),
-      metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-      closedLive: !!state.getIn(['sessions', 'errors']) || (isAssist && !session.live),
-    };
-  }
-)(observer(LivePlayerBlockHeader));
+const PlayerHeaderCont = observer(LivePlayerBlockHeader);
 
 export default PlayerHeaderCont;

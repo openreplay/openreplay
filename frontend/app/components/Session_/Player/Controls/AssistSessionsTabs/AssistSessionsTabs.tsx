@@ -5,7 +5,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useHistory } from 'react-router-dom';
 import { multiview, liveSession, withSiteId } from 'App/routes';
-import { connect } from 'react-redux';
 
 interface ITab {
   onClick?: () => void;
@@ -42,9 +41,10 @@ const CurrentTab = React.memo(() => (
   </Tab>
 ));
 
-function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId: string }) {
+function AssistTabs({ session }: { session: Record<string, any> }) {
   const history = useHistory();
-  const { assistMultiviewStore } = useStore();
+  const { assistMultiviewStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId!;
 
   const placeholder = new Array(4 - assistMultiviewStore.sessions.length).fill(0);
 
@@ -83,6 +83,4 @@ function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId:
   );
 }
 
-export default connect((state: any) => ({ siteId: state.getIn(['site', 'siteId']) }))(
-  observer(AssistTabs)
-);
+export default observer(AssistTabs)

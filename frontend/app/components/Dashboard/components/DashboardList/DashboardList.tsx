@@ -10,7 +10,6 @@ import {
 } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router';
 
 import { checkForRecent } from 'App/date';
@@ -24,11 +23,12 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
 
-function DashboardList({ siteId }: { siteId: string }) {
+function DashboardList() {
+  const { dashboardStore, projectsStore } = useStore();
+  const siteId = projectsStore.siteId;
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
 
-  const { dashboardStore } = useStore();
   const list = dashboardStore.filteredList;
   const dashboardsSearch = dashboardStore.filter.query;
   const history = useHistory();
@@ -219,6 +219,4 @@ function DashboardList({ siteId }: { siteId: string }) {
   );
 }
 
-export default connect((state: any) => ({
-  siteId: state.getIn(['site', 'siteId']),
-}))(observer(DashboardList));
+export default observer(DashboardList);

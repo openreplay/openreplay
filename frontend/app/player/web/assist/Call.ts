@@ -4,8 +4,7 @@ import type { MediaConnection } from 'peerjs';
 import type { LocalStream } from './LocalStream';
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
-
-import appStore from 'App/store';
+import { userStore } from "App/mstore";
 
 export enum CallingState {
   NoCall,
@@ -168,7 +167,8 @@ export default class Call {
   };
 
   initiateCallEnd = async () => {
-    this.emitData('call_end', appStore.getState().getIn(['user', 'account', 'name']));
+    const userName = userStore.account.name;
+    this.emitData('call_end', userName);
     this.handleCallEnd();
     // TODO:  We have it separated, right? (check)
     // const remoteControl = this.store.get().remoteControl
@@ -249,7 +249,8 @@ export default class Call {
         ? this.peerID
         : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
 
-    this.emitData('_agent_name', appStore.getState().getIn(['user', 'account', 'name']));
+    const userName = userStore.account.name;
+    this.emitData('_agent_name', userName);
     void this._peerConnection(peerId);
   }
 

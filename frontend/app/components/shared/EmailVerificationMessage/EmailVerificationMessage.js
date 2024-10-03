@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
-import { Tooltip } from 'UI';
-import { resendEmailVerification } from 'Duck/user';
 import { toast } from 'react-toastify';
 
+import { useStore } from 'App/mstore';
+import { Tooltip } from 'UI';
+
 function EmailVerificationMessage(props) {
+  const { userStore } = useStore();
   const [sent, setSent] = useState(false);
   const { email } = props;
   const send = () => {
-    props.resendEmailVerification(email).then(function () {
+    userStore.resendEmailVerification(email).then(() => {
       toast.success(`Verification email sent to ${email}`);
       setSent(true);
     });
@@ -32,9 +33,7 @@ function EmailVerificationMessage(props) {
         </a>
       </div>
     </Tooltip>
-  ) : (
-    <></>
-  );
+  ) : null;
 }
 
-export default connect(null, { resendEmailVerification })(EmailVerificationMessage);
+export default EmailVerificationMessage;

@@ -1,41 +1,34 @@
 import React, { useEffect } from 'react';
-import AnimatedSVG, { ICONS } from "Shared/AnimatedSVG/AnimatedSVG";
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
-import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import { addOptionsToFilter } from 'Types/filter/newFilter';
 import { Button, Loader } from 'UI';
-import { edit, addFilter, fetchSessions, updateFilter } from 'Duck/search';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler';
-import { refreshFilterOptions } from 'Duck/search';
 
-let debounceFetch: any = () => {};
+let debounceFetch: any = () => {
+};
 
 interface Props {
-  appliedFilter: any;
-  edit: typeof edit;
-  addFilter: typeof addFilter;
-  saveRequestPayloads: boolean;
-  metaLoading?: boolean;
-  fetchSessions: typeof fetchSessions;
-  updateFilter: typeof updateFilter;
-  refreshFilterOptions: typeof refreshFilterOptions;
+
 }
 
 function SessionSearch(props: Props) {
-  const { tagWatchStore, aiFiltersStore } = useStore();
-  const { appliedFilter, saveRequestPayloads = false, metaLoading = false } = props;
-  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
-  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
+  const { tagWatchStore, aiFiltersStore, searchStore, customFieldStore, projectsStore } = useStore();
+  const appliedFilter = searchStore.instance;
+  const metaLoading = customFieldStore.isLoading;
+  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
+  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
+  const saveRequestPayloads = projectsStore.instance?.saveRequestPayloads ?? false;
 
   useSessionSearchQueryHandler({
     appliedFilter,
-    applyFilter: props.updateFilter,
+    applyFilter: searchStore.updateFilter,
     loading: metaLoading,
     onBeforeLoad: async () => {
       const tags = await tagWatchStore.getTags();
@@ -44,63 +37,51 @@ function SessionSearch(props: Props) {
           FilterKey.TAGGED_ELEMENT,
           tags.map((tag) => ({
             label: tag.name,
-            value: tag.tagId.toString(),
+            value: tag.tagId.toString()
           }))
         );
-        props.refreshFilterOptions();
+        searchStore.refreshFilterOptions();
       }
-    },
+    }
   });
 
   useEffect(() => {
-    debounceFetch = debounce(() => props.fetchSessions(), 500);
+    debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
+    void searchStore.fetchSessions(true)
   }, []);
 
   const onAddFilter = (filter: any) => {
-    props.addFilter(filter);
+    searchStore.addFilter(filter);
   };
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
-    const newFilters = appliedFilter.filters.map((_filter: any, i: any) => {
-      if (i === filterIndex) {
-        return filter;
-      } else {
-        return _filter;
-      }
-    });
-
-    props.updateFilter({
-      ...appliedFilter,
-      filters: newFilters,
-    });
+    searchStore.updateFilter(filterIndex, filter);
 
     debounceFetch();
   };
 
   const onFilterMove = (newFilters: any) => {
-    props.updateFilter({
+    searchStore.updateFilter(0, {
       ...appliedFilter,
-      filters: newFilters,
+      filters: newFilters
     });
 
     debounceFetch();
-  }
+  };
 
   const onRemoveFilter = (filterIndex: any) => {
     const newFilters = appliedFilter.filters.filter((_filter: any, i: any) => {
       return i !== filterIndex;
     });
 
-    props.updateFilter({
-      filters: newFilters,
-    });
+    searchStore.removeFilter(filterIndex);
 
     debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
-    props.updateFilter({
-      eventsOrder: value,
+    searchStore.edit({
+      eventsOrder: value
     });
 
     debounceFetch();
@@ -152,11 +133,4 @@ function SessionSearch(props: Props) {
   ) : null;
 }
 
-export default connect(
-  (state: any) => ({
-    saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
-    appliedFilter: state.getIn(['search', 'instance']),
-    metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading']),
-  }),
-  { edit, addFilter, fetchSessions, updateFilter, refreshFilterOptions }
-)(observer(SessionSearch));
+export default observer(SessionSearch);

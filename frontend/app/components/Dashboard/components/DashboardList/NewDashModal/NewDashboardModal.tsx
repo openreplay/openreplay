@@ -1,8 +1,8 @@
 import { Modal } from 'antd';
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import colors from 'tailwindcss/colors';
-
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import CreateCard from 'Components/Dashboard/components/DashboardList/NewDashModal/CreateCard';
 
 import SelectCard from './SelectCard';
@@ -12,16 +12,16 @@ interface NewDashboardModalProps {
   open: boolean;
   isAddingFromLibrary?: boolean;
   isEnterprise?: boolean;
-  isMobile?: boolean;
 }
 
 const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   onClose,
   open,
   isAddingFromLibrary = false,
-  isEnterprise = false,
-  isMobile = false,
 }) => {
+  const { projectsStore, userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const isMobile = projectsStore.isMobile;
   const [step, setStep] = React.useState<number>(0);
   const [selectedCategory, setSelectedCategory] =
     React.useState<string>('product-analytics');
@@ -74,11 +74,4 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  isMobile: state.getIn(['site', 'instance', 'platform']) === 'ios',
-  isEnterprise:
-    state.getIn(['user', 'account', 'edition']) === 'ee' ||
-    state.getIn(['user', 'account', 'edition']) === 'msaas',
-});
-
-export default connect(mapStateToProps)(NewDashboardModal);
+export default observer(NewDashboardModal);

@@ -1,48 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, Icon } from 'UI';
-import { connect } from 'react-redux';
-import { fetchSessionClickmap } from 'Duck/sessions';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { compareJsonObjects } from 'App/utils';
 
 import Select from 'Shared/Select';
-import SelectDateRange from 'Shared/SelectDateRange';
-import Period from 'Types/app/period';
 
 const JUMP_OFFSET = 1000;
 interface Props {
-    filters: any;
-    fetchSessionClickmap: (sessionId: string, filters: Record<string, any>) => void;
-    insights: any;
-    events: Array<any>;
-    urlOptions: Array<any>;
-    loading: boolean;
-    host: string;
     setActiveTab: (tab: string) => void;
-    sessionId: string;
 }
 
-function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insights, urlOptions, host, loading = true, setActiveTab, sessionId }: Props) {
+function PageInsightsPanel({ setActiveTab }: Props) {
+    const { sessionStore } = useStore();
+    const sessionId = sessionStore.current.sessionId;
+    const loading = sessionStore.loadingSessionData;
+    const events = sessionStore.visitedEvents;
+    const filters = sessionStore.insightsFilters;
+    const fetchSessionClickmap = sessionStore.fetchSessionClickmap;
+    const host = sessionStore.host;
+    const insights = sessionStore.insights;
+    const urlOptions = events.map(({ url, host }: any) => ({ label: url, value: url, host }));
+
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
     const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: host + defaultValue });
     const prevInsights = React.useRef<any>();
 
-    const period = Period({
-        start: insightsFilters.startDate,
-        end: insightsFilters.endDate,
-        rangeName: insightsFilters.rangeValue,
-    });
-
-    const onDateChange = (e: any) => {
-        const { startDate, endDate, rangeValue } = e.toJSON();
-        setInsightsFilters({ ...insightsFilters, startDate, endDate, rangeValue });
-    };
-
     useEffect(() => {
-        markTargets(insights.toJS());
+        markTargets(insights);
         return () => {
             markTargets(null);
         };
@@ -55,7 +44,7 @@ function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insight
         if (urlOptions && urlOptions[0]) {
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             Player.pause();
-            fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
+            void fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
             markTargets([]);
         }
         prevInsights.current = insightsFilters;
@@ -104,18 +93,4 @@ function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insight
     );
 }
 
-export default connect(
-    (state: any) => {
-        const events = state.getIn(['sessions', 'visitedEvents']);
-        return {
-            filters: state.getIn(['sessions', 'insightFilters']),
-            host: state.getIn(['sessions', 'host']),
-            insights: state.getIn(['sessions', 'insights']),
-            events: events,
-            urlOptions: events.map(({ url, host }: any) => ({ label: url, value: url, host })),
-            loading: state.getIn(['sessions', 'fetchInsightsRequest', 'loading']),
-            sessionId: state.getIn(['sessions', 'current']).sessionId,
-        };
-    },
-    { fetchSessionClickmap }
-)(PageInsightsPanel);
+export default observer(PageInsightsPanel);

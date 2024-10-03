@@ -9,24 +9,16 @@ on:
   pull_request:
     branches: [ "dev", "main" ]
     paths:
-      - frontend/**
       - tracker/**
 jobs:
   build-and-test:
     runs-on: macos-latest
     name: Build and test Tracker
-    strategy:
-      matrix:
-        node-version: [ 18.x ]
     steps:
-      - uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:

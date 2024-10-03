@@ -1,22 +1,12 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import stl from './styles.module.css';
 
-interface Props {
-  time: number;
-  offset: number;
-  isVisible: boolean;
-  localTime: string;
-  userTime?: string;
-}
-
-function TimeTooltip({
-  time,
-  offset,
-  isVisible,
-  localTime,
-  userTime
-}: Props) {
+function TimeTooltip() {
+  const { sessionStore } = useStore();
+  const timeLineTooltip = sessionStore.timeLineTooltip;
+  const { time = 0, offset = 0, isVisible, localTime, userTime } = timeLineTooltip;
   return (
     <div
       className={stl.timeTooltip}
@@ -46,8 +36,4 @@ function TimeTooltip({
   );
 }
 
-export default connect((state) => {
-  // @ts-ignore
-  const { time = 0, offset = 0, isVisible, localTime, userTime } = state.getIn(['sessions', 'timeLineTooltip']);
-  return { time, offset, isVisible, localTime, userTime };
-})(TimeTooltip);
+export default observer(TimeTooltip);

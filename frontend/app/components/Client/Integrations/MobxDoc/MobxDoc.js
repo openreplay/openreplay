@@ -1,11 +1,15 @@
 import React from 'react';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
-import { connect } from 'react-redux';
 import { CodeBlock } from "UI";
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
-const MobxDoc = (props) => {
-    const { projectKey } = props;
+const MobxDoc = () => {
+    const { integrationsStore, projectsStore } = useStore();
+    const sites = projectsStore.list;
+    const siteId = integrationsStore.integrations.siteId
+    const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
     const mobxUsage = `import OpenReplay from '@openreplay/tracker';
 import trackerMobX from '@openreplay/tracker-mobx';
@@ -67,10 +71,4 @@ function SomeFunctionalComponent() {
 
 MobxDoc.displayName = 'MobxDoc';
 
-export default connect((state) => {
-    const siteId = state.getIn(['integrations', 'siteId']);
-    const sites = state.getIn(['site', 'list']);
-    return {
-      projectKey: sites.find((site) => site.get('id') === siteId).get('projectKey'),
-    };
-})(MobxDoc);
+export default observer(MobxDoc)

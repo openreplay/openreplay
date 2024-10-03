@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { Modal, Loader } from 'UI';
-import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
-import { fetchList } from 'Duck/integrations';
 import { createIOSPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
@@ -24,19 +21,21 @@ const TABS = {
 let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
-  const { session, toggleFullscreen, closeBottomBlock, fullscreen, fetchList } = props;
-
-  const { notesStore, sessionStore } = useStore();
+  const { notesStore, sessionStore, uiPlayerStore, integrationsStore, userStore } = useStore();
+  const session = sessionStore.current;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
+  const fullscreen = uiPlayerStore.fullscreen
+  const toggleFullscreen = uiPlayerStore.toggleFullscreen
+  const closeBottomBlock = uiPlayerStore.closeBottomBlock
 
   useEffect(() => {
     playerInst = undefined;
     if (!session.sessionId || contextValue.player !== undefined) return;
-    fetchList('issues');
+    void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone);
     const [IOSPlayerInst, PlayerStore] = createIOSPlayer(
       session,
@@ -142,18 +141,4 @@ function MobilePlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    session: state.getIn(['sessions', 'current']),
-    visitedEvents: state.getIn(['sessions', 'visitedEvents']),
-    jwt: state.getIn(['user', 'jwt']),
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-    showEvents: state.get('showEvents'),
-    members: state.getIn(['members', 'list']),
-  }),
-  {
-    toggleFullscreen,
-    closeBottomBlock,
-    fetchList,
-  }
-)(withLocationHandlers()(observer(MobilePlayer)));
+export default withLocationHandlers()(observer(MobilePlayer));

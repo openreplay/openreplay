@@ -1,12 +1,7 @@
 import React from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import AssistView from './AssistView'
 
-interface Props extends RouteComponentProps {
-  match: any;
-}
-
-function AssistRouter(props: Props) {
+function AssistRouter() {
   return (
     <div className="w-full">
       <AssistView />
@@ -14,4 +9,4 @@ function AssistRouter(props: Props) {
   );
 }
 
-export default withRouter(AssistRouter);
+export default AssistRouter;

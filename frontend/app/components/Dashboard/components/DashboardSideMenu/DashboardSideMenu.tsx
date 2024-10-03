@@ -2,17 +2,13 @@ import React from 'react';
 import { SideMenuitem } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
-import { connect } from 'react-redux';
-import { compose } from 'redux';
-import { setShowAlerts } from 'Duck/dashboard';
 
 interface Props extends RouteComponentProps {
   siteId: string;
   history: any;
-  setShowAlerts: (show: boolean) => void;
 }
 function DashboardSideMenu(props: Props) {
-  const { history, siteId, setShowAlerts } = props;
+  const { history, siteId } = props;
   const isMetric = history.location.pathname.includes('metrics');
   const isDashboards = history.location.pathname.includes('dashboard');
   const isAlerts = history.location.pathname.includes('alerts');
@@ -57,4 +53,4 @@ function DashboardSideMenu(props: Props) {
   );
 }
 
-export default compose(withRouter, connect(null, { setShowAlerts }))(DashboardSideMenu);
+export default withRouter(DashboardSideMenu);

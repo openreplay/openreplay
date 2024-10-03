@@ -15,9 +15,9 @@ import pathAlias from './path-alias';
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration
 }
-
+console.log('running in', isDevelopment ? 'development' : 'production');
 const config: Configuration = {
-  // mode: isDevelopment ? "development" : "production",
+  mode: isDevelopment ? "development" : "production",
   output: {
     publicPath: "/",
     filename: 'app-[contenthash:7].js',
@@ -34,7 +34,7 @@ const config: Configuration = {
     rules: [
       {
         test: /\.(ts|js)x?$/i,
-        exclude: /node_modules/,
+        exclude: isDevelopment ? /node_modules/ : undefined,
         use: ['thread-loader', {
           loader: "babel-loader",
           options: {

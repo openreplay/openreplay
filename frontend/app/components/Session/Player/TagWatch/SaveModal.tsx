@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Checkbox, Input } from 'antd';
 import { useHistory } from 'react-router-dom';
 import { withSiteId, sessions } from 'App/routes';
-import store from 'App/store';
+import { useStore } from 'App/mstore';
 
 interface Props {
   onSave: (name: string, ignoreClRage: boolean, ignoreDeadCl: boolean) => Promise<any>;
@@ -11,6 +11,7 @@ interface Props {
 
 function SaveModal({ onSave, hideModal }: Props) {
   const history = useHistory();
+  const { projectsStore } = useStore();
   const [name, setName] = React.useState('');
   const [ignoreClRage, setIgnoreClRage] = React.useState(false);
   const [ignoreDeadCl, setIgnoreDeadCl] = React.useState(false);
@@ -22,7 +23,7 @@ function SaveModal({ onSave, hideModal }: Props) {
   const saveAndOpen = () => {
     onSave(name, ignoreClRage, ignoreDeadCl).then((tagId) => {
       hideModal();
-      const siteId = store.getState().getIn(['site', 'siteId']);
+      const siteId = projectsStore.getSiteId() as unknown as string;
       history.push(withSiteId(sessions({ tnw: `is|${tagId}`, range: 'LAST_24_HOURS' }), siteId));
     });
   };

@@ -4,8 +4,7 @@ import {
   PERFORMANCE,
   STACKEVENTS,
   STORAGE,
-  toggleBottomBlock,
-} from 'Duck/components/player';
+} from 'App/mstore/uiPlayerStore';
 import React from 'react';
 import AutoplayTimer from 'Components/Session_/Player/Overlay/AutoplayTimer';
 import PlayIconLayer from 'Components/Session_/Player/Overlay/PlayIconLayer';
@@ -14,14 +13,13 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { connect } from 'react-redux';
 import { Icon } from 'UI';
+import { useStore } from 'App/mstore'
 
 interface Props {
   nextId?: string;
   closedLive?: boolean;
   isClickmap?: boolean;
-  toggleBottomBlock: (block: number) => void;
 }
 
 enum ItemKey {
@@ -62,9 +60,10 @@ const menuItems: MenuProps['items'] = [
   },
 ];
 
-function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
+function Overlay({ nextId, isClickmap }: Props) {
   const { player, store } = React.useContext(PlayerContext);
-
+  const { uiPlayerStore } = useStore();
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
   const togglePlay = () => player.togglePlay();
   const { playing, messagesLoading, completed, autoplay } = store.get();
   const loading = messagesLoading
@@ -110,6 +109,4 @@ function Overlay({ nextId, isClickmap, toggleBottomBlock }: Props) {
   );
 }
 
-export default connect(null, {
-  toggleBottomBlock,
-})(observer(Overlay));
+export default observer(Overlay);

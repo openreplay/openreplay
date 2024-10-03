@@ -20,7 +20,6 @@ import {
 import copy from 'copy-to-clipboard';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
 import Tabs from 'App/components/Session/Tabs';
@@ -40,24 +39,22 @@ function SpotPlayerHeader({
   title,
   user,
   date,
-  isLoggedIn,
   browserVersion,
   resolution,
   platform,
-  hasShareAccess,
 }: {
   activeTab: Tab | null;
   setActiveTab: (tab: Tab) => void;
   title: string;
   user: string;
   date: string;
-  isLoggedIn: boolean;
   browserVersion: string | null;
   resolution: string | null;
   platform: string | null;
-  hasShareAccess: boolean;
 }) {
-  const { spotStore } = useStore();
+  const { spotStore, userStore } = useStore();
+  const isLoggedIn = !!userStore.jwt;
+  const hasShareAccess = userStore.isEnterprise ? userStore.account.permissions.includes('SPOT_PUBLIC') : true;
   const comments = spotStore.currentSpot?.comments ?? [];
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -256,12 +253,4 @@ async function downloadFile(url: string, fileName: string) {
   }
 }
 
-export default connect((state: any) => {
-  const jwt = state.getIn(['user', 'jwt']);
-  const isEE = state.getIn(['user', 'account', 'edition']) === 'ee';
-  const permissions: string[] =
-    state.getIn(['user', 'account', 'permissions']) || [];
-
-  const hasShareAccess = isEE ? permissions.includes('SPOT_PUBLIC') : true;
-  return { isLoggedIn: !!jwt, hasShareAccess };
-})(observer(SpotPlayerHeader));
+export default observer(SpotPlayerHeader);

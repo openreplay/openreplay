@@ -2,7 +2,6 @@ import { Log, LogLevel, SessionFilesInfo } from 'App/player'
 
 import type { Store } from 'App/player'
 import Player from '../player/Player'
-
 import MessageManager from './MessageManager'
 import MessageLoader from './MessageLoader'
 import InspectorController from './addons/InspectorController'
@@ -72,7 +71,6 @@ export default class WebPlayer extends Player {
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
     this.inspectorController = new InspectorController(screen, wpState)
-
 
     const endTime = session.duration?.valueOf() || 0
     wpState.update({

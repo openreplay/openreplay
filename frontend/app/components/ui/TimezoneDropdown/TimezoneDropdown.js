@@ -1,7 +1,7 @@
 import React from 'react'
 import Select from 'Shared/Select';
-import { connect } from 'react-redux';
-import { setTimezone } from 'Duck/sessions';
+import { observer } from 'mobx-react-lite';
+import { useStore } from "App/mstore";
 
 const localMachineFormat = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)[1]
 const middlePoint = localMachineFormat.length - 2
@@ -13,7 +13,10 @@ const timezoneOptions = {
   'UTC': 'UTC'
 };
 
-function TimezoneDropdown({ local, setTimezone }) {
+function TimezoneDropdown() {
+  const { sessionStore } = useStore();
+  const local = sessionStore.timezone;
+  const setTimezone = sessionStore.setTimezone;
   const sortOptions = Object.entries(timezoneOptions)
     .map(([ value, label ]) => ({ value, label }));
 
@@ -33,6 +36,4 @@ function TimezoneDropdown({ local, setTimezone }) {
   )
 }
 
-export default connect(state => ({
-  local: state.getIn(['sessions', 'timezone']),
-}), { setTimezone })(TimezoneDropdown)
+export default observer(TimezoneDropdown)

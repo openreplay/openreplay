@@ -1,18 +1,13 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { Button, Tooltip } from 'antd';
-import { toggleZoom } from 'Duck/components/player';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-interface Props {
-  enabled: boolean;
-  startTs: number;
-  endTs: number;
-  toggleZoom: typeof toggleZoom;
-}
-
-function TimelineZoomButton({ enabled, toggleZoom }: Props) {
+function TimelineZoomButton() {
+  const { uiPlayerStore } = useStore();
+  const toggleZoom = uiPlayerStore.toggleZoom;
+  const enabled = uiPlayerStore.timelineZoom.enabled;
   const { store } = React.useContext(PlayerContext);
 
   const onClickHandler = () => {
@@ -41,11 +36,4 @@ function TimelineZoomButton({ enabled, toggleZoom }: Props) {
   );
 }
 
-export default connect(
-  (state: Record<string, any>) => ({
-    enabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    startTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    endTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  }),
-  { toggleZoom }
-)(observer(TimelineZoomButton));
+export default observer(TimelineZoomButton);

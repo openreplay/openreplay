@@ -1,15 +1,13 @@
 import React from 'react';
 import { Form, Input, Loader, Button, Icon } from 'UI';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { connect } from 'react-redux';
-import { requestResetPassword } from 'Duck/user';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-interface Props {
-  requestResetPassword: Function;
-  loading?: boolean;
-}
-function ResetPasswordRequest(props: Props) {
-  const { loading = false } = props;
+function ResetPasswordRequest() {
+  const { userStore } = useStore();
+  const loading = userStore.loading;
+  const requestResetPassword = userStore.requestResetPassword;
   const recaptchaRef = React.createRef();
   const [requested, setRequested] = React.useState(false);
   const [email, setEmail] = React.useState('');
@@ -35,8 +33,7 @@ function ResetPasswordRequest(props: Props) {
     if (CAPTCHA_ENABLED && recaptchaRef.current && (token === null || token === undefined))  return;
 
     setError(null);
-    props
-      .requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
+    requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
       .then((response: any) => {
         setRequested(true);
         if (response && response.errors && response.errors.length > 0) {
@@ -106,6 +103,4 @@ function ResetPasswordRequest(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  loading: state.getIn(['user', 'requestResetPassowrd', 'loading']),
-}), { requestResetPassword })(ResetPasswordRequest);
+export default observer(ResetPasswordRequest);

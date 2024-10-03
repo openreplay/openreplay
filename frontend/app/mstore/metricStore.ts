@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
-import Error from './types/error';
+import { ErrorInfo } from './types/error';
 import {
   TIMESERIES,
   TABLE,
@@ -318,7 +318,7 @@ export default class MetricStore {
       errorService
         .one(errorId)
         .then((error: any) => {
-          resolve(new Error().fromJSON(error));
+          resolve(new ErrorInfo(error));
         })
         .catch((error: any) => {
           toast.error('Failed to fetch error details.');

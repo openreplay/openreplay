@@ -1,13 +1,9 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import { NoContent, Loader, Pagination, Button } from 'UI';
-import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
 import { KEYS } from 'Types/filter/customFilter';
-import { applyFilter } from 'Duck/liveSearch';
 import { FilterKey } from 'App/types/filter/filterType';
-import { addFilterByKeyAndValue, updateCurrentPage } from 'Duck/liveSearch';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
 import { capitalize } from 'App/utils';
@@ -15,29 +11,21 @@ import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
 
-interface Props {
-  loading: boolean;
-  metaListLoading: boolean;
-  list: List<any>;
-  // fetchLiveList: () => Promise<void>,
-  applyFilter: (filter: any) => void;
-  filter: any;
-  // addAttribute: (obj: any) => void,
-  addFilterByKeyAndValue: (key: FilterKey, value: string) => void;
-  updateCurrentPage: (page: number) => void;
-  currentPage: number;
-  totla: number;
-  metaList: any;
-  sort: any;
-  total: number;
-}
+function LiveSessionList() {
+  const { searchStoreLive, sessionStore, customFieldStore } = useStore();
+  const filter = searchStoreLive.instance;
+  const list = sessionStore.liveSessions;
+  const loading = sessionStore.loadingLiveSessions;
+  const { currentPage, total } = searchStoreLive;
+  const metaList = customFieldStore.list;
+  const metaListLoading = customFieldStore.isLoading;
 
-function LiveSessionList(props: Props) {
-  const { loading, metaListLoading, filter, list, currentPage, total, metaList = [], sort } = props;
   var timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
@@ -45,9 +33,8 @@ function LiveSessionList(props: Props) {
     metaList
       .map((i: any) => ({
         label: capitalize(i),
-        value: i,
+        value: i
       }))
-      .toJS()
   );
 
   useEffect(() => {
@@ -56,7 +43,7 @@ function LiveSessionList(props: Props) {
     if (sortOptions[1] && !filter.sort) {
       _filter.sort = sortOptions[1].value;
     }
-    props.applyFilter(_filter);
+    searchStoreLive.edit(_filter);
     timeout();
     return () => {
       clearTimeout(timeoutId);
@@ -65,19 +52,19 @@ function LiveSessionList(props: Props) {
 
   const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
-      props.addFilterByKeyAndValue(FilterKey.USERID, userId);
+      searchStoreLive.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
+      searchStoreLive.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
     }
   };
 
   const onSortChange = ({ value }: any) => {
-    props.applyFilter({ sort: value.value });
+    searchStoreLive.edit({ sort: value.value });
   };
 
   const timeout = () => {
     timeoutId = setTimeout(() => {
-      props.applyFilter({ ...filter });
+      searchStoreLive.edit({ ...filter });
       timeout();
     }, AUTOREFRESH_INTERVAL);
   };
@@ -92,7 +79,7 @@ function LiveSessionList(props: Props) {
               {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
             </h3>
 
-            <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
+            <LiveSessionReloadButton onClick={() => searchStoreLive.edit({ ...filter })} />
           </div>
           <div className="flex items-center">
             <div className="flex items-center ml-6">
@@ -104,11 +91,11 @@ function LiveSessionList(props: Props) {
                   options={sortOptions}
                   onChange={onSortChange}
                   value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-              />
+                />
 
                 <div className="mx-2" />
                 <SortOrderButton
-                  onChange={(state: any) => props.applyFilter({ order: state })}
+                  onChange={(state: any) => searchStoreLive.edit({ order: state })}
                   sortOrder={filter.order}
                 />
               </div>
@@ -142,14 +129,14 @@ function LiveSessionList(props: Props) {
                   className="mt-4"
                   icon="arrow-repeat"
                   iconSize={20}
-                  onClick={() => props.applyFilter({ ...filter })}
+                  onClick={() => searchStoreLive.edit({ ...filter })}
                 >
                   Refresh
                 </Button>
               </div>
             }
             // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
-            show={!loading && list.size === 0}
+            show={!loading && list.length === 0}
           >
             <div>
               {list.map((session) => (
@@ -168,13 +155,13 @@ function LiveSessionList(props: Props) {
             <div className={cn('flex items-center justify-between p-5', { disabled: loading })}>
               <div>
                 Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
-                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
+                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.length}</span> of{' '}
                 <span className="font-medium">{numberWithCommas(total)}</span> sessions.
               </div>
               <Pagination
                 page={currentPage}
                 total={total}
-                onPageChange={(page: any) => props.updateCurrentPage(page)}
+                onPageChange={(page: any) => searchStoreLive.updateCurrentPage(page)}
                 limit={PER_PAGE}
                 debounceRequest={500}
               />
@@ -186,23 +173,8 @@ function LiveSessionList(props: Props) {
   );
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
-  connect(
-    (state: any) => ({
-      list: state.getIn(['liveSearch', 'list']),
-      loading: state.getIn(['liveSearch', 'fetchList', 'loading']),
-      metaListLoading: state.getIn(['customFields', 'fetchRequest', 'loading']),
-      filter: state.getIn(['liveSearch', 'instance']),
-      total: state.getIn(['liveSearch', 'total']),
-      currentPage: state.getIn(['liveSearch', 'currentPage']),
-      metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-      sort: state.getIn(['liveSearch', 'sort']),
-    }),
-    {
-      applyFilter,
-      addFilterByKeyAndValue,
-      updateCurrentPage,
-    }
-  )(LiveSessionList)
+export default withPermissions(
+  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
+  observer(LiveSessionList)
 );
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
+import { NETWORK, EXCEPTIONS } from 'App/mstore/uiPlayerStore';
 import { useModal } from 'App/components/Modal';
 import { Icon } from 'UI';
 import StackEventModal from '../StackEventModal';

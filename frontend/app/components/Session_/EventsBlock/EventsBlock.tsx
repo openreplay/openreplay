@@ -1,16 +1,12 @@
-import Session, { mergeEventLists, sortEvents } from 'Types/session';
+import { mergeEventLists, sortEvents } from 'Types/session';
 import { TYPES } from 'Types/session/event';
-import { InjectedEvent } from 'Types/session/event';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { VList, VListHandle } from 'virtua';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { RootStore } from 'App/duck';
 import { useStore } from 'App/mstore';
-import { filterOutNote, setEventFilter } from 'Duck/sessions';
 import { Icon } from 'UI';
 
 import EventGroupWrapper from './EventGroupWrapper';
@@ -18,25 +14,24 @@ import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
 
 interface IProps {
-  setEventFilter: (filter: { query: string }) => void;
-  filteredEvents: InjectedEvent[];
   setActiveTab: (tab?: string) => void;
-  query: string;
-  events: Session['events'];
-  notesWithEvents: Session['notesWithEvents'];
-  filterOutNote: (id: string) => void;
-  eventsIndex: number[];
-  uxtVideo: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
 }
 
 function EventsBlock(props: IProps) {
-  const { notesStore, uxtestingStore } = useStore();
+  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } = useStore();
+  const session = sessionStore.current;
+  const notesWithEvents = session.notesWithEvents;
+  const uxtVideo = session.uxtVideo;
+  const filteredEvents = sessionStore.filteredEvents;
+  const query = sessionStore.eventsQuery;
+  const eventsIndex = sessionStore.eventsIndex;
+  const setEventFilter = sessionStore.setEventQuery;
+  const filterOutNote = sessionStore.filterOutNote;
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
-
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
 
   const {
@@ -48,12 +43,7 @@ function EventsBlock(props: IProps) {
   } = store.get();
 
   const {
-    filteredEvents,
-    eventsIndex,
-    filterOutNote,
-    query,
     setActiveTab,
-    notesWithEvents = [],
   } = props;
   const notes = notesStore.sessionNotes;
 
@@ -88,9 +78,9 @@ function EventsBlock(props: IProps) {
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
       tabChangeEvents
     ).filter((e) =>
-      props.zoomEnabled
+      zoomEnabled
         ? 'time' in e
-          ? e.time >= props.zoomStartTs && e.time <= props.zoomEndTs
+          ? e.time >= zoomStartTs && e.time <= zoomEndTs
           : false
         : true
     );
@@ -98,9 +88,9 @@ function EventsBlock(props: IProps) {
     filteredLength,
     notesWithEvtsLength,
     notesLength,
-    props.zoomEnabled,
-    props.zoomStartTs,
-    props.zoomEndTs,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
   ]);
   const findLastFitting = React.useCallback(
     (time: number) => {
@@ -130,7 +120,7 @@ function EventsBlock(props: IProps) {
   const write = ({
     target: { value },
   }: React.ChangeEvent<HTMLInputElement>) => {
-    props.setEventFilter({ query: value });
+    setEventFilter({ query: value });
 
     setTimeout(() => {
       if (!scroller.current) return;
@@ -140,7 +130,7 @@ function EventsBlock(props: IProps) {
   };
 
   const clearSearch = () => {
-    props.setEventFilter({ query: '' });
+    setEventFilter({ query: '' });
 
     setTimeout(() => {
       if (!scroller.current) return;
@@ -164,7 +154,7 @@ function EventsBlock(props: IProps) {
 
   const onEventClick = (_: React.MouseEvent, event: { time: number }) => {
     player.jump(event.time);
-    props.setEventFilter({ query: '' });
+    setEventFilter({ query: '' });
   };
   const onMouseOver = () => setMouseOver(true);
   const onMouseLeave = () => setMouseOver(false);
@@ -214,7 +204,7 @@ function EventsBlock(props: IProps) {
               muted
               autoPlay
               controls
-              src={props.uxtVideo}
+              src={uxtVideo}
               width={240}
             />
             <div
@@ -266,21 +256,4 @@ function EventsBlock(props: IProps) {
   );
 }
 
-export default connect(
-  (state: RootStore) => ({
-    session: state.getIn(['sessions', 'current']),
-    notesWithEvents: state.getIn(['sessions', 'current']).notesWithEvents,
-    events: state.getIn(['sessions', 'current']).events,
-    uxtVideo: state.getIn(['sessions', 'current']).uxtVideo,
-    filteredEvents: state.getIn(['sessions', 'filteredEvents']),
-    query: state.getIn(['sessions', 'eventsQuery']),
-    eventsIndex: state.getIn(['sessions', 'eventsIndex']),
-    zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  }),
-  {
-    setEventFilter,
-    filterOutNote,
-  }
-)(observer(EventsBlock));
+export default observer(EventsBlock);

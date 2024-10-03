@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 
 import { PlayerContext } from 'Components/Session/playerContext';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
-import { blockValues, blocks } from 'Duck/components/player';
+import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
 
 function useShortcuts({
   skipInterval,

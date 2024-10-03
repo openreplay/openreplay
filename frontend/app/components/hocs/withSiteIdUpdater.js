@@ -1,40 +1,39 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { setSiteId } from 'Duck/site';
+import React, { useEffect, useRef } from 'react';
+import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite'
 
-export default (BaseComponent) => {
-  @connect((state, props) => ({
-    urlSiteId: props.match.params.siteId,
-    siteId: state.getIn(['site', 'siteId']),
-  }), {
-    setSiteId,
-  })
-  class WrapperClass extends React.PureComponent {
-    state = { load: false }
-    constructor(props) {
-      super(props);
-      if (props.urlSiteId && props.urlSiteId !== props.siteId) {
-        props.setSiteId(props.urlSiteId);
+const withSiteIdUpdater = (BaseComponent) => {
+  const WrapperComponent = (props) => {
+    const { projectsStore } = useStore();
+    const siteId = projectsStore.siteId;
+    const setSiteId = projectsStore.setSiteId;
+    const urlSiteId = props.match.params.siteId
+    const prevSiteIdRef = useRef(siteId);
+
+    useEffect(() => {
+      if (urlSiteId && urlSiteId !== siteId) {
+        setSiteId(urlSiteId);
       }
-    }
-    componentDidUpdate(prevProps) {
-      const { urlSiteId, siteId, location: { pathname }, history } = this.props;
+    }, []);
+
+    useEffect(() => {
+      const { location: { pathname }, history } = props;
+
       const shouldUrlUpdate = urlSiteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
       if (shouldUrlUpdate) {
         const path = ['', siteId].concat(pathname.split('/').slice(2)).join('/');
         history.push(path);
       }
-      const shouldBaseComponentReload = shouldUrlUpdate || siteId !== prevProps.siteId;
-      if (shouldBaseComponentReload) {
-        this.setState({ load: true });
-        setTimeout(() => this.setState({ load: false }), 0);
-      }
-    }
+      prevSiteIdRef.current = siteId;
+    }, [urlSiteId, siteId, props.location.pathname, props.history]);
 
-    render() {
-      return this.state.load ? null : <BaseComponent {...this.props} />;
-    }
-  }
+    const key = siteId;
 
-  return WrapperClass
-}
+    const passedProps = { ...props, siteId, setSiteId, urlSiteId };
+    return <BaseComponent key={key} {...passedProps} />;
+  };
+
+  return observer(WrapperComponent);
+};
+
+export default withSiteIdUpdater;

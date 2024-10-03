@@ -3,18 +3,20 @@ import QueueControls from 'Components/Session_/QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import Issues from 'Components/Session_/Issues/Issues';
 import NotePopup from 'Components/Session_/components/NotePopup';
-import { observer } from 'mobx-react-lite';
-import { connect } from 'react-redux';
 import { Tag } from 'antd'
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Popover } from 'antd';
 import SharePopup from 'Components/shared/SharePopup/SharePopup';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 function SubHeader(props: any) {
+  const { sessionStore, integrationsStore} = useStore();
+  const integrations = integrationsStore.issues.list;
+  const isIOS = sessionStore.current.platform === 'ios';
 
   const enabledIntegration = useMemo(() => {
-    const { integrations } = props;
-    if (!integrations || !integrations.size) {
+    if (!integrations || !integrations.length) {
       return false;
     }
 
@@ -24,7 +26,7 @@ function SubHeader(props: any) {
   return (
     <>
       <div className="w-full px-4 flex items-center border-b relative">
-        <Tag color="green" bordered={false} className='rounded-full'>{props.isIOS ? 'iOS' : 'Android'} BETA</Tag>
+        <Tag color="green" bordered={false} className='rounded-full'>{isIOS ? 'iOS' : 'Android'} BETA</Tag>
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
@@ -55,9 +57,4 @@ function SubHeader(props: any) {
   );
 }
 
-export default connect((state: any) => ({
-  siteId: state.getIn(['site', 'siteId']),
-  integrations: state.getIn(['issues', 'list']),
-  modules: state.getIn(['user', 'account', 'modules']) || [],
-  isIOS: state.getIn(['sessions', 'current']).platform === 'ios',
-}))(observer(SubHeader));
+export default observer(SubHeader);

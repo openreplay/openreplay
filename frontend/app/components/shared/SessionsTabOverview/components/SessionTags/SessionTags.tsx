@@ -2,11 +2,10 @@ import { issues_types, types } from 'Types/session/issue';
 import { Segmented } from 'antd';
 import cn from 'classnames';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React, { memo } from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 
-import { setActiveTab } from 'Duck/search';
+import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 
 interface Tag {
@@ -16,16 +15,10 @@ interface Tag {
 }
 
 interface StateProps {
-  activeTab: { type: string };
-  tags: Tag[];
-  total: number;
+
 }
 
-interface DispatchProps {
-  setActiveTab: typeof setActiveTab;
-}
-
-type Props = StateProps & DispatchProps;
+type Props = StateProps;
 
 const tagIcons = {
   [types.ALL]: undefined,
@@ -33,54 +26,63 @@ const tagIcons = {
   [types.BAD_REQUEST]: <WifiOff size={14} />,
   [types.CLICK_RAGE]: <Angry size={14} />,
   [types.CRASH]: <Skull size={14} />,
-} as Record<string, any>
+} as Record<string, any>;
 
-const SessionTags: React.FC<Props> = memo(
-  ({ activeTab, tags, total, setActiveTab }) => {
-    const disable = activeTab.type === 'all' && total === 0;
+const SessionTags: React.FC<Props> = () => {
+  const { projectsStore, sessionStore, searchStore } = useStore();
+  const total = sessionStore.total;
+  const platform = projectsStore.active?.platform || '';
+  const disable = searchStore.activeTab.type === 'all' && total === 0;
+  const activeTab = searchStore.activeTab;
+  const tags = issues_types.filter(
+    (tag) =>
+      tag.type !== 'mouse_thrashing' &&
+      (platform === 'web'
+        ? tag.type !== types.TAP_RAGE
+        : tag.type !== types.CLICK_RAGE)
+  );
 
-    const options = tags.map((tag, i) => ({
-      label: (
-        <div className={'flex items-center gap-2'}>
-          {tag.icon ? (
-            tagIcons[tag.type] ? (
-              tagIcons[tag.type]
-            ) : (
-              <Icon
-                name={tag.icon}
-                color={activeTab.type === tag.type ? 'main' : undefined}
-                size="14"
-                className={cn('group-hover:fill-teal')}
-              />
-            )
-          ) : null}
-          <div className={activeTab.type === tag.type ? 'text-main' : ''}>
-            {tag.name}
-          </div>
+  const options = tags.map((tag, i) => ({
+    label: (
+      <div className={'flex items-center gap-2'}>
+        {tag.icon ? (
+          tagIcons[tag.type] ? (
+            tagIcons[tag.type]
+          ) : (
+            <Icon
+              name={tag.icon}
+              color={activeTab.type === tag.type ? 'main' : undefined}
+              size="14"
+              className={cn('group-hover:fill-teal')}
+            />
+          )
+        ) : null}
+        <div className={activeTab.type === tag.type ? 'text-main' : ''}>
+          {tag.name}
         </div>
-      ),
-      value: tag.type,
-      disabled: disable && tag.type !== 'all',
-    }));
-
-    const onPick = (tabValue: string) => {
-      const tab = tags.find((t) => t.type === tabValue);
-      if (tab) {
-        setActiveTab(tab);
-      }
-    };
-    return (
-      <div className="flex items-center">
-        <Segmented
-          options={options}
-          value={activeTab.type}
-          onChange={onPick}
-          size={'small'}
-        />
       </div>
-    );
-  }
-);
+    ),
+    value: tag.type,
+    disabled: disable && tag.type !== 'all',
+  }));
+
+  const onPick = (tabValue: string) => {
+    const tab = tags.find((t) => t.type === tabValue);
+    if (tab) {
+      searchStore.setActiveTab(tab);
+    }
+  };
+  return (
+    <div className="flex items-center">
+      <Segmented
+        options={options}
+        value={activeTab.type}
+        onChange={onPick}
+        size={'small'}
+      />
+    </div>
+  );
+};
 
 // Separate the TagItem into its own memoized component.
 export const TagItem: React.FC<{
@@ -96,7 +98,7 @@ export const TagItem: React.FC<{
       'transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal',
       {
         'bg-active-blue text-teal': isActive,
-        disabled: disabled,
+        disabled: disabled
       }
     )}
     style={{ height: '36px' }}
@@ -113,27 +115,4 @@ export const TagItem: React.FC<{
   </button>
 ));
 
-const mapStateToProps = (state: any): StateProps => {
-  const platform = state.getIn(['site', 'active'])?.platform || '';
-  const activeTab = state.getIn(['search', 'activeTab']);
-  const filteredTags = issues_types.filter(
-    (tag) =>
-      tag.type !== 'mouse_thrashing' &&
-      (platform === 'web'
-        ? tag.type !== types.TAP_RAGE
-        : tag.type !== types.CLICK_RAGE)
-  );
-  const total = state.getIn(['sessions', 'total']) || 0;
-
-  return { activeTab, tags: filteredTags, total };
-};
-
-const mapDispatchToProps = (dispatch: any): DispatchProps =>
-  bindActionCreators(
-    {
-      setActiveTab,
-    },
-    dispatch
-  );
-
-export default connect(mapStateToProps, mapDispatchToProps)(SessionTags);
+export default observer(SessionTags);

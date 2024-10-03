@@ -1,19 +1,21 @@
+import { Space } from 'antd';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import {connect} from "react-redux";
-import {updateModule} from "Duck/user";
-import {Space} from "antd";
+
+import { useStore } from 'App/mstore';
 
 const Logo = require('../../svg/logo-gray.svg').default;
 
-function VersionTag({version}: { version: string }) {
-    return (
-        <Space>
-            <img src={Logo} width={20}/>
-            <div>{version}</div>
-        </Space>
-    );
+function VersionTag() {
+  const { userStore } = useStore();
+  const version = userStore.account.versionNumber;
+
+  return (
+    <Space>
+      <img src={Logo} width={20} />
+      <div>{version}</div>
+    </Space>
+  );
 }
 
-export default connect((state: any) => ({
-    version: state.getIn(['user', 'account', 'versionNumber'])
-}), {updateModule})(VersionTag)
+export default observer(VersionTag);

@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
@@ -19,22 +18,17 @@ function isTitleLine(line: string): boolean {
 
 function SummaryBlock({
   sessionId,
-  zoomEnabled,
-  zoomStartTs,
-  zoomEndTs,
-  zoomTab,
-  duration,
 }: {
   sessionId: string;
-  zoomEnabled: boolean;
-  zoomStartTs: number;
-  zoomEndTs: number;
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors';
-  duration: any;
 }) {
   const { store } = React.useContext(PlayerContext)
   const { tabStates } = store.get();
-  const { aiSummaryStore } = useStore();
+  const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
+  const duration = sessionStore.current.durationSeconds;
+  const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
+  const zoomTab = uiPlayerStore.zoomTab;
 
   React.useEffect(() => {
     debounceUpdate = debounce(
@@ -154,10 +148,4 @@ const summaryBlockStyle: React.CSSProperties = {
   padding: '1rem',
 };
 
-export default connect((state: Record<string, any>) => ({
-  zoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-  zoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-  zoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  zoomTab: state.getIn(['components', 'player']).zoomTab,
-  duration: state.getIn(['sessions', 'current']).durationSeconds,
-}))(observer(SummaryBlock));
+export default observer(SummaryBlock);

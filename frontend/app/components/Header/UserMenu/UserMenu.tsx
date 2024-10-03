@@ -1,23 +1,21 @@
 import React from 'react';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { connect } from 'react-redux';
-import { logout } from 'Duck/user';
+import { withRouter } from 'react-router-dom';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { Icon } from 'UI';
 import { getInitials } from 'App/utils';
 import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
 interface Props {
   history: any;
-  onLogoutClick?: any;
-  className?: string;
-  account: any;
 }
-function UserMenu(props: RouteComponentProps<Props>) {
-  const { account, history, className, onLogoutClick }: any = props;
-  const { loginStore } = useStore();
+function UserMenu(props: Props) {
+  const { history }: any = props;
+  const { loginStore, userStore } = useStore();
+  const account = userStore.account;
+  const onLogoutClick = userStore.logout;
 
   const onAccountClick = () => {
     history.push(CLIENT_PATH);
@@ -28,7 +26,7 @@ function UserMenu(props: RouteComponentProps<Props>) {
     window.postMessage({
       type: "orspot:invalidate"
     }, "*")
-    onLogoutClick();
+    void onLogoutClick();
   }
   return (
     <div
@@ -61,11 +59,4 @@ function UserMenu(props: RouteComponentProps<Props>) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    account: state.getIn(['user', 'account']),
-  }),
-  { onLogoutClick: logout }
-)(withRouter(UserMenu)) as React.FunctionComponent<RouteComponentProps<Props>>;
-
-// export default UserMenu;
+export default withRouter(observer(UserMenu))

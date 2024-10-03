@@ -6,20 +6,20 @@ import { TYPES, LIBRARY, INSIGHTS } from 'App/constants/card';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 interface Props extends RouteComponentProps {
   dashboardId?: number;
   siteId: string;
-  isEnterprise: boolean;
   isList?: boolean;
 }
 
 function MetricTypeList(props: Props) {
-  const { dashboardId, siteId, history, isEnterprise, isList = false } = props;
-  const { metricStore } = useStore();
+  const { dashboardId, siteId, history, isList = false } = props;
+  const { metricStore, userStore } = useStore();
   const { showModal, hideModal } = useModal();
+  const isEnterprise = userStore.isEnterprise;
 
   const list = React.useMemo(() => {
     return TYPES.map((metric: MetricType) => {
@@ -67,6 +67,4 @@ function MetricTypeList(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' || state.getIn(['user', 'account', 'edition']) === 'msaas'
-}))(withRouter(MetricTypeList));
+export default withRouter(observer(MetricTypeList));

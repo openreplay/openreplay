@@ -1,22 +1,19 @@
 import React, { useCallback, useState } from 'react';
-import { connect } from 'react-redux';
-
+import { observer } from 'mobx-react-lite';
+import { useStore } from "App/mstore";
 import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
-import { toggleZoom } from 'Duck/components/player';
 
 interface Props {
-  timelineZoomStartTs: number;
-  timelineZoomEndTs: number;
   scale: number;
-  toggleZoom: typeof toggleZoom;
 }
 
 const DraggableMarkers = ({
-  timelineZoomStartTs,
-  timelineZoomEndTs,
   scale,
-  toggleZoom,
 }: Props) => {
+  const { uiPlayerStore } = useStore();
+  const toggleZoom = uiPlayerStore.toggleZoom;
+  const timelineZoomStartTs = uiPlayerStore.timelineZoom.startTs;
+  const timelineZoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const [startPos, setStartPos] = useState(
     getTimelinePosition(timelineZoomStartTs, scale)
   );
@@ -195,11 +192,4 @@ const DraggableMarkers = ({
   );
 };
 
-export default connect(
-  (state: Record<string, any>) => ({
-    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom
-      .startTs,
-    timelineZoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  }),
-  { toggleZoom }
-)(DraggableMarkers);
+export default observer(DraggableMarkers);

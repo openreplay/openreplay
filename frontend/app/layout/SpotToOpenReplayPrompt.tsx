@@ -1,22 +1,20 @@
 import React from 'react';
 import { Modal, Button, List, Divider } from 'antd';
 import { CircleDot, Play, TrendingUp, Radio, Sparkles, Plug, ArrowRight } from 'lucide-react';
-import { upgradeScope } from 'App/duck/user';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { onboarding } from 'App/routes';
+import { useStore } from 'App/mstore';
 
 interface SpotToOpenReplayPromptProps {
   isVisible: boolean;
   onCancel: () => void;
-  upgradeScope: () => void;
 }
 
-const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgradeScope, isVisible, onCancel }: {
-  upgradeScope: () => Promise<void>;
+const SpotToOpenReplayPrompt = ({ isVisible, onCancel }: {
   isVisible: boolean;
   onCancel: () => void;
 }) => {
+  const { userStore } = useStore();
   const history = useHistory();
   const features = [
     { icon: <CircleDot />, text: 'Spot', noBorder: true },
@@ -29,7 +27,7 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgrade
   ];
 
   const onUpgrade = () => {
-    upgradeScope().then(() => {
+    userStore.upgradeScope().then(() => {
       history.push(onboarding());
       onCancel();
     })
@@ -71,4 +69,4 @@ const SpotToOpenReplayPrompt: React.FC<SpotToOpenReplayPromptProps> = ({ upgrade
   );
 };
 
-export default connect(null, { upgradeScope })(SpotToOpenReplayPrompt);
+export default SpotToOpenReplayPrompt;

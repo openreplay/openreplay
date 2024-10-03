@@ -3,9 +3,7 @@ import { Switch } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { FullScreenButton, PlayButton, PlayingState } from 'App/player-ui';
@@ -18,7 +16,7 @@ import {
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
   LaunchStateShortcut,
-  LaunchXRaShortcut,
+  LaunchXRaShortcut
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import {
   CONSOLE,
@@ -29,13 +27,8 @@ import {
   PERFORMANCE,
   PROFILER,
   STACKEVENTS,
-  STORAGE,
-  changeSkipInterval,
-  fullscreenOff,
-  fullscreenOn,
-  toggleBottomBlock,
-} from 'Duck/components/player';
-import { fetchSessions } from 'Duck/liveSearch';
+  STORAGE
+} from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 
 import ControlButton from './ControlButton';
@@ -50,7 +43,7 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4,
+  60: 6e4
 };
 
 function getStorageName(type: any) {
@@ -72,10 +65,23 @@ function getStorageName(type: any) {
   }
 }
 
-function Controls(props: any) {
+function Controls({
+  setActiveTab
+}: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore } = useStore();
+  const { uxtestingStore, uiPlayerStore, projectsStore, sessionStore, userStore } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
+  const fullscreen = uiPlayerStore.fullscreen;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const fullscreenOn = uiPlayerStore.fullscreenOn;
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const changeSkipInterval = uiPlayerStore.changeSkipInterval;
+  const skipInterval = uiPlayerStore.skipInterval;
+  const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
   const history = useHistory();
+  const siteId = projectsStore.siteId;
   const {
     playing,
     completed,
@@ -83,23 +89,12 @@ function Controls(props: any) {
     speed,
     messagesLoading,
     markedTargets,
-    inspectorMode,
+    inspectorMode
   } = store.get();
 
-  const {
-    bottomBlock,
-    toggleBottomBlock,
-    fullscreen,
-    changeSkipInterval,
-    skipInterval,
-    disableDevtools,
-    showStorageRedux,
-    session,
-    previousSessionId,
-    nextSessionId,
-    siteId,
-    setActiveTab,
-  } = props;
+  const session = sessionStore.current;
+  const previousSessionId = sessionStore.previousId;
+  const nextSessionId = sessionStore.nextId;
 
   const disabled =
     disableDevtools || messagesLoading || inspectorMode || markedTargets;
@@ -115,13 +110,13 @@ function Controls(props: any) {
 
   useShortcuts({
     skipInterval,
-    fullScreenOn: props.fullscreenOn,
-    fullScreenOff: props.fullscreenOff,
+    fullScreenOn: fullscreenOn,
+    fullScreenOff: fullscreenOff,
     toggleBottomBlock,
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
     setActiveTab,
-    disableDevtools,
+    disableDevtools
   });
 
   const forthTenSeconds = () => {
@@ -142,8 +137,8 @@ function Controls(props: any) {
   const state = completed
     ? PlayingState.Completed
     : playing
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+      ? PlayingState.Playing
+      : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
   return (
@@ -189,7 +184,7 @@ function Controls(props: any) {
 
             <FullScreenButton
               size={16}
-              onClick={props.fullscreenOn}
+              onClick={fullscreenOn}
               customClasses={
                 'rounded hover:bg-gray-light-shade color-gray-medium'
               }
@@ -211,12 +206,12 @@ interface IDevtoolsButtons {
 
 const DevtoolsButtons = observer(
   ({
-    showStorageRedux,
-    toggleBottomTools,
-    bottomBlock,
-    disabled,
-    events,
-  }: IDevtoolsButtons) => {
+     showStorageRedux,
+     toggleBottomTools,
+     bottomBlock,
+     disabled,
+     events
+   }: IDevtoolsButtons) => {
     const { aiSummaryStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
@@ -363,11 +358,11 @@ const DevtoolsButtons = observer(
 );
 
 export function SummaryButton({
-  onClick,
-  withToggle,
-  onToggle,
-  toggleValue,
-}: {
+                                onClick,
+                                withToggle,
+                                onToggle,
+                                toggleValue
+                              }: {
   onClick?: () => void;
   withToggle?: boolean;
   onToggle?: () => void;
@@ -403,7 +398,7 @@ export const gradientButton = {
   height: 24,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'center'
 };
 const onHoverFillStyle = {
   width: '100%',
@@ -413,7 +408,7 @@ const onHoverFillStyle = {
   gap: 2,
   alignItems: 'center',
   padding: '1px 8px',
-  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
+  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)'
 };
 const fillStyle = {
   width: '100%',
@@ -422,87 +417,7 @@ const fillStyle = {
   borderRadius: '60px',
   gap: 2,
   alignItems: 'center',
-  padding: '1px 8px',
+  padding: '1px 8px'
 };
 
-const ControlPlayer = observer(Controls);
-
-export default connect(
-  (state: any) => {
-    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
-    return {
-      disableDevtools:
-        isEnterprise &&
-        !(
-          permissions.includes('DEV_TOOLS') ||
-          permissions.includes('SERVICE_DEV_TOOLS')
-        ),
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
-      showStorageRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'storage',
-      ]),
-      showStackRedux: !state.getIn([
-        'components',
-        'player',
-        'hiddenHints',
-        'stack',
-      ]),
-      session: state.getIn(['sessions', 'current']),
-      totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
-      previousSessionId: state.getIn(['sessions', 'previousId']),
-      nextSessionId: state.getIn(['sessions', 'nextId']),
-      siteId: state.getIn(['site', 'siteId']),
-    };
-  },
-  {
-    fullscreenOn,
-    fullscreenOff,
-    toggleBottomBlock,
-    fetchSessions,
-    changeSkipInterval,
-  }
-)(ControlPlayer);
-
-// shouldComponentUpdate(nextProps) {
-//   if (
-//     nextProps.fullscreen !== props.fullscreen ||
-//     nextProps.bottomBlock !== props.bottomBlock ||
-//     nextProps.live !== props.live ||
-//     nextProps.livePlay !== props.livePlay ||
-//     nextProps.playing !== props.playing ||
-//     nextProps.completed !== props.completed ||
-//     nextProps.skip !== props.skip ||
-//     nextProps.skipToIssue !== props.skipToIssue ||
-//     nextProps.speed !== props.speed ||
-//     nextProps.disabled !== props.disabled ||
-//     nextProps.fullscreenDisabled !== props.fullscreenDisabled ||
-//     // nextProps.inspectorMode !== props.inspectorMode ||
-//     // nextProps.logCount !== props.logCount ||
-//     nextProps.logRedCount !== props.logRedCount ||
-//     nextProps.showExceptions !== props.showExceptions ||
-//     nextProps.resourceRedCount !== props.resourceRedCount ||
-//     nextProps.fetchRedCount !== props.fetchRedCount ||
-//     nextProps.showStack !== props.showStack ||
-//     nextProps.stackCount !== props.stackCount ||
-//     nextProps.stackRedCount !== props.stackRedCount ||
-//     nextProps.profilesCount !== props.profilesCount ||
-//     nextProps.storageCount !== props.storageCount ||
-//     nextProps.storageType !== props.storageType ||
-//     nextProps.showStorage !== props.showStorage ||
-//     nextProps.showProfiler !== props.showProfiler ||
-//     nextProps.showGraphql !== props.showGraphql ||
-//     nextProps.showFetch !== props.showFetch ||
-//     nextProps.fetchCount !== props.fetchCount ||
-//     nextProps.graphqlCount !== props.graphqlCount ||
-//     nextProps.liveTimeTravel !== props.liveTimeTravel ||
-//     nextProps.skipInterval !== props.skipInterval
-//   )
-//     return true;
-//   return false;
-// }
+export default observer(Controls);

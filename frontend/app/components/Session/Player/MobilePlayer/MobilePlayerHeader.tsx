@@ -1,9 +1,7 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { sessions as sessionsRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { BackLink, Link } from 'UI';
-import { toggleFavorite, setSessionPath } from 'Duck/sessions';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { BackLink } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
@@ -11,8 +9,8 @@ import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from '../ReplayPlayer/playerBlockHeader.module.css';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { IFRAME } from 'App/constants/storageKeys';
+import { useStore } from 'App/mstore';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -23,24 +21,22 @@ function PlayerBlockHeader(props: any) {
 
   const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
   const { width = 0, height = 0, showEvents = false } = playerState;
-
+  const { customFieldStore, projectsStore, sessionStore } = useStore();
+  const session = sessionStore.current;
+  const siteId = projectsStore.siteId!;
   const {
-    session,
     fullscreen,
-    metaList,
-    siteId,
     setActiveTab,
     activeTab,
     history,
-    sessionPath,
-    fetchMetadata,
   } = props;
+  const metaList = customFieldStore.list.map((i: any) => i.key)
 
   React.useEffect(() => {
     const iframe = localStorage.getItem(IFRAME) || false;
     setHideBack(!!iframe && iframe === 'true');
 
-    if (metaList.size === 0) fetchMetadata();
+    if (metaList.length === 0) customFieldStore.fetchList();
   }, []);
 
   const backHandler = () => {
@@ -100,24 +96,6 @@ function PlayerBlockHeader(props: any) {
   );
 }
 
-const PlayerHeaderCont = connect(
-  (state: any) => {
-    const session = state.getIn(['sessions', 'current']);
-
-    return {
-      session,
-      sessionPath: state.getIn(['sessions', 'sessionPath']),
-      local: state.getIn(['sessions', 'timezone']),
-      funnelRef: state.getIn(['funnels', 'navRef']),
-      siteId: state.getIn(['site', 'siteId']),
-      metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    };
-  },
-  {
-    toggleFavorite,
-    setSessionPath,
-    fetchMetadata,
-  }
-)(observer(PlayerBlockHeader));
+const PlayerHeaderCont = observer(PlayerBlockHeader);
 
 export default withRouter(PlayerHeaderCont);

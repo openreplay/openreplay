@@ -1,5 +1,4 @@
-import Record from 'Types/Record';
-import { Map } from 'immutable';
+import { makeAutoObservable } from 'mobx';
 
 interface ILimitValue {
   limit: number
@@ -11,10 +10,14 @@ export interface ILimits {
   sites: ILimitValue
 }
 
-const defaultValues = Map({ limit: 0, remaining: 0 });
-const Limit = Record({
-  teamMember: defaultValues,
-  sites: defaultValues
-});
+const defaultValues = { limit: 0, remaining: 0 };
 
-export default Limit;
+export default class Limit {
+  teamMember = defaultValues;
+  sites = defaultValues;
+
+  constructor(data: Record<string, any>) {
+    Object.assign(this, data);
+    makeAutoObservable(this);
+  }
+}

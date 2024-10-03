@@ -2,17 +2,13 @@ import React from 'react'
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
-import { connect } from 'react-redux'
-import { fetchInsights } from 'App/duck/sessions'
 import { NoContent, Icon } from 'App/components/ui'
 
-function ClickMapCard({
-    insights,
-    fetchInsights,
-    insightsFilters,
-}: any) {
+function ClickMapCard() {
     const [customSession, setCustomSession] = React.useState<any>(null)
-    const { metricStore, dashboardStore } = useStore();
+    const { metricStore, dashboardStore, sessionStore } = useStore();
+    const fetchInsights = sessionStore.fetchInsights
+    const insights = sessionStore.insights
     const onMarkerClick = (s: string, innerText: string) => {
         metricStore.changeClickMapSearch(s, innerText)
     }
@@ -36,7 +32,7 @@ function ClickMapCard({
         const rangeValue = dashboardStore.drillDownPeriod.rangeValue
         const startDate = dashboardStore.drillDownPeriod.start
         const endDate = dashboardStore.drillDownPeriod.end
-        fetchInsights({ ...insightsFilters, url: mapUrl || '/', startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
+        void fetchInsights({ url: mapUrl || '/', startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
     }, [dashboardStore.drillDownPeriod.start, dashboardStore.drillDownPeriod.end, dashboardStore.drillDownPeriod.rangeValue, metricStore.clickMapFilter])
 
     if (!metricStore.instance.data.domURL || insights.size === 0) {
@@ -76,13 +72,4 @@ function ClickMapCard({
     )
 }
 
-export default connect(
-    (state: any) => ({
-        insightsFilters: state.getIn(['sessions', 'insightFilters']),
-        visitedEvents: state.getIn(['sessions', 'visitedEvents']),
-        insights: state.getIn(['sessions', 'insights']),
-        host: state.getIn(['sessions', 'host']),
-    }),
-    { fetchInsights, }
-)
-(observer(ClickMapCard))
+export default observer(ClickMapCard)
