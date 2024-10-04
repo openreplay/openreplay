@@ -17,7 +17,9 @@ function LiveSession({
     const { integrationsStore, sessionStore } = useStore();
     const session = sessionStore.current;
     const fetchFailed = sessionStore.fetchFailed;
+    const clearCurrentSession = sessionStore.clearCurrentSession;
     const fetchSlackList = integrationsStore.slack.fetchIntegrations;
+    const fetchSession = sessionStore.fetchSessionData;
     const [initialLoading, setInitialLoading] = React.useState(true);
     usePageTitle('OpenReplay Assist');
 
@@ -32,7 +34,7 @@ function LiveSession({
 
     useEffect(() => {
         if (sessionId != null) {
-            fetchSession(sessionId, true);
+            void fetchSession(sessionId, true);
         } else {
             console.error('No sessionID in route.');
         }

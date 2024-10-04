@@ -12,6 +12,14 @@ function EventsList({ scale }: { scale: number }) {
     return Object.values(tabStates)[0]?.eventList.filter(e => e.time) || [];
   }, [eventCount]);
 
+  React.useEffect(() => {
+    const hasDuplicates = events.some((e, i) => {
+      return events.findIndex((el) => el.key === e.key && el.time === e.time) !== i;
+    })
+    if (hasDuplicates) {
+      console.error('Duplicate events detected in list', events);
+    }
+  }, [eventCount])
   return (
     <>
       {events.map((e) => (

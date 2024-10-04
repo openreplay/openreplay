@@ -60,7 +60,7 @@ function EventGroupWrapper(props) {
           event={event}
           onClick={onEventClick}
           selected={isSelected}
-          showLoadInfo={showLoadInfo}
+          showLoadInfo
           isCurrent={isCurrent}
           presentInSearch={presentInSearch}
           isLastInGroup={isLastInGroup}
