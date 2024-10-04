@@ -50,6 +50,11 @@ function LiveSessionList() {
     };
   }, [metaListLoading]);
 
+  const refetch = () => {
+    searchStoreLive.edit({ ...filter })
+    void searchStoreLive.fetchSessions();
+  }
+
   const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
       searchStoreLive.addFilterByKeyAndValue(FilterKey.USERID, userId);
@@ -64,7 +69,7 @@ function LiveSessionList() {
 
   const timeout = () => {
     timeoutId = setTimeout(() => {
-      searchStoreLive.edit({ ...filter });
+      refetch();
       timeout();
     }, AUTOREFRESH_INTERVAL);
   };
@@ -76,10 +81,9 @@ function LiveSessionList() {
           <div className="flex items-center">
             <h3 className="text-2xl capitalize mr-2">
               <span>Co-Browse</span>
-              {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
             </h3>
 
-            <LiveSessionReloadButton onClick={() => searchStoreLive.edit({ ...filter })} />
+            <LiveSessionReloadButton onClick={refetch} />
           </div>
           <div className="flex items-center">
             <div className="flex items-center ml-6">
@@ -129,7 +133,7 @@ function LiveSessionList() {
                   className="mt-4"
                   icon="arrow-repeat"
                   iconSize={20}
-                  onClick={() => searchStoreLive.edit({ ...filter })}
+                  onClick={refetch}
                 >
                   Refresh
                 </Button>
