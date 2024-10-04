@@ -1,5 +1,4 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 
@@ -14,11 +13,11 @@ import SiteDropdown from 'Shared/SiteDropdown';
 import BugsnagForm from './Backend/BugsnagForm';
 import CloudwatchForm from './Backend/CloudwatchForm';
 import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
-import DynatraceFormModal from "./Backend/DynatraceForm/DynatraceFormModal";
-import ElasticsearchForm from './Backend/ElasticsearchForm';
+import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
+import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
 import NewrelicForm from './Backend/NewrelicForm';
 import RollbarForm from './Backend/RollbarForm';
-import SentryForm from './Backend/SentryForm';
+import SentryForm from './Backend/SentryForm/SentryFormModal';
 import StackdriverForm from './Backend/StackdriverForm';
 import SumoLogicForm from './Backend/SumoLogicForm';
 import GithubForm from './GithubForm';
@@ -122,7 +121,7 @@ function Integrations(props: Props) {
 
   const onChangeSelect = (siteId: string) => {
     integrationsStore.integrations.setSiteId(siteId);
-  }
+  };
 
   return (
     <>
@@ -296,12 +295,13 @@ const integrations = [
       },
       {
         title: 'Dynatrace',
-        subtitle: "Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.",
+        subtitle:
+          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
         slug: 'dynatrace',
         icon: 'integrations/dynatrace',
         useIcon: true,
         component: <DynatraceFormModal />,
-      }
+      },
     ],
   },
   {

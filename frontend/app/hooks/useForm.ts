@@ -9,9 +9,9 @@ interface ValidationRule {
   required?: boolean;
 }
 type FormValue = string | boolean | number;
-function useForm<T extends Record<string, FormValue>>(
+function useForm<T extends { [K in keyof T]: FormValue }>(
   initialValues: T,
-  validationRules?: Record<keyof T, ValidationRule>
+  validationRules?: Partial<Record<keyof T, ValidationRule>>
 ) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -27,7 +27,7 @@ function useForm<T extends Record<string, FormValue>>(
   }, [errors])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target as unknown as { name: keyof T; value: FormValue };
 
     setValues((prevValues) => ({
       ...prevValues,
