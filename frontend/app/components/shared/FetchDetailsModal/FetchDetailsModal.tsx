@@ -23,6 +23,7 @@ function FetchDetailsModal(props: Props) {
   const isXHR = resource.type === ResourceType.XHR
       || resource.type === ResourceType.FETCH
       || resource.type === ResourceType.IOS
+      || resource.type === ResourceType.GRAPHQL
 
   const {
     sessionStore: { devTools },
