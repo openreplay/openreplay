@@ -11,25 +11,25 @@ import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 
-interface DatadogConfig {
-  site: string;
-  api_key: string;
-  app_key: string;
+interface SentryConfig {
+  organization_slug: string;
+  project_slug: string;
+  token: string;
 }
 
 const initialValues = {
-  site: '',
-  api_key: '',
-  app_key: '',
+  organization_slug: '',
+  project_slug: '',
+  token: '',
 };
 
-const DatadogFormModal = ({
+function SentryForm({
   onClose,
   integrated,
 }: {
   onClose: () => void;
   integrated: boolean;
-}) => {
+}) {
   const { integrationsStore } = useStore();
   const siteId = integrationsStore.integrations.siteId;
   const {
@@ -37,19 +37,19 @@ const DatadogFormModal = ({
     isPending,
     saveMutation,
     removeMutation,
-  } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
+  } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
   const { values, errors, handleChange, hasErrors } = useForm(data, {
-    site: {
+    organization_slug: {
       required: true,
     },
-    api_key: {
+    project_slug: {
       required: true,
     },
-    app_key: {
+    token: {
       required: true,
     },
   });
-  const exists = Boolean(data.api_key);
+  const exists = Boolean(data.token);
 
   const save = async () => {
     await saveMutation.mutateAsync({ values, siteId, exists });
@@ -66,45 +66,47 @@ const DatadogFormModal = ({
       style={{ width: '350px' }}
     >
       <IntegrationModalCard
-        title="Datadog"
-        icon="integrations/datadog"
-        description="Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting."
+        title="Sentry"
+        icon="integrations/sentry"
+        description="Integrate Sentry with session replays to seamlessly observe backend errors."
       />
       <div className="p-5 border-b mb-4">
         <div className="font-medium mb-1">How it works?</div>
         <ol className="list-decimal list-inside">
-          <li>Generate Datadog API Key & Application Key</li>
-          <li>Enter the API key below</li>
+          <li>Generate Sentry Auth Token</li>
+          <li>Enter the token below</li>
           <li>Propagate openReplaySessionToken</li>
         </ol>
         <DocLink
           className="mt-4"
-          label="Integrate Datadog"
-          url="https://docs.openreplay.com/integrations/datadog"
+          label="See detailed steps"
+          url="https://docs.openreplay.com/integrations/sentry"
         />
+
         <Loader loading={isPending}>
           <FormField
-            label="Site"
-            name="site"
-            value={values.site}
+            label="Organization Slug"
+            name="organization_slug"
+            value={values.organization_slug}
             onChange={handleChange}
+            errors={errors.url}
             autoFocus
-            errors={errors.site}
           />
           <FormField
-            label="API Key"
-            name="api_key"
-            value={values.api_key}
+            label="Project Slug"
+            name="project_slug"
+            value={values.project_slug}
             onChange={handleChange}
-            errors={errors.api_key}
+            errors={errors.project_slug}
           />
           <FormField
-            label="Application Key"
-            name="app_key"
-            value={values.app_key}
+            label="Token"
+            name="token"
+            value={values.token}
             onChange={handleChange}
-            errors={errors.app_key}
+            errors={errors.token}
           />
+
           <div className={'flex items-center gap-2'}>
             <Button
               onClick={save}
@@ -125,8 +127,6 @@ const DatadogFormModal = ({
       </div>
     </div>
   );
-};
+}
 
-DatadogFormModal.displayName = 'DatadogForm';
-
-export default observer(DatadogFormModal);
+export default observer(SentryForm);

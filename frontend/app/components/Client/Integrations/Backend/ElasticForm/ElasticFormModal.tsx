@@ -11,25 +11,27 @@ import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 
-interface DatadogConfig {
-  site: string;
+interface ElasticConfig {
+  url: string;
+  api_key_id: string;
   api_key: string;
-  app_key: string;
+  indexes: string;
 }
 
 const initialValues = {
-  site: '',
+  url: '',
+  api_key_id: '',
   api_key: '',
-  app_key: '',
+  indexes: '',
 };
 
-const DatadogFormModal = ({
+function ElasticsearchForm({
   onClose,
   integrated,
 }: {
   onClose: () => void;
   integrated: boolean;
-}) => {
+}) {
   const { integrationsStore } = useStore();
   const siteId = integrationsStore.integrations.siteId;
   const {
@@ -37,19 +39,19 @@ const DatadogFormModal = ({
     isPending,
     saveMutation,
     removeMutation,
-  } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
+  } = useIntegration<ElasticConfig>('elasticsearch', siteId, initialValues);
   const { values, errors, handleChange, hasErrors } = useForm(data, {
-    site: {
+    url: {
+      required: true,
+    },
+    api_key_id: {
       required: true,
     },
     api_key: {
       required: true,
     },
-    app_key: {
-      required: true,
-    },
   });
-  const exists = Boolean(data.api_key);
+  const exists = Boolean(data.api_key_id);
 
   const save = async () => {
     await saveMutation.mutateAsync({ values, siteId, exists });
@@ -66,30 +68,38 @@ const DatadogFormModal = ({
       style={{ width: '350px' }}
     >
       <IntegrationModalCard
-        title="Datadog"
-        icon="integrations/datadog"
-        description="Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting."
+        title="Elasticsearch"
+        icon="integrations/elasticsearch"
+        description="Integrate Elasticsearch with session replays to seamlessly observe backend errors."
       />
+
       <div className="p-5 border-b mb-4">
         <div className="font-medium mb-1">How it works?</div>
         <ol className="list-decimal list-inside">
-          <li>Generate Datadog API Key & Application Key</li>
+          <li>Create a new Elastic API key</li>
           <li>Enter the API key below</li>
           <li>Propagate openReplaySessionToken</li>
         </ol>
         <DocLink
           className="mt-4"
-          label="Integrate Datadog"
-          url="https://docs.openreplay.com/integrations/datadog"
+          label="Integrate Elasticsearch"
+          url="https://docs.openreplay.com/integrations/elastic"
         />
         <Loader loading={isPending}>
           <FormField
-            label="Site"
-            name="site"
-            value={values.site}
+            label="URL"
+            name="url"
+            value={values.url}
             onChange={handleChange}
+            errors={errors.url}
             autoFocus
-            errors={errors.site}
+          />
+          <FormField
+            label="API Key ID"
+            name="api_key_id"
+            value={values.api_key_id}
+            onChange={handleChange}
+            errors={errors.api_key_id}
           />
           <FormField
             label="API Key"
@@ -99,11 +109,11 @@ const DatadogFormModal = ({
             errors={errors.api_key}
           />
           <FormField
-            label="Application Key"
-            name="app_key"
-            value={values.app_key}
+            label="Indexes"
+            name="indexes"
+            value={values.indexes}
             onChange={handleChange}
-            errors={errors.app_key}
+            errors={errors.indexes}
           />
           <div className={'flex items-center gap-2'}>
             <Button
@@ -125,8 +135,6 @@ const DatadogFormModal = ({
       </div>
     </div>
   );
-};
+}
 
-DatadogFormModal.displayName = 'DatadogForm';
-
-export default observer(DatadogFormModal);
+export default observer(ElasticsearchForm);
