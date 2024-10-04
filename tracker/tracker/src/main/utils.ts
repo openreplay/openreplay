@@ -148,9 +148,10 @@ export function createEventListener(
     target[safeAddEventListener](event, cb, capture)
   } catch (e) {
     const msg = e.message
-    console.debug(
+    console.error(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
+      event,
     )
   }
 }
@@ -168,9 +169,10 @@ export function deleteEventListener(
     target[safeRemoveEventListener](event, cb, capture)
   } catch (e) {
     const msg = e.message
-    console.debug(
+    console.error(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
+      event,
     )
   }
 }

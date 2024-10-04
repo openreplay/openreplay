@@ -11,6 +11,9 @@ export default function(opts?: Partial<Options>) {
     if (app === null || !navigator?.mediaDevices?.getUserMedia) {
       return
     }
+    if (app.insideIframe) {
+      return
+    }
     if (!app.checkRequiredVersion || !app.checkRequiredVersion('REQUIRED_TRACKER_VERSION')) {
       console.warn('OpenReplay Assist: couldn\'t load. The minimum required version of @openreplay/tracker@REQUIRED_TRACKER_VERSION is not met')
       return

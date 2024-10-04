@@ -185,14 +185,14 @@ const proto = {
   resp: 'never-gonna-let-you-down',
   // regenerating id (copied other tab)
   reg: 'never-gonna-run-around-and-desert-you',
-  // tracker inside a child iframe
-  iframeSignal: 'never-gonna-make-you-cry',
-  // getting node id for child iframe
-  iframeId: 'never-gonna-say-goodbye',
-  // batch of messages from an iframe window
-  iframeBatch: 'never-gonna-tell-a-lie-and-hurt-you',
-  // signal that parent is live
-  parentAlive: 'i-dont-know-more-lines',
+  iframeSignal: 'tracker inside a child iframe',
+  iframeId: 'getting node id for child iframe',
+  iframeBatch: 'batch of messages from an iframe window',
+  parentAlive: 'signal that parent is live',
+  killIframe: 'stop tracker inside frame',
+  startIframe: 'start tracker inside frame',
+  // checking updates
+  polling: 'hello-how-are-you-im-under-the-water-please-help-me',
 } as const
 
 export default class App {
@@ -250,7 +250,7 @@ export default class App {
     sessionToken: string | undefined,
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
-    private readonly insideIframe: boolean,
+    public readonly insideIframe: boolean,
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
@@ -353,24 +353,28 @@ export default class App {
     this.initWorker()
 
     const thisTab = this.session.getTabId()
-    const catchParentMessage = (event: MessageEvent) => {
-      if (!this.active()) return
-      const { data } = event
-      if (!data) return
-      if (data.line === proto.parentAlive) {
-        this.parentActive = true
-      }
-      if (data.line === proto.iframeId) {
-        this.parentActive = true
-        this.rootId = data.id
-        this.session.setSessionToken(data.token as string)
-        this.frameOderNumber = data.frameOrderNumber
-        this.debug.log('starting iframe tracking', data)
-        this.allowAppStart()
-      }
-    }
 
-    window.addEventListener('message', catchParentMessage)
+    /**
+     * listen for messages from parent window, so we can signal that we're alive
+     * */
+    if (this.insideIframe) {
+      window.addEventListener('message', this.parentCrossDomainFrameListener)
+      setInterval(() => {
+        window.parent.postMessage(
+          {
+            line: proto.polling,
+          },
+          '*',
+        )
+      }, 250)
+    }
+    /**
+     * if we get a signal from child iframes, we check for their node_id and send it back,
+     * so they can act as if it was just a same-domain iframe
+     * */
+    if (!this.insideIframe) {
+      window.addEventListener('message', this.crossDomainIframeListener)
+    }
 
     if (this.bc !== null) {
       this.bc.postMessage({
@@ -380,7 +384,7 @@ export default class App {
       })
       this.startTimeout = setTimeout(() => {
         this.allowAppStart()
-      }, 500)
+      }, 250)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
         if (ev.data.context === this.contextId) {
           return
@@ -416,104 +420,143 @@ export default class App {
   checkStatus = () => {
     return this.parentActive
   }
-  /** used by child iframes for crossdomain only */
+  parentCrossDomainFrameListener = (event: MessageEvent) => {
+    const { data } = event
+    if (!data || event.source === window) return
+    if (data.line === proto.startIframe) {
+      if (this.active()) return
+      try {
+        this.allowAppStart()
+        void this.start()
+      } catch (e) {
+        console.error('children frame restart failed:', e)
+      }
+    }
+    if (data.line === proto.parentAlive) {
+      this.parentActive = true
+    }
+    if (data.line === proto.iframeId) {
+      this.parentActive = true
+      this.rootId = data.id
+      this.session.setSessionToken(data.token as string)
+      this.frameOderNumber = data.frameOrderNumber
+      this.debug.log('starting iframe tracking', data)
+      this.allowAppStart()
+      this.delay = data.frameTimeOffset
+    }
+    if (data.line === proto.killIframe) {
+      if (this.active()) {
+        this.stop()
+      }
+    }
+  }
 
-  /** track app instances in crossdomain child iframes */
-  crossdomainIframesModule = () => {
-    if (!this.insideIframe) {
-      /**
-       * if we get a signal from child iframes, we check for their node_id and send it back,
-       * so they can act as if it was just a same-domain iframe
-       * */
-      let crossdomainFrameCount = 0
-      const catchIframeMessage = (event: MessageEvent) => {
-        if (!this.active()) return;
-        const { data } = event
-        if (!data) return
-        if (data.line === proto.iframeSignal) {
-          // @ts-ignore
-          event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
-          const childIframeDomain = data.domain as string
-          const pageIframes = Array.from(document.querySelectorAll('iframe'))
-          this.pageFrames = pageIframes
-          const signalId = async () => {
-            const id = await this.checkNodeId(pageIframes, childIframeDomain)
-            if (id) {
-              try {
-                await this.waitStarted()
-                crossdomainFrameCount++
-                const token = this.session.getSessionToken()
-                const iframeData = {
-                  line: proto.iframeId,
-                  context: this.contextId,
-                  domain: childIframeDomain,
-                  id,
-                  token,
-                  frameOrderNumber: crossdomainFrameCount,
-                }
-                this.debug.log('iframe_data', iframeData)
-                // @ts-ignore
-                event.source?.postMessage(iframeData, '*')
-              } catch (e) {
-                console.error(e)
-              }
+  trackedFrames: number[] = []
+  crossDomainIframeListener = (event: MessageEvent) => {
+    if (!this.active() || event.source === window) return
+    const { data } = event
+    if (!data) return
+    if (data.line === proto.iframeSignal) {
+      // @ts-ignore
+      event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
+      const childIframeDomain = data.domain as string
+      const pageIframes = Array.from(document.querySelectorAll('iframe'))
+      this.pageFrames = pageIframes
+      const signalId = async () => {
+        const id = await this.checkNodeId(pageIframes, childIframeDomain)
+        if (id && !this.trackedFrames.includes(id)) {
+          try {
+            this.trackedFrames.push(id)
+            await this.waitStarted()
+            const token = this.session.getSessionToken()
+            const iframeData = {
+              line: proto.iframeId,
+              context: this.contextId,
+              domain: childIframeDomain,
+              id,
+              token,
+              frameOrderNumber: this.trackedFrames.length,
+              frameTimeOffset: this.timestamp(),
             }
+            // @ts-ignore
+            event.source?.postMessage(iframeData, '*')
+          } catch (e) {
+            console.error(e)
           }
-          void signalId()
-        }
-        /**
-         * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
-         * plus we rewrite some of the messages to be relative to the main context/window
-         * */
-        if (data.line === proto.iframeBatch) {
-          const msgBatch = data.messages
-          const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
-            if (msg[0] === MType.MouseMove) {
-              let fixedMessage = msg
-              this.pageFrames.forEach((frame) => {
-                if (frame.dataset.domain === event.data.domain) {
-                  const [type, x, y] = msg
-                  const { left, top } = frame.getBoundingClientRect()
-                  fixedMessage = [type, x + left, y + top]
-                }
-              })
-              return fixedMessage
-            }
-            if (msg[0] === MType.MouseClick) {
-              let fixedMessage = msg
-              this.pageFrames.forEach((frame) => {
-                if (frame.dataset.domain === event.data.domain) {
-                  const [type, id, hesitationTime, label, selector, normX, normY] = msg
-                  const { left, top, width, height } = frame.getBoundingClientRect()
-
-                  const contentWidth = document.documentElement.scrollWidth
-                  const contentHeight = document.documentElement.scrollHeight
-                  // (normalizedX * frameWidth + frameLeftOffset)/docSize
-                  const fullX = (normX / 100) * width + left
-                  const fullY = (normY / 100) * height + top
-                  const fixedX = fullX / contentWidth
-                  const fixedY = fullY / contentHeight
-
-                  fixedMessage = [
-                    type,
-                    id,
-                    hesitationTime,
-                    label,
-                    selector,
-                    Math.round(fixedX * 1e3) / 1e1,
-                    Math.round(fixedY * 1e3) / 1e1,
-                  ]
-                }
-              })
-              return fixedMessage
-            }
-            return msg
-          })
-          this.messages.push(...mappedMessages)
         }
       }
-      window.addEventListener('message', catchIframeMessage)
+      void signalId()
     }
+    /**
+     * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
+     * plus we rewrite some of the messages to be relative to the main context/window
+     * */
+    if (data.line === proto.iframeBatch) {
+      const msgBatch = data.messages
+      const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
+        if (msg[0] === MType.MouseMove) {
+          let fixedMessage = msg
+          this.pageFrames.forEach((frame) => {
+            if (frame.dataset.domain === event.data.domain) {
+              const [type, x, y] = msg
+              const { left, top } = frame.getBoundingClientRect()
+              fixedMessage = [type, x + left, y + top]
+            }
+          })
+          return fixedMessage
+        }
+        if (msg[0] === MType.MouseClick) {
+          let fixedMessage = msg
+          this.pageFrames.forEach((frame) => {
+            if (frame.dataset.domain === event.data.domain) {
+              const [type, id, hesitationTime, label, selector, normX, normY] = msg
+              const { left, top, width, height } = frame.getBoundingClientRect()
+
+              const contentWidth = document.documentElement.scrollWidth
+              const contentHeight = document.documentElement.scrollHeight
+              // (normalizedX * frameWidth + frameLeftOffset)/docSize
+              const fullX = (normX / 100) * width + left
+              const fullY = (normY / 100) * height + top
+              const fixedX = fullX / contentWidth
+              const fixedY = fullY / contentHeight
+
+              fixedMessage = [
+                type,
+                id,
+                hesitationTime,
+                label,
+                selector,
+                Math.round(fixedX * 1e3) / 1e1,
+                Math.round(fixedY * 1e3) / 1e1,
+              ]
+            }
+          })
+          return fixedMessage
+        }
+        return msg
+      })
+      this.messages.push(...mappedMessages)
+    }
+    if (data.line === proto.polling) {
+      if (!this.pollingQueue.length) {
+        return
+      }
+      while (this.pollingQueue.length) {
+        const msg = this.pollingQueue.shift()
+        // @ts-ignore
+        event.source?.postMessage({ line: msg }, '*')
+      }
+    }
+  }
+
+  pollingQueue: string[] = []
+  public bootChildrenFrames = async () => {
+    await this.waitStarted()
+    this.pollingQueue.push(proto.startIframe)
+  }
+
+  public killChildrenFrames = () => {
+    this.pollingQueue.push(proto.killIframe)
   }
 
   signalIframeTracker = () => {
@@ -539,7 +582,7 @@ export default class App {
   }
 
   startTimeout: ReturnType<typeof setTimeout> | null = null
-  private allowAppStart() {
+  public allowAppStart() {
     this.canStart = true
     if (this.startTimeout) {
       clearTimeout(this.startTimeout)
@@ -778,27 +821,27 @@ export default class App {
     this.commitCallbacks.push(cb)
   }
 
-  attachStartCallback(cb: StartCallback, useSafe = false): void {
+  attachStartCallback = (cb: StartCallback, useSafe = false): void => {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.startCallbacks.push(cb)
   }
 
-  attachStopCallback(cb: () => any, useSafe = false): void {
+  attachStopCallback = (cb: () => any, useSafe = false): void => {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.stopCallbacks.push(cb)
   }
 
-  attachEventListener(
+  attachEventListener = (
     target: EventTarget,
     type: string,
     listener: EventListener,
     useSafe = true,
     useCapture = true,
-  ): void {
+  ): void => {
     if (useSafe) {
       listener = this.safe(listener)
     }
@@ -1362,8 +1405,8 @@ export default class App {
       }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
-      if (this.options.crossdomain?.enabled || this.insideIframe) {
-        this.crossdomainIframesModule()
+      if (this.options.crossdomain?.enabled && !this.insideIframe) {
+        void this.bootChildrenFrames()
       }
 
       if (canvasEnabled && !this.options.canvas.disableCanvas) {
@@ -1499,9 +1542,13 @@ export default class App {
   }
 
   async waitStarted() {
+    return this.waitStatus(ActivityState.Active)
+  }
+
+  async waitStatus(status: ActivityState) {
     return new Promise((resolve) => {
       const check = () => {
-        if (this.activityState === ActivityState.Active) {
+        if (this.activityState === status) {
           resolve(true)
         } else {
           setTimeout(check, 25)
@@ -1516,9 +1563,6 @@ export default class App {
    * and here we just apply 10ms delay just in case
    * */
   async start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
-    if (this.insideIframe) {
-      this.signalIframeTracker()
-    }
     if (
       this.activityState === ActivityState.Active ||
       this.activityState === ActivityState.Starting
@@ -1526,6 +1570,10 @@ export default class App {
       const reason =
         'OpenReplay: trying to call `start()` on the instance that has been started already.'
       return Promise.resolve(UnsuccessfulStart(reason))
+    }
+
+    if (this.insideIframe) {
+      this.signalIframeTracker()
     }
 
     if (!document.hidden) {
@@ -1582,22 +1630,29 @@ export default class App {
 
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
+      console.trace('stopped')
       try {
+        if (!this.insideIframe && this.options.crossdomain?.enabled) {
+          this.killChildrenFrames()
+        }
         this.attributeSender.clear()
         this.sanitizer.clear()
         this.observer.disconnect()
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
-        this.debug.log('OpenReplay tracking stopped.')
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
         this.canvasRecorder?.clear()
         this.messages.length = 0
+        this.trackedFrames = []
+        this.parentActive = false
+        this.canStart = false
       } finally {
         this.activityState = ActivityState.NotActive
+        this.debug.log('OpenReplay tracking stopped.')
       }
     }
   }
