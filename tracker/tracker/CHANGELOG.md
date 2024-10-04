@@ -1,3 +1,9 @@
+# 14.0.10
+
+- adjust timestamps for messages from tracker instances inside child iframes (if they were loaded later)
+- restart child trackers if parent tracker is restarted
+- fixes for general stability of crossdomain iframe tracking
+
 # 14.0.9
 
 - more stable crossdomain iframe tracking (refactored child/parent process discovery)

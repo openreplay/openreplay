@@ -90,8 +90,12 @@ export default function (app: App, opts: Partial<Options>): void {
         app.send(msg)
       }
     }
-    app.attachEventListener(context, 'unhandledrejection', handler)
-    app.attachEventListener(context, 'error', handler)
+    try {
+      app.attachEventListener(context, 'unhandledrejection', handler)
+      app.attachEventListener(context, 'error', handler)
+    } catch (e) {
+      console.error('Error while attaching to error proto contexts', e)
+    }
   }
   if (options.captureExceptions) {
     app.observer.attachContextCallback(patchContext) // TODO: attach once-per-iframe (?)
