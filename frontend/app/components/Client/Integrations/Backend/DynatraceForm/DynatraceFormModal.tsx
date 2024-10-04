@@ -1,14 +1,9 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import FormField from 'App/components/Client/Integrations/FormField';
-import {
-  getIntegrationData,
-  removeIntegration,
-  saveIntegration,
-} from 'App/components/Client/Integrations/apiMethods';
+import { useIntegration } from 'App/components/Client/Integrations/apiMethods';
 import useForm from 'App/hooks/useForm';
 import { useStore } from 'App/mstore';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
@@ -38,20 +33,12 @@ const DynatraceFormModal = ({
 }) => {
   const { integrationsStore } = useStore();
   const siteId = integrationsStore.integrations.siteId;
-  const { data, isPending } = useQuery({
-    queryKey: ['integrationData', 'dynatrace'],
-    queryFn: async () => {
-      const resp = await getIntegrationData<DynatraceConfig>(
-        'dynatrace',
-        siteId
-      );
-      if (resp) {
-        return resp;
-      }
-      return initialValues;
-    },
-    initialData: initialValues,
-  });
+  const {
+    data = initialValues,
+    isPending,
+    saveMutation,
+    removeMutation,
+  } = useIntegration<DynatraceConfig>('dynatrace', siteId, initialValues);
   const { values, errors, handleChange, hasErrors } = useForm(data, {
     environment: {
       required: true,
@@ -67,14 +54,6 @@ const DynatraceFormModal = ({
     },
   });
   const exists = Boolean(data.client_id);
-
-  const saveMutation = useMutation({
-    mutationFn: ({ values, siteId, exists }: any) =>
-      saveIntegration('dynatrace', values, siteId, exists),
-  });
-  const removeMutation = useMutation({
-    mutationFn: ({ siteId }: any) => removeIntegration('dynatrace', siteId),
-  });
 
   const save = async () => {
     await saveMutation.mutateAsync({ values, siteId, exists });
