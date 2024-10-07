@@ -7,8 +7,8 @@ import { Button, Checkbox, Form, Input, Loader } from 'UI';
 
 function IntegrationForm(props: any) {
   const { formFields, name, integrated } = props;
-  const { integrationsStore, projectsStore } = useStore();
-  const initialSiteId = projectsStore.siteId;
+  const { integrationsStore } = useStore();
+  const initialSiteId = integrationsStore.integrations.siteId;
   const integrationStore = integrationsStore[name as unknown as namedStore];
   const config = integrationStore.instance;
   const loading = integrationStore.loading;
