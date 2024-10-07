@@ -173,7 +173,7 @@ export default class UserService {
 
   logout() {
     return this.client
-      .post('/logout')
+      .get('/logout')
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
