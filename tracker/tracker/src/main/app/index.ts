@@ -350,8 +350,6 @@ export default class App {
       this.session.applySessionHash(sessionToken)
     }
 
-    this.initWorker()
-
     const thisTab = this.session.getTabId()
 
     /**
@@ -367,6 +365,8 @@ export default class App {
           '*',
         )
       }, 250)
+    } else {
+      this.initWorker()
     }
     /**
      * if we get a signal from child iframes, we check for their node_id and send it back,
@@ -1269,7 +1269,7 @@ export default class App {
     })
 
     const timestamp = now()
-    this.worker.postMessage({
+    this.worker?.postMessage({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -1375,9 +1375,9 @@ export default class App {
 
       if (socketOnly) {
         this.socketMode = true
-        this.worker.postMessage('stop')
+        this.worker?.postMessage('stop')
       } else {
-        this.worker.postMessage({
+        this.worker?.postMessage({
           type: 'auth',
           token,
           beaconSizeLimit,
