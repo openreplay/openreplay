@@ -30,7 +30,7 @@ function CardSessionsByList({ list, selected, onClickHandler = () => null }: Pro
             title={(
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">
-                  <Typography.Text>{row.displayName}</Typography.Text>
+                  <Typography.Text ellipsis={true}>{row.displayName}</Typography.Text>
                   <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
                 </div>
 
