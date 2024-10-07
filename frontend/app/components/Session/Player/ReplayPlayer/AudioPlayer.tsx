@@ -102,7 +102,6 @@ function DropdownAudioPlayer({
         const file = files.find((f) => f.url === key);
         if (file) {
           const targetTime = (timeMs + delta * 1000 - file.start) / 1000;
-          console.log(targetTime, audio.currentTime, timeMs)
           const fileLength = fileLengths.current[key];
           if (targetTime < 0 || (fileLength && targetTime > fileLength)) {
             audio.pause();
