@@ -352,10 +352,10 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    /**
-     * listen for messages from parent window, so we can signal that we're alive
-     * */
     if (this.insideIframe) {
+      /**
+       * listen for messages from parent window, so we can signal that we're alive
+       * */
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       setInterval(() => {
         window.parent.postMessage(
@@ -367,15 +367,12 @@ export default class App {
       }, 250)
     } else {
       this.initWorker()
-    }
-    /**
-     * if we get a signal from child iframes, we check for their node_id and send it back,
-     * so they can act as if it was just a same-domain iframe
-     * */
-    if (!this.insideIframe) {
+      /**
+       * if we get a signal from child iframes, we check for their node_id and send it back,
+       * so they can act as if it was just a same-domain iframe
+       * */
       window.addEventListener('message', this.crossDomainIframeListener)
     }
-
     if (this.bc !== null) {
       this.bc.postMessage({
         line: proto.ask,
@@ -729,9 +726,6 @@ export default class App {
       this.messages.length = 0
       return
     }
-    if (this.worker === undefined || !this.messages.length) {
-      return
-    }
 
     if (this.insideIframe) {
       window.parent.postMessage(
@@ -746,6 +740,11 @@ export default class App {
       this.messages.length = 0
       return
     }
+
+    if (this.worker === undefined || !this.messages.length) {
+      return
+    }
+
     try {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
@@ -1237,7 +1236,7 @@ export default class App {
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
     }
-    if (!this.worker) {
+    if (!this.worker && !this.insideIframe) {
       const reason = 'No worker found: perhaps, CSP is not set.'
       this.signalError(reason, [])
       return Promise.resolve(UnsuccessfulStart(reason))
@@ -1317,7 +1316,7 @@ export default class App {
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
         return UnsuccessfulStart(reason)
       }
-      if (!this.worker) {
+      if (!this.worker && !this.insideIframe) {
         const reason = 'no worker found after start request (this should not happen in real world)'
         this.signalError(reason, [])
         return UnsuccessfulStart(reason)
