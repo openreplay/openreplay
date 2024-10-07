@@ -191,7 +191,7 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    const index = this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
+    const index = filter.isEvent ? -1 : this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
@@ -202,12 +202,13 @@ class SearchStore {
       : null;
 
     if (index > -1) {
-      const oldFilter = this.instance.filters[index];
+      const oldFilter = new FilterItem(this.instance.filters[index]);
       const updatedFilter = {
         ...oldFilter,
         value: oldFilter.value.concat(filter.value)
       };
       oldFilter.merge(updatedFilter);
+      this.updateFilter(index, updatedFilter);
     } else {
       this.instance.filters.push(filter);
       this.instance = new Search({
@@ -239,7 +240,7 @@ class SearchStore {
     // TODO
   }
 
-  updateFilter = (index: number, search: Partial<IFilter>) => {
+  updateFilter = (index: number, search: Partial<FilterItem>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
         return search;

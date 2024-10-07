@@ -73,7 +73,7 @@ window.getJWT = () => {
 };
 
 window.setJWT = (jwt) => {
-  userStore.updateJwt(jwt);
+  userStore.updateJwt({jwt});
 };
 
 export class RootStore {
