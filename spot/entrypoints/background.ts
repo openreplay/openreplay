@@ -5,7 +5,7 @@ let checkBusy = false;
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = "1.0.7";
+  const VER = "1.0.10";
 
   const messages = {
     popup: {
@@ -42,6 +42,7 @@ export default defineBackground(() => {
         checkNewTab: "ort:check-new-tab",
         started: "ort:started",
         stopped: "ort:stopped",
+        toStop: "ort:stop",
         restart: "ort:restart",
         getErrorEvents: "ort:get-error-events",
       },
@@ -63,6 +64,7 @@ export default defineBackground(() => {
       to: {
         checkRecStatus: "offscr:check-status",
         startRecording: "offscr:start-recording",
+        stopRecording: "offscr:stop-recording",
       },
     },
   };
@@ -661,10 +663,14 @@ export default defineBackground(() => {
         errorData,
       });
     }
-    if (request.type === "ort:stop") {
+    if (request.type === messages.content.from.toStop) {
+      if (recordingState.recording === REC_STATE.stopped) {
+        return console.error('Calling stopped recording?')
+      }
+      console.log('calling stop')
       browser.runtime
         .sendMessage({
-          type: "offscr:stop-recording",
+          type: messages.offscreen.to.stopRecording,
           target: "offscreen",
         })
         .then((r) => {
@@ -999,6 +1005,7 @@ export default defineBackground(() => {
     let activeTab = activeTabs[0];
     const sendTo = message.activeTabId || activeTab.id!;
     let attempts = 0;
+    // 10 seconds;
     while (!contentArmy[sendTo] && attempts < 100) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       attempts++;
@@ -1142,18 +1149,16 @@ export default defineBackground(() => {
       }
 
       const trackedTab: number | null = usedTab ?? null;
+
       /** reloads ui on currently active tab once its reloads itself */
-      function tabUpdateListener(tabId: number, changeInfo: any) {
+      function tabNavigatedListener(details: { tabId: number }) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
-          return stopTabListening();
+          return stopNavListening();
         }
+        contentArmy[details.tabId] = false
 
-        if (changeInfo.status !== "complete") {
-          return (contentArmy[tabId] = false);
-        }
-
-        if (area === "tab" && (!trackedTab || tabId !== trackedTab)) {
+        if (area === "tab" && (!trackedTab || details.tabId !== trackedTab)) {
           return;
         }
 
@@ -1172,6 +1177,13 @@ export default defineBackground(() => {
             };
             void sendToActiveTab(msg);
           });
+      }
+
+      function startNavListening() {
+        browser.webNavigation.onCompleted.addListener(tabNavigatedListener)
+      }
+      function stopNavListening() {
+        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener)
       }
 
       /** discards recording if was recording single tab and its now closed */
@@ -1200,15 +1212,7 @@ export default defineBackground(() => {
         browser.tabs.onRemoved.removeListener(tabRemovedListener);
       }
 
-      function startTabListening() {
-        browser.tabs.onUpdated.addListener(tabUpdateListener);
-      }
-
-      function stopTabListening() {
-        browser.tabs.onUpdated.removeListener(tabUpdateListener);
-      }
-
-      startTabListening();
+      startNavListening();
       if (area === "desktop") {
         // if desktop, watch for tab change events
         startTabActivationListening();
@@ -1218,7 +1222,7 @@ export default defineBackground(() => {
         startRemovedListening();
       }
       setOnStop(() => {
-        stopTabListening();
+        stopNavListening();
         if (area === "desktop") {
           stopTabActivationListening();
         }

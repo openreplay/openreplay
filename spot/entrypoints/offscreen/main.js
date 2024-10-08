@@ -1,3 +1,6 @@
+/**
+ * 24 MB; hardlimit for video chunk
+ * */
 const hardLimit = 24 * 1024 * 1024; // 24 MB
 
 function getRecordingSettings(qualityValue) {
@@ -124,6 +127,7 @@ class ScreenRecorder {
     this.mRecorder.start();
     this.isRecording = true;
     this.trackDuration();
+    console.log('started recording inside startRecording');
   }
 
   stop() {
@@ -217,20 +221,24 @@ class ScreenRecorder {
             },
           }));
     } catch (e) {
-      console.error(e);
+      console.error('get stream error:', e);
       throw e;
     }
+    // try {
+    //   microphoneStream = await navigator.mediaDevices.getUserMedia({
+    //     audio: { echoCancellation: false, deviceId: audioId },
+    //   });
+    //   this.audioTrack = microphoneStream.getAudioTracks()[0];
+    //   if (!useMicrophone) {
+    //     this.audioTrack.enabled = false;
+    //   }
+    // } catch (e) {
+    //   console.error('get audio error', e);
+    // }
     try {
-      microphoneStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, deviceId: audioId },
-      });
-      this.audioTrack = microphoneStream.getAudioTracks()[0];
-      if (!useMicrophone) {
-        this.audioTrack.enabled = false;
-      }
-    } catch (e) {
-      console.error(e);
       this.audioTrack = this.createPlaceholderAudioTrack();
+    } catch (e) {
+      console.error('get audio error', e);
     }
 
     const existingAudioTracks = this.videoStream.getAudioTracks();
@@ -312,6 +320,7 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
           message.audioId,
         )
         .then(() => {
+          console.log('started recording');
           respond({ success: true, time: Date.now() });
         })
         .catch(e => {
@@ -336,6 +345,7 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
       recorder.stop();
       const duration = recorder.duration;
       recorder.getVideoData().then((data) => {
+        console.log(data)
         if (!data.blob) {
           respond({ status: "empty" });
         }

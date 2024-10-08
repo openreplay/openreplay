@@ -125,6 +125,7 @@ export default defineContentScript({
       stopClickRecording();
       stopLocationRecording();
       const result = await browser.runtime.sendMessage({ type: "ort:stop" });
+      console.log('Spot getting video:', result)
       if (result.status === "full") {
         chunksReady = true;
         data = result;
@@ -323,7 +324,9 @@ export default defineContentScript({
         });
     }
 
-    void browser.runtime.sendMessage({ type: "ort:content-ready" });
+    setInterval(() => {
+      void browser.runtime.sendMessage({ type: "ort:content-ready" });
+    }, 500)
     // @ts-ignore false positive
     browser.runtime.onMessage.addListener((message: any, resp) => {
       if (message.type === "content:mount") {

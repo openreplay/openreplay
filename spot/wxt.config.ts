@@ -25,6 +25,7 @@ export default defineConfig({
       "tabCapture",
       "offscreen",
       "unlimitedStorage",
+      "webNavigation",
     ],
   },
 });
