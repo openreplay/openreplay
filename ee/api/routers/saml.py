@@ -90,26 +90,35 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
     existing = users.get_by_email_only(email)
     role_names = user_data.get("role", [])
-    if len(role_names) == 0:
-        logger.info("No role specified, setting role to member")
-        role_names = ["member"]
     role = None
-    for r in role_names:
-        if r.lower() == existing["roleName"].lower():
-            role = {"roleId": existing["roleId"], "name": r}
+    if len(role_names) == 0:
+        if existing is None:
+            logger.info("No role specified, setting role to member")
+            role_names = ["member"]
         else:
-            role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)
+            role_names = [existing["roleName"]]
+            role = {"name": existing["roleName"], "roleId": existing["roleId"]}
+    if role is None:
+        for r in role_names:
+            if r.lower() == existing["roleName"].lower():
+                role = {"roleId": existing["roleId"], "name": r}
+            else:
+                role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)
 
-        if role is not None:
-            break
+            if role is not None:
+                break
 
     if role is None:
         return {"errors": [f"role '{role_names}' not found, please create it in OpenReplay first"]}
     logger.info(f"received roles:{role_names}; using:{role['name']}")
     admin_privileges = user_data.get("adminPrivileges", [])
-    admin_privileges = not (len(admin_privileges) == 0
-                            or admin_privileges[0] is None
-                            or admin_privileges[0].lower() == "false")
+    if len(admin_privileges) == 0:
+        if existing is None:
+            admin_privileges = not (len(admin_privileges) == 0
+                                    or admin_privileges[0] is None
+                                    or admin_privileges[0].lower() == "false")
+        else:
+            admin_privileges = existing["admin"]
 
     internal_id = next(iter(user_data.get("internalId", [])), None)
     full_name = " ".join(user_data.get("firstName", []) + user_data.get("lastName", []))
