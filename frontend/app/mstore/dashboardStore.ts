@@ -68,6 +68,7 @@ export default class DashboardStore {
     const timeStamps = this.drillDownPeriod.toTimestamps();
     this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
     this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
+    this.updateKey('metricsPage', 1)
   }
 
   get filteredList() {

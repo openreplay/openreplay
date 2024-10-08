@@ -1,9 +1,8 @@
 import React from 'react';
 import { Button, Space } from 'antd';
 import { filtersMap } from 'Types/filter/newFilter';
-// import { Icon } from 'UI';
 import { Empty } from 'antd';
-import { Info } from 'lucide-react'
+import { Info } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
@@ -18,7 +17,7 @@ interface Props {
 function SessionsBy(props: Props) {
   const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
   const [selected, setSelected] = React.useState<any>(null);
-  const total = data.values.length;
+  const total = data.count;
   const { openModal, closeModal } = useModal();
 
   const onClickHandler = (event: any, data: any) => {
@@ -42,10 +41,15 @@ function SessionsBy(props: Props) {
   const showMore = (e: any) => {
     e.stopPropagation();
     openModal(
-      <CardSessionsByList list={data.values} onClickHandler={(e, item) => {
-        closeModal();
-        onClickHandler(null, item);
-      }} selected={selected} />, {
+      <CardSessionsByList
+        paginated={true}
+        metric={metric}
+        total={total}
+        list={data.values}
+        onClickHandler={(e, item) => {
+          closeModal();
+          onClickHandler(null, item);
+        }} selected={selected} />, {
         title: metric.name,
         width: 600
       });
@@ -58,7 +62,7 @@ function SessionsBy(props: Props) {
           image={null}
           style={{ minHeight: 220 }}
           className="flex flex-col items-center justify-center"
-          imageStyle={{ height: 0}}
+          imageStyle={{ height: 0 }}
           description={
             <div className="flex items-center gap-2 justify-center text-black">
               <Info size={14} />
