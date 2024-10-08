@@ -12,7 +12,7 @@ type Stack = { function: string; url: string }[]
 
 export interface IError {
   sessionId: string
-  messageId: string
+  messageId: number
   timestamp: number
   errorId: string
   projectId: string

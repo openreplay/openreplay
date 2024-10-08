@@ -44,6 +44,7 @@ export interface IStackEvent {
   payload: any;
   source: any;
   level: string;
+  messageId: number;
 
   isRed: boolean;
 }
@@ -56,6 +57,7 @@ export default class StackEvent {
   payload: IStackEvent["payload"];
   source: IStackEvent["source"];
   level: IStackEvent["level"];
+  messageId: IStackEvent["messageId"];
 
   constructor(evt: IStackEvent) {
     const event = { ...evt, source: evt.source || OPENREPLAY, payload: evt.payload || {} };

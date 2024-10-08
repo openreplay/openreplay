@@ -112,6 +112,9 @@ function Timeline(props: IProps) {
   };
 
   const jumpToTime = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLDivElement).id === 'click-ignore') {
+      return;
+    }
     seekProgress(e);
   };
 
