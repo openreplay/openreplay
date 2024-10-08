@@ -1406,7 +1406,7 @@ export default class App {
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
       if (startOpts.startCallback) {
-        startOpts.startCallback(onStartInfo)
+        startOpts.startCallback(SuccessfulStart(onStartInfo))
       }
       if (this.features['feature-flags']) {
         void this.featureFlags.reloadFlags()
