@@ -289,6 +289,10 @@ export default class Widget {
         }) : [];
     };
 
+    setPage(page: number) {
+        this.page = page;
+    }
+
     setData(data: any, period: any) {
         const _data: any = {...data};
 

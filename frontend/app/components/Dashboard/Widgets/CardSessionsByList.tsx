@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { useStore } from '@/mstore';
 import { WEB_VITALS } from '@/constants/card';
 import { observer } from 'mobx-react-lite';
+import { metricService } from '@/services';
 
 interface Props {
   list: any;
@@ -20,21 +21,18 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
   const isOverviewWidget = metric?.metricType === WEB_VITALS;
   const params = { density: isOverviewWidget ? 7 : 70 };
   const metricParams = { ...params };
-  const [data, setData] = React.useState<any>(list);
   const [loading, setLoading] = React.useState(false);
-  const page = dashboardStore.metricsPage;
+  const data = paginated ? metric?.data[0]?.values : list;
 
-  useEffect(() => {
-    if (!metric) return;
+  const loadData = async (page: number) => {
     const timestamps = drillDownPeriod.toTimestamps();
     const payload = { ...metricParams, ...timestamps, ...metric?.toJson() };
+    const params = { ...drillDownPeriod, ...payload, key: metric.predefinedKey };
     setLoading(true);
-    dashboardStore.fetchMetricChartData({ ...metric, page }, payload, true, drillDownPeriod).then((res: any) => {
-      setData(res);
-    }).finally(() => {
-      setLoading(false);
-    });
-  }, [metric, page]);
+    const data = await metricService.getMetricChartData(metric, { ...params, page, limit: 20 }, false);
+    metric.setData(data, drillDownPeriod);
+    setLoading(false);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -89,12 +87,15 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
         <div className="sticky bottom-0 bg-white py-2">
           <Pagination
             // showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
-            defaultCurrent={page}
+            defaultCurrent={metric.page}
             total={total}
             showQuickJumper
             pageSize={20}
             showSizeChanger={false}
-            onChange={(page) => dashboardStore.updateKey('metricsPage', page)}
+            onChange={(page) => {
+              metric.setPage(page);
+              void loadData(page);
+            }}
           />
         </div>
       )}

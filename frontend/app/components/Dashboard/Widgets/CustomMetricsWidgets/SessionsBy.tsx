@@ -6,6 +6,7 @@ import { Info } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
+import Widget from '@/mstore/types/widget';
 
 interface Props {
   metric?: any;
@@ -19,6 +20,7 @@ function SessionsBy(props: Props) {
   const [selected, setSelected] = React.useState<any>(null);
   const total = data.count;
   const { openModal, closeModal } = useModal();
+  const modalMetric = React.useMemo(() => Object.assign(new Widget(), metric), [metric]);
 
   const onClickHandler = (event: any, data: any) => {
     const filters = Array<any>();
@@ -43,7 +45,7 @@ function SessionsBy(props: Props) {
     openModal(
       <CardSessionsByList
         paginated={true}
-        metric={metric}
+        metric={modalMetric}
         total={total}
         list={data.values}
         onClickHandler={(e, item) => {
@@ -72,10 +74,9 @@ function SessionsBy(props: Props) {
         />
       ) : (
         <div className="flex flex-col justify-between w-full" style={{ height: 220 }}>
-          {/* TODO - remove slice once the api pagination is fixed */}
-          <CardSessionsByList list={data.values.slice(0, 3)}
-                              selected={selected}
-                              onClickHandler={onClickHandler} />
+          {metric && <CardSessionsByList list={data.values.slice(0, 3)}
+                                         selected={selected}
+                                         onClickHandler={onClickHandler} />}
           {total > 3 && (
             <div className="flex">
               <Button type="link" onClick={showMore}>
