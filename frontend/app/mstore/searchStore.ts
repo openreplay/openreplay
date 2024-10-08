@@ -177,7 +177,7 @@ class SearchStore {
   }
 
   checkForLatestSessions() {
-    const filter = this.instance.toData();
+    const filter = this.instance.toSearch();
     if (this.latestRequestTime) {
       const period = Period({ rangeName: CUSTOM_RANGE, start: this.latestRequestTime, end: Date.now() });
       const newTimestamps: any = period.toJSON();

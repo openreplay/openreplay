@@ -16,7 +16,7 @@ type SessionStatus = {
   count: number;
 }
 
-const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
+const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
 let sessionStatusTimeOut: any = null;
 
@@ -112,7 +112,7 @@ function SessionList() {
       if (!document.hidden) {
         searchStore.checkForLatestSessions();
       }
-    }, AUTOREFRESH_INTERVAL);
+    }, AUTO_REFRESH_INTERVAL);
     return () => clearInterval(id);
   }, []);
 
