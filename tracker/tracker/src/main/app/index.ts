@@ -52,6 +52,12 @@ export interface StartOptions {
   forceNew?: boolean
   sessionHash?: string
   assistOnly?: boolean
+  /**
+   * @deprecated We strongly advise to use .start().then instead.
+   *
+   * This method is kept for snippet compatibility only
+   * */
+  startCallback?: (result: StartPromiseReturn) => void
 }
 
 interface OnStartInfo {
@@ -1399,6 +1405,9 @@ export default class App {
       // TODO: start as early as possible (before receiving the token)
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
+      if (startOpts.startCallback) {
+        startOpts.startCallback(onStartInfo)
+      }
       if (this.features['feature-flags']) {
         void this.featureFlags.reloadFlags()
       }
