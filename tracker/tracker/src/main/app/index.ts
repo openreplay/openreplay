@@ -52,6 +52,12 @@ export interface StartOptions {
   forceNew?: boolean
   sessionHash?: string
   assistOnly?: boolean
+  /**
+   * @deprecated We strongly advise to use .start().then instead.
+   *
+   * This method is kept for snippet compatibility only
+   * */
+  startCallback?: (result: StartPromiseReturn) => void
 }
 
 interface OnStartInfo {
@@ -239,7 +245,6 @@ export default class App {
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
-  private readonly initialHostName = location.hostname
   private features = {
     'feature-flags': true,
     'usability-test': true,
@@ -352,10 +357,10 @@ export default class App {
 
     const thisTab = this.session.getTabId()
 
-    /**
-     * listen for messages from parent window, so we can signal that we're alive
-     * */
     if (this.insideIframe) {
+      /**
+       * listen for messages from parent window, so we can signal that we're alive
+       * */
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       setInterval(() => {
         window.parent.postMessage(
@@ -368,11 +373,11 @@ export default class App {
     } else {
       this.initWorker()
     }
-    /**
-     * if we get a signal from child iframes, we check for their node_id and send it back,
-     * so they can act as if it was just a same-domain iframe
-     * */
     if (!this.insideIframe) {
+      /**
+       * if we get a signal from child iframes, we check for their node_id and send it back,
+       * so they can act as if it was just a same-domain iframe
+       * */
       window.addEventListener('message', this.crossDomainIframeListener)
     }
 
@@ -459,11 +464,13 @@ export default class App {
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
       event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
-      const childIframeDomain = data.domain as string
       const pageIframes = Array.from(document.querySelectorAll('iframe'))
       this.pageFrames = pageIframes
       const signalId = async () => {
-        const id = await this.checkNodeId(pageIframes, childIframeDomain)
+        if (event.source === null) {
+          return console.error('Couldnt connect to event.source for child iframe tracking')
+        }
+        const id = await this.checkNodeId(pageIframes, event.source)
         if (id && !this.trackedFrames.includes(id)) {
           try {
             this.trackedFrames.push(id)
@@ -472,7 +479,6 @@ export default class App {
             const iframeData = {
               line: proto.iframeId,
               context: this.contextId,
-              domain: childIframeDomain,
               id,
               token,
               frameOrderNumber: this.trackedFrames.length,
@@ -497,7 +503,7 @@ export default class App {
         if (msg[0] === MType.MouseMove) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
-            if (frame.dataset.domain === event.data.domain) {
+            if (frame.contentWindow === event.source) {
               const [type, x, y] = msg
               const { left, top } = frame.getBoundingClientRect()
               fixedMessage = [type, x + left, y + top]
@@ -508,7 +514,7 @@ export default class App {
         if (msg[0] === MType.MouseClick) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
-            if (frame.dataset.domain === event.data.domain) {
+            if (frame.contentWindow === event.source) {
               const [type, id, hesitationTime, label, selector, normX, normY] = msg
               const { left, top, width, height } = frame.getBoundingClientRect()
 
@@ -560,7 +566,6 @@ export default class App {
   }
 
   signalIframeTracker = () => {
-    const domain = this.initialHostName
     const thisTab = this.session.getTabId()
     const signalToParent = (n: number) => {
       window.parent.postMessage(
@@ -568,7 +573,6 @@ export default class App {
           line: proto.iframeSignal,
           source: thisTab,
           context: this.contextId,
-          domain,
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
@@ -590,9 +594,12 @@ export default class App {
     }
   }
 
-  private async checkNodeId(iframes: HTMLIFrameElement[], domain: string): Promise<number | null> {
+  private async checkNodeId(
+    iframes: HTMLIFrameElement[],
+    source: MessageEventSource,
+  ): Promise<number | null> {
     for (const iframe of iframes) {
-      if (iframe.dataset.domain === domain) {
+      if (iframe.contentWindow && iframe.contentWindow === source) {
         /**
          * Here we're trying to get node id from the iframe (which is kept in observer)
          * because of async nature of dom initialization, we give 100 retries with 100ms delay each
@@ -729,21 +736,21 @@ export default class App {
       this.messages.length = 0
       return
     }
-    if (this.worker === undefined || !this.messages.length) {
-      return
-    }
 
     if (this.insideIframe) {
       window.parent.postMessage(
         {
           line: proto.iframeBatch,
           messages: this.messages,
-          domain: this.initialHostName,
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
+      return
+    }
+
+    if (this.worker === undefined || !this.messages.length) {
       return
     }
     try {
@@ -1237,7 +1244,7 @@ export default class App {
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
     }
-    if (!this.worker) {
+    if (!this.worker && !this.insideIframe) {
       const reason = 'No worker found: perhaps, CSP is not set.'
       this.signalError(reason, [])
       return Promise.resolve(UnsuccessfulStart(reason))
@@ -1317,7 +1324,7 @@ export default class App {
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
         return UnsuccessfulStart(reason)
       }
-      if (!this.worker) {
+      if (!this.worker && !this.insideIframe) {
         const reason = 'no worker found after start request (this should not happen in real world)'
         this.signalError(reason, [])
         return UnsuccessfulStart(reason)
@@ -1400,6 +1407,9 @@ export default class App {
       // TODO: start as early as possible (before receiving the token)
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
+      if (startOpts.startCallback) {
+        startOpts.startCallback(SuccessfulStart(onStartInfo))
+      }
       if (this.features['feature-flags']) {
         void this.featureFlags.reloadFlags()
       }
