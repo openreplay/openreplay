@@ -21,10 +21,7 @@ export default class StylesManager {
   private skipCSSLinks: Array<string> = []; // should be common for all pages
   private abortController = new AbortController()
 
-  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {
-    // @ts-ignore
-    window.repl_skippedLinks = window.repl_skippedLinks || []
-  }
+  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
 
   reset():void {
     this.linkLoadingCount = 0;
@@ -42,8 +39,6 @@ export default class StylesManager {
         || this.skipCSSLinks.includes(value)
         ||  node.ownerDocument !== this.screen.document
       ) {
-        // @ts-ignore
-        window.repl_skippedLinks?.push(['skipped', node, value, this.abortController.signal.aborted, this.skipCSSLinks.includes(value), node.ownerDocument !== this.screen.document])
         resolve();
       }
       this.setLoading(true);
@@ -55,7 +50,6 @@ export default class StylesManager {
       }
       timeoutId = setTimeout(addSkipAndResolve, 4000);
 
-      // It would be better to make it more relyable with addEventListener
       node.onload = () => {
         const doc = this.screen.document;
         if (node.ownerDocument === doc && doc) {
@@ -77,8 +71,8 @@ export default class StylesManager {
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
         setTimeout(() => {
-          this.setLoading(false)
-          this.linkLoadPromises = [];
+        this.setLoading(false)
+        this.linkLoadPromises = [];
         }, 0)
       }
     });
