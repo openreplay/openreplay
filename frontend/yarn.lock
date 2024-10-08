@@ -29,12 +29,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ant-design/colors@npm:^7.0.0, @ant-design/colors@npm:^7.0.2":
+"@ant-design/colors@npm:^7.0.0":
   version: 7.0.2
   resolution: "@ant-design/colors@npm:7.0.2"
   dependencies:
     "@ctrl/tinycolor": ^3.6.1
   checksum: b44f7136a9f8edead342c05945fa338be68a61d6de3255bc6fcf90f38fa011a6f0ebadd2746f9557fe74ccdb71b424aa7c6daef0e81e2ff94514f5e7c8cf46ff
+  languageName: node
+  linkType: hard
+
+"@ant-design/colors@npm:^7.1.0":
+  version: 7.1.0
+  resolution: "@ant-design/colors@npm:7.1.0"
+  dependencies:
+    "@ctrl/tinycolor": ^3.6.1
+  checksum: 057fa10e1d0e787235149ef66cfac8c0060b50a5de29bc40d8f3226672e5f4d7d713a8c3f48d21a54d790a0269340897ebf3575af762caa3c006eacf5f883fa9
+  languageName: node
+  linkType: hard
+
+"@ant-design/cssinjs-utils@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@ant-design/cssinjs-utils@npm:1.1.0"
+  dependencies:
+    "@ant-design/cssinjs": ^1.21.0
+    "@babel/runtime": ^7.23.2
+    rc-util: ^5.38.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: aaa58f59ed7e56ac3bda76786ff159f328757a4ec8e1881a9f643e8f384aab7de77f32a5ac42b880ebd597579ae0fc0cb7465c5f69134ca4c4e7c480cbff7244
   languageName: node
   linkType: hard
 
@@ -53,6 +76,33 @@ __metadata:
     react: ">=16.0.0"
     react-dom: ">=16.0.0"
   checksum: ffc384e369e2d0610ef322adcf3eba9fe785c4cc065b2bffbf6973abebf72f15ea194d7ffbb94440f363ee7c105388c6ca6b98aff3979f31ee7a49bd2600e986
+  languageName: node
+  linkType: hard
+
+"@ant-design/cssinjs@npm:^1.21.1":
+  version: 1.21.1
+  resolution: "@ant-design/cssinjs@npm:1.21.1"
+  dependencies:
+    "@babel/runtime": ^7.11.1
+    "@emotion/hash": ^0.8.0
+    "@emotion/unitless": ^0.7.5
+    classnames: ^2.3.1
+    csstype: ^3.1.3
+    rc-util: ^5.35.0
+    stylis: ^4.3.3
+  peerDependencies:
+    react: ">=16.0.0"
+    react-dom: ">=16.0.0"
+  checksum: 9dca7fa851ae59d084cfe6787937536a601e16e3b4f82f6a63a5eb4098d83b36a5b88a1ff9128a8d8cd2bd3336734e14248e427f0875c37cbf94a70fb0d29e50
+  languageName: node
+  linkType: hard
+
+"@ant-design/fast-color@npm:^2.0.6":
+  version: 2.0.6
+  resolution: "@ant-design/fast-color@npm:2.0.6"
+  dependencies:
+    "@babel/runtime": ^7.24.7
+  checksum: 8d30649bd8d4e56d5c48393fcf0ad5c24d1099ec4cbf88f55bd9f4489e61efc30087d301da384c4ed21f2d5597087c8ba27dfbcc7693915310c26d307f5a8276
   languageName: node
   linkType: hard
 
@@ -79,19 +129,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ant-design/icons@npm:^5.3.7":
-  version: 5.3.7
-  resolution: "@ant-design/icons@npm:5.3.7"
+"@ant-design/icons@npm:^5.5.1":
+  version: 5.5.1
+  resolution: "@ant-design/icons@npm:5.5.1"
   dependencies:
     "@ant-design/colors": ^7.0.0
     "@ant-design/icons-svg": ^4.4.0
-    "@babel/runtime": ^7.11.2
+    "@babel/runtime": ^7.24.8
     classnames: ^2.2.6
     rc-util: ^5.31.1
   peerDependencies:
     react: ">=16.0.0"
     react-dom: ">=16.0.0"
-  checksum: 1db109da6893938c431381ad25b4709cbc9c928b9c50b7e1e53a3f49c4faac91e5ec70f1b7df3bf714197841810d858be09c1b61e6cc407cd093b3ab65451daa
+  checksum: 440493303138ffa595c87043bbd34cd777967a5481a55ea72b38caa1ecf24862d041c84212d064af644069046ca0a7dfb4205724dcea2d95a2723d5d7589b7a0
   languageName: node
   linkType: hard
 
@@ -1864,6 +1914,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.24.8, @babel/runtime@npm:^7.25.6":
+  version: 7.25.7
+  resolution: "@babel/runtime@npm:7.25.7"
+  dependencies:
+    regenerator-runtime: ^0.14.0
+  checksum: 86b7829d2fc9343714a9afe92757cf96c4dc799006ca61d73cda62f4b9e29bfa1ce36794955bc6cb4c188f5b10db832c949339895e1bbe81a69022d9d578ce29
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:~7.5.4":
   version: 7.5.5
   resolution: "@babel/runtime@npm:7.5.5"
@@ -3018,18 +3077,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/color-picker@npm:~1.5.3":
-  version: 1.5.3
-  resolution: "@rc-component/color-picker@npm:1.5.3"
+"@rc-component/color-picker@npm:~2.0.1":
+  version: 2.0.1
+  resolution: "@rc-component/color-picker@npm:2.0.1"
   dependencies:
+    "@ant-design/fast-color": ^2.0.6
     "@babel/runtime": ^7.23.6
-    "@ctrl/tinycolor": ^3.6.1
     classnames: ^2.2.6
     rc-util: ^5.38.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 40c0c1d319624a859828c8de8ae891ac1b187ef1770ab6aab237929abf11569af3e2a5ece30dfb2c207fe80e86c4659029b0bbbdc3801e8a29e52b2885fb1f03
+  checksum: be0b851a609fdb360367f38765b568c52f935dde4e70f7b832146a921eb221ddd51735144a35ce36c55810f47f830078e271508920585e3ab789e47c4f824775
   languageName: node
   linkType: hard
 
@@ -3083,9 +3142,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/tour@npm:~1.15.0":
-  version: 1.15.0
-  resolution: "@rc-component/tour@npm:1.15.0"
+"@rc-component/qrcode@npm:~1.0.0":
+  version: 1.0.0
+  resolution: "@rc-component/qrcode@npm:1.0.0"
+  dependencies:
+    "@babel/runtime": ^7.24.7
+    classnames: ^2.3.2
+    rc-util: ^5.38.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 406dbe13e3b24ca20ef729d5456a329711ac9ca50f20604ff1e1fdbcb3a716408ad453cc083ec87d541096c85e2f512175f0b357075b40f71bea38e2a4f59cbd
+  languageName: node
+  linkType: hard
+
+"@rc-component/tour@npm:~1.15.1":
+  version: 1.15.1
+  resolution: "@rc-component/tour@npm:1.15.1"
   dependencies:
     "@babel/runtime": ^7.18.0
     "@rc-component/portal": ^1.0.0-9
@@ -3095,7 +3168,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: c3bdc3331869c7691197b0d4d40a6e307d7a2379fee8fadeb4718c45e6ccfe31bffc1d018b0a5bc246247bbc80069ff09a6b8bf92089f0a8c271946da1c40236
+  checksum: 8324edb96bbca2838e9bdcca5ac02e615596593d0e79ee74ad2e7d3a4801975f205907170bb16f92303b22701bc730c34337cb10270281cea36659bac10193b5
   languageName: node
   linkType: hard
 
@@ -3116,7 +3189,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/trigger@npm:^2.1.1, @rc-component/trigger@npm:^2.2.0":
+"@rc-component/trigger@npm:^2.1.1":
   version: 2.2.0
   resolution: "@rc-component/trigger@npm:2.2.0"
   dependencies:
@@ -3130,6 +3203,23 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 71881fceaa645ae906d765901c23b7c80d96bc6305e943ddc18f2226eb5524d3b61b7d46eae3ab9c6a0519376b7ee5c312df82eb1143942941ba2a56a675ccf6
+  languageName: node
+  linkType: hard
+
+"@rc-component/trigger@npm:^2.2.3":
+  version: 2.2.3
+  resolution: "@rc-component/trigger@npm:2.2.3"
+  dependencies:
+    "@babel/runtime": ^7.23.2
+    "@rc-component/portal": ^1.1.0
+    classnames: ^2.3.2
+    rc-motion: ^2.0.0
+    rc-resize-observer: ^1.3.1
+    rc-util: ^5.38.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: f819e4de1a907997b11db2d4da87efbb93e6d16a9d280fc6d99f38c4726fefea15b32cd506efd7f0181639787f922a0d3d1779874769a8c592429318f56abd04
   languageName: node
   linkType: hard
 
@@ -6546,62 +6636,60 @@ __metadata:
   languageName: node
   linkType: hard
 
-"antd@npm:^5.18.3":
-  version: 5.18.3
-  resolution: "antd@npm:5.18.3"
+"antd@npm:^5.21.2":
+  version: 5.21.2
+  resolution: "antd@npm:5.21.2"
   dependencies:
-    "@ant-design/colors": ^7.0.2
-    "@ant-design/cssinjs": ^1.21.0
-    "@ant-design/icons": ^5.3.7
+    "@ant-design/colors": ^7.1.0
+    "@ant-design/cssinjs": ^1.21.1
+    "@ant-design/cssinjs-utils": ^1.1.0
+    "@ant-design/icons": ^5.5.1
     "@ant-design/react-slick": ~1.1.2
-    "@babel/runtime": ^7.24.7
+    "@babel/runtime": ^7.25.6
     "@ctrl/tinycolor": ^3.6.1
-    "@rc-component/color-picker": ~1.5.3
+    "@rc-component/color-picker": ~2.0.1
     "@rc-component/mutate-observer": ^1.1.0
-    "@rc-component/tour": ~1.15.0
-    "@rc-component/trigger": ^2.2.0
+    "@rc-component/qrcode": ~1.0.0
+    "@rc-component/tour": ~1.15.1
+    "@rc-component/trigger": ^2.2.3
     classnames: ^2.5.1
     copy-to-clipboard: ^3.3.3
     dayjs: ^1.11.11
-    qrcode.react: ^3.1.0
-    rc-cascader: ~3.26.0
+    rc-cascader: ~3.28.1
     rc-checkbox: ~3.3.0
-    rc-collapse: ~3.7.3
-    rc-dialog: ~9.5.2
+    rc-collapse: ~3.8.0
+    rc-dialog: ~9.6.0
     rc-drawer: ~7.2.0
     rc-dropdown: ~4.2.0
-    rc-field-form: ~2.2.1
-    rc-image: ~7.9.0
-    rc-input: ~1.5.1
-    rc-input-number: ~9.1.0
-    rc-mentions: ~2.14.0
-    rc-menu: ~9.14.0
-    rc-motion: ^2.9.2
-    rc-notification: ~5.6.0
-    rc-pagination: ~4.0.4
-    rc-picker: ~4.5.0
+    rc-field-form: ~2.4.0
+    rc-image: ~7.11.0
+    rc-input: ~1.6.3
+    rc-input-number: ~9.2.0
+    rc-mentions: ~2.16.1
+    rc-menu: ~9.15.1
+    rc-motion: ^2.9.3
+    rc-notification: ~5.6.2
+    rc-pagination: ~4.3.0
+    rc-picker: ~4.6.15
     rc-progress: ~4.0.0
     rc-rate: ~2.13.0
     rc-resize-observer: ^1.4.0
-    rc-segmented: ~2.3.0
-    rc-select: ~14.14.0
-    rc-slider: ~10.6.2
+    rc-segmented: ~2.5.0
+    rc-select: ~14.15.2
+    rc-slider: ~11.1.6
     rc-steps: ~6.0.1
     rc-switch: ~4.1.0
-    rc-table: ~7.45.7
-    rc-tabs: ~15.1.1
-    rc-textarea: ~1.7.0
-    rc-tooltip: ~6.2.0
-    rc-tree: ~5.8.8
-    rc-tree-select: ~5.21.0
-    rc-upload: ~4.5.2
+    rc-table: ~7.47.5
+    rc-tabs: ~15.3.0
+    rc-textarea: ~1.8.2
+    rc-tooltip: ~6.2.1
+    rc-tree: ~5.9.0
+    rc-tree-select: ~5.23.0
+    rc-upload: ~4.8.1
     rc-util: ^5.43.0
     scroll-into-view-if-needed: ^3.1.0
-    throttle-debounce: ^5.0.0
-  peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: da0420ef3c22ad205e5198d83da0e3df672ee3e7a9e64ec60e77c51537d6c2e955f223c48d3d8479b4617a8470db2f2de4ecf9611dddf475da47b5959bd78aa1
+    throttle-debounce: ^5.0.2
+  checksum: 3052f247f7bd0717f3f37197d9536dfcdbc848040613054b29a2de2ca5e453e44a07fdbda9b6109a1713768d4362e36b08dd5c7a0f6227549740364ef0cb8aa6
   languageName: node
   linkType: hard
 
@@ -18131,7 +18219,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.24.0
     "@typescript-eslint/parser": ^5.24.0
     "@wojtekmaj/react-daterange-picker": ^6.0.0
-    antd: ^5.18.3
+    antd: ^5.21.2
     autoprefixer: ^10.4.7
     babel-loader: ^9.1.3
     babel-plugin-prismjs: ^2.1.0
@@ -18209,7 +18297,7 @@ __metadata:
     svg-inline-loader: ^0.8.2
     svgo: ^2.8.0
     syncod: ^0.0.1
-    tailwindcss: ^3.3.5
+    tailwindcss: ^3.4.3
     thread-loader: ^4.0.2
     ts-jest: ^29.0.5
     ts-node: ^10.7.0
@@ -19898,15 +19986,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qrcode.react@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "qrcode.react@npm:3.1.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: af183e99ecaad90f7ef14bd027510ae7866935693c53ccf81b172438abbbf7f29c283c5dc7c2141b420d2413960b8f8dca8d9949646475afe669ed638e8fb722
-  languageName: node
-  linkType: hard
-
 "qs@npm:6.10.4":
   version: 6.10.4
   resolution: "qs@npm:6.10.4"
@@ -20086,20 +20165,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:~3.26.0":
-  version: 3.26.0
-  resolution: "rc-cascader@npm:3.26.0"
+"rc-cascader@npm:~3.28.1":
+  version: 3.28.1
+  resolution: "rc-cascader@npm:3.28.1"
   dependencies:
     "@babel/runtime": ^7.12.5
     array-tree-filter: ^2.1.0
     classnames: ^2.3.1
-    rc-select: ~14.14.0
-    rc-tree: ~5.8.1
+    rc-select: ~14.15.0
+    rc-tree: ~5.9.0
     rc-util: ^5.37.0
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: aa28be36e7ffdf8988f898130bf957e252b6eb68e15b3bfc8723f61ea6b7f81da18a3f64fa366e7437a68b0b986afae093d9ce1b4bba868d03ece65987155a64
+  checksum: ffa13db0728d7021e3d0b6586e681c029ca1f112e78f4c2c0b1becd66386ef2e3201d02880e06867dfbc77b75bee624766d7fad95e0a26d204451657fb7d2d76
   languageName: node
   linkType: hard
 
@@ -20117,9 +20196,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-collapse@npm:~3.7.3":
-  version: 3.7.3
-  resolution: "rc-collapse@npm:3.7.3"
+"rc-collapse@npm:~3.8.0":
+  version: 3.8.0
+  resolution: "rc-collapse@npm:3.8.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
@@ -20128,13 +20207,13 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 6e5ff193eb22e88a21871759e99814837f6c0732fb375f57e5ed3aa94a6253a5337cf5179aa10bfc9930500d536dfa262180f435ea2c41eea4ace4f3b3e148ac
+  checksum: c576a53b68e5df44a64939826de441a40ca3ec684672ddc5af4c228da87043668021a92044d507eb4c52357ce96daff3ce97c98d2f4c67eb0ceab4fec31551e6
   languageName: node
   linkType: hard
 
-"rc-dialog@npm:~9.5.2":
-  version: 9.5.2
-  resolution: "rc-dialog@npm:9.5.2"
+"rc-dialog@npm:~9.6.0":
+  version: 9.6.0
+  resolution: "rc-dialog@npm:9.6.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/portal": ^1.0.0-8
@@ -20144,7 +20223,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: e5854b2b99d4336f8c1125f63bb66da6b25959502866fb74c32cede5cad4ee6aa62dba6de79a16082812605193d83d99409f6372b161c2b906e68b9645d7031e
+  checksum: 19e9acef746baa25c3167a961919123b0b457288188c18bc4d468ae31144bf750d6d6468dd3be43b376eba42ddda26fef1aac8ae9bd016f5d0428ffee0c615e7
   languageName: node
   linkType: hard
 
@@ -20179,9 +20258,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-field-form@npm:~2.2.1":
-  version: 2.2.1
-  resolution: "rc-field-form@npm:2.2.1"
+"rc-field-form@npm:~2.4.0":
+  version: 2.4.0
+  resolution: "rc-field-form@npm:2.4.0"
   dependencies:
     "@babel/runtime": ^7.18.0
     "@rc-component/async-validator": ^5.0.3
@@ -20189,46 +20268,46 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 59911ef8222b08df561ea32bf0cc8d0731c796a06de95be9faacd8399be24e9c82343ceb52201df13c061bf75713b43e8d3963de33c41be35b735991c8f0f500
+  checksum: 79365813fb0166c109e81e3bde2c979db26bb97dcc418f6170266f7d5f6f11d25c27938f857a695b6921a16cb43b805f1fd4e9fa73cb2a918618a08fef82fed7
   languageName: node
   linkType: hard
 
-"rc-image@npm:~7.9.0":
-  version: 7.9.0
-  resolution: "rc-image@npm:7.9.0"
+"rc-image@npm:~7.11.0":
+  version: 7.11.0
+  resolution: "rc-image@npm:7.11.0"
   dependencies:
     "@babel/runtime": ^7.11.2
     "@rc-component/portal": ^1.0.2
     classnames: ^2.2.6
-    rc-dialog: ~9.5.2
+    rc-dialog: ~9.6.0
     rc-motion: ^2.6.2
     rc-util: ^5.34.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: fd04b8b66447d6c55f6fb298723582b80e51ddf364d7ae9560431f3f6a11622b97f1870755014d22994fadfbaaa21dda80444eee717409300853c1f65764d5b1
+  checksum: e0350bdfa531bbf4cdc23bb834fe46fee78f10739ef740ae3b880ea4e529674edb60074defcdb651d9b4aab305f0b971b08dd8739cf6409bb28dadcefca20808
   languageName: node
   linkType: hard
 
-"rc-input-number@npm:~9.1.0":
-  version: 9.1.0
-  resolution: "rc-input-number@npm:9.1.0"
+"rc-input-number@npm:~9.2.0":
+  version: 9.2.0
+  resolution: "rc-input-number@npm:9.2.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/mini-decimal": ^1.0.1
     classnames: ^2.2.5
-    rc-input: ~1.5.0
+    rc-input: ~1.6.0
     rc-util: ^5.40.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 360a3e215ed8b3f1bdc3605eae139059db59dcfb962e321260e16f1d34bc19d99323b8c7c5ba58a8feeb42a017293ad6b74c30f81f92a618c89625f5f8330219
+  checksum: 6053fd1585f65f0a48d2e98bdf83000981b28c3581dc390d8ae9cb2c4c90a2c559bfe8bbb7f0a376eea0ab4dcfe83c758e0cf09023a2fdf2e49eecc5145c8f79
   languageName: node
   linkType: hard
 
-"rc-input@npm:~1.5.0, rc-input@npm:~1.5.1":
-  version: 1.5.1
-  resolution: "rc-input@npm:1.5.1"
+"rc-input@npm:~1.6.0, rc-input@npm:~1.6.3":
+  version: 1.6.3
+  resolution: "rc-input@npm:1.6.3"
   dependencies:
     "@babel/runtime": ^7.11.1
     classnames: ^2.2.1
@@ -20236,31 +20315,31 @@ __metadata:
   peerDependencies:
     react: ">=16.0.0"
     react-dom: ">=16.0.0"
-  checksum: b6c0199f48a810fbc1ed0bbf0b64c80f2d8b2efb10632cfabe473ea7b79630553ac0f351774d3d0659c2580319e5f98e7e7630efb857f6f26cc49754334536f3
+  checksum: b18c2316eb64b6d02dcc33c18f1d57cc3759f620042446d012812dee4c94b61d3edd97303d309f8680a935eef627af6cda3bbdc3324a839ce27a72e07c1d6129
   languageName: node
   linkType: hard
 
-"rc-mentions@npm:~2.14.0":
-  version: 2.14.0
-  resolution: "rc-mentions@npm:2.14.0"
+"rc-mentions@npm:~2.16.1":
+  version: 2.16.1
+  resolution: "rc-mentions@npm:2.16.1"
   dependencies:
     "@babel/runtime": ^7.22.5
     "@rc-component/trigger": ^2.0.0
     classnames: ^2.2.6
-    rc-input: ~1.5.0
-    rc-menu: ~9.14.0
-    rc-textarea: ~1.7.0
+    rc-input: ~1.6.0
+    rc-menu: ~9.15.1
+    rc-textarea: ~1.8.0
     rc-util: ^5.34.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 43e3da8d736b5656fd2bb1073f81be5b494178123a1ca7834168e596cc2156827bee1d63a780c4338bd71a43368ae4fa445e8174b2ba1f3b29cb5ce70ad1adb4
+  checksum: 8479b0abfebd004834001f973739a0e8baebb2a0f6b6c77ad5a9b11c1b4c6a2bc28b6a4641d618d80eb5ac16a4b4b349e0c39cf02be16c139d69711317344146
   languageName: node
   linkType: hard
 
-"rc-menu@npm:~9.14.0":
-  version: 9.14.1
-  resolution: "rc-menu@npm:9.14.1"
+"rc-menu@npm:~9.15.1":
+  version: 9.15.1
+  resolution: "rc-menu@npm:9.15.1"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/trigger": ^2.0.0
@@ -20271,7 +20350,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 821c4016d64b83fb3035c0abfe83c6203f6ae885e9fbb7d4f78e7db5ae390cb67398bac7fd667ff738c4dccb447d9a35ac0bdf0f2bc4816def2b33cdb8a16861
+  checksum: 21b5ba6450eb9cfb1fb0d0475ee540bde2b3a1d67f042a84c8788a59547c75a3eb143dc7b52e3be9e96a5510d7bdd987c4714f48154a5c701229e63dbed6548b
   languageName: node
   linkType: hard
 
@@ -20289,9 +20368,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-motion@npm:^2.9.2":
-  version: 2.9.2
-  resolution: "rc-motion@npm:2.9.2"
+"rc-motion@npm:^2.9.3":
+  version: 2.9.3
+  resolution: "rc-motion@npm:2.9.3"
   dependencies:
     "@babel/runtime": ^7.11.1
     classnames: ^2.2.1
@@ -20299,13 +20378,13 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: e5e4f8fe83238c414fb0fc738b4d71faef0c951b5858bfd90bb3f3ff1dde1577262c258fcdae4e5a53a78f5056e2868ff85335ded92758cc886e610308709d8d
+  checksum: d83981e8a4e4adf51c80174d7a2ff1461659b84522c70941e74e7b52450f7a4af49992606349d8a5a56237271b6cb38613137266a193501e8442934950ecf9df
   languageName: node
   linkType: hard
 
-"rc-notification@npm:~5.6.0":
-  version: 5.6.0
-  resolution: "rc-notification@npm:5.6.0"
+"rc-notification@npm:~5.6.2":
+  version: 5.6.2
+  resolution: "rc-notification@npm:5.6.2"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
@@ -20314,7 +20393,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 754b158716564a90a96480646fd95ce02b54b25dc88a6b7fd7d4cbfd53f6fcd95aa97fe9267356f66a678ec38c8a04282217c5b909904949b4bdd3a7fd1b7480
+  checksum: ce4237ac23a04e6e07ec2610544938c64f08b3035360dccda6f17b6a6494f71fc8a588ae39542c5e06fa1ba96fc95084290a34b7f47f245ee8a23f944376d69c
   languageName: node
   linkType: hard
 
@@ -20333,9 +20412,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-pagination@npm:~4.0.4":
-  version: 4.0.4
-  resolution: "rc-pagination@npm:4.0.4"
+"rc-pagination@npm:~4.3.0":
+  version: 4.3.0
+  resolution: "rc-pagination@npm:4.3.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.3.2
@@ -20343,20 +20422,20 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: b54bdd2989686aa16ed253c9d4823601f6b1895fdc6e81b5516a9a3d5850155d0a9d12da1f0ed75e5ea7b7de133f289db105673ca0245c86845060c6839465fb
+  checksum: 9642a0826b927fbeb8c3c4508bb5755302a4e2ac088c196cdcb028e64f93abfadeb89c2dc7a49761152a2698be22a0bbe5f2a17f28d247948a5a410de3dfcf0d
   languageName: node
   linkType: hard
 
-"rc-picker@npm:~4.5.0":
-  version: 4.5.0
-  resolution: "rc-picker@npm:4.5.0"
+"rc-picker@npm:~4.6.15":
+  version: 4.6.15
+  resolution: "rc-picker@npm:4.6.15"
   dependencies:
-    "@babel/runtime": ^7.10.1
+    "@babel/runtime": ^7.24.7
     "@rc-component/trigger": ^2.0.0
     classnames: ^2.2.1
     rc-overflow: ^1.3.2
     rc-resize-observer: ^1.4.0
-    rc-util: ^5.38.1
+    rc-util: ^5.43.0
   peerDependencies:
     date-fns: ">= 2.x"
     dayjs: ">= 1.x"
@@ -20373,7 +20452,7 @@ __metadata:
       optional: true
     moment:
       optional: true
-  checksum: 4302ae7e2f152dd505c1f2dc5e19eaa4019ac57432e4d26b3be961af6c6fc4297abe0a680f644295621330ef5121faab7416d6b29987c1326fcefb6e654b5215
+  checksum: ade0ed6e0ebce771c9faa885a67ffd303cdca77e6d3c2329ceab13fc342ebd48d72c0579f0e6046f6528f721e052ea2c575a77af47f16fe09d83a5c64b71b3a0
   languageName: node
   linkType: hard
 
@@ -20420,9 +20499,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-segmented@npm:~2.3.0":
-  version: 2.3.0
-  resolution: "rc-segmented@npm:2.3.0"
+"rc-segmented@npm:~2.5.0":
+  version: 2.5.0
+  resolution: "rc-segmented@npm:2.5.0"
   dependencies:
     "@babel/runtime": ^7.11.1
     classnames: ^2.2.1
@@ -20431,13 +20510,13 @@ __metadata:
   peerDependencies:
     react: ">=16.0.0"
     react-dom: ">=16.0.0"
-  checksum: 8d5f99ca55f1a1b0f3de66801a456e35c8c41a94a8d1b90a98aeb622cc95c86a7430449f2b3384d497f68641f92af0e3bd2689bfb7bbaf6543882cfc12e6c42f
+  checksum: c0f760989fdff4cddfa66e4441f4ea219a452fd70a80b4b11e326b6d243584cb1b1a078078c7c62792c7468ad12fe5cfad8ecaf7affaac9bb42a580072e1658e
   languageName: node
   linkType: hard
 
-"rc-select@npm:~14.14.0":
-  version: 14.14.0
-  resolution: "rc-select@npm:14.14.0"
+"rc-select@npm:~14.15.0, rc-select@npm:~14.15.2":
+  version: 14.15.2
+  resolution: "rc-select@npm:14.15.2"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/trigger": ^2.1.1
@@ -20449,13 +20528,13 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: beedaf68d84ab21ca00b759f36bc15649fb20a636e39baa1ef489181f038674f8950881c5c3100dc8bc0b9a6bc3f0f0db1c01244180386c5e82c63b8ecdf8aa1
+  checksum: 00151da840002e30ee2b1f372c416e8370495524cf46e587eeb903fce2d1fd43167774a49cb7aed3e9816d2a200b46150c7d1fdcb1b17a21ca19d3a3cf930792
   languageName: node
   linkType: hard
 
-"rc-slider@npm:~10.6.2":
-  version: 10.6.2
-  resolution: "rc-slider@npm:10.6.2"
+"rc-slider@npm:~11.1.6":
+  version: 11.1.7
+  resolution: "rc-slider@npm:11.1.7"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.2.5
@@ -20463,7 +20542,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: f2d156ffa88596419957f3955a2be86a98705140546f24e53180a17baa20f948187db55529759451adcfbcc52dc67c72bd26b4d3afd54529be8f092e81fa8f65
+  checksum: ddb870a8f9982565c3ab4e7ece12a224c4d6f1983a0760d516561fa8963c2bc6d9e25bed6b87cad007b3d4962194398e1490231d0b5ab062262c0ea0ba734b85
   languageName: node
   linkType: hard
 
@@ -20495,54 +20574,54 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-table@npm:~7.45.7":
-  version: 7.45.7
-  resolution: "rc-table@npm:7.45.7"
+"rc-table@npm:~7.47.5":
+  version: 7.47.5
+  resolution: "rc-table@npm:7.47.5"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/context": ^1.4.0
     classnames: ^2.2.5
     rc-resize-observer: ^1.1.0
-    rc-util: ^5.37.0
+    rc-util: ^5.41.0
     rc-virtual-list: ^3.14.2
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 18803454e2d4f2dcbbc8d6c5cf8b0445c35f586106d389db503601f4b17e941765c1fda53555a2120af4b122b9a88ccde30c28bb4d6a2fd96f9daa5438ff16a5
+  checksum: 11976a76715a7cade9687549049ed045c5f91f50c6cd8a1f37d27b51d235c5f694466fc80987cec4baca5c578bf269da4f44a5181467edfb87449bbadd0ff4fa
   languageName: node
   linkType: hard
 
-"rc-tabs@npm:~15.1.1":
-  version: 15.1.1
-  resolution: "rc-tabs@npm:15.1.1"
+"rc-tabs@npm:~15.3.0":
+  version: 15.3.0
+  resolution: "rc-tabs@npm:15.3.0"
   dependencies:
     "@babel/runtime": ^7.11.2
     classnames: 2.x
     rc-dropdown: ~4.2.0
-    rc-menu: ~9.14.0
+    rc-menu: ~9.15.1
     rc-motion: ^2.6.2
     rc-resize-observer: ^1.0.0
     rc-util: ^5.34.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: b6115747f23f94d31fa6b2de381e6e7db38f18a121cdf15ffaec8008faa9da6c7e8d6253c998f817b6e453532ca6e3577b0b7ab9bf4ec3de541eaad32fac50f7
+  checksum: d26a885609fecd9fc85f35a8d6e4fd10147b0af4fe8d2a62e64cc736a07192970a61771eb0a4879baca44ded138f11d6611d3f6128414215f107d008a877cd15
   languageName: node
   linkType: hard
 
-"rc-textarea@npm:~1.7.0":
-  version: 1.7.0
-  resolution: "rc-textarea@npm:1.7.0"
+"rc-textarea@npm:~1.8.0, rc-textarea@npm:~1.8.2":
+  version: 1.8.2
+  resolution: "rc-textarea@npm:1.8.2"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.2.1
-    rc-input: ~1.5.0
+    rc-input: ~1.6.0
     rc-resize-observer: ^1.0.0
     rc-util: ^5.27.0
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 7a72c67e8bb947a188b824a9081bdceb0fd150d4b783ec6b6195bd74eb31434308b9862ddad3ddb9c450637578d6825a7a8fd4116b23bff1a649a72c646985f8
+  checksum: bd547309735d3ec22a1cec930965ec8f5d861379c81de7616377e61cdbfe43e248291dfd45a477e2c84a42641b03c7a4c4ca3f9ef730ee47b3731b5b22aca170
   languageName: node
   linkType: hard
 
@@ -20560,9 +20639,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:~6.2.0":
-  version: 6.2.0
-  resolution: "rc-tooltip@npm:6.2.0"
+"rc-tooltip@npm:~6.2.1":
+  version: 6.2.1
+  resolution: "rc-tooltip@npm:6.2.1"
   dependencies:
     "@babel/runtime": ^7.11.2
     "@rc-component/trigger": ^2.0.0
@@ -20570,45 +20649,29 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 5f1f8e51fbb156acb3ebea52f509e61b3c0679869d73f0238bcd6d585fcef3cb5f544b5064cac417fb7137218ac81cf9223dc6d87d2e7820a56c72e9f279198e
+  checksum: 879341bcb7c162faa51b187482947c4f7d67b223f3999cf4a0fc5f4ffd15030086cef05b32464203c6ea7d07fc9f68cca85d806bf65ffdb91a5e7a76e46c839d
   languageName: node
   linkType: hard
 
-"rc-tree-select@npm:~5.21.0":
-  version: 5.21.0
-  resolution: "rc-tree-select@npm:5.21.0"
+"rc-tree-select@npm:~5.23.0":
+  version: 5.23.0
+  resolution: "rc-tree-select@npm:5.23.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
-    rc-select: ~14.14.0
-    rc-tree: ~5.8.1
+    rc-select: ~14.15.0
+    rc-tree: ~5.9.0
     rc-util: ^5.16.1
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: c73c81f248e6be638dfca58c31303e5a173643accfbc79da4bc630b59cc381a9f6d6c4bbef551afe007edba0825496f8dc84800d2b9440d495833a4ceabea296
+  checksum: 6e054b168f0970686cd3afeefca3ec09138c6c81ea2243c059c446500220fceca1471d91db3231f7759a0f3e05014dcd0f80a5a78306c189b70896b3117a256c
   languageName: node
   linkType: hard
 
-"rc-tree@npm:~5.8.1":
-  version: 5.8.5
-  resolution: "rc-tree@npm:5.8.5"
-  dependencies:
-    "@babel/runtime": ^7.10.1
-    classnames: 2.x
-    rc-motion: ^2.0.1
-    rc-util: ^5.16.1
-    rc-virtual-list: ^3.5.1
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 335532c889edf5fe5c4a2c62b25a345f3442b667a4c0a278d6107d49b20cd17c39fdf18ea3db36c328ac8d765aa580c44ceb2b1efa54443d5ff154beec7780e6
-  languageName: node
-  linkType: hard
-
-"rc-tree@npm:~5.8.8":
-  version: 5.8.8
-  resolution: "rc-tree@npm:5.8.8"
+"rc-tree@npm:~5.9.0":
+  version: 5.9.0
+  resolution: "rc-tree@npm:5.9.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: 2.x
@@ -20618,7 +20681,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 879547f43ead839c3ef2a1d7b7626c2771013b4c480e7c49d74929d99778fd47b977a593922aa80947dba5aa60a7524f1b43dca1258a56a30d9ca143f12558cf
+  checksum: 07cb1126910739060170be6348835bb39cfdf0ddf6fffbbfda2eca49cadee9233fd2031a0cabce07e4874df29ccdc1168b47695dec5e03ecfe502c0fa49712a9
   languageName: node
   linkType: hard
 
@@ -20637,9 +20700,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-upload@npm:~4.5.2":
-  version: 4.5.2
-  resolution: "rc-upload@npm:4.5.2"
+"rc-upload@npm:~4.8.1":
+  version: 4.8.1
+  resolution: "rc-upload@npm:4.8.1"
   dependencies:
     "@babel/runtime": ^7.18.3
     classnames: ^2.2.5
@@ -20647,7 +20710,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 28012a51fc31195990c64c52bcbded9296e083bb3d071b480fa46195398ce1072c869c1c5cea740661b817700de720ec51da55e818270f8b0cb181d6f8afaff7
+  checksum: 27555e114c1705b88558312beeda4b8d3e74d192c09f5a41d161045cbe621d372973acaffff8b9c79ebfe495962e2bf96aedffc9fadc96b5e7c7b5cd1af98b99
   languageName: node
   linkType: hard
 
@@ -20677,7 +20740,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.40.1, rc-util@npm:^5.43.0":
+"rc-util@npm:^5.40.1, rc-util@npm:^5.41.0, rc-util@npm:^5.43.0":
   version: 5.43.0
   resolution: "rc-util@npm:5.43.0"
   dependencies:
@@ -23463,6 +23526,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stylis@npm:^4.3.3":
+  version: 4.3.4
+  resolution: "stylis@npm:4.3.4"
+  checksum: 4899c2674cd2538e314257abd1ba7ea3c2176439659ddac6593c78192cfd4a06f814a0a4fc69bc7f8fcc6b997e13d383dd9b578b71074746a0fb86045a83e42d
+  languageName: node
+  linkType: hard
+
 "sucrase@npm:^3.32.0":
   version: 3.35.0
   resolution: "sucrase@npm:3.35.0"
@@ -23607,9 +23677,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:^3.3.5":
-  version: 3.4.3
-  resolution: "tailwindcss@npm:3.4.3"
+"tailwindcss@npm:^3.4.3":
+  version: 3.4.13
+  resolution: "tailwindcss@npm:3.4.13"
   dependencies:
     "@alloc/quick-lru": ^5.2.0
     arg: ^5.0.2
@@ -23636,7 +23706,7 @@ __metadata:
   bin:
     tailwind: lib/cli.js
     tailwindcss: lib/cli.js
-  checksum: 11e5546494f2888f693ebaa271b218b3a8e52fe59d7b629e54f2dffd6eaafd5ded2e9f0c37ad04e6a866dffb2b116d91becebad77e1441beee8bf016bb2392f9
+  checksum: c6525be3dd26febc4ec5e45e80596bff8b48ade7de258c1ec8704297bf47c1ec7b2b186b13662ebaa6ab4795ad8879fb64064f796756bfc8b46558b542b01a6c
   languageName: node
   linkType: hard
 
@@ -23877,6 +23947,13 @@ __metadata:
   version: 5.0.0
   resolution: "throttle-debounce@npm:5.0.0"
   checksum: 666d5b73bfa7340c5186b244416ce965cd276e4bc91a12453ff6eddcc62f02a19c6f532305601d90c809dd5acbd45dd6eea5eb43e0a879a0b3d66d0886a4d8d2
+  languageName: node
+  linkType: hard
+
+"throttle-debounce@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "throttle-debounce@npm:5.0.2"
+  checksum: 9a10ac51400b353562770721718486847adb5d7287c94a0c0d47df5326e8d47e5d92fcb74dac53d6734efb9344a2d46d68c7f996c2d0aedfd11446522e4bb356
   languageName: node
   linkType: hard
 
