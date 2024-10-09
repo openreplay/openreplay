@@ -484,7 +484,7 @@ export default class App {
               // since indexes go from 0 we +1
               frameOrderNumber: this.trackedFrames.findIndex((f) => f === data.context) + 1,
             }
-            this.debug.log('Got child frame signal; nodeId', id, event.source)
+            this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
             // @ts-ignore
             event.source?.postMessage(iframeData, '*')
           } catch (e) {
