@@ -2,7 +2,7 @@ import {
   CaretDownOutlined,
   FolderAddOutlined
 } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Space, Typography } from 'antd';
+import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { withRouter } from 'react-router-dom';
@@ -46,12 +46,11 @@ function ProjectDropdown(props: { location: any }) {
     showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
 
-  const menuItems = sites.map((site) => ({
+  const menuItems: MenuProps['items'] = sites.map((site) => ({
     key: site.id,
     label: (
       <div
         key={site.id}
-        onClick={() => handleSiteChange(site.id)}
         className={'!py-1 flex items-center gap-2'}
       >
         <Icon
@@ -70,21 +69,18 @@ function ProjectDropdown(props: { location: any }) {
     )
   }));
   if (isAdmin) {
-    menuItems.unshift({
+    menuItems?.unshift({
       key: 'add-proj',
       label: (
-        <>
-          <div
-            key="all-projects"
-            onClick={addProjectClickHandler}
-            className={'flex items-center gap-2'}
-          >
-            <FolderAddOutlined rev={undefined} />
-            <Text>Add Project</Text>
-          </div>
-          <Divider style={{ marginTop: 4, marginBottom: 0 }} />
-        </>
+        <div
+          className={'flex items-center gap-2 whitespace-nowrap'}
+        >
+          <FolderAddOutlined rev={undefined} />
+          <Text>Add Project</Text>
+        </div>
       )
+    }, {
+      type: 'divider'
     });
   }
 
@@ -97,6 +93,13 @@ function ProjectDropdown(props: { location: any }) {
         style: {
           maxHeight: 500,
           overflowY: 'auto'
+        },
+        onClick: (e) => {
+          if (e.key === 'add-proj') {
+            addProjectClickHandler();
+          } else {
+            void handleSiteChange(e.key);
+          }
         }
       }}
       placement="bottomLeft"
