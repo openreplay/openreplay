@@ -219,6 +219,10 @@ export default class DOMManager extends ListWalker<Message> {
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true
         }
+        if (this.vElements.has(msg.id)) {
+          logger.error("CreateElementNode: Node already exists", msg)
+          return
+        }
         this.vElements.set(msg.id, vElem)
         this.insertNode(msg)
         this.removeBodyScroll(msg.id, vElem)

@@ -366,6 +366,7 @@ export default class App {
         window.parent.postMessage(
           {
             line: proto.polling,
+            context: this.contextId,
           },
           '*',
         )
@@ -453,7 +454,11 @@ export default class App {
     }
   }
 
-  trackedFrames: number[] = []
+  /**
+   * context ids for iframes,
+   * order is not so important as long as its consistent
+   * */
+  trackedFrames: string[] = []
   crossDomainIframeListener = (event: MessageEvent) => {
     if (!this.active() || event.source === window) return
     const { data } = event
@@ -468,19 +473,20 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(pageIframes, event.source)
-        if (id && !this.trackedFrames.includes(id)) {
+        if (id && !this.trackedFrames.includes(data.context)) {
           try {
-            this.trackedFrames.push(id)
+            this.trackedFrames.push(data.frameUID)
             await this.waitStarted()
             const token = this.session.getSessionToken()
             const iframeData = {
               line: proto.iframeId,
-              context: this.contextId,
               id,
               token,
-              frameOrderNumber: this.trackedFrames.length,
+              // since indexes go from 0 we +1
+              frameOrderNumber: this.trackedFrames.findIndex((f) => f === data.context) + 1,
               frameTimeOffset: this.timestamp(),
             }
+            this.debug.log('Got child frame signal; nodeId', id, event.source)
             // @ts-ignore
             event.source?.postMessage(iframeData, '*')
           } catch (e) {
@@ -541,25 +547,42 @@ export default class App {
       this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
-      if (!this.pollingQueue.length) {
+      if (!this.pollingQueue.order.length) {
         return
       }
-      while (this.pollingQueue.length) {
-        const msg = this.pollingQueue.shift()
+      const nextCommand = this.pollingQueue.order[0]
+      if (this.pollingQueue[nextCommand].includes(data.context)) {
+        this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
+          (c: string) => c !== data.context,
+        )
         // @ts-ignore
-        event.source?.postMessage({ line: msg }, '*')
+        event.source?.postMessage({ line: nextCommand }, '*')
+        if (this.pollingQueue[nextCommand].length === 0) {
+          this.pollingQueue.order.shift()
+        }
       }
     }
   }
 
-  pollingQueue: string[] = []
+  /**
+   * { command : [remaining iframes] }
+   * + order of commands
+   **/
+  pollingQueue: Record<string, any> = {
+    order: [],
+  }
+  private readonly addCommand = (cmd: string) => {
+    this.pollingQueue.order.push(cmd)
+    this.pollingQueue[cmd] = [...this.trackedFrames]
+  }
+
   public bootChildrenFrames = async () => {
     await this.waitStarted()
-    this.pollingQueue.push(proto.startIframe)
+    this.addCommand(proto.startIframe)
   }
 
   public killChildrenFrames = () => {
-    this.pollingQueue.push(proto.killIframe)
+    this.addCommand(proto.killIframe)
   }
 
   signalIframeTracker = () => {
@@ -573,6 +596,7 @@ export default class App {
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
+      console.log('trying to signal to parent', n)
       setTimeout(() => {
         if (!this.checkStatus() && n < 100) {
           void signalToParent(n + 1)

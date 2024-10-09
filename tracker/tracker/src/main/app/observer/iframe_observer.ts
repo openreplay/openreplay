@@ -19,13 +19,13 @@ export default class IFrameObserver extends Observer {
     })
   }
 
-  syntheticObserve(selfId: number, doc: Document) {
+  syntheticObserve(rootNodeId: number, doc: Document) {
     this.observeRoot(doc, (docID) => {
       if (docID === undefined) {
         this.app.debug.log('OpenReplay: Iframe document not bound')
         return
       }
-      this.app.send(CreateIFrameDocument(selfId, docID))
+      this.app.send(CreateIFrameDocument(rootNodeId, docID))
     })
   }
 }

@@ -13,7 +13,7 @@ export default class Nodes {
   constructor(private readonly node_id: string) {}
 
   syntheticMode(frameOrder: number) {
-    const maxSafeNumber = 9007199254740900
+    const maxSafeNumber = Number.MAX_SAFE_INTEGER
     const placeholderSize = 99999999
     const nextFrameId = placeholderSize * frameOrder
     // I highly doubt that this will ever happen,
