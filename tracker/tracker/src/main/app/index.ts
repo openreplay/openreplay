@@ -445,7 +445,6 @@ export default class App {
       this.frameOderNumber = data.frameOrderNumber
       this.debug.log('starting iframe tracking', data)
       this.allowAppStart()
-      this.delay = data.frameTimeOffset
     }
     if (data.line === proto.killIframe) {
       if (this.active()) {
@@ -484,7 +483,6 @@ export default class App {
               token,
               // since indexes go from 0 we +1
               frameOrderNumber: this.trackedFrames.findIndex((f) => f === data.context) + 1,
-              frameTimeOffset: this.timestamp(),
             }
             this.debug.log('Got child frame signal; nodeId', id, event.source)
             // @ts-ignore
