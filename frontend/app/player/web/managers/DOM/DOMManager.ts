@@ -1,5 +1,4 @@
 import logger from 'App/logger';
-import { resolveURL } from "../../messages/rewriter/urlResolve";
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
@@ -32,6 +31,8 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
   private readonly vElements: Map<number, VElement> = new Map()
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map()
+  /** required to keep track of iframes, frameId : vnodeId */
+  private readonly iframeRoots: Record<number, number> = {}
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
    */
@@ -219,6 +220,10 @@ export default class DOMManager extends ListWalker<Message> {
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true
         }
+        if (this.vElements.has(msg.id)) {
+          logger.error("CreateElementNode: Node already exists", msg)
+          return
+        }
         this.vElements.set(msg.id, vElem)
         this.insertNode(msg)
         this.removeBodyScroll(msg.id, vElem)
@@ -316,6 +321,10 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.CreateIFrameDocument: {
         const vElem = this.vElements.get(msg.frameID)
         if (!vElem) { logger.error("CreateIFrameDocument: Node not found", msg); return }
+        if (this.iframeRoots[msg.frameID] && !this.olVRoots.has(msg.id)) {
+          this.olVRoots.delete(this.iframeRoots[msg.frameID])
+        }
+        this.iframeRoots[msg.frameID] = msg.id
         const vRoot = OnloadVRoot.fromVElement(vElem)
         vRoot.catch(e => logger.warn(e, msg))
         this.olVRoots.set(msg.id, vRoot)

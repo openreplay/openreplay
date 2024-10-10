@@ -52,6 +52,12 @@ export interface StartOptions {
   forceNew?: boolean
   sessionHash?: string
   assistOnly?: boolean
+  /**
+   * @deprecated We strongly advise to use .start().then instead.
+   *
+   * This method is kept for snippet compatibility only
+   * */
+  startCallback?: (result: StartPromiseReturn) => void
 }
 
 interface OnStartInfo {
@@ -161,6 +167,12 @@ type AppOptions = {
   }
 
   network?: NetworkOptions
+  /**
+   * use this flag if you're using Angular
+   * basically goes around window.Zone api changes to mutation observer
+   * and event listeners
+   * */
+  angularMode?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -185,12 +197,14 @@ const proto = {
   resp: 'never-gonna-let-you-down',
   // regenerating id (copied other tab)
   reg: 'never-gonna-run-around-and-desert-you',
-  // tracker inside a child iframe
-  iframeSignal: 'never-gonna-make-you-cry',
-  // getting node id for child iframe
-  iframeId: 'never-gonna-say-goodbye',
-  // batch of messages from an iframe window
-  iframeBatch: 'never-gonna-tell-a-lie-and-hurt-you',
+  iframeSignal: 'tracker inside a child iframe',
+  iframeId: 'getting node id for child iframe',
+  iframeBatch: 'batch of messages from an iframe window',
+  parentAlive: 'signal that parent is live',
+  killIframe: 'stop tracker inside frame',
+  startIframe: 'start tracker inside frame',
+  // checking updates
+  polling: 'hello-how-are-you-im-under-the-water-please-help-me',
 } as const
 
 export default class App {
@@ -237,14 +251,17 @@ export default class App {
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
-  private readonly initialHostName = location.hostname
+  private features = {
+    'feature-flags': true,
+    'usability-test': true,
+  }
 
   constructor(
     projectKey: string,
     sessionToken: string | undefined,
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
-    private readonly insideIframe: boolean,
+    public readonly insideIframe: boolean,
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
@@ -301,6 +318,7 @@ export default class App {
         __save_canvas_locally: false,
         useAnimationFrame: false,
       },
+      angularMode: false,
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -318,7 +336,7 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
-    this.nodes = new Nodes(this.options.node_id)
+    this.nodes = new Nodes(this.options.node_id, Boolean(options.angularMode))
     this.observer = new Observer(this, options)
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
@@ -344,136 +362,31 @@ export default class App {
       this.session.applySessionHash(sessionToken)
     }
 
-    this.initWorker()
-
     const thisTab = this.session.getTabId()
 
+    if (this.insideIframe) {
+      /**
+       * listen for messages from parent window, so we can signal that we're alive
+       * */
+      window.addEventListener('message', this.parentCrossDomainFrameListener)
+      setInterval(() => {
+        window.parent.postMessage(
+          {
+            line: proto.polling,
+            context: this.contextId,
+          },
+          '*',
+        )
+      }, 250)
+    } else {
+      this.initWorker()
+    }
     if (!this.insideIframe) {
       /**
        * if we get a signal from child iframes, we check for their node_id and send it back,
        * so they can act as if it was just a same-domain iframe
        * */
-      let crossdomainFrameCount = 0
-      const catchIframeMessage = (event: MessageEvent) => {
-        const { data } = event
-        if (data.line === proto.iframeSignal) {
-          const childIframeDomain = data.domain
-          const pageIframes = Array.from(document.querySelectorAll('iframe'))
-          this.pageFrames = pageIframes
-          const signalId = async () => {
-            let tries = 0
-            while (tries < 10) {
-              const id = this.checkNodeId(pageIframes, childIframeDomain)
-              if (id) {
-                this.waitStarted()
-                  .then(() => {
-                    crossdomainFrameCount++
-                    const token = this.session.getSessionToken()
-                    const iframeData = {
-                      line: proto.iframeId,
-                      context: this.contextId,
-                      domain: childIframeDomain,
-                      id,
-                      token,
-                      frameOrderNumber: crossdomainFrameCount,
-                    }
-                    this.debug.log('iframe_data', iframeData)
-                    // @ts-ignore
-                    event.source?.postMessage(iframeData, '*')
-                  })
-                  .catch(console.error)
-                tries = 10
-                break
-              }
-              tries++
-              await delay(100)
-            }
-          }
-          void signalId()
-        }
-        /**
-         * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
-         * plus we rewrite some of the messages to be relative to the main context/window
-         * */
-        if (data.line === proto.iframeBatch) {
-          const msgBatch = data.messages
-          const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
-            if (msg[0] === MType.MouseMove) {
-              let fixedMessage = msg
-              this.pageFrames.forEach((frame) => {
-                if (frame.dataset.domain === event.data.domain) {
-                  const [type, x, y] = msg
-                  const { left, top } = frame.getBoundingClientRect()
-                  fixedMessage = [type, x + left, y + top]
-                }
-              })
-              return fixedMessage
-            }
-            if (msg[0] === MType.MouseClick) {
-              let fixedMessage = msg
-              this.pageFrames.forEach((frame) => {
-                if (frame.dataset.domain === event.data.domain) {
-                  const [type, id, hesitationTime, label, selector, normX, normY] = msg
-                  const { left, top, width, height } = frame.getBoundingClientRect()
-
-                  const contentWidth = document.documentElement.scrollWidth
-                  const contentHeight = document.documentElement.scrollHeight
-                  // (normalizedX * frameWidth + frameLeftOffset)/docSize
-                  const fullX = (normX / 100) * width + left
-                  const fullY = (normY / 100) * height + top
-                  const fixedX = fullX / contentWidth
-                  const fixedY = fullY / contentHeight
-
-                  fixedMessage = [
-                    type,
-                    id,
-                    hesitationTime,
-                    label,
-                    selector,
-                    Math.round(fixedX * 1e3) / 1e1,
-                    Math.round(fixedY * 1e3) / 1e1,
-                  ]
-                }
-              })
-              return fixedMessage
-            }
-            return msg
-          })
-          this.messages.push(...mappedMessages)
-        }
-      }
-      window.addEventListener('message', catchIframeMessage)
-      this.attachStopCallback(() => {
-        window.removeEventListener('message', catchIframeMessage)
-      })
-    } else {
-      const catchParentMessage = (event: MessageEvent) => {
-        const { data } = event
-        if (data.line !== proto.iframeId) {
-          return
-        }
-        this.rootId = data.id
-        this.session.setSessionToken(data.token as string)
-        this.frameOderNumber = data.frameOrderNumber
-        this.debug.log('starting iframe tracking', data)
-        this.allowAppStart()
-      }
-      window.addEventListener('message', catchParentMessage)
-      this.attachStopCallback(() => {
-        window.removeEventListener('message', catchParentMessage)
-      })
-      // communicating with parent window,
-      // even if its crossdomain is possible via postMessage api
-      const domain = this.initialHostName
-      window.parent.postMessage(
-        {
-          line: proto.iframeSignal,
-          source: thisTab,
-          context: this.contextId,
-          domain,
-        },
-        '*',
-      )
+      window.addEventListener('message', this.crossDomainIframeListener)
     }
 
     if (this.bc !== null) {
@@ -484,7 +397,7 @@ export default class App {
       })
       this.startTimeout = setTimeout(() => {
         this.allowAppStart()
-      }, 500)
+      }, 250)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
         if (ev.data.context === this.contextId) {
           return
@@ -515,8 +428,204 @@ export default class App {
     }
   }
 
+  /** used by child iframes for crossdomain only */
+  /** used by child iframes for crossdomain only */
+  parentActive = false
+  checkStatus = () => {
+    return this.parentActive
+  }
+  parentCrossDomainFrameListener = (event: MessageEvent) => {
+    const { data } = event
+    if (!data || event.source === window) return
+    if (data.line === proto.startIframe) {
+      if (this.active()) return
+      try {
+        this.allowAppStart()
+        void this.start()
+      } catch (e) {
+        console.error('children frame restart failed:', e)
+      }
+    }
+    if (data.line === proto.parentAlive) {
+      this.parentActive = true
+    }
+    if (data.line === proto.iframeId) {
+      this.parentActive = true
+      this.rootId = data.id
+      this.session.setSessionToken(data.token as string)
+      this.frameOderNumber = data.frameOrderNumber
+      this.debug.log('starting iframe tracking', data)
+      this.allowAppStart()
+    }
+    if (data.line === proto.killIframe) {
+      if (this.active()) {
+        this.stop()
+      }
+    }
+  }
+
+  /**
+   * context ids for iframes,
+   * order is not so important as long as its consistent
+   * */
+  trackedFrames: string[] = []
+  crossDomainIframeListener = (event: MessageEvent) => {
+    if (!this.active() || event.source === window) return
+    const { data } = event
+    if (!data) return
+    if (data.line === proto.iframeSignal) {
+      // @ts-ignore
+      event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
+      const pageIframes = Array.from(document.querySelectorAll('iframe'))
+      this.pageFrames = pageIframes
+      const signalId = async () => {
+        if (event.source === null) {
+          return console.error('Couldnt connect to event.source for child iframe tracking')
+        }
+        const id = await this.checkNodeId(pageIframes, event.source)
+        if (id && !this.trackedFrames.includes(data.context)) {
+          try {
+            this.trackedFrames.push(data.context)
+            await this.waitStarted()
+            const token = this.session.getSessionToken()
+            const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
+            if (order === 0) {
+              this.debug.error(
+                'Couldnt get order number for iframe',
+                data.context,
+                this.trackedFrames,
+              )
+            }
+            const iframeData = {
+              line: proto.iframeId,
+              id,
+              token,
+              // since indexes go from 0 we +1
+              frameOrderNumber: order,
+            }
+            this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
+            // @ts-ignore
+            event.source?.postMessage(iframeData, '*')
+          } catch (e) {
+            console.error(e)
+          }
+        } else {
+          this.debug.log('Couldnt get node id for iframe', event.source, pageIframes)
+        }
+      }
+      void signalId()
+    }
+    /**
+     * proxying messages from iframe to main body, so they can be in one batch (same indexes, etc)
+     * plus we rewrite some of the messages to be relative to the main context/window
+     * */
+    if (data.line === proto.iframeBatch) {
+      const msgBatch = data.messages
+      const mappedMessages: Message[] = msgBatch.map((msg: Message) => {
+        if (msg[0] === MType.MouseMove) {
+          let fixedMessage = msg
+          this.pageFrames.forEach((frame) => {
+            if (frame.contentWindow === event.source) {
+              const [type, x, y] = msg
+              const { left, top } = frame.getBoundingClientRect()
+              fixedMessage = [type, x + left, y + top]
+            }
+          })
+          return fixedMessage
+        }
+        if (msg[0] === MType.MouseClick) {
+          let fixedMessage = msg
+          this.pageFrames.forEach((frame) => {
+            if (frame.contentWindow === event.source) {
+              const [type, id, hesitationTime, label, selector, normX, normY] = msg
+              const { left, top, width, height } = frame.getBoundingClientRect()
+
+              const contentWidth = document.documentElement.scrollWidth
+              const contentHeight = document.documentElement.scrollHeight
+              // (normalizedX * frameWidth + frameLeftOffset)/docSize
+              const fullX = (normX / 100) * width + left
+              const fullY = (normY / 100) * height + top
+              const fixedX = fullX / contentWidth
+              const fixedY = fullY / contentHeight
+
+              fixedMessage = [
+                type,
+                id,
+                hesitationTime,
+                label,
+                selector,
+                Math.round(fixedX * 1e3) / 1e1,
+                Math.round(fixedY * 1e3) / 1e1,
+              ]
+            }
+          })
+          return fixedMessage
+        }
+        return msg
+      })
+      this.messages.push(...mappedMessages)
+    }
+    if (data.line === proto.polling) {
+      if (!this.pollingQueue.order.length) {
+        return
+      }
+      const nextCommand = this.pollingQueue.order[0]
+      if (this.pollingQueue[nextCommand].includes(data.context)) {
+        this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
+          (c: string) => c !== data.context,
+        )
+        // @ts-ignore
+        event.source?.postMessage({ line: nextCommand }, '*')
+        if (this.pollingQueue[nextCommand].length === 0) {
+          this.pollingQueue.order.shift()
+        }
+      }
+    }
+  }
+
+  /**
+   * { command : [remaining iframes] }
+   * + order of commands
+   **/
+  pollingQueue: Record<string, any> = {
+    order: [],
+  }
+  private readonly addCommand = (cmd: string) => {
+    this.pollingQueue.order.push(cmd)
+    this.pollingQueue[cmd] = [...this.trackedFrames]
+  }
+
+  public bootChildrenFrames = async () => {
+    await this.waitStarted()
+    this.addCommand(proto.startIframe)
+  }
+
+  public killChildrenFrames = () => {
+    this.addCommand(proto.killIframe)
+  }
+
+  signalIframeTracker = () => {
+    const thisTab = this.session.getTabId()
+    const signalToParent = (n: number) => {
+      window.parent.postMessage(
+        {
+          line: proto.iframeSignal,
+          source: thisTab,
+          context: this.contextId,
+        },
+        this.options.crossdomain?.parentDomain ?? '*',
+      )
+      setTimeout(() => {
+        if (!this.checkStatus() && n < 100) {
+          void signalToParent(n + 1)
+        }
+      }, 250)
+    }
+    void signalToParent(1)
+  }
+
   startTimeout: ReturnType<typeof setTimeout> | null = null
-  private allowAppStart() {
+  public allowAppStart() {
     this.canStart = true
     if (this.startTimeout) {
       clearTimeout(this.startTimeout)
@@ -524,15 +633,38 @@ export default class App {
     }
   }
 
-  private checkNodeId(iframes: HTMLIFrameElement[], domain: string) {
+  private async checkNodeId(
+    iframes: HTMLIFrameElement[],
+    source: MessageEventSource,
+  ): Promise<number | null> {
     for (const iframe of iframes) {
-      if (iframe.dataset.domain === domain) {
-        // @ts-ignore
-        return iframe[this.options.node_id] as number | undefined
+      if (iframe.contentWindow && iframe.contentWindow === source) {
+        /**
+         * Here we're trying to get node id from the iframe (which is kept in observer)
+         * because of async nature of dom initialization, we give 100 retries with 100ms delay each
+         * which equals to 10 seconds. This way we have a period where we give app some time to load
+         * and tracker some time to parse the initial DOM tree even on slower devices
+         * */
+        let tries = 0
+        while (tries < 100) {
+          // @ts-ignore
+          const potentialId = iframe[this.options.node_id]
+          if (potentialId !== undefined) {
+            tries = 100
+            return potentialId
+          } else {
+            tries++
+            await delay(100)
+          }
+        }
+
+        return null
       }
     }
+
     return null
   }
+
   private initWorker() {
     try {
       this.worker = new Worker(
@@ -643,28 +775,28 @@ export default class App {
       this.messages.length = 0
       return
     }
-    if (this.worker === undefined || !this.messages.length) {
-      return
-    }
 
     if (this.insideIframe) {
       window.parent.postMessage(
         {
           line: proto.iframeBatch,
           messages: this.messages,
-          domain: this.initialHostName,
         },
-        '*',
+        this.options.crossdomain?.parentDomain ?? '*',
       )
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
     }
+
+    if (this.worker === undefined || !this.messages.length) {
+      return
+    }
+
     try {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
         this.messages.unshift(Timestamp(this.timestamp()))
-        // why I need to add opt chaining?
         this.worker?.postMessage(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
@@ -736,36 +868,39 @@ export default class App {
     this.commitCallbacks.push(cb)
   }
 
-  attachStartCallback(cb: StartCallback, useSafe = false): void {
+  attachStartCallback = (cb: StartCallback, useSafe = false): void => {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.startCallbacks.push(cb)
   }
 
-  attachStopCallback(cb: () => any, useSafe = false): void {
+  attachStopCallback = (cb: () => any, useSafe = false): void => {
     if (useSafe) {
       cb = this.safe(cb)
     }
     this.stopCallbacks.push(cb)
   }
 
-  // Use  app.nodes.attachNodeListener for registered nodes instead
-  attachEventListener(
+  attachEventListener = (
     target: EventTarget,
     type: string,
     listener: EventListener,
     useSafe = true,
     useCapture = true,
-  ): void {
+  ): void => {
     if (useSafe) {
       listener = this.safe(listener)
     }
 
     const createListener = () =>
-      target ? createEventListener(target, type, listener, useCapture) : null
+      target
+      ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
+      : null
     const deleteListener = () =>
-      target ? deleteEventListener(target, type, listener, useCapture) : null
+      target
+      ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
+      : null
 
     this.attachStartCallback(createListener, useSafe)
     this.attachStopCallback(deleteListener, useSafe)
@@ -978,7 +1113,9 @@ export default class App {
       userOS,
       userState,
       projectID,
+      features,
     } = await r.json()
+    this.features = features ? features : this.features
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -991,9 +1128,11 @@ export default class App {
     const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
     this.startCallbacks.forEach((cb) => cb(onStartInfo))
     await this.conditionsManager?.fetchConditions(projectID as string, token as string)
-    await this.featureFlags.reloadFlags(token as string)
+    if (this.features['feature-flags']) {
+      await this.featureFlags.reloadFlags(token as string)
+      this.conditionsManager?.processFlags(this.featureFlags.flags)
+    }
     await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
-    this.conditionsManager?.processFlags(this.featureFlags.flags)
   }
 
   onSessionSent = () => {
@@ -1149,7 +1288,7 @@ export default class App {
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
     }
-    if (!this.worker) {
+    if (!this.worker && !this.insideIframe) {
       const reason = 'No worker found: perhaps, CSP is not set.'
       this.signalError(reason, [])
       return Promise.resolve(UnsuccessfulStart(reason))
@@ -1181,7 +1320,7 @@ export default class App {
     })
 
     const timestamp = now()
-    this.worker.postMessage({
+    this.worker?.postMessage({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -1221,18 +1360,18 @@ export default class App {
           condition: conditionName,
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
-          height: window.screen.height
-    }),
+          height: window.screen.height,
+        }),
       })
       if (r.status !== 200) {
         const error = await r.text()
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
-      if (!this.worker) {
-        const reason = 'no worker found after start request (this might not happen)'
+      if (!this.worker && !this.insideIframe) {
+        const reason = 'no worker found after start request (this should not happen in real world)'
         this.signalError(reason, [])
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
       const {
         token,
@@ -1253,8 +1392,9 @@ export default class App {
         canvasQuality,
         canvasFPS,
         assistOnly: socketOnly,
+        features,
       } = await r.json()
-
+      this.features = features ? features : this.features
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||
@@ -1265,7 +1405,7 @@ export default class App {
       ) {
         const reason = `Incorrect server response: ${JSON.stringify(r)}`
         this.signalError(reason, [])
-        return Promise.reject(reason)
+        return UnsuccessfulStart(reason)
       }
 
       this.delay = delay
@@ -1286,9 +1426,9 @@ export default class App {
 
       if (socketOnly) {
         this.socketMode = true
-        this.worker.postMessage('stop')
+        this.worker?.postMessage('stop')
       } else {
-        this.worker.postMessage({
+        this.worker?.postMessage({
           type: 'auth',
           token,
           beaconSizeLimit,
@@ -1311,9 +1451,17 @@ export default class App {
       // TODO: start as early as possible (before receiving the token)
       /** after start */
       this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-      void this.featureFlags.reloadFlags()
+      if (startOpts.startCallback) {
+        startOpts.startCallback(SuccessfulStart(onStartInfo))
+      }
+      if (this.features['feature-flags']) {
+        void this.featureFlags.reloadFlags()
+      }
       await this.tagWatcher.fetchTags(this.options.ingestPoint, token)
       this.activityState = ActivityState.Active
+      if (this.options.crossdomain?.enabled && !this.insideIframe) {
+        void this.bootChildrenFrames()
+      }
 
       if (canvasEnabled && !this.options.canvas.disableCanvas) {
         this.canvasRecorder =
@@ -1325,7 +1473,6 @@ export default class App {
             fixedScaling: this.options.canvas.fixedCanvasScaling,
             useAnimationFrame: this.options.canvas.useAnimationFrame,
           })
-        this.canvasRecorder.startTracking()
       }
 
       /** --------------- COLD START BUFFER ------------------*/
@@ -1348,32 +1495,37 @@ export default class App {
         }
         this.ticker.start()
       }
+      this.canvasRecorder?.startTracking()
 
-      this.uxtManager = this.uxtManager ? this.uxtManager : new UserTestManager(this, uxtStorageKey)
-      let uxtId: number | undefined
-      const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
-      if (savedUxtTag) {
-        uxtId = parseInt(savedUxtTag, 10)
-      }
-      if (location?.search) {
-        const query = new URLSearchParams(location.search)
-        if (query.has('oruxt')) {
-          const qId = query.get('oruxt')
-          uxtId = qId ? parseInt(qId, 10) : undefined
+      if (this.features['usability-test']) {
+        this.uxtManager = this.uxtManager
+          ? this.uxtManager
+          : new UserTestManager(this, uxtStorageKey)
+        let uxtId: number | undefined
+        const savedUxtTag = this.localStorage.getItem(uxtStorageKey)
+        if (savedUxtTag) {
+          uxtId = parseInt(savedUxtTag, 10)
         }
-      }
+        if (location?.search) {
+          const query = new URLSearchParams(location.search)
+          if (query.has('oruxt')) {
+            const qId = query.get('oruxt')
+            uxtId = qId ? parseInt(qId, 10) : undefined
+          }
+        }
 
-      if (uxtId) {
-        if (!this.uxtManager.isActive) {
-          // eslint-disable-next-line
-          this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
-            if (id) {
-              this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
-            }
-          })
-        } else {
-          // @ts-ignore
-          this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
+        if (uxtId) {
+          if (!this.uxtManager.isActive) {
+            // eslint-disable-next-line
+            this.uxtManager.getTest(uxtId, token, Boolean(savedUxtTag)).then((id) => {
+              if (id) {
+                this.onUxtCb.forEach((cb: (id: number) => void) => cb(id))
+              }
+            })
+          } else {
+            // @ts-ignore
+            this.onUxtCb.forEach((cb: (id: number) => void) => cb(uxtId))
+          }
         }
       }
 
@@ -1381,6 +1533,11 @@ export default class App {
     } catch (reason) {
       this.stop()
       this.session.reset()
+      if (!reason) {
+        console.error('Unknown error during start')
+        this.signalError('Unknown error', [])
+        return UnsuccessfulStart('Unknown error')
+      }
       if (reason === CANCELED) {
         this.signalError(CANCELED, [])
         return UnsuccessfulStart(CANCELED)
@@ -1439,9 +1596,13 @@ export default class App {
   }
 
   async waitStarted() {
+    return this.waitStatus(ActivityState.Active)
+  }
+
+  async waitStatus(status: ActivityState) {
     return new Promise((resolve) => {
       const check = () => {
-        if (this.activityState === ActivityState.Active) {
+        if (this.activityState === status) {
           resolve(true)
         } else {
           setTimeout(check, 25)
@@ -1463,6 +1624,10 @@ export default class App {
       const reason =
         'OpenReplay: trying to call `start()` on the instance that has been started already.'
       return Promise.resolve(UnsuccessfulStart(reason))
+    }
+
+    if (this.insideIframe) {
+      this.signalIframeTracker()
     }
 
     if (!document.hidden) {
@@ -1520,20 +1685,28 @@ export default class App {
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
+        if (!this.insideIframe && this.options.crossdomain?.enabled) {
+          this.killChildrenFrames()
+        }
         this.attributeSender.clear()
         this.sanitizer.clear()
         this.observer.disconnect()
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
-        this.debug.log('OpenReplay tracking stopped.')
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
         this.canvasRecorder?.clear()
+        this.messages.length = 0
+        this.trackedFrames = []
+        this.parentActive = false
+        this.canStart = false
+        this.pollingQueue = { order: [] }
       } finally {
         this.activityState = ActivityState.NotActive
+        this.debug.log('OpenReplay tracking stopped.')
       }
     }
   }

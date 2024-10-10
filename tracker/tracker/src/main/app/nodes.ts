@@ -10,10 +10,13 @@ export default class Nodes {
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
   private nextNodeId = 0
 
-  constructor(private readonly node_id: string) {}
+  constructor(
+    private readonly node_id: string,
+    private readonly angularMode: boolean,
+  ) {}
 
   syntheticMode(frameOrder: number) {
-    const maxSafeNumber = 9007199254740900
+    const maxSafeNumber = Number.MAX_SAFE_INTEGER
     const placeholderSize = 99999999
     const nextFrameId = placeholderSize * frameOrder
     // I highly doubt that this will ever happen,
@@ -25,7 +28,7 @@ export default class Nodes {
   }
 
   // Attached once per Tracker instance
-  attachNodeCallback(nodeCallback: NodeCallback): void {
+  attachNodeCallback = (nodeCallback: NodeCallback): void => {
     this.nodeCallbacks.push(nodeCallback)
   }
 
@@ -33,12 +36,12 @@ export default class Nodes {
     this.nodes.forEach((node) => cb(node))
   }
 
-  attachNodeListener(node: Node, type: string, listener: EventListener, useCapture = true): void {
+  attachNodeListener = (node: Node, type: string, listener: EventListener, useCapture = true): void => {
     const id = this.getID(node)
     if (id === undefined) {
       return
     }
-    createEventListener(node, type, listener, useCapture)
+    createEventListener(node, type, listener, useCapture, this.angularMode)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
@@ -70,7 +73,7 @@ export default class Nodes {
       if (listeners !== undefined) {
         this.elementListeners.delete(id)
         listeners.forEach((listener) =>
-          deleteEventListener(node, listener[0], listener[1], listener[2]),
+          deleteEventListener(node, listener[0], listener[1], listener[2], this.angularMode),
         )
       }
       this.totalNodeAmount--
