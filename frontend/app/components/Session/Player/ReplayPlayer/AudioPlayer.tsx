@@ -6,9 +6,10 @@ import {
 } from '@ant-design/icons';
 import { Button, InputNumber, Popover } from 'antd';
 import { Slider } from 'antd';
+import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import cn from 'classnames';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function DropdownAudioPlayer({
@@ -27,15 +28,24 @@ function DropdownAudioPlayer({
   const fileLengths = useRef<Record<string, number>>({});
   const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {};
 
-  const files = React.useMemo(() => audioEvents.map((pa) => {
-    const data = pa.payload;
-    const nativeTs = data.timestamp
-    return {
-      url: data.url,
-      timestamp: data.timestamp,
-      start: nativeTs ? nativeTs : pa.timestamp - sessionStart,
-    };
-  }), [audioEvents.length, sessionStart])
+  const files = React.useMemo(
+    () =>
+      audioEvents.map((pa) => {
+        const data = pa.payload;
+        const nativeTs = data.timestamp;
+        const startTs = nativeTs
+          ? nativeTs > sessionStart
+            ? nativeTs - sessionStart
+            : nativeTs
+          : pa.timestamp - sessionStart;
+        return {
+          url: data.url,
+          timestamp: data.timestamp,
+          start: startTs,
+        };
+      }),
+    [audioEvents.length, sessionStart]
+  );
 
   React.useEffect(() => {
     Object.entries(audioRefs.current).forEach(([url, audio]) => {
@@ -43,10 +53,10 @@ function DropdownAudioPlayer({
         audio.loop = false;
         audio.addEventListener('loadedmetadata', () => {
           fileLengths.current[url] = audio.duration;
-        })
+        });
       }
-    })
-  }, [audioRefs.current])
+    });
+  }, [audioRefs.current]);
 
   const toggleMute = () => {
     Object.values(audioRefs.current).forEach((audio) => {
@@ -125,7 +135,7 @@ function DropdownAudioPlayer({
 
   useEffect(() => {
     const deltaMs = delta * 1000;
-    const deltaTime = Math.abs(lastPlayerTime.current - time - deltaMs)
+    const deltaTime = Math.abs(lastPlayerTime.current - time - deltaMs);
     if (deltaTime >= 250) {
       handleSeek(time);
     }
@@ -134,7 +144,7 @@ function DropdownAudioPlayer({
         const file = files.find((f) => f.url === url);
         const fileLength = fileLengths.current[url];
         if (file) {
-          if (fileLength && (fileLength*1000)+file.start < time) {
+          if (fileLength && fileLength * 1000 + file.start < time) {
             return;
           }
           if (time >= file.start) {
@@ -155,8 +165,8 @@ function DropdownAudioPlayer({
       if (audio) {
         audio.muted = isMuted;
       }
-    })
-  }, [isMuted])
+    });
+  }, [isMuted]);
 
   useEffect(() => {
     changePlaybackSpeed(speed);
@@ -168,7 +178,7 @@ function DropdownAudioPlayer({
         const file = files.find((f) => f.url === url);
         const fileLength = fileLengths.current[url];
         if (file) {
-          if (fileLength && (fileLength*1000)+file.start < time) {
+          if (fileLength && fileLength * 1000 + file.start < time) {
             audio.pause();
             return;
           }
@@ -183,7 +193,8 @@ function DropdownAudioPlayer({
     setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
-  const buttonIcon = 'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit'
+  const buttonIcon =
+    'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
     <div className={'relative'}>
       <div className={'flex items-center'} style={{ height: 24 }}>
@@ -205,20 +216,14 @@ function DropdownAudioPlayer({
             </div>
           }
         >
-          <div
-            className={
-              cn(buttonIcon, 'rounded-l')
-            }
-          >
+          <div className={cn(buttonIcon, 'rounded-l')}>
             {isMuted ? <MutedOutlined /> : <SoundOutlined />}
           </div>
         </Popover>
         <div
           onClick={toggleVisible}
           style={{ marginLeft: -1 }}
-          className={
-            cn(buttonIcon, 'rounded-r')
-          }
+          className={cn(buttonIcon, 'rounded-r')}
         >
           <CaretDownOutlined />
         </div>

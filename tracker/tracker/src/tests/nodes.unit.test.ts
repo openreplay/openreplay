@@ -7,7 +7,7 @@ describe('Nodes', () => {
   const mockCallback = jest.fn()
 
   beforeEach(() => {
-    nodes = new Nodes(nodeId)
+    nodes = new Nodes(nodeId, false)
     mockCallback.mockClear()
   })
 
