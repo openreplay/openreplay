@@ -167,6 +167,12 @@ type AppOptions = {
   }
 
   network?: NetworkOptions
+  /**
+   * use this flag if you're using Angular
+   * basically goes around window.Zone api changes to mutation observer
+   * and event listeners
+   * */
+  angularMode?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -312,6 +318,7 @@ export default class App {
         __save_canvas_locally: false,
         useAnimationFrame: false,
       },
+      angularMode: false,
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -329,7 +336,7 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
-    this.nodes = new Nodes(this.options.node_id)
+    this.nodes = new Nodes(this.options.node_id, Boolean(options.angularMode))
     this.observer = new Observer(this, options)
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
@@ -474,15 +481,23 @@ export default class App {
         const id = await this.checkNodeId(pageIframes, event.source)
         if (id && !this.trackedFrames.includes(data.context)) {
           try {
-            this.trackedFrames.push(data.frameUID)
+            this.trackedFrames.push(data.context)
             await this.waitStarted()
             const token = this.session.getSessionToken()
+            const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
+            if (order === 0) {
+              this.debug.error(
+                'Couldnt get order number for iframe',
+                data.context,
+                this.trackedFrames,
+              )
+            }
             const iframeData = {
               line: proto.iframeId,
               id,
               token,
               // since indexes go from 0 we +1
-              frameOrderNumber: this.trackedFrames.findIndex((f) => f === data.context) + 1,
+              frameOrderNumber: order,
             }
             this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
             // @ts-ignore
@@ -490,6 +505,8 @@ export default class App {
           } catch (e) {
             console.error(e)
           }
+        } else {
+          this.debug.log('Couldnt get node id for iframe', event.source, pageIframes)
         }
       }
       void signalId()
@@ -874,9 +891,13 @@ export default class App {
     }
 
     const createListener = () =>
-      target ? createEventListener(target, type, listener, useCapture) : null
+      target
+        ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
+        : null
     const deleteListener = () =>
-      target ? deleteEventListener(target, type, listener, useCapture) : null
+      target
+        ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
+        : null
 
     this.attachStartCallback(createListener, useSafe)
     this.attachStopCallback(deleteListener, useSafe)

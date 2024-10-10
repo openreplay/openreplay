@@ -132,9 +132,13 @@ export function ngSafeBrowserMethod(method: string): string {
     : method
 }
 
-export function createMutationObserver(cb: MutationCallback) {
-  const mObserver = ngSafeBrowserMethod('MutationObserver') as 'MutationObserver'
-  return new window[mObserver](cb)
+export function createMutationObserver(cb: MutationCallback, angularMode?: boolean) {
+  if (angularMode) {
+    const mObserver = ngSafeBrowserMethod('MutationObserver') as 'MutationObserver'
+    return new window[mObserver](cb)
+  } else {
+    return new MutationObserver(cb)
+  }
 }
 
 export function createEventListener(
@@ -142,16 +146,24 @@ export function createEventListener(
   event: string,
   cb: EventListenerOrEventListenerObject,
   capture?: boolean,
+  angularMode?: boolean,
 ) {
-  const safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
+  let safeAddEventListener: 'addEventListener'
+  if (angularMode) {
+    safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
+  } else {
+    safeAddEventListener = 'addEventListener'
+  }
   try {
     target[safeAddEventListener](event, cb, capture)
+    target.addEventListener(event, cb, capture)
   } catch (e) {
     const msg = e.message
     console.error(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
       event,
+      target,
     )
   }
 }
@@ -161,18 +173,24 @@ export function deleteEventListener(
   event: string,
   cb: EventListenerOrEventListenerObject,
   capture?: boolean,
+  angularMode?: boolean,
 ) {
-  const safeRemoveEventListener = ngSafeBrowserMethod(
-    'removeEventListener',
-  ) as 'removeEventListener'
+  let safeRemoveEventListener: 'removeEventListener'
+  if (angularMode) {
+    safeRemoveEventListener = ngSafeBrowserMethod('removeEventListener') as 'removeEventListener'
+  } else {
+    safeRemoveEventListener = 'removeEventListener'
+  }
   try {
     target[safeRemoveEventListener](event, cb, capture)
+    target.removeEventListener(event, cb, capture)
   } catch (e) {
     const msg = e.message
     console.error(
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       `Openreplay: ${msg}; if this error is caused by an IframeObserver, ignore it`,
       event,
+      target,
     )
   }
 }

@@ -1,6 +1,5 @@
 import Observer from './observer.js'
 import { isElementNode, hasTag } from '../guards.js'
-import Network from '../../modules/network.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
