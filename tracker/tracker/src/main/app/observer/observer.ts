@@ -1,4 +1,4 @@
-import { createMutationObserver, ngSafeBrowserMethod } from '../../utils.js'
+import { createMutationObserver } from '../../utils.js'
 import {
   RemoveNodeAttribute,
   SetNodeAttributeURLBased,
@@ -105,6 +105,9 @@ export default abstract class Observer {
             if (name === null) {
               continue
             }
+            if (target instanceof HTMLIFrameElement && name === 'src') {
+              this.handleIframeSrcChange(target)
+            }
             let attr = this.attributesMap.get(id)
             if (attr === undefined) {
               this.attributesMap.set(id, (attr = new Set()))
@@ -119,6 +122,7 @@ export default abstract class Observer {
         }
         this.commitNodes()
       }) as MutationCallback,
+      this.app.options.angularMode,
     )
   }
   private clear(): void {
@@ -129,10 +133,49 @@ export default abstract class Observer {
     this.textSet.clear()
   }
 
+  /**
+   * Unbinds the removed nodes in case of iframe src change.
+   */
+  private handleIframeSrcChange(iframe: HTMLIFrameElement): void {
+    const oldContentDocument = iframe.contentDocument
+    if (oldContentDocument) {
+      const id = this.app.nodes.getID(oldContentDocument)
+      if (id !== undefined) {
+        const walker = document.createTreeWalker(
+          oldContentDocument,
+          NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) =>
+              isIgnored(node) || this.app.nodes.getID(node) === undefined
+              ? NodeFilter.FILTER_REJECT
+              : NodeFilter.FILTER_ACCEPT,
+          },
+          // @ts-ignore
+          false,
+        )
+
+        let removed = 0
+        const totalBeforeRemove = this.app.nodes.getNodeCount()
+
+        while (walker.nextNode()) {
+          if (!iframe.contentDocument.contains(walker.currentNode)) {
+            removed += 1
+            this.app.nodes.unregisterNode(walker.currentNode)
+          }
+        }
+
+        const removedPercent = Math.floor((removed / totalBeforeRemove) * 100)
+        if (removedPercent > 30) {
+          this.app.send(UnbindNodes(removedPercent))
+        }
+      }
+    }
+  }
+
   private sendNodeAttribute(id: number, node: Element, name: string, value: string | null): void {
     if (isSVGElement(node)) {
-      if (name.substr(0, 6) === 'xlink:') {
-        name = name.substr(6)
+      if (name.substring(0, 6) === 'xlink:') {
+        name = name.substring(6)
       }
       if (value === null) {
         this.app.send(RemoveNodeAttribute(id, name))
@@ -152,7 +195,7 @@ export default abstract class Observer {
       name === 'integrity' ||
       name === 'crossorigin' ||
       name === 'autocomplete' ||
-      name.substr(0, 2) === 'on'
+      name.substring(0, 2) === 'on'
     ) {
       return
     }
