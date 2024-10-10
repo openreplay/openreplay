@@ -1,5 +1,5 @@
 import React from 'react';
-import { HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
+import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
 import { Select, Space, Switch } from 'antd';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -38,7 +38,7 @@ function WidgetOptions(props: Props) {
         </a>
       )}
 
-      {metric.metricType === TABLE && metric.metricOf != FilterKey.USERID && metric.metricOf != FilterKey.ERRORS &&  (
+      {(metric.metricType === FUNNEL || metric.metricType === TABLE) && metric.metricOf != FilterKey.USERID && metric.metricOf != FilterKey.ERRORS &&  (
         <Select
           defaultValue={metric.metricFormat}
           onChange={handleChange}

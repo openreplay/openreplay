@@ -67,13 +67,15 @@ function FunnelBar(props: Props) {
             ({filter.completedPercentage}%) Completed
           </span>
         </div>
-        <Space className="items-center">
-          <Icon name="caret-down-fill" color={filter.droppedCount > 0 ? 'red' : 'gray-light'} size={16} />
-          <span
-            className={'mx-1 ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>{filter.droppedCount} Sessions</span>
-          <span
-            className={'text-sm ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>({filter.droppedPercentage}%) Dropped</span>
-        </Space>
+        {index && index > 1 && (
+          <Space className="items-center">
+            <Icon name="caret-down-fill" color={filter.droppedCount > 0 ? 'red' : 'gray-light'} size={16} />
+            <span
+              className={'mx-1 ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>{filter.droppedCount} Sessions</span>
+            <span
+              className={'text-sm ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>({filter.droppedPercentage}%) Dropped</span>
+          </Space>
+        )}
       </div>
     </div>
   );
