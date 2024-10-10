@@ -167,6 +167,12 @@ type AppOptions = {
   }
 
   network?: NetworkOptions
+  /**
+   * use this flag if you're using Angular
+   * basically goes around window.Zone api changes to mutation observer
+   * and event listeners
+   * */
+  angularMode?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -312,6 +318,7 @@ export default class App {
         __save_canvas_locally: false,
         useAnimationFrame: false,
       },
+      angularMode: false,
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -329,7 +336,7 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
-    this.nodes = new Nodes(this.options.node_id)
+    this.nodes = new Nodes(this.options.node_id, Boolean(options.angularMode))
     this.observer = new Observer(this, options)
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
@@ -366,6 +373,7 @@ export default class App {
         window.parent.postMessage(
           {
             line: proto.polling,
+            context: this.contextId,
           },
           '*',
         )
@@ -421,6 +429,7 @@ export default class App {
   }
 
   /** used by child iframes for crossdomain only */
+  /** used by child iframes for crossdomain only */
   parentActive = false
   checkStatus = () => {
     return this.parentActive
@@ -447,7 +456,6 @@ export default class App {
       this.frameOderNumber = data.frameOrderNumber
       this.debug.log('starting iframe tracking', data)
       this.allowAppStart()
-      this.delay = data.frameTimeOffset
     }
     if (data.line === proto.killIframe) {
       if (this.active()) {
@@ -456,7 +464,11 @@ export default class App {
     }
   }
 
-  trackedFrames: number[] = []
+  /**
+   * context ids for iframes,
+   * order is not so important as long as its consistent
+   * */
+  trackedFrames: string[] = []
   crossDomainIframeListener = (event: MessageEvent) => {
     if (!this.active() || event.source === window) return
     const { data } = event
@@ -471,24 +483,34 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(pageIframes, event.source)
-        if (id && !this.trackedFrames.includes(id)) {
+        if (id && !this.trackedFrames.includes(data.context)) {
           try {
-            this.trackedFrames.push(id)
+            this.trackedFrames.push(data.context)
             await this.waitStarted()
             const token = this.session.getSessionToken()
+            const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
+            if (order === 0) {
+              this.debug.error(
+                'Couldnt get order number for iframe',
+                data.context,
+                this.trackedFrames,
+              )
+            }
             const iframeData = {
               line: proto.iframeId,
-              context: this.contextId,
               id,
               token,
-              frameOrderNumber: this.trackedFrames.length,
-              frameTimeOffset: this.timestamp(),
+              // since indexes go from 0 we +1
+              frameOrderNumber: order,
             }
+            this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
             // @ts-ignore
             event.source?.postMessage(iframeData, '*')
           } catch (e) {
             console.error(e)
           }
+        } else {
+          this.debug.log('Couldnt get node id for iframe', event.source, pageIframes)
         }
       }
       void signalId()
@@ -544,25 +566,42 @@ export default class App {
       this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
-      if (!this.pollingQueue.length) {
+      if (!this.pollingQueue.order.length) {
         return
       }
-      while (this.pollingQueue.length) {
-        const msg = this.pollingQueue.shift()
+      const nextCommand = this.pollingQueue.order[0]
+      if (this.pollingQueue[nextCommand].includes(data.context)) {
+        this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
+          (c: string) => c !== data.context,
+        )
         // @ts-ignore
-        event.source?.postMessage({ line: msg }, '*')
+        event.source?.postMessage({ line: nextCommand }, '*')
+        if (this.pollingQueue[nextCommand].length === 0) {
+          this.pollingQueue.order.shift()
+        }
       }
     }
   }
 
-  pollingQueue: string[] = []
+  /**
+   * { command : [remaining iframes] }
+   * + order of commands
+   **/
+  pollingQueue: Record<string, any> = {
+    order: [],
+  }
+  private readonly addCommand = (cmd: string) => {
+    this.pollingQueue.order.push(cmd)
+    this.pollingQueue[cmd] = [...this.trackedFrames]
+  }
+
   public bootChildrenFrames = async () => {
     await this.waitStarted()
-    this.pollingQueue.push(proto.startIframe)
+    this.addCommand(proto.startIframe)
   }
 
   public killChildrenFrames = () => {
-    this.pollingQueue.push(proto.killIframe)
+    this.addCommand(proto.killIframe)
   }
 
   signalIframeTracker = () => {
@@ -753,6 +792,7 @@ export default class App {
     if (this.worker === undefined || !this.messages.length) {
       return
     }
+
     try {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
@@ -854,9 +894,13 @@ export default class App {
     }
 
     const createListener = () =>
-      target ? createEventListener(target, type, listener, useCapture) : null
+      target
+      ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
+      : null
     const deleteListener = () =>
-      target ? deleteEventListener(target, type, listener, useCapture) : null
+      target
+      ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
+      : null
 
     this.attachStartCallback(createListener, useSafe)
     this.attachStopCallback(deleteListener, useSafe)
@@ -1640,7 +1684,6 @@ export default class App {
 
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
-      console.trace('stopped')
       try {
         if (!this.insideIframe && this.options.crossdomain?.enabled) {
           this.killChildrenFrames()
@@ -1660,6 +1703,7 @@ export default class App {
         this.trackedFrames = []
         this.parentActive = false
         this.canStart = false
+        this.pollingQueue = { order: [] }
       } finally {
         this.activityState = ActivityState.NotActive
         this.debug.log('OpenReplay tracking stopped.')
