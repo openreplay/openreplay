@@ -1,6 +1,5 @@
 import Observer from './observer.js'
 import { isElementNode, hasTag } from '../guards.js'
-import Network from '../../modules/network.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
@@ -140,7 +139,7 @@ export default class TopObserver extends Observer {
     )
   }
 
-  crossdomainObserve(selfId: number, frameOder: number) {
+  crossdomainObserve(rootNodeId: number, frameOder: number) {
     const observer = this
     Element.prototype.attachShadow = function () {
       // eslint-disable-next-line
@@ -152,7 +151,7 @@ export default class TopObserver extends Observer {
     this.app.nodes.syntheticMode(frameOder)
     const iframeObserver = new IFrameObserver(this.app)
     this.iframeObservers.push(iframeObserver)
-    iframeObserver.syntheticObserve(selfId, window.document)
+    iframeObserver.syntheticObserve(rootNodeId, window.document)
   }
 
   disconnect() {
