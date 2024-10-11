@@ -125,7 +125,6 @@ export default defineContentScript({
       stopClickRecording();
       stopLocationRecording();
       const result = await browser.runtime.sendMessage({ type: "ort:stop" });
-      console.log('Spot getting video:', result)
       if (result.status === "full") {
         chunksReady = true;
         data = result;

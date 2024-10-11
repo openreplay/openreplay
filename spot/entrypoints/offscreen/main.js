@@ -127,7 +127,6 @@ class ScreenRecorder {
     this.mRecorder.start();
     this.isRecording = true;
     this.trackDuration();
-    console.log('started recording inside startRecording');
   }
 
   stop() {
@@ -320,7 +319,6 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
           message.audioId,
         )
         .then(() => {
-          console.log('started recording');
           respond({ success: true, time: Date.now() });
         })
         .catch(e => {
@@ -345,7 +343,6 @@ browser.runtime.onMessage.addListener((message, _, respond) => {
       recorder.stop();
       const duration = recorder.duration;
       recorder.getVideoData().then((data) => {
-        console.log(data)
         if (!data.blob) {
           respond({ status: "empty" });
         }

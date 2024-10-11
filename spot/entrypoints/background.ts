@@ -667,7 +667,6 @@ export default defineBackground(() => {
       if (recordingState.recording === REC_STATE.stopped) {
         return console.error('Calling stopped recording?')
       }
-      console.log('calling stop')
       browser.runtime
         .sendMessage({
           type: messages.offscreen.to.stopRecording,
