@@ -8,11 +8,11 @@ COPY . .
 
 RUN cp .env.sample .env
 
-RUN pnpm install -g pnpm
+RUN npm install -g pnpm
 
 RUN pnpm install --filter . --frozen-lockfile --dir /work/frontend
 
-RUN pnpm build
+RUN bun run build
 
 FROM nginx:alpine AS cicd
 LABEL maintainer="Rajesh<rajesh@openreplay.com>"
