@@ -334,7 +334,7 @@ export default class Widget {
                     }, []);
             } else {
                 const updatedData: any = this.calculateTotalSeries(data);
-                _data['chart'] = getChartFormatter('period')(updatedData);
+                _data['chart'] = getChartFormatter(period)(updatedData);
                 _data['namesMap'] = Array.isArray(updatedData)
                   ? updatedData
                     .map((i) => Object.keys(i))
