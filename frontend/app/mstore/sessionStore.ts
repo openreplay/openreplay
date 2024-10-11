@@ -519,4 +519,8 @@ export default class SessionStore {
     this.total = 0;
     this.sessionIds = [];
   }
+
+  setLastPlayedSessionId = (sessionId: string) => {
+    this.lastPlayedSessionId = sessionId;
+  }
 }

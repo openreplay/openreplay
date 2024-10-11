@@ -63,6 +63,9 @@ function WebPlayer(props: any) {
   }, []);
 
   useEffect(() => {
+    if (session.sessionId) {
+      sessionStore.setLastPlayedSessionId(session.sessionId);
+    }
     playerInst = undefined;
     if (!session.sessionId || contextValue.player !== undefined) return;
     const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as
