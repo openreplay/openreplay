@@ -1,6 +1,6 @@
 import { issues_types, types } from 'Types/session/issue';
 import { Segmented } from 'antd';
-import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
+import { Angry, CircleAlert, HandIcon, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useStore } from 'App/mstore';
@@ -21,7 +21,8 @@ const tagIcons = {
   [types.JS_EXCEPTION]: <CircleAlert size={14} />,
   [types.BAD_REQUEST]: <WifiOff size={14} />,
   [types.CLICK_RAGE]: <Angry size={14} />,
-  [types.CRASH]: <Skull size={14} />
+  [types.CRASH]: <Skull size={14} />,
+  [types.TAP_RAGE]: <Angry size={14} />,
 } as Record<string, any>;
 
 const SessionTags: React.FC<Props> = () => {
