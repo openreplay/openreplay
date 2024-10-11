@@ -34,16 +34,16 @@ jobs:
         with:
           bun-version: latest
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/checkout@v3
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
-      # Install pnpm
-      - name: Install pnpm
-        run: npm install -g pnpm
 
       # Cache pnpm node modules for Tracker
       - name: Cache tracker node_modules

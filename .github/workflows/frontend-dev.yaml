@@ -14,8 +14,10 @@ jobs:
           bun-version: latest
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Install pnpm
-        run: npm install -g pnpm
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Cache node_modules
         uses: actions/cache@v3
