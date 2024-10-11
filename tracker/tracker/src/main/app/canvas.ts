@@ -20,7 +20,7 @@ interface Options {
 
 class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
-  private readonly intervals: NodeJS.Timeout[] = []
+  private readonly intervals: ReturnType<typeof setInterval>[] = []
   private readonly interval: number
   private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
 
