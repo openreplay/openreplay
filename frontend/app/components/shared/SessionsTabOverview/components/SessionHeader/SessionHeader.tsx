@@ -20,16 +20,16 @@ function SessionHeader() {
     if (activeTab.type === 'notes') {
       return 'Notes';
     }
-    if (activeTab.type === 'bookmark') {
+    if (activeTab.type === 'bookmarks') {
       return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
-  }, [activeTab]);
+  }, [activeTab.type, isEnterprise]);
 
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
     searchStore.edit(dateValues);
-    searchStore.fetchSessions();
+    void searchStore.fetchSessions(true);
   };
 
   return (
@@ -37,7 +37,7 @@ function SessionHeader() {
       <h2 className="text-2xl capitalize mr-4">{title}</h2>
       {activeTab.type !== 'notes' ? (
         <div className="flex items-center w-full justify-end">
-          {activeTab.type !== 'bookmark' && (
+          {activeTab.type !== 'bookmarks' && (
             <>
               <SessionTags />
               <div className="mr-auto" />

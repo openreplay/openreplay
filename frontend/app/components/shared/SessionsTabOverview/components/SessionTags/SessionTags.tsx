@@ -1,12 +1,9 @@
 import { issues_types, types } from 'Types/session/issue';
 import { Segmented } from 'antd';
-import cn from 'classnames';
 import { Angry, CircleAlert, Skull, WifiOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { memo } from 'react';
-
+import React from 'react';
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
 
 interface Tag {
   name: string;
@@ -15,7 +12,6 @@ interface Tag {
 }
 
 interface StateProps {
-
 }
 
 type Props = StateProps;
@@ -25,94 +21,37 @@ const tagIcons = {
   [types.JS_EXCEPTION]: <CircleAlert size={14} />,
   [types.BAD_REQUEST]: <WifiOff size={14} />,
   [types.CLICK_RAGE]: <Angry size={14} />,
-  [types.CRASH]: <Skull size={14} />,
+  [types.CRASH]: <Skull size={14} />
 } as Record<string, any>;
 
 const SessionTags: React.FC<Props> = () => {
   const { projectsStore, sessionStore, searchStore } = useStore();
   const total = sessionStore.total;
   const platform = projectsStore.active?.platform || '';
-  const disable = searchStore.activeTab.type === 'all' && total === 0;
-  const activeTab = searchStore.activeTab;
-  const tags = issues_types.filter(
-    (tag) =>
-      tag.type !== 'mouse_thrashing' &&
-      (platform === 'web'
-        ? tag.type !== types.TAP_RAGE
-        : tag.type !== types.CLICK_RAGE)
-  );
+  const activeTab = searchStore.activeTags;
 
-  const options = tags.map((tag, i) => ({
-    label: (
-      <div className={'flex items-center gap-2'}>
-        {tag.icon ? (
-          tagIcons[tag.type] ? (
-            tagIcons[tag.type]
-          ) : (
-            <Icon
-              name={tag.icon}
-              color={activeTab.type === tag.type ? 'main' : undefined}
-              size="14"
-              className={cn('group-hover:fill-teal')}
-            />
-          )
-        ) : null}
-        <div className={activeTab.type === tag.type ? 'text-main' : ''}>
-          {tag.name}
-        </div>
-      </div>
-    ),
-    value: tag.type,
-    disabled: disable && tag.type !== 'all',
-  }));
-
-  const onPick = (tabValue: string) => {
-    const tab = tags.find((t) => t.type === tabValue);
-    if (tab) {
-      searchStore.setActiveTab(tab);
-    }
-  };
-  return (
+  return total === 0 && (activeTab.length === 0 || activeTab[0] === 'all') ? null : (
     <div className="flex items-center">
       <Segmented
-        options={options}
-        value={activeTab.type}
-        onChange={onPick}
+        options={issues_types
+          .filter(
+            (tag) =>
+              tag.type !== 'mouse_thrashing' &&
+              (platform === 'web'
+                ? tag.type !== types.TAP_RAGE
+                : tag.type !== types.CLICK_RAGE)
+          )
+          .map((tag: any) => ({
+            value: tag.type,
+            icon: tagIcons[tag.type],
+            label: tag.name
+          }))}
+        value={activeTab[0]}
+        onChange={(value: any) => searchStore.toggleTag(value)}
         size={'small'}
       />
     </div>
   );
 };
-
-// Separate the TagItem into its own memoized component.
-export const TagItem: React.FC<{
-  isActive: boolean;
-  onClick: () => void;
-  label: string;
-  icon?: string;
-  disabled: boolean;
-}> = memo(({ isActive, onClick, label, icon, disabled }) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      'transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal',
-      {
-        'bg-active-blue text-teal': isActive,
-        disabled: disabled
-      }
-    )}
-    style={{ height: '36px' }}
-  >
-    {icon && (
-      <Icon
-        name={icon}
-        color={isActive ? 'teal' : 'gray-medium'}
-        size="14"
-        className={cn('group-hover:fill-teal mr-2')}
-      />
-    )}
-    <span className="leading-none font-medium">{label}</span>
-  </button>
-));
 
 export default observer(SessionTags);

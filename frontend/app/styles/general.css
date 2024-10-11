@@ -431,3 +431,8 @@ p {
 .ant-segmented-group{
   gap:0.25rem;
 }
+
+.ant-segmented-item-label {
+  display: flex;
+  align-items: center;
+}

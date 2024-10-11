@@ -139,12 +139,12 @@ function SideMenu(props: Props) {
 
   React.useEffect(() => {
     const currentLocation = location.pathname;
-    const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
-      currentLocation.includes(TabToUrlMap[tab])
-    );
-    if (tab && tab !== searchStore.activeTab && siteId) {
-      searchStore.setActiveTab({ type: tab });
-    }
+    // const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
+    //   currentLocation.includes(TabToUrlMap[tab])
+    // );
+    // if (tab && tab !== searchStore.activeTab && siteId) {
+    //   searchStore.setActiveTab({ type: tab });
+    // }
   }, [location.pathname]);
 
   const menuRoutes: any = {

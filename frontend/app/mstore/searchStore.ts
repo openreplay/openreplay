@@ -15,6 +15,8 @@ import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
+import { iTag } from '@/services/NotesService';
+import { issues_types } from 'Types/session/issue';
 
 const PER_PAGE = 10;
 
@@ -48,6 +50,14 @@ export const filterMap = ({
   filters: filters ? filters.map(filterMap) : []
 });
 
+export const TAB_MAP: any = {
+  all: { name: 'All', type: 'all' },
+  sessions: { name: 'Sessions', type: 'sessions' },
+  bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
+  notes: { name: 'Notes', type: 'notes' },
+  recommendations: { name: 'Recommendations', type: 'recommendations' }
+};
+
 class SearchStore {
   filterList = generateFilterOptions(filtersMap);
   filterListLive = generateFilterOptions(liveFiltersMap);
@@ -68,6 +78,7 @@ class SearchStore {
   total: number = 0;
   loadingFilterSearch = false;
   isSaving: boolean = false;
+  activeTags: any[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -79,7 +90,7 @@ class SearchStore {
     //   filters: savedSearch.filter.filters
     // });
     console.log('savedSearch.filter.filters', savedSearch.filter.filters);
-    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i)) : []});
+    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i)) : [] });
     // this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters : [] });
     this.currentPage = 1;
   }
@@ -131,10 +142,21 @@ class SearchStore {
     void this.fetchSessions();
   }
 
-  setActiveTab(tab: any) {
-    this.activeTab = tab;
+  setActiveTab(tab: string) {
+    this.activeTab = TAB_MAP[tab];
+    // this.activeTab = tab;
     this.currentPage = 1;
     // this.fetchSessions();
+  }
+
+  toggleTag(tag?: iTag) {
+    if (!tag) {
+      this.activeTags = [];
+      void this.fetchSessions(true);
+    } else {
+      this.activeTags = [tag];
+      void this.fetchSessions(true);
+    }
   }
 
   async removeSavedSearch(id: string): Promise<void> {
@@ -174,6 +196,7 @@ class SearchStore {
 
     this.savedSearch = new SavedSearch({});
     sessionStore.clearList();
+    void this.fetchSessions(true);
   }
 
   checkForLatestSessions() {
@@ -274,13 +297,26 @@ class SearchStore {
     // TODO
   }
 
-  async fetchSessions(force: boolean = false): Promise<void> {
+  async fetchSessions(force: boolean = false, bookmarked: boolean = false): Promise<void> {
+    const filter = this.instance.toSearch();
+
+    if (this.activeTags[0] && this.activeTags[0] !== 'all') {
+      const tagFilter = filtersMap[FilterKey.ISSUE];
+      tagFilter.value = [issues_types.find((i: any) => i.type === this.activeTags[0])?.type];
+      delete tagFilter.operatorOptions;
+      delete tagFilter.options;
+      delete tagFilter.placeholder;
+      delete tagFilter.label;
+      delete tagFilter.icon;
+      filter.filters = filter.filters.concat(tagFilter);
+    }
+
     await sessionStore.fetchSessions({
-      ...this.instance.toSearch(),
+      ...filter,
       page: this.currentPage,
       perPage: this.pageSize,
       tab: this.activeTab.type,
-      bookmarked: this.activeTab.type === 'bookmark' ? true : undefined
+      bookmarked: bookmarked ? true : undefined
     }, force);
   };
 }

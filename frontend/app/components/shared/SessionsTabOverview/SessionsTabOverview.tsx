@@ -12,7 +12,7 @@ function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
-  const activeTab = searchStore.activeTab.type;
+  const isNotesRoute = searchStore.activeTab.type === 'notes';
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
@@ -38,7 +38,7 @@ function SessionsTabOverview() {
       <SessionHeader />
       <div className="border-b" />
       <LatestSessionsMessage />
-      {activeTab !== 'notes' ? (
+      {!isNotesRoute ? (
         <SessionList />
       ) : (
         <NotesList />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
@@ -8,9 +8,10 @@ import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
 import { Switch, Route } from 'react-router';
 import { sessions, fflags, withSiteId, newFFlag, fflag, notes, fflagRead, bookmarks } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
+import { useStore } from '@/mstore';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -23,7 +24,16 @@ interface IProps extends RouteComponentProps {
 }
 
 function Overview({ match: { params } }: IProps) {
+  const { searchStore } = useStore();
   const { siteId, fflagId } = params;
+  const location = useLocation();
+  const tab = location.pathname.split('/')[2];
+  searchStore.setActiveTab(tab);
+
+  // useEffect(() => {
+  //   // const tab = location.pathname.split('/')[2];
+  //   searchStore.setActiveTab(tab);
+  // }, [tab]);
 
   return (
     <Switch>

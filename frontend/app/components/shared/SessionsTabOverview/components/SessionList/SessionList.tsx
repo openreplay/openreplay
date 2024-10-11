@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Button } from 'UI';
-import { withRouter } from 'react-router-dom';
+import { useLocation, withRouter } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import SessionDateRange from './SessionDateRange';
@@ -23,6 +23,10 @@ let sessionStatusTimeOut: any = null;
 const STATUS_FREQUENCY = 5000;
 
 function SessionList() {
+  const location = useLocation(); // Get the current URL location
+  const isSessionsRoute = location.pathname.includes('/sessions');
+  const isBookmark = location.pathname.includes('/bookmarks');
+
   const { projectsStore, sessionStore, customFieldStore, userStore } = useStore();
   const isEnterprise = userStore.isEnterprise;
   const isLoggedIn = userStore.isLoggedIn;
@@ -39,11 +43,16 @@ function SessionList() {
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
     _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
-  const isBookmark = activeTab.type === 'bookmark';
+  // const isBookmark = activeTab.type === 'bookmark';
   const isVault = isBookmark && isEnterprise;
   const activeSite = projectsStore.active;
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
+
+  useEffect(() => {
+    void searchStore.fetchSessions(true, isBookmark);
+  }, [location.pathname]);
+
 
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
@@ -61,7 +70,7 @@ function SessionList() {
       icon: ICONS.NO_SESSIONS,
       message: <SessionDateRange />
     };
-  }, [isBookmark, isVault, activeTab]);
+  }, [isBookmark, isVault, activeTab, location.pathname]);
   const [statusData, setStatusData] = React.useState<SessionStatus>({ status: 0, count: 0 });
 
 
@@ -101,11 +110,11 @@ function SessionList() {
     }
   }, [statusData, siteId]);
 
-  useEffect(() => {
-    if (siteId) {
-      void searchStore.fetchSessions();
-    }
-  }, [siteId])
+  // useEffect(() => {
+  //   if (siteId) {
+  //     void searchStore.fetchSessions();
+  //   }
+  // }, [siteId]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -121,11 +130,11 @@ function SessionList() {
     const { scrollY } = searchStore;
     window.scrollTo(0, scrollY);
 
-    if (total === 0 && !loading && !hasNoRecordings) {
-      setTimeout(() => {
-        void searchStore.fetchSessions();
-      }, 100);
-    }
+    // if (total === 0 && !loading && !hasNoRecordings) {
+    //   setTimeout(() => {
+    //     void searchStore.fetchSessions();
+    //   }, 100);
+    // }
 
     return () => {
       searchStore.setScrollPosition(window.scrollY);
