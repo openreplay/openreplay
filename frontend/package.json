@@ -4,9 +4,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "webpack serve",
-    "build": "yarn gen:icons && yarn gen:colors && rm -rf public && webpack",
+    "build": "pnpm gen:icons && pnpm gen:colors && rm -rf public && webpack",
     "upload:minio": "node ./scripts/upload-minio.js",
-    "deploy:minio": "yarn build:minio && yarn upload:minio",
+    "deploy:minio": "pnpm build:minio && pnpm upload:minio",
     "lint": "eslint --fix app; exit 0",
     "tsc": "tsc --noEmit --w --incremental false",
     "gen:constants": "node ./scripts/constants.js",
@@ -14,7 +14,7 @@
     "gen:colors": "node ./scripts/colors.js",
     "storybook": "start-storybook -p 6006",
     "flow": "flow",
-    "gen:static": "yarn gen:icons && yarn gen:colors",
+    "gen:static": "pnpm gen:icons && pnpm gen:colors",
     "build-storybook": "build-storybook",
     "test:ci": "jest --maxWorkers=1 --no-cache --coverage",
     "test": "jest --watch",
@@ -59,6 +59,7 @@
     "prismjs": "^1.29.0",
     "rc-time-picker": "^3.7.3",
     "react": "^18.2.0",
+    "react-calendar": "^5.0.0",
     "react-confirm": "^0.3.0-7",
     "react-daterange-picker": "^2.0.1",
     "react-dnd": "^16.0.1",
@@ -160,6 +161,5 @@
   },
   "engines": {
     "node": ">=10.14.1"
-  },
-  "packageManager": "yarn@3.2.1"
+  }
 }

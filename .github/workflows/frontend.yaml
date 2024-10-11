@@ -1,4 +1,5 @@
 name: Frontend Foss Deployment
+
 on:
   workflow_dispatch:
   push:
@@ -6,7 +7,7 @@ on:
       - dev
     paths:
       - frontend/**
-# Disable previous workflows for this action.
+
 concurrency:
   group: ${{ github.workflow }} #-${{ github.ref }}
   cancel-in-progress: true
@@ -18,13 +19,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Cache node modules
         uses: actions/cache@v4
         with:
           path: |
             /home/runner/work/openreplay/openreplay/frontend/node_modules
-            /home/runner/work/openreplay/openreplay/frontend/.yarn
-          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
+            /home/runner/.pnpm-store
+          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
@@ -47,7 +51,7 @@ jobs:
       - uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+          kubeconfig: ${{ secrets.OSS_KUBECONFIG }}
         id: setcontext
 
       - name: Building and Pushing frontend image
@@ -60,7 +64,7 @@ jobs:
           set -x
           cd frontend
           mv .env.sample .env
-          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:18-slim /bin/bash -c "yarn && yarn build"
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:18-slim /bin/bash -c "pnpm install && pnpm build"
           # https://github.com/docker/cli/issues/1134#issuecomment-613516912
           DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
           docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
@@ -85,7 +89,7 @@ jobs:
           # Deploy command
           mkdir -p /tmp/charts
           mv openreplay/charts/{ingress-nginx,frontend,quickwit,connector} /tmp/charts/
-          rm -rf  openreplay/charts/*
+          rm -rf openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
         env:
@@ -93,12 +97,10 @@ jobs:
           IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
           ENVIRONMENT: staging
 
-      ### Enterprise code deployment
-
       - uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+          kubeconfig: ${{ secrets.EE_KUBECONFIG }}
         id: setcontextee
 
       - uses: ./.github/composite-actions/update-keys
@@ -129,7 +131,7 @@ jobs:
           # Deploy command
           mkdir -p /tmp/charts
           mv openreplay/charts/{ingress-nginx,frontend,quickwit,connector} /tmp/charts/
-          rm -rf  openreplay/charts/*
+          rm -rf openreplay/charts/*
           mv /tmp/charts/* openreplay/charts/
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
         env:
@@ -137,13 +139,3 @@ jobs:
           # We're not passing -ee flag, because helm will add that.
           IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
           ENVIRONMENT: staging
-
-    # - name: Debug Job
-    #   # if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
-    #   env:
-    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}-ee
-    #     ENVIRONMENT: staging
-    #    with:
-    #      iimit-access-to-actor: true

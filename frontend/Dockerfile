@@ -1,31 +1,40 @@
-from node:18-slim AS builder
-workdir /work
+FROM oven/bun:1.1.30-slim
+
+WORKDIR /work/frontend
+
+COPY ../pnpm-lock.yaml /work/
+
 COPY . .
+
 RUN cp .env.sample .env
-RUN yarn 
-RUN yarn build
 
-FROM nginx:alpine as cicd
-LABEL maintainer=Rajesh<rajesh@openreplay.com>
-COPY public /var/www/openreplay
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN pnpm install --filter . --frozen-lockfile --dir /work/frontend
 
+RUN pnpm build
 
-# Default step in docker build
+FROM nginx:alpine AS cicd
+LABEL maintainer="Rajesh<rajesh@openreplay.com>"
+
+COPY --from=builder /work/frontend/public /var/www/openreplay
+
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
 FROM nginx:alpine
-LABEL maintainer=Rajesh<rajesh@openreplay.com>
+LABEL maintainer="Rajesh<rajesh@openreplay.com>"
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
-COPY --from=builder /work/public /var/www/openreplay
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY --from=builder /var/www/openreplay /var/www/openreplay
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 ENV GIT_SHA=$GIT_SHA
 
-EXPOSE 8080
 RUN chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d && \
     touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
+
+EXPOSE 8080
 
 USER nginx

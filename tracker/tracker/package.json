@@ -21,7 +21,6 @@
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
     "build": "bun run clean && bun run tscRun && bun run rollup && bun run compile",
-    "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
     "postversion": "bun run build",
@@ -39,7 +38,6 @@
     "eslint-plugin-prettier": "^5.0.1",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
-    "lint-staged": "^13.0.3",
     "prettier": "^3.0.3",
     "replace-in-files": "^2.0.3",
     "rollup": "^4.1.4",
@@ -57,13 +55,5 @@
   },
   "engines": {
     "node": ">=14.0"
-  },
-  "lint-staged": {
-    "*.{js,mjs,jsx,ts,tsx}": [
-      "eslint --fix --quiet"
-    ],
-    "*.{json,md,html,js,jsx,ts,tsx}": [
-      "prettier --write"
-    ]
   }
 }

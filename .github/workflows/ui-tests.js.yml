@@ -1,18 +1,18 @@
-# Checking unit and visual tests locally on every merge rq to dev and main
 name: Frontend tests
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
       - frontend/**
       - tracker/**
   pull_request:
-    branches: [ "dev", "main" ]
+    branches: ["dev", "main"]
     paths:
       - frontend/**
       - tracker/**
+
 env:
   API: ${{ secrets.E2E_API_ORIGIN }}
   ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
@@ -21,63 +21,78 @@ env:
   CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
   FOSS_PROJECT_KEY: ${{ secrets.FOSS_PROJECT_KEY }}
   FOSS_INGEST: ${{ secrets.FOSS_INGEST }}
+
 jobs:
   build-and-test:
     runs-on: macos-latest
     name: Build and test Tracker plus Replayer
     strategy:
       matrix:
-        node-version: [ 18.x ]
+        node-version: [18.x]
     steps:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
       - uses: actions/checkout@v3
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Cache tracker modules
+
+      # Install pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Cache pnpm node modules for Tracker
+      - name: Cache tracker node_modules
         uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('tracker/tracker/bun.lockb') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             test_tracker_build-{{ runner.OS }}-build-
             test_tracker_build-{{ runner.OS }}-
-      - name: Setup Testing packages
+
+      # Install dependencies for Tracker
+      - name: Setup Testing packages for Tracker
         run: |
           cd tracker/tracker
-          bun install
+          pnpm install
+
       - name: Build tracker inst
         run: |
           cd tracker/tracker
           bun run build
-      - name: Setup Testing UI Env
-        run: |
-          cd tracker/tracker-testing-playground
-          echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
-          echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
+
+      # Cache pnpm node_modules for Testing UI
       - name: Cache testing UI node modules
         uses: actions/cache@v3
         with:
           path: tracker/tracker-testing-playground/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.OS }}-build-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
-      - name: Setup Testing packages
+
+      # Install dependencies for Testing UI
+      - name: Setup Testing packages for Testing UI
         run: |
           cd tracker/tracker-testing-playground
-          yarn
-      - name: Cache node modules
+          pnpm install
+
+      # Cache pnpm node_modules for Frontend
+      - name: Cache frontend node_modules
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('frontend/yarn.lock') }}
+          key: ${{ runner.OS }}-build-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
+
+      # Set up environment for Frontend
       - name: Setup env
         run: |
           cd frontend
@@ -86,37 +101,45 @@ jobs:
           echo "ORIGIN=$API" >> .env
           echo "ASSETS_HOST=$ASSETS" >> .env
           echo "API_EDP=$APIEDP" >> .env
-          echo "SENTRY_ENABLED = false" >> .env
-          echo "SENTRY_URL = ''" >> .env
-          echo "CAPTCHA_ENABLED = false" >> .env
-          echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
-          echo "MINIO_ENDPOINT = ''" >> .env
-          echo "MINIO_PORT = ''" >> .env
-          echo "MINIO_USE_SSL = ''" >> .env
-          echo "MINIO_ACCESS_KEY = ''" >> .env
-          echo "MINIO_SECRET_KEY = ''" >> .env
-          echo "VERSION = '1.15.0'" >> .env
-          echo "TRACKER_VERSION = '10.0.0'" >> .env
-          echo "COMMIT_HASH = 'dev'" >> .env
+          echo "SENTRY_ENABLED=false" >> .env
+          echo "SENTRY_URL=''" >> .env
+          echo "CAPTCHA_ENABLED=false" >> .env
+          echo "CAPTCHA_SITE_KEY='asdad'" >> .env
+          echo "MINIO_ENDPOINT=''" >> .env
+          echo "MINIO_PORT=''" >> .env
+          echo "MINIO_USE_SSL=''" >> .env
+          echo "MINIO_ACCESS_KEY=''" >> .env
+          echo "MINIO_SECRET_KEY=''" >> .env
+          echo "VERSION='1.15.0'" >> .env
+          echo "TRACKER_VERSION='10.0.0'" >> .env
+          echo "COMMIT_HASH='dev'" >> .env
           echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
+
+      # Install dependencies for Frontend
       - name: Setup packages
         run: |
           cd frontend
-          yarn
+          pnpm install
+
+      # Run unit tests for Frontend
       - name: Run unit tests
         run: |
           cd frontend
-          yarn test:ci
+          pnpm test:ci
+
+      # Upload coverage reports to Codecov
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ui
           name: ui
+
+      # Run Testing frontend with pnpm
       - name: Run testing frontend
         run: |
           cd tracker/tracker-testing-playground
-          yarn start &> testing.log &
+          pnpm start &> testing.log &
           echo "Started"
           npm i -g wait-on
           echo "Got wait on"
@@ -125,6 +148,8 @@ jobs:
           npx wait-on http://localhost:3000
           echo "Done"
         timeout-minutes: 4
+
+      # Run frontend with pnpm
       - name: Run Frontend
         run: |
           cd frontend
@@ -135,21 +160,20 @@ jobs:
           npx wait-on http://0.0.0.0:3333
           echo "Done"
         timeout-minutes: 4
+
+      # Run visual tests with pnpm
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
-          yarn cy:test
-#        firefox have different viewport somehow
-#      - name: (Firefox) Run visual tests
-#        run: yarn cy:test-firefox
-#      - name: (Edge) Run visual tests
-#        run: yarn cy:test-edge
+          pnpm cy:test
         timeout-minutes: 5
+
+      # Upload Debug Info if tests fail
       - name: Upload Debug
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
         with:
-          name: 'Snapshots'
+          name: "Snapshots"
           path: |
             frontend/cypress/videos
             frontend/cypress/snapshots/replayer.cy.ts

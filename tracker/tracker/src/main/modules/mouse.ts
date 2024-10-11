@@ -136,7 +136,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   let direction = 0
   let directionChangeCount = 0
   let distance = 0
-  let checkIntervalId: NodeJS.Timer
+  let checkIntervalId: ReturnType<typeof setInterval> | null = null
   const shakeThreshold = 0.008
   const shakeCheckInterval = 225
 

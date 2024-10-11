@@ -1,0 +1,10 @@
+{
+  "name": "or-js-monorepo",
+  "version": "1.0.0",
+  "description": "entry file for all things javascript related in openreplay",
+  "scripts": {
+    "start-ui": "pnpm --filter openreplay start"
+  },
+  "keywords": [],
+  "author": "Nick <nick.delirium@pm.me>"
+}

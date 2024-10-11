@@ -1,5 +1,5 @@
-# Checking unit tests for tracker and assist
 name: Tracker tests
+
 on:
   workflow_dispatch:
   push:
@@ -10,6 +10,7 @@ on:
     branches: [ "dev", "main" ]
     paths:
       - tracker/**
+
 jobs:
   build-and-test:
     runs-on: macos-latest
@@ -18,50 +19,73 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
       - uses: actions/checkout@v3
+
+      # Install pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # Cache tracker node_modules
       - name: Cache tracker modules
         uses: actions/cache@v3
         with:
           path: tracker/tracker/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             test_tracker_build{{ runner.OS }}-build-
             test_tracker_build{{ runner.OS }}-
+
+      # Cache tracker-assist node_modules
       - name: Cache tracker-assist modules
         uses: actions/cache@v3
         with:
           path: tracker/tracker-assist/node_modules
-          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             test_tracker_build{{ runner.OS }}-build-
             test_tracker_build{{ runner.OS }}-
-      - name: Setup Testing packages
+
+      # Setup testing packages for Tracker
+      - name: Setup Testing packages for Tracker
         run: |
           cd tracker/tracker
-          bun install
-      - name: Jest tests
+          pnpm install
+
+      # Run Jest tests for Tracker
+      - name: Jest tests for Tracker
         run: |
           cd tracker/tracker
           bun run test:ci
-      - name: Building test
+
+      # Build Tracker project
+      - name: Build Tracker
         run: |
           cd tracker/tracker
           bun run build
-      - name: (TA) Setup Testing packages
+
+      # Setup testing packages for Tracker Assist
+      - name: (TA) Setup Testing packages for Tracker Assist
         run: |
           cd tracker/tracker-assist
-          bun install
-      - name: (TA) Jest tests
+          pnpm install
+
+      # Run Jest tests for Tracker Assist
+      - name: (TA) Jest tests for Tracker Assist
         run: |
           cd tracker/tracker-assist
           bun run test:ci
-      - name: (TA) Building test
+
+      # Build Tracker Assist project
+      - name: (TA) Build Tracker Assist
         run: |
           cd tracker/tracker-assist
           bun run build
+
+      # Upload coverage reports to Codecov
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: tracker
-          iame: tracker
+          name: tracker

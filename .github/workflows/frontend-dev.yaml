@@ -9,14 +9,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Cache node modules
-        uses: actions/cache@v1
+      - uses: oven-sh/setup-bun@v2
         with:
-          path: node_modules
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
+          bun-version: latest
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            ~/.pnpm-store
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.OS }}-build-
             ${{ runner.OS }}-
@@ -52,7 +59,7 @@ jobs:
           set -x
           cd frontend
           mv .env.sample .env
-          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "yarn && yarn build"
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "pnpm i && bun run build"
           # https://github.com/docker/cli/issues/1134#issuecomment-613516912
           DOCKER_BUILDKIT=1 docker build --target=cicd -t $DOCKER_REPO/frontend:${IMAGE_TAG} .
           docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
