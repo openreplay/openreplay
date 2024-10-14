@@ -34,6 +34,8 @@ import type {
   RawNgRx,
   RawGraphQlDeprecated,
   RawPerformanceTrack,
+  RawStringDictDeprecated,
+  RawSetNodeAttributeDictDeprecated,
   RawStringDict,
   RawSetNodeAttributeDict,
   RawResourceTimingDeprecated,
@@ -142,6 +144,10 @@ export type NgRx = RawNgRx & Timed
 export type GraphQlDeprecated = RawGraphQlDeprecated & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
+
+export type StringDictDeprecated = RawStringDictDeprecated & Timed
+
+export type SetNodeAttributeDictDeprecated = RawSetNodeAttributeDictDeprecated & Timed
 
 export type StringDict = RawStringDict & Timed
 
