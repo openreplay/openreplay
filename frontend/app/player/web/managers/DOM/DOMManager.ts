@@ -59,7 +59,7 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly screen: Screen;
   private readonly isMobile: boolean;
   private readonly stringDict: Record<number, string>;
-  private readonly globalDict: Record<string, string>;
+  private readonly globalDict: { get: (key: string) => string | undefined, all: () => Record<string, string> };
   public readonly time: number;
 
   constructor(params: {
@@ -68,12 +68,11 @@ export default class DOMManager extends ListWalker<Message> {
     setCssLoading: ConstructorParameters<typeof StylesManager>[1];
     time: number;
     stringDict: Record<number, string>;
-    globalDict: Record<string, string>
+    globalDict: { get: (key: string) => string | undefined, all: () => Record<string, string> };
   }) {
     super();
     this.screen = params.screen;
     this.isMobile = params.isMobile;
-    this.setCssLoading = params.setCssLoading;
     this.time = params.time;
     this.stringDict = params.stringDict;
     this.globalDict = params.globalDict;
@@ -296,40 +295,40 @@ export default class DOMManager extends ListWalker<Message> {
         this.setNodeAttribute(msg);
         return;
       case MType.SetNodeAttributeDict:
-        this.globalDict[msg.nameKey] === undefined &&
-        logger.error(
-          "No dictionary key for msg 'name': ",
-          msg,
-          this.globalDict
-        );
-        this.globalDict[msg.valueKey] === undefined &&
-        logger.error(
-          "No dictionary key for msg 'value': ",
-          msg,
-          this.globalDict
-        );
-        if (
-          this.globalDict[msg.nameKey] === undefined ||
-          this.globalDict[msg.valueKey] === undefined
-        ) {
+        const name = this.globalDict.get(msg.name);
+        const value = this.globalDict.get(msg.value);
+        if (name === undefined) {
+          logger.error(
+            "No dictionary key for msg 'name': ",
+            msg,
+            this.globalDict.all()
+          );
+          return;
+        }
+        if (value === undefined) {
+          logger.error(
+            "No dictionary key for msg 'value': ",
+            msg,
+            this.globalDict.all()
+          );
           return;
         }
         this.setNodeAttribute({
           id: msg.id,
-          name: this.globalDict[msg.nameKey],
-          value: this.globalDict[msg.valueKey],
+          name,
+          value,
         });
         return;
       case MType.SetNodeAttributeDictDeprecated:
         this.stringDict[msg.nameKey] === undefined &&
           logger.error(
-            "No dictionary key for msg 'name': ",
+            "No local dictionary key for msg 'name': ",
             msg,
             this.stringDict
           );
         this.stringDict[msg.valueKey] === undefined &&
           logger.error(
-            "No dictionary key for msg 'value': ",
+            "No local dictionary key for msg 'value': ",
             msg,
             this.stringDict
           );

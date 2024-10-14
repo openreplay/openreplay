@@ -283,6 +283,7 @@ message 50, "StringDictDeprecated" do
   uint "Key"
   string "Value"
 end
+# deprecated @ 10.2024 (v1.21) -> removed @ 2025
 message 51, "SetNodeAttributeDictDeprecated" do
   uint 'ID'
   uint 'NameKey'

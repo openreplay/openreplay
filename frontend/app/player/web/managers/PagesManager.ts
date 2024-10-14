@@ -14,7 +14,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
    * TODO: understand why and fix
    */
   private stringDicts: Record<number, string>[] = [{}];
-  private globalDictionary: Record<string, string> = {};
+  private globalDictionary: Map<string, string> = new Map();
 
   constructor(
     private screen: Screen,
@@ -30,7 +30,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
   falseOrder = false;
   appendMessage(m: Message): void {
     if (m.tp === MType.StringDict) {
-      this.globalDictionary[m.key] = m.value;
+      this.globalDictionary.set(m.key, m.value);
       return;
     }
     if (m.tp === MType.StringDictDeprecated) {
@@ -43,9 +43,6 @@ export default class PagesManager extends ListWalker<DOMManager> {
       currentDict[m.key] = m.value;
       return;
     }
-    if (m.tp === MType.SetNodeAttributeDict) {
-      console.log(this.list, this.last, m);
-    }
     if (m.tp === MType.CreateDocument) {
       if (!this.falseOrder) {
         this.stringDicts.unshift({});
@@ -54,10 +51,14 @@ export default class PagesManager extends ListWalker<DOMManager> {
         new DOMManager({
           screen: this.screen,
           isMobile: this.isMobile,
+          // TODO: this is a deprecated code on life support, remove it after 09.2025
           stringDict: this.stringDicts[0],
           time: m.time,
           setCssLoading: this.setCssLoading,
-          globalDict: this.globalDictionary,
+          globalDict: {
+            get: (key: string) => this.globalDictionary.get(key),
+            all: () => Object.fromEntries(this.globalDictionary),
+          },
         })
       );
       this.falseOrder = false;
