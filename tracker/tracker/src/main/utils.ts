@@ -95,6 +95,17 @@ export function canAccessIframe(iframe: HTMLIFrameElement) {
   }
 }
 
+export function canAccessTarget(target: any) {
+  try {
+    if (target.contentWindow) {
+      // If this property is inaccessible, it will throw due to cross-origin restrictions
+      return Boolean(target.contentWindow.location)
+    }
+  } catch (e) {
+    return false
+  }
+}
+
 function dec2hex(dec: number) {
   return dec.toString(16).padStart(2, '0')
 }
@@ -148,6 +159,10 @@ export function createEventListener(
   capture?: boolean,
   angularMode?: boolean,
 ) {
+  // we need to check if target is crossorigin frame or no and if we can access it
+  if (target instanceof HTMLIFrameElement && !canAccessIframe(target)) {
+    return
+  }
   let safeAddEventListener: 'addEventListener'
   if (angularMode) {
     safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
@@ -174,6 +189,9 @@ export function deleteEventListener(
   capture?: boolean,
   angularMode?: boolean,
 ) {
+  if (target instanceof HTMLIFrameElement && !canAccessIframe(target)) {
+    return
+  }
   let safeRemoveEventListener: 'removeEventListener'
   if (angularMode) {
     safeRemoveEventListener = ngSafeBrowserMethod('removeEventListener') as 'removeEventListener'
