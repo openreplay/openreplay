@@ -105,8 +105,8 @@ export default class Screen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      this.parentElement = null;
-      console.warn('BaseScreen: reattaching the screen.');
+      console.error('!!! web/Screen.ts#108: Tried to reattach the parent element.');
+      return;
     }
 
     parentElement.appendChild(this.screen);

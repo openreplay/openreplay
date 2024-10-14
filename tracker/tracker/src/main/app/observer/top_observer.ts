@@ -22,14 +22,16 @@ const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () =>
 export default class TopObserver extends Observer {
   private readonly options: Options
   private readonly iframeOffsets: IFrameOffsets = new IFrameOffsets()
+  readonly app: App
 
-  constructor(app: App, options: Partial<Options>) {
-    super(app, true)
+  constructor(params: { app: App; options: Partial<Options> }) {
+    super(params.app, true)
+    this.app = params.app
     this.options = Object.assign(
       {
         captureIFrames: true,
       },
-      options,
+      params.options,
     )
 
     // IFrames

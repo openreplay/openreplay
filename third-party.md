@@ -81,7 +81,6 @@ up to date with every new library you use.
 | react-dom                  | MIT              | JavaScript       |
 | react-google-recaptcha     | MIT              | JavaScript       |
 | react-json-view            | MIT              | JavaScript       |
-| react-lazyload             | MIT              | JavaScript       |
 | react-redux                | MIT              | JavaScript       |
 | react-router               | MIT              | JavaScript       |
 | react-router-dom           | MIT              | JavaScript       |
@@ -123,3 +122,4 @@ up to date with every new library you use.
 | prismjs                   | MIT              | JavaScript       |
 | virtua                   | MIT              | JavaScript       |
 | babel-plugin-prismjs     | MIT              | JavaScript       |
+| react-intersection-observer | MIT              | JavaScript       |

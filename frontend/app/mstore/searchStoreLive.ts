@@ -87,7 +87,7 @@ class SearchStoreLive {
   }
 
   edit(instance: Partial<Search>) {
-    this.instance = new Search(Object.assign(this.instance.toData(), instance));
+    this.instance = new Search(Object.assign({ ...this.instance }, instance));
     this.currentPage = 1;
   }
 

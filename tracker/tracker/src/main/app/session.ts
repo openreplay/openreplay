@@ -35,11 +35,12 @@ export default class Session {
   private tabId: string
   public userInfo: UserInfo
   private token: string | undefined
+  private readonly app: App
+  private readonly options: Options
 
-  constructor(
-    private readonly app: App,
-    private readonly options: Options,
-  ) {
+  constructor(params: { app: App; options: Options }) {
+    this.app = params.app
+    this.options = params.options
     this.createTabId()
   }
 

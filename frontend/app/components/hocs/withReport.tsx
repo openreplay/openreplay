@@ -4,7 +4,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';
-import { forceVisible } from 'react-lazyload';
 
 const TEXT_GENERATING = 'Generating report...';
 const TEXT_SUCCESS = 'Report successfully generated';
@@ -38,7 +37,6 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     };
 
     const renderPromise = async (): Promise<any> => {
-      forceVisible();
       setRendering(true);
       toast.info(TEXT_GENERATING, {
         autoClose: false,

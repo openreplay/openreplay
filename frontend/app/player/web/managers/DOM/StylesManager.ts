@@ -34,11 +34,11 @@ export default class StylesManager {
       this.linkLoadingCount++;
       this.setLoading(true);
       const addSkipAndResolve = (e: any) => {
-        this.skipCSSLinks.push(value); // watch out
+        this.skipCSSLinks.push(value);
         logger.error('skip node', e)
         resolve()
       }
-      timeoutId = setTimeout(addSkipAndResolve, 4000);
+      timeoutId = setTimeout(() => addSkipAndResolve('by timeout'), 5000);
 
       node.onload = () => {
         const doc = this.screen.document;
@@ -55,6 +55,7 @@ export default class StylesManager {
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
         this.setLoading(false)
+        this.linkLoadPromises = [];
       }
     });
     this.linkLoadPromises.push(promise);

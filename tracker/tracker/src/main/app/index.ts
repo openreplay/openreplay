@@ -335,17 +335,25 @@ export default class App {
     this.revID = this.options.revID
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
-    this.sanitizer = new Sanitizer(this, options)
-    this.nodes = new Nodes(this.options.node_id, Boolean(options.angularMode))
-    this.observer = new Observer(this, options)
+    this.sanitizer = new Sanitizer({ app: this, options })
+    this.nodes = new Nodes({
+      node_id: this.options.node_id,
+      angularMode: Boolean(options.angularMode),
+    })
+    this.observer = new Observer({ app: this, options })
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
-    this.session = new Session(this, this.options)
-    this.attributeSender = new AttributeSender(this, Boolean(this.options.disableStringDict))
+    this.session = new Session({ app: this, options: this.options })
+    this.attributeSender = new AttributeSender({
+      app: this,
+      isDictDisabled: Boolean(this.options.disableStringDict || this.options.crossdomain?.enabled),
+    })
     this.featureFlags = new FeatureFlags(this)
-    this.tagWatcher = new TagWatcher(this.sessionStorage, this.debug.error, (tag) => {
-      this.send(TagTrigger(tag) as Message)
+    this.tagWatcher = new TagWatcher({
+      sessionStorage: this.sessionStorage,
+      errLog: this.debug.error,
+      onTag: (tag) => this.send(TagTrigger(tag) as Message),
     })
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
@@ -895,12 +903,12 @@ export default class App {
 
     const createListener = () =>
       target
-      ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
-      : null
+        ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
+        : null
     const deleteListener = () =>
       target
-      ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
-      : null
+        ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
+        : null
 
     this.attachStartCallback(createListener, useSafe)
     this.attachStopCallback(deleteListener, useSafe)

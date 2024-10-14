@@ -68,14 +68,16 @@ function Player(props: IProps) {
   const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
-  const [isAttached, setAttached] = React.useState(false);
+  const isAttached = React.useRef(false);
 
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
-    const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
-    if (parentElement && !isAttached) {
-      playerContext.player.attach(parentElement);
-      setAttached(true);
+    if (isReady && !isAttached.current) {
+      const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
+      if (parentElement) {
+        playerContext.player.attach(parentElement);
+        isAttached.current = true;
+      }
     }
   }, [isReady]);
 

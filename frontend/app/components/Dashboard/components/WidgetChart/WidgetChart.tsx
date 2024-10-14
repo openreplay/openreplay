@@ -33,7 +33,7 @@ import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/
 import SankeyChart from 'Shared/Insights/SankeyChart';
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from "Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy";
-import { Empty } from 'antd';
+import { useInView } from "react-intersection-observer";
 
 interface Props {
     metric: any;
@@ -43,6 +43,10 @@ interface Props {
 }
 
 function WidgetChart(props: Props) {
+    const { ref, inView } = useInView({
+        triggerOnce: true,
+        rootMargin: "200px 0px",
+    });
     const {isSaved = false, metric, isTemplate} = props;
     const {dashboardStore, metricStore, sessionStore} = useStore();
     const _metric: any = metricStore.instance;
@@ -105,6 +109,7 @@ function WidgetChart(props: Props) {
 
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
     const loadPage = () => {
+        if (!inView) return;
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
             prevMetricRef.current = metric;
             return;
@@ -117,7 +122,18 @@ function WidgetChart(props: Props) {
     useEffect(() => {
         _metric.updateKey('page', 1);
         loadPage();
-    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue, metric.startType, metric.metricFormat]);
+    }, [
+      drillDownPeriod,
+      period,
+      depsString,
+      metric.metricType,
+      metric.metricOf,
+      metric.viewType,
+      metric.metricValue,
+      metric.startType,
+      metric.metricFormat,
+      inView,
+    ]);
     useEffect(loadPage, [_metric.page]);
 
 
@@ -254,9 +270,11 @@ function WidgetChart(props: Props) {
         return <div>Unknown metric type</div>;
     };
     return (
+      <div ref={ref}>
         <Loader loading={loading} style={{height: `240px`}}>
             <div style={{minHeight: 240}}>{renderChart()}</div>
         </Loader>
+      </div>
     );
 }
 

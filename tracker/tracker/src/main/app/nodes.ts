@@ -9,11 +9,13 @@ export default class Nodes {
   private readonly nodeCallbacks: Array<NodeCallback> = []
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
   private nextNodeId = 0
+  private readonly node_id: string
+  private readonly angularMode: boolean
 
-  constructor(
-    private readonly node_id: string,
-    private readonly angularMode: boolean,
-  ) {}
+  constructor(params: { node_id: string; angularMode: boolean }) {
+    this.node_id = params.node_id
+    this.angularMode = params.angularMode
+  }
 
   syntheticMode(frameOrder: number) {
     const maxSafeNumber = Number.MAX_SAFE_INTEGER
@@ -36,7 +38,12 @@ export default class Nodes {
     this.nodes.forEach((node) => cb(node))
   }
 
-  attachNodeListener = (node: Node, type: string, listener: EventListener, useCapture = true): void => {
+  attachNodeListener = (
+    node: Node,
+    type: string,
+    listener: EventListener,
+    useCapture = true,
+  ): void => {
     const id = this.getID(node)
     if (id === undefined) {
       return
