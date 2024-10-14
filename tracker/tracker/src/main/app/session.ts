@@ -91,7 +91,7 @@ export default class Session {
     this.userInfo = userInfo
   }
 
-  private getPageNumber(): number | undefined {
+  public getPageNumber = (): number | undefined => {
     const pageNoStr = this.app.sessionStorage.getItem(this.options.session_pageno_key)
     if (pageNoStr == null) {
       return undefined
@@ -99,7 +99,7 @@ export default class Session {
     return parseInt(pageNoStr)
   }
 
-  incPageNo(): number {
+  incPageNo = (): number => {
     let pageNo = this.getPageNumber()
     if (pageNo === undefined) {
       pageNo = 0
