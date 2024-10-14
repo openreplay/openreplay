@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { Table, Typography } from 'antd';
 import type { TableProps } from 'antd';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -11,6 +11,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import FunnelIssueModal from '../FunnelIssueModal';
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
+const { Text } = Typography;
 
 interface Issue {
   issueId: string;
@@ -37,6 +38,20 @@ const columns: TableProps<Issue>['columns'] = [
     key: 'title',
   },
   {
+    title: 'Page / Element',
+    dataIndex: 'contextString',
+    key: 'contextString',
+    render: (text: string) => (
+      <Text ellipsis style={{
+        width: 200,  // Adjust width here as needed
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+      }}>{text}</Text>
+    ),
+    width: 200,
+  },
+  {
     title: '# Users Affected',
     dataIndex: 'affectedUsers',
     key: 'affectedUsers',
@@ -55,13 +70,13 @@ const columns: TableProps<Issue>['columns'] = [
   },
 ];
 
-interface Props {
+interface Props extends RouteComponentProps {
   loading?: boolean;
   issues: Issue[];
   history: any;
   location: any;
 }
-function FunnelIssuesList(props: RouteComponentProps<Props>) {
+function FunnelIssuesList(props: Props) {
   const { issues, loading } = props;
   const { funnelStore } = useStore();
   const issuesSort = useObserver(() => funnelStore.issuesSort);
