@@ -4,6 +4,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
 import { Button, Checkbox, Form, Input, Loader } from 'UI';
+import { toast } from 'react-toastify';
 
 function IntegrationForm(props: any) {
   const { formFields, name, integrated } = props;
@@ -31,6 +32,15 @@ function IntegrationForm(props: any) {
     onSave(customPath || name).then(() => {
       fetchList();
       props.onClose();
+    }).catch(async (error) => {
+      if (error.response) {
+        const errorResponse = await error.response.json();
+        if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
+          toast.error(errorResponse.errors.map((e: any) => e).join(', '));
+        } else {
+          toast.error('Failed to save integration');
+        }
+      }
     });
   };
 
