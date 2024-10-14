@@ -671,7 +671,7 @@ cdef class PerformanceTrack(PyMessage):
         self.used_js_heap_size = used_js_heap_size
 
 
-cdef class StringDict(PyMessage):
+cdef class StringDictDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long key
     cdef public str value
@@ -682,7 +682,7 @@ cdef class StringDict(PyMessage):
         self.value = value
 
 
-cdef class SetNodeAttributeDict(PyMessage):
+cdef class SetNodeAttributeDictDeprecated(PyMessage):
     cdef public int __id__
     cdef public unsigned long id
     cdef public unsigned long name_key
@@ -693,6 +693,30 @@ cdef class SetNodeAttributeDict(PyMessage):
         self.id = id
         self.name_key = name_key
         self.value_key = value_key
+
+
+cdef class StringDict(PyMessage):
+    cdef public int __id__
+    cdef public str key
+    cdef public str value
+
+    def __init__(self, str key, str value):
+        self.__id__ = 43
+        self.key = key
+        self.value = value
+
+
+cdef class SetNodeAttributeDict(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long id
+    cdef public str name
+    cdef public str value
+
+    def __init__(self, unsigned long id, str name, str value):
+        self.__id__ = 52
+        self.id = id
+        self.name = name
+        self.value = value
 
 
 cdef class ResourceTimingDeprecated(PyMessage):

@@ -792,10 +792,37 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeStringDictDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &StringDictDeprecated{}
+	if msg.Key, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetNodeAttributeDictDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetNodeAttributeDictDeprecated{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.NameKey, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ValueKey, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeStringDict(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &StringDict{}
-	if msg.Key, err = reader.ReadUint(); err != nil {
+	if msg.Key, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.Value, err = reader.ReadString(); err != nil {
@@ -810,10 +837,10 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	if msg.ID, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.NameKey, err = reader.ReadUint(); err != nil {
+	if msg.Name, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.ValueKey, err = reader.ReadUint(); err != nil {
+	if msg.Value, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2121,8 +2148,12 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 49:
 		return DecodePerformanceTrack(reader)
 	case 50:
-		return DecodeStringDict(reader)
+		return DecodeStringDictDeprecated(reader)
 	case 51:
+		return DecodeSetNodeAttributeDictDeprecated(reader)
+	case 43:
+		return DecodeStringDict(reader)
+	case 52:
 		return DecodeSetNodeAttributeDict(reader)
 	case 53:
 		return DecodeResourceTimingDeprecated(reader)
