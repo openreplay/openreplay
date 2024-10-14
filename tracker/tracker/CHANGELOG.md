@@ -1,12 +1,14 @@
 # 15.0.0
 
-- new webvitals messages source
+- new webvitals messages source (new msg type)
+- new structure for string dictionary (new msg type)
 
 # 14.0.10
 
 - adjust timestamps for messages from tracker instances inside child iframes (if they were loaded later)
 - restart child trackers if parent tracker is restarted
 - fixes for general stability of crossdomain iframe tracking
+- disable string dictionary for crossdomain mode (for now)
 
 # 14.0.9
 
