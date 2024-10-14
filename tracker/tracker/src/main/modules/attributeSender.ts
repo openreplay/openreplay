@@ -17,11 +17,13 @@ export class StringDictionary {
 
 export default class AttributeSender {
   private dict = new StringDictionary()
+  private readonly app: App
+  private readonly isDictDisabled: boolean
 
-  constructor(
-    private readonly app: App,
-    private readonly isDictDisabled: boolean,
-  ) {}
+  constructor(options: { app: App; isDictDisabled: boolean }) {
+    this.app = options.app
+    this.isDictDisabled = options.isDictDisabled
+  }
 
   public sendSetAttribute(id: number, name: string, value: string) {
     if (this.isDictDisabled) {
