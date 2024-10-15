@@ -1,6 +1,8 @@
 public
 .cache
 node_modules
+backend/pkg/mod
+backend/pkg/sumdb
 *DS_Store
 *.env
 *.log
