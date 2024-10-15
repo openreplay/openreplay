@@ -16,9 +16,9 @@ class TagWatcher {
     this.sessionStorage = params.sessionStorage
     this.errLog = params.errLog
     this.onTag = params.onTag
-
+    // @ts-ignore
     const tags: { id: number; selector: string }[] = JSON.parse(
-      sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
+      params.sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
     )
     this.setTags(tags)
     this.observer = new IntersectionObserver((entries) => {

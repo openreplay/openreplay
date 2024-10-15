@@ -86,6 +86,7 @@ export default class Assist {
   private socket: Socket | null = null
   private peer: Peer | null = null
   private canvasPeers: Record<number, Peer | null> = {}
+  private canvasNodeCheckers: Map<number, any> = new Map()
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
   private remoteControl: RemoteControl | null = null;
@@ -674,6 +675,20 @@ export default class Assist {
           app.debug.error,
         )
         this.canvasMap.set(id, canvasHandler)
+        if (this.canvasNodeCheckers.has(id)) {
+          clearInterval(this.canvasNodeCheckers.get(id))
+        }
+        const int = setInterval(() => {
+          const isPresent = node.ownerDocument.defaultView && node.isConnected
+          if (!isPresent) {
+            canvasHandler.stop()
+            this.canvasMap.delete(id)
+            this.canvasPeers[id]?.destroy()
+            this.canvasPeers[id] = null
+            clearInterval(int)
+          }
+        }, 5000)
+        this.canvasNodeCheckers.set(id, int)
       }
     })
   }
@@ -703,6 +718,10 @@ export default class Assist {
       this.socket.disconnect()
       this.app.debug.log('Socket disconnected')
     }
+    this.canvasMap.clear()
+    this.canvasPeers = []
+    this.canvasNodeCheckers.forEach((int) => clearInterval(int))
+    this.canvasNodeCheckers.clear()
   }
 }
 

@@ -1,6 +1,5 @@
 import Observer from './observer.js'
 import { isElementNode, hasTag } from '../guards.js'
-import Network from '../../modules/network.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
@@ -56,7 +55,7 @@ export default class TopObserver extends Observer {
   private readonly contextCallbacks: Array<ContextCallback> = []
 
   // Attached once per Tracker instance
-  private readonly contextsSet: Set<Window> = new Set()
+  private readonly contextsSet: WeakSet<Window> = new WeakSet()
   attachContextCallback(cb: ContextCallback) {
     this.contextCallbacks.push(cb)
   }
@@ -65,7 +64,7 @@ export default class TopObserver extends Observer {
     return this.iframeOffsets.getDocumentOffset(doc)
   }
 
-  private iframeObservers: IFrameObserver[] = []
+  private iframeObservers: WeakMap<HTMLIFrameElement | Document, IFrameObserver> = new WeakMap()
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
     // setTimeout is required. Otherwise some event listeners (scroll, mousemove) applied in modules
@@ -73,16 +72,12 @@ export default class TopObserver extends Observer {
     const handle = this.app.safe(() =>
       setTimeout(() => {
         const id = this.app.nodes.getID(iframe)
-        if (id === undefined) {
-          //log
-          return
-        }
-        if (!canAccessIframe(iframe)) return
+        if (id === undefined || !canAccessIframe(iframe)) return
         const currentWin = iframe.contentWindow
         const currentDoc = iframe.contentDocument
         if (currentDoc && currentDoc !== doc) {
           const observer = new IFrameObserver(this.app)
-          this.iframeObservers.push(observer)
+          this.iframeObservers.set(iframe, observer)
           observer.observe(iframe) // TODO: call unregisterNode for the previous doc if present (incapsulate: one iframe - one observer)
           doc = currentDoc
 
@@ -106,10 +101,10 @@ export default class TopObserver extends Observer {
     handle()
   }
 
-  private shadowRootObservers: ShadowRootObserver[] = []
+  private shadowRootObservers: WeakMap<ShadowRoot, ShadowRootObserver> = new WeakMap()
   private handleShadowRoot(shRoot: ShadowRoot) {
     const observer = new ShadowRootObserver(this.app)
-    this.shadowRootObservers.push(observer)
+    this.shadowRootObservers.set(shRoot, observer)
     observer.observe(shRoot.host)
   }
 
@@ -153,17 +148,15 @@ export default class TopObserver extends Observer {
     this.app.nodes.clear()
     this.app.nodes.syntheticMode(frameOder)
     const iframeObserver = new IFrameObserver(this.app)
-    this.iframeObservers.push(iframeObserver)
+    this.iframeObservers.set(window.document, iframeObserver)
     iframeObserver.syntheticObserve(rootNodeId, window.document)
   }
 
   disconnect() {
     this.iframeOffsets.clear()
     Element.prototype.attachShadow = attachShadowNativeFn
-    this.iframeObservers.forEach((o) => o.disconnect())
-    this.iframeObservers = []
-    this.shadowRootObservers.forEach((o) => o.disconnect())
-    this.shadowRootObservers = []
+    this.iframeObservers = new WeakMap()
+    this.shadowRootObservers = new WeakMap()
     super.disconnect()
   }
 }

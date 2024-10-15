@@ -1,8 +1,12 @@
-import TagWatcher, { WATCHED_TAGS_KEY } from '../main/modules/TagWatcher'
+import TagWatcher, { WATCHED_TAGS_KEY } from '../main/modules/tagWatcher'
 import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globals'
 
+const getMockSaved = () => '[{"id":1,"selector":"div"},{"id":2,"selector":"span"}]'
 describe('TagWatcher', () => {
-  let sessionStorageMock: Storage
+  const sessionStorageMock = {
+    getItem: getMockSaved,
+    setItem: jest.fn(),
+  } as unknown as Storage
   let errLogMock: (args: any[]) => void
   const onTag = jest.fn()
   let mockObserve: Function
@@ -10,11 +14,6 @@ describe('TagWatcher', () => {
   let mockDisconnect: Function
 
   beforeEach(() => {
-    sessionStorageMock = {
-      // @ts-ignore
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-    }
     errLogMock = jest.fn()
     mockObserve = jest.fn()
     mockUnobserve = jest.fn()
@@ -46,11 +45,9 @@ describe('TagWatcher', () => {
   }
 
   test('constructor initializes with tags from sessionStorage', () => {
-    // @ts-ignore
-    sessionStorageMock.getItem.mockReturnValue(
-      '[{"id":1,"selector":"div"},{"id":2,"selector":"span"}]',
-    )
-    const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
+    const watcher = new TagWatcher({
+      sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
+    })
     expect(watcher.tags).toEqual([
       { id: 1, selector: 'div' },
       { id: 2, selector: 'span' },
@@ -73,7 +70,9 @@ describe('TagWatcher', () => {
           }),
       }),
     )
-    const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
+    const watcher = new TagWatcher({
+      sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
+    })
     await watcher.fetchTags('https://localhost.com', '123')
     expect(watcher.tags).toEqual([
       { id: 1, selector: 'div' },
@@ -87,7 +86,9 @@ describe('TagWatcher', () => {
   })
 
   test('setTags sets intervals for each tag', () => {
-    const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
+    const watcher = new TagWatcher({
+      sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
+    })
     watcher.setTags([
       { id: 1, selector: 'div' },
       { id: 2, selector: 'p' },
@@ -98,7 +99,9 @@ describe('TagWatcher', () => {
   })
 
   test('onTagRendered sends messages', () => {
-    const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
+    const watcher = new TagWatcher({
+      sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
+    })
     watcher.setTags([{ id: 1, selector: 'div' }])
     // @ts-ignore
     document.querySelectorAll.mockReturnValue([{ __or_watcher_tagname: 'div' }]) // Mock a found element
@@ -109,7 +112,9 @@ describe('TagWatcher', () => {
   })
 
   test('clear method clears all intervals and resets tags', () => {
-    const watcher = new TagWatcher(sessionStorageMock, errLogMock, onTag)
+    const watcher = new TagWatcher({
+      sessionStorage: sessionStorageMock, errLog: errLogMock, onTag
+    })
     watcher.setTags([
       { id: 1, selector: 'div' },
       { id: 2, selector: 'p' },

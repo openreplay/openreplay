@@ -21,8 +21,11 @@ describe('Sanitizer', () => {
         getID: (el: { mockId: number }) => el.mockId,
       },
     }
-    // @ts-expect-error
-    sanitizer = new Sanitizer(app, options)
+    sanitizer = new Sanitizer({
+      // @ts-expect-error
+      app,
+      options,
+    })
   })
 
   afterEach(() => {
@@ -78,7 +81,7 @@ describe('Sanitizer', () => {
     }
 
     // @ts-expect-error
-    sanitizer = new Sanitizer(app, options)
+    sanitizer = new Sanitizer({ app, options })
 
     const spanNode = document.createElement('span')
     const divNode = document.createElement('div')

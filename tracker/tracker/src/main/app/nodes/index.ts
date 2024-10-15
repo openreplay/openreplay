@@ -1,20 +1,30 @@
-import { createEventListener, deleteEventListener } from '../utils.js'
+import { createEventListener, deleteEventListener } from '../../utils.js'
+import Maintainer, { MaintainerOptions } from './maintainer.js'
 
 type NodeCallback = (node: Node, isStart: boolean) => void
 type ElementListener = [string, EventListener, boolean]
 
+export interface NodesOptions {
+  node_id: string
+  forceNgOff: boolean
+  maintainer?: Partial<MaintainerOptions>
+}
+
 export default class Nodes {
-  private nodes: Array<Node | void> = []
+  private readonly nodes: Map<number, Node | void> = new Map()
   private totalNodeAmount = 0
   private readonly nodeCallbacks: Array<NodeCallback> = []
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
   private nextNodeId = 0
   private readonly node_id: string
-  private readonly angularMode: boolean
+  private readonly forceNgOff: boolean
+  private readonly maintainer: Maintainer
 
-  constructor(params: { node_id: string; angularMode: boolean }) {
+  constructor(params: NodesOptions) {
     this.node_id = params.node_id
-    this.angularMode = params.angularMode
+    this.forceNgOff = params.forceNgOff
+    this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.maintainer)
+    this.maintainer.start()
   }
 
   syntheticMode(frameOrder: number) {
@@ -30,12 +40,12 @@ export default class Nodes {
   }
 
   // Attached once per Tracker instance
-  attachNodeCallback = (nodeCallback: NodeCallback): void => {
-    this.nodeCallbacks.push(nodeCallback)
+  attachNodeCallback = (nodeCallback: NodeCallback): number => {
+    return this.nodeCallbacks.push(nodeCallback)
   }
 
   scanTree = (cb: (node: Node | void) => void) => {
-    this.nodes.forEach((node) => cb(node))
+    this.nodes.forEach((node) => (node ? cb(node) : undefined))
   }
 
   attachNodeListener = (
@@ -48,7 +58,7 @@ export default class Nodes {
     if (id === undefined) {
       return
     }
-    createEventListener(node, type, listener, useCapture, this.angularMode)
+    createEventListener(node, type, listener, useCapture, this.forceNgOff)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
@@ -64,23 +74,23 @@ export default class Nodes {
       id = this.nextNodeId
       this.totalNodeAmount++
       this.nextNodeId++
-      this.nodes[id] = node
+      this.nodes.set(id, node)
       ;(node as any)[this.node_id] = id
     }
     return [id, isNew]
   }
 
-  unregisterNode(node: Node): number | undefined {
+  unregisterNode = (node: Node): number | undefined => {
     const id = (node as any)[this.node_id]
     if (id !== undefined) {
       ;(node as any)[this.node_id] = undefined
       delete (node as any)[this.node_id]
-      delete this.nodes[id]
+      this.nodes.delete(id)
       const listeners = this.elementListeners.get(id)
       if (listeners !== undefined) {
         this.elementListeners.delete(id)
         listeners.forEach((listener) =>
-          deleteEventListener(node, listener[0], listener[1], listener[2], this.angularMode),
+          deleteEventListener(node, listener[0], listener[1], listener[2], this.forceNgOff),
         )
       }
       this.totalNodeAmount--
@@ -93,8 +103,7 @@ export default class Nodes {
     // but its still better than keeping dead nodes or undef elements
     // plus we keep our index positions for new/alive nodes
     // performance test: 3ms for 30k nodes with 17k dead ones
-    for (let i = 0; i < this.nodes.length; i++) {
-      const node = this.nodes[i]
+    for (const [_, node] of this.nodes) {
       if (node && !document.contains(node)) {
         this.unregisterNode(node)
       }
@@ -111,7 +120,7 @@ export default class Nodes {
   }
 
   getNode(id: number) {
-    return this.nodes[id]
+    return this.nodes.get(id)
   }
 
   getNodeCount() {
@@ -119,14 +128,13 @@ export default class Nodes {
   }
 
   clear(): void {
-    for (let id = 0; id < this.nodes.length; id++) {
-      const node = this.nodes[id]
-      if (!node) {
-        continue
+    for (const [_, node] of this.nodes) {
+      if (node) {
+        this.unregisterNode(node)
       }
-      this.unregisterNode(node)
     }
+
     this.nextNodeId = 0
-    this.nodes.length = 0
+    this.nodes.clear()
   }
 }

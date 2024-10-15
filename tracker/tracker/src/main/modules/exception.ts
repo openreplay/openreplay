@@ -1,7 +1,7 @@
 import type App from '../app/index.js'
 import type Message from '../app/messages.gen.js'
 import { JSException } from '../app/messages.gen.js'
-import ErrorStackParser from 'error-stack-parser'
+import { parse } from 'error-stack-parser-es'
 
 export interface Options {
   captureExceptions: boolean
@@ -34,7 +34,7 @@ export function getExceptionMessage(
 ): Message {
   let stack = fallbackStack
   try {
-    stack = ErrorStackParser.parse(error)
+    stack = parse(error)
   } catch (e) {}
   return JSException(error.name, error.message, JSON.stringify(stack), JSON.stringify(metadata))
 }

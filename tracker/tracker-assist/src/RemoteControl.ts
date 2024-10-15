@@ -1,7 +1,7 @@
 import Mouse from './Mouse.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { controlConfirmDefault, } from './ConfirmWindow/defaults.js'
-import type { Options as AssistOptions, } from './Assist'
+import type { Options as AssistOptions, } from './Assist.js'
 
 export enum RCStatus {
   Disabled,
