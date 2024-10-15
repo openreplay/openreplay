@@ -378,12 +378,15 @@ export default class App {
        * */
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       setInterval(() => {
+        if (document.hidden) {
+          return
+        }
         window.parent.postMessage(
           {
             line: proto.polling,
             context: this.contextId,
           },
-          '*',
+          options.crossdomain?.parentDomain ?? '*',
         )
       }, 250)
     } else {
@@ -480,13 +483,11 @@ export default class App {
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
       event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
-      const pageIframes = Array.from(document.querySelectorAll('iframe'))
-      this.pageFrames = pageIframes
       const signalId = async () => {
         if (event.source === null) {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
-        const id = await this.checkNodeId(pageIframes, event.source)
+        const id = await this.checkNodeId(event.source)
         if (id && !this.trackedFrames.includes(data.context)) {
           try {
             this.trackedFrames.push(data.context)
@@ -514,7 +515,7 @@ export default class App {
             console.error(e)
           }
         } else {
-          this.debug.log('Couldnt get node id for iframe', event.source, pageIframes)
+          this.debug.log('Couldnt get node id for iframe', event.source)
         }
       }
       void signalId()
@@ -610,7 +611,31 @@ export default class App {
 
   signalIframeTracker = () => {
     const thisTab = this.session.getTabId()
-    const signalToParent = (n: number) => {
+    window.parent.postMessage(
+      {
+        line: proto.iframeSignal,
+        source: thisTab,
+        context: this.contextId,
+      },
+      this.options.crossdomain?.parentDomain ?? '*',
+    )
+
+    /**
+     * since we need to wait uncertain amount of time
+     * and I don't want to have recursion going on,
+     * we'll just use a timeout loop with backoff
+     * */
+    const maxRetries = 10
+    let retries = 0
+    let delay = 250
+    let cumulativeDelay = 0
+    let stopAttempts = false
+
+    const checkAndSendMessage = () => {
+      if (stopAttempts || this.checkStatus()) {
+        stopAttempts = true
+        return
+      }
       window.parent.postMessage(
         {
           line: proto.iframeSignal,
@@ -619,14 +644,21 @@ export default class App {
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
-      console.log('trying to signal to parent', n)
-      setTimeout(() => {
-        if (!this.checkStatus() && n < 100) {
-          void signalToParent(n + 1)
-        }
-      }, 250)
+      console.log('Trying to signal to parent, attempt:', retries + 1)
+      retries++
     }
-    void signalToParent(1)
+
+    for (let i = 0; i < maxRetries; i++) {
+      if (this.checkStatus()) {
+        stopAttempts = true
+        break
+      }
+      cumulativeDelay += delay
+      setTimeout(() => {
+        checkAndSendMessage()
+      }, cumulativeDelay)
+      delay *= 1.5
+    }
   }
 
   startTimeout: ReturnType<typeof setTimeout> | null = null
@@ -638,32 +670,35 @@ export default class App {
     }
   }
 
-  private async checkNodeId(
-    iframes: HTMLIFrameElement[],
-    source: MessageEventSource,
-  ): Promise<number | null> {
-    for (const iframe of iframes) {
-      if (iframe.contentWindow && iframe.contentWindow === source) {
-        /**
-         * Here we're trying to get node id from the iframe (which is kept in observer)
-         * because of async nature of dom initialization, we give 100 retries with 100ms delay each
-         * which equals to 10 seconds. This way we have a period where we give app some time to load
-         * and tracker some time to parse the initial DOM tree even on slower devices
-         * */
-        let tries = 0
-        while (tries < 100) {
-          // @ts-ignore
-          const potentialId = iframe[this.options.node_id]
-          if (potentialId !== undefined) {
-            tries = 100
-            return potentialId
-          } else {
-            tries++
-            await delay(100)
-          }
-        }
-
-        return null
+  private async checkNodeId(source: MessageEventSource): Promise<number | null> {
+    let targetFrame
+    if (this.pageFrames.length > 0) {
+      targetFrame = this.pageFrames.find((frame) => frame.contentWindow === source)
+    }
+    if (!targetFrame || !this.pageFrames.length) {
+      const pageIframes = Array.from(document.querySelectorAll('iframe'))
+      this.pageFrames = pageIframes
+      targetFrame = pageIframes.find((frame) => frame.contentWindow === source)
+    }
+    if (!targetFrame) {
+      return null
+    }
+    /**
+     * Here we're trying to get node id from the iframe (which is kept in observer)
+     * because of async nature of dom initialization, we give 100 retries with 100ms delay each
+     * which equals to 10 seconds. This way we have a period where we give app some time to load
+     * and tracker some time to parse the initial DOM tree even on slower devices
+     * */
+    let tries = 0
+    while (tries < 100) {
+      // @ts-ignore
+      const potentialId = targetFrame[this.options.node_id]
+      if (potentialId !== undefined) {
+        tries = 100
+        return potentialId
+      } else {
+        tries++
+        await delay(100)
       }
     }
 
@@ -1502,7 +1537,7 @@ export default class App {
       }
       this.canvasRecorder?.startTracking()
 
-      if (this.features['usability-test']) {
+      if (this.features['usability-test'] && !this.insideIframe) {
         this.uxtManager = this.uxtManager
           ? this.uxtManager
           : new UserTestManager(this, uxtStorageKey)
@@ -1589,14 +1624,12 @@ export default class App {
 
   async waitStart() {
     return new Promise((resolve) => {
-      const check = () => {
+      const int = setInterval(() => {
         if (this.canStart) {
+          clearInterval(int)
           resolve(true)
-        } else {
-          setTimeout(check, 25)
         }
-      }
-      check()
+      }, 100)
     })
   }
 
