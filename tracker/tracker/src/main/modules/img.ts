@@ -99,7 +99,7 @@ export default function (app: App): void {
         }
       }
     }) as MutationCallback,
-    app.options.angularMode,
+    app.options.forceNgOff,
   )
 
   app.attachStopCallback(() => {

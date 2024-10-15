@@ -119,7 +119,7 @@ export default abstract class Observer {
         }
         this.commitNodes()
       }) as MutationCallback,
-      this.app.options.angularMode,
+      this.app.options.forceNgOff,
     )
   }
 

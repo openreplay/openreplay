@@ -10,11 +10,11 @@ export default class Nodes {
   private readonly elementListeners: Map<number, Array<ElementListener>> = new Map()
   private nextNodeId = 0
   private readonly node_id: string
-  private readonly angularMode: boolean
+  private readonly forceNgOff: boolean
 
-  constructor(params: { node_id: string; angularMode: boolean }) {
+  constructor(params: { node_id: string; forceNgOff: boolean }) {
     this.node_id = params.node_id
-    this.angularMode = params.angularMode
+    this.forceNgOff = params.forceNgOff
   }
 
   syntheticMode(frameOrder: number) {
@@ -48,7 +48,7 @@ export default class Nodes {
     if (id === undefined) {
       return
     }
-    createEventListener(node, type, listener, useCapture, this.angularMode)
+    createEventListener(node, type, listener, useCapture, this.forceNgOff)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
@@ -80,7 +80,7 @@ export default class Nodes {
       if (listeners !== undefined) {
         this.elementListeners.delete(id)
         listeners.forEach((listener) =>
-          deleteEventListener(node, listener[0], listener[1], listener[2], this.angularMode),
+          deleteEventListener(node, listener[0], listener[1], listener[2], this.forceNgOff),
         )
       }
       this.totalNodeAmount--

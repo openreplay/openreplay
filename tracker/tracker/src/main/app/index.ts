@@ -168,11 +168,12 @@ type AppOptions = {
 
   network?: NetworkOptions
   /**
-   * use this flag if you're using Angular
+   * use this flag to force angular detection to be offline
+   *
    * basically goes around window.Zone api changes to mutation observer
    * and event listeners
    * */
-  angularMode?: boolean
+  forceNgOff?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -318,7 +319,7 @@ export default class App {
         __save_canvas_locally: false,
         useAnimationFrame: false,
       },
-      angularMode: false,
+      forceNgOff: false,
     }
     this.options = simpleMerge(defaultOptions, options)
 
@@ -338,7 +339,7 @@ export default class App {
     this.sanitizer = new Sanitizer({ app: this, options })
     this.nodes = new Nodes({
       node_id: this.options.node_id,
-      angularMode: Boolean(options.angularMode),
+      forceNgOff: Boolean(options.forceNgOff),
     })
     this.observer = new Observer({ app: this, options })
     this.ticker = new Ticker(this)
@@ -935,11 +936,11 @@ export default class App {
 
     const createListener = () =>
       target
-        ? createEventListener(target, type, listener, useCapture, this.options.angularMode)
+        ? createEventListener(target, type, listener, useCapture, this.options.forceNgOff)
         : null
     const deleteListener = () =>
       target
-        ? deleteEventListener(target, type, listener, useCapture, this.options.angularMode)
+        ? deleteEventListener(target, type, listener, useCapture, this.options.forceNgOff)
         : null
 
     this.attachStartCallback(createListener, useSafe)
