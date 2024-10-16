@@ -91,10 +91,27 @@ export const InputMode = {
 export type InputModeT = (typeof InputMode)[keyof typeof InputMode]
 
 export interface Options {
+  /**
+   * Sanitize numbers from DOM input nodes.
+   *
+   * (for plain text nodes, look for obscureTextNumbers)
+   * */
   obscureInputNumbers: boolean
+  /**
+   * Sanitize emails from DOM input nodes.
+   *
+   * (for plain text nodes, look for obscureTextEmails)
+   * */
   obscureInputEmails: boolean
-  defaultInputMode: InputModeT
+  /**
+   * Sanitize dates from DOM input nodes.
+   * */
   obscureInputDates: boolean
+  /**
+   * Default input mode for all input nodes. Higher security level
+   * will override other settings.
+   * */
+  defaultInputMode: InputModeT
 }
 
 export default function (app: App, opts: Partial<Options>): void {

@@ -9,8 +9,28 @@ export enum SanitizeLevel {
 }
 
 export interface Options {
+  /**
+   * Sanitize emails in text DOM nodes
+   *
+   * (for inputs, look for obscureInputEmails)
+   * */
   obscureTextEmails: boolean
+  /**
+   * Sanitize emails in text DOM nodes
+   *
+   * (for inputs, look for obscureInputNumbers)
+   * */
   obscureTextNumbers: boolean
+  /**
+   * Sanitize the DOM node based on the returned level
+   * (Plain = 0, Obscured = 1, Hidden = 2)
+   *
+   * higher security levels will override other settings or data-params.
+   *
+   * @param node - the DOM node to sanitize
+   * @returns the level of sanitization to apply
+   *
+   * */
   domSanitizer?: (node: Element) => SanitizeLevel
 }
 
