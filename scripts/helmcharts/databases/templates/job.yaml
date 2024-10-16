@@ -1,3 +1,4 @@
+{{- if or .Values.postgresql.oldPostgresqlPassword .Values.clickhouse.oldPassword }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -11,7 +12,7 @@ spec:
   template:
     spec:
       containers:
-      {{- if .Values.postgres.oldPostgresqlPassword }}
+      {{- if .Values.postgresql.oldPostgresqlPassword }}
       - name: update-postgres-password
         image: postgres:13
         env:
@@ -53,6 +54,7 @@ spec:
               fi
             fi
       {{- end }}
+      {{- if .Values.clickhouse.oldPassword }}
       - name: update-clickhouse-password
         image: clickhouse/clickhouse-server:22.8
         env:
@@ -109,5 +111,7 @@ spec:
               echo "Clickhouse server is not reachable."
               exit 1
             fi
+      {{- end}}
       restartPolicy: Never
   backoffLimit: 3
+{{- end }}
