@@ -72,7 +72,14 @@ spec:
             - name: BUCKET_NAME
               value: {{ .Values.global.s3.assetsBucket }}
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             - name: AWS_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
             - name: AWS_REGION

@@ -11,11 +11,9 @@ kind: ConfigMap
 metadata:
   name: db-migration-script
   namespace: "{{ .Release.Namespace }}"
-  labels:
-    {{- include "openreplay.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
-    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+    "helm.sh/hook-weight": "-6" # Higher precedence, so the first the config map will get created.
 data:
   {{- (.Files.Glob "files/*").AsConfig | nindent 2 }}
 ---
@@ -26,8 +24,6 @@ metadata:
   namespace: "{{ .Release.Namespace }}"
   labels:
     app: databases
-    or.workload/type: db-migrate
-    {{- include "openreplay.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
     "helm.sh/hook-weight": "-5"
@@ -41,18 +37,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       initContainers:
       - name: git
         image: alpine/git
@@ -74,50 +58,12 @@ spec:
           - |
             set -x
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
-
-            # Function to check if GitHub is available
-            check_github() {
-              for i in {1..10}; do
-                if ping -c 1 github.com &> /dev/null || wget -q --spider https://github.com; then
-                  echo "GitHub is available."
-                  git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
-                  break
-                else
-                  echo "GitHub is not available. Retrying in 3 seconds..."
-                  sleep 3
-                fi
-              done
-            }
-
-            check_github
-
+            git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
-            git log -1
             {{ .Values.global.dbMigrationPreCommand | default "" }}
 
-            exit_count=0
-            error_connection=1
-
-            while [ $exit_count -le 20 ];do
-              nc -zv {{.Values.global.postgresql.postgresqlHost}} {{.Values.global.postgresql.postgresqlPort}} -w 1
-              if [ $? -ne 0 ]; then
-                echo "[info] postgresql is not up; retrying in 5 seconds"
-                sleep 4
-                exit_count=$(($exit_count+1))
-                echo $exit_count
-              else
-                error_connection=0
-                break
-              fi
-            done
-
-            if [ $error_connection -eq 1 ]; then
-              echo "[error] postgres is not running. Check kubectl get po -n db; exiting"
-              exit 100
-            fi
-
-            # Checking variable is empty. Shell independant method.
+            # Checking variable is empty. Shell independent method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
               exit_count=0
               error_connection=1
@@ -150,40 +96,6 @@ spec:
           mountPath: /opt/openreplay
         - name: datadir
           mountPath: /mnt/efs
-      - name: postgres-check
-        image: bitnami/postgresql:16.3.0
-        env:
-          - name: PGHOST
-            value: "{{ .Values.global.postgresql.postgresqlHost }}"
-          - name: PGPORT
-            value: "{{ .Values.global.postgresql.postgresqlPort }}"
-          - name: PGUSER
-            value: "{{ .Values.global.postgresql.postgresqlUser }}"
-          - name: PGPASSWORD
-            {{- if .Values.global.postgresql.existingSecret }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.postgresql.existingSecret }}
-                key: postgresql-postgres-password
-            {{- else }}
-            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-            {{- end}}
-        command:
-          - /bin/bash
-          - -c
-        args:
-          - |
-            pg_version=$(psql -c "SHOW server_version;" | xargs | grep -oP '\d+(?=\.)')
-            if [[ $pg_version -le 14 ]]; then
-              echo "[error] postgresql version is $pg_version which is < 16. Exiting."
-              For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
-              exit 101
-            fi
-        volumeMounts:
-          - name: shared
-            mountPath: /opt/openreplay
-          - name: datadir
-            mountPath: /mnt/efs
       containers:
       - name: postgres
         env:
@@ -218,7 +130,7 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
-        image: bitnami/postgresql:16.3.0
+        image: bitnami/postgresql:15.5.0
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -250,9 +162,23 @@ spec:
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
           - name: MINIO_ACCESS_KEY
+            {{- if .Values.minio.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.minio.existingSecret }}
+                key: access-key
+            {{- else }}
             value: "{{ .Values.minio.global.minio.accessKey }}"
+            {{- end }}
           - name: MINIO_SECRET_KEY
+            {{- if .Values.minio.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.minio.existingSecret }}
+                key: secret-key
+            {{- else }}
             value: "{{ .Values.minio.global.minio.secretKey }}"
+            {{- end }}
           - name: MINIO_HOST
             value: "{{ .Values.global.s3.endpoint }}"
         command: 
@@ -290,7 +216,14 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
+            {{- if .Values.global.postgresql.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.postgresql.existingSecret }}
+                key: postgresql-postgres-password
+            {{- else }}
             value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            {{- end }}
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
@@ -313,9 +246,23 @@ spec:
             value: '{{ $val }}'
           {{- end }}
           - name: AWS_ACCESS_KEY_ID
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: access-key
+            {{- else }}
             value: "{{ .Values.global.s3.accessKey }}"
+            {{- end }}
           - name: AWS_SECRET_ACCESS_KEY
+            {{- if .Values.global.s3.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.s3.existingSecret }}
+                key: secret-key
+            {{- else }}
             value: "{{ .Values.global.s3.secretKey }}"
+            {{- end }}
           - name: AWS_DEFAULT_REGION
             value: "{{ .Values.global.s3.region }}"
           - name: AWS_ENDPOINT
@@ -377,7 +324,14 @@ spec:
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
-            value: "{{.Values.global.clickhouse.password}}"
+            {{- if .Values.global.clickhouse.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.clickhouse.existingSecret }}
+                key: clickhousepassword
+            {{- else }}
+            value: "{{ .Values.global.clickhouse.password }}"
+            {{- end }}
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

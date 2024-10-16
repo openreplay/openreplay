@@ -44,7 +44,14 @@ spec:
           {{- end}}
           env:
             - name: ASSIST_KEY
-              value: {{ .Values.global.assistKey }}
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: assistKey
+              {{- else }}
+              value: '{{ .Values.global.assistKey }}'
+              {{- end }}
             - name: S3_KEY
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:
