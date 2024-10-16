@@ -19,6 +19,7 @@ export function NetworkElement({ item, createEventClickHandler }: CommonProps) {
   const name = item.name || '';
   return (
     <Tooltip
+      placement={'right'}
       title={
         <div className="">
           <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
@@ -70,6 +71,7 @@ export function FrustrationElement({ item, createEventClickHandler }: CommonProp
   const elData = getFrustration(item);
   return (
     <Tooltip
+      placement={'right'}
       title={
         <div className="">
           <b>{elData.name}</b>
@@ -89,6 +91,7 @@ export function FrustrationElement({ item, createEventClickHandler }: CommonProp
 export function StackEventElement({ item, createEventClickHandler }: CommonProps) {
   return (
     <Tooltip
+      placement={'right'}
       title={
         <div className="">
           <b>{item.name || 'Stack Event'}</b>
@@ -108,6 +111,7 @@ export function StackEventElement({ item, createEventClickHandler }: CommonProps
 export function PerformanceElement({ item, createEventClickHandler }: CommonProps) {
   return (
     <Tooltip
+      placement={'right'}
       title={
         <div className="">
           <b>{item.type}</b>
@@ -127,6 +131,7 @@ export function PerformanceElement({ item, createEventClickHandler }: CommonProp
 export function ExceptionElement({ item, createEventClickHandler }: CommonProps) {
   return (
     <Tooltip
+      placement={'right'}
       title={
         <div className="">
           <b>{'Exception'}</b>

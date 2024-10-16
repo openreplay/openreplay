@@ -1,5 +1,5 @@
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton, Popover, Switch, Tooltip } from 'antd';
+import { Button as AntButton, Switch, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
