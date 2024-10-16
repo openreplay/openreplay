@@ -54,13 +54,34 @@ spec:
             - name: S3_HOST
               value: {{ .Values.global.s3.endpoint }}
             - name: S3_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
               value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
             - name: S3_SECRET
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
               value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'

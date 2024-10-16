@@ -63,7 +63,14 @@ spec:
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             - name: AWS_ACCESS_KEY_ID
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:

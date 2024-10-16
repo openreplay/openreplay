@@ -71,9 +71,6 @@ helm.sh/chart: {{ include "openreplay.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.global.appLabels }}
-{{- .Values.global.appLabels | toYaml | nindent 0}}
-{{- end}}
 {{- end }}
 
 {{/*
@@ -136,5 +133,25 @@ Create the volume mount config for redis TLS certificates
 - name: redis-ca-certificate
   mountPath: /etc/ssl/certs/redis-ca-certificate.pem
   subPath: {{ .tls.certCAFilename }}
+{{- end }}
+{{- end }}
+
+{{/*
+Retrieve secret values from Kubernetes secrets if available, otherwise use default values specified in values.yaml.
+*/}}
+{{- define "chart.secretValueOrDefault" -}}
+{{- $secretName := .Release.Name | printf "%s-external-secrets" -}}
+{{- $envVar := index .Values.global.env .name -}}
+{{- $key := $envVar.key -}}
+{{- $default := $envVar.default -}}
+{{- if $key -}}
+- name: {{ .name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secretName }}
+      key: {{ $key }}
+{{- else -}}
+- name: {{ .name }}
+  value: {{ $default | quote }}
 {{- end }}
 {{- end }}
