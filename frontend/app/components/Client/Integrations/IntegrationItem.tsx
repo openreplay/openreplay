@@ -9,10 +9,11 @@ interface Props {
   onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   integrated?: boolean;
   hide?: boolean;
+  useIcon?: boolean;
 }
 
 const IntegrationItem = (props: Props) => {
-  const { integration, integrated, hide = false } = props;
+  const { integration, integrated, hide = false, useIcon } = props;
   return hide ? <></> : (
     <div
       className={cn('flex flex-col border rounded-lg p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue')}
@@ -21,7 +22,7 @@ const IntegrationItem = (props: Props) => {
     >
       <div className='flex gap-3'>
         <div className="shrink-0">
-          <img className='h-10 w-10' src={'/assets/' + integration.icon + '.svg'} alt='integration' />
+          {useIcon ? <Icon name={integration.icon} size={40} /> : <img className="h-10 w-10" src={"/assets/" + integration.icon + ".svg"} alt="integration" />}
         </div>
         <div className='flex flex-col'>
           <h4 className='text-lg'>{integration.title}</h4>

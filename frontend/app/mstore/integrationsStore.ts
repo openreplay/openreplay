@@ -24,6 +24,7 @@ class GenericIntegrationsStore {
   list: any[] = [];
   isLoading: boolean = false;
   siteId: string = '';
+
   constructor() {
     makeAutoObservable(this);
   }

@@ -10,10 +10,15 @@ import { ConfigProvider, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
+const queryClient = new QueryClient()
 const customTheme: ThemeConfig = {
   // algorithm: theme.compactAlgorithm,
   components: {
@@ -70,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // const theme = window.localStorage.getItem('theme');
   root.render(
+    <QueryClientProvider client={queryClient}>
     <ConfigProvider theme={customTheme}>
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
@@ -81,5 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <MountPoint />
         </StoreProvider>
     </ConfigProvider>
+    </QueryClientProvider>
   );
 });
