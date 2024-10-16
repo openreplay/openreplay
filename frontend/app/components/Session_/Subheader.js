@@ -1,5 +1,5 @@
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton, Switch, Tooltip } from 'antd';
+import { Button as AntButton, Popover, Switch, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -11,7 +11,7 @@ import { useStore } from 'App/mstore';
 import { checkParam, truncateStringToFit } from 'App/utils';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import { Icon } from 'UI';
+import WarnBadge from 'Components/Session_/WarnBadge';
 
 import Bookmark from 'Shared/Bookmark';
 
@@ -20,18 +20,13 @@ import Issues from './Issues/Issues';
 import QueueControls from './QueueControls';
 import NotePopup from './components/NotePopup';
 
-const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
-  const { uxtestingStore, projectsStore, userStore, integrationsStore } = useStore();
+  const { uxtestingStore, integrationsStore, sessionStore, projectsStore } = useStore();
+  const currentSession = sessionStore.current
+  const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
-  const defaultLocalhostWarn = React.useMemo(() => {
-    const siteId = projectsStore.siteId;
-    const localhostWarnKey = localhostWarn(siteId);
-    return localStorage.getItem(localhostWarnKey) !== '1';
-  }, [projectsStore.siteId]);
-  const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
   const { store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
@@ -56,15 +51,6 @@ function SubHeader(props) {
     window.innerWidth - 200
   );
 
-  const showWarning =
-    currentLocation &&
-    /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation) &&
-    showWarningModal;
-  const closeWarning = () => {
-    localStorage.setItem(localhostWarnKey, '1');
-    setWarning(false);
-  };
-
   const toggleDevtools = (enabled) => {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
     uxtestingStore.setHideDevtools(!enabled);
@@ -82,32 +68,11 @@ function SubHeader(props) {
             : undefined,
         }}
       >
-        {showWarning ? (
-          <div
-            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-            style={{
-              zIndex: 999,
-              position: 'absolute',
-              left: '50%',
-              bottom: '-24px',
-              transform: 'translate(-50%, 0)',
-              fontWeight: 500,
-            }}
-          >
-            Some assets may load incorrectly on localhost.
-            <a
-              href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
-              target="_blank"
-              rel="noreferrer"
-              className="link ml-1"
-            >
-              Learn More
-            </a>
-            <div className="py-1 ml-3 cursor-pointer" onClick={closeWarning}>
-              <Icon name="close" size={16} color="black" />
-            </div>
-          </div>
-        ) : null}
+        <WarnBadge
+          siteId={projectId}
+          currentLocation={currentLocation}
+          version={currentSession?.trackerVersion ?? '1.0.0'}
+        />
 
         <SessionTabs />
 
@@ -120,9 +85,9 @@ function SubHeader(props) {
             style={{ width: 'max-content' }}
           >
             <KeyboardHelp />
-            <Bookmark sessionId={props.sessionId} />
+            <Bookmark sessionId={currentSession.sessionId} />
             <NotePopup />
-            {enabledIntegration && <Issues sessionId={props.sessionId} />}
+            {enabledIntegration && <Issues sessionId={currentSession.sessionId} />}
             <SharePopup
               showCopyLink={true}
               trigger={
