@@ -15,6 +15,9 @@ const OverviewPanelContainer = React.memo((props: Props) => {
   const [mouseX, setMouseX] = React.useState(0);
   const [mouseIn, setMouseIn] = React.useState(false);
   const onClickTrack = (e: any) => {
+    if (e.target.className.includes('ant-popover')) {
+      return;
+    }
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     if (time) {

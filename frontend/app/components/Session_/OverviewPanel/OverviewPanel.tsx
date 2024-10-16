@@ -319,10 +319,11 @@ function PanelComponent({
                       isGraph={feature === 'PERFORMANCE'}
                       title={feature}
                       list={resources[feature]}
-                      renderElement={(pointer: any) => (
+                      renderElement={(pointer: any[], isGrouped: boolean) => (
                         <TimelinePointer
                           pointer={pointer}
                           type={feature}
+                          isGrouped={isGrouped}
                           fetchPresented={fetchPresented}
                         />
                       )}
