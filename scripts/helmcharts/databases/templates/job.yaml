@@ -17,15 +17,15 @@ spec:
         image: postgres:13
         env:
           - name: PGUSER
-            value: {{.Values.postgres.postgresqlUser}}
+            value: {{.Values.postgresql.postgresqlUser}}
           - name: PGPASSWORD
-            value: {{.Values.postgres.postgresqlPassword}}  # current password
+            value: {{.Values.postgresql.postgresqlPassword}}  # current password
           - name: PGPASSWORD_OLD
-            value: {{.Values.postgres.oldPostgresqlPassword}}  # old password
+            value: {{.Values.postgresql.oldPostgresqlPassword}}  # old password
           - name: PGHOST
-            value: {{.Values.postgres.postgresqlHost}}
+            value: {{.Values.postgresql.postgresqlHost}}
           - name: PGPORT
-            value: {{.Values.postgres.postgresqlPort}}
+            value: {{.Values.postgresql.postgresqlPort}}
         command: ["/bin/bash", "-c", "--"]
         args:
           - |
