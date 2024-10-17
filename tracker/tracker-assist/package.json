@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "9.0.2-beta.3",
+  "version": "9.0.2-beta.11",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -49,11 +49,12 @@
     "prettier": "^2.7.1",
     "replace-in-files-cli": "^1.0.0",
     "ts-jest": "^29.0.3",
-    "typescript": "^4.6.0-dev.20211126"
+    "typescript": "^5.6.3"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": [
       "eslint --fix --quiet"
     ]
-  }
+  },
+  "packageManager": "yarn@4.5.0"
 }

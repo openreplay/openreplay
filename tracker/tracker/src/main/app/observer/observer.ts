@@ -103,9 +103,6 @@ export default abstract class Observer {
             if (name === null) {
               continue
             }
-            if (target instanceof HTMLIFrameElement && name === 'src') {
-              this.handleIframeSrcChange(target)
-            }
             let attr = this.attributesMap.get(id)
             if (attr === undefined) {
               this.attributesMap.set(id, (attr = new Set()))
@@ -132,7 +129,9 @@ export default abstract class Observer {
   }
 
   /**
-   * Unbinds the removed nodes in case of iframe src change.
+   * EXPERIMENTAL: Unbinds the removed nodes in case of iframe src change.
+   *
+   * right now, we're relying on nodes.maintainer
    */
   private handleIframeSrcChange(iframe: HTMLIFrameElement): void {
     const oldContentDocument = iframe.contentDocument

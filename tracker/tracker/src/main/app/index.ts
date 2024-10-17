@@ -32,7 +32,7 @@ import Message, {
   UserID,
   WSChannel,
 } from './messages.gen.js'
-import Nodes from './nodes.js'
+import Nodes from './nodes/index.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
