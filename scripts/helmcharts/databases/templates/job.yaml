@@ -18,7 +18,7 @@ spec:
         env:
           - name: PGUSER
             value: {{.Values.postgresql.postgresqlUser}}
-          - name: PGPASSWORD
+          - name: PGPASSWORD_NEW
             value: {{.Values.postgresql.postgresqlPassword}}  # current password
           - name: PGPASSWORD_OLD
             value: {{.Values.postgresql.oldPostgresqlPassword}}  # old password
@@ -30,8 +30,7 @@ spec:
         args:
           - |
             # Try to login with the current password
-            echo if PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q';
-            if PGPASSWORD=$PGPASSWORD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q'; then
+            if PGPASSWORD=$PGPASSWORD_NEW psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q'; then
               echo "Successfully logged in with current password. No update needed."
               exit 0
             else
@@ -40,8 +39,7 @@ spec:
               if PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q'; then
                 echo "Successfully logged in with old password. Updating password to the new one."
                 # Update the password to the new one
-                new_password=$(openssl rand -hex 20)
-                PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c "ALTER USER $PGUSER WITH PASSWORD '$new_password';"
+                PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c "ALTER USER $PGUSER WITH PASSWORD '$PGPASSWORD_NEW';"
                 if [ $? -eq 0 ]; then
                   echo "Password updated successfully."
                   exit 0
