@@ -54,7 +54,7 @@ spec:
               fi
             fi
       {{- end }}
-      {{- if .Values.clickhouse.oldPassword }}
+      {{- if .Values.clickhouse.oldPasswordnever }} # This will never trigger, as there is no clickhouse server right now.
       - name: update-clickhouse-password
         image: clickhouse/clickhouse-server:22.8
         env:
