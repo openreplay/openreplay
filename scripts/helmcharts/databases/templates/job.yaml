@@ -25,7 +25,7 @@ spec:
           - name: PGHOST
             value: {{.Values.postgresql.postgresqlHost}}
           - name: PGPORT
-            value: {{.Values.postgresql.postgresqlPort}}
+            value: "{{.Values.postgresql.postgresqlPort}}"
         command: ["/bin/bash", "-c", "--"]
         args:
           - |
