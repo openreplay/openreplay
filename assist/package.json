@@ -19,10 +19,10 @@
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
     "@maxmind/geoip2-node": "^4.2.0",
-    "express": "^4.18.2",
+    "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "prom-client": "^15.0.0",
-    "socket.io": "^4.7.2",
+    "socket.io": "^4.8.0",
     "ua-parser-js": "^1.0.37",
     "winston": "^3.13.0"
   }
