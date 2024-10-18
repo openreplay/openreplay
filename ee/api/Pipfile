@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-urllib3 = "==1.26.16"
+urllib3 = "==1.26.19"
 requests = "==2.32.3"
 boto3 = "==1.35.13"
 pyjwt = "==2.9.0"
@@ -17,11 +17,11 @@ fastapi = "==0.113.0"
 uvicorn = {extras = ["standard"], version = "==0.30.6"}
 gunicorn = "==23.0.0"
 python-decouple = "==3.8"
-pydantic = {extras = ["email"], version = "==2.8.2"}
+pydantic = {extras = ["email"], version = "==2.9.2"}
 apscheduler = "==3.10.4"
 clickhouse-driver = {extras = ["lz4"], version = "==0.2.9"}
 python3-saml = "==1.16.0"
-python-multipart = "==0.0.9"
+python-multipart = "==0.0.12"
 redis = "==5.1.0b6"
 azure-storage-blob = "==12.22.0"
 
