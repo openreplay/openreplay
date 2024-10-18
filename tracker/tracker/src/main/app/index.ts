@@ -40,6 +40,7 @@ import Sanitizer from './sanitizer.js'
 import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
+import { MaintainerOptions } from './nodes/maintainer.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
@@ -174,6 +175,16 @@ type AppOptions = {
    * and event listeners
    * */
   forceNgOff?: boolean
+  /**
+   * This option is used to change how tracker handles potentially detached nodes
+   *
+   * defaults here are tested and proven to be lightweight and easy on cpu
+   *
+   * consult the docs before changing it
+   * */
+  nodes?: {
+    maintainer: Partial<MaintainerOptions>
+  }
 } & WebworkerOptions &
   SessOptions
 
@@ -340,6 +351,7 @@ export default class App {
     this.nodes = new Nodes({
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
+      maintainer: this.options.nodes?.maintainer,
     })
     this.observer = new Observer({ app: this, options })
     this.ticker = new Ticker(this)

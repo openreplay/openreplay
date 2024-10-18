@@ -10,7 +10,10 @@ describe('AttributeSender', () => {
     appMock = {
       send: (...args: any[]) => args,
     }
-    attributeSender = new AttributeSender(appMock, false)
+    attributeSender = new AttributeSender({
+      app: appMock,
+      isDictDisabled: false,
+    })
   })
 
   afterEach(() => {

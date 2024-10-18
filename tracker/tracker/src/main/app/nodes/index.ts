@@ -1,8 +1,14 @@
 import { createEventListener, deleteEventListener } from '../../utils.js'
-import Maintainer from './maintainer.js'
+import Maintainer, { MaintainerOptions } from './maintainer.js'
 
 type NodeCallback = (node: Node, isStart: boolean) => void
 type ElementListener = [string, EventListener, boolean]
+
+export interface NodesOptions {
+  node_id: string
+  forceNgOff: boolean
+  maintainer?: Partial<MaintainerOptions>
+}
 
 export default class Nodes {
   private readonly nodes: Map<number, Node | void> = new Map()
@@ -14,10 +20,10 @@ export default class Nodes {
   private readonly forceNgOff: boolean
   private readonly maintainer: Maintainer
 
-  constructor(params: { node_id: string; forceNgOff: boolean }) {
+  constructor(params: NodesOptions) {
     this.node_id = params.node_id
     this.forceNgOff = params.forceNgOff
-    this.maintainer = new Maintainer(this.nodes, this.unregisterNode)
+    this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.maintainer)
     this.maintainer.start()
   }
 

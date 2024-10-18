@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "14.0.11-30",
+  "version": "14.0.10",
   "keywords": [
     "logging",
     "replay"
@@ -13,14 +13,29 @@
   ],
   "license": "MIT",
   "type": "module",
-  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/lib/index.js",
+      "types": "./dist/lib/main/index.d.ts"
+    },
+    "./cjs": {
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/cjs/main/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/lib/**/*",
+    "dist/cjs/**/*"
+  ],
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/lib/index.js",
+  "types": "./dist/lib/main/index.d.ts",
   "scripts": {
     "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
-    "tscRun": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
-    "rollup": "rollup --config rollup.config.js",
-    "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
-    "build": "bun run clean && bun run tscRun && bun run rollup && bun run compile",
+    "build:common": "tsc -b src/common",
+    "build": "yarn run clean && yarn build:common && rollup --config rollup.config.js",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
@@ -32,7 +47,9 @@
     "@jest/globals": "^29.3.1",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^6.0.1",
     "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
     "@typescript-eslint/eslint-plugin": "^5.30.0",
     "@typescript-eslint/parser": "^5.30.0",
     "eslint": "^8.57.1",
@@ -52,6 +69,7 @@
     "@medv/finder": "^3.2.0",
     "@openreplay/network-proxy": "^1.0.3",
     "error-stack-parser": "^2.0.6",
+    "error-stack-parser-es": "^0.1.5",
     "fflate": "^0.8.2"
   },
   "engines": {

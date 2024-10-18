@@ -1,7 +1,12 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "lib": ["es6"]
+    "lib": ["es6", "webworker"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "es2016",
+    "preserveConstEnums": false,
+    "declaration": false
   },
   "references": [{ "path": "../common" }]
 }

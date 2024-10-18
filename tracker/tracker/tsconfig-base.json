@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "build",
-    "declaration": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
     "alwaysStrict": true,
     "target": "es2020",
-    "module": "es6",
-    "moduleResolution":  "node",
+    "module": "NodeNext",
+    "moduleResolution":  "NodeNext",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts"],
 }

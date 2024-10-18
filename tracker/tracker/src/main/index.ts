@@ -106,7 +106,10 @@ export default class API {
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
-    if ((window as any).__OPENREPLAY__) {
+    if (
+      (window as any).__OPENREPLAY__ ||
+      (!this.crossdomainMode && inIframe() && (window.top as any)?.__OPENREPLAY__)
+    ) {
       console.error('OpenReplay: one tracker instance has been initialised already')
       return
     }

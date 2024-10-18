@@ -57,25 +57,62 @@ function isNodeStillActive(node: Node): boolean {
   }
 }
 
+export interface MaintainerOptions {
+  /**
+   * Run cleanup each X ms
+   *
+   * @default 30 * 1000
+   * */
+  interval: number
+  /**
+   * Maintainer checks nodes in small batches over 50ms timeouts
+   *
+   * @default 2500
+   * */
+  batchSize: number
+  /**
+   * @default true
+   * */
+  enabled: boolean
+}
+
+const defaults = {
+  interval: SECOND * 30,
+  batchSize: 2500,
+  enabled: true,
+}
+
 class Maintainer {
   private interval: ReturnType<typeof setInterval>
+  private readonly options: MaintainerOptions
   constructor(
     private readonly nodes: Map<number, Node | void>,
     private readonly unregisterNode: (node: Node) => void,
-  ) {}
+    options?: Partial<MaintainerOptions>,
+  ) {
+    this.options = { ...defaults, ...options }
+  }
 
   public start = () => {
+    if (!this.options.enabled) {
+      return
+    }
+
+    this.stop()
+
     this.interval = setInterval(() => {
-      processMapInBatches(this.nodes, SECOND * 2.5, (node) => {
+      processMapInBatches(this.nodes, this.options.batchSize, (node) => {
         if (!isNodeStillActive(node)) {
           this.unregisterNode(node)
         }
       })
-    }, SECOND * 30)
+    }, this.options.interval)
   }
 
   public stop = () => {
-    clearInterval(this.interval)
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
   }
 }
 
