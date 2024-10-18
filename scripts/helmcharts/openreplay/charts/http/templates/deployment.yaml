@@ -92,9 +92,23 @@ spec:
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             - name: JWT_SECRET
-              value: {{ .Values.global.jwtSecret }}
+              {{- if .Values.global.jwtSecret.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.jwtSecret.existingSecret }}
+                  key: jwtSecret
+              {{- else }}
+              value: '{{ .Values.global.jwtSecret }}'
+              {{- end}}
             - name: JWT_SPOT_SECRET
-              value: {{ .Values.global.jwtSpotSecret }}
+              {{- if .Values.global.jwtSpotSecret.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.jwtSpotSecret.existingSecret }}
+                  key: jwtSpotSecret
+              {{- else }}
+              value: '{{ .Values.global.jwtSpotSecret }}'
+              {{- end}}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

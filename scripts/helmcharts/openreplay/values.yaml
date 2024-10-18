@@ -53,4 +53,3 @@ global:
 chalice:
   env:
     CH_COMPRESSION: "false"
-
