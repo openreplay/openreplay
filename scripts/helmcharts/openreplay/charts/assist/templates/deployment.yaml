@@ -44,9 +44,23 @@ spec:
           {{- end}}
           env:
             - name: ASSIST_JWT_SECRET
-              value: {{ .Values.global.assistJWTSecret }}
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: assistJWTSecret
+              {{- else }}
+              value: '{{ .Values.global.assistJWTSecret }}'
+              {{- end }}
             - name: ASSIST_KEY
-              value: {{ .Values.global.assistKey }}
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: assistKey
+              {{- else }}
+              value: '{{ .Values.global.assistKey }}'
+              {{- end }}
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
             - name: S3_HOST
@@ -87,8 +101,8 @@ spec:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
               containerPort: {{ $val }}
-            {{- end }}
               protocol: TCP
+            {{- end }}
           {{- with .Values.persistence.mounts  }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

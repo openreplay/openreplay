@@ -51,9 +51,23 @@ spec:
             - name: QW_S3_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
             - name: AWS_ACCESS_KEY_ID
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
               value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
             - name: AWS_SECRET_ACCESS_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
               value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
             - name: QW_DATA_DIR
               value: /opt/openreplay/
             {{- range $key, $val := .Values.global.env }}

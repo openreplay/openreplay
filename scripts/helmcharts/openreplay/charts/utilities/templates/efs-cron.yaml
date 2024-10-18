@@ -74,4 +74,3 @@ spec:
             persistentVolumeClaim:
               claimName: {{ tpl .Values.efsCleaner.pvc.name . }}
           {{- end }}
-

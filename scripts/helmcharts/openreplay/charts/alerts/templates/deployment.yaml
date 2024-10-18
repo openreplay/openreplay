@@ -58,7 +58,14 @@ spec:
             - name: ch_username
               value: '{{ .Values.global.clickhouse.username }}'
             - name: ch_password
-              value: '{{ .Values.global.clickhouse.passwordk }}'
+              {{- if .Values.global.clickhouse.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.clickhouse.existingSecret }}
+                  key: clickhousepassword
+              {{- else }}
+              value: '{{ .Values.global.clickhouse.password }}'
+              {{- end }}
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
@@ -101,15 +108,36 @@ spec:
             - name: EMAIL_USER
               value: '{{ .Values.global.email.emailUser }}'
             - name: EMAIL_PASSWORD
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: email-password
+              {{- else }}
               value: '{{ .Values.global.email.emailPassword }}'
+              {{- end }}
             - name: EMAIL_USE_TLS
               value: '{{ .Values.global.email.emailUseTls }}'
             - name: EMAIL_USE_SSL
               value: '{{ .Values.global.email.emailUseSsl }}'
             - name: EMAIL_SSL_KEY
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: email-ssl-key
+              {{- else }}
               value: '{{ .Values.global.email.emailSslKey }}'
+              {{- end }}
             - name: EMAIL_SSL_CERT
+              {{- if .Values.global.email.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.email.existingSecret }}
+                  key: email-ssl-cert
+              {{- else }}
               value: '{{ .Values.global.email.emailSslCert }}'
+              {{- end }}
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
             {{- range $key, $val := .Values.global.env }}
@@ -126,16 +154,18 @@ spec:
               containerPort: {{ $val }}
               protocol: TCP
             {{- end }}
-          {{- with .Values.persistence.mounts  }}
           volumeMounts:
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
+          {{- with .Values.persistence.mounts  }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.persistence.volumes  }}
       volumes:
+      {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 8 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
