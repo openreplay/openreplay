@@ -74,7 +74,14 @@ spec:
             - name: AWS_ENDPOINT
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: LICENSE_KEY
+              {{- if .Values.global.existingsecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.existingsecret.name }}
+                  key: enterpriseEditionLicense
+              {{- else }}
               value: '{{ .Values.global.enterpriseEditionLicense }}'
+              {{- end }}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
@@ -91,10 +98,6 @@ spec:
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
-            - name: JWT_SECRET
-              value: {{ .Values.global.jwtSecret }}
-            - name: JWT_SPOT_SECRET
-              value: {{ .Values.global.jwtSpotSecret }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

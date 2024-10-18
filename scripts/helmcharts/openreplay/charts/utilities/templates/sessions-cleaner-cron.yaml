@@ -1,8 +1,4 @@
 {{- if .Values.global.enterpriseEditionLicense }}
-{{- $context := . }}
-{{- range $key, $job := .Values.apiCrons }}
-{{- with $context }}
----
 {{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
 {{- if semverCompare ">=1.22.0-0" $kubeTargetVersion }}
 apiVersion: batch/v1
@@ -11,12 +7,10 @@ apiVersion: batch/v1beta1
 {{- end }}
 kind: CronJob
 metadata:
-  name: {{$key | kebabcase}}-cron
+  name: sessions-cleaner-cron
   namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "utilities.labels" . | nindent 4 }}
 spec:
-  schedule: "{{ $job.cron }}"
+  schedule: "{{ .Values.sessionsCleaner.cron }}"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 1
   jobTemplate:
@@ -30,29 +24,24 @@ spec:
           {{- end }}
         spec:
           restartPolicy: Never
-          {{- with .Values.nodeSelector }}
-          nodeSelector:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.affinity }}
-          affinity:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.tolerations }}
-          tolerations:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           containers:
-          - name: report-cron
-            image: "{{ tpl $job.image.repository . }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
-            imagePullPolicy: "{{ $job.image.pullPolicy}}"
+          - name: sessions-cleaner-cron
+            image: "{{ tpl .Values.sessionsCleaner.image.repository . }}:{{ .Values.sessionsCleaner.image.tag | default .Chart.AppVersion }}-ee"
+            imagePullPolicy: {{ .Values.sessionsCleaner.image.pullPolicy }}
             env:
               {{- range $key, $val := .Values.global.env }}
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end }}
               - name: LICENSE_KEY
+                {{- if .Values.global.existingsecret.name }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.existingsecret.name }}
+                    key: enterpriseEditionLicense
+                {{- else }}
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
+                {{- end }}
               - name: version_number
                 value: '{{ .Chart.AppVersion }}'
               - name: pg_host
@@ -111,21 +100,40 @@ spec:
               - name: EMAIL_USER
                 value: '{{ .Values.global.email.emailUser }}'
               - name: EMAIL_PASSWORD
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-password
+                {{- else }}
                 value: '{{ .Values.global.email.emailPassword }}'
+                {{- end }}
               - name: EMAIL_USE_TLS
                 value: '{{ .Values.global.email.emailUseTls }}'
               - name: EMAIL_USE_SSL
                 value: '{{ .Values.global.email.emailUseSsl }}'
               - name: EMAIL_SSL_KEY
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-ssl-key
+                {{- else }}
                 value: '{{ .Values.global.email.emailSslKey }}'
+                {{- end }}
               - name: EMAIL_SSL_CERT
+                {{- if .Values.global.email.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.global.email.existingSecret }}
+                    key: email-ssl-cert
+                {{- else }}
                 value: '{{ .Values.global.email.emailSslCert }}'
+                {{- end }}
               - name: EMAIL_FROM
                 value: '{{ .Values.global.email.emailFrom }}'
-              {{- range $key, $val := $job.env }}
+              {{- range $key, $val := .Values.sessionsCleaner.env }}
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end}}
-{{- end}}
-{{- end}}
 {{- end}}

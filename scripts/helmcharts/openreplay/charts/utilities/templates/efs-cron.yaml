@@ -8,8 +8,6 @@ kind: CronJob
 metadata:
   name: efs-cleaner
   namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "utilities.labels" . | nindent 4 }}
 spec:
   schedule: "{{ .Values.cron }}"
   failedJobsHistoryLimit: 1
@@ -25,18 +23,6 @@ spec:
           {{- end }}
         spec:
           restartPolicy: Never
-          {{- with .Values.nodeSelector }}
-          nodeSelector:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.affinity }}
-          affinity:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.tolerations }}
-          tolerations:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           containers:
           - name: efs-cleaner
             image: debian:stable-slim
@@ -48,7 +34,7 @@ spec:
               # Delete all the files older than {{.Values.efsCleaner.retention}} days
               set -x
               echo "Cleaning NFS strorage for data older than {{.Values.efsCleaner.retention}} days"
-              storage=$(df -h /mnt/efs | awk 'NR==2 {print $2}')
+              storage=`du -sh /mnt/efs`
               {{- $time := mul .Values.efsCleaner.retention 1440 }}
               {{- if .Values.efsCleaner.retentionHours }}
               {{- $time = mul .Values.efsCleaner.retentionHours 60 }} 
@@ -57,7 +43,7 @@ spec:
               echo "Storage before cleaning"
               echo ${storage}
               echo "Storage after cleaning"
-              df -h /mnt/efs | awk 'NR==2 {print $2}'
+              du -sh /mnt/efs
             volumeMounts:
             - mountPath: /mnt/efs
               name: datadir
