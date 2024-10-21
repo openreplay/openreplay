@@ -144,12 +144,14 @@ export class VElement extends VParent<Element> {
 	parentNode: VParent | null = null /** Should be modified only by he parent itself */
 	private newAttributes: Map<string, string | false> = new Map()
 
-	constructor(readonly tagName: string, readonly isSVG = false, public readonly index: number) { super() }
+	constructor(readonly tagName: string, readonly isSVG = false, public readonly index: number, private readonly nodeId: number) { super() }
 	protected createNode() {
 		try {
-			return this.isSVG
+			const element = this.isSVG
 				? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
 				: document.createElement(this.tagName)
+			element.dataset['openreplayId'] = this.nodeId.toString()
+			return element
 		} catch (e) {
 			console.error('Openreplay: Player received invalid html tag', this.tagName, e)
 			return document.createElement(this.tagName.replace(/[^a-z]/gi, ''))

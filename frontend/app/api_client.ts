@@ -251,4 +251,8 @@ export default class APIClient {
     this.init.method = 'PATCH';
     return this.fetch(path, params, 'PATCH');
   }
+
+  forceSiteId = (siteId: string) => {
+    this.siteId = siteId;
+  }
 }

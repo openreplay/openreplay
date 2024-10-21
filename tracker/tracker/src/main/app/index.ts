@@ -67,6 +67,11 @@ interface OnStartInfo {
   userUUID: string
 }
 
+/**
+ * this value is injected during build time via rollup
+ * */
+// @ts-ignore
+const workerBodyFn = WEBWORKER_BODY
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
@@ -657,7 +662,7 @@ export default class App {
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
-      console.log('Trying to signal to parent, attempt:', retries + 1)
+      this.debug.info('Trying to signal to parent, attempt:', retries + 1)
       retries++
     }
 
@@ -693,6 +698,7 @@ export default class App {
       this.pageFrames = pageIframes
       targetFrame = pageIframes.find((frame) => frame.contentWindow === source)
     }
+
     if (!targetFrame) {
       return null
     }
@@ -721,7 +727,7 @@ export default class App {
   private initWorker() {
     try {
       this.worker = new Worker(
-        URL.createObjectURL(new Blob(['WEBWORKER_BODY'], { type: 'text/javascript' })),
+        URL.createObjectURL(new Blob([workerBodyFn], { type: 'text/javascript' })),
       )
       this.worker.onerror = (e) => {
         this._debug('webworker_error', e)

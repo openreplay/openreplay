@@ -24,6 +24,15 @@ function isStyleVElement(vElem: VElement): vElem is VElement & { node: StyleElem
   return vElem.tagName.toLowerCase() === "style"
 }
 
+function setupWindowLogging(vTexts: Map<number, VText>, vElements: Map<number, VElement>, olVRoots: Map<number, OnloadVRoot>) {
+  // @ts-ignore
+  window.checkVElements = () => vElements
+  // @ts-ignore
+  window.checkVTexts = () => vTexts
+  // @ts-ignore
+  window.checkVRoots = () => olVRoots
+}
+
 const IGNORED_ATTRS = [ "autocomplete" ]
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/
 
@@ -56,6 +65,11 @@ export default class DOMManager extends ListWalker<Message> {
     super()
     this.selectionManager = new SelectionManager(this.vElements, screen)
     this.stylesManager = new StylesManager(screen, setCssLoading)
+    setupWindowLogging(
+      this.vTexts,
+      this.vElements,
+      this.olVRoots,
+    )
   }
 
   setStringDict(stringDict: Record<number,string>) {
@@ -216,7 +230,7 @@ export default class DOMManager extends ListWalker<Message> {
       }
       case MType.CreateElementNode: {
         // if (msg.tag.toLowerCase() === 'canvas') msg.tag = 'video'
-        const vElem = new VElement(msg.tag, msg.svg, msg.index)
+        const vElem = new VElement(msg.tag, msg.svg, msg.index, msg.id)
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) {
           vElem.prioritized = true
         }
@@ -296,7 +310,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
 
-      /** @deprecated 
+      /** @deprecated
        * since 4.0.2 in favor of AdoptedSsInsertRule/DeleteRule + AdoptedSsAddOwner as a common case for StyleSheets
        */
       case MType.CssInsertRule: {
@@ -422,11 +436,11 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   /**
-   * Moves and applies all the messages from the current (or from the beginning, if t < current.time) 
+   * Moves and applies all the messages from the current (or from the beginning, if t < current.time)
    * to the one with msg[time] >= `t`
-   * 
+   *
    * This function autoresets pointer if necessary (better name?)
-   * 
+   *
    * @returns Promise that fulfills when necessary changes get applied
    *   (the async part exists mostly due to styles loading)
    */

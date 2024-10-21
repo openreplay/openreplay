@@ -30,30 +30,32 @@ function processMapInBatches(
   processNextBatch()
 }
 
-function isNodeStillActive(node: Node): boolean {
+function isNodeStillActive(node: Node): [isCon: boolean, reason: string] {
   try {
     if (!node.isConnected) {
-      return false
+      return [false, 'not connected']
     }
+    const nodeIsDocument = node.nodeType === Node.DOCUMENT_NODE
+    const nodeWindow = nodeIsDocument
+      ? (node as Document).defaultView
+      : node.ownerDocument?.defaultView
 
-    const nodeWindow = node.ownerDocument?.defaultView
-
+    const ownerDoc = nodeIsDocument ? (node as Document) : node.ownerDocument
     if (!nodeWindow) {
-      return false
+      return [false, 'no window']
     }
 
     if (nodeWindow.closed) {
-      return false
+      return [false, 'window closed']
     }
 
-    if (!node.ownerDocument.documentElement.isConnected) {
-      return false
+    if (!ownerDoc?.documentElement.isConnected) {
+      return [false, 'documentElement not connected']
     }
 
-    return true
+    return [true, 'ok']
   } catch (e) {
-    console.error('Error checking node activity:', e)
-    return false
+    return [false, e]
   }
 }
 
@@ -102,7 +104,8 @@ class Maintainer {
 
     this.interval = setInterval(() => {
       processMapInBatches(this.nodes, this.options.batchSize, (node) => {
-        if (!isNodeStillActive(node)) {
+        const isActive = isNodeStillActive(node)[0]
+        if (!isActive) {
           this.unregisterNode(node)
         }
       })

@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "15.0.0",
+  "version": "15.0.1-32",
   "keywords": [
     "logging",
     "replay"
@@ -50,19 +50,19 @@
     "@rollup/plugin-replace": "^6.0.1",
     "@rollup/plugin-terser": "0.4.4",
     "@rollup/plugin-typescript": "^12.1.1",
-    "@typescript-eslint/eslint-plugin": "^5.30.0",
-    "@typescript-eslint/parser": "^5.30.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.10.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
-    "lint-staged": "^13.0.3",
     "prettier": "^3.0.3",
     "replace-in-files": "^2.0.3",
     "rollup": "^4.1.4",
     "semver": "^6.3.0",
     "ts-jest": "^29.0.3",
+    "tslib": "^2.8.0",
     "typescript": "^5.6.3"
   },
   "dependencies": {
@@ -76,13 +76,5 @@
   "engines": {
     "node": ">=14.0"
   },
-  "lint-staged": {
-    "*.{js,mjs,jsx,ts,tsx}": [
-      "eslint --fix --quiet"
-    ],
-    "*.{json,md,html,js,jsx,ts,tsx}": [
-      "prettier --write"
-    ]
-  },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.5.1"
 }
