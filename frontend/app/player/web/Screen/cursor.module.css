@@ -3,7 +3,7 @@
   position: absolute;
   width: 36px;
   height: 60px;
-  background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg enable-background='new 0 0 28 28' version='1.1' viewBox='0 0 28 28' xml:space='preserve' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='8.2 20.9 8.2 4.9 19.8 16.5 13 16.5 12.6 16.6' fill='%23fff'/%3E%3Cpolygon points='17.3 21.6 13.7 23.1 9 12 12.7 10.5' fill='%23fff'/%3E%3Crect transform='matrix(.9221 -.3871 .3871 .9221 -5.7605 6.5909)' x='12.5' y='13.6' width='2' height='8'/%3E%3Cpolygon points='9.2 7.3 9.2 18.5 12.2 15.6 12.6 15.5 17.4 15.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg enable-background='new 0 0 20 20' version='1.1' viewBox='8.5 5.2 28 28' xml:space='preserve' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='8.2 20.9 8.2 4.9 19.8 16.5 13 16.5 12.6 16.6' fill='%23fff'/%3E%3Cpolygon points='17.3 21.6 13.7 23.1 9 12 12.7 10.5' fill='%23fff'/%3E%3Crect transform='matrix(.9221 -.3871 .3871 .9221 -5.7605 6.5909)' x='12.5' y='13.6' width='2' height='8'/%3E%3Cpolygon points='9.2 7.3 9.2 18.5 12.2 15.6 12.6 15.5 17.4 15.5'/%3E%3C/svg%3E%0A");
   background-repeat: no-repeat;
   transition: top .15s ease-out, left .15s ease-out;
 
