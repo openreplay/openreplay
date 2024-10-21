@@ -401,7 +401,7 @@ export default abstract class Observer {
   }
   private commitNode(id: number): boolean {
     const node = this.app.nodes.getNode(id)
-    if (node === undefined) {
+    if (!node) {
       return false
     }
     const cmt = this.commited[id]

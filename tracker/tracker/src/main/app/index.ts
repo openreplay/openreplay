@@ -71,7 +71,7 @@ interface OnStartInfo {
  * this value is injected during build time via rollup
  * */
 // @ts-ignore
-const workerBodyFn = WEBWORKER_BODY
+const workerBodyFn = global.WEBWORKER_BODY
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
