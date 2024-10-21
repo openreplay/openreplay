@@ -1,3 +1,7 @@
+## 14.0.11 & .12
+
+- fix for node maintainer stability around `#document` nodes (mainly iframes field)
+
 ## 14.0.10
 
 - adjust timestamps for messages from tracker instances inside child iframes (if they were loaded later)

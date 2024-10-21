@@ -1,13 +1,14 @@
 import Observer from './observer.js'
-import { CreateIFrameDocument } from '../messages.gen.js'
+import { CreateIFrameDocument, RemoveNode } from '../messages.gen.js'
 
 export default class IFrameObserver extends Observer {
+  docId: number | undefined
   observe(iframe: HTMLIFrameElement) {
     const doc = iframe.contentDocument
     const hostID = this.app.nodes.getID(iframe)
     if (!doc || hostID === undefined) {
       return
-    } //log TODO common app.logger
+    }
     // Have to observe document, because the inner <html> might be changed
     this.observeRoot(doc, (docID) => {
       //MBTODO: do not send if empty (send on load? it might be in-place iframe, like our replayer, which does not get loaded)
@@ -15,6 +16,7 @@ export default class IFrameObserver extends Observer {
         this.app.debug.log('OpenReplay: Iframe document not bound')
         return
       }
+      this.docId = docID
       this.app.send(CreateIFrameDocument(hostID, docID))
     })
   }
@@ -27,5 +29,12 @@ export default class IFrameObserver extends Observer {
       }
       this.app.send(CreateIFrameDocument(rootNodeId, docID))
     })
+  }
+
+  disconnect() {
+    if (this.docId !== undefined) {
+      this.app.send(RemoveNode(this.docId))
+    }
+    super.disconnect()
   }
 }

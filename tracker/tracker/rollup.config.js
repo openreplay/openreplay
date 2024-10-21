@@ -74,6 +74,8 @@ async function buildWebWorker() {
     inlineDynamicImports: true,
   })
   const webWorkerCode = output[0].code
-  console.log('webworker done!')
-  return webWorkerCode.replace(/"/g, '\\"').replace(/\n/g, '')
+
+  console.log('webworker done!', output.length)
+
+  return webWorkerCode
 }
