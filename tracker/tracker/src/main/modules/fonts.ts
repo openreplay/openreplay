@@ -12,6 +12,7 @@ export default function (app: App) {
   const docFonts: Map<Document, FFData[]> = new Map()
 
   const patchWindow = (wnd: typeof globalThis) => {
+    // @ts-ignore
     class FontFaceInterceptor extends wnd.FontFace {
       constructor(...args: ConstructorParameters<typeof FontFace>) {
         //maybe do this on load(). In this case check if the document.fonts.load(...) function calls the font's load()
