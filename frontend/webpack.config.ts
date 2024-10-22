@@ -62,6 +62,8 @@ const config: Configuration = {
               modules: {
                 mode: "local",
                 auto: true,
+                namedExport: false,
+                exportLocalsConvention: 'as-is',
                 localIdentName: "[name]__[local]--[hash:base64:5]",
               }
               // url: {
