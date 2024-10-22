@@ -27,7 +27,7 @@ jobs:
     name: Build and test Tracker plus Replayer
     strategy:
       matrix:
-        node-version: [ 18.x ]
+        node-version: [ 20.x ]
     steps:
       - uses: oven-sh/setup-bun@v2
         with:
