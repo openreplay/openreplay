@@ -75,6 +75,7 @@ window.getJWT = () => {
 window.setJWT = (jwt) => {
   userStore.updateJwt({jwt});
 };
+export const client = new APIClient();
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -142,7 +143,6 @@ export class RootStore {
   }
 
   initClient() {
-    const client = new APIClient();
     client.setSiteIdCheck(projectStore.getSiteId);
     client.setJwt(userStore.getJwt());
     client.setJwtChecker(userStore.getJwt);

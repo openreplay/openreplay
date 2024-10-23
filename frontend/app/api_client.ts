@@ -166,8 +166,8 @@ export default class APIClient {
 
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-    const spotService = path.includes('/spot') && !path.includes('/login')
-    if (spotService && !edp.includes('api.openreplay.com')) {
+    const noChalice = path.includes('/spot') && !path.includes('/login')
+    if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '')
     }
     if (
@@ -176,7 +176,7 @@ export default class APIClient {
       !path.includes('/assist/credentials') &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
-      if (!this.siteId) console.trace('no id', path)
+      if (!this.siteId) console.trace('no site id', path, this.siteId)
       edp = `${edp}/${this.siteId}`;
     }
 

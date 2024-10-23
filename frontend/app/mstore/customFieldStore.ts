@@ -79,7 +79,7 @@ class CustomFieldStore {
     this.isSaving = true;
     try {
       const wasCreating = !instance.exists();
-      const response = instance.exists() ? await customFieldService.create(siteId, instance.toData()) :
+      const response = wasCreating ? await customFieldService.create(siteId, instance.toData()) :
         await customFieldService.update(siteId, instance.toData());
       const updatedInstance = new CustomField(response);
 

@@ -33,7 +33,6 @@ const CustomFields = () => {
   }, [sites]);
 
   const handleInit = (field?: any) => {
-    console.log('field', field);
     store.init(field);
     showModal(<CustomFieldForm siteId={currentSite.id} />, {
       title: field ? 'Edit Metadata' : 'Add Metadata', right: true

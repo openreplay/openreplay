@@ -1,4 +1,4 @@
-import APIClient from 'App/api_client';
+import { client } from 'App/mstore'
 
 const ALLOWED_404 = 'No-file-and-this-is-ok';
 const NO_BACKUP_FILE = 'No-efs-file';
@@ -58,16 +58,21 @@ export async function requestTarball(url: string) {
   }
 }
 
+const urlPattern = /https?:\/\/[a-zA-Z0-9.-]+(:\d+)?\/(\d+)\/session\/\d+/;
+
+function getSiteId(url) {
+  const match = url.match(urlPattern);
+  return match ? match[2] : null; // match[2] contains the siteId
+}
+
 async function requestEFSMobFile(filename: string) {
-  const api = new APIClient();
-  const siteId = document.location.href.match(
-    /https:\/\/[a-z.-]+\/([a-z0-9]+)\/[a-z-]+\/[0-9]+/
-  )?.[1];
+  const siteId = getSiteId(document.location.href)
   if (siteId) {
-    api.forceSiteId(siteId);
-    api.setSiteIdCheck(() => siteId);
+    client.forceSiteId(siteId);
+    client.setSiteIdCheck(() => ({ siteId }));
   }
-  const res = await api.fetch('/unprocessed/' + filename);
+
+  const res = await client.fetch('/unprocessed/' + filename);
   if (res.status >= 400) {
     throw NO_BACKUP_FILE;
   }

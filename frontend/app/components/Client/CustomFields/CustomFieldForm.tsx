@@ -13,7 +13,6 @@ interface CustomFieldFormProps {
 }
 
 const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
-  console.log('siteId', siteId);
   const focusElementRef = useRef<HTMLInputElement>(null);
   const { customFieldStore: store } = useStore();
   const field = store.instance;
