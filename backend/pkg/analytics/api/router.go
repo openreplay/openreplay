@@ -2,12 +2,13 @@ package api
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	analyticsConfig "openreplay/backend/internal/config/analytics"
-	"openreplay/backend/pkg/analytics"
+	"openreplay/backend/pkg/common"
 	"openreplay/backend/pkg/logger"
 	"sync"
+
+	"github.com/gorilla/mux"
 )
 
 type Router struct {
@@ -15,10 +16,10 @@ type Router struct {
 	cfg      *analyticsConfig.Config
 	router   *mux.Router
 	mutex    *sync.RWMutex
-	services *analytics.ServicesBuilder
+	services *common.ServicesBuilder
 }
 
-func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *analytics.ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *common.ServicesBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -44,10 +45,7 @@ func (e *Router) init() {
 	e.router.HandleFunc("/", e.ping)
 
 	// Analytics routes
-	// e.router.HandleFunc("/v1/analytics", e.createAnalytics).Methods("POST", "OPTIONS")
-	// e.router.HandleFunc("/v1/analytics/{id}", e.getAnalytics).Methods("GET", "OPTIONS")
-	// e.router.HandleFunc("/v1/analytics/{id}", e.updateAnalytics).Methods("PATCH", "OPTIONS")
-	// e.router.HandleFunc("/v1/analytics", e.getAnalytics).Methods("GET", "OPTIONS")
+	e.router.HandleFunc("/v1/analytics/{id}", e.getAnalytics).Methods("GET", "OPTIONS")
 }
 
 func (e *Router) ping(w http.ResponseWriter, r *http.Request) {
@@ -56,4 +54,18 @@ func (e *Router) ping(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) GetHandler() http.Handler {
 	return e.router
+}
+
+func (e *Router) GetRouter() *mux.Router {
+	return e.router
+}
+
+func (e *Router) getAnalytics(w http.ResponseWriter, r *http.Request) {
+	//w.WriteHeader(http.StatusOK)
+	vars := mux.Vars(r)
+	id := vars["id"]
+	e.log.Info(r.Context(), id)
+	w.WriteHeader(http.StatusOK)
+
+	//e.ResponseWithJSON(w, http.StatusOK, map[string]string{"message": "getAnalytics"})
 }
