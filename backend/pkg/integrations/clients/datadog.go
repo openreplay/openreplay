@@ -28,7 +28,6 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 	}
 	body := datadogV2.LogsListRequest{
 		Filter: &datadogV2.LogsQueryFilter{
-			Query: datadog.PtrString(fmt.Sprintf("openReplaySession.id=%d", sessionID)),
 			Indexes: []string{
 				"main",
 			},
@@ -37,6 +36,9 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 		Page: &datadogV2.LogsListRequestPage{
 			Limit: datadog.PtrInt32(1000),
 		},
+	}
+	if sessionID != 0 {
+		body.Filter.Query = datadog.PtrString(fmt.Sprintf("openReplaySession.id=%d", sessionID))
 	}
 	ctx := context.WithValue(context.Background(), datadog.ContextServerVariables, map[string]string{"site": cfg.Site})
 	ctx = context.WithValue(ctx, datadog.ContextAPIKeys, map[string]datadog.APIKey{

@@ -17,7 +17,8 @@ type Logger interface {
 }
 
 type loggerImpl struct {
-	l *zap.Logger
+	l     *zap.Logger
+	extra ExtraLogger
 }
 
 func New() Logger {
@@ -27,7 +28,7 @@ func New() Logger {
 	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel)
 	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
-	return &loggerImpl{l: logger}
+	return &loggerImpl{l: logger, extra: NewExtraLogger()}
 }
 
 func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logger {
@@ -53,21 +54,31 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 }
 
 func (l *loggerImpl) Debug(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(logStr)
+	l.extra.Log(ctx, logStr)
 }
 
 func (l *loggerImpl) Info(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "info"))).Info(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "info"))).Info(logStr)
+	l.extra.Log(ctx, logStr)
 }
 
 func (l *loggerImpl) Warn(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "warn"))).Warn(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "warn"))).Warn(logStr)
+	l.extra.Log(ctx, logStr)
 }
 
 func (l *loggerImpl) Error(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "error"))).Error(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "error"))).Error(logStr)
+	l.extra.Log(ctx, logStr)
 }
 
 func (l *loggerImpl) Fatal(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "fatal"))).Fatal(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "fatal"))).Fatal(logStr)
+	l.extra.Log(ctx, logStr)
 }
