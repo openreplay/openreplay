@@ -1,19 +1,27 @@
 import { client } from "App/mstore";
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-export async function getIntegrationData<T>(name: string, projectId: string): Promise<T> {
+export type ServiceName = 'datadog' | 'dynatrace' | 'elasticsearch' | 'sentry'
+export const serviceNames: Record<ServiceName, string> = {
+  datadog: 'Datadog',
+  dynatrace: 'Dynatrace',
+  elasticsearch: 'Elastic',
+  sentry: 'Sentry',
+};
+
+export async function getIntegrationData<T>(name: ServiceName, projectId: string): Promise<T> {
   const r = await client.get(
     `/integrations/v1/integrations/${name}/${projectId}`
   );
   return r.json();
 }
 
-export function useIntegration<T>(name: string, projectId: string, initialValues: T) {
+export function useIntegration<T>(name: ServiceName, projectId: string, initialValues: T) {
   const { data, isPending } = useQuery({
-    queryKey: ['integrationData', 'dynatrace'],
+    queryKey: ['integrationData', name],
     queryFn: async () => {
       const resp = await getIntegrationData<T>(
-        'dynatrace',
+        name,
         projectId
       );
       if (resp) {

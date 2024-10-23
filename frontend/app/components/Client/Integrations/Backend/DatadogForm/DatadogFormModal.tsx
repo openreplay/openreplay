@@ -37,6 +37,7 @@ const DatadogFormModal = ({
     isPending,
     saveMutation,
     removeMutation,
+    checkErrors,
   } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
   const { values, errors, handleChange, hasErrors } = useForm(data, {
     site: {
@@ -52,6 +53,9 @@ const DatadogFormModal = ({
   const exists = Boolean(data.api_key);
 
   const save = async () => {
+    if (checkErrors()) {
+      return;
+    }
     await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };

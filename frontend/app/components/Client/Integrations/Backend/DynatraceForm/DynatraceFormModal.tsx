@@ -39,7 +39,7 @@ const DynatraceFormModal = ({
     saveMutation,
     removeMutation,
   } = useIntegration<DynatraceConfig>('dynatrace', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors } = useForm(data, {
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
     environment: {
       required: true,
     },
@@ -56,6 +56,9 @@ const DynatraceFormModal = ({
   const exists = Boolean(data.client_id);
 
   const save = async () => {
+    if (checkErrors()) {
+      return;
+    }
     await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };

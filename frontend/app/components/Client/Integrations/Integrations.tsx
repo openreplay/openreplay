@@ -10,16 +10,10 @@ import { PageTitle } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 import SiteDropdown from 'Shared/SiteDropdown';
 
-import BugsnagForm from './Backend/BugsnagForm';
-import CloudwatchForm from './Backend/CloudwatchForm';
 import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
 import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
 import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
-import NewrelicForm from './Backend/NewrelicForm';
-import RollbarForm from './Backend/RollbarForm';
 import SentryForm from './Backend/SentryForm/SentryFormModal';
-import StackdriverForm from './Backend/StackdriverForm';
-import SumoLogicForm from './Backend/SumoLogicForm';
 import GithubForm from './GithubForm';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
@@ -52,8 +46,7 @@ function Integrations(props: Props) {
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    const list = storeIntegratedList
-      .filter((item: any) => item.integrated)
+    const list = integrationsStore.integrations.integratedServices
       .map((item: any) => item.name);
     setIntegratedList(list);
   }, [storeIntegratedList]);
@@ -142,27 +135,30 @@ function Integrations(props: Props) {
       <div
         className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
       >
-        {allIntegrations.map((integration) => (
-          <IntegrationItem
-            integrated={integratedList.includes(integration.slug)}
-            integration={integration}
-            useIcon={integration.useIcon}
-            onClick={() =>
-              onClick(
-                integration,
-                filteredIntegrations.find((cat) =>
-                  cat.integrations.includes(integration)
-                )?.title === 'Plugins'
-                  ? 500
-                  : 350
-              )
-            }
-            hide={
-              (integration.slug === 'github' &&
-                integratedList.includes('jira')) ||
-              (integration.slug === 'jira' && integratedList.includes('github'))
-            }
-          />
+        {allIntegrations.map((integration, i) => (
+          <React.Fragment key={`${integration.slug}+${i}`}>
+            <IntegrationItem
+              integrated={integratedList.includes(integration.slug)}
+              integration={integration}
+              useIcon={integration.useIcon}
+              onClick={() =>
+                onClick(
+                  integration,
+                  filteredIntegrations.find((cat) =>
+                    cat.integrations.includes(integration)
+                  )?.title === 'Plugins'
+                    ? 500
+                    : 350
+                )
+              }
+              hide={
+                (integration.slug === 'github' &&
+                  integratedList.includes('jira')) ||
+                (integration.slug === 'jira' &&
+                  integratedList.includes('github'))
+              }
+            />
+          </React.Fragment>
         ))}
       </div>
     </>
@@ -230,22 +226,6 @@ const integrations = [
         component: <SentryForm />,
       },
       {
-        title: 'Bugsnag',
-        subtitle:
-          'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
-        slug: 'bugsnag',
-        icon: 'integrations/bugsnag',
-        component: <BugsnagForm />,
-      },
-      {
-        title: 'Rollbar',
-        subtitle:
-          'Integrate Rollbar with session replays to seamlessly observe backend errors.',
-        slug: 'rollbar',
-        icon: 'integrations/rollbar',
-        component: <RollbarForm />,
-      },
-      {
         title: 'Elasticsearch',
         subtitle:
           'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
@@ -260,38 +240,6 @@ const integrations = [
         slug: 'datadog',
         icon: 'integrations/datadog',
         component: <DatadogForm />,
-      },
-      {
-        title: 'Sumo Logic',
-        subtitle:
-          'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
-        slug: 'sumologic',
-        icon: 'integrations/sumologic',
-        component: <SumoLogicForm />,
-      },
-      {
-        title: 'Google Cloud',
-        subtitle:
-          'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
-        slug: 'stackdriver',
-        icon: 'integrations/google-cloud',
-        component: <StackdriverForm />,
-      },
-      {
-        title: 'CloudWatch',
-        subtitle:
-          'Integrate CloudWatch to see backend logs and errors alongside session replay.',
-        slug: 'cloudwatch',
-        icon: 'integrations/aws',
-        component: <CloudwatchForm />,
-      },
-      {
-        title: 'Newrelic',
-        subtitle:
-          'Integrate NewRelic with session replays to seamlessly observe backend errors.',
-        slug: 'newrelic',
-        icon: 'integrations/newrelic',
-        component: <NewrelicForm />,
       },
       {
         title: 'Dynatrace',
@@ -428,3 +376,56 @@ const integrations = [
     ],
   },
 ];
+
+/**
+ *
+ * @deprecated
+ * */
+// {
+//   title: 'Sumo Logic',
+//     subtitle:
+//   'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
+//     slug: 'sumologic',
+//   icon: 'integrations/sumologic',
+//   component: <SumoLogicForm />,
+// },
+// {
+//   title: 'Bugsnag',
+//     subtitle:
+//   'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
+//     slug: 'bugsnag',
+//   icon: 'integrations/bugsnag',
+//   component: <BugsnagForm />,
+// },
+// {
+//   title: 'Rollbar',
+//     subtitle:
+//   'Integrate Rollbar with session replays to seamlessly observe backend errors.',
+//     slug: 'rollbar',
+//   icon: 'integrations/rollbar',
+//   component: <RollbarForm />,
+// },
+// {
+//   title: 'Google Cloud',
+//     subtitle:
+//   'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
+//     slug: 'stackdriver',
+//   icon: 'integrations/google-cloud',
+//   component: <StackdriverForm />,
+// },
+// {
+//   title: 'CloudWatch',
+//     subtitle:
+//   'Integrate CloudWatch to see backend logs and errors alongside session replay.',
+//     slug: 'cloudwatch',
+//   icon: 'integrations/aws',
+//   component: <CloudwatchForm />,
+// },
+// {
+//   title: 'Newrelic',
+//     subtitle:
+//   'Integrate NewRelic with session replays to seamlessly observe backend errors.',
+//     slug: 'newrelic',
+//   icon: 'integrations/newrelic',
+//   component: <NewrelicForm />,
+// },

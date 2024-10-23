@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ValidationRule {
   custom?: (
@@ -79,7 +79,18 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
       ...prevErrors,
       [fieldName]: error,
     }));
+    return Boolean(error);
   };
+
+  const checkErrors = () => {
+    const errSignals: boolean[] = [];
+    Object.keys(values).forEach((key) => {
+        // @ts-ignore
+        errSignals.push(validateField(key, values[key]));
+    });
+
+    return errSignals.some((signal) => signal);
+  }
 
   const resetForm = () => {
     setValues(initialValues);
@@ -92,6 +103,7 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
     handleChange,
     resetForm,
     hasErrors,
+    checkErrors,
   };
 }
 

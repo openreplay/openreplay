@@ -8,7 +8,7 @@ import { VList, VListHandle } from 'virtua';
 import { processLog, UnifiedLog } from './utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-
+import { ServiceName, serviceNames } from 'App/components/Client/Integrations/apiMethods';
 import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
 import { capitalize } from 'App/utils';
 import { Icon, Input } from 'UI';
@@ -21,10 +21,12 @@ async function fetchLogs(tab: string, projectId: string, sessionId: string): Pro
 }
 
 function BackendLogsPanel() {
-  const { projectsStore, sessionStore } = useStore();
+  const { projectsStore, sessionStore, integrationsStore } = useStore();
+  const integratedServices = integrationsStore.integrations.backendLogIntegrations
+  const defaultTab = integratedServices[0]!.name
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
-  const [tab, setTab] = React.useState('dynatrace');
+  const [tab, setTab] = React.useState<ServiceName>(defaultTab);
   const {
     data,
     isError,
@@ -32,7 +34,8 @@ function BackendLogsPanel() {
   } = useQuery<UnifiedLog[]>({
     queryKey: ['integrationLogs', tab],
     staleTime: 3 * 1000 * 60,
-    queryFn: () => fetchLogs(tab, projectId, sessionId),
+    queryFn: () => fetchLogs(tab!, projectId, sessionId),
+    enabled: tab !== null,
     initialData: []
   });
   const [filter, setFilter] = React.useState('');
@@ -44,44 +47,31 @@ function BackendLogsPanel() {
     }
   }, [activeIndex]);
 
-  const onFilterChange = (e) => {
+  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
   };
-
-  const tabs = [
-    {
-      label: (
-        <div className={'flex items-center gap-2'}>
-          <Icon size={14} name={'integrations/dynatrace'} /> <div>Dynatrace</div>
-        </div>
-      ),
-      value: 'dynatrace',
-    },
-    {
-      label: (
-        <div className={'flex items-center gap-2'}>
-          <Icon size={14} name={'integrations/elasticsearch'} /> <div>Elastic</div>
-        </div>
-      ),
-      value: 'elastic',
-    },
-    {
-      label: (
-        <div className={'flex items-center gap-2'}>
-          <Icon size={14} name={'integrations/datadog'} /> <div>Datadog</div>
-        </div>
-      ),
-      value: 'datadog',
-    },
-  ];
+  
+  const tabs = Object.entries(serviceNames)
+    .filter(([slug]) => integratedServices.includes(slug))
+    .map(([slug, name]) => ({
+    label: (
+      <div className={'flex items-center gap-2'}>
+        <Icon size={14} name={`integrations/${slug}`} /> <div>{name}</div>
+      </div>
+    ),
+    value: slug,
+  }))
+  
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
         <div className={'flex gap-2 items-center w-full'}>
           <div className={'font-semibold'}>Traces</div>
-          <div>
-            <Segmented options={tabs} value={tab} onChange={setTab} />
-          </div>
+          {tabs.length && tab ?
+            <div>
+              <Segmented options={tabs} value={tab} onChange={setTab} />
+            </div>
+          : null}
 
           <div className={'ml-auto'} />
           <Input

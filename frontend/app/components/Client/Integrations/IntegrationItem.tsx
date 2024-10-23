@@ -14,7 +14,7 @@ interface Props {
 
 const IntegrationItem = (props: Props) => {
   const { integration, integrated, hide = false, useIcon } = props;
-  return hide ? <></> : (
+  return hide ? null : (
     <div
       className={cn('flex flex-col border rounded-lg p-3 bg-white relative justify-between cursor-pointer hover:bg-active-blue')}
       onClick={(e) => props.onClick(e)}

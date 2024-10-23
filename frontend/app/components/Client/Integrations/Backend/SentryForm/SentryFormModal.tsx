@@ -37,6 +37,7 @@ function SentryForm({
     isPending,
     saveMutation,
     removeMutation,
+    checkErrors,
   } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
   const { values, errors, handleChange, hasErrors } = useForm(data, {
     organization_slug: {
@@ -52,6 +53,9 @@ function SentryForm({
   const exists = Boolean(data.token);
 
   const save = async () => {
+    if (checkErrors()) {
+      return;
+    }
     await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };

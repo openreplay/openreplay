@@ -40,7 +40,7 @@ function ElasticsearchForm({
     saveMutation,
     removeMutation,
   } = useIntegration<ElasticConfig>('elasticsearch', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors } = useForm(data, {
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
     url: {
       required: true,
     },
@@ -54,6 +54,9 @@ function ElasticsearchForm({
   const exists = Boolean(data.api_key_id);
 
   const save = async () => {
+    if (checkErrors()) {
+      return;
+    }
     await saveMutation.mutateAsync({ values, siteId, exists });
     onClose();
   };
