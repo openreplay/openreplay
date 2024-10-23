@@ -40,12 +40,8 @@ func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *common.
 
 func (e *Router) init() {
 	e.router = mux.NewRouter()
-
-	// Root route
 	e.router.HandleFunc("/", e.ping)
-
-	// Analytics routes
-	e.router.HandleFunc("/v1/analytics/{id}", e.getAnalytics).Methods("GET", "OPTIONS")
+	e.routes()
 }
 
 func (e *Router) ping(w http.ResponseWriter, r *http.Request) {
@@ -68,4 +64,132 @@ func (e *Router) getAnalytics(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	//e.ResponseWithJSON(w, http.StatusOK, map[string]string{"message": "getAnalytics"})
+}
+
+func (e *Router) routes() {
+	e.router.HandleFunc("/{projectId}/dashboards", e.createDashboards).Methods("POST")
+	e.router.HandleFunc("/{projectId}/dashboards", e.getDashboards).Methods("GET")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.getDashboard).Methods("GET")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.updateDashboard).Methods("PUT")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.deleteDashboard).Methods("DELETE")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}/pin", e.pinDashboard).Methods("GET")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}/cards", e.addCardToDashboard).Methods("POST")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}/metrics", e.createMetricAndAddToDashboard).Methods("POST")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}", e.updateWidgetInDashboard).Methods("PUT")
+	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}", e.removeWidgetFromDashboard).Methods("DELETE")
+	e.router.HandleFunc("/{projectId}/cards/try", e.tryCard).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/try/sessions", e.tryCardSessions).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/try/issues", e.tryCardIssues).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards", e.getCards).Methods("GET")
+	e.router.HandleFunc("/{projectId}/cards", e.createCard).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/search", e.searchCards).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}", e.getCard).Methods("GET")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/sessions", e.getCardSessions).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/issues", e.getCardFunnelIssues).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/issues/{issueId}/sessions", e.getMetricFunnelIssueSessions).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/errors", e.getCardErrorsList).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/chart", e.getCardChart).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}", e.updateCard).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}/status", e.updateCardState).Methods("POST")
+	e.router.HandleFunc("/{projectId}/cards/{cardId}", e.deleteCard).Methods("DELETE")
+}
+
+func (e *Router) createDashboards(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) getDashboards(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) updateDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) deleteDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (e *Router) pinDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) addCardToDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) createMetricAndAddToDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) updateWidgetInDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) removeWidgetFromDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (e *Router) tryCard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) tryCardSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) tryCardIssues(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) getCards(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) createCard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (e *Router) searchCards(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getCard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getCardSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getCardFunnelIssues(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getMetricFunnelIssueSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getCardErrorsList(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) getCardChart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) updateCard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) updateCardState(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *Router) deleteCard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
 }
