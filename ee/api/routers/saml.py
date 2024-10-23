@@ -76,6 +76,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         tenant_key = user_data.get("tenantKey", [])
     else:
         logger.info("Using tenant key from ACS-URL")
+        tenant_key = [tenant_key]
 
     logger.debug(f"received nameId: {email}  tenant_key: {tenant_key}")
     logger.debug(">user_data:")
