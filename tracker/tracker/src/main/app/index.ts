@@ -1741,7 +1741,6 @@ export default class App {
 
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
-      console.trace('stopped')
       try {
         if (!this.insideIframe && this.options.crossdomain?.enabled) {
           this.killChildrenFrames()
