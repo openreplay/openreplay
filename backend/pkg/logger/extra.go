@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/getsentry/sentry-go"
-	"google.golang.org/appengine/log"
 	"net/http"
 	"openreplay/backend/pkg/env"
 	"time"
@@ -35,7 +34,7 @@ func NewExtraLogger() ExtraLogger {
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {
-		log.Errorf(context.Background(), "sentry.Init: %s", err)
+		fmt.Printf("sentry.Init: %s", err)
 		hasSentry = false
 	}
 
@@ -49,14 +48,14 @@ func NewExtraLogger() ExtraLogger {
 		APIKey:    ELASTIC_API_KEY,
 	})
 	if err != nil {
-		log.Errorf(context.Background(), "Error creating the ES client: %s", err)
+		fmt.Printf("Error creating the ES client: %s", err)
 		hasElastic = false
 	}
 
 	// Init
 	DATADOG_API_KEY := env.String("DATADOG_API_KEY")
 	if DATADOG_API_KEY == "" {
-		log.Errorf(context.Background(), "DATADOG_API_KEY is empty")
+		fmt.Printf("DATADOG_API_KEY is empty")
 	}
 
 	return &extraLogger{
@@ -77,7 +76,7 @@ type LogMessage struct {
 func sendLog(es *elasticsearch.Client, logMessage LogMessage) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(logMessage); err != nil {
-		log.Errorf(context.Background(), "Error encoding log message: %s", err)
+		fmt.Printf("Error encoding log message: %s", err)
 		return
 	}
 
@@ -90,16 +89,16 @@ func sendLog(es *elasticsearch.Client, logMessage LogMessage) {
 
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		log.Errorf(context.Background(), "Error sending log to Elasticsearch: %s", err)
+		fmt.Printf("Error sending log to Elasticsearch: %s", err)
 		return
 	}
 	defer res.Body.Close()
 
 	// Check the response status
 	if res.IsError() {
-		log.Errorf(context.Background(), "Error response from Elasticsearch: %s", res.String())
+		fmt.Printf("Error response from Elasticsearch: %s", res.String())
 	} else {
-		log.Infof(context.Background(), "Log successfully sent to Elasticsearch.")
+		fmt.Printf("Log successfully sent to Elasticsearch.")
 	}
 }
 
