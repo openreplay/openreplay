@@ -8,6 +8,7 @@
   background: white;
 }
 .iframe {
+  pointer-events: none;
   position: absolute;
   border: none;
   background: white;
