@@ -1,35 +1,39 @@
 import { makeAutoObservable } from 'mobx';
 
 import { integrationsService } from 'App/services';
-import ElasticsearchForm from "../components/Client/Integrations/ElasticsearchForm";
 
 import { MessengerConfig } from './types/integrations/messengers';
 import {
-  Bugsnag,
-  Cloudwatch,
   DatadogInt,
   ElasticSearchInt,
   GithubInt,
   Integration,
   IssueTracker,
   JiraInt,
-  NewRelicInt,
-  RollbarInt,
   SentryInt,
-  StackDriverInt,
-  SumoLogic,
 } from './types/integrations/services';
+import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
 
 class GenericIntegrationsStore {
   list: any[] = [];
   isLoading: boolean = false;
   siteId: string = '';
+
   constructor() {
     makeAutoObservable(this);
   }
 
   setSiteId(siteId: string) {
     this.siteId = siteId;
+  }
+
+  get integratedServices() {
+    return this.list.filter(int => int.integrated);
+  }
+
+  get backendLogIntegrations(): { name: string, integrated: boolean }[] {
+    const backendServices = Object.keys(serviceNames);
+    return this.list.filter(int => int.integrated && backendServices.includes(int.name));
   }
 
   setList(list: any[]) {
@@ -276,13 +280,7 @@ export type namedStore = 'sentry'
 export class IntegrationsStore {
   sentry = new NamedIntegrationStore('sentry', (d) => new SentryInt(d));
   datadog = new NamedIntegrationStore('datadog', (d) => new DatadogInt(d));
-  stackdriver = new NamedIntegrationStore('stackdriver', (d) => new StackDriverInt(d));
-  rollbar = new NamedIntegrationStore('rollbar', (d) => new RollbarInt(d));
-  newrelic = new NamedIntegrationStore('newrelic', (d) => new NewRelicInt(d));
-  bugsnag = new NamedIntegrationStore('bugsnag', (d) => new Bugsnag(d));
-  cloudwatch = new NamedIntegrationStore('cloudwatch', (d) => new Cloudwatch(d));
   elasticsearch = new NamedIntegrationStore('elasticsearch', (d) => new ElasticSearchInt(d));
-  sumologic = new NamedIntegrationStore('sumologic', (d) => new SumoLogic(d));
   jira = new NamedIntegrationStore('jira', (d) => new JiraInt(d));
   github = new NamedIntegrationStore('github', (d) => new GithubInt(d));
   issues = new NamedIntegrationStore('issues', (d) => new IssueTracker(d));

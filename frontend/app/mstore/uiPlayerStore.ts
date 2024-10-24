@@ -17,6 +17,8 @@ export const FETCH = 8;
 export const EXCEPTIONS = 9;
 export const INSPECTOR = 11;
 export const OVERVIEW = 12;
+export const BACKENDLOGS = 13;
+
 
 export const blocks = {
   none: NONE,
@@ -31,6 +33,7 @@ export const blocks = {
   exceptions: EXCEPTIONS,
   inspector: INSPECTOR,
   overview: OVERVIEW,
+  backendLogs: BACKENDLOGS,
 } as const;
 
 export const blockValues = [
@@ -46,6 +49,7 @@ export const blockValues = [
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
+  BACKENDLOGS,
 ] as const;
 
 export default class UiPlayerStore {

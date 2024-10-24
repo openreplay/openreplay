@@ -106,7 +106,7 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 function PrivateRoutes() {
-  const { projectsStore, userStore } = useStore();
+  const { projectsStore, userStore, integrationsStore } = useStore();
   const onboarding = userStore.onboarding;
   const scope = userStore.scopeState;
   const tenantId = userStore.account.tenantId;
@@ -118,6 +118,11 @@ function PrivateRoutes() {
     !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
+  React.useEffect(() => {
+    if (integrationsStore.integrations.list.length === 0 && siteId) {
+      void integrationsStore.integrations.fetchIntegrations(siteId);
+    }
+  }, [siteId])
   return (
     <Suspense fallback={<Loader loading={true} className="flex-1" />}>
       <Switch key="content">
