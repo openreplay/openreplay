@@ -75,7 +75,6 @@ window.getJWT = () => {
 window.setJWT = (jwt) => {
   userStore.updateJwt({jwt});
 };
-export const client = new APIClient();
 
 const client = new APIClient();
 

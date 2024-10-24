@@ -28,8 +28,14 @@ async function fetchLogs(
     `/integrations/v1/integrations/${tab}/${projectId}/data/${sessionId}`
   );
   const json = await data.json();
-
-  return json.map(processLog);
+  const logsResp = await fetch(json.url)
+  console.log(logsResp, logsResp.ok)
+  if (logsResp.ok) {
+    const logs = await logsResp.json()
+    return logs.map(processLog)
+  } else {
+    throw new Error('Failed to fetch logs')
+  }
 }
 
 function BackendLogsPanel() {
@@ -47,8 +53,10 @@ function BackendLogsPanel() {
     staleTime: 0,
     queryFn: () => fetchLogs(tab!, projectId, sessionId),
     enabled: tab !== null,
+    retry: 3,
   });
 
+  console.log(isError, isPending, isSuccess)
   const [filter, setFilter] = React.useState('');
   const _list = React.useRef<VListHandle>(null);
   const activeIndex = 1;

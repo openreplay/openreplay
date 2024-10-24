@@ -41,7 +41,7 @@ function Integrations(props: Props) {
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { hideHeader = false } = props;
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const [integratedList, setIntegratedList] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -84,6 +84,7 @@ function Integrations(props: Props) {
       React.cloneElement(integration.component, {
         integrated: integratedList.includes(integration.slug),
         siteId,
+        onClose: hideModal,
       }),
       { right: true, width }
     );
