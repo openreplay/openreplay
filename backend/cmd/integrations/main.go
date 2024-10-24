@@ -17,7 +17,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log := logger.New()
+	log := logger.New(false)
 	cfg := config.New(log)
 	metrics.New(log, append(database.List()))
 
