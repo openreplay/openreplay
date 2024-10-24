@@ -6,19 +6,18 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-
-
 import { useStore } from 'App/mstore';
 import { Note } from 'App/services/NotesService';
 import { Loader, Modal } from 'UI';
 
-
-
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
-import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
-
+import {
+  IPlayerContext,
+  PlayerContext,
+  defaultContextValue,
+} from './playerContext';
 
 const TABS = {
   EVENTS: 'Activity',
@@ -33,7 +32,14 @@ const UXTTABS = {
 let playerInst: IPlayerContext['player'] | undefined;
 
 function WebPlayer(props: any) {
-  const { notesStore, sessionStore, uxtestingStore, uiPlayerStore, integrationsStore, userStore } = useStore();
+  const {
+    notesStore,
+    sessionStore,
+    uxtestingStore,
+    uiPlayerStore,
+    integrationsStore,
+    userStore,
+  } = useStore();
   const session = sessionStore.current;
   const prefetched = sessionStore.prefetched;
   const startedAt = sessionStore.current.startedAt || 0;
@@ -102,7 +108,7 @@ function WebPlayer(props: any) {
     }
   }, [session.sessionId]);
 
-  const domFiles = session?.domURL?.length ?? 0
+  const domFiles = session?.domURL?.length ?? 0;
   useEffect(() => {
     if (!prefetched && domFiles > 0) {
       playerInst?.reinit(session);
@@ -130,7 +136,13 @@ function WebPlayer(props: any) {
     ) {
       contextValue.player?.updateLists?.(session);
     }
-  }, [session.events, session.errors, session.addedEvents, contextValue.player, messagesProcessed]);
+  }, [
+    session.events,
+    session.errors,
+    session.addedEvents,
+    contextValue.player,
+    messagesProcessed,
+  ]);
 
   React.useEffect(() => {
     if (noteItem === undefined) {
