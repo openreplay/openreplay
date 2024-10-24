@@ -150,7 +150,7 @@ func (s *serviceImpl) hasSessionData(projectID uint64, provider string, sessionI
 }
 
 func (s *serviceImpl) getProviderCredentials(projectID uint64, provider string) (interface{}, error) {
-	sql := `SELECT credentials FROM project_integrations WHERE project_id = $1 AND provider = $2`
+	sql := `SELECT options FROM public.integrations WHERE project_id = $1 AND provider = $2`
 	var credentials interface{}
 	if err := s.conn.QueryRow(sql, projectID, provider).Scan(&credentials); err != nil {
 		return nil, fmt.Errorf("failed to get provider credentials: %v", err)
