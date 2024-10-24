@@ -476,7 +476,7 @@ else:
             session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
                                           location_condition=location_condition,
                                           start_time=data.startTimestamp, end_time=data.endTimestamp)
-            if False and include_mobs:
+            if include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
                 if _depth > 0 and len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
