@@ -148,11 +148,12 @@ function WidgetView(props: Props) {
             <WidgetPreview name={widget.name} isEditing={expanded} />
 
             {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
-              <>
-                {(widget.metricType === TABLE || widget.metricType === TIMESERIES || widget.metricType === HEATMAP || widget.metricType === INSIGHTS) &&
-                  <WidgetSessions />}
-                {widget.metricType === FUNNEL && <FunnelIssues />}
-              </>
+                (widget.metricType === TABLE
+                  || widget.metricType === TIMESERIES
+                  || widget.metricType === HEATMAP
+                  || widget.metricType === INSIGHTS
+                  || widget.metricType === FUNNEL) ?
+                  <WidgetSessions /> : null
             )}
 
             {widget.metricType === USER_PATH && <CardIssues />}

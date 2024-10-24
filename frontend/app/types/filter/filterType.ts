@@ -302,19 +302,11 @@ export enum FilterKey {
   MEMORY_CONSUMPTION = 'memoryConsumption',
   PAGES_RESPONSE_TIME = 'pagesResponseTime',
   PAGES_RESPONSE_TIME_DISTRIBUTION = 'pagesResponseTimeDistribution',
-  RESOURCES_VS_VISUALLY_COMPLETE = 'resourcesVsVisuallyComplete',
   SESSIONS_PER_BROWSER = 'sessionsPerBrowser',
   SLOWEST_DOMAINS = 'slowestDomains',
   SPEED_LOCATION = 'speedLocation',
   TIME_TO_RENDER = 'timeToRender',
   IMPACTED_SESSIONS_BY_SLOW_PAGES = 'impactedSessionsBySlowPages',
-
-  // Resources
-  BREAKDOWN_OF_LOADED_RESOURCES = 'resourcesCountByType',
-  MISSING_RESOURCES = 'missingResources',
-  RESOURCE_TYPE_VS_RESPONSE_END = 'resourceTypeVsResponseEnd',
-  RESOURCE_FETCH_TIME = 'resourcesLoadingTime',
-  SLOWEST_RESOURCES = 'slowestResources',
 
   CLICKMAP_URL = 'clickMapUrl',
   FEATURE_FLAG = 'featureFlag',

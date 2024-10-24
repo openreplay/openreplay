@@ -272,22 +272,6 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Resources vs Visually Completed',
-    key: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
-    cardType: PERFORMANCE,
-    metricOf: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
-    category: CARD_CATEGORIES[1].key,
-    data: {
-      chart: generateStackedBarChartData(['Images', 'Scripts', 'CSS']),
-      label: 'Visually Completed (ms)',
-      namesMap: [
-        'Series 1'
-      ]
-    },
-    example: BarChartCard
-  },
-
-  {
     title: 'Sessions by Browser & Version',
     key: FilterKey.SESSIONS_PER_BROWSER,
     cardType: PERFORMANCE,

@@ -14,16 +14,10 @@ import MemoryConsumption from 'App/components/Dashboard/Widgets/PredefinedWidget
 import ResponseTime from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResponseTime';
 import TimeToRender from 'App/components/Dashboard/Widgets/PredefinedWidgets/TimeToRender';
 import SlowestDomains from 'App/components/Dashboard/Widgets/PredefinedWidgets/SlowestDomains';
-import ResourceLoadedVsVisuallyComplete from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResourceLoadedVsVisuallyComplete';
 import SessionsImpactedBySlowRequests from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsImpactedBySlowRequests';
-import ResourceLoadingTime from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResourceLoadingTime';
-import BreakdownOfLoadedResources from 'App/components/Dashboard/Widgets/PredefinedWidgets/BreakdownOfLoadedResources';
-import MissingResources from 'App/components/Dashboard/Widgets/PredefinedWidgets/MissingResources';
-import ResourceLoadedVsResponseEnd from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResourceLoadedVsResponseEnd';
 import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
-import SlowestResources from '../../Widgets/PredefinedWidgets/SlowestResources';
 import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
 import { FilterKey } from 'Types/filter/filterType';
 
@@ -73,26 +67,12 @@ function WidgetPredefinedChart(props: Props) {
                 return <MemoryConsumption data={data} metric={metric} />
             case FilterKey.PAGES_RESPONSE_TIME:
                 return <ResponseTime data={data} metric={metric} />
-            case FilterKey.RESOURCES_VS_VISUALLY_COMPLETE:
-                return <ResourceLoadedVsVisuallyComplete data={data} metric={metric} />
             case FilterKey.SESSIONS_PER_BROWSER:
                 return <SessionsPerBrowser data={data} />
             case FilterKey.SLOWEST_DOMAINS:
                 return <SlowestDomains data={data} />
             case FilterKey.TIME_TO_RENDER:
                 return <TimeToRender data={data} metric={metric} />
-
-            // Resources
-            case FilterKey.BREAKDOWN_OF_LOADED_RESOURCES:
-                return <BreakdownOfLoadedResources data={data} metric={metric} />
-            case FilterKey.MISSING_RESOURCES:
-                return <MissingResources isTemplate={isTemplate} data={data} metric={metric} />
-            case FilterKey.RESOURCE_TYPE_VS_RESPONSE_END:
-                return <ResourceLoadedVsResponseEnd data={data} metric={metric} />
-            case FilterKey.RESOURCES_LOADING_TIME:
-                return <ResourceLoadingTime data={data} metric={metric} />
-            case FilterKey.SLOWEST_RESOURCES:
-                return <SlowestResources isTemplate={isTemplate} data={data} metric={metric} />
 
             default:
                 return <div className="h-40 color-red">Widget not supported</div>

@@ -112,11 +112,6 @@ export const TYPES: CardType[] = [
         slug: FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION,
         description: '',
       },
-      {
-        title: 'Resources vs Visually Complete',
-        slug: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
-        description: '',
-      },
       { title: 'Sessions per Browser', slug: FilterKey.SESSIONS_PER_BROWSER, description: '' },
       { title: 'Slowest Domains', slug: FilterKey.SLOWEST_DOMAINS, description: '' },
       { title: 'Speed Index by Location', slug: FilterKey.SPEED_LOCATION, description: '' },
@@ -126,27 +121,6 @@ export const TYPES: CardType[] = [
         slug: FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES,
         description: '',
       },
-    ],
-  },
-  {
-    title: 'Resource Monitoring',
-    icon: 'files',
-    description: 'Identify missing resources and those slowing down your app.',
-    slug: RESOURCE_MONITORING,
-    subTypes: [
-      {
-        title: 'Breakdown of Loaded Resources',
-        slug: FilterKey.BREAKDOWN_OF_LOADED_RESOURCES,
-        description: '',
-      },
-      { title: 'Missing Resources', slug: FilterKey.MISSING_RESOURCES, description: '' },
-      {
-        title: 'Resource Type vs Response End',
-        slug: FilterKey.RESOURCE_TYPE_VS_RESPONSE_END,
-        description: '',
-      },
-      { title: 'Resource Fetch Time', slug: FilterKey.RESOURCE_FETCH_TIME, description: '' },
-      { title: 'Slowest Resources', slug: FilterKey.SLOWEST_RESOURCES, description: '' },
     ],
   },
   {

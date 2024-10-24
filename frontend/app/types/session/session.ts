@@ -424,8 +424,6 @@ export default class Session {
     this.notesWithEvents = [...this.notesWithEvents, ...mixedEventsWithIssues].sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
-    // @ts-ignore legacy code? no idea
-    this.resources = resources;
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;
