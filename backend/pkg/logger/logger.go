@@ -28,7 +28,8 @@ func New() Logger {
 	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel)
 	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
-	return &loggerImpl{l: logger, extra: NewExtraLogger()}
+	//return &loggerImpl{l: logger, extra: NewExtraLogger()}
+	return &loggerImpl{l: logger}
 }
 
 func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logger {
