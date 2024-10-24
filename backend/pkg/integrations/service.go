@@ -181,10 +181,7 @@ func (s *serviceImpl) uploadSessionData(provider string, sessionID uint64, data 
 	if err != nil {
 		return fmt.Errorf("failed to marshal session data: %v", err)
 	}
-	if err := s.storage.Upload(bytes.NewReader(dataBytes), key, "application/json", objectstorage.NoCompression); err != nil {
-		return fmt.Errorf("failed to upload session data: %v", err)
-	}
-	return nil
+	return s.storage.Upload(bytes.NewReader(dataBytes), key, "text/plain", objectstorage.NoCompression)
 }
 
 func (s *serviceImpl) markSessionData(projectID uint64, provider string, sessionID uint64) error {
