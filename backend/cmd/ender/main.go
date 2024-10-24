@@ -29,7 +29,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log := logger.New()
+	log := logger.New(false)
 	cfg := ender.New(log)
 	metrics.New(log, append(enderMetrics.List(), databaseMetrics.List()...))
 

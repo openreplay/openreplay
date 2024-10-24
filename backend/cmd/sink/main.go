@@ -23,7 +23,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log := logger.New()
+	log := logger.New(false)
 	cfg := sink.New(log)
 	metrics.New(log, sinkMetrics.List())
 
