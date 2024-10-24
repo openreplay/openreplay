@@ -37,9 +37,8 @@ function SentryForm({
     isPending,
     saveMutation,
     removeMutation,
-    checkErrors,
   } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors } = useForm(data, {
+  const { values, errors, handleChange, hasErrors, checkErrors, } = useForm(data, {
     organization_slug: {
       required: true,
     },

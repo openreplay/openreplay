@@ -17,9 +17,10 @@ function LogsButton({
       label={'Traces'}
       customTags={
         <Avatar.Group>
-          <Avatar size={16} src={<Icon name={'integrations/datadog'} size={14} />} />
-          <Avatar size={16} src={<Icon name={'integrations/dynatrace'} size={14} />} />
-          <Avatar size={16} src={<Icon name={'integrations/elasticsearch'} size={14} />} />
+          {integrated.map((name) => (
+            <Avatar size={16} src={<Icon name={`integrations/${name}`} size={14} />} />
+           ))
+          }
         </Avatar.Group>
       }
       onClick={onClick}

@@ -31,7 +31,7 @@ class GenericIntegrationsStore {
     return this.list.filter(int => int.integrated);
   }
 
-  get backendLogIntegrations() {
+  get backendLogIntegrations(): { name: string, integrated: boolean }[] {
     const backendServices = Object.keys(serviceNames);
     return this.list.filter(int => int.integrated && backendServices.includes(int.name));
   }

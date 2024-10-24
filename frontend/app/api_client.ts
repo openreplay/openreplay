@@ -166,7 +166,7 @@ export default class APIClient {
 
     let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-    const noChalice = path.includes('/integrations/v1') || path.includes('/spot') && !path.includes('/login')
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
     if (noChalice && !edp.includes('api.openreplay.com')) {
       edp = edp.replace('/api', '')
     }

@@ -37,9 +37,8 @@ const DatadogFormModal = ({
     isPending,
     saveMutation,
     removeMutation,
-    checkErrors,
   } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors } = useForm(data, {
+  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
     site: {
       required: true,
     },
