@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { toast } from ".store/react-toastify-virtual-9dd0f3eae1/package";
 
 interface DatadogConfig {
   site: string;
@@ -55,12 +56,24 @@ const DatadogFormModal = ({
     if (checkErrors()) {
       return;
     }
-    await saveMutation.mutateAsync({ values, siteId, exists });
+    try {
+      await saveMutation.mutateAsync({ values, siteId, exists });
+      toast.success('Datadog integration has been saved.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to save Datadog integration.');
+    }
     onClose();
   };
 
   const remove = async () => {
-    await removeMutation.mutateAsync({ siteId });
+    try {
+      await removeMutation.mutateAsync({ siteId });
+      toast.success('Datadog integration has been removed.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to remove Datadog integration.');
+    }
     onClose();
   };
   return (

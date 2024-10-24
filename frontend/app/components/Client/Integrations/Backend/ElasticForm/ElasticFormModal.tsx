@@ -10,6 +10,7 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
+import { toast } from ".store/react-toastify-virtual-9dd0f3eae1/package";
 
 interface ElasticConfig {
   url: string;
@@ -57,12 +58,24 @@ function ElasticsearchForm({
     if (checkErrors()) {
       return;
     }
-    await saveMutation.mutateAsync({ values, siteId, exists });
+    try {
+      await saveMutation.mutateAsync({ values, siteId, exists });
+      toast.success('Elastic Search integration has been saved.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to save Elastic Search integration.');
+    }
     onClose();
   };
 
   const remove = async () => {
-    await removeMutation.mutateAsync({ siteId });
+    try {
+      await removeMutation.mutateAsync({ siteId });
+      toast.success('Elastic Search integration has been removed.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to remove Elastic Search integration.');
+    }
     onClose();
   };
   return (

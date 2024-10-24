@@ -40,7 +40,7 @@ function BackendLogsPanel() {
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
   const [tab, setTab] = React.useState<ServiceName>(defaultTab as ServiceName);
-  const { data, isError, isPending, isSuccess } = useQuery<
+  const { data, isError, isPending, isSuccess, refetch } = useQuery<
     UnifiedLog[]
   >({
     queryKey: ['integrationLogs', tab],
@@ -48,6 +48,7 @@ function BackendLogsPanel() {
     queryFn: () => fetchLogs(tab!, projectId, sessionId),
     enabled: tab !== null,
   });
+
   const [filter, setFilter] = React.useState('');
   const _list = React.useRef<VListHandle>(null);
   const activeIndex = 1;
@@ -105,7 +106,7 @@ function BackendLogsPanel() {
         {isError ? (
           <FailedFetch
             provider={capitalize(tab)}
-            onRetry={() => console.log('hi')}
+            onRetry={refetch}
           />
         ) : null}
         {isSuccess ? (

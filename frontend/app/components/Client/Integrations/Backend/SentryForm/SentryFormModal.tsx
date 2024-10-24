@@ -8,7 +8,7 @@ import useForm from 'App/hooks/useForm';
 import { useStore } from 'App/mstore';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
 import { Loader } from 'UI';
-
+import { toast } from 'react-toastify';
 import DocLink from 'Shared/DocLink/DocLink';
 
 interface SentryConfig {
@@ -55,12 +55,24 @@ function SentryForm({
     if (checkErrors()) {
       return;
     }
-    await saveMutation.mutateAsync({ values, siteId, exists });
+    try {
+      await saveMutation.mutateAsync({ values, siteId, exists });
+      toast.success('Sentry integration has been saved.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to save Sentry integration.');
+    }
     onClose();
   };
 
   const remove = async () => {
-    await removeMutation.mutateAsync({ siteId });
+    try {
+      await removeMutation.mutateAsync({ siteId });
+      toast.success('Sentry integration has been removed.');
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to remove Sentry integration.');
+    }
     onClose();
   };
   return (

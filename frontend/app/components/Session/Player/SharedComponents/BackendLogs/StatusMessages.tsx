@@ -1,26 +1,26 @@
-import React from "react";
-import { client as settingsPath, CLIENT_TABS } from "App/routes";
-import { Icon } from "UI";
-import { LoadingOutlined } from "@ant-design/icons";
-import { useHistory } from "react-router-dom";
-import { Button } from "antd";
+import React from 'react';
+import { client as settingsPath, CLIENT_TABS } from 'App/routes';
+import { Icon } from 'UI';
+import { LoadingOutlined } from '@ant-design/icons';
+import { useHistory } from 'react-router-dom';
+import { Button } from 'antd';
 
 export function LoadingFetch({ provider }: { provider: string }) {
   return (
     <div
       className={
-        "w-full h-full flex items-center justify-center flex-col gap-2"
+        'w-full h-full flex items-center justify-center flex-col gap-2'
       }
     >
       <LoadingOutlined style={{ fontSize: 32 }} />
       <div>Fetching logs from {provider}...</div>
     </div>
-  )
+  );
 }
 
 export function FailedFetch({
   provider,
-  onRetry
+  onRetry,
 }: {
   provider: string;
   onRetry: () => void;
@@ -28,17 +28,21 @@ export function FailedFetch({
   const history = useHistory();
   const intPath = settingsPath(CLIENT_TABS.INTEGRATIONS);
   return (
-    <div className={"w-full h-full flex flex-col items-center justify-center gap-2"}>
+    <div
+      className={
+        'w-full h-full flex flex-col items-center justify-center gap-2'
+      }
+    >
       <Icon name={'exclamation-circle'} size={32} />
-      <div>
-        Failed to fetch logs from {provider}.{' '}
-        <Button type={'link'} onClick={onRetry}>
+      <div className={'flex items-center gap-1'}>
+        <span>Failed to fetch logs from {provider}. </span>
+        <div className={'link'} onClick={onRetry}>
           Retry
-        </Button>
+        </div>
       </div>
-      <Button type={'link'} onClick={() => history.push(intPath)}>
+      <div className={'link'} onClick={() => history.push(intPath)}>
         Check Configuration
-      </Button>
+      </div>
     </div>
   );
 }
