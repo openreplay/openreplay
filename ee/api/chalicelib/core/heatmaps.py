@@ -4,8 +4,7 @@ from decouple import config
 
 import schemas
 from chalicelib.core import sessions_mobs, events
-
-# from chalicelib.utils import sql_helper as sh
+from chalicelib.utils import sql_helper as sh
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     from chalicelib.core import sessions_exp as sessions
@@ -158,27 +157,91 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     s.duration"""
 
 
+    def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, session_id: str, project_id: int,
+                    start_time: int,
+                    end_time: int) -> str | None:
+        full_args = {
+            "sessionId": session_id,
+            "projectId": project_id,
+            "start_time": start_time,
+            "end_time": end_time,
+        }
+        sub_condition = ["session_id = %(sessionId)s"]
+        if location_condition and len(location_condition.value) > 0:
+            f_k = "LOC"
+            op = sh.get_sql_operator(location_condition.operator)
+            full_args = {**full_args, **sh.multi_values(location_condition.value, value_key=f_k)}
+            sub_condition.append(
+                sh.multi_conditions(f'path {op} %({f_k})s', location_condition.value, is_not=False,
+                                    value_key=f_k))
+        with pg_client.PostgresClient() as cur:
+            main_query = cur.mogrify(f"""WITH paths AS (SELECT DISTINCT path 
+                                                        FROM events.clicks 
+                                                        WHERE {" AND ".join(sub_condition)})
+                                         SELECT path, COUNT(1) AS count
+                                         FROM events.clicks
+                                                  INNER JOIN public.sessions USING (session_id)
+                                                  INNER JOIN paths USING (path)
+                                         WHERE sessions.project_id = %(projectId)s
+                                           AND clicks.timestamp >= %(start_time)s
+                                           AND clicks.timestamp <= %(end_time)s
+                                           AND start_ts >= %(start_time)s
+                                           AND start_ts <= %(end_time)s
+                                           AND duration IS NOT NULL
+                                         GROUP BY path
+                                         ORDER BY count DESC
+                                         LIMIT 1;""", full_args)
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
+            try:
+                cur.execute(main_query)
+            except Exception as err:
+                logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION -----------")
+                logger.warning(main_query.decode('UTF-8'))
+                logger.warning("--------- PAYLOAD -----------")
+                logger.warning(full_args)
+                logger.warning("--------------------")
+                raise err
+
+            url = cur.fetchone()
+        if url is None:
+            return None
+        return url["path"]
+
+
     def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
                              include_mobs: bool = True, exclude_sessions: list[str] = [],
                              _depth: int = 3):
         no_platform = True
-        no_location = True
+        location_condition = None
+        no_click = True
         for f in data.filters:
             if f.type == schemas.FilterType.PLATFORM:
                 no_platform = False
                 break
         for f in data.events:
             if f.type == schemas.EventType.LOCATION:
-                no_location = False
+                location_condition = f
                 if len(f.value) == 0:
                     f.operator = schemas.SearchEventOperator.IS_ANY
+            elif f.type == schemas.EventType.CLICK:
+                no_click = False
+                if len(f.value) == 0:
+                    f.operator = schemas.SearchEventOperator.IS_ANY
+            if location_condition and not no_click:
                 break
+
         if no_platform:
             data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
                                                                   value=[schemas.PlatformType.DESKTOP],
                                                                   operator=schemas.SearchEventOperator.IS))
-        if no_location:
+        if location_condition:
             data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
+                                                                 value=[],
+                                                                 operator=schemas.SearchEventOperator.IS_ANY))
+        if no_click:
+            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.CLICK,
                                                                  value=[],
                                                                  operator=schemas.SearchEventOperator.IS_ANY))
 
@@ -217,6 +280,9 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
 
             session = cur.fetchone()
         if session:
+            session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
+                                          location_condition=location_condition,
+                                          start_time=data.startTimestamp, end_time=data.endTimestamp)
             if include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
@@ -288,27 +354,87 @@ else:
     s.duration AS duration"""
 
 
+    def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, session_id: str, project_id: int,
+                    start_time: int,
+                    end_time: int) -> str | None:
+        full_args = {
+            "sessionId": session_id,
+            "projectId": project_id,
+            "start_time": start_time,
+            "end_time": end_time,
+        }
+        sub_condition = ["session_id = %(sessionId)s", "event_type = 'CLICK'", "project_id = %(projectId)s"]
+        if location_condition and len(location_condition.value) > 0:
+            f_k = "LOC"
+            op = sh.get_sql_operator(location_condition.operator)
+            full_args = {**full_args, **sh.multi_values(location_condition.value, value_key=f_k)}
+            sub_condition.append(
+                sh.multi_conditions(f'path {op} %({f_k})s', location_condition.value, is_not=False,
+                                    value_key=f_k))
+        with ch_client.ClickHouseClient() as cur:
+            main_query = cur.format(f"""WITH paths AS (SELECT DISTINCT url_path
+                                                        FROM experimental.events
+                                                        WHERE {" AND ".join(sub_condition)})
+                                         SELECT url_path, COUNT(1) AS count
+                                         FROM experimental.events
+                                                  INNER JOIN paths USING (url_path)
+                                         WHERE event_type = 'CLICK'
+                                           AND project_id = %(projectId)s
+                                           AND datetime >= toDateTime(%(start_time)s / 1000)
+                                           AND datetime <= toDateTime(%(end_time)s / 1000)
+                                         GROUP BY url_path
+                                         ORDER BY count DESC
+                                         LIMIT 1;""", full_args)
+            logger.debug("--------------------")
+            logger.debug(main_query)
+            logger.debug("--------------------")
+            try:
+                url = cur.execute(main_query)
+            except Exception as err:
+                logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION CH-----------")
+                logger.warning(main_query.decode('UTF-8'))
+                logger.warning("--------- PAYLOAD -----------")
+                logger.warning(full_args)
+                logger.warning("--------------------")
+                raise err
+
+        if url is None or len(url) == 0:
+            return None
+        return url[0]["path"]
+
+
     def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
                              include_mobs: bool = True, exclude_sessions: list[str] = [],
                              _depth: int = 3):
         no_platform = True
-        no_location = True
+        location_condition = None
+        no_click = True
         for f in data.filters:
             if f.type == schemas.FilterType.PLATFORM:
                 no_platform = False
                 break
         for f in data.events:
             if f.type == schemas.EventType.LOCATION:
-                no_location = False
+                location_condition = f
                 if len(f.value) == 0:
                     f.operator = schemas.SearchEventOperator.IS_ANY
+            elif f.type == schemas.EventType.CLICK:
+                no_click = False
+                if len(f.value) == 0:
+                    f.operator = schemas.SearchEventOperator.IS_ANY
+            if location_condition and not no_click:
                 break
+
         if no_platform:
             data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
                                                                   value=[schemas.PlatformType.DESKTOP],
                                                                   operator=schemas.SearchEventOperator.IS))
-        if no_location:
+        if location_condition:
             data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
+                                                                 value=[],
+                                                                 operator=schemas.SearchEventOperator.IS_ANY))
+        if no_click:
+            data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.CLICK,
                                                                  value=[],
                                                                  operator=schemas.SearchEventOperator.IS_ANY))
 
@@ -347,7 +473,10 @@ else:
 
         if len(session) > 0:
             session = session[0]
-            if include_mobs:
+            session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
+                                          location_condition=location_condition,
+                                          start_time=data.startTimestamp, end_time=data.endTimestamp)
+            if False and include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
                 if _depth > 0 and len(session['domURL']) == 0 and len(session['mobsUrl']) == 0:
@@ -411,6 +540,6 @@ else:
                     WHERE session_id = %(session_id)s 
                         AND event_type='LOCATION'
                         AND project_id= %(project_id)s
-                    ORDER BY datetime,message_id;""", {"session_id": session_id,"project_id": project_id})
+                    ORDER BY datetime,message_id;""", {"session_id": session_id, "project_id": project_id})
             rows = helper.list_to_camel_case(rows)
         return rows
