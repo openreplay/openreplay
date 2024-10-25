@@ -198,7 +198,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                 cur.execute(main_query)
             except Exception as err:
                 logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION -----------")
-                logger.warning(main_query.decode('UTF-8'))
+                logger.warning(main_query)
                 logger.warning("--------- PAYLOAD -----------")
                 logger.warning(full_args)
                 logger.warning("--------------------")
@@ -369,7 +369,7 @@ else:
             op = sh.get_sql_operator(location_condition.operator)
             full_args = {**full_args, **sh.multi_values(location_condition.value, value_key=f_k)}
             sub_condition.append(
-                sh.multi_conditions(f'path {op} %({f_k})s', location_condition.value, is_not=False,
+                sh.multi_conditions(f'url_path {op} %({f_k})s', location_condition.value, is_not=False,
                                     value_key=f_k))
         with ch_client.ClickHouseClient() as cur:
             main_query = cur.format(f"""WITH paths AS (SELECT DISTINCT url_path
@@ -392,7 +392,7 @@ else:
                 url = cur.execute(main_query)
             except Exception as err:
                 logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION CH-----------")
-                logger.warning(main_query.decode('UTF-8'))
+                logger.warning(main_query)
                 logger.warning("--------- PAYLOAD -----------")
                 logger.warning(full_args)
                 logger.warning("--------------------")
@@ -506,8 +506,8 @@ else:
             try:
                 session = cur.execute(main_query)
             except Exception as err:
-                logger.warning("--------- CLICK MAP GET SELECTED SESSION QUERY EXCEPTION -----------")
-                logger.warning(main_query.decode('UTF-8'))
+                logger.warning("--------- CLICK MAP GET SELECTED SESSION QUERY EXCEPTION CH-----------")
+                logger.warning(main_query)
                 raise err
         if len(session) > 0:
             session = session[0]
