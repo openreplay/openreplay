@@ -337,7 +337,8 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+@app.get('/{projectId}/errors/{errorId}', tags=['errors'],
+         dependencies=[OR_scope(Permissions.dev_tools, ServicePermissions.dev_tools)])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
@@ -348,7 +349,8 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     return data
 
 
-@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'],
+         dependencies=[OR_scope(Permissions.dev_tools, ServicePermissions.dev_tools)])
 def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -526,7 +528,7 @@ def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema 
 
 
 @app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
-         dependencies=[OR_scope(Permissions.session_replay)])
+         dependencies=[OR_scope(Permissions.session_replay, ServicePermissions.read_notes)])
 def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
                                             session_id=sessionId, user_id=context.user_id)
