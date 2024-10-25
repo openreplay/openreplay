@@ -25,14 +25,19 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 	cfg, ok := credentials.(datadogConfig)
 	if !ok {
 		// Not a struct, will try to parse as JSON string
-		strCfg, ok := credentials.(string)
+		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
 		}
 		cfg = datadogConfig{}
-		err := json.Unmarshal([]byte(strCfg), &cfg)
-		if err != nil {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		if site, ok := strCfg["site"].(string); ok {
+			cfg.Site = site
+		}
+		if apiKey, ok := strCfg["api_key"].(string); ok {
+			cfg.ApiKey = apiKey
+		}
+		if appKey, ok := strCfg["app_key"].(string); ok {
+			cfg.AppKey = appKey
 		}
 	}
 	body := datadogV2.LogsListRequest{
@@ -65,6 +70,7 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 	}
 
 	responseContent, _ := json.MarshalIndent(resp, "", "  ")
+	// DEBUG log
 	fmt.Printf("response from `LogsApi.ListLogs`:\n%s\n", responseContent)
-	return nil, nil
+	return responseContent, nil
 }
