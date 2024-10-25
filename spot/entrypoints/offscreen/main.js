@@ -223,17 +223,17 @@ class ScreenRecorder {
       console.error('get stream error:', e);
       throw e;
     }
-    // try {
-    //   microphoneStream = await navigator.mediaDevices.getUserMedia({
-    //     audio: { echoCancellation: false, deviceId: audioId },
-    //   });
-    //   this.audioTrack = microphoneStream.getAudioTracks()[0];
-    //   if (!useMicrophone) {
-    //     this.audioTrack.enabled = false;
-    //   }
-    // } catch (e) {
-    //   console.error('get audio error', e);
-    // }
+    try {
+      microphoneStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, deviceId: audioId },
+      });
+      this.audioTrack = microphoneStream.getAudioTracks()[0];
+      if (!useMicrophone) {
+        this.audioTrack.enabled = false;
+      }
+    } catch (e) {
+      console.error('get audio error', e);
+    }
     try {
       this.audioTrack = this.createPlaceholderAudioTrack();
     } catch (e) {
