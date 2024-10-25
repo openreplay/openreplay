@@ -233,11 +233,7 @@ class ScreenRecorder {
       }
     } catch (e) {
       console.error('get audio error', e);
-    }
-    try {
       this.audioTrack = this.createPlaceholderAudioTrack();
-    } catch (e) {
-      console.error('get audio error', e);
     }
 
     const existingAudioTracks = this.videoStream.getAudioTracks();

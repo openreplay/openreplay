@@ -325,7 +325,7 @@ export default defineContentScript({
 
     setInterval(() => {
       void browser.runtime.sendMessage({ type: "ort:content-ready" });
-    }, 500)
+    }, 250)
     // @ts-ignore false positive
     browser.runtime.onMessage.addListener((message: any, resp) => {
       if (message.type === "content:mount") {

@@ -354,7 +354,7 @@ export default defineBackground(() => {
               type: "content:mount",
               area: request.area,
               mic: request.mic,
-              audioId: request.selectedAudioDevice,
+              audioId: request.audioId,
               audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
             });
           });
