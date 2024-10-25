@@ -756,7 +756,15 @@ export default class App {
     if (data === 'a_stop') {
       this.stop(false)
     } else if (data === 'a_start') {
-      void this.start({}, true)
+      this.waitStatus(ActivityState.NotActive).then(() => {
+        this.start({}, true)
+          .then((r) => {
+            this.debug.info('Worker restart, session too long', r)
+          })
+          .catch((e) => {
+            this.debug.error('Worker restart failed', e)
+          })
+      })
     } else if (data === 'not_init') {
       this.debug.warn('OR WebWorker: writer not initialised. Restarting tracker')
     } else if (data.type === 'failure') {
