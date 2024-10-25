@@ -757,9 +757,10 @@ export default class App {
       this.stop(false)
     } else if (data === 'a_start') {
       this.waitStatus(ActivityState.NotActive).then(() => {
+        this.allowAppStart()
         this.start({}, true)
           .then((r) => {
-            this.debug.info('Worker restart, session too long', r)
+            this.debug.info('Worker restarted, session was too long', r)
           })
           .catch((e) => {
             this.debug.error('Worker restart failed', e)
@@ -1749,7 +1750,6 @@ export default class App {
 
   stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
-      console.trace('stopped')
       try {
         if (!this.insideIframe && this.options.crossdomain?.enabled) {
           this.killChildrenFrames()
@@ -1762,6 +1762,7 @@ export default class App {
         this.stopCallbacks.forEach((cb) => cb())
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
+          console.log('stop worker')
           this.worker.postMessage('stop')
         }
         this.canvasRecorder?.clear()
