@@ -55,7 +55,8 @@ function SelectDateRange(props: Props) {
   };
 
   const isCustomRange = period.rangeName === CUSTOM_RANGE;
-  const customRange = isCustomRange ? period.rangeFormatted() : '';
+  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
+  const customRange = isCustomRange ? period.rangeFormatted(isUSLocale ? "MMM dd yyyy, hh:mm a" : "MMM dd yyyy, HH:mm") : '';
 
   if (props.isAnt) {
     const menuProps = {
@@ -106,7 +107,7 @@ function SelectDateRange(props: Props) {
             <div
               className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
               style={{
-                width: '520px',
+                width: isUSLocale ? '542px' : '500px',
                 fontSize: '14px',
                 textAlign: 'left',
               }}
@@ -164,7 +165,7 @@ function SelectDateRange(props: Props) {
           <div
             className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
             style={{
-              width: '520px',
+              width: isUSLocale ? '542px' : '520px',
               fontSize: '14px',
               textAlign: 'left'
             }}

@@ -53,6 +53,7 @@ function DateRangePopup(props: any) {
   };
 
   const { onCancel } = props;
+  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const rangeForDisplay = [range.start!.startOf('day').ts, range.end!.startOf('day').ts]
   return (
     <div className={styles.wrapper}>
@@ -70,7 +71,7 @@ function DateRangePopup(props: any) {
               </div>
             ))}
         </div>
-        <div className="flex justify-center h-fit dateRangeContainer">
+        <div className="flex justify-center h-fit w-full items-center dateRangeContainer">
           <DateRangePicker
             name="dateRangePicker"
             // onSelect={this.selectCustomRange} -> onChange
@@ -89,24 +90,24 @@ function DateRangePopup(props: any) {
       <div className="flex items-center justify-between py-2 px-3">
         <div className="flex items-center gap-2">
           <label>From: </label>
-          <span>{range.start.toFormat("dd/MM")} </span>
+          <span>{range.start.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
           <TimePicker
-            format={"HH:mm"}
+            format={isUSLocale ? 'hh:mm a' : "HH:mm"}
             value={range.start}
-            className="w-24"
             onChange={setRangeTimeStart}
             needConfirm={false}
             showNow={false}
+            style={{ width: isUSLocale ? 102 : 76 }}
           />
           <label>To: </label>
-          <span>{range.end.toFormat("dd/MM")} </span>
+          <span>{range.end.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
           <TimePicker
-            format={"HH:mm"}
+            format={isUSLocale ? 'hh:mm a' : "HH:mm"}
             value={range.end}
             onChange={setRangeTimeEnd}
-            className="w-24"
             needConfirm={false}
             showNow={false}
+            style={{ width: isUSLocale ? 102 : 76 }}
           />
         </div>
         <div className="flex items-center">

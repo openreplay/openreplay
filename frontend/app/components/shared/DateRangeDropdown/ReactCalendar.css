@@ -153,3 +153,7 @@
 .react-calendar--selectRange .react-calendar__tile--hover {
     background-color: #e6e6e6;
 }
+
+.ant-picker-input > input:focus {
+    border: 0!important;
+}
