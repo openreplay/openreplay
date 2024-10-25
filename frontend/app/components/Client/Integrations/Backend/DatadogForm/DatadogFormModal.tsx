@@ -33,6 +33,7 @@ const DatadogFormModal = ({
 }) => {
   const { integrationsStore } = useStore();
   const siteId = integrationsStore.integrations.siteId;
+
   const {
     data = initialValues,
     isPending,

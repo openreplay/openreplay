@@ -28,13 +28,21 @@ async function fetchLogs(
     `/integrations/v1/integrations/${tab}/${projectId}/data/${sessionId}`
   );
   const json = await data.json();
-  const logsResp = await fetch(json.url)
-  console.log(logsResp, logsResp.ok)
-  if (logsResp.ok) {
-    const logs = await logsResp.json()
-    return logs.map(processLog)
-  } else {
-    throw new Error('Failed to fetch logs')
+  try {
+    const logsResp = await fetch(json.url)
+    if (logsResp.ok) {
+      let logsBase64 = await logsResp.text()
+      while (logsBase64.length % 4 !== 0) {
+        logsBase64 += '='
+      }
+      const logs = JSON.parse(atob(logsBase64))
+      return logs.map(processLog)
+    } else {
+      throw new Error('Failed to fetch logs')
+    }
+  } catch (e) {
+    console.log(e)
+    throw e
   }
 }
 

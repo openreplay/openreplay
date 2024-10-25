@@ -113,8 +113,8 @@ function Integrations(props: Props) {
     (cat) => cat.integrations
   );
 
-  const onChangeSelect = (siteId: string) => {
-    integrationsStore.integrations.setSiteId(siteId);
+  const onChangeSelect = ({ value }: any) => {
+    integrationsStore.integrations.setSiteId(value.value);
   };
 
   return (

@@ -66,10 +66,10 @@ export async function saveIntegration<T>(
     `/integrations/v1/integrations/${name}/${projectId}`,
     { data }
   );
-  return r.json();
+  return r.ok;
 }
 
 export async function removeIntegration(name: string, projectId: string) {
   const r = await client.delete(`/integrations/v1/integrations/${name}/${projectId}`);
-  return r.json();
+  return r.ok;
 }
