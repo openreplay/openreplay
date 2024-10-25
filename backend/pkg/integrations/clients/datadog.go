@@ -24,7 +24,16 @@ type datadogConfig struct {
 func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint64) (interface{}, error) {
 	cfg, ok := credentials.(datadogConfig)
 	if !ok {
-		return nil, fmt.Errorf("invalid credentials")
+		// Not a struct, will try to parse as JSON string
+		strCfg, ok := credentials.(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		}
+		cfg = datadogConfig{}
+		err := json.Unmarshal([]byte(strCfg), &cfg)
+		if err != nil {
+			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		}
 	}
 	body := datadogV2.LogsListRequest{
 		Filter: &datadogV2.LogsQueryFilter{
