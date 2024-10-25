@@ -6064,8 +6064,8 @@ __metadata:
   linkType: hard
 
 "cypress@npm:^13.3.0":
-  version: 13.15.0
-  resolution: "cypress@npm:13.15.0"
+  version: 13.15.1
+  resolution: "cypress@npm:13.15.1"
   dependencies:
     "@cypress/request": "npm:^3.0.4"
     "@cypress/xvfb": "npm:^1.2.4"
@@ -6107,11 +6107,12 @@ __metadata:
     semver: "npm:^7.5.3"
     supports-color: "npm:^8.1.1"
     tmp: "npm:~0.2.3"
+    tree-kill: "npm:1.2.2"
     untildify: "npm:^4.0.0"
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10c1/52d4d54ab0d267f1118d43639d061b4b624b38832fd19e14ff7e4c07c20f9cb22207e07c32e8fa877c49d95baedbca802c4a5427b2570221edba01d0993d0901
+  checksum: 10c1/2f2ae41152669b4675dd5b9709572d7c4f3e4b4ffb705d2fd0030879dd12b999335160a39ded5c56986a6e5c2a13db4260645ba06b8ea2c388c7857e4a407fb1
   languageName: node
   linkType: hard
 
@@ -7569,7 +7570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fdir@npm:^6.4.0":
+"fdir@npm:^6.4.2":
   version: 6.4.2
   resolution: "fdir@npm:6.4.2"
   peerDependencies:
@@ -14526,14 +14527,14 @@ __metadata:
   linkType: hard
 
 "socket.io-client@npm:^4.4.1":
-  version: 4.8.0
-  resolution: "socket.io-client@npm:4.8.0"
+  version: 4.8.1
+  resolution: "socket.io-client@npm:4.8.1"
   dependencies:
     "@socket.io/component-emitter": "npm:~3.1.0"
     debug: "npm:~4.3.2"
     engine.io-client: "npm:~6.6.1"
     socket.io-parser: "npm:~4.2.4"
-  checksum: 10c1/ef931a4d1a8390e889cdc4edae6a916e8da435ced5f860df383b3280bb8d135b1d22c2c7c3561867ced68c75a3c257b6a60112a8eda98eea15258a0eb0223cea
+  checksum: 10c1/032c06f70a977ca1c0127c572058761b49906420e157602081fd77f298b1f388462514214792b32372d4a824e6de9e290875d0a29384d96944fbde3734c53315
   languageName: node
   linkType: hard
 
@@ -15357,12 +15358,12 @@ __metadata:
   linkType: hard
 
 "tinyglobby@npm:^0.2.7":
-  version: 0.2.9
-  resolution: "tinyglobby@npm:0.2.9"
+  version: 0.2.10
+  resolution: "tinyglobby@npm:0.2.10"
   dependencies:
-    fdir: "npm:^6.4.0"
+    fdir: "npm:^6.4.2"
     picomatch: "npm:^4.0.2"
-  checksum: 10c1/5cdae2c08334752a2f52ec23f827e81d71e43a178e18ba67660561a61f7cce8c5bde5bbed6a04f6e14f603be1db183025bcf6ddec6e91b3cd86a70350fc7e7f2
+  checksum: 10c1/3fa72df8a421b40ab770ce3eddb827789e2b8001c4b9910651a530f267dbabc0f628a3ca8b75d85feb75052ace031311e914b3a2a1e1a20c79e1aad797475224
   languageName: node
   linkType: hard
 
@@ -15444,6 +15445,15 @@ __metadata:
   peerDependencies:
     tslib: 2
   checksum: 10c1/fbb190f064098b16541f8168b3ea31cc7bcab986c7dee03ae8631a7ec80ea6bb9ad4edd64ca8a0a057bceee5f4048dec8ae8bad8a116efda8060777363484990
+  languageName: node
+  linkType: hard
+
+"tree-kill@npm:1.2.2":
+  version: 1.2.2
+  resolution: "tree-kill@npm:1.2.2"
+  bin:
+    tree-kill: cli.js
+  checksum: 10c1/293c709cd222ea0e3eedd5648699ddbcdd8b91654646e20699cce034847747cdb3e5e45a4dc599efbcfeaad7e04aefe672604cfc0144b3c0fcede52190080204
   languageName: node
   linkType: hard
 
