@@ -244,17 +244,23 @@ export default class SessionStore {
     try {
       const filter = isLive ? searchStoreLive.instance : searchStore.instance;
       const data = await sessionService.getSessionInfo(sessionId, isLive);
-      const eventsData = await sessionService.getSessionEvents(sessionId);
+      const eventsData: Record<string, any[]> = {};
+      try {
+        const evData = await sessionService.getSessionEvents(sessionId);
+        Object.assign(eventsData, evData);
+      } catch (e) {
+        console.error('Failed to fetch events', e);
+      }
 
       const {
-        errors,
-        events,
-        issues,
-        crashes,
-        resources,
-        stackEvents,
-        userEvents,
-        userTesting,
+        errors = [],
+        events = [],
+        issues = [],
+        crashes = [],
+        resources = [],
+        stackEvents = [],
+        userEvents = [],
+        userTesting = [],
       } = eventsData;
 
       const filterEvents = filter.events as Record<string, any>[];
