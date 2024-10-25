@@ -33,6 +33,10 @@ WHERE NOT permissions @> '{SPOT_PUBLIC}'
   AND NOT service_role;
 --   AND name ILIKE 'owner';
 
+UPDATE public.roles
+SET permissions='{SERVICE_SESSION_REPLAY,SERVICE_DEV_TOOLS,SERVICE_ASSIST_LIVE,SERVICE_ASSIST_CALL,SERVICE_READ_NOTES}'
+WHERE service_role;
+
 ALTER TABLE IF EXISTS public.users
     ADD COLUMN IF NOT EXISTS spot_jwt_iat         timestamp without time zone NULL DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS spot_jwt_refresh_jti integer                     NULL DEFAULT NULL,
