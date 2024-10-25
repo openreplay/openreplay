@@ -14,7 +14,7 @@ function ClickMapCard() {
   };
 
   const sessionId = metricStore.instance.data.sessionId;
-  const url = metricStore.instance.data.url;
+  const url = metricStore.instance.data.path;
 
   React.useEffect(() => {
     return () => setCustomSession(null);
