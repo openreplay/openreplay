@@ -146,7 +146,7 @@ func (s *serviceImpl) hasSessionData(projectID uint64, provider string, sessionI
 		s.log.Error(context.Background(), "failed to check session data existence: %v", err)
 		return false
 	}
-	return true
+	return val
 }
 
 func (s *serviceImpl) getProviderCredentials(projectID uint64, provider string) (interface{}, error) {
