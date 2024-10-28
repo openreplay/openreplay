@@ -380,14 +380,17 @@ export default class Assist {
       if (this.app.active()) {
         this.assistDemandedRestart = true
         this.app.stop()
-        setTimeout(() => {
-          this.app.start().then(() => { this.assistDemandedRestart = false })
-            .then(() => {
-              this.remoteControl?.reconnect(ids)
-            })
-            .catch(e => app.debug.error(e))
-          // TODO: check if it's needed; basically allowing some time for the app to finish everything before starting again
-        }, 400)
+        this.app.waitStatus(0)
+          .then(() => {
+            this.app.allowAppStart()
+            setTimeout(() => {
+              this.app.start().then(() => { this.assistDemandedRestart = false })
+                .then(() => {
+                  this.remoteControl?.reconnect(ids)
+                })
+                .catch(e => app.debug.error(e))
+            }, 100)
+          })
       }
     })
 

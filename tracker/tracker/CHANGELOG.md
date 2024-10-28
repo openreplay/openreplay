@@ -1,3 +1,7 @@
+## 14.0.14
+
+- fixed crossdomain restart logic (when triggered via assist)
+
 ## 14.0.13
 
 - fixes for restart logic

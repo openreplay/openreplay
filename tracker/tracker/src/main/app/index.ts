@@ -593,6 +593,10 @@ export default class App {
         return
       }
       const nextCommand = this.pollingQueue.order[0]
+      if (nextCommand && this.pollingQueue[nextCommand].length === 0) {
+        this.pollingQueue.order = this.pollingQueue.order.filter((c) => c !== nextCommand)
+        return
+      }
       if (this.pollingQueue[nextCommand].includes(data.context)) {
         this.pollingQueue[nextCommand] = this.pollingQueue[nextCommand].filter(
           (c: string) => c !== data.context,
@@ -1762,12 +1766,10 @@ export default class App {
         this.stopCallbacks.forEach((cb) => cb())
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
-          console.log('stop worker')
           this.worker.postMessage('stop')
         }
         this.canvasRecorder?.clear()
         this.messages.length = 0
-        this.trackedFrames = []
         this.parentActive = false
         this.canStart = false
       } finally {

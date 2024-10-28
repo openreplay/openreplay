@@ -1,3 +1,7 @@
+## 10.0.1
+
+- some fixes for waitstatus usage
+
 ## 10.0.0
 
 - memory handling improvements to prevent possible leaks on sessions with multiple canvas nodes
