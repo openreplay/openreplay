@@ -1,16 +1,22 @@
-import React from "react";
-import { Icon } from "UI";
-import { CopyOutlined } from "@ant-design/icons";
-import { Button } from "antd";
-import cn from "classnames";
-import copy from "copy-to-clipboard";
+import React from 'react';
+import { Icon } from 'UI';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import cn from 'classnames';
+import copy from 'copy-to-clipboard';
+import { getDateFromString } from 'App/date';
 
 export function TableHeader({ size }: { size: number }) {
   return (
-    <div className={'grid grid-cols-12 items-center py-2 px-4 bg-gray-lighter'}>
-      <div className={'col-span-1'}>timestamp</div>
+    <div
+      className={'grid items-center py-2 px-4 bg-gray-lighter'}
+      style={{
+        gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
+      }}
+    >
+      <div className={'col-span-2'}>timestamp</div>
       <div className={'col-span-1 pl-2'}>status</div>
-      <div className={'col-span-10 flex items-center justify-between'}>
+      <div className={'col-span-11 flex items-center justify-between'}>
         <div>content</div>
         <div>
           <span className={'font-semibold'}>{size}</span> Records
@@ -51,36 +57,46 @@ export function LogRow({
     <div className={'code-font'}>
       <div
         className={cn(
-          'text-sm grid grid-cols-12 items-center py-2 px-4',
+          'text-sm grid items-center py-2 px-4',
           'cursor-pointer border-b border-b-gray-light last:border-b-0',
           border(log.status),
           bg(log.status)
         )}
+        style={{
+          gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
+        }}
         onClick={() => setIsExpanded((prev) => !prev)}
       >
-        <div className={'col-span-1'}>
+        <div className={'col-span-2'}>
           <div className={'flex items-center gap-2'}>
             <Icon
-              name={'chevron-down'}
+              name={'chevron-right'}
               className={
-                isExpanded ? 'rotate-180 transition' : 'rotate-0 transition'
+                isExpanded ? 'rotate-90 transition' : 'rotate-0 transition'
               }
             />
-            <div>{log.timestamp}</div>
+            <div className={'whitespace-nowrap'}>
+              {getDateFromString(log.timestamp)}
+            </div>
           </div>
         </div>
         <div className={'col-span-1 pl-2'}>{log.status}</div>
         <div
           className={
-            'col-span-10 whitespace-nowrap overflow-hidden text-ellipsis'
+            'col-span-11 whitespace-nowrap overflow-hidden text-ellipsis'
           }
         >
           {log.content}
         </div>
       </div>
       {isExpanded ? (
-        <div className={'rounded bg-gray-lighter p-2 relative m-2'}>
-          {log.content}
+        <div className={'rounded bg-gray-lightest px-4 py-2 relative mx-4 my-2'}>
+          {log.content.split('\n').map((line, index) => (
+            <div key={index} className={'flex items-start gap-2'}>
+              <div className={'border-r border-r-gray-light pr-2 select-none'}>{index}</div>
+              <div className={'whitespace-pre-wrap'}>{line}</div>
+            </div>
+          ))}
 
           <div className={'absolute top-1 right-1'}>
             <Button

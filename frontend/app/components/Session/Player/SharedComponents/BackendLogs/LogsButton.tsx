@@ -18,7 +18,7 @@ function LogsButton({
       customTags={
         <Avatar.Group>
           {integrated.map((name) => (
-            <Avatar size={16} src={<Icon name={`integrations/${name}`} size={14} />} />
+            <Avatar key={name} size={16} src={<Icon name={`integrations/${name}`} size={14} />} />
            ))
           }
         </Avatar.Group>

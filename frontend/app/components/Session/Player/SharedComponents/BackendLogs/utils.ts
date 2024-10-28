@@ -5,9 +5,9 @@ export interface UnifiedLog {
   status: string;
 }
 
-export function processLog(log: any): UnifiedLog {
+export function processLog(log: any): UnifiedLog[] {
   if (isDatadogLog(log)) {
-    return processDatadogLog(log);
+    return log.data.map(processDatadogLog);
   } else if (isElasticLog(log)) {
     return processElasticLog(log);
   } else if (isSentryLog(log)) {
@@ -30,7 +30,7 @@ function isDynatraceLog(log: any): boolean {
 }
 
 function isDatadogLog(log: any): boolean {
-  return log && log.content && typeof log.content.message === 'string';
+  return log.data && log.data[0].attributes && typeof log.data[0].attributes.message === 'string';
 }
 
 function isElasticLog(log: any): boolean {
@@ -66,11 +66,11 @@ function processDynatraceLog(log: any): UnifiedLog {
 }
 
 function processDatadogLog(log: any): UnifiedLog {
-  const key = log.content.attributes?.id || log.id || '';
-  const timestamp = log.content.timestamp || log.content.attributes?.timestamp || '';
-  const message = log.content.message || '';
-  const level = log.content.attributes?.level || 'info';
-  return { key, timestamp, content: message, status: level };
+  const key = log.id || '';
+  const timestamp = log.timestamp || log.attributes?.timestamp || '';
+  const message = log.attributes?.message || '';
+  const level = log.attributes?.status || 'info';
+  return { key, timestamp, content: message, status: level.toUpperCase() };
 }
 
 function processElasticLog(log: any): UnifiedLog {

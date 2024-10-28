@@ -31,12 +31,8 @@ async function fetchLogs(
   try {
     const logsResp = await fetch(json.url)
     if (logsResp.ok) {
-      let logsBase64 = await logsResp.text()
-      while (logsBase64.length % 4 !== 0) {
-        logsBase64 += '='
-      }
-      const logs = JSON.parse(atob(logsBase64))
-      return logs.map(processLog)
+      const logJson = await logsResp.json()
+      return processLog(logJson)
     } else {
       throw new Error('Failed to fetch logs')
     }
