@@ -20,12 +20,15 @@ type Router struct {
 }
 
 func NewRouter(log logger.Logger, services *common.ServicesBuilder) *Router {
-	return &Router{
+	e := &Router{
 		router:   mux.NewRouter(),
 		log:      log,
 		mutex:    &sync.RWMutex{},
 		services: services,
 	}
+
+	e.router.HandleFunc("/ping", e.ping).Methods("GET")
+	return e
 }
 
 // Get return log, router, mutex, services
