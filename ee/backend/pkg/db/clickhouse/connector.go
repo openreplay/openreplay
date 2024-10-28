@@ -247,7 +247,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 	issueID := hashid.IssueID(session.ProjectID, msg)
 	// Check issue type before insert to avoid panic from clickhouse lib
 	switch msg.Type {
-	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception", "mouse_thrashing":
+	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception", "mouse_thrashing", "app_crash":
 	default:
 		return fmt.Errorf("unknown issueType: %s", msg.Type)
 	}
