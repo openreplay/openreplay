@@ -1,3 +1,8 @@
+## 14.0.13
+
+- fixes for restart logic
+- fixed top context check in case of crossdomain placement
+
 ## 14.0.11 & .12
 
 - fix for node maintainer stability around `#document` nodes (mainly iframes field)

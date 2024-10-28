@@ -95,6 +95,14 @@ function processOptions(obj: any): obj is Options {
   return true
 }
 
+const canAccessTop = () => {
+  try {
+    return Boolean(window.top)
+  } catch {
+    return false
+  }
+}
+
 export default class API {
   public featureFlags: FeatureFlags
 
@@ -104,11 +112,12 @@ export default class API {
   constructor(private readonly options: Options) {
     this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
     if (!IN_BROWSER || !processOptions(options)) {
+      console.error('OpenReplay: tracker called in a non-browser environment or with invalid options')
       return
     }
     if (
       (window as any).__OPENREPLAY__ ||
-      (!this.crossdomainMode && inIframe() && (window.top as any)?.__OPENREPLAY__)
+      (!this.crossdomainMode && inIframe() && canAccessTop() && (window.top as any)?.__OPENREPLAY__)
     ) {
       console.error('OpenReplay: one tracker instance has been initialised already')
       return
