@@ -22,7 +22,7 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
-                   "(main_events.url_hostpath = %(url)s OR main_events.url_path = %(url)s)",
+                   "main_events.url_path = %(url)s",
                    "main_events.datetime >= toDateTime(%(startDate)s/1000)",
                    "main_events.datetime <= toDateTime(%(endDate)s/1000)",
                    "main_events.event_type='CLICK'",
@@ -94,7 +94,7 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatM
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
-                   "(main_events.url_hostpath = %(url)s OR main_events.url_path = %(url)s)",
+                   "main_events.url_path = %(url)s",
                    "main_events.event_type='CLICK'",
                    "isNotNull(main_events.normalized_x)"]
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
@@ -124,7 +124,7 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
-                   "(main_events.url_hostpath = %(url)s OR main_events.url_path = %(url)s)",
+                   "main_events.url_path = %(url)s",
                    "main_events.event_type='CLICK'"]
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
 
