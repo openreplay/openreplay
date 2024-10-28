@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
+    if data.url is None or data.url == "":
+        return []
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["sessions.project_id = %(project_id)s",
