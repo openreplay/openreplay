@@ -423,8 +423,8 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		msg.Selector,
 		nX,
 		nY,
-		msg.URL,
-		extractUrlPath(msg.URL),
+		msg.Url,
+		extractUrlPath(msg.Url),
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
