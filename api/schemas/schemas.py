@@ -1595,7 +1595,7 @@ class HeatMapFilterSchema(BaseModel):
 
 
 class GetHeatMapPayloadSchema(_TimedSchema):
-    url: Optional[str] = Field(...)
+    url: Optional[str] = Field(default=None)
     filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
 

@@ -14,7 +14,7 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["sessions.project_id = %(project_id)s",
-                   "(url = %(url)s OR path= %(url)s)",
+                   "path= %(url)s",
                    "clicks.timestamp >= %(startDate)s",
                    "clicks.timestamp <= %(endDate)s",
                    "start_ts >= %(startDate)s",
@@ -84,7 +84,7 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
 def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
     constraints = ["session_id = %(session_id)s",
-                   "(url = %(url)s OR path= %(url)s)",
+                   "path= %(url)s",
                    "normalized_x IS NOT NULL"]
     query_from = "events.clicks"
 
@@ -112,7 +112,7 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatM
 def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
     constraints = ["session_id = %(session_id)s",
-                   "(url = %(url)s OR path= %(url)s)"]
+                   "path= %(url)s"]
     query_from = "events.clicks"
 
     with pg_client.PostgresClient() as cur:
