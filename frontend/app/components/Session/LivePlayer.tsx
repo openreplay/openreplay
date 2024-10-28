@@ -43,7 +43,7 @@ function LivePlayer({
   const location = useLocation();
 
   useEffect(() => {
-    const projectId = projectsStore.getSiteId();
+    const projectId = projectsStore.getSiteId().siteId;
     playerInst = undefined;
     if (!usedSession.sessionId || contextValue.player !== undefined) return;
     console.debug('creating live player for', usedSession.sessionId);
