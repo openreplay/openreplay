@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"openreplay/backend/internal/http/server"
+	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/analytics/api"
 	"openreplay/backend/pkg/common"
 	"openreplay/backend/pkg/common/api/auth"
@@ -30,8 +31,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	builder := common.NewServiceBuilder(log)
-	services, err := builder.
+	services, err := analytics.NewServiceBuilder(log).
 		WithDatabase(pgConn).
 		WithJWTSecret(cfg.JWTSecret, cfg.JWTSpotSecret).
 		Build()
@@ -77,10 +77,10 @@ func main() {
 	limiterMiddleware := middleware.RateLimit(common.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute))
 
 	router, err := api.NewRouter(cfg, log, services)
-	router.GetRouter().Use(middleware.CORS(cfg.UseAccessControlHeaders))
-	router.GetRouter().Use(authMiddleware)
-	router.GetRouter().Use(limiterMiddleware)
-	router.GetRouter().Use(middleware.Action())
+	router.Use(middleware.CORS(cfg.UseAccessControlHeaders))
+	router.Use(authMiddleware)
+	router.Use(limiterMiddleware)
+	router.Use(middleware.Action())
 
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
