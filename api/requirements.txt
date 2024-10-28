@@ -11,7 +11,7 @@ cachetools==5.5.0
 
 
 
-fastapi==0.115.0
+fastapi==0.115.4
 uvicorn[standard]==0.31.0
 python-decouple==3.8
 pydantic[email]==2.9.2
