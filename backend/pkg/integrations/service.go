@@ -3,7 +3,6 @@ package data_integration
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -177,10 +176,11 @@ func (s *serviceImpl) fetchSessionData(provider string, credentials interface{},
 
 func (s *serviceImpl) uploadSessionData(provider string, sessionID uint64, data interface{}) error {
 	key := fmt.Sprintf("%d/%s.logs", sessionID, provider)
-	dataBytes, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("failed to marshal session data: %v", err)
-	}
+	//dataBytes, err := json.Marshal(data)
+	dataBytes, _ := data.([]byte)
+	//if err != nil {
+	//	return fmt.Errorf("failed to marshal session data: %v", err)
+	//}
 	return s.storage.Upload(bytes.NewReader(dataBytes), key, "text/plain", objectstorage.NoCompression)
 }
 
