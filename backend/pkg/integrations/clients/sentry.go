@@ -38,11 +38,14 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	}
 	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", creds.OrganizationSlug, creds.ProjectSlug)
 
+	testCallLimit := 1
+	params := url.Values{}
 	if sessionID != 0 {
-		params := url.Values{}
-		params.Add("query", fmt.Sprintf("level:error openReplaySession.id:%d", sessionID))
-		requestUrl += "?" + params.Encode()
+		params.Add("query", fmt.Sprintf("openReplaySession.id=%d", sessionID))
+	} else {
+		params.Add("per_page", fmt.Sprintf("%d", testCallLimit))
 	}
+	requestUrl += "?" + params.Encode()
 
 	// Create a new request
 	req, err := http.NewRequest("GET", requestUrl, nil)
@@ -78,10 +81,17 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	if err != nil {
 		log.Fatalf("Failed to parse JSON: %v", err)
 	}
+	if events == nil || len(events) == 0 {
+		return nil, fmt.Errorf("no logs found")
+	}
 
 	// Print the logs
 	for _, event := range events {
 		fmt.Printf("ID: %s, Title: %s, Message: %s, Environment: %s\n", event.ID, event.Title, event.Message, event.Environment)
 	}
-	return events, nil
+	result, err := json.Marshal(events)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

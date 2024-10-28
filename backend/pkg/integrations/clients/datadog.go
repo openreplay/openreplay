@@ -48,11 +48,12 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 		},
 		Sort: datadogV2.LOGSSORT_TIMESTAMP_ASCENDING.Ptr(),
 		Page: &datadogV2.LogsListRequestPage{
-			Limit: datadog.PtrInt32(1000),
+			Limit: datadog.PtrInt32(1),
 		},
 	}
 	if sessionID != 0 {
 		body.Filter.Query = datadog.PtrString(fmt.Sprintf("openReplaySession.id=%d", sessionID))
+		body.Page.Limit = datadog.PtrInt32(1000)
 	}
 	ctx := context.WithValue(context.Background(), datadog.ContextServerVariables, map[string]string{"site": cfg.Site})
 	ctx = context.WithValue(ctx, datadog.ContextAPIKeys, map[string]datadog.APIKey{
@@ -69,7 +70,12 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 		fmt.Printf("full HTTP response: %v\n", r)
 	}
 
-	responseContent, _ := json.MarshalIndent(resp, "", "  ")
+	logs := resp.Data
+	if logs == nil || len(logs) == 0 {
+		return nil, fmt.Errorf("no logs found")
+	}
+	responseContent, _ := json.Marshal(logs)
+	//responseContent, _ := json.MarshalIndent(resp, "", "  ")
 	// DEBUG log
 	fmt.Printf("response from `LogsApi.ListLogs`:\n%s\n", responseContent)
 	return responseContent, nil

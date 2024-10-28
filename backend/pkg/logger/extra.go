@@ -121,7 +121,7 @@ func (el *extraLogger) Log(ctx context.Context, msg string) {
 		url := "https://http-intake.logs.datadoghq.com/v1/input"
 
 		logMessage := `{
-        "message": ` + msg + `,
+        "message": "` + msg + `",
         "ddsource": "go",
         "service": "myservice",
         "hostname": "myhost",
