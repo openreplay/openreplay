@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	"net/http"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/common"
@@ -41,7 +40,8 @@ func AuthMiddleware(
 	services *common.ServicesBuilder, // Injected services (Auth, Keys, etc.)
 	log logger.Logger, // Logger for logging events
 	excludedPaths map[string]map[string]bool, // Map of excluded paths with methods
-	getPermissions func(path string) []string, // Function to retrieve permissions for a path
+	getPermissions func(path string) []string,
+	authOptionsSelector func(r *http.Request) *auth.Options, // Function to retrieve permissions for a path
 ) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,14 +56,34 @@ func AuthMiddleware(
 				return
 			}
 
-			// Check if the route is dynamic and get the path template
-			pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
-			if err != nil {
-				log.Error(r.Context(), "failed to get path template: %s", err)
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				log.Warn(r.Context(), "Authorization header missing")
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			// Get AuthOptions for the request
+			options := auth.Options{
+				JwtColumn: services.Auth.JWTCol(), // Default JWT column from ServicesBuilder
+				Secret:    services.Auth.Secret(), // Default secret from ServicesBuilder
+			}
+
+			if authOptionsSelector != nil {
+				selectorOptions := authOptionsSelector(r)
+				if selectorOptions != nil {
+					// Override defaults with values from selectorOptions
+					if selectorOptions.JwtColumn != "" {
+						options.JwtColumn = selectorOptions.JwtColumn
+					}
+					if selectorOptions.Secret != "" {
+						options.Secret = selectorOptions.Secret
+					}
+				}
 			}
 
 			// Check if this request is authorized
-			user, err := services.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path), pathTemplate != "")
+			user, err := services.Auth.IsAuthorized(authHeader, getPermissions(r.URL.Path), options)
 			if err != nil {
 				log.Warn(r.Context(), "Unauthorized request: %s", err)
 				w.WriteHeader(http.StatusUnauthorized)

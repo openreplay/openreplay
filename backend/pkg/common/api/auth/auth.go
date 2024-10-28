@@ -10,21 +10,46 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+// Options struct to hold optional JWT column and secret
+type Options struct {
+	JwtColumn string // The JWT column to use (e.g., "jwt_iat" or "spot_jwt_iat")
+	Secret    string // An optional secret; if nil, default secret is used
+}
+
 type Auth interface {
-	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*User, error)
+	IsAuthorized(authHeader string, permissions []string, options Options) (*User, error)
+	Secret() string
+	JWTCol() string
+	ExtraSecret() string
 }
 
 type authImpl struct {
-	log    logger.Logger
-	secret string
-	pgconn pool.Pool
+	log         logger.Logger
+	secret      string
+	extraSecret string
+	pgconn      pool.Pool
+	jwtCol      string
 }
 
-func NewAuth(log logger.Logger, jwtSecret string, conn pool.Pool) Auth {
+func (a *authImpl) Secret() string {
+	return a.secret
+}
+
+func (a *authImpl) JWTCol() string {
+	return a.jwtCol
+}
+
+func (a *authImpl) ExtraSecret() string {
+	return a.extraSecret
+}
+
+func NewAuth(log logger.Logger, jwtCol string, jwtSecret string, extraSecret string, conn pool.Pool) Auth {
 	return &authImpl{
-		log:    log,
-		secret: jwtSecret,
-		pgconn: conn,
+		log:         log,
+		secret:      jwtSecret,
+		extraSecret: extraSecret,
+		pgconn:      conn,
+		jwtCol:      jwtCol,
 	}
 }
 

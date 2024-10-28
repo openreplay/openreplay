@@ -42,8 +42,9 @@ func (e *Router) init() {
 	e.router = mux.NewRouter()
 	e.router.HandleFunc("/", e.ping)
 
-	e.router.HandleFunc("/{projectId}/dashboards", e.createDashboard).Methods("POST")
-	e.router.HandleFunc("/{projectId}/dashboards", e.getDashboards).Methods("GET")
+	e.router.HandleFunc("/{projectId}/dashboards", e.createDashboard).Methods("POST", "OPTIONS")
+	e.router.HandleFunc("/v1/spots/{id}/uploaded", e.spotTest).Methods("POST", "OPTIONS")
+	e.router.HandleFunc("/{projectId}/dashboards", e.getDashboards).Methods("GET", "OPTIONS")
 	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.getDashboard).Methods("GET")
 	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.updateDashboard).Methods("PUT")
 	e.router.HandleFunc("/{projectId}/dashboards/{dashboardId}", e.deleteDashboard).Methods("DELETE")

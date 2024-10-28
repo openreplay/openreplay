@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+func (e *Router) spotTest(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Welcome to NSE Live API"))
+}
+
 func (e *Router) createDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0

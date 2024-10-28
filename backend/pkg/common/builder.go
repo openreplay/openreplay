@@ -11,13 +11,14 @@ import (
 
 // ServicesBuilder struct to hold service components
 type ServicesBuilder struct {
-	flaker     *flakeid.Flaker
-	objStorage objectstorage.ObjectStorage
-	Auth       auth.Auth
-	log        logger.Logger
-	pgconn     pool.Pool
-	workerID   int
-	jwtSecret  string
+	flaker      *flakeid.Flaker
+	objStorage  objectstorage.ObjectStorage
+	Auth        auth.Auth
+	log         logger.Logger
+	pgconn      pool.Pool
+	workerID    int
+	jwtSecret   string
+	extraSecret string
 }
 
 // NewServiceBuilder initializes the ServicesBuilder with essential components (logger)
@@ -57,9 +58,12 @@ func (b *ServicesBuilder) WithWorkerID(workerID int) *ServicesBuilder {
 	return b
 }
 
-// WithJWTSecret sets the JWT secret for Auth
-func (b *ServicesBuilder) WithJWTSecret(jwtSecret string) *ServicesBuilder {
+// WithJWTSecret sets the JWT and optional extra secret for Auth
+func (b *ServicesBuilder) WithJWTSecret(jwtSecret string, extraSecret ...string) *ServicesBuilder {
 	b.jwtSecret = jwtSecret
+	if len(extraSecret) > 0 {
+		b.extraSecret = extraSecret[0]
+	}
 	return b
 }
 
@@ -82,7 +86,7 @@ func (b *ServicesBuilder) Build() (*ServicesBuilder, error) {
 		if b.jwtSecret == "" {
 			return nil, errors.New("JWT secret is required")
 		}
-		b.Auth = auth.NewAuth(b.log, b.jwtSecret, b.pgconn)
+		b.Auth = auth.NewAuth(b.log, "jwt_iat", b.jwtSecret, b.extraSecret, b.pgconn)
 	}
 
 	// Return the fully constructed service

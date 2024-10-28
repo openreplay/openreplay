@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"github.com/gorilla/mux"
+	"net/http"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/pkg/analytics/api"
 	"openreplay/backend/pkg/common"
+	"openreplay/backend/pkg/common/api/auth"
 	"openreplay/backend/pkg/common/middleware"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -29,17 +32,12 @@ func main() {
 	builder := common.NewServiceBuilder(log)
 	services, err := builder.
 		WithDatabase(pgConn).
-		WithJWTSecret(cfg.JWTSecret).
+		WithJWTSecret(cfg.JWTSecret, cfg.JWTSpotSecret).
 		Build()
 
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
-
-	//services, err := analytics.NewServiceBuilder(log, cfg, pgConn)
-	//if err != nil {
-	//	log.Fatal(ctx, "can't init services: %s", err)
-	//}
 
 	// Define excluded paths for this service
 	excludedPaths := map[string]map[string]bool{
@@ -56,9 +54,29 @@ func main() {
 		return []string{"user"}
 	}
 
+	authOptionsSelector := func(r *http.Request) *auth.Options {
+		pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
+		if err != nil {
+			log.Error(r.Context(), "failed to get path template: %s", err)
+			return nil // Use default options if there’s an error
+		}
+
+		// Customize based on route and method
+		if pathTemplate == "/v1/spots/{id}/uploaded" && r.Method == "POST" {
+			column := "spot_jwt_iat"
+			secret := cfg.JWTSpotSecret
+			return &auth.Options{JwtColumn: column, Secret: secret}
+		}
+
+		// Return nil to signal default options in AuthMiddleware
+		return nil
+	}
+
+	authMiddleware := middleware.AuthMiddleware(services, log, excludedPaths, getPermissions, authOptionsSelector)
+
 	router, err := api.NewRouter(cfg, log, services)
 	router.GetRouter().Use(middleware.CORS(cfg.UseAccessControlHeaders))
-	router.GetRouter().Use(middleware.AuthMiddleware(services, log, excludedPaths, getPermissions))
+	router.GetRouter().Use(authMiddleware)
 	router.GetRouter().Use(middleware.RateLimit)
 	router.GetRouter().Use(middleware.Action)
 
