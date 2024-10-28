@@ -327,11 +327,11 @@ function cleanup() {
     fi
 
     # Run pg cleanup
-    pguser=$(awk '/postgresqlUser/{print $2}' <"${OR_DIR}/vars.yaml" | xargs)
-    pgpassword=$(awk '/postgresqlPassword/{print $2}' <"${OR_DIR}/vars.yaml" | xargs)
-    pghost=$(awk '/postgresqlHost/{print $2}' <"${OR_DIR}/vars.yaml" | xargs)
-    pgport=$(awk '/postgresqlPort/{print $2}' <"${OR_DIR}/vars.yaml" | xargs)
-    pgdatabase=$(awk '/postgresqlDatabase/{print $2}' <"${OR_DIR}/vars.yaml" | xargs)
+    pguser=$(yq 'explode(.) | .global.postgresql.postgresqlUser' ${OR_DIR}/vars.yaml)
+    pgpassword=$(yq 'explode(.) | .global.postgresql.postgresqlPassword' ${OR_DIR}/vars.yaml)
+    pghost=$(yq 'explode(.) | .global.postgresql.postgresqlHost' ${OR_DIR}/vars.yaml)
+    pgport=$(yq 'explode(.) | .global.postgresql.postgresqlPort' ${OR_DIR}/vars.yaml)
+    pgdatabase=$(yq 'explode(.) | .global.postgresql.postgresqlDatabase' ${OR_DIR}/vars.yaml)
     cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
     [[ $EE ]] && cleanup_query="DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000 AND session_id NOT IN (SELECT session_id FROM user_favorite_sessions);"
     kubectl delete po -n "${APP_NS}" pg-cleanup &>/dev/null || true
@@ -344,9 +344,9 @@ function cleanup() {
         --env PGPORT="$pgport" \
         --image bitnami/postgresql -- psql -c "$cleanup_query"
     # Run minio cleanup
-    MINIO_ACCESS_KEY=$(awk '/accessKey/{print $NF}' <"${OR_DIR}/vars.yaml" | tail -n1 | xargs)
-    MINIO_SECRET_KEY=$(awk '/secretKey/{print $NF}' <"${OR_DIR}/vars.yaml" | tail -n1 | xargs)
-    MINIO_HOST=$(awk '/endpoint/{print $NF}' <"${OR_DIR}/vars.yaml" | tail -n1 | xargs)
+    MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
+    MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
+    MINIO_HOST=$(yq 'explode(.) | .global.minio.host' ${OR_DIR}/vars.yaml)
     kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
     kubectl run minio-cleanup -n "${APP_NS}" \
         --restart=Never \
