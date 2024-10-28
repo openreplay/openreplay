@@ -346,11 +346,11 @@ function cleanup() {
     # Run minio cleanup
     MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
     MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
-    MINIO_HOST=$(yq 'explode(.) | .global.minio.host' ${OR_DIR}/vars.yaml)
+    MINIO_HOST=$(yq 'explode(.) | .global.s3.endpoint' ${OR_DIR}/vars.yaml)
     kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
     kubectl run minio-cleanup -n "${APP_NS}" \
         --restart=Never \
-        --env MINIO_HOST="$pghost" \
+        --env MINIO_HOST="$MINIO_HOST" \
         --image bitnami/minio:2020.10.9-debian-10-r6 -- /bin/sh -c "
       mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
       mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
