@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	config "openreplay/backend/internal/config/analytics"
 )
@@ -73,12 +74,13 @@ func main() {
 	}
 
 	authMiddleware := middleware.AuthMiddleware(services, log, excludedPaths, getPermissions, authOptionsSelector)
+	limiterMiddleware := middleware.RateLimit(common.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute))
 
 	router, err := api.NewRouter(cfg, log, services)
 	router.GetRouter().Use(middleware.CORS(cfg.UseAccessControlHeaders))
 	router.GetRouter().Use(authMiddleware)
-	router.GetRouter().Use(middleware.RateLimit)
-	router.GetRouter().Use(middleware.Action)
+	router.GetRouter().Use(limiterMiddleware)
+	router.GetRouter().Use(middleware.Action())
 
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)

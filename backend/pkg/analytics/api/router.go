@@ -17,6 +17,7 @@ type Router struct {
 	router   *mux.Router
 	mutex    *sync.RWMutex
 	services *common.ServicesBuilder
+	limiter  *common.UserRateLimiter
 }
 
 func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *common.ServicesBuilder) (*Router, error) {

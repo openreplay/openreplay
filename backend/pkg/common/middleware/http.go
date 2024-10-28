@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/common"
@@ -106,16 +108,64 @@ func GetUserData(r *http.Request) (*auth.User, bool) {
 	return user, ok
 }
 
-func RateLimit(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Implement rate limiting logic here
-		next.ServeHTTP(w, r)
-	})
+// RateLimit General rate-limiting middleware
+func RateLimit(limiter *common.UserRateLimiter) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			user, ok := GetUserData(r)
+			if !ok {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			rl := limiter.GetRateLimiter(user.ID)
+			if !rl.Allow() {
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
-func Action(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Implement action logging or processing logic here
-		next.ServeHTTP(w, r)
-	})
+type statusWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *statusWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.statusCode == 0 {
+		w.statusCode = http.StatusOK // Default status code is 200
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+func Action() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/" {
+				next.ServeHTTP(w, r)
+			}
+			// Read body and restore the io.ReadCloser to its original state
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "can't read body", http.StatusBadRequest)
+				return
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			// Use custom response writer to get the status code
+			sw := &statusWriter{ResponseWriter: w}
+			// Serve the request
+			next.ServeHTTP(sw, r)
+			//e.logRequest(r, bodyBytes, sw.statusCode)
+		})
+	}
 }
