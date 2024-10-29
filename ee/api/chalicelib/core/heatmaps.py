@@ -239,9 +239,9 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                 break
         for f in data.events:
             if f.type == schemas.EventType.LOCATION:
-                location_condition = f.model_copy()
                 if len(f.value) == 0:
                     f.operator = schemas.SearchEventOperator.IS_ANY
+                location_condition = f.model_copy()
             elif f.type == schemas.EventType.CLICK:
                 no_click = False
                 if len(f.value) == 0:
@@ -437,9 +437,9 @@ else:
                 break
         for f in data.events:
             if f.type == schemas.EventType.LOCATION:
-                location_condition = f.model_copy()
                 if len(f.value) == 0:
                     f.operator = schemas.SearchEventOperator.IS_ANY
+                location_condition = f.model_copy()
             elif f.type == schemas.EventType.CLICK:
                 no_click = False
                 if len(f.value) == 0:
