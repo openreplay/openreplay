@@ -224,7 +224,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
             break
     for f in data.events:
         if f.type == schemas.EventType.LOCATION:
-            location_condition = f
+            location_condition = f.model_copy()
             if len(f.value) == 0:
                 f.operator = schemas.SearchEventOperator.IS_ANY
         elif f.type == schemas.EventType.CLICK:
