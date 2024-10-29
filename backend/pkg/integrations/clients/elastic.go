@@ -25,19 +25,35 @@ type elasticsearchConfig struct {
 }
 
 func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionID uint64) (interface{}, error) {
-	creds, ok := credentials.(elasticsearchConfig)
+	cfg, ok := credentials.(elasticsearchConfig)
 	if !ok {
-		return nil, fmt.Errorf("invalid credentials")
+		strCfg, ok := credentials.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		}
+		cfg = elasticsearchConfig{}
+		if val, ok := strCfg["url"].(string); ok {
+			cfg.URL = val
+		}
+		if val, ok := strCfg["api_key_id"].(string); ok {
+			cfg.APIKeyId = val
+		}
+		if val, ok := strCfg["api_key"].(string); ok {
+			cfg.APIKey = val
+		}
+		if val, ok := strCfg["indexes"].(string); ok {
+			cfg.Indexes = val
+		}
 	}
-	cfg := elasticsearch.Config{
+	clientCfg := elasticsearch.Config{
 		Addresses: []string{
-			creds.URL,
+			cfg.URL,
 		},
-		APIKey: base64.StdEncoding.EncodeToString([]byte(creds.APIKeyId + ":" + creds.APIKey)),
+		APIKey: base64.StdEncoding.EncodeToString([]byte(cfg.APIKeyId + ":" + cfg.APIKey)),
 	}
 
 	// Create Elasticsearch client
-	es, err := elasticsearch.NewClient(cfg)
+	es, err := elasticsearch.NewClient(clientCfg)
 	if err != nil {
 		log.Fatalf("Error creating the client: %s", err)
 	}
