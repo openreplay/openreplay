@@ -22,11 +22,16 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
-                   "main_events.url_path = %(url)s",
                    "main_events.datetime >= toDateTime(%(startDate)s/1000)",
                    "main_events.datetime <= toDateTime(%(endDate)s/1000)",
                    "main_events.event_type='CLICK'",
                    "isNotNull(main_events.normalized_x)"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("path_path= %(url)s")
+    else:
+        constraints.append("path_path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = f"{exp_ch_helper.get_main_events_table(data.startTimestamp)} AS main_events"
     has_click_rage_filter = False
     # TODO: is this used ?
@@ -94,16 +99,21 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatM
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
-                   "main_events.url_path = %(url)s",
                    "main_events.event_type='CLICK'",
                    "isNotNull(main_events.normalized_x)"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("main_events.url_path = %(url)s")
+    else:
+        constraints.append("main_events.url_path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
 
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(f"""SELECT main_events.normalized_x AS normalized_x, 
                                                 main_events.normalized_y AS normalized_y
-                                    FROM {query_from}
-                                    WHERE {" AND ".join(constraints)};""", args)
+                               FROM {query_from}
+                               WHERE {" AND ".join(constraints)};""", args)
         logger.debug("---------")
         logger.debug(query)
         logger.debug("---------")
@@ -124,17 +134,22 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
-                   "main_events.url_path = %(url)s",
                    "main_events.event_type='CLICK'"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("main_events.url_path = %(url)s")
+    else:
+        constraints.append("main_events.url_path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
 
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(f"""SELECT main_events.selector AS selector, 
-                                            COUNT(1) AS count
-                                    FROM {query_from}
-                                    WHERE {" AND ".join(constraints)}
-                                    GROUP BY 1
-                                    ORDER BY count DESC;""", args)
+                                      COUNT(1) AS count
+                               FROM {query_from}
+                               WHERE {" AND ".join(constraints)}
+                               GROUP BY 1
+                               ORDER BY count DESC;""", args)
         logger.debug("---------")
         logger.debug(query)
         logger.debug("---------")
@@ -200,7 +215,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
                 cur.execute(main_query)
             except Exception as err:
                 logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION -----------")
-                logger.warning(main_query)
+                logger.warning(main_query.decode('UTF-8'))
                 logger.warning("--------- PAYLOAD -----------")
                 logger.warning(full_args)
                 logger.warning("--------------------")
@@ -238,7 +253,7 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
             data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
                                                                   value=[schemas.PlatformType.DESKTOP],
                                                                   operator=schemas.SearchEventOperator.IS))
-        if location_condition:
+        if not location_condition:
             data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
                                                                  value=[],
                                                                  operator=schemas.SearchEventOperator.IS_ANY))
@@ -263,7 +278,8 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
             main_query = cur.mogrify(f"""SELECT *
                                          FROM (SELECT {SESSION_PROJECTION_COLS}
                                                {query_part}
-                                               ORDER BY {data.sort} {data.order.value}
+                                               --ignoring the sort made the query faster (from 6s to 100ms)
+                                               --ORDER BY {data.sort} {data.order.value}
                                                LIMIT 20) AS raw
                                          ORDER BY random()
                                          LIMIT 1;""", full_args)
@@ -282,9 +298,13 @@ if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
 
             session = cur.fetchone()
         if session:
-            session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
-                                          location_condition=location_condition,
-                                          start_time=data.startTimestamp, end_time=data.endTimestamp)
+            if not location_condition or location_condition.operator == schemas.SearchEventOperator.IS_ANY:
+                session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
+                                              location_condition=location_condition,
+                                              start_time=data.startTimestamp, end_time=data.endTimestamp)
+            else:
+                session["path"] = location_condition.value[0]
+
             if include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
@@ -431,7 +451,7 @@ else:
             data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
                                                                   value=[schemas.PlatformType.DESKTOP],
                                                                   operator=schemas.SearchEventOperator.IS))
-        if location_condition:
+        if not location_condition:
             data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
                                                                  value=[],
                                                                  operator=schemas.SearchEventOperator.IS_ANY))
@@ -456,7 +476,7 @@ else:
             main_query = cur.format(f"""SELECT * 
                                                FROM (SELECT {SESSION_PROJECTION_COLS}
                                                {query_part}
-                                               ORDER BY {data.sort} {data.order.value}
+                                               -- ORDER BY {data.sort} {data.order.value}
                                                LIMIT 20) AS raw
                                                ORDER BY rand()
                                                LIMIT 1;""", full_args)
@@ -475,9 +495,13 @@ else:
 
         if len(session) > 0:
             session = session[0]
-            session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
-                                          location_condition=location_condition,
-                                          start_time=data.startTimestamp, end_time=data.endTimestamp)
+            if not location_condition or location_condition.operator == schemas.SearchEventOperator.IS_ANY:
+                session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
+                                              location_condition=location_condition,
+                                              start_time=data.startTimestamp, end_time=data.endTimestamp)
+            else:
+                session["path"] = location_condition.value[0]
+
             if include_mobs:
                 session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
                 session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
@@ -500,8 +524,8 @@ else:
     def get_selected_session(project_id, session_id):
         with ch_client.ClickHouseClient() as cur:
             main_query = cur.format(f"""SELECT {SESSION_PROJECTION_COLS}
-                                              FROM experimental.sessions AS s
-                                              WHERE session_id=%(session_id)s;""", {"session_id": session_id})
+                                        FROM experimental.sessions AS s
+                                        WHERE session_id=%(session_id)s;""", {"session_id": session_id})
             logger.debug("--------------------")
             logger.debug(main_query)
             logger.debug("--------------------")
