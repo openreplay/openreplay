@@ -30,7 +30,23 @@ func (d *dynatraceClient) FetchSessionData(credentials interface{}, sessionID ui
 	// Try to parse the credentials as a Config struct
 	cfg, ok := credentials.(dynatraceConfig)
 	if !ok {
-		return nil, fmt.Errorf("invalid credentials")
+		strCfg, ok := credentials.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		}
+		cfg = dynatraceConfig{}
+		if val, ok := strCfg["environment"].(string); ok {
+			cfg.Environment = val
+		}
+		if val, ok := strCfg["client_id"].(string); ok {
+			cfg.ClientID = val
+		}
+		if val, ok := strCfg["client_secret"].(string); ok {
+			cfg.ClientSecret = val
+		}
+		if val, ok := strCfg["resource"].(string); ok {
+			cfg.Resource = val
+		}
 	}
 	token, err := d.requestOAuthToken(cfg.ClientID, cfg.ClientSecret, cfg.Resource)
 	if err != nil {
