@@ -14,13 +14,18 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
     constraints = ["sessions.project_id = %(project_id)s",
-                   "path= %(url)s",
                    "clicks.timestamp >= %(startDate)s",
                    "clicks.timestamp <= %(endDate)s",
                    "start_ts >= %(startDate)s",
                    "start_ts <= %(endDate)s",
                    "duration IS NOT NULL",
                    "normalized_x IS NOT NULL"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("path= %(url)s")
+    else:
+        constraints.append("path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = "events.clicks INNER JOIN sessions USING (session_id)"
     has_click_rage_filter = False
     # TODO: is this used ?
@@ -84,8 +89,13 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
 def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
     constraints = ["session_id = %(session_id)s",
-                   "path= %(url)s",
                    "normalized_x IS NOT NULL"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("path= %(url)s")
+    else:
+        constraints.append("path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = "events.clicks"
 
     with pg_client.PostgresClient() as cur:
@@ -111,8 +121,13 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatM
 
 def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"session_id": session_id, "url": data.url}
-    constraints = ["session_id = %(session_id)s",
-                   "path= %(url)s"]
+    constraints = ["session_id = %(session_id)s"]
+    if data.operator == schemas.SearchEventOperator.IS:
+        constraints.append("path= %(url)s")
+    else:
+        constraints.append("path ILIKE %(url)s")
+        args["url"] = helper.values_for_operator(data.url, data.operator)
+
     query_from = "events.clicks"
 
     with pg_client.PostgresClient() as cur:
@@ -223,7 +238,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
         data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.PLATFORM,
                                                               value=[schemas.PlatformType.DESKTOP],
                                                               operator=schemas.SearchEventOperator.IS))
-    if location_condition:
+    if not location_condition:
         data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
                                                              value=[],
                                                              operator=schemas.SearchEventOperator.IS_ANY))
@@ -248,7 +263,8 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
         main_query = cur.mogrify(f"""SELECT *
                                      FROM (SELECT {SESSION_PROJECTION_COLS}
                                            {query_part}
-                                           ORDER BY {data.sort} {data.order.value}
+                                           --ignoring the sort made the query faster (from 6s to 100ms)
+                                           --ORDER BY {data.sort} {data.order.value}
                                            LIMIT 20) AS raw
                                      ORDER BY random()
                                      LIMIT 1;""", full_args)
@@ -267,9 +283,13 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
 
         session = cur.fetchone()
     if session:
-        session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
-                                      location_condition=location_condition,
-                                      start_time=data.startTimestamp, end_time=data.endTimestamp)
+        if not location_condition or location_condition.operator == schemas.SearchEventOperator.IS_ANY:
+            session["path"] = __get_1_url(project_id=project_id, session_id=session["session_id"],
+                                          location_condition=location_condition,
+                                          start_time=data.startTimestamp, end_time=data.endTimestamp)
+        else:
+            session["path"] = location_condition.value[0]
+
         if include_mobs:
             session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
             session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
