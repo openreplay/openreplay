@@ -47,7 +47,6 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 		if val, ok := strCfg["token"].(string); ok {
 			cfg.Token = val
 		}
-		return nil, fmt.Errorf("invalid credentials")
 	}
 	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", cfg.OrganizationSlug, cfg.ProjectSlug)
 
