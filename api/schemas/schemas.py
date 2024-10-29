@@ -1598,6 +1598,8 @@ class GetHeatMapPayloadSchema(_TimedSchema):
     url: Optional[str] = Field(default=None)
     filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
+    operator: Literal[SearchEventOperator.IS, SearchEventOperator.STARTS_WITH,
+    SearchEventOperator.CONTAINS, SearchEventOperator.ENDS_WITH] = Field(default=SearchEventOperator.STARTS_WITH)
 
 
 class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):
