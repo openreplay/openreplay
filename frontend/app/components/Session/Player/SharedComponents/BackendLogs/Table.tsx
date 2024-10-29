@@ -66,7 +66,7 @@ export function LogRow({
           'text-sm grid items-center py-2 px-4',
           'cursor-pointer border-b border-b-gray-light last:border-b-0',
           border(log.status),
-          isActive ? 'bg-gray-lightest' : bg(log.status)
+          isActive ? 'bg-active-blue' : bg(log.status)
         )}
         style={{
           gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
