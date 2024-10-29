@@ -2,11 +2,13 @@ package common
 
 import (
 	"errors"
+	objConfig "openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/common/api/auth"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/objectstorage/store"
 )
 
 // ServicesBuilder struct to hold service components
@@ -35,8 +37,12 @@ func (b *ServicesBuilder) WithFlaker(flaker *flakeid.Flaker) *ServicesBuilder {
 }
 
 // WithObjectStorage sets the Object Storage component
-func (b *ServicesBuilder) WithObjectStorage(objStorage objectstorage.ObjectStorage) *ServicesBuilder {
-	b.objStorage = objStorage
+func (b *ServicesBuilder) WithObjectStorage(config *objConfig.ObjectsConfig) *ServicesBuilder {
+	objStore, err := store.NewStore(config)
+	if err != nil {
+		return nil
+	}
+	b.objStorage = objStore
 	return b
 }
 
@@ -70,7 +76,6 @@ func (b *ServicesBuilder) WithJWTSecret(jwtSecret string, extraSecret ...string)
 // Build finalizes the service setup and returns an instance of ServicesBuilder with all components
 func (b *ServicesBuilder) Build() (*ServicesBuilder, error) {
 	// Initialize default components if they aren't provided
-
 	// Check if database pool is provided
 	if b.pgconn == nil {
 		return nil, errors.New("database connection pool is required")

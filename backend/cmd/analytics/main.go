@@ -34,6 +34,7 @@ func main() {
 	services, err := analytics.NewServiceBuilder(log).
 		WithDatabase(pgConn).
 		WithJWTSecret(cfg.JWTSecret, cfg.JWTSpotSecret).
+		WithObjectStorage(&cfg.ObjectsConfig).
 		Build()
 
 	if err != nil {
