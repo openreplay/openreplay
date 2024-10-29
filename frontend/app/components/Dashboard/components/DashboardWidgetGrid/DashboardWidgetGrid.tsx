@@ -1,10 +1,9 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
-import { Empty } from 'antd';
-import { NoContent, Loader } from 'UI';
-import { useObserver } from 'mobx-react-lite';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Loader } from 'UI';
+import { observer } from 'mobx-react-lite';
+import AddCardSection from "../AddCardSection/AddCardSection";
 
 interface Props {
   siteId: string;
@@ -16,32 +15,16 @@ interface Props {
 function DashboardWidgetGrid(props: Props) {
   const { dashboardId, siteId } = props;
   const { dashboardStore } = useStore();
-  const loading = useObserver(() => dashboardStore.isLoading);
+  const loading = dashboardStore.isLoading;
   const dashboard = dashboardStore.selectedDashboard;
-  const list = useObserver(() => dashboard?.widgets);
+  const list = dashboard?.widgets;
 
-  return useObserver(() => (
+  return (
     <Loader loading={loading}>
       {
         list?.length === 0 ? (
-          <div className="bg-gray-light-blue rounded-lg shadow-sm p-5">
-            <NoContent
-              show={true}
-              icon="no-metrics-chart"
-              title={
-                <div className="text-center">
-                   <div className='mb-4'>
-                   <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
-                   </div>
-                  <div className="text-xl font-medium mb-2">
-                    There are no cards in this dashboard
-                  </div>
-                  <div className="text-base font-normal">
-                  Create a card by clicking the "Add Card" button to visualize insights here.
-                  </div>
-                </div>
-              }
-            />
+          <div className={'flex-1 flex justify-center items-center'}>
+            <AddCardSection />
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
@@ -65,7 +48,7 @@ function DashboardWidgetGrid(props: Props) {
         )
       }
     </Loader>
-  ));
+  );
 }
 
-export default DashboardWidgetGrid;
+export default observer(DashboardWidgetGrid);
