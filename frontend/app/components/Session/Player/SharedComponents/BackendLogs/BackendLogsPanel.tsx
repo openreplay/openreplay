@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Segmented } from 'antd';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
+import { PlayerContext } from "App/components/Session/playerContext";
 import { processLog, UnifiedLog } from './utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -32,6 +33,7 @@ async function fetchLogs(
     const logsResp = await fetch(json.url)
     if (logsResp.ok) {
       const logJson = await logsResp.json()
+      if (logJson.length === 0) return []
       return processLog(logJson)
     } else {
       throw new Error('Failed to fetch logs')
@@ -59,16 +61,7 @@ function BackendLogsPanel() {
     enabled: tab !== null,
     retry: 3,
   });
-
-  console.log(isError, isPending, isSuccess)
   const [filter, setFilter] = React.useState('');
-  const _list = React.useRef<VListHandle>(null);
-  const activeIndex = 1;
-  React.useEffect(() => {
-    if (_list.current) {
-      _list.current.scrollToIndex(activeIndex);
-    }
-  }, [activeIndex]);
 
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
@@ -122,40 +115,44 @@ function BackendLogsPanel() {
           />
         ) : null}
         {isSuccess ? (
-          <>
-            <TableHeader size={data.length} />
-            <VList ref={_list} count={testLogs.length}>
-              {data.map((log, index) => (
-                <LogRow key={index} log={log} />
-              ))}
-            </VList>
-          </>
+          <LogsTable data={data} />
         ) : null}
       </BottomBlock.Content>
     </BottomBlock>
   );
 }
 
-const testLogs = [
-  {
-    key: 1,
-    timestamp: '2021-09-01 12:00:00',
-    status: 'INFO',
-    content: 'This is a test log',
-  },
-  {
-    key: 2,
-    timestamp: '2021-09-01 12:00:00',
-    status: 'WARN',
-    content: 'This is a test log',
-  },
-  {
-    key: 3,
-    timestamp: '2021-09-01 12:00:00',
-    status: 'ERROR',
-    content:
-      'This is a test log that is very long and should be truncated to fit in the table cell and it will be displayed later in a separate thing when clicked on a row because its so long you never gonna give htem up or alskjhaskfjhqwfhwekfqwfjkqlwhfkjqhflqkwjhefqwklfehqwlkfjhqwlkjfhqwe \n kjhdafskjfhlqkwjhfwelefkhwqlkqehfkqlwehfkqwhefkqhwefkjqwhf',
-  },
-];
+const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
+  const { store, player } = React.useContext(PlayerContext);
+  const time = store.get().time;
+  const sessionStart = store.get().sessionStart;
+  const _list = React.useRef<VListHandle>(null);
+  const activeIndex = React.useMemo(() => {
+    const currTs = time + sessionStart;
+    const index = data.findIndex(
+      (log) => log.timestamp !== 'N/A' ? new Date(log.timestamp).getTime() >= currTs : false
+    );
+    return index === -1 ? data.length - 1 : index;
+  }, [time, data.length]);
+  React.useEffect(() => {
+    if (_list.current) {
+      _list.current.scrollToIndex(activeIndex);
+    }
+  }, [activeIndex]);
+
+  const onJump = (ts: number) => {
+    player.jump(ts - sessionStart);
+  }
+  return (
+    <>
+      <TableHeader size={data.length} />
+      <VList ref={_list} count={data.length}>
+        {data.map((log, index) => (
+          <LogRow key={index} isActive={index === activeIndex} log={log} onJump={onJump} />
+        ))}
+      </VList>
+    </>
+  )
+});
 
 export default observer(BackendLogsPanel);

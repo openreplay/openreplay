@@ -5,6 +5,7 @@ import { Button } from 'antd';
 import cn from 'classnames';
 import copy from 'copy-to-clipboard';
 import { getDateFromString } from 'App/date';
+import JumpButton from 'App/components/shared/DevTools/JumpButton';
 
 export function TableHeader({ size }: { size: number }) {
   return (
@@ -28,8 +29,12 @@ export function TableHeader({ size }: { size: number }) {
 
 export function LogRow({
   log,
+  onJump,
+  isActive,
 }: {
   log: { timestamp: string; status: string; content: string };
+  onJump: (ts: number) => void;
+  isActive?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const bg = (status: string) => {
@@ -54,13 +59,16 @@ export function LogRow({
     return 'border-l border-l-4 border-gray-lighter';
   };
   return (
-    <div className={'code-font'}>
+    <div
+      className={'code-font relative group'}
+    >
+      <JumpButton onClick={() => onJump(new Date(log.timestamp).getTime())} />
       <div
         className={cn(
           'text-sm grid items-center py-2 px-4',
           'cursor-pointer border-b border-b-gray-light last:border-b-0',
           border(log.status),
-          bg(log.status)
+          isActive ? 'bg-gray-lightest' : bg(log.status)
         )}
         style={{
           gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
@@ -90,10 +98,14 @@ export function LogRow({
         </div>
       </div>
       {isExpanded ? (
-        <div className={'rounded bg-gray-lightest px-4 py-2 relative mx-4 my-2'}>
+        <div
+          className={'rounded bg-gray-lightest px-4 py-2 relative mx-4 my-2'}
+        >
           {log.content.split('\n').map((line, index) => (
             <div key={index} className={'flex items-start gap-2'}>
-              <div className={'border-r border-r-gray-light pr-2 select-none'}>{index}</div>
+              <div className={'border-r border-r-gray-light pr-2 select-none'}>
+                {index}
+              </div>
               <div className={'whitespace-pre-wrap'}>{line}</div>
             </div>
           ))}
