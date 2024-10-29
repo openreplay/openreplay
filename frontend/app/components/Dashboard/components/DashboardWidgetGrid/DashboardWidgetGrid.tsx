@@ -24,7 +24,7 @@ function DashboardWidgetGrid(props: Props) {
     <Loader loading={loading}>
       {
         list?.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-5">
+          <div className="bg-gray-light-blue rounded-lg shadow-sm p-5">
             <NoContent
               show={true}
               icon="no-metrics-chart"

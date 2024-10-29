@@ -46,7 +46,7 @@
     "jshint": "^2.11.1",
     "jspdf": "^2.5.1",
     "lottie-react": "^2.4.0",
-    "lucide-react": "^0.396.0",
+    "lucide-react": "^0.454.0",
     "luxon": "^3.5.0",
     "microdiff": "^1.4.0",
     "mobx": "^6.13.3",
