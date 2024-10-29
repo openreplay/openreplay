@@ -27,9 +27,9 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
                    "main_events.event_type='CLICK'",
                    "isNotNull(main_events.normalized_x)"]
     if data.operator == schemas.SearchEventOperator.IS:
-        constraints.append("path_path= %(url)s")
+        constraints.append("url_path= %(url)s")
     else:
-        constraints.append("path_path ILIKE %(url)s")
+        constraints.append("url_path ILIKE %(url)s")
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(data.startTimestamp)} AS main_events"
