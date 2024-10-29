@@ -15,6 +15,8 @@ function ClickMapCard() {
 
   const sessionId = metricStore.instance.data.sessionId;
   const url = metricStore.instance.data.path;
+  const operator = metricStore.instance.series[0].filter.filters[0].operator
+
 
   React.useEffect(() => {
     return () => setCustomSession(null);
@@ -44,6 +46,7 @@ function ClickMapCard() {
       endDate,
       rangeValue,
       clickRage: metricStore.clickMapFilter,
+      operator,
     });
   }, [
     sessionId,
