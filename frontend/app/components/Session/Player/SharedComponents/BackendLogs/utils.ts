@@ -9,11 +9,11 @@ export function processLog(log: any): UnifiedLog[] {
   if (isDatadogLog(log)) {
     return log.map(processDatadogLog);
   } else if (isElasticLog(log)) {
-    return processElasticLog(log);
+    return log.map(processElasticLog);
   } else if (isSentryLog(log)) {
-    return processSentryLog(log);
+    return log.map(processSentryLog);
   } else if (isDynatraceLog(log)) {
-    return processDynatraceLog(log);
+    return log.map(processDynatraceLog);
   } else {
     throw new Error("Unknown log format");
   }
@@ -22,10 +22,10 @@ export function processLog(log: any): UnifiedLog[] {
 function isDynatraceLog(log: any): boolean {
   return (
     log &&
-    log.results &&
-    Array.isArray(log.results) &&
-    log.results.length > 0 &&
-    log.results[0].eventType === "LOG"
+    log[0].results &&
+    Array.isArray(log[0].results) &&
+    log[0].results.length > 0 &&
+    log[0].results[0].eventType === "LOG"
   );
 }
 
@@ -34,11 +34,11 @@ function isDatadogLog(log: any): boolean {
 }
 
 function isElasticLog(log: any): boolean {
-  return log && log._source && log._source.message;
+  return log && log[0]._source && log[0]._source.message;
 }
 
 function isSentryLog(log: any): boolean {
-  return log && log.eventID && Array.isArray(log.tags);
+  return log && log[0].id && log[0].message && log[0].title;
 }
 
 function processDynatraceLog(log: any): UnifiedLog {
@@ -75,16 +75,16 @@ function processDatadogLog(log: any): UnifiedLog {
 
 function processElasticLog(log: any): UnifiedLog {
   const key = log._id || '';
-  const timestamp = log._source.timestamp || log._source.utc_time || '';
+  const timestamp = log._source['@timestamp'] || '';
   const message = log._source.message || '';
-  const level = getLevelFromElasticTags(log._source.tags);
+  const level = getLevelFromElasticTags(log._source.level);
   return { key, timestamp, content: message, status: level };
 }
 
 function getLevelFromElasticTags(tags: string[]): string {
   const levels = ['error', 'warning', 'info', 'debug'];
   for (const level of levels) {
-    if (tags.includes(level)) {
+    if (tags.includes(level.toLowerCase())) {
       return level;
     }
   }
@@ -93,9 +93,9 @@ function getLevelFromElasticTags(tags: string[]): string {
 
 function processSentryLog(log: any): UnifiedLog {
   const key = log.id || log.eventID || '';
-  const timestamp = log.dateCreated || '';
-  const message = log.message || log.title || log.culprit || '';
-  const level = getLevelFromSentryTags(log.tags);
+  const timestamp = log.dateCreated || 'N/A';
+  const message = `${log.title}: \n ${log.message}`;
+  const level = log.tags ? getLevelFromSentryTags(log.tags) : 'N/A';
   return { key, timestamp, content: message, status: level };
 }
 
