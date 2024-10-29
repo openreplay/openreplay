@@ -31,12 +31,25 @@ type SentryEvent struct {
 }
 
 func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint64) (interface{}, error) {
-	fmt.Println(credentials)
-	creds, ok := credentials.(sentryConfig)
+	cfg, ok := credentials.(sentryConfig)
 	if !ok {
+		strCfg, ok := credentials.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+		}
+		cfg = sentryConfig{}
+		if val, ok := strCfg["organization_slug"].(string); ok {
+			cfg.OrganizationSlug = val
+		}
+		if val, ok := strCfg["project_slug"].(string); ok {
+			cfg.ProjectSlug = val
+		}
+		if val, ok := strCfg["token"].(string); ok {
+			cfg.Token = val
+		}
 		return nil, fmt.Errorf("invalid credentials")
 	}
-	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", creds.OrganizationSlug, creds.ProjectSlug)
+	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", cfg.OrganizationSlug, cfg.ProjectSlug)
 
 	testCallLimit := 1
 	params := url.Values{}
@@ -54,7 +67,7 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	}
 
 	// Add Authorization header
-	req.Header.Set("Authorization", "Bearer "+creds.Token)
+	req.Header.Set("Authorization", "Bearer "+cfg.Token)
 
 	// Send the request
 	client := &http.Client{}
