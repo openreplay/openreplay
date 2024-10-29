@@ -7,27 +7,21 @@ const VersionComparison = {
   Same: 0,
   Higher: 1,
 };
+function parseVersion(version: string) {
+  const cleanVersion = version.split(/[-+]/)[0];
+  return cleanVersion.split('.').map(Number);
+}
 
 function compareVersions(
   suppliedVersion: string,
   currentVersion: string
 ): number {
-  function parseVersion(version: string) {
-    const cleanVersion = version.split(/[-+]/)[0];
-    return cleanVersion.split('.').map(Number);
-  }
 
   const v1 = parseVersion(suppliedVersion);
   const v2 = parseVersion(currentVersion);
 
-  const length = Math.max(v1.length, v2.length);
-  while (v1.length < length) v1.push(0);
-  while (v2.length < length) v2.push(0);
-
-  for (let i = 0; i < length; i++) {
-    if (v1[i] < v2[i]) return VersionComparison.Lower;
-    if (v1[i] > v2[i]) return VersionComparison.Higher;
-  }
+  if (v1[0] < v2[0]) return VersionComparison.Lower;
+  if (v1[0] > v2[0]) return VersionComparison.Higher;
 
   return VersionComparison.Same;
 }

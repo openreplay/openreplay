@@ -1,5 +1,4 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 
@@ -9,30 +8,26 @@ import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilter
 import { PageTitle } from 'UI';
 
 import DocCard from 'Shared/DocCard/DocCard';
+import SiteDropdown from 'Shared/SiteDropdown';
 
-import AssistDoc from './AssistDoc';
-import BugsnagForm from './BugsnagForm';
-import CloudwatchForm from './CloudwatchForm';
-import DatadogForm from './DatadogForm';
-import ElasticsearchForm from './ElasticsearchForm';
+import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
+import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
+import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
+import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
-import GraphQLDoc from './GraphQLDoc';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
-import MobxDoc from './MobxDoc';
-import NewrelicForm from './NewrelicForm';
-import NgRxDoc from './NgRxDoc';
-import PiniaDoc from './PiniaDoc';
 import ProfilerDoc from './ProfilerDoc';
-import ReduxDoc from './ReduxDoc';
-import RollbarForm from './RollbarForm';
-import SentryForm from './SentryForm';
 import SlackForm from './SlackForm';
-import StackdriverForm from './StackdriverForm';
-import SumoLogicForm from './SumoLogicForm';
 import MSTeams from './Teams';
-import VueDoc from './VueDoc';
-import ZustandDoc from './ZustandDoc';
+import AssistDoc from './Tracker/AssistDoc';
+import GraphQLDoc from './Tracker/GraphQLDoc';
+import MobxDoc from './Tracker/MobxDoc';
+import NgRxDoc from './Tracker/NgRxDoc';
+import PiniaDoc from './Tracker/PiniaDoc';
+import ReduxDoc from './Tracker/ReduxDoc';
+import VueDoc from './Tracker/VueDoc';
+import ZustandDoc from './Tracker/ZustandDoc';
 
 interface Props {
   siteId: string;
@@ -41,23 +36,27 @@ interface Props {
 
 function Integrations(props: Props) {
   const { integrationsStore, projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const initialSiteId = projectsStore.siteId;
+  const siteId = integrationsStore.integrations.siteId;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { hideHeader = false } = props;
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const [integratedList, setIntegratedList] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    const list = storeIntegratedList
-      .filter((item: any) => item.integrated)
+    const list = integrationsStore.integrations.integratedServices
       .map((item: any) => item.name);
     setIntegratedList(list);
   }, [storeIntegratedList]);
 
   useEffect(() => {
-    void fetchIntegrationList(siteId);
+    if (siteId) {
+      void fetchIntegrationList(siteId);
+    } else if (initialSiteId) {
+      integrationsStore.integrations.setSiteId(initialSiteId);
+    }
   }, [siteId]);
 
   const onClick = (integration: any, width: number) => {
@@ -84,6 +83,8 @@ function Integrations(props: Props) {
     showModal(
       React.cloneElement(integration.component, {
         integrated: integratedList.includes(integration.slug),
+        siteId,
+        onClose: hideModal,
       }),
       { right: true, width }
     );
@@ -112,15 +113,17 @@ function Integrations(props: Props) {
     (cat) => cat.integrations
   );
 
-  console.log(
-    allIntegrations,
-  integratedList
-  )
+  const onChangeSelect = ({ value }: any) => {
+    integrationsStore.integrations.setSiteId(value.value);
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
-        {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
-
+        <div className={'flex items-center gap-4 mb-2'}>
+          {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
+          <SiteDropdown value={siteId} onChange={onChangeSelect} />
+        </div>
         <IntegrationFilters
           onChange={onChange}
           activeItem={activeFilter}
@@ -131,37 +134,41 @@ function Integrations(props: Props) {
       <div className="mb-4" />
 
       <div
-        className={cn(`
-    mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
-`)}
+        className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
       >
-        {allIntegrations.map((integration: any) => (
-          <IntegrationItem
-            integrated={integratedList.includes(integration.slug)}
-            integration={integration}
-            onClick={() =>
-              onClick(
-                integration,
-                filteredIntegrations.find((cat) =>
-                  cat.integrations.includes(integration)
-                ).title === 'Plugins'
-                  ? 500
-                  : 350
-              )
-            }
-            hide={
-              (integration.slug === 'github' &&
-                integratedList.includes('jira')) ||
-              (integration.slug === 'jira' && integratedList.includes('github'))
-            }
-          />
+        {allIntegrations.map((integration, i) => (
+          <React.Fragment key={`${integration.slug}+${i}`}>
+            <IntegrationItem
+              integrated={integratedList.includes(integration.slug)}
+              integration={integration}
+              useIcon={integration.useIcon}
+              onClick={() =>
+                onClick(
+                  integration,
+                  filteredIntegrations.find((cat) =>
+                    cat.integrations.includes(integration)
+                  )?.title === 'Plugins'
+                    ? 500
+                    : 350
+                )
+              }
+              hide={
+                (integration.slug === 'github' &&
+                  integratedList.includes('jira')) ||
+                (integration.slug === 'jira' &&
+                  integratedList.includes('github'))
+              }
+            />
+          </React.Fragment>
         ))}
       </div>
     </>
   );
 }
 
-export default withPageTitle('Integrations - OpenReplay Preferences')(observer(Integrations))
+export default withPageTitle('Integrations - OpenReplay Preferences')(
+  observer(Integrations)
+);
 
 const integrations = [
   {
@@ -220,22 +227,6 @@ const integrations = [
         component: <SentryForm />,
       },
       {
-        title: 'Bugsnag',
-        subtitle:
-          'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
-        slug: 'bugsnag',
-        icon: 'integrations/bugsnag',
-        component: <BugsnagForm />,
-      },
-      {
-        title: 'Rollbar',
-        subtitle:
-          'Integrate Rollbar with session replays to seamlessly observe backend errors.',
-        slug: 'rollbar',
-        icon: 'integrations/rollbar',
-        component: <RollbarForm />,
-      },
-      {
         title: 'Elasticsearch',
         subtitle:
           'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
@@ -252,36 +243,13 @@ const integrations = [
         component: <DatadogForm />,
       },
       {
-        title: 'Sumo Logic',
+        title: 'Dynatrace',
         subtitle:
-          'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
-        slug: 'sumologic',
-        icon: 'integrations/sumologic',
-        component: <SumoLogicForm />,
-      },
-      {
-        title: 'Google Cloud',
-        subtitle:
-          'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
-        slug: 'stackdriver',
-        icon: 'integrations/google-cloud',
-        component: <StackdriverForm />,
-      },
-      {
-        title: 'CloudWatch',
-        subtitle:
-          'Integrate CloudWatch to see backend logs and errors alongside session replay.',
-        slug: 'cloudwatch',
-        icon: 'integrations/aws',
-        component: <CloudwatchForm />,
-      },
-      {
-        title: 'Newrelic',
-        subtitle:
-          'Integrate NewRelic with session replays to seamlessly observe backend errors.',
-        slug: 'newrelic',
-        icon: 'integrations/newrelic',
-        component: <NewrelicForm />,
+          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
+        slug: 'dynatrace',
+        icon: 'integrations/dynatrace',
+        useIcon: true,
+        component: <DynatraceFormModal />,
       },
     ],
   },
@@ -409,3 +377,56 @@ const integrations = [
     ],
   },
 ];
+
+/**
+ *
+ * @deprecated
+ * */
+// {
+//   title: 'Sumo Logic',
+//     subtitle:
+//   'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
+//     slug: 'sumologic',
+//   icon: 'integrations/sumologic',
+//   component: <SumoLogicForm />,
+// },
+// {
+//   title: 'Bugsnag',
+//     subtitle:
+//   'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
+//     slug: 'bugsnag',
+//   icon: 'integrations/bugsnag',
+//   component: <BugsnagForm />,
+// },
+// {
+//   title: 'Rollbar',
+//     subtitle:
+//   'Integrate Rollbar with session replays to seamlessly observe backend errors.',
+//     slug: 'rollbar',
+//   icon: 'integrations/rollbar',
+//   component: <RollbarForm />,
+// },
+// {
+//   title: 'Google Cloud',
+//     subtitle:
+//   'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
+//     slug: 'stackdriver',
+//   icon: 'integrations/google-cloud',
+//   component: <StackdriverForm />,
+// },
+// {
+//   title: 'CloudWatch',
+//     subtitle:
+//   'Integrate CloudWatch to see backend logs and errors alongside session replay.',
+//     slug: 'cloudwatch',
+//   icon: 'integrations/aws',
+//   component: <CloudwatchForm />,
+// },
+// {
+//   title: 'Newrelic',
+//     subtitle:
+//   'Integrate NewRelic with session replays to seamlessly observe backend errors.',
+//     slug: 'newrelic',
+//   icon: 'integrations/newrelic',
+//   component: <NewrelicForm />,
+// },

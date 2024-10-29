@@ -3,6 +3,10 @@
 import { DateTime, Duration } from 'luxon'; // TODO
 import { Timezone } from 'App/mstore/types/sessionSettings';
 
+export function getDateFromString(date: string, format = 'yyyy-MM-dd HH:mm:ss:SSS'): string {
+  return DateTime.fromISO(date).toFormat(format);
+}
+
 /**
  * Formats a given duration.
  *

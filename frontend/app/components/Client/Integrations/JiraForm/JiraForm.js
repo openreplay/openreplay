@@ -2,7 +2,6 @@ import React from 'react';
 import IntegrationForm from '../IntegrationForm';
 import DocLink from 'Shared/DocLink/DocLink';
 import { useModal } from 'App/components/Modal';
-import { Icon } from 'UI';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
 
 const JiraForm = (props) => {

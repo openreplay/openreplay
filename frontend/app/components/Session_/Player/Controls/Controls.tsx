@@ -16,7 +16,7 @@ import {
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
   LaunchStateShortcut,
-  LaunchXRaShortcut
+  LaunchXRaShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import {
   CONSOLE,
@@ -27,9 +27,11 @@ import {
   PERFORMANCE,
   PROFILER,
   STACKEVENTS,
-  STORAGE
+  STORAGE,
+  BACKENDLOGS,
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
+import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 
 import ControlButton from './ControlButton';
 import Timeline from './Timeline';
@@ -43,7 +45,7 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4
+  60: 6e4,
 };
 
 function getStorageName(type: any) {
@@ -65,13 +67,22 @@ function getStorageName(type: any) {
   }
 }
 
-function Controls({
-  setActiveTab
-}: any) {
+function Controls({ setActiveTab }: any) {
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, uiPlayerStore, projectsStore, sessionStore, userStore } = useStore();
+  const {
+    uxtestingStore,
+    uiPlayerStore,
+    projectsStore,
+    sessionStore,
+    userStore,
+  } = useStore();
   const permissions = userStore.account.permissions || [];
-  const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
+  const disableDevtools =
+    userStore.isEnterprise &&
+    !(
+      permissions.includes('DEV_TOOLS') ||
+      permissions.includes('SERVICE_DEV_TOOLS')
+    );
   const fullscreen = uiPlayerStore.fullscreen;
   const bottomBlock = uiPlayerStore.bottomBlock;
   const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
@@ -89,7 +100,7 @@ function Controls({
     speed,
     messagesLoading,
     markedTargets,
-    inspectorMode
+    inspectorMode,
   } = store.get();
 
   const session = sessionStore.current;
@@ -116,7 +127,7 @@ function Controls({
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
     setActiveTab,
-    disableDevtools
+    disableDevtools,
   });
 
   const forthTenSeconds = () => {
@@ -137,8 +148,8 @@ function Controls({
   const state = completed
     ? PlayingState.Completed
     : playing
-      ? PlayingState.Playing
-      : PlayingState.Paused;
+    ? PlayingState.Playing
+    : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
   return (
@@ -206,13 +217,13 @@ interface IDevtoolsButtons {
 
 const DevtoolsButtons = observer(
   ({
-     showStorageRedux,
-     toggleBottomTools,
-     bottomBlock,
-     disabled,
-     events
-   }: IDevtoolsButtons) => {
-    const { aiSummaryStore } = useStore();
+    showStorageRedux,
+    toggleBottomTools,
+    bottomBlock,
+    disabled,
+    events,
+  }: IDevtoolsButtons) => {
+    const { aiSummaryStore, integrationsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
     // @ts-ignore
@@ -249,6 +260,8 @@ const DevtoolsButtons = observer(
     };
 
     const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
+    const integratedServices =
+      integrationsStore.integrations.backendLogIntegrations;
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
@@ -349,6 +362,12 @@ const DevtoolsButtons = observer(
             label="Profiler"
           />
         )}
+        {integratedServices.length ? (
+          <LogsButton
+            integrated={integratedServices.map((service) => service.name)}
+            onClick={() => toggleBottomTools(BACKENDLOGS)}
+          />
+        ) : null}
         {possibleAudio.length ? (
           <DropdownAudioPlayer audioEvents={possibleAudio} />
         ) : null}
@@ -358,11 +377,11 @@ const DevtoolsButtons = observer(
 );
 
 export function SummaryButton({
-                                onClick,
-                                withToggle,
-                                onToggle,
-                                toggleValue
-                              }: {
+  onClick,
+  withToggle,
+  onToggle,
+  toggleValue,
+}: {
   onClick?: () => void;
   withToggle?: boolean;
   onToggle?: () => void;
@@ -398,7 +417,7 @@ export const gradientButton = {
   height: 24,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
 };
 const onHoverFillStyle = {
   width: '100%',
@@ -408,7 +427,7 @@ const onHoverFillStyle = {
   gap: 2,
   alignItems: 'center',
   padding: '1px 8px',
-  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)'
+  background: 'linear-gradient(156deg, #E3E6FF 0%, #E4F3F4 69.48%)',
 };
 const fillStyle = {
   width: '100%',
@@ -417,7 +436,7 @@ const fillStyle = {
   borderRadius: '60px',
   gap: 2,
   alignItems: 'center',
-  padding: '1px 8px'
+  padding: '1px 8px',
 };
 
 export default observer(Controls);

@@ -15,6 +15,7 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
+  BACKENDLOGS
 } from 'App/mstore/uiPlayerStore';
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
@@ -31,6 +32,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import BackendLogsPanel from "../SharedComponents/BackendLogs/BackendLogsPanel";
 
 interface IProps {
   fullView: boolean;
@@ -147,6 +149,7 @@ function Player(props: IProps) {
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
           {bottomBlock === GRAPHQL && <GraphQL panelHeight={panelHeight} />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}
+          {bottomBlock === BACKENDLOGS && <BackendLogsPanel />}
         </div>
       )}
       {!fullView ? (

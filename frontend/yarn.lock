@@ -2888,6 +2888,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.59.13":
+  version: 5.59.13
+  resolution: "@tanstack/query-core@npm:5.59.13"
+  checksum: 10c1/04ad8684a04d995488da547f0a885f7f41adf8a06920c8c2fff0e614e4f322609ce007540e5d313268cad601fc5387c55837609fb1de3b137873a75a754153db
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.56.2":
+  version: 5.59.15
+  resolution: "@tanstack/react-query@npm:5.59.15"
+  dependencies:
+    "@tanstack/query-core": "npm:5.59.13"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c1/7642f9ad4e48b3d1684f6aee5194df16655dbb50575ed0aac473a1b393759e9a48a5fb22c077c8d9c0c0a81f49d2d7cd964400b0ad41b1f41a887bb29e67bcae
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -11392,6 +11410,7 @@ __metadata:
     "@openreplay/sourcemap-uploader": "npm:^3.0.8"
     "@sentry/browser": "npm:^5.21.1"
     "@svg-maps/world": "npm:^1.0.1"
+    "@tanstack/react-query": "npm:^5.56.2"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
     "@types/luxon": "npm:^3.4.2"
     "@types/node": "npm:^22.7.8"
