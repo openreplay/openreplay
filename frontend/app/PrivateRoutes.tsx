@@ -119,7 +119,8 @@ function PrivateRoutes() {
   const siteIdList: any = sites.map(({ id }) => id);
 
   React.useEffect(() => {
-    if (integrationsStore.integrations.list.length === 0 && siteId) {
+    if (siteId && integrationsStore.integrations.siteId !== siteId) {
+      integrationsStore.integrations.setSiteId(siteId)
       void integrationsStore.integrations.fetchIntegrations(siteId);
     }
   }, [siteId])
