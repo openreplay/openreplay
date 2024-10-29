@@ -59,10 +59,8 @@ export function LogRow({
     return 'border-l border-l-4 border-gray-lighter';
   };
   return (
-    <div
-      className={'code-font relative group'}
-    >
-      <JumpButton onClick={() => onJump(new Date(log.timestamp).getTime())} />
+    <div className={'code-font relative group'}>
+      {log.timestamp === 'N/A' ? null : <JumpButton onClick={() => onJump(new Date(log.timestamp).getTime())} />}
       <div
         className={cn(
           'text-sm grid items-center py-2 px-4',
