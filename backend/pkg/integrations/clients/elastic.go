@@ -59,11 +59,12 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 	}
 
 	var buf strings.Builder
-	query := `{}`
+	query := `{"size": 1}`
 	if sessionID != 0 {
 		query = fmt.Sprintf(`{
+			"size": 1000,
 			"query": {
-				"match": {
+				"match_phrase": {
 					"message": "openReplaySession.id=%d"
 				}
 			}
@@ -90,12 +91,13 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		log.Fatalf("Error parsing the response body: %s", err)
 	}
-
-	fmt.Printf("Total hits: %d\n", int(r["hits"].(map[string]interface{})["total"].(map[string]interface{})["value"].(float64)))
-
-	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
-		doc := hit.(map[string]interface{})["_source"]
-		fmt.Printf("Log: %s\n", doc)
+	if r["hits"] == nil {
+		return nil, fmt.Errorf("no logs found")
 	}
-	return nil, nil
+	logHits := r["hits"].(map[string]interface{})["hits"].([]interface{})
+	if logHits == nil || len(logHits) == 0 {
+		return nil, fmt.Errorf("no logs found")
+	}
+	responseContent, _ := json.Marshal(logHits)
+	return responseContent, nil
 }

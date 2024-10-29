@@ -77,6 +77,6 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 	responseContent, _ := json.Marshal(logs)
 	//responseContent, _ := json.MarshalIndent(resp, "", "  ")
 	// DEBUG log
-	fmt.Printf("response from `LogsApi.ListLogs`:\n%s\n", responseContent)
+	//fmt.Printf("response from `LogsApi.ListLogs`:\n%s\n", responseContent)
 	return responseContent, nil
 }
