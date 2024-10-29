@@ -33,8 +33,8 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(data.startTimestamp)} AS main_events"
-    has_click_rage_filter = False
     # TODO: is this used ?
+    # has_click_rage_filter = False
     # if len(data.filters) > 0:
     #     for i, f in enumerate(data.filters):
     #         if f.type == schemas.FilterType.issue and len(f.value) > 0:
@@ -61,18 +61,18 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     #                                                    f.value, value_key=f_k))
     #             constraints.append(sh.multi_conditions(f"mis.type = %({f_k})s",
     #                                                    f.value, value_key=f_k))
-
-    if data.click_rage and not has_click_rage_filter:
-        constraints.append("""(issues_t.session_id IS NULL 
-                                OR (issues_t.datetime >= toDateTime(%(startDate)s/1000)
-                                    AND issues_t.datetime <= toDateTime(%(endDate)s/1000)
-                                    AND issues_t.project_id = toUInt16(%(project_id)s)
-                                    AND issues_t.event_type = 'ISSUE'
-                                    AND issues_t.project_id = toUInt16(%(project_id)s)
-                                    AND mis.project_id = toUInt16(%(project_id)s)
-                                    AND mis.type='click_rage'))""")
-        query_from += """ LEFT JOIN experimental.events AS issues_t ON (main_events.session_id=issues_t.session_id)
-                       LEFT JOIN experimental.issues AS mis ON (issues_t.issue_id=mis.issue_id)"""
+    # TODO: change this once click-rage is fixed
+    # if data.click_rage and not has_click_rage_filter:
+    #     constraints.append("""(issues_t.session_id IS NULL
+    #                             OR (issues_t.datetime >= toDateTime(%(startDate)s/1000)
+    #                                 AND issues_t.datetime <= toDateTime(%(endDate)s/1000)
+    #                                 AND issues_t.project_id = toUInt16(%(project_id)s)
+    #                                 AND issues_t.event_type = 'ISSUE'
+    #                                 AND issues_t.project_id = toUInt16(%(project_id)s)
+    #                                 AND mis.project_id = toUInt16(%(project_id)s)
+    #                                 AND mis.type='click_rage'))""")
+    #     query_from += """ LEFT JOIN experimental.events AS issues_t ON (main_events.session_id=issues_t.session_id)
+    #                    LEFT JOIN experimental.issues AS mis ON (issues_t.issue_id=mis.issue_id)"""
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(f"""SELECT main_events.normalized_x AS normalized_x, 
                                             main_events.normalized_y AS normalized_y

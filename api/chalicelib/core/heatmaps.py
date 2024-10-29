@@ -27,8 +27,8 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = "events.clicks INNER JOIN sessions USING (session_id)"
-    has_click_rage_filter = False
     # TODO: is this used ?
+    # has_click_rage_filter = False
     # if len(data.filters) > 0:
     #     for i, f in enumerate(data.filters):
     #         if f.type == schemas.FilterType.issue and len(f.value) > 0:
@@ -55,15 +55,15 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     #                                                    f.value, value_key=f_k))
     #             constraints.append(sh.multi_conditions(f"mis.type = %({f_k})s",
     #                                                    f.value, value_key=f_k))
-
-    if data.click_rage and not has_click_rage_filter:
-        constraints.append("""(issues.session_id IS NULL 
-                                OR (issues.timestamp >= %(startDate)s
-                                    AND issues.timestamp <= %(endDate)s
-                                    AND mis.project_id = %(project_id)s
-                                    AND mis.type='click_rage'))""")
-        query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
-                       LEFT JOIN issues AS mis USING (issue_id)"""
+    # TODO: change this once click-rage is fixed
+    # if data.click_rage and not has_click_rage_filter:
+    #     constraints.append("""(issues.session_id IS NULL
+    #                             OR (issues.timestamp >= %(startDate)s
+    #                                 AND issues.timestamp <= %(endDate)s
+    #                                 AND mis.project_id = %(project_id)s
+    #                                 AND mis.type='click_rage'))""")
+    #     query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
+    #                    LEFT JOIN issues AS mis USING (issue_id)"""
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT normalized_x, normalized_y
                                 FROM {query_from}
