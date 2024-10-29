@@ -7,7 +7,7 @@ export interface UnifiedLog {
 
 export function processLog(log: any): UnifiedLog[] {
   if (isDatadogLog(log)) {
-    return log.data.map(processDatadogLog);
+    return log.map(processDatadogLog);
   } else if (isElasticLog(log)) {
     return processElasticLog(log);
   } else if (isSentryLog(log)) {
@@ -30,7 +30,7 @@ function isDynatraceLog(log: any): boolean {
 }
 
 function isDatadogLog(log: any): boolean {
-  return log.data && log.data[0].attributes && typeof log.data[0].attributes.message === 'string';
+  return log && log[0].attributes && typeof log[0].attributes.message === 'string';
 }
 
 function isElasticLog(log: any): boolean {

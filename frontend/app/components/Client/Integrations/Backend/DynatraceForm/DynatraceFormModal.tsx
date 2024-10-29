@@ -62,10 +62,8 @@ const DynatraceFormModal = ({
     }
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
-      toast.success('Dynatrace integration has been saved.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to save Dynatrace integration.');
     }
     onClose();
   };
@@ -73,10 +71,8 @@ const DynatraceFormModal = ({
   const remove = async () => {
     try {
       await removeMutation.mutateAsync({ siteId });
-      toast.success('Dynatrace integration has been removed.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to remove Dynatrace integration.');
     }
     onClose();
   };

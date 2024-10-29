@@ -59,10 +59,8 @@ const DatadogFormModal = ({
     }
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
-      toast.success('Datadog integration has been saved.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to save Datadog integration.');
     }
     onClose();
   };
@@ -70,10 +68,8 @@ const DatadogFormModal = ({
   const remove = async () => {
     try {
       await removeMutation.mutateAsync({ siteId });
-      toast.success('Datadog integration has been removed.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to remove Datadog integration.');
     }
     onClose();
   };

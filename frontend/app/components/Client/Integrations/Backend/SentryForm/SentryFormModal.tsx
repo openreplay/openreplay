@@ -57,10 +57,8 @@ function SentryForm({
     }
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
-      toast.success('Sentry integration has been saved.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to save Sentry integration.');
     }
     onClose();
   };
@@ -68,10 +66,8 @@ function SentryForm({
   const remove = async () => {
     try {
       await removeMutation.mutateAsync({ siteId });
-      toast.success('Sentry integration has been removed.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to remove Sentry integration.');
     }
     onClose();
   };

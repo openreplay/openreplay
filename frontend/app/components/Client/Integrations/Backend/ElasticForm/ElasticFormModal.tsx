@@ -60,10 +60,8 @@ function ElasticsearchForm({
     }
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
-      toast.success('Elastic Search integration has been saved.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to save Elastic Search integration.');
     }
     onClose();
   };
@@ -71,10 +69,8 @@ function ElasticsearchForm({
   const remove = async () => {
     try {
       await removeMutation.mutateAsync({ siteId });
-      toast.success('Elastic Search integration has been removed.');
     } catch (e) {
       console.error(e)
-      toast.error('Failed to remove Elastic Search integration.');
     }
     onClose();
   };

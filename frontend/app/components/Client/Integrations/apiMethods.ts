@@ -66,10 +66,20 @@ export async function saveIntegration<T>(
     `/integrations/v1/integrations/${name}/${projectId}`,
     { data }
   );
+  if (r.ok) {
+    toast.success(`${name} integration saved`);
+  } else {
+    toast.error(`Failed to save ${name} integration`);
+  }
   return r.ok;
 }
 
 export async function removeIntegration(name: string, projectId: string) {
   const r = await client.delete(`/integrations/v1/integrations/${name}/${projectId}`);
+  if (r.ok) {
+    toast.success(`${name} integration removed`);
+  } else {
+    toast.error(`Failed to remove ${name} integration`);
+  }
   return r.ok;
 }

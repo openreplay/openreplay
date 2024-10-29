@@ -53,8 +53,8 @@ function BackendLogsPanel() {
   const { data, isError, isPending, isSuccess, refetch } = useQuery<
     UnifiedLog[]
   >({
-    queryKey: ['integrationLogs', tab],
-    staleTime: 0,
+    queryKey: ['integrationLogs', tab, sessionId],
+    staleTime: 1000 * 30,
     queryFn: () => fetchLogs(tab!, projectId, sessionId),
     enabled: tab !== null,
     retry: 3,
