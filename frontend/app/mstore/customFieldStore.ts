@@ -54,7 +54,6 @@ class CustomFieldStore {
         addElementToConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key);
         addElementToMobileConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key);
       });
-      console.log('here')
       this.list = response.map((item_1: any) => new CustomField(item_1));
       this.fetchedMetadata = true;
     } finally {
