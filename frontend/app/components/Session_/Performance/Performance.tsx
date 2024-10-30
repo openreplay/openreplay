@@ -225,6 +225,7 @@ export const MobilePerformance = observer(() => {
   const { player, store } = React.useContext(MobilePlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([])
   const [_data, setData] = React.useState<any[]>([])
+  const { sessionStore } = useStore();
 
   const {
     performanceChartTime = 0,
@@ -270,7 +271,7 @@ export const MobilePerformance = observer(() => {
             <InfoLine>
               <InfoLine.Point
                   label="Device Memory Size"
-                  value={formatBytes(userDeviceMemorySize * 1024)}
+                  value={formatBytes(sessionStore.current.userDeviceMemorySize * 1024)}
                   display={true}
               />
             </InfoLine>
