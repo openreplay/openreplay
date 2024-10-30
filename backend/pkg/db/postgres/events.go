@@ -75,11 +75,6 @@ func (conn *Conn) InsertIssueEvent(sess *sessions.Session, e *messages.IssueEven
 		payload = nil
 	}
 
-	if e.Type == "app_crash" {
-		conn.log.Warn(ctx, "app crash event: %+v", e)
-		return nil
-	}
-
 	if err := conn.bulks.Get("webIssues").Append(sess.ProjectID, issueID, e.Type, e.ContextString); err != nil {
 		conn.log.Error(ctx, "insert web issue err: %s", err)
 	}
