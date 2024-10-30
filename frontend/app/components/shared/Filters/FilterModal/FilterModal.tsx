@@ -145,10 +145,10 @@ function FilterModal(props: Props) {
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
-    isMobile
   } = props;
-  const { searchStore, searchStoreLive } = useStore();
-  const filters = isLive ? searchStoreLive.filterList : searchStore.filterList;
+  const { searchStore, searchStoreLive, projectsStore } = useStore();
+  const isMobile = projectsStore.active?.platform === 'ios'; // TODO - should be using mobile once the app is changed
+  const filters = isLive ? searchStoreLive.filterListLive : (isMobile ? searchStore.filterListMobile : searchStoreLive.filterList);
   const conditionalFilters = searchStore.filterListConditional;
   const mobileConditionalFilters = searchStore.filterListMobileConditional;
   const showSearchList = isMainSearch && searchQuery.length > 0;

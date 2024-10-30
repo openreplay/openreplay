@@ -83,6 +83,9 @@ class SearchStore {
   get filterList() {
     return generateFilterOptions(filtersMap);
   }
+  get filterListMobile() {
+    return generateFilterOptions(filtersMap, true);
+  }
   get filterListLive() {
     return generateFilterOptions(liveFiltersMap);
   }
