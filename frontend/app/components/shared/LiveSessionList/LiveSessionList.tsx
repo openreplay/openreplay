@@ -78,8 +78,8 @@ function LiveSessionList() {
 
   return (
     <div>
-      <div className="bg-white p-3 rounded-lg border shadow-sm">
-        <div className="flex mb-6 justify-between items-center">
+      <div className="bg-white py-3 rounded-lg border shadow-sm">
+        <div className="flex mb-4 pb-2 px-3 justify-between items-center border-b border-b-gray-lighter">
           <div className="flex items-center">
             <h3 className="text-2xl capitalize mr-2">
               <span>Co-Browse</span>
