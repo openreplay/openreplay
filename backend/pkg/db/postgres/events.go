@@ -280,35 +280,3 @@ func (conn *Conn) InsertWebStatsPerformance(p *messages.PerformanceTrackAggr) er
 	)
 	return nil
 }
-
-func (conn *Conn) InsertWebStatsResourceEvent(e *messages.ResourceTiming) error {
-	sessionID := e.SessionID()
-	host, _, _, err := url.GetURLParts(e.URL)
-	if err != nil {
-		return err
-	}
-	msgType := url.GetResourceType(e.Initiator, e.URL)
-	sqlRequest := `
-		INSERT INTO events.resources (
-			session_id, timestamp, message_id, 
-			type,
-			url, url_host, url_hostpath,
-			success, status, 
-			duration, ttfb, header_size, encoded_body_size, decoded_body_size
-		) VALUES (
-			$1, $2, $3, 
-			$4, 
-			LEFT($5, 8000), LEFT($6, 300), LEFT($7, 2000), 
-			$8, $9, 
-			NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0)
-		)`
-	urlQuery := url.DiscardURLQuery(e.URL)
-	conn.BatchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, truncSqIdx(e.MsgID()),
-		msgType,
-		e.URL, host, urlQuery,
-		e.Duration != 0, 0,
-		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
-	)
-	return nil
-}

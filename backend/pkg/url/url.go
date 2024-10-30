@@ -44,25 +44,3 @@ func getURLExtension(URL string) string {
 	i := strings.LastIndex(u.Path, ".")
 	return u.Path[i+1:]
 }
-
-func GetResourceType(initiator string, URL string) string {
-	switch initiator {
-	case "xmlhttprequest", "fetch":
-		return "fetch"
-	case "img":
-		return "img"
-	default:
-		switch getURLExtension(URL) {
-		case "css":
-			return "stylesheet"
-		case "js":
-			return "script"
-		case "png", "gif", "jpg", "jpeg", "svg":
-			return "img"
-		case "mp4", "mkv", "ogg", "webm", "avi", "mp3":
-			return "media"
-		default:
-			return "other"
-		}
-	}
-}
