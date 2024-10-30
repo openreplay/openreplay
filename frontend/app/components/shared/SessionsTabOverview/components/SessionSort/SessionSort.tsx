@@ -17,12 +17,6 @@ const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({
   key: value
 }));
 
-interface Props {
-  filter: any;
-  options?: any;
-  sort: (sort: string, sign: number) => void;
-}
-
 export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }: {
   defaultOption?: string,
   onSort: ({ key, item }: { key: string, item: T }) => void,
@@ -50,13 +44,14 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
   );
 }
 
-function SessionSort(props: Props) {
+function SessionSort() {
   const { searchStore, sessionStore } = useStore();
   const onSessionSort = sessionStore.sortSessions;
   const { sort, order } = searchStore.instance;
   const onSort = ({ key }: { key: string }) => {
     const [sort, order] = key.split('-');
     const sign = order === 'desc' ? -1 : 1;
+    console.log('sort', sort, 'order', order);
     searchStore.applyFilter({ order, sort });
     onSessionSort(sort, sign);
   };
