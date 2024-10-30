@@ -110,12 +110,6 @@ function SessionList() {
     }
   }, [statusData, siteId]);
 
-  // useEffect(() => {
-  //   if (siteId) {
-  //     void searchStore.fetchSessions();
-  //   }
-  // }, [siteId]);
-
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) {
@@ -129,12 +123,6 @@ function SessionList() {
     // handle scroll position
     const { scrollY } = searchStore;
     window.scrollTo(0, scrollY);
-
-    // if (total === 0 && !loading && !hasNoRecordings) {
-    //   setTimeout(() => {
-    //     void searchStore.fetchSessions();
-    //   }, 100);
-    // }
 
     return () => {
       searchStore.setScrollPosition(window.scrollY);
@@ -205,7 +193,9 @@ function SessionList() {
                   className="mt-4"
                   icon="arrow-repeat"
                   iconSize={20}
-                  onClick={() => searchStore.fetchSessions(true)}
+                  onClick={() => {
+                    void searchStore.fetchSessions(true, isBookmark);
+                  }}
                 >
                   Refresh
                 </Button>

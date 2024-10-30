@@ -496,7 +496,10 @@ class UserStore {
     try {
       await userService.updateClient(params);
       runInAction(() => {
-        this.client = new Client({ ...this.client, ...params });
+        Object.keys(params).forEach((key) => {
+          this.client[key] = params[key];
+          this.account[key] = params[key];
+        })
       });
     } catch (error) {
       // TODO error handling
