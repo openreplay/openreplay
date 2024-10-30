@@ -173,12 +173,23 @@ spec:
           - -c
         args:
           - |
-            pg_version=$(psql -c "SHOW server_version;" | xargs | grep -oP '\d+(?=\.)')
-            if [[ $pg_version -le 14 ]]; then
-              echo "[error] postgresql version is $pg_version which is < 16. Exiting."
-              For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
-              exit 101
-            fi
+            majorVersion=16
+            minorVersion=4
+            pg_version=`psql -V | awk '{print $3}'`
+            echo $pg_version |\
+              awk -v pg_version=$pg_version -v major="$majorVersion" -v minor="$minorVersion" -F. '{
+                if ($1 != major) {
+                  # print "Need version " major pg_version;
+                  exit 100
+                } else if ($2 < minor) {
+                  # print "Need at least " major "." minor pg_version;
+                  exit 100
+                } 
+              }' || {
+              echo "[error] postgresql version is $pg_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
+              # exit 101
+            }
         volumeMounts:
           - name: shared
             mountPath: /opt/openreplay
