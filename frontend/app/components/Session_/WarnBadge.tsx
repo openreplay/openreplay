@@ -16,7 +16,7 @@ function compareVersions(
   suppliedVersion: string,
   currentVersion: string
 ): number {
-
+  if (!suppliedVersion || !currentVersion) return VersionComparison.Same;
   const v1 = parseVersion(suppliedVersion);
   const v2 = parseVersion(currentVersion);
 
