@@ -101,7 +101,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             role = {"name": existing["roleName"], "roleId": existing["roleId"]}
     if role is None:
         for r in role_names:
-            if r.lower() == existing["roleName"].lower():
+            if existing and r.lower() == existing["roleName"].lower():
                 role = {"roleId": existing["roleId"], "name": r}
             else:
                 role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)
