@@ -277,7 +277,8 @@ function SideMenu(props: Props) {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              alignItems: 'center'
+                              alignItems: 'center',
+                              width: '100%'
                             }}
                           >
                             {item.label}
@@ -286,8 +287,7 @@ function SideMenu(props: Props) {
                               bordered={false}
                               className="text-xs"
                             >
-                              {' '}
-                              Beta{' '}
+                              Beta
                             </Tag>
                           </div>
                         </Menu.Item>
