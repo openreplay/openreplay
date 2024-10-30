@@ -144,7 +144,6 @@ function SessionItem(props: RouteComponentProps & Props) {
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
-    .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
       return { label: key, value };
