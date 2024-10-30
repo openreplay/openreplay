@@ -8,9 +8,6 @@ import {
   TABLE,
   FUNNEL,
   ERRORS,
-  RESOURCE_MONITORING,
-  PERFORMANCE,
-  WEB_VITALS,
   INSIGHTS,
   HEATMAP,
   USER_PATH,
@@ -156,9 +153,6 @@ export default class MetricStore {
     }
     if (
       value === ERRORS ||
-      value === RESOURCE_MONITORING ||
-      value === PERFORMANCE ||
-      value === WEB_VITALS ||
       value === HEATMAP
     ) {
       obj['viewType'] = 'chart';

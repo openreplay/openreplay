@@ -8,7 +8,7 @@ import {FilterKey} from 'Types/filter/filterType';
 import Period, {LAST_24_HOURS} from 'Types/app/period';
 import Funnel from '../types/funnel';
 import {metricService} from 'App/services';
-import { FUNNEL, HEATMAP, INSIGHTS, TABLE, USER_PATH, WEB_VITALS } from "App/constants/card";
+import { FUNNEL, HEATMAP, INSIGHTS, TABLE, USER_PATH } from "App/constants/card";
 import { ErrorInfo } from '../types/error';
 import {getChartFormatter} from 'Types/dashboard/helper';
 import FilterItem from './filterItem';

@@ -46,7 +46,6 @@ export const enum MENU {
   CARDS = 'cards',
   FUNNELS = 'funnels',
   ERROR_TRACKING = 'error-tracking',
-  RESOURCE_MONITORING = 'resource-monitoring',
   ALERTS = 'alerts',
   FEATURE_FLAGS = 'feature-flags',
   USABILITY_TESTS = 'usability-tests',

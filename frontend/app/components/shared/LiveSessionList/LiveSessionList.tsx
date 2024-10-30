@@ -161,7 +161,7 @@ function LiveSessionList() {
               <div>
                 Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
                 <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.length}</span> of{' '}
-                <span className="font-medium">{numberWithCommas(total)}</span> sessions.
+                <span className="font-medium">{numberWithCommas(totalLiveSessions)}</span> sessions.
               </div>
               <Pagination
                 page={currentPage}

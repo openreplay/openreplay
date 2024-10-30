@@ -7,11 +7,9 @@ import {
   ERRORS,
   FUNNEL,
   INSIGHTS,
-  PERFORMANCE,
-  RESOURCE_MONITORING,
   RETENTION,
   TABLE,
-  USER_PATH, WEB_VITALS, TIMESERIES
+  USER_PATH
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 import { issueCategories, metricOf } from 'App/constants/filterOptions';
@@ -32,7 +30,7 @@ function WidgetFormNew() {
   const isPathAnalysis = metric.metricType === USER_PATH;
   const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
   const hasFilters = filtersLength > 0 || eventsLength > 0;
-  const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(metric.metricType);
+  const isPredefined = metric.metricType === ERRORS
 
   return isPredefined ? <PredefinedMessage /> : (
     <Space direction="vertical" className="w-full">

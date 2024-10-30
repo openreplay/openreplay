@@ -2,7 +2,6 @@ import { GitCommitHorizontal } from 'lucide-react';
 import React from 'react';
 
 import ExCard from './ExCard';
-import {PERFORMANCE} from "App/constants/card";
 
 function PerfBreakdown(props: any) {
   const rows = [

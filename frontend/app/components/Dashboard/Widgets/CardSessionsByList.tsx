@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Avatar, List, Progress, Typography, Pagination } from 'antd';
 import cn from 'classnames';
 import { useStore } from '@/mstore';
-import { WEB_VITALS } from '@/constants/card';
 import { observer } from 'mobx-react-lite';
 import { metricService } from '@/services';
 
@@ -18,8 +17,7 @@ interface Props {
 function CardSessionsByList({ list, selected, paginated, onClickHandler = () => null, metric, total }: Props) {
   const { dashboardStore, metricStore, sessionStore } = useStore();
   const drillDownPeriod = dashboardStore.drillDownPeriod;
-  const isOverviewWidget = metric?.metricType === WEB_VITALS;
-  const params = { density: isOverviewWidget ? 7 : 70 };
+  const params = { density: 70 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
   const data = paginated ? metric?.data[0]?.values : list;

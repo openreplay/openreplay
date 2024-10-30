@@ -48,32 +48,6 @@ function WidgetPredefinedChart(props: Props) {
             case FilterKey.CALLS_ERRORS:
                 return <CallWithErrors isTemplate={isTemplate} data={data} />
 
-            // PERFORMANCE
-            case FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES:
-                return <SessionsImpactedBySlowRequests data={data} metric={metric} />
-            case FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION:
-                return <ResponseTimeDistribution data={data} metric={metric} />
-            case FilterKey.SPEED_LOCATION:
-                return <SpeedIndexByLocation data={data} />
-            case FilterKey.CPU:
-                return <CPULoad data={data} metric={metric} />
-            case FilterKey.CRASHES:
-                return <Crashes data={data} metric={metric} />
-            case FilterKey.PAGES_DOM_BUILD_TIME:
-                return <DomBuildingTime data={data} metric={metric} />
-            case FilterKey.FPS:
-                return <FPS data={data} metric={metric} />
-            case FilterKey.MEMORY_CONSUMPTION:
-                return <MemoryConsumption data={data} metric={metric} />
-            case FilterKey.PAGES_RESPONSE_TIME:
-                return <ResponseTime data={data} metric={metric} />
-            case FilterKey.SESSIONS_PER_BROWSER:
-                return <SessionsPerBrowser data={data} />
-            case FilterKey.SLOWEST_DOMAINS:
-                return <SlowestDomains data={data} />
-            case FilterKey.TIME_TO_RENDER:
-                return <TimeToRender data={data} metric={metric} />
-
             default:
                 return <div className="h-40 color-red">Widget not supported</div>
         }

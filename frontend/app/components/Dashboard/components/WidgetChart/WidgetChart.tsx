@@ -18,9 +18,6 @@ import {
     HEATMAP,
     FUNNEL,
     ERRORS,
-    PERFORMANCE,
-    RESOURCE_MONITORING,
-    WEB_VITALS,
     INSIGHTS,
     USER_PATH,
     RETENTION
@@ -55,8 +52,7 @@ function WidgetChart(props: Props) {
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true);
-    const isOverviewWidget = metric.metricType === WEB_VITALS;
-    const params = {density: isOverviewWidget ? 7 : 70};
+    const params = {density: 70};
     const metricParams = {...params};
     const prevMetricRef = useRef<any>();
     const isMounted = useIsMounted();
@@ -145,11 +141,8 @@ function WidgetChart(props: Props) {
             return <FunnelWidget metric={metric} data={data} isWidget={isSaved || isTemplate}/>;
         }
 
-        if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
+        if (metricType === 'predefined' || metricType === ERRORS) {
             const defaultMetric = metric.data.chart && metric.data.chart.length === 0 ? metricWithData : metric;
-            if (isOverviewWidget) {
-                return <CustomMetricOverviewChart data={data}/>;
-            }
             return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data}
                                           predefinedKey={metric.metricOf}/>;
         }
