@@ -55,7 +55,7 @@ class UserStore {
   constructor() {
     makeAutoObservable(this);
 
-    makePersistable(
+    void makePersistable(
       this,
       {
         name: 'UserStore',

@@ -42,15 +42,13 @@ const Login = ({
   const params = new URLSearchParams(location.search);
 
   useEffect(() => {
-    if (Object.keys(authDetails).length !== 0) {
-      if (!authDetails.tenants) {
+      if (authDetails && !authDetails.tenants) {
         history.push(SIGNUP_ROUTE);
       }
-    }
   }, [authDetails]);
 
   useEffect(() => {
-    void fetchTenants();
+    // void fetchTenants();
     const jwt = params.get('jwt');
     const spotJwt = params.get('spotJwt');
     if (spotJwt) {

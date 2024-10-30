@@ -41,14 +41,10 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
 
   useEffect(() => {
     if (!healthModalPassed) void getHealth();
-
-    if (Object.keys(authDetails).length === 0) {
-      fetchTenants();
-    }
   }, []);
 
   useEffect(() => {
-    if (Object.keys(authDetails).length === 0) {
+    if (authDetails && authDetails.tenants) {
       history.push(LOGIN_ROUTE);
     }
   }, [authDetails]);

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Loader } from 'UI';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import Signup from 'Components/Signup/Signup';
@@ -19,8 +19,16 @@ const Spot = lazy(() => import('Components/Spots/SpotPlayer/SpotPlayer'));
 
 function PublicRoutes() {
   const { userStore } = useStore();
+  const authDetails = userStore.authDetails;
   const isEnterprise = userStore.isEnterprise;
   const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot')
+
+  useEffect(() => {
+    if (authDetails && !authDetails.tenants) {
+      void userStore.fetchTenants();
+    }
+  }, []);
+
   return (
     <Suspense fallback={<Loader loading={true} className='flex-1' />}>
       <Switch>
