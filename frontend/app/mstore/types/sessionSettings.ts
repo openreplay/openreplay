@@ -76,9 +76,9 @@ export default class SessionSettings {
   shownTimezone: 'user' | 'local';
 
   constructor() {
-    const userTimezoneOffset = DateTime.local().toFormat('Z');
+    const userTimezoneOffset = DateTime.local().toFormat('ZZ')
     const defaultTimezone = this.defaultTimezones.find((tz) =>
-      tz.value.includes('UTC' + userTimezoneOffset.slice(0, 3))
+      tz.value === 'UTC' + userTimezoneOffset.slice(0, 3)
     ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
     const savedTz = localStorage.getItem(TIMEZONE)
