@@ -71,7 +71,7 @@ function SubHeader(props) {
         <WarnBadge
           siteId={projectId}
           currentLocation={currentLocation}
-          version={currentSession?.trackerVersion ?? '1.0.0'}
+          version={currentSession?.trackerVersion ?? undefined}
         />
 
         <SessionTabs />
