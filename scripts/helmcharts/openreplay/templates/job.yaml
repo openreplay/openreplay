@@ -190,6 +190,54 @@ spec:
               echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
               # exit 101
             }
+      {{- if .Values.global.enterpriseEditionLicense }}
+      - name: clickhouse-check
+        image: clickhouse/clickhouse-server:22.12-alpine
+        env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          - name: CH_HOST
+            value: "{{.Values.global.clickhouse.chHost}}"
+          - name: CH_PORT
+            value: "{{.Values.global.clickhouse.service.webPort}}"
+          - name: CH_USERNAME
+            value: "{{.Values.global.clickhouse.username}}"
+          - name: CH_PASSWORD
+            value: "{{.Values.global.clickhouse.password}}"
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            majorVersion=24
+            minorVersion=9
+            [[ "${CH_PASSWORD}" == "" ]] || {
+              CH_PASSWORD="--password $CH_PASSWORD"
+            }
+            ch_client=`echo clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT}`
+            echo $ch_client
+            ch_version=`$ch_client -q "SELECT version()"`
+            echo $ch_version |\
+            awk -v major="$majorVersion" -v minor="$minorVersion" '{split($4, ver, ".");
+              if ($1 != major) {
+                # print "Need version " major pg_version;
+                exit 100
+              } else if ($2 < minor) {
+                # print "Need at least " major "." minor pg_version;
+                exit 100
+              } 
+            }' || {
+              echo "[error] Clickhouse server version $ch_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-clickhouse
+              # exit 101
+            }
+        {{- end}}
         volumeMounts:
           - name: shared
             mountPath: /opt/openreplay
