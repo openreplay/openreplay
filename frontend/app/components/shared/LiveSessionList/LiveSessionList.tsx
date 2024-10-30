@@ -21,8 +21,9 @@ function LiveSessionList() {
   const { searchStoreLive, sessionStore, customFieldStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
+  const totalLiveSessions = sessionStore.totalLiveSessions;
   const loading = sessionStore.loadingLiveSessions;
-  const { currentPage, total } = searchStoreLive;
+  const { currentPage } = searchStoreLive;
   const metaList = customFieldStore.list;
   const metaListLoading = customFieldStore.isLoading;
 
@@ -164,7 +165,7 @@ function LiveSessionList() {
               </div>
               <Pagination
                 page={currentPage}
-                total={total}
+                total={totalLiveSessions}
                 onPageChange={(page: any) => searchStoreLive.updateCurrentPage(page)}
                 limit={PER_PAGE}
                 debounceRequest={500}
