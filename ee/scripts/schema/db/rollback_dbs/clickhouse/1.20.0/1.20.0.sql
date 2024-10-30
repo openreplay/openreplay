@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.19.0-ee';
