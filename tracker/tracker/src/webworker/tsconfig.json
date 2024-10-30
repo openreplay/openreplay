@@ -8,5 +8,4 @@
     "preserveConstEnums": false,
     "declaration": false
   },
-  "references": [{ "path": "../../common" }]
 }

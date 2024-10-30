@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "15.0.1-32",
+  "version": "15.0.0",
   "keywords": [
     "logging",
     "replay"
@@ -35,7 +35,7 @@
     "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
     "build:common": "tsc -b src/common",
-    "build": "yarn run clean && yarn build:common && rollup --config rollup.config.js",
+    "build": "yarn run clean && rollup --config rollup.config.js",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",

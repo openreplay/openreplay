@@ -447,16 +447,29 @@ class MessageCodec(Codec):
             )
 
         if message_id == 50:
-            return StringDict(
+            return StringDictDeprecated(
                 key=self.read_uint(reader),
                 value=self.read_string(reader)
             )
 
         if message_id == 51:
-            return SetNodeAttributeDict(
+            return SetNodeAttributeDictDeprecated(
                 id=self.read_uint(reader),
                 name_key=self.read_uint(reader),
                 value_key=self.read_uint(reader)
+            )
+
+        if message_id == 43:
+            return StringDict(
+                key=self.read_string(reader),
+                value=self.read_string(reader)
+            )
+
+        if message_id == 52:
+            return SetNodeAttributeDict(
+                id=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 53:

@@ -36,8 +36,10 @@ export declare const enum Type {
     NgRx = 47,
     GraphQLDeprecated = 48,
     PerformanceTrack = 49,
-    StringDict = 50,
-    SetNodeAttributeDict = 51,
+    StringDictDeprecated = 50,
+    SetNodeAttributeDictDeprecated = 51,
+    StringDict = 43,
+    SetNodeAttributeDict = 52,
     ResourceTimingDeprecated = 53,
     ConnectionInformation = 54,
     SetPageVisibility = 55,
@@ -293,16 +295,27 @@ export type PerformanceTrack = [
     number,
     number
 ];
+export type StringDictDeprecated = [
+    Type.StringDictDeprecated,
+    number,
+    string
+];
+export type SetNodeAttributeDictDeprecated = [
+    Type.SetNodeAttributeDictDeprecated,
+    number,
+    number,
+    number
+];
 export type StringDict = [
     Type.StringDict,
-    number,
+    string,
     string
 ];
 export type SetNodeAttributeDict = [
     Type.SetNodeAttributeDict,
     number,
-    number,
-    number
+    string,
+    string
 ];
 export type ResourceTimingDeprecated = [
     Type.ResourceTimingDeprecated,
@@ -550,5 +563,5 @@ export type WebVitals = [
     string,
     string
 ];
-type Message = Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | NetworkRequest | WSChannel | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals;
+type Message = Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | NetworkRequest | WSChannel | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTiming | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals;
 export default Message;

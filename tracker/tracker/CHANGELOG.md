@@ -1,6 +1,7 @@
 # 15.0.0
 
-- new webvitals messages source
+- new webvitals messages source (new msg type)
+- new structure for string dictionary (new msg type)
 
 ## 14.0.11 & .12
 
