@@ -6,19 +6,19 @@ name = "pypi"
 [packages]
 urllib3 = "==1.26.16"
 requests = "==2.32.3"
-boto3 = "==1.35.29"
+boto3 = "==1.35.51"
 pyjwt = "==2.9.0"
-psycopg2-binary = "==2.9.9"
+psycopg2-binary = "==2.9.10"
+psycopg = {extras = ["binary", "pool"], version = "==3.2.3"}
 elasticsearch = "==8.15.1"
 jira = "==3.8.0"
 cachetools = "==5.5.0"
-fastapi = "==0.115.0"
+fastapi = "==0.115.4"
+uvicorn = {extras = ["standard"], version = "==0.32.0"}
 python-decouple = "==3.8"
-apscheduler = "==3.10.4"
-redis = "==5.1.0"
-psycopg = {extras = ["binary", "pool"], version = "==3.2.3"}
-uvicorn = {extras = ["standard"], version = "==0.31.0"}
 pydantic = {extras = ["email"], version = "==2.9.2"}
+apscheduler = "==3.10.4"
+redis = "==5.2.0"
 
 [dev-packages]
 

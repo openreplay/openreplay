@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.19.0-ee';
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.20.0-ee';
 
 DROP TABLE IF EXISTS experimental.events_l7d_mv;
 
