@@ -2,16 +2,14 @@ package middleware
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
-	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/common"
 	"openreplay/backend/pkg/common/api/auth"
 	"openreplay/backend/pkg/logger"
 )
 
-type userDataKey struct{}
+type userData struct{}
 
 func CORS(useAccessControlHeaders bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -30,8 +28,9 @@ func CORS(useAccessControlHeaders bool) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusOK)
 				return
 			}
-			r = r.WithContext(context.WithValue(r.Context(), "httpMethod", r.Method))
-			r = r.WithContext(context.WithValue(r.Context(), "url", util.SafeString(r.URL.Path)))
+			//r = r.WithContext(context.WithValue(r.Context(), "httpMethod", r.Method))
+			//r = r.WithContext(context.WithValue(r.Context(), "url", util.SafeString(r.URL.Path)))
+			//r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "url": util.SafeString(r.URL.Path)}))
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -39,7 +38,8 @@ func CORS(useAccessControlHeaders bool) func(http.Handler) http.Handler {
 
 // AuthMiddleware function takes dynamic parameters to handle custom authentication logic
 func AuthMiddleware(
-	services *common.ServicesBuilder, // Injected services (Auth, Keys, etc.)
+	//services *common.ServicesBuilder, // Injected services (Auth, Keys, etc.)
+	Auth auth.Auth, // Auth interface for authorization
 	log logger.Logger, // Logger for logging events
 	excludedPaths map[string]map[string]bool, // Map of excluded paths with methods
 	getPermissions func(path string) []string,
@@ -67,8 +67,8 @@ func AuthMiddleware(
 
 			// Get AuthOptions for the request
 			options := auth.Options{
-				JwtColumn: services.Auth.JWTCol(), // Default JWT column from ServicesBuilder
-				Secret:    services.Auth.Secret(), // Default secret from ServicesBuilder
+				JwtColumn: Auth.JWTCol(), // Default JWT column from ServicesBuilder
+				Secret:    Auth.Secret(), // Default secret from ServicesBuilder
 			}
 
 			if authOptionsSelector != nil {
@@ -85,16 +85,15 @@ func AuthMiddleware(
 			}
 
 			// Check if this request is authorized
-			user, err := services.Auth.IsAuthorized(authHeader, getPermissions(r.URL.Path), options)
-			if err != nil {
-				log.Warn(r.Context(), "Unauthorized request: %s", err)
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-
-			// Add userData to the context for downstream handlers
-			ctx := context.WithValue(r.Context(), userDataKey{}, user)
-			r = r.WithContext(ctx)
+			//user, err := Auth.IsAuthorized(authHeader, getPermissions(r.URL.Path), options)
+			//if err != nil {
+			//	log.Warn(r.Context(), "Unauthorized request: %s", err)
+			//	w.WriteHeader(http.StatusUnauthorized)
+			//	return
+			//}
+			//
+			//// Add userData to the context for downstream handlers
+			//r = r.WithContext(context.WithValues(r.Context(), map[string]interface{}{"userData": user}))
 
 			// Call the next handler with the modified request
 			next.ServeHTTP(w, r)
@@ -104,7 +103,7 @@ func AuthMiddleware(
 
 // GetUserData Helper function to retrieve userData from the request context
 func GetUserData(r *http.Request) (*auth.User, bool) {
-	user, ok := r.Context().Value(userDataKey{}).(*auth.User)
+	user, ok := r.Context().Value(userData{}).(*auth.User)
 	return user, ok
 }
 

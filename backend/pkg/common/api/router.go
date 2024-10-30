@@ -6,34 +6,26 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	"openreplay/backend/pkg/common"
 	"openreplay/backend/pkg/logger"
 	"sync"
 	"time"
 )
 
 type Router struct {
-	log      logger.Logger
-	router   *mux.Router
-	mutex    *sync.RWMutex
-	services *common.ServicesBuilder
+	log    logger.Logger
+	router *mux.Router
+	mutex  *sync.RWMutex
 }
 
-func NewRouter(log logger.Logger, services *common.ServicesBuilder) *Router {
+func NewRouter(log logger.Logger) *Router {
 	e := &Router{
-		router:   mux.NewRouter(),
-		log:      log,
-		mutex:    &sync.RWMutex{},
-		services: services,
+		router: mux.NewRouter(),
+		log:    log,
+		mutex:  &sync.RWMutex{},
 	}
 
 	e.router.HandleFunc("/ping", e.ping).Methods("GET")
 	return e
-}
-
-// Get return log, router, mutex, services
-func (e *Router) Get() (logger.Logger, *mux.Router, *sync.RWMutex, *common.ServicesBuilder) {
-	return e.log, e.router, e.mutex, e.services
 }
 
 func (e *Router) ping(w http.ResponseWriter, r *http.Request) {

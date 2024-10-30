@@ -31,11 +31,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	services, err := analytics.NewServiceBuilder(log).
-		WithDatabase(pgConn).
-		WithJWTSecret(cfg.JWTSecret, cfg.JWTSpotSecret).
-		WithObjectStorage(&cfg.ObjectsConfig).
-		Build()
+	services := analytics.NewServiceBuilder(log, cfg)
 
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
@@ -74,7 +70,7 @@ func main() {
 		return nil
 	}
 
-	authMiddleware := middleware.AuthMiddleware(services, log, excludedPaths, getPermissions, authOptionsSelector)
+	authMiddleware := middleware.AuthMiddleware(services.Auth, log, excludedPaths, getPermissions, authOptionsSelector)
 	limiterMiddleware := middleware.RateLimit(common.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute))
 
 	router, err := api.NewRouter(cfg, log, services)

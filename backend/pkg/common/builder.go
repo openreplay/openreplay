@@ -1,7 +1,8 @@
 package common
 
 import (
-	"errors"
+	"context"
+	"openreplay/backend/internal/config/common"
 	objConfig "openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/common/api/auth"
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -13,11 +14,12 @@ import (
 
 // ServicesBuilder struct to hold service components
 type ServicesBuilder struct {
-	flaker      *flakeid.Flaker
-	objStorage  objectstorage.ObjectStorage
+	Config      *common.Config
+	Flaker      *flakeid.Flaker
+	ObjStorage  objectstorage.ObjectStorage
 	Auth        auth.Auth
-	log         logger.Logger
-	pgconn      pool.Pool
+	Log         logger.Logger
+	Pgconn      pool.Pool
 	workerID    int
 	jwtSecret   string
 	extraSecret string
@@ -26,13 +28,13 @@ type ServicesBuilder struct {
 // NewServiceBuilder initializes the ServicesBuilder with essential components (logger)
 func NewServiceBuilder(log logger.Logger) *ServicesBuilder {
 	return &ServicesBuilder{
-		log: log,
+		Log: log,
 	}
 }
 
 // WithFlaker sets the Flaker component
-func (b *ServicesBuilder) WithFlaker(flaker *flakeid.Flaker) *ServicesBuilder {
-	b.flaker = flaker
+func (b *ServicesBuilder) WithFlaker(workerID uint16) *ServicesBuilder {
+	b.Flaker = flakeid.NewFlaker(workerID)
 	return b
 }
 
@@ -42,19 +44,28 @@ func (b *ServicesBuilder) WithObjectStorage(config *objConfig.ObjectsConfig) *Se
 	if err != nil {
 		return nil
 	}
-	b.objStorage = objStore
+	b.ObjStorage = objStore
 	return b
 }
 
 // WithAuth sets the Auth component
-func (b *ServicesBuilder) WithAuth(auth auth.Auth) *ServicesBuilder {
-	b.Auth = auth
+func (b *ServicesBuilder) WithAuth(jwtSecret string, extraSecret ...string) *ServicesBuilder {
+	b.jwtSecret = jwtSecret
+	if len(extraSecret) > 0 {
+		b.extraSecret = extraSecret[0]
+	}
+	b.Auth = auth.NewAuth(b.Log, "jwt_iat", b.jwtSecret, b.extraSecret, b.Pgconn)
 	return b
 }
 
-// WithDatabase sets the database connection pool (Postgres pool.Pool)
-func (b *ServicesBuilder) WithDatabase(pgconn pool.Pool) *ServicesBuilder {
-	b.pgconn = pgconn
+// WithDatabase sets the database connection pool
+func (b *ServicesBuilder) WithDatabase(url string) *ServicesBuilder {
+	pgConn, err := pool.New(url)
+	if err != nil {
+		b.Log.Fatal(context.Background(), "can't init postgres connection: %s", err)
+	}
+
+	b.Pgconn = pgConn
 	return b
 }
 
@@ -71,29 +82,4 @@ func (b *ServicesBuilder) WithJWTSecret(jwtSecret string, extraSecret ...string)
 		b.extraSecret = extraSecret[0]
 	}
 	return b
-}
-
-// Build finalizes the service setup and returns an instance of ServicesBuilder with all components
-func (b *ServicesBuilder) Build() (*ServicesBuilder, error) {
-	// Initialize default components if they aren't provided
-	// Check if database pool is provided
-	if b.pgconn == nil {
-		return nil, errors.New("database connection pool is required")
-	}
-
-	// Flaker
-	if b.flaker == nil {
-		b.flaker = flakeid.NewFlaker(uint16(b.workerID))
-	}
-
-	// Auth
-	if b.Auth == nil {
-		if b.jwtSecret == "" {
-			return nil, errors.New("JWT secret is required")
-		}
-		b.Auth = auth.NewAuth(b.log, "jwt_iat", b.jwtSecret, b.extraSecret, b.pgconn)
-	}
-
-	// Return the fully constructed service
-	return b, nil
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	analyticsConfig "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/analytics"
 	"openreplay/backend/pkg/common"
 	"openreplay/backend/pkg/common/api"
 	"openreplay/backend/pkg/logger"
@@ -14,7 +15,7 @@ type Router struct {
 	limiter *common.UserRateLimiter
 }
 
-func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *common.ServicesBuilder) (*Router, error) {
+func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *analytics.ServiceBuilder) (*Router, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
@@ -25,7 +26,7 @@ func NewRouter(cfg *analyticsConfig.Config, log logger.Logger, services *common.
 	}
 
 	e := &Router{
-		Router:  api.NewRouter(log, services),
+		Router:  api.NewRouter(log),
 		cfg:     cfg,
 		limiter: common.NewUserRateLimiter(10, 30, 1, 5),
 	}
