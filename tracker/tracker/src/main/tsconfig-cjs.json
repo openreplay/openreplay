@@ -5,5 +5,4 @@
     "moduleResolution": "Node",
     "declarationDir": "../../dist/cjs"
   },
-  "references": [{ "path": "../common" }]
 }

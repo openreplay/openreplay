@@ -6,5 +6,4 @@
     "declaration": true,
     "declarationDir": "../../dist/lib",
   },
-  "references": [{ "path": "../common" }]
 }
