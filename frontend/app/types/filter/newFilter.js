@@ -1,14 +1,10 @@
 import {
   clickSelectorOperators,
-  stringConditional,
-  tagElementOperators,
-  targetConditional
 } from 'App/constants/filterOptions';
-import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
 import filterOptions, { countries, platformOptions } from 'App/constants';
-import { capitalize } from 'App/utils';
+import { observable } from 'mobx';
 
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }];
@@ -985,11 +981,11 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
   return acc;
 }, {});
 
-export let filtersMap = mapFilters(filters);
-export let liveFiltersMap = mapLiveFilters(filters);
-export let fflagsConditionsMap = mapFilters(flagConditionFilters);
-export let conditionalFiltersMap = mapFilters(conditionalFilters);
-export let mobileConditionalFiltersMap = mapFilters(mobileConditionalFilters);
+export let filtersMap = observable(mapFilters(filters))
+export let liveFiltersMap = observable(mapLiveFilters(filters))
+export let fflagsConditionsMap = observable(mapFilters(flagConditionFilters))
+export let conditionalFiltersMap = observable(mapFilters(conditionalFilters));
+export let mobileConditionalFiltersMap = observable(mapFilters(mobileConditionalFilters));
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);

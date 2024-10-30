@@ -8,10 +8,10 @@ import {
   mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
-import { makeAutoObservable, action, observable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { searchService } from 'App/services';
 import Search from 'App/mstore/types/search';
-import Filter, { checkFilterValue, IFilter } from 'App/mstore/types/filter';
+import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
 import { sessionStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
@@ -59,10 +59,6 @@ export const TAB_MAP: any = {
 };
 
 class SearchStore {
-  filterList = generateFilterOptions(filtersMap);
-  filterListLive = generateFilterOptions(liveFiltersMap);
-  filterListConditional = generateFilterOptions(conditionalFiltersMap);
-  filterListMobileConditional = generateFilterOptions(mobileConditionalFiltersMap);
   list = List();
   latestRequestTime: number | null = null;
   latestList = List();
@@ -84,14 +80,22 @@ class SearchStore {
     makeAutoObservable(this);
   }
 
+  get filterList() {
+    return generateFilterOptions(filtersMap);
+  }
+  get filterListLive() {
+    return generateFilterOptions(liveFiltersMap);
+  }
+  get filterListConditional() {
+    return generateFilterOptions(conditionalFiltersMap);
+  }
+  get filterListMobileConditional() {
+    return generateFilterOptions(mobileConditionalFiltersMap);
+  }
+
   applySavedSearch(savedSearch: ISavedSearch) {
     this.savedSearch = savedSearch;
-    // this.instance = new Search({
-    //   filters: savedSearch.filter.filters
-    // });
-    console.log('savedSearch.filter.filters', savedSearch.filter.filters);
     this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i)) : [] });
-    // this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters : [] });
     this.currentPage = 1;
   }
 
@@ -143,10 +147,10 @@ class SearchStore {
   }
 
   setActiveTab(tab: string) {
-    this.activeTab = TAB_MAP[tab];
-    // this.activeTab = tab;
-    this.currentPage = 1;
-    // this.fetchSessions();
+    runInAction(() => {
+      this.activeTab = TAB_MAP[tab];
+      this.currentPage = 1;
+    })
   }
 
   toggleTag(tag?: iTag) {

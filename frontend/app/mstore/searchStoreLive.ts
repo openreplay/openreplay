@@ -1,10 +1,8 @@
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
-  conditionalFiltersMap,
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable } from 'mobx';
@@ -47,10 +45,6 @@ export const filterMap = ({
 });
 
 class SearchStoreLive {
-  filterList = generateFilterOptions(filtersMap);
-  filterListLive = generateFilterOptions(liveFiltersMap);
-  filterListConditional = generateFilterOptions(conditionalFiltersMap);
-  filterListMobileConditional = generateFilterOptions(mobileConditionalFiltersMap);
   list = List();
   latestRequestTime: number | null = null;
   latestList = List();
@@ -69,6 +63,13 @@ class SearchStoreLive {
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  get filterList() {
+    return generateFilterOptions(filtersMap);
+  }
+  get filterListLive() {
+    return generateFilterOptions(liveFiltersMap);
   }
 
   fetchFilterSearch(params: any) {

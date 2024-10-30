@@ -28,12 +28,10 @@ function Overview({ match: { params } }: IProps) {
   const { siteId, fflagId } = params;
   const location = useLocation();
   const tab = location.pathname.split('/')[2];
-  searchStore.setActiveTab(tab);
 
-  // useEffect(() => {
-  //   // const tab = location.pathname.split('/')[2];
-  //   searchStore.setActiveTab(tab);
-  // }, [tab]);
+  React.useEffect(() => {
+    searchStore.setActiveTab(tab);
+  }, [tab]);
 
   return (
     <Switch>

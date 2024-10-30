@@ -225,11 +225,12 @@ export default class SessionStore {
       setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getSessions(params);
       const list = data.sessions.map((s) => new Session(s));
-
-      this.list = list;
-      this.total = data.total;
-      this.sessionIds = data.sessions.map((s) => s.sessionId);
-      this.favoriteList = list.filter((s) => s.favorite);
+      runInAction(() => {
+        this.list = list;
+        this.total = data.total;
+        this.sessionIds = data.sessions.map((s) => s.sessionId);
+        this.favoriteList = list.filter((s) => s.favorite);
+      })
     } catch (e) {
       console.error(e);
     } finally {
