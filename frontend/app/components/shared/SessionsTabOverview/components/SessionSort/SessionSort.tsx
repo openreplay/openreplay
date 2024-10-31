@@ -51,8 +51,8 @@ function SessionSort() {
   const onSort = ({ key }: { key: string }) => {
     const [sort, order] = key.split('-');
     const sign = order === 'desc' ? -1 : 1;
-    console.log('sort', sort, 'order', order);
     searchStore.applyFilter({ order, sort });
+    void searchStore.fetchSessions();
     onSessionSort(sort, sign);
   };
 
