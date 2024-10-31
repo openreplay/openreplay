@@ -1,7 +1,0 @@
-confluent-kafka==2.1.1
-psycopg2-binary==2.9.6
-SQLAlchemy==1.4.43
-google-cloud-bigquery==3.4.2
-pandas==1.5.1
-PyYAML==6.0
-pandas-gbq==0.19.2
