@@ -76,7 +76,7 @@ jobs:
           cd api
           PUSH_IMAGE=0 bash -x ./build_alerts.sh
           [[ "x$skip_security_checks" == "xtrue" ]]  || {
-            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.56.2/trivy_0.56.2_Linux-64bit.tar.gz | tar -xzf - -C ./ 
             images=("alerts")
             for image in ${images[*]};do
               ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
