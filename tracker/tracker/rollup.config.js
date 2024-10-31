@@ -17,7 +17,7 @@ export default async () => {
       preventAssignment: true,
       values: {
         TRACKER_VERSION: packageConfig.version,
-        WEBWORKER_BODY: JSON.stringify(webworkerContent),
+        'global.WEBWORKER_BODY': JSON.stringify(webworkerContent),
       },
     }),
   ]
