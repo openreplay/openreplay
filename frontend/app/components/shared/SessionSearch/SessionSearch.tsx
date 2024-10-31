@@ -50,14 +50,16 @@ function SessionSearch(props: Props) {
     // void searchStore.fetchSessions(true)
   }, []);
 
+  useEffect(() => {
+    debounceFetch();
+  }, [appliedFilter.filters]);
+
   const onAddFilter = (filter: any) => {
     searchStore.addFilter(filter);
   };
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     searchStore.updateFilter(filterIndex, filter);
-
-    debounceFetch();
   };
 
   const onFilterMove = (newFilters: any) => {

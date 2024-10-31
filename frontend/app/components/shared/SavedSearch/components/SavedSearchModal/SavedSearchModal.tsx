@@ -82,7 +82,7 @@ function SavedSearchModal(props: Props) {
       <div style={{ maxHeight: 'calc(100vh - 106px)', overflowY: 'auto' }}>
         {shownItems.map((item) => (
           <div
-            key={item.key}
+            key={item.searchId}
             className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue')}
             onClick={(e) => onClick(item, e)}
           >
