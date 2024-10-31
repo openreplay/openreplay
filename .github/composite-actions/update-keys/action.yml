@@ -10,6 +10,9 @@ inputs:
   jwt_secret:
     required: true
     description: 'JWT Secret'
+  jwt_spot_secret:
+    required: true
+    description: 'JWT spot Secret'
   minio_access_key:
     required: true
     description: 'MinIO Access Key'
@@ -36,22 +39,36 @@ runs:
     - name: "Updating OSS secrets"
       run: |
         cd scripts/helmcharts/
-        yq e -i '.global.domainName = strenv(DOMAIN_NAME)' vars.yaml
-        yq e -i '.global.assistKey = strenv(ASSIST_KEY)' vars.yaml
-        yq e -i '.global.assistJWTSecret = strenv(ASSIST_JWT_SECRET)' vars.yaml
-        yq e -i '.global.jwtSecret = strenv(JWT_SECRET)' vars.yaml
-        yq e -i '.global.jwtSpotSecret = strenv(JWT_SPOT_SECRET)' vars.yaml
-        yq e -i '.global.enterpriseEditionLicense = strenv(LICENSE_KEY)' vars.yaml
-        yq e -i '.global.s3.accessKey = strenv(MINIO_ACCESS_KEY)' vars.yaml
-        yq e -i '.global.s3.secretKey = strenv(MINIO_SECRET_KEY)' vars.yaml
-        yq e -i '.postgresql.postgresqlPassword = strenv(PG_PASSWORD)' vars.yaml
-        yq e -i '.global.openReplayContainerRegistry = strenv(REGISTRY_URL)' vars.yaml
+        vars=(
+            "ASSIST_JWT_SECRET:.global.assistJWTSecret"
+            "ASSIST_KEY:.global.assistKey"
+            "DOMAIN_NAME:.global.domainName"
+            "JWT_REFRESH_SECRET:.chalice.env.JWT_REFRESH_SECRET"
+            "JWT_SECRET:.global.jwtSecret"
+            "JWT_SPOT_REFRESH_SECRET:.chalice.env.JWT_SPOT_REFRESH_SECRET"
+            "JWT_SPOT_SECRET:.global.jwtSpotSecret"
+            "LICENSE_KEY:.global.enterpriseEditionLicense"
+            "MINIO_ACCESS_KEY:.global.s3.accessKey"
+            "MINIO_SECRET_KEY:.global.s3.secretKey"
+            "PG_PASSWORD:.postgresql.postgresqlPassword"
+            "REGISTRY_URL:.global.openReplayContainerRegistry"
+        )
+        for var in "${vars[@]}"; do
+            IFS=":" read -r env_var yq_path <<<"$var"
+            yq e -i "${yq_path} = strenv(${env_var})" vars.yaml
+        done
       shell: bash
       env:
+        ASSIST_JWT_SECRET: ${{ inputs.assist_jwt_secret }}
+        ASSIST_KEY: ${{ inputs.assist_key }}
         DOMAIN_NAME: ${{ inputs.domain_name }}
-        LICENSE_KEY: ${{ inputs.license_key }}
+        JWT_REFRESH_SECRET: ${{ inputs.jwt_refresh_secret }}
         JWT_SECRET: ${{ inputs.jwt_secret }}
+        JWT_SPOT_REFRESH_SECRET: ${{inputs.jwt_spot_refresh_secret}}
+        JWT_SPOT_SECRET: ${{ inputs.jwt_spot_secret }}
+        LICENSE_KEY: ${{ inputs.license_key }}
         MINIO_ACCESS_KEY: ${{ inputs.minio_access_key }}
         MINIO_SECRET_KEY: ${{ inputs.minio_secret_key }}
         PG_PASSWORD: ${{ inputs.pg_password }}
         REGISTRY_URL: ${{ inputs.registry_url }}
+
