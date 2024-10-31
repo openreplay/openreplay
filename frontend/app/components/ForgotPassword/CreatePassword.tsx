@@ -128,7 +128,7 @@ function CreatePassword(props: Props) {
 
           {validationError && <Message error>{validationError}</Message>}
 
-          <Button type="submit" variant="primary" loading={loading} className="w-full mt-4">
+          <Button type="submit" data-hidden={updated} variant="primary" loading={loading} className="w-full mt-4">
             Create
           </Button>
         </>
