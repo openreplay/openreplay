@@ -20,6 +20,8 @@ $fn_def$, :'next_version')
 ALTER TABLE IF EXISTS events.pages
     DROP COLUMN IF EXISTS web_vitals
 
+DROP TABLE IF EXISTS public.session_integrations;
+
 COMMIT;
 
 \elif :is_next

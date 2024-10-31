@@ -1371,4 +1371,13 @@ CREATE TABLE IF NOT EXISTS spots.tasks
     added_time timestamp NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS public.session_integrations
+(
+    session_id bigint                      NOT NULL REFERENCES public.sessions (session_id) ON DELETE CASCADE,
+    project_id integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
+    provider   text                        NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+    PRIMARY KEY (session_id, project_id, provider)
+);
+
 COMMIT;
