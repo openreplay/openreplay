@@ -119,10 +119,10 @@ class SearchStore {
   apply(filter: any, fromUrl: boolean) {
     if (fromUrl) {
       this.instance = new Search(filter);
-      this.currentPage = 1;
     } else {
-      this.instance = { ...this.instance, ...filter };
+      this.instance = new Search({ ...this.instance.toData(), ...filter });
     }
+    this.currentPage = 1;
   }
 
   applyFilter(filter: any, force = false) {
