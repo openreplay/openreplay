@@ -27,7 +27,7 @@ function SessionsBy(props: Props) {
       ...filtersMap[metric.metricOf],
       value: [data.name],
       type: filtersMap[metric.metricOf].key,
-      filters: filtersMap[metric.metricOf].filters.map((f: any) => {
+      filters: filtersMap[metric.metricOf].filters?.map((f: any) => {
         const { key, operatorOptions, category, icon, label, options, ...cleaned } = f;
         return { ...cleaned, type: f.key, value: [] };
       })
