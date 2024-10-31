@@ -12,7 +12,6 @@ const sortOptionsMap = {
 };
 
 const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({
-  // value,
   label,
   key: value
 }));
@@ -27,16 +26,11 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
     <Dropdown
       menu={{
         items: sortOptions,
-        defaultSelectedKeys: defaultOption ? [defaultOption] : undefined,
-        // @ts-ignore
+        selectedKeys: [defaultOption],
         onClick: onSort
       }}
     >
-      <div
-        className={
-          'cursor-pointer flex items-center justify-end gap-2'
-        }
-      >
+      <div className={'cursor-pointer flex items-center justify-end gap-2'}>
         <div>{current}</div>
         <DownOutlined />
       </div>
