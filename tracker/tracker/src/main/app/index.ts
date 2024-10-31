@@ -757,8 +757,8 @@ export default class App {
       this.stop(false)
     } else if (data === 'a_start') {
       this.waitStatus(ActivityState.NotActive).then(() => {
-        this.allowAppStart();
-        this.start({}, true)
+        this.allowAppStart()
+        this.start(this.prevOpts, true)
           .then((r) => {
             this.debug.info('Worker restart, session too long', r)
           })
@@ -1347,11 +1347,15 @@ export default class App {
     this.clearBuffers()
   }
 
+  prevOpts: StartOptions = {}
   private async _start(
     startOpts: StartOptions = {},
     resetByWorker = false,
     conditionName?: string,
   ): Promise<StartPromiseReturn> {
+    if (Object.keys(startOpts).length !== 0) {
+      this.prevOpts = startOpts
+    }
     const isColdStart = this.activityState === ActivityState.ColdStart
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
