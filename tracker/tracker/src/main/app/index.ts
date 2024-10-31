@@ -71,7 +71,7 @@ interface OnStartInfo {
  * this value is injected during build time via rollup
  * */
 // @ts-ignore
-const workerBodyFn = WEBWORKER_BODY
+const workerBodyFn = global.WEBWORKER_BODY
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
@@ -762,7 +762,7 @@ export default class App {
     } else if (data === 'a_start') {
       this.waitStatus(ActivityState.NotActive).then(() => {
         this.allowAppStart()
-        this.start({}, true)
+        this.start(this.prevOpts, true)
           .then((r) => {
             this.debug.info('Worker restarted, session was too long', r)
           })
@@ -1351,11 +1351,15 @@ export default class App {
     this.clearBuffers()
   }
 
+  prevOpts: StartOptions = {}
   private async _start(
     startOpts: StartOptions = {},
     resetByWorker = false,
     conditionName?: string,
   ): Promise<StartPromiseReturn> {
+    if (Object.keys(startOpts).length !== 0) {
+      this.prevOpts = startOpts
+    }
     const isColdStart = this.activityState === ActivityState.ColdStart
     if (isColdStart && this.coldInterval) {
       clearInterval(this.coldInterval)
