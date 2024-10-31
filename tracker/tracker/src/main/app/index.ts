@@ -757,6 +757,7 @@ export default class App {
       this.stop(false)
     } else if (data === 'a_start') {
       this.waitStatus(ActivityState.NotActive).then(() => {
+        this.allowAppStart();
         this.start({}, true)
           .then((r) => {
             this.debug.info('Worker restart, session too long', r)
