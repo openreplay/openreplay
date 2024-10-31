@@ -341,7 +341,7 @@ export default class SessionStore {
 
   fetchSessionClickmap = async (sessionId: string, params: any) => {
     try {
-      const data = await sessionService.getSessionClickmap(sessionId, params);
+      const data = await sessionService.getSessionClickMap(sessionId, params);
       this.insights = data;
     } catch (e) {
       console.error(e);

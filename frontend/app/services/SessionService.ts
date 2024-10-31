@@ -106,6 +106,14 @@ export default class SettingsService {
       .catch(Promise.reject);
   }
 
+  getSessionClickMap(sessionId: string, params = {}): Promise<any[]> {
+    return this.client
+      .post(`/sessions/${sessionId}/clickmaps`, params)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch(Promise.reject);
+  }
+
   getRecordingStatus(): Promise<any> {
     return this.client
       .get('/check-recording-status')
