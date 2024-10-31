@@ -39,7 +39,7 @@ export const CARD_CATEGORY = {
 export const CARD_CATEGORIES = [
   { key: CARD_CATEGORY.PRODUCT_ANALYTICS, label: 'Product Analytics', icon: TrendingUp, types: [USER_PATH, ERRORS] },
   { key: CARD_CATEGORY.WEB_ANALYTICS, label: 'Web Analytics', icon: BarChart, types: [TABLE] },
-  { key: CARD_CATEGORY.ERROR_TRACKING, label: 'Errors Tracking', icon: SearchSlash, types: [] },
+  { key: CARD_CATEGORY.ERROR_TRACKING, label: 'Monitors', icon: SearchSlash, types: [] },
 ];
 
 export interface CardType {
@@ -136,15 +136,6 @@ export const CARD_LIST: CardType[] = [
     example: ExampleTrend
   },
 
-  {
-    title: 'Sessions by Issues',
-    key: FilterKey.ISSUE,
-    cardType: TABLE,
-    metricOf: FilterKey.ISSUE,
-    category: CARD_CATEGORIES[0].key,
-    example: ByIssues
-  },
-
 
   // Web analytics
   {
@@ -232,127 +223,6 @@ export const CARD_LIST: CardType[] = [
     width: 4,
     height: 336,
     example: TableOfErrors
-  },
-  {
-    title: 'Insights',
-    key: INSIGHTS,
-    cardType: INSIGHTS,
-    metricOf: 'issueCategories',
-    category: CARD_CATEGORIES[2].key,
-    width: 4,
-    isEnterprise: true,
-    example: InsightsExample
-  },
-  {
-    title: 'Sessions Impacted by JS Errors',
-    key: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
-    cardType: ERRORS,
-    metricOf: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
-    category: CARD_CATEGORIES[2].key,
-    data: {
-      chart: generateBarChartData(),
-      hideLegend: true,
-      label: 'Number of Sessions'
-    },
-    example: BarChartCard
-  },
-  {
-    title: 'Errors by Origin',
-    key: FilterKey.RESOURCES_BY_PARTY,
-    cardType: ERRORS,
-    metricOf: FilterKey.RESOURCES_BY_PARTY,
-    category: CARD_CATEGORIES[2].key,
-    data: {
-      chart: generateStackedBarChartData(['1st Party', '3rd Party'])
-    },
-    example: BarChartCard
-  },
-  {
-    title: 'Errors by Domain',
-    key: FilterKey.ERRORS_PER_DOMAINS,
-    cardType: ERRORS,
-    metricOf: FilterKey.ERRORS_PER_DOMAINS,
-    category: CARD_CATEGORIES[2].key,
-    example: SlowestDomains
-  },
-  {
-    title: 'Errors by Type',
-    key: FilterKey.ERRORS_PER_TYPE,
-    cardType: ERRORS,
-    metricOf: FilterKey.ERRORS_PER_TYPE,
-    category: CARD_CATEGORIES[2].key,
-    data: {
-      chart: generateStackedBarChartData(['Integrations', '4xx', '5xx'])
-    },
-    example: BarChartCard
-  },
-  {
-    title: 'Calls with Errors',
-    key: FilterKey.CALLS_ERRORS,
-    cardType: ERRORS,
-    metricOf: FilterKey.CALLS_ERRORS,
-    category: CARD_CATEGORIES[2].key,
-    width: 4,
-    data: {
-      chart: [
-        {
-          'method': 'GET',
-          'urlHostpath': 'https://openreplay.com',
-          'allRequests': 1333,
-          '4xx': 1333,
-          '5xx': 0
-        },
-        {
-          'method': 'POST',
-          'urlHostpath': 'https://company.domain.com',
-          'allRequests': 10,
-          '4xx': 10,
-          '5xx': 0
-        },
-        {
-          'method': 'PUT',
-          'urlHostpath': 'https://example.com',
-          'allRequests': 3,
-          '4xx': 3,
-          '5xx': 0
-        }
-      ]
-    },
-    example: CallsWithErrorsExample
-  },
-
-  {
-    title: '4xx Domains',
-    key: FilterKey.DOMAINS_ERRORS_4XX,
-    cardType: ERRORS,
-    metricOf: FilterKey.DOMAINS_ERRORS_4XX,
-    category: CARD_CATEGORIES[2].key,
-    data: {
-      chart: generateTimeSeriesData(),
-      label: 'Number of Errors',
-      hideLegend: true,
-      namesMap: [
-        'Series 1'
-      ]
-    },
-    example: ExampleTrend
-  },
-
-  {
-    title: '5xx Domains',
-    key: FilterKey.DOMAINS_ERRORS_5XX,
-    cardType: ERRORS,
-    metricOf: FilterKey.DOMAINS_ERRORS_5XX,
-    category: CARD_CATEGORIES[2].key,
-    data: {
-      chart: generateTimeSeriesData(),
-      label: 'Number of Errors',
-      hideLegend: true,
-      namesMap: [
-        'Series 1'
-      ]
-    },
-    example: ExampleTrend
   },
 ];
 

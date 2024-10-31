@@ -74,25 +74,6 @@ export const TYPES: CardType[] = [
     slug: FUNNEL,
   },
   {
-    title: 'Error Tracking',
-    icon: 'exclamation-circle',
-    description: 'Track API errors across domains and origins.',
-    slug: ERRORS,
-    subTypes: [
-      { title: 'Errors by Origin', slug: FilterKey.RESOURCES_BY_PARTY, description: '' },
-      { title: 'Errors per Domain', slug: FilterKey.ERRORS_PER_DOMAINS, description: '' },
-      { title: 'Errors by type', slug: FilterKey.ERRORS_PER_TYPE, description: '' },
-      { title: 'Calls with Errors', slug: FilterKey.CALLS_ERRORS, description: '' },
-      { title: 'Top 4xx Domains', slug: FilterKey.DOMAINS_ERRORS_4XX, description: '' },
-      { title: 'Top 5xx Domains', slug: FilterKey.DOMAINS_ERRORS_5XX, description: '' },
-      {
-        title: 'Impacted Sessions by JS Errors',
-        slug: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
-        description: '',
-      },
-    ],
-  },
-  {
     title: 'Path Analysis',
     icon: 'signpost-split',
     description: 'See where users are flowing and explore their journeys.',
@@ -111,12 +92,6 @@ export const TYPES: CardType[] = [
   //   description: 'See which features are used the most and how often.',
   //   slug: FEATURE_ADOPTION,
   // },
-  {
-    title: 'Insights',
-    icon: 'lightbulb',
-    description: 'Uncover new issues impacting user experience.',
-    slug: INSIGHTS,
-  },
   // {
   //   title: 'Form Analysis',
   //   icon: 'card-checklist',
