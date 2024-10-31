@@ -379,7 +379,7 @@ export default class SessionStore {
    toggleFavorite = async (id: string) => {
     try {
       const r = await sessionService.toggleFavorite(id);
-      if (r.success) {
+      if (r.ok) {
         const list = this.list;
         const current = this.current;
         const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
