@@ -39,7 +39,7 @@ runs:
     - name: "Updating OSS secrets"
       run: |
         cd scripts/helmcharts/
-        local vars=(
+        vars=(
             "ASSIST_JWT_SECRET:.global.assistJWTSecret"
             "ASSIST_KEY:.global.assistKey"
             "DOMAIN_NAME:.global.domainName"
