@@ -17,7 +17,9 @@ type Logger interface {
 }
 
 type loggerImpl struct {
-	l *zap.Logger
+	l        *zap.Logger
+	useExtra bool
+	extra    ExtraLogger
 }
 
 func New() Logger {
@@ -27,7 +29,14 @@ func New() Logger {
 	core := zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel)
 	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
-	return &loggerImpl{l: logger}
+	customLogger := &loggerImpl{l: logger}
+
+	// Use it only for debugging purposes
+	if doExtra := os.Getenv("ENABLE_EXTRA_LOGS"); doExtra == "true" {
+		customLogger.extra = NewExtraLogger()
+		customLogger.useExtra = true
+	}
+	return customLogger
 }
 
 func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logger {
@@ -53,21 +62,41 @@ func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logge
 }
 
 func (l *loggerImpl) Debug(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "debug"))).Debug(logStr)
+	if l.useExtra {
+		l.extra.Log(ctx, logStr)
+	}
 }
 
 func (l *loggerImpl) Info(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "info"))).Info(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "info"))).Info(logStr)
+	if l.useExtra {
+		l.extra.Log(ctx, logStr)
+	}
 }
 
 func (l *loggerImpl) Warn(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "warn"))).Warn(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "warn"))).Warn(logStr)
+	if l.useExtra {
+		l.extra.Log(ctx, logStr)
+	}
 }
 
 func (l *loggerImpl) Error(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "error"))).Error(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "error"))).Error(logStr)
+	if l.useExtra {
+		l.extra.Log(ctx, logStr)
+	}
 }
 
 func (l *loggerImpl) Fatal(ctx context.Context, message string, args ...interface{}) {
-	l.prepare(ctx, l.l.With(zap.String("level", "fatal"))).Fatal(fmt.Sprintf(message, args...))
+	logStr := fmt.Sprintf(message, args...)
+	l.prepare(ctx, l.l.With(zap.String("level", "fatal"))).Fatal(logStr)
+	if l.useExtra {
+		l.extra.Log(ctx, logStr)
+	}
 }
