@@ -23,21 +23,20 @@ function SessionsBy(props: Props) {
   const modalMetric = React.useMemo(() => Object.assign(new Widget(), metric), [metric]);
 
   const onClickHandler = (event: any, data: any) => {
-    const filters = Array<any>();
-    let filter = { ...filtersMap[metric.metricOf] };
-    filter.value = [data.name];
-    filter.type = filter.key;
-    delete filter.key;
-    delete filter.operatorOptions;
-    delete filter.category;
-    delete filter.icon;
-    delete filter.label;
-    delete filter.options;
+    const baseFilter = {
+      ...filtersMap[metric.metricOf],
+      value: [data.name],
+      type: filtersMap[metric.metricOf].key,
+      filters: filtersMap[metric.metricOf].filters.map((f: any) => {
+        const { key, operatorOptions, category, icon, label, options, ...cleaned } = f;
+        return { ...cleaned, type: f.key, value: [] };
+      })
+    };
+
+    const { key, operatorOptions, category, icon, label, options, ...finalFilter } = baseFilter;
 
     setSelected(data.name);
-
-    filters.push(filter);
-    onClick(filters);
+    onClick([finalFilter]);
   };
 
   const showMore = (e: any) => {
