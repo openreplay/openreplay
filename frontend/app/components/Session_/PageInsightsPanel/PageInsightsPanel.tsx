@@ -42,10 +42,11 @@ function PageInsightsPanel({ setActiveTab }: Props) {
         if (!changed) { return }
 
         if (urlOptions && urlOptions[0]) {
-            const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
+            const url = urlOptions[0].value ? urlOptions[0].value : insightsFilters.url;
             Player.pause();
+            markTargets(null);
+            console.log(insightsFilters.url, urlOptions[0].value)
             void fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
-            markTargets([]);
         }
         prevInsights.current = insightsFilters;
     }, [insightsFilters]);
