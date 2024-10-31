@@ -22,7 +22,7 @@ type loggerImpl struct {
 	extra    ExtraLogger
 }
 
-func New(useExtra bool) Logger {
+func New() Logger {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
 	jsonEncoder := zapcore.NewJSONEncoder(encoderConfig)
@@ -30,7 +30,9 @@ func New(useExtra bool) Logger {
 	baseLogger := zap.New(core, zap.AddCaller())
 	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
 	customLogger := &loggerImpl{l: logger}
-	if useExtra {
+
+	// Use it only for debugging purposes
+	if doExtra := os.Getenv("ENABLE_EXTRA_LOGS"); doExtra == "true" {
 		customLogger.extra = NewExtraLogger()
 		customLogger.useExtra = true
 	}

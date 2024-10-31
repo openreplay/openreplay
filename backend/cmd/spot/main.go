@@ -19,7 +19,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log := logger.New(false)
+	log := logger.New()
 	cfg := spotConfig.New(log)
 	metrics.New(log, append(spotMetrics.List(), databaseMetrics.List()...))
 

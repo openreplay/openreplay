@@ -21,7 +21,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log := logger.New(true)
+	log := logger.New()
 	cfg := http.New(log)
 	metrics.New(log, append(httpMetrics.List(), databaseMetrics.List()...))
 
