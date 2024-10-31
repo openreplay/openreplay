@@ -29,7 +29,7 @@ function rewriteCSSLinks(
   );
 
   // Ensure the CSS ends with a semicolon
-  const hasSemi = css.trim().endsWith(';');
+  const hasSemi = css.trim().endsWith(';') || css.trim().endsWith('}');
   return hasSemi ? css : css + ';';
 }
 
