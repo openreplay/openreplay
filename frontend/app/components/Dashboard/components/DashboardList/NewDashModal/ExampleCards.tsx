@@ -198,17 +198,7 @@ export const CARD_LIST: CardType[] = [
     example: ByReferrer
   },
 
-  {
-    title: 'Sessions by Fetch',
-    key: FilterKey.FETCH,
-    cardType: TABLE,
-    metricOf: FilterKey.FETCH,
-    category: CARD_CATEGORIES[1].key,
-    example: ByFetch
-  },
-
-  // Errors Tracking
-  // CustomMetricTableErrors
+  // Monitors
   {
     title: 'Table of Errors',
     key: FilterKey.ERRORS,
@@ -223,6 +213,14 @@ export const CARD_LIST: CardType[] = [
     width: 4,
     height: 336,
     example: TableOfErrors
+  },
+  {
+    title: 'Top Network Requests',
+    key: FilterKey.FETCH,
+    cardType: TABLE,
+    metricOf: FilterKey.FETCH,
+    category: CARD_CATEGORIES[2].key,
+    example: ByFetch
   },
 ];
 
