@@ -83,14 +83,14 @@ function SavedSearchModal(props: Props) {
         {shownItems.map((item) => (
           <div
             key={item.key}
-            className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue', item.isPublic && 'pb-10')}
+            className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue')}
             onClick={(e) => onClick(item, e)}
           >
             <Icon name="search" color="gray-medium" size="16" />
             <div className="ml-4">
               <div className="text-lg">{item.name} </div>
               {item.isPublic && (
-                <div className={cn(stl.iconContainer, 'absolute color-gray-medium flex items-center px-2 mt-2')}>
+                <div className={cn(stl.iconContainer, 'color-gray-medium flex items-center px-2 mt-2')}>
                   <Icon name="user-friends" size="11" />
                   <div className="ml-1 text-sm"> Team</div>
                 </div>

@@ -157,3 +157,10 @@
 .ant-picker-input > input:focus {
     border: 0!important;
 }
+.react-calendar__month-view__days__day--weekend {
+    color: black;
+}
+.react-calendar__tile--now {
+    background: #2331A8;
+    color: white;
+}
