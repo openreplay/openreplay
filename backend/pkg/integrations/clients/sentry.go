@@ -97,10 +97,6 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 		return nil, fmt.Errorf("no logs found")
 	}
 
-	// Print the logs
-	for _, event := range events {
-		fmt.Printf("ID: %s, Title: %s, Message: %s, Environment: %s\n", event.ID, event.Title, event.Message, event.Environment)
-	}
 	result, err := json.Marshal(events)
 	if err != nil {
 		return nil, err
