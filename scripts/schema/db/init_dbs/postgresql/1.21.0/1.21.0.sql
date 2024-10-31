@@ -31,6 +31,14 @@ CREATE TABLE IF NOT EXISTS public.session_integrations
     PRIMARY KEY (session_id, project_id, provider)
 );
 
+ALTER TABLE IF EXISTS public.metrics
+    ALTER COLUMN user_id DROP NOT NULL,
+    ALTER COLUMN project_id SET NOT NULL;
+
+ALTER TABLE IF EXISTS public.dashboards
+    ALTER COLUMN user_id DROP NOT NULL,
+    ALTER COLUMN project_id SET NOT NULL;
+
 COMMIT;
 
 \elif :is_next
