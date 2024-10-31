@@ -17,6 +17,9 @@ $$ LANGUAGE sql IMMUTABLE;
 $fn_def$, :'next_version')
 \gexec
 
+ALTER TABLE IF EXISTS events.pages
+    DROP COLUMN IF EXISTS web_vitals;
+
 COMMIT;
 
 \elif :is_next

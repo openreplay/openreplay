@@ -19,6 +19,8 @@ $fn_def$, :'next_version')
 
 --
 
+ALTER TABLE IF EXISTS events.pages
+    ADD COLUMN IF NOT EXISTS web_vitals text DEFAULT NULL;
 
 COMMIT;
 
