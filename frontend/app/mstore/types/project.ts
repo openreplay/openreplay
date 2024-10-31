@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import GDPR from './gdpr';
 
 export default class Project {
@@ -27,7 +27,7 @@ export default class Project {
 
   exists = () => {
     return !!this.id;
-  }
+  };
 
   get validate() {
     return this.name.length > 0;
@@ -40,8 +40,9 @@ export default class Project {
       } else {
         console.error(`Project: Unknown key ${key}`);
       }
-    })
-  }
+    });
+    return this;
+  };
 
   toData = () => {
     return {
@@ -60,5 +61,5 @@ export default class Project {
       sampleRate: this.sampleRate,
       conditionsCount: this.conditionsCount,
     };
-  }
+  };
 }

@@ -38,14 +38,15 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (site?.id && site.exists()) {
+    if (!projectsStore.instance) return;
+    if (projectsStore.instance.id && projectsStore.instance.exists()) {
       projectsStore
-        .updateProject(site.id, site.toData())
+        .updateProject(projectsStore.instance.id, projectsStore.instance.toData())
         .then((response: any) => {
           if (!response || !response.errors || response.errors.size === 0) {
             onClose(null);
             if (!pathname.includes('onboarding')) {
-              fetchList();
+              void fetchList();
             }
             toast.success('Project updated successfully');
           } else {
@@ -53,7 +54,7 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
           }
         });
     } else {
-      saveProject(site!).then((response: any) => {
+      saveProject(projectsStore.instance!).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
           onClose(null);
           searchStore.clearSearch();
