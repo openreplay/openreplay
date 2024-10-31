@@ -37,6 +37,8 @@ export default class Project {
     Object.keys(data).forEach((key) => {
       if (key in this) {
         this[key] = data[key];
+      } else {
+        console.error(`Project: Unknown key ${key}`);
       }
     })
   }

@@ -15,10 +15,7 @@ type OwnProps = {
 
 type Props = RouteComponentProps & OwnProps;
 
-const NewSiteForm = ({
-                       location: { pathname },
-                       onClose
-                     }: Props) => {
+const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
   const mstore = useStore();
   const { projectsStore } = mstore;
   const activeSiteId = projectsStore.active?.id;
@@ -42,17 +39,19 @@ const NewSiteForm = ({
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (site?.id && site.exists()) {
-      projectsStore.updateProject(site.id, site.toData()).then((response: any) => {
-        if (!response || !response.errors || response.errors.size === 0) {
-          onClose(null);
-          if (!pathname.includes('onboarding')) {
-            fetchList();
+      projectsStore
+        .updateProject(site.id, site.toData())
+        .then((response: any) => {
+          if (!response || !response.errors || response.errors.size === 0) {
+            onClose(null);
+            if (!pathname.includes('onboarding')) {
+              fetchList();
+            }
+            toast.success('Project updated successfully');
+          } else {
+            toast.error(response.errors[0]);
           }
-          toast.success('Project updated successfully');
-        } else {
-          toast.error(response.errors[0]);
-        }
-      });
+        });
     } else {
       saveProject(site!).then((response: any) => {
         if (!response || !response.errors || response.errors.size === 0) {
@@ -70,13 +69,13 @@ const NewSiteForm = ({
 
   const handleRemove = async () => {
     if (
-      await confirm({
+      (await confirm({
         header: 'Project Deletion Alert',
         confirmation: `Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.`,
         confirmButton: 'Yes, delete',
-        cancelButton: 'Cancel'
-      })
-      && site?.id
+        cancelButton: 'Cancel',
+      })) &&
+      site?.id
     ) {
       projectsStore.removeProject(site.id).then(() => {
         onClose(null);
@@ -88,8 +87,8 @@ const NewSiteForm = ({
   };
 
   const handleEdit = ({
-                        target: { name, value }
-                      }: ChangeEvent<HTMLInputElement>) => {
+    target: { name, value },
+  }: ChangeEvent<HTMLInputElement>) => {
     setExistsError(false);
     projectsStore.editInstance({ [name]: value });
   };
@@ -105,10 +104,7 @@ const NewSiteForm = ({
       <h3 className="p-5 text-2xl">
         {site.exists() ? 'Edit Project' : 'New Project'}
       </h3>
-      <Form
-        className={styles.formWrapper}
-        onSubmit={site.validate && onSubmit}
-      >
+      <Form className={styles.formWrapper} onSubmit={site.validate && onSubmit}>
         <div className={styles.content}>
           <Form.Field>
             <label>{'Name'}</label>
@@ -128,12 +124,12 @@ const NewSiteForm = ({
                 options={[
                   {
                     value: 'web',
-                    label: 'Web'
+                    label: 'Web',
                   },
                   {
                     value: 'ios',
-                    label: 'Mobile'
-                  }
+                    label: 'Mobile',
+                  },
                 ]}
                 value={site.platform}
                 onChange={(value) => {

@@ -55,7 +55,13 @@ export default class ProjectsStore {
 
   editInstance = (instance: Partial<Project>) => {
     if (!this.instance) return;
-    this.instance.edit(instance);
+    Object.keys(instance).forEach((key) => {
+      if (key in this.instance) {
+        this.instance[key] = instance[key];
+      } else {
+        console.error(`Project: Unknown key ${key}`);
+      }
+    })
   }
 
   fetchGDPR = async (siteId: string) => {
