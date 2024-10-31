@@ -29,8 +29,8 @@ function rewriteCSSLinks(
   );
 
   // Ensure the CSS ends with a semicolon
-  const hasSemi = css.trim().endsWith(';') || css.trim().endsWith('}');
-  return hasSemi ? css : css + ';';
+  const dontNeedSemi = css.trim().endsWith(';') || css.trim().endsWith('}');
+  return dontNeedSemi ? css : css + ';';
 }
 
 function rewritePseudoclasses(css: string): string {
