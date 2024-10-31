@@ -32,9 +32,14 @@ jobs:
 
       - uses: ./.github/composite-actions/update-keys
         with:
+          assist_jwt_secret: ${{ secrets.ASSIST_JWT_SECRET }}
+          assist_key: ${{ secrets.ASSIST_KEY }}
           domain_name: ${{ secrets.EE_DOMAIN_NAME }}
-          license_key: ${{ secrets.EE_LICENSE_KEY }}
+          jwt_refresh_secret: ${{ secrets.JWT_REFRESH_SECRET }}
           jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+          jwt_spot_refresh_secret: ${{ secrets.JWT_SPOT_REFRESH_SECRET }}
+          jwt_spot_secret: ${{ secrets.JWT_SPOT_SECRET }}
+          license_key: ${{ secrets.EE_LICENSE_KEY }}
           minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
           minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
           pg_password: ${{ secrets.EE_PG_PASSWORD }}
