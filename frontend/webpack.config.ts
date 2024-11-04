@@ -1,29 +1,31 @@
-import webpack from "webpack";
-import path from "path";
-import { Configuration as WebpackConfiguration } from "webpack";
-import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
+import CompressionPlugin from 'compression-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import HtmlWebpackPlugin from "html-webpack-plugin";
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import CompressionPlugin from "compression-webpack-plugin";
-const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
-const isDevelopment = process.env.NODE_ENV !== 'production'
-const stylesHandler = MiniCssExtractPlugin.loader;
-const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
+import path from 'path';
+import webpack from 'webpack';
+import { Configuration as WebpackConfiguration } from 'webpack';
+import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
+
 import pathAlias from './path-alias';
 
+const dotenv = require('dotenv').config({ path: __dirname + '/.env' });
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const stylesHandler = MiniCssExtractPlugin.loader;
+const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
+
 interface Configuration extends WebpackConfiguration {
-  devServer?: WebpackDevServerConfiguration
+  devServer?: WebpackDevServerConfiguration;
 }
 
 const config: Configuration = {
-  // mode: isDevelopment ? "development" : "production",
+  mode: isDevelopment ? 'development' : 'production',
   output: {
-    publicPath: "/",
+    publicPath: '/',
     filename: 'app-[contenthash:7].js',
     path: path.resolve(__dirname, 'public'),
   },
-  entry: "./app/initialize.tsx",
+  entry: './app/initialize.tsx',
   optimization: {
     splitChunks: {
       chunks: 'all',
@@ -35,16 +37,19 @@ const config: Configuration = {
       {
         test: /\.(ts|js)x?$/i,
         exclude: /node_modules/,
-        use: ['thread-loader', {
-          loader: "babel-loader",
-          options: {
-            presets: [
-              "@babel/preset-env",
-              "@babel/preset-react",
-              "@babel/preset-typescript",
-            ],
+        use: [
+          'thread-loader',
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                '@babel/preset-env',
+                '@babel/preset-react',
+                '@babel/preset-typescript',
+              ],
+            },
           },
-        }],
+        ],
       },
       {
         test: /\.s[ac]ss$/i,
@@ -57,13 +62,13 @@ const config: Configuration = {
         use: [
           stylesHandler,
           {
-            loader: "css-loader",
+            loader: 'css-loader',
             options: {
               modules: {
-                mode: "local",
+                mode: 'local',
                 auto: true,
-                localIdentName: "[name]__[local]--[hash:base64:5]",
-              }
+                localIdentName: '[name]__[local]--[hash:base64:5]',
+              },
               // url: {
               //     filter: (url: string) => {
               //       // Semantic-UI-CSS has an extra semi colon in one of the URL due to which CSS loader along
@@ -78,7 +83,7 @@ const config: Configuration = {
               // }
             },
           },
-          'postcss-loader'
+          'postcss-loader',
         ],
       },
       // {
@@ -102,7 +107,7 @@ const config: Configuration = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js"],
+    extensions: ['.tsx', '.ts', '.js'],
     alias: pathAlias,
     fallback: {
       assert: false,
@@ -116,16 +121,14 @@ const config: Configuration = {
       'window.env.PRODUCTION': isDevelopment ? false : true,
     }),
     new HtmlWebpackPlugin({
-      template: 'app/assets/index.html'
+      template: 'app/assets/index.html',
     }),
     new CopyWebpackPlugin({
-      patterns: [
-        { from: "./app/assets", to: "assets" },
-      ],
+      patterns: [{ from: './app/assets', to: 'assets' }],
     }),
     new MiniCssExtractPlugin({ ignoreOrder: true }),
   ],
-  devtool: isDevelopment ? "inline-source-map" : false,
+  devtool: isDevelopment ? 'inline-source-map' : false,
   performance: {
     hints: false,
   },
@@ -137,14 +140,14 @@ const config: Configuration = {
     port: 3333,
     hot: true,
     compress: true,
-    allowedHosts: "all",
-      client: {
-        overlay: {
-          errors: true,
-          warnings: false,
-          runtimeErrors: false,
-        }
+    allowedHosts: 'all',
+    client: {
+      overlay: {
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
       },
+    },
   },
 };
 
