@@ -28,7 +28,9 @@ func New(handler http.Handler, host, port string, timeout time.Duration) (*Serve
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
 	}
-	http2.ConfigureServer(server, nil)
+	if err := http2.ConfigureServer(server, nil); err != nil {
+		return nil, fmt.Errorf("error configuring server: %s", err)
+	}
 	return &Server{
 		server: server,
 	}, nil
@@ -39,5 +41,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop() {
-	s.server.Shutdown(context.Background())
+	if err := s.server.Shutdown(context.Background()); err != nil {
+		fmt.Printf("error shutting down server: %s\n", err)
+	}
 }

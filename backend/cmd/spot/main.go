@@ -9,12 +9,12 @@ import (
 	"syscall"
 
 	spotConfig "openreplay/backend/internal/config/spot"
-	"openreplay/backend/internal/http/server"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
+	"openreplay/backend/pkg/server"
 )
 
 func main() {

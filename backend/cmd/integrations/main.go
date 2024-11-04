@@ -7,12 +7,12 @@ import (
 	"syscall"
 
 	config "openreplay/backend/internal/config/integrations"
-	"openreplay/backend/internal/http/server"
 	"openreplay/backend/pkg/db/postgres/pool"
 	integration "openreplay/backend/pkg/integrations"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/server"
 )
 
 func main() {

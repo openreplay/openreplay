@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"openreplay/backend/pkg/spot"
 	"openreplay/backend/pkg/spot/auth"
-	"sync"
 	"time"
 
 	"github.com/docker/distribution/context"
@@ -22,7 +21,6 @@ type Router struct {
 	log      logger.Logger
 	cfg      *spotConfig.Config
 	router   *mux.Router
-	mutex    *sync.RWMutex
 	services *spot.ServicesBuilder
 	limiter  *UserRateLimiter
 }
@@ -39,7 +37,6 @@ func NewRouter(cfg *spotConfig.Config, log logger.Logger, services *spot.Service
 	e := &Router{
 		log:      log,
 		cfg:      cfg,
-		mutex:    &sync.RWMutex{},
 		services: services,
 		limiter:  NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 	}

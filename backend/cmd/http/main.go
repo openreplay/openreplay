@@ -8,7 +8,6 @@ import (
 
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/router"
-	"openreplay/backend/internal/http/server"
 	"openreplay/backend/internal/http/services"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -17,6 +16,7 @@ import (
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	httpMetrics "openreplay/backend/pkg/metrics/http"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/server"
 )
 
 func main() {
