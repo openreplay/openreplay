@@ -5,14 +5,26 @@
   "scripts": {
     "dev": "bun vite",
     "build": "bun vite build",
-    "preview": "bun vite preview"
+    "preview": "bun vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "3.2.2",
+    "@storybook/addon-essentials": "8.4.1",
+    "@storybook/addon-interactions": "8.4.1",
+    "@storybook/addon-onboarding": "8.4.1",
+    "@storybook/blocks": "8.4.1",
+    "@storybook/react": "8.4.1",
+    "@storybook/react-vite": "8.4.1",
+    "@storybook/test": "8.4.1",
     "@types/bun": "latest",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.8"
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "prop-types": "15.8.1",
+    "storybook": "8.4.1"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
