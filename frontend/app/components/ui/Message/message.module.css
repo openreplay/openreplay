@@ -1,5 +1,0 @@
-.message {
-	&[data-inline=true]{
-		display: inline-block;
-	}
-}

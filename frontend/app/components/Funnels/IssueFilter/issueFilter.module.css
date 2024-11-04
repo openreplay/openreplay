@@ -1,7 +1,0 @@
-.filterBtn {
-  border: dashed 1px $teal !important; 
-  color: $teal;
-  &:hover {
-    background-color: $active-blue;
-  }
-}

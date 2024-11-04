@@ -1,20 +1,15 @@
-# openreplay-ui
-OpenReplay prototype UI
+# frontend
 
-On new icon addition:
-`yarn gen:icons`
+To install dependencies:
 
-## Documentation
+```bash
+bun install
+```
 
-* [Redux](https://redux.js.org/)
-* [Immutable](https://facebook.github.io/immutable-js/)
-* [Ducks](https://github.com/erikras/ducks-modular-redux)
-* [CSS Modules](https://github.com/css-modules/css-modules)
+To run:
 
-Labels in comments:
-TEMP = temporary code
-TODO = things to implement
+```bash
+bun run index.ts
+```
 
-## Contributing notes
-
-Please use `dev` branch as base and target branch.
+This project was created using `bun init` in bun v1.1.27. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.

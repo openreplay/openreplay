@@ -1,7 +1,0 @@
-node_modules
-npm-debug.log
-.git
-.cache
-**/build.sh
-**/build_*.sh
-**/*deploy.sh
