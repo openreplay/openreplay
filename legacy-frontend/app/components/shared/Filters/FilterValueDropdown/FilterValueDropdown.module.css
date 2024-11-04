@@ -1,0 +1,62 @@
+.wrapper {
+  border: solid thin $gray-light !important;
+  border-radius: 3px;
+  background-color: white !important;
+  display: flex;
+  align-items: center;
+  height: 26px;
+  width: 100%;
+  /* z-index: 3; TODO this has to be fixed in clickmaps @Nikita */
+
+  & .right {
+    height: 24px;
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background-color: $gray-lightest;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    margin-left: auto;
+
+    & div {
+      /* background-color: red; */
+      border-left: solid thin $gray-light !important;
+      width: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:last-child {
+        border-top-right-radius: 3px;
+        border-bottom-right-radius: 3px;
+      }
+      &:hover {
+        background-color: $gray-light;
+      }
+    }
+  }
+}
+.operatorDropdown {
+  font-weight: 400;
+  /* height: 30px; */
+  min-width: 60px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px !important;
+  font-size: 13px;
+  height: 26px;
+  /* background-color: rgba(255, 255, 255, 0.8) !important; */
+  /* background-color: $gray-lightest !important; */
+  /* border: solid thin rgba(34, 36, 38, 0.15) !important; */
+  /* border-radius: 4px !important; */
+  color: $gray-darkest !important;
+  font-size: 14px !important;
+  &.ui.basic.button {
+    box-shadow: 0 0 0 1px rgba(62, 170, 175,36,38,.35) inset, 0 0 0 0 rgba(62, 170, 175,.15) inset !important;
+  }
+/* 
+  & input {
+    padding: 0 8px !important;
+  } */
+}

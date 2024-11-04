@@ -1,0 +1,72 @@
+* {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  text-decoration: none;
+  outline: none;
+}
+
+body, html {
+  height: 100%;
+  background: $gray-lightest;
+  font-family: 'Roboto', 'ArialMT', 'Arial';
+  font-size: 14px;
+  font-weight: 400;
+  color: $gray-darkest;
+}
+
+input, button {
+  background: none;
+  border: none;
+  border: solid thin transparent;
+}
+
+button {
+  font-weight: 400;
+}
+
+textarea:focus,
+input:not(.ant-input-number-input, .ant-input, .nofocus):focus {
+  border: solid thin $teal !important;
+}
+
+/* body ::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+} */
+
+* {
+  &::-webkit-scrollbar {
+    width: 2px;
+    height: 0;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+  }
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Roboto', 'ArialMT', 'Arial';
+  font-weight: 500;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button:focus {
+  outline: none;
+}

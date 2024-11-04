@@ -1,0 +1,42 @@
+.header {
+  padding: 10px 0;
+  font-weight: 500;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.topBorder {
+  height: 1px;
+  background-color: $gray-light-shade;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.content {
+  overflow-y: auto;
+  max-height: 340px;
+  &.small {
+    height: 201px;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  font-size: 13px;
+  
+  & .cell {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding-right: 10px;
+  }
+
+  &:hover {
+    background-color: $gray-lightest;
+  }
+}
+
+.bottomBorder {
+  border-bottom: 1px solid #EFEFEF;
+}

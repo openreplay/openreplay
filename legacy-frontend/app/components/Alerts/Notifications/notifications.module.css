@@ -1,0 +1,39 @@
+.wrapper {
+  position: relative;
+  background-color: white;
+}
+
+.button {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;  
+  height: 49px;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+  }
+
+  &[data-active=true] {
+    background-color: $active-blue;
+  }
+}
+
+.counter {
+  position: absolute;
+  top: 8px;
+  left: 24px;
+  background-color: $red;
+  color: white;
+  font-size: 9px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+}

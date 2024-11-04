@@ -1,0 +1,17 @@
+.form {
+  padding: 0 20px;
+  & label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  & .input {
+    width: 100%;
+  }
+
+  & input[type=checkbox] {
+    margin-right: 10px;
+    height: 13px;
+  }
+}

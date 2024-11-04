@@ -1,0 +1,18 @@
+.header {
+  padding: 0px 0 15px;
+}
+
+.dateInput {
+  width: 180px !important;
+  border-radius: 3px;
+  border: solid thin $gray-light;
+  text-align: center;
+  margin-left: 10px;
+  background-color: white;
+  height: 38px;
+  color: $gray-darkest;
+
+  &[disabled] {
+    opacity: 0.5;
+  }
+}

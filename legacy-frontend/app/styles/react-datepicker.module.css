@@ -1,0 +1,15 @@
+.react-datepicker {
+  box-shadow: 0px 1px 3px 0 $gray-light;
+}
+.react-datepicker__triangle,
+.react-datepicker__header {
+  /* background-color: white; */
+}
+.react-datepicker__day--selected:hover {
+  background-color: $teal-dark;
+}
+
+.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected,
+.react-datepicker__day--selected {
+  background-color: $teal;
+}

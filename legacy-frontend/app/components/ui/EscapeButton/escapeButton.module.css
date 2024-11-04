@@ -1,0 +1,31 @@
+$padding: 23px;
+
+.closeWrapper {
+  background-color: white;
+  padding: 10px;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  position: fixed;
+  top: $padding;
+  right: 20px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 102; /* stay top of the test builer stiky header */
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s ease-out;
+  color: #333;
+  border: 1px solid #ddd;
+  opacity: 0.7;
+  &:hover {
+    opacity: 1
+  }
+
+  & div:last-child {
+    font-size: 8px;
+    line-height: 12px;
+  }
+}

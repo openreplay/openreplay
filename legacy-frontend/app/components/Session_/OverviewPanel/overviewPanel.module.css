@@ -1,0 +1,13 @@
+.popup {
+    max-width: 300px !important;
+    /* max-height: 300px !important; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    & span {
+        display: block;
+        max-height: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

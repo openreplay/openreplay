@@ -1,0 +1,26 @@
+.wrapper {
+  position: relative;    
+  /* margin-left: 15px; */
+
+  &:hover .pin {
+    border: solid thin rgba(0,0,0,0.2);
+  }
+
+  &  .icon {
+    position: absolute;
+    top: 3px;
+  }
+
+  & .pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    background: #EEEEEE;
+    position: absolute;
+    box-shadow: 0 1px 0 0 rgba(0,0,0, 0.1);
+    transform: rotate(-45deg);
+    top: -5px;
+    border: solid thin transparent;
+    z-index: 0;
+  }
+}

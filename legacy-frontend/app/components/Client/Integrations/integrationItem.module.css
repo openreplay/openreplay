@@ -1,0 +1,63 @@
+.wrapper {
+  border-radius: .5rem;  
+  /* border: solid thin $gray-light-shade; */
+  padding: 20px;
+  cursor: pointer;
+  width: 130px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* min-height: 250px; */
+  /* min-width: 260px; */
+  /* max-width: 300px; */
+  
+  &:hover {
+    background-color: $active-blue;
+  }
+
+  & .description {
+    font-weight: 300;
+    font-size: 12px;
+  }
+}
+
+.externalIcon {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  bottom: 14px;
+  left: 20px;
+  justify-content: space-between;
+  right: 20px;
+}
+
+.docsLink {
+  display: flex;
+  align-items: center;
+  color: $gray-medium;
+  &:hover {
+    text-decoration: underline;
+  }
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.integratedCheck {
+  display: flex;
+  align-items: center;
+  color: $teal;
+}
+
+.integrated {
+  background-color: $active-blue;
+}

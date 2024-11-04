@@ -1,0 +1,41 @@
+.title {
+  color: $gray-medium;
+  font-size: 11px;
+  margin-bottom: 15px;
+}
+
+.icon {
+  height: 16px;
+}
+
+.countWrapper {  
+  height: 24px;
+  margin-top: -5px;
+}
+.count {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: initial;
+}
+
+.unit {
+  font-size: 15px;
+  align-self: flex-end;
+  margin-left: 5px;
+  /* margin-bottom: 3px; */
+}
+
+.change {
+  font-size: 12px;
+  min-height: 20px;
+  & > div {
+    display: flex;
+    align-items: center;
+  }
+  &[data-colorgreen=true] {
+    color: $green;
+  }
+  &[data-colorgreen=false] {
+    color: $red;
+  }
+}

@@ -1,0 +1,13 @@
+.newBadge {  
+  height: 14px;
+  width: 34px;  
+  letter-spacing: 2px;
+  background-image: linear-gradient(40deg, #6051FF 0%, #FF693B 100%);
+  border-radius: 3px;
+  font-size: 9px;
+  line-height: 15px;
+  color: white;
+  text-align: center;
+  right: -22px;
+  top: 10px;
+}

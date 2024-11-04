@@ -1,0 +1,7 @@
+.text {
+  color: $gray-light;
+  font-size: 40px;
+  max-width: 680px;
+  line-height: 48px;
+  text-align: center;
+}

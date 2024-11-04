@@ -1,0 +1,36 @@
+.container {
+  padding: 0px 7px; /*0.35rem 0.5rem */
+  background-color: #f6f6f6;
+}
+
+.first {
+  padding-top: 7px;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.last {
+  padding-bottom: 7px;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.dashAfter {
+  margin-bottom: 0.8rem;
+}
+
+.referrer {
+  font-size: 14px;
+  color: $gray-dark;
+  font-weight: 500 !important;
+  display: flex;
+  align-items: center;
+  & .url {
+    margin-left: 5px;
+    font-weight: 300;
+    color: $gray-medium;
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -1,0 +1,55 @@
+@import 'mixins.css';
+
+.wrapper {
+  display: flex;
+  padding: 15px 10px;
+  border-bottom: solid thin $gray-light;
+  transition: all 0.4s;
+  align-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+    & .actions {
+      opacity: 1;
+      transition: all 0.4s;
+    }
+  }
+}
+
+.preDefined {
+  cursor: not-allowed;
+}
+
+.actions {
+  margin-left: auto;
+  opacity: 0;
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  & .button {
+    padding: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    &:hover {
+      & svg {
+        fill: $teal-dark;
+      }
+    }
+  }
+}
+
+.tag {
+  margin-left: 10px;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background-color: $gray-lightest;
+  box-shadow: 0 0 0 1px $gray-light inset;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

@@ -1,0 +1,5 @@
+.tooltipContainer {
+  & > tippy-popper > tippy-tooltip {
+    padding: 0!important;
+  }
+}

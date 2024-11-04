@@ -1,0 +1,88 @@
+
+@import 'icons.css';
+
+.popup {
+  border-radius: 3px;
+  box-shadow: 0px 1px 3px 0 $gray-light;
+}
+
+.wrapper {
+  background-color: white;
+  width: 100%;
+  height: 100vh;
+  padding: 10px 8px;
+  color: $gray-darkest !important;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+.title {
+  margin-right: auto;
+}
+
+.closeButton {
+  @mixin icon close, $gray-light;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.body {
+  & textarea {
+    border: solid thin $gray-light;
+    border-radius: 3px;
+    resize: none;
+  }
+  margin-bottom: 14px;
+}
+
+textarea {
+  width: 100%;
+  background-color: $gray-lightest;
+  border: none;
+  padding: 10px;
+}
+
+.shreButtons {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+}
+
+.icon {
+  margin: 0 8px;
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+$iconsize: 30px;
+.slack {
+  @mixin icon social/slack, $teal;
+  width: $iconsize;
+  height: $iconsize;
+}
+
+.trello {
+  @mixin icon social/trello, $teal;
+  width: $iconsize;
+  height: $iconsize;
+}
+
+.shareButton {
+  display: flex;
+  align-items: center;
+  border: solid thin transparent;
+  padding: 10px 15px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: $main;
+  color: white;
+  &:hover {
+    box-shadow: 0px 1px 3px 0 $gray-light;
+  }
+}

@@ -1,0 +1,28 @@
+@import 'zindex.css';
+
+.positionTracker {
+  width: 15px;
+  height: 15px;
+  border: solid 1px $teal;
+  margin-left: -7px;
+  border-radius: 50%;
+  background-color: $active-blue;
+  position: absolute;
+  left: 0;
+  z-index: $positionTracker;
+  pointer-events: none; /* temporary. DnD should be */
+}
+
+.playedTimeline {
+  display: block;
+  height: 100%;
+  background-color: $active-blue-border;
+  pointer-events: none;
+  height: 10px;
+  z-index: 1;
+}
+
+
+.liveTime {
+  background-color: rgba(66, 174, 94, 0.3)!important;
+}

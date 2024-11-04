@@ -1,0 +1,115 @@
+@import 'icons.css';
+
+@keyframes fade {
+  0%   { opacity: 1}
+  50% { opacity: 0}
+  100%   { opacity: 1}
+}
+
+.controls {
+  padding-top: 10px;
+  position: relative;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 65px;
+  padding-left: 10px;
+  padding-right: 0;
+}
+
+.buttonsLeft {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+}
+
+.butonsRight {
+  display: flex;
+  align-items: center;
+}
+
+.speedButton {
+  cursor: pointer;  
+  color: $gray-darkest;
+  font-size: 14px;
+  padding: 0 10px;
+  height: 30px;
+  border-radius: 3px;
+  background-color: $gray-lightest;
+
+  
+  &:hover {
+    background-color: $active-blue;
+    color: $teal;
+    transition: all 0.2s;
+  }
+}
+
+
+.skipIntervalButton {
+  font-weight: normal !important;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: $gray-darkest;
+  background-color: $gray-lightest;
+  padding: 0 10px;
+  height: 30px;
+  border-radius: 3px;
+  /* margin: 0 5px; */
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+    color: $teal;
+  }
+  &.active {
+    background: repeating-linear-gradient( 125deg, #efefef, #efefef 3px, #ddd 3px, #efefef 5px );
+  }
+}
+
+.divider {
+  height: 30px;
+  width: 1px;
+  margin: 0 5px;
+  background-color: $gray-light-shade;
+}
+
+.withCheckIcon {
+  color: $gray-darkest;
+  & .checkIcon {
+    /* opacity: 1 !important; */
+    display: block;
+  }
+}
+
+.liveTag {
+  cursor: pointer;
+  user-select: none;
+  height: 26px;
+  width: 56px;
+  border-radius: 3px;
+  background-color: $gray-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $gray-dark;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-right: 10px;
+  & svg {
+    fill: $gray-dark;
+  }
+  &[data-is-live=true] {
+    background-color: #42AE5E;
+    color: white;
+    & svg {
+      fill: white;
+      animation: fade 1s infinite;
+    }
+  }
+}

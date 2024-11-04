@@ -1,0 +1,385 @@
+#app {
+    padding: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+* {
+    border-color: #eeeeee;
+}
+
+.page {
+    padding-top: 50px;
+}
+
+.page-margin {
+    padding-top: 81px;
+}
+
+.container-fit {
+    margin: 0 30px 0px;
+}
+
+.container {
+    margin: 0 30px 30px;
+}
+
+@media only screen and (max-width: 1380px) {
+    .container-70 {
+        width: 90%;
+    }
+}
+
+@media only screen and (min-width: 1380px) {
+    .container-70 {
+        width: 1280px;
+    }
+}
+
+.container-70 {
+    position: relative;
+    margin: 0 auto;
+}
+
+.container-90 {
+    width: 98%;
+    margin: 0 auto;
+}
+
+.side-menu {
+    width: 250px;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-right: 20px;
+    position: fixed;
+    top: 81px;
+
+&
+::-webkit-scrollbar {
+    width: 0px;
+}
+
+&
+:hover {
+
+&
+::-webkit-scrollbar {
+    width: 0px;
+}
+
+}
+}
+.side-menu-margined {
+    margin-left: 250px;
+}
+
+.top-header {
+    margin-bottom: 25px;
+    /* border: dashed thin gray; */
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-title {
+    font-size: 22px;
+    margin-right: 15px;
+
+&
+> span {
+    font-weight: 300;
+}
+
+&
+.title {
+    margin-right: 15px;
+
+&
+span {
+    color: $ gray-medium;
+    font-weight: 300;
+}
+
+}
+}
+
+.page-title-flex {
+    display: flex;
+    align-items: center;
+}
+
+[data-hidden='true'] {
+    display: none !important;
+}
+
+[data-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.form-group {
+    margin-bottom: 25px;
+
+&
+label {
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+}
+
+.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.hover {
+
+&
+:hover {
+    background-color: $ active-blue;
+}
+
+}
+
+.hover-teal:hover {
+    background-color: $ active-blue;
+    color: $ teal;
+
+&
+svg {
+    fill: $ teal;
+}
+
+}
+
+.note-hover {
+    border: solid thin transparent;
+
+&
+:hover {
+    background-color: #FFFEF5;
+    border-color: $ gray-lightest;
+}
+
+}
+.note-hover-bg {
+
+&
+:hover {
+    background-color: #FFFEF5;
+}
+
+}
+
+.text-dotted-underline {
+    text-decoration: underline dotted !important;
+}
+
+
+.no-scroll {
+    height: 100vh;
+    overflow-y: hidden;
+    padding-right: 15px;
+}
+
+.json-view {
+    display: block;
+    color: #4d4d4d;
+    text-align: left;
+    --json-property: #009033;
+    --json-index: #676dff;
+    --json-number: #676dff;
+    --json-string: #b2762e;
+    --json-boolean: #dc155e;
+    --json-null: #dc155e;
+}
+.json-view .json-view--property {
+    color: var(--json-property);
+}
+.json-view .json-view--index {
+    color: var(--json-index);
+}
+.json-view .json-view--number {
+    color: var(--json-number);
+}
+.json-view .json-view--string {
+    color: var(--json-string);
+}
+.json-view .json-view--boolean {
+    color: var(--json-boolean);
+}
+.json-view .json-view--null {
+    color: var(--json-null);
+}
+
+.json-view .jv-indent {
+    padding-left: 1em;
+}
+.json-view .jv-chevron {
+    display: inline-block;
+    vertical-align: -20%;
+    cursor: pointer;
+    opacity: 0.4;
+    width: 1em;
+    height: 1em;
+}
+:is(.json-view .jv-chevron:hover, .json-view .jv-size:hover + .jv-chevron) {
+    opacity: 0.8;
+}
+.json-view .jv-size {
+    cursor: pointer;
+    opacity: 0.4;
+    font-size: 0.875em;
+    font-style: italic;
+    margin-left: 0.5em;
+    vertical-align: -5%;
+    line-height: 1;
+}
+
+.json-view :is(.json-view--copy, .json-view--edit),
+.json-view .json-view--link svg {
+    display: none;
+    width: 1em;
+    height: 1em;
+    margin-left: 0.25em;
+    cursor: pointer;
+}
+
+.json-view .json-view--input {
+    width: 120px;
+    margin-left: 0.25em;
+    border-radius: 4px;
+    border: 1px solid currentColor;
+    padding: 0px 4px;
+    font-size: 87.5%;
+    line-height: 1.25;
+    background: transparent;
+}
+.json-view .json-view--deleting {
+    outline: 1px solid #da0000;
+    background-color: #da000011;
+    text-decoration-line: line-through;
+}
+
+:is(.json-view:hover, .json-view--pair:hover) > :is(.json-view--copy, .json-view--edit),
+:is(.json-view:hover, .json-view--pair:hover) > .json-view--link svg {
+    display: inline-block;
+}
+
+.json-view .jv-button {
+    background: transparent;
+    outline: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+}
+.json-view .cursor-pointer {
+    cursor: pointer;
+}
+
+.json-view svg {
+    vertical-align: -10%;
+}
+.jv-size-chevron ~ svg {
+    vertical-align: -16%;
+}
+
+/* Themes */
+.json-view_a11y {
+    color: #545454;
+    --json-property: #aa5d00;
+    --json-index: #007299;
+    --json-number: #007299;
+    --json-string: #008000;
+    --json-boolean: #d91e18;
+    --json-null: #d91e18;
+}
+.json-view .jv-size {
+    opacity: 0.6!important;
+}
+.json-view_github {
+    color: #005cc5;
+    --json-property: #005cc5;
+    --json-index: #005cc5;
+    --json-number: #005cc5;
+    --json-string: #032f62;
+    --json-boolean: #005cc5;
+    --json-null: #005cc5;
+}
+.json-view_vscode {
+    color: #005cc5;
+    --json-property: #0451a5;
+    --json-index: #0000ff;
+    --json-number: #0000ff;
+    --json-string: #a31515;
+    --json-boolean: #0000ff;
+    --json-null: #0000ff;
+}
+.json-view_atom {
+    color: #383a42;
+    --json-property: #e45649;
+    --json-index: #986801;
+    --json-number: #986801;
+    --json-string: #50a14f;
+    --json-boolean: #0184bc;
+    --json-null: #0184bc;
+}
+.json-view_winter-is-coming {
+    color: #0431fa;
+    --json-property: #3a9685;
+    --json-index: #ae408b;
+    --json-number: #ae408b;
+    --json-string: #8123a9;
+    --json-boolean: #0184bc;
+    --json-null: #0184bc;
+}
+
+.react-daterange-picker__wrapper {
+    display: none!important;
+}
+.react-daterange-picker__calendar {
+    position: relative!important;
+    inset: 0!important;
+}
+
+.dateRangeContainer .react-calendar{
+    border: none;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dateRangeContainer  .react-calendar__tile--active{
+    background-color: rgba(57, 77, 254,.7);
+}
+
+.dateRangeContainer .react-calendar__tile--hasActive, .dateRangeContainer .react-calendar__tile--active:hover, .dateRangeContainer .react-calendar__tile--active:enabled:hover, .dateRangeContainer .react-calendar__tile--active:enabled:focus, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:hover, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:focus{
+    background-color: #394dfe;
+    color: #FFF;
+}
+
+.dateRangeContainer .react-calendar__tile--hasActive:hover{
+    background-color: #394dfe;
+    cursor: default;
+}
+
+.dateRangeContainer  .react-calendar button{
+    border: 1px solid #fff;
+    border-radius: .5rem;
+}
+
+.dateRangeContainer abbr{
+    text-decoration: none;
+}
+
+.dateRangeContainer  textarea:focus, .dateRangeContainer  input:not(.ant-input-number-input, .ant-input, .nofocus):focus{
+    border:none;
+}
+
+.react-daterange-picker__calendar--open {
+    display: unset!important;
+    height: 100%!important;
+}
+  

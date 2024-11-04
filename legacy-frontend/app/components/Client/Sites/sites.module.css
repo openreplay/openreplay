@@ -1,0 +1,58 @@
+@import 'mixins.css';
+
+.tabHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+
+  & .tabTitle {
+    margin: 0 15px 0 0;
+    font-weight: 400 !important;
+  }
+}
+
+.site {  
+  padding: 15px 10px;
+  border-bottom: solid thin $gray-light-shade;
+
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    & .actions button {
+      display: unset;
+      opacity: 1 !important;
+    }
+  }
+
+  & .actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    & > * {
+      margin-left: 15px;
+    }
+
+      & button {
+        &:disabled {
+          opacity: 0.3;
+        }
+      }
+
+      & button:not(:last-child) {
+        opacity: 0;
+      }
+  }
+}
+
+
+.label {
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 3px;
+  background-color: $gray-lightest;
+  font-size: 12px;
+  border: solid thin $gray-light;
+}

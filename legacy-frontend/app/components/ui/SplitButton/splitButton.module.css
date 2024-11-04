@@ -1,0 +1,16 @@
+.left {
+  margin: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border: solid thin $teal !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}
+
+.right {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  box-shadow: none !important;
+  border: solid thin $teal !important;
+  padding: 0 12px !important;
+}

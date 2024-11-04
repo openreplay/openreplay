@@ -1,0 +1,32 @@
+.form-field > label {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: '#888';
+}
+
+.capitalize-first::first-letter {
+    text-transform: uppercase;
+}
+
+input.no-focus:focus {
+    outline: none !important;
+    border: solid thin transparent !important;
+}
+
+.widget-wrapper {
+    @apply rounded-lg shadow-sm border bg-white;
+}
+
+@layer base {
+  img {
+    @apply inline-block;
+  }
+}
+
+.lucide {
+  stroke-width: 1.5px;
+}
+
+.ant-pagination-simple-pager input {
+  min-width: 80px;
+}

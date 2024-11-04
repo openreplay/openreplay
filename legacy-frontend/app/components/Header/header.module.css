@@ -1,0 +1,165 @@
+@import 'icons.css';
+@import "zindex.css";
+
+$height: 50px;
+
+.header {
+  /* position: fixed; */
+  /* width: 100%;   */
+  /* display: flex; */
+  /* justify-content: space-between;   */
+  border-bottom: solid thin $gray-light;
+  /* padding: 0 15px; */
+  /* background: $white; */
+  z-index: $header;
+}
+
+.nav {
+  position: relative;
+  margin: 0 15px;
+  padding: 0 10px;
+  height: $height;
+  line-height: $height;
+  font-size: 16px;
+  font-weight: 500;
+  color: $gray-darkest;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: all .2s ease-in-out;
+  &:hover, &.active {
+    color: $teal;
+    border-bottom: 2px solid $teal;
+    transition: all .2s ease-in-out;
+  }
+  position: relative;
+}
+
+.logo {
+  background-image: svg-load('logo-small.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+  height: $height;
+  width: 30px;
+  margin-right: 15px;
+}
+
+.right {
+  /* margin-left: auto; */
+  position: relative;
+  cursor: default;
+  display: flex;
+
+  & > .menuItem {
+    height: $height;
+    width: 50px;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: solid thin $gray-light;
+    
+    position: relative;
+
+    & .dropdown {
+      position: absolute;
+      right: 0;
+      top: $height;
+    }
+  }
+}
+
+.userDetails {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 14px;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+    & ul {
+      display: block;
+    }
+  }  
+  & ul {
+    display: none;
+    position: absolute;
+    list-style: none;
+    right: -15px;
+    top: 50px;
+    left: -1px;
+    background: $white;
+    z-index: 1;
+  }
+  & li {
+    border: 1px solid $gray-light;
+    border-top: none;
+    &:first-child {
+      border-top: 1px solid $gray-light;
+    }
+  }
+  /* & a, & button {
+    color: $gray-darkest;
+    display: block;
+    cursor: pointer;
+    width: 100%;    
+    padding: 10px 15px;
+    text-align: left;
+    font-size: 14px;
+    &:hover {
+      background-color: $gray-lightest;
+    }
+  } */
+}
+
+.userIcon {
+  @mixin icon user-circle, $gray-dark;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.headerIcon {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;  
+  height: 49px;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: $gray-lightest;
+    transition: all 0.2s;
+  }
+
+  &[data-active=true] {
+    background-color: $gray-lightest;
+  }
+}
+
+.divider {
+  width: 1px;
+  background-color: $gray-light;  
+}
+
+.placeOnTop {
+  z-index: 9999;
+}
+
+.newBadge {
+  position: absolute;
+  height: 14px;
+  width: 28px;  
+  background-image: linear-gradient(40deg, #6051FF 0%, #FF693B 100%);
+  border-radius: 3px;
+  font-size: 9px;
+  line-height: 15px;
+  color: white;
+  text-align: center;
+  right: -22px;
+  top: 10px;
+}

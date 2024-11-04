@@ -1,0 +1,10 @@
+.searchField {
+  box-shadow: none !important;
+  & input {
+    box-shadow: none !important;
+    border-radius: 3 !important;
+    border: solid thin $gray-light !important;    
+    height: 34px !important;
+    font-size: 16px;
+  }
+}

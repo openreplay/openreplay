@@ -1,0 +1,135 @@
+.wrapper {
+  position: relative;
+}
+
+.button {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;  
+  height: 50px;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: $gray-lightest;
+    transition: all 0.2s;
+  }
+
+  &[data-active=true] {
+    background-color: $gray-lightest;
+  }
+}
+
+.counter {
+  position: absolute;
+  top: 8px;
+  left: 24px;
+  background-color: #CC0000;
+  color: white;
+  font-size: 9px;
+  font-weight: 300;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+}
+
+.list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.dropdown {
+  min-width: 300px;  
+  border-radius: 5px;  
+  background-color: white;
+  box-shadow: 0 2px 10px 0 $gray-light;
+  position: absolute;
+  right: -40px;
+  top: 65px;
+
+  & .tooltipArrow {
+    width: 50px;
+    height: 25px;
+    position: absolute;
+    bottom: 100%;
+    right: 15px;
+    transform: translateX(-50%);
+    overflow: hidden;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      transform: translateX(-50%) translateY(50%) rotate(45deg);
+      bottom: 0;
+      left: 50%;
+      box-shadow: 2px 2px 6px 0px rgba(0,0,0,0.6);
+    }
+  }
+
+  & .header {
+    padding: 10px 15px;
+    border-bottom: solid thin $gray-light;
+    font-weight: 500;
+    box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.1);
+  
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    & > div:first-child {      
+      font-size: 16px;
+    }
+  
+    & .closeButton {
+      cursor: pointer;
+    }
+
+    & .right {
+      display: flex;
+      align-items: center;
+    }
+  }
+  
+  & .content {
+    max-height: 300px;
+    overflow-y: auto;
+  
+    &::-webkit-scrollbar {
+      width: 4px;
+      margin-right: 10px;
+    }
+
+    & .emptyBox {
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $gray-medium;
+    }
+  }
+
+  & .footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    height: 40px;
+
+    border-top: solid thin $gray-light;    
+    box-shadow: 0 -1px 10px 0 rgba(0, 0, 0, 0.05);
+    color: $teal;
+    cursor: pointer;
+
+    & span:last-child {
+      line-height: 1px;
+    }
+  }
+}

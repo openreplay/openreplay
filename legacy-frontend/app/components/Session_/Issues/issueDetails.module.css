@@ -1,0 +1,8 @@
+.activitiesList {
+  max-height: calc(100vh - 186px);
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}

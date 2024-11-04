@@ -1,0 +1,31 @@
+
+
+.info {
+	padding-left: 10px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  & >.infoPoint {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    &:not(:last-child):after {
+      content: '';
+      margin: 0 12px;
+      height: 30px;
+      border-right: 1px solid $gray-light-shade;
+    }
+    & .label {
+      font-weight: 500;
+      margin-right: 6px;
+    }
+  }
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+

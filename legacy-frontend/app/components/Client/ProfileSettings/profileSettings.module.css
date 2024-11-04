@@ -1,0 +1,19 @@
+
+.left {
+  padding: 40px;
+  width: 320px;
+  & .info {
+    color: $gray-medium;
+  }
+}
+
+.form {
+  margin-top: 30px;
+  width: 350px;
+}
+
+.passwordPolicy {
+  color: $gray-medium;
+  padding: 5px 0 10px;
+  font-size: 13px;
+}

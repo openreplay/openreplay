@@ -1,0 +1,12 @@
+.navButtons {
+	position: absolute;
+
+	background: rgba(255, 255, 255, 0.5);
+	padding: 4px;
+
+	right: 24px;
+	top: 8px;
+	z-index: 1;
+}
+
+

@@ -1,0 +1,4 @@
+.link[disabled] {
+  pointer-events: none;
+  opacity: .3
+}

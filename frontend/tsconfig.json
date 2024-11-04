@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    // Enable absolute paths
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     // Enable latest features
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",

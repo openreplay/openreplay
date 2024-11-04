@@ -1,0 +1,37 @@
+
+
+.field {
+  &:not(:last-child) {
+    border-bottom: solid thin $gray-light-shade;
+  }
+  /* padding: 10px 20px; */
+}
+
+.key {
+  color: $gray-medium;
+  font-weight: 500;
+}
+
+.searchResultsHeader {
+  & span {
+    padding: 4px 8px;
+    font-size: 18px;
+    background-color: $gray-lightest;
+    border: solid thin $gray-light;
+    margin-left: 10px;
+    border-radius: 3px;
+  }
+}
+
+.searchButton  {
+  border-radius: 3px;
+  height: 30px !important;
+  width: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  &:hover {
+    background-color: $gray-lightest !important;
+  }
+}

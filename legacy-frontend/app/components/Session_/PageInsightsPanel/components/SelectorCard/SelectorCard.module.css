@@ -1,0 +1,44 @@
+.wrapper {
+  padding: 10px;
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+  border-radius: 3px;  
+  background-color: $gray-lightest;
+  margin-bottom: 15px;
+
+  & .top {
+    display: flex;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  & .index {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: $tealx;
+    flex-shrink: 0;    
+    border: solid thin white;
+    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+  }
+
+  & .counts {
+    text-align: center;    
+    padding: 5px;
+    margin: 20px 0;
+
+    & div:first-child {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }    
+  }
+}
+
+.active {
+  background-color: $light-blue-bg;
+}

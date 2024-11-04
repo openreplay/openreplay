@@ -1,0 +1,35 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  width: 150px;
+
+  & .inputWrapper {
+    position: relative;
+    margin-right: 5px;
+
+    & input {
+      background-color: white;
+      border-radius: 15px !important;
+      padding: 4px;
+      border: solid thin $gray-light;
+      padding-left: 25px !important;
+      width: 120px;
+      height: 25px;
+    }
+  
+    & div {
+      z-index: 99;
+      background-color: $gray-lightest;
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      bottom: 1px;
+      width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top-left-radius: 15px;
+      border-bottom-left-radius: 15px;
+    }
+  }
+}

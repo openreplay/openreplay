@@ -1,0 +1,19 @@
+.modal {
+  width: 400px;
+  z-index: 999;
+}
+
+.buttonWrapper {
+  display: flex;
+  align-items: center;
+  /* &:hover {
+    background-color: white;
+  } */
+}
+.button {
+  height: 36px !important;
+  display: flex !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
+}

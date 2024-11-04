@@ -1,0 +1,38 @@
+.playerBody {
+  background: $white;
+  height: 100%;
+}
+
+.screenWrapper {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  /* border: solid thin $gray-light; */
+  /* border-radius: 3px; */
+  overflow-y: scroll;
+}
+
+.checkers {
+  background: repeating-linear-gradient(135deg, #f3f3f3, #f3f3f3 1px, #f6f6f6 1px, #FFF 4px);
+}
+.solidBg {
+  background: $gray-lightest;
+}
+
+.mobileScreenWrapper {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  background: #F6F6F6;
+}
+
+.disconnected {
+  font-size: 40px;
+  font-weight: 200;
+  color: $gray-medium;
+}
+
+.playerView {
+  position: relative;
+  flex: 1;
+}

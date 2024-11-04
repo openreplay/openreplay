@@ -1,0 +1,20 @@
+.header {
+  height: 50px;
+  border-bottom: solid thin $gray-lighter;
+  padding-right: 0;
+  background-color: white;
+}
+
+.divider {
+  width: 1px;
+  height: 49px;
+  margin: 0 10px;
+  background-color: $gray-lighter;
+}
+
+.liveSwitchButton {
+  cursor: pointer;
+  color: $green;
+  text-decoration: underline;
+  white-space: nowrap;
+}

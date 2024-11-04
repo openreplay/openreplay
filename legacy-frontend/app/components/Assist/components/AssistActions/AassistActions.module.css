@@ -1,0 +1,11 @@
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.divider {
+  width: 1px;
+  height: 49px;
+  margin: 0 10px;
+  background-color: $gray-light;
+}

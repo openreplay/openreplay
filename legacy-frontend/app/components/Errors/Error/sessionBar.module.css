@@ -1,0 +1,10 @@
+.wrapper {
+  color: $gray-medium;
+  &:hover {
+    background-color: $active-blue !important;
+    color: $gray-medium !important;
+  }
+  & > div {
+    background-color: transparent !important;
+  }
+}

@@ -1,0 +1,58 @@
+.tabHeader {  
+  margin-bottom: 25px;
+
+  & .tabTitle {
+    margin: 0 15px 0 0;
+    font-weight: 400 !important;
+  }
+  & .subText {
+    font-weight: 300;
+    color: $gray-medium;
+    padding: 5px 0;
+  }
+  & .divider {
+    height: 1px;
+    background-color: #DDDDDD;
+  }
+}
+
+.sectionTitle {
+  margin: 10px 15px 15px 0;
+  font-weight: 400 !important;
+  display: flex;
+  align-items: center;
+  &>span:first-child {
+  	padding-right: 10px;
+  };
+}
+
+.message {
+	color: $gray-light;
+	display: inline;
+	padding-left: 20px;
+}
+
+.applicable {
+  padding-left: 15px;
+  font-size: 11px;
+  color: $gray-light;
+}
+
+.requestNew {
+  min-width: 135px;
+  color: $gray-medium;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.content {
+  display: flex;
+  flex-wrap: wrap;  
+  & > div {
+    margin-bottom: 20px;
+    margin-right: 20px;
+  }  
+}

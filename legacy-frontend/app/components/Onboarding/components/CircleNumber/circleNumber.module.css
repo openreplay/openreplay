@@ -1,0 +1,13 @@
+.number {
+  width: 24px;
+  height: 24px;
+  background-color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: white;
+  font-size: 12px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}

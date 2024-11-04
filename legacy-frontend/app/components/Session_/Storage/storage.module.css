@@ -1,0 +1,16 @@
+
+.button {
+  padding: 3px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: $gray-light;
+  &:hover {
+    background-color: $gray-lightest;
+    transition: all 0.2s;
+    color: $gray-darkest;
+  }
+
+  font-size: 12px;
+
+  margin-right: 5px;
+}

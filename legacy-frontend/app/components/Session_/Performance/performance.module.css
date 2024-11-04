@@ -1,0 +1,7 @@
+.tooltipWrapper {
+	background: white;
+	padding: 2px 5px;
+	border-radius: 3px;
+	border: 1px solid #ccc;
+	color: $gray-dark !important;
+}

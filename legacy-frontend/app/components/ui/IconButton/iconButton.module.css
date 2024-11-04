@@ -1,0 +1,159 @@
+
+@import 'icons.css';
+@import 'mixins.css';
+
+.button {
+  padding: 0px 0.75rem;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 36px;
+  font-size: 14px;
+  border: none;
+
+  &:disabled,
+  &[disabled] {
+    opacity: 0.5 !important;
+  }
+
+  &.marginRight {
+    margin-right: 10px;
+  }
+
+  &.buttonSmall {
+    height: 23px;
+    font-size: 12px;
+    padding: 0px 10px;
+  }
+
+  &.circle {
+    border-radius: 50%;
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  &.shadow {
+    @mixin shadow-light;
+  }
+
+  &.small {
+    padding: 0px 12px;
+    height: 28px;
+    width: 28px;
+    font-size: 12px;
+
+    & .label {
+      margin-left: 4px;
+      line-height: 2px;
+    }
+  }
+
+  &.hasLabel {
+    width: fit-content;
+  }
+  
+  &.compact {
+    padding: 0 8px;
+  }
+
+  &.tiny {
+    padding: 0 2px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  &.primary {
+    background-color: $teal;
+    box-shadow: 0 0 0 1px $teal inset !important;
+  
+    & .icon {
+      fill: white;
+    }
+
+    & svg {
+      fill: white;
+    }
+
+    & .label { 
+      color: white !important;
+    }
+
+    &:hover {
+      background-color: $teal-dark;
+    }
+  }
+
+  &.red {
+    background-color: $red;
+    box-shadow: 0 0 0 1px $red inset !important;
+  
+    & .icon {
+      fill: white;
+    }
+
+    & svg {
+      fill: white;
+    }
+
+    & .label { 
+      color: white !important;
+    }
+
+    &:hover {
+      background-color: $red;
+      filter: brightness(90%);
+    }
+  }
+
+  &.outline {
+    box-shadow: 0 0 0 1px $teal inset !important;
+    & .label {
+      color: $teal;
+    }
+    &:hover {
+      background-color: $active-blue !important;
+    }
+  }
+  
+  &.plain {
+    background-color: transparent !important;
+    color: $teal !important;
+    box-shadow: none !important;
+    padding: 0 10px !important;
+    &:hover {
+      background-color: $active-blue;
+    }
+  }
+
+  & .label {
+    white-space: nowrap;
+    color: $gray-dark;
+  }
+
+  &:hover {
+    background-color: $active-blue;
+  }
+
+  &roundedOutline {
+    border-radius: 15px;
+    box-shadow: 0 0 0 1px rgba(62,170,175,1) inset !important;
+    color: $teal;
+  }
+}
+
+.primaryText .label {
+  color: $teal !important;
+}
+
+.redText {
+  & .label {
+    color: $red !important;
+  }
+
+  & svg {
+    fill: $red;
+  }
+}

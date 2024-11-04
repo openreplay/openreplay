@@ -1,0 +1,29 @@
+.controls {
+  height: 38px;
+  /* margin-top: 5px; */
+  /* background-color: white; */
+  /* border-top: solid thin #CCC; */
+}
+
+.btnWrapper {  
+  display: flex;
+  align-items: center;
+  height: 24px;
+  font-size: 12px;
+  color: $gray-medium;
+
+  &.disabled {
+    /* background-color: red; */
+    & svg {
+      fill: $red;
+    }
+  }
+}
+
+.endButton {
+  background-color: $red;
+  border-radius: 3px;
+  padding: 2px 8px;
+  color: white;
+  font-size: 12px;
+}

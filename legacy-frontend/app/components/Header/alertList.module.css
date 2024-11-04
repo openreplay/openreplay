@@ -1,0 +1,15 @@
+.detailContent {
+  width: 400px;
+  padding: 20px;
+
+  background-color: rgba(242, 242, 242, 1);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+
+  & .title {
+      font-size: 20px;
+      margin-bottom: 25px;
+  }
+}

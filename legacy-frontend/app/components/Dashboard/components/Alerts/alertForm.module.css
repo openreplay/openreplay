@@ -1,0 +1,27 @@
+.wrapper {
+  position: relative;
+}
+
+.content {
+  height: calc(100vh - 102px);
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+  }
+}

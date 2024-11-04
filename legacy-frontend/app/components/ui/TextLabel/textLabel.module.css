@@ -1,0 +1,12 @@
+.sessionLabel {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px; 
+  & > div:last-child {
+    min-height: 16px;
+    margin-left: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

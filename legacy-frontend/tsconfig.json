@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "target": "es6",
+    "allowJs": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "noEmit": true,
+    "jsx": "react",
+    // "baseUrl": ".",
+    "paths": {
+      "Shared/*": ["./app/components/shared/*"],
+      "App/*": ["./app/*"],
+      "Components/*": ["./app/components/*"],
+      "UI/*": ["./app/components/ui/*"],
+      "UI": ["./app/components/ui"],
+      "Player/*": ["./app/player/*"],
+      "Player": ["./app/player"],
+      "HOCs/*": ["./app/components/hocs/*"],
+      "Types/*": ["./app/types/*"],
+      "Duck/*": ["./app/duck/*"],
+      "MOBX/*": ["./app/mstore/*"],
+    }
+  },
+  "include": ["app"]
+}

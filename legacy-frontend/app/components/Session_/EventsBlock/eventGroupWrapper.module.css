@@ -1,0 +1,33 @@
+.first {
+  /* padding-top: 7px; */
+  border-radius: 0;
+}
+
+.last {
+  padding-bottom: 2px;
+  margin-bottom: 5px;
+  /* border-bottom: 1px solid $gray-lightest; */
+}
+
+.dashAfter {
+  margin-bottom: 0.8rem;
+}
+
+.referrer {
+  font-size: 14px;
+  color: $gray-dark;
+  font-weight: 500 !important;
+  display: flex;
+  align-items: center;
+  max-width: 280px;
+  margin: 0 14px;
+  margin-bottom: 5px;
+  & .url {
+    margin-left: 5px;
+    font-weight: 300;
+    color: $gray-medium;
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

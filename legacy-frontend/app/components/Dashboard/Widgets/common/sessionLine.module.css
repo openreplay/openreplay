@@ -1,0 +1,30 @@
+.wrapper {
+	padding: 12px 0 8px;
+	margin: 0 5px;
+  border-bottom: 1px solid $gray-light;
+}
+
+.info {
+  font-size: 15px;
+}
+
+.subInfo {
+  color: $gray-medium;
+  font-size: 12px;
+}
+
+.link {
+  position: absolute;
+  right: 0;
+  opacity: 0;
+}
+
+.wrapper:hover {
+	& .link {
+		opacity: 1;
+	}
+}
+
+.ellipsisWrapper {
+  overflow: hidden;
+}

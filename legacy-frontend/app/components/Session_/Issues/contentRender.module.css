@@ -1,0 +1,32 @@
+
+
+.codeMirror > div {
+    border: 1px solid #eee;
+    height: auto;
+}
+
+.para {
+    padding: 3px 0;
+}
+.mention {
+    font-weight: 500;
+    margin-right: 5px;
+}
+
+.quote {
+    padding: 5px;
+    padding-left: 10px;
+    border-left: solid 2px $gray-light;
+    color: $gray-dark;
+    margin: 5px 0;
+    margin-left: 10px;
+}
+
+.code {
+    background-color: lightgray;
+    padding: 2px 5px;
+}
+
+.rule {
+    margin: 6px 0;
+}

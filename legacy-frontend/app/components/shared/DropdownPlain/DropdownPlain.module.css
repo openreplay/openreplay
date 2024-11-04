@@ -1,0 +1,26 @@
+.dropdown {
+  display: flex !important;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 3px;
+  color: $gray-darkest;
+  font-weight: 500;
+  background-color: white;
+  border: solid thin $gray-light;
+  &:hover {
+    background-color: $gray-light;
+  }
+}
+
+.dropdownTrigger {
+  padding: 4px;
+  border-radius: 3px;
+  &:hover {
+    background-color: $gray-light;
+  }
+}
+
+.dropdownIcon {
+  margin-top: 2px;
+  margin-left: 3px;
+}

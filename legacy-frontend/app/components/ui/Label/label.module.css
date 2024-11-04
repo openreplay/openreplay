@@ -1,0 +1,22 @@
+.label {
+  font-weight: 500 !important;
+  
+  & > div {
+    display: flex;
+    align-items: center;
+  }
+
+  &[data-rounded] {
+    border-radius: 16px;
+  }
+
+  &[data-red = true] {
+    color: $red !important;
+    background-color: rgba(204, 0, 0, 0.1);
+  }
+
+  &[data-green = true] {
+    color: #12722A !important;  
+    background-color: rgba(60, 180, 0, 0.1);
+  }
+}

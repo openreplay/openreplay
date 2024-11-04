@@ -1,0 +1,45 @@
+
+@import 'icons.css';
+
+.badge {
+  padding: 2px 10px;
+  border-radius: 15px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  height: 29px;
+  margin-right: 8px;
+  font-weight: 300;
+  user-select: none;
+  /* text-transform: capitalize; */
+  color: $gray-dark !important;
+
+  &[data-outline=true] {
+    box-shadow: 0 0 0 1px $gray-light inset;
+    backgorund-color: white;
+  }
+
+  &:hover {
+    background-color: $active-blue;
+  }
+  
+  & button {
+    margin-left: 2px;
+    margin-right: -5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    & .closeIcon {
+      @mixin icon close, $gray-medium, 13px;
+    }
+  }
+
+  &[data-hashed=true]:before {
+      content: '#';
+      margin-right: 1px;
+  }
+}

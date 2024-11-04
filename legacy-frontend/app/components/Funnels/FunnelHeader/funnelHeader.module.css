@@ -1,0 +1,30 @@
+.dropdown {
+  display: flex !important;
+  align-items: center;
+  padding: 0 20px;
+  border-radius: 0;  
+  border-radius: 0;
+  color: $gray-darkest;
+  font-weight: 500;
+  height: 54px;
+  padding-right: 20px;
+  border-right: solid thin #eee;
+  border-bottom-left-radius: 3px;
+  border-top-left-radius: 3px;
+  &:hover {
+    background-color: $gray-lightest;
+  }
+}
+
+.dropdownTrigger {
+  padding: 4px 8px;
+  border-radius: 3px;
+  &:hover {
+    background-color: $gray-light;
+  }
+}
+
+.dropdownIcon {  
+  margin-top: 4px;
+  margin-left: 6px;
+}

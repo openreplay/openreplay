@@ -1,0 +1,55 @@
+.maps {
+    height: auto;
+    width: 110%;
+    stroke: $gray-medium;
+	stroke-width: 1;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+    margin-top: -20px;
+}
+
+.location {
+    fill: $gray-light !important;
+    cursor: pointer;
+    stroke: #fff;
+
+    &:focus,
+    &:hover {
+        fill: #2E3ECC !important;
+        outline: 0;
+    }
+}
+
+.heat_index0 {
+    fill:$gray-light !important;
+}
+
+.heat_index5 {
+    fill: #B0B8FF !important;
+}
+
+.heat_index4 {
+    fill:#6171FF !important;
+}
+
+.heat_index3 {
+    fill: #394EFF !important;
+}
+
+.heat_index2 {
+    fill: #2E3ECC !important;
+}
+
+.heat_index1 {
+    fill: #222F99 !important;
+}
+
+.tooltip {
+    position: fixed;
+    padding: 5px;
+    border: 1px solid $gray-light;
+    border-radius: 3px;
+    background-color: white;
+    font-size: 12px;
+    line-height: 1.2;
+}

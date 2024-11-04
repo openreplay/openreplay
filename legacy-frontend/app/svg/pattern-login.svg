@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="840px" height="1024px" viewBox="0 0 840 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>pattern-login</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="840" height="1024"></rect>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Clipped">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <g id="path-1"></g>
+            <g id="Group" opacity="0.100000001" mask="url(#mask-2)">
+                <g transform="translate(-624.000000, -238.000000)">
+                    <polygon id="Fill-1" fill="#059FE2" fill-rule="nonzero" points="1647.5382 1500.0002 1896.3642 1500.0002 1063.3382 750.9482"></polygon>
+                    <polygon id="Fill-2" fill="#F7931E" fill-rule="nonzero" points="0 452.8862 1061.461 749.5762 0 140.9242"></polygon>
+                    <polygon id="Fill-3" fill="#24B7EA" fill-rule="nonzero" points="2124.9216 1359.0773 2124.9216 1047.1143 1063.4596 750.4243"></polygon>
+                    <polygon id="Fill-4" fill="#FF0000" fill-rule="nonzero" points="0 1359.3725 0 1500.0005 228.206 1500.0005 1061.51 750.6965"></polygon>
+                    <polygon id="Fill-5" fill="#2E3192" fill-rule="nonzero" points="1200.6306 1500.0002 1278.9106 1500.0002 1062.8546 751.6762"></polygon>
+                    <polygon id="Fill-6" fill="#0071BC" fill-rule="nonzero" points="1371.3291 1500.0002 1487.3321 1500.0002 1063.1281 751.3802"></polygon>
+                    <polygon id="Fill-7" fill="#161E7F" fill-rule="nonzero" points="1062.5409 1500.0002 1129.6909 1500.0002 1062.5419 751.8092"></polygon>
+                    <polygon id="Fill-8" fill="#C1272D" fill-rule="nonzero" points="477.657 1500.0002 637.363 1500.0002 1061.679 751.1782"></polygon>
+                    <polygon id="Fill-9" fill="#FC4D17" fill-rule="nonzero" points="0 1046.8286 1061.434 750.1426 1004.638 750.1416 0 750.1396"></polygon>
+                    <polygon id="Fill-10" fill="#662D91" fill-rule="nonzero" points="924.4593 1500.0002 995.0683 1500.0002 1062.2203 751.7642"></polygon>
+                    <polygon id="Fill-11" fill="#FCEE21" fill-rule="nonzero" points="637.5906 0 1061.7926 748.617 753.5926 0"></polygon>
+                    <polygon id="Fill-12" fill="#8CC63F" fill-rule="nonzero" points="995.2317 0 1062.3797 748.188 1062.3807 0"></polygon>
+                    <polygon id="Fill-13" fill="#22B573" fill-rule="nonzero" points="1896.7148 0 1063.4088 749.308 2124.9218 140.629 2124.9218 0"></polygon>
+                    <polygon id="Fill-14" fill="#006837" fill-rule="nonzero" points="1487.5587 0 1063.2427 748.821 1647.2657 0"></polygon>
+                    <polygon id="Fill-15" fill="#12C623" fill-rule="nonzero" points="1129.8528 0 1062.7008 748.232 1200.4618 0"></polygon>
+                    <polygon id="Fill-16" fill="#9E005D" fill-rule="nonzero" points="753.7905 1500.0002 845.8295 1500.0002 1061.9225 751.5512"></polygon>
+                    <polygon id="Fill-17" fill="#D9E021" fill-rule="nonzero" points="846.0108 0 1062.0668 748.321 924.2898 0"></polygon>
+                    <polygon id="Fill-18" fill="#009245" fill-rule="nonzero" points="1279.0917 0 1062.9987 748.453 1371.1307 0"></polygon>
+                    <polygon id="Fill-19" fill="#00A99D" fill-rule="nonzero" points="1063.4877 749.8574 2124.9217 749.8594 2124.9217 453.1724"></polygon>
+                    <polygon id="Fill-20" fill="#FBB03B" fill-rule="nonzero" points="228.5586 0 1061.5826 749.05 477.3836 0"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

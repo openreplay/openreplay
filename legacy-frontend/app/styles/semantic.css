@@ -1,0 +1,348 @@
+@import 'icons.css';
+
+.ui.dropdown .menu {
+  z-index: 1900;
+}
+.ui.dropdown .menu>.item {
+  color: #454545;
+}
+.customDropdownSmall {
+  min-width: 70px !important;
+}
+
+.customDropdown {
+  min-height: 0 !important;
+  height: 30px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  font-weight: normal !important;
+}
+.ui.selection.active.customDropdown .menu {
+  border-color: $teal !important;
+}
+.ui.search.customDropdown>input.search,
+.ui.search.customDropdown>input.search,
+.ui.search.customDropdown.active>input.search, 
+.ui.search.customDropdown.visible>input.search {
+  padding: 6px !important;
+}
+
+.ui.customDropdown>.text,
+.ui.search.customDropdown>.text {
+  max-width: 90% !important;
+  overflow: hidden !important;
+  white-space: nowrap;
+  text-overflow: ellipsis !important;
+}
+.ui.selection.customDropdown>.dropdown.icon {
+  top: 5px !important;
+}
+
+.ui.selection.customDropdown>.search.icon {
+  padding: 6px !important;
+}
+
+.customLightDropdown {
+  min-height: 0 !important;
+  height: 37px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+  font-weight: normal !important;
+  color: $gray-dark !important;
+  border: solid thin $gray-light !important;
+}
+.ui.selection.active.customLightDropdown .menu {
+  border-color: $teal !important;
+}
+.ui.selection.customLightDropdown>.dropdown.icon {
+  top: 8px !important;
+}
+.ui.selection.customLightDropdown:focus {
+  border-color: $teal !important;
+}
+
+.ui.modal>.header {
+  border-bottom: none !important;
+  box-shadow: 0px 1px 3px 0 rgba(0, 0, 0, 1) !important;
+}
+
+.ui.modal>.content {
+  background-color: $gray-lightest;
+}
+
+.ui.modal>.actions {
+  background-color: #FFF !important;
+  border-top: none !important;
+  text-align: left !important;
+}
+
+.ui.input input {
+  padding: 8.5px !important;
+}
+
+.ui.form .field {
+  margin-bottom: 25px;
+}
+.ui.form .field>label {
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+.ui.searchDropdown .menu>.item {
+  padding: 0 !important;
+  border-bottom: solid thin $gray-lightest !important;
+}
+
+.ui.searchDropdown {
+  & .ui.dropdown {
+    height: 46px !important;
+  }
+  & .ui.input {
+    width: 100% !important;
+    height: 46px !important;
+    font-size: 16px !important;
+
+    & input {
+      border: none !important;
+      border-radius: 0;
+    }
+  }
+  &.small .ui.input {
+    height: 36px !important;
+  }
+  & .menu {
+    width: 100%;
+
+    & .header {
+      color: $gray-medium;
+    }
+    
+    & > .item {
+      padding: 0 !important;
+      color: $gray-dark;
+      &:hover {
+        background-color: $active-blue !important;
+      }
+    }
+  }
+}
+
+.ui.customCheckbox {
+  z-index: 1;
+}
+.ui.customCheckbox label { 
+  color: $gray-darkest; 
+  font-weight: 400;
+}
+
+.ui.customCheckbox label:after {
+  font-size: 12px !important;
+  color: $teal !important;
+}
+
+.ui.radio.customCheckbox input:checked~label:after {
+  background-color: $teal !important;
+}
+
+.ui.toggle.customCheckbox label:before {
+  width: 44px;
+  height: 27px;
+}
+
+.ui.toggle.customCheckbox {
+  & input~label:after {
+    top: 1px;
+    left: 1px;
+    width: 25px;
+    height: 25px;
+    @mixin icon check, $gray-light;
+    background-size: 15px 15px !important;
+    padding: 5px;
+  }
+
+  & input:checked~label:after {
+    left: 18px;
+    @mixin icon check, $tealx;
+    background-size: 15px 15px !important;
+  }
+}
+
+.ui.toggle.checkbox input:checked~.box:before, 
+.ui.toggle.checkbox.customCheckbox input:checked~label:before {
+  background-color: $tealx !important;
+}
+
+.customInput {
+  height: 29px;
+
+  & .ui.label {
+    font-weight: 300 !important;
+    padding: 7px 10px !important;            
+  }
+}
+
+.ui.input input,
+.ui.button {
+  font-family: 'Roboto', 'ArialMT', 'Arial' !important;
+}
+.ui.small.button {
+  height: 32px !important;
+  padding: 5px 10px !important;
+}
+
+.ui.smallest.button {
+  height: 26px !important;
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+}
+
+.ui.button:disabled {
+  cursor: not-allowed !important;
+}
+
+.ui.button.copy-button {
+  background-color: #ffff !important;
+  box-shadow: inset 0px 0px 0px 1px #ddd;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.ui.selection.dropdown>.search.icon {
+  padding: 10px;
+}
+
+.input-small {
+  height: 30px !important;
+}
+
+.customPopupText {
+  font-family: 'menlo', 'monaco', 'consolas', monospace !important;
+  letter-spacing: -.04em;
+  font-size: .9rem;
+}
+
+.ui.styled.accordion .title {
+  color: $gray-dark;
+}
+
+.filterDropdown {
+  padding: 6px !important;
+  min-height: 28px !important;
+  font-size: 13px !important;
+  &.ui.search.selection.dropdown {
+    & >input.search {
+      padding: 5px !important;
+      color: $gray-medium !important;
+      padding-right: 30px !important;
+      text-overflow: ellipsis;
+    }
+  }
+  & .ui.label {
+    background-color: transparent !important;
+    font-weight: 300;
+    font-size: 12px;
+    padding: 4px 12px !important;
+  }
+
+  & i,
+  & .search.icon {
+    color: $gray-medium !important;
+    top: 3px !important;
+    right: 8px !important;
+  },
+
+  & i, 
+  & .delete.icon {
+    padding: 0 !important;
+  }
+}
+
+.ui.multiple.search.dropdown>.text {
+  padding: 5px !important;
+  margin: 0 !important;
+  font-size: 13px !important;
+}
+
+.ui.multiple.search.dropdown> input {
+  padding: 0 !important;
+}
+
+.ui.dropdown:not(.button) > .default.text {
+  color: $gray-medium;
+}
+
+.ui.selection.active.dropdown,
+.ui.selection.active.dropdown .menu {
+  border-color: $teal !important;
+}
+
+.ui.toggle.checkbox {
+  min-height: 1.9rem !important;
+}
+
+.ui {
+  &.modal {
+    box-shadow: none;
+    border: solid thin $gray-light;
+    &>.header {
+      border-bottom: solid thin $gray-light !important;
+      box-shadow: none !important;
+    }
+  }
+
+  &.dimmer {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.confirmCustom {
+  & .actions {
+    display: flex !important;
+    flex-direction: row-reverse !important;
+    justify-content: flex-end !important;
+  }
+}
+
+a:hover {
+  color: $teal;
+}
+
+.ui.toggle.checkbox {
+  min-height: 20px !important;
+}
+
+.ui.search.dropdown>input.search {
+  bottom: 0 !important;
+}
+
+.filterDropdown.ui.search.dropdown.active>input.search,
+.filterDropdown.ui.search.dropdown.visible>input.search {
+  border: solid thin $teal !important;
+  border-radius: 3px;
+  height: 26px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  whitespace: nowrap;
+}
+
+.filterDropdown.ui.search.dropdown>.text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 15px;
+}
+
+.ui.mini.modal>.header:not(.ui) {
+  padding: 10px 17px !important;
+  font-size: 16px !important;
+}
+
+.ui.modal>.content {
+  padding: 10px 17px !important; 
+}

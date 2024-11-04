@@ -1,0 +1,59 @@
+
+.controlButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 5px;
+  cursor: pointer;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  min-width: 60px;
+  position: relative;
+
+  & .errorSymbol {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #CC0000;
+    margin-right: 3px;
+  }
+  & .labels {
+    position: absolute;
+    top: -3px;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    height: 16px;
+  }
+  
+  & .countLabel {
+    background-color: $gray-dark;
+    color: white;
+    font-size: 9px;
+    font-weight: 300;
+    min-width: 20px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+  }
+
+  & .label {
+    font-size: 14px !important;
+    height: 16px;
+
+    &:hover {
+      color: $main!important;
+      transition: all 0.2s;
+    }
+  }
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,102 @@
+@import 'icons.css';
+
+.wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.menuBtn {
+  @mixin icon-before ellipsis-v, $gray-darkest, 18px {
+    margin: 5px;
+  }
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  margin: 0 auto;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $active-blue-border;
+    transition: all 0.2s;
+    background-color: #fff;
+  }
+}
+
+.menuDim {
+  border: none!important;
+  box-shadow: 0 1px 3px 0 $gray-light!important;
+
+  & .menuItem {
+    color: $gray-dark!important;
+  }
+}
+
+.menu {
+  &[data-displayed=false] {
+    display: none;
+  }
+
+  white-space: nowrap;
+  z-index: 9999;
+  position: absolute;
+  right: 0px;
+  top: 37px;
+  min-width: 150px;
+  background-color: $white;
+  border-radius: 3px;
+  border: 1px solid rgba(34,36,38,.15);
+  box-shadow: 0 2px 3px 0 rgb(34 36 38 / 15%);
+
+
+  & .menuItem {
+    cursor: pointer;
+    /* padding: 10px; */
+    color: black;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid $gray-light;
+    position: relative;
+
+    & .iconWrapper {
+      width: 13px;
+      height: 13px  ;
+      margin-right: 8px;
+    }
+
+    &:hover {
+      background-color: $active-blue;
+    }
+
+    &:last-child {
+      border: none;
+    }
+
+    & .edit {
+      @mixin icon pencil, $gray-medium, 15px;
+      margin-right: 10px;
+    }
+
+    & .copy {
+      @mixin icon copy, $gray-medium, 15px;
+      margin-right: 10px;
+    }
+
+    & .remove {
+      @mixin icon trash, $gray-medium, 15px;
+      margin-right: 10px;
+    }
+
+    & .enabled {
+      @mixin icon eye, $gray-medium, 15px;
+      margin-right: 10px;
+    }
+
+    & .disabled {
+      @mixin icon eye-slash, $gray-medium, 15px;
+      margin-right: 10px;
+    }
+
+  }
+}

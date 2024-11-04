@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 65 57" fill="#fff" fill-rule="evenodd" stroke="#000" stroke-linecap="round" stroke-linejoin="round" font-family="Roboto" font-size="14px" text-anchor="middle">
+    <defs>
+        <style type="text/css"></style>
+    </defs>
+    <use xlink:href="#A" x=".5" y=".5"></use>
+    <symbol id="A" overflow="visible"><g stroke="none" fill-rule="nonzero"><path d="M47.83 55.172l-16-29.834-15.984 29.84z" fill="#009245"></path><path d="M31.83 27.617l-16 27.565L0 27.617z" fill="#006837"></path><path d="M0 27.627L15.97.01h31.942L31.905 27.627z" fill="#39b54a"></path><path d="M47.83 55.172L31.904 27.618 47.91 0 64 27.585z" fill="#8cc63f"></path></g></symbol>
+</svg>

@@ -1,0 +1,114 @@
+.sessionItem {
+  background-color: #fff;
+  user-select: none;
+  /* border-radius: 3px; */
+  /* border: solid thin #EEEEEE; */
+  transition: all 0.4s;
+
+  & .favorite {
+    opacity: 0;
+    &[data-favourite=true] {
+      opacity: 1;
+    }
+  }
+
+  &:hover {
+    background-color: $active-blue;
+    /* border: solid thin $active-blue-border; */
+    transition: all 0.2s;
+
+    & .playLink {
+      transition: all 0.4s;
+      opacity: 1;
+    }
+
+    & .favorite {
+      transition: all 0.4s;
+      opacity: 1;
+    }
+  }
+
+  /* & .iconStack {
+    min-width: 200px;
+    display: flex;
+    & .icons {
+      display: flex;
+      flex-flow: row;
+      margin-bottom: 5px;
+      align-items: center;
+    }
+  } */
+
+  & .left {
+    & > div {
+      &[data-collapsed=true] {
+        height: 0;
+        overflow: hidden;
+      }
+      justify-content: center;
+      font-size: 12px;
+      color: $gray-medium;
+      font-weight: 300;
+    }
+
+    & .fid {
+      & span {
+        margin-bottom: 2px;
+      }
+      & .fidLabel {
+        width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    & .iconDetails {
+      flex: 2;
+      display: flex;
+      flex-flow: row;
+      justify-content: flex-start;
+      align-items: center;
+    }
+  }
+
+  & .count {
+    font-size: 18px;
+    font-weight: 400;
+  }
+}
+
+.playLink {
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  &[data-viewed=true] {
+    opacity: 1;
+  }
+  & > a {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.liveTag {
+  height: 26px;
+  width: 56px;
+  border-radius: 3px;
+  background-color: #42AE5E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.userName {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-decoration-color: $teal;
+  }
+}

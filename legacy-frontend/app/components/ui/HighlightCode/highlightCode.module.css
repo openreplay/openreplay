@@ -1,0 +1,11 @@
+@import 'zindex.css';
+
+.snippetWrapper {
+  position: relative;
+  & .snippet {
+    overflow: hidden;
+    line-height: 20px;
+    border-radius: 5px;
+    user-select: none;
+  }
+}

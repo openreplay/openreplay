@@ -1,0 +1,151 @@
+.contextMenu {
+  position: absolute;
+  top: 27px;
+  right: 15px;
+  /* padding: 2px 3px; */
+  background: $white;
+  border-radius: 3px;
+  cursor: pointer;
+  color: $gray-medium;
+  font-size: 12px;
+  z-index: 2;
+}
+
+.event {
+  position: relative;
+  background: #f6f6f6;
+  /* border-radius: 3px; */
+  user-select: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  &:hover {
+    background-color: $active-blue;
+  }
+
+  & .title {
+    font-size: 13px;
+  }
+
+  & .topBlock {
+    min-height: 30px;
+    position: relative;
+    padding: 8px 0px;
+  }
+
+  & .checkbox {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    bottom: 0;
+    /* margin: auto; */
+    display: none;
+    /* align-items: center; */
+  }
+
+  &.menuClosed:hover {
+    & .edit {
+      opacity: 1;
+      transition: all 0.2s;
+    }
+  }
+
+  &.menuClosed.showSelection {
+    &:hover, &.selected {
+      background-color: $active-blue;
+
+      & .checkbox {
+        display: flex;
+      }
+
+      & .icon {
+        opacity: 0;
+      }
+    }
+  }
+
+   &.highlighted {
+    transition: all 0.2s;
+    background-color: $active-blue;
+  }
+
+  &.red {
+    border-color: $red;
+  }
+}
+
+.firstLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: flex-start;
+}
+
+
+.type {
+  color: $gray-dark;
+  font-size: 12px;
+  text-transform: capitalize;
+  font-weight: bold;
+}
+
+.data {
+  margin-left: 5px;
+  color: $gray-medium;
+  font-size: 12px;
+  max-width: 100%;
+  /* overflow: hidden; */
+  /* text-overflow: ellipsis; */
+}
+
+.badge {
+  display: inline-block;
+  padding: 0;
+  border-radius: 3px;
+  font-size: 9px;
+  /* margin-left: 28px; */
+  max-width: 170px;
+  word-wrap: break-word;
+  line-height: normal;
+  color: #999;
+  text-transform: none;
+}
+
+.icon {
+  margin-right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  & i {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
+.clickType, .inputType {
+  background-color: $gray-lightest;
+  cursor: pointer;
+}
+
+.frustration {
+  background-color: rgba(204, 0, 0, 0.1)!important;
+}
+
+.clickrageType {
+  background-color: #FFF3F3;
+}
+
+.highlight {
+  /* border: solid thin red; */
+}
+
+.lastInGroup {
+  background: white;
+}

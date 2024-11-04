@@ -1,0 +1,12 @@
+.tagList {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: -8px;
+  min-height: 40px;
+
+  & > div {
+    flex-shrink: 0;
+    flex-grow: 0;
+  }
+}

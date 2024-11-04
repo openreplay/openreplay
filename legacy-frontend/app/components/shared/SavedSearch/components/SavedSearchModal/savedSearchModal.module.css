@@ -1,0 +1,14 @@
+.iconContainer {
+    background-color: #f3f3f3;
+    border-radius: 100px;
+    width: 62px;
+}
+
+.iconCircle {
+    border-radius: 50%;
+    padding: 6px;
+
+    &:hover {
+        background: rgba(63, 81, 181, 0.08);
+    }
+}

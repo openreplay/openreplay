@@ -1,0 +1,168 @@
+.cursor {
+  display: block;
+  position: absolute;
+  width: 36px;
+  height: 60px;
+  background-image: url("data:image/svg+xml,%3Csvg enable-background='new 0 0 20 20' version='1.1' viewBox='8.5 5.2 28 28' xml:space='preserve' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='8.2 20.9 8.2 4.9 19.8 16.5 13 16.5 12.6 16.6' fill='%23fff'/%3E%3Cpolygon points='17.3 21.6 13.7 23.1 9 12 12.7 10.5' fill='%23fff'/%3E%3Crect transform='matrix(.9221 -.3871 .3871 .9221 -5.7605 6.5909)' x='12.5' y='13.6' width='2' height='8'/%3E%3Cpolygon points='9.2 7.3 9.2 18.5 12.2 15.6 12.6 15.5 17.4 15.5'/%3E%3C/svg%3E%0A");
+  background-repeat: no-repeat;
+  transition: top .15s ease-out, left .15s ease-out;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ====== *
+  Source:  https://github.com/codrops/ClickEffects/blob/master/css/component.css
+* ======= */
+.cursor::after {
+  position: absolute;
+  margin: -35px 0 0 -35px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  box-shadow: inset 0 0 0 35px rgba(111,148,182,0);
+}
+
+.cursor.clicked::after {
+  -webkit-animation: click-animation 0.5s ease-out forwards;
+  animation: click-animation 0.5s ease-out forwards;
+}
+
+@-webkit-keyframes click-animation {
+  0% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.4, 0.4, 1);
+    transform: scale3d(0.4, 0.4, 1);
+  }
+  80% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0.1;
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0;
+    -webkit-transform: scale3d(1.2, 1.2, 1);
+    transform: scale3d(1.2, 1.2, 1);
+  }
+}
+
+@keyframes click-animation {
+  0% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.4, 0.4, 1);
+    transform: scale3d(0.4, 0.4, 1);
+  }
+  80% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0.1;
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0;
+    -webkit-transform: scale3d(1.2, 1.2, 1);
+    transform: scale3d(1.2, 1.2, 1);
+  }
+}
+
+.mobileTouch {
+    width: 25px;
+    height: 25px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 42 42'%3E%3Cstyle%3E @keyframes x2menhl6cupbu94auppeu01e_t %7B 0%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); %7D 62.5%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 75%25 %7B transform: translate(23px, 23px) scale(0.9, 0.9) translate(-2px, -2px); animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 100%25 %7B transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px); %7D %7D @keyframes x2menhl6cupbu94auppeu01e_sw %7B 0%25 %7B stroke-width: 2px; %7D 62.5%25 %7B stroke-width: 2px; animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 75%25 %7B stroke-width: 5px; animation-timing-function: cubic-bezier(0, 0, 0.6, 1); %7D 100%25 %7B stroke-width: 2px; %7D %7D %3C/style%3E%3Cellipse rx='20' ry='20' fill='rgba(0,0,0,0.50)' stroke='%23fff' stroke-width='2' transform='translate(23,23) translate(-2,-2)' style='animation: 0.6s infinite linear both x2menhl6cupbu94auppeu01e_t, 0.6s infinite linear both x2menhl6cupbu94auppeu01e_sw;' /%3E%3C/svg%3E")!important;
+}
+
+@keyframes touch-animation {
+    0% {
+        transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px);
+    }
+    31% {
+        transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px);
+        animation-timing-function: cubic-bezier(0, 0, 0.6, 1);
+    }
+    47.5% {
+        transform: translate(23px, 23px) scale(0.9, 0.9) translate(-2px, -2px);
+        animation-timing-function: cubic-bezier(0, 0, 0.6, 1);
+    }
+    50% {
+        transform: translate(23px, 23px) scale(1, 1) translate(-2px, -2px);
+    }
+    51% {
+        stroke-width: 2px;
+    }
+    62.5% {
+        stroke-width: 2px;
+        animation-timing-function: cubic-bezier(0, 0, 0.6, 1);
+    }
+    75% {
+        stroke-width: 5px;
+        animation-timing-function: cubic-bezier(0, 0, 0.6, 1);
+    }
+    100% {
+        stroke-width: 2px;
+    }
+}
+
+@-webkit-keyframes anim-effect-sanja {
+	0% {
+		opacity: 1;
+		-webkit-transform: scale3d(0.5, 0.5, 1);
+		transform: scale3d(0.5, 0.5, 1);
+	}
+	25% {
+		opacity: 1;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+	100% {
+		opacity: 0;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+}
+
+@keyframes anim-effect-sanja {
+	0% {
+		opacity: 1;
+		-webkit-transform: scale3d(0.5, 0.5, 1);
+		transform: scale3d(0.5, 0.5, 1);
+	}
+	25% {
+		opacity: 1;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+	100% {
+		opacity: 0;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+}
+
+.cursor.shaking {
+    width: 45px;
+    height: 75px;
+    -webkit-animation: shaking 0.3s linear;
+    animation: shaking 0.3s linear;
+    animation-iteration-count: 2;
+}
+
+@keyframes shaking {
+    0% {
+        transform: translate(60px, -60px);
+    }
+    25% {
+        transform: translate(-60px, 60px);
+    }
+    50% {
+        transform: translate(60px, -60px);
+    }
+    75% {
+        transform: translate(-60px, 60px);
+    }
+    100% {
+        transform: translate(60px, -60px);
+    }
+}

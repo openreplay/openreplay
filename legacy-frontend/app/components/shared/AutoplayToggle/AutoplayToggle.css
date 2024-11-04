@@ -1,0 +1,30 @@
+.ant-switch.custom-switch .ant-switch-inner-unchecked .switch-icon {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    color: grey;
+  }
+
+  .ant-switch.custom-switch .ant-switch-inner-checked .switch-icon{
+    position: relative;
+    left: 20px;
+    color: blue;
+    top: .05rem;
+  }
+
+  .ant-switch.custom-switch[aria-checked="false"]  .ant-switch-inner-checked .switch-icon{
+    visibility: hidden;
+  }
+
+  .ant-switch.custom-switch[aria-checked="true"]  .ant-switch-inner-checked .switch-icon{
+    visibility: visible;
+  }
+
+  .ant-switch.custom-switch[aria-checked="true"] .ant-switch-inner-unchecked .switch-icon{
+    visibility: hidden;
+  }
+
+  .ant-switch.custom-switch[aria-checked="false"] .ant-switch-inner-unchecked .switch-icon{
+    visibility: visible;
+  }
+

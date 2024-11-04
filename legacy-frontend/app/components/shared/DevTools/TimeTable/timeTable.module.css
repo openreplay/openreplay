@@ -1,0 +1,120 @@
+
+
+$offset: 10px;
+
+.timeCell {
+  border-left: solid thin rgba(0, 0, 0, 0.05);
+}
+
+.headers {
+  box-shadow: 0 1px 2px 0 $gray-light;
+  background-color: $gray-lightest;
+  color: $gray-darkest;
+  font-size: 12px;
+  overflow-x: hidden;
+  white-space: nowrap;
+  width: 100%;
+  display: flex;
+  padding: 0 $offset;
+}
+.infoHeaders {
+  text-transform: uppercase;
+  display: flex;
+  & .headerCell {
+    padding: 4px 2px;
+  }
+}
+.waterfallHeaders {
+  display: flex;
+  flex: 1;
+  & .timeCell {
+    flex: 1;
+    overflow: hidden;
+    padding: 4px 0;
+  }
+}
+
+.list {
+  /* TODO hide the scrollbar track */
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+  scrollbar-width: thin;
+  font-size: 12px;
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+}
+
+.row {
+  display: flex;
+  padding: 0 $offset;
+
+  &:hover {
+    background-color: $active-blue;
+  }
+  /*align-items: center;
+  cursor: pointer;
+  */
+  /* &:nth-child(even) {
+    background-color: $gray-lightest;
+  } */
+ /* & > div:first-child {
+    padding-left: 5px;
+  }*/
+}
+.cell {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 6px;
+  white-space: nowrap;
+  
+  & > div > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+}
+.hoverable {
+  transition: all 0.3s;
+  cursor: pointer;
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+    color: $gray-dark;
+  }
+}
+.timeBarWrapper{
+  overflow: hidden;
+}
+
+.timePart {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /*left:0;*/
+  right: 0;
+  display: flex;
+  margin: 0 $offset;
+  & .timeCell {
+    height: 100%;
+    flex: 1;  
+    z-index: 1;
+    pointer-events: none;
+  }
+  & .refLine {
+    position: absolute;
+    height: 100%;
+    width: 1px;
+    z-index: 1;
+  }
+}
+
+.activeRow {
+  background-color: $teal-light;
+}
+
+.inactiveRow {
+  opacity: 0.5;
+}

@@ -1,0 +1,49 @@
+.wrapper {
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox {
+  font-weight: 500;
+  pointer-events: none;
+  & label {    
+    &:before {
+      border-radius: 50% !important;
+      background-color: $gray-light !important;
+    }
+  }
+  &.active {
+    text-decoration: line-through !important;
+    font-weight: 300;
+    & label {
+      &:before {
+        display: none !important;
+      }
+    }
+  }
+}
+
+.subText {
+  margin-left: 27px;
+  color: $gray-medium;
+  font-size: 12px;
+  font-weight: 300;
+}
+
+.activeLink {
+  cursor: pointer;
+  pointer-events: default;
+  text-decoration: underline;
+  & label {
+    color: #000000 !important;
+    text-decoration: underline;
+  }
+}
+
+.completed {
+  pointer-events: none;
+  & label {
+    text-decoration: none !important;
+  }
+}

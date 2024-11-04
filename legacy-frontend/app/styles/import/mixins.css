@@ -1,0 +1,69 @@
+@define-mixin shadow-light {
+  box-shadow: 0 1px 5px 0 $gray-light;
+}
+
+@define-mixin shadow {
+  box-shadow: 0 2px 10px 0 $gray-light;
+}
+
+@define-mixin shadow-button {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: 0px 1px 3px 0 $gray-light;
+
+  &:hover {
+    border-color: $active-blue-border;
+    background-color: $active-blue;
+  }
+}
+
+@define-mixin defaultHover {
+  transition: all 0.4s;
+  &:hover {
+    background-color: $active-blue;
+    border: solid thin $active-blue-border;
+    transition: all 0.2s;
+  }
+}
+
+@define-mixin card {
+  padding: 10px 15px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  border: solid thin transparent;
+}
+
+@define-mixin basicButton {
+  background-color: white !important;
+  border: solid thin $active-blue-border !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
+}
+
+@define-mixin plainButton {
+  background-color: transparent !important;
+  border: solid thin transparent !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
+}
+
+@define-mixin primaryButton {
+  background-color: $teal !important;
+  color: white !important;
+  &:hover {
+    background-color: $teal-dark !important;
+  }
+}
+
+@define-mixin cssHighLight {
+  color: #CC66CC !important;
+  border-radius: 15px;
+  padding: 5px 15px;
+  box-shadow: 0px 1px 3px 0 $gray-light;
+  background-color: #F8F8F8 !important;
+}

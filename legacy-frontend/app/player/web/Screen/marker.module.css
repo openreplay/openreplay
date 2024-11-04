@@ -1,0 +1,59 @@
+.marker {
+  display: none;
+  position: absolute;
+  background: rgba(40, 40, 100, .3);
+  pointer-events: none;
+}
+.marker div:not(.tooltip, .tooltip > div) {
+  position: absolute;
+  background-image: linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d),
+                    linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d);
+  background-size: 5px 5px;
+}
+.markerL {
+  left: -1px;
+  top: -100vh;
+  bottom: -100vh;
+  width: 1px;
+}
+.markerT {
+  top: -1px;
+  left: -100vw;
+  right: -100vw;
+  height: 1px;
+}
+.markerR {
+  right: 1px;
+  top: -100vh;
+  bottom: -100vh;
+  width: 1px;
+}
+.markerB {
+  bottom: 1px;
+  left: -100vw;
+  right: -100vw;
+  height: 1px;
+}
+
+.tooltip {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  padding: 8px;
+  max-width: 600px;
+  box-shadow: 2px 2px 1px rgba(40, 40, 100, .3);
+  z-index: 999;
+  border-radius: 3px;
+  background-color: #202124;
+  min-width: 300px;
+  font-size: 16px !important;
+  color:#9BBBDC;
+}
+
+.tooltipHint {
+  margin-top: 4px;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+  color: rgba(138, 170, 201, 0.8);
+}

@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "complexity": 0
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  }
+}

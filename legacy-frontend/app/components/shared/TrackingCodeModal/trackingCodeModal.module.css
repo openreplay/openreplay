@@ -1,0 +1,20 @@
+
+@import 'zindex.css';
+
+.modalHeader {
+  display: flex !important;
+  align-items: center;
+}
+
+.content {
+  background-color: white !important;
+  padding: 0 !important;
+}
+
+
+.closeButton {
+  margin-left: auto;
+  cursor: pointer;
+  padding: 5px;
+}
+

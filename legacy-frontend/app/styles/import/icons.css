@@ -1,0 +1,22 @@
+@define-mixin icon $name, $color, $size, $display: block {
+  width: $size;
+  height: $size;
+  display: $display;
+  background-image: svg-load(icons/$(name).svg, fill=$color);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+}
+
+@define-mixin icon-before $name, $color, $size {
+  &::before {
+    content: '';
+    @mixin icon $name, $color, $size, inline-block;
+    /* vertical-align: text-bottom; */
+    margin-right: 5px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: -2px;
+    @mixin-content;
+  }
+}
