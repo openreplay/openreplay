@@ -10,7 +10,9 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3"
+    "@vitejs/plugin-react": "^4.3.3",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -18,9 +20,12 @@
   "dependencies": {
     "@types/react": "^18.3.12",
     "@types/react-router-dom": "^5.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.27.0",
+    "tailwindcss": "^3.4.14",
     "vite": "^5.4.10"
   }
 }
