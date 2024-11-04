@@ -18,8 +18,7 @@ const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
 tracker.use(trackerMobX(<options>)); // check list of available options below
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... );
+tracker.start();
 `
 
     const mobxUsageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
@@ -32,8 +31,7 @@ tracker.use(trackerMobX(<options>)); // check list of available options below
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 }`
 

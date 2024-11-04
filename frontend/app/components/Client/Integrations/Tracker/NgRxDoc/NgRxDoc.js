@@ -18,8 +18,7 @@ import trackerNgRx from '@openreplay/tracker-ngrx';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 //...
 const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of available options below
 //...
@@ -38,8 +37,7 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 //...
 const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of available options below

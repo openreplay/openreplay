@@ -11,8 +11,7 @@ const tracker = new Tracker({
   ingestPoint: "https://${window.location.hostname}/ingest",
 });
 
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )`
+tracker.start()`
 const usageCodeSST = `import Tracker from '@openreplay/tracker/cjs';
 
 const tracker = new Tracker({
@@ -22,8 +21,7 @@ const tracker = new Tracker({
 
 function MyApp() {
   useEffect(() => { // use componentDidMount in case of React Class Component
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, []);
   
   //...
@@ -40,7 +38,7 @@ function InstallDocs({ site }) {
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={installationCommand} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
             <CodeBlock code={installationCommand} language={'bash'} />
-          </div>  
+          </div>
         </div>
       </div>
       <div>
@@ -49,7 +47,7 @@ function InstallDocs({ site }) {
           <div className={ cn(stl.snippetWrapper, '') }>
             <CopyButton content={_usageCode} className={cn(stl.codeCopy, 'mt-2 mr-2')} />
             <CodeBlock code={_usageCode} language={'js'} />
-          </div>  
+          </div>
         </div>
       </div>
       <div className="mt-6">See <a href="https://docs.openreplay.com/en/sdk/" className="color-teal underline" target="_blank">Documentation</a> for the list of available options.</div>

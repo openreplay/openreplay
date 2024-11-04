@@ -18,8 +18,7 @@ import trackerRedux from '@openreplay/tracker-redux';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 //...
 const store = createStore(
   reducer,
@@ -35,8 +34,7 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 //...
 const store = createStore(

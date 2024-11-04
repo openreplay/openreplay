@@ -10,8 +10,7 @@ import trackerAssist from '@openreplay/tracker-assist';
 const tracker = new OpenReplay({
   projectKey: '${props.projectKey}',
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 
 tracker.use(trackerAssist(options)); // check the list of available options below`;
   const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
@@ -23,8 +22,7 @@ const trackerAssist = tracker.use(trackerAssist(options)); // check the list of 
 //...
 function MyApp() {
   useEffect(async () => { // use componentDidMount in case of React Class Component
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 //...
 }`;

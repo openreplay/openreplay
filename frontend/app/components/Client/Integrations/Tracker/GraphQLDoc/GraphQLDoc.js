@@ -16,8 +16,7 @@ import trackerGraphQL from '@openreplay/tracker-graphql';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 //...
 export const recordGraphQL = tracker.use(trackerGraphQL());`
     const usageCjs = `import OpenReplay from '@openreplay/tracker/cjs';
@@ -29,8 +28,7 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-       tracker.start().then(sessionData => ... ).catch(e => ... )
+       tracker.start()
   }, [])
 }
 //...

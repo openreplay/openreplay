@@ -18,8 +18,7 @@ import trackerProfiler from '@openreplay/tracker-profiler';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 //...
 export const profiler = tracker.use(trackerProfiler());
 //...
@@ -35,8 +34,7 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 //...
 export const profiler = tracker.use(trackerProfiler());
