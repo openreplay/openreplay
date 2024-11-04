@@ -53,6 +53,7 @@ export interface CardType {
   data?: any;
   height?: number;
   isEnterprise?: boolean;
+  filters?: any;
 }
 
 export const CARD_LIST: CardType[] = [
@@ -221,6 +222,74 @@ export const CARD_LIST: CardType[] = [
     metricOf: FilterKey.FETCH,
     category: CARD_CATEGORIES[2].key,
     example: ByFetch
+  },
+  {
+    title: 'Sessions with 4xx/5xx Requests',
+    key: TIMESERIES + '_4xx_requests',
+    cardType: TIMESERIES,
+    metricOf: 'sessionCount',
+    category: CARD_CATEGORY.ERROR_TRACKING,
+    data: {
+      chart: generateTimeSeriesData(),
+      label: 'Number of Sessions',
+      namesMap: [
+        'Series 1'
+      ]
+    },
+    filters: [
+      {
+        "type": "fetch",
+        "isEvent": true,
+        "value": [],
+        "operator": "is",
+        "filters": [
+          {
+            "type": "fetchStatusCode",
+            "isEvent": false,
+            "value": [
+              "400"
+            ],
+            "operator": ">=",
+            "filters": []
+          },
+        ]
+      }
+    ],
+    example: ExampleTrend
+  },
+  {
+    title: 'Sessions with Slow Network Requests',
+    key: TIMESERIES + '_slow_network_requests',
+    cardType: TIMESERIES,
+    metricOf: 'sessionCount',
+    category: CARD_CATEGORY.ERROR_TRACKING,
+    data: {
+      chart: generateTimeSeriesData(),
+      label: 'Number of Sessions',
+      namesMap: [
+        'Series 1'
+      ]
+    },
+    filters: [
+      {
+        "type": "fetch",
+        "isEvent": true,
+        "value": [],
+        "operator": "is",
+        "filters": [
+          {
+            "type": "fetchDuration",
+            "isEvent": false,
+            "value": [
+              "5000"
+            ],
+            "operator": ">=",
+            "filters": []
+          },
+        ]
+      }
+    ],
+    example: ExampleTrend
   },
 ];
 

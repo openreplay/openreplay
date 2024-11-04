@@ -9,6 +9,7 @@ import CardsLibrary from 'Components/Dashboard/components/DashboardList/NewDashM
 import { FUNNEL } from 'App/constants/card';
 import { useHistory } from 'react-router';
 import { FilterKey } from 'Types/filter/filterType';
+import FilterSeries from '@/mstore/types/filterSeries';
 
 interface SelectCardProps {
   onClose: (refresh?: boolean) => void;
@@ -64,6 +65,17 @@ const SelectCard: React.FC<SelectCardProps> = (props: SelectCardProps) => {
       name: selectedCard.title,
       metricOf: selectedCard.metricOf
     };
+
+    if (selectedCard.filters) {
+      cardData.series = [
+        new FilterSeries().fromJson({
+          name: "Series 1",
+          filter: {
+            filters: selectedCard.filters,
+          }
+        })
+      ];
+    }
 
     if (selectedCard.cardType === FUNNEL) {
       cardData.series = [];
