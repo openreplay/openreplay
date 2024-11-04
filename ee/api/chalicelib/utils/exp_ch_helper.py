@@ -26,12 +26,6 @@ def get_main_sessions_table(timestamp=0):
            and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.sessions"
 
 
-def get_main_resources_table(timestamp=0):
-    return "experimental.resources_l7d_mv" \
-        if config("EXP_7D_MV", cast=bool, default=True) \
-           and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.resources"
-
-
 def get_autocomplete_table(timestamp=0):
     return "experimental.autocomplete"
 

@@ -31,6 +31,46 @@ CREATE TABLE IF NOT EXISTS public.session_integrations
     PRIMARY KEY (session_id, project_id, provider)
 );
 
+ALTER TABLE IF EXISTS public.metrics
+    ALTER COLUMN user_id DROP NOT NULL,
+    ALTER COLUMN project_id SET NOT NULL;
+
+ALTER TABLE IF EXISTS public.dashboards
+    ALTER COLUMN user_id DROP NOT NULL,
+    ALTER COLUMN project_id SET NOT NULL;
+
+DELETE
+FROM public.metrics
+WHERE metric_of IN ('avgCpu', 'avgDomContentLoaded',
+                    'avgDomContentLoadStart', 'avgFirstContentfulPixel',
+                     'avgFirstPaint',
+                    'avgFps', 'avgImageLoadTime',
+                    'avgPageLoadTime', 'avgRequestLoadTime',
+                    'avgResponseTime', 'avgSessionDuration',
+                    'avgTillFirstByte', 'avgTimeToRender')
+   or metric_of IN ('timeToRender', 'cpu','crashes'
+                    'fps', 'avgTimeToInteractive',
+                    'avgPagesResponseTime', 'avgUsedJsHeapSize',
+                    'memoryConsumption', 'pagesResponseTime',
+                    'pagesDomBuildtime', 'pagesResponseTimeDistribution',
+                    'resourcesVsVisuallyComplete', 'sessionsPerBrowser',
+                    'slowestDomains', 'speedLocation', 'impactedSessionsBySlowPages',
+                    'avgPagesDomBuildtime')
+   or metric_of IN ('missingResources', 'resourcesLoadingTime',
+                    'slowestResources', 'callsErrors','resourceTypeVsResponseEnd',
+                    'resourcesCountByType');
+
+DELETE
+FROM public.alerts
+WHERE query ->> 'left' IN ('performance.image_load_time.average', 'performance.request_load_time.average',
+                           'resources.load_time.average', 'resources.missing.count',
+                           'errors.4xx_5xx.count', 'errors.4xx.count',
+                           'errors.5xx.count', 'errors.javascript.impacted_sessions.count');
+
+DROP TABLE IF EXISTS events.resources;
+DROP TYPE IF EXISTS events.resource_type;
+DROP TYPE IF EXISTS events.resource_method;
+
 COMMIT;
 
 \elif :is_next
