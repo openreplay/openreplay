@@ -393,14 +393,6 @@ class AlertColumn(str, Enum):
     PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE = "performance.page_response_time.average"
     PERFORMANCE__TTFB__AVERAGE = "performance.ttfb.average"
     PERFORMANCE__TIME_TO_RENDER__AVERAGE = "performance.time_to_render.average"
-    PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE = "performance.image_load_time.average"
-    PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE = "performance.request_load_time.average"
-    RESOURCES__LOAD_TIME__AVERAGE = "resources.load_time.average"
-    RESOURCES__MISSING__COUNT = "resources.missing.count"
-    ERRORS__4XX_5XX__COUNT = "errors.4xx_5xx.count"
-    ERRORS__4XX__COUNT = "errors.4xx.count"
-    ERRORS__5XX__COUNT = "errors.5xx.count"
-    ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT = "errors.javascript.impacted_sessions.count"
     PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
     ERRORS__JAVASCRIPT__COUNT = "errors.javascript.count"
     ERRORS__BACKEND__COUNT = "errors.backend.count"
@@ -945,7 +937,6 @@ class MetricType(str, Enum):
 
 
 class MetricOfErrors(str, Enum):
-    CALLS_ERRORS = "callsErrors"
     DOMAINS_ERRORS_4XX = "domainsErrors4xx"
     DOMAINS_ERRORS_5XX = "domainsErrors5xx"
     ERRORS_PER_DOMAINS = "errorsPerDomains"
@@ -954,47 +945,8 @@ class MetricOfErrors(str, Enum):
     RESOURCES_BY_PARTY = "resourcesByParty"
 
 
-class MetricOfPerformance(str, Enum):
-    CPU = "cpu"
-    CRASHES = "crashes"
-    FPS = "fps"
-    IMPACTED_SESSIONS_BY_SLOW_PAGES = "impactedSessionsBySlowPages"
-    MEMORY_CONSUMPTION = "memoryConsumption"
-    PAGES_DOM_BUILDTIME = "pagesDomBuildtime"
-    PAGES_RESPONSE_TIME = "pagesResponseTime"
-    PAGES_RESPONSE_TIME_DISTRIBUTION = "pagesResponseTimeDistribution"
-    RESOURCES_VS_VISUALLY_COMPLETE = "resourcesVsVisuallyComplete"
-    SESSIONS_PER_BROWSER = "sessionsPerBrowser"
-    SLOWEST_DOMAINS = "slowestDomains"
-    SPEED_LOCATION = "speedLocation"
-    TIME_TO_RENDER = "timeToRender"
-
-
-class MetricOfResources(str, Enum):
-    MISSING_RESOURCES = "missingResources"
-    RESOURCES_COUNT_BY_TYPE = "resourcesCountByType"
-    RESOURCES_LOADING_TIME = "resourcesLoadingTime"
-    RESOURCE_TYPE_VS_RESPONSE_END = "resourceTypeVsResponseEnd"
-    SLOWEST_RESOURCES = "slowestResources"
-
-
 class MetricOfWebVitals(str, Enum):
-    AVG_CPU = "avgCpu"
-    AVG_DOM_CONTENT_LOADED = "avgDomContentLoaded"
-    AVG_DOM_CONTENT_LOAD_START = "avgDomContentLoadStart"
-    AVG_FIRST_CONTENTFUL_PIXEL = "avgFirstContentfulPixel"
-    AVG_FIRST_PAINT = "avgFirstPaint"
-    AVG_FPS = "avgFps"
-    AVG_IMAGE_LOAD_TIME = "avgImageLoadTime"
-    AVG_PAGE_LOAD_TIME = "avgPageLoadTime"
-    AVG_PAGES_DOM_BUILDTIME = "avgPagesDomBuildtime"
-    AVG_PAGES_RESPONSE_TIME = "avgPagesResponseTime"
-    AVG_REQUEST_LOAD_TIME = "avgRequestLoadTime"
-    AVG_RESPONSE_TIME = "avgResponseTime"
     AVG_SESSION_DURATION = "avgSessionDuration"
-    AVG_TILL_FIRST_BYTE = "avgTillFirstByte"
-    AVG_TIME_TO_INTERACTIVE = "avgTimeToInteractive"
-    AVG_TIME_TO_RENDER = "avgTimeToRender"
     AVG_USED_JS_HEAP_SIZE = "avgUsedJsHeapSize"
     AVG_VISITED_PAGES = "avgVisitedPages"
     COUNT_REQUESTS = "countRequests"
@@ -1225,43 +1177,9 @@ class CardErrors(__CardSchema):
         return self
 
 
-class CardPerformance(__CardSchema):
-    metric_type: Literal[MetricType.PERFORMANCE]
-    metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.CPU)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfPerformance(self.metric_of)
-        return self
-
-
-class CardResources(__CardSchema):
-    metric_type: Literal[MetricType.RESOURCES]
-    metric_of: MetricOfResources = Field(default=MetricOfResources.MISSING_RESOURCES)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfResources(self.metric_of)
-        return self
-
-
 class CardWebVital(__CardSchema):
     metric_type: Literal[MetricType.WEB_VITAL]
-    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_CPU)
+    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_VISITED_PAGES)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1390,7 +1308,7 @@ class CardPathAnalysis(__CardSchema):
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
-    CardErrors, CardPerformance, CardResources,
+    CardErrors,
     CardWebVital, CardHeatMap,
     CardPathAnalysis]
 CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
