@@ -527,7 +527,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
             "type": all_issues[issue_id]["issue_type"],
             "title": helper.get_issue_title(all_issues[issue_id]["issue_type"]),
             "affected_sessions": affected_sessions[issue_id],
-            "unaffected_sessions": session_counts[1] - affected_sessions[issue_id],
+            "unaffected_sessions": session_counts[1] - affected_sessions.get(issue_id, 0),
             "lost_conversions": lost_conversions,
             "affected_users": affected_users_dict[issue_id],
             "conversion_impact": round(r * 100),
