@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"openreplay/backend/pkg/server/auth"
 	"time"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/spot/auth"
 )
 
 const MaxNameLength = 64

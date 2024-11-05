@@ -16,14 +16,9 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	objectstorage.ObjectsConfig
-	HTTPHost                string        `env:"HTTP_HOST,default="`
-	HTTPPort                string        `env:"HTTP_PORT,required"`
-	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
-	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=131072"` // 128KB
-	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
-	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
-	JWTSecret               string        `env:"JWT_SECRET,required"`
-	WorkerID                uint16
+	common.HTTP
+	ProjectExpiration time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	WorkerID          uint16
 }
 
 func New(log logger.Logger) *Config {

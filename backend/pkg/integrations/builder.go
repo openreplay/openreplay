@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/objectstorage/store"
-	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/server/auth"
 )
 
 type ServiceBuilder struct {

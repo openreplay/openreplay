@@ -3,13 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"openreplay/backend/pkg/server/auth"
 	"time"
 
 	"github.com/rs/xid"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/spot/auth"
 )
 
 type Key struct {

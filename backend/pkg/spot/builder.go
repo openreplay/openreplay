@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/objectstorage/store"
-	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/spot/service"
 	"openreplay/backend/pkg/spot/transcoder"
 )
@@ -15,10 +15,10 @@ import (
 type ServicesBuilder struct {
 	Flaker     *flakeid.Flaker
 	ObjStorage objectstorage.ObjectStorage
-	Auth       auth.Auth
+	Transcoder transcoder.Transcoder
 	Spots      service.Spots
 	Keys       service.Keys
-	Transcoder transcoder.Transcoder
+	Auth       auth.Auth
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*ServicesBuilder, error) {
@@ -31,9 +31,9 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*
 	return &ServicesBuilder{
 		Flaker:     flaker,
 		ObjStorage: objStore,
-		Auth:       auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn),
+		Transcoder: transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots),
 		Spots:      spots,
 		Keys:       service.NewKeys(log, pgconn),
-		Transcoder: transcoder.NewTranscoder(cfg, log, objStore, pgconn, spots),
+		Auth:       auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn),
 	}, nil
 }

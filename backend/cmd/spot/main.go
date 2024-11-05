@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/spot"
-	"openreplay/backend/pkg/spot/api"
+	api2 "openreplay/backend/pkg/spot/api"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,10 +35,16 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	router, err := api.NewRouter(cfg, log, services)
+	handlers, err := api2.NewHandlers(log, cfg, services)
+	if err != nil {
+		log.Fatal(ctx, "can't init handlers: %s", err)
+	}
+
+	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
+	router.AddHandlers(handlers.GetAll())
 
 	spotServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
