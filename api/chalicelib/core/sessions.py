@@ -448,11 +448,11 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
         main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
-                                            COALESCE(SUM(session_count), 0) AS count,
+                                            COALESCE(SUM(total), 0) AS total,
                                             COALESCE(JSONB_AGG(ranked_issues) 
                                                 FILTER ( WHERE rn > %(issues_limit_s)s 
                                                             AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
-                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
+                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY total DESC) AS rn
                                             FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS total
                                                   FROM (SELECT session_id
                                                         {query_part}) AS filtered_sessions
@@ -462,7 +462,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
                                                     AND timestamp >= %(startDate)s
                                                     AND timestamp <= %(endDate)s
                                                   GROUP BY type, context_string
-                                                  ORDER BY session_count DESC) AS filtered_issues
+                                                  ORDER BY total DESC) AS filtered_issues
                                             ) AS ranked_issues;""", full_args)
         logger.debug("--------------------")
         logger.debug(main_query)
