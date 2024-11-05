@@ -15,7 +15,7 @@
     "@storybook/addon-interactions": "8.4.1",
     "@storybook/addon-onboarding": "8.4.1",
     "@storybook/blocks": "8.4.1",
-    "@storybook/react": "8.4.1",
+    "@storybook/react": "^8.4.2",
     "@storybook/react-vite": "8.4.1",
     "@storybook/test": "8.4.1",
     "@types/bun": "latest",
