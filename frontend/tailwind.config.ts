@@ -17,6 +17,11 @@ module.exports = {
       },
     },
     extend: {
+      screens: {
+        sm: "375px",
+        md: "834px",
+        lg: "1440px",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -60,6 +65,177 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
+      fontSize: {
+        "heading-h1": [
+          "3rem",
+          {
+            lineHeight: "53px",
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "heading-h2": [
+          "2.5rem",
+          {
+            lineHeight: "50px",
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "heading-h3": [
+          "2rem",
+          {
+            lineHeight: "40px",
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "heading-h4": [
+          "1.5rem",
+          {
+            lineHeight: "32px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "heading-h5": [
+          "1.25rem",
+          {
+            lineHeight: "24px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "heading-h6": [
+          "1rem",
+          {
+            lineHeight: "20px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "heading-h1-mb": [
+          "2.5rem",
+          {
+            lineHeight: "40px",
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "heading-h2-mb": [
+          "2rem",
+          {
+            lineHeight: "32px",
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "heading-h3-mb": [
+          "1.5rem",
+          {
+            lineHeight: "24px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "heading-h4-mb": [
+          "1.25rem",
+          {
+            lineHeight: "20px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "heading-h5-mb": [
+          "1.125rem",
+          {
+            lineHeight: "18px",
+            fontWeight: 500,
+            letterSpacing: "-0.015em",
+          },
+        ],
+        "heading-h6-mb": [
+          "1rem",
+          {
+            lineHeight: "16px",
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          },
+        ],
+        "body-24": [
+          "1.5rem",
+          {
+            lineHeight: "32px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "body-20": [
+          "1.25rem",
+          {
+            lineHeight: "28px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "body-18": [
+          "1.125rem",
+          {
+            lineHeight: "24px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "body-16": [
+          "1rem",
+          {
+            lineHeight: "24px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "body-14": [
+          "0.875rem",
+          {
+            lineHeight: "22px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "label-12": [
+          "0.75rem",
+          {
+            lineHeight: "18px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "label-12-regular": [
+          "0.75rem",
+          {
+            lineHeight: "18px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+        "label-10": [
+          "0.625rem",
+          {
+            lineHeight: "16px",
+            fontWeight: 500,
+            letterSpacing: "0",
+          },
+        ],
+        "label-10-regular": [
+          "0.625rem",
+          {
+            lineHeight: "16px",
+            fontWeight: 400,
+            letterSpacing: "0",
+          },
+        ],
+      },
+
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
