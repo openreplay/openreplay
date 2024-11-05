@@ -98,7 +98,12 @@ func (e *routerImpl) rateLimitMiddleware(next http.Handler) http.Handler {
 		if r.URL.Path == "/" {
 			next.ServeHTTP(w, r)
 		}
-		user := r.Context().Value("userData").(*auth2.User)
+		userContext := r.Context().Value("userData")
+		if userContext == nil {
+			// TODO: check what to do in this case (should not happen)
+			next.ServeHTTP(w, r)
+		}
+		user := userContext.(*auth2.User)
 		rl := e.limiter.GetRateLimiter(user.ID)
 
 		if !rl.Allow() {
