@@ -12,11 +12,22 @@ import (
 	auth2 "openreplay/backend/pkg/server/auth"
 )
 
-func (e *routerImpl) corsMiddleware(next http.Handler) http.Handler {
+func (e *routerImpl) health(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *routerImpl) healthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
+			w.WriteHeader(http.StatusOK)
+			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (e *routerImpl) corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if e.cfg.UseAccessControlHeaders {
 			// Prepare headers for preflight requests
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -28,19 +39,14 @@ func (e *routerImpl) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		r = r.WithContext(ctxStore.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "url": util.SafeString(r.URL.Path)}))
 
+		r = r.WithContext(ctxStore.WithValues(r.Context(), map[string]interface{}{"httpMethod": r.Method, "url": util.SafeString(r.URL.Path)}))
 		next.ServeHTTP(w, r)
 	})
 }
 
 func (e *routerImpl) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
-		}
-
-		// Check if the request is authorized
 		user, err := e.Auth.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path), e.isExtensionRequest(r))
 		if err != nil {
 			e.log.Warn(r.Context(), "Unauthorized request: %s", err)
@@ -95,9 +101,6 @@ func isSpotWithKeyRequest(r *http.Request) bool {
 
 func (e *routerImpl) rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
-		}
 		userContext := r.Context().Value("userData")
 		if userContext == nil {
 			// TODO: check what to do in this case (should not happen)
@@ -127,16 +130,13 @@ func (w *statusWriter) WriteHeader(statusCode int) {
 
 func (w *statusWriter) Write(b []byte) (int, error) {
 	if w.statusCode == 0 {
-		w.statusCode = http.StatusOK // Default status code is 200
+		w.statusCode = http.StatusOK
 	}
 	return w.ResponseWriter.Write(b)
 }
 
 func (e *routerImpl) actionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
-		}
 		// Read body and restore the io.ReadCloser to its original state
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {

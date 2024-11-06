@@ -48,29 +48,30 @@ func NewRouter(cfg *common.HTTP, log logger.Logger, pgconn pool.Pool) (Router, e
 
 func (e *routerImpl) init() {
 	e.router = mux.NewRouter()
-
-	// Root route for health checks
-	e.router.HandleFunc("/", e.ping)
+	e.router.HandleFunc("/", e.health)
 
 	// Common middleware
-	e.router.Use(e.corsMiddleware) // the same for all routes
+	e.router.Use(e.healthMiddleware)
+	e.router.Use(e.corsMiddleware)
 	// Spots, integrations, pa services
 	e.router.Use(e.authMiddleware)      // should be different for http service
 	e.router.Use(e.rateLimitMiddleware) // can be skipped for some routes
 	e.router.Use(e.actionMiddleware)    // should be skipped for some routes
 }
 
-// TODO: add something to support extra prefix (prefix := "/ingest" for example)
 func (e *routerImpl) AddHandlers(handlers Handlers) {
 	for _, handler := range handlers.GetAll() {
 		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Methods...)
 	}
 }
 
-func (e *routerImpl) GetHandler() http.Handler {
-	return e.router
+// AddHandlerWithPrefix adds a prefix := "/ingest" for http service for example
+func (e *routerImpl) AddHandlerWithPrefix(prefix string, handlers Handlers) {
+	for _, handler := range handlers.GetAll() {
+		e.router.HandleFunc(prefix+handler.Path, handler.Handler).Methods(handler.Methods...)
+	}
 }
 
-func (e *routerImpl) ping(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func (e *routerImpl) GetHandler() http.Handler {
+	return e.router
 }
