@@ -13,19 +13,19 @@ function LiveSessionSearch() {
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).length > 0;
 
   useEffect(() => {
-    searchStoreLive.fetchSessions();
+    void searchStoreLive.fetchSessions();
   }, []);
 
-  const onAddFilter = (filter) => {
+  const onAddFilter = (filter: any) => {
     searchStoreLive.addFilter(filter);
   };
 
-  const onUpdateFilter = (filterIndex, filter) => {
+  const onUpdateFilter = (filterIndex: number, filter: any) => {
     searchStoreLive.updateFilter(filterIndex, filter);
-    sessionStore.fetchLiveSessions();
+    void searchStoreLive.fetchSessions();
   };
 
-  const onRemoveFilter = (filterIndex) => {
+  const onRemoveFilter = (filterIndex: number) => {
     const newFilters = appliedFilter.filters.filter((_filter, i) => {
       return i !== filterIndex;
     });
@@ -34,15 +34,15 @@ function LiveSessionSearch() {
       filters: newFilters
     });
 
-    sessionStore.fetchLiveSessions();
+    void searchStoreLive.fetchSessions();
   };
 
-  const onChangeEventsOrder = (e, { name, value }) => {
+  const onChangeEventsOrder = (e: any, { name, value }: any) => {
     searchStoreLive.edit({
       eventsOrder: value
     });
 
-    sessionStore.fetchLiveSessions();
+    void searchStoreLive.fetchSessions();
   };
 
   return (hasEvents || hasFilters) ? (
@@ -74,8 +74,6 @@ function LiveSessionSearch() {
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">
-          {/* <SaveFunnelButton /> */}
-          {/* <SaveFilterButton /> */}
         </div>
       </div>
     </div>
