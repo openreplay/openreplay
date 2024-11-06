@@ -85,16 +85,6 @@ def __complete_missing_steps(start_time, end_time, density, neutral, rows, time_
     return result
 
 
-def __merge_charts(list1, list2, time_key="timestamp"):
-    if len(list1) != len(list2):
-        raise Exception("cannot merge unequal lists")
-    result = []
-    for i in range(len(list1)):
-        timestamp = min(list1[i][time_key], list2[i][time_key])
-        result.append({**list1[i], **list2[i], time_key: timestamp})
-    return result
-
-
 def __get_constraint(data, fields, table_name):
     constraints = []
     # for k in fields.keys():
@@ -312,32 +302,6 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
                 r.pop("total")
 
     return response
-
-
-def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                  endTimestamp=TimeUTC.now(),
-                                  platform=None, **args):
-    ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
-    ch_sub_query.append("requests.event_type = 'REQUEST'")
-    ch_sub_query.append(f"intDiv(requests.status, 100) == {status}")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  requests.method,
-                               requests.url_hostpath,
-                               COUNT(1)                           AS all_requests
-                        FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS requests
-                        WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY requests.method, requests.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(ch.format(query=ch_query, params=params))
-        rows = ch.execute(query=ch_query, params=params)
-    return helper.list_to_camel_case(rows)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),

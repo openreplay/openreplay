@@ -149,29 +149,6 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         return helper.dict_to_camel_case(row)
 
 
-def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
-    with pg_client.PostgresClient() as cur:
-        extra_select = ""
-        if include_last_session:
-            extra_select += """,(SELECT max(ss.start_ts) 
-                                 FROM public.sessions AS ss 
-                                 WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at"""
-        if include_gdpr:
-            extra_select += ",s.gdpr"
-        query = cur.mogrify(f"""SELECT s.project_key,
-                                       s.name
-                                       {extra_select}
-                                FROM public.projects AS s
-                                WHERE s.project_key =%(project_key)s
-                                    AND s.tenant_id =%(tenant_id)s
-                                    AND s.deleted_at IS NULL
-                                LIMIT 1;""",
-                            {"project_key": project_key, "tenant_id": tenant_id})
-        cur.execute(query=query)
-        row = cur.fetchone()
-        return helper.dict_to_camel_case(row)
-
-
 def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
     if __exists_by_name(name=data.name, exclude_id=None, tenant_id=tenant_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
