@@ -107,7 +107,7 @@ function SavedSearchModal(props: Props) {
           </div>
         ))}
       </div>
-      {showModal && <SaveSearchModal show closeHandler={() => setshowModal(false)} rename={true} />}
+      {showModal && <SaveSearchModal show closeHandler={() => setshowModal(false)} rename={false} />}
     </div>
   );
 }
