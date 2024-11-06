@@ -175,8 +175,8 @@ spec:
           - |
             pg_version=$(psql -c "SHOW server_version;" | xargs | grep -oP '\d+(?=\.)')
             if [[ $pg_version -le 14 ]]; then
-              echo "[error] postgresql version is $pg_version which is < 16. Exiting."
-              For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
+              echo "[error] postgresql version is $pg_version which is < 16. Exiting.
+              For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql"
               exit 101
             fi
         volumeMounts:
