@@ -345,25 +345,6 @@ class MetadataSchema(BaseModel):
     _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
-class EmailPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    link: str = Field(...)
-    message: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
-class MemberInvitationPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    invitation_link: str = Field(...)
-    client_id: str = Field(...)
-    sender_name: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)

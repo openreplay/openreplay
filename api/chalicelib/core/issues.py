@@ -62,20 +62,6 @@ def get_by_session_id(session_id, project_id, issue_type=None):
         return helper.list_to_camel_case(cur.fetchall())
 
 
-def get_types_by_project(project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(f"""SELECT type,
-                               {ORDER_QUERY}>=0 AS visible,
-                               {ORDER_QUERY} AS order,
-                               {NAME_QUERY} AS name
-                            FROM (SELECT DISTINCT type
-                                  FROM public.issues
-                                  WHERE project_id = %(project_id)s) AS types
-                            ORDER BY "order";""", {"project_id": project_id}))
-        return helper.list_to_camel_case(cur.fetchall())
-
-
 def get_all_types():
     return [
         {
