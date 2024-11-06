@@ -60,20 +60,6 @@ def get(project_id, integration):
     return helper.dict_to_camel_case(helper.flatten_nested_dicts(r))
 
 
-def get_all_by_type(integration):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """\
-                SELECT integrations.* 
-                FROM public.integrations INNER JOIN public.projects USING(project_id)
-                WHERE provider = %(provider)s AND projects.deleted_at ISNULL;""",
-                {"provider": integration})
-        )
-        r = cur.fetchall()
-    return helper.list_to_camel_case(r, flatten=True)
-
-
 def edit(project_id, integration, changes):
     if "projectId" in changes:
         changes.pop("project_id")

@@ -26,10 +26,6 @@ def get_main_sessions_table(timestamp=0):
            and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.sessions"
 
 
-def get_autocomplete_table(timestamp=0):
-    return "experimental.autocomplete"
-
-
 def get_user_favorite_sessions_table(timestamp=0):
     return "experimental.user_favorite_sessions"
 
