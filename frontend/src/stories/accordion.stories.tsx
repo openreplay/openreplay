@@ -64,4 +64,3 @@ OpenState.args = {
     { title: "Section 2", description: "Content for section 2" },
   ],
 };
-

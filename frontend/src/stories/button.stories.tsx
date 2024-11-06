@@ -1,25 +1,35 @@
-import React from "react";
 import type { Meta, StoryFn } from "@storybook/react";
-import { Button, buttonVariants } from "@/components/button/button";
+import { Button } from "@/components/button/button";
 
 export default {
   title: "Components/Button",
   component: Button,
+  parameters: {
+    backgrounds: {
+      default: "light",
+      values: [{ name: "dark" }],
+    },
+    darkMode: {
+      current: "dark",
+      stylePreview: true,
+    },
+  },
   argTypes: {
     variant: {
       control: {
         type: "select",
-        options: ["primary", "secondary", "secondary-outline"],
       },
+      options: ["primary", "secondary", "outline", "ghost", "destructive"],
     },
     size: {
       control: {
         type: "select",
-        options: ["default", "sm", "lg"],
       },
+      options: ["default", "sm", "lg"],
     },
     disabled: {
       control: "boolean",
+      description: "Simulate the disabled state",
     },
     children: {
       control: "text",
@@ -29,6 +39,18 @@ export default {
 } as Meta;
 
 const Template: StoryFn = (args) => <Button {...args} />;
+
+export const AllVariants = Template.bind({});
+AllVariants.args = {
+  variant: "primary",
+  size: "default",
+  children: "Button",
+  disabled: false,
+};
+
+AllVariants.parameters = {
+  backgrounds: { default: "dark" },
+};
 
 export const Primary = Template.bind({});
 Primary.args = {
@@ -44,11 +66,25 @@ Secondary.args = {
   children: "Secondary Button",
 };
 
-export const SecondaryOutline = Template.bind({});
-SecondaryOutline.args = {
-  variant: "secondary-outline",
+export const Outline = Template.bind({});
+Outline.args = {
+  variant: "outline",
   size: "default",
-  children: "Secondary Outline Button",
+  children: "Outline Button",
+};
+
+export const Ghost = Template.bind({});
+Ghost.args = {
+  variant: "ghost",
+  size: "default",
+  children: "Ghost Button",
+};
+
+export const Destructive = Template.bind({});
+Destructive.args = {
+  variant: "destructive",
+  size: "default",
+  children: "Destructive Button",
 };
 
 export const Small = Template.bind({});
@@ -70,5 +106,4 @@ Disabled.args = {
   variant: "primary",
   size: "default",
   children: "Disabled Button",
-  disabled: true,
 };
