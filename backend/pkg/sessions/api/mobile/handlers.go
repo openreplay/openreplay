@@ -1,4 +1,4 @@
-package router
+package mobile
 
 import (
 	"context"
@@ -8,21 +8,75 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/Masterminds/semver"
+	gzip "github.com/klauspost/pgzip"
+
+	http3 "openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/ios"
+	http2 "openreplay/backend/internal/http/services"
 	"openreplay/backend/internal/http/uuid"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/token"
-	"strconv"
-	"time"
 )
 
-func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Request) {
+func checkMobileTrackerVersion(ver string) bool {
+	c, err := semver.NewConstraint(">=1.0.9")
+	if err != nil {
+		return false
+	}
+	// Check for beta version
+	parts := strings.Split(ver, "-")
+	if len(parts) > 1 {
+		ver = parts[0]
+	}
+	v, err := semver.NewVersion(ver)
+	if err != nil {
+		return false
+	}
+	return c.Check(v)
+}
+
+type handlersImpl struct {
+	log      logger.Logger
+	cfg      *http3.Config
+	services *http2.ServicesBuilder
+	features map[string]bool
+}
+
+func NewHandlers(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (api.Handlers, error) {
+	return &handlersImpl{
+		log:      log,
+		cfg:      cfg,
+		services: services,
+		features: map[string]bool{
+			"feature-flags":  cfg.IsFeatureFlagEnabled,
+			"usability-test": cfg.IsUsabilityTestEnabled,
+		},
+	}, nil
+}
+
+func (e *handlersImpl) GetAll() []*api.Description {
+	return []*api.Description{
+		{"/v1/mobile/start", e.startMobileSessionHandler, []string{"POST", "OPTIONS"}},
+		{"/v1/mobile/i", e.pushMobileMessagesHandler, []string{"POST", "OPTIONS"}},
+		{"/v1/mobile/late", e.pushMobileLateMessagesHandler, []string{"POST", "OPTIONS"}},
+		{"/v1/mobile/images", e.mobileImagesUploadHandler, []string{"POST", "OPTIONS"}},
+	}
+}
+
+func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	if r.Body == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
@@ -30,7 +84,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 
 	req := &StartMobileSessionRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -38,7 +92,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
 
 	if req.ProjectKey == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -46,10 +100,10 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, 0)
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, 0)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
-			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, 0)
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, 0)
 		}
 		return
 	}
@@ -59,12 +113,12 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 
 	// Check if the project supports mobile sessions
 	if !p.IsMobile() {
-		e.ResponseWithError(r.Context(), w, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, r.URL.Path, 0)
 		return
 	}
 
 	if !checkMobileTrackerVersion(req.TrackerVersion) {
-		e.ResponseWithError(r.Context(), w, http.StatusUpgradeRequired, errors.New("tracker version not supported"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusUpgradeRequired, errors.New("tracker version not supported"), startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -83,18 +137,18 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		if dice >= p.SampleRate {
-			e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, 0)
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, 0)
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			e.ResponseWithError(r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, 0)
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, 0)
 			return
 		}
 		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
-			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 			return
 		}
 
@@ -104,7 +158,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 		// Add sessionID to context
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
-		geoInfo := e.ExtractGeoData(r)
+		geoInfo := e.services.GeoIP.ExtractGeoData(r)
 		deviceType, platform, os := ios.GetIOSDeviceType(req.UserDevice), "ios", "IOS"
 		if req.Platform != "" && req.Platform != "ios" {
 			deviceType = req.UserDeviceType
@@ -156,7 +210,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	e.ResponseWithJSON(r.Context(), w, &StartMobileSessionResponse{
+	api.ResponseWithJSON(e.log, r.Context(), w, &StartMobileSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -168,7 +222,7 @@ func (e *Router) startMobileSessionHandler(w http.ResponseWriter, r *http.Reques
 	}, startTime, r.URL.Path, 0)
 }
 
-func (e *Router) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
@@ -176,7 +230,7 @@ func (e *Router) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Reques
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -188,7 +242,7 @@ func (e *Router) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Reques
 	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
 }
 
-func (e *Router) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
@@ -196,14 +250,14 @@ func (e *Router) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if err != nil && err != token.EXPIRED {
-		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 	// Check timestamps here?
 	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawMobile)
 }
 
-func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
@@ -211,7 +265,7 @@ func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Reques
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -221,7 +275,7 @@ func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if r.Body == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
@@ -229,20 +283,20 @@ func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Reques
 
 	err = r.ParseMultipartForm(5 * 1e6) // ~5Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
-		e.ResponseWithError(r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 
 	if r.MultipartForm == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("multipart not parsed"), startTime, r.URL.Path, 0)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("multipart not parsed"), startTime, r.URL.Path, 0)
 		return
 	}
 
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("projectKey parameter missing"), startTime, r.URL.Path, 0) // status for missing/wrong parameter?
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("projectKey parameter missing"), startTime, r.URL.Path, 0) // status for missing/wrong parameter?
 		return
 	}
 
@@ -256,7 +310,7 @@ func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Reques
 			data, err := io.ReadAll(file)
 			if err != nil {
 				file.Close()
-				e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+				api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 				return
 			}
 			file.Close()
@@ -266,6 +320,37 @@ func (e *Router) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Reques
 			}
 		}
 	}
+	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+}
 
-	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, 0)
+func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
+	start := time.Now()
+	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
+	defer body.Close()
+
+	var reader io.ReadCloser
+	var err error
+
+	switch r.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err = gzip.NewReader(body)
+		if err != nil {
+			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
+			return
+		}
+		defer reader.Close()
+	default:
+		reader = body
+	}
+	buf, err := io.ReadAll(reader)
+	if err != nil {
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
+		return
+	}
+	if err := e.services.Producer.Produce(topicName, sessionID, buf); err != nil {
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	e.log.Info(r.Context(), "response ok")
 }

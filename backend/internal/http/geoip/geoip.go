@@ -2,7 +2,10 @@ package geoip
 
 import (
 	"errors"
+	"github.com/tomasen/realip"
 	"net"
+	"net/http"
+	"openreplay/backend/pkg/logger"
 	"strings"
 
 	"github.com/oschwald/maxminddb-golang"
@@ -46,18 +49,23 @@ func UnpackGeoRecord(pkg string) *GeoRecord {
 
 type GeoParser interface {
 	Parse(ip net.IP) (*GeoRecord, error)
+	ExtractGeoData(r *http.Request) *GeoRecord
 }
 
 type geoParser struct {
-	r *maxminddb.Reader
+	log logger.Logger
+	r   *maxminddb.Reader
 }
 
-func New(file string) (GeoParser, error) {
+func New(log logger.Logger, file string) (GeoParser, error) {
 	r, err := maxminddb.Open(file)
 	if err != nil {
 		return nil, err
 	}
-	return &geoParser{r}, nil
+	return &geoParser{
+		log: log,
+		r:   r,
+	}, nil
 }
 
 func (geoIP *geoParser) Parse(ip net.IP) (*GeoRecord, error) {
@@ -81,4 +89,13 @@ func (geoIP *geoParser) Parse(ip net.IP) (*GeoRecord, error) {
 	}
 	res.City = record.City.Names["en"]
 	return res, nil
+}
+
+func (geoIP *geoParser) ExtractGeoData(r *http.Request) *GeoRecord {
+	ip := net.ParseIP(realip.FromRequest(r))
+	geoRec, err := geoIP.Parse(ip)
+	if err != nil {
+		geoIP.log.Warn(r.Context(), "failed to parse geo data: %v", err)
+	}
+	return geoRec
 }

@@ -4,31 +4,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"openreplay/backend/internal/config/integrations"
-	"openreplay/backend/pkg/logger"
-	api2 "openreplay/backend/pkg/server/api"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
+
+	"openreplay/backend/internal/config/integrations"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/server/api"
 )
 
-type Handlers struct {
+type handlersImpl struct {
 	log           logger.Logger
 	JsonSizeLimit int64
 	services      *ServiceBuilder
 }
 
-func NewHandlers(log logger.Logger, cfg *integrations.Config, services *ServiceBuilder) (*Handlers, error) {
-	return &Handlers{
+func NewHandlers(log logger.Logger, cfg *integrations.Config, services *ServiceBuilder) (api.Handlers, error) {
+	return &handlersImpl{
 		log:           log,
 		JsonSizeLimit: cfg.JsonSizeLimit,
 		services:      services,
 	}, nil
 }
 
-func (e *Handlers) GetAll() []*api2.HandlerDescription {
-	return []*api2.HandlerDescription{
+func (e *handlersImpl) GetAll() []*api.Description {
+	return []*api.Description{
 		{"/v1/integrations/{name}/{project}", e.createIntegration, []string{"POST", "OPTIONS"}},
 		{"/v1/integrations/{name}/{project}", e.getIntegration, []string{"GET", "OPTIONS"}},
 		{"/v1/integrations/{name}/{project}", e.updateIntegration, []string{"PATCH", "OPTIONS"}},
@@ -71,123 +72,123 @@ type IntegrationRequest struct {
 	IntegrationData map[string]string `json:"data"`
 }
 
-func (e *Handlers) createIntegration(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) createIntegration(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api2.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	integration, project, err := getIntegrationsArgs(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	req := &IntegrationRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	if err := e.services.Integrator.AddIntegration(project, integration, req.IntegrationData); err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api2.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Handlers) getIntegration(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getIntegration(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	integration, project, err := getIntegrationsArgs(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	intParams, err := e.services.Integrator.GetIntegration(project, integration)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api2.ResponseWithJSON(e.log, r.Context(), w, intParams, startTime, r.URL.Path, bodySize)
+	api.ResponseWithJSON(e.log, r.Context(), w, intParams, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Handlers) updateIntegration(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) updateIntegration(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api2.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	integration, project, err := getIntegrationsArgs(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	req := &IntegrationRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	if err := e.services.Integrator.UpdateIntegration(project, integration, req.IntegrationData); err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api2.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Handlers) deleteIntegration(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) deleteIntegration(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	integration, project, err := getIntegrationsArgs(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	if err := e.services.Integrator.DeleteIntegration(project, integration); err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api2.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Handlers) getIntegrationData(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getIntegrationData(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	integration, project, err := getIntegrationsArgs(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	session, err := getIntegrationSession(r)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	url, err := e.services.Integrator.GetSessionDataURL(project, integration, session)
 	if err != nil {
-		api2.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	resp := map[string]string{"url": url}
-	api2.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	api.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

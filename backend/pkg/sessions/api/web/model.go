@@ -1,4 +1,10 @@
-package router
+package web
+
+type NotStartedRequest struct {
+	ProjectKey     *string `json:"projectKey"`
+	TrackerVersion string  `json:"trackerVersion"`
+	DoNotTrack     bool    `json:"DoNotTrack"`
+}
 
 type StartSessionRequest struct {
 	Token           string  `json:"token"`

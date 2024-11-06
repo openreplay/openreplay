@@ -15,14 +15,8 @@ import (
 )
 
 type Router interface {
-	AddHandlers(handlers []*HandlerDescription)
+	AddHandlers(handlers []*Description)
 	GetHandler() http.Handler
-}
-
-type HandlerDescription struct {
-	Path    string
-	Handler http.HandlerFunc
-	Methods []string
 }
 
 type routerImpl struct {
@@ -59,13 +53,15 @@ func (e *routerImpl) init() {
 	e.router.HandleFunc("/", e.ping)
 
 	// Common middleware
-	e.router.Use(e.corsMiddleware)
-	e.router.Use(e.authMiddleware)
-	e.router.Use(e.rateLimitMiddleware)
-	e.router.Use(e.actionMiddleware)
+	e.router.Use(e.corsMiddleware) // the same for all routes
+	// Spots, integrations, pa services
+	e.router.Use(e.authMiddleware)      // should be different for http service
+	e.router.Use(e.rateLimitMiddleware) // can be skipped for some routes
+	e.router.Use(e.actionMiddleware)    // should be skipped for some routes
 }
 
-func (e *routerImpl) AddHandlers(handlers []*HandlerDescription) {
+// TODO: add something to support extra prefix (prefix := "/ingest" for example)
+func (e *routerImpl) AddHandlers(handlers []*Description) {
 	for _, handler := range handlers {
 		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Methods...)
 	}

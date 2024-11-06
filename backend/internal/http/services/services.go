@@ -42,7 +42,7 @@ func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn po
 	if err != nil {
 		return nil, err
 	}
-	geoModule, err := geoip.New(cfg.MaxMinDBFile)
+	geoModule, err := geoip.New(log, cfg.MaxMinDBFile)
 	if err != nil {
 		return nil, err
 	}
