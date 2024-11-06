@@ -163,6 +163,7 @@ const Router: React.FC<RouterProps> = (props) => {
   }, [isSpotCb, isLoggedIn, localSpotJwt, isSignup]);
 
   useEffect(() => {
+    if (!isLoggedIn)  return
     const fetchData = async () => {
       if (siteId && siteId !== lastFetchedSiteIdRef.current) {
         const activeSite = sites.find((s) => s.id == siteId);
@@ -174,7 +175,7 @@ const Router: React.FC<RouterProps> = (props) => {
     };
 
     void fetchData();
-  }, [siteId]);
+  }, [siteId, isLoggedIn]);
 
   const lastFetchedSiteIdRef = useRef<any>(null);
 

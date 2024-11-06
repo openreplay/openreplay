@@ -21,27 +21,32 @@ function PublicRoutes() {
   const { userStore } = useStore();
   const authDetails = userStore.authDetails;
   const isEnterprise = userStore.isEnterprise;
-  const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot')
+  const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot');
+  const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
     if (authDetails && !authDetails.tenants) {
-      void userStore.fetchTenants();
+      userStore.fetchTenants().then(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, []);
 
   return (
-    <Suspense fallback={<Loader loading={true} className='flex-1' />}>
-      <Switch>
-        <Route exact strict path={SPOT_PATH} component={Spot} />
-        <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
-        <Route exact strict path={LOGIN_PATH} component={Login} />
-        <Route exact strict path={SIGNUP_PATH} component={Signup} />
-        <Redirect to={LOGIN_PATH} />
-      </Switch>
-      {!hideSupport && <SupportCallout />}
-    </Suspense>
+    <Loader loading={loading} className="flex-1">
+      <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+        <Switch>
+          <Route exact strict path={SPOT_PATH} component={Spot} />
+          <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
+          <Route exact strict path={LOGIN_PATH} component={Login} />
+          <Route exact strict path={SIGNUP_PATH} component={Signup} />
+          <Redirect to={LOGIN_PATH} />
+        </Switch>
+        {!hideSupport && <SupportCallout />}
+      </Suspense>
+    </Loader>
   );
 }
 
 
-export default observer(PublicRoutes)
+export default observer(PublicRoutes);

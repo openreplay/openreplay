@@ -27,7 +27,6 @@ type SignupProps = RouteComponentProps;
 const Signup: React.FC<SignupProps> = ({ history }) => {
   const { userStore } = useStore();
   const authDetails = userStore.authDetails;
-  const fetchTenants = userStore.fetchTenants;
   const [healthModalPassed, setHealthModalPassed] = useState<boolean>(localStorage.getItem(healthStatusCheck_key) === 'true');
   const [healthStatusLoading, setHealthStatusLoading] = useState<boolean>(true);
   const [healthStatus, setHealthStatus] = useState<any>(null);
@@ -40,16 +39,17 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
   };
 
   useEffect(() => {
-    if (!healthModalPassed) void getHealth();
-  }, []);
-
-  useEffect(() => {
-    if (authDetails && authDetails.tenants) {
-      history.push(LOGIN_ROUTE);
+    if (!authDetails)  return
+    if (authDetails) {
+      if (authDetails.tenants) {
+        history.push(LOGIN_ROUTE);
+      } else {
+        void getHealth();
+      }
     }
   }, [authDetails]);
 
-  if (!healthModalPassed) {
+  if (authDetails && !healthModalPassed && !authDetails.tenants) {
     return (
       <HealthModal
         setShowModal={() => null}
