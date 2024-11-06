@@ -15,7 +15,7 @@ import (
 )
 
 type Router interface {
-	AddHandlers(handlers []*Description)
+	AddHandlers(handlers Handlers)
 	GetHandler() http.Handler
 }
 
@@ -61,8 +61,8 @@ func (e *routerImpl) init() {
 }
 
 // TODO: add something to support extra prefix (prefix := "/ingest" for example)
-func (e *routerImpl) AddHandlers(handlers []*Description) {
-	for _, handler := range handlers {
+func (e *routerImpl) AddHandlers(handlers Handlers) {
+	for _, handler := range handlers.GetAll() {
 		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Methods...)
 	}
 }

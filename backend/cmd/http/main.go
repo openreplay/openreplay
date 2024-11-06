@@ -60,37 +60,37 @@ func main() {
 	if err != nil {
 		log.Fatal(ctx, "failed while creating web sessions handlers: %s", err)
 	}
-	router.AddHandlers(webAPI.GetAll())
+	router.AddHandlers(webAPI)
 
 	mobileAPI, err := mobilesessions.NewHandlers(cfg, log, services)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating mobile sessions handlers: %s", err)
 	}
-	router.AddHandlers(mobileAPI.GetAll())
+	router.AddHandlers(mobileAPI)
 
 	conditionsAPI, err := conditions.NewHandlers(log)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating conditions handlers: %s", err)
 	}
-	router.AddHandlers(conditionsAPI.GetAll())
+	router.AddHandlers(conditionsAPI)
 
 	featureFlagsAPI, err := featureflags.NewHandlers(log, cfg.JsonSizeLimit, services)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating feature flags handlers: %s", err)
 	}
-	router.AddHandlers(featureFlagsAPI.GetAll())
+	router.AddHandlers(featureFlagsAPI)
 
 	tagsAPI, err := tags.NewHandlers(log, services)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating tags handlers: %s", err)
 	}
-	router.AddHandlers(tagsAPI.GetAll())
+	router.AddHandlers(tagsAPI)
 
 	uxtestsAPI, err := uxtesting.NewHandlers(log, cfg.JsonSizeLimit, services)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating ux testing handlers: %s", err)
 	}
-	router.AddHandlers(uxtestsAPI.GetAll())
+	router.AddHandlers(uxtestsAPI)
 
 	webServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {

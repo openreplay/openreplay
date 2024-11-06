@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/spot"
-	api2 "openreplay/backend/pkg/spot/api"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +13,9 @@ import (
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/server"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/spot"
+	spotAPI "openreplay/backend/pkg/spot/api"
 )
 
 func main() {
@@ -35,24 +35,23 @@ func main() {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}
 
-	handlers, err := api2.NewHandlers(log, cfg, services)
-	if err != nil {
-		log.Fatal(ctx, "can't init handlers: %s", err)
-	}
-
 	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(handlers.GetAll())
 
-	spotServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
+	handlers, err := spotAPI.NewHandlers(log, cfg, services)
+	if err != nil {
+		log.Fatal(ctx, "can't init handlers: %s", err)
+	}
+	router.AddHandlers(handlers)
+
+	webServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating server: %s", err)
 	}
-
 	go func() {
-		if err := spotServer.Start(); err != nil {
+		if err := webServer.Start(); err != nil {
 			log.Fatal(ctx, "http server error: %s", err)
 		}
 	}()
@@ -63,5 +62,5 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigchan
 	log.Info(ctx, "shutting down the server")
-	spotServer.Stop()
+	webServer.Stop()
 }
