@@ -143,11 +143,18 @@ export default class UserService {
       .then((response: { data: any }) => response.data || {});
   }
 
-  requestResetPassword(data: any) {
-    return this.client
-      .post('/password/reset-link', data)
-      .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data || {});
+  async requestResetPassword(data: any) {
+    try {
+      const response = await this.client.post('/password/reset-link', data);
+      const responseData = await response.json();
+      return responseData.data || {};
+    } catch (error: any) {
+      if (error.response) {
+        const errorData = await error.response.json();
+        return { errors: errorData.errors };
+      }
+      return { errors: ["An unexpected error occurred."] };
+    }
   }
 
   updatePassword(data: any) {

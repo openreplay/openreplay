@@ -411,10 +411,13 @@ class UserStore {
       this.loading = true;
     });
     try {
-      await userService.requestResetPassword(params);
+      const response = await userService.requestResetPassword(params);
+      if (response.errors) {
+        toast.error(response.errors[0] || 'Error resetting your password, please try again');
+        return response;
+      }
     } catch (error) {
-      toast.error('Error resetting your password; please try again');
-      return error.response;
+      toast.error('Unexpected error resetting your password; please try again');
     } finally {
       runInAction(() => {
         this.loading = false;

@@ -38,7 +38,6 @@ function ResetPasswordRequest() {
         setRequested(true);
         if (response && response.errors && response.errors.length > 0) {
           setError(response.errors[0]);
-        } else {
         }
       });
   };
