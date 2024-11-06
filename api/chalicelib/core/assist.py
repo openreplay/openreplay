@@ -196,11 +196,6 @@ def autocomplete(project_id, q: str, key: str = None):
     return {"data": results}
 
 
-def get_ice_servers():
-    return config("iceServers") if config("iceServers", default=None) is not None \
-                                   and len(config("iceServers")) > 0 else None
-
-
 def __get_efs_path():
     efs_path = config("FS_DIR")
     if not path_exists(efs_path):

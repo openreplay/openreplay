@@ -138,39 +138,12 @@ def get_card_sessions(projectId: int, metric_id: int,
     return {"data": data}
 
 
-@app.post('/{projectId}/cards/{metric_id}/issues', tags=["cards"])
-def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
-                           data: schemas.CardSessionsSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
-    if metric_id.isnumeric():
-        metric_id = int(metric_id)
-    else:
-        return {"errors": ["invalid card_id"]}
-
-    data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                            data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
 @app.post('/{projectId}/cards/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
                                      data: schemas.CardSessionsSchema = Body(...),
                                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_sessions_by_issue(project_id=projectId, user_id=context.user_id,
                                                        metric_id=metric_id, issue_id=issueId, data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/cards/{metric_id}/errors', tags=["dashboard"])
-def get_card_errors_list(projectId: int, metric_id: int,
-                         data: schemas.CardSessionsSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id,
-                                          metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}

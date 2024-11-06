@@ -345,25 +345,6 @@ class MetadataSchema(BaseModel):
     _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
-class EmailPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    link: str = Field(...)
-    message: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
-class MemberInvitationPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    invitation_link: str = Field(...)
-    client_id: str = Field(...)
-    sender_name: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)
@@ -1373,6 +1354,7 @@ class LiveFilterType(str, Enum):
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
+    USER_STATE = FilterType.USER_STATE.value
     USER_ID = FilterType.USER_ID.value
     USER_ANONYMOUS_ID = FilterType.USER_ANONYMOUS_ID.value
     REV_ID = FilterType.REV_ID.value

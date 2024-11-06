@@ -19,16 +19,6 @@ def __find_groups(client, token):
     return response["logGroups"] + __find_groups(client, response["nextToken"])
 
 
-def __make_stream_filter(start_time, end_time):
-    def __valid_stream(stream):
-        return "firstEventTimestamp" in stream and not (
-                stream['firstEventTimestamp'] <= start_time and stream["lastEventTimestamp"] <= start_time
-                or stream['firstEventTimestamp'] >= end_time and stream["lastEventTimestamp"] >= end_time
-        )
-
-    return __valid_stream
-
-
 def __find_streams(project_id, log_group, client, token, stream_filter):
     d_args = {"logGroupName": log_group, "orderBy": 'LastEventTime', 'limit': 50}
     if token is not None and len(token) > 0:

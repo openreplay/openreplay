@@ -6,10 +6,10 @@ name = "pypi"
 [packages]
 urllib3 = "==1.26.16"
 requests = "==2.32.3"
-boto3 = "==1.35.51"
+boto3 = "==1.35.54"
 pyjwt = "==2.9.0"
 psycopg2-binary = "==2.9.10"
-psycopg = {extras = ["binary", "pool"], version = "==3.2.3"}
+psycopg = {extras = ["pool", "binary"], version = "==3.2.3"}
 elasticsearch = "==8.15.1"
 jira = "==3.8.0"
 cachetools = "==5.5.0"
