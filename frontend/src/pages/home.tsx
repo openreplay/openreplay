@@ -1,4 +1,4 @@
-import { Button } from "@/shadcn-components/button/button";
+import { Button } from "@/shadcn-components/button";
 
 const Home = () => {
   return (

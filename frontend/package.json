@@ -15,7 +15,7 @@
     "@storybook/addon-interactions": "8.4.1",
     "@storybook/addon-onboarding": "8.4.1",
     "@storybook/blocks": "8.4.1",
-    "@storybook/react": "^8.4.2",
+    "@storybook/react": "8.4.1",
     "@storybook/react-vite": "8.4.1",
     "@storybook/test": "8.4.1",
     "@types/bun": "latest",
@@ -30,6 +30,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.1",
+    "@storybook/core": "8.4.1",
     "@types/react": "^18.3.12",
     "@types/react-router-dom": "^5.3.3",
     "autoprefixer": "^10.4.20",
