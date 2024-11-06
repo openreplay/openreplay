@@ -5,9 +5,25 @@ cd $(dirname $0)
 
 is_migrate=$1
 
+# Check if the openreplay version is set.
+# This will take precedence over the .Values.fromVersion variable
+# Because its created by installation programatically.
+if [[ -n $OPENREPLAY_VERSION ]]; then
+    is_migrate=true
+    PREVIOUS_APP_VERSION=$OPENREPLAY_VERSION
+    echo "$OPENREPLAY_VERSION set"
+fi
+
+if [[ $FORCE_MIGRATION == "true" ]]; then
+    is_migrate=true
+fi
+
 # Passed from env
 # PREVIOUS_APP_VERSION
 # CHART_APP_VERSION
+# Converting alphaneumeric to number.
+PREVIOUS_APP_VERSION=$(echo $PREVIOUS_APP_VERSION | cut -d "v" -f2)
+CHART_APP_VERSION=$(echo $CHART_APP_VERSION | cut -d "v" -f2)
 
 function migration() {
     ls -la /opt/openreplay/openreplay
