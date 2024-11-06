@@ -9,7 +9,7 @@ from chalicelib.core import funnels, issues, heatmaps, sessions_insights, sessio
     product_analytics, custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.storage import StorageClient, extra
+from chalicelib.utils.storage import extra
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     logging.info(">>> Using experimental error search")
@@ -198,23 +198,6 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
     return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
 
 
-# def __merge_metric_with_data(metric: schemas.CardSchema,
-#                              data: schemas.CardSessionsSchema) -> schemas.CardSchema:
-#     metric.startTimestamp = data.startTimestamp
-#     metric.endTimestamp = data.endTimestamp
-#     metric.page = data.page
-#     metric.limit = data.limit
-#     metric.density = data.density
-#     if data.series is not None and len(data.series) > 0:
-#         metric.series = data.series
-#
-#     # if len(data.filters) > 0:
-#     #     for s in metric.series:
-#     #         s.filter.filters += data.filters
-#     # metric = schemas.CardSchema(**metric.model_dump(by_alias=True))
-#     return metric
-
-
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     # No need for this because UI is sending the full payload
     # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
@@ -232,38 +215,6 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
     return results
 
 
-def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # No need for this because UI is sending the full payload
-    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if raw_metric is None:
-    #     return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    # if metric is None:
-    #     return None
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
-        return None
-    for s in data.series:
-        return {"seriesId": s.series_id, "seriesName": s.name,
-                **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
-
-
-def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # No need for this because UI is sending the full payload
-    # raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if raw_metric is None:
-    #     return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    # if metric is None:
-    #     return None
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
-        return None
-    for s in data.series:
-        return {"seriesId": s.series_id, "seriesName": s.name,
-                **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
-
-
 def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
@@ -277,15 +228,6 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
-
-
-def __get_funnel_issues(project_id: int, user_id: int, data: schemas.CardFunnel):
-    if len(data.series) == 0:
-        return []
-    data.series[0].filter.startTimestamp = data.startTimestamp
-    data.series[0].filter.endTimestamp = data.endTimestamp
-    data = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    return data
 
 
 def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
@@ -329,7 +271,6 @@ def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
         schemas.MetricType.TIMESERIES: not_supported,
         schemas.MetricType.TABLE: not_supported,
         schemas.MetricType.HEAT_MAP: not_supported,
-        schemas.MetricType.FUNNEL: __get_funnel_issues,
         schemas.MetricType.INSIGHTS: not_supported,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_issues,
     }
@@ -377,9 +318,8 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data}
-        params["default_config"] = json.dumps(data.default_config.model_dump())
-        params["card_info"] = None
+        params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data,
+                  "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
             params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
 
