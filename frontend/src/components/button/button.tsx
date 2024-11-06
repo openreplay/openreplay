@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Button as ShadButton } from "@/shadcn-components/button";
+import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -35,17 +36,20 @@ const buttonVariants = cva(
 
 interface IButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  isLoading?: boolean;
+}
 
 const Button = forwardRef<HTMLButtonElement, IButtonProps>(
-  ({ className, children, variant, size, ...props }, ref) => {
+  ({ className, children, variant, size, isLoading, ...props }, ref) => {
     return (
       <ShadButton
         ref={ref}
-        disabled={props.disabled}
+        disabled={isLoading || props.disabled}
         className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       >
+        {isLoading && <Loader2 className="mr-2.5 h-5 w-5 animate-spin" />}{" "}
         {children}
       </ShadButton>
     );

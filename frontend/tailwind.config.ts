@@ -25,6 +25,7 @@ module.exports = {
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
+
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -56,6 +57,10 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        accordion: {
+          description: "hsl(var(--accordion-description))",
+          "background-hover": "hsl(var(--accordion-background-hover))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",

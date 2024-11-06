@@ -7,6 +7,7 @@ const config = {
     "@chromatic-com/storybook",
     "@storybook/addon-interactions",
     "storybook-dark-mode",
+    "storybook-addon-pseudo-states",
   ],
   framework: {
     name: "@storybook/react-vite",

@@ -17,8 +17,11 @@ body {
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
 
-    --border: 0 0% 89.8%;
+    --border: 0 0% 83%;
     --input: 0 0% 89.8%;
+
+    --accordion-description: 0 0% 45%;
+    --accordion-background-hover: 0 0% 96%;
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -66,6 +69,9 @@ body {
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
+
+    --accordion-description: 0° 0% 83%;
+    --accordion-background-hover: 0 0% 15%;
 
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
