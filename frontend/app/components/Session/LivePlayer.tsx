@@ -55,7 +55,7 @@ function LivePlayer({
       },
     };
     if (isEnterprise) {
-      new APIClient()
+      new APIClient(userStore.jwt)
         .get('/config/assist/credentials')
         .then((r) => r.json())
         .then(({ data }) => {

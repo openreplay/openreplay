@@ -58,13 +58,17 @@ export default class APIClient {
   private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
 
-  constructor() {
+  constructor(jwt?: string | null) {
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
         'Content-Type': 'application/json'
       })
     };
+
+    if (jwt) {
+      this.setJwt(jwt);
+    }
   }
 
   setJwt(jwt: string | null): void {
