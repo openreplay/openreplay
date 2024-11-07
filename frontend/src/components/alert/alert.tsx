@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const alertVariants = cva(
-  "relative w-full gap-3 rounded-lg border font-medium p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full max-w-[34rem] gap-3 rounded-lg border font-medium p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
   {
     variants: {
       variant: {
