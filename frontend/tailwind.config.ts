@@ -62,6 +62,18 @@ module.exports = {
           description: "hsl(var(--accordion-description))",
           "background-hover": "hsl(var(--accordion-background-hover))",
         },
+        alert: {
+          bg: "hsl(var(--alert-bg))",
+          description: "hsl(var(--alert-description))",
+          destructive: "hsl(var(--alert-destructive))",
+          success: "hsl(var(--alert-success))",
+          warning: "hsl(var(--alert-warning))",
+          "border-destructive": "hsl(var(--alert-border-destructive))",
+          "border-warning": "hsl(var(--alert-border-warning))",
+          "bg-destructive": "hsl(var(--alert-bg-destructive))",
+          "bg-success": "hsl(var(--alert-bg-success))",
+          "bg-warning": "hsl(var(--alert-bg-warning))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

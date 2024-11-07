@@ -23,6 +23,17 @@ body {
     --accordion-description: 0 0% 45%;
     --accordion-background-hover: 0 0% 96%;
 
+    --alert-bg: 0 0% 100%;
+    --alert-description: 0 0% 45%;
+    --alert-destructive: 0 74% 42%;
+    --alert-border-destructive: 0 91% 71%;
+    --alert-border-warning: 32 95% 44%;
+    --alert-bg-destructive: 0 86% 97%;
+    --alert-bg-success: 152 81% 96%;
+    --alert-bg-warning: 55 92% 95%;
+    --alert-success: 163 88% 20%;
+    --alert-warning: 28 73% 26%;
+
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
 
@@ -70,8 +81,19 @@ body {
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
 
-    --accordion-description: 0° 0% 83%;
+    --accordion-description: 0 0% 83%;
     --accordion-background-hover: 0 0% 15%;
+
+    --alert-bg: 0 0% 15%;
+    --alert-description: 0 0% 83%;
+    --alert-destructive: 0 94% 82%;
+    --alert-border-destructive: 0 94% 82%;
+    --alert-border-warning: 43 96% 56%;
+    --alert-bg-destructive: 0 86% 5%;
+    --alert-bg-success: 166 100% 5%;
+    --alert-bg-warning: 44 100% 5%;
+    --alert-success: 158 64% 52%;
+    --alert-warning: 50 98% 64%;
 
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;

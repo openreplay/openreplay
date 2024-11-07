@@ -17,7 +17,7 @@ export default {
   argTypes: {
     variant: {
       control: { type: "select" },
-      options: ["default", "destructive", "info", "success"],
+      options: ["default", "destructive", "warning", "success"],
     },
     title: { control: "text" },
     description: { control: "text" },
@@ -40,16 +40,16 @@ Destructive.args = {
   variant: "destructive",
 };
 
-export const Info = Template.bind({});
-Info.args = {
-  title: "Info Alert",
-  description: "This alert provides informational content.",
-  variant: "info",
-};
-
 export const Success = Template.bind({});
 Success.args = {
   title: "Success Alert",
   description: "This alert indicates a successful action.",
   variant: "success",
+};
+
+export const Warning = Template.bind({});
+Warning.args = {
+  title: "Warning Alert",
+  description: "This alert provides informational content.",
+  variant: "warning",
 };
