@@ -1,5 +1,5 @@
 import type { Meta, StoryFn } from "@storybook/react";
-import { Alert } from "@/components/alert";
+import { Alert } from "@/components/alert/alert";
 
 export default {
   title: "Components/Alert",
@@ -50,6 +50,6 @@ Success.args = {
 export const Warning = Template.bind({});
 Warning.args = {
   title: "Warning Alert",
-  description: "This alert provides informational content.",
+  description: "This alert indicates a warning action.",
   variant: "warning",
 };
