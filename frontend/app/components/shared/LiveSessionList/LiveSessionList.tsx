@@ -27,7 +27,7 @@ function LiveSessionList() {
   const metaList = customFieldStore.list;
   const metaListLoading = customFieldStore.isLoading;
 
-  var timeoutId: any;
+  let timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
   const sortOptions = [{ label: 'Start Time', value: 'timestamp' }].concat(
@@ -100,7 +100,10 @@ function LiveSessionList() {
 
                 <div className="mx-2" />
                 <SortOrderButton
-                  onChange={(state: any) => searchStoreLive.edit({ order: state })}
+                  onChange={(state: any) => {
+                    searchStoreLive.edit({ order: state })
+                    void searchStoreLive.fetchSessions();
+                  }}
                   sortOrder={filter.order}
                 />
               </div>
