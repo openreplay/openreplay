@@ -24,7 +24,7 @@ function LiveSessionList() {
   const totalLiveSessions = sessionStore.totalLiveSessions;
   const loading = sessionStore.loadingLiveSessions;
   const { currentPage } = searchStoreLive;
-  const metaList = customFieldStore.list;
+  const metaList = customFieldStore.list
   const metaListLoading = customFieldStore.isLoading;
 
   let timeoutId: any;
@@ -32,9 +32,9 @@ function LiveSessionList() {
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
   const sortOptions = [{ label: 'Start Time', value: 'timestamp' }].concat(
     metaList
-      .map((i: any) => ({
-        label: capitalize(i),
-        value: i
+      .map(({ key} : any) => ({
+        label: capitalize(key),
+        value: key
       }))
   );
 
@@ -66,6 +66,7 @@ function LiveSessionList() {
 
   const onSortChange = ({ value }: any) => {
     searchStoreLive.edit({ sort: value.value });
+    void searchStoreLive.fetchSessions();
   };
 
   const timeout = () => {
