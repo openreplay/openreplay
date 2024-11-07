@@ -62,7 +62,7 @@ function FunnelBar(props: Props) {
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="arrow-right-short" size="20" color="green" />
-          <span className="mx-1">{filter.sessionsCount} Sessions</span>
+          <span className="mx-1">{filter.count} Sessions</span>
           <span className="color-gray-medium text-sm">
             ({filter.completedPercentage}%) Completed
           </span>
