@@ -121,4 +121,15 @@ export default class SettingsService {
       .then((j) => j.data || {})
       .catch(Promise.reject);
   }
+
+  async getAssistCredentials(): Promise<any> {
+    try {
+      const r = await this.client
+        .get('/config/assist/credentials');
+      const j = await r.json();
+      return j.data || {};
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
+  }
 }

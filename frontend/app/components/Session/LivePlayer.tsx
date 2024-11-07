@@ -15,6 +15,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { sessionService } from 'App/services';
 
 interface Props {
   customSession?: Session;
@@ -54,26 +55,11 @@ function LivePlayer({
         name: userName,
       },
     };
-    if (isEnterprise) {
-      new APIClient(userStore.jwt)
-        .get('/config/assist/credentials')
-        .then((r) => r.json())
-        .then(({ data }) => {
-          const [player, store] = createLiveWebPlayer(
-            sessionWithAgentData,
-            data,
-            userId,
-            projectId,
-            (state) => makeAutoObservable(state),
-            toast
-          );
-          setContextValue({ player, store });
-          playerInst = player;
-        });
-    } else {
+
+    const initPlayer = async (credentials = null) => {
       const [player, store] = createLiveWebPlayer(
         sessionWithAgentData,
-        null,
+        credentials,
         userId,
         projectId,
         (state) => makeAutoObservable(state),
@@ -81,6 +67,12 @@ function LivePlayer({
       );
       setContextValue({ player, store });
       playerInst = player;
+    };
+
+    if (isEnterprise) {
+      sessionService.getAssistCredentials().then(initPlayer);
+    } else {
+      void initPlayer();
     }
 
     return () => {
