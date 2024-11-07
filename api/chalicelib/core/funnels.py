@@ -35,7 +35,6 @@ def __fix_stages(f_events: List[schemas.SessionSearchEventSchema2]):
     return events
 
 
-# def get_top_insights_on_the_fly_widget(project_id, data: schemas.FunnelInsightsPayloadSchema):
 def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema,
                                        metric_format: schemas.MetricExtendedFormatType):
     data.events = filter_stages(__parse_events(data.events))
@@ -58,7 +57,6 @@ def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilte
             "totalDropDueToIssues": total_drop_due_to_issues}
 
 
-# def get_issues_on_the_fly_widget(project_id, data: schemas.FunnelSearchPayloadSchema):
 def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
@@ -69,3 +67,16 @@ def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchem
         "issues": helper.dict_to_camel_case(
             significance.get_issues_list(filter_d=data, project_id=project_id, first_stage=1,
                                          last_stage=len(data.events)))}
+
+
+def get_simple_funnel(project_id, data: schemas.CardSeriesFilterSchema,
+                      metric_format: schemas.MetricExtendedFormatType):
+    data.events = filter_stages(__parse_events(data.events))
+    data.events = __fix_stages(data.events)
+    if len(data.events) == 0:
+        return {"stages": [], "totalDropDueToIssues": 0}
+    insights = significance.get_simple_funnel(filter_d=data,
+                                              project_id=project_id,
+                                              metric_format=metric_format)
+
+    return {"stages": insights, "totalDropDueToIssues": 0}

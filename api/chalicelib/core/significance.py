@@ -238,6 +238,227 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     return rows
 
 
+def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project_id: int,
+                      metric_format: schemas.MetricExtendedFormatType) -> List[RealDictRow]:
+    """
+    Add minimal timestamp
+    :param filter_d: dict contains events&filters&...
+    :return:
+    """
+
+    stages: List[schemas.SessionSearchEventSchema2] = filter_d.events
+    filters: List[schemas.SessionSearchFilterSchema] = filter_d.filters
+
+    stage_constraints = ["main.timestamp <= %(endTimestamp)s"]
+    first_stage_extra_constraints = ["s.project_id=%(project_id)s", "s.start_ts >= %(startTimestamp)s",
+                                     "s.start_ts <= %(endTimestamp)s"]
+    if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
+        count_value = '1'
+    else:
+        count_value = 'user_id'
+        first_stage_extra_constraints.append("user_id IS NOT NULL")
+        first_stage_extra_constraints.append("user_id !=''")
+
+    filter_extra_from = []
+    n_stages_query = []
+    values = {}
+    if len(filters) > 0:
+        meta_keys = None
+        for i, f in enumerate(filters):
+            if len(f.value) == 0:
+                continue
+            f.value = helper.values_for_operator(value=f.value, op=f.operator)
+
+            op = sh.get_sql_operator(f.operator)
+
+            filter_type = f.type
+            f_k = f"f_value{i}"
+            values = {**values,
+                      **sh.multi_values(f.value, value_key=f_k)}
+            is_not = False
+            if sh.is_negation_operator(f.operator):
+                is_not = True
+            if filter_type == schemas.FilterType.USER_BROWSER:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+            elif filter_type == schemas.FilterType.DURATION:
+                if len(f.value) > 0 and f.value[0] is not None:
+                    first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
+                    values["minDuration"] = f.value[0]
+                if len(f["value"]) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                    first_stage_extra_constraints.append('s.duration <= %(maxDuration)s')
+                    values["maxDuration"] = f.value[1]
+            elif filter_type == schemas.FilterType.REFERRER:
+                # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
+                filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+            elif filter_type == events.EventType.METADATA.ui_type:
+                if meta_keys is None:
+                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = {m["key"]: m["index"] for m in meta_keys}
+                if f.source in meta_keys.keys():
+                    first_stage_extra_constraints.append(
+                        sh.multi_conditions(
+                            f's.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s', f.value,
+                            is_not=is_not, value_key=f_k))
+                    # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+            elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+            elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
+                                 schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+            elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
+                first_stage_extra_constraints.append(
+                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+    i = -1
+    for s in stages:
+
+        if s.operator is None:
+            s.operator = schemas.SearchEventOperator.IS
+
+        if not isinstance(s.value, list):
+            s.value = [s.value]
+        is_any = sh.isAny_opreator(s.operator)
+        if not is_any and isinstance(s.value, list) and len(s.value) == 0:
+            continue
+        i += 1
+        if i == 0:
+            extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
+        else:
+            extra_from = []
+        op = sh.get_sql_operator(s.operator)
+        # event_type = s["type"].upper()
+        event_type = s.type
+        if event_type == events.EventType.CLICK.ui_type:
+            next_table = events.EventType.CLICK.table
+            next_col_name = events.EventType.CLICK.column
+        elif event_type == events.EventType.INPUT.ui_type:
+            next_table = events.EventType.INPUT.table
+            next_col_name = events.EventType.INPUT.column
+        elif event_type == events.EventType.LOCATION.ui_type:
+            next_table = events.EventType.LOCATION.table
+            next_col_name = events.EventType.LOCATION.column
+        elif event_type == events.EventType.CUSTOM.ui_type:
+            next_table = events.EventType.CUSTOM.table
+            next_col_name = events.EventType.CUSTOM.column
+        #     IOS --------------
+        elif event_type == events.EventType.CLICK_MOBILE.ui_type:
+            next_table = events.EventType.CLICK_MOBILE.table
+            next_col_name = events.EventType.CLICK_MOBILE.column
+        elif event_type == events.EventType.INPUT_MOBILE.ui_type:
+            next_table = events.EventType.INPUT_MOBILE.table
+            next_col_name = events.EventType.INPUT_MOBILE.column
+        elif event_type == events.EventType.VIEW_MOBILE.ui_type:
+            next_table = events.EventType.VIEW_MOBILE.table
+            next_col_name = events.EventType.VIEW_MOBILE.column
+        elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
+            next_table = events.EventType.CUSTOM_MOBILE.table
+            next_col_name = events.EventType.CUSTOM_MOBILE.column
+        else:
+            logger.warning(f"=================UNDEFINED:{event_type}")
+            continue
+
+        values = {**values, **sh.multi_values(helper.values_for_operator(value=s.value, op=s.operator),
+                                              value_key=f"value{i + 1}")}
+        if sh.is_negation_operator(s.operator) and i > 0:
+            op = sh.reverse_sql_operator(op)
+            main_condition = "left_not.session_id ISNULL"
+            extra_from.append(f"""LEFT JOIN LATERAL (SELECT session_id 
+                                                        FROM {next_table} AS s_main 
+                                                        WHERE 
+                                                        {sh.multi_conditions(f"s_main.{next_col_name} {op} %(value{i + 1})s",
+                                                                             values=s.value, value_key=f"value{i + 1}")}
+                                                        AND s_main.timestamp >= T{i}.stage{i}_timestamp
+                                                        AND s_main.session_id = T1.session_id) AS left_not ON (TRUE)""")
+        else:
+            if is_any:
+                main_condition = "TRUE"
+            else:
+                main_condition = sh.multi_conditions(f"main.{next_col_name} {op} %(value{i + 1})s",
+                                                     values=s.value, value_key=f"value{i + 1}")
+        n_stages_query.append(f""" 
+        (SELECT main.session_id, 
+                {"MIN(main.timestamp)" if i + 1 < len(stages) else "MAX(main.timestamp)"} AS stage{i + 1}_timestamp,
+                {count_value} AS c
+        FROM {next_table} AS main {" ".join(extra_from)}        
+        WHERE main.timestamp >= {f"T{i}.stage{i}_timestamp" if i > 0 else "%(startTimestamp)s"}
+            {f"AND main.session_id=T1.session_id" if i > 0 else ""}
+            AND {main_condition}
+            {(" AND " + " AND ".join(stage_constraints)) if len(stage_constraints) > 0 else ""}
+            {(" AND " + " AND ".join(first_stage_extra_constraints)) if len(first_stage_extra_constraints) > 0 and i == 0 else ""}
+        GROUP BY main.session_id,{count_value})
+        AS T{i + 1} {"ON (TRUE)" if i > 0 else ""}
+        """)
+        count_value = '1'
+    n_stages = len(n_stages_query)
+    if n_stages == 0:
+        return []
+    n_stages_query = " LEFT JOIN LATERAL ".join(n_stages_query)
+
+    n_stages_query = f"""
+             SELECT {",".join([f"COUNT(T{i + 1}.c) AS stage{i + 1}" for i in range(n_stages)])}
+              FROM {n_stages_query};
+    """
+
+    params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
+              "endTimestamp": filter_d.endTimestamp, **values}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(n_stages_query, params)
+        logger.debug("---------------------------------------------------")
+        logger.debug(query)
+        logger.debug("---------------------------------------------------")
+        try:
+            cur.execute(query)
+            row = cur.fetchone()
+        except Exception as err:
+            logger.warning("--------- SIMPLE FUNNEL SEARCH QUERY EXCEPTION -----------")
+            logger.warning(query.decode('UTF-8'))
+            logger.warning("--------- PAYLOAD -----------")
+            logger.warning(filter_d.model_dump_json())
+            logger.warning("--------------------")
+            raise err
+
+    stages_list = []
+    for i, stage in enumerate(stages):
+        count = row[f"stage{i + 1}"]
+        drop = None
+        if i != 0:
+            base_count = row[f"stage{i}"]
+            if base_count == 0:
+                drop = 0
+            elif base_count > 0:
+                drop = int(100 * (base_count - count) / base_count)
+
+        stages_list.append(
+            {"value": stage.value,
+             "type": stage.type,
+             "operator": stage.operator,
+             "dropPct": drop,
+             "count": count
+             }
+        )
+
+    return stages_list
+
+
 def pearson_corr(x: list, y: list):
     n = len(x)
     if n != len(y):
