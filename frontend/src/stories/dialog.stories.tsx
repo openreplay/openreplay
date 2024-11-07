@@ -29,6 +29,10 @@ const meta: Meta<typeof ResponsiveDialog> = {
       control: "boolean",
       defaultValue: true,
     },
+    actionButtons: {
+      control: "boolean",
+      defaultValue: false,
+    },
   },
 };
 
@@ -50,6 +54,31 @@ export const Default: Story = {
           {...args}
           isOpen={isOpen}
           onClose={handleClose}
+          title="Title"
+        >
+          Body Text.
+        </ResponsiveDialog>
+      </>
+    );
+  },
+};
+
+export const WithActionButtons: Story = {
+  render: (args) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleOpen = () => setIsOpen(true);
+    const handleClose = () => setIsOpen(false);
+
+    return (
+      <>
+        <Button onClick={handleOpen}>Open Dialog/Drawer</Button>
+        <ResponsiveDialog
+          {...args}
+          isOpen={isOpen}
+          onClose={handleClose}
+          actionButtons
+          separator
           title="Title"
         >
           Body Text.
