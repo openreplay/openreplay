@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Inter";
+  src: url("@/assets/fonts/interVF.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
 body {
   font-family: "Inter", sans-serif;
 }
@@ -19,6 +25,8 @@ body {
 
     --border: 0 0% 83%;
     --input: 0 0% 89.8%;
+
+    --secondary-text: 0 0% 45%;
 
     --accordion-description: 0 0% 45%;
     --accordion-background-hover: 0 0% 96%;
@@ -80,6 +88,8 @@ body {
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
+
+    --secondary-text: 0 0% 83%;
 
     --accordion-description: 0 0% 83%;
     --accordion-background-hover: 0 0% 15%;
