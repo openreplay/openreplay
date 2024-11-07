@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 type CheckboxProps = {
   label?: string;
   description?: string;
-  className?: string;
   disabled?: boolean;
+  className?: string;
 };
 
 const Checkbox = ({

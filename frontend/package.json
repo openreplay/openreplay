@@ -33,6 +33,8 @@
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@storybook/core": "8.4.1",
     "@storybook/testing-library": "^0.2.2",
@@ -53,6 +55,7 @@
     "tailwind-merge": "^2.5.4",
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
+    "vaul": "^1.1.1",
     "vite": "^5.4.10"
   }
 }
