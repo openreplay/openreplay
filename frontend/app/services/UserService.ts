@@ -66,7 +66,7 @@ export default class UserService {
   }
 
   createRole(role: any) {
-    return this.client.post('/client/roles/', role).then((r) => r.json());
+    return this.client.post('/client/roles', role).then((r) => r.json());
   }
 
   modifyRole(role: any) {
