@@ -407,10 +407,10 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                  ORDER BY total DESC) AS users_sessions;"""
             else:
                 main_query = f"""SELECT COUNT(*) AS count,
-                                    COALESCE(SUM(users_sessions.user_count),0) AS count,
+                                    COALESCE(SUM(users_sessions.total),0) AS total,
                                     COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                  FROM (SELECT {main_col} AS name,
-                                         count(DISTINCT user_id)                                AS user_count,
+                                         count(DISTINCT user_id)                                AS total,
                                          ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                        FROM (SELECT *
                                              FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
@@ -424,7 +424,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                         ) AS full_sessions
                                 {extra_where}
                                 GROUP BY {main_col}
-                                ORDER BY user_count DESC) AS users_sessions;"""
+                                ORDER BY total DESC) AS users_sessions;"""
 
             main_query = cur.mogrify(main_query, full_args)
         logger.debug("--------------------")
@@ -448,11 +448,11 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
         full_args["issues_limit_s"] = (data.page - 1) * data.limit
         full_args["issues_limit_e"] = data.page * data.limit
         main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
-                                            COALESCE(SUM(total), 0) AS total,
+                                            COALESCE(SUM(session_count), 0) AS count,
                                             COALESCE(JSONB_AGG(ranked_issues) 
                                                 FILTER ( WHERE rn > %(issues_limit_s)s 
                                                             AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
-                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY total DESC) AS rn
+                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
                                             FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS total
                                                   FROM (SELECT session_id
                                                         {query_part}) AS filtered_sessions
@@ -462,7 +462,7 @@ def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema,
                                                     AND timestamp >= %(startDate)s
                                                     AND timestamp <= %(endDate)s
                                                   GROUP BY type, context_string
-                                                  ORDER BY total DESC) AS filtered_issues
+                                                  ORDER BY session_count DESC) AS filtered_issues
                                             ) AS ranked_issues;""", full_args)
         logger.debug("--------------------")
         logger.debug(main_query)
