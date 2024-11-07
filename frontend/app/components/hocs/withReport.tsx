@@ -17,13 +17,13 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     const site = projectsStore.instance;
     const dashboard: any = dashboardStore.selectedDashboard;
     const period = dashboardStore.period;
-    const pendingRequests = dashboardStore.pendingRequests;
+    // const pendingRequests = dashboardStore.pendingRequests;
 
-    useEffect(() => {
-      if (rendering && pendingRequests <= 0) {
-        processReport();
-      }
-    }, [pendingRequests]);
+    // useEffect(() => {
+    //   if (rendering && pendingRequests <= 0) {
+    //     processReport();
+    //   }
+    // }, [pendingRequests]);
 
     const addFooters = (doc: any) => {
       const pageCount = doc.internal.getNumberOfPages();
@@ -38,6 +38,7 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
 
     const renderPromise = async (): Promise<any> => {
       setRendering(true);
+      processReport();
       toast.info(TEXT_GENERATING, {
         autoClose: false,
         isLoading: true,
