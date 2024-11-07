@@ -222,9 +222,6 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
             sessions[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
 
-    # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
-    #     sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
-    #                       reverse=data.order.upper() == "DESC")
     return {
         'total': total,
         'sessions': sessions
@@ -871,16 +868,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             event_where = ["main.project_id = %(projectId)s",
                            "main.datetime >= toDateTime(%(startDate)s/1000)",
                            "main.datetime <= toDateTime(%(endDate)s/1000)"]
-            # if favorite_only and not errors_only:
-            #     event_from += f"INNER JOIN {exp_ch_helper.get_user_favorite_sessions_table()} AS fs USING(session_id)"
-            #     event_where.append("fs.user_id = %(userId)s")
-            # else:
-            #     event_from = "%s"
-            #     event_where = ["main.datetime >= toDateTime(%(startDate)s/1000)",
-            #                    "main.datetime <= toDateTime(%(endDate)s/1000)",
-            #                    "main.session_id=event_0.session_id"]
-            #     if data.events_order == schemas.SearchEventOrder._then:
-            #         event_where.append(f"event_{event_index - 1}.datetime <= main.datetime")
+
             e_k = f"e_value{i}"
             s_k = e_k + "_source"
 
@@ -1040,15 +1028,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
-            # elif EventType == events.EventType.GRAPHQL.ui_type:
-            #     event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
-            #     event_where.append(f"main.event_type='GRAPHQL'")
-            #     events_conditions.append({"type": event_where[-1]})
-            #     if not is_any:
-            #         event_where.append(
-            #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
-            #                                  value_key=e_k))
-            #         events_conditions[-1]["condition"] = event_where[-1]
+
             elif event_type == events.EventType.STATEACTION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.STATEACTION.column
@@ -1217,21 +1197,6 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
-            # elif EventType == schemas.PerformanceEventType.fetch_duration:
-            #     event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
-            #     if not is_any:
-            #         event_where.append(
-            #             _multiple_conditions(f"main.url_path {op} %({e_k})s",
-            #                                  event.value, value_key=e_k))
-            #     col = performance_event.get_col(EventType)
-            #     colname = col["column"]
-            #     tname = "main"
-            #     e_k += "_custom"
-            #     full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
-            #     event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-            #                        _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-            #                                             event.source, value_key=e_k))
-            # TODO: isNot for PerformanceEvent
             elif event_type in [schemas.PerformanceEventType.LOCATION_DOM_COMPLETE,
                                 schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                 schemas.PerformanceEventType.LOCATION_TTFB]:
@@ -1278,58 +1243,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                                         event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
-            # # TODO: no isNot for TimeBetweenEvents
-            # elif event_type == schemas.PerformanceEventType.time_between_events:
-            #     event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-            #     # event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
-            #     event_where.append(f"main.event_type='{__exp_ch_helper.get_event_type(event.value[0].type, platform=platform)}'")
-            #     events_conditions.append({"type": event_where[-1]})
-            #     event_where.append(f"main.event_type='{__exp_ch_helper.get_event_type(event.value[0].type, platform=platform)}'")
-            #     events_conditions.append({"type": event_where[-1]})
-            #
-            #     if not isinstance(event.value[0].value, list):
-            #         event.value[0].value = [event.value[0].value]
-            #     if not isinstance(event.value[1].value, list):
-            #         event.value[1].value = [event.value[1].value]
-            #     event.value[0].value = helper.values_for_operator(value=event.value[0].value,
-            #                                                       op=event.value[0].operator)
-            #     event.value[1].value = helper.values_for_operator(value=event.value[1].value,
-            #                                                       op=event.value[0].operator)
-            #     e_k1 = e_k + "_e1"
-            #     e_k2 = e_k + "_e2"
-            #     full_args = {**full_args,
-            #                  **_multiple_values(event.value[0].value, value_key=e_k1),
-            #                  **_multiple_values(event.value[1].value, value_key=e_k2)}
-            #     s_op = get_sql_operator(event.value[0].operator)
-            #     # event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
-            #     # if event_index > 0 and not or_events:
-            #     #     event_where.append("main2.session_id=event_0.session_id")
-            #     is_any = _isAny_opreator(event.value[0].operator)
-            #     if not is_any:
-            #         event_where.append(
-            #             _multiple_conditions(
-            #                 f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
-            #                 event.value[0].value, value_key=e_k1))
-            #         events_conditions[-2]["condition"] = event_where[-1]
-            #     s_op = get_sql_operator(event.value[1].operator)
-            #     is_any = _isAny_opreator(event.value[1].operator)
-            #     if not is_any:
-            #         event_where.append(
-            #             _multiple_conditions(
-            #                 f"main.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
-            #                 event.value[1].value, value_key=e_k2))
-            #         events_conditions[-1]["condition"] = event_where[-1]
-            #
-            #     e_k += "_custom"
-            #     full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
-            #     # event_where.append(
-            #     #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
-            #     #                          event.source, value_key=e_k))
-            #     # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
-            #     events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator}%({e_k})s",
-            #                                                          event.source, value_key=e_k)
-            #     event_index += 1
-            # TODO: no isNot for RequestDetails
+
             elif event_type == schemas.EventType.REQUEST_DETAILS:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
@@ -1579,33 +1493,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         extra_constraints.append("s.datetime >= toDateTime(%(startDate)s/1000)")
     if data.endTimestamp is not None:
         extra_constraints.append("s.datetime <= toDateTime(%(endDate)s/1000)")
-    # if data.platform is not None:
-    #     if data.platform == schemas.PlatformType.mobile:
-    #         extra_constraints.append(b"s.user_os in ('Android','BlackBerry OS','iOS','Tizen','Windows Phone')")
-    #     elif data.platform == schemas.PlatformType.desktop:
-    #         extra_constraints.append(
-    #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
 
-    # if errors_only:
-    #     extra_from += f" INNER JOIN {events.EventType.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
-    #     extra_constraints.append("ser.source = 'js_exception'")
-    #     extra_constraints.append("ser.project_id = %(project_id)s")
-    # if error_status != schemas.ErrorStatus.all:
-    #     extra_constraints.append("ser.status = %(error_status)s")
-    #     full_args["error_status"] = error_status
-    # if favorite_only:
-    #     extra_from += " INNER JOIN final.user_favorite_errors AS ufe USING (error_id)"
-    #     extra_constraints.append("ufe.user_id = %(userId)s")
-
-    # if favorite_only and not errors_only and user_id is not None:
-    #     extra_from += f"""INNER JOIN (SELECT session_id
-    #                                     FROM {exp_ch_helper.get_user_favorite_sessions_table()}
-    #                                     WHERE user_id=%(userId)s) AS favorite_sessions USING (session_id)"""
-    # elif not favorite_only and not errors_only and user_id is not None:
-    #     extra_from += f"""LEFT JOIN (SELECT session_id
-    #                                 FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
-    #                                 WHERE user_id = %(userId)s) AS favorite_sessions
-    #                                 ON (s.session_id=favorite_sessions.session_id)"""
     extra_join = ""
     if issue is not None:
         extra_join = """
