@@ -23,7 +23,7 @@ function MetricTypeIcon({ type }: any) {
   const [card, setCard] = useState<any>('');
   useEffect(() => {
     const t = TYPES.find((i) => i.slug === type);
-    setCard(t);
+    setCard(t || {});
   }, [type]);
 
   return (
