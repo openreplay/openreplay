@@ -18,7 +18,7 @@ export default class CustomFieldService extends BaseService {
   }
 
   async update(projectId: string, instance: any): Promise<any> {
-    return this.client.put(`/${projectId}/metadata/${instance.index}`, instance)
+    return this.client.post(`/${projectId}/metadata/${instance.index}`, instance)
       .then(r => r.json()).then(j => j.data);
   }
 

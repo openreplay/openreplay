@@ -44,9 +44,11 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
       } else {
         toast.error(response.errors[0]);
       }
+    }).catch(() => {
+      toast.error('An error occurred while saving metadata.');
     }).finally(() => {
       setLoading(false);
-    });
+    })
   };
 
   return (
