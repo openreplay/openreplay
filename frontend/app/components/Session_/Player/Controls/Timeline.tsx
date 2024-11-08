@@ -26,7 +26,7 @@ function Timeline(props: IProps) {
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   const timezone = sessionStore.current.timezone;
-  const issues = sessionStore.current.issues;
+  const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
 
