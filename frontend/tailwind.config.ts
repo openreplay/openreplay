@@ -26,6 +26,11 @@ module.exports = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
 
+        calendar: {
+          DEFAULT: "hsl(var(--calendar))",
+          hover: "hsl(var(--calendar-hover))",
+        },
+
         "secondary-text": "hsl(var(--secondary-text))",
 
         ring: "hsl(var(--ring))",

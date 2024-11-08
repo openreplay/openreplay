@@ -26,6 +26,9 @@ body {
     --border: 0 0% 83%;
     --input: 0 0% 89.8%;
 
+    --calendar: 0 0% 100%;
+    --calendar-hover: 26 100% 97%;
+
     --secondary-text: 0 0% 45%;
 
     --accordion-description: 0 0% 45%;
@@ -88,6 +91,9 @@ body {
 
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
+
+    --calendar: 0 0% 15%;
+    --calendar-hover: 26 100% 26%;
 
     --secondary-text: 0 0% 83%;
 

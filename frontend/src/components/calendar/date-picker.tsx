@@ -6,10 +6,9 @@ import {
 } from "@/shadcn-components/popover";
 import { Button } from "../button/button";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/shadcn-components/calendar";
+import { Calendar } from "./calendar";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Label } from "@/shadcn-components/label";
-import { Calendar1, Calendar1Icon, ChevronDown } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 
 type DatePickerProps = {
   date: Date | undefined;
@@ -49,14 +48,14 @@ const DatePicker = ({
                   !date && "text-muted-foreground",
                 )}
               >
-                <Calendar1Icon className="h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
               </div>
             )}
             <Button
               variant={"outline"}
               disabled={disabled}
               className={cn(
-                "items-center justify-between border-neutral-300 text-left text-sm font-medium shadow-none",
+                "items-center justify-between text-left text-sm font-medium shadow-none",
                 !date && "text-muted-foreground",
                 hasError && "border-red-500",
                 icon && "pl-9 pr-2",
@@ -72,7 +71,7 @@ const DatePicker = ({
         </PopoverTrigger>
         {!disabled && (
           <PopoverContent
-            className={cn("w-auto p-0 shadow-lg", contentStyle)}
+            className={cn("w-auto overflow-hidden p-0 shadow-lg", contentStyle)}
             align={align}
           >
             <Calendar
