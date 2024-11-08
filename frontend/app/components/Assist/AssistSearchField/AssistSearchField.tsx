@@ -33,9 +33,11 @@ function AssistSearchField() {
       {isEnterprise && modules.includes(MODULES.OFFLINE_RECORDINGS)
         ? <Button type="primary" ghost onClick={showRecords}>Training Videos</Button> : null
       }
-      <Button type="primary" ghost onClick={showStats}
-              disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>Co-Browsing
-        Reports</Button>
+      {isEnterprise && (
+        <Button type="primary" ghost onClick={showStats}
+                disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
+          Co-Browsing Reports</Button>
+      )}
       <Button
         type="link"
         className="ml-auto font-medium"
