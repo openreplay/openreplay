@@ -43,6 +43,8 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: JWT_SECRET
+              value: '{{ .Values.global.jwtSecret }}'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: KAFKA_SERVERS
