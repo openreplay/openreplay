@@ -1,6 +1,3 @@
-"use client";
-
-import * as React from "react";
 import { format } from "date-fns";
 import {
   Popover,
@@ -73,17 +70,19 @@ const DatePicker = ({
             </Button>
           </div>
         </PopoverTrigger>
-        <PopoverContent
-          className={cn("w-auto p-0 shadow-lg", contentStyle)}
-          align={align}
-        >
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            initialFocus
-          />
-        </PopoverContent>
+        {!disabled && (
+          <PopoverContent
+            className={cn("w-auto p-0 shadow-lg", contentStyle)}
+            align={align}
+          >
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+            />
+          </PopoverContent>
+        )}
       </Popover>
       {hasError && (
         <p className="text-sm font-semibold text-red-500">{error}</p>
