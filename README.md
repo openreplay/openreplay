@@ -101,3 +101,9 @@ Also, feel free to join our [Slack](https://slack.openreplay.com) to ask questio
 ## License
 
 This monorepo uses several licenses. See [LICENSE](/LICENSE) for more details.
+
+<p align="center">
+  <a href="https://gurubase.io/g/openreplay">
+    <img src="https://img.shields.io/badge/Gurubase-Ask%20OpenReplay%20Guru-006BFF" />
+  </a>
+</p>
