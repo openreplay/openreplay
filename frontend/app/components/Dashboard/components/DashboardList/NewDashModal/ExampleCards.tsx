@@ -64,7 +64,7 @@ export const CARD_LIST: CardType[] = [
     category: CARD_CATEGORIES[0].key,
     example: ExampleFunnel,
     width: 4,
-    height: 356,
+    height: 300,
     data: {
       stages: [
         {
@@ -73,22 +73,20 @@ export const CARD_LIST: CardType[] = [
           ],
           'type': 'location',
           'operator': 'contains',
-          'sessionsCount': 1586,
+          'count': 1586,
           'dropPct': null,
-          'usersCount': 470,
           'dropDueToIssues': 0
         },
         {
           'value': [],
           'type': 'click',
           'operator': 'onAny',
-          'sessionsCount': 1292,
+          'count': 1292,
           'dropPct': 18,
-          'usersCount': 450,
           'dropDueToIssues': 294
         }
       ],
-      totalDropDueToIssues: 294
+      // totalDropDueToIssues: 294
     }
   },
   {

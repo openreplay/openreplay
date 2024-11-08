@@ -15,7 +15,7 @@ interface Props {
 }
 function FunnelWidget(props: Props) {
     const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
-    const { isWidget = false, data } = props;
+    const { isWidget = false, data, metric } = props;
     const funnel = data.funnel || { stages: [] };
     const totalSteps = funnel.stages.length;
     const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
@@ -23,6 +23,7 @@ function FunnelWidget(props: Props) {
     const lastStage = funnel.stages[funnel.stages.length - 1];
     const remainingSteps = totalSteps - 2;
     const { hideModal } = useModal();
+    const metricLabel = metric?.metricFormat == 'userCount' ? 'Users' : 'Sessions';
 
     useEffect(() => {
         return () => {
@@ -69,6 +70,7 @@ function FunnelWidget(props: Props) {
                           stage={filter}
                           focusStage={focusStage}
                           focusedFilter={focusedFilter}
+                          metricLabel={metricLabel}
                         />
                     ))
                 )}
@@ -125,13 +127,13 @@ export const EmptyStage = observer(({ total }: any) => {
     )
 })
 
-export const Stage = observer(({ stage, index, isWidget, uxt, focusStage, focusedFilter }: any) => {
+export const Stage = observer(({ metricLabel, stage, index, isWidget, uxt, focusStage, focusedFilter }: any) => {
     return stage ? (
         <div
           className={cn('flex items-start', stl.step, { [stl['step-disabled']]: !stage.isActive })}
         >
           <IndexNumber index={index} />
-          {!uxt ? <Funnelbar index={index} filter={stage} focusStage={focusStage} focusedFilter={focusedFilter} /> : <UxTFunnelBar filter={stage} />}
+          {!uxt ? <Funnelbar metricLabel={metricLabel} index={index} filter={stage} focusStage={focusStage} focusedFilter={focusedFilter} /> : <UxTFunnelBar filter={stage} />}
           {/*{!isWidget && !uxt && <BarActions bar={stage} />}*/}
         </div>
       ) : (
