@@ -71,9 +71,9 @@ function ShareModalComp({
   const [shareTo, setShareTo] = useState('slack');
   const [comment, setComment] = useState('');
   // @ts-ignore
-  const [channelId, setChannelId] = useState(channels.getIn([0, 'webhookId']));
+  const [channelId, setChannelId] = useState(channels[0]?.webhookId);
   // @ts-ignore
-  const [teamsChannel, setTeamsChannel] = useState(msTeamsChannels.getIn([0, 'webhookId']));
+  const [teamsChannel, setTeamsChannel] = useState(msTeamsChannels[0]?.webhookId);
   const [loadingSlack, setLoadingSlack] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(false);
 
