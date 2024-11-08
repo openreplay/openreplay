@@ -8,6 +8,7 @@ import { Loader, Pagination, NoContent } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
 import { checkForRecent, durationFromMsFormatted, getDateFromMill } from 'App/date';
+import { useModal } from 'Components/Modal';
 
 interface Props {
   onSort: (v: string) => void;
@@ -122,6 +123,8 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
 }
 
 function Row({ session }: { session: AssistStatsSession }) {
+  const { hideModal } = useModal();
+  
   return (
     <div className={'grid grid-cols-9 p-4 border-b hover:bg-active-blue'}>
       <Cell size={2}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, hh:mm a')}</Cell>
@@ -160,7 +163,7 @@ function Row({ session }: { session: AssistStatsSession }) {
               </div>
             )
           ) : null}
-          <PlayLink isAssist={false} viewed={false} sessionId={session.sessionId} />
+          <PlayLink isAssist={false} viewed={false} sessionId={session.sessionId} onClick={hideModal} />
         </div>
       </Cell>
     </div>
