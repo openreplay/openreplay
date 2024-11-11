@@ -2,35 +2,16 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/components/badge/badge";
 import { cn } from "@/lib/utils";
-
-const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-  {
-    variants: {
-      variant: {
-        default: "text-foreground",
-        muted: "text-muted-foreground",
-      },
-      size: {
-        default: "text-md",
-        sm: "text-sm",
-        lg: "text-base",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-);
+import type { LucideProps } from "lucide-react";
 
 export interface LabelProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement>,
-    VariantProps<typeof labelVariants> {
+  extends React.LabelHTMLAttributes<HTMLLabelElement> {
   label: string;
   required?: boolean;
   helperText?: string;
-  icon?: any;
+  icon?: React.ForwardRefExoticComponent<
+    Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+  >;
   badge?: string;
   badgeVariant?: "solid" | "outline" | "soft" | "surface";
   wrapperClassName?: string;
@@ -42,36 +23,30 @@ export default function Label({
   helperText,
   icon: Icon,
   badge,
-  badgeVariant = "solid",
-  variant,
-  size,
+  badgeVariant = "outline",
   wrapperClassName,
   className,
   ...props
 }: LabelProps) {
   return (
-    <div className={cn("space-y-2", wrapperClassName)}>
+    <div className={cn("flex flex-col gap-1", wrapperClassName)}>
       <label
-        className={cn(
-          labelVariants({ variant, size }),
-          "inline-flex items-center gap-2",
-          className,
-        )}
+        className={cn("text-sm font-medium text-primary", className)}
         {...props}
       >
-        {Icon && <Icon className="h-4 w-4" />}
-        <span className="inline-flex items-center gap-2">
+        <span className="inline-flex items-center">
           {label}
           {required && <span className="text-destructive">*</span>}
+          {Icon && <Icon className="ml-1 h-4 w-4 text-secondary-text" />}
           {badge && (
-            <Badge variant={badgeVariant} className="ml-2">
+            <Badge variant={badgeVariant} size={"small"} className="ml-1">
               {badge}
             </Badge>
           )}
         </span>
       </label>
       {helperText && (
-        <p className="text-xs text-muted-foreground">{helperText}</p>
+        <p className="text-sm text-secondary-text">{helperText}</p>
       )}
     </div>
   );
