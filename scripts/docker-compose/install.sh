@@ -33,30 +33,41 @@ function exists() {
 randomPass() {
 	exists openssl || {
 		info "Installing openssl... 🔐"
-		sudo apt update &>/dev/null
-		sudo apt install openssl -y &>/dev/null
+		brew update &>/dev/null
+		brew install openssl -y &>/dev/null
 	}
 	openssl rand -hex 10
 }
 
 # Create dynamic passwords and update the environment file
 function create_passwords() {
-	info "Creating dynamic passwords..."
-	sed -i "s/change_me_domain/${DOMAIN_NAME}/g" common.env
-	sed -i "s/change_me_jwt/$(randomPass)/g" common.env
-	sed -i "s/change_me_s3_key/$(randomPass)/g" common.env
-	sed -i "s/change_me_s3_secret/$(randomPass)/g" common.env
-	sed -i "s/change_me_pg_password/$(randomPass)/g" common.env
-	info "Passwords created and updated in common.env file."
+    info "Creating dynamic passwords..."
+    
+    # Check if file exists
+    if [ ! -f common.env ]; then
+        echo "Error: common.env file not found"
+        return 1
+    fi
+
+    # For macOS, using a different syntax
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # Create a temporary file for each substitution
+        sed "s|change_me_domain|${DOMAIN_NAME}|g" common.env > temp.env && mv temp.env common.env
+        sed "s|change_me_jwt|$(randomPass)|g" common.env > temp.env && mv temp.env common.env
+        sed "s|change_me_s3_key|$(randomPass)|g" common.env > temp.env && mv temp.env common.env
+        sed "s|change_me_s3_secret|$(randomPass)|g" common.env > temp.env && mv temp.env common.env
+        sed "s|change_me_pg_password|$(randomPass)|g" common.env > temp.env && mv temp.env common.env
+    else
+        # Linux version remains the same
+        sed -i "s/change_me_domain/${DOMAIN_NAME}/g" common.env
+        sed -i "s/change_me_jwt/$(randomPass)/g" common.env
+        sed -i "s/change_me_s3_key/$(randomPass)/g" common.env
+        sed -i "s/change_me_s3_secret/$(randomPass)/g" common.env
+        sed -i "s/change_me_pg_password/$(randomPass)/g" common.env
+    fi
+
+    info "Passwords created and updated in common.env file."
 }
-
-# update apt cache
-info "Grabbing latest apt caches"
-sudo apt update
-
-# setup docker
-info "Setting up Docker"
-sudo apt install docker.io docker-compose -y
 
 # enable docker without sudo
 sudo usermod -aG docker "${USER}" || true
@@ -101,7 +112,7 @@ source common.env
 set +a
 
 # Use the `envsubst` command to substitute the shell environment variables into reference_var.env and output to a combined .env
-find ./ -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
+find . -type f \( -iname "*.env" -o -iname "docker-compose.yaml" \) ! -name "common.env" -exec /bin/bash -c 'file="{}"; git checkout -- "$file"; cp "$file" "$file.bak"; envsubst < "$file.bak" > "$file"; rm "$file.bak"' \;
 
 case $yn in 
 	y ) echo "$DOMAIN_NAME is on a public DNS";
