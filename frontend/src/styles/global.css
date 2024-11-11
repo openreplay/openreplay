@@ -45,6 +45,13 @@ body {
     --alert-success: 163 88% 20%;
     --alert-warning: 28 73% 26%;
 
+    --badge-soft: 240 5% 96%;
+    --badge-outline-border: 0 0% 83%;
+    --badge-outline-foreground: 0 0% 45%;
+    --badge-surface: 0 0% 94%;
+    --badge-surface-border: 240 6% 90%;
+    --badge-surface-foreground: 0 0% 45%;
+
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
 
@@ -110,6 +117,13 @@ body {
     --alert-bg-warning: 44 100% 5%;
     --alert-success: 158 64% 52%;
     --alert-warning: 50 98% 64%;
+
+    --badge-soft: 0 0% 9%;
+    --badge-outline-border: 0 0% 25%;
+    --badge-outline-foreground: 0 0% 83%;
+    --badge-surface: 240 5% 96% 10%;
+    --badge-surface-border: 0 0% 25%;
+    --badge-surface-foreground: 0 0% 83%;
 
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;

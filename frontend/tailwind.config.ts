@@ -81,6 +81,14 @@ module.exports = {
           "bg-success": "hsl(var(--alert-bg-success))",
           "bg-warning": "hsl(var(--alert-bg-warning))",
         },
+        badge: {
+          soft: "hsl(var(--bage-soft))",
+          "outline-border": "hsl(var(--badge-outline-border))",
+          "outline-foreground": "hsl(var(--badge-outline-foreground))",
+          surface: "hsl(var(--badge-surface))",
+          "surface-border": "hsl(var(--badge-surface-border))",
+          "surface-foreground": "hsl(var(--badge-surface-foreground))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

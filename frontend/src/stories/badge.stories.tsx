@@ -19,10 +19,6 @@ export default {
       control: { type: "select" },
       options: ["solid", "soft", "outline", "surface"],
     },
-    badgeColor: {
-      control: { type: "select" },
-      options: ["primary", "success", "warning", "danger", "info"],
-    },
     size: {
       control: { type: "select" },
       options: ["small", "medium", "large"],
@@ -35,56 +31,27 @@ const Template: StoryFn<BadgeProps> = (args) => <Badge {...args}>Label</Badge>;
 export const Default = Template.bind({});
 Default.args = {
   variant: "solid",
-  badgeColor: "primary",
   size: "medium",
 };
 
-export const Variants = () => (
+export const AllVariants = () => (
   <div className="flex flex-col gap-4">
-    <Badge variant="solid" badgeColor="primary" size="medium">
-      Solid Primary
-    </Badge>
-    <Badge variant="soft" badgeColor="success" size="medium">
-      Soft Success
-    </Badge>
-    <Badge variant="outline" badgeColor="warning" size="medium">
-      Outline Warning
-    </Badge>
-    <Badge variant="surface" badgeColor="danger" size="medium">
-      Surface Danger
-    </Badge>
+    <Badge variant="solid">Solid</Badge>
+    <Badge variant="soft">Soft</Badge>
+    <Badge variant="outline">Outline</Badge>
+    <Badge variant="surface">Surface</Badge>
   </div>
 );
 
-export const Colors = () => (
+export const Sizes = (args: Meta) => (
   <div className="flex flex-col gap-4">
-    <Badge variant="solid" badgeColor="primary" size="medium">
-      Primary
-    </Badge>
-    <Badge variant="solid" badgeColor="success" size="medium">
-      Success
-    </Badge>
-    <Badge variant="solid" badgeColor="warning" size="medium">
-      Warning
-    </Badge>
-    <Badge variant="solid" badgeColor="danger" size="medium">
-      Danger
-    </Badge>
-    <Badge variant="solid" badgeColor="info" size="medium">
-      Info
-    </Badge>
-  </div>
-);
-
-export const Sizes = () => (
-  <div className="flex flex-col gap-4">
-    <Badge variant="solid" badgeColor="primary" size="small">
+    <Badge variant="solid" size="small" {...args}>
       Small
     </Badge>
-    <Badge variant="solid" badgeColor="primary" size="medium">
+    <Badge variant="solid" size="medium" {...args}>
       Medium
     </Badge>
-    <Badge variant="solid" badgeColor="primary" size="large">
+    <Badge variant="solid" size="large" {...args}>
       Large
     </Badge>
   </div>
