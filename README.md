@@ -89,7 +89,7 @@ Please refer to the [official OpenReplay documentation](https://docs.openreplay.
 - [Twitter](https://twitter.com/OpenReplayHQ) (Product updates, Great content)
 - [YouTube](https://www.youtube.com/channel/UCcnWlW-5wEuuPAwjTR1Ydxw) (How-to tutorials, past Community Calls)
 - [Website chat](https://openreplay.com) (Talk to us)
-- [OpenReplay Guru](https://gurubase.io/g/openreplay) (OpenReplay-focused AI to answer your questions.)
+- [OpenReplay Guru](https://gurubase.io/g/openreplay) (OpenReplay-focused AI to answer your questions)
 
 ## Contributing
 
@@ -102,4 +102,3 @@ Also, feel free to join our [Slack](https://slack.openreplay.com) to ask questio
 ## License
 
 This monorepo uses several licenses. See [LICENSE](/LICENSE) for more details.
-
