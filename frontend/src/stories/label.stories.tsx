@@ -1,6 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/react";
 import Label, { type LabelProps } from "@/components/label/label";
-import { CircleHelp, Info } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 
 export default {
   title: "Components/Label",

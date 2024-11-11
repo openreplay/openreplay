@@ -1,5 +1,4 @@
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/components/badge/badge";
 import { cn } from "@/lib/utils";
 import type { LucideProps } from "lucide-react";

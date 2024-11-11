@@ -82,7 +82,7 @@ module.exports = {
           "bg-warning": "hsl(var(--alert-bg-warning))",
         },
         badge: {
-          soft: "hsl(var(--bage-soft))",
+          soft: "hsl(var(--badge-soft))",
           "outline-border": "hsl(var(--badge-outline-border))",
           "outline-foreground": "hsl(var(--badge-outline-foreground))",
           surface: "hsl(var(--badge-surface))",
