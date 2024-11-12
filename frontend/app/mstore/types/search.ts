@@ -147,7 +147,7 @@ export default class Search {
     return js;
   }
 
-  static fromJS({ eventsOrder, filters, events, custom, ...filterData }: any) {
+  fromJS({ eventsOrder, filters, events, custom, ...filterData }: any) {
     let startDate, endDate;
     const rValue = filterData.rangeValue || rangeValue;
 
@@ -165,7 +165,7 @@ export default class Search {
       eventsOrder,
       startDate,
       endDate,
-      events: events.map((event: any) => new Event(event)),
+      // events: events.map((event: any) => new Event(event)),
       filters: filters.map((i: any) => {
         const filter = new Filter(i).toData();
         if (Array.isArray(i.filters)) {

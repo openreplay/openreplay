@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
-import { createUrlQuery, getFiltersFromQuery } from 'App/utils/search';
+import { JsonUrlConverter } from 'App/utils/search';
 import { useStore } from '@/mstore';
+import Search from '@/mstore/types/search';
+import { getFilterFromJson } from 'Types/filter/newFilter';
 
 interface Props {
   onBeforeLoad?: () => Promise<any>;
@@ -23,7 +25,9 @@ const useSessionSearchQueryHandler = (props: Props) => {
           setBeforeHookLoaded(true);
         }
 
-        const filter = getFiltersFromQuery(history.location.search, appliedFilter);
+        const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
+        const json: any = getFilterFromJson(converter.toJSON());
+        const filter = new Search(json);
         searchStore.applyFilter(filter, true);
       }
     };
@@ -34,8 +38,8 @@ const useSessionSearchQueryHandler = (props: Props) => {
   useEffect(() => {
     const generateUrlQuery = () => {
       if (!loading && beforeHookLoaded) {
-        const search: any = createUrlQuery(appliedFilter);
-        history.replace({ search });
+        const converter = JsonUrlConverter.jsonToUrlParams(appliedFilter);
+        history.replace({ search: converter });
       }
     };
 
