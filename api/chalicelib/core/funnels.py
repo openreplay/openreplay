@@ -69,14 +69,14 @@ def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchem
                                          last_stage=len(data.events)))}
 
 
-def get_simple_funnel(project_id, data: schemas.CardSeriesFilterSchema,
+def get_simple_funnel(project:schemas.ProjectContext, data: schemas.CardSeriesFilterSchema,
                       metric_format: schemas.MetricExtendedFormatType):
     data.events = filter_stages(__parse_events(data.events))
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         return {"stages": [], "totalDropDueToIssues": 0}
     insights = significance.get_simple_funnel(filter_d=data,
-                                              project_id=project_id,
+                                              project=project,
                                               metric_format=metric_format)
 
     return {"stages": insights, "totalDropDueToIssues": 0}

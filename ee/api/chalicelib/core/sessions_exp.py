@@ -5,7 +5,7 @@ from typing import List, Union
 import schemas
 from chalicelib.core import events, metadata, projects, performance_event, metrics, sessions_favorite, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-from chalicelib.utils.sql_helper import get_sql_operator
+from chalicelib.utils import sql_helper as sh
 
 logger = logging.getLogger(__name__)
 SESSION_PROJECTION_COLS_CH = """\
@@ -55,16 +55,6 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'issue_score',       toString(coalesce(issue_score,0)),
 'viewed',            toString(viewed_sessions.session_id > 0)
 """
-
-
-def __is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator.IS_NOT,
-                  schemas.SearchEventOperator.NOT_ON,
-                  schemas.SearchEventOperator.NOT_CONTAINS]
-
-
-def __reverse_sql_operator(op):
-    return "=" if op == "!=" else "!=" if op == "=" else "ILIKE" if op == "NOT ILIKE" else "NOT ILIKE"
 
 
 def _multiple_conditions(condition, values, value_key="value", is_not=False):
@@ -599,14 +589,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
-            op = get_sql_operator(f.operator) \
+            op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
             is_any = _isAny_opreator(f.operator)
             is_undefined = _isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
-            if __is_negation_operator(f.operator):
+            if sh.is_negation_operator(f.operator):
                 is_not = True
             if filter_type == schemas.FilterType.USER_BROWSER:
                 if is_any:
@@ -796,7 +786,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         _multiple_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type == schemas.FilterType.PLATFORM:
-                # op = get_sql_operator(f.operator)
+                # op = sh.get_sql_operator(f.operator)
                 extra_constraints.append(
                     _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                          value_key=f_k))
@@ -857,11 +847,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 event.value = [event.value]
             if not __is_valid_event(is_any=is_any, event=event):
                 continue
-            op = get_sql_operator(event.operator)
+            op = sh.get_sql_operator(event.operator)
             is_not = False
-            if __is_negation_operator(event.operator):
+            if sh.is_negation_operator(event.operator):
                 is_not = True
-                op = __reverse_sql_operator(op)
+                op = sh.reverse_sql_operator(op)
             # if event_index == 0 or or_events:
             # event_from = f"%s INNER JOIN {MAIN_SESSIONS_TABLE} AS ms USING (session_id)"
             event_from = "%s"
@@ -1255,7 +1245,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = get_sql_operator(f.operator)
+                    op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_fetch{j}"
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType.FETCH_URL:
@@ -1308,7 +1298,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = get_sql_operator(f.operator)
+                    op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
@@ -1538,7 +1528,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 if _isAny_opreator(c.operator):
                     continue
                 e_k = f"ec_value{i}"
-                op = get_sql_operator(c.operator)
+                op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
                              **_multiple_values(c.value, value_key=e_k)}
