@@ -13,7 +13,7 @@ import (
 )
 
 type Router interface {
-	AddHandlers(handlers Handlers)
+	AddHandlers(handlers ...Handlers)
 	GetHandler() http.Handler
 	AddMiddlewares(middlewares ...func(http.Handler) http.Handler)
 }
@@ -50,9 +50,11 @@ func (e *routerImpl) init() {
 	e.router.Use(e.corsMiddleware)
 }
 
-func (e *routerImpl) AddHandlers(handlers Handlers) {
-	for _, handler := range handlers.GetAll() {
-		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
+func (e *routerImpl) AddHandlers(handlers ...Handlers) {
+	for _, handlersSet := range handlers {
+		for _, handler := range handlersSet.GetAll() {
+			e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
+		}
 	}
 }
 

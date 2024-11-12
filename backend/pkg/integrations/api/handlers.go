@@ -1,15 +1,16 @@
-package data_integration
+package api
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/integrations"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 
-	"openreplay/backend/internal/config/integrations"
+	integrationsCfg "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 )
@@ -17,10 +18,10 @@ import (
 type handlersImpl struct {
 	log           logger.Logger
 	JsonSizeLimit int64
-	services      *ServiceBuilder
+	services      *integrations.ServiceBuilder
 }
 
-func NewHandlers(log logger.Logger, cfg *integrations.Config, services *ServiceBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, services *integrations.ServiceBuilder) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		JsonSizeLimit: cfg.JsonSizeLimit,

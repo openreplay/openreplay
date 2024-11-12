@@ -2,10 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/services"
 	conditions "openreplay/backend/pkg/conditions/api"
@@ -46,68 +42,46 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	services, err := services.New(log, cfg, producer, pgConn, redisClient)
+	builder, err := services.New(log, cfg, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating services: %s", err)
+	}
+
+	webAPI, err := websessions.NewHandlers(cfg, log, builder)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating web sessions handlers: %s", err)
+	}
+
+	mobileAPI, err := mobilesessions.NewHandlers(cfg, log, builder)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating mobile sessions handlers: %s", err)
+	}
+
+	conditionsAPI, err := conditions.NewHandlers(log)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating conditions handlers: %s", err)
+	}
+
+	featureFlagsAPI, err := featureflags.NewHandlers(log, cfg.JsonSizeLimit, builder)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating feature flags handlers: %s", err)
+	}
+
+	tagsAPI, err := tags.NewHandlers(log, builder)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating tags handlers: %s", err)
+	}
+
+	uxtestsAPI, err := uxtesting.NewHandlers(log, cfg.JsonSizeLimit, builder)
+	if err != nil {
+		log.Fatal(ctx, "failed while creating ux testing handlers: %s", err)
 	}
 
 	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
+	router.AddHandlers(webAPI, mobileAPI, conditionsAPI, featureFlagsAPI, tagsAPI, uxtestsAPI)
 
-	webAPI, err := websessions.NewHandlers(cfg, log, services)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating web sessions handlers: %s", err)
-	}
-	router.AddHandlers(webAPI)
-
-	mobileAPI, err := mobilesessions.NewHandlers(cfg, log, services)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating mobile sessions handlers: %s", err)
-	}
-	router.AddHandlers(mobileAPI)
-
-	conditionsAPI, err := conditions.NewHandlers(log)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating conditions handlers: %s", err)
-	}
-	router.AddHandlers(conditionsAPI)
-
-	featureFlagsAPI, err := featureflags.NewHandlers(log, cfg.JsonSizeLimit, services)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating feature flags handlers: %s", err)
-	}
-	router.AddHandlers(featureFlagsAPI)
-
-	tagsAPI, err := tags.NewHandlers(log, services)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating tags handlers: %s", err)
-	}
-	router.AddHandlers(tagsAPI)
-
-	uxtestsAPI, err := uxtesting.NewHandlers(log, cfg.JsonSizeLimit, services)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating ux testing handlers: %s", err)
-	}
-	router.AddHandlers(uxtestsAPI)
-
-	webServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating server: %s", err)
-	}
-	go func() {
-		if err := webServer.Start(); err != nil {
-			log.Fatal(ctx, "http server error: %s", err)
-		}
-	}()
-
-	log.Info(ctx, "server successfully started on port %s", cfg.HTTPPort)
-
-	// Wait stop signal to shut down server gracefully
-	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigchan
-	log.Info(ctx, "shutting down the server")
-	webServer.Stop()
+	server.Run(ctx, log, &cfg.HTTP, router)
 }

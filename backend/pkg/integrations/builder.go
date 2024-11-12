@@ -1,4 +1,4 @@
-package data_integration
+package integrations
 
 import (
 	"time"

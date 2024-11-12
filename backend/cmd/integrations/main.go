@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/db/postgres/pool"
-	integrationsAPI "openreplay/backend/pkg/integrations"
+	"openreplay/backend/pkg/integrations"
+	integrationsAPI "openreplay/backend/pkg/integrations/api"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
@@ -29,38 +26,22 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	services, err := integrationsAPI.NewServiceBuilder(log, cfg, pgConn)
+	builder, err := integrations.NewServiceBuilder(log, cfg, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
+	}
+
+	handlers, err := integrationsAPI.NewHandlers(log, cfg, builder)
+	if err != nil {
+		log.Fatal(ctx, "can't init handlers: %s", err)
 	}
 
 	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-
-	handlers, err := integrationsAPI.NewHandlers(log, cfg, services)
-	if err != nil {
-		log.Fatal(ctx, "can't init handlers: %s", err)
-	}
 	router.AddHandlers(handlers)
-	router.AddMiddlewares(services.Auth.AuthMiddleware, services.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
+	router.AddMiddlewares(builder.Auth.AuthMiddleware, builder.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
 
-	dataIntegrationServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
-	if err != nil {
-		log.Fatal(ctx, "failed while creating server: %s", err)
-	}
-	go func() {
-		if err := dataIntegrationServer.Start(); err != nil {
-			log.Fatal(ctx, "http server error: %s", err)
-		}
-	}()
-	log.Info(ctx, "server successfully started on port %s", cfg.HTTPPort)
-
-	// Wait stop signal to shut down server gracefully
-	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigchan
-	log.Info(ctx, "shutting down the server")
-	dataIntegrationServer.Stop()
+	server.Run(ctx, log, &cfg.HTTP, router)
 }
