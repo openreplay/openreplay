@@ -1772,7 +1772,6 @@ export default class App {
         this.messages.length = 0
         this.trackedFrames = []
         this.parentActive = false
-        this.canStart = false
       } finally {
         this.activityState = ActivityState.NotActive
         this.debug.log('OpenReplay tracking stopped.')
