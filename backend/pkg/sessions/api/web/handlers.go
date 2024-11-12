@@ -54,10 +54,10 @@ func NewHandlers(cfg *http3.Config, log logger.Logger, services *http2.ServicesB
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/not-started", e.notStartedHandlerWeb, []string{"POST", "OPTIONS"}},
-		{"/v1/web/start", e.startSessionHandlerWeb, []string{"POST", "OPTIONS"}},
-		{"/v1/web/i", e.pushMessagesHandlerWeb, []string{"POST", "OPTIONS"}},
-		{"/v1/web/images", e.imagesUploaderHandlerWeb, []string{"POST", "OPTIONS"}},
+		{"/v1/web/not-started", e.notStartedHandlerWeb, "POST"},
+		{"/v1/web/start", e.startSessionHandlerWeb, "POST"},
+		{"/v1/web/i", e.pushMessagesHandlerWeb, "POST"},
+		{"/v1/web/images", e.imagesUploaderHandlerWeb, "POST"},
 	}
 }
 

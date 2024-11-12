@@ -52,14 +52,14 @@ func (e *routerImpl) init() {
 
 func (e *routerImpl) AddHandlers(handlers Handlers) {
 	for _, handler := range handlers.GetAll() {
-		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Methods...)
+		e.router.HandleFunc(handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
 	}
 }
 
 // AddHandlerWithPrefix adds a prefix := "/ingest" for http service for example
 func (e *routerImpl) AddHandlerWithPrefix(prefix string, handlers Handlers) {
 	for _, handler := range handlers.GetAll() {
-		e.router.HandleFunc(prefix+handler.Path, handler.Handler).Methods(handler.Methods...)
+		e.router.HandleFunc(prefix+handler.Path, handler.Handler).Methods(handler.Method, "OPTIONS")
 	}
 }
 

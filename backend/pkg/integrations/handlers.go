@@ -30,11 +30,11 @@ func NewHandlers(log logger.Logger, cfg *integrations.Config, services *ServiceB
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/integrations/{name}/{project}", e.createIntegration, []string{"POST", "OPTIONS"}},
-		{"/v1/integrations/{name}/{project}", e.getIntegration, []string{"GET", "OPTIONS"}},
-		{"/v1/integrations/{name}/{project}", e.updateIntegration, []string{"PATCH", "OPTIONS"}},
-		{"/v1/integrations/{name}/{project}", e.deleteIntegration, []string{"DELETE", "OPTIONS"}},
-		{"/v1/integrations/{name}/{project}/data/{session}", e.getIntegrationData, []string{"GET", "OPTIONS"}},
+		{"/v1/integrations/{name}/{project}", e.createIntegration, "POST"},
+		{"/v1/integrations/{name}/{project}", e.getIntegration, "GET"},
+		{"/v1/integrations/{name}/{project}", e.updateIntegration, "PATCH"},
+		{"/v1/integrations/{name}/{project}", e.deleteIntegration, "DELETE"},
+		{"/v1/integrations/{name}/{project}/data/{session}", e.getIntegrationData, "GET"},
 	}
 }
 

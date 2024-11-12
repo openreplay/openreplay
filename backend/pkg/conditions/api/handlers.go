@@ -20,8 +20,8 @@ func NewHandlers(log logger.Logger) (api.Handlers, error) {
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/conditions/{project}", e.getConditions, []string{"GET", "OPTIONS"}},
-		{"/v1/mobile/conditions/{project}", e.getConditions, []string{"GET", "OPTIONS"}},
+		{"/v1/web/conditions/{project}", e.getConditions, "GET"},
+		{"/v1/mobile/conditions/{project}", e.getConditions, "GET"},
 	}
 }
 

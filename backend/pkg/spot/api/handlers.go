@@ -38,18 +38,18 @@ func NewHandlers(log logger.Logger, cfg *spotConfig.Config, services *spot.Servi
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/spots", e.createSpot, []string{"POST", "OPTIONS"}},
-		{"/v1/spots/{id}", e.getSpot, []string{"GET", "OPTIONS"}},
-		{"/v1/spots/{id}", e.updateSpot, []string{"PATCH", "OPTIONS"}},
-		{"/v1/spots", e.getSpots, []string{"GET", "OPTIONS"}},
-		{"/v1/spots", e.deleteSpots, []string{"DELETE", "OPTIONS"}},
-		{"/v1/spots/{id}/comment", e.addComment, []string{"POST", "OPTIONS"}},
-		{"/v1/spots/{id}/uploaded", e.uploadedSpot, []string{"POST", "OPTIONS"}},
-		{"/v1/spots/{id}/video", e.getSpotVideo, []string{"GET", "OPTIONS"}},
-		{"/v1/spots/{id}/public-key", e.getPublicKey, []string{"GET", "OPTIONS"}},
-		{"/v1/spots/{id}/public-key", e.updatePublicKey, []string{"PATCH", "OPTIONS"}},
-		{"/v1/spots/{id}/status", e.spotStatus, []string{"GET", "OPTIONS"}},
-		{"/v1/ping", e.ping, []string{"GET", "OPTIONS"}},
+		{"/v1/spots", e.createSpot, "POST"},
+		{"/v1/spots/{id}", e.getSpot, "GET"},
+		{"/v1/spots/{id}", e.updateSpot, "PATCH"},
+		{"/v1/spots", e.getSpots, "GET"},
+		{"/v1/spots", e.deleteSpots, "DELETE"},
+		{"/v1/spots/{id}/comment", e.addComment, "POST"},
+		{"/v1/spots/{id}/uploaded", e.uploadedSpot, "POST"},
+		{"/v1/spots/{id}/video", e.getSpotVideo, "GET"},
+		{"/v1/spots/{id}/public-key", e.getPublicKey, "GET"},
+		{"/v1/spots/{id}/public-key", e.updatePublicKey, "PATCH"},
+		{"/v1/spots/{id}/status", e.spotStatus, "GET"},
+		{"/v1/ping", e.ping, "GET"},
 	}
 }
 

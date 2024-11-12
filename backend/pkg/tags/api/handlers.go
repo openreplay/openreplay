@@ -25,7 +25,7 @@ func NewHandlers(log logger.Logger, services *services.ServicesBuilder) (api.Han
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/tags", e.getTags, []string{"GET", "OPTIONS"}},
+		{"/v1/tags", e.getTags, "GET"},
 	}
 }
 

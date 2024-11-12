@@ -5,7 +5,7 @@ import "net/http"
 type Description struct {
 	Path    string
 	Handler http.HandlerFunc
-	Methods []string
+	Method  string
 }
 
 type Handlers interface {

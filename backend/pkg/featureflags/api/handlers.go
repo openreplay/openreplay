@@ -30,7 +30,7 @@ func NewHandlers(log logger.Logger, jsonSizeLimit int64, services *services.Serv
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/feature-flags", e.featureFlagsHandlerWeb, []string{"POST", "OPTIONS"}},
+		{"/v1/web/feature-flags", e.featureFlagsHandlerWeb, "POST"},
 	}
 }
 
