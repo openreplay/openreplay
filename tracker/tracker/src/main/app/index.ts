@@ -1775,7 +1775,6 @@ export default class App {
         this.canvasRecorder?.clear()
         this.messages.length = 0
         this.parentActive = false
-        this.canStart = false
       } finally {
         this.activityState = ActivityState.NotActive
         this.debug.log('OpenReplay tracking stopped.')
