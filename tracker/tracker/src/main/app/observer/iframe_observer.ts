@@ -30,11 +30,4 @@ export default class IFrameObserver extends Observer {
       this.app.send(CreateIFrameDocument(rootNodeId, docID))
     })
   }
-
-  disconnect() {
-    if (this.docId !== undefined) {
-      this.app.send(RemoveNode(this.docId))
-    }
-    super.disconnect()
-  }
 }

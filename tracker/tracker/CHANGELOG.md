@@ -3,6 +3,13 @@
 - new webvitals messages source (new msg type)
 - new structure for string dictionary (new msg type)
 
+## 14.0.13
+
+- fixes for restart logic
+- fixed top context check in case of crossdomain placement
+- fixed crossdomain restart logic (when triggered via assist)
+- keep allowstart option on manual stop
+
 ## 14.0.11 & .12
 
 - fix for node maintainer stability around `#document` nodes (mainly iframes field)
