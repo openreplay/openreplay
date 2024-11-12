@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 import { createUrlQuery, getFiltersFromQuery } from 'App/utils/search';
+import { useStore } from '@/mstore';
 
 interface Props {
   onBeforeLoad?: () => Promise<any>;
   appliedFilter: any;
-  applyFilter: any;
   loading: boolean;
 }
 
 const useSessionSearchQueryHandler = (props: Props) => {
+  const { searchStore } = useStore();
   const [beforeHookLoaded, setBeforeHookLoaded] = useState(!props.onBeforeLoad);
-  const { appliedFilter, applyFilter, loading } = props;
+  const { appliedFilter, loading } = props;
   const history = useHistory();
 
   useEffect(() => {
@@ -21,8 +22,9 @@ const useSessionSearchQueryHandler = (props: Props) => {
           await props.onBeforeLoad();
           setBeforeHookLoaded(true);
         }
+
         const filter = getFiltersFromQuery(history.location.search, appliedFilter);
-        applyFilter(filter, true, false);
+        searchStore.applyFilter(filter, true);
       }
     };
 

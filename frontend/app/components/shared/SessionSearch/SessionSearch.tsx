@@ -14,11 +14,7 @@ import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler
 let debounceFetch: any = () => {
 };
 
-interface Props {
-
-}
-
-function SessionSearch(props: Props) {
+function SessionSearch() {
   const { tagWatchStore, aiFiltersStore, searchStore, customFieldStore, projectsStore } = useStore();
   const appliedFilter = searchStore.instance;
   const metaLoading = customFieldStore.isLoading;
@@ -28,7 +24,6 @@ function SessionSearch(props: Props) {
 
   useSessionSearchQueryHandler({
     appliedFilter,
-    applyFilter: searchStore.updateFilter,
     loading: metaLoading,
     onBeforeLoad: async () => {
       const tags = await tagWatchStore.getTags();

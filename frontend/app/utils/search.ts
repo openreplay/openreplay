@@ -1,7 +1,7 @@
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
-import Filter from 'Types/filter/filter';
 import { filtersMap } from 'Types/filter/newFilter';
+import Search from '@/mstore/types/search';
 
 type QueryItem = {
   key: any;
@@ -52,7 +52,7 @@ export const getFiltersFromQuery = (search: string, filter: any) => {
   const period: any = getPeriodFromEntries(entries);
   const filters = getFiltersFromEntries(entries);
 
-  return Filter({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
+  return new Search({ filters, rangeValue: period.rangeName, startDate: period.start, endDate: period.end });
 };
 
 const getFiltersFromEntries = (entries: any) => {
@@ -126,7 +126,7 @@ const getPeriodFromEntries = (entries: any) => {
 };
 
 function getQueryObject(search: any) {
-  let jsonArray = search
+  return search
     .slice(1)
     .split('&')
     .map((item: any) => {
@@ -134,5 +134,4 @@ function getQueryObject(search: any) {
       key = key.replace('[]', '');
       return { key: key, value: decodeURI(value) };
     });
-  return jsonArray;
 }
