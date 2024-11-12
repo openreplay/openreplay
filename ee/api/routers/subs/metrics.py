@@ -82,7 +82,7 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
 @app.post('/{projectId}/cards/try', tags=["cards"])
 def try_card(projectId: int, data: schemas.CardSchema = Body(...),
              context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_chart(project_id=projectId, data=data, user_id=context.user_id)}
+    return {"data": custom_metrics.get_chart(project=context.project, data=data, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
@@ -177,9 +177,9 @@ def get_card_errors_list(projectId: int, metric_id: int,
 
 
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
-def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardSessionsSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, data: schemas.CardSessionsSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+    data = custom_metrics.make_chart_from_card(project=context.project, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
     return {"data": data}
 

@@ -23,7 +23,6 @@ else:
     from chalicelib.core import sessions_legacy as sessions
 
 logger = logging.getLogger(__name__)
-PIE_CHART_GROUP = 5
 
 
 # TODO: refactor this to split
@@ -50,69 +49,73 @@ def __get_table_of_series(project_id, data: schemas.CardSchema):
     return results
 
 
-def __get_funnel_chart(project_id: int, data: schemas.CardFunnel, user_id: int = None):
+def __get_funnel_chart(project: schemas.ProjectContext, data: schemas.CardFunnel, user_id: int = None):
     if len(data.series) == 0:
         return {
             "stages": [],
             "totalDropDueToIssues": 0
         }
 
-    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
-                                                      data=data.series[0].filter,
-                                                      metric_format=data.metric_format)
+    # return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
+    #                                                   data=data.series[0].filter,
+    #                                                   metric_format=data.metric_format)
+    return funnels.get_simple_funnel(project=project,
+                                     data=data.series[0].filter,
+                                     metric_format=data.metric_format)
 
 
-def __get_errors_list(project_id, user_id, data: schemas.CardSchema):
+def __get_errors_list(project: schemas.ProjectContext, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
             "errors": []
         }
-    return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+    return errors.search(data.series[0].filter, project_id=project.project_id, user_id=user_id)
 
 
-def __get_sessions_list(project_id, user_id, data: schemas.CardSchema):
+def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.CardSchema):
     if len(data.series) == 0:
         logger.debug("empty series")
         return {
             "total": 0,
             "sessions": []
         }
-    return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
+    return sessions.search_sessions(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
 
 
-def __get_heat_map_chart(project_id, user_id, data: schemas.CardHeatMap, include_mobs: bool = True):
+def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
+                         include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.filters += data.series[0].filter.events
     data.series[0].filter.events = []
-    return heatmaps.search_short_session(project_id=project_id, user_id=user_id,
+    return heatmaps.search_short_session(project_id=project.project_id, user_id=user_id,
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
                                          include_mobs=include_mobs)
 
 
 # EE only
-def __get_insights_chart(project_id: int, data: schemas.CardInsights, user_id: int = None):
-    return sessions_insights.fetch_selected(project_id=project_id,
+def __get_insights_chart(project: schemas.ProjectContext, data: schemas.CardInsights, user_id: int = None):
+    return sessions_insights.fetch_selected(project_id=project.project_id,
                                             data=schemas.GetInsightsSchema(startTimestamp=data.startTimestamp,
                                                                            endTimestamp=data.endTimestamp,
                                                                            metricValue=data.metric_value,
                                                                            series=data.series))
 
 
-def __get_path_analysis_chart(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
+def __get_path_analysis_chart(project: schemas.ProjectContext, user_id: int, data: schemas.CardPathAnalysis):
     if len(data.series) == 0:
         data.series.append(
             schemas.CardPathAnalysisSeriesSchema(startTimestamp=data.startTimestamp, endTimestamp=data.endTimestamp))
     elif not isinstance(data.series[0].filter, schemas.PathAnalysisSchema):
         data.series[0].filter = schemas.PathAnalysisSchema()
 
-    return product_analytics.path_analysis(project_id=project_id, data=data)
+    return product_analytics.path_analysis(project_id=project.project_id, data=data)
 
 
-def __get_timeseries_chart(project_id: int, data: schemas.CardTimeSeries, user_id: int = None):
-    series_charts = __try_live(project_id=project_id, data=data)
+def __get_timeseries_chart(project: schemas.ProjectContext, data: schemas.CardTimeSeries, user_id: int = None):
+    series_charts = __try_live(project_id=project.project_id, data=data)
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
@@ -125,47 +128,47 @@ def not_supported(**args):
     raise Exception("not supported")
 
 
-def __get_table_of_user_ids(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_user_ids(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_sessions(project_id: int, data: schemas.CardTable, user_id):
-    return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+def __get_table_of_sessions(project: schemas.ProjectContext, data: schemas.CardTable, user_id):
+    return __get_sessions_list(project=project, user_id=user_id, data=data)
 
 
-def __get_table_of_errors(project_id: int, data: schemas.CardTable, user_id: int):
-    return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+def __get_table_of_errors(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int):
+    return __get_errors_list(project=project, user_id=user_id, data=data)
 
 
-def __get_table_of_issues(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_issues(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_browsers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_browsers(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_devises(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_devises(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_countries(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_countries(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_urls(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_urls(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_referrers(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_referrers(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_of_requests(project_id: int, data: schemas.CardTable, user_id: int = None):
-    return __get_table_of_series(project_id=project_id, data=data)
+def __get_table_of_requests(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int = None):
+    return __get_table_of_series(project_id=project.project_id, data=data)
 
 
-def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
+def __get_table_chart(project: schemas.ProjectContext, data: schemas.CardTable, user_id: int):
     supported = {
         schemas.MetricOfTable.SESSIONS: __get_table_of_sessions,
         schemas.MetricOfTable.ERRORS: __get_table_of_errors,
@@ -178,13 +181,13 @@ def __get_table_chart(project_id: int, data: schemas.CardTable, user_id: int):
         schemas.MetricOfTable.REFERRER: __get_table_of_referrers,
         schemas.MetricOfTable.FETCH: __get_table_of_requests
     }
-    return supported.get(data.metric_of, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_of, not_supported)(project=project, data=data, user_id=user_id)
 
 
-def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
+def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id: int):
     if data.is_predefined:
         return custom_metrics_predefined.get_metric(key=data.metric_of,
-                                                    project_id=project_id,
+                                                    project_id=project.project_id,
                                                     data=data.model_dump())
 
     supported = {
@@ -195,7 +198,7 @@ def get_chart(project_id: int, data: schemas.CardSchema, user_id: int):
         schemas.MetricType.INSIGHTS: __get_insights_chart,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
@@ -675,8 +678,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
+def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id, data: schemas.CardSessionsSchema):
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project.project_id, user_id=user_id, include_data=True)
 
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
@@ -688,18 +691,18 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardSessi
 
     if metric.is_predefined:
         return custom_metrics_predefined.get_metric(key=metric.metric_of,
-                                                    project_id=project_id,
+                                                    project_id=project.project_id,
                                                     data=data.model_dump())
     elif metric.metric_type == schemas.MetricType.HEAT_MAP:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
-            return heatmaps.get_selected_session(project_id=project_id,
+            return heatmaps.get_selected_session(project_id=project.project_id,
                                                  session_id=raw_metric["data"]["sessionId"])
         else:
-            return heatmaps.search_short_session(project_id=project_id,
+            return heatmaps.search_short_session(project_id=project.project_id,
                                                  data=schemas.HeatMapSessionsSearch(**metric.model_dump()),
                                                  user_id=user_id)
 
-    return get_chart(project_id=project_id, data=metric, user_id=user_id)
+    return get_chart(project=project, data=metric, user_id=user_id)
 
 
 def card_exists(metric_id, project_id, user_id) -> bool:

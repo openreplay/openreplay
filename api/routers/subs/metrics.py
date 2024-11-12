@@ -150,9 +150,9 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
 
 
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
-def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardSessionsSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, data: schemas.CardSessionsSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+    data = custom_metrics.make_chart_from_card(project=context.project, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
     return {"data": data}
 

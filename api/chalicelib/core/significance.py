@@ -238,7 +238,7 @@ def get_stages_and_events(filter_d: schemas.CardSeriesFilterSchema, project_id) 
     return rows
 
 
-def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project_id: int,
+def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas.ProjectContext,
                       metric_format: schemas.MetricExtendedFormatType) -> List[RealDictRow]:
     """
     Add minimal timestamp
@@ -307,7 +307,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project_id: int,
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = metadata.get(project_id=project.project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 if f.source in meta_keys.keys():
                     first_stage_extra_constraints.append(
@@ -418,7 +418,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project_id: int,
               FROM {n_stages_query};
     """
 
-    params = {"project_id": project_id, "startTimestamp": filter_d.startTimestamp,
+    params = {"project_id": project.project_id, "startTimestamp": filter_d.startTimestamp,
               "endTimestamp": filter_d.endTimestamp, **values}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(n_stages_query, params)
