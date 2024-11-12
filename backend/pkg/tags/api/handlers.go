@@ -6,20 +6,25 @@ import (
 	"net/http"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/tags"
+	"openreplay/backend/pkg/token"
 	"time"
-
-	"openreplay/backend/internal/http/services"
 )
 
 type handlersImpl struct {
-	log      logger.Logger
-	services *services.ServicesBuilder
+	log       logger.Logger
+	tokenizer *token.Tokenizer
+	sessions  sessions.Sessions
+	tags      tags.Tags
 }
 
-func NewHandlers(log logger.Logger, services *services.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, tokenizer *token.Tokenizer, sessions sessions.Sessions, tags tags.Tags) (api.Handlers, error) {
 	return &handlersImpl{
-		log:      log,
-		services: services,
+		log:       log,
+		tokenizer: tokenizer,
+		sessions:  sessions,
+		tags:      tags,
 	}, nil
 }
 
@@ -34,7 +39,7 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// TODO: move check authorization into middleware (we gonna have 2 different auth middlewares)
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -42,7 +47,7 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	sessInfo, err := e.services.Sessions.Get(sessionData.ID)
+	sessInfo, err := e.sessions.Get(sessionData.ID)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
@@ -53,7 +58,7 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", sessInfo.ProjectID)))
 
 	// Get tags
-	tags, err := e.services.Tags.Get(sessInfo.ProjectID)
+	tags, err := e.tags.Get(sessInfo.ProjectID)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

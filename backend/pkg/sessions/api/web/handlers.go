@@ -14,36 +14,54 @@ import (
 
 	"github.com/Masterminds/semver"
 
-	http3 "openreplay/backend/internal/config/http"
-	http2 "openreplay/backend/internal/http/services"
+	httpCfg "openreplay/backend/internal/config/http"
+	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/sessions"
-	api2 "openreplay/backend/pkg/sessions/api"
+	beacons "openreplay/backend/pkg/sessions/api"
 	"openreplay/backend/pkg/token"
 )
 
 type handlersImpl struct {
-	log                  logger.Logger
-	cfg                  *http3.Config
-	services             *http2.ServicesBuilder
-	beaconSizeCache      *api2.BeaconCache
-	compressionThreshold int64
-	features             map[string]bool
+	log             logger.Logger
+	cfg             *httpCfg.Config
+	producer        types.Producer
+	projects        projects.Projects
+	sessions        sessions.Sessions
+	uaParser        *uaparser.UAParser
+	geoIP           geoip.GeoParser
+	tokenizer       *token.Tokenizer
+	conditions      conditions.Conditions
+	flaker          *flakeid.Flaker
+	beaconSizeCache *beacons.BeaconCache
+	features        map[string]bool
 }
 
-func NewHandlers(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(cfg *httpCfg.Config, log logger.Logger, producer types.Producer, projects projects.Projects,
+	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
+	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
 	return &handlersImpl{
-		log:                  log,
-		cfg:                  cfg,
-		services:             services,
-		beaconSizeCache:      api2.NewBeaconCache(cfg.BeaconSizeLimit),
-		compressionThreshold: cfg.CompressionThreshold,
+		log:             log,
+		cfg:             cfg,
+		producer:        producer,
+		projects:        projects,
+		sessions:        sessions,
+		uaParser:        uaParser,
+		geoIP:           geoIP,
+		tokenizer:       tokenizer,
+		conditions:      conditions,
+		flaker:          flaker,
+		beaconSizeCache: beacons.NewBeaconCache(cfg.BeaconSizeLimit),
 		features: map[string]bool{
 			"feature-flags":  cfg.IsFeatureFlagEnabled,
 			"usability-test": cfg.IsUsabilityTestEnabled,
@@ -120,7 +138,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
+	p, err := e.projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
@@ -141,21 +159,21 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	ua := e.services.UaParser.ParseFromHTTPRequest(r)
+	ua := e.uaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	geoInfo := e.services.GeoIP.ExtractGeoData(r)
+	geoInfo := e.geoIP.ExtractGeoData(r)
 
 	userUUID := uuid.GetUUID(req.UserUUID)
-	tokenData, err := e.services.Tokenizer.Parse(req.Token)
+	tokenData, err := e.tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
 		dice := byte(rand.Intn(100))
 		// Use condition rate if it's set
 		if req.Condition != "" {
-			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
+			rate, err := e.conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
 			if err != nil {
 				e.log.Warn(r.Context(), "can't get condition rate, condition: %s, err: %s", req.Condition, err)
 			} else {
@@ -168,7 +186,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		}
 
 		startTimeMili := startTime.UnixMilli()
-		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
+		sessionID, err := e.flaker.Compose(uint64(startTimeMili))
 		if err != nil {
 			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 			return
@@ -205,7 +223,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 			}
 
 			// Save sessionStart to db
-			if err := e.services.Sessions.Add(&sessions.Session{
+			if err := e.sessions.Add(&sessions.Session{
 				SessionID:            sessionID,
 				Platform:             "web",
 				Timestamp:            sessionStart.Timestamp,
@@ -234,7 +252,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 			}
 
 			// Send sessionStart message to kafka
-			if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
+			if err := e.producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
 				e.log.Error(r.Context(), "can't send sessionStart to queue: %s", err)
 			}
 		}
@@ -246,7 +264,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	e.beaconSizeCache.Add(tokenData.ID, p.BeaconSize)
 
 	startResponse := &StartSessionResponse{
-		Token:                e.services.Tokenizer.Compose(*tokenData),
+		Token:                e.tokenizer.Compose(*tokenData),
 		UserUUID:             userUUID,
 		UserOS:               ua.OS,
 		UserDevice:           ua.Device,
@@ -257,7 +275,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		SessionID:            strconv.FormatUint(tokenData.ID, 10),
 		ProjectID:            strconv.FormatUint(uint64(p.ProjectID), 10),
 		BeaconSizeLimit:      e.beaconSizeCache.Get(tokenData.ID),
-		CompressionThreshold: e.compressionThreshold,
+		CompressionThreshold: e.cfg.CompressionThreshold,
 		StartTimestamp:       int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:                tokenData.Delay,
 		CanvasEnabled:        e.cfg.RecordCanvas,
@@ -280,7 +298,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -290,7 +308,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -308,7 +326,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	bodySize = len(bodyBytes)
 
 	// Send processed messages to queue as array of bytes
-	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
+	err = e.producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
 	if err != nil {
 		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
@@ -347,7 +365,7 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
+	p, err := e.projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
@@ -362,13 +380,13 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 	// Add projectID to context
 	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", p.ProjectID)))
 
-	ua := e.services.UaParser.ParseFromHTTPRequest(r)
+	ua := e.uaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
-	geoInfo := e.services.GeoIP.ExtractGeoData(r)
-	err = e.services.Sessions.AddUnStarted(&sessions.UnStartedSession{
+	geoInfo := e.geoIP.ExtractGeoData(r)
+	err = e.sessions.AddUnStarted(&sessions.UnStartedSession{
 		ProjectKey:         *req.ProjectKey,
 		TrackerVersion:     req.TrackerVersion,
 		DoNotTrack:         req.DoNotTrack,
@@ -399,7 +417,7 @@ type ScreenshotMessage struct {
 func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -409,7 +427,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -462,7 +480,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			}
 
 			// Send the message to queue
-			if err := e.services.Producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
+			if err := e.producer.Produce(e.cfg.TopicCanvasImages, sessionData.ID, data); err != nil {
 				e.log.Warn(r.Context(), "can't send screenshot message to queue, err: %s", err)
 			}
 		}

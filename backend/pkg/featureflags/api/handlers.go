@@ -8,23 +8,29 @@ import (
 	"net/http"
 	"time"
 
-	"openreplay/backend/internal/http/services"
 	"openreplay/backend/pkg/featureflags"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/token"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	JsonSizeLimit int64
-	services      *services.ServicesBuilder
+	jsonSizeLimit int64
+	tokenizer     *token.Tokenizer
+	sessions      sessions.Sessions
+	featureFlags  featureflags.FeatureFlags
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, services *services.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
+	featureFlags featureflags.FeatureFlags) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
-		JsonSizeLimit: jsonSizeLimit,
-		services:      services,
+		jsonSizeLimit: jsonSizeLimit,
+		tokenizer:     tokenizer,
+		sessions:      sessions,
+		featureFlags:  featureFlags,
 	}, nil
 }
 
@@ -39,7 +45,7 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -49,7 +55,7 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -57,7 +63,7 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -71,7 +77,7 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	computedFlags, err := e.services.FeatureFlags.ComputeFlagsForSession(req)
+	computedFlags, err := e.featureFlags.ComputeFlagsForSession(req)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

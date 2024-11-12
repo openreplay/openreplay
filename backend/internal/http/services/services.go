@@ -5,39 +5,38 @@ import (
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/conditions"
+	conditionsAPI "openreplay/backend/pkg/conditions/api"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/featureflags"
+	featureflagsAPI "openreplay/backend/pkg/featureflags/api"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/sessions"
+	mobilesessions "openreplay/backend/pkg/sessions/api/mobile"
+	websessions "openreplay/backend/pkg/sessions/api/web"
 	"openreplay/backend/pkg/tags"
+	tagsAPI "openreplay/backend/pkg/tags/api"
 	"openreplay/backend/pkg/token"
 	"openreplay/backend/pkg/uxtesting"
+	uxtestingAPI "openreplay/backend/pkg/uxtesting/api"
 )
 
 type ServicesBuilder struct {
-	Projects     projects.Projects
-	Sessions     sessions.Sessions
-	FeatureFlags featureflags.FeatureFlags
-	Producer     types.Producer
-	Flaker       *flakeid.Flaker
-	UaParser     *uaparser.UAParser
-	GeoIP        geoip.GeoParser
-	Tokenizer    *token.Tokenizer
-	ObjStorage   objectstorage.ObjectStorage
-	UXTesting    uxtesting.UXTesting
-	Tags         tags.Tags
-	Conditions   conditions.Conditions
+	WebAPI          api.Handlers
+	MobileAPI       api.Handlers
+	ConditionsAPI   api.Handlers
+	FeatureFlagsAPI api.Handlers
+	TagsAPI         api.Handlers
+	UxTestsAPI      api.Handlers
 }
 
 func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
 	projs := projects.New(log, pgconn, redis)
-	// ObjectStorage client to generate pre-signed upload urls
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -50,18 +49,31 @@ func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn po
 	if err != nil {
 		return nil, err
 	}
-	return &ServicesBuilder{
-		Projects:     projs,
-		Sessions:     sessions.New(log, pgconn, projs, redis),
-		FeatureFlags: featureflags.New(pgconn),
-		Producer:     producer,
-		Tokenizer:    token.NewTokenizer(cfg.TokenSecret),
-		UaParser:     uaModule,
-		GeoIP:        geoModule,
-		Flaker:       flakeid.NewFlaker(cfg.WorkerID),
-		ObjStorage:   objStore,
-		UXTesting:    uxtesting.New(pgconn),
-		Tags:         tags.New(log, pgconn),
-		Conditions:   conditions.New(pgconn),
-	}, nil
+	tokenizer := token.NewTokenizer(cfg.TokenSecret)
+	conditions := conditions.New(pgconn)
+	flaker := flakeid.NewFlaker(cfg.WorkerID)
+	sessions := sessions.New(log, pgconn, projs, redis)
+	featureFlags := featureflags.New(pgconn)
+	tags := tags.New(log, pgconn)
+	uxTesting := uxtesting.New(pgconn)
+	builder := &ServicesBuilder{}
+	if builder.WebAPI, err = websessions.NewHandlers(cfg, log, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
+		return nil, err
+	}
+	if builder.MobileAPI, err = mobilesessions.NewHandlers(cfg, log, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
+		return nil, err
+	}
+	if builder.ConditionsAPI, err = conditionsAPI.NewHandlers(log); err != nil {
+		return nil, err
+	}
+	if builder.FeatureFlagsAPI, err = featureflagsAPI.NewHandlers(log, cfg.JsonSizeLimit, tokenizer, sessions, featureFlags); err != nil {
+		return nil, err
+	}
+	if builder.TagsAPI, err = tagsAPI.NewHandlers(log, tokenizer, sessions, tags); err != nil {
+		return nil, err
+	}
+	if builder.UxTestsAPI, err = uxtestingAPI.NewHandlers(log, cfg.JsonSizeLimit, tokenizer, sessions, uxTesting, objStore); err != nil {
+		return nil, err
+	}
+	return builder, nil
 }

@@ -10,23 +10,32 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"openreplay/backend/internal/http/services"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/token"
 	"openreplay/backend/pkg/uxtesting"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	JsonSizeLimit int64
-	services      *services.ServicesBuilder
+	jsonSizeLimit int64
+	tokenizer     *token.Tokenizer
+	sessions      sessions.Sessions
+	uxTesting     uxtesting.UXTesting
+	objStorage    objectstorage.ObjectStorage
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, services *services.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
+	uxTesting uxtesting.UXTesting, objStorage objectstorage.ObjectStorage) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
-		JsonSizeLimit: jsonSizeLimit,
-		services:      services,
+		jsonSizeLimit: jsonSizeLimit,
+		tokenizer:     tokenizer,
+		sessions:      sessions,
+		uxTesting:     uxTesting,
+		objStorage:    objStorage,
 	}, nil
 }
 
@@ -44,7 +53,7 @@ func (e *handlersImpl) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -53,7 +62,7 @@ func (e *handlersImpl) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, err := e.services.Sessions.Get(sessionData.ID)
+	sess, err := e.sessions.Get(sessionData.ID)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
 		return
@@ -67,7 +76,7 @@ func (e *handlersImpl) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	// Get task info
-	info, err := e.services.UXTesting.GetInfo(id)
+	info, err := e.uxTesting.GetInfo(id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -87,7 +96,7 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -97,11 +106,11 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -118,7 +127,7 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 	req.SessionID = sessionData.ID
 
 	// Save test signal
-	if err := e.services.UXTesting.SetTestSignal(req); err != nil {
+	if err := e.uxTesting.SetTestSignal(req); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -130,7 +139,7 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -140,11 +149,11 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -161,7 +170,7 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 	req.SessionID = sessionData.ID
 
 	// Save test signal
-	if err := e.services.UXTesting.SetTaskSignal(req); err != nil {
+	if err := e.uxTesting.SetTaskSignal(req); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -173,7 +182,7 @@ func (e *handlersImpl) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 	bodySize := 0
 
 	// Check authorization
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -183,12 +192,12 @@ func (e *handlersImpl) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
 	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
-	url, err := e.services.ObjStorage.GetPreSignedUploadUrl(key)
+	url, err := e.objStorage.GetPreSignedUploadUrl(key)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return

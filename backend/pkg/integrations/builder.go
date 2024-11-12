@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"openreplay/backend/pkg/integrations/service"
 	"time"
 
 	"openreplay/backend/internal/config/integrations"
@@ -24,7 +25,7 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, pgconn pool.
 	if err != nil {
 		return nil, err
 	}
-	integrator, err := NewService(log, pgconn, objStore)
+	integrator, err := service.NewService(log, pgconn, objStore)
 	if err != nil {
 		return nil, err
 	}

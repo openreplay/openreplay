@@ -10,18 +10,18 @@ import (
 	"github.com/gorilla/mux"
 
 	integrationsCfg "openreplay/backend/internal/config/integrations"
-	"openreplay/backend/pkg/integrations"
+	"openreplay/backend/pkg/integrations/service"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	integrations  integrations.Service
+	integrations  service.Service
 	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, integrations integrations.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, integrations service.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		integrations:  integrations,

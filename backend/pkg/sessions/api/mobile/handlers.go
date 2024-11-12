@@ -15,13 +15,18 @@ import (
 	"github.com/Masterminds/semver"
 	gzip "github.com/klauspost/pgzip"
 
-	http3 "openreplay/backend/internal/config/http"
+	httpCfg "openreplay/backend/internal/config/http"
+	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/ios"
-	http2 "openreplay/backend/internal/http/services"
+	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/token"
@@ -45,17 +50,33 @@ func checkMobileTrackerVersion(ver string) bool {
 }
 
 type handlersImpl struct {
-	log      logger.Logger
-	cfg      *http3.Config
-	services *http2.ServicesBuilder
-	features map[string]bool
+	log        logger.Logger
+	cfg        *httpCfg.Config
+	producer   types.Producer
+	projects   projects.Projects
+	sessions   sessions.Sessions
+	uaParser   *uaparser.UAParser
+	geoIP      geoip.GeoParser
+	tokenizer  *token.Tokenizer
+	conditions conditions.Conditions
+	flaker     *flakeid.Flaker
+	features   map[string]bool
 }
 
-func NewHandlers(cfg *http3.Config, log logger.Logger, services *http2.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(cfg *httpCfg.Config, log logger.Logger, producer types.Producer, projects projects.Projects,
+	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
+	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
 	return &handlersImpl{
-		log:      log,
-		cfg:      cfg,
-		services: services,
+		log:        log,
+		cfg:        cfg,
+		producer:   producer,
+		projects:   projects,
+		sessions:   sessions,
+		uaParser:   uaParser,
+		geoIP:      geoIP,
+		tokenizer:  tokenizer,
+		conditions: conditions,
+		flaker:     flaker,
 		features: map[string]bool{
 			"feature-flags":  cfg.IsFeatureFlagEnabled,
 			"usability-test": cfg.IsUsabilityTestEnabled,
@@ -96,7 +117,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	p, err := e.services.Projects.GetProjectByKey(*req.ProjectKey)
+	p, err := e.projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
@@ -123,13 +144,13 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	}
 
 	userUUID := uuid.GetUUID(req.UserUUID)
-	tokenData, err := e.services.Tokenizer.Parse(req.Token)
+	tokenData, err := e.tokenizer.Parse(req.Token)
 
 	if err != nil { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		// Use condition rate if it's set
 		if req.Condition != "" {
-			rate, err := e.services.Conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
+			rate, err := e.conditions.GetRate(p.ProjectID, req.Condition, int(p.SampleRate))
 			if err != nil {
 				e.log.Warn(r.Context(), "can't get condition rate, condition: %s, err: %s", req.Condition, err)
 			} else {
@@ -141,12 +162,12 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 			return
 		}
 
-		ua := e.services.UaParser.ParseFromHTTPRequest(r)
+		ua := e.uaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
 			api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, 0)
 			return
 		}
-		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
+		sessionID, err := e.flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
 			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 			return
@@ -158,7 +179,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		// Add sessionID to context
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
 
-		geoInfo := e.services.GeoIP.ExtractGeoData(r)
+		geoInfo := e.geoIP.ExtractGeoData(r)
 		deviceType, platform, os := ios.GetIOSDeviceType(req.UserDevice), "ios", "IOS"
 		if req.Platform != "" && req.Platform != "ios" {
 			deviceType = req.UserDeviceType
@@ -167,7 +188,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		}
 
 		if !req.DoNotRecord {
-			if err := e.services.Sessions.Add(&sessions.Session{
+			if err := e.sessions.Add(&sessions.Session{
 				SessionID:            sessionID,
 				Platform:             platform,
 				Timestamp:            req.Timestamp,
@@ -204,14 +225,14 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 				UserCountry:    geoInfo.Pack(),
 			}
 
-			if err := e.services.Producer.Produce(e.cfg.TopicRawMobile, tokenData.ID, sessStart.Encode()); err != nil {
+			if err := e.producer.Produce(e.cfg.TopicRawMobile, tokenData.ID, sessStart.Encode()); err != nil {
 				e.log.Error(r.Context(), "failed to send mobile sessionStart event to queue: %s", err)
 			}
 		}
 	}
 
 	api.ResponseWithJSON(e.log, r.Context(), w, &StartMobileSessionResponse{
-		Token:           e.services.Tokenizer.Compose(*tokenData),
+		Token:           e.tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
@@ -225,7 +246,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 func (e *handlersImpl) pushMobileMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -235,7 +256,7 @@ func (e *handlersImpl) pushMobileMessagesHandler(w http.ResponseWriter, r *http.
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -244,7 +265,7 @@ func (e *handlersImpl) pushMobileMessagesHandler(w http.ResponseWriter, r *http.
 
 func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -260,7 +281,7 @@ func (e *handlersImpl) pushMobileLateMessagesHandler(w http.ResponseWriter, r *h
 func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
-	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
@@ -270,7 +291,7 @@ func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.
 	}
 
 	// Add sessionID and projectID to context
-	if info, err := e.services.Sessions.Get(sessionData.ID); err == nil {
+	if info, err := e.sessions.Get(sessionData.ID); err == nil {
 		r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", info.ProjectID)))
 	}
 
@@ -315,7 +336,7 @@ func (e *handlersImpl) mobileImagesUploadHandler(w http.ResponseWriter, r *http.
 			}
 			file.Close()
 
-			if err := e.services.Producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
+			if err := e.producer.Produce(e.cfg.TopicRawImages, sessionData.ID, data); err != nil {
 				e.log.Warn(r.Context(), "failed to send image to queue: %s", err)
 			}
 		}
@@ -347,7 +368,7 @@ func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sess
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return
 	}
-	if err := e.services.Producer.Produce(topicName, sessionID, buf); err != nil {
+	if err := e.producer.Produce(topicName, sessionID, buf); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
 		return
 	}
