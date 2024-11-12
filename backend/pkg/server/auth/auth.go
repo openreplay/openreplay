@@ -2,16 +2,20 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/server/keys"
+	"openreplay/backend/pkg/server/user"
 )
 
 type Auth interface {
-	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*User, error)
+	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error)
+	AuthMiddleware(next http.Handler) http.Handler
 }
 
 type authImpl struct {
@@ -19,18 +23,20 @@ type authImpl struct {
 	secret     string
 	spotSecret string
 	pgconn     pool.Pool
+	keys       keys.Keys
 }
 
-func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool) Auth {
+func NewAuth(log logger.Logger, jwtSecret, jwtSpotSecret string, conn pool.Pool, keys keys.Keys) Auth {
 	return &authImpl{
 		log:        log,
 		secret:     jwtSecret,
 		spotSecret: jwtSpotSecret,
 		pgconn:     conn,
+		keys:       keys,
 	}
 }
 
-func parseJWT(authHeader, secret string) (*JWTClaims, error) {
+func parseJWT(authHeader, secret string) (*user.JWTClaims, error) {
 	if authHeader == "" {
 		return nil, fmt.Errorf("authorization header missing")
 	}
@@ -40,7 +46,7 @@ func parseJWT(authHeader, secret string) (*JWTClaims, error) {
 	}
 	tokenString := tokenParts[1]
 
-	claims := &JWTClaims{}
+	claims := &user.JWTClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil

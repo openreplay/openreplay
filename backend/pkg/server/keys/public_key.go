@@ -1,9 +1,9 @@
-package service
+package keys
 
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/user"
 	"time"
 
 	"github.com/rs/xid"
@@ -22,9 +22,9 @@ type Key struct {
 }
 
 type Keys interface {
-	Set(spotID, expiration uint64, user *auth.User) (*Key, error)
-	Get(spotID uint64, user *auth.User) (*Key, error)
-	IsValid(key string) (*auth.User, error)
+	Set(spotID, expiration uint64, user *user.User) (*Key, error)
+	Get(spotID uint64, user *user.User) (*Key, error)
+	IsValid(key string) (*user.User, error)
 }
 
 type keysImpl struct {
@@ -32,7 +32,7 @@ type keysImpl struct {
 	conn pool.Pool
 }
 
-func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error) {
+func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error) {
 	switch {
 	case spotID == 0:
 		return nil, fmt.Errorf("spotID is required")
@@ -89,7 +89,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *auth.User) (*Key, error)
 	return key, nil
 }
 
-func (k *keysImpl) Get(spotID uint64, user *auth.User) (*Key, error) {
+func (k *keysImpl) Get(spotID uint64, user *user.User) (*Key, error) {
 	switch {
 	case spotID == 0:
 		return nil, fmt.Errorf("spotID is required")
@@ -114,7 +114,7 @@ func (k *keysImpl) Get(spotID uint64, user *auth.User) (*Key, error) {
 	return key, nil
 }
 
-func (k *keysImpl) IsValid(key string) (*auth.User, error) {
+func (k *keysImpl) IsValid(key string) (*user.User, error) {
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
@@ -133,7 +133,7 @@ func (k *keysImpl) IsValid(key string) (*auth.User, error) {
 		return nil, fmt.Errorf("key is expired")
 	}
 	// Get user info by userID
-	user := &auth.User{ID: userID, AuthMethod: "public-key"}
+	user := &user.User{ID: userID, AuthMethod: "public-key"}
 	// We don't need tenantID here
 	if err := k.conn.QueryRow(getUserSQL, userID).Scan(&user.TenantID, &user.Name, &user.Email); err != nil {
 		k.log.Error(context.Background(), "failed to get user: %v", err)

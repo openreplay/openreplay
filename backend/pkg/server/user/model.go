@@ -1,4 +1,4 @@
-package auth
+package user
 
 import "github.com/golang-jwt/jwt/v5"
 
@@ -24,11 +24,4 @@ func (u *User) HasPermission(perm string) bool {
 	}
 	_, ok := u.Permissions[perm]
 	return ok
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

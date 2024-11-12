@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/user"
 	"time"
 
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -58,14 +58,14 @@ type Update struct {
 }
 
 type Spots interface {
-	Add(user *auth.User, name, comment string, duration int, crop []int) (*Spot, error)
-	GetByID(user *auth.User, spotID uint64) (*Spot, error)
-	Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error)
-	UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error)
-	AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error)
-	Delete(user *auth.User, spotIds []uint64) error
+	Add(user *user.User, name, comment string, duration int, crop []int) (*Spot, error)
+	GetByID(user *user.User, spotID uint64) (*Spot, error)
+	Get(user *user.User, opts *GetOpts) ([]*Spot, uint64, bool, error)
+	UpdateName(user *user.User, spotID uint64, newName string) (*Spot, error)
+	AddComment(user *user.User, spotID uint64, comment *Comment) (*Spot, error)
+	Delete(user *user.User, spotIds []uint64) error
 	SetStatus(spotID uint64, status string) error
-	GetStatus(user *auth.User, spotID uint64) (string, error)
+	GetStatus(user *user.User, spotID uint64) (string, error)
 }
 
 func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots {
@@ -76,7 +76,7 @@ func NewSpots(log logger.Logger, pgconn pool.Pool, flaker *flakeid.Flaker) Spots
 	}
 }
 
-func (s *spotsImpl) Add(user *auth.User, name, comment string, duration int, crop []int) (*Spot, error) {
+func (s *spotsImpl) Add(user *user.User, name, comment string, duration int, crop []int) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -142,7 +142,7 @@ func (s *spotsImpl) add(spot *Spot) error {
 	return nil
 }
 
-func (s *spotsImpl) GetByID(user *auth.User, spotID uint64) (*Spot, error) {
+func (s *spotsImpl) GetByID(user *user.User, spotID uint64) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -152,7 +152,7 @@ func (s *spotsImpl) GetByID(user *auth.User, spotID uint64) (*Spot, error) {
 	return s.getByID(spotID, user)
 }
 
-func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
+func (s *spotsImpl) getByID(spotID uint64, user *user.User) (*Spot, error) {
 	sql := `SELECT s.name, u.email, s.duration, s.crop, s.comments, s.created_at 
 			FROM spots.spots s 
             JOIN public.users u ON s.user_id = u.user_id
@@ -176,7 +176,7 @@ func (s *spotsImpl) getByID(spotID uint64, user *auth.User) (*Spot, error) {
 	return spot, nil
 }
 
-func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
+func (s *spotsImpl) Get(user *user.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
 	switch {
 	case user == nil:
 		return nil, 0, false, fmt.Errorf("user is required")
@@ -200,7 +200,7 @@ func (s *spotsImpl) Get(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, 
 	return s.getAll(user, opts)
 }
 
-func (s *spotsImpl) getAll(user *auth.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
+func (s *spotsImpl) getAll(user *user.User, opts *GetOpts) ([]*Spot, uint64, bool, error) {
 	sql := `SELECT COUNT(1) OVER () AS total, s.spot_id, s.name, u.email, s.duration, s.created_at 
 			FROM spots.spots s
 			JOIN public.users u ON s.user_id = u.user_id
@@ -261,7 +261,7 @@ func (s *spotsImpl) doesTenantHasSpots(tenantID uint64) bool {
 	return count > 0
 }
 
-func (s *spotsImpl) UpdateName(user *auth.User, spotID uint64, newName string) (*Spot, error) {
+func (s *spotsImpl) UpdateName(user *user.User, spotID uint64, newName string) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -276,7 +276,7 @@ func (s *spotsImpl) UpdateName(user *auth.User, spotID uint64, newName string) (
 	return s.updateName(spotID, newName, user)
 }
 
-func (s *spotsImpl) updateName(spotID uint64, newName string, user *auth.User) (*Spot, error) {
+func (s *spotsImpl) updateName(spotID uint64, newName string, user *user.User) (*Spot, error) {
 	sql := `WITH updated AS (
 		UPDATE spots.spots SET name = $1, updated_at = $2 
 		WHERE spot_id = $3 AND tenant_id = $4 AND deleted_at IS NULL RETURNING *)
@@ -291,7 +291,7 @@ func (s *spotsImpl) updateName(spotID uint64, newName string, user *auth.User) (
 	return &Spot{ID: spotID, Name: newName}, nil
 }
 
-func (s *spotsImpl) AddComment(user *auth.User, spotID uint64, comment *Comment) (*Spot, error) {
+func (s *spotsImpl) AddComment(user *user.User, spotID uint64, comment *Comment) (*Spot, error) {
 	switch {
 	case user == nil:
 		return nil, fmt.Errorf("user is required")
@@ -311,7 +311,7 @@ func (s *spotsImpl) AddComment(user *auth.User, spotID uint64, comment *Comment)
 	return s.addComment(spotID, comment, user)
 }
 
-func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *auth.User) (*Spot, error) {
+func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *user.User) (*Spot, error) {
 	sql := `WITH updated AS (
 		UPDATE spots.spots 
 			SET comments = array_append(comments, $1), updated_at = $2 
@@ -332,7 +332,7 @@ func (s *spotsImpl) addComment(spotID uint64, newComment *Comment, user *auth.Us
 	return &Spot{ID: spotID}, nil
 }
 
-func (s *spotsImpl) Delete(user *auth.User, spotIds []uint64) error {
+func (s *spotsImpl) Delete(user *user.User, spotIds []uint64) error {
 	switch {
 	case user == nil:
 		return fmt.Errorf("user is required")
@@ -342,7 +342,7 @@ func (s *spotsImpl) Delete(user *auth.User, spotIds []uint64) error {
 	return s.deleteSpots(spotIds, user)
 }
 
-func (s *spotsImpl) deleteSpots(spotIds []uint64, user *auth.User) error {
+func (s *spotsImpl) deleteSpots(spotIds []uint64, user *user.User) error {
 	sql := `WITH updated AS (UPDATE spots.spots SET deleted_at = NOW() WHERE tenant_id = $1 AND spot_id IN (`
 	args := []interface{}{user.TenantID}
 	for i, spotID := range spotIds {
@@ -378,7 +378,7 @@ func (s *spotsImpl) SetStatus(spotID uint64, status string) error {
 	return nil
 }
 
-func (s *spotsImpl) GetStatus(user *auth.User, spotID uint64) (string, error) {
+func (s *spotsImpl) GetStatus(user *user.User, spotID uint64) (string, error) {
 	switch {
 	case user == nil:
 		return "", fmt.Errorf("user is required")

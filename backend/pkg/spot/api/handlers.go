@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"openreplay/backend/pkg/server/user"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/spot"
 	"openreplay/backend/pkg/spot/service"
 )
@@ -75,7 +75,7 @@ func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Creat a spot
-	currUser := r.Context().Value("userData").(*auth.User)
+	currUser := r.Context().Value("userData").(*user.User)
 	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -216,7 +216,7 @@ func (e *handlersImpl) getSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	res, err := e.services.Spots.GetByID(user, id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -285,7 +285,7 @@ func (e *handlersImpl) updateSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	_, err = e.services.Spots.UpdateName(user, id, req.Name)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -305,7 +305,7 @@ func (e *handlersImpl) getSpots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	opts := &service.GetOpts{
 		NameFilter: req.Query, Order: req.Order, Page: req.Page, Limit: req.Limit}
 	switch req.FilterBy {
@@ -363,7 +363,7 @@ func (e *handlersImpl) deleteSpots(w http.ResponseWriter, r *http.Request) {
 		spotsToDelete = append(spotsToDelete, id)
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	if err := e.services.Spots.Delete(user, spotsToDelete); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -395,7 +395,7 @@ func (e *handlersImpl) addComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	updatedSpot, err := e.services.Spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -434,7 +434,7 @@ func (e *handlersImpl) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	spot, err := e.services.Spots.GetByID(user, id) // check if spot exists
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -513,7 +513,7 @@ func (e *handlersImpl) getPublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	key, err := e.services.Keys.Get(id, user)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -552,7 +552,7 @@ func (e *handlersImpl) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	key, err := e.services.Keys.Set(id, req.Expiration, user)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
@@ -574,7 +574,7 @@ func (e *handlersImpl) spotStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	status, err := e.services.Spots.GetStatus(user, id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)

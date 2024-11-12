@@ -14,6 +14,7 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/tracer"
 )
 
 func main() {
@@ -43,6 +44,7 @@ func main() {
 		log.Fatal(ctx, "can't init handlers: %s", err)
 	}
 	router.AddHandlers(handlers)
+	router.AddMiddlewares(services.Auth.AuthMiddleware, services.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
 
 	dataIntegrationServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {

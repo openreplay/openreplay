@@ -14,6 +14,7 @@ import (
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/tracer"
 	"openreplay/backend/pkg/spot"
 	spotAPI "openreplay/backend/pkg/spot/api"
 )
@@ -45,6 +46,7 @@ func main() {
 		log.Fatal(ctx, "can't init handlers: %s", err)
 	}
 	router.AddHandlers(handlers)
+	router.AddMiddlewares(services.Auth.AuthMiddleware, services.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
 
 	webServer, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
