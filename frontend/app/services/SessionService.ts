@@ -127,7 +127,7 @@ export default class SettingsService {
       const r = await this.client
         .get('/config/assist/credentials');
       const j = await r.json();
-      return j.data || {};
+      return j.data || null;
     } catch (reason) {
       return Promise.reject(reason);
     }
