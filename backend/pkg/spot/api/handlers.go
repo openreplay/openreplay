@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"openreplay/backend/pkg/server/user"
 	"strconv"
 	"strings"
 	"time"
@@ -18,21 +17,29 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/spot"
+	"openreplay/backend/pkg/server/keys"
+	"openreplay/backend/pkg/server/user"
 	"openreplay/backend/pkg/spot/service"
+	"openreplay/backend/pkg/spot/transcoder"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	JsonSizeLimit int64
-	services      *spot.ServicesBuilder
+	jsonSizeLimit int64
+	spots         service.Spots
+	objStorage    objectstorage.ObjectStorage
+	transcoder    transcoder.Transcoder
+	keys          keys.Keys
 }
 
-func NewHandlers(log logger.Logger, cfg *spotConfig.Config, services *spot.ServicesBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *spotConfig.Config, spots service.Spots, objStore objectstorage.ObjectStorage, transcoder transcoder.Transcoder, keys keys.Keys) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
-		JsonSizeLimit: cfg.JsonSizeLimit,
-		services:      services,
+		jsonSizeLimit: cfg.JsonSizeLimit,
+		spots:         spots,
+		objStorage:    objStore,
+		transcoder:    transcoder,
+		keys:          keys,
 	}, nil
 }
 
@@ -61,7 +68,7 @@ func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -76,7 +83,7 @@ func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 
 	// Creat a spot
 	currUser := r.Context().Value("userData").(*user.User)
-	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
+	newSpot, err := e.spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -90,7 +97,7 @@ func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	previewName := fmt.Sprintf("%d/preview.jpeg", newSpot.ID)
-	if err = e.services.ObjStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
+	if err = e.objStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
 		e.log.Error(r.Context(), "can't upload preview image: %s", err)
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't upload preview image"), startTime, r.URL.Path, bodySize)
 		return
@@ -131,7 +138,7 @@ func getSpotPreview(preview string) ([]byte, error) {
 
 func (e *handlersImpl) getUploadMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get mob URL: %s", err)
 	}
@@ -140,7 +147,7 @@ func (e *handlersImpl) getUploadMobURL(spotID uint64) (string, error) {
 
 func (e *handlersImpl) getUploadVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get video URL: %s", err)
 	}
@@ -181,7 +188,7 @@ func getSpotsRequest(r *http.Request) (*GetSpotsRequest, error) {
 
 func (e *handlersImpl) getPreviewURL(spotID uint64) (string, error) {
 	previewKey := fmt.Sprintf("%d/preview.jpeg", spotID)
-	previewURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(previewKey)
+	previewURL, err := e.objStorage.GetPreSignedDownloadUrl(previewKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get preview URL: %s", err)
 	}
@@ -190,7 +197,7 @@ func (e *handlersImpl) getPreviewURL(spotID uint64) (string, error) {
 
 func (e *handlersImpl) getMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedDownloadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get mob URL: %s", err)
 	}
@@ -199,7 +206,7 @@ func (e *handlersImpl) getMobURL(spotID uint64) (string, error) {
 
 func (e *handlersImpl) getVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID) // TODO: later return url to m3u8 file
-	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedDownloadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get video URL: %s", err)
 	}
@@ -217,7 +224,7 @@ func (e *handlersImpl) getSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	res, err := e.services.Spots.GetByID(user, id)
+	res, err := e.spots.GetByID(user, id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -252,7 +259,7 @@ func (e *handlersImpl) getSpot(w http.ResponseWriter, r *http.Request) {
 		MobURL:     mobURL,
 		VideoURL:   videoURL,
 	}
-	playlist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	playlist, err := e.transcoder.GetSpotStreamPlaylist(id)
 	if err != nil {
 		e.log.Warn(r.Context(), "can't get stream playlist: %s", err)
 	} else {
@@ -272,7 +279,7 @@ func (e *handlersImpl) updateSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -286,7 +293,7 @@ func (e *handlersImpl) updateSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	_, err = e.services.Spots.UpdateName(user, id, req.Name)
+	_, err = e.spots.UpdateName(user, id, req.Name)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -314,7 +321,7 @@ func (e *handlersImpl) getSpots(w http.ResponseWriter, r *http.Request) {
 	default:
 		opts.TenantID = user.TenantID
 	}
-	spots, total, tenantHasSpots, err := e.services.Spots.Get(user, opts)
+	spots, total, tenantHasSpots, err := e.spots.Get(user, opts)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -341,7 +348,7 @@ func (e *handlersImpl) deleteSpots(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -364,7 +371,7 @@ func (e *handlersImpl) deleteSpots(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	if err := e.services.Spots.Delete(user, spotsToDelete); err != nil {
+	if err := e.spots.Delete(user, spotsToDelete); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -382,7 +389,7 @@ func (e *handlersImpl) addComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -396,7 +403,7 @@ func (e *handlersImpl) addComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	updatedSpot, err := e.services.Spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
+	updatedSpot, err := e.spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -435,13 +442,13 @@ func (e *handlersImpl) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	spot, err := e.services.Spots.GetByID(user, id) // check if spot exists
+	spot, err := e.spots.GetByID(user, id) // check if spot exists
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	e.log.Info(r.Context(), "uploaded spot %+v, from user: %+v", spot, user)
-	if err := e.services.Transcoder.Process(spot); err != nil {
+	if err := e.transcoder.Process(spot); err != nil {
 		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
 	}
 
@@ -459,7 +466,7 @@ func (e *handlersImpl) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := fmt.Sprintf("%d/video.webm", id)
-	videoURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(key)
+	videoURL, err := e.objStorage.GetPreSignedDownloadUrl(key)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -482,7 +489,7 @@ func (e *handlersImpl) getSpotStream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Example data to serve as the file content
-	streamPlaylist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	streamPlaylist, err := e.transcoder.GetSpotStreamPlaylist(id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -514,7 +521,7 @@ func (e *handlersImpl) getPublicKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	key, err := e.services.Keys.Get(id, user)
+	key, err := e.keys.Get(id, user)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			api.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
@@ -539,7 +546,7 @@ func (e *handlersImpl) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -553,7 +560,7 @@ func (e *handlersImpl) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	key, err := e.services.Keys.Set(id, req.Expiration, user)
+	key, err := e.keys.Set(id, req.Expiration, user)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -575,7 +582,7 @@ func (e *handlersImpl) spotStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := r.Context().Value("userData").(*user.User)
-	status, err := e.services.Spots.GetStatus(user, id)
+	status, err := e.spots.GetStatus(user, id)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
