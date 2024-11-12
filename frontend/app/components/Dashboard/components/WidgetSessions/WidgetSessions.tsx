@@ -127,6 +127,7 @@ function WidgetSessions(props: Props) {
               <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
             </div>
           </div>
+
           {hasFilters && widget.metricType === 'table' &&
             <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
         </div>

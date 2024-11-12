@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
-import { Icon, Loader, NoContent } from 'UI';
+import { Loader, NoContent } from 'UI';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { useObserver } from 'mobx-react-lite';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
-import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
 import { Prompt, useHistory } from 'react-router';
@@ -19,7 +18,6 @@ import {
   USER_PATH,
   RETENTION
 } from 'App/constants/card';
-import CardIssues from '../CardIssues';
 import CardUserList from '../CardUserList/CardUserList';
 import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
 import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
@@ -39,8 +37,6 @@ function WidgetView(props: Props) {
       params: { siteId, dashboardId, metricId }
     }
   } = props;
-  // const siteId = location.pathname.split('/')[1];
-  // const dashboardId = location.pathname.split('/')[3];
   const { metricStore, dashboardStore } = useStore();
   const widget = useObserver(() => metricStore.instance);
   const loading = useObserver(() => metricStore.isLoading);
@@ -65,15 +61,6 @@ function WidgetView(props: Props) {
       metricStore.init();
     }
   }, []);
-
-  // const onBackHandler = () => {
-  //     props.history.goBack();
-  // };
-  //
-  // const openEdit = () => {
-  //     if (expanded) return;
-  //     setExpanded(true);
-  // };
 
   const undoChanges = () => {
     const w = new Widget();
@@ -140,11 +127,6 @@ function WidgetView(props: Props) {
           <Space direction="vertical" className="w-full" size={14}>
             <WidgetViewHeader onSave={onSave} undoChanges={undoChanges} />
             <WidgetFormNew />
-
-            {/*<div className="bg-white rounded border mt-3">*/}
-            {/*    <WidgetForm expanded={expanded} onDelete={onBackHandler} {...props} />*/}
-            {/*</div>*/}
-
             <WidgetPreview name={widget.name} isEditing={expanded} />
 
             {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
@@ -152,11 +134,10 @@ function WidgetView(props: Props) {
                   || widget.metricType === TIMESERIES
                   || widget.metricType === HEATMAP
                   || widget.metricType === INSIGHTS
-                  || widget.metricType === FUNNEL) ?
+                  || widget.metricType === FUNNEL
+                  || widget.metricType === USER_PATH) ?
                   <WidgetSessions /> : null
             )}
-
-            {widget.metricType === USER_PATH && <CardIssues />}
             {widget.metricType === RETENTION && <CardUserList />}
           </Space>
         </NoContent>
