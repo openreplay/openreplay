@@ -4,28 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"openreplay/backend/pkg/integrations"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 
 	integrationsCfg "openreplay/backend/internal/config/integrations"
+	"openreplay/backend/pkg/integrations"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
-	JsonSizeLimit int64
-	services      *integrations.ServiceBuilder
+	integrations  integrations.Service
+	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, services *integrations.ServiceBuilder) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *integrationsCfg.Config, integrations integrations.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
-		JsonSizeLimit: cfg.JsonSizeLimit,
-		services:      services,
+		integrations:  integrations,
+		jsonSizeLimit: cfg.JsonSizeLimit,
 	}, nil
 }
 
@@ -77,7 +77,7 @@ func (e *handlersImpl) createIntegration(w http.ResponseWriter, r *http.Request)
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -96,7 +96,7 @@ func (e *handlersImpl) createIntegration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := e.services.Integrator.AddIntegration(project, integration, req.IntegrationData); err != nil {
+	if err := e.integrations.AddIntegration(project, integration, req.IntegrationData); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -113,7 +113,7 @@ func (e *handlersImpl) getIntegration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	intParams, err := e.services.Integrator.GetIntegration(project, integration)
+	intParams, err := e.integrations.GetIntegration(project, integration)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -125,7 +125,7 @@ func (e *handlersImpl) updateIntegration(w http.ResponseWriter, r *http.Request)
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
@@ -144,7 +144,7 @@ func (e *handlersImpl) updateIntegration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := e.services.Integrator.UpdateIntegration(project, integration, req.IntegrationData); err != nil {
+	if err := e.integrations.UpdateIntegration(project, integration, req.IntegrationData); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -161,7 +161,7 @@ func (e *handlersImpl) deleteIntegration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := e.services.Integrator.DeleteIntegration(project, integration); err != nil {
+	if err := e.integrations.DeleteIntegration(project, integration); err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -184,7 +184,7 @@ func (e *handlersImpl) getIntegrationData(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	url, err := e.services.Integrator.GetSessionDataURL(project, integration, session)
+	url, err := e.integrations.GetSessionDataURL(project, integration, session)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return

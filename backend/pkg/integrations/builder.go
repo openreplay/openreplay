@@ -5,20 +5,18 @@ import (
 
 	"openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/flakeid"
+	integrationsAPI "openreplay/backend/pkg/integrations/api"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/objectstorage/store"
+	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/limiter"
 )
 
 type ServiceBuilder struct {
-	Flaker      *flakeid.Flaker
-	ObjStorage  objectstorage.ObjectStorage
-	Integrator  Service
-	Auth        auth.Auth
-	RateLimiter *limiter.UserRateLimiter
+	Auth            auth.Auth
+	RateLimiter     *limiter.UserRateLimiter
+	IntegrationsAPI api.Handlers
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, pgconn pool.Pool) (*ServiceBuilder, error) {
@@ -30,12 +28,14 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, pgconn pool.
 	if err != nil {
 		return nil, err
 	}
-	flaker := flakeid.NewFlaker(cfg.WorkerID)
-	return &ServiceBuilder{
-		Flaker:      flaker,
-		ObjStorage:  objStore,
-		Auth:        auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil),
-		Integrator:  integrator,
-		RateLimiter: limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
-	}, nil
+	handlers, err := integrationsAPI.NewHandlers(log, cfg, integrator)
+	if err != nil {
+		return nil, err
+	}
+	builder := &ServiceBuilder{
+		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil),
+		RateLimiter:     limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
+		IntegrationsAPI: handlers,
+	}
+	return builder, nil
 }
