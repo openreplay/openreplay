@@ -31,7 +31,6 @@ import (
 type handlersImpl struct {
 	log                  logger.Logger
 	cfg                  *http3.Config
-	jsonSizeLimit        int64
 	services             *http2.ServicesBuilder
 	beaconSizeCache      *api2.BeaconCache
 	compressionThreshold int64
@@ -98,7 +97,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.jsonSizeLimit)
+	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
