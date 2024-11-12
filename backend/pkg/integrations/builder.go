@@ -16,8 +16,8 @@ import (
 type ServiceBuilder struct {
 	Flaker      *flakeid.Flaker
 	ObjStorage  objectstorage.ObjectStorage
-	Auth        auth.Auth
 	Integrator  Service
+	Auth        auth.Auth
 	RateLimiter *limiter.UserRateLimiter
 }
 

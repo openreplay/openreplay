@@ -78,11 +78,11 @@ func main() {
 		log.Fatal(ctx, "failed while creating ux testing handlers: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
+	router, err := api.NewRouter(&cfg.HTTP, log)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(webAPI, mobileAPI, conditionsAPI, featureFlagsAPI, tagsAPI, uxtestsAPI)
+	router.AddHandlers(api.NoPrefix, webAPI, mobileAPI, conditionsAPI, featureFlagsAPI, tagsAPI, uxtestsAPI)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

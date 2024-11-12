@@ -55,7 +55,7 @@ func (s *Server) Stop() {
 }
 
 func Run(ctx context.Context, log logger.Logger, cfg *common.HTTP, router api.Router) {
-	webServer, err := New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
+	webServer, err := New(router.Get(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating server: %s", err)
 	}

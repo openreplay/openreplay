@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/integrations"
@@ -36,11 +37,11 @@ func main() {
 		log.Fatal(ctx, "can't init handlers: %s", err)
 	}
 
-	router, err := api.NewRouter(&cfg.HTTP, log, pgConn)
+	router, err := api.NewRouter(&cfg.HTTP, log)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
-	router.AddHandlers(handlers)
+	router.AddHandlers(api.NoPrefix, handlers)
 	router.AddMiddlewares(builder.Auth.AuthMiddleware, builder.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
