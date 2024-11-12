@@ -21,6 +21,8 @@ export default {
     error: { control: "text" },
     helperText: { control: "text" },
     inputIcon: { control: "boolean" },
+    required: { control: "boolean" },
+    disabled: { control: "boolean" },
   },
 } as Meta;
 

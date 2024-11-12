@@ -45,7 +45,7 @@ export default function Label({
         </span>
       </label>
       {helperText && (
-        <p className="text-sm text-secondary-text">{helperText}</p>
+        <p className="mb-1 text-sm text-secondary-text">{helperText}</p>
       )}
     </div>
   );

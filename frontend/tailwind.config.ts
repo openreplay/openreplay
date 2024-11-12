@@ -24,7 +24,12 @@ module.exports = {
       },
       colors: {
         border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
+        input: {
+          DEFAULT: "hsl(var(--input))",
+          background: "hsl(var(--input-background))",
+          placeholder: "hsl(var(--input-placeholder))",
+          border: "hsl(var(--input-border))",
+        },
 
         calendar: {
           DEFAULT: "hsl(var(--calendar))",
