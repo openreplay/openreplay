@@ -154,9 +154,9 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
             <div className="font-semibold">
               {period &&
-                period.range.start.toFormat('MMM Do YY') +
+                period.range.start.toFormat('MMM D') +
                   ' - ' +
-                  period.range.end.toFormat('MMM Do YY')}
+                  period.range.end.toFormat('MMM D')}
             </div>
           </div>
           {dashboard && dashboard.description && (
