@@ -57,7 +57,7 @@ function FetchDetailsModal(props: Props) {
   return (
     <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
       <h5 className="mb-4 text-2xl ">Network Request</h5>
-      <FetchBasicDetails resource={resource} timestamp={props.time ? DateTime.fromMillis(props.time).setZone(timezone.value).toFormat(`hh:mm:ss a`) : undefined} />
+      <FetchBasicDetails resource={resource} timestamp={resource.timestamp ? DateTime.fromMillis(resource.timestamp).setZone(timezone.value).toFormat(`LLL dd, yyyy, hh:mm:ss a`) : undefined} />
 
       {isXHR && <FetchTabs isSpot={isSpot} resource={resource} />}
 
