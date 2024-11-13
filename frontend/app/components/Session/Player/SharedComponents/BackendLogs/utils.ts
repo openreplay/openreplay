@@ -48,7 +48,7 @@ function processDynatraceLog(log: any): UnifiedLog {
     result.additionalColumns?.["span_id"]?.[0] ||
     String(result.timestamp);
 
-  const timestamp = result.timestamp;
+  const timestamp = new Date(result.timestamp).toISOString();
 
   let message = result.content || "";
   let level = result.status?.toLowerCase() || "info";

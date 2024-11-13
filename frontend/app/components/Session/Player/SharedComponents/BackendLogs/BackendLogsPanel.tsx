@@ -46,8 +46,7 @@ async function fetchLogs(
 
 function BackendLogsPanel() {
   const { projectsStore, sessionStore, integrationsStore } = useStore();
-  const integratedServices =
-    integrationsStore.integrations.backendLogIntegrations;
+  const integratedServices = integrationsStore.integrations.backendLogIntegrations;
   const defaultTab = integratedServices[0]!.name;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
