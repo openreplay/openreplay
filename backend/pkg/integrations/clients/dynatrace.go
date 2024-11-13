@@ -103,7 +103,7 @@ type Logs struct {
 
 func testRequestParams() url.Values {
 	params := url.Values{}
-	params.Add("limit", "1")
+	params.Add("limit", "10") // TODO: make 1 as before
 	return params
 }
 
@@ -114,13 +114,15 @@ func requestParams(sessionID uint64) url.Values {
 	return params
 }
 
-func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uint64) (*Logs, error) {
+func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uint64) (interface{}, error) {
 	requestURL := fmt.Sprintf("https://%s.live.dynatrace.com/api/v2/logs/search", environmentID)
-	if sessionID == 0 {
-		requestURL += "?" + testRequestParams().Encode()
-	} else {
-		requestURL += "?" + requestParams(sessionID).Encode()
-	}
+	//if sessionID == 0 {
+	//	requestURL += "?" + testRequestParams().Encode()
+	//} else {
+	//	requestURL += "?" + requestParams(sessionID).Encode()
+	//}
+	// TODO:remove after tests
+	requestURL += "?" + testRequestParams().Encode()
 
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -149,5 +151,6 @@ func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uin
 	if len(logs.Results) == 0 {
 		return nil, fmt.Errorf("empty logs, body: %s", string(body))
 	}
-	return logs, nil
+	responseContent, _ := json.Marshal(logs.Results)
+	return responseContent, nil
 }
