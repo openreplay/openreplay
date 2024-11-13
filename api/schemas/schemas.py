@@ -1425,6 +1425,7 @@ class IntegrationType(str, Enum):
     STACKDRIVER = "STACKDRIVER"
     CLOUDWATCH = "CLOUDWATCH"
     NEWRELIC = "NEWRELIC"
+    DYNATRACE = "DYNATRACE"
 
 
 class SearchNoteSchema(_PaginatedSchema):
