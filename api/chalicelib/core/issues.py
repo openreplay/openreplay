@@ -1,32 +1,5 @@
 from chalicelib.utils import pg_client, helper
 
-ISSUE_TYPES = ['click_rage', 'dead_click', 'excessive_scrolling', 'bad_request', 'missing_resource', 'memory', 'cpu',
-               'slow_resource', 'slow_page_load', 'crash', 'ml_cpu', 'ml_memory', 'ml_dead_click', 'ml_click_rage',
-               'ml_mouse_thrashing', 'ml_excessive_scrolling', 'ml_slow_resources', 'custom', 'js_exception',
-               'custom_event_error', 'js_error']
-ORDER_QUERY = """\
-(CASE   WHEN type = 'js_exception' THEN 0
-        WHEN type = 'bad_request' THEN 1
-        WHEN type = 'missing_resource' THEN 2
-        WHEN type = 'click_rage' THEN 3
-        WHEN type = 'dead_click' THEN 4
-        WHEN type = 'memory' THEN 5
-        WHEN type = 'cpu' THEN 6
-        WHEN type = 'crash' THEN 7
-        ELSE -1 END)::INTEGER 
-"""
-NAME_QUERY = """\
-(CASE   WHEN type = 'js_exception' THEN 'Errors'
-        WHEN type = 'bad_request' THEN 'Bad Requests'
-        WHEN type = 'missing_resource' THEN 'Missing Images'
-        WHEN type = 'click_rage' THEN 'Click Rage'
-        WHEN type = 'dead_click' THEN 'Dead Clicks'
-        WHEN type = 'memory' THEN 'High Memory'
-        WHEN type = 'cpu' THEN 'High CPU'
-        WHEN type = 'crash' THEN 'Crashes'
-        ELSE type::text END)::text 
-"""
-
 
 def get(project_id, issue_id):
     with pg_client.PostgresClient() as cur:

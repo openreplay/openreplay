@@ -289,7 +289,7 @@ def get_first_mob_file(projectId: int, sessionId: Union[int, str], background_ta
         return {"errors": ["session not found"]}
     else:
         sessionId = int(sessionId)
-    data = sessions_replay.get_pre_replay(project_id=projectId, session_id=sessionId, context=context)
+    data = sessions_replay.get_pre_replay(project_id=projectId, session_id=sessionId)
     if data is None:
         return {"errors": ["session not found"]}
     return {

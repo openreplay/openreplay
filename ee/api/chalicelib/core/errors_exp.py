@@ -3,7 +3,7 @@ from decouple import config
 import schemas
 from chalicelib.core import errors_legacy
 from chalicelib.core import metrics, metadata
-from chalicelib.core import sourcemaps, sessions
+from chalicelib.core import sessions
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -106,30 +106,6 @@ def __flatten_sort_key_count(data):
     ]
 
 
-def __rearrange_chart_details(start_at, end_at, density, chart):
-    chart = list(chart)
-    for i in range(len(chart)):
-        chart[i] = {"timestamp": chart[i][0], "count": chart[i][1]}
-    chart = metrics.__complete_missing_steps(rows=chart, start_time=start_at, end_time=end_at, density=density,
-                                             neutral={"count": 0})
-    return chart
-
-
-def __process_tags(row):
-    return [
-        {"name": "browser", "partitions": __flatten_sort_key_count_version(data=row.get("browsers_partition"))},
-        {"name": "browser.ver",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("browsers_partition"), merge_nested=True)},
-        {"name": "OS", "partitions": __flatten_sort_key_count_version(data=row.get("os_partition"))},
-        {"name": "OS.ver",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("os_partition"), merge_nested=True)},
-        {"name": "device.family", "partitions": __flatten_sort_key_count_version(data=row.get("device_partition"))},
-        {"name": "device",
-         "partitions": __flatten_sort_key_count_version(data=row.pop("device_partition"), merge_nested=True)},
-        {"name": "country", "partitions": __flatten_sort_key_count(data=row.pop("country_partition"))}
-    ]
-
-
 def __process_tags_map(row):
     browsers_partition = row.pop("browsers_partition")
     os_partition = row.pop("os_partition")
@@ -181,35 +157,23 @@ def get_details(project_id, error_id, user_id, **data):
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(0)
     MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
-    MAIN_EVENTS_TABLE_24 = exp_ch_helper.get_main_events_table(TimeUTC.now())
 
     ch_sub_query24 = __get_basic_constraints(startTime_arg_name="startDate24", endTime_arg_name="endDate24")
     ch_sub_query24.append("error_id = %(error_id)s")
-    # pg_sub_query30_err = __get_basic_constraints(time_constraint=True, startTime_arg_name="startDate30",
-    #                                              endTime_arg_name="endDate30", project_key="errors.project_id",
-    #                                              table_name="errors")
-    # pg_sub_query30_err.append("sessions.project_id = toUInt16(%(project_id)s)")
-    # pg_sub_query30_err.append("sessions.datetime >= toDateTime(%(startDate30)s/1000)")
-    # pg_sub_query30_err.append("sessions.datetime <= toDateTime(%(endDate30)s/1000)")
-    # pg_sub_query30_err.append("error_id = %(error_id)s")
-    # pg_sub_query30_err.append("source ='js_exception'")
+
     ch_sub_query30 = __get_basic_constraints(startTime_arg_name="startDate30", endTime_arg_name="endDate30",
                                              project_key="errors.project_id")
     ch_sub_query30.append("error_id = %(error_id)s")
     ch_basic_query = __get_basic_constraints(time_constraint=False)
     ch_basic_query.append("error_id = %(error_id)s")
-    # ch_basic_query_session = ch_basic_query[:]
-    # ch_basic_query_session.append("sessions.project_id = toUInt16(%(project_id)s)")
+
+
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
         data["endDate24"] = TimeUTC.now()
         data["startDate30"] = TimeUTC.now(-30)
         data["endDate30"] = TimeUTC.now()
-        # # TODO: remove time limits
-        # data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
-        # data["endDate24"] = 1650470729000
-        # data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
-        # data["endDate30"] = 1650470729000
+
         density24 = int(data.get("density24", 24))
         step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
@@ -353,17 +317,11 @@ def get_details(project_id, error_id, user_id, **data):
 
     if status is not None:
         status = status[0]
-        # row["stack"] = format_first_stack_frame(status).pop("stack")
-        # row["status"] = status.pop("status")
-        # row["parent_error_id"] = status.pop("parent_error_id")
         row["favorite"] = status.pop("favorite")
         row["viewed"] = status.pop("viewed")
         row["last_hydrated_session"] = status
     else:
-        # row["stack"] = []
         row["last_hydrated_session"] = None
-        # row["status"] = "untracked"
-        # row["parent_error_id"] = None
         row["favorite"] = False
         row["viewed"] = False
     row["chart24"] = metrics.__complete_missing_steps(start_time=data["startDate24"], end_time=data["endDate24"],
@@ -710,10 +668,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         'total': total,
         'errors': helper.list_to_camel_case(rows)
     }
-
-
-def __save_stacktrace(error_id, data):
-    errors_legacy.__save_stacktrace(error_id=error_id, data=data)
 
 
 def get_trace(project_id, error_id):

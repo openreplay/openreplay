@@ -46,20 +46,6 @@ def __get_constraint_values(data):
     return params
 
 
-METADATA_FIELDS = {"userId": "user_id",
-                   "userAnonymousId": "user_anonymous_id",
-                   "metadata1": "metadata_1",
-                   "metadata2": "metadata_2",
-                   "metadata3": "metadata_3",
-                   "metadata4": "metadata_4",
-                   "metadata5": "metadata_5",
-                   "metadata6": "metadata_6",
-                   "metadata7": "metadata_7",
-                   "metadata8": "metadata_8",
-                   "metadata9": "metadata_9",
-                   "metadata10": "metadata_10"}
-
-
 def __get_meta_constraint(project_id, data):
     if len(data.get("filters", [])) == 0:
         return []
@@ -99,14 +85,6 @@ def __get_meta_constraint(project_id, data):
                      for item in filter_type):
                 constraints.append(f"sessions.rev_id = %({f['key']}_{i})s")
     return constraints
-
-
-SESSIONS_META_FIELDS = {"revId": "rev_id",
-                        "country": "user_country",
-                        "os": "user_os",
-                        "platform": "user_device_type",
-                        "device": "user_device",
-                        "browser": "user_browser"}
 
 
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -263,33 +241,6 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
                 r.pop("rn")
 
     return helper.dict_to_camel_case(row)
-
-
-def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                  endTimestamp=TimeUTC.now(),
-                                  platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("requests.type = 'fetch'")
-    pg_sub_query.append("requests.method IS NOT NULL")
-    pg_sub_query.append(f"requests.status_code/100 = {status}")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  requests.method,
-                               requests.host,
-                               requests.path,
-                               COUNT(requests.session_id) AS all_requests
-                        FROM events_common.requests INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY requests.method, requests.host, requests.path
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
-        rows = cur.fetchall()
-        for r in rows:
-            r["url_hostpath"] = r.pop("host") + r.pop("path")
-    return helper.list_to_camel_case(rows)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
