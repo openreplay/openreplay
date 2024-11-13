@@ -35,28 +35,6 @@ def __fix_stages(f_events: List[schemas.SessionSearchEventSchema2]):
     return events
 
 
-def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema,
-                                       metric_format: schemas.MetricExtendedFormatType):
-    data.events = filter_stages(__parse_events(data.events))
-    data.events = __fix_stages(data.events)
-    if len(data.events) == 0:
-        return {"stages": [], "totalDropDueToIssues": 0}
-    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data,
-                                                                       project_id=project_id,
-                                                                       metric_format=metric_format)
-    insights = helper.list_to_camel_case(insights)
-    if len(insights) > 0:
-        if metric_format == schemas.MetricFormatType.SESSION_COUNT and total_drop_due_to_issues > (
-                insights[0]["sessionsCount"] - insights[-1]["sessionsCount"]):
-            total_drop_due_to_issues = insights[0]["sessionsCount"] - insights[-1]["sessionsCount"]
-        elif metric_format == schemas.MetricExtendedFormatType.USER_COUNT and total_drop_due_to_issues > (
-                insights[0]["usersCount"] - insights[-1]["usersCount"]):
-            total_drop_due_to_issues = insights[0]["usersCount"] - insights[-1]["usersCount"]
-        insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
-    return {"stages": insights,
-            "totalDropDueToIssues": total_drop_due_to_issues}
-
-
 def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
@@ -69,7 +47,7 @@ def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchem
                                          last_stage=len(data.events)))}
 
 
-def get_simple_funnel(project:schemas.ProjectContext, data: schemas.CardSeriesFilterSchema,
+def get_simple_funnel(project: schemas.ProjectContext, data: schemas.CardSeriesFilterSchema,
                       metric_format: schemas.MetricExtendedFormatType):
     data.events = filter_stages(__parse_events(data.events))
     data.events = __fix_stages(data.events)
@@ -79,4 +57,4 @@ def get_simple_funnel(project:schemas.ProjectContext, data: schemas.CardSeriesFi
                                               project=project,
                                               metric_format=metric_format)
 
-    return {"stages": insights, "totalDropDueToIssues": 0}
+    return {"stages": insights}

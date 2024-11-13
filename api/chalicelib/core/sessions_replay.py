@@ -18,7 +18,7 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_pre_replay(project_id, session_id, context: schemas.CurrentContext):
+def get_pre_replay(project_id, session_id):
     return {
         'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
 

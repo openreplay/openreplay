@@ -43,13 +43,13 @@ DELETE
 FROM public.metrics
 WHERE metric_of IN ('avgCpu', 'avgDomContentLoaded',
                     'avgDomContentLoadStart', 'avgFirstContentfulPixel',
-                     'avgFirstPaint',
+                    'avgFirstPaint',
                     'avgFps', 'avgImageLoadTime',
                     'avgPageLoadTime', 'avgRequestLoadTime',
                     'avgResponseTime', 'avgSessionDuration',
                     'avgTillFirstByte', 'avgTimeToRender')
-   or metric_of IN ('timeToRender', 'cpu','crashes'
-                    'fps', 'avgTimeToInteractive',
+   or metric_of IN ('timeToRender', 'cpu', 'crashes'
+    'fps', 'avgTimeToInteractive',
                     'avgPagesResponseTime', 'avgUsedJsHeapSize',
                     'memoryConsumption', 'pagesResponseTime',
                     'pagesDomBuildtime', 'pagesResponseTimeDistribution',
@@ -57,7 +57,7 @@ WHERE metric_of IN ('avgCpu', 'avgDomContentLoaded',
                     'slowestDomains', 'speedLocation', 'impactedSessionsBySlowPages',
                     'avgPagesDomBuildtime')
    or metric_of IN ('missingResources', 'resourcesLoadingTime',
-                    'slowestResources', 'callsErrors','resourceTypeVsResponseEnd',
+                    'slowestResources', 'callsErrors', 'resourceTypeVsResponseEnd',
                     'resourcesCountByType');
 
 DELETE
@@ -70,6 +70,8 @@ WHERE query ->> 'left' IN ('performance.image_load_time.average', 'performance.r
 DROP TABLE IF EXISTS events.resources;
 DROP TYPE IF EXISTS events.resource_type;
 DROP TYPE IF EXISTS events.resource_method;
+
+ALTER TYPE integration_provider ADD VALUE IF NOT EXISTS 'dynatrace';
 
 COMMIT;
 

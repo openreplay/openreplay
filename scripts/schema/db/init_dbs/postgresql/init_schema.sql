@@ -262,7 +262,7 @@ CREATE TABLE public.announcements
 );
 
 
-CREATE TYPE integration_provider AS ENUM ('bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic', 'elasticsearch'); --, 'jira', 'github');
+CREATE TYPE integration_provider AS ENUM ('bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic', 'elasticsearch', 'dynatrace');
 CREATE TABLE public.integrations
 (
     project_id   integer              NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,

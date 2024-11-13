@@ -438,43 +438,6 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         return sessions
 
 
-def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
-    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
-                                               favorite_only=False, issue=None, project_id=project_id,
-                                               user_id=None)
-
-    with pg_client.PostgresClient() as cur:
-        full_args["issues_limit"] = data.limit
-        full_args["issues_limit_s"] = (data.page - 1) * data.limit
-        full_args["issues_limit_e"] = data.page * data.limit
-        main_query = cur.mogrify(f"""SELECT COUNT(1) AS count,
-                                            COALESCE(SUM(session_count), 0) AS count,
-                                            COALESCE(JSONB_AGG(ranked_issues) 
-                                                FILTER ( WHERE rn > %(issues_limit_s)s 
-                                                            AND rn <= %(issues_limit_e)s ), '[]'::JSONB) AS values
-                                      FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY session_count DESC) AS rn
-                                            FROM (SELECT type AS name, context_string AS value, COUNT(DISTINCT session_id) AS total
-                                                  FROM (SELECT session_id
-                                                        {query_part}) AS filtered_sessions
-                                                     INNER JOIN events_common.issues USING (session_id)
-                                                     INNER JOIN public.issues USING (issue_id)
-                                                  WHERE project_id = %(project_id)s
-                                                    AND timestamp >= %(startDate)s
-                                                    AND timestamp <= %(endDate)s
-                                                  GROUP BY type, context_string
-                                                  ORDER BY session_count DESC) AS filtered_issues
-                                            ) AS ranked_issues;""", full_args)
-        logger.debug("--------------------")
-        logger.debug(main_query)
-        logger.debug("--------------------")
-        cur.execute(main_query)
-        sessions = helper.dict_to_camel_case(cur.fetchone())
-        for s in sessions["values"]:
-            s.pop("rn")
-
-        return sessions
-
-
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \

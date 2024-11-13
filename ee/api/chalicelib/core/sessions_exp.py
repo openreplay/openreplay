@@ -485,50 +485,6 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         return sessions
 
 
-def search_table_of_individual_issues(data: schemas.SessionsSearchPayloadSchema, project_id: int):
-    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
-                                                  favorite_only=False, issue=None, project_id=project_id,
-                                                  user_id=None)
-
-    with ch_client.ClickHouseClient() as cur:
-        full_args["issues_limit"] = data.limit
-        full_args["issues_limit_s"] = (data.page - 1) * data.limit
-        full_args["issues_limit_e"] = data.page * data.limit
-        main_query = cur.format(f"""SELECT issues.type                             AS name,
-                                                 issues.context_string                   AS value,
-                                                 COUNT(DISTINCT raw_sessions.session_id) AS session_count,
-                                                 sum(session_count) OVER ()              AS total_sessions,
-                                                 COUNT(1) OVER ()                        AS count
-                                          FROM (SELECT session_id
-                                                {query_part}) AS raw_sessions
-                                                   INNER JOIN experimental.events ON (raw_sessions.session_id = events.session_id)
-                                                   INNER JOIN experimental.issues ON (events.issue_id = issues.issue_id)
-                                          WHERE event_type = 'ISSUE'
-                                            AND events.datetime >= toDateTime(%(startDate)s / 1000)
-                                            AND events.datetime <= toDateTime(%(endDate)s / 1000)
-                                            AND events.project_id = %(projectId)s
-                                            AND issues.project_id = %(projectId)s
-                                          GROUP BY issues.type, issues.context_string
-                                          ORDER BY session_count DESC
-                                          LIMIT %(issues_limit)s OFFSET %(issues_limit_s)s""", full_args)
-        logging.debug("--------------------")
-        logging.debug(main_query)
-        logging.debug("--------------------")
-        issues = cur.execute(main_query)
-        issues = helper.list_to_camel_case(issues)
-        if len(issues) > 0:
-            total_sessions = issues[0]["totalSessions"]
-            issues_count = issues[0]["count"]
-            for s in issues:
-                s.pop("totalSessions")
-                s.pop("count")
-        else:
-            total_sessions = 0
-            issues_count = 0
-
-        return {"total": issues_count, "count": total_sessions, "values": issues}
-
-
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.REQUEST_DETAILS,
                                                                             schemas.EventType.GRAPHQL] \

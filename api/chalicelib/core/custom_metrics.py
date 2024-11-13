@@ -211,51 +211,19 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     return results
 
 
-def __get_path_analysis_issues(project_id: int, user_id: int, data: schemas.CardPathAnalysis):
-    if len(data.filters) > 0 or len(data.series) > 0:
-        filters = [f.model_dump(by_alias=True) for f in data.filters] \
-                  + [f.model_dump(by_alias=True) for f in data.series[0].filter.filters]
-    else:
-        return []
-
-    search_data = schemas.SessionsSearchPayloadSchema(
-        startTimestamp=data.startTimestamp,
-        endTimestamp=data.endTimestamp,
-        limit=data.limit,
-        page=data.page,
-        filters=filters
-    )
-    # ---- To make issues response close to the chart response
-    search_data.filters.append(schemas.SessionSearchFilterSchema(type=schemas.FilterType.EVENTS_COUNT,
-                                                                 operator=schemas.MathOperator.GREATER,
-                                                                 value=[1]))
-    if len(data.start_point) == 0:
-        search_data.events.append(schemas.SessionSearchEventSchema2(type=schemas.EventType.LOCATION,
-                                                                    operator=schemas.SearchEventOperator.IS_ANY,
-                                                                    value=[]))
-    # ---- End
-
-    for s in data.excludes:
-        search_data.events.append(schemas.SessionSearchEventSchema2(type=s.type,
-                                                                    operator=schemas.SearchEventOperator.NOT_ON,
-                                                                    value=s.value))
-    result = sessions.search_table_of_individual_issues(project_id=project_id, data=search_data)
-    return result
-
-
-def get_issues(project_id: int, user_id: int, data: schemas.CardSchema):
+def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.CardSchema):
     if data.is_predefined:
         return not_supported()
     if data.metric_of == schemas.MetricOfTable.ISSUES:
-        return __get_table_of_issues(project_id=project_id, user_id=user_id, data=data)
+        return __get_table_of_issues(project=project, user_id=user_id, data=data)
     supported = {
         schemas.MetricType.TIMESERIES: not_supported,
         schemas.MetricType.TABLE: not_supported,
         schemas.MetricType.HEAT_MAP: not_supported,
         schemas.MetricType.INSIGHTS: not_supported,
-        schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_issues,
+        schemas.MetricType.PATH_ANALYSIS: not_supported,
     }
-    return supported.get(data.metric_type, not_supported)(project_id=project_id, data=data, user_id=user_id)
+    return supported.get(data.metric_type, not_supported)()
 
 
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
