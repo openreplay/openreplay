@@ -29,6 +29,8 @@ body {
     --input-placeholder: 0 0% 45%;
     --input-border: 0 0% 83%;
 
+    --tag-hover: 0 0% 96%;
+
     --calendar: 0 0% 100%;
     --calendar-hover: 26 100% 97%;
 
@@ -104,6 +106,8 @@ body {
     --input-background: 0 0% 15%;
     --input-placeholder: 0 0% 83%;
     --input-border: 0 0% 25%;
+
+    --tag-hover: 0 0% 9%;
 
     --calendar: 0 0% 15%;
     --calendar-hover: 26 100% 26%;
