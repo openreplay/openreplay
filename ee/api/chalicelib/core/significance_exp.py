@@ -25,12 +25,6 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
     full_args["MAIN_EVENTS_TABLE"] = MAIN_EVENTS_TABLE
     full_args["MAIN_SESSIONS_TABLE"] = MAIN_SESSIONS_TABLE
 
-    if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
-        group_by = 'e.session_id'
-    else:
-        constraints.append("isNotNull(s.user_id)")
-        group_by = 's.user_id'
-
     n_stages_query = []
     n_stages_query_not = []
     event_types = []
@@ -172,11 +166,17 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         return []
 
     extra_from = ""
-    if has_filters:
+    if has_filters or metric_format == schemas.MetricExtendedFormatType.USER_COUNT:
         extra_from = f"INNER JOIN {MAIN_SESSIONS_TABLE} AS s ON (e.session_id=s.session_id)"
         constraints += ["s.project_id = %(project_id)s",
                         "s.datetime >= toDateTime(%(startTimestamp)s/1000)",
                         "s.datetime <= toDateTime(%(endTimestamp)s/1000)"]
+
+    if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
+        group_by = 'e.session_id'
+    else:
+        constraints.append("isNotNull(s.user_id)")
+        group_by = 's.user_id'
 
     if len(n_stages_query_not) > 0:
         value_conditions_not_base = ["project_id = %(project_id)s",
