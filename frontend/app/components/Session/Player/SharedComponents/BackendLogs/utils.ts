@@ -21,11 +21,10 @@ export function processLog(log: any): UnifiedLog[] {
 
 function isDynatraceLog(log: any): boolean {
   return (
-    log &&
-    log[0].results &&
-    Array.isArray(log[0].results) &&
-    log[0].results.length > 0 &&
-    log[0].results[0].eventType === "LOG"
+    Array.isArray(log) &&
+    log[0].eventType === "LOG" &&
+    log[0].content &&
+    log[0].status
   );
 }
 
@@ -42,14 +41,14 @@ function isSentryLog(log: any): boolean {
 }
 
 function processDynatraceLog(log: any): UnifiedLog {
-  const result = log.results[0];
+  const result = log;
 
   const key =
     result.additionalColumns?.["trace_id"]?.[0] ||
     result.additionalColumns?.["span_id"]?.[0] ||
     String(result.timestamp);
 
-  const timestamp = new Date(result.timestamp).toISOString();
+  const timestamp = result.timestamp;
 
   let message = result.content || "";
   let level = result.status?.toLowerCase() || "info";

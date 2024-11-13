@@ -20,6 +20,7 @@ public class ORTrackerConnector: NSObject {
           screen: optionsDict["screen"] as? Bool ?? true,
           wifiOnly: optionsDict["wifiOnly"] as? Bool ?? true,
           debugLogs: optionsDict["debugLogs"] as? Bool ?? false,
+          screenshotBatchSize: 20,
           debugImages: false
         )
         Openreplay.shared.serverURL = projectUrl ?? "https://api.openreplay.com/ingest"
