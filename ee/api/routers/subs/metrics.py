@@ -95,7 +95,7 @@ def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(..
 @app.post('/{projectId}/cards/try/issues', tags=["cards"])
 def try_card_issues(projectId: int, data: schemas.CardSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_issues(project_id=projectId, user_id=context.user_id, data=data)}
+    return {"data": custom_metrics.get_issues(project=context.project, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards', tags=["cards"])
