@@ -34,7 +34,7 @@ const Login = ({
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
   const errors = userStore.loginRequest.errors;
-  const loading = userStore.loginRequest.loading;
+  const loading = loginStore.loading;
   const authDetails = userStore.authDetails;
   const setJwt = userStore.updateJwt;
   const fetchTenants = userStore.fetchTenants;
@@ -111,7 +111,7 @@ const Login = ({
         }
       })
       .catch((e) => {
-        userStore.syntheticLoginError(e.errors)
+        userStore.syntheticLoginError(e);
       });
   };
 
