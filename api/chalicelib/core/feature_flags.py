@@ -1,11 +1,14 @@
+import json
+import logging
+from typing import Any, List, Dict, Optional
+
 import schemas
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from typing import Any, List, Dict, Optional
 from fastapi import HTTPException, status
-import json
-import logging
+
+logger = logging.getLogger(__name__)
 
 feature_flag_columns = (
     "feature_flag_id",
@@ -299,7 +302,8 @@ def create_conditions(feature_flag_id: int, conditions: List[schemas.FeatureFlag
 
         with pg_client.PostgresClient() as cur:
             params = [
-                (feature_flag_id, c.name, c.rollout_percentage, json.dumps([filter_.model_dump() for filter_ in c.filters]))
+                (feature_flag_id, c.name, c.rollout_percentage,
+                 json.dumps([filter_.model_dump() for filter_ in c.filters]))
                 for c in conditions]
             query = cur.mogrify(sql, params)
             cur.execute(query)
@@ -455,7 +459,8 @@ def create_variants(feature_flag_id: int, variants: List[schemas.FeatureFlagVari
         """
 
         with pg_client.PostgresClient() as cur:
-            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in variants]
+            params = [(feature_flag_id, v.value, v.description, json.dumps(v.payload), v.rollout_percentage) for v in
+                      variants]
             query = cur.mogrify(sql, params)
             cur.execute(query)
             rows = cur.fetchall()

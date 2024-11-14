@@ -234,14 +234,14 @@ def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     return r
 
 
-def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
+def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         session_data = None
         if data.metric_type == schemas.MetricType.HEAT_MAP:
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
-                session_data = __get_heat_map_chart(project_id=project_id, user_id=user_id,
+                session_data = __get_heat_map_chart(project=project, user_id=user_id,
                                                     data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = {"sessionId": session_data["sessionId"]}
@@ -253,7 +253,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        params = {"user_id": user_id, "project_id": project_id, **data.model_dump(), **_data,
+        params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
                   "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
             params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
@@ -279,7 +279,7 @@ def create_card(project_id, user_id, data: schemas.CardSchema, dashboard=False):
         r = cur.fetchone()
         if dashboard:
             return r["metric_id"]
-    return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
+    return {"data": get_card(metric_id=r["metric_id"], project_id=project.project_id, user_id=user_id)}
 
 
 def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):

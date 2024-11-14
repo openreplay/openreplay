@@ -2,11 +2,12 @@ import logging
 from typing import Optional
 
 import requests
-from fastapi import HTTPException, status
-
 import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 
 def get_by_id(webhook_id):

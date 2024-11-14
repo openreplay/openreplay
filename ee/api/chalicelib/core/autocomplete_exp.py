@@ -1,4 +1,3 @@
-import chalicelib.utils.exp_ch_helper
 import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import ch_client
