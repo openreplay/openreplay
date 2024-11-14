@@ -6,14 +6,14 @@ name = "pypi"
 [packages]
 urllib3 = "==1.26.16"
 requests = "==2.32.3"
-boto3 = "==1.35.54"
+boto3 = "==1.35.60"
 pyjwt = "==2.9.0"
 psycopg2-binary = "==2.9.10"
 psycopg = {extras = ["pool", "binary"], version = "==3.2.3"}
-elasticsearch = "==8.15.1"
+elasticsearch = "==8.16.0"
 jira = "==3.8.0"
 cachetools = "==5.5.0"
-fastapi = "==0.115.4"
+fastapi = "==0.115.5"
 uvicorn = {extras = ["standard"], version = "==0.32.0"}
 python-decouple = "==3.8"
 pydantic = {extras = ["email"], version = "==2.9.2"}
