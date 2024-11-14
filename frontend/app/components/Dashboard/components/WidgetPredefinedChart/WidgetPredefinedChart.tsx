@@ -47,7 +47,8 @@ function WidgetPredefinedChart(props: Props) {
                 return <CallsErrors5xx data={data} metric={metric} />
             case FilterKey.CALLS_ERRORS:
                 return <CallWithErrors isTemplate={isTemplate} data={data} />
-
+            case FilterKey.SPEED_LOCATION:
+                return <SpeedIndexByLocation data={data} />
             default:
                 return <div className="h-40 color-red">Widget not supported</div>
         }

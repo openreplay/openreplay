@@ -21,6 +21,7 @@ export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
 export const FEATURE_ADOPTION = 'featureAdoption';
 export const INSIGHTS = 'insights';
+export const PERFORMANCE = 'performance';
 
 export interface Option {
   label: string;
@@ -73,6 +74,7 @@ export const TYPES: CardType[] = [
     description: 'Find out where users are dropping and understand why.',
     slug: FUNNEL,
   },
+  { title: 'Speed Index', slug: FilterKey.SPEED_LOCATION, description: '' },
   {
     title: 'Path Analysis',
     icon: 'signpost-split',

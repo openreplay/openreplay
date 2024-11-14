@@ -1,4 +1,3 @@
-
 import ExampleFunnel from './Examples/Funnel';
 import ExamplePath from './Examples/Path';
 import ExampleTrend from './Examples/Trend';
@@ -14,6 +13,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
+  PERFORMANCE,
 } from 'App/constants/card';
 import { FilterKey } from 'Types/filter/filterType';
 import { BarChart, TrendingUp, SearchSlash } from 'lucide-react';
@@ -21,6 +21,8 @@ import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal
 import InsightsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample';
 import ByUser from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByUser';
 import BarChartCard from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/BarChart';
+import SpeedIndexByLocationExample
+  from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
 import CallsWithErrorsExample
   from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/CallsWithErrorsExample';
 import SlowestDomains
@@ -254,6 +256,20 @@ export const CARD_LIST: CardType[] = [
       }
     ],
     example: ExampleTrend
+  },
+  {
+    title: 'Speed Index',
+    key: FilterKey.SPEED_LOCATION,
+    cardType: PERFORMANCE,
+    metricOf: FilterKey.SPEED_LOCATION,
+    category: CARD_CATEGORIES[1].key,
+    data: {
+      chart: generateAreaData(),
+      namesMap: [
+        'Series 1'
+      ]
+    },
+    example: SpeedIndexByLocationExample
   },
   {
     title: 'Sessions with Slow Network Requests',
