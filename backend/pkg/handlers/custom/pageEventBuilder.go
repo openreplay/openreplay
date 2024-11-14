@@ -72,7 +72,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		if msg.FirstContentfulPaint <= 30000 {
 			b.pageEvent.FirstContentfulPaint = msg.FirstContentfulPaint
 		}
-		return nil //b.buildIfTimingsComplete()
+		return nil
 	case *PageRenderTiming:
 		if b.pageEvent == nil {
 			break
@@ -80,7 +80,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 		b.pageEvent.SpeedIndex = msg.SpeedIndex
 		b.pageEvent.VisuallyComplete = msg.VisuallyComplete
 		b.pageEvent.TimeToInteractive = msg.TimeToInteractive
-		return nil //b.buildIfTimingsComplete()
+		return nil
 	case *WebVitals:
 		if b.webVitals == nil {
 			b.webVitals = make(map[string]string)
@@ -105,17 +105,8 @@ func (b *pageEventBuilder) Build() Message {
 		if vitals, err := json.Marshal(b.webVitals); err == nil {
 			pageEvent.WebVitals = string(vitals)
 		} else {
-			// DEBUG
 			fmt.Printf("Error marshalling web vitals: %v\n", err)
 		}
 	}
 	return pageEvent
 }
-
-//func (b *pageEventBuilder) buildIfTimingsComplete() Message {
-//	if b.firstTimingHandled {
-//		return b.Build()
-//	}
-//	b.firstTimingHandled = true
-//	return nil
-//}
