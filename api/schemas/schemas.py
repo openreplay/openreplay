@@ -933,6 +933,7 @@ class MetricOfWebVitals(str, Enum):
     COUNT_REQUESTS = "countRequests"
     COUNT_SESSIONS = "countSessions"
     COUNT_USERS = "userCount"
+    SPEED_LOCATION = "speedLocation"
 
 
 class MetricOfTable(str, Enum):
@@ -940,8 +941,6 @@ class MetricOfTable(str, Enum):
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
-    # user_city = FilterType.user_city.value
-    # user_state = FilterType.user_state.value
     USER_ID = FilterType.USER_ID.value
     ISSUES = FilterType.ISSUE.value
     VISITED_URL = "location"

@@ -594,3 +594,31 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
     results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
+
+
+def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                             endTimestamp=TimeUTC.now(), **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("pages.speed_index IS NOT NULL")
+    pg_sub_query.append("pages.speed_index>0")
+
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS value
+                        FROM events.pages INNER JOIN public.sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query)} 
+                        GROUP BY sessions.user_country
+                        ORDER BY value, sessions.user_country;"""
+        params = {"project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+        if len(rows) > 0:
+            pg_query = f"""SELECT AVG(pages.speed_index) AS avg
+                                FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                WHERE {" AND ".join(pg_sub_query)};"""
+            cur.execute(cur.mogrify(pg_query, params))
+            avg = cur.fetchone()["avg"]
+        else:
+            avg = 0
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MILLISECOND}

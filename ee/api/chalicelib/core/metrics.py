@@ -585,3 +585,30 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
     results["unit"] = schemas.TemplatePredefinedUnits.COUNT
     return results
+
+
+def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                             endTimestamp=TimeUTC.now(), **args):
+    ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
+    ch_sub_query.append("pages.event_type='LOCATION'")
+    ch_sub_query.append("isNotNull(pages.speed_index)")
+    ch_sub_query.append("pages.speed_index>0")
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT sessions.user_country, COALESCE(avgOrNull(pages.speed_index),0) AS value
+                        FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages
+                            INNER JOIN {exp_ch_helper.get_main_sessions_table(startTimestamp)} AS sessions USING (session_id)
+                        WHERE {" AND ".join(ch_sub_query)} 
+                        GROUP BY sessions.user_country
+                        ORDER BY value ,sessions.user_country;"""
+        params = {"project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        rows = ch.execute(query=ch_query, params=params)
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.speed_index),0) AS avg
+                    FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages
+                    WHERE {" AND ".join(ch_sub_query)};"""
+        avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
