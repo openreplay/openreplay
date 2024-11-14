@@ -138,7 +138,7 @@ export const CARD_LIST: CardType[] = [
 
   // Web analytics
   {
-    title: 'Sessions by Users',
+    title: 'Top Users',
     key: FilterKey.USERID,
     cardType: TABLE,
     metricOf: FilterKey.USERID,
@@ -147,7 +147,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Sessions by Browser',
+    title: 'Top Browsers',
     key: FilterKey.USER_BROWSER,
     cardType: TABLE,
     metricOf: FilterKey.USER_BROWSER,
@@ -163,7 +163,7 @@ export const CARD_LIST: CardType[] = [
   //     example: BySystem,
   // },
   {
-    title: 'Sessions by Country',
+    title: 'Top Countries',
     key: FilterKey.USER_COUNTRY,
     cardType: TABLE,
     metricOf: FilterKey.USER_COUNTRY,
@@ -172,7 +172,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Sessions by Device',
+    title: 'Top Devices',
     key: FilterKey.USER_DEVICE,
     cardType: TABLE,
     metricOf: FilterKey.USER_DEVICE,
@@ -180,7 +180,7 @@ export const CARD_LIST: CardType[] = [
     example: BySystem
   },
   {
-    title: 'Sessions by URL',
+    title: 'Top Pages',
     key: FilterKey.LOCATION,
     cardType: TABLE,
     metricOf: FilterKey.LOCATION,
@@ -189,7 +189,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Sessions by Referrer',
+    title: 'Top Referrer',
     key: FilterKey.REFERRER,
     cardType: TABLE,
     metricOf: FilterKey.REFERRER,
