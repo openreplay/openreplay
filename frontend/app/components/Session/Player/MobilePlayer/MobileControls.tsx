@@ -119,7 +119,6 @@ function Controls(props: any) {
               backTenSeconds={backTenSeconds}
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
-              toggleSkip={() => player.toggleSkip()}
               playButton={
                 <PlayButton
                   state={state}

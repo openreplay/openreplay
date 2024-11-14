@@ -47,7 +47,7 @@ interface Props extends RouteComponentProps {
 
 function SideMenu(props: Props) {
   const {
-    location,
+    location
   } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
@@ -58,7 +58,8 @@ function SideMenu(props: Props) {
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = account.edition === 'ee';
-  const siteId = projectsStore.siteId
+  const siteId = projectsStore.siteId;
+  const isMobile = projectsStore.isMobile;
 
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
@@ -114,8 +115,7 @@ function SideMenu(props: Props) {
               item.key === MENU.FEATURE_FLAGS &&
               modules.includes(MODULES.FEATURE_FLAGS),
               item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
-              item.key === MENU.LIVE_SESSIONS &&
-              modules.includes(MODULES.ASSIST),
+              item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.SESSIONS &&
               modules.includes(MODULES.OFFLINE_RECORDINGS),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
@@ -135,7 +135,7 @@ function SideMenu(props: Props) {
           hidden: allItemsHidden
         };
       });
-  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly]);
+  }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId]);
 
   React.useEffect(() => {
     const currentLocation = location.pathname;

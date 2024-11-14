@@ -19,7 +19,7 @@ export default class ProjectsStore {
   }
 
   get isMobile() {
-    return this.instance ? ['ios', 'android'].includes(this.instance.platform) : false;
+    return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
   }
 
   getSiteId = () => {
