@@ -114,7 +114,7 @@ func requestParams(sessionID uint64) url.Values {
 	return params
 }
 
-func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uint64) (*Logs, error) {
+func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uint64) (interface{}, error) {
 	requestURL := fmt.Sprintf("https://%s.live.dynatrace.com/api/v2/logs/search", environmentID)
 	if sessionID == 0 {
 		requestURL += "?" + testRequestParams().Encode()
@@ -149,5 +149,6 @@ func (d *dynatraceClient) requestLogs(token, environmentID string, sessionID uin
 	if len(logs.Results) == 0 {
 		return nil, fmt.Errorf("empty logs, body: %s", string(body))
 	}
-	return logs, nil
+	responseContent, _ := json.Marshal(logs.Results)
+	return responseContent, nil
 }

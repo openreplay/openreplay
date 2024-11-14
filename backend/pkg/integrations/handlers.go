@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -90,7 +91,11 @@ func (e *Router) getIntegration(w http.ResponseWriter, r *http.Request) {
 
 	intParams, err := e.services.Integrator.GetIntegration(project, integration)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if strings.Contains(err.Error(), "no rows in result set") {
+			e.ResponseWithError(r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	e.ResponseWithJSON(r.Context(), w, intParams, startTime, r.URL.Path, bodySize)
