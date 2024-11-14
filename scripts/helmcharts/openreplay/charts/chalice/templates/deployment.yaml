@@ -44,6 +44,8 @@ spec:
           {{- end}}
           env:
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            - name: OPENREPLAY_VERSION
+              value: "{{ .Chart.AppVersion }}"
             - name: KAFKA_SERVERS
               value: "{{ .Values.global.kafka.kafkaHost }}"
             - name: ch_username
