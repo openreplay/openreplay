@@ -506,34 +506,38 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(event.source)
-        if (id && !this.trackedFrames.includes(data.context)) {
-          try {
-            this.trackedFrames.push(data.context)
-            await this.waitStarted()
-            const token = this.session.getSessionToken()
-            const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
-            if (order === 0) {
-              this.debug.error(
-                'Couldnt get order number for iframe',
-                data.context,
-                this.trackedFrames,
-              )
-            }
-            const iframeData = {
-              line: proto.iframeId,
-              id,
-              token,
-              // since indexes go from 0 we +1
-              frameOrderNumber: order,
-            }
-            this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
-            // @ts-ignore
-            event.source?.postMessage(iframeData, '*')
-          } catch (e) {
-            console.error(e)
-          }
-        } else {
+        if (!id) {
           this.debug.log('Couldnt get node id for iframe', event.source)
+          return
+        }
+        try {
+          if (this.trackedFrames.includes(data.context)) {
+            this.debug.log('Trying to observe already added iframe; ignore if its a restart')
+          } else {
+            this.trackedFrames.push(data.context)
+          }
+          await this.waitStarted()
+          const token = this.session.getSessionToken()
+          const order = this.trackedFrames.findIndex((f) => f === data.context) + 1
+          if (order === 0) {
+            this.debug.error(
+              'Couldnt get order number for iframe',
+              data.context,
+              this.trackedFrames,
+            )
+          }
+          const iframeData = {
+            line: proto.iframeId,
+            id,
+            token,
+            // since indexes go from 0 we +1
+            frameOrderNumber: order,
+          }
+          this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
+          // @ts-ignore
+          event.source?.postMessage(iframeData, '*')
+        } catch (e) {
+          console.error(e)
         }
       }
       void signalId()
