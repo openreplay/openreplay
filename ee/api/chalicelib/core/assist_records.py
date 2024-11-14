@@ -1,13 +1,11 @@
 import hashlib
 
-from decouple import config
-
-import schemas
 import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import StorageClient
 from chalicelib.utils.storage import extra
+from decouple import config
 
 
 def generate_file_key(project_id, key):

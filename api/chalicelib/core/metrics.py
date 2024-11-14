@@ -1,5 +1,4 @@
 import logging
-import math
 
 import schemas
 from chalicelib.core import metadata

@@ -140,7 +140,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                  MIN(full_sessions.start_ts)                            AS first_session_ts,
                                                  ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order}) AS rn 
-                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} {meta_map}
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS_CH} {meta_map}
                                                     {query_part}
                                                     ) AS filtred_sessions
                                                 ) AS full_sessions
@@ -294,7 +294,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.MetricOfTable.USER_DEVICE:
                     main_col = "user_device"
                     extra_col = "s.user_device"
-                elif metric_of == schemas.MetricOfTable.user_browser:
+                elif metric_of == schemas.MetricOfTable.USER_BROWSER:
                     main_col = "user_browser"
                     extra_col = "s.user_browser"
                 elif metric_of == schemas.MetricOfTable.ISSUES:
@@ -1564,7 +1564,7 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                             f"""(
                                     SELECT *
                                     FROM (
-                                            SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS}
+                                            SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS_CH}
                                             FROM public.sessions AS s LEFT JOIN (SELECT session_id
                                                                                     FROM public.user_favorite_sessions
                                                                                     WHERE user_favorite_sessions.user_id = %(userId)s
