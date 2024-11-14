@@ -74,7 +74,7 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
 }
 
 export default class BeaconProxy {
-  public static origSendBeacon = window?.navigator?.sendBeacon
+  public static origSendBeacon = typeof window !== 'undefined' ? window.navigator?.sendBeacon : undefined
 
   public static hasSendBeacon() {
     return !!BeaconProxy.origSendBeacon

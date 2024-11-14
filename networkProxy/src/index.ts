@@ -54,6 +54,7 @@ export default function createNetworkProxy(
   },
   tokenUrlMatcher?: (url: string) => boolean,
 ): void {
+  if (!context) return;
   if (modules.xhr) {
     if (context.XMLHttpRequest) {
       context.XMLHttpRequest = XHRProxy.create(
@@ -83,7 +84,7 @@ export default function createNetworkProxy(
     }
   }
   if (modules.beacon) {
-    if (context?.navigator?.sendBeacon) {
+    if (context.navigator?.sendBeacon) {
       context.navigator.sendBeacon = BeaconProxy.create(
         ignoredHeaders,
         setSessionTokenHeader,
