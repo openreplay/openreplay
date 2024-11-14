@@ -27,7 +27,6 @@ class UserStore {
   passwordRequestError: boolean = false;
   passwordErrors: string[] = [];
   tenants: any[] = [];
-  authDetails: Record<string, any> = {};
   onboarding: boolean = false;
   sites: any[] = [];
   jwt: string | null = null;
@@ -50,10 +49,12 @@ class UserStore {
     errors: [] as string[],
   };
   scopeState: number | null = null;
-  client = new Client();
+  client = new Client()
+  authStore: AuthStore;
 
-  constructor() {
+  constructor(authStore: AuthStore) {
     makeAutoObservable(this);
+    this.authStore = authStore;
 
     void makePersistable(
       this,
@@ -65,7 +66,6 @@ class UserStore {
           'jwt',
           'spotJwt',
           'scopeState',
-          'authDetails',
           'onboarding',
           {
             key: 'account',
@@ -74,15 +74,6 @@ class UserStore {
             },
             deserialize: (json) => {
               return new Account(JSON.parse(json));
-            },
-          },
-          {
-            key: 'authDetails',
-            serialize: (ad) => {
-              return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
-            },
-            deserialize: (json) => {
-              return JSON.parse(json)
             },
           },
         ],
@@ -98,7 +89,7 @@ class UserStore {
     return (
       this.account?.edition === 'ee' ||
       this.account?.edition === 'msaas' ||
-      this.authDetails?.edition === 'ee'
+      this.authStore.authDetails?.edition === 'ee'
     );
   }
 
@@ -446,17 +437,6 @@ class UserStore {
     }
   };
 
-  fetchTenants = async () => {
-    try {
-      const response = await userService.fetchTenants();
-      runInAction(() => {
-        this.authDetails = response;
-      });
-    } catch (error) {
-      // TODO error handling
-    }
-  };
-
   fetchUserInfo = async () => {
     runInAction(() => {
       this.fetchInfoRequest = { loading: true, errors: [] };
@@ -603,7 +583,6 @@ class UserStore {
     this.passwordRequestError = false;
     this.passwordErrors = [];
     this.tenants = [];
-    this.authDetails = {};
     this.onboarding = false;
     this.sites = [];
     this.jwt = null;
@@ -628,6 +607,60 @@ class UserStore {
   };
 }
 
-const userStore = new UserStore();
+type AuthDetails = {
+  tenants: boolean;
+  sso: string | null;
+  ssoProvider: string | null;
+  enforceSSO: boolean | null;
+  edition: 'foss' | 'ee' | 'msaas';
+};
+
+class AuthStore {
+  authDetails: AuthDetails = {
+    tenants: false,
+    sso: null,
+    ssoProvider: null,
+    enforceSSO: null,
+    edition: 'foss',
+  };
+
+  constructor() {
+    makeAutoObservable(this);
+
+    void makePersistable(this, {
+      name: 'AuthStore',
+      properties: [
+        'authDetails',
+        {
+          key: 'authDetails',
+          serialize: (ad) => {
+            return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
+          },
+          deserialize: (json) => {
+            return JSON.parse(json)
+          },
+        },
+      ],
+      expireIn: 60000 * 60,
+      removeOnExpiration: true,
+      storage: window.localStorage,
+    });
+  }
+
+  fetchTenants = async () => {
+    try {
+      const response = await userService.fetchTenants();
+      runInAction(() => {
+        this.authDetails = response;
+      });
+    } catch (error) {
+      // TODO error handling
+    }
+  };
+}
+
+
+export const authStore = new AuthStore();
+const userStore = new UserStore(authStore);
 
 export default userStore;

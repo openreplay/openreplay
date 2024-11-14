@@ -26,7 +26,7 @@ type SignupProps = RouteComponentProps;
 
 const Signup: React.FC<SignupProps> = ({ history }) => {
   const { userStore } = useStore();
-  const authDetails = userStore.authDetails;
+  const authDetails = userStore.authStore.authDetails;
   const [healthModalPassed, setHealthModalPassed] = useState<boolean>(localStorage.getItem(healthStatusCheck_key) === 'true');
   const [healthStatusLoading, setHealthStatusLoading] = useState<boolean>(true);
   const [healthStatus, setHealthStatus] = useState<any>(null);

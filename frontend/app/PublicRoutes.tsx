@@ -19,14 +19,14 @@ const Spot = lazy(() => import('Components/Spots/SpotPlayer/SpotPlayer'));
 
 function PublicRoutes() {
   const { userStore } = useStore();
-  const authDetails = userStore.authDetails;
+  const authDetails = userStore.authStore.authDetails;
   const isEnterprise = userStore.isEnterprise;
   const hideSupport = isEnterprise || location.pathname.includes('spots') || location.pathname.includes('view-spot');
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
     if (authDetails && !authDetails.tenants) {
-      userStore.fetchTenants().then(() => setLoading(false));
+      userStore.authStore.fetchTenants().then(() => setLoading(false));
     } else {
       setLoading(false);
     }

@@ -35,9 +35,8 @@ const Login = ({
   const { loginStore, userStore } = useStore();
   const errors = userStore.loginRequest.errors;
   const loading = loginStore.loading;
-  const authDetails = userStore.authDetails;
+  const authDetails = userStore.authStore.authDetails;
   const setJwt = userStore.updateJwt;
-  const fetchTenants = userStore.fetchTenants;
   const history = useHistory();
   const params = new URLSearchParams(location.search);
 
