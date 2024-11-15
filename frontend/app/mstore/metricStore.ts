@@ -248,7 +248,6 @@ export default class MetricStore {
         toast.success('Card updated successfully');
         this.updateInList(_metric);
       }
-      this.instance = _metric;
       this.instance.updateKey('hasChanged', false);
       return _metric;
     } catch (error) {
