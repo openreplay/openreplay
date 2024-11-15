@@ -108,7 +108,6 @@
     "babel-plugin-prismjs": "^2.1.0",
     "babel-plugin-react-require": "^4.0.2",
     "babel-plugin-recharts": "^2.0.0",
-    "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "compression-webpack-plugin": "^10.0.0",
     "copy-webpack-plugin": "^12.0.2",
     "country-data": "0.0.31",
@@ -144,7 +143,7 @@
     "typescript": "^4.6.4",
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4"
+    "webpack-dev-server": "^5.1.0"
   },
   "engines": {
     "node": ">=20.18.0"
