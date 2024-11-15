@@ -153,16 +153,28 @@ export default class UserService {
         const errorData = await error.response.json();
         return { errors: errorData.errors };
       }
-      return { errors: ["An unexpected error occurred."] };
+      return { errors: ['An unexpected error occurred.'] };
     }
   }
 
-  updatePassword(data: any) {
-    return this.client
-      .post('/account/password', data)
-      .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response || {});
-  }
+  updatePassword = async (data: any) => {
+    try {
+      const response = await this.client.post('/account/password', data);
+      const responseData = await response.json();
+      if (responseData.errors) {
+        throw new Error(responseData.errors[0] || 'An unexpected error occurred.');
+      }
+
+      return responseData || {};
+    } catch (error: any) {
+      if (error.response) {
+        const errorData = await error.response.json();
+        const errorMessage = errorData.errors ? errorData.errors[0] : 'An unexpected error occurred.';
+        throw new Error(errorMessage);
+      }
+      throw new Error('An unexpected error occurred.');
+    }
+  };
 
   fetchTenants() {
     return this.client
@@ -192,21 +204,21 @@ export default class UserService {
       .then((response: { data: any }) => response.data || {});
   }
 
-    updateAccount(data: any) {
-      return this.updateClient(data)
-    }
+  updateAccount(data: any) {
+    return this.updateClient(data);
+  }
 
-    resendEmailVerification(data: any) {
-      return this.client
-        .post('/re-validate', data)
-        .then((response: { json: () => any }) => response.json())
-        .then((response: { data: any }) => response.data || {});
-    }
+  resendEmailVerification(data: any) {
+    return this.client
+      .post('/re-validate', data)
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || {});
+  }
 
-    changeScope(scope: 1 | 2) {
-      return this.client
-        .post('/account/scope', { scope })
-        .then((response: { json: () => any }) => response.json())
-        .then((response: { data: any }) => response.data || {});
-    }
+  changeScope(scope: 1 | 2) {
+    return this.client
+      .post('/account/scope', { scope })
+      .then((response: { json: () => any }) => response.json())
+      .then((response: { data: any }) => response.data || {});
+  }
 }

@@ -34,22 +34,22 @@ class UserStore {
   errors: any[] = [];
   loginRequest = {
     loading: false,
-    errors: [] as string[],
+    errors: [] as string[]
   };
   fetchInfoRequest = {
     loading: false,
-    errors: [] as string[],
+    errors: [] as string[]
   };
   signUpRequest = {
     loading: false,
-    errors: [] as string[],
+    errors: [] as string[]
   };
   updatePasswordRequest = {
     loading: false,
-    errors: [] as string[],
+    errors: [] as string[]
   };
   scopeState: number | null = null;
-  client = new Client()
+  client = new Client();
   authStore: AuthStore;
 
   constructor(authStore: AuthStore) {
@@ -74,13 +74,13 @@ class UserStore {
             },
             deserialize: (json) => {
               return new Account(JSON.parse(json));
-            },
-          },
+            }
+          }
         ],
-        storage: window.localStorage,
+        storage: window.localStorage
       },
       {
-        delay: 200,
+        delay: 200
       }
     );
   }
@@ -306,7 +306,7 @@ class UserStore {
 
     toast.promise(promise, {
       pending: 'Generating an invite code...',
-      success: 'Invite code generated successfully',
+      success: 'Invite code generated successfully'
     });
 
     return promise;
@@ -323,7 +323,7 @@ class UserStore {
     deleteCookie('jwt', '/', 'openreplay.com');
     this.loginRequest = {
       loading: false,
-      errors: errors || [],
+      errors: errors || []
     };
   };
 
@@ -344,7 +344,7 @@ class UserStore {
         deleteCookie('jwt', '/', 'openreplay.com');
         this.loginRequest = {
           loading: false,
-          errors: error.errors || [],
+          errors: error.errors || []
         };
       });
     }
@@ -367,7 +367,7 @@ class UserStore {
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
-          errors: error.response?.errors || [],
+          errors: error.response?.errors || []
         };
       });
       toast.error('Error signing up; please check your data and try again');
@@ -428,15 +428,18 @@ class UserStore {
         this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
-      return;
-    } catch (error: any) {
+      toast.success(`Successfully changed password`);
+      return data;
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to updated password.');
+      throw e;
+    } finally {
       runInAction(() => {
         this.updatePasswordRequest = {
           loading: false,
-          errors: error.response?.errors || [],
+          errors: []
         };
       });
-      return error.response;
     }
   };
 
@@ -485,7 +488,7 @@ class UserStore {
         Object.keys(params).forEach((key) => {
           this.client[key] = params[key];
           this.account[key] = params[key];
-        })
+        });
       });
     } catch (error) {
       // TODO error handling
@@ -593,7 +596,7 @@ class UserStore {
     this.errors = [];
     this.loginRequest = {
       loading: false,
-      errors: [],
+      errors: []
     };
     this.scopeState = null;
     this.client = new Client();
@@ -624,7 +627,7 @@ class AuthStore {
     sso: null,
     ssoProvider: null,
     enforceSSO: null,
-    edition: 'foss',
+    edition: 'foss'
   };
 
   constructor() {
@@ -640,13 +643,13 @@ class AuthStore {
             return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
           },
           deserialize: (json) => {
-            return JSON.parse(json)
-          },
-        },
+            return JSON.parse(json);
+          }
+        }
       ],
       expireIn: 60000 * 60,
       removeOnExpiration: true,
-      storage: window.localStorage,
+      storage: window.localStorage
     });
   }
 
