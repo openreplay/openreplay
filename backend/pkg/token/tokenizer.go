@@ -11,7 +11,10 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 )
 
-var EXPIRED = errors.New("token expired")
+var (
+	EXPIRED      = errors.New("token expired")
+	JUST_EXPIRED = errors.New("token just expired")
+)
 
 type Tokenizer struct {
 	secret []byte
@@ -64,8 +67,13 @@ func (tokenizer *Tokenizer) Parse(token string) (*TokenData, error) {
 	if err != nil {
 		return nil, err
 	}
+	res := &TokenData{id, delay, expTime}
 	if expTime <= time.Now().UnixMilli() {
-		return &TokenData{id, delay, expTime}, EXPIRED
+		// If token is expired less than 30 seconds ago, we still consider it semi-valid
+		if expTime+30000 > time.Now().UnixMilli() {
+			return res, JUST_EXPIRED
+		}
+		return res, EXPIRED
 	}
-	return &TokenData{id, delay, expTime}, nil
+	return res, nil
 }
