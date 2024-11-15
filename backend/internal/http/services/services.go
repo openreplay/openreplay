@@ -63,7 +63,7 @@ func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn po
 	if builder.MobileAPI, err = mobilesessions.NewHandlers(cfg, log, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
 		return nil, err
 	}
-	if builder.ConditionsAPI, err = conditionsAPI.NewHandlers(log); err != nil {
+	if builder.ConditionsAPI, err = conditionsAPI.NewHandlers(log, tokenizer, conditions); err != nil {
 		return nil, err
 	}
 	if builder.FeatureFlagsAPI, err = featureflagsAPI.NewHandlers(log, cfg.JsonSizeLimit, tokenizer, sessions, featureFlags); err != nil {

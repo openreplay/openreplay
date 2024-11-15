@@ -1,18 +1,20 @@
 package api
 
 import (
-	"errors"
 	"net/http"
+	"time"
+
+	"openreplay/backend/pkg/conditions"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
-	"time"
+	"openreplay/backend/pkg/token"
 )
 
 type handlersImpl struct {
 	log logger.Logger
 }
 
-func NewHandlers(log logger.Logger) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, tokenizer *token.Tokenizer, conditions conditions.Conditions) (api.Handlers, error) {
 	return &handlersImpl{
 		log: log,
 	}, nil
@@ -26,5 +28,5 @@ func (e *handlersImpl) GetAll() []*api.Description {
 }
 
 func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
-	api.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, errors.New("no support"), time.Now(), r.URL.Path, 0)
+	api.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, nil, time.Now(), r.URL.Path, 0)
 }
