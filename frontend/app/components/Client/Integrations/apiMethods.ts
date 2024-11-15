@@ -81,7 +81,11 @@ export async function saveIntegration<T>(
     return r.ok;
   } catch (e) {
     console.error(e);
-    toast.error(`Failed to save ${name} integration`);
+    if (e.response.status === 422) {
+      toast.error(`Invalid credentials for ${name}`);
+    } else {
+      toast.error(`Failed to save ${name} integration`);
+    }
   }
 }
 
