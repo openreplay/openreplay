@@ -10,8 +10,8 @@ function NotesList() {
   const { notesStore } = useStore();
 
   React.useEffect(() => {
-      notesStore.fetchNotes();
-  }, []);
+      void notesStore.fetchNotes();
+  }, [notesStore.page]);
 
   const list = notesStore.notes;
 
@@ -33,7 +33,7 @@ function NotesList() {
         }
       >
         <div className="border-b rounded bg-white">
-          {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map((note) => (
+          {list.map((note) => (
             <React.Fragment key={note.noteId}>
               <NoteItem note={note} />
             </React.Fragment>
