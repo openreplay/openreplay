@@ -161,7 +161,7 @@ export default class UserService {
     return this.client
       .post('/account/password', data)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data || {});
+      .then((response: { data: any }) => response || {});
   }
 
   fetchTenants() {

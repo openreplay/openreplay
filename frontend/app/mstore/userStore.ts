@@ -421,8 +421,11 @@ class UserStore {
       this.updatePasswordRequest = { loading: true, errors: [] };
     });
     try {
-      await userService.updatePassword(params);
+      const data = await userService.updatePassword(params) as { jwt: string, spotJwt: string, data: any };
       runInAction(() => {
+        this.jwt = data.jwt;
+        this.spotJwt = data.spotJwt;
+        this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
       return;
