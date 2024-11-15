@@ -4,9 +4,9 @@ import React, { useEffect, useRef } from 'react';
 import { useStore } from 'App/mstore';
 import { Button, Checkbox, Form, Icon, Input } from 'UI';
 
-import Select from 'Shared/Select';
-
 import stl from './roleForm.module.css';
+import { Select } from 'antd';
+import { SelectProps } from 'antd/es/select';
 
 interface Props {
   closeModal: (toastMessage?: string) => void;
@@ -20,26 +20,36 @@ const RoleForm = (props: Props) => {
   const role = roleStore.instance;
   const saving = roleStore.loading;
   const { closeModal, permissionsMap } = props;
-  const projectOptions = projects
-    .filter(({ value }) => !role.projects.includes(value))
-    .map((p: any) => ({
-      key: p.id,
-      value: p.id,
-      label: p.name,
-    }))
-    .filter(({ value }: any) => !role.projects.includes(value));
-  const projectsMap = projects.reduce((acc: any, p: any) => {
-    acc[p.id] = p.name;
-    return acc;
-  }, {});
+
+  const projectOptions: SelectProps['options'] = projects.map((p: any) => ({
+    value: p.projectId,
+    label: p.name
+  }));
+
+  const permissionOptions: SelectProps['options'] = roleStore.permissions.map((p: any) => ({
+    value: p.value,
+    label: p.text
+  }));
+
+  const selectProjects = (pros: { value: number; label: string }[]) => {
+    const ids: any = pros.map((p) => p.value);
+    roleStore.editRole({ projects: ids });
+  };
+
+  const selectPermissions = (pros: { value: number; label: string }[]) => {
+    const ids: any = pros.map((p) => p.value);
+    roleStore.editRole({ permissions: ids });
+  };
+
 
   let focusElement = useRef<any>(null);
-  const permissions: {}[] = roleStore.permissions
-    .filter(({ value }) => !role.permissions.includes(value))
-    .map((p) => ({
-      label: p.text,
-      value: p.value,
-    }));
+  // const permissions: {}[] = roleStore.permissions
+  //   .filter(({ value }) => !role.permissions.includes(value))
+  //   .map((p) => ({
+  //     label: p.text,
+  //     value: p.value
+  //   }));
+
   const _save = () => {
     roleStore.saveRole(role).then(() => {
       closeModal(role.exists() ? 'Role updated' : 'Role created');
@@ -141,21 +151,24 @@ const RoleForm = (props: Props) => {
             {!role.allProjects && (
               <>
                 <Select
-                  isSearchable
-                  name="projects"
-                  options={projectOptions}
-                  onChange={({ value }: any) =>
-                    writeOption({ name: 'projects', value: value.value })
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                   }
-                  value={null}
+                  mode="multiple"
+                  allowClear
+                  placeholder="Select"
+                  options={projectOptions.filter(
+                    (option: any) => !role.projects.includes(option.value) // Exclude selected options
+                  )}
+                  onChange={selectProjects}
+                  labelInValue
+                  value={role.projects.map((projectId: string) => {
+                    const matchingProject = projectOptions.find((opt) => opt.value === projectId);
+                    return matchingProject
+                      ? { value: matchingProject.value, label: matchingProject.label }
+                      : { value: projectId, label: String(projectId) }; // Fallback to projectId as label
+                  })}
                 />
-                {role.projects.size > 0 && (
-                  <div className="flex flex-row items-start flex-wrap mt-4">
-                    {role.projects.map((p: any) =>
-                      OptionLabel(projectsMap, p, onChangeProjects)
-                    )}
-                  </div>
-                )}
               </>
             )}
           </Form.Field>
@@ -163,21 +176,41 @@ const RoleForm = (props: Props) => {
           <Form.Field>
             <label>{'Capability Access'}</label>
             <Select
-              isSearchable
-              name="permissions"
-              options={permissions}
-              onChange={({ value }: any) =>
-                writeOption({ name: 'permissions', value: value.value })
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              value={null}
+              mode="multiple"
+              allowClear
+              placeholder="Select"
+              options={permissionOptions.filter(
+                (option: any) => !role.permissions.includes(option.value) // Exclude selected options
+              )}
+              onChange={selectPermissions}
+              labelInValue
+              value={role.permissions.map((id: string) => {
+                const matching = permissionOptions.find((opt) => opt.value === id);
+                return matching
+                  ? { value: matching.value, label: matching.label }
+                  : { value: id, label: String(id) }; // Fallback to projectId as label
+              })}
             />
-            {role.permissions.length > 0 && (
-              <div className="flex flex-row items-start flex-wrap mt-4">
-                {role.permissions.map((p: any) =>
-                  OptionLabel(permissionsMap, p, onChangePermissions)
-                )}
-              </div>
-            )}
+
+            {/*<Select*/}
+            {/*  isSearchable*/}
+            {/*  name="permissions"*/}
+            {/*  options={permissions}*/}
+            {/*  onChange={({ value }: any) =>*/}
+            {/*    writeOption({ name: 'permissions', value: value.value })*/}
+            {/*  }*/}
+            {/*  value={null}*/}
+            {/*/>*/}
+            {/*{role.permissions.length > 0 && (*/}
+            {/*  <div className="flex flex-row items-start flex-wrap mt-4">*/}
+            {/*    {role.permissions.map((p: any) =>*/}
+            {/*      OptionLabel(permissionsMap, p, onChangePermissions)*/}
+            {/*    )}*/}
+            {/*  </div>*/}
+            {/*)}*/}
           </Form.Field>
         </Form>
 
