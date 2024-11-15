@@ -73,7 +73,11 @@ func (e *Router) createIntegration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := e.services.Integrator.AddIntegration(project, integration, req.IntegrationData); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if strings.Contains(err.Error(), "failed to validate") {
+			e.ResponseWithError(r.Context(), w, http.StatusUnprocessableEntity, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
