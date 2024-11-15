@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"openreplay/backend/pkg/integrations/service"
+	"openreplay/backend/pkg/server/tracer"
 	"time"
 
 	"openreplay/backend/internal/config/integrations"
@@ -17,6 +18,7 @@ import (
 type ServiceBuilder struct {
 	Auth            auth.Auth
 	RateLimiter     *limiter.UserRateLimiter
+	AuditTrail      tracer.Tracer
 	IntegrationsAPI api.Handlers
 }
 
@@ -33,9 +35,14 @@ func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, pgconn pool.
 	if err != nil {
 		return nil, err
 	}
+	auditrail, err := tracer.NewTracer(log, pgconn)
+	if err != nil {
+		return nil, err
+	}
 	builder := &ServiceBuilder{
 		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil),
 		RateLimiter:     limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
+		AuditTrail:      auditrail,
 		IntegrationsAPI: handlers,
 	}
 	return builder, nil

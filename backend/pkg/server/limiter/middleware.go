@@ -5,7 +5,7 @@ import (
 	"openreplay/backend/pkg/server/user"
 )
 
-func (rl *UserRateLimiter) RateLimitMiddleware(next http.Handler) http.Handler {
+func (rl *UserRateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userContext := r.Context().Value("userData")
 		if userContext == nil {

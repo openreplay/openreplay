@@ -15,7 +15,7 @@ import (
 
 type Auth interface {
 	IsAuthorized(authHeader string, permissions []string, isExtension bool) (*user.User, error)
-	AuthMiddleware(next http.Handler) http.Handler
+	Middleware(next http.Handler) http.Handler
 }
 
 type authImpl struct {

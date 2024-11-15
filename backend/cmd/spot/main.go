@@ -11,7 +11,6 @@ import (
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/tracer"
 	"openreplay/backend/pkg/spot"
 )
 
@@ -37,7 +36,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(api.NoPrefix, builder.SpotsAPI)
-	router.AddMiddlewares(builder.Auth.AuthMiddleware, builder.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
+	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }

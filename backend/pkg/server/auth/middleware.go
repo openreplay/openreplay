@@ -8,7 +8,7 @@ import (
 	ctxStore "github.com/docker/distribution/context"
 )
 
-func (e *authImpl) AuthMiddleware(next http.Handler) http.Handler {
+func (e *authImpl) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, err := e.IsAuthorized(r.Header.Get("Authorization"), getPermissions(r.URL.Path), e.isExtensionRequest(r))
 		if err != nil {

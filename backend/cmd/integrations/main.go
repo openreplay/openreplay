@@ -11,7 +11,6 @@ import (
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/tracer"
 )
 
 func main() {
@@ -36,7 +35,7 @@ func main() {
 		log.Fatal(ctx, "failed while creating router: %s", err)
 	}
 	router.AddHandlers(api.NoPrefix, builder.IntegrationsAPI)
-	router.AddMiddlewares(builder.Auth.AuthMiddleware, builder.RateLimiter.RateLimitMiddleware, tracer.ActionMiddleware)
+	router.AddMiddlewares(builder.Auth.Middleware, builder.RateLimiter.Middleware, builder.AuditTrail.Middleware)
 
 	server.Run(ctx, log, &cfg.HTTP, router)
 }
