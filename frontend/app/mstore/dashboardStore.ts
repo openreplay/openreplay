@@ -216,9 +216,9 @@ export default class DashboardStore {
   syncDashboardInfo(id: string, info: { name: string, description: string, isPublic: boolean, createdAt: number }) {
     if (this.selectedDashboard !== null) {
       this.selectedDashboard.updateInfo(info)
-      const index = this.dashboards.findIndex((d) => d.dashboardId === id);
-      this.dashboards[index].updateInfo(info);
     }
+    const index = this.dashboards.findIndex((d) => d.dashboardId === id);
+    this.dashboards[index].updateInfo(info);
   }
 
   saveMetric(metric: Widget, dashboardId: string): Promise<any> {
@@ -319,6 +319,10 @@ export default class DashboardStore {
       return false;
     }
   };
+
+  resetSelectedDashboard = () => {
+    this.selectedDashboard = null
+  }
 
   setSiteId = (siteId: any) => {
     this.siteId = siteId;
