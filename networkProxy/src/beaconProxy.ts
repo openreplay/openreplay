@@ -1,5 +1,5 @@
 import NetworkMessage from './networkMessage'
-import { RequestState, INetworkMessage, RequestResponseData } from './types';
+import { INetworkMessage, RequestResponseData } from './types';
 import { genStringBody, getURL } from './utils'
 
 // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
@@ -74,24 +74,19 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
 }
 
 export default class BeaconProxy {
-  public static origSendBeacon = typeof window !== 'undefined' ? window.navigator?.sendBeacon : undefined
-
-  public static hasSendBeacon() {
-    return !!BeaconProxy.origSendBeacon
-  }
-
   public static create(
+    originalSendBeacon: typeof window.navigator.sendBeacon,
     ignoredHeaders: boolean | string[],
     setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
     sanitize: (data: RequestResponseData) => RequestResponseData | null,
     sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
   ) {
-    if (!BeaconProxy.hasSendBeacon()) {
+    if (!originalSendBeacon) {
       return undefined
     }
     return new Proxy(
-      BeaconProxy.origSendBeacon,
+      originalSendBeacon,
       new BeaconProxyHandler(
         ignoredHeaders,
         setSessionTokenHeader,

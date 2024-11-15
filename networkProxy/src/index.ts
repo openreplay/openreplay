@@ -85,7 +85,9 @@ export default function createNetworkProxy(
   }
   if (modules.beacon) {
     if (context.navigator?.sendBeacon) {
+      const origBeacon = context.navigator.sendBeacon
       context.navigator.sendBeacon = BeaconProxy.create(
+        origBeacon,
         ignoredHeaders,
         setSessionTokenHeader,
         sanitize,
