@@ -116,7 +116,6 @@ function SideMenu(props: Props) {
               modules.includes(MODULES.FEATURE_FLAGS),
               item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
               item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
-              item.key === MENU.SESSIONS,
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
