@@ -32,10 +32,9 @@ class InputJson {
   endDate: number;
   sort: string;
   order: string;
-  strict: boolean;
   eventsOrder: string;
 
-  constructor(filters: Filter[], rangeValue: string, startDate: number, endDate: number, sort: string, order: string, strict: boolean, eventsOrder: string) {
+  constructor(filters: Filter[], rangeValue: string, startDate: number, endDate: number, sort: string, order: string, eventsOrder: string) {
     this.filters = filters;
     //   .map((f: any) => {
     //   const subFilters = f.filters ? f.filters.map((sf: any) => new Filter(sf.key, sf.operator, sf.value, sf.filters)) : undefined;
@@ -46,7 +45,6 @@ class InputJson {
     this.endDate = endDate;
     this.sort = sort;
     this.order = order;
-    this.strict = strict;
     this.eventsOrder = eventsOrder;
   }
 
@@ -58,7 +56,6 @@ class InputJson {
       endDate: this.endDate,
       sort: this.sort,
       order: this.order,
-      strict: this.strict,
       eventsOrder: this.eventsOrder
     };
   }
@@ -72,7 +69,6 @@ export class JsonUrlConverter {
     endDate: 'ed',
     sort: 's',
     order: 'o',
-    strict: 'st',
     eventsOrder: 'eo',
     key: 'k',
     operator: 'op',
@@ -156,7 +152,6 @@ export class JsonUrlConverter {
       endDate,
       params.get(this.keyMap.sort) || 'startTs',
       params.get(this.keyMap.order) || 'desc',
-      params.get(this.keyMap.strict) === 'true',
       params.get(this.keyMap.eventsOrder) || 'then'
     );
   }
