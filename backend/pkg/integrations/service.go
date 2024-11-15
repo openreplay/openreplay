@@ -53,6 +53,11 @@ func (s *serviceImpl) AddIntegration(projectID uint64, provider string, data int
 	if err := s.conn.Exec(sql, projectID, provider, data); err != nil {
 		return fmt.Errorf("failed to add integration: %v", err)
 	}
+	// Check that provided credentials are valid
+	_, err := s.fetchSessionData(provider, data, 0)
+	if err != nil {
+		return fmt.Errorf("failed to validate provider credentials: %v", err)
+	}
 	return nil
 }
 
