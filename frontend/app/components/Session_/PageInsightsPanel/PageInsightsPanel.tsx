@@ -16,18 +16,18 @@ interface Props {
 function PageInsightsPanel({ setActiveTab }: Props) {
     const { sessionStore } = useStore();
     const sessionId = sessionStore.current.sessionId;
+    const startTs = sessionStore.current.startedAt;
     const loading = sessionStore.loadingSessionData;
     const events = sessionStore.visitedEvents;
     const filters = sessionStore.insightsFilters;
     const fetchSessionClickmap = sessionStore.fetchSessionClickmap;
-    const host = sessionStore.host;
     const insights = sessionStore.insights;
     const urlOptions = events.map(({ url, host }: any) => ({ label: url, value: url, host }));
 
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
-    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: host + defaultValue });
+    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: defaultValue });
     const prevInsights = React.useRef<any>();
 
     useEffect(() => {
@@ -42,10 +42,9 @@ function PageInsightsPanel({ setActiveTab }: Props) {
         if (!changed) { return }
 
         if (urlOptions && urlOptions[0]) {
-            const url = urlOptions[0].value ? urlOptions[0].value : insightsFilters.url;
+            const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value;
             Player.pause();
             markTargets(null);
-            console.log(insightsFilters.url, urlOptions[0].value)
             void fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
         }
         prevInsights.current = insightsFilters;
@@ -53,8 +52,9 @@ function PageInsightsPanel({ setActiveTab }: Props) {
 
     const onPageSelect = ({ value }: any) => {
         const event = events.find((item) => item.url === value.value);
-        Player.jump(event.time + JUMP_OFFSET);
-        setInsightsFilters({ ...insightsFilters, url: host + value.value });
+        Player.jump((event.timestamp - startTs) + JUMP_OFFSET);
+        Player.pause();
+        setInsightsFilters({ ...insightsFilters, url: value.value });
     };
 
     return (
