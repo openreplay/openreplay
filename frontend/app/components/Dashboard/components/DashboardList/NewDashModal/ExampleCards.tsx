@@ -258,20 +258,6 @@ export const CARD_LIST: CardType[] = [
     example: ExampleTrend
   },
   {
-    title: 'Speed Index',
-    key: FilterKey.SPEED_LOCATION,
-    cardType: PERFORMANCE,
-    metricOf: FilterKey.SPEED_LOCATION,
-    category: CARD_CATEGORIES[1].key,
-    data: {
-      chart: generateAreaData(),
-      namesMap: [
-        'Series 1'
-      ]
-    },
-    example: SpeedIndexByLocationExample
-  },
-  {
     title: 'Sessions with Slow Network Requests',
     key: TIMESERIES + '_slow_network_requests',
     cardType: TIMESERIES,

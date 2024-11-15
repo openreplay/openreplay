@@ -74,7 +74,6 @@ export const TYPES: CardType[] = [
     description: 'Find out where users are dropping and understand why.',
     slug: FUNNEL,
   },
-  { title: 'Speed Index', slug: FilterKey.SPEED_LOCATION, description: '' },
   {
     title: 'Path Analysis',
     icon: 'signpost-split',
