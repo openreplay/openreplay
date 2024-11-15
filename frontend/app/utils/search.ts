@@ -111,7 +111,6 @@ export class JsonUrlConverter {
     params.append(this.keyMap.endDate, rangeValues[1].toString());
     params.append(this.keyMap.sort, json.sort);
     params.append(this.keyMap.order, json.order);
-    params.append(this.keyMap.strict, json.strict.toString());
     params.append(this.keyMap.eventsOrder, json.eventsOrder);
 
     return decodeURIComponent(params.toString());

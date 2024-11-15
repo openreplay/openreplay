@@ -8,9 +8,11 @@ import { SearchOutlined, ZoomInOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
+import { FilterKey } from "App/types/filter/filterType";
+import { addOptionsToFilter } from "App/types/filter/newFilter";
 
 function TagWatch() {
-  const { tagWatchStore } = useStore();
+  const { tagWatchStore, searchStore } = useStore();
   const [selector, setSelector] = React.useState('');
   const { store, player } = React.useContext(PlayerContext);
   const { showModal, hideModal } = useModal();
@@ -48,6 +50,14 @@ function TagWatch() {
         ignoreClickRage: ignoreClRage,
         ignoreDeadClick: ignoreDeadCl,
       });
+      const tags = await tagWatchStore.getTags()
+      if (tags) {
+        addOptionsToFilter(
+          FilterKey.TAGGED_ELEMENT,
+          tags.map((tag) => ({ label: tag.name, value: tag.tagId.toString() }))
+        );
+        searchStore.refreshFilterOptions();
+      }
       // @ts-ignore
       toast.success('Tag created');
       setSelector('');

@@ -5,13 +5,17 @@ import { withSiteId, sessions } from 'App/routes';
 import { useStore } from 'App/mstore';
 
 interface Props {
-  onSave: (name: string, ignoreClRage: boolean, ignoreDeadCl: boolean) => Promise<any>;
+  onSave: (
+    name: string,
+    ignoreClRage: boolean,
+    ignoreDeadCl: boolean
+  ) => Promise<any>;
   hideModal: () => void;
 }
 
 function SaveModal({ onSave, hideModal }: Props) {
   const history = useHistory();
-  const { projectsStore } = useStore();
+  const { projectsStore, searchStore } = useStore();
   const [name, setName] = React.useState('');
   const [ignoreClRage, setIgnoreClRage] = React.useState(false);
   const [ignoreDeadCl, setIgnoreDeadCl] = React.useState(false);
@@ -24,7 +28,16 @@ function SaveModal({ onSave, hideModal }: Props) {
     onSave(name, ignoreClRage, ignoreDeadCl).then((tagId) => {
       hideModal();
       const siteId = projectsStore.getSiteId() as unknown as string;
-      history.push(withSiteId(sessions({ tnw: `is|${tagId}`, range: 'LAST_24_HOURS' }), siteId));
+      searchStore.addFilterByKeyAndValue(
+        'tag',
+        tagId.toString(),
+      )
+      history.push(
+        withSiteId(
+          sessions(),
+          siteId
+        )
+      );
     });
   };
   return (
@@ -41,12 +54,20 @@ function SaveModal({ onSave, hideModal }: Props) {
         />
       </div>
       <div>
-        <div className={'font-semibold'}>Ignore following actions on this element</div>
+        <div className={'font-semibold'}>
+          Ignore following actions on this element
+        </div>
         <div className={'flex gap-2'}>
-          <Checkbox checked={ignoreClRage} onChange={(e) => setIgnoreClRage(e.target.checked)}>
+          <Checkbox
+            checked={ignoreClRage}
+            onChange={(e) => setIgnoreClRage(e.target.checked)}
+          >
             Click Rage
           </Checkbox>
-          <Checkbox checked={ignoreDeadCl} onChange={(e) => setIgnoreDeadCl(e.target.checked)}>
+          <Checkbox
+            checked={ignoreDeadCl}
+            onChange={(e) => setIgnoreDeadCl(e.target.checked)}
+          >
             Dead Click
           </Checkbox>
         </div>
