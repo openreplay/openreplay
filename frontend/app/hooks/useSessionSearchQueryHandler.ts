@@ -19,7 +19,7 @@ const useSessionSearchQueryHandler = (props: Props) => {
 
   useEffect(() => {
     const applyFilterFromQuery = async () => {
-      if (!loading) {
+      if (!loading && !searchStore.urlParsed) {
         if (props.onBeforeLoad) {
           await props.onBeforeLoad();
           setBeforeHookLoaded(true);
@@ -29,6 +29,7 @@ const useSessionSearchQueryHandler = (props: Props) => {
         const json: any = getFilterFromJson(converter.toJSON());
         const filter = new Search(json);
         searchStore.applyFilter(filter, true);
+        searchStore.setUrlParsed()
       }
     };
 

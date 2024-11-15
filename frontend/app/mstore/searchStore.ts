@@ -75,23 +75,32 @@ class SearchStore {
   loadingFilterSearch = false;
   isSaving: boolean = false;
   activeTags: any[] = [];
+  urlParsed: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
   }
 
+  setUrlParsed() {
+    this.urlParsed = true;
+  }
+
   get filterList() {
     return generateFilterOptions(filtersMap);
   }
+
   get filterListMobile() {
     return generateFilterOptions(filtersMap, true);
   }
+
   get filterListLive() {
     return generateFilterOptions(liveFiltersMap);
   }
+
   get filterListConditional() {
     return generateFilterOptions(conditionalFiltersMap);
   }
+
   get filterListMobileConditional() {
     return generateFilterOptions(mobileConditionalFiltersMap);
   }
@@ -153,7 +162,7 @@ class SearchStore {
     runInAction(() => {
       this.activeTab = TAB_MAP[tab];
       this.currentPage = 1;
-    })
+    });
   }
 
   toggleTag(tag?: iTag) {

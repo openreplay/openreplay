@@ -27,7 +27,7 @@ function SessionList() {
   const isSessionsRoute = location.pathname.includes('/sessions');
   const isBookmark = location.pathname.includes('/bookmarks');
 
-  const { projectsStore, sessionStore, customFieldStore, userStore } = useStore();
+  const { projectsStore, sessionStore, customFieldStore, userStore, searchStore } = useStore();
   const isEnterprise = userStore.isEnterprise;
   const isLoggedIn = userStore.isLoggedIn;
   const list = sessionStore.list;
@@ -37,7 +37,6 @@ function SessionList() {
   const onToggleFavorite = sessionStore.toggleFavorite;
   const siteId = projectsStore.siteId;
   const updateProjectRecordingStatus = projectsStore.updateProjectRecordingStatus;
-  const { searchStore } = useStore();
   const { currentPage, activeTab, pageSize } = searchStore;
   const { filters } = searchStore.instance;
   const _filterKeys = filters.map((i: any) => i.key);
@@ -50,6 +49,7 @@ function SessionList() {
   const metaList = customFieldStore.list;
 
   useEffect(() => {
+    if (!searchStore.urlParsed) return;
     void searchStore.fetchSessions(true, isBookmark);
   }, [location.pathname]);
 
