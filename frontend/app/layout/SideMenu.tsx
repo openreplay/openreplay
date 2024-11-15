@@ -57,7 +57,7 @@ function SideMenu(props: Props) {
   const account = userStore.account;
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
-  const isEnterprise = account.edition === 'ee';
+  const isEnterprise = userStore.isEnterprise;
   const siteId = projectsStore.siteId;
   const isMobile = projectsStore.isMobile;
 
