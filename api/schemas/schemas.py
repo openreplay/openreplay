@@ -1570,7 +1570,7 @@ class ModuleType(str, Enum):
     BUG_REPORTS = "bug-reports"
     OFFLINE_RECORDINGS = "offline-recordings"
     ALERTS = "alerts"
-    ASSIST_STATTS = "assist-statts"
+    ASSIST_STATS = "assist-stats"
     RECOMMENDATIONS = "recommendations"
     FEATURE_FLAGS = "feature-flags"
     USABILITY_TESTS = "usability-tests"
