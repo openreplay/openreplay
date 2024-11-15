@@ -350,6 +350,10 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if tokenJustExpired {
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, errors.New("token expired"), startTime, r.URL.Path, bodySize)
+		return
+	}
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
