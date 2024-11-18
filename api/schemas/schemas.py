@@ -8,7 +8,7 @@ from pydantic.functional_validators import BeforeValidator
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
-    force_is_event, NAME_PATTERN, int_to_string
+    force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric
 
 
 def transform_old_filter_type(cls, values):
@@ -76,20 +76,23 @@ class UserLoginSchema(_GRecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(..., min_length=1, pattern=NAME_PATTERN)
-    organizationName: str = Field(..., min_length=1, pattern=NAME_PATTERN)
+    fullname: str = Field(..., min_length=1)
+    organizationName: str = Field(..., min_length=1)
 
     _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
     _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
 
+    _check_alphanumeric = field_validator('fullname', 'organizationName')(check_alphanumeric)
+
 
 class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
-    tenantName: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
+    name: Optional[str] = Field(default=None)
+    tenantName: Optional[str] = Field(default=None)
     opt_out: Optional[bool] = Field(default=None)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
     _transform_tenantName = field_validator('tenantName', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name', 'tenantName')(check_alphanumeric)
 
 
 class ForgetPasswordPayloadSchema(_GRecaptcha):
@@ -226,12 +229,13 @@ class CreateMemberSchema(BaseModel):
 
 
 class EditMemberSchema(BaseModel):
-    name: str = Field(..., pattern=NAME_PATTERN)
+    name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(default=False)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name')(check_alphanumeric)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
