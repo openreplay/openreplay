@@ -72,20 +72,27 @@ class SearchStoreLive {
     return generateFilterOptions(liveFiltersMap);
   }
 
-  fetchFilterSearch(params: any) {
+  fetchFilterSearch = async (params: any): Promise<void> => {
     this.loadingFilterSearch = true;
-    searchService.fetchFilterSearch(params).then((response: any) => {
-      this.filterSearchList = response.reduce((acc: any, item: any) => {
-        const { projectId, type, value } = item;
-        const key = type;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push({ projectId, value });
-        return acc;
-      }, {}).finally(() => {
-        this.loadingFilterSearch = false;
-      });
-    });
-  }
+
+    try {
+      const response: any[] = await searchService.fetchFilterSearch(params);
+
+      this.filterSearchList = response.reduce(
+        (acc: Record<string, { projectId: number; value: string }[]>, item: any) => {
+          const { projectId, type, value } = item;
+          if (!acc[type]) acc[type] = [];
+          acc[type].push({ projectId, value });
+          return acc;
+        },
+        {}
+      );
+    } catch (error) {
+      console.error('Error fetching filter search:', error);
+    } finally {
+      this.loadingFilterSearch = false;
+    }
+  };
 
   edit(instance: Partial<Search>) {
     this.instance = new Search(Object.assign({ ...this.instance }, instance));

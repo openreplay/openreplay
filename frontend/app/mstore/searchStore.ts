@@ -140,17 +140,26 @@ class SearchStore {
 
   fetchFilterSearch(params: any) {
     this.loadingFilterSearch = true;
-    searchService.fetchFilterSearch(params).then((response: any) => {
-      this.filterSearchList = response.reduce((acc: any, item: any) => {
-        const { projectId, type, value } = item;
-        const key = type;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push({ projectId, value });
-        return acc;
-      }, {}).finally(() => {
+
+    searchService
+      .fetchFilterSearch(params)
+      .then((response: any[]) => {
+        this.filterSearchList = response.reduce(
+          (acc: Record<string, { projectId: number; value: string }[]>, item: any) => {
+            const { projectId, type, value } = item;
+            if (!acc[type]) acc[type] = [];
+            acc[type].push({ projectId, value });
+            return acc;
+          },
+          {}
+        );
+      })
+      .catch((error: any) => {
+        console.error('Error fetching filter search:', error);
+      })
+      .finally(() => {
         this.loadingFilterSearch = false;
       });
-    });
   }
 
   updateCurrentPage(page: number) {

@@ -17,8 +17,13 @@ function SessionSearchField(props: Props) {
   const isLive =
     isRoute(ASSIST_ROUTE, window.location.pathname) ||
     window.location.pathname.includes('multiview');
+
+  const fetchFilterSearch = isLive
+    ? searchStoreLive.fetchFilterSearch.bind(searchStoreLive)
+    : searchStore.fetchFilterSearch.bind(searchStore);
+
   const debounceFetchFilterSearch = React.useCallback(
-    debounce(isLive ? searchStoreLive.fetchFilterSearch : searchStore.fetchFilterSearch, 1000),
+    debounce(fetchFilterSearch, 1000),
     []
   );
   const [showModal, setShowModal] = useState(false);
