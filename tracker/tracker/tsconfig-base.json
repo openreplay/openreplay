@@ -6,11 +6,12 @@
     "strictNullChecks": true,
     "alwaysStrict": true,
     "target": "es2020",
+    "lib": ["DOM", "ES2020"],
     "module": "NodeNext",
     "moduleResolution":  "NodeNext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
   "exclude": ["**/*.test.ts"],
 }

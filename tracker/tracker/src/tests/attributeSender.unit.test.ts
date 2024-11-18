@@ -9,6 +9,9 @@ describe('AttributeSender', () => {
   beforeEach(() => {
     appMock = {
       send: (...args: any[]) => args,
+      session: {
+        getPageNumber: () => 1,
+      }
     }
     attributeSender = new AttributeSender({
       app: appMock,
@@ -23,10 +26,10 @@ describe('AttributeSender', () => {
   test('should send the set attribute message to the app', () => {
     const sendSpy = jest.spyOn(appMock, 'send')
     const id = 1
-    const name = 'color'
-    const value = 'red'
+    const name = 'color' // 1_1
+    const value = 'red' // attribute is second, so 1_2; (page_key)
     // @ts-ignore
-    const expectedMessage = [Type.SetNodeAttributeDict, id, 1, 2]
+    const expectedMessage = [Type.SetNodeAttributeDict, id, '1_1', '1_2']
 
     attributeSender.sendSetAttribute(id, name, value)
 
@@ -54,14 +57,14 @@ describe('AttributeSender', () => {
 
   test('should send the string dictionary entry if the attribute is new', () => {
     const id = 1
-    const name = 'color'
+    const name = 'color' // 1_1, name comes first (page_keyid)
     const value = 'red'
     const sendSpy = jest.spyOn(appMock, 'send')
 
     attributeSender.sendSetAttribute(id, name, value)
 
     // @ts-ignore
-    expect(sendSpy).toHaveBeenCalledWith([Type.StringDict, expect.any(Number), name])
+    expect(sendSpy).toHaveBeenCalledWith([Type.StringDict, '1_1', name])
   })
 
   test('should not send the string dictionary entry if the attribute already exists', () => {
