@@ -83,7 +83,12 @@ export default class SessionSettings {
     ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
     const savedTz = localStorage.getItem(TIMEZONE)
-    const isLocal = localStorage.getItem(TIMEZONE_LOCAL) === 'true';
+    let isLocal = localStorage.getItem(TIMEZONE_LOCAL) === 'true';
+    if (!savedTz) {
+      localStorage.setItem(TIMEZONE, JSON.stringify(defaultTimezone));
+      localStorage.setItem(TIMEZONE_LOCAL, 'true');
+      isLocal = true;
+    }
     if (isLocal) {
       this.timezone = defaultTimezone;
       this.usingLocal = true;
