@@ -133,7 +133,7 @@ export default class UserService {
     return this.client
       .post('/signup', data)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data || {});
+      .then((response: { data: any }) => response as Record<string, any> || {});
   }
 
   resetPassword(data: any) {

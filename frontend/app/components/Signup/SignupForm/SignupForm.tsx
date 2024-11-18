@@ -211,14 +211,14 @@ const SignupForm = () => {
                 type="error"
               />
             )}
-            {errors && errors.length && (
+            {errors && errors.length > 0 ? (
               <Alert
                 className="my-3 rounded-lg"
                 // message="Error Text"
                 description={errors[0]}
                 type="error"
               />
-            )}
+            ) : null}
 
             <Button
               type="submit"
