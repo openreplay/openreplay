@@ -10,7 +10,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
-	httpMetrics "openreplay/backend/pkg/metrics/http"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
@@ -20,7 +20,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := http.New(log)
-	metrics.New(log, append(httpMetrics.List(), databaseMetrics.List()...))
+	webMetrics := web.New("http")
+	metrics.New(log, append(webMetrics.List(), databaseMetrics.List()...))
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
