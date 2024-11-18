@@ -62,6 +62,7 @@ function DefaultTimezone() {
   const onTimezoneSave = () => {
     setChanged(false);
     sessionSettings.updateTimezone(timezone);
+    setIsLocal(false);
     toast.success('Default timezone saved successfully');
   };
 

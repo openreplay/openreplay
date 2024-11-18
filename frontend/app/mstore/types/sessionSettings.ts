@@ -122,6 +122,7 @@ export default class SessionSettings {
     Settings.defaultZone = value.value;
     localStorage.setItem(TIMEZONE, JSON.stringify(value));
     localStorage.setItem(TIMEZONE_LOCAL, local ? 'true' : 'false');
+    this.usingLocal = local || false;
   }
 
   updateKey = (key: string, value: any) => {
