@@ -1,12 +1,11 @@
 import { Radio } from 'antd';
-import { toJS } from 'mobx';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
-import { Button } from 'UI';
+import { Button, Icon } from 'UI';
 
 import Select from 'Shared/Select';
 
@@ -24,6 +23,7 @@ function DefaultTimezone() {
   const [timezone, setTimezone] = React.useState(
     settingsStore.sessionSettings.timezone
   );
+  const [isLocal, setIsLocal] = React.useState(settingsStore.sessionSettings.usingLocal);
 
   useEffect(() => {
     if (!timezone) setTimezone({ label: 'Local Timezone', value: 'system' });
@@ -48,7 +48,8 @@ function DefaultTimezone() {
     const selectedTimezone = getCurrentTimezone();
     if (selectedTimezone) {
       setTimezone(selectedTimezone);
-      sessionSettings.updateTimezone(selectedTimezone);
+      setIsLocal(true);
+      sessionSettings.updateTimezone(selectedTimezone, true);
       toast.success('Default timezone saved successfully');
     }
   };
@@ -110,8 +111,13 @@ function DefaultTimezone() {
               </Button>
             </div>
           </div>
-          <div onClick={setCurrentTimezone} className="mt-3 link">
-            Apply my current timezone
+          <div className={'mt-3 flex gap-1 items-center'}>
+            <div onClick={setCurrentTimezone} className={"link"}>
+              Apply my current timezone
+            </div>
+            {isLocal ? (
+              <Icon name={'check'} size={18} />
+            ) : null}
           </div>
         </>
       ) : null}

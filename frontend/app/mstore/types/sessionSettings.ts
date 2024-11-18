@@ -1,5 +1,5 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { SKIP_TO_ISSUE, TIMEZONE, SHOWN_TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
+import { SKIP_TO_ISSUE, TIMEZONE, TIMEZONE_LOCAL, SHOWN_TIMEZONE, DURATION_FILTER, MOUSE_TRAIL } from 'App/constants/storageKeys';
 import { DateTime, Settings } from 'luxon'
 
 export type Timezone = {
@@ -74,6 +74,7 @@ export default class SessionSettings {
   captureConditions: { name: string; captureRate: number; filters: any[] }[] = [];
   mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
   shownTimezone: 'user' | 'local';
+  usingLocal: boolean = false;
 
   constructor() {
     const userTimezoneOffset = DateTime.local().toFormat('ZZ')
@@ -82,7 +83,13 @@ export default class SessionSettings {
     ) || { label: 'Local', value: `UTC${userTimezoneOffset}` };
 
     const savedTz = localStorage.getItem(TIMEZONE)
-    this.timezone = savedTz ? JSON.parse(savedTz) : defaultTimezone;
+    const isLocal = localStorage.getItem(TIMEZONE_LOCAL) === 'true';
+    if (isLocal) {
+      this.timezone = defaultTimezone;
+      this.usingLocal = true;
+    } else {
+      this.timezone = savedTz ? JSON.parse(savedTz) : defaultTimezone;
+    }
     Settings.defaultZone = this.timezone.value;
     if (localStorage.getItem(MOUSE_TRAIL) === null) {
       localStorage.setItem(MOUSE_TRAIL, 'true');
@@ -110,10 +117,11 @@ export default class SessionSettings {
     this.conditionalCapture = all;
   };
 
-  updateTimezone = (value: Timezone) => {
+  updateTimezone = (value: Timezone, local?: boolean) => {
     this.timezone = value;
     Settings.defaultZone = value.value;
-    localStorage.setItem(`__$session-timezone$__`, JSON.stringify(value));
+    localStorage.setItem(TIMEZONE, JSON.stringify(value));
+    localStorage.setItem(TIMEZONE_LOCAL, local ? 'true' : 'false');
   }
 
   updateKey = (key: string, value: any) => {
