@@ -13,7 +13,8 @@ ENV APP_NAME=crons \
 
 WORKDIR /work
 COPY requirements-crons.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade uv
+RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
 
 COPY . .
 RUN mv env.default .env && mv entrypoint_crons.sh entrypoint.sh
