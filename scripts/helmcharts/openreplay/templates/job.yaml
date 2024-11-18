@@ -2,8 +2,14 @@
 Don't have to trigger migration if there is no version change
 Don't have to trigger migration if skipMigration is set
 Have to trigger migration if forceMigration is set
+
+versionChange is true when:
+    Release.IsUpgrade is false.
+    Or .Values.deployment.argo is set.
+    Or Release.IsUpgrade is true and .Values.fromVersion is not equal to .Chart.AppVersion.
 */}}
-{{- $versionChange := (or .Values.deployment.argo (and (not (eq .Values.fromVersion .Chart.AppVersion)) .Release.IsUpgrade)) }}
+
+{{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq .Values.fromVersion .Chart.AppVersion)))) }}
 {{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
 apiVersion: v1
