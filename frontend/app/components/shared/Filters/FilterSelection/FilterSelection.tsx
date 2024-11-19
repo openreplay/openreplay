@@ -37,7 +37,7 @@ function FilterSelection(props: Props) {
       <OutsideClickDetectingDiv
         className="relative"
         onClickOutside={() =>
-          setTimeout(function() {
+          setTimeout(function () {
             setShowModal(false);
           }, 200)
         }
@@ -49,12 +49,19 @@ function FilterSelection(props: Props) {
               e.preventDefault();
               setShowModal(true);
             },
-            disabled: disabled
+            disabled: disabled,
           })
         ) : (
           <div
-            className={cn('rounded-lg py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade', { 'opacity-50 pointer-events-none': disabled })}
-            style={{ width: '150px', height: '26px', border: 'solid thin #e9e9e9' }}
+            className={cn(
+              'rounded-lg py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade',
+              { 'opacity-50 pointer-events-none': disabled }
+            )}
+            style={{
+              width: '150px',
+              height: '26px',
+              border: 'solid thin #e9e9e9',
+            }}
             onClick={() => setShowModal(true)}
           >
             <div
@@ -66,19 +73,19 @@ function FilterSelection(props: Props) {
             <Icon name="chevron-down" size="14" />
           </div>
         )}
+        {showModal && (
+          <div className="absolute mt-2 left-0 rounded-lg shadow bg-white z-50">
+            <FilterModal
+              isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
+              onFilterClick={onFilterClick}
+              excludeFilterKeys={excludeFilterKeys}
+              allowedFilterKeys={allowedFilterKeys}
+              isConditional={isConditional}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
       </OutsideClickDetectingDiv>
-      {showModal && (
-        <div className="absolute left-0 rounded-lg shadow bg-white z-50">
-          <FilterModal
-            isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
-            onFilterClick={onFilterClick}
-            excludeFilterKeys={excludeFilterKeys}
-            allowedFilterKeys={allowedFilterKeys}
-            isConditional={isConditional}
-            isMobile={isMobile}
-          />
-        </div>
-      )}
     </div>
   );
 }

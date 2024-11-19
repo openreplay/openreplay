@@ -7,11 +7,14 @@ import {
   CircleAlert,
   Clock2,
   Code,
-  ContactRound, CornerDownRight,
+  ContactRound,
+  CornerDownRight,
   Cpu,
   Earth,
-  FileStack, Layers,
-  MapPin, Megaphone,
+  FileStack,
+  Layers,
+  MapPin,
+  Megaphone,
   MemoryStick,
   MonitorSmartphone,
   Navigation,
@@ -25,11 +28,13 @@ import {
   Timer,
   VenetianMask,
   Workflow,
-  Flag
+  Flag,
+  ChevronRight,
 } from 'lucide-react';
 import React from 'react';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Input } from 'antd';
 
 import { FilterKey } from 'Types/filter/filterType';
 import stl from './FilterModal.module.css';
@@ -69,7 +74,7 @@ const IconMap = {
   [FilterKey.UTM_SOURCE]: <CornerDownRight size={18} />,
   [FilterKey.UTM_MEDIUM]: <Layers size={18} />,
   [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18} />,
-  [FilterKey.FEATURE_FLAG]: <Flag size={18} />
+  [FilterKey.FEATURE_FLAG]: <Flag size={18} />,
 };
 
 function filterJson(
@@ -103,7 +108,7 @@ export const getMatchingEntries = (
   if (lowerCaseQuery.length === 0)
     return {
       matchingCategories: Object.keys(filters),
-      matchingFilters: filters
+      matchingFilters: filters,
     };
 
   Object.keys(filters).forEach((name) => {
@@ -141,19 +146,28 @@ function FilterModal(props: Props) {
     isLive,
     onFilterClick = () => null,
     isMainSearch = false,
-    searchQuery = '',
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
   } = props;
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [category, setCategory] = React.useState('ALL');
   const { searchStore, searchStoreLive, projectsStore } = useStore();
   const isMobile = projectsStore.active?.platform === 'ios'; // TODO - should be using mobile once the app is changed
-  const filters = isLive ? searchStoreLive.filterListLive : (isMobile ? searchStore.filterListMobile : searchStoreLive.filterList);
+  const filters = isLive
+    ? searchStoreLive.filterListLive
+    : isMobile
+    ? searchStore.filterListMobile
+    : searchStoreLive.filterList;
   const conditionalFilters = searchStore.filterListConditional;
   const mobileConditionalFilters = searchStore.filterListMobileConditional;
   const showSearchList = isMainSearch && searchQuery.length > 0;
-  const filterSearchList = isLive ? searchStoreLive.filterSearchList : searchStore.filterSearchList;
-  const fetchingFilterSearchList = isLive ? searchStoreLive.loadingFilterSearch : searchStore.loadingFilterSearch;
+  const filterSearchList = isLive
+    ? searchStoreLive.filterSearchList
+    : searchStore.filterSearchList;
+  const fetchingFilterSearchList = isLive
+    ? searchStoreLive.loadingFilterSearch
+    : searchStore.loadingFilterSearch;
 
   const onFilterSearchClick = (filter: any) => {
     const _filter = { ...filtersMap[filter.type] };
@@ -162,7 +176,9 @@ function FilterModal(props: Props) {
   };
 
   const filterJsonObj = isConditional
-    ? isMobile ? mobileConditionalFilters : conditionalFilters
+    ? isMobile
+      ? mobileConditionalFilters
+      : conditionalFilters
     : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
@@ -184,44 +200,95 @@ function FilterModal(props: Props) {
       return IconMap[filter.key];
     } else return <Icon name={filter.icon} size={16} />;
   };
+
+  const displayedFilters =
+    category === 'ALL'
+      ? Object.entries(matchingFilters).flatMap(([category, filters]) =>
+          filters.map((f: any) => ({ ...f, category }))
+        )
+      : matchingFilters[category];
+
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto', borderRadius: '.5rem' }}
+      style={{ width: '480px', height: '380px', borderRadius: '.5rem' }}
     >
-      <div
-        className={searchQuery && !isResultEmpty ? 'mb-6' : ''}
-        style={{ columns: matchingCategories.length > 1 ? 'auto 200px' : 1 }}
-      >
-        {matchingCategories.map((key) => {
-          return (
+      <Input
+        className={'mb-4'}
+        placeholder={'Search'}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+      <div className={'flex gap-2 items-start'}>
+        <div className={'flex flex-col gap-1'} style={{ flex: 1 }}>
+          {matchingCategories.map((key) => (
             <div
-              className="mb-6 flex flex-col gap-2 break-inside-avoid"
               key={key}
+              className={'rounded p-4 hover:bg-active-blue capitalize'}
             >
-              <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">
-                {key}
-              </div>
-              <div>
-                {matchingFilters[key] &&
-                  matchingFilters[key].map((filter: Record<string, any>) => (
-                    <div
-                      key={filter.label}
-                      className={cn(
-                        stl.optionItem,
-                        'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2 rounded-lg hover:shadow-sm'
-                      )}
-                      onClick={() => onFilterClick({ ...filter, value: [''] })}
-                    >
-                      {getNewIcon(filter)}
-                      <span>{filter.label}</span>
-                    </div>
-                  ))}
-              </div>
+              {key.toLowerCase()}
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div
+          className={'flex flex-col gap-2 overflow-y-auto w-full'}
+          style={{ maxHeight: 300, flex: 2 }}
+        >
+          {displayedFilters.length
+            ? displayedFilters.map((filter: Record<string, any>) => (
+                <div
+                  key={filter.label}
+                  className={cn(
+                    'flex items-center p-2 cursor-pointer gap-1 rounded-lg hover:bg-active-blue'
+                  )}
+                  onClick={() => onFilterClick({ ...filter, value: [''] })}
+                >
+                  {filter.category ? <div style={{ width: 150 }} className={'text-disabled-text w-full flex justify-between items-center'}>
+                    <span>{filter.category}</span>
+                    <ChevronRight size={14} />
+                  </div> : null}
+                  <div className={'flex items-center gap-2'}>
+                    {getNewIcon(filter)}
+                    <span>{filter.label}</span>
+                  </div>
+                </div>
+              ))
+            : null}
+        </div>
       </div>
+      {/*<div*/}
+      {/*  className={searchQuery && !isResultEmpty ? "mb-6" : ""}*/}
+      {/*  style={{ columns: matchingCategories.length > 1 ? "auto 200px" : 1 }}*/}
+      {/*>*/}
+      {/*  {matchingCategories.map((key) => {*/}
+      {/*    return (*/}
+      {/*      <div*/}
+      {/*        className="mb-6 flex flex-col gap-2 break-inside-avoid"*/}
+      {/*        key={key}*/}
+      {/*      >*/}
+      {/*        <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">*/}
+      {/*          {key}*/}
+      {/*        </div>*/}
+      {/*        <div>*/}
+      {/*          {matchingFilters[key] &&*/}
+      {/*            matchingFilters[key].map((filter: Record<string, any>) => (*/}
+      {/*              <div*/}
+      {/*                key={filter.label}*/}
+      {/*                className={cn(*/}
+      {/*                  stl.optionItem,*/}
+      {/*                  'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2 rounded-lg hover:shadow-sm'*/}
+      {/*                )}*/}
+      {/*                onClick={() => onFilterClick({ ...filter, value: [''] })}*/}
+      {/*              >*/}
+      {/*                {getNewIcon(filter)}*/}
+      {/*                <span>{filter.label}</span>*/}
+      {/*              </div>*/}
+      {/*            ))}*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*    );*/}
+      {/*  })}*/}
+      {/*</div>*/}
       {showSearchList && (
         <Loader loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">

@@ -1,16 +1,12 @@
 import React, { useEffect } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
-import FilterSelection from 'Shared/Filters/FilterSelection';
-import { Button } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 function LiveSessionSearch() {
-  const { projectsStore, searchStoreLive, sessionStore } = useStore();
+  const { projectsStore, searchStoreLive } = useStore();
   const saveRequestPayloads = projectsStore.active?.saveRequestPayloads;
   const appliedFilter = searchStoreLive.instance;
-  const hasEvents = appliedFilter.filters.filter((i) => i.isEvent).length > 0;
-  const hasFilters = appliedFilter.filters.filter((i) => !i.isEvent).length > 0;
 
   useEffect(() => {
     void searchStoreLive.fetchSessions();

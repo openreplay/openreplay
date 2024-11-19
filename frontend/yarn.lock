@@ -2900,21 +2900,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.59.20":
-  version: 5.59.20
-  resolution: "@tanstack/query-core@npm:5.59.20"
-  checksum: 10c1/bfac064d0344ab32e2718c1f75552072283793780f9e22a7fb3c84d0bb560de3311c8b9c33505a20904ade136acba74f9f56f837297dbb1619f2db179b27d4da
+"@tanstack/query-core@npm:5.60.5":
+  version: 5.60.5
+  resolution: "@tanstack/query-core@npm:5.60.5"
+  checksum: 10c1/dd9b77e7bf3073470756384574085097bb00f9682ac1621c26f1cf9089e93ba45b7e6720579187b83c49ab697665768d00643add0bd68d482610d87137a30ae1
   languageName: node
   linkType: hard
 
 "@tanstack/react-query@npm:^5.56.2":
-  version: 5.60.2
-  resolution: "@tanstack/react-query@npm:5.60.2"
+  version: 5.60.5
+  resolution: "@tanstack/react-query@npm:5.60.5"
   dependencies:
-    "@tanstack/query-core": "npm:5.59.20"
+    "@tanstack/query-core": "npm:5.60.5"
   peerDependencies:
     react: ^18 || ^19
-  checksum: 10c1/a3f01498078002dddb4dcca09ae21b0cb33e6923bc54a4d5c4b8426d50bff6c1e566346180f0f7b51bdd88d7ed33311936dee09c8d24258fe871591e3558a0d4
+  checksum: 10c1/715c0d83028741bd159e0ce6b60562d9e94b48813ab71061698808d730d0e94dc842bfa45859e116194c19f7c5cebc20fd6f0e170113c38444c203430d83d90f
   languageName: node
   linkType: hard
 
@@ -4807,12 +4807,12 @@ __metadata:
   linkType: hard
 
 "bonjour-service@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "bonjour-service@npm:1.2.1"
+  version: 1.3.0
+  resolution: "bonjour-service@npm:1.3.0"
   dependencies:
     fast-deep-equal: "npm:^3.1.3"
     multicast-dns: "npm:^7.2.5"
-  checksum: 10c1/5a3415004efa60ce805845a18fb7b2232097b708cbba21e5432612dbe6a5912013fac9e30f27fa80d0804975e9f20fa22d61e82957d1d171b648cf0967e3336d
+  checksum: 10c1/c6e6c7a15df4aa4c932ec9df2eb301e38aaecd561151a384181863866d357074a69240280be8210828995ac5262fe82721af46ac1725c89c0c84db2b75a9ee06
   languageName: node
   linkType: hard
 
@@ -5729,26 +5729,26 @@ __metadata:
   linkType: hard
 
 "cross-spawn@npm:^6.0.0":
-  version: 6.0.5
-  resolution: "cross-spawn@npm:6.0.5"
+  version: 6.0.6
+  resolution: "cross-spawn@npm:6.0.6"
   dependencies:
     nice-try: "npm:^1.0.4"
     path-key: "npm:^2.0.1"
     semver: "npm:^5.5.0"
     shebang-command: "npm:^1.2.0"
     which: "npm:^1.2.9"
-  checksum: 10c1/ea71fd2b6b32cb716f2fb2768377b7cf531bffec212be25b04d6826af95d6973dcb9fb8ee056932e32549a2b5b07d632f0fe9ec93d1ebf2ec66b10903b15848d
+  checksum: 10c1/aa1908a9201525d1fb0a67f0d0d5c1abd26fc6e052a05da243c8320d0bf5f4711174682271ea030a547c10202c7ef72af3f7db0c47dfb94132213697fb370412
   languageName: node
   linkType: hard
 
 "cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
-  version: 7.0.5
-  resolution: "cross-spawn@npm:7.0.5"
+  version: 7.0.6
+  resolution: "cross-spawn@npm:7.0.6"
   dependencies:
     path-key: "npm:^3.1.0"
     shebang-command: "npm:^2.0.0"
     which: "npm:^2.0.1"
-  checksum: 10c1/c5f8aff024602dfd280da19f91065d42c3b472cf9ef275dce1b640648b06420a110072fffd379910c07d8d18b1f81f9eb3ffbc4f069cde6586605445dc609cb9
+  checksum: 10c1/16d66c65e6e190a063cd75a3a90fd8396a843cb9151e862f28fd952ca4ca6d8821e4d44e0cbd455c20627993ae6c903130928d6c0e6ed2ae88534444f1c16d86
   languageName: node
   linkType: hard
 
@@ -6695,9 +6695,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.41":
-  version: 1.5.60
-  resolution: "electron-to-chromium@npm:1.5.60"
-  checksum: 10c1/5677c9062d1b577afa920d7f9e401270d44d19b5791b51044f174f8218aa3cb2af3e39be422d544687110fe70edbe3da60ba832a1a930d4bf99a7ff3f7064964
+  version: 1.5.63
+  resolution: "electron-to-chromium@npm:1.5.63"
+  checksum: 10c1/206b19d6932d22153929a232bbabf788fbf6efad2e9455ee0f7154e2685de8eb6af2c7dd7982d3438e910acdacb76d3095ae891b12e1bd6dca5ac07cf980ba2a
   languageName: node
   linkType: hard
 
@@ -7693,9 +7693,9 @@ __metadata:
   linkType: hard
 
 "flatted@npm:^3.2.9":
-  version: 3.3.1
-  resolution: "flatted@npm:3.3.1"
-  checksum: 10c1/b844833190688feb603d789f42c1413395cb3246abff628739a2d2b86a464a81793b09d11d6cb5a521023bc2cf657aec053793db0acabac47601ded34220977a
+  version: 3.3.2
+  resolution: "flatted@npm:3.3.2"
+  checksum: 10c1/e3a2065b2741881be6cf16b64c28be87b5c99d4544b3702a93e54b2aa9a792c85974fb8b485c3a26ff60359f2f85e97d124b9e56b018b2eba2a047706cefbf0a
   languageName: node
   linkType: hard
 
