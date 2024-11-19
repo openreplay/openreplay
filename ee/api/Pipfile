@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-urllib3 = "==1.26.16"
+urllib3 = "==1.26.19"
 requests = "==2.32.3"
 boto3 = "==1.35.60"
 pyjwt = "==2.9.0"
