@@ -32,6 +32,10 @@ function FilterSelection(props: Props) {
   } = props;
   const [showModal, setShowModal] = useState(false);
 
+  const onAddFilter = (filter: any) => {
+    onFilterClick(filter);
+    setShowModal(false);
+  }
   return (
     <div className="relative flex-shrink-0">
       <OutsideClickDetectingDiv
@@ -54,13 +58,11 @@ function FilterSelection(props: Props) {
         ) : (
           <div
             className={cn(
-              'rounded-lg py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade',
+              'rounded-lg py-1 px-2 flex items-center cursor-pointer bg-white border border-gray-light text-ellipsis',
               { 'opacity-50 pointer-events-none': disabled }
             )}
             style={{
-              width: '150px',
               height: '26px',
-              border: 'solid thin #e9e9e9',
             }}
             onClick={() => setShowModal(true)}
           >
@@ -70,14 +72,13 @@ function FilterSelection(props: Props) {
             >
               {filter.label}
             </div>
-            <Icon name="chevron-down" size="14" />
           </div>
         )}
         {showModal && (
           <div className="absolute mt-2 left-0 rounded-lg shadow bg-white z-50">
             <FilterModal
               isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
-              onFilterClick={onFilterClick}
+              onFilterClick={onAddFilter}
               excludeFilterKeys={excludeFilterKeys}
               allowedFilterKeys={allowedFilterKeys}
               isConditional={isConditional}

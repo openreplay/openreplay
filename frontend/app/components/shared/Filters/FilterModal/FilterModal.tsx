@@ -107,7 +107,7 @@ export const getMatchingEntries = (
 
   if (lowerCaseQuery.length === 0)
     return {
-      matchingCategories: Object.keys(filters),
+      matchingCategories: ['ALL', ...Object.keys(filters)],
       matchingFilters: filters,
     };
 
@@ -125,7 +125,7 @@ export const getMatchingEntries = (
     }
   });
 
-  return { matchingCategories, matchingFilters };
+  return { matchingCategories: ['ALL', ...matchingCategories], matchingFilters };
 };
 
 interface Props {
@@ -211,7 +211,7 @@ function FilterModal(props: Props) {
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '480px', height: '380px', borderRadius: '.5rem' }}
+      style={{ width: '560px', height: '380px', borderRadius: '.5rem' }}
     >
       <Input
         className={'mb-4'}
@@ -224,14 +224,15 @@ function FilterModal(props: Props) {
           {matchingCategories.map((key) => (
             <div
               key={key}
-              className={'rounded p-4 hover:bg-active-blue capitalize'}
+              onClick={() => setCategory(key)}
+              className={cn('rounded px-4 py-2 hover:bg-active-blue capitalize', key === category ? 'bg-active-blue' : '')}
             >
               {key.toLowerCase()}
             </div>
           ))}
         </div>
         <div
-          className={'flex flex-col gap-2 overflow-y-auto w-full'}
+          className={'flex flex-col gap-1 overflow-y-auto w-full'}
           style={{ maxHeight: 300, flex: 2 }}
         >
           {displayedFilters.length

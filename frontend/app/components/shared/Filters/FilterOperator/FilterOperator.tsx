@@ -10,16 +10,12 @@ const dropdownStyles = {
       cursor: 'pointer',
       height: '26px',
       minHeight: '26px',
-      backgroundColor: '#f6f6f6',
-      '&:hover': {
-        backgroundColor: '#EEEEEE',
-      },
+      backgroundColor: 'white',
     }
     return obj;
   },
   valueContainer: (provided: any) => ({
     ...provided,
-    paddingRight: '0px',
     width: 'fit-content',
     '& input': {
       marginTop: '-3px',
@@ -29,9 +25,7 @@ const dropdownStyles = {
     ...provided,
   }),
   indicatorsContainer: (provided: any) => ({
-    ...provided,
-    padding: '0px',
-    height: '26px',
+    display: 'none',
   }),
   // option: (provided: any, state: any) => ({
   //   ...provided,
@@ -39,11 +33,13 @@ const dropdownStyles = {
   // }),
   menu: (provided: any, state: any) => ({
       ...provided,
-      top: 20,
+      marginTop: '0.5rem',
       left: 0,
       minWidth: 'fit-content',
       overflow: 'hidden',
       zIndex: 100,
+      border: 'none',
+      boxShadow: '0px 4px 10px rgba(0,0,0, 0.15)',
   }),
   container: (provided: any) => ({
       ...provided,

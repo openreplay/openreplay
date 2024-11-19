@@ -4,7 +4,7 @@ export enum FilterCategory {
   RECORDING_ATTRIBUTES = 'Recording Attributes',
   TECHNICAL = 'Technical',
   USER = 'User Identification',
-  METADATA = 'Session & User Metadata',
+  METADATA = 'Metadata',
   PERFORMANCE = 'Performance',
 }
 

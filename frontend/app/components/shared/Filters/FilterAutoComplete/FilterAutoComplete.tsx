@@ -298,14 +298,13 @@ const FilterAutoComplete: React.FC<Props> = ({
               <Icon name="close" size="12" />
             </div>
           )}
-          {showOrButton && (
-            <div onClick={onAddValue} className="color-teal">
-              <span className="px-1">or</span>
-            </div>
-          )}
+          {/*{showOrButton && (*/}
+          {/*  <div onClick={onAddValue} className="color-teal">*/}
+          {/*    <span className="px-1">or</span>*/}
+          {/*  </div>*/}
+          {/*)}*/}
         </div>
       </div>
-      {!showOrButton && !hideOrText && <div className="ml-3">or</div>}
     </div>
   );
 };

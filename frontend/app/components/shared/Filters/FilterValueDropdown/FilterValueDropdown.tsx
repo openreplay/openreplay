@@ -72,26 +72,28 @@ const dropdownStyles = {
 interface Props {
   placeholder?: string;
   value: string;
-  onChange: (value: any) => void;
+  onChange: (value: any, ind: number) => void;
   className?: string;
   options: any[];
   search?: boolean;
   showCloseButton?: boolean;
   showOrButton?: boolean;
-  onRemoveValue?: () => void;
-  onAddValue?: () => void;
-  isMultilple?: boolean;
+  onRemoveValue?: (ind: number) => void;
+  onAddValue?: (ind: number) => void;
+  isMultiple?: boolean;
+  index: number;
 }
 function FilterValueDropdown(props: Props) {
   const {
     placeholder = 'Select',
-    isMultilple = true,
+    isMultiple = true,
     search = false,
     options,
     onChange,
     value,
     showCloseButton = true,
     showOrButton = true,
+    index,
   } = props;
 
   return (
@@ -102,27 +104,54 @@ function FilterValueDropdown(props: Props) {
           options={options}
           name="issue_type"
           value={value ? options.find((item) => item.value === value) : null}
-          onChange={(value: any) => onChange(value.value)}
+          onChange={(value: any) => onChange(value.value, index)}
           placeholder={placeholder}
           styles={dropdownStyles}
         />
         <div className={stl.right}>
           {showCloseButton && (
-            <div onClick={props.onRemoveValue}>
+            <div onClick={() => props.onRemoveValue?.(index)}>
               <Icon name="close" size="12" />
             </div>
           )}
           {showOrButton && (
-            <div onClick={props.onAddValue} className="color-teal">
+            <div onClick={() => props.onAddValue?.(index)} className="color-teal">
               <span className="px-1">or</span>
             </div>
           )}
         </div>
       </div>
 
-      {!showOrButton && isMultilple && <div className="ml-3">or</div>}
+      {!showOrButton && isMultiple && <div className="ml-3">or</div>}
     </div>
   );
 }
 
-export default FilterValueDropdown;
+interface MainProps {
+  placeholder?: string;
+  value: string[];
+  onChange: (value: any, ind: number) => void;
+  className?: string;
+  options: any[];
+  search?: boolean;
+  showCloseButton?: boolean;
+  showOrButton?: boolean;
+  onRemoveValue?: (ind: number) => void;
+  onAddValue?: (ind: number) => void;
+  isMultiple?: boolean;
+}
+
+function FilterDropdownController(props: MainProps) {
+  return props.value.map((value, index) => (
+    <FilterValueDropdown
+      {...props}
+      key={index}
+      value={value}
+      index={index}
+      showOrButton={index === props.value.length - 1}
+      showCloseButton={props.value.length > 1}
+    />
+  ))
+}
+
+export default FilterDropdownController;
