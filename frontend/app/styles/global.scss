@@ -17,10 +17,8 @@ input.no-focus:focus {
     @apply rounded-lg shadow-sm border bg-white;
 }
 
-@layer base {
-  img {
-    @apply inline-block;
-  }
+img {
+  @apply inline-block;
 }
 
 .lucide {

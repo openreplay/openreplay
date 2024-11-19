@@ -38,10 +38,9 @@ function QueueControls(props: Props) {
     const totalPages = Math.ceil(total / PER_PAGE);
     const index = sessionIds.indexOf(sessionId);
 
-    // check for the last page and load the next
     if (currentPage !== totalPages && index === sessionIds.length - 1) {
-      searchStore
-        .fetchAutoplaySessions(currentPage + 1)
+      sessionStore
+        .fetchAutoplayList(currentPage + 1)
         .then(setAutoplayValues);
     }
   }, []);

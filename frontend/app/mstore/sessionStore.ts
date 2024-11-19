@@ -513,17 +513,17 @@ export default class SessionStore {
     this.totalLiveSessions = data.total
   }
 
-  fetchAutoplayList = async (params = {}) => {
+  fetchAutoplayList = async (page: number) => {
     try {
-      setSessionFilter(cleanSessionFilters(params));
-      const data = await sessionService.getAutoplayList(params);
-      this.sessionIds = this.sessionIds
-        .concat(data.map((i: any) => i.sessionId + ''))
-        .filter((i, index) => this.sessionIds.indexOf(i) === index);
+      const filter = searchStore.instance.toSearch();
+      setSessionFilter(cleanSessionFilters(filter));
+      const data = await sessionService.getAutoplayList({ ...filter, page: page });
+      const ids = data.map((i: any) => i.sessionId + '').filter((i, index) => !this.sessionIds.includes(i));
+      this.sessionIds = this.sessionIds.concat(ids);
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 
   clearList = () => {
     this.list = [];
