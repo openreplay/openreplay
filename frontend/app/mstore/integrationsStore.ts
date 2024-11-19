@@ -10,9 +10,10 @@ import {
   Integration,
   IssueTracker,
   JiraInt,
-  SentryInt,
+  SentryInt
 } from './types/integrations/services';
 import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
+import { toast } from 'react-toastify';
 
 class GenericIntegrationsStore {
   list: any[] = [];
@@ -82,15 +83,15 @@ class NamedIntegrationStore<T extends Integration> {
 
   setList = (list: T[]): void => {
     this.list = list;
-  }
+  };
 
   setFetched = (fetched: boolean): void => {
     this.fetched = fetched;
-  }
+  };
 
   setIssuesFetched = (issuesFetched: boolean): void => {
     this.issuesFetched = issuesFetched;
-  }
+  };
 
   fetchIntegrations = async (): Promise<void> => {
     this.setLoading(true);
@@ -134,23 +135,23 @@ class NamedIntegrationStore<T extends Integration> {
       siteId
     );
     return;
-  }
+  };
 
   edit = (data: T): void => {
     if (!this.instance) {
       this.instance = this.namedTypeCreator({});
     }
     this.instance.edit(data);
-  }
+  };
 
   deleteIntegration = async (siteId?: string) => {
     if (!this.instance) return;
     return integrationsService.removeIntegration(this.name, siteId);
-  }
+  };
 
   init = (config: Record<string, any>): void => {
     this.instance = this.namedTypeCreator(config);
-  }
+  };
 }
 
 class MessengerIntegrationStore {
@@ -185,19 +186,22 @@ class MessengerIntegrationStore {
   };
 
   saveIntegration = async (): Promise<void> => {
-    // redux todo: errors
     if (!this.instance) return;
     this.setLoading(true);
     try {
-      await integrationsService.saveIntegration(
+      const response = await integrationsService.saveIntegration(
         this.mName,
         this.instance.toData(),
         undefined
       );
+      if (response.errors) {
+        toast.error(response.errors[0] || 'Couldn\'t process the request: check your data.');
+        return response;
+      }
+      this.instance.edit({ webhookId: response.data.webhookId });
       this.setList([...this.list, this.instance]);
     } catch (e) {
-      console.log(e);
-      this.setErrors(["Couldn't process the request: check your data."]);
+      toast.error('Couldn\'t process the request: check your data.');
     } finally {
       this.setLoading(false);
     }
@@ -214,11 +218,11 @@ class MessengerIntegrationStore {
   };
 
   sendMessage = ({
-    integrationId,
-    entity,
-    entityId,
-    data,
-  }: {
+                   integrationId,
+                   entity,
+                   entityId,
+                   data
+                 }: {
     integrationId: string;
     entity: string;
     entityId: string;
@@ -250,21 +254,31 @@ class MessengerIntegrationStore {
   };
 
   update = async () => {
-    // redux todo: errors
     if (!this.instance) return;
     this.setLoading(true);
-    await integrationsService.updateMessengerInt(
-      this.mName,
-      this.instance.toData()
-    );
-    this.setList(
-      this.list.map((int) =>
-        int.webhookId === this.instance?.webhookId ? this.instance : int
-      )
-    );
-    this.setLoading(false);
+    try {
+      const response = await integrationsService.updateMessengerInt(
+        this.mName,
+        this.instance.toData()
+      );
+
+      if (response.errors) {
+        toast.error(response.errors[0] || 'Couldn\'t process the request: check your data.');
+        return response;
+      }
+      this.setList(
+        this.list.map((int) =>
+          int.webhookId === this.instance?.webhookId ? this.instance : int
+        )
+      );
+    } catch (e) {
+      toast.error('Couldn\'t process the request: check your data.');
+    } finally {
+      this.setLoading(false);
+    }
   };
 }
+
 export type namedStore = 'sentry'
   | 'datadog'
   | 'stackdriver'
@@ -277,6 +291,7 @@ export type namedStore = 'sentry'
   | 'jira'
   | 'github'
   | 'issues'
+
 export class IntegrationsStore {
   sentry = new NamedIntegrationStore('sentry', (d) => new SentryInt(d));
   datadog = new NamedIntegrationStore('datadog', (d) => new DatadogInt(d));

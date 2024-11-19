@@ -26,9 +26,13 @@ function TeamsAddForm({ onClose }: Props) {
 
   const save = () => {
     if (instance?.exists()) {
-      void update();
+      update().then(() => {
+        void onClose();
+      });
     } else {
-      void onSave();
+      void onSave().then(() => {
+        void onClose();
+      });
     }
   };
 
@@ -37,16 +41,16 @@ function TeamsAddForm({ onClose }: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this channel?`,
+        confirmation: `Are you sure you want to permanently delete this channel?`
       })
     ) {
-      void onRemove(id);
+      void onRemove(id).then(onClose);
     }
   };
 
   const write = ({
-    target: { name, value },
-  }: {
+                   target: { name, value }
+                 }: {
     target: { name: string; value: string };
   }) => edit({ [name]: value });
 

@@ -10,7 +10,6 @@ import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModa
 import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
-import { toast } from ".store/react-toastify-virtual-9dd0f3eae1/package";
 
 interface DynatraceConfig {
   environment: string;
