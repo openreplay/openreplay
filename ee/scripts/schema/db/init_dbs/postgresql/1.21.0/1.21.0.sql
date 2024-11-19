@@ -1,3 +1,18 @@
+-- To fix a skipped version replacement from the previous release
+SELECT openreplay_version() = 'v1.19.0-ee'
+           AND EXISTS (SELECT 1
+                       FROM information_schema.tables
+                       WHERE table_schema = 'spots'
+                         AND table_name = 'tasks') AS valid_previous;
+\gset
+\if :valid_previous
+CREATE OR REPLACE FUNCTION openreplay_version()
+    RETURNS text AS
+$$
+SELECT 'v1.20.0-ee'
+$$ LANGUAGE sql IMMUTABLE;
+\endif
+
 \set previous_version 'v1.20.0-ee'
 \set next_version 'v1.21.0-ee'
 SELECT openreplay_version()                       AS current_version,
