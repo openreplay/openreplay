@@ -27,23 +27,22 @@ function QueueControls(props: Props) {
   const {
     match: {
       // @ts-ignore
-      params: { sessionId }
-    }
+      params: { sessionId },
+    },
   } = props;
 
   const currentPage = searchStore.currentPage;
-  const latestRequestTime = searchStore.latestRequestTime;
 
   useEffect(() => {
-    if (latestRequestTime) {
-      setAutoplayValues();
-      const totalPages = Math.ceil(total / PER_PAGE);
-      const index = sessionIds.indexOf(sessionId);
+    setAutoplayValues();
+    const totalPages = Math.ceil(total / PER_PAGE);
+    const index = sessionIds.indexOf(sessionId);
 
-      // check for the last page and load the next
-      if (currentPage !== totalPages && index === sessionIds.length - 1) {
-        searchStore.fetchAutoplaySessions(currentPage + 1).then(setAutoplayValues);
-      }
+    // check for the last page and load the next
+    if (currentPage !== totalPages && index === sessionIds.length - 1) {
+      searchStore
+        .fetchAutoplaySessions(currentPage + 1)
+        .then(setAutoplayValues);
     }
   }, []);
 
@@ -63,15 +62,22 @@ function QueueControls(props: Props) {
         onClick={prevHandler}
         className={cn('p-1 group rounded-full', {
           'pointer-events-none opacity-50': !previousId,
-          'cursor-pointer': !!previousId
+          'cursor-pointer': !!previousId,
         })}
       >
         <Popover
           placement="bottom"
-          content={<div className="whitespace-nowrap">Play Previous Session</div>}
+          content={
+            <div className="whitespace-nowrap">Play Previous Session</div>
+          }
           open={previousId ? undefined : false}
         >
-          <Button size={'small'} shape={'circle'} disabled={!previousId} className={'flex items-center justify-center'}>
+          <Button
+            size={'small'}
+            shape={'circle'}
+            disabled={!previousId}
+            className={'flex items-center justify-center'}
+          >
             <LeftOutlined />
           </Button>
         </Popover>
@@ -81,7 +87,7 @@ function QueueControls(props: Props) {
         onClick={nextHandler}
         className={cn('p-1 group ml-1 rounded-full', {
           'pointer-events-none opacity-50': !nextId,
-          'cursor-pointer': !!nextId
+          'cursor-pointer': !!nextId,
         })}
       >
         <Popover
@@ -89,7 +95,12 @@ function QueueControls(props: Props) {
           content={<div className="whitespace-nowrap">Play Next Session</div>}
           open={nextId ? undefined : false}
         >
-          <Button size={'small'} shape={'circle'} disabled={!nextId} className={'flex items-center justify-center'}>
+          <Button
+            size={'small'}
+            shape={'circle'}
+            disabled={!nextId}
+            className={'flex items-center justify-center'}
+          >
             <RightOutlined />
           </Button>
         </Popover>
