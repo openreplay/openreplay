@@ -422,7 +422,7 @@ else:
 
         if url is None or len(url) == 0:
             return None
-        return url[0]["path"]
+        return url[0]["url_path"]
 
 
     def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_id,
