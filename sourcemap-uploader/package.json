@@ -1,6 +1,6 @@
 {
   "name": "@openreplay/sourcemap-uploader",
-  "version": "3.0.11",
+  "version": "3.0.13",
   "description": "NPM module to upload your JS sourcemaps files to OpenReplay",
   "bin": "cli.js",
   "main": "index.js",
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "argparse": "^2.0.1",
+    "glob": "^8.0.3",
     "glob-promise": "^6.0.7"
   }
 }
