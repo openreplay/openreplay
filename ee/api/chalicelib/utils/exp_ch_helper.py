@@ -58,6 +58,7 @@ def get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEvent
         schemas.EventType.REQUEST: "REQUEST",
         schemas.EventType.REQUEST_DETAILS: "REQUEST",
         schemas.PerformanceEventType.FETCH_FAILED: "REQUEST",
+        schemas.GraphqlFilterType.GRAPHQL_NAME: "GRAPHQL",
         schemas.EventType.STATE_ACTION: "STATEACTION",
         schemas.EventType.ERROR: "ERROR",
         schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD: 'PERFORMANCE',
