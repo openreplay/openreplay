@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -99,7 +100,11 @@ func (e *handlersImpl) createIntegration(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := e.integrations.AddIntegration(project, integration, req.IntegrationData); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if strings.Contains(err.Error(), "failed to validate") {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnprocessableEntity, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
@@ -117,7 +122,11 @@ func (e *handlersImpl) getIntegration(w http.ResponseWriter, r *http.Request) {
 
 	intParams, err := e.integrations.GetIntegration(project, integration)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if strings.Contains(err.Error(), "no rows in result set") {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, intParams, startTime, r.URL.Path, bodySize)
