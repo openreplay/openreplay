@@ -1,36 +1,51 @@
-package data_integration
+package integrations
 
 import (
+	"openreplay/backend/pkg/integrations/service"
+	"openreplay/backend/pkg/metrics/web"
+	"openreplay/backend/pkg/server/tracer"
+	"time"
+
 	"openreplay/backend/internal/config/integrations"
 	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/flakeid"
+	integrationsAPI "openreplay/backend/pkg/integrations/api"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/objectstorage/store"
-	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/auth"
+	"openreplay/backend/pkg/server/limiter"
 )
 
 type ServiceBuilder struct {
-	Flaker     *flakeid.Flaker
-	ObjStorage objectstorage.ObjectStorage
-	Auth       auth.Auth
-	Integrator Service
+	Auth            auth.Auth
+	RateLimiter     *limiter.UserRateLimiter
+	AuditTrail      tracer.Tracer
+	IntegrationsAPI api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, pgconn pool.Pool) (*ServiceBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *integrations.Config, webMetrics web.Web, pgconn pool.Pool) (*ServiceBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
 	}
-	integrator, err := NewService(log, pgconn, objStore)
+	integrator, err := service.NewService(log, pgconn, objStore)
 	if err != nil {
 		return nil, err
 	}
-	flaker := flakeid.NewFlaker(cfg.WorkerID)
-	return &ServiceBuilder{
-		Flaker:     flaker,
-		ObjStorage: objStore,
-		Auth:       auth.NewAuth(log, cfg.JWTSecret, "", pgconn),
-		Integrator: integrator,
-	}, nil
+	responser := api.NewResponser(webMetrics)
+	handlers, err := integrationsAPI.NewHandlers(log, cfg, responser, integrator)
+	if err != nil {
+		return nil, err
+	}
+	auditrail, err := tracer.NewTracer(log, pgconn)
+	if err != nil {
+		return nil, err
+	}
+	builder := &ServiceBuilder{
+		Auth:            auth.NewAuth(log, cfg.JWTSecret, "", pgconn, nil),
+		RateLimiter:     limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
+		AuditTrail:      auditrail,
+		IntegrationsAPI: handlers,
+	}
+	return builder, nil
 }
