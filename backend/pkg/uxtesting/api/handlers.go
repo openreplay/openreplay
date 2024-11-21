@@ -20,6 +20,7 @@ import (
 
 type handlersImpl struct {
 	log           logger.Logger
+	responser     *api.Responser
 	jsonSizeLimit int64
 	tokenizer     *token.Tokenizer
 	sessions      sessions.Sessions
@@ -27,10 +28,11 @@ type handlersImpl struct {
 	objStorage    objectstorage.ObjectStorage
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
+func NewHandlers(log logger.Logger, responser *api.Responser, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
 	uxTesting uxtesting.UXTesting, objStorage objectstorage.ObjectStorage) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
+		responser:     responser,
 		jsonSizeLimit: jsonSizeLimit,
 		tokenizer:     tokenizer,
 		sessions:      sessions,
@@ -58,13 +60,13 @@ func (e *handlersImpl) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	sess, err := e.sessions.Get(sessionData.ID)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -78,17 +80,17 @@ func (e *handlersImpl) getUXTestInfo(w http.ResponseWriter, r *http.Request) {
 	// Get task info
 	info, err := e.uxTesting.GetInfo(id)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	if sess.ProjectID != info.ProjectID {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project mismatch"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	type TaskInfoResponse struct {
 		Task *uxtesting.UXTestInfo `json:"test"`
 	}
-	api.ResponseWithJSON(e.log, r.Context(), w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &TaskInfoResponse{Task: info}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +103,7 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -112,7 +114,7 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 
 	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -121,17 +123,17 @@ func (e *handlersImpl) sendUXTestSignal(w http.ResponseWriter, r *http.Request) 
 	req := &uxtesting.TestSignal{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	req.SessionID = sessionData.ID
 
 	// Save test signal
 	if err := e.uxTesting.SetTestSignal(req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +146,7 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -155,7 +157,7 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 
 	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -164,17 +166,17 @@ func (e *handlersImpl) sendUXTaskSignal(w http.ResponseWriter, r *http.Request) 
 	req := &uxtesting.TaskSignal{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	req.SessionID = sessionData.ID
 
 	// Save test signal
 	if err := e.uxTesting.SetTaskSignal(req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +189,7 @@ func (e *handlersImpl) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -199,11 +201,11 @@ func (e *handlersImpl) getUXUploadUrl(w http.ResponseWriter, r *http.Request) {
 	key := fmt.Sprintf("%d/ux_webcam_record.webm", sessionData.ID)
 	url, err := e.objStorage.GetPreSignedUploadUrl(key)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	type UrlResponse struct {
 		URL string `json:"url"`
 	}
-	api.ResponseWithJSON(e.log, r.Context(), w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &UrlResponse{URL: url}, startTime, r.URL.Path, bodySize)
 }

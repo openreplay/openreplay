@@ -1,6 +1,7 @@
 package spot
 
 import (
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server/tracer"
 	"time"
 
@@ -25,7 +26,7 @@ type ServicesBuilder struct {
 	SpotsAPI    api.Handlers
 }
 
-func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*ServicesBuilder, error) {
+func NewServiceBuilder(log logger.Logger, cfg *spot.Config, webMetrics web.Web, pgconn pool.Pool) (*ServicesBuilder, error) {
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,8 @@ func NewServiceBuilder(log logger.Logger, cfg *spot.Config, pgconn pool.Pool) (*
 	if err != nil {
 		return nil, err
 	}
-	handlers, err := spotAPI.NewHandlers(log, cfg, spots, objStore, transcoder, keys)
+	responser := api.NewResponser(webMetrics)
+	handlers, err := spotAPI.NewHandlers(log, cfg, responser, spots, objStore, transcoder, keys)
 	if err != nil {
 		return nil, err
 	}

@@ -12,6 +12,7 @@ import (
 	featureflagsAPI "openreplay/backend/pkg/featureflags/api"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
@@ -35,7 +36,7 @@ type ServicesBuilder struct {
 	UxTestsAPI      api.Handlers
 }
 
-func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
+func New(log logger.Logger, cfg *http.Config, metrics web.Web, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (*ServicesBuilder, error) {
 	projs := projects.New(log, pgconn, redis)
 	objStore, err := store.NewStore(&cfg.ObjectsConfig)
 	if err != nil {
@@ -56,23 +57,24 @@ func New(log logger.Logger, cfg *http.Config, producer types.Producer, pgconn po
 	featureFlags := featureflags.New(pgconn)
 	tags := tags.New(log, pgconn)
 	uxTesting := uxtesting.New(pgconn)
+	responser := api.NewResponser(metrics)
 	builder := &ServicesBuilder{}
-	if builder.WebAPI, err = websessions.NewHandlers(cfg, log, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
+	if builder.WebAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
 		return nil, err
 	}
-	if builder.MobileAPI, err = mobilesessions.NewHandlers(cfg, log, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
+	if builder.MobileAPI, err = mobilesessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker); err != nil {
 		return nil, err
 	}
-	if builder.ConditionsAPI, err = conditionsAPI.NewHandlers(log, tokenizer, conditions); err != nil {
+	if builder.ConditionsAPI, err = conditionsAPI.NewHandlers(log, responser, tokenizer, conditions); err != nil {
 		return nil, err
 	}
-	if builder.FeatureFlagsAPI, err = featureflagsAPI.NewHandlers(log, cfg.JsonSizeLimit, tokenizer, sessions, featureFlags); err != nil {
+	if builder.FeatureFlagsAPI, err = featureflagsAPI.NewHandlers(log, responser, cfg.JsonSizeLimit, tokenizer, sessions, featureFlags); err != nil {
 		return nil, err
 	}
-	if builder.TagsAPI, err = tagsAPI.NewHandlers(log, tokenizer, sessions, tags); err != nil {
+	if builder.TagsAPI, err = tagsAPI.NewHandlers(log, responser, tokenizer, sessions, tags); err != nil {
 		return nil, err
 	}
-	if builder.UxTestsAPI, err = uxtestingAPI.NewHandlers(log, cfg.JsonSizeLimit, tokenizer, sessions, uxTesting, objStore); err != nil {
+	if builder.UxTestsAPI, err = uxtestingAPI.NewHandlers(log, responser, cfg.JsonSizeLimit, tokenizer, sessions, uxTesting, objStore); err != nil {
 		return nil, err
 	}
 	return builder, nil

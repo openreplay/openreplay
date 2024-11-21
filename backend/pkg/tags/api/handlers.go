@@ -4,24 +4,27 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
+
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/tags"
 	"openreplay/backend/pkg/token"
-	"time"
 )
 
 type handlersImpl struct {
 	log       logger.Logger
+	responser *api.Responser
 	tokenizer *token.Tokenizer
 	sessions  sessions.Sessions
 	tags      tags.Tags
 }
 
-func NewHandlers(log logger.Logger, tokenizer *token.Tokenizer, sessions sessions.Sessions, tags tags.Tags) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.Tokenizer, sessions sessions.Sessions, tags tags.Tags) (api.Handlers, error) {
 	return &handlersImpl{
 		log:       log,
+		responser: responser,
 		tokenizer: tokenizer,
 		sessions:  sessions,
 		tags:      tags,
@@ -44,12 +47,12 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	sessInfo, err := e.sessions.Get(sessionData.ID)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -60,11 +63,11 @@ func (e *handlersImpl) getTags(w http.ResponseWriter, r *http.Request) {
 	// Get tags
 	tags, err := e.tags.Get(sessInfo.ProjectID)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	type UrlResponse struct {
 		Tags interface{} `json:"tags"`
 	}
-	api.ResponseWithJSON(e.log, r.Context(), w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &UrlResponse{Tags: tags}, startTime, r.URL.Path, bodySize)
 }

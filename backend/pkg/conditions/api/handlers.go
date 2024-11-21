@@ -11,12 +11,14 @@ import (
 )
 
 type handlersImpl struct {
-	log logger.Logger
+	log       logger.Logger
+	responser *api.Responser
 }
 
-func NewHandlers(log logger.Logger, tokenizer *token.Tokenizer, conditions conditions.Conditions) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.Tokenizer, conditions conditions.Conditions) (api.Handlers, error) {
 	return &handlersImpl{
-		log: log,
+		log:       log,
+		responser: responser,
 	}, nil
 }
 
@@ -28,5 +30,5 @@ func (e *handlersImpl) GetAll() []*api.Description {
 }
 
 func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
-	api.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, nil, time.Now(), r.URL.Path, 0)
+	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, nil, time.Now(), r.URL.Path, 0)
 }

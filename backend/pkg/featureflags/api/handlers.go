@@ -17,16 +17,18 @@ import (
 
 type handlersImpl struct {
 	log           logger.Logger
+	responser     *api.Responser
 	jsonSizeLimit int64
 	tokenizer     *token.Tokenizer
 	sessions      sessions.Sessions
 	featureFlags  featureflags.FeatureFlags
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
+func NewHandlers(log logger.Logger, responser *api.Responser, jsonSizeLimit int64, tokenizer *token.Tokenizer, sessions sessions.Sessions,
 	featureFlags featureflags.FeatureFlags) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
+		responser:     responser,
 		jsonSizeLimit: jsonSizeLimit,
 		tokenizer:     tokenizer,
 		sessions:      sessions,
@@ -50,7 +52,7 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -60,12 +62,12 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 
 	if r.Body == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -73,18 +75,18 @@ func (e *handlersImpl) featureFlagsHandlerWeb(w http.ResponseWriter, r *http.Req
 	// Parse request body
 	req := &featureflags.FeatureFlagsRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	computedFlags, err := e.featureFlags.ComputeFlagsForSession(req)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	resp := &featureflags.FeatureFlagsResponse{
 		Flags: computedFlags,
 	}
-	api.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

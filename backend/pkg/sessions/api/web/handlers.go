@@ -35,6 +35,7 @@ import (
 type handlersImpl struct {
 	log             logger.Logger
 	cfg             *httpCfg.Config
+	responser       *api.Responser
 	producer        types.Producer
 	projects        projects.Projects
 	sessions        sessions.Sessions
@@ -47,12 +48,13 @@ type handlersImpl struct {
 	features        map[string]bool
 }
 
-func NewHandlers(cfg *httpCfg.Config, log logger.Logger, producer types.Producer, projects projects.Projects,
+func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser *api.Responser, producer types.Producer, projects projects.Projects,
 	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
 	conditions conditions.Conditions, flaker *flakeid.Flaker) (api.Handlers, error) {
 	return &handlersImpl{
 		log:             log,
 		cfg:             cfg,
+		responser:       responser,
 		producer:        producer,
 		projects:        projects,
 		sessions:        sessions,
@@ -111,13 +113,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Check request body
 	if r.Body == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -125,7 +127,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	// Parse request body
 	req := &StartSessionRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -134,7 +136,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -142,10 +144,10 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
 		} else {
 			e.log.Error(r.Context(), "failed to get project by key: %s, err: %s", *req.ProjectKey, err)
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
@@ -155,13 +157,13 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Check if the project supports mobile sessions
 	if !p.IsWeb() {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("project doesn't support web sessions"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	ua := e.uaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -181,14 +183,14 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 			}
 		}
 		if dice >= p.SampleRate {
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("capture rate miss, rate: %d", p.SampleRate), startTime, r.URL.Path, bodySize)
 			return
 		}
 
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.flaker.Compose(uint64(startTimeMili))
 		if err != nil {
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 			return
 		}
 
@@ -285,7 +287,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 	}
 	modifyResponse(req, startResponse)
 
-	api.ResponseWithJSON(e.log, r.Context(), w, startResponse, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, startResponse, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -303,7 +305,7 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -314,13 +316,13 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	// Check request body
 	if r.Body == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.beaconSizeCache.Get(sessionData.ID))
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -329,11 +331,11 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 	err = e.producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
 	if err != nil {
 		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -341,19 +343,19 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 	bodySize := 0
 
 	if r.Body == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &NotStartedRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -362,17 +364,17 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	p, err := e.projects.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
 		} else {
 			e.log.Error(r.Context(), "can't find a project: %s", err)
-			api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
@@ -382,7 +384,7 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 
 	ua := e.uaParser.ParseFromHTTPRequest(r)
 	if ua == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
 		return
 	}
 	geoInfo := e.geoIP.ExtractGeoData(r)
@@ -406,7 +408,7 @@ func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Reque
 		e.log.Warn(r.Context(), "can't insert un-started session: %s", err)
 	}
 	// response ok anyway
-	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
 type ScreenshotMessage struct {
@@ -422,7 +424,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
 	if err != nil { // Should accept expired token?
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -432,7 +434,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	}
 
 	if r.Body == nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
@@ -441,10 +443,10 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 	// Parse the multipart form
 	err = r.ParseMultipartForm(10 << 20) // Max upload size 10 MB
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 	} else if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 		return
 	}
 
@@ -453,7 +455,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 		for _, fileHeader := range fileHeaderList {
 			file, err := fileHeader.Open()
 			if err != nil {
-				api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 				return
 			}
 
@@ -461,7 +463,7 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			fileBytes, err := io.ReadAll(file)
 			if err != nil {
 				file.Close()
-				api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
+				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 				return
 			}
 			file.Close()
@@ -485,5 +487,5 @@ func (e *handlersImpl) imagesUploaderHandlerWeb(w http.ResponseWriter, r *http.R
 			}
 		}
 	}
-	api.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, 0)
 }

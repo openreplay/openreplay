@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
 )
@@ -17,7 +18,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := config.New(log)
-	metrics.New(log, append(database.List()))
+	webMetrics := web.New("integrations")
+	metrics.New(log, append(webMetrics.List(), database.List()...))
 
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
@@ -25,7 +27,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	builder, err := integrations.NewServiceBuilder(log, cfg, pgConn)
+	builder, err := integrations.NewServiceBuilder(log, cfg, webMetrics, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	spotMetrics "openreplay/backend/pkg/metrics/spot"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/server"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/spot"
@@ -18,7 +19,8 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := spotConfig.New(log)
-	metrics.New(log, append(spotMetrics.List(), databaseMetrics.List()...))
+	webMetrics := web.New("spot")
+	metrics.New(log, append(webMetrics.List(), append(spotMetrics.List(), databaseMetrics.List()...)...))
 
 	pgConn, err := pool.New(cfg.Postgres.String())
 	if err != nil {
@@ -26,7 +28,7 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	builder, err := spot.NewServiceBuilder(log, cfg, pgConn)
+	builder, err := spot.NewServiceBuilder(log, cfg, webMetrics, pgConn)
 	if err != nil {
 		log.Fatal(ctx, "can't init services: %s", err)
 	}

@@ -38,7 +38,7 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	builder, err := services.New(log, cfg, producer, pgConn, redisClient)
+	builder, err := services.New(log, cfg, webMetrics, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "failed while creating services: %s", err)
 	}
