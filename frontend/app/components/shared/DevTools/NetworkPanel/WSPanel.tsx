@@ -23,9 +23,9 @@ const lineLength = 40;
 function WSPanel({ socketMsgList, onClose }: Props) {
   const [query, setQuery] = React.useState('');
   const [list, setList] = React.useState(socketMsgList);
-  const [selectedRow, setSelectedRow] = React.useState<SocketMsg | null>(null);
+  const [selectedRow, setSelectedRow] = React.useState<{ msg: SocketMsg, id: number } | null>(null);
 
-  const onQueryChange = (e) => {
+  const onQueryChange = (e: any) => {
     setQuery(e.target.value);
     const newList = filterList(socketMsgList, e.target.value, [
       'data',
@@ -69,15 +69,16 @@ function WSPanel({ socketMsgList, onClose }: Props) {
           position: 'relative',
         }}
       >
-        {list.map((msg) => (
+        {list.map((msg, i) => (
           <Row
             msg={msg}
             key={msg.timestamp}
-            onSelect={() => setSelectedRow(msg)}
+            onSelect={() => setSelectedRow({ msg, id: i })}
+            isSelected={selectedRow ? selectedRow.id === i : false}
           />
         ))}
         {selectedRow ? (
-          <SelectedRow msg={selectedRow} onClose={() => setSelectedRow(null)} />
+          <SelectedRow msg={selectedRow.msg} onClose={() => setSelectedRow(null)} />
         ) : null}
       </div>
     </div>
@@ -127,7 +128,7 @@ function MsgDirection({ dir }: { dir: 'up' | 'down' }) {
   );
 }
 
-function Row({ msg, onSelect }: { msg: SocketMsg; onSelect: () => void }) {
+function Row({ msg, onSelect, isSelected }: { msg: SocketMsg; isSelected: boolean; onSelect: () => void }) {
   return (
     <>
       <div
@@ -149,7 +150,7 @@ function Row({ msg, onSelect }: { msg: SocketMsg; onSelect: () => void }) {
                 'rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center'
               }
             >
-              <span>{isOpen ? '-' : '+'}</span>
+              <span>{isSelected ? '-' : '+'}</span>
             </div>
           ) : null}
         </div>
