@@ -38,7 +38,7 @@ const Icon: React.FunctionComponent<IProps> = ({
     _style.marginRight = `${ marginRight }px`;
   }
 
-  const additionalStyles = color === 'inherit' ? { fill: 'currentcolor' } : {}
+  const additionalStyles = color === 'inherit' ? { fill: 'currentColor' } : {}
 
   return (
     <span
