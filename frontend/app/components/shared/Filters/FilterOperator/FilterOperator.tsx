@@ -17,6 +17,7 @@ const dropdownStyles = {
   valueContainer: (provided: any) => ({
     ...provided,
     width: 'fit-content',
+    height: 26,
     '& input': {
       marginTop: '-3px',
     },

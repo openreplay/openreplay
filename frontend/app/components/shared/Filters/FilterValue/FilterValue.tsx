@@ -29,6 +29,10 @@ function FilterValue(props: Props) {
     props.onUpdate({ ...filter, value: newValue });
   };
 
+  const onApplyValues = (values: string[]) => {
+    props.onUpdate({ ...filter, value: values });
+  }
+
   const onRemoveValue = (valueIndex: any) => {
     const newValue = filter.value.filter(
       (_: any, index: any) => index !== valueIndex
@@ -37,6 +41,7 @@ function FilterValue(props: Props) {
   };
 
   const onChange = (e: any, item: any, valueIndex: any) => {
+    console.log('item', item, valueIndex);
     const newValues = filter.value.map((_: any, _index: any) => {
       if (_index === valueIndex) {
         return item;
@@ -86,7 +91,6 @@ function FilterValue(props: Props) {
 
   const renderValueFiled = (value: any[]) => {
     const showOrButton = filter.value.length > 1;
-    const valueIndex = 0;
     const BaseFilterLocalAutoComplete = (props) => (
       <FilterAutoCompleteLocal
         value={value}
@@ -98,6 +102,16 @@ function FilterValue(props: Props) {
         {...props}
       />
     );
+    const BaseDropDown = (props) => (
+      <FilterValueDropdown
+        value={value}
+        placeholder={filter.placeholder}
+        options={filter.options}
+        onApplyValues={onApplyValues}
+        // onChange={(item, index) => onChange(null, { value: item.value }, index)}
+        {...props}
+      />
+    )
     switch (filter.type) {
       case FilterType.NUMBER_MULTIPLE:
         return <BaseFilterLocalAutoComplete type="number" />;
@@ -113,22 +127,13 @@ function FilterValue(props: Props) {
         return <BaseFilterLocalAutoComplete />;
       case FilterType.DROPDOWN:
         return (
-          <FilterValueDropdown
-            value={value}
-            placeholder={filter.placeholder}
-            options={filter.options}
-            onChange={(item, index) => onChange(null, { value: item.value }, index)}
-          />
+          <BaseDropDown />
         );
       case FilterType.ISSUE:
       case FilterType.MULTIPLE_DROPDOWN:
         return (
-          <FilterValueDropdown
+          <BaseDropDown
             search={true}
-            value={value}
-            placeholder={filter.placeholder}
-            options={filter.options}
-            onChange={(item, index) => onChange(null, { value: item.value }, index)}
             onAddValue={onAddValue}
             onRemoveValue={(ind) => onRemoveValue(ind)}
             showCloseButton={showCloseButton}
@@ -151,14 +156,14 @@ function FilterValue(props: Props) {
             value={value}
             showCloseButton={showCloseButton}
             showOrButton={showOrButton}
-            onAddValue={onAddValue}
-            onRemoveValue={() => onRemoveValue(valueIndex)}
+            onApplyValues={onApplyValues}
+            onRemoveValue={(index) => onRemoveValue(index)}
             method={'GET'}
             endpoint="/PROJECT_ID/events/search"
             params={getParms(filter.key)}
             headerText={''}
             placeholder={filter.placeholder}
-            onSelect={(e, item) => onChange(e, item, valueIndex)}
+            onSelect={(e, item, index) => onChange(e, item, index)}
             icon={filter.icon}
           />
         );
@@ -176,64 +181,5 @@ function FilterValue(props: Props) {
     </div>
   );
 }
-
-// const isEmpty = filter.value.length === 0 || !filter.value[0].length;
-// return (
-//   <div
-//     className={
-//         'rounded border border-gray-light px-2 relative w-fit whitespace-nowrap'
-//     }
-//     style={{ height: 26 }}
-//     ref={filterValueContainer}
-//   >
-//       <div onClick={() => setShowValueModal(true)} className={'flex items-center gap-2 '}>
-//           {!isEmpty ? (
-//             <>
-//                 <div
-//                   className={
-//                       'rounded-xl bg-gray-lighter  leading-none px-1 py-0.5'
-//                   }
-//                 >
-//                     {filter.value[0]}
-//                 </div>
-//                 <div
-//                   className={
-//                       'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
-//                   }
-//                 >
-//                     + {filter.value.length - 1} More
-//                 </div>
-//             </>
-//           ) : (
-//              <div className={'text-disabled-text'}>Select values</div>
-//            )}
-//       </div>
-//       {showValueModal ? (
-//         <div
-//           className={cn(
-//             'absolute left-0 mt-6 flex items-center gap-2 bg-white border shadow border-gray-light z-10',
-//             {
-//                 'grid-cols-2': filter.hasSource,
-//                 'grid-cols-3': !filter.hasSource,
-//             }
-//           )}
-//           style={{ minWidth: 200, minHeight: 100, top: '100%' }}
-//         >
-//             {filter.type === FilterType.DURATION
-//              ? renderValueFiled(filter.value, 0)
-//              : filter.value &&
-//                filter.value.map((value: any, valueIndex: any) => (
-//                  <div key={valueIndex}>
-//                      {renderValueFiled(value, valueIndex)}
-//                  </div>
-//                ))}
-//             <div>
-//                 <Button>Apply</Button>
-//                 <Button>Cancel</Button>
-//             </div>
-//         </div>
-//       ) : null}
-//   </div>
-// );
 
 export default observer(FilterValue);

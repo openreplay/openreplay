@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
-import SessionSearch from 'Shared/SessionSearch';
+import SearchActions from 'Shared/SearchActions';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
@@ -32,15 +32,14 @@ function Overview({ match: { params } }: IProps) {
   React.useEffect(() => {
     searchStore.setActiveTab(tab);
   }, [tab]);
-
   return (
     <Switch>
       <Route exact strict
              path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <NoSessionsMessage siteId={siteId} />
+          <SearchActions />
           <MainSearchBar />
-          <SessionSearch />
           <div className="my-4" />
           <SessionsTabOverview />
         </div>

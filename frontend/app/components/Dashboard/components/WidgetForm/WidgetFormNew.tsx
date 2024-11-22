@@ -44,17 +44,6 @@ function WidgetFormNew() {
 
 export default observer(WidgetFormNew);
 
-
-function DefineSteps({ metric, excludeFilterKeys }: any) {
-  return (
-      <div className="px-4 py-2 bg-white rounded-lg shadow-sm flex items-center">
-        <Typography.Text strong>Filter</Typography.Text>
-        <AddStepButton excludeFilterKeys={excludeFilterKeys} series={metric.series[0]} />
-      </div>
-  );
-}
-
-
 const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   // const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
   // const tableOptions = metricOf.filter((i) => i.type === 'table');

@@ -1,11 +1,12 @@
 import React from 'react';
 import LiveSessionList from 'Shared/LiveSessionList';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
-import AssistSearchField from './AssistSearchField';
+import AssistSearchActions from './AssistSearchActions';
 
 function AssistView() {
   return (
     <div className="w-full mx-auto" style={{ maxWidth: '1360px'}}>
+      <AssistSearchActions />
       <LiveSessionSearch />
       <div className="my-4" />
       <LiveSessionList />

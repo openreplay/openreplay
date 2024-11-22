@@ -1,9 +1,7 @@
-import { Space } from 'antd';
-import { List } from 'immutable';
 import { GripHorizontal } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { Button, Card } from 'antd';
+import { Button } from 'antd';
 import { Icon } from 'UI';
 
 import FilterItem from '../FilterItem';
@@ -44,7 +42,6 @@ function FilterList(props: Props) {
 
   const filters = filter.filters;
   const hasEvents = filters.filter((i: any) => i.isEvent).length > 0;
-  const hasFilters = filters.filter((i: any) => !i.isEvent).length > 0;
 
   let rowIndex = 0;
   const cannotDeleteFilter = hasEvents && !supportsEmpty;
@@ -97,7 +94,7 @@ function FilterList(props: Props) {
     (event: Record<string, any>) => {
       event.preventDefault();
       if (draggedInd === null) return;
-      const newItems = filters.toArray();
+      const newItems = filters;
       const newPosition = calculateNewPosition(
         draggedInd,
         hoveredItem.i,
@@ -107,23 +104,32 @@ function FilterList(props: Props) {
       const reorderedItem = newItems.splice(draggedInd, 1)[0];
       newItems.splice(newPosition, 0, reorderedItem);
 
-      props.onFilterMove?.(List(newItems));
+      props.onFilterMove?.(newItems);
       setHoveredItem({ i: null, position: null });
       setDraggedItem(null);
     },
     [draggedInd, hoveredItem, filters, props.onFilterMove]
   );
 
-  const eventsNum = filters.filter((i: any) => i.isEvent).size;
+  const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
-    <div className="flex flex-col">
-        {onlyFilters ? null : (<Card size={'small'}>
-          <div className="flex items-center mb-2">
+    <div className="widget-wrapper flex flex-col">
+        {onlyFilters ? null : (<div className={'border-b border-b-gray-lighter py-2 px-4'}>
+          <div className="flex items-center mb-2 gap-2">
             <div className="font-semibold">
               {filter.eventsHeader || 'Events'}
             </div>
+            <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
+              <Button
+                icon={<Icon name={'filter'} />}
+                type="default"
+                size={'small'}
+              >
+                Add
+              </Button>
+            </FilterSelection>
 
-            <Space>
+            <div className={'ml-auto'}>
               {!hideEventsOrder && (
                 <EventsOrder
                   filter={filter}
@@ -132,7 +138,7 @@ function FilterList(props: Props) {
               )}
               {actions &&
                 actions.map((action, index) => <div key={index}>{action}</div>)}
-            </Space>
+            </div>
           </div>
           <div className={'flex flex-col'}>
             {filters.map((filter: any, filterIndex: number) =>
@@ -193,10 +199,9 @@ function FilterList(props: Props) {
               ) : null
             )}
           </div>
-          <div className="mb-2" />
-        </Card>)}
+        </div>)}
 
-      <Card size={'small'}>
+      <div className={'py-2 px-4'}>
         <div className={'flex items-center gap-2 mb-2'}>
           <div className="font-semibold">Filters</div>
           <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
@@ -232,7 +237,7 @@ function FilterList(props: Props) {
             </div>
           ) : null
         )}
-      </Card>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from 'UI';
 import stl from './FilterAutoCompleteLocal.module.css';
+import { Input } from 'antd';
 
 interface Props {
   showOrButton?: boolean;
@@ -58,7 +59,7 @@ function FilterAutoCompleteLocal(props: Props & { index: number }) {
   return (
     <div className="relative flex items-center">
       <div className={stl.wrapper}>
-        <input
+        <Input
           name="query"
           onInput={onInputChange}
           value={query}

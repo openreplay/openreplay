@@ -436,3 +436,9 @@ p {
   display: flex;
   align-items: center;
 }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Remove default styling */
+  appearance: none;
+  margin: 0; /* Fix margin if necessary */
+}
