@@ -387,3 +387,11 @@ svg {
     font-family: Menlo, Monaco, Consolas, serif;
     letter-spacing: -0.025rem
 }
+
+.ai-gradient {
+    background: linear-gradient(180deg, rgba(0, 199, 149, 0.72) 0%, rgba(60, 0, 255, 0.85) 77%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-fill-color: transparent;
+}
