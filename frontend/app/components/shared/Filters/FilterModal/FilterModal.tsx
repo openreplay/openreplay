@@ -80,13 +80,16 @@ const IconMap = {
 function filterJson(
   jsonObj: Record<string, any>,
   excludeKeys: string[] = [],
-  allowedFilterKeys: string[] = []
+  allowedFilterKeys: string[] = [],
+  mode: 'filters' | 'events'
 ): Record<string, any> {
   return Object.fromEntries(
     Object.entries(jsonObj)
       .map(([key, value]) => {
-        const arr = value.filter((i: { key: string }) => {
+        const arr = value.filter((i: { key: string, isEvent: boolean }) => {
           if (excludeKeys.includes(i.key)) return false;
+          if (mode === 'events' && !i.isEvent) return false;
+          if (mode === 'filters' && i.isEvent) return false;
           return !(
             allowedFilterKeys.length > 0 && !allowedFilterKeys.includes(i.key)
           );
@@ -139,6 +142,7 @@ interface Props {
   allowedFilterKeys?: Array<string>;
   isConditional?: boolean;
   isMobile?: boolean;
+  mode: 'filters' | 'events';
 }
 
 function FilterModal(props: Props) {
@@ -149,6 +153,7 @@ function FilterModal(props: Props) {
     excludeFilterKeys = [],
     allowedFilterKeys = [],
     isConditional,
+    mode,
   } = props;
   const [searchQuery, setSearchQuery] = React.useState('');
   const [category, setCategory] = React.useState('ALL');
@@ -182,7 +187,7 @@ function FilterModal(props: Props) {
     : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys)
+    filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys, mode)
   );
 
   const isResultEmpty =

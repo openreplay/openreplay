@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import FilterList from 'Shared/Filters/FilterList';
+import { FilterList } from 'Shared/Filters/FilterList';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 

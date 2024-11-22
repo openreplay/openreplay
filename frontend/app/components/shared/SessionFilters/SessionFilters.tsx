@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { debounce } from 'App/utils';
-import FilterList from 'Shared/Filters/FilterList';
+import { FilterList, EventsList } from 'Shared/Filters/FilterList';
 
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -81,7 +81,18 @@ function SessionFilters() {
 
   return (
     <div className="relative">
+      <EventsList
+        filter={appliedFilter}
+        onAddFilter={onAddFilter}
+        onUpdateFilter={onUpdateFilter}
+        onRemoveFilter={onRemoveFilter}
+        onChangeEventsOrder={onChangeEventsOrder}
+        saveRequestPayloads={saveRequestPayloads}
+        onFilterMove={onFilterMove}
+        mergeDown
+      />
       <FilterList
+        mergeUp
         filter={appliedFilter}
         onAddFilter={onAddFilter}
         onUpdateFilter={onUpdateFilter}

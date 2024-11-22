@@ -1,9 +1,8 @@
-import { GripHorizontal } from 'lucide-react';
+import { GripHorizontal, Plus, Filter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
 import { Icon } from 'UI';
-
 import FilterItem from '../FilterItem';
 import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
 import FilterSelection from '../FilterSelection/FilterSelection';
@@ -24,9 +23,71 @@ interface Props {
   actions?: React.ReactNode[];
   onlyFilters?: boolean;
   onAddFilter: (filter: any) => void;
+  mergeDown?: boolean;
+  mergeUp?: boolean;
 }
 
-function FilterList(props: Props) {
+export const FilterList = observer((props: Props) => {
+  const {
+    observeChanges = () => {},
+    filter,
+    excludeFilterKeys = [],
+    isConditional,
+    onAddFilter,
+  } = props;
+
+  const filters = filter.filters;
+  useEffect(observeChanges, [filters]);
+
+  const onRemoveFilter = (filterIndex: any) => {
+    props.onRemoveFilter(filterIndex);
+  };
+  return (
+    <div
+      className={'py-2 px-4 widget-wrapper'}
+      style={{
+        borderBottomLeftRadius: props.mergeDown ? 0 : 'unset',
+        borderBottomRightRadius: props.mergeDown ? 0 : 'unset',
+        borderTopLeftRadius: props.mergeUp ? 0 : 'unset',
+        borderTopRightRadius: props.mergeUp ? 0 : 'unset',
+      }}
+    >
+      <div className={'flex items-center gap-2 mb-2'}>
+        <div className="font-semibold">Filters</div>
+        <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter}>
+          <Button icon={<Filter size={16} strokeWidth={1} />} type="default" size={'small'}>
+            Add
+          </Button>
+        </FilterSelection>
+      </div>
+      {filters.map((filter: any, filterIndex: any) =>
+        !filter.isEvent ? (
+          <div
+            className={'py-2 hover:bg-active-blue px-5'}
+            style={{
+              marginLeft: '-1.25rem',
+              width: 'calc(100% + 2.5rem)',
+            }}
+          >
+            <FilterItem
+              key={filterIndex}
+              readonly={props.readonly}
+              isFilter={true}
+              filterIndex={filterIndex}
+              filter={filter}
+              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+              onRemoveFilter={() => onRemoveFilter(filterIndex)}
+              excludeFilterKeys={excludeFilterKeys}
+              isConditional={isConditional}
+            />
+          </div>
+        ) : null
+      )}
+    </div>
+  );
+});
+
+export const EventsList = observer((props: Props) => {
   const {
     observeChanges = () => {},
     filter,
@@ -37,7 +98,6 @@ function FilterList(props: Props) {
     isConditional,
     actions = [],
     onAddFilter,
-    onlyFilters,
   } = props;
 
   const filters = filter.filters;
@@ -113,125 +173,81 @@ function FilterList(props: Props) {
 
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
-    <div className="widget-wrapper flex flex-col">
-        {onlyFilters ? null : (<div className={'border-b border-b-gray-lighter py-2 px-4'}>
-          <div className="flex items-center mb-2 gap-2">
-            <div className="font-semibold">
-              {filter.eventsHeader || 'Events'}
-            </div>
-            <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
-              <Button
-                icon={<Icon name={'filter'} />}
-                type="default"
-                size={'small'}
-              >
-                Add
-              </Button>
-            </FilterSelection>
+    <div
+      className={'widget-wrapper border-b border-b-gray-lighter py-2 px-4'}
+      style={{
+        borderBottomLeftRadius: props.mergeDown ? 0 : 'unset',
+        borderBottomRightRadius: props.mergeDown ? 0 : 'unset',
+        borderTopLeftRadius: props.mergeUp ? 0 : 'unset',
+        borderTopRightRadius: props.mergeUp ? 0 : 'unset',
+        marginBottom: props.mergeDown ? '-1px' : undefined,
+      }}
+    >
+      <div className="flex items-center mb-2 gap-2">
+        <div className="font-semibold">{filter.eventsHeader || 'Events'}</div>
+        <FilterSelection mode={'events'} filter={undefined} onFilterClick={onAddFilter}>
+          <Button icon={<Plus size={16} strokeWidth={1} />} type="default" size={'small'}>
+            Add
+          </Button>
+        </FilterSelection>
 
-            <div className={'ml-auto'}>
-              {!hideEventsOrder && (
-                <EventsOrder
-                  filter={filter}
-                  onChange={props.onChangeEventsOrder}
-                />
-              )}
-              {actions &&
-                actions.map((action, index) => <div key={index}>{action}</div>)}
-            </div>
-          </div>
-          <div className={'flex flex-col'}>
-            {filters.map((filter: any, filterIndex: number) =>
-              filter.isEvent ? (
-                <div
-                  style={{
-                    pointerEvents: 'unset',
-                    paddingTop:
-                      hoveredItem.i === filterIndex &&
-                      hoveredItem.position === 'top'
-                        ? '1.5rem'
-                        : '0.5rem',
-                    paddingBottom:
-                      hoveredItem.i === filterIndex &&
-                      hoveredItem.position === 'bottom'
-                        ? '1.5rem'
-                        : '0.5rem',
-                    marginLeft: '-1.25rem',
-                    width: 'calc(100% + 2.5rem)',
-                  }}
-                  className={
-                    'hover:bg-active-blue px-5 gap-2 items-center flex'
-                  }
-                  id={`${filter.key}-${filterIndex}`}
-                  onDragOver={(e) => handleDragOverEv(e, filterIndex)}
-                  onDrop={(e) => handleDrop(e)}
-                  key={`${filter.key}-${filterIndex}`}
-                >
-                  {!!props.onFilterMove && eventsNum > 1 ? (
-                    <div
-                      className={'p-2 cursor-grab'}
-                      draggable={!!props.onFilterMove}
-                      onDragStart={(e) =>
-                        handleDragStart(
-                          e,
-                          filterIndex,
-                          `${filter.key}-${filterIndex}`
-                        )
-                      }
-                    >
-                      <GripHorizontal size={16} />
-                    </div>
-                  ) : null}
-                  <FilterItem
-                    filterIndex={rowIndex++}
-                    filter={filter}
-                    onUpdate={(filter) =>
-                      props.onUpdateFilter(filterIndex, filter)
-                    }
-                    onRemoveFilter={() => onRemoveFilter(filterIndex)}
-                    saveRequestPayloads={saveRequestPayloads}
-                    disableDelete={cannotDeleteFilter}
-                    excludeFilterKeys={excludeFilterKeys}
-                    readonly={props.readonly}
-                    isConditional={isConditional}
-                  />
-                </div>
-              ) : null
-            )}
-          </div>
-        </div>)}
-
-      <div className={'py-2 px-4'}>
-        <div className={'flex items-center gap-2 mb-2'}>
-          <div className="font-semibold">Filters</div>
-          <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
-            <Button
-              icon={<Icon name={'filter'} />}
-              type="default"
-              size={'small'}
-            >
-              Add
-            </Button>
-          </FilterSelection>
+        <div className={'ml-auto'}>
+          {!hideEventsOrder && (
+            <EventsOrder filter={filter} onChange={props.onChangeEventsOrder} />
+          )}
+          {actions &&
+            actions.map((action, index) => <div key={index}>{action}</div>)}
         </div>
-        {filters.map((filter: any, filterIndex: any) =>
-          !filter.isEvent ? (
+      </div>
+      <div className={'flex flex-col'}>
+        {filters.map((filter: any, filterIndex: number) =>
+          filter.isEvent ? (
             <div
-              className={'py-2 hover:bg-active-blue px-5'}
               style={{
+                pointerEvents: 'unset',
+                paddingTop:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'top'
+                    ? '1.5rem'
+                    : '0.5rem',
+                paddingBottom:
+                  hoveredItem.i === filterIndex &&
+                  hoveredItem.position === 'bottom'
+                    ? '1.5rem'
+                    : '0.5rem',
                 marginLeft: '-1.25rem',
                 width: 'calc(100% + 2.5rem)',
               }}
+              className={'hover:bg-active-blue px-5 gap-2 items-center flex'}
+              id={`${filter.key}-${filterIndex}`}
+              onDragOver={(e) => handleDragOverEv(e, filterIndex)}
+              onDrop={(e) => handleDrop(e)}
+              key={`${filter.key}-${filterIndex}`}
             >
+              {!!props.onFilterMove && eventsNum > 1 ? (
+                <div
+                  className={'p-2 cursor-grab'}
+                  draggable={!!props.onFilterMove}
+                  onDragStart={(e) =>
+                    handleDragStart(
+                      e,
+                      filterIndex,
+                      `${filter.key}-${filterIndex}`
+                    )
+                  }
+                >
+                  <GripHorizontal size={16} />
+                </div>
+              ) : null}
               <FilterItem
-                key={filterIndex}
-                readonly={props.readonly}
-                isFilter={true}
-                filterIndex={filterIndex}
+                filterIndex={rowIndex++}
                 filter={filter}
                 onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
+                saveRequestPayloads={saveRequestPayloads}
+                disableDelete={cannotDeleteFilter}
                 excludeFilterKeys={excludeFilterKeys}
+                readonly={props.readonly}
                 isConditional={isConditional}
               />
             </div>
@@ -240,6 +256,4 @@ function FilterList(props: Props) {
       </div>
     </div>
   );
-}
-
-export default observer(FilterList);
+});

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import FilterModal from '../FilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
-import { Icon } from 'UI';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
@@ -17,6 +16,7 @@ interface Props {
   disabled?: boolean;
   isConditional?: boolean;
   isMobile?: boolean;
+  mode: 'filters' | 'events';
 }
 
 function FilterSelection(props: Props) {
@@ -28,7 +28,8 @@ function FilterSelection(props: Props) {
     allowedFilterKeys = [],
     disabled = false,
     isConditional,
-    isMobile
+    isMobile,
+    mode,
   } = props;
   const [showModal, setShowModal] = useState(false);
 
@@ -83,6 +84,7 @@ function FilterSelection(props: Props) {
               allowedFilterKeys={allowedFilterKeys}
               isConditional={isConditional}
               isMobile={isMobile}
+              mode={mode}
             />
           </div>
         )}

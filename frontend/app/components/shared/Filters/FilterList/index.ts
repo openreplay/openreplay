@@ -1,1 +1,1 @@
-export { default } from './FilterList';
+export { FilterList, EventsList } from './FilterList';

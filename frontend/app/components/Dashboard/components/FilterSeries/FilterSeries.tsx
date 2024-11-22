@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import FilterList from 'Shared/Filters/FilterList';
+import { EventsList } from 'Shared/Filters/FilterList';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
@@ -202,7 +202,7 @@ function FilterSeries(props: Props) {
       )}
 
       {expanded ? (
-        <FilterList
+        <EventsList
           filter={series.filter}
           onUpdateFilter={onUpdateFilter}
           onRemoveFilter={onRemoveFilter}
