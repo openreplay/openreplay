@@ -1357,6 +1357,7 @@ class LiveFilterType(str, Enum):
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
+    USER_CITY = FilterType.USER_CITY.value
     USER_STATE = FilterType.USER_STATE.value
     USER_ID = FilterType.USER_ID.value
     USER_ANONYMOUS_ID = FilterType.USER_ANONYMOUS_ID.value
