@@ -4,6 +4,6 @@
     "allowSyntheticDefaultImports": true,
     "lib": ["es2020", "dom"],
     "declaration": true,
-    "declarationDir": "../../dist/lib",
-  },
+    "declarationDir": "../../dist/types",
+  }
 }

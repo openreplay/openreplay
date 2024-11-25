@@ -49,7 +49,7 @@ function printObject(arg: any): string {
     return `Array(${length})[${values}]`
   }
   if (typeof arg === 'object') {
-    const res = []
+    const res: string[] = []
     let i = 0
     for (const k in arg) {
       if (++i === 10) {

@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
     "rootDir": "src",
-    "noImplicitAny": true,
-    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
     "strictNullChecks": true,
-    "alwaysStrict": true,
+    "alwaysStrict": false,
     "target": "es2020",
     "lib": ["DOM", "ES2020"],
-    "module": "NodeNext",
-    "moduleResolution":  "NodeNext",
+    "module": "ES2022",
+    "moduleResolution":  "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "outDir": "build"
   },
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts"]
 }
