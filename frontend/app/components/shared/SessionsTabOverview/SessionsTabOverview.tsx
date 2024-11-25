@@ -37,9 +37,11 @@ function SessionsTabOverview() {
       ) : null}
       <SessionHeader />
       <div className="border-b" />
-      <LatestSessionsMessage />
       {!isNotesRoute ? (
-        <SessionList />
+        <>
+          <LatestSessionsMessage />
+          <SessionList />
+        </>
       ) : (
         <NotesList />
       )}

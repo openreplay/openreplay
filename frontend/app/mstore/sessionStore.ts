@@ -170,7 +170,7 @@ export default class SessionStore {
     }
     const nextEntryNum =
       keys.length > 0
-      ? Math.max(...keys.map((key) => this.prefetchedMobUrls[key].entryNum || 0)) + 1
+      ? Math.max(...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0)) + 1
       : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
