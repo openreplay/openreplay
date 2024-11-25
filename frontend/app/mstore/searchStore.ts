@@ -228,8 +228,8 @@ class SearchStore {
     if (this.latestRequestTime) {
       const period = Period({ rangeName: CUSTOM_RANGE, start: this.latestRequestTime, end: Date.now() });
       const newTimestamps: any = period.toJSON();
-      filter.startTimestamp = newTimestamps.startDate;
-      filter.endTimestamp = newTimestamps.endDate;
+      filter.startDate = newTimestamps.startDate;
+      filter.endDate = newTimestamps.endDate;
     }
     searchService.checkLatestSessions(filter).then((response: any) => {
       runInAction(() => {
@@ -337,6 +337,7 @@ class SearchStore {
     }
 
     this.latestRequestTime = Date.now();
+    this.latestList = List();
 
     await sessionStore.fetchSessions({
       ...filter,
