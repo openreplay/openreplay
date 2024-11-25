@@ -23,7 +23,7 @@ function DashboardWidgetGrid(props: Props) {
     <Loader loading={loading}>
       {
         list?.length === 0 ? (
-          <div className={'flex-1 flex justify-center items-center'} style={{ minHeight: 620 }}>
+          <div className={'flex-1 flex justify-center items-center pt-10'} style={{ minHeight: 620 }}>
             <AddCardSection />
           </div>
         ) : (

@@ -58,7 +58,9 @@ function WidgetView(props: Props) {
         }
       });
     } else {
-      metricStore.init();
+      if (!metricStore.instance) {
+        metricStore.init();
+      }
     }
   }, []);
 

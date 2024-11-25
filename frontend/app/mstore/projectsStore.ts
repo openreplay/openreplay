@@ -22,6 +22,10 @@ export default class ProjectsStore {
     return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
   }
 
+  get activeSiteId() {
+    return this.active?.id || this.siteId;
+  }
+
   getSiteId = () => {
     return {
       siteId: this.siteId,

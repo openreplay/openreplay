@@ -82,6 +82,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
     metric.updateKey('hasChanged', true)
   }
 
+  console.log(metric.series, isTable, isClickMap, isInsights, isPathAnalysis, isFunnel)
   return (
     <>
       {metric.series.length > 0 &&

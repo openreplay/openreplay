@@ -145,6 +145,17 @@ interface Props {
   mode: 'filters' | 'events';
 }
 
+export const getNewIcon = (filter: Record<string, any>) => {
+  if (filter.icon?.includes('metadata')) {
+    return IconMap[FilterKey.METADATA];
+  }
+  // @ts-ignore
+  if (IconMap[filter.key]) {
+    // @ts-ignore
+    return IconMap[filter.key];
+  } else return <Icon name={filter.icon} size={16} />;
+};
+
 function FilterModal(props: Props) {
   const {
     isLive,
@@ -194,17 +205,6 @@ function FilterModal(props: Props) {
     (!filterSearchList || Object.keys(filterSearchList).length === 0) &&
     matchingCategories.length === 0 &&
     Object.keys(matchingFilters).length === 0;
-
-  const getNewIcon = (filter: Record<string, any>) => {
-    if (filter.icon?.includes('metadata')) {
-      return IconMap[FilterKey.METADATA];
-    }
-    // @ts-ignore
-    if (IconMap[filter.key]) {
-      // @ts-ignore
-      return IconMap[filter.key];
-    } else return <Icon name={filter.icon} size={16} />;
-  };
 
   const displayedFilters =
     category === 'ALL'
@@ -262,39 +262,6 @@ function FilterModal(props: Props) {
             : null}
         </div>
       </div>
-      {/*<div*/}
-      {/*  className={searchQuery && !isResultEmpty ? "mb-6" : ""}*/}
-      {/*  style={{ columns: matchingCategories.length > 1 ? "auto 200px" : 1 }}*/}
-      {/*>*/}
-      {/*  {matchingCategories.map((key) => {*/}
-      {/*    return (*/}
-      {/*      <div*/}
-      {/*        className="mb-6 flex flex-col gap-2 break-inside-avoid"*/}
-      {/*        key={key}*/}
-      {/*      >*/}
-      {/*        <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">*/}
-      {/*          {key}*/}
-      {/*        </div>*/}
-      {/*        <div>*/}
-      {/*          {matchingFilters[key] &&*/}
-      {/*            matchingFilters[key].map((filter: Record<string, any>) => (*/}
-      {/*              <div*/}
-      {/*                key={filter.label}*/}
-      {/*                className={cn(*/}
-      {/*                  stl.optionItem,*/}
-      {/*                  'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2 rounded-lg hover:shadow-sm'*/}
-      {/*                )}*/}
-      {/*                onClick={() => onFilterClick({ ...filter, value: [''] })}*/}
-      {/*              >*/}
-      {/*                {getNewIcon(filter)}*/}
-      {/*                <span>{filter.label}</span>*/}
-      {/*              </div>*/}
-      {/*            ))}*/}
-      {/*        </div>*/}
-      {/*      </div>*/}
-      {/*    );*/}
-      {/*  })}*/}
-      {/*</div>*/}
       {showSearchList && (
         <Loader loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">

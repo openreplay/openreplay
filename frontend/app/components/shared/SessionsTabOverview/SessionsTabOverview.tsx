@@ -3,7 +3,6 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 
 import LatestSessionsMessage from './components/LatestSessionsMessage';
-import NotesList from './components/Notes/NoteList';
 import SessionHeader from './components/SessionHeader';
 import SessionList from './components/SessionList';
 import { observer } from 'mobx-react-lite';
@@ -12,7 +11,6 @@ function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
-  const isNotesRoute = searchStore.activeTab.type === 'notes';
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
@@ -38,11 +36,7 @@ function SessionsTabOverview() {
       <SessionHeader />
       <div className="border-b" />
       <LatestSessionsMessage />
-      {!isNotesRoute ? (
-        <SessionList />
-      ) : (
-        <NotesList />
-      )}
+      <SessionList />
     </div>
   );
 }

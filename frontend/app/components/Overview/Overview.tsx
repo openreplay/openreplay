@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
@@ -12,6 +12,7 @@ import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
+import NotesRoute from "../shared/SessionsTabOverview/components/Notes/NotesRoute";
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -34,8 +35,11 @@ function Overview({ match: { params } }: IProps) {
   }, [tab]);
   return (
     <Switch>
-      <Route exact strict
-             path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
+      <Route
+        exact
+        strict
+        path={[withSiteId(sessions(), siteId), withSiteId(bookmarks(), siteId)]}
+      >
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <NoSessionsMessage siteId={siteId} />
           <SearchActions />
@@ -43,6 +47,9 @@ function Overview({ match: { params } }: IProps) {
           <div className="my-4" />
           <SessionsTabOverview />
         </div>
+      </Route>
+      <Route exact strict path={withSiteId(notes(), siteId)}>
+        <NotesRoute />
       </Route>
       <Route exact strict path={withSiteId(fflags(), siteId)}>
         <FFlagsList siteId={siteId} />

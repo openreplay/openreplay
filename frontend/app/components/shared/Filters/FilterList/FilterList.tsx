@@ -52,7 +52,7 @@ export const FilterList = observer((props: Props) => {
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
       }}
     >
-      <div className={'flex items-center gap-2 mb-2'}>
+      <div className={'flex items-center mb-2'} style={{ gap: '0.65rem' }}>
         <div className="font-semibold">Filters</div>
         <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter}>
           <Button icon={<Filter size={16} strokeWidth={1} />} type="default" size={'small'}>

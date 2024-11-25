@@ -4,6 +4,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
+import { getNewIcon } from "../FilterModal/FilterModal";
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -59,7 +60,7 @@ function FilterSelection(props: Props) {
         ) : (
           <div
             className={cn(
-              'rounded-lg py-1 px-2 flex items-center cursor-pointer bg-white border border-gray-light text-ellipsis',
+              'rounded-lg py-1 px-2 flex items-center gap-1 cursor-pointer bg-white border border-gray-light text-ellipsis',
               { 'opacity-50 pointer-events-none': disabled }
             )}
             style={{
@@ -67,6 +68,9 @@ function FilterSelection(props: Props) {
             }}
             onClick={() => setShowModal(true)}
           >
+            <div>
+              {getNewIcon(filter)}
+            </div>
             <div
               className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
               style={{ textOverflow: 'ellipsis' }}

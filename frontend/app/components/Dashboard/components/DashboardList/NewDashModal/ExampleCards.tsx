@@ -13,8 +13,8 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
-  PERFORMANCE,
-} from 'App/constants/card';
+  PERFORMANCE, RETENTION
+} from "App/constants/card";
 import { FilterKey } from 'Types/filter/filterType';
 import { BarChart, TrendingUp, SearchSlash } from 'lucide-react';
 import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues';

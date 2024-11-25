@@ -125,6 +125,7 @@ export default class MetricStore {
       }
     }
 
+    console.log('ch', obj)
     Object.assign(this.instance, obj);
     this.instance.updateKey('hasChanged', updateChangeFlag);
   }

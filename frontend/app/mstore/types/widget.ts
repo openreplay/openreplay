@@ -333,7 +333,7 @@ export default class Widget {
                         return unique;
                     }, []);
             } else {
-                const updatedData: any = this.calculateTotalSeries(data);
+                const updatedData: any = data; // we don't use total anymore this.calculateTotalSeries(data);
                 _data['chart'] = getChartFormatter(period)(updatedData);
                 _data['namesMap'] = Array.isArray(updatedData)
                   ? updatedData

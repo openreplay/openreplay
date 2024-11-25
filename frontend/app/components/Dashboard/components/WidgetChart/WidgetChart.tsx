@@ -57,7 +57,6 @@ function WidgetChart(props: Props) {
     const prevMetricRef = useRef<any>();
     const isMounted = useIsMounted();
     const [data, setData] = useState<any>(metric.data);
-
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
 

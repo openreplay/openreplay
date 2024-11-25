@@ -29,13 +29,13 @@ export default {
         axisLine: {stroke: '#CCCCCC'},
         interval: 0,
         dataKey: "time",
-        tick: {fill: '#999999', fontSize: 9},
+        tick: {fill: '#000000', fontSize: 9},
         tickLine: {stroke: '#CCCCCC'},
         strokeWidth: 0.5
     },
     yaxis: {
         axisLine: {stroke: '#CCCCCC'},
-        tick: {fill: '#999999', fontSize: 9},
+        tick: {fill: '#000000', fontSize: 9},
         tickLine: {stroke: '#CCCCCC'},
     },
     axisLabelLeft: {
@@ -50,9 +50,6 @@ export default {
     tickFormatterBytes: val => Math.round(val / 1024 / 1024),
     chartMargins: {left: 0, right: 20, top: 10, bottom: 5},
     tooltip: {
-        cursor: {
-            fill: '#f6f6f6'
-        },
         contentStyle: {
             padding: '5px',
             background: 'white',

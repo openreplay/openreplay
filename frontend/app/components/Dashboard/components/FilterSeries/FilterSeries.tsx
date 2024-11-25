@@ -124,7 +124,7 @@ function FilterSeries(props: Props) {
     canExclude = false,
     expandable = false,
   } = props;
-  const [expanded, setExpanded] = useState(!expandable);
+  const [expanded, setExpanded] = useState(hideHeader || !expandable);
   const { series, seriesIndex } = props;
   const [prevLength, setPrevLength] = useState(0);
 
@@ -180,7 +180,7 @@ function FilterSeries(props: Props) {
         />
       )}
 
-      {expandable && (
+      {!hideHeader && expandable && (
         <Space
           className="justify-between w-full py-2 cursor-pointer"
           onClick={() => setExpanded(!expanded)}
@@ -212,7 +212,7 @@ function FilterSeries(props: Props) {
           onFilterMove={onFilterMove}
           excludeFilterKeys={excludeFilterKeys}
           onAddFilter={onAddFilter}
-          mergeUp
+          mergeUp={!hideHeader}
         />
       ) : null}
     </div>
