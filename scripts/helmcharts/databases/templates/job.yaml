@@ -1,0 +1,116 @@
+{{- if or .Values.postgresql.oldPostgresqlPassword .Values.clickhouse.oldPassword }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: update-db-passwords
+  namespace: "{{ .Release.Namespace }}"
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+spec:
+  template:
+    spec:
+      containers:
+      {{- if .Values.postgresql.oldPostgresqlPassword }}
+      - name: update-postgres-password
+        image: postgres:13
+        env:
+          - name: PGUSER
+            value: {{.Values.postgresql.postgresqlUser}}
+          - name: PGPASSWORD_NEW
+            value: {{.Values.postgresql.postgresqlPassword}}  # current password
+          - name: PGPASSWORD_OLD
+            value: {{.Values.postgresql.oldPostgresqlPassword}}  # old password
+          - name: PGHOST
+            value: {{.Values.postgresql.postgresqlHost}}
+          - name: PGPORT
+            value: "{{.Values.postgresql.postgresqlPort}}"
+        command: ["/bin/bash", "-c", "--"]
+        args:
+          - |
+            # Try to login with the current password
+            if PGPASSWORD=$PGPASSWORD_NEW psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q'; then
+              echo "Successfully logged in with current password. No update needed."
+              exit 0
+            else
+              echo "Failed to login with current password, trying with old password."
+              # Try to login with the old password
+              if PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c '\q'; then
+                echo "Successfully logged in with old password. Updating password to the new one."
+                # Update the password to the new one
+                PGPASSWORD=$PGPASSWORD_OLD psql -h $PGHOST -p $PGPORT -U $PGUSER -d postgres -c "ALTER USER $PGUSER WITH PASSWORD '$PGPASSWORD_NEW';"
+                if [ $? -eq 0 ]; then
+                  echo "Password updated successfully."
+                  exit 0
+                else
+                  echo "Failed to update the password."
+                  exit 1
+                fi
+              else
+                echo "Failed to login with both current and old passwords."
+                exit 1
+              fi
+            fi
+      {{- end }}
+      {{- if .Values.clickhouse.oldPasswordnever }} # This will never trigger, as there is no clickhouse server right now.
+      - name: update-clickhouse-password
+        image: clickhouse/clickhouse-server:22.8
+        env:
+          - name: CLICKHOUSE_USER
+            value: {{.Values.clickhouse.username}}
+          - name: CLICKHOUSE_PASSWORD
+            value: {{.Values.clickhouse.password}}  # current password
+          - name: CLICKHOUSE_PASSWORD_OLD
+            value: {{.Values.clickhouse.oldPassword}}  # old password
+          - name: CLICKHOUSE_HOST
+            value: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+          - name: CLICKHOUSE_PORT
+            value: "9000"
+        command: ["/bin/bash", "-c", "--"]
+        args:
+          - |
+            # Function to check if the Clickhouse server is reachable
+            is_clickhouse_reachable() {
+              [ "$(curl -s -o /dev/null -w '%{http_code}' http://$CLICKHOUSE_HOST:$CLICKHOUSE_PORT/ping)" -eq 200 ]
+            }
+
+            # Check if Clickhouse server is reachable
+            if is_clickhouse_reachable; then
+              echo "Clickhouse server is reachable, attempting to login with the current password."
+
+              # Try to login with the current password
+              if echo 'SELECT 1' | clickhouse-client --host $CLICKHOUSE_HOST --port $CLICKHOUSE_PORT --user $CLICKHOUSE_USER --password $CLICKHOUSE_PASSWORD; then
+                echo "Successfully logged in with current password. No update needed."
+                exit 0
+              else
+                echo "Failed to login with current password, trying with old password."
+
+                # Try to login with the old password
+                if echo 'SELECT 1' | clickhouse-client --host $CLICKHOUSE_HOST --port $CLICKHOUSE_PORT --user $CLICKHOUSE_USER --password $CLICKHOUSE_PASSWORD_OLD; then
+                  echo "Successfully logged in with old password. Updating password to the new one."
+                  
+                  # Generate a new random password and update it
+                  new_password=$(openssl rand -hex 20)
+                  clickhouse-client --host $CLICKHOUSE_HOST --port $CLICKHOUSE_PORT --user $CLICKHOUSE_USER --password $CLICKHOUSE_PASSWORD_OLD --query "ALTER USER $CLICKHOUSE_USER IDENTIFIED WITH PLAINTEXT_PASSWORD BY '$new_password';"
+                  
+                  if [ $? -eq 0 ]; then
+                    echo "Password updated successfully."
+                    exit 0
+                  else
+                    echo "Failed to update the password."
+                    exit 1
+                  fi
+                else
+                  echo "Failed to login with both current and old passwords."
+                  exit 1
+                fi
+              fi
+            else
+              echo "Clickhouse server is not reachable."
+              exit 1
+            fi
+      {{- end}}
+      restartPolicy: Never
+  backoffLimit: 3
+{{- end }}
