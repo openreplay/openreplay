@@ -1,5 +1,7 @@
 import React from 'react';
 import { Card, Space, Typography, Button, Alert, Form } from 'antd';
+import { FilterList } from 'Shared/Filters/FilterList';
+
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -45,8 +47,6 @@ function WidgetFormNew() {
 export default observer(WidgetFormNew);
 
 const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
-  // const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
-  // const tableOptions = metricOf.filter((i) => i.type === 'table');
   const isTable = metric.metricType === TABLE;
   const isClickMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
@@ -54,29 +54,53 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const isPathAnalysis = metric.metricType === USER_PATH;
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
-  const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
-  // const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
   const isSingleSeries = isTable || isFunnel || isClickMap || isInsights || isRetention;
 
-  // const onAddFilter = (filter: any) => {
-  //     metric.series[0].filter.addFilter(filter);
-  //     metric.updateKey('hasChanged', true)
-  // }
+  const onUpdateFilter = (filterIndex: any, filter: any) => {
+    metric.series[0].filter.updateFilter(filterIndex, filter);
+    metric.updateKey('hasChanged', true)
+  };
+
+  const onFilterMove = (newFilters: any) => {
+    metric.series[0].filter.replaceFilters(newFilters.toArray());
+    metric.updateKey('hasChanged', true)
+  };
+
+  const onChangeEventsOrder = (_: any, { name, value }: any) => {
+    metric.series[0].filter.updateKey(name, value);
+    metric.updateKey('hasChanged', true)
+  };
+
+  const onRemoveFilter = (filterIndex: any) => {
+    metric.series[0].filter.removeFilter(filterIndex);
+    metric.updateKey('hasChanged', true)
+  };
+
+  const onAddFilter = (filter: any) => {
+    metric.series[0].filter.addFilter(filter);
+    metric.updateKey('hasChanged', true)
+  }
 
   return (
     <>
-      {
-        metric.series.length > 0 && metric.series
+      {metric.series.length > 0 &&
+        metric.series
           .slice(0, isSingleSeries ? 1 : metric.series.length)
           .map((series: any, index: number) => (
-            <div className="mb-2" key={series.name}>
+            <div className="mb-2 rounded-xl border border-gray-lighter" key={series.name}>
               <FilterSeries
                 canExclude={isPathAnalysis}
                 supportsEmpty={!isClickMap && !isPathAnalysis}
                 excludeFilterKeys={excludeFilterKeys}
                 observeChanges={() => metric.updateKey('hasChanged', true)}
-                hideHeader={isTable || isClickMap || isInsights || isPathAnalysis || isFunnel}
+                hideHeader={
+                  isTable ||
+                  isClickMap ||
+                  isInsights ||
+                  isPathAnalysis ||
+                  isFunnel
+                }
                 seriesIndex={index}
                 series={series}
                 onRemoveSeries={() => metric.removeSeries(index)}
@@ -89,11 +113,13 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
                 expandable={isSingleSeries}
               />
             </div>
-          ))
-      }
+          ))}
 
       {!isSingleSeries && canAddSeries && (
-        <Card styles={{ body: { padding: '4px' } }} className="rounded-full shadow-sm">
+        <Card
+          styles={{ body: { padding: '4px' } }}
+          className="rounded-xl shadow-sm mb-2"
+        >
           <Button
             type="link"
             onClick={() => {
@@ -110,6 +136,21 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           </Button>
         </Card>
       )}
+
+      {metric.series[0] ?
+       <div className={'rounded-xl border border-gray-lighter'}>
+        <FilterList
+          filter={metric.series[0].filter}
+          onUpdateFilter={onUpdateFilter}
+          onRemoveFilter={onRemoveFilter}
+          onChangeEventsOrder={onChangeEventsOrder}
+          supportsEmpty
+          onFilterMove={onFilterMove}
+          excludeFilterKeys={excludeFilterKeys}
+          onAddFilter={onAddFilter}
+        />
+       </div>
+      : null}
     </>
   );
 });

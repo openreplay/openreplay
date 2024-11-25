@@ -44,12 +44,12 @@ export const FilterList = observer((props: Props) => {
   };
   return (
     <div
-      className={'py-2 px-4 widget-wrapper'}
+      className={'py-2 px-4 rounded-xl bg-white border border-gray-lighter'}
       style={{
-        borderBottomLeftRadius: props.mergeDown ? 0 : 'unset',
-        borderBottomRightRadius: props.mergeDown ? 0 : 'unset',
-        borderTopLeftRadius: props.mergeUp ? 0 : 'unset',
-        borderTopRightRadius: props.mergeUp ? 0 : 'unset',
+        borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
+        borderBottomRightRadius: props.mergeDown ? 0 : undefined,
+        borderTopLeftRadius: props.mergeUp ? 0 : undefined,
+        borderTopRightRadius: props.mergeUp ? 0 : undefined,
       }}
     >
       <div className={'flex items-center gap-2 mb-2'}>
@@ -174,17 +174,17 @@ export const EventsList = observer((props: Props) => {
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
-      className={'widget-wrapper border-b border-b-gray-lighter py-2 px-4'}
+      className={'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter'}
       style={{
-        borderBottomLeftRadius: props.mergeDown ? 0 : 'unset',
-        borderBottomRightRadius: props.mergeDown ? 0 : 'unset',
-        borderTopLeftRadius: props.mergeUp ? 0 : 'unset',
-        borderTopRightRadius: props.mergeUp ? 0 : 'unset',
+        borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
+        borderBottomRightRadius: props.mergeDown ? 0 : undefined,
+        borderTopLeftRadius: props.mergeUp ? 0 : undefined,
+        borderTopRightRadius: props.mergeUp ? 0 : undefined,
         marginBottom: props.mergeDown ? '-1px' : undefined,
       }}
     >
       <div className="flex items-center mb-2 gap-2">
-        <div className="font-semibold">{filter.eventsHeader || 'Events'}</div>
+        <div className="font-semibold">Events</div>
         <FilterSelection mode={'events'} filter={undefined} onFilterClick={onAddFilter}>
           <Button icon={<Plus size={16} strokeWidth={1} />} type="default" size={'small'}>
             Add

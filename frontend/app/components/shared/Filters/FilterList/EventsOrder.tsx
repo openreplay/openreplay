@@ -1,6 +1,6 @@
 import {observer} from "mobx-react-lite";
 import {Tooltip} from "UI";
-import {Segmented} from "antd";
+import {Segmented, Select} from "antd";
 import React from "react";
 
 const EventsOrder = observer((props: {
@@ -12,19 +12,19 @@ const EventsOrder = observer((props: {
     const options = [
         {
             name: 'eventsOrder',
-            label: 'THEN',
+            label: 'Then',
             value: 'then',
             disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
         },
         {
             name: 'eventsOrder',
-            label: 'AND',
+            label: 'And',
             value: 'and',
             disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
         },
         {
             name: 'eventsOrder',
-            label: 'OR',
+            label: 'Or',
             value: 'or',
             disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
         },
@@ -42,7 +42,7 @@ const EventsOrder = observer((props: {
             </Tooltip>
         </div>
 
-        <Segmented
+        <Select
             size={"small"}
             className="text-sm"
             onChange={(v) => onChange(null, options.find((i) => i.value === v))}

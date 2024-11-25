@@ -56,8 +56,9 @@ const FilterSeriesHeader = observer(
     };
     return (
       <div
-        className={cn('px-4 h-12 flex items-center relative', {
+        className={cn('px-4 h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl', {
           hidden: props.hidden,
+          'rounded-b-xl': !props.expanded,
         })}
       >
         <Space className="mr-auto" size={30}>
@@ -181,7 +182,7 @@ function FilterSeries(props: Props) {
 
       {expandable && (
         <Space
-          className="justify-between w-full px-5 py-2 cursor-pointer"
+          className="justify-between w-full py-2 cursor-pointer"
           onClick={() => setExpanded(!expanded)}
         >
           <div>
@@ -211,6 +212,7 @@ function FilterSeries(props: Props) {
           onFilterMove={onFilterMove}
           excludeFilterKeys={excludeFilterKeys}
           onAddFilter={onAddFilter}
+          mergeUp
         />
       ) : null}
     </div>
