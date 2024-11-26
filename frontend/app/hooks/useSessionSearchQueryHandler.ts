@@ -6,46 +6,59 @@ import Search from '@/mstore/types/search';
 import { getFilterFromJson } from 'Types/filter/newFilter';
 
 interface Props {
-  onBeforeLoad?: () => Promise<any>;
-  appliedFilter: any;
+  onBeforeLoad?: () => Promise<void>;
+  appliedFilter: Record<string, any>;
   loading: boolean;
 }
 
-const useSessionSearchQueryHandler = (props: Props) => {
+const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading }: Props) => {
   const { searchStore } = useStore();
-  const [beforeHookLoaded, setBeforeHookLoaded] = useState(!props.onBeforeLoad);
-  const { appliedFilter, loading } = props;
+  const [beforeHookLoaded, setBeforeHookLoaded] = useState(!onBeforeLoad);
   const history = useHistory();
 
+  // Apply filter from the query string when the component mounts
   useEffect(() => {
     const applyFilterFromQuery = async () => {
       if (!loading && !searchStore.urlParsed) {
-        if (props.onBeforeLoad) {
-          await props.onBeforeLoad();
-          setBeforeHookLoaded(true);
-        }
+        try {
+          if (onBeforeLoad) {
+            await onBeforeLoad();
+            setBeforeHookLoaded(true);
+          }
 
-        const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
-        const json: any = getFilterFromJson(converter.toJSON());
-        const filter = new Search(json);
-        searchStore.applyFilter(filter, true);
-        searchStore.setUrlParsed()
+          const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
+          const json = getFilterFromJson(converter.toJSON());
+          const filter = new Search(json);
+          searchStore.applyFilter(filter, true);
+          searchStore.setUrlParsed();
+        } catch (error) {
+          console.error('Error applying filter from query:', error);
+        }
       }
     };
 
     void applyFilterFromQuery();
-  }, [loading]);
+  }, [loading, onBeforeLoad, searchStore, history.location.search]);
 
+  // Update the URL whenever the appliedFilter changes
   useEffect(() => {
-    const generateUrlQuery = () => {
+    const updateUrlWithFilter = () => {
       if (!loading && beforeHookLoaded) {
-        const converter = JsonUrlConverter.jsonToUrlParams(appliedFilter);
-        history.replace({ search: converter });
+        const query = JsonUrlConverter.jsonToUrlParams(appliedFilter);
+        history.replace({ search: query });
       }
     };
 
-    generateUrlQuery();
-  }, [appliedFilter, loading, beforeHookLoaded]);
+    updateUrlWithFilter();
+  }, [appliedFilter, loading, beforeHookLoaded, history]);
+
+  // Ensure the URL syncs on remount if already parsed
+  useEffect(() => {
+    if (searchStore.urlParsed) {
+      const query = JsonUrlConverter.jsonToUrlParams(appliedFilter);
+      history.replace({ search: query });
+    }
+  }, [appliedFilter, searchStore.urlParsed, history]);
 
   return null;
 };
