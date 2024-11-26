@@ -143,7 +143,7 @@ export default class Search {
       return new FilterItem(filter).toJson();
     });
 
-    const { startDate, endDate } = this.getDateRange(js.rangeName, js.startDate, js.endDate);
+    const { startDate, endDate } = this.getDateRange(js.rangeValue, js.startDate, js.endDate);
     js.startDate = startDate;
     js.endDate = endDate;
 

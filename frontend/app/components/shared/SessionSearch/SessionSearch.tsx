@@ -45,9 +45,10 @@ function SessionSearch() {
 
   useEffect(() => {
     debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
-  }, [searchStore]);
+  }, []);
 
   useEffect(() => {
+    if (searchStore.urlParsed) return;
     debounceFetch();
   }, [appliedFilter.filters]);
 

@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
 import SessionTags from '../SessionTags';
-import NoteTags from '../Notes/NoteTags';
 import SessionSort from '../SessionSort';
 import { Space } from 'antd';
 import { useStore } from 'App/mstore';
@@ -17,9 +16,6 @@ function SessionHeader() {
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
   const title = useMemo(() => {
-    if (activeTab.type === 'notes') {
-      return 'Notes';
-    }
     if (activeTab.type === 'bookmarks') {
       return isEnterprise ? 'Vault' : 'Bookmarks';
     }
@@ -35,26 +31,15 @@ function SessionHeader() {
   return (
     <div className="flex items-center px-4 py-1 justify-between w-full">
       <h2 className="text-2xl capitalize mr-4">{title}</h2>
-      {activeTab.type !== 'notes' ? (
-        <div className="flex items-center w-full justify-end">
-          {activeTab.type !== 'bookmarks' && (
-            <>
-              <SessionTags />
-              <div className="mr-auto" />
-              <Space>
-                <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
-                <SessionSort />
-              </Space>
-            </>
-          )}
-        </div>
-      ) : null}
-
-      {activeTab.type === 'notes' && (
-        <div className="flex items-center justify-end w-full">
-          <NoteTags />
-        </div>
-      )}
+      <div className="flex items-center w-full justify-end">
+        {activeTab.type !== 'bookmarks' && <SessionTags />}
+        <div className="mr-auto" />
+        <Space>
+          {activeTab.type !== 'bookmarks' &&
+            <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />}
+          <SessionSort />
+        </Space>
+      </div>
     </div>
   );
 }
