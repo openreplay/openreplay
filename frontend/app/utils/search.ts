@@ -1,5 +1,8 @@
-import Period, { CUSTOM_RANGE } from 'Types/app/period';
+import Period, { CUSTOM_RANGE, LAST_24_HOURS } from 'Types/app/period';
 
+const DEFAULT_SORT = 'startTs';
+const DEFAULT_ORDER = 'desc';
+const DEFAULT_EVENTS_ORDER = 'then';
 
 class Filter {
   key: string;
@@ -23,10 +26,6 @@ class Filter {
     };
   }
 }
-
-const DEFAULT_SORT = 'startTs';
-const DEFAULT_ORDER = 'desc';
-const DEFAULT_EVENTS_ORDER = 'then';
 
 export class InputJson {
   filters: Filter[];
@@ -169,7 +168,7 @@ export class JsonUrlConverter {
       index++;
     }
 
-    const rangeValue = params.get(this.keyMap.rangeValue) || 'LAST_24_HOURS';
+    const rangeValue = params.get(this.keyMap.rangeValue) || LAST_24_HOURS;
     const rangeValues = this.getDateRangeValues(rangeValue, params.get(this.keyMap.startDate), params.get(this.keyMap.endDate));
 
     return new InputJson(
