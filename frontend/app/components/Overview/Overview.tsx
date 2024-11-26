@@ -12,6 +12,8 @@ import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
+import NotesList from 'Shared/SessionsTabOverview/components/Notes/NoteList';
+import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -36,13 +38,14 @@ function Overview({ match: { params } }: IProps) {
   return (
     <Switch>
       <Route exact strict
-             path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
+             path={[withSiteId(sessions(), siteId), withSiteId(bookmarks(), siteId)]}>
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
-          <NoSessionsMessage siteId={siteId} />
-          <MainSearchBar />
-          <SessionSearch />
-          <div className="my-4" />
           <SessionsTabOverview />
+        </div>
+      </Route>
+      <Route exact strict path={withSiteId(notes(), siteId)}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+          <NotesList />
         </div>
       </Route>
       <Route exact strict path={withSiteId(fflags(), siteId)}>

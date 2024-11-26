@@ -264,6 +264,8 @@ class SearchStore {
       });
     }
 
+    this.currentPage = 1;
+
     if (filter.value && filter.value[0] && filter.value[0] !== '') {
       void this.fetchSessions();
     }

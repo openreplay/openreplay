@@ -73,7 +73,6 @@ function SessionList() {
   }, [isBookmark, isVault, activeTab, location.pathname]);
   const [statusData, setStatusData] = React.useState<SessionStatus>({ status: 0, count: 0 });
 
-
   const fetchStatus = async () => {
     const response = await sessionService.getRecordingStatus();
     setStatusData({
