@@ -1,18 +1,18 @@
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, CloseOutlined } from '@ant-design/icons';
 import Period from 'Types/app/period';
-import { Dropdown, Button } from 'antd';
+import { Dropdown } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { components } from 'react-select';
-import { CUSTOM_RANGE, DATE_RANGE_OPTIONS } from 'App/dateRange';
-
+import { CUSTOM_RANGE, DATE_RANGE_OPTIONS, DATE_RANGE_COMPARISON_OPTIONS } from 'App/dateRange';
+import { Calendar } from 'lucide-react'
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import Select from 'Shared/Select';
 
 interface Props {
-  period: any;
+  period: any | null;
   onChange: (data: any) => void;
   disableCustom?: boolean;
   right?: boolean;
@@ -20,17 +20,18 @@ interface Props {
   isAnt?: boolean;
   small?: boolean;
   useButtonStyle?: boolean;  // New prop to control button style
-
+  comparison?: boolean;
   [x: string]: any;
 }
 
 function SelectDateRange(props: Props) {
   const [isCustom, setIsCustom] = React.useState(false);
   const { right = false, period, disableCustom = false, timezone, useButtonStyle = false } = props;
-  let selectedValue = DATE_RANGE_OPTIONS.find(
-    (obj: any) => obj.value === period.rangeName
-  );
-  const options = DATE_RANGE_OPTIONS.filter((obj: any) =>
+  const dateRangeOptions = props.comparison ? DATE_RANGE_COMPARISON_OPTIONS : DATE_RANGE_OPTIONS;
+  let selectedValue = period?.rangeName ? dateRangeOptions.find(
+    (obj: any) => obj.value === period?.rangeName
+  ) : null;
+  const options = dateRangeOptions.filter((obj: any) =>
     disableCustom ? obj.value !== CUSTOM_RANGE : true
   );
 
@@ -54,7 +55,7 @@ function SelectDateRange(props: Props) {
     setIsCustom(false);
   };
 
-  const isCustomRange = period.rangeName === CUSTOM_RANGE;
+  const isCustomRange = period ? period.rangeName === CUSTOM_RANGE : false;
   const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const customRange = isCustomRange ? period.rangeFormatted(isUSLocale ? "MMM dd yyyy, hh:mm a" : "MMM dd yyyy, HH:mm") : '';
 
@@ -70,28 +71,54 @@ function SelectDateRange(props: Props) {
       },
     };
 
-
     return (
       <div className={'relative'}>
-        <Dropdown menu={menuProps} >
-          {useButtonStyle ? (
-            <Button type='text'>
-              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
-              <DownOutlined />
-            </Button>
-          ) : (
-            <div className={'cursor-pointer flex items-center gap-2'}>
-              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
-              <DownOutlined />
+        {props.comparison ? (
+          <div className={'flex items-center gap-0'}>
+            <Dropdown menu={menuProps} className={'px-2 py-1'}>
+              <div className={"cursor-pointer flex items-center gap-2 border-l border-t border-b border-gray-light rounded-l !border-r-0"}>
+              <span>
+                {isCustomRange
+                 ? customRange
+                 : `Compare to ${selectedValue ? selectedValue?.label : ''}`}
+              </span>
+                <DownOutlined />
+              </div>
+            </Dropdown>
+            <div
+              className={"flex items-center justify-center border border-gray-light p-2 hover:border-main rounded-r"}
+              style={{ height: 30 }}
+              onClick={() => props.onChange(null)}
+            >
+              <CloseOutlined />
             </div>
-          )}
-        </Dropdown>
+          </div>
+        ) : (
+          <Dropdown menu={menuProps} className={'px-2 py-1'}>
+            {useButtonStyle ? (
+              <div className={'flex items-center gap-2 border border-gray-light rounded cursor-pointer'}>
+                <Calendar size={16} />
+                <span>
+                  {isCustomRange ? customRange : selectedValue?.label}
+                </span>
+                <DownOutlined />
+              </div>
+            ) : (
+              <div className={'cursor-pointer flex items-center gap-2'}>
+                <span>
+                  {isCustomRange ? customRange : selectedValue?.label}
+                </span>
+                <DownOutlined />
+              </div>
+            )}
+          </Dropdown>
+        )}
         {isCustom && (
           <OutsideClickDetectingDiv
             onClickOutside={(e: any) => {
               if (
-                e.target.className.includes('react-calendar')
-                || e.target.parentElement.parentElement.classList.contains(
+                e.target.className.includes('react-calendar') ||
+                e.target.parentElement.parentElement.classList.contains(
                   'rc-time-picker-panel-select'
                 ) ||
                 e.target.parentElement.parentElement.classList[0]?.includes(
@@ -117,7 +144,7 @@ function SelectDateRange(props: Props) {
                 onApply={onApplyDateRange}
                 onCancel={() => setIsCustom(false)}
                 selectedDateRange={period.range}
-                className='h-fit'
+                className="h-fit"
               />
             </div>
           </OutsideClickDetectingDiv>

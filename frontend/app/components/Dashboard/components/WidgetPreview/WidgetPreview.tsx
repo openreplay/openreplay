@@ -1,11 +1,9 @@
-import { Button, Space, Switch } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-
-import { HEATMAP, USER_PATH } from 'App/constants/card';
+import WidgetDateRange from "Components/Dashboard/components/WidgetDateRange/WidgetDateRange";
 import { useStore } from 'App/mstore';
-import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker';
+import { TIMESERIES } from "../../../../constants/card";
 
 import WidgetWrapper from '../WidgetWrapper';
 import WidgetOptions from 'Components/Dashboard/components/WidgetOptions';
@@ -21,14 +19,16 @@ function WidgetPreview(props: Props) {
   const { metricStore, dashboardStore } = useStore();
   const metric: any = metricStore.instance;
 
+  // compare logic
   return (
     <>
       <div
         className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}
       >
-        <div className="flex items-center justify-between px-4 pt-2">
-          <h2 className="text-xl">{props.name}</h2>
-          <div className="flex items-center">
+        <div className="flex items-center gap-2 px-4 pt-2">
+          <WidgetDateRange label="" />
+          {metric.metricType === TIMESERIES ? <WidgetDateRange comparison label="" /> : null}
+          <div className="flex items-center ml-auto">
             <WidgetOptions />
             {/*{metric.metricType === USER_PATH && (*/}
             {/*  <a*/}
@@ -46,7 +46,6 @@ function WidgetPreview(props: Props) {
             {/*    </Space>*/}
             {/*  </a>*/}
             {/*)}*/}
-
 
             {/*{isTimeSeries && (*/}
             {/*    <>*/}
@@ -103,8 +102,6 @@ function WidgetPreview(props: Props) {
             {/*    />*/}
             {/*</>*/}
             {/*)}*/}
-
-
 
             {/* add to dashboard */}
             {/*{metric.exists() && (*/}

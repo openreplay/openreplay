@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
-import { formatTimeOrDate } from 'App/date';
-import { Button, Table } from 'antd';
-import type { TableProps } from 'antd';
-import CustomTooltip from "../CustomChartTooltip";
-
-import { Eye, EyeOff } from 'lucide-react';
-import { Styles } from '../../common';
+import React from 'react';
+import CustomTooltip from "./CustomChartTooltip";
+import { Styles } from '../common';
 import {
   ResponsiveContainer,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   Legend,
 } from 'recharts';
-import cn from 'classnames';
 
 interface Props {
   data: any;
@@ -39,9 +33,11 @@ function CustomMetricLineChart(props: Props) {
     hideLegend = false,
   } = props;
 
+
+  console.log(data.namesMap, data.chart)
   return (
     <ResponsiveContainer height={240} width="100%">
-      <LineChart
+      <AreaChart
         data={data.chart}
         margin={Styles.chartMargins}
         onClick={onClick}
@@ -66,26 +62,20 @@ function CustomMetricLineChart(props: Props) {
         />
         <Tooltip {...Styles.tooltip} content={CustomTooltip} />
         {Array.isArray(data.namesMap) &&
-          data.namesMap.map((key, index) => key ? (
-            <Line
-              key={key}
-              name={key}
-              animationDuration={0}
-              type="monotone"
-              dataKey={key}
-              stroke={colors[index]}
-              fillOpacity={1}
-              strokeWidth={2}
-              strokeOpacity={key === 'Total' ? 0 : 0.6}
-              legendType={key === 'Total' ? 'none' : 'line'}
-              dot={false}
-              // strokeDasharray={'4 3'} FOR COPMARISON ONLY
-              activeDot={{
-                fill: key === 'Total' ? 'transparent' : colors[index],
-              }}
-            />
-          ) : null)}
-      </LineChart>
+         data.namesMap.map((key, index) => (
+           <Area
+             key={key}
+             name={key}
+             type="monotone"
+             dataKey={key}
+             stroke={colors[index]}
+             color={colors[index]}
+             legendType={key === 'Total' ? 'none' : 'line'}
+             dot={false}
+             // strokeDasharray={'4 3'} FOR COPMARISON ONLY
+           />
+         ))}
+      </AreaChart>
     </ResponsiveContainer>
   );
 }

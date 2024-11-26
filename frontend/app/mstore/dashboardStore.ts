@@ -23,6 +23,7 @@ export default class DashboardStore {
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
+  comparisonPeriod: Record<string, any> | null = null
   startTimestamp: number = 0;
   endTimestamp: number = 0;
   pendingRequests: number = 0;
@@ -402,6 +403,17 @@ export default class DashboardStore {
 
   setDrillDownPeriod(period: any) {
     this.drillDownPeriod = Period({
+      start: period.start,
+      end: period.end,
+      rangeName: period.rangeName,
+    });
+  }
+
+  setComparisonPeriod(period: any) {
+    if (!period) {
+      return this.comparisonPeriod = null
+    }
+    this.comparisonPeriod = Period({
       start: period.start,
       end: period.end,
       rangeName: period.rangeName,

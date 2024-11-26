@@ -1,22 +1,17 @@
-import React, { useState } from 'react';
-import { formatTimeOrDate } from 'App/date';
-import { Button, Table } from 'antd';
-import type { TableProps } from 'antd';
-import CustomTooltip from "../CustomChartTooltip";
-
-import { Eye, EyeOff } from 'lucide-react';
-import { Styles } from '../../common';
+import React from 'react';
+import CustomTooltip from "./CustomChartTooltip";
+import { Styles } from '../common';
 import {
   ResponsiveContainer,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   Legend,
+  Rectangle,
 } from 'recharts';
-import cn from 'classnames';
 
 interface Props {
   data: any;
@@ -27,6 +22,28 @@ interface Props {
   label?: string;
   hideLegend?: boolean;
 }
+const getPath = (x, y, width, height) => {
+  const radius = Math.min(width / 2, height / 2);
+  return `
+    M${x + radius},${y}
+    H${x + width - radius}
+    A${radius},${radius} 0 0 1 ${x + width},${y + radius}
+    V${y + height - radius}
+    A${radius},${radius} 0 0 1 ${x + width - radius},${y + height}
+    H${x + radius}
+    A${radius},${radius} 0 0 1 ${x},${y + height - radius}
+    V${y + radius}
+    A${radius},${radius} 0 0 1 ${x + radius},${y}
+    Z
+  `;
+};
+
+const PillBar = (props) => {
+  const { fill, x, y, width, height } = props;
+
+  return <path d={getPath(x, y, width, height)} stroke="none" fill={fill} />;
+};
+
 
 function CustomMetricLineChart(props: Props) {
   const {
@@ -41,7 +58,7 @@ function CustomMetricLineChart(props: Props) {
 
   return (
     <ResponsiveContainer height={240} width="100%">
-      <LineChart
+      <BarChart
         data={data.chart}
         margin={Styles.chartMargins}
         onClick={onClick}
@@ -66,26 +83,20 @@ function CustomMetricLineChart(props: Props) {
         />
         <Tooltip {...Styles.tooltip} content={CustomTooltip} />
         {Array.isArray(data.namesMap) &&
-          data.namesMap.map((key, index) => key ? (
-            <Line
-              key={key}
-              name={key}
-              animationDuration={0}
-              type="monotone"
-              dataKey={key}
-              stroke={colors[index]}
-              fillOpacity={1}
-              strokeWidth={2}
-              strokeOpacity={key === 'Total' ? 0 : 0.6}
-              legendType={key === 'Total' ? 'none' : 'line'}
-              dot={false}
-              // strokeDasharray={'4 3'} FOR COPMARISON ONLY
-              activeDot={{
-                fill: key === 'Total' ? 'transparent' : colors[index],
-              }}
-            />
-          ) : null)}
-      </LineChart>
+         data.namesMap.map((key, index) => (
+           <Bar
+             key={key}
+             name={key}
+             type="monotone"
+             dataKey={key}
+             shape={<PillBar />}
+             fill={colors[index]}
+             legendType={key === 'Total' ? 'none' : 'line'}
+             activeBar={<PillBar fill={colors[index]} stroke={colors[index]} />}
+             // strokeDasharray={'4 3'} FOR COPMARISON ONLY
+           />
+         ))}
+      </BarChart>
     </ResponsiveContainer>
   );
 }

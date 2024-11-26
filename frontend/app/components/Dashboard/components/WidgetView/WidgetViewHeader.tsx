@@ -4,7 +4,6 @@ import WidgetName from "Components/Dashboard/components/WidgetName";
 import {useStore} from "App/mstore";
 import {useObserver} from "mobx-react-lite";
 import AddToDashboardButton from "Components/Dashboard/components/AddToDashboardButton";
-import WidgetDateRange from "Components/Dashboard/components/WidgetDateRange/WidgetDateRange";
 import {Button, Space} from "antd";
 import CardViewMenu from "Components/Dashboard/components/WidgetView/CardViewMenu";
 
@@ -30,7 +29,6 @@ function WidgetViewHeader({onClick, onSave, undoChanges}: Props) {
                 />
             </h1>
             <Space>
-                <WidgetDateRange label=""/>
                 <AddToDashboardButton metricId={widget.metricId}/>
                 <Button
                     type="primary"

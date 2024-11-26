@@ -17,6 +17,19 @@ const DATE_RANGE_LABELS = {
     [CUSTOM_RANGE]: "Custom Range",
 };
 
+const COMPARISON_DATE_RANGE_LABELS = {
+    // LAST_30_MINUTES: '30 Minutes',
+    // TODAY: 'Today',
+    LAST_24_HOURS: "Previous Day",
+    // YESTERDAY: 'Yesterday',
+    LAST_7_DAYS: "Previous Week",
+    LAST_30_DAYS: "Previous Month",
+    //THIS_MONTH: 'This Month',
+    //LAST_MONTH: 'Previous Month',
+    //THIS_YEAR: 'This Year',
+    [CUSTOM_RANGE]: "Custom Range",
+}
+
 const DATE_RANGE_VALUES = {};
 Object.keys(DATE_RANGE_LABELS).forEach((key) => {
   DATE_RANGE_VALUES[key] = key;
@@ -30,6 +43,12 @@ export const DATE_RANGE_OPTIONS = Object.keys(DATE_RANGE_LABELS).map((key) => {
     label: DATE_RANGE_LABELS[key],
     value: key,
   };
+});
+export const DATE_RANGE_COMPARISON_OPTIONS = Object.keys(COMPARISON_DATE_RANGE_LABELS).map((key) => {
+    return {
+        label: COMPARISON_DATE_RANGE_LABELS[key],
+        value: key,
+    };
 });
 
 export function getDateRangeLabel(value) {
