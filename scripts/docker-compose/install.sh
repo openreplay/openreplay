@@ -115,7 +115,13 @@ case $yn in
 		exit 1;;
 esac
 
-sudo -E docker-compose --parallel 1 pull
+services=$(sudo -E docker-compose config --services)
+for service in $services; do
+  echo "Pulling image for $service..."
+  sudo -E docker-compose pull $service
+  sleep 5
+done
+
 sudo -E docker-compose --profile migration up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"

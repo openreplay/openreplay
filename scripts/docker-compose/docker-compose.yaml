@@ -208,15 +208,6 @@ services:
       - sourcemapreader.env
     restart: unless-stopped
 
-  videostorage-openreplay:
-    image: public.ecr.aws/p1t3u8a3/videostorage:${COMMON_VERSION}
-    container_name: videostorage
-    networks:
-      - openreplay-net
-    env_file:
-      - videostorage.env
-    restart: unless-stopped
-
   http-openreplay:
     image: public.ecr.aws/p1t3u8a3/http:${COMMON_VERSION}
     container_name: http
