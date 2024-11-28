@@ -1,8 +1,7 @@
-import Filter from 'Types/filter';
 import { FilterKey } from 'Types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
 import { makeAutoObservable } from 'mobx';
-
+import Search from 'App/mstore/types/search';
 import { aiService } from 'App/services';
 
 export default class AiFiltersStore {
@@ -99,7 +98,7 @@ export default class AiFiltersStore {
     this.isLoading = true;
     try {
       const r = await aiService.getSearchFilters(query);
-      const filterObj = Filter({
+      const filterObj = new Search({
         filters: r.filters.map((f: Record<string, any>) => {
           if (f.key === 'fetch') {
             return mapFetch(f);
