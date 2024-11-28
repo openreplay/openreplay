@@ -32,6 +32,7 @@ interface IORTrackerConnector {
     optionsDict: Options,
     projectUrl?: string
   ) => void;
+  stop: () => void;
   setMetadata: (key: string, value: string) => void;
   event: (name: string, payload?: string) => void;
   setUserID: (userID: string) => void;
