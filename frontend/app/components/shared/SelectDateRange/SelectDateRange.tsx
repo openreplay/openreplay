@@ -14,6 +14,7 @@ import { Calendar } from 'lucide-react';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import Select from 'Shared/Select';
+import AntlikeDropdown from "Shared/Dropdown";
 
 interface Props {
   period: any | null;
@@ -24,8 +25,8 @@ interface Props {
   isAnt?: boolean;
   small?: boolean;
   useButtonStyle?: boolean; // New prop to control button style
-  compPeriod: any | null;
-  onChangeComparison: (data: any) => void;
+  compPeriod?: any | null;
+  onChangeComparison?: (data: any) => void;
   comparison?: boolean;
   [x: string]: any;
 }
@@ -217,24 +218,13 @@ function AndDateRange({
           </div>
         </div>
       ) : (
-        <Dropdown menu={menuProps} className={'px-2 py-1'}>
-          {useButtonStyle ? (
-            <div
-              className={
-                'flex items-center gap-2 border border-gray-light rounded cursor-pointer'
-              }
-            >
-              <Calendar size={16} />
-              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
-              <DownOutlined />
-            </div>
-          ) : (
-            <div className={'cursor-pointer flex items-center gap-2'}>
-              <span>{isCustomRange ? customRange : selectedValue?.label}</span>
-              <DownOutlined />
-            </div>
-          )}
-        </Dropdown>
+        <AntlikeDropdown
+          label={isCustomRange ? customRange : selectedValue?.label}
+          menuProps={menuProps}
+          useButtonStyle={useButtonStyle}
+          leftIcon={useButtonStyle ? <Calendar size={16} /> : null}
+          rightIcon={<DownOutlined />}
+        />
       )}
       {isCustom && (
         <OutsideClickDetectingDiv

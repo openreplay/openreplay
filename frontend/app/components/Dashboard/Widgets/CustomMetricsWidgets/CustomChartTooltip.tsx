@@ -2,6 +2,7 @@ import React from 'react';
 import { formatTimeOrDate } from 'App/date';
 import cn from 'classnames';
 import { ArrowUp, ArrowDown } from 'lucide-react'
+
 function CustomTooltip({ active, payload, label }) {
   if (!active) return;
 
@@ -33,7 +34,7 @@ function CustomTooltip({ active, payload, label }) {
       className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-30'}
     >
       {transformedArray.map((p, index) => (
-        <>
+        <React.Fragment key={p.name + index}>
           <div className={'flex gap-2 items-center'}>
             <div
               style={{ borderRadius: 99, background: p.color }}
@@ -67,7 +68,7 @@ function CustomTooltip({ active, payload, label }) {
               ) : null}
             </div>
           </div>
-        </>
+        </React.Fragment>
       ))}
     </div>
   );

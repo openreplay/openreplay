@@ -120,7 +120,6 @@ const FilterAutoComplete = observer(
       setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
     };
 
-    console.log(options)
     return <AutocompleteModal 
       values={values} 
       onClose={onClose} 

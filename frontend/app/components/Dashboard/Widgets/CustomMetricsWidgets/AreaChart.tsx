@@ -33,8 +33,6 @@ function CustomMetricLineChart(props: Props) {
     hideLegend = false,
   } = props;
 
-
-  console.log(data.namesMap, data.chart)
   return (
     <ResponsiveContainer height={240} width="100%">
       <AreaChart
@@ -50,7 +48,7 @@ function CustomMetricLineChart(props: Props) {
           vertical={false}
           stroke="#EEEEEE"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval={params.density / 7} />
+        <XAxis {...Styles.xaxis} dataKey="time" interval={'equidistantPreserveStart'} />
         <YAxis
           {...yaxis}
           allowDecimals={false}

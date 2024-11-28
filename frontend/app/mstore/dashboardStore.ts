@@ -24,6 +24,7 @@ export default class DashboardStore {
   drillDownFilter: Filter = new Filter();
   comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
+  selectedDensity: number = 7 // depends on default drilldown, 7 points here!!!;
   comparisonPeriod: Record<string, any> | null = null
   startTimestamp: number = 0;
   endTimestamp: number = 0;
@@ -55,6 +56,10 @@ export default class DashboardStore {
     makeAutoObservable(this);
 
     this.resetDrillDownFilter();
+  }
+
+  setDensity = (density: any) => {
+    this.selectedDensity = parseInt(density, 10);
   }
 
   get sortedDashboards() {

@@ -56,8 +56,8 @@ function WidgetChart(props: Props) {
   const drillDownFilter = dashboardStore.drillDownFilter;
   const colors = Styles.customMetricColors;
   const [loading, setLoading] = useState(true);
-  const params = { density: 70 };
-  const metricParams = { ...params };
+  const params = { density: dashboardStore.selectedDensity }
+  const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [data, setData] = useState<any>(metric.data);
@@ -153,8 +153,8 @@ function WidgetChart(props: Props) {
     prevMetricRef.current = metric;
     const timestmaps = drillDownPeriod.toTimestamps();
     const payload = isSaved
-      ? { ...params }
-      : { ...metricParams, ...timestmaps, ...metric.toJson() };
+      ? { ...metricParams }
+      : { ...params, ...timestmaps, ...metric.toJson() };
     debounceRequest(
       metric,
       payload,
@@ -167,7 +167,7 @@ function WidgetChart(props: Props) {
     if (!dashboardStore.comparisonPeriod) return setCompData(null);
 
     const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
-    const payload = { ...metricParams, ...timestamps, ...metric.toJson() };
+    const payload = { ...params, ...timestamps, ...metric.toJson() };
     fetchMetricChartData(metric, payload, isSaved, dashboardStore.comparisonPeriod, true);
   }
   useEffect(() => {
@@ -180,6 +180,7 @@ function WidgetChart(props: Props) {
     drillDownPeriod,
     period,
     depsString,
+    dashboardStore.selectedDensity,
     metric.metricType,
     metric.metricOf,
     metric.metricValue,
@@ -257,6 +258,7 @@ function WidgetChart(props: Props) {
         return (
           <BarChart
             data={chartData}
+            compData={compData}
             params={params}
             colors={colors}
             onClick={onChartClick}

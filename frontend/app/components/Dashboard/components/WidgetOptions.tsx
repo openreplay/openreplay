@@ -9,14 +9,14 @@ import { observer } from 'mobx-react-lite';
 import { ChartLine, ChartArea, ChartColumn, ChartBar, ChartPie, Table } from 'lucide-react'
 
 function WidgetOptions() {
-  const { metricStore, dashboardStore } = useStore();
+  const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
   const handleChange = (value: any) => {
     metric.update({ metricFormat: value });
   };
 
-  const chartTypes = {
+ const chartTypes = {
     lineChart: 'Chart',
     barChart: 'Column',
     areaChart: 'Area',

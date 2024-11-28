@@ -146,13 +146,28 @@ export function AutoCompleteContainer(props: Props) {
                 : props.value[0]}
             </div>
             {props.value.length > 1 ? (
-              <div
-                className={
-                  'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
-                }
-              >
-                + {props.value.length - 1} More
-              </div>
+              props.value.length === 2 ? (
+                <>
+                  or
+                  <div
+                    className={
+                      'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
+                    }
+                  >
+                    {props.mapValues
+                      ? props.mapValues(props.value[1])
+                      : props.value[1]}
+                  </div>
+                </>
+              ) : (
+                <div
+                  className={
+                    'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
+                  }
+                >
+                  + {props.value.length - 1} More
+                </div>
+              )
             ) : null}
           </>
         ) : (

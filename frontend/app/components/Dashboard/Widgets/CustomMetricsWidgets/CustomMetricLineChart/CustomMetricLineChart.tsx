@@ -45,6 +45,7 @@ function CustomMetricLineChart(props: Props) {
     if (compData && compData.chart[i]) return { ...compData.chart[i], ...item }
     return item
   })
+
   return (
     <ResponsiveContainer height={240} width="100%">
       <LineChart
@@ -60,7 +61,7 @@ function CustomMetricLineChart(props: Props) {
           vertical={false}
           stroke="#EEEEEE"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval={params.density / 7} />
+        <XAxis {...Styles.xaxis} dataKey="time" interval={'equidistantPreserveStart'} />
         <YAxis
           {...yaxis}
           allowDecimals={false}
@@ -72,25 +73,25 @@ function CustomMetricLineChart(props: Props) {
         />
         <Tooltip {...Styles.tooltip} content={CustomTooltip} />
         {Array.isArray(data.namesMap) &&
-          data.namesMap.map((key, index) => key ? (
-            <Line
-              key={key}
-              name={key}
-              animationDuration={0}
-              type="monotone"
-              dataKey={key}
-              stroke={colors[index]}
-              fillOpacity={1}
-              strokeWidth={2}
-              strokeOpacity={key === 'Total' ? 0 : 0.6}
-              legendType={key === 'Total' ? 'none' : 'line'}
-              dot={false}
-              // strokeDasharray={'4 3'} FOR COPMARISON ONLY
-              activeDot={{
-                fill: key === 'Total' ? 'transparent' : colors[index],
-              }}
-            />
-          ) : null)}
+         data.namesMap.map((key, index) => key ? (
+           <Line
+             key={key}
+             name={key}
+             animationDuration={0}
+             type="monotone"
+             dataKey={key}
+             stroke={colors[index]}
+             fillOpacity={1}
+             strokeWidth={2}
+             strokeOpacity={key === 'Total' ? 0 : 0.6}
+             legendType={key === 'Total' ? 'none' : 'line'}
+             dot={false}
+             // strokeDasharray={'4 3'} FOR COPMARISON ONLY
+             activeDot={{
+               fill: key === 'Total' ? 'transparent' : colors[index],
+             }}
+           />
+         ) : null)}
         {compData ? compData.namesMap.map((key, i) => (
           <Line
             key={key}

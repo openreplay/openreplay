@@ -3,9 +3,14 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Space } from 'antd';
+import RangeGranularity from "./RangeGranularity";
 
-function WidgetDateRange({ label = 'Time Range', isTimeseries = false }: any) {
+function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeseries = false }: any) {
   const { dashboardStore } = useStore();
+  const density = dashboardStore.selectedDensity
+  const onDensityChange = (density: number) => {
+    dashboardStore.setDensity(density);
+  }
   const period =  dashboardStore.drillDownPeriod;
   const compPeriod = dashboardStore.comparisonPeriod;
   const drillDownFilter = dashboardStore.drillDownFilter;
@@ -29,6 +34,8 @@ function WidgetDateRange({ label = 'Time Range', isTimeseries = false }: any) {
     });
   }
 
+  const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(viewType);
+  const hasCompare = ['lineChart', 'barChart', 'table', 'progressChart'].includes(viewType);
   return (
     <Space>
       {label && <span className="mr-1 color-gray-medium">{label}</span>}
@@ -40,16 +47,27 @@ function WidgetDateRange({ label = 'Time Range', isTimeseries = false }: any) {
         useButtonStyle={true}
       />
       {isTimeseries ? (
-        <SelectDateRange
-          period={period}
-          compPeriod={compPeriod}
-          onChange={onChangePeriod}
-          onChangeComparison={onChangeComparison}
-          right={true}
-          isAnt={true}
-          useButtonStyle={true}
-          comparison={true}
-        />
+        <>
+          {hasGranularity ? (
+            <RangeGranularity
+              period={period}
+              density={density}
+              onDensityChange={onDensityChange}
+            />
+          ) : null}
+          {hasCompare ?
+            <SelectDateRange
+              period={period}
+              compPeriod={compPeriod}
+              onChange={onChangePeriod}
+              onChangeComparison={onChangeComparison}
+              right={true}
+              isAnt={true}
+              useButtonStyle={true}
+              comparison={true}
+            />
+          : null}
+        </>
       ) : null}
     </Space>
   );

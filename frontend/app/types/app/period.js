@@ -130,6 +130,9 @@ export default Record(
                   endTimestamp: this.end,
               };
           },
+          getDuration() {
+              return this.range.end.diff(this.range.start).as("milliseconds");
+          },
           rangeFormatted(format = "MMM dd yyyy, HH:mm", tz) {
               const start = this.range.start.setZone(tz);
               const end = this.range.end.setZone(tz);

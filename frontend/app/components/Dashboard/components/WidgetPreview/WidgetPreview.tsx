@@ -26,7 +26,7 @@ function WidgetPreview(props: Props) {
         className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}
       >
         <div className="flex items-center gap-2 px-4 pt-2">
-          <WidgetDateRange label="" isTimeseries={metric.metricType === TIMESERIES} />
+          <WidgetDateRange label="" isTimeseries={metric.metricType === TIMESERIES} viewType={metric.viewType} />
           <div className="flex items-center ml-auto">
             <WidgetOptions />
             {/*{metric.metricType === USER_PATH && (*/}

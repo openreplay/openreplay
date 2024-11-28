@@ -10,11 +10,11 @@ import {
   BarChart,
   Bar,
   Legend,
-  Rectangle,
 } from 'recharts';
 
 interface Props {
-  data: any;
+  data: { chart: any[], namesMap: string[] };
+  compData: { chart: any[], namesMap: string[] } | null;
   params: any;
   colors: any;
   onClick?: (event, index) => void;
@@ -22,6 +22,7 @@ interface Props {
   label?: string;
   hideLegend?: boolean;
 }
+
 const getPath = (x, y, width, height) => {
   const radius = Math.min(width / 2, height / 2);
   return `
@@ -39,15 +40,35 @@ const getPath = (x, y, width, height) => {
 };
 
 const PillBar = (props) => {
-  const { fill, x, y, width, height } = props;
+  const { fill, x, y, width, height, striped } = props;
 
-  return <path d={getPath(x, y, width, height)} stroke="none" fill={fill} />;
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <rect
+        width={width}
+        height={height}
+        rx={Math.min(width / 2, height / 2)}
+        ry={Math.min(width / 2, height / 2)}
+        fill={fill}
+      />
+      {striped && (
+        <rect
+          width={width}
+          height={height}
+          clipPath="url(#pillClip)"
+          fill="url(#diagonalStripes)"
+        />
+      )}
+    </g>
+  );
 };
+
 
 
 function CustomMetricLineChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
+    compData,
     params,
     colors,
     onClick = () => null,
@@ -56,13 +77,32 @@ function CustomMetricLineChart(props: Props) {
     hideLegend = false,
   } = props;
 
+  const resultChart = data.chart.map((item, i) => {
+    if (compData && compData.chart[i]) return { ...compData.chart[i], ...item };
+    return item;
+  });
+
   return (
     <ResponsiveContainer height={240} width="100%">
       <BarChart
-        data={data.chart}
+        data={resultChart}
         margin={Styles.chartMargins}
         onClick={onClick}
       >
+        <defs>
+          <clipPath id="pillClip">
+            <rect x="0" y="0" width="100%" height="100%" rx="10" ry="10" />
+          </clipPath>
+          <pattern
+            id="diagonalStripes"
+            patternUnits="userSpaceOnUse"
+            width="8"
+            height="8"
+            patternTransform="rotate(45)"
+          >
+            <line x1="0" y="0" x2="0" y2="8" stroke="white" strokeWidth="6" />
+          </pattern>
+        </defs>
         {!hideLegend && (
           <Legend iconType={'circle'} wrapperStyle={{ top: -26 }} />
         )}
@@ -71,7 +111,11 @@ function CustomMetricLineChart(props: Props) {
           vertical={false}
           stroke="#EEEEEE"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval={params.density / 7} />
+        <XAxis
+          {...Styles.xaxis}
+          dataKey="time"
+          interval={'equidistantPreserveStart'}
+        />
         <YAxis
           {...yaxis}
           allowDecimals={false}
@@ -89,13 +133,32 @@ function CustomMetricLineChart(props: Props) {
              name={key}
              type="monotone"
              dataKey={key}
-             shape={<PillBar />}
-             fill={colors[index]}
+             shape={(barProps) => (
+               <PillBar {...barProps} fill={colors[index]} />
+             )}
              legendType={key === 'Total' ? 'none' : 'line'}
-             activeBar={<PillBar fill={colors[index]} stroke={colors[index]} />}
-             // strokeDasharray={'4 3'} FOR COPMARISON ONLY
+             activeBar={
+               <PillBar fill={colors[index]} stroke={colors[index]} />
+             }
            />
          ))}
+        {compData
+         ? compData.namesMap.map((key, i) => (
+            <Bar
+              key={key}
+              name={key}
+              type="monotone"
+              dataKey={key}
+              shape={(barProps) => (
+                <PillBar {...barProps} fill={colors[i]} barKey={i} stroke={colors[i]} striped />
+              )}
+              legendType={key === 'Total' ? 'none' : 'line'}
+              activeBar={
+                <PillBar fill={colors[i]} stroke={colors[i]} barKey={i} striped />
+              }
+            />
+          ))
+         : null}
       </BarChart>
     </ResponsiveContainer>
   );
