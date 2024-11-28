@@ -11,6 +11,10 @@ export const THIS_MONTH = "THIS_MONTH";
 export const LAST_MONTH = "LAST_MONTH";
 export const THIS_YEAR = "THIS_YEAR";
 export const CUSTOM_RANGE = "CUSTOM_RANGE";
+export const PREV_24_HOURS = "PREV_24_HOURS";
+export const PREV_7_DAYS = "PREV_7_DAYS";
+export const PREV_30_DAYS = "PREV_30_DAYS";
+export const PREV_QUARTER = "PREV_QUARTER";
 
 function getRange(rangeName, offset) {
     const now = DateTime.now().setZone(offset);
@@ -47,9 +51,28 @@ function getRange(rangeName, offset) {
             return Interval.fromDateTimes(lastMonth.startOf("month"), lastMonth.endOf("month"));
         case THIS_YEAR:
             return Interval.fromDateTimes(now.startOf("year"), now.endOf("year"));
+        case PREV_24_HOURS:
+            return Interval.fromDateTimes(now.minus({ hours: 48 }), now.minus({ hours: 24 }));
+        case PREV_7_DAYS:
+            return Interval.fromDateTimes(
+              now.minus({ days: 14 }).startOf("day"),
+              now.minus({ days: 7 }).endOf("day")
+            );
+        case PREV_30_DAYS:
+            return Interval.fromDateTimes(
+              now.minus({ days: 60 }).startOf("day"),
+              now.minus({ days: 30 }).endOf("day")
+            );
         default:
             return Interval.fromDateTimes(now, now);
     }
+}
+
+const substractValues = {
+    [PREV_24_HOURS]: { hours: 24 },
+    [PREV_7_DAYS]: { days: 7 },
+    [PREV_30_DAYS]: { days: 30 },
+    [PREV_QUARTER]: { months: 3 },
 }
 
 export default Record(
@@ -58,22 +81,30 @@ export default Record(
       end: 0,
       rangeName: CUSTOM_RANGE,
       range: Interval.fromDateTimes(DateTime.now(), DateTime.now()),
+      substract: null,
   },
   {
+      // type substractors = 'PREV_24_HOURS' | 'PREV_7_DAYS' | 'PREV_30_DAYS' | 'PREV_QUARTER';
       fromJS: (period) => {
           const offset = period.timezoneOffset || DateTime.now().offset;
           if (!period.rangeName || period.rangeName === CUSTOM_RANGE) {
               const isLuxon = DateTime.isDateTime(period.start);
-              const start = isLuxon
+              let start = isLuxon
                 ? period.start : DateTime.fromMillis(period.start || 0, { zone: Settings.defaultZone });
-              const end = isLuxon
+              let end = isLuxon
                 ? period.end : DateTime.fromMillis(period.end || 0, { zone: Settings.defaultZone });
+              if (period.substract) {
+                  const delta = substractValues[period.substract]
+                  start = start.minus(delta);
+                  end = end.minus(delta);
+              }
               const range = Interval.fromDateTimes(start, end);
               return {
                   ...period,
                   range,
                   start: range.start.toMillis(),
                   end: range.end.toMillis(),
+                  rangeName: period.substract ? period.substract : undefined
               };
           }
           const range = getRange(period.rangeName, offset);

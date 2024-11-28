@@ -22,6 +22,7 @@ export default class DashboardStore {
   widgets: Widget[] = [];
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
+  comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
   comparisonPeriod: Record<string, any> | null = null
   startTimestamp: number = 0;
@@ -420,6 +421,13 @@ export default class DashboardStore {
     });
   }
 
+  cloneCompFilter() {
+    const filterData = this.drillDownFilter.toData()
+    this.comparisonFilter = new Filter().fromData(filterData);
+
+    return this.comparisonFilter;
+  }
+
   toggleAlertModal(val: boolean) {
     this.showAlertModal = val;
   }
@@ -436,12 +444,13 @@ export default class DashboardStore {
     metric: Widget,
     data: any,
     isSaved: boolean = false,
-    period: Record<string, any>
+    period: Record<string, any>,
+    isComparison?: boolean
   ): Promise<any> {
     period = period.toTimestamps();
     const params = { ...period, ...data, key: metric.predefinedKey };
 
-    if (metric.page && metric.limit) {
+    if (!isComparison && metric.page && metric.limit) {
       params['page'] = metric.page;
       params['limit'] = metric.limit;
     }
@@ -449,13 +458,13 @@ export default class DashboardStore {
     return new Promise(async (resolve, reject) => {
       this.upPendingRequests()
 
-      if (metric.metricType === 'table' && metric.metricOf === 'jsException') {
+      if (!isComparison && metric.metricType === 'table' && metric.metricOf === 'jsException') {
         params.limit = 5;
       }
 
       try {
         const data = await metricService.getMetricChartData(metric, params, isSaved);
-        resolve(metric.setData(data, period));
+        resolve(metric.setData(data, period, isComparison));
       } catch (error) {
         reject(error);
       } finally {

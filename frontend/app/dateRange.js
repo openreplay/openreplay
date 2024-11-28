@@ -18,16 +18,11 @@ const DATE_RANGE_LABELS = {
 };
 
 const COMPARISON_DATE_RANGE_LABELS = {
-    // LAST_30_MINUTES: '30 Minutes',
-    // TODAY: 'Today',
-    LAST_24_HOURS: "Previous Day",
-    // YESTERDAY: 'Yesterday',
-    LAST_7_DAYS: "Previous Week",
-    LAST_30_DAYS: "Previous Month",
-    //THIS_MONTH: 'This Month',
-    //LAST_MONTH: 'Previous Month',
-    //THIS_YEAR: 'This Year',
-    [CUSTOM_RANGE]: "Custom Range",
+    PREV_24_HOURS: "Previous Day",
+    PREV_7_DAYS: "Previous Week",
+    PREV_30_DAYS: "Previous Month",
+    PREV_QUARTER: "Previous Quarter",
+    CUSTOM_RANGE: "Custom",
 }
 
 const DATE_RANGE_VALUES = {};
@@ -86,6 +81,18 @@ export function getDateRangeFromValue(value) {
         now.minus({ days: 30 }).startOf('day'),
         now.endOf('day')
       );
+      case COMPARISON_DATE_RANGE_LABELS.PREV_24_HOURS:
+        return Interval.fromDateTimes(now.minus({ hours: 48 }), now.minus({ hours: 24 }));
+      case COMPARISON_DATE_RANGE_LABELS.PREV_7_DAYS:
+        return Interval.fromDateTimes(
+          now.minus({ days: 14 }).startOf('day'),
+          now.minus({ days: 7 }).endOf('day')
+        );
+      case COMPARISON_DATE_RANGE_LABELS.PREV_30_DAYS:
+        return Interval.fromDateTimes(
+          now.minus({ days: 60 }).startOf('day'),
+          now.minus({ days: 30 }).endOf('day')
+        );
     // case DATE_RANGE_VALUES.THIS_MONTH:
     //   return Interval.fromDateTimes(now.startOf('month'), now.endOf('month'));
     // case DATE_RANGE_VALUES.LAST_MONTH:

@@ -1,13 +1,38 @@
-import React from "react";
-import { formatTimeOrDate } from "App/date";
-
+import React from 'react';
+import { formatTimeOrDate } from 'App/date';
+import cn from 'classnames';
+import { ArrowUp, ArrowDown } from 'lucide-react'
 function CustomTooltip({ active, payload, label }) {
   if (!active) return;
 
-  const shownPayloads = payload.filter((p) => !p.hide);
+  const shownPayloads: Record<string, any>[] = payload.filter((p) => !p.hide);
+  const currentSeries: { value: number }[] = [];
+  const previousSeriesMap: Record<string, any> = {};
+
+  shownPayloads.forEach((item) => {
+    if (item.name.startsWith('Previous ')) {
+      const originalName = item.name.replace('Previous ', '');
+      previousSeriesMap[originalName] = item.value;
+    } else {
+      currentSeries.push(item);
+    }
+  });
+
+  const transformedArray = currentSeries.map((item) => {
+    const prevValue = previousSeriesMap[item.name] || null;
+    return {
+      ...item,
+      prevValue,
+    };
+  });
+  const isHigher = (item: { value: number; prevValue: number }) => {
+    return item.prevValue !== null && item.prevValue < item.value;
+  };
   return (
-    <div className={'flex flex-col gap-1 bg-white shadow border rounded p-2'}>
-      {shownPayloads.map((p, index) => (
+    <div
+      className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-30'}
+    >
+      {transformedArray.map((p, index) => (
         <>
           <div className={'flex gap-2 items-center'}>
             <div
@@ -25,7 +50,22 @@ function CustomTooltip({ active, payload, label }) {
             <div className={'text-disabled-text text-sm'}>
               {label}, {formatTimeOrDate(p.payload.timestamp)}
             </div>
-            <div className={'font-semibold'}>{p.value}</div>
+            <div className={'flex items-center gap-2'}>
+              <div className={'font-semibold'}>{p.value}</div>
+              {p.prevValue !== null ? (
+                <div
+                  className={cn(
+                    'px-2 py-1 rounded flex items-center gap-1',
+                    isHigher(p) ? 'bg-green2 text-xs' : 'bg-red2 text-xs'
+                  )}
+                >
+                  {!isHigher(p) ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
+                  <div>
+                    {p.prevValue}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </>
       ))}

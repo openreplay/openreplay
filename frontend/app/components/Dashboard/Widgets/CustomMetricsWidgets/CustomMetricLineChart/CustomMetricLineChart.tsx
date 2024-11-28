@@ -20,6 +20,7 @@ import cn from 'classnames';
 
 interface Props {
   data: any;
+  compData: any | null;
   params: any;
   colors: any;
   onClick?: (event, index) => void;
@@ -31,6 +32,7 @@ interface Props {
 function CustomMetricLineChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
+    compData,
     params,
     colors,
     onClick = () => null,
@@ -39,10 +41,14 @@ function CustomMetricLineChart(props: Props) {
     hideLegend = false,
   } = props;
 
+  const resultChart = data.chart.map((item, i) => {
+    if (compData && compData.chart[i]) return { ...compData.chart[i], ...item }
+    return item
+  })
   return (
     <ResponsiveContainer height={240} width="100%">
       <LineChart
-        data={data.chart}
+        data={resultChart}
         margin={Styles.chartMargins}
         onClick={onClick}
       >
@@ -85,6 +91,25 @@ function CustomMetricLineChart(props: Props) {
               }}
             />
           ) : null)}
+        {compData ? compData.namesMap.map((key, i) => (
+          <Line
+            key={key}
+            name={key}
+            animationDuration={0}
+            type="monotone"
+            dataKey={key}
+            stroke={colors[i]}
+            fillOpacity={1}
+            strokeWidth={2}
+            strokeOpacity={0.6}
+            legendType={'line'}
+            dot={false}
+            strokeDasharray={'4 3'}
+            activeDot={{
+              fill: colors[i],
+            }}
+          />
+        )) : null}
       </LineChart>
     </ResponsiveContainer>
   );

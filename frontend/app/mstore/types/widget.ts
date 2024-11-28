@@ -293,8 +293,18 @@ export default class Widget {
         this.page = page;
     }
 
-    setData(data: any, period: any) {
-        const _data: any = {...data};
+    setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison?: boolean) {
+        const _data: any = {};
+        if (isComparison) {
+            console.log(data)
+            data.forEach((point, i) => {
+              Object.keys(point).forEach((key) => {
+                  if (key === 'timestamp') return;
+                  point[`Previous ${key}`] = point[key];
+                  delete point[key];
+              })
+            })
+        }
 
         if (this.metricType === USER_PATH) {
             const _data = processData(data);
@@ -350,7 +360,9 @@ export default class Widget {
             }
         }
 
-        Object.assign(this.data, _data);
+        if (!isComparison) {
+            Object.assign(this.data, _data);
+        }
         return _data;
     }
 

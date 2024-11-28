@@ -95,13 +95,8 @@ function WidgetDatatable(props: Props) {
 
   const rowSelection: TableProps['rowSelection'] = {
     selectedRowKeys: props.enabledRows,
-    onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
+    onChange: (selectedRowKeys: React.Key[]) => {
       props.setEnabledRows(selectedRowKeys as string[]);
-      console.log(
-        `selectedRowKeys: ${selectedRowKeys}`,
-        'selectedRows: ',
-        selectedRows
-      );
     },
     getCheckboxProps: (record: any) => ({
       name: record.name,

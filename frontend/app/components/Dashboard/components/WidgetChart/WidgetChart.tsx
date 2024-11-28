@@ -61,6 +61,7 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [data, setData] = useState<any>(metric.data);
+  const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState([]);
   const isTableWidget =
     metric.metricType === 'table' && metric.viewType === 'table';
@@ -121,14 +122,18 @@ function WidgetChart(props: Props) {
     metric: any,
     payload: any,
     isSaved: any,
-    period: any
+    period: any,
+    isComparison?: boolean
   ) => {
     if (!isMounted()) return;
     setLoading(true);
     dashboardStore
-      .fetchMetricChartData(metric, payload, isSaved, period)
+      .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
-        if (isMounted()) setData(res);
+        if (isMounted()) {
+          if (isComparison) setCompData(res)
+          else setData(res);
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -157,6 +162,17 @@ function WidgetChart(props: Props) {
       !isSaved ? drillDownPeriod : period
     );
   };
+  const loadComparisonData = () => {
+    if (!inView) return;
+    if (!dashboardStore.comparisonPeriod) return setCompData(null);
+
+    const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
+    const payload = { ...metricParams, ...timestamps, ...metric.toJson() };
+    fetchMetricChartData(metric, payload, isSaved, dashboardStore.comparisonPeriod, true);
+  }
+  useEffect(() => {
+    loadComparisonData();
+  }, [dashboardStore.comparisonPeriod])
   useEffect(() => {
     _metric.updateKey('page', 1);
     loadPage();
@@ -210,6 +226,7 @@ function WidgetChart(props: Props) {
         return (
           <CustomMetricLineChart
             data={chartData}
+            compData={compData}
             colors={colors}
             params={params}
             onClick={onChartClick}

@@ -4,22 +4,30 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Space } from 'antd';
 
-function WidgetDateRange({ label = 'Time Range', comparison = false }: any) {
+function WidgetDateRange({ label = 'Time Range', isTimeseries = false }: any) {
   const { dashboardStore } = useStore();
-  const period = comparison ? dashboardStore.comparisonPeriod : dashboardStore.drillDownPeriod;
+  const period =  dashboardStore.drillDownPeriod;
+  const compPeriod = dashboardStore.comparisonPeriod;
   const drillDownFilter = dashboardStore.drillDownFilter;
 
   const onChangePeriod = (period: any) => {
-    if (comparison) dashboardStore.setComparisonPeriod(period);
-    else {
       dashboardStore.setDrillDownPeriod(period);
       const periodTimestamps = period.toTimestamps();
       drillDownFilter.merge({
         startTimestamp: periodTimestamps.startTimestamp,
         endTimestamp: periodTimestamps.endTimestamp,
       });
-    }
   };
+
+  const onChangeComparison = (period: any) => {
+    dashboardStore.setComparisonPeriod(period);
+    const periodTimestamps = period.toTimestamps();
+    const compFilter = dashboardStore.cloneCompFilter();
+    compFilter.merge({
+      startTimestamp: periodTimestamps.startTimestamp,
+      endTimestamp: periodTimestamps.endTimestamp,
+    });
+  }
 
   return (
     <Space>
@@ -30,8 +38,19 @@ function WidgetDateRange({ label = 'Time Range', comparison = false }: any) {
         right={true}
         isAnt={true}
         useButtonStyle={true}
-        comparison={comparison}
       />
+      {isTimeseries ? (
+        <SelectDateRange
+          period={period}
+          compPeriod={compPeriod}
+          onChange={onChangePeriod}
+          onChangeComparison={onChangeComparison}
+          right={true}
+          isAnt={true}
+          useButtonStyle={true}
+          comparison={true}
+        />
+      ) : null}
     </Space>
   );
 }

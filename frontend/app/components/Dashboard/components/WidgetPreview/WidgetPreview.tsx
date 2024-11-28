@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import WidgetDateRange from "Components/Dashboard/components/WidgetDateRange/WidgetDateRange";
 import { useStore } from 'App/mstore';
-import { TIMESERIES } from "../../../../constants/card";
+import { TIMESERIES } from "App/constants/card";
 
 import WidgetWrapper from '../WidgetWrapper';
 import WidgetOptions from 'Components/Dashboard/components/WidgetOptions';
@@ -26,8 +26,7 @@ function WidgetPreview(props: Props) {
         className={cn(className, 'bg-white rounded-xl border shadow-sm mt-0')}
       >
         <div className="flex items-center gap-2 px-4 pt-2">
-          <WidgetDateRange label="" />
-          {metric.metricType === TIMESERIES ? <WidgetDateRange comparison label="" /> : null}
+          <WidgetDateRange label="" isTimeseries={metric.metricType === TIMESERIES} />
           <div className="flex items-center ml-auto">
             <WidgetOptions />
             {/*{metric.metricType === USER_PATH && (*/}
