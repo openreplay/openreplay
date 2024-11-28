@@ -8,7 +8,7 @@ function processMapInBatches(
   const iterator = map.entries()
 
   function processNextBatch() {
-    const batch = []
+    const batch: any[] = []
     let result = iterator.next()
 
     while (!result.done && batch.length < batchSize) {

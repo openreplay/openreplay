@@ -2,9 +2,15 @@
 Don't have to trigger migration if there is no version change
 Don't have to trigger migration if skipMigration is set
 Have to trigger migration if forceMigration is set
+
+versionChange is true when:
+    Release.IsUpgrade is false.
+    Or .Values.deployment.argo is set.
+    Or Release.IsUpgrade is true and .Values.fromVersion is not equal to .Chart.AppVersion.
 */}}
-{{- $versionChange := and (eq .Values.fromVersion .Chart.AppVersion) (.Release.IsUpgrade) }}
-{{- if or (not (or .Values.skipMigration $versionChange)) .Values.forceMigration }}
+
+{{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq .Values.fromVersion .Chart.AppVersion)))) }}
+{{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -91,6 +97,7 @@ spec:
 
             check_github
 
+            git clone {{ .Values.global.dbMigrationUpstreamRepoURL | default "https://github.com/openreplay/openreplay" }} .
             ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
             git log -1

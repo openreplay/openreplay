@@ -162,15 +162,14 @@ class SearchStore {
       });
   }
 
-  updateCurrentPage(page: number) {
+  updateCurrentPage(page: number, force = false) {
     this.currentPage = page;
-    void this.fetchSessions();
+    void this.fetchSessions(force);
   }
 
   setActiveTab(tab: string) {
     runInAction(() => {
       this.activeTab = TAB_MAP[tab];
-      this.currentPage = 1;
     });
   }
 
@@ -229,12 +228,13 @@ class SearchStore {
     if (this.latestRequestTime) {
       const period = Period({ rangeName: CUSTOM_RANGE, start: this.latestRequestTime, end: Date.now() });
       const newTimestamps: any = period.toJSON();
-      filter.startTimestamp = newTimestamps.startDate;
-      filter.endTimestamp = newTimestamps.endDate;
+      filter.startDate = newTimestamps.startDate;
+      filter.endDate = newTimestamps.endDate;
     }
     searchService.checkLatestSessions(filter).then((response: any) => {
-      this.latestList = response;
-      this.latestRequestTime = Date.now();
+      runInAction(() => {
+        this.latestList = List(response);
+      });
     });
   }
 
@@ -264,8 +264,10 @@ class SearchStore {
       });
     }
 
+    this.currentPage = 1;
+
     if (filter.value && filter.value[0] && filter.value[0] !== '') {
-      this.fetchSessions();
+      void this.fetchSessions();
     }
   }
 
@@ -335,6 +337,9 @@ class SearchStore {
       delete tagFilter.icon;
       filter.filters = filter.filters.concat(tagFilter);
     }
+
+    this.latestRequestTime = Date.now();
+    this.latestList = List();
 
     await sessionStore.fetchSessions({
       ...filter,

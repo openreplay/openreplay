@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/db/postgres/pool"
 	"time"
 
+	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/metrics/database"
 )
 

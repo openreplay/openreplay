@@ -16,18 +16,12 @@ type Config struct {
 	common.Postgres
 	redis.Redis
 	objectstorage.ObjectsConfig
-	FSDir                   string        `env:"FS_DIR,required"`
-	SpotsDir                string        `env:"SPOTS_DIR,default=spots"`
-	HTTPHost                string        `env:"HTTP_HOST,default="`
-	HTTPPort                string        `env:"HTTP_PORT,required"`
-	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
-	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=131072"` // 128KB
-	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
-	ProjectExpiration       time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
-	JWTSecret               string        `env:"JWT_SECRET,required"`
-	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET,required"`
-	MinimumStreamDuration   int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
-	WorkerID                uint16
+	common.HTTP
+	FSDir                 string        `env:"FS_DIR,required"`
+	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
+	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	MinimumStreamDuration int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
+	WorkerID              uint16
 }
 
 func New(log logger.Logger) *Config {

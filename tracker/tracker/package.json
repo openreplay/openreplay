@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "15.0.0",
+  "version": "15.0.1",
   "keywords": [
     "logging",
     "replay"
@@ -26,16 +26,19 @@
   },
   "files": [
     "dist/lib/**/*",
-    "dist/cjs/**/*"
+    "dist/cjs/**/*",
+    "dist/types/**/*"
   ],
   "main": "./dist/cjs/index.js",
   "module": "./dist/lib/index.js",
   "types": "./dist/lib/main/index.d.ts",
   "scripts": {
     "lint": "eslint src --ext .ts,.js --fix --quiet",
-    "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
+    "clean": "rm -Rf build && rm -Rf dist",
     "build:common": "tsc -b src/common",
-    "build": "yarn run clean && rollup --config rollup.config.js",
+    "compile": "tsc --project src/main/tsconfig.json",
+    "create-types": "mkdir dist/lib/ dist/cjs && cp -r dist/types/* dist/lib/ && cp -r dist/types/* dist/cjs/",
+    "build": "yarn run clean && yarn compile && yarn create-types && rollup --config rollup.config.js",
     "lint-front": "lint-staged",
     "test": "jest --coverage=false",
     "test:ci": "jest --coverage=true",
@@ -46,6 +49,7 @@
     "@babel/core": "^7.26.0",
     "@jest/globals": "^29.7.0",
     "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-replace": "^6.0.1",
     "@rollup/plugin-terser": "0.4.4",
@@ -67,7 +71,7 @@
   },
   "dependencies": {
     "@medv/finder": "^3.2.0",
-    "@openreplay/network-proxy": "^1.0.4",
+    "@openreplay/network-proxy": "^1.0.5",
     "error-stack-parser": "^2.0.6",
     "error-stack-parser-es": "^0.1.5",
     "fflate": "^0.8.2",

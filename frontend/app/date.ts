@@ -2,6 +2,8 @@
 
 import { DateTime, Duration } from 'luxon'; // TODO
 import { Timezone } from 'App/mstore/types/sessionSettings';
+import { LAST_24_HOURS, LAST_30_DAYS, LAST_7_DAYS } from 'Types/app/period';
+import { CUSTOM_RANGE } from '@/dateRange';
 
 export function getDateFromString(date: string, format = 'yyyy-MM-dd HH:mm:ss:SSS'): string {
   return DateTime.fromISO(date).toFormat(format);
@@ -190,4 +192,36 @@ export const countDaysFrom = (timestamp: number): number => {
   const date = DateTime.fromMillis(timestamp);
   const d = new Date();
   return Math.round(Math.abs(d.getTime() - date.toJSDate().getTime()) / (1000 * 3600 * 24));
+}
+
+export const getDateRangeUTC = (rangeName: string, customStartDate?: number, customEndDate?: number): {
+  startDate: number;
+  endDate: number
+}  => {
+  let endDate = new Date().getTime();
+  let startDate: number;
+
+  switch (rangeName) {
+    case LAST_7_DAYS:
+      startDate = endDate - 7 * 24 * 60 * 60 * 1000;
+      break;
+    case LAST_30_DAYS:
+      startDate = endDate - 30 * 24 * 60 * 60 * 1000;
+      break;
+    case CUSTOM_RANGE:
+      if (!customStartDate || !customEndDate) {
+        throw new Error('Start date and end date must be provided for CUSTOM_RANGE.');
+      }
+      startDate = customStartDate;
+      endDate = customEndDate;
+      break;
+    case LAST_24_HOURS:
+    default:
+      startDate = endDate - 24 * 60 * 60 * 1000;
+  }
+
+  return {
+    startDate,
+    endDate
+  };
 }

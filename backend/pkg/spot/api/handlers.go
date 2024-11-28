@@ -2,12 +2,10 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,59 +13,106 @@ import (
 
 	"github.com/gorilla/mux"
 
-	metrics "openreplay/backend/pkg/metrics/spot"
+	spotConfig "openreplay/backend/internal/config/spot"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
-	"openreplay/backend/pkg/spot/auth"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/keys"
+	"openreplay/backend/pkg/server/user"
 	"openreplay/backend/pkg/spot/service"
+	"openreplay/backend/pkg/spot/transcoder"
 )
 
-func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
+type handlersImpl struct {
+	log           logger.Logger
+	responser     *api.Responser
+	jsonSizeLimit int64
+	spots         service.Spots
+	objStorage    objectstorage.ObjectStorage
+	transcoder    transcoder.Transcoder
+	keys          keys.Keys
+}
+
+func NewHandlers(log logger.Logger, cfg *spotConfig.Config, responser *api.Responser, spots service.Spots, objStore objectstorage.ObjectStorage, transcoder transcoder.Transcoder, keys keys.Keys) (api.Handlers, error) {
+	return &handlersImpl{
+		log:           log,
+		responser:     responser,
+		jsonSizeLimit: cfg.JsonSizeLimit,
+		spots:         spots,
+		objStorage:    objStore,
+		transcoder:    transcoder,
+		keys:          keys,
+	}, nil
+}
+
+func (e *handlersImpl) GetAll() []*api.Description {
+	return []*api.Description{
+		{"/v1/spots", e.createSpot, "POST"},
+		{"/v1/spots/{id}", e.getSpot, "GET"},
+		{"/v1/spots/{id}", e.updateSpot, "PATCH"},
+		{"/v1/spots", e.getSpots, "GET"},
+		{"/v1/spots", e.deleteSpots, "DELETE"},
+		{"/v1/spots/{id}/comment", e.addComment, "POST"},
+		{"/v1/spots/{id}/uploaded", e.uploadedSpot, "POST"},
+		{"/v1/spots/{id}/video", e.getSpotVideo, "GET"},
+		{"/v1/spots/{id}/public-key", e.getPublicKey, "GET"},
+		{"/v1/spots/{id}/public-key", e.updatePublicKey, "PATCH"},
+		{"/v1/spots/{id}/status", e.spotStatus, "GET"},
+		{"/v1/ping", e.ping, "GET"},
+	}
+}
+
+func (e *handlersImpl) ping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &CreateSpotRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Creat a spot
-	currUser := r.Context().Value("userData").(*auth.User)
-	newSpot, err := e.services.Spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
+	currUser := r.Context().Value("userData").(*user.User)
+	newSpot, err := e.spots.Add(currUser, req.Name, req.Comment, req.Duration, req.Crop)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Parse and upload preview image
 	previewImage, err := getSpotPreview(req.Preview)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	previewName := fmt.Sprintf("%d/preview.jpeg", newSpot.ID)
-	if err = e.services.ObjStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
+	if err = e.objStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
 		e.log.Error(r.Context(), "can't upload preview image: %s", err)
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't upload preview image"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't upload preview image"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	mobURL, err := e.getUploadMobURL(newSpot.ID)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	videoURL, err := e.getUploadVideoURL(newSpot.ID)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -76,7 +121,7 @@ func (e *Router) createSpot(w http.ResponseWriter, r *http.Request) {
 		MobURL:   mobURL,
 		VideoURL: videoURL,
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
 func getSpotPreview(preview string) ([]byte, error) {
@@ -93,18 +138,18 @@ func getSpotPreview(preview string) ([]byte, error) {
 	return data, nil
 }
 
-func (e *Router) getUploadMobURL(spotID uint64) (string, error) {
+func (e *handlersImpl) getUploadMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get mob URL: %s", err)
 	}
 	return mobURL, nil
 }
 
-func (e *Router) getUploadVideoURL(spotID uint64) (string, error) {
+func (e *handlersImpl) getUploadVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get video URL: %s", err)
 	}
@@ -143,51 +188,51 @@ func getSpotsRequest(r *http.Request) (*GetSpotsRequest, error) {
 	return req, nil
 }
 
-func (e *Router) getPreviewURL(spotID uint64) (string, error) {
+func (e *handlersImpl) getPreviewURL(spotID uint64) (string, error) {
 	previewKey := fmt.Sprintf("%d/preview.jpeg", spotID)
-	previewURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(previewKey)
+	previewURL, err := e.objStorage.GetPreSignedDownloadUrl(previewKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get preview URL: %s", err)
 	}
 	return previewURL, nil
 }
 
-func (e *Router) getMobURL(spotID uint64) (string, error) {
+func (e *handlersImpl) getMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
-	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedDownloadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get mob URL: %s", err)
 	}
 	return mobURL, nil
 }
 
-func (e *Router) getVideoURL(spotID uint64) (string, error) {
+func (e *handlersImpl) getVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID) // TODO: later return url to m3u8 file
-	mobURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedDownloadUrl(mobKey)
 	if err != nil {
 		return "", fmt.Errorf("can't get video URL: %s", err)
 	}
 	return mobURL, nil
 }
 
-func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	res, err := e.services.Spots.GetByID(user, id)
+	user := r.Context().Value("userData").(*user.User)
+	res, err := e.spots.GetByID(user, id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	if res == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusNotFound, fmt.Errorf("spot not found"), startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, fmt.Errorf("spot not found"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -197,12 +242,12 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 	}
 	mobURL, err := e.getMobURL(id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	videoURL, err := e.getVideoURL(id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -216,60 +261,60 @@ func (e *Router) getSpot(w http.ResponseWriter, r *http.Request) {
 		MobURL:     mobURL,
 		VideoURL:   videoURL,
 	}
-	playlist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	playlist, err := e.transcoder.GetSpotStreamPlaylist(id)
 	if err != nil {
 		e.log.Warn(r.Context(), "can't get stream playlist: %s", err)
 	} else {
 		spotInfo.StreamFile = base64.StdEncoding.EncodeToString(playlist)
 	}
 
-	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) updateSpot(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) updateSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &UpdateSpotRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	_, err = e.services.Spots.UpdateName(user, id, req.Name)
+	user := r.Context().Value("userData").(*user.User)
+	_, err = e.spots.UpdateName(user, id, req.Name)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getSpots(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	req, err := getSpotsRequest(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
+	user := r.Context().Value("userData").(*user.User)
 	opts := &service.GetOpts{
 		NameFilter: req.Query, Order: req.Order, Page: req.Page, Limit: req.Limit}
 	switch req.FilterBy {
@@ -278,9 +323,9 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 	default:
 		opts.TenantID = user.TenantID
 	}
-	spots, total, tenantHasSpots, err := e.services.Spots.Get(user, opts)
+	spots, total, tenantHasSpots, err := e.spots.Get(user, opts)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	res := make([]ShortInfo, 0, len(spots))
@@ -298,82 +343,82 @@ func (e *Router) getSpots(w http.ResponseWriter, r *http.Request) {
 			PreviewURL: previewUrl,
 		})
 	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotsResponse{Spots: res, Total: total, TenantHasSpots: tenantHasSpots}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &GetSpotsResponse{Spots: res, Total: total, TenantHasSpots: tenantHasSpots}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) deleteSpots(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) deleteSpots(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &DeleteSpotRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	spotsToDelete := make([]uint64, 0, len(req.SpotIDs))
 	for _, idStr := range req.SpotIDs {
 		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
-			e.ResponseWithError(r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid spot id: %s", idStr), startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid spot id: %s", idStr), startTime, r.URL.Path, bodySize)
 			return
 		}
 		spotsToDelete = append(spotsToDelete, id)
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	if err := e.services.Spots.Delete(user, spotsToDelete); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+	user := r.Context().Value("userData").(*user.User)
+	if err := e.spots.Delete(user, spotsToDelete); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) addComment(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &AddCommentRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	updatedSpot, err := e.services.Spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
+	user := r.Context().Value("userData").(*user.User)
+	updatedSpot, err := e.spots.AddComment(user, id, &service.Comment{UserName: req.UserName, Text: req.Comment})
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	mobURL, err := e.getMobURL(id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	videoURL, err := e.getVideoURL(id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -385,70 +430,70 @@ func (e *Router) addComment(w http.ResponseWriter, r *http.Request) {
 		MobURL:    mobURL,
 		VideoURL:  videoURL,
 	}
-	e.ResponseWithJSON(r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, &GetSpotResponse{Spot: spotInfo}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) uploadedSpot(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) uploadedSpot(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	spot, err := e.services.Spots.GetByID(user, id) // check if spot exists
+	user := r.Context().Value("userData").(*user.User)
+	spot, err := e.spots.GetByID(user, id) // check if spot exists
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	e.log.Info(r.Context(), "uploaded spot %+v, from user: %+v", spot, user)
-	if err := e.services.Transcoder.Process(spot); err != nil {
+	if err := e.transcoder.Process(spot); err != nil {
 		e.log.Error(r.Context(), "can't add transcoding task: %s", err)
 	}
 
-	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) getSpotVideo(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	key := fmt.Sprintf("%d/video.webm", id)
-	videoURL, err := e.services.ObjStorage.GetPreSignedDownloadUrl(key)
+	videoURL, err := e.objStorage.GetPreSignedDownloadUrl(key)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	resp := map[string]interface{}{
 		"url": videoURL,
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) getSpotStream(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getSpotStream(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Example data to serve as the file content
-	streamPlaylist, err := e.services.Transcoder.GetSpotStreamPlaylist(id)
+	streamPlaylist, err := e.transcoder.GetSpotStreamPlaylist(id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -462,144 +507,90 @@ func (e *Router) getSpotStream(w http.ResponseWriter, r *http.Request) {
 
 	// Write the content of the buffer to the response writer
 	if _, err := buffer.WriteTo(w); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 }
 
-func (e *Router) getPublicKey(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) getPublicKey(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	key, err := e.services.Keys.Get(id, user)
+	user := r.Context().Value("userData").(*user.User)
+	key, err := e.keys.Get(id, user)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			e.ResponseWithError(r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
 		} else {
-			e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
 	resp := map[string]interface{}{
 		"key": key,
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) updatePublicKey(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
 
 	req := &UpdateSpotPublicKeyRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	key, err := e.services.Keys.Set(id, req.Expiration, user)
+	user := r.Context().Value("userData").(*user.User)
+	key, err := e.keys.Set(id, req.Expiration, user)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	resp := map[string]interface{}{
 		"key": key,
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
 
-func (e *Router) spotStatus(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl) spotStatus(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
 	id, err := getSpotID(r)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	user := r.Context().Value("userData").(*auth.User)
-	status, err := e.services.Spots.GetStatus(user, id)
+	user := r.Context().Value("userData").(*user.User)
+	status, err := e.spots.GetStatus(user, id)
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	resp := map[string]interface{}{
 		"status": status,
 	}
-	e.ResponseWithJSON(r.Context(), w, resp, startTime, r.URL.Path, bodySize)
-}
-
-func recordMetrics(requestStart time.Time, url string, code, bodySize int) {
-	if bodySize > 0 {
-		metrics.RecordRequestSize(float64(bodySize), url, code)
-	}
-	metrics.IncreaseTotalRequests()
-	metrics.RecordRequestDuration(float64(time.Now().Sub(requestStart).Milliseconds()), url, code)
-}
-
-func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
-	body := http.MaxBytesReader(w, r.Body, limit)
-	bodyBytes, err := io.ReadAll(body)
-
-	// Close body
-	if closeErr := body.Close(); closeErr != nil {
-		e.log.Warn(r.Context(), "error while closing request body: %s", closeErr)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return bodyBytes, nil
-}
-
-func (e *Router) ResponseOK(ctx context.Context, w http.ResponseWriter, requestStart time.Time, url string, bodySize int) {
-	w.WriteHeader(http.StatusOK)
-	e.log.Info(ctx, "response ok")
-	recordMetrics(requestStart, url, http.StatusOK, bodySize)
-}
-
-func (e *Router) ResponseWithJSON(ctx context.Context, w http.ResponseWriter, res interface{}, requestStart time.Time, url string, bodySize int) {
-	e.log.Info(ctx, "response ok")
-	body, err := json.Marshal(res)
-	if err != nil {
-		e.log.Error(ctx, "can't marshal response: %s", err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(body)
-	recordMetrics(requestStart, url, http.StatusOK, bodySize)
-}
-
-type response struct {
-	Error string `json:"error"`
-}
-
-func (e *Router) ResponseWithError(ctx context.Context, w http.ResponseWriter, code int, err error, requestStart time.Time, url string, bodySize int) {
-	e.log.Error(ctx, "response error, code: %d, error: %s", code, err)
-	body, err := json.Marshal(&response{err.Error()})
-	if err != nil {
-		e.log.Error(ctx, "can't marshal response: %s", err)
-	}
-	w.WriteHeader(code)
-	w.Write(body)
-	recordMetrics(requestStart, url, code, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

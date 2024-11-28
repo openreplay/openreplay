@@ -119,7 +119,7 @@ function install_openreplay_actions() {
         sudo rm -rf $openreplay_code_dir
     fi
     sudo cp -rfb ./vars.yaml $openreplay_home_dir
-    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_code_dir
+    sudo cp -rf "$(cd ../.. && pwd)" $openreplay_home_dir
 }
 
 function main() {

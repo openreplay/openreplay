@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
 import SessionTags from '../SessionTags';
-import NoteTags from '../Notes/NoteTags';
 import SessionSort from '../SessionSort';
 import { Space } from 'antd';
 import { useStore } from 'App/mstore';
@@ -32,18 +31,15 @@ function SessionHeader() {
   return (
     <div className="flex items-center px-4 py-1 justify-between w-full">
       <h2 className="text-2xl capitalize mr-4">{title}</h2>
-        <div className="flex items-center w-full justify-end">
-          {activeTab.type !== 'bookmarks' && (
-            <>
-              <SessionTags />
-              <div className="mr-auto" />
-              <Space>
-                <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
-                <SessionSort />
-              </Space>
-            </>
-          )}
-        </div>
+      <div className="flex items-center w-full justify-end">
+        {activeTab.type !== 'bookmarks' && <SessionTags />}
+        <div className="mr-auto" />
+        <Space>
+          {activeTab.type !== 'bookmarks' &&
+            <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />}
+          <SessionSort />
+        </Space>
+      </div>
     </div>
   );
 }

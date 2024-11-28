@@ -1,4 +1,5 @@
 #!/bin/sh
+export TZ=UTC
 sh env_vars.sh
 source /tmp/.env.override
 
