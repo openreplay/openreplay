@@ -296,7 +296,6 @@ export default class Widget {
     setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison?: boolean) {
         const _data: any = {};
         if (isComparison) {
-            console.log(data)
             data.forEach((point, i) => {
               Object.keys(point).forEach((key) => {
                   if (key === 'timestamp') return;

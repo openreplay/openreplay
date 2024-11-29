@@ -41,7 +41,6 @@ function FilterValue(props: Props) {
   };
 
   const onChange = (e: any, item: any, valueIndex: any) => {
-    console.log('item', item, valueIndex);
     const newValues = filter.value.map((_: any, _index: any) => {
       if (_index === valueIndex) {
         return item;

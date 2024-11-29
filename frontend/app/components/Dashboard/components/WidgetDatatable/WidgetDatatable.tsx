@@ -31,7 +31,6 @@ interface Props {
 function WidgetDatatable(props: Props) {
   const [tableProps, setTableProps] =
     useState<TableProps['columns']>(initTableProps);
-  // console.log(params.density / 7, data.chart)
   const data = props.data;
 
   const [showTable, setShowTable] = useState(false);

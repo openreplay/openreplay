@@ -31,7 +31,6 @@ function BigNumChart(props: Props) {
       series: data.namesMap[i],
     });
   }
-  console.log(values, data, compData)
   return (
     <div className={'flex justify-around gap-2 w-full'} style={{ height: 240 }}>
       {values.map((val, i) => (
