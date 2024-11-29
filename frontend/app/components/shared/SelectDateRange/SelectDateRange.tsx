@@ -81,11 +81,11 @@ function SelectDateRange(props: Props) {
     setIsCustom(false);
   };
 
-  const isCustomRange = period ? period.rangeName === CUSTOM_RANGE : false;
+  const isCustomRange = usedPeriod ? usedPeriod.rangeName === CUSTOM_RANGE : false;
   const isUSLocale =
     navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const customRange = isCustomRange
-    ? period.rangeFormatted(
+    ? usedPeriod.rangeFormatted(
         isUSLocale ? 'MMM dd yyyy, hh:mm a' : 'MMM dd yyyy, HH:mm'
       )
     : '';
@@ -97,6 +97,7 @@ function SelectDateRange(props: Props) {
       selectedValue={selectedValue}
       onChange={onChange}
       isCustomRange={isCustomRange}
+      isCustom={isCustom}
       customRange={customRange}
       setIsCustom={setIsCustom}
       onApplyDateRange={onApplyDateRange}
@@ -189,6 +190,7 @@ function AndDateRange({
     },
   };
 
+  const comparisonValue = isCustomRange && selectedValue ? customRange : selectedValue?.label;
   return (
     <div className={'relative'}>
       {comparison ? (
@@ -200,9 +202,7 @@ function AndDateRange({
               }
             >
               <span>
-                {isCustomRange
-                  ? customRange
-                  : `Compare to ${selectedValue ? selectedValue?.label : ''}`}
+                {`Compare to ${comparisonValue || ''}`}
               </span>
               <DownOutlined />
             </div>

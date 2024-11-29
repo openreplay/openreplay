@@ -42,7 +42,6 @@ function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeser
       <SelectDateRange
         period={period}
         onChange={onChangePeriod}
-        right={true}
         isAnt={true}
         useButtonStyle={true}
       />

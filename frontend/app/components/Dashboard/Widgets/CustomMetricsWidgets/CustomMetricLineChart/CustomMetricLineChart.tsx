@@ -32,7 +32,7 @@ interface Props {
 function CustomMetricLineChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
-    compData,
+    compData = { chart: [], namesMap: [] },
     params,
     colors,
     onClick = () => null,
@@ -86,13 +86,12 @@ function CustomMetricLineChart(props: Props) {
              strokeOpacity={key === 'Total' ? 0 : 0.6}
              legendType={key === 'Total' ? 'none' : 'line'}
              dot={false}
-             // strokeDasharray={'4 3'} FOR COPMARISON ONLY
              activeDot={{
                fill: key === 'Total' ? 'transparent' : colors[index],
              }}
            />
          ) : null)}
-        {compData ? compData.namesMap.map((key, i) => (
+        {compData?.namesMap.map((key, i) => data.namesMap[i] ? (
           <Line
             key={key}
             name={key}
@@ -110,7 +109,7 @@ function CustomMetricLineChart(props: Props) {
               fill: colors[i],
             }}
           />
-        )) : null}
+        ) : null)}
       </LineChart>
     </ResponsiveContainer>
   );

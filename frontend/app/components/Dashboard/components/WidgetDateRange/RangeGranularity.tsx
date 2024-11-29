@@ -15,6 +15,7 @@ function RangeGranularity({
     return calculateGranularities(period.getDuration());
   }, [period]);
 
+
   const menuProps = {
     items: granularityOptions,
     onClick: (item: any) => onDensityChange(item.key),
@@ -22,13 +23,19 @@ function RangeGranularity({
   const selected = React.useMemo(() => {
     let selected = 'Custom';
     for (const option of granularityOptions) {
-      if (option.key <= density) {
+      if (option.key === density) {
         selected = option.label;
         break;
       }
     }
     return selected;
-  }, [])
+  }, [period, density])
+
+  React.useEffect(() => {
+    const defaultOption = Math.max(granularityOptions.length - 2, 0);
+    onDensityChange(granularityOptions[defaultOption].key);
+  }, [period]);
+
   return (
     <AntlikeDropdown
       useButtonStyle
@@ -41,7 +48,7 @@ function RangeGranularity({
 
 function calculateGranularities(periodDurationMs: number) {
   const granularities = [
-    { label: 'Minute', durationMs: 60 * 1000 },
+    { label: 'By minute', durationMs: 60 * 1000 },
     { label: 'Hourly', durationMs: 60 * 60 * 1000 },
     { label: 'Daily', durationMs: 24 * 60 * 60 * 1000 },
     { label: 'Weekly', durationMs: 7 * 24 * 60 * 60 * 1000 },

@@ -11,12 +11,14 @@ const initTableProps = [
     dataIndex: 'seriesName',
     key: 'seriesName',
     sorter: (a, b) => a.seriesName.localeCompare(b.seriesName),
+    fixed: 'left',
   },
   {
     title: 'Avg.',
     dataIndex: 'average',
     key: 'average',
     sorter: (a, b) => a.average - b.average,
+    fixed: 'left',
   },
 ];
 
@@ -132,6 +134,7 @@ function WidgetDatatable(props: Props) {
             pagination={false}
             rowSelection={rowSelection}
             size={'small'}
+            scroll={{ x: 'max-content' }}
           />
           {/* 1.23+ export menu floater */}
           {/*<div className={'absolute top-0 -right-1'}>*/}

@@ -70,6 +70,9 @@ export default {
             lineHeight: '0.75rem',
             color: '#000',
             fontSize: '12px'
+        },
+        cursor: {
+            fill: '#eee'
         }
     },
     gradientDef: () => (

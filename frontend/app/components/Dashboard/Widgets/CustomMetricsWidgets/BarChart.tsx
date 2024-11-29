@@ -68,7 +68,7 @@ const PillBar = (props) => {
 function CustomMetricLineChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
-    compData,
+    compData = { chart: [], namesMap: [] },
     params,
     colors,
     onClick = () => null,
@@ -82,6 +82,14 @@ function CustomMetricLineChart(props: Props) {
     return item;
   });
 
+  // we mix 1 original, then 1 comparison, etc
+  const mergedNameMap: { data: any, isComp: boolean, index: number }[] = [];
+  for (let i = 0; i < data.namesMap.length; i++) {
+    mergedNameMap.push({ data: data.namesMap[i], isComp: false, index: i });
+    if (compData && compData.namesMap[i]) {
+      mergedNameMap.push({ data: compData.namesMap[i], isComp: true, index: i });
+    }
+  }
   return (
     <ResponsiveContainer height={240} width="100%">
       <BarChart
@@ -126,39 +134,23 @@ function CustomMetricLineChart(props: Props) {
           }}
         />
         <Tooltip {...Styles.tooltip} content={CustomTooltip} />
-        {Array.isArray(data.namesMap) &&
-         data.namesMap.map((key, index) => (
-           <Bar
-             key={key}
-             name={key}
-             type="monotone"
-             dataKey={key}
-             shape={(barProps) => (
-               <PillBar {...barProps} fill={colors[index]} />
-             )}
-             legendType={key === 'Total' ? 'none' : 'line'}
-             activeBar={
-               <PillBar fill={colors[index]} stroke={colors[index]} />
-             }
-           />
-         ))}
-        {compData
-         ? compData.namesMap.map((key, i) => (
-            <Bar
-              key={key}
-              name={key}
-              type="monotone"
-              dataKey={key}
-              shape={(barProps) => (
-                <PillBar {...barProps} fill={colors[i]} barKey={i} stroke={colors[i]} striped />
-              )}
-              legendType={key === 'Total' ? 'none' : 'line'}
-              activeBar={
-                <PillBar fill={colors[i]} stroke={colors[i]} barKey={i} striped />
-              }
-            />
-          ))
-         : null}
+        {mergedNameMap.map((item) => (
+          <Bar
+            key={item.data}
+            name={item.data}
+            type="monotone"
+            dataKey={item.data}
+            fill={colors[item.index]}
+            stroke={colors[item.index]}
+            shape={(barProps: any) => (
+              <PillBar {...barProps} fill={colors[item.index]} barKey={item.index} stroke={colors[item.index]} striped={item.isComp} />
+            )}
+            legendType={'line'}
+            activeBar={
+              <PillBar fill={colors[item.index]} stroke={colors[item.index]} barKey={item.index} striped={item.isComp} />
+            }
+          />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   );

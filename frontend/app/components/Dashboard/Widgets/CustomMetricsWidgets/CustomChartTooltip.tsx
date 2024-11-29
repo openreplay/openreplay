@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatTimeOrDate } from 'App/date';
 import cn from 'classnames';
-import { ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 function CustomTooltip({ active, payload, label }) {
   if (!active) return;
@@ -54,22 +54,35 @@ function CustomTooltip({ active, payload, label }) {
             <div className={'flex items-center gap-2'}>
               <div className={'font-semibold'}>{p.value}</div>
               {p.prevValue !== null ? (
-                <div
-                  className={cn(
-                    'px-2 py-1 rounded flex items-center gap-1',
-                    isHigher(p) ? 'bg-green2 text-xs' : 'bg-red2 text-xs'
-                  )}
-                >
-                  {!isHigher(p) ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
-                  <div>
-                    {p.prevValue}
-                  </div>
-                </div>
+                <CompareTag
+                  isHigher={isHigher(p)}
+                  prevValue={p.prevValue}
+                />
               ) : null}
             </div>
           </div>
         </React.Fragment>
       ))}
+    </div>
+  );
+}
+
+export function CompareTag({
+  isHigher,
+  prevValue,
+}: {
+  isHigher: boolean;
+  prevValue: number | string;
+}) {
+  return (
+    <div
+      className={cn(
+        'px-2 py-1 rounded flex items-center gap-1',
+        isHigher ? 'bg-green2 text-xs' : 'bg-red2 text-xs'
+      )}
+    >
+      {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
+      <div>{prevValue}</div>
     </div>
   );
 }

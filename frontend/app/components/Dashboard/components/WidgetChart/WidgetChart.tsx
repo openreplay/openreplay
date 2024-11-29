@@ -9,7 +9,7 @@ import { useStore } from 'App/mstore';
 import AreaChart from '../../Widgets/CustomMetricsWidgets/AreaChart';
 import BarChart from '../../Widgets/CustomMetricsWidgets/BarChart';
 import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
-
+import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart'
 import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
@@ -274,6 +274,7 @@ function WidgetChart(props: Props) {
         return (
           <ProgressBarChart
             data={chartData}
+            compData={compData}
             params={params}
             colors={colors}
             onClick={onChartClick}
@@ -291,8 +292,12 @@ function WidgetChart(props: Props) {
             metric={metric}
             data={chartData}
             colors={colors}
-            // params={params}
             onClick={onChartClick}
+            label={
+              metric.metricOf === 'sessionCount'
+              ? 'Number of Sessions'
+              : 'Number of Users'
+            }
           />
         );
       }
@@ -302,11 +307,31 @@ function WidgetChart(props: Props) {
             data={data[0]}
             colors={colors}
             params={params}
+            label={
+              metric.metricOf === 'sessionCount'
+              ? 'Number of Sessions'
+              : 'Number of Users'
+            }
           />
         );
       }
       if (viewType === 'table') {
         return null;
+      }
+      if (viewType === 'metric') {
+        return (
+          <BugNumChart
+            data={data}
+            compData={compData}
+            colors={colors}
+            onClick={onChartClick}
+            label={
+              metric.metricOf === 'sessionCount'
+              ? 'Number of Sessions'
+              : 'Number of Users'
+            }
+          />
+        )
       }
     }
 

@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
-import { ChartLine, ChartArea, ChartColumn, ChartBar, ChartPie, Table } from 'lucide-react'
+import { ChartLine, ChartArea, ChartColumn, ChartBar, ChartPie, Table, Hash } from 'lucide-react'
 
 function WidgetOptions() {
   const { metricStore } = useStore();
@@ -23,6 +23,7 @@ function WidgetOptions() {
     pieChart: 'Pie',
     progressChart: 'Bar',
     table: 'Table',
+   metric: 'Metric',
   }
   const chartIcons = {
     lineChart: <ChartLine size={16} strokeWidth={1} />,
@@ -31,6 +32,7 @@ function WidgetOptions() {
     pieChart: <ChartPie size={16} strokeWidth={1} />,
     progressChart: <ChartBar size={16} strokeWidth={1} />,
     table: <Table size={16} strokeWidth={1} />,
+    metric: <Hash size={16} strokeWidth={1} />,
   }
   return (
     <div>

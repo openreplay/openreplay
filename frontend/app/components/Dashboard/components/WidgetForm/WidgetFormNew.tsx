@@ -136,21 +136,6 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           </Button>
         </Card>
       )}
-
-      {metric.series[0] ?
-       <div className={'rounded-xl border border-gray-lighter'}>
-        <FilterList
-          filter={metric.series[0].filter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          supportsEmpty
-          onFilterMove={onFilterMove}
-          excludeFilterKeys={excludeFilterKeys}
-          onAddFilter={onAddFilter}
-        />
-       </div>
-      : null}
     </>
   );
 });
