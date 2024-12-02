@@ -54,10 +54,14 @@ function SessionSearch() {
 
   const onAddFilter = (filter: any) => {
     searchStore.addFilter(filter);
+
+    debounceFetch();
   };
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     searchStore.updateFilter(filterIndex, filter);
+
+    debounceFetch();
   };
 
   const onFilterMove = (newFilters: any) => {
