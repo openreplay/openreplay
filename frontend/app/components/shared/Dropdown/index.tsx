@@ -1,11 +1,11 @@
 import React from 'react';
-import { Dropdown } from 'antd';
+import { Dropdown, MenuProps } from 'antd';
 
 function AntlikeDropdown(props: {
   label: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  menuProps: any;
+  menuProps: MenuProps;
   useButtonStyle?: boolean;
   className?: string;
 }) {

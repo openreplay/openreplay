@@ -21,7 +21,6 @@ interface Props {
   excludeFilterKeys?: Array<string>;
   isConditional?: boolean;
   actions?: React.ReactNode[];
-  onlyFilters?: boolean;
   onAddFilter: (filter: any) => void;
   mergeDown?: boolean;
   mergeUp?: boolean;

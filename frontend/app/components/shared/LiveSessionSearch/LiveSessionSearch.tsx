@@ -49,7 +49,6 @@ function LiveSessionSearch() {
       onRemoveFilter={onRemoveFilter}
       onChangeEventsOrder={onChangeEventsOrder}
       saveRequestPayloads={saveRequestPayloads}
-      onlyFilters={true}
     />
   );
 }

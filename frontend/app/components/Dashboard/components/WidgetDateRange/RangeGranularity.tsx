@@ -7,11 +7,14 @@ function RangeGranularity({
   density,
   onDensityChange
 }: {
-  period: any,
+  period: {
+    getDuration(): number;
+  },
   density: number,
   onDensityChange: (density: number) => void
 }) {
   const granularityOptions = React.useMemo(() => {
+    if (!period) return []
     return calculateGranularities(period.getDuration());
   }, [period]);
 
@@ -32,9 +35,10 @@ function RangeGranularity({
   }, [period, density])
 
   React.useEffect(() => {
+    if (granularityOptions.length === 0) return;
     const defaultOption = Math.max(granularityOptions.length - 2, 0);
     onDensityChange(granularityOptions[defaultOption].key);
-  }, [period]);
+  }, [period, granularityOptions.length]);
 
   return (
     <AntlikeDropdown
@@ -60,7 +64,7 @@ function calculateGranularities(periodDurationMs: number) {
 
   for (const granularity of granularities) {
     if (periodDurationMs >= granularity.durationMs) {
-      const density = Math.floor(periodDurationMs / granularity.durationMs);
+      const density = Math.floor(Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)));
       result.push({ label: granularity.label, key: density });
     }
   }

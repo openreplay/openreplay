@@ -1,7 +1,7 @@
-import {observer} from "mobx-react-lite";
-import {Tooltip} from "UI";
-import {Segmented, Select} from "antd";
 import React from "react";
+import { observer } from "mobx-react-lite";
+import { Tooltip } from "UI";
+import { Select } from "antd";
 
 const EventsOrder = observer((props: {
     onChange: (e: any, v: any) => void,

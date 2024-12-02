@@ -1,25 +1,21 @@
 import React from 'react';
-import BackButton from '../../../shared/Breadcrumb/BackButton';
+import BackButton from 'Shared/Breadcrumb/BackButton';
 import { withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { Button, PageTitle, confirm, Tooltip } from 'UI';
+import { PageTitle, confirm, Tooltip } from 'UI';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
-import { useModal } from 'App/components/Modal';
 import DashboardOptions from '../DashboardOptions';
 import withModal from 'App/components/Modal/withModal';
 import { observer } from 'mobx-react-lite';
 import DashboardEditModal from '../DashboardEditModal';
-import CreateCardButton from 'Components/Dashboard/components/CreateCardButton';
 
 interface IProps {
-  dashboardId: string;
   siteId: string;
   renderReport?: any;
 }
 
 type Props = IProps & RouteComponentProps;
-const MAX_CARDS = 29;
 
 function DashboardHeader(props: Props) {
   const { siteId } = props;
@@ -29,7 +25,6 @@ function DashboardHeader(props: Props) {
   const period = dashboardStore.period;
 
   const dashboard: any = dashboardStore.selectedDashboard;
-  const canAddMore: boolean = dashboard?.widgets?.length <= MAX_CARDS;
 
   const onEdit = (isTitle: boolean) => {
     dashboardStore.initDashboard(dashboard);

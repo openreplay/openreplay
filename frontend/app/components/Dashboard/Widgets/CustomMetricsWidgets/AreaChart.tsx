@@ -13,19 +13,17 @@ import {
 } from 'recharts';
 
 interface Props {
-  data: any;
-  params: any;
+  data: { chart: any[]; namesMap: string[] };
   colors: any;
   onClick?: (event, index) => void;
-  yaxis?: any;
+  yaxis?: Record<string, any>;
   label?: string;
   hideLegend?: boolean;
 }
 
-function CustomMetricLineChart(props: Props) {
+function CustomAreaChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
-    params,
     colors,
     onClick = () => null,
     yaxis = { ...Styles.yaxis },
@@ -78,4 +76,4 @@ function CustomMetricLineChart(props: Props) {
   );
 }
 
-export default CustomMetricLineChart;
+export default CustomAreaChart;

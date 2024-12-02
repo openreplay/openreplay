@@ -10,11 +10,10 @@ import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMen
 interface Props {
   onClick?: () => void;
   onSave: () => void;
-  undoChanges?: () => void;
 }
 
-function WidgetViewHeader({ onClick, onSave, undoChanges }: Props) {
-  const { metricStore, dashboardStore } = useStore();
+function WidgetViewHeader({ onClick, onSave }: Props) {
+  const { metricStore } = useStore();
   const widget = useObserver(() => metricStore.instance);
 
   return (

@@ -1,4 +1,3 @@
-//@ts-nocheck
 import React from 'react';
 import { ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChart, Pie, Cell, Legend } from 'recharts';
@@ -6,9 +5,16 @@ import { Styles } from '../../common';
 import { NoContent } from 'UI';
 import { filtersMap } from 'Types/filter/newFilter';
 import { numberWithCommas } from 'App/utils';
+
 interface Props {
-  metric: any;
-  data: any;
+  metric: {
+    metricOf: string;
+    metricType: string;
+  };
+  data: {
+    chart: any[];
+    namesMap: string[];
+  };
   colors: any;
   onClick?: (filters) => void;
 }

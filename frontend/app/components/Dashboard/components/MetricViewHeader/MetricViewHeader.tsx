@@ -107,11 +107,11 @@ function DashboardDropdown({
   plain = false,
 }: {
   plain?: boolean;
-  onChange: any;
+  onChange: (val: any) => void;
 }) {
   const { dashboardStore, metricStore } = useStore();
-  const dashboardOptions = dashboardStore.dashboards.map((i: any) => ({
-    key: i.id,
+  const dashboardOptions = dashboardStore.dashboards.map((i, l) => ({
+    key: `${i.dashboardId}_${l}`,
     label: i.name,
     value: i.dashboardId,
   }));

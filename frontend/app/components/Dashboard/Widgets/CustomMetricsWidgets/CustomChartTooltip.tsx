@@ -3,11 +3,23 @@ import { formatTimeOrDate } from 'App/date';
 import cn from 'classnames';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active) return;
+interface PayloadItem {
+  hide?: boolean;
+  name: string;
+  value: number;
+  prevValue?: number;
+}
+interface Props {
+  active: boolean;
+  payload: PayloadItem[];
+  label: string;
+}
 
-  const shownPayloads: Record<string, any>[] = payload.filter((p) => !p.hide);
-  const currentSeries: { value: number }[] = [];
+function CustomTooltip({ active, payload, label }: Props) {
+  if (!active || !payload?.length) return null;
+
+  const shownPayloads: PayloadItem[] = payload.filter((p) => !p.hide);
+  const currentSeries: PayloadItem[] = [];
   const previousSeriesMap: Record<string, any> = {};
 
   shownPayloads.forEach((item) => {

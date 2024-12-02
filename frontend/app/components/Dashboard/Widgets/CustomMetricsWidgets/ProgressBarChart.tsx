@@ -22,6 +22,7 @@ function ProgressBarChart(props: Props) {
 
   const getTotalForSeries = (series: string, isComp: boolean) => {
     if (isComp) {
+      if (!compData) return 0;
       return compData.chart.reduce((acc, curr) => acc + curr[series], 0);
     }
     return data.chart.reduce((acc, curr) => acc + curr[series], 0);
