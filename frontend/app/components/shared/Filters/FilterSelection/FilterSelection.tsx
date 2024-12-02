@@ -68,9 +68,8 @@ function FilterSelection(props: Props) {
             }}
             onClick={() => setShowModal(true)}
           >
-            <div>
-              {getNewIcon(filter)}
-            </div>
+            <div>{getNewIcon(filter)}</div>
+            <div className={'text-disabled-text'}>{`${filter.category} .`}</div>
             <div
               className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
               style={{ textOverflow: 'ellipsis' }}

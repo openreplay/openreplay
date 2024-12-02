@@ -26,6 +26,7 @@ interface Props {
   data: { chart: any[]; namesMap: string[] };
   enabledRows: string[];
   setEnabledRows: (rows: string[]) => void;
+  defaultOpen?: boolean;
 }
 
 function WidgetDatatable(props: Props) {
@@ -33,7 +34,7 @@ function WidgetDatatable(props: Props) {
     useState<TableProps['columns']>(initTableProps);
   const data = props.data;
 
-  const [showTable, setShowTable] = useState(false);
+  const [showTable, setShowTable] = useState(props.defaultOpen);
   const hasMultipleSeries = data.namesMap.length > 1;
   const [tableData, setTableData] = useState([]);
 

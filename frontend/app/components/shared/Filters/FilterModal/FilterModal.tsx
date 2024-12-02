@@ -230,7 +230,7 @@ function FilterModal(props: Props) {
             <div
               key={key}
               onClick={() => setCategory(key)}
-              className={cn('rounded px-4 py-2 hover:bg-active-blue capitalize', key === category ? 'bg-active-blue' : '')}
+              className={cn('rounded px-4 py-2 hover:bg-active-blue capitalize cursor-pointer', key === category ? 'bg-active-blue' : '')}
             >
               {key.toLowerCase()}
             </div>

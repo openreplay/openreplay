@@ -49,7 +49,7 @@ function WidgetChart(props: Props) {
     rootMargin: '200px 0px',
   });
   const { isSaved = false, metric, isTemplate } = props;
-  const { dashboardStore, metricStore, sessionStore } = useStore();
+  const { dashboardStore, metricStore } = useStore();
   const _metric: any = metricStore.instance;
   const period = dashboardStore.period;
   const drillDownPeriod = dashboardStore.drillDownPeriod;
@@ -153,8 +153,9 @@ function WidgetChart(props: Props) {
     prevMetricRef.current = metric;
     const timestmaps = drillDownPeriod.toTimestamps();
     const payload = isSaved
-      ? { ...metricParams }
-      : { ...params, ...timestmaps, ...metric.toJson() };
+                    // TODO: remove after backend adds support for more view types
+      ? { ...metricParams, viewType: 'lineChart' }
+      : { ...params, ...timestmaps, ...metric.toJson(), viewType: 'lineChart' };
     debounceRequest(
       metric,
       payload,
@@ -167,7 +168,8 @@ function WidgetChart(props: Props) {
     if (!dashboardStore.comparisonPeriod) return setCompData(null);
 
     const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
-    const payload = { ...params, ...timestamps, ...metric.toJson() };
+    // TODO: remove after backend adds support for more view types
+    const payload = { ...params, ...timestamps, ...metric.toJson(), viewType: 'lineChart' };
     fetchMetricChartData(metric, payload, isSaved, dashboardStore.comparisonPeriod, true);
   }
   useEffect(() => {
@@ -432,7 +434,7 @@ function WidgetChart(props: Props) {
         <div style={{ minHeight: 240 }}>
           {renderChart()}
           {metric.metricType === TIMESERIES ? (
-            <WidgetDatatable data={data} enabledRows={enabledRows} setEnabledRows={setEnabledRows} />
+            <WidgetDatatable defaultOpen={metric.viewType === 'table'} data={data} enabledRows={enabledRows} setEnabledRows={setEnabledRows} />
           ) : null}
         </div>
       </Loader>
