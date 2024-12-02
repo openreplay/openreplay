@@ -540,12 +540,6 @@ def set_password_invitation(tenant_id, user_id, new_password):
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
 
-    tenant_id = r.pop("tenantId")
-    r["limits"] = {
-        "teamMember": -1,
-        "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
-
     return {
         "jwt": r.pop("jwt"),
         "refreshToken": r.pop("refreshToken"),
@@ -554,10 +548,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
         "spotRefreshToken": r.pop("spotRefreshToken"),
         "spotRefreshTokenMaxAge": r.pop("spotRefreshTokenMaxAge"),
         "tenantId": tenant_id,
-        'data': {
-            "scopeState": scope.get_scope(tenant_id),
-            "user": r
-        }
+        **r
     }
 
 
