@@ -33,6 +33,7 @@ interface IORTrackerConnector {
     projectUrl?: string
   ) => void;
   stop: () => void;
+  getSessionID: () => Promise<string>;
   setMetadata: (key: string, value: string) => void;
   event: (name: string, payload?: string) => void;
   setUserID: (userID: string) => void;
