@@ -65,6 +65,7 @@ export const FilterList = observer((props: Props) => {
       {filters.map((filter: any, filterIndex: any) =>
         !filter.isEvent ? (
           <div
+            key={`${filter.key}-${filterIndex}`}
             className={'py-2 hover:bg-active-blue px-5'}
             style={{
               marginLeft: '-1.25rem',

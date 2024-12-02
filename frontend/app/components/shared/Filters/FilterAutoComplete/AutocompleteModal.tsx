@@ -53,7 +53,7 @@ export function AutocompleteModal({
       return sorted;
     }
     return options;
-  }, [options.length]);
+  }, [options.length, values]);
   return (
     <div
       className={cn(
@@ -74,6 +74,7 @@ export function AutocompleteModal({
       >
         {sortedOptions.map((item) => (
           <div
+            key={item.value}
             onClick={() => onSelectOption(item)}
             className={
               'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'

@@ -65,7 +65,7 @@ const PillBar = (props) => {
 
 
 
-function CustomMetricLineChart(props: Props) {
+function CustomBarChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
     compData = { chart: [], namesMap: [] },
@@ -156,4 +156,4 @@ function CustomMetricLineChart(props: Props) {
   );
 }
 
-export default CustomMetricLineChart;
+export default CustomBarChart;

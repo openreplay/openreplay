@@ -64,7 +64,7 @@ const tabItems: Record<string, TabItem[]> = {
       icon: <Icon name={'dashboards/heatmap-2'} color={'inherit'} size={16} />,
       title: 'Heatmaps',
       type: HEATMAP,
-      description: 'Generate a report using by asking AI.',
+      description: 'Visualize user interaction patterns on your pages.',
     },
   ],
   monitors: [
@@ -153,6 +153,7 @@ function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
       ];
     }
 
+    // TODO This code here makes 0 sense
     if (selectedCard.cardType === FUNNEL) {
       cardData.series = [];
       cardData.series.filter = [];
