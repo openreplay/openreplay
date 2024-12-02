@@ -10,7 +10,8 @@ import network from './network';
 import type { Options as NetworkOptions } from './network';
 
 const { ORTrackerConnector } = NativeModules;
-
+console.log(Object.keys(ORTrackerConnector));
+// ["start", "startSession", "stop", "setMetadata", "event", "setUserID", "userAnonymousID", "networkRequest", "getConstants"]
 const LINKING_ERROR =
   `The package '@openreplay/react-native' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
@@ -33,6 +34,7 @@ interface IORTrackerConnector {
     projectUrl?: string
   ) => void;
   stop: () => void;
+  getSessionID: () => Promise<string>;
   setMetadata: (key: string, value: string) => void;
   event: (name: string, payload?: string) => void;
   setUserID: (userID: string) => void;

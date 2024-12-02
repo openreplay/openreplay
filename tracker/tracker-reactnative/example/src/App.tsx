@@ -7,6 +7,7 @@ export default function App() {
   const [number, onChangeNumber] = React.useState('');
 
   const start = () => {
+    console.log(process.env)
     Openreplay.tracker.startSession(
       process.env.REACT_APP_KEY!,
       {},
@@ -31,6 +32,12 @@ export default function App() {
     Openreplay.tracker.setUserID('react-native@connector.me');
   };
 
+  const showId = async () => {
+    console.log(Openreplay.tracker);
+    const id = await Openreplay.tracker.getSessionID();
+    console.log(id, 'test');
+  };
+
   const apiTest = () => {
     fetch('https://pokeapi.co/api/v2/pokemon/ditto')
       .then((res) => {
@@ -46,6 +53,10 @@ export default function App() {
       <View style={styles.container}>
         <TouchableOpacity onPress={setMetadata}>
           <Text>Set Metadata</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={showId}>
+          <Text>Show ID</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={event}>
