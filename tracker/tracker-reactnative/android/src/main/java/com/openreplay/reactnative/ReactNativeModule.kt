@@ -95,8 +95,13 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun getSessionId(): String {
-    return OpenReplay.getSessionId()
+  fun getSessionID(promise: Promise) {
+    try {
+      val sessionId = OpenReplay.getSessionID() ?: ""
+      promise.resolve(sessionId) // Resolve the promise with the session ID
+    } catch (e: Exception) {
+      promise.reject("GET_SESSION_ID_ERROR", "Failed to retrieve session ID", e)
+    }
   }
 
   @ReactMethod
