@@ -24,7 +24,7 @@ function LiveSessionList() {
   const totalLiveSessions = sessionStore.totalLiveSessions;
   const loading = sessionStore.loadingLiveSessions;
   const { currentPage } = searchStoreLive;
-  const metaList = customFieldStore.list
+  const metaList = customFieldStore.list;
   const metaListLoading = customFieldStore.isLoading;
 
   let timeoutId: any;
@@ -32,7 +32,7 @@ function LiveSessionList() {
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
   const sortOptions = [{ label: 'Start Time', value: 'timestamp' }].concat(
     metaList
-      .map(({ key} : any) => ({
+      .map(({ key }: any) => ({
         label: capitalize(key),
         value: key
       }))
@@ -40,21 +40,33 @@ function LiveSessionList() {
 
   useEffect(() => {
     if (metaListLoading) return;
+
     const _filter = { ...filter };
+    let shouldUpdate = false;
+
+    // Set default sort if not already set
     if (sortOptions[1] && !filter.sort) {
       _filter.sort = sortOptions[1].value;
+      shouldUpdate = true;
     }
-    searchStoreLive.edit(_filter);
+
+    // Only update filters if there's a change
+    if (shouldUpdate) {
+      searchStoreLive.edit(_filter);
+    }
+
+    // Start auto-refresh timeout
     timeout();
+
+    // Cleanup on component unmount or re-run
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [metaListLoading]);
+  }, [metaListLoading, filter.sort]); // Add necessary dependencies
 
   const refetch = () => {
-    searchStoreLive.edit({ ...filter })
     void searchStoreLive.fetchSessions();
-  }
+  };
 
   const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
@@ -66,7 +78,6 @@ function LiveSessionList() {
 
   const onSortChange = ({ value }: any) => {
     searchStoreLive.edit({ sort: value.value });
-    void searchStoreLive.fetchSessions();
   };
 
   const timeout = () => {
@@ -102,8 +113,7 @@ function LiveSessionList() {
                 <div className="mx-2" />
                 <SortOrderButton
                   onChange={(state: any) => {
-                    searchStoreLive.edit({ order: state })
-                    void searchStoreLive.fetchSessions();
+                    searchStoreLive.edit({ order: state });
                   }}
                   sortOrder={filter.order}
                 />

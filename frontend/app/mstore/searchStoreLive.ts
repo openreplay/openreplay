@@ -2,10 +2,10 @@ import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
   filtersMap,
   generateFilterOptions,
-  liveFiltersMap,
+  liveFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, reaction } from 'mobx';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue, IFilter } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
@@ -63,11 +63,29 @@ class SearchStoreLive {
 
   constructor() {
     makeAutoObservable(this);
+
+    // Reset currentPage to 1 only on filter changes
+    reaction(
+      () => this.instance,
+      () => {
+        this.currentPage = 1;
+        void this.fetchSessions();
+      }
+    );
+
+    // Fetch sessions when currentPage changes
+    reaction(
+      () => this.currentPage,
+      () => {
+        void this.fetchSessions();
+      }
+    );
   }
 
   get filterList() {
     return generateFilterOptions(filtersMap);
   }
+
   get filterListLive() {
     return generateFilterOptions(liveFiltersMap);
   }
@@ -96,14 +114,12 @@ class SearchStoreLive {
 
   edit(instance: Partial<Search>) {
     this.instance = new Search(Object.assign({ ...this.instance }, instance));
-    this.currentPage = 1;
   }
 
 
   apply(filter: any, fromUrl: boolean) {
     if (fromUrl) {
       this.instance = new Search(filter);
-      this.currentPage = 1;
     } else {
       this.instance = { ...this.instance, ...filter };
     }
@@ -115,7 +131,6 @@ class SearchStoreLive {
 
   updateCurrentPage(page: number) {
     this.currentPage = page;
-    this.fetchSessions();
   }
 
   clearSearch() {
@@ -140,22 +155,25 @@ class SearchStoreLive {
       : null;
 
     if (index > -1) {
-      const oldFilter = this.instance.filters[index];
-      const updatedFilter = {
-        ...oldFilter,
-        value: oldFilter.value.concat(filter.value)
+      // Update existing filter
+      // @ts-ignore
+      this.instance.filters[index] = {
+        ...this.instance.filters[index],
+        value: this.instance.filters[index].value.concat(filter.value)
       };
-      oldFilter.merge(updatedFilter);
     } else {
-      this.instance.filters.push(filter);
-      this.instance = new Search({
-        ...this.instance.toData()
-      });
+      // Add new filter (create a new array reference to notify MobX)
+      this.instance.filters = [...this.instance.filters, filter];
     }
 
-    if (filter.value && filter.value[0] && filter.value[0] !== '') {
-      this.fetchSessions();
-    }
+    // Update the instance to trigger reactions
+    this.instance = new Search({
+      ...this.instance.toData()
+    });
+
+    // if (filter.value && filter.value[0] && filter.value[0] !== '') {
+    //   void this.fetchSessions();
+    // }
   }
 
   addFilterByKeyAndValue(key: any, value: any, operator?: string, sourceOperator?: string, source?: string) {
@@ -200,7 +218,7 @@ class SearchStoreLive {
   };
 
   async fetchSessions() {
-    await sessionStore.fetchLiveSessions(this.instance.toSearch());
+    await sessionStore.fetchLiveSessions({ ...this.instance.toSearch(), page: this.currentPage });
   };
 }
 

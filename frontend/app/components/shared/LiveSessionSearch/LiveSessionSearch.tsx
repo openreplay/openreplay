@@ -18,7 +18,6 @@ function LiveSessionSearch() {
 
   const onUpdateFilter = (filterIndex: number, filter: any) => {
     searchStoreLive.updateFilter(filterIndex, filter);
-    void searchStoreLive.fetchSessions();
   };
 
   const onRemoveFilter = (filterIndex: number) => {
@@ -29,16 +28,12 @@ function LiveSessionSearch() {
     searchStoreLive.edit({
       filters: newFilters,
     });
-
-    void searchStoreLive.fetchSessions();
   };
 
   const onChangeEventsOrder = (e: any, { name, value }: any) => {
     searchStoreLive.edit({
       eventsOrder: value,
     });
-
-    void searchStoreLive.fetchSessions();
   };
 
   return (
