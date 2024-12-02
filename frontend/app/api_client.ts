@@ -198,6 +198,11 @@ export default class APIClient {
     }
 
     return fetch(edp + _path, init).then((response) => {
+      if (response.status === 403) {
+        console.warn('API returned 403. Clearing JWT token.');
+        this.onUpdateJwt({ jwt: undefined }); // Clear the token
+      }
+
       if (response.ok) {
         return response;
       } else {
