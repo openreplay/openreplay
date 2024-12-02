@@ -95,6 +95,11 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun getSessionId(): String {
+    return OpenReplay.getSessionId()
+  }
+
+  @ReactMethod
   fun networkRequest(
     url: String,
     method: String,
