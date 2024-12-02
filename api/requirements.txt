@@ -2,7 +2,7 @@
 urllib3==1.26.16
 requests==2.32.3
 boto3==1.35.60
-pyjwt==2.9.0
+pyjwt==2.10.1
 psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.3
 elasticsearch==8.16.0
