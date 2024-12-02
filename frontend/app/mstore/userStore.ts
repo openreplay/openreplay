@@ -88,7 +88,6 @@ class UserStore {
   get isEnterprise() {
     return (
       this.account?.edition === 'ee' ||
-      this.account?.edition === 'msaas' ||
       this.authStore.authDetails?.edition === 'ee'
     );
   }
