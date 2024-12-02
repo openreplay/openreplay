@@ -2,7 +2,7 @@ import { GripHorizontal, Plus, Filter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
-import { Icon } from 'UI';
+import cn from 'classnames';
 import FilterItem from '../FilterItem';
 import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
 import FilterSelection from '../FilterSelection/FilterSelection';
@@ -25,6 +25,7 @@ interface Props {
   onAddFilter: (filter: any) => void;
   mergeDown?: boolean;
   mergeUp?: boolean;
+  borderless?: boolean;
 }
 
 export const FilterList = observer((props: Props) => {
@@ -34,6 +35,8 @@ export const FilterList = observer((props: Props) => {
     excludeFilterKeys = [],
     isConditional,
     onAddFilter,
+    readonly,
+    borderless
   } = props;
 
   const filters = filter.filters;
@@ -44,7 +47,7 @@ export const FilterList = observer((props: Props) => {
   };
   return (
     <div
-      className={'py-2 px-4 rounded-xl bg-white border border-gray-lighter'}
+      className={cn('bg-white', borderless ? '' : 'py-2 px-4 rounded-xl  border border-gray-lighter')}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
@@ -54,7 +57,7 @@ export const FilterList = observer((props: Props) => {
     >
       <div className={'flex items-center mb-2'} style={{ gap: '0.65rem' }}>
         <div className="font-semibold">Filters</div>
-        <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter}>
+        <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter} disabled={readonly}>
           <Button icon={<Filter size={16} strokeWidth={1} />} type="default" size={'small'}>
             Add
           </Button>
