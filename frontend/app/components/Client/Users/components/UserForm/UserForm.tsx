@@ -18,7 +18,7 @@ function UserForm() {
   const isSaving = userStore.saving;
   const user: any = userStore.instance || userStore.initUser();
   const roles = roleStore.list
-    .filter((r) => (r.isProtected ? user.isSuperAdmin : true))
+    .filter((r) => (r.protected ? user.isSuperAdmin : true))
     .map((r) => ({ label: r.name, value: r.roleId }));
 
   const onChangeCheckbox = (e: any) => {
