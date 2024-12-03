@@ -171,6 +171,7 @@ function FilterValue(props: Props) {
 
   return (
     <div
+      id={`ignore-outside`}
       className={cn('grid gap-3', {
         'grid-cols-2': filter.hasSource,
         'grid-cols-3': !filter.hasSource,

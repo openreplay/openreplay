@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button, Checkbox, Input } from 'antd';
 import cn from 'classnames';
+import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
 
 export function AutocompleteModal({
   onClose,
@@ -55,11 +56,14 @@ export function AutocompleteModal({
     return options;
   }, [options.length, values]);
   return (
-    <div
+    <OutsideClickDetectingDiv
       className={cn(
         'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10'
       )}
       style={{ minWidth: 320, minHeight: 100, top: '100%' }}
+      onClickOutside={() => {
+        onClose();
+      }}
     >
       <Input.Search
         value={query}
@@ -102,7 +106,7 @@ export function AutocompleteModal({
         </Button>
         <Button onClick={onClose}>Cancel</Button>
       </div>
-    </div>
+    </OutsideClickDetectingDiv>
   );
 }
 
@@ -134,7 +138,7 @@ export function AutoCompleteContainer(props: Props) {
       ref={filterValueContainer}
     >
       <div
-        onClick={() => setShowValueModal(true)}
+        onClick={() => setTimeout(() => setShowValueModal(true), 0)}
         className={'flex items-center gap-2 cursor-pointer'}
       >
         {!isEmpty ? (
