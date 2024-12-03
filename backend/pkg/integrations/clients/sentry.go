@@ -35,7 +35,7 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = sentryConfig{}
 		if val, ok := strCfg["organization_slug"].(string); ok {

@@ -32,7 +32,7 @@ func (d *dynatraceClient) FetchSessionData(credentials interface{}, sessionID ui
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = dynatraceConfig{}
 		if val, ok := strCfg["environment"].(string); ok {
