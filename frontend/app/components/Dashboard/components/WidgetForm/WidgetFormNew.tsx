@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, Space, Typography, Button, Alert, Form } from 'antd';
-import { FilterList } from 'Shared/Filters/FilterList';
+import { Card, Space, Button, Alert, Form } from 'antd';
 
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
@@ -14,31 +13,25 @@ import {
   USER_PATH
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
-import { issueCategories, metricOf } from 'App/constants/filterOptions';
-import { AudioWaveform, ChevronDown, ChevronUp, PlusIcon } from 'lucide-react';
+import { issueCategories } from 'App/constants/filterOptions';
+import { PlusIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import AddStepButton from 'Components/Dashboard/components/FilterSeries/AddStepButton';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterKey } from 'Types/filter/filterType';
 import Select from 'Shared/Select';
 
 function WidgetFormNew() {
-  const { metricStore, dashboardStore, aiFiltersStore } = useStore();
+  const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
-  const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
-  const filtersLength = metric.series[0].filter.filters.filter((i: any) => i && !i.isEvent).length;
   const isClickMap = metric.metricType === HEATMAP;
   const isPathAnalysis = metric.metricType === USER_PATH;
   const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
-  const hasFilters = filtersLength > 0 || eventsLength > 0;
   const isPredefined = metric.metricType === ERRORS
 
   return isPredefined ? <PredefinedMessage /> : (
     <Space direction="vertical" className="w-full">
       <AdditionalFilters />
-      {/*{!hasFilters && (<DefineSteps metric={metric} excludeFilterKeys={excludeFilterKeys} />)}*/}
-      {/*{hasFilters && (<FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />)}*/}
       <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />
     </Space>
   );
@@ -56,31 +49,6 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const canAddSeries = metric.series.length < 3;
 
   const isSingleSeries = isTable || isFunnel || isClickMap || isInsights || isRetention;
-
-  const onUpdateFilter = (filterIndex: any, filter: any) => {
-    metric.series[0].filter.updateFilter(filterIndex, filter);
-    metric.updateKey('hasChanged', true)
-  };
-
-  const onFilterMove = (newFilters: any) => {
-    metric.series[0].filter.replaceFilters(newFilters.toArray());
-    metric.updateKey('hasChanged', true)
-  };
-
-  const onChangeEventsOrder = (_: any, { name, value }: any) => {
-    metric.series[0].filter.updateKey(name, value);
-    metric.updateKey('hasChanged', true)
-  };
-
-  const onRemoveFilter = (filterIndex: any) => {
-    metric.series[0].filter.removeFilter(filterIndex);
-    metric.updateKey('hasChanged', true)
-  };
-
-  const onAddFilter = (filter: any) => {
-    metric.series[0].filter.addFilter(filter);
-    metric.updateKey('hasChanged', true)
-  }
 
   return (
     <>
@@ -120,20 +88,16 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           styles={{ body: { padding: '4px' } }}
           className="rounded-xl shadow-sm mb-2"
         >
-          <Button
-            type="link"
+          <div
             onClick={() => {
+              if (!canAddSeries) return;
               metric.addSeries();
             }}
-            disabled={!canAddSeries}
-            size="small"
-            className="block w-full"
+            className="w-full cursor-pointer flex items-center py-2 justify-center gap-2"
           >
-            <Space>
-              <AudioWaveform size={16} />
-              New Chart Series
-            </Space>
-          </Button>
+              <PlusIcon size={16} />
+              Add Series
+          </div>
         </Card>
       )}
     </>
@@ -207,7 +171,7 @@ const InsightsFilter = observer(({ metric, writeOption }: any) => {
 });
 
 const AdditionalFilters = observer(() => {
-  const { metricStore, dashboardStore, aiFiltersStore } = useStore();
+  const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
   const writeOption = ({ value, name }: { value: any; name: any }) => {
