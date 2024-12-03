@@ -14,8 +14,6 @@ export default (requiredPermissions, className, isReplay = false, andEd = true) 
       requiredPermissions.some((permission) => permissions.includes(permission)
       );
 
-    console.log(isEnterprise, hasPermission, userStore.account, userStore.authStore)
-
     return !isEnterprise || hasPermission ? (
       <BaseComponent {...props} />
     ) : (

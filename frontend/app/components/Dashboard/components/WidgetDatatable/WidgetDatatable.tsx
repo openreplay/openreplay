@@ -51,6 +51,7 @@ function WidgetDatatable(props: Props) {
     (key) => key !== 'time' && key !== 'timestamp'
   );
   React.useEffect(() => {
+    if (!data.chart) return;
     setTableProps(initTableProps);
     columnNames.clear();
     data.chart.forEach((p: any) => {
@@ -93,7 +94,7 @@ function WidgetDatatable(props: Props) {
 
     setTableProps((prev) => [...prev, ...tableCols]);
     setTableData(items);
-  }, [data.chart.length]);
+  }, [data.chart]);
 
   const rowSelection: TableProps['rowSelection'] = {
     selectedRowKeys: props.enabledRows,

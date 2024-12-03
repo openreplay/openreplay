@@ -75,13 +75,14 @@ function WidgetChart(props: Props) {
   }, []);
 
   useEffect(() => {
+    if (!data.chart) return;
     const series = data.chart[0] ? Object.keys(data.chart[0]).filter(
       (key) => key !== 'time' && key !== 'timestamp'
     ) : []
     if (series.length) {
       setEnabledRows(series)
     }
-  }, [data.chart.length])
+  }, [data.chart])
 
   const onChartClick = (event: any) => {
     if (event) {

@@ -14,8 +14,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Icon } from 'UI';
-import FilterSeries from "App/mstore/types/filterSeries";
-import { CARD_LIST, CardType } from "../DashboardList/NewDashModal/ExampleCards";
+import FilterSeries from 'App/mstore/types/filterSeries';
+import { useModal } from 'App/components/Modal';
+import {
+  CARD_LIST,
+  CardType,
+} from '../DashboardList/NewDashModal/ExampleCards';
 import { useStore } from 'App/mstore';
 import {
   HEATMAP,
@@ -24,9 +28,11 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { useHistory } from "react-router-dom";
-import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes'
+import { useHistory } from 'react-router-dom';
+import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
 import { FilterKey } from 'Types/filter/filterType';
+import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
+import { observer } from 'mobx-react-lite';
 
 interface TabItem {
   icon: React.ReactNode;
@@ -49,7 +55,9 @@ const tabItems: Record<string, TabItem[]> = {
       description: 'Visualize user progression through critical steps.',
     },
     {
-      icon: <Icon name={'dashboards/user-journey'} color={'inherit'} size={16} />,
+      icon: (
+        <Icon name={'dashboards/user-journey'} color={'inherit'} size={16} />
+      ),
       title: 'Journeys',
       type: USER_PATH,
       description: 'Understand the paths users take through your product.',
@@ -69,7 +77,9 @@ const tabItems: Record<string, TabItem[]> = {
   ],
   monitors: [
     {
-      icon: <Icon name={'dashboards/circle-alert'} color={'inherit'} size={16} />,
+      icon: (
+        <Icon name={'dashboards/circle-alert'} color={'inherit'} size={16} />
+      ),
       title: 'JS Errors',
       type: FilterKey.ERRORS,
       description: 'Monitor JS errors affecting user experience.',
@@ -127,7 +137,7 @@ const tabItems: Record<string, TabItem[]> = {
   ],
 };
 
-function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
+function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
   const items = tabItems[tab];
   const { metricStore, projectsStore, dashboardStore } = useStore();
   const history = useHistory();
@@ -144,11 +154,11 @@ function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
     if (selectedCard.filters) {
       cardData.series = [
         new FilterSeries().fromJson({
-          name: "Series 1",
+          name: 'Series 1',
           filter: {
             filters: selectedCard.filters,
-          }
-        })
+          },
+        }),
       ];
     }
 
@@ -165,7 +175,12 @@ function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
       if (inCards) {
         history.push(withSiteId(metricCreate(), projectsStore.activeSiteId));
       } else if (dashboardStore.selectedDashboard) {
-        history.push(withSiteId(dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId), projectsStore.activeSiteId));
+        history.push(
+          withSiteId(
+            dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId),
+            projectsStore.activeSiteId
+          )
+        );
       }
     }
   };
@@ -192,7 +207,9 @@ function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
   );
 }
 
-function AddCardSection({ inCards }: { inCards?: boolean }) {
+const AddCardSection = observer(({ inCards }: { inCards?: boolean }) => {
+  const { showModal } = useModal();
+  const { metricStore, dashboardStore, projectsStore } = useStore();
   const [tab, setTab] = React.useState('product_analytics');
   const options = [
     { label: 'Product Analytics', value: 'product_analytics' },
@@ -201,7 +218,21 @@ function AddCardSection({ inCards }: { inCards?: boolean }) {
   ];
 
   const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /api\.openreplay\.com/.test(originStr)
+  const isSaas = /api\.openreplay\.com/.test(originStr);
+  const onExistingClick = () => {
+    const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
+    const siteId = projectsStore.activeSiteId;
+    showModal(
+      <MetricsLibraryModal siteId={siteId} dashboardId={dashboardId} />,
+      {
+        right: true,
+        width: 800,
+        onClose: () => {
+          metricStore.updateKey('metricsSearch', '');
+        },
+      }
+    );
+  };
   return (
     <div
       className={
@@ -213,14 +244,14 @@ function AddCardSection({ inCards }: { inCards?: boolean }) {
         className={'flex justify-between border-b border-b-gray-lighter p-2'}
       >
         <div className={'font-semibold text-lg'}>Add a card to dashboard</div>
-        {isSaas ?
+        {isSaas ? (
           <div
             className={'font-semibold flex items-center gap-2 cursor-pointer'}
           >
             <Sparkles color={'#3C00FFD8'} size={16} />
             <div className={'ai-gradient'}>Ask AI</div>
           </div>
-        : null}
+        ) : null}
       </div>
       <div>
         <Segmented
@@ -232,14 +263,16 @@ function AddCardSection({ inCards }: { inCards?: boolean }) {
       <CategoryTab tab={tab} inCards={inCards} />
       <div
         className={
-          'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2'
+          'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
         }
       >
         <FolderOutlined />
-        <div className={'font-semibold'}>Add existing card</div>
+        <div className={'font-semibold'} onClick={onExistingClick}>
+          Add existing card
+        </div>
       </div>
     </div>
   );
-}
+});
 
 export default AddCardSection;
