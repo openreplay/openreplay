@@ -153,11 +153,9 @@ function WidgetChart(props: Props) {
     }
     prevMetricRef.current = metric;
     const timestmaps = drillDownPeriod.toTimestamps();
-    const isTimeseries = metric.metricType === TIMESERIES;
     const payload = isSaved
-                    // TODO: remove after backend adds support for more view types
-      ? { ...metricParams, viewType: isTimeseries ? 'lineChart' : metric.viewType }
-      : { ...params, ...timestmaps, ...metric.toJson(), viewType: isTimeseries ? 'lineChart' : metric.viewType };
+      ? { ...metricParams }
+      : { ...params, ...timestmaps, ...metric.toJson() };
     debounceRequest(
       metric,
       payload,

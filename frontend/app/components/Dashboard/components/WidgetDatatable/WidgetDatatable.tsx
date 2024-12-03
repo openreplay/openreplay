@@ -47,7 +47,7 @@ function WidgetDatatable(props: Props) {
    * + average for each row
    * [ { seriesName: 'series1', mon: 1, tue: 2, wed: 3, average: 2 }, ... ]
    * */
-  const series = Object.keys(data.chart[0]).filter(
+  const series = !data.chart[0] ? [] : Object.keys(data.chart[0]).filter(
     (key) => key !== 'time' && key !== 'timestamp'
   );
   React.useEffect(() => {
@@ -107,7 +107,7 @@ function WidgetDatatable(props: Props) {
     }),
     type: 'checkbox',
   };
-  return hasMultipleSeries ? (
+  return (
     <div className={cn('relative -mx-4 px-2', showTable ? 'pt-6' : '')}>
       <div
         className={
@@ -154,7 +154,7 @@ function WidgetDatatable(props: Props) {
         </div>
       ) : null}
     </div>
-  ) : null;
+  )
 }
 
 export default WidgetDatatable;
