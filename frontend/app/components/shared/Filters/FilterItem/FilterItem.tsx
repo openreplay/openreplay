@@ -78,6 +78,7 @@ function FilterItem(props: Props) {
         )}
         <FilterSelection
           filter={filter}
+          mode={props.isFilter ? 'filters' : 'events'}
           onFilterClick={replaceFilter}
           allowedFilterKeys={allowedFilterKeys}
           excludeFilterKeys={excludeFilterKeys}
