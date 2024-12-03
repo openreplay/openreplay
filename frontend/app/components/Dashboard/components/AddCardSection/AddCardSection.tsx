@@ -135,11 +135,10 @@ function CategoryTab({ tab, inCards }: { tab: string, inCards?: boolean }) {
   const handleCardSelection = (card: string) => {
     metricStore.init();
     const selectedCard = CARD_LIST.find((c) => c.key === card) as CardType;
-
     const cardData: any = {
       metricType: selectedCard.cardType,
       name: selectedCard.title,
-      metricOf: selectedCard.metricOf
+      metricOf: selectedCard.metricOf,
     };
 
     if (selectedCard.filters) {
