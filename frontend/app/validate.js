@@ -5,7 +5,7 @@ export function validateIP(value) {
 
 export function validateURL(value) {
   if (typeof value !== 'string') return false;
-  const urlRegex = /^(http|https):\/\/(?:www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(\/\S*)?$/i;
+  const urlRegex = /^(http|https):\/\/(?:www\.)?[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(:\d+)?(\/\S*)?$/i;
   const ipRegex = /^(http|https):\/\/(?:localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/\S*)?$/i;
   return urlRegex.test(value) || ipRegex.test(value);
 }
