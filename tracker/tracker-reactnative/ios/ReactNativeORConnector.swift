@@ -74,4 +74,10 @@ public class ORTrackerConnector: NSObject {
     open func networkRequest(_ url: String, method: String, requestJSON: String, responseJSON: String, status: NSNumber, duration: NSNumber) {
         Openreplay.shared.networkRequest(url: url, method: method, requestJSON: requestJSON, responseJSON: responseJSON, status: Int(truncating: status), duration: UInt64(truncating: duration))
     }
+
+    @objc(getSessionID:rejecter:)
+    open func getSessionID(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        let sessionID = Openreplay.shared.getSessionID()
+        resolve(sessionID)
+    }
 }
