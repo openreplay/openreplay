@@ -207,72 +207,74 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
   );
 }
 
-const AddCardSection = observer(({ inCards }: { inCards?: boolean }) => {
-  const { showModal } = useModal();
-  const { metricStore, dashboardStore, projectsStore } = useStore();
-  const [tab, setTab] = React.useState('product_analytics');
-  const options = [
-    { label: 'Product Analytics', value: 'product_analytics' },
-    { label: 'Monitors', value: 'monitors' },
-    { label: 'Web Analytics', value: 'web_analytics' },
-  ];
+const AddCardSection = observer(
+  ({ inCards, fit }: { fit?: boolean; inCards?: boolean }) => {
+    const { showModal } = useModal();
+    const { metricStore, dashboardStore, projectsStore } = useStore();
+    const [tab, setTab] = React.useState('product_analytics');
+    const options = [
+      { label: 'Product Analytics', value: 'product_analytics' },
+      { label: 'Monitors', value: 'monitors' },
+      { label: 'Web Analytics', value: 'web_analytics' },
+    ];
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /api\.openreplay\.com/.test(originStr);
-  const onExistingClick = () => {
-    const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
-    const siteId = projectsStore.activeSiteId;
-    showModal(
-      <MetricsLibraryModal siteId={siteId} dashboardId={dashboardId} />,
-      {
-        right: true,
-        width: 800,
-        onClose: () => {
-          metricStore.updateKey('metricsSearch', '');
-        },
-      }
-    );
-  };
-  return (
-    <div
-      className={
-        'py-8 px-8 rounded-xl bg-white border border-gray-lighter flex flex-col gap-4'
-      }
-      style={{ width: 520, height: 400 }}
-    >
-      <div
-        className={'flex justify-between border-b border-b-gray-lighter p-2'}
-      >
-        <div className={'font-semibold text-lg'}>Add a card to dashboard</div>
-        {isSaas ? (
-          <div
-            className={'font-semibold flex items-center gap-2 cursor-pointer'}
-          >
-            <Sparkles color={'#3C00FFD8'} size={16} />
-            <div className={'ai-gradient'}>Ask AI</div>
-          </div>
-        ) : null}
-      </div>
-      <div>
-        <Segmented
-          options={options}
-          value={tab}
-          onChange={(value) => setTab(value)}
-        />
-      </div>
-      <CategoryTab tab={tab} inCards={inCards} />
+    const originStr = window.env.ORIGIN || window.location.origin;
+    const isSaas = /api\.openreplay\.com/.test(originStr);
+    const onExistingClick = () => {
+      const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
+      const siteId = projectsStore.activeSiteId;
+      showModal(
+        <MetricsLibraryModal siteId={siteId} dashboardId={dashboardId} />,
+        {
+          right: true,
+          width: 800,
+          onClose: () => {
+            metricStore.updateKey('metricsSearch', '');
+          },
+        }
+      );
+    };
+    return (
       <div
         className={
-          'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
+          'py-8 px-8 rounded-xl bg-white border border-gray-lighter flex flex-col gap-4'
         }
+        style={{ width: fit ? 390 : 520, height: 400 }}
       >
-        <FolderOutlined />
-        <div className={'font-semibold'} onClick={onExistingClick}>
-          Add existing card
+        <div
+          className={'flex justify-between border-b border-b-gray-lighter p-2'}
+        >
+          <div className={'font-semibold text-lg'}>Add a card to dashboard</div>
+          {isSaas ? (
+            <div
+              className={'font-semibold flex items-center gap-2 cursor-pointer'}
+            >
+              <Sparkles color={'#3C00FFD8'} size={16} />
+              <div className={'ai-gradient'}>Ask AI</div>
+            </div>
+          ) : null}
+        </div>
+        <div>
+          <Segmented
+            options={options}
+            value={tab}
+            onChange={(value) => setTab(value)}
+          />
+        </div>
+        <CategoryTab tab={tab} inCards={inCards} />
+        <div
+          className={
+            'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
+          }
+        >
+          <FolderOutlined />
+          <div className={'font-semibold'} onClick={onExistingClick}>
+            Add existing card
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export default AddCardSection;

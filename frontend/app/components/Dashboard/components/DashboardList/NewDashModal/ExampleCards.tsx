@@ -107,7 +107,7 @@ export const CARD_LIST: CardType[] = [
     example: ExamplePath
   },
   {
-    title: 'Sessions Trend',
+    title: 'Trend',
     key: TIMESERIES,
     cardType: TIMESERIES,
     metricOf: 'sessionCount',

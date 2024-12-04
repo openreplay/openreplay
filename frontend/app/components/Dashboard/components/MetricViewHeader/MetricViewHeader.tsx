@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { PageTitle, Icon } from 'UI';
-import { Segmented, Button } from 'antd';
+import { Segmented, Button, Popover } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import MetricsSearch from '../MetricsSearch';
@@ -8,7 +8,6 @@ import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
-import { INDEXES } from "App/constants/zindex";
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
@@ -28,13 +27,15 @@ function MetricViewHeader() {
           <PageTitle title="Cards" className="" />
         </div>
         <div className="ml-auto flex items-center">
-          <Button
-            type="primary"
-            onClick={() => setShowAddCardModal(true)}
-            icon={<PlusOutlined />}
-          >
-            Create Card
-          </Button>
+          <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection fit inCards />} trigger={'click'}>
+            <Button
+              type="primary"
+              onClick={() => setShowAddCardModal(true)}
+              icon={<PlusOutlined />}
+            >
+              Create Card
+            </Button>
+          </Popover>
           <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
             <MetricsSearch />
           </div>
@@ -78,23 +79,6 @@ function MetricViewHeader() {
                         }
                     /> */}
         </div>
-
-        {showAddCardModal ? (
-          <div
-            ref={modalBgRef}
-            onClick={(e) => {
-              if (modalBgRef.current === e.target) {
-                setShowAddCardModal(false);
-              }
-            }}
-            className={
-              'fixed top-0 left-0 w-screen h-screen flex items-center justify-center bg-gray-lightest'
-            }
-            style={{ background: 'rgba(0,0,0,0.5)', zIndex: INDEXES.POPUP_GUIDE_BG }}
-          >
-            <AddCardSection inCards />
-          </div>
-        ) : null}
       </div>
     </div>
   );
