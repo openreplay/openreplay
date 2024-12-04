@@ -13,7 +13,6 @@ import (
 
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
-	"openreplay/backend/pkg/license"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
@@ -70,7 +69,6 @@ func getEnv(key, fallback string) string {
 }
 
 func NewConnector(url string) Connector {
-	license.CheckLicense()
 	url = strings.TrimPrefix(url, "tcp://")
 	url = strings.TrimSuffix(url, "/default")
 	userName := getEnv("CH_USERNAME", "default")
