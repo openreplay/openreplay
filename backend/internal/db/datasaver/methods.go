@@ -29,9 +29,6 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		return err
 	}
 
-	// Send data to quickwit
-	s.sendToFTS(msg, session.ProjectID)
-
 	// Handle message
 	switch m := msg.(type) {
 	case *messages.SessionEnd:
