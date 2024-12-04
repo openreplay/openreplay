@@ -211,7 +211,8 @@ class IssueTrackingJiraSchema(IssueTrackingIntegration):
 
 class WebhookSchema(BaseModel):
     webhook_id: Optional[int] = Field(default=None)
-    endpoint: AnyHttpUrl = Field(...)
+    processed_endpoint: AnyHttpUrl = Field(..., alias="endpoint")
+    endpoint: Optional[str] = Field(default=None, doc_hidden=True)
     auth_header: Optional[str] = Field(default=None)
     name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
