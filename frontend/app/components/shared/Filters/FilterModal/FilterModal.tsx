@@ -247,7 +247,7 @@ function FilterModal(props: Props) {
                   className={cn(
                     'flex items-center p-2 cursor-pointer gap-1 rounded-lg hover:bg-active-blue'
                   )}
-                  onClick={() => onFilterClick({ ...filter, value: [''] })}
+                  onClick={() => onFilterClick({ ...filter })}
                 >
                   {filter.category ? <div style={{ width: 150 }} className={'text-disabled-text w-full flex justify-between items-center'}>
                     <span>{filter.category}</span>

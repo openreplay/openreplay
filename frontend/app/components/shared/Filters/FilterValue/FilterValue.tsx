@@ -18,6 +18,7 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
+  const isEvent = filter.isEvent;
   const [durationValues, setDurationValues] = useState({
     minDuration: filter.value[0],
     maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
@@ -113,17 +114,18 @@ function FilterValue(props: Props) {
     )
     switch (filter.type) {
       case FilterType.NUMBER_MULTIPLE:
-        return <BaseFilterLocalAutoComplete type="number" />;
+        return <BaseFilterLocalAutoComplete type="number" placeholder={filter.placeholder} />;
       case FilterType.NUMBER:
         return (
           <BaseFilterLocalAutoComplete
             type="number"
             allowDecimals={false}
             isMultiple={false}
+            placeholder={filter.placeholder}
           />
         );
       case FilterType.STRING:
-        return <BaseFilterLocalAutoComplete />;
+        return <BaseFilterLocalAutoComplete placeholder={filter.placeholder} />;
       case FilterType.DROPDOWN:
         return (
           <BaseDropDown />
@@ -137,6 +139,7 @@ function FilterValue(props: Props) {
             onRemoveValue={(ind) => onRemoveValue(ind)}
             showCloseButton={showCloseButton}
             showOrButton={showOrButton}
+            placeholder={filter.placeholder}
           />
         );
       case FilterType.DURATION:
@@ -164,6 +167,7 @@ function FilterValue(props: Props) {
             placeholder={filter.placeholder}
             onSelect={(e, item, index) => onChange(e, item, index)}
             icon={filter.icon}
+            modalProps={{ placeholder: isEvent ? 'Search event' : 'Filter by'}}
           />
         );
     }

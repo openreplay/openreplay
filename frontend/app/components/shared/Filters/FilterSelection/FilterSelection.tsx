@@ -38,6 +38,8 @@ function FilterSelection(props: Props) {
     onFilterClick(filter);
     setShowModal(false);
   }
+
+  const label = filter?.category === 'Issue' ? 'Issue' : filter?.label;
   return (
     <div className="relative flex-shrink-0">
       <OutsideClickDetectingDiv
@@ -74,7 +76,7 @@ function FilterSelection(props: Props) {
               className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
               style={{ textOverflow: 'ellipsis' }}
             >
-              {filter.label}
+              {label}
             </div>
           </div>
         )}

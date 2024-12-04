@@ -43,6 +43,7 @@ interface Props {
   icon?: string;
   hideOrText?: boolean;
   onApplyValues: (values: string[]) => void;
+  modalProps?: Record<string, any>
 }
 
 const FilterAutoComplete = observer(
@@ -51,7 +52,8 @@ const FilterAutoComplete = observer(
     onClose,
     onApply,
     values,
-  }: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void }) => {
+    placeholder,
+  }: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>(
       []
     );
@@ -128,6 +130,7 @@ const FilterAutoComplete = observer(
       loadOptions={handleInputChange}
       options={options}
       isLoading={loading}
+      placeholder={placeholder}
     />
   }
 );

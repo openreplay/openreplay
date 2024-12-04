@@ -42,7 +42,7 @@ function FilterItem(props: Props) {
   const replaceFilter = (filter: any) => {
     props.onUpdate({
       ...filter,
-      value: [''],
+      value: filter.value,
       filters: filter.filters ? filter.filters.map((i: any) => ({...i, value: ['']})) : [],
     });
   };

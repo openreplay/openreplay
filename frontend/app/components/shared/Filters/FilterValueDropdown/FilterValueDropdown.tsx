@@ -1,7 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
 import { AutoCompleteContainer, AutocompleteModal } from "../FilterAutoComplete/AutocompleteModal";
-import stl from './FilterValueDropdown.module.css';
 
 interface Props {
   options: any[];
@@ -28,6 +26,7 @@ function FilterValueDropdown(props: Props) {
       onApply={onApply}
       loadOptions={setQuery}
       options={filteredOptions}
+      isLoading={false}
     />
   );
 }

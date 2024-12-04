@@ -1,6 +1,6 @@
 import {
-  clickSelectorOperators
-} from 'App/constants/filterOptions';
+  clickSelectorOperators, issueOptions
+} from "App/constants/filterOptions";
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
 import filterOptions, { countries, platformOptions } from 'App/constants';
@@ -86,6 +86,18 @@ export const mobileFilters = [
   }
 ];
 
+const issueFilters = issueOptions.map((i) => ({
+  key: `${FilterKey.ISSUE}_${i.value}`,
+  type: FilterType.ISSUE,
+  category: FilterCategory.ISSUE,
+  label: i.label,
+  value: i.value,
+  placeholder: 'Select an issue',
+  operator: 'is',
+  operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
+  icon: 'filters/click',
+  options: filterOptions.issueOptions,
+}));
 export const filters = [
   ...mobileFilters,
   {
@@ -431,6 +443,7 @@ export const filters = [
     icon: 'filters/click',
     options: filterOptions.issueOptions
   },
+  ...issueFilters,
   {
     key: FilterKey.USER_OS,
     type: FilterType.MULTIPLE,
@@ -884,7 +897,7 @@ export const clickmapFilter = {
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
-    filter.value = [''];
+    filter.value = filter.value ? [filter.value] : [''];
     acc[filter.key] = filter;
     return acc;
   }, {});

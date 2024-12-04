@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button, Checkbox, Input } from 'antd';
 import cn from 'classnames';
+import { Loader } from 'UI';
 import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
 
 export function AutocompleteModal({
@@ -11,11 +12,12 @@ export function AutocompleteModal({
   loadOptions,
   options,
   isLoading,
+  placeholder,
 }: {
   values: string[];
   onClose: () => void;
   onApply: (values: string[]) => void;
-  handleFocus: () => void;
+  handleFocus?: () => void;
   loadOptions: (query: string) => void;
   options: { value: string; label: string }[];
   placeholder?: string;
@@ -70,36 +72,40 @@ export function AutocompleteModal({
         onFocus={handleFocus}
         loading={isLoading}
         onChange={(e) => handleInputChange(e.target.value)}
+        placeholder={placeholder}
       />
-
-      <div
-        className={'flex flex-col gap-2 overflow-y-auto py-2'}
-        style={{ maxHeight: 200 }}
-      >
-        {sortedOptions.map((item) => (
+      <Loader loading={isLoading}>
+        <>
           <div
-            key={item.value}
-            onClick={() => onSelectOption(item)}
-            className={
-              'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'
-            }
+            className={'flex flex-col gap-2 overflow-y-auto py-2'}
+            style={{ maxHeight: 200 }}
           >
-            <Checkbox checked={isSelected(item)} /> {item.label}
+            {sortedOptions.map((item) => (
+              <div
+                key={item.value}
+                onClick={() => onSelectOption(item)}
+                className={
+                  'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'
+                }
+              >
+                <Checkbox checked={isSelected(item)} /> {item.label}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      {query.length ? (
-        <div className={'border-y border-y-gray-light py-2'}>
-          <div
-            className={
-              'rounded cursor-pointer text-blue hover:bg-active-blue px-2 py-1'
-            }
-            onClick={() => onApply([query])}
-          >
-            Apply "{query}"
-          </div>
-        </div>
-      ) : null}
+          {query.length ? (
+            <div className={'border-y border-y-gray-light py-2'}>
+              <div
+                className={
+                  'rounded cursor-pointer text-blue hover:bg-active-blue px-2 py-1'
+                }
+                onClick={() => onApply([query])}
+              >
+                Apply "{query}"
+              </div>
+            </div>
+          ) : null}
+        </>
+      </Loader>
       <div className={'flex gap-2 items-center pt-2'}>
         <Button type={'primary'} onClick={applyValues}>
           Apply
@@ -151,9 +157,9 @@ export function AutoCompleteContainer(props: Props) {
                 : props.value[0]}
             </div>
             {props.value.length > 1 ? (
-              props.value.length === 2 ? (
-                <>
-                  or
+              <>
+                or
+                {props.value.length === 2 ? (
                   <div
                     className={
                       'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
@@ -163,16 +169,16 @@ export function AutoCompleteContainer(props: Props) {
                       ? props.mapValues(props.value[1])
                       : props.value[1]}
                   </div>
-                </>
-              ) : (
-                <div
-                  className={
-                    'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
-                  }
-                >
-                  + {props.value.length - 1} More
-                </div>
-              )
+                ) : (
+                  <div
+                    className={
+                      'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
+                    }
+                  >
+                    + {props.value.length - 1} More
+                  </div>
+                )}
+              </>
             ) : null}
           </>
         ) : (
