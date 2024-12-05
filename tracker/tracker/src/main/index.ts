@@ -97,15 +97,7 @@ function processOptions(obj: any): obj is Options {
 
 const canAccessTop = () => {
   try {
-    return Boolean(window.top)
-  } catch {
-    return false
-  }
-}
-
-const hasTopOpenReplay = () => {
-  try {
-    return Boolean((window.top as any).__OPENREPLAY__)
+    return Boolean(window.top?.document)
   } catch {
     return false
   }
@@ -124,7 +116,7 @@ export default class API {
     }
     if (
       (window as any).__OPENREPLAY__ ||
-      (!this.crossdomainMode && inIframe() && canAccessTop() && hasTopOpenReplay())
+      (!this.crossdomainMode && inIframe() && canAccessTop() && (window.top as any).__OPENREPLAY__)
     ) {
       console.error('OpenReplay: one tracker instance has been initialised already')
       return
