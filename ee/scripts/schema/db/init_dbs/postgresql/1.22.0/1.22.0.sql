@@ -19,6 +19,10 @@ $fn_def$, :'next_version')
 
 --
 
+DELETE
+FROM public.metrics
+WHERE metrics.metric_type = 'insights';
+
 COMMIT;
 
 \elif :is_next

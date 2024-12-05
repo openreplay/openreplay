@@ -173,7 +173,6 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
         schemas.MetricType.TABLE: __get_table_chart,
         schemas.MetricType.HEAT_MAP: __get_heat_map_chart,
         schemas.MetricType.FUNNEL: __get_funnel_chart,
-        schemas.MetricType.INSIGHTS: not_supported,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
     return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
@@ -220,7 +219,6 @@ def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.Card
         schemas.MetricType.TIMESERIES: not_supported,
         schemas.MetricType.TABLE: not_supported,
         schemas.MetricType.HEAT_MAP: not_supported,
-        schemas.MetricType.INSIGHTS: not_supported,
         schemas.MetricType.PATH_ANALYSIS: not_supported,
     }
     return supported.get(data.metric_type, not_supported)()
