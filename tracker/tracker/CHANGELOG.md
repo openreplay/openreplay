@@ -1,4 +1,8 @@
-# 15.0.1
+# 15.0.2
+
+- fixing crossdomain access check
+
+## 15.0.1
 
 - update dependencies
 - fix for cjs build process
