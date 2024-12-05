@@ -81,7 +81,7 @@ function FilterSelection(props: Props) {
           </div>
         )}
         {showModal && (
-          <div className="absolute mt-2 left-0 rounded-xl shadow-lg bg-white z-50">
+          <div className="absolute mt-2 left-0 rounded-lg shadow bg-white z-50">
             <FilterModal
               isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
               onFilterClick={onAddFilter}

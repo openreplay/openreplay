@@ -1,70 +1,55 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
-import { Dropdown, Menu, Tooltip, Space } from "antd";
-import {DownOutlined} from '@ant-design/icons';
+import { Tooltip } from "UI";
+import { Select } from "antd";
 
 const EventsOrder = observer((props: {
-  onChange: (e: any, v: any) => void,
-  filter: any,
+    onChange: (e: any, v: any) => void,
+    filter: any,
 }) => {
-  const { filter, onChange } = props;
-  const eventsOrderSupport = filter.eventsOrderSupport;
+    const {filter, onChange} = props;
+    const eventsOrderSupport = filter.eventsOrderSupport;
+    const options = [
+        {
+            name: 'eventsOrder',
+            label: 'Then',
+            value: 'then',
+            disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
+        },
+        {
+            name: 'eventsOrder',
+            label: 'And',
+            value: 'and',
+            disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
+        },
+        {
+            name: 'eventsOrder',
+            label: 'Or',
+            value: 'or',
+            disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
+        },
+    ];
 
-  const options = [
-    {
-      name: 'eventsOrder',
-      label: 'THEN',
-      value: 'then',
-      disabled: eventsOrderSupport && !eventsOrderSupport.includes('then'),
-    },
-    {
-      name: 'eventsOrder',
-      label: 'AND',
-      value: 'and',
-      disabled: eventsOrderSupport && !eventsOrderSupport.includes('and'),
-    },
-    {
-      name: 'eventsOrder',
-      label: 'OR',
-      value: 'or',
-      disabled: eventsOrderSupport && !eventsOrderSupport.includes('or'),
-    },
-  ];
+    return <div className="flex items-center gap-2">
+        <div
+            className="color-gray-medium text-sm"
+            style={{textDecoration: "underline dotted"}}
+        >
+            <Tooltip
+                title={`Select the operator to be applied between events in your search.`}
+            >
+                <div>Events Order</div>
+            </Tooltip>
+        </div>
 
-  const menu = (
-    <Menu
-      onClick={(e) => {
-        const selectedOption = options.find((item) => item.value === e.key);
-        if (selectedOption && !selectedOption.disabled) {
-          onChange(null, selectedOption);
-        }
-      }}
-    >
-      {options.map((item) => (
-        <Menu.Item key={item.value} disabled={item.disabled}>
-          {item.label}
-        </Menu.Item>
-      ))}
-    </Menu>
-  );
-
-  return (
-    <div className="flex items-center gap-2">
-      <Tooltip title="Select the operator to be applied between events." placement="bottom">
-        <div className="color-gray-medium text-sm">Events Order</div>
-      </Tooltip>
-
-      <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-      <a onClick={(e) => e.preventDefault()} className="text-sm items-center gap-2 hover:text-teal">
-        <Space className="text-sm">
-        {options.find((item) => item.value === filter.eventsOrder)?.label || 'Select'} 
-        <DownOutlined className="mr-2 text-xs" />
-        </Space>
-      </a>
-
-      </Dropdown>
-    </div>
-  );
+        <Select
+            size={"small"}
+            className="text-sm"
+            onChange={(v) => onChange(null, options.find((i) => i.value === v))}
+            value={filter.eventsOrder}
+            options={options}
+        />
+    </div>;
 });
 
 export default EventsOrder;
