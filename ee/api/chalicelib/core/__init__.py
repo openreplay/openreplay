@@ -4,6 +4,10 @@ import logging
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 from . import sessions as sessions_legacy
+from . import custom_metrics as custom_metrics_legacy
+from . import custom_metrics_ee as custom_metrics
+from . import metrics_ch as metrics
+from . import metrics as metrics_legacy
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     logging.info(">>> Using experimental sessions search")
