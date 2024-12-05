@@ -72,7 +72,8 @@
     "react-native-builder-bob": "^0.20.0",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "@expo/config-plugins": "^9.0.12"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
@@ -157,8 +158,5 @@
         }
       ]
     ]
-  },
-  "dependencies": {
-    "@expo/config-plugins": "^9.0.12"
   }
 }
