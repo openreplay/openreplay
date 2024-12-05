@@ -15,6 +15,9 @@ rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
+rm -rf ./chalicelib/core/metrics.py
+rm -rf ./chalicelib/core/metrics_ch.py
+rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
 rm -rf ./chalicelib/core/errors_favorite.py
@@ -98,3 +101,7 @@ rm -rf ./chalicelib/utils/or_cache
 rm -rf ./routers/subs/health.py
 rm -rf ./chalicelib/core/spot.py
 rm -rf ./chalicelib/core/unprocessed_sessions.py
+rm -rf ./chalicelib/core/product_anaytics2.py
+rm -rf ./chalicelib/utils/ch_client.py
+rm -rf ./chalicelib/utils/ch_client_exp.py
+rm -rf ./routers/subs/product_anaytics.py

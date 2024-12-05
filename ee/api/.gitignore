@@ -194,6 +194,9 @@ Pipfile.lock
 /chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
+/chalicelib/core/metrics.py
+/chalicelib/core/metrics_ch.py
+/chalicelib/core/custom_metrics.py
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py
 /chalicelib/core/errors_favorite.py
@@ -279,3 +282,7 @@ Pipfile.lock
 /chalicelib/core/unprocessed_sessions.py
 /run-db_init-dev.sh
 /.dev/
+/chalicelib/core/product_anaytics2.py
+/chalicelib/utils/ch_client.py
+/chalicelib/utils/ch_client_exp.py
+/routers/subs/product_anaytics.py

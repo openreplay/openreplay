@@ -3,15 +3,15 @@ import logging
 import clickhouse_driver
 from decouple import config
 
-logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logger = logging.getLogger(__name__)
 
 settings = {}
 if config('ch_timeout', cast=int, default=-1) > 0:
-    logging.info(f"CH-max_execution_time set to {config('ch_timeout')}s")
+    logger.info(f"CH-max_execution_time set to {config('ch_timeout')}s")
     settings = {**settings, "max_execution_time": config('ch_timeout', cast=int)}
 
 if config('ch_receive_timeout', cast=int, default=-1) > 0:
-    logging.info(f"CH-receive_timeout set to {config('ch_receive_timeout')}s")
+    logger.info(f"CH-receive_timeout set to {config('ch_receive_timeout')}s")
     settings = {**settings, "receive_timeout": config('ch_receive_timeout', cast=int)}
 
 
@@ -41,14 +41,14 @@ class ClickHouseClient:
             keys = tuple(x for x, y in results[1])
             return [dict(zip(keys, i)) for i in results[0]]
         except Exception as err:
-            logging.error("--------- CH EXCEPTION -----------")
-            logging.error(err)
-            logging.error("--------- CH QUERY EXCEPTION -----------")
-            logging.error(self.format(query=query, params=params)
-                          .replace('\n', '\\n')
-                          .replace('    ', ' ')
-                          .replace('        ', ' '))
-            logging.error("--------------------")
+            logger.error("--------- CH EXCEPTION -----------")
+            logger.error(err)
+            logger.error("--------- CH QUERY EXCEPTION -----------")
+            logger.error(self.format(query=query, params=params)
+                         .replace('\n', '\\n')
+                         .replace('    ', ' ')
+                         .replace('        ', ' '))
+            logger.error("--------------------")
             raise err
 
     def insert(self, query, params=None, **args):
@@ -64,3 +64,11 @@ class ClickHouseClient:
 
     def __exit__(self, *args):
         pass
+
+
+async def init():
+    logger.info(f">CH_POOL:not defined")
+
+
+async def terminate():
+    pass
