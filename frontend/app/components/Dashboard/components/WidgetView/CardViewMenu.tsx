@@ -89,7 +89,7 @@ const CardViewMenu = () => {
     return (
         <div className="flex items-center justify-between">
             <Dropdown menu={{items}}>
-                <Button icon={<EllipsisVertical size={16}/>}/>
+                <Button type="text" icon={<EllipsisVertical size={16}/>}/>
             </Dropdown>
         </div>
     );
