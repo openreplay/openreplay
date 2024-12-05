@@ -19,6 +19,7 @@ interface Props {
   yaxis?: Record<string, any>;
   label?: string;
   hideLegend?: boolean;
+  inGrid?: boolean;
 }
 
 function CustomAreaChart(props: Props) {
@@ -29,6 +30,7 @@ function CustomAreaChart(props: Props) {
     yaxis = { ...Styles.yaxis },
     label = 'Number of Sessions',
     hideLegend = false,
+    inGrid,
   } = props;
 
   return (
@@ -39,7 +41,7 @@ function CustomAreaChart(props: Props) {
         onClick={onClick}
       >
         {!hideLegend && (
-          <Legend iconType={'circle'} wrapperStyle={{ top: -26 }} />
+          <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
         )}
         <CartesianGrid
           strokeDasharray="3 3"

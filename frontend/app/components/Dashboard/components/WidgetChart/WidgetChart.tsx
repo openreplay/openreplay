@@ -9,7 +9,7 @@ import { useStore } from 'App/mstore';
 import AreaChart from '../../Widgets/CustomMetricsWidgets/AreaChart';
 import BarChart from '../../Widgets/CustomMetricsWidgets/BarChart';
 import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
-import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart'
+import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
@@ -56,7 +56,7 @@ function WidgetChart(props: Props) {
   const drillDownFilter = dashboardStore.drillDownFilter;
   const colors = Styles.customMetricColors;
   const [loading, setLoading] = useState(true);
-  const params = { density: dashboardStore.selectedDensity }
+  const params = { density: dashboardStore.selectedDensity };
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
@@ -76,13 +76,15 @@ function WidgetChart(props: Props) {
 
   useEffect(() => {
     if (!data.chart) return;
-    const series = data.chart[0] ? Object.keys(data.chart[0]).filter(
-      (key) => key !== 'time' && key !== 'timestamp'
-    ) : []
+    const series = data.chart[0]
+      ? Object.keys(data.chart[0]).filter(
+          (key) => key !== 'time' && key !== 'timestamp'
+        )
+      : [];
     if (series.length) {
-      setEnabledRows(series)
+      setEnabledRows(series);
     }
-  }, [data.chart])
+  }, [data.chart]);
 
   const onChartClick = (event: any) => {
     if (event) {
@@ -132,7 +134,7 @@ function WidgetChart(props: Props) {
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
         if (isMounted()) {
-          if (isComparison) setCompData(res)
+          if (isComparison) setCompData(res);
           else setData(res);
         }
       })
@@ -169,12 +171,27 @@ function WidgetChart(props: Props) {
 
     const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
     // TODO: remove after backend adds support for more view types
-    const payload = { ...params, ...timestamps, ...metric.toJson(), viewType: 'lineChart' };
-    fetchMetricChartData(metric, payload, isSaved, dashboardStore.comparisonPeriod, true);
-  }
+    const payload = {
+      ...params,
+      ...timestamps,
+      ...metric.toJson(),
+      viewType: 'lineChart',
+    };
+    fetchMetricChartData(
+      metric,
+      payload,
+      isSaved,
+      dashboardStore.comparisonPeriod,
+      true
+    );
+  };
   useEffect(() => {
+    if (!dashboardStore.comparisonPeriod) {
+      setCompData(null);
+      return;
+    }
     loadComparisonData();
-  }, [dashboardStore.comparisonPeriod])
+  }, [dashboardStore.comparisonPeriod]);
   useEffect(() => {
     _metric.updateKey('page', 1);
     loadPage();
@@ -202,6 +219,7 @@ function WidgetChart(props: Props) {
         <FunnelWidget
           metric={metric}
           data={data}
+          compData={compData}
           isWidget={isSaved || isTemplate}
         />
       );
@@ -224,10 +242,13 @@ function WidgetChart(props: Props) {
 
     if (metricType === TIMESERIES) {
       const chartData = { ...data };
-      chartData.namesMap = Array.isArray(chartData.namesMap) ? chartData.namesMap.map(n => enabledRows.includes(n) ? n : null) : chartData.namesMap
+      chartData.namesMap = Array.isArray(chartData.namesMap)
+        ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
+        : chartData.namesMap;
       if (viewType === 'lineChart') {
         return (
           <CustomMetricLineChart
+            inGrid={!props.isPreview}
             data={chartData}
             compData={compData}
             colors={colors}
@@ -245,6 +266,7 @@ function WidgetChart(props: Props) {
         return (
           <AreaChart
             data={chartData}
+            inGrid={!props.isPreview}
             params={params}
             colors={colors}
             onClick={onChartClick}
@@ -259,6 +281,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'barChart') {
         return (
           <BarChart
+            inGrid={!props.isPreview}
             data={chartData}
             compData={compData}
             params={params}
@@ -275,6 +298,7 @@ function WidgetChart(props: Props) {
       if (viewType === 'progressChart') {
         return (
           <ProgressBarChart
+            inGrid={!props.isPreview}
             data={chartData}
             compData={compData}
             params={params}
@@ -291,14 +315,15 @@ function WidgetChart(props: Props) {
       if (viewType === 'pieChart') {
         return (
           <CustomMetricPieChart
+            inGrid={!props.isPreview}
             metric={metric}
             data={chartData}
             colors={colors}
             onClick={onChartClick}
             label={
               metric.metricOf === 'sessionCount'
-              ? 'Number of Sessions'
-              : 'Number of Users'
+                ? 'Number of Sessions'
+                : 'Number of Users'
             }
           />
         );
@@ -306,13 +331,14 @@ function WidgetChart(props: Props) {
       if (viewType === 'progress') {
         return (
           <CustomMetricPercentage
+            inGrid={!props.isPreview}
             data={data[0]}
             colors={colors}
             params={params}
             label={
               metric.metricOf === 'sessionCount'
-              ? 'Number of Sessions'
-              : 'Number of Users'
+                ? 'Number of Sessions'
+                : 'Number of Users'
             }
           />
         );
@@ -324,16 +350,17 @@ function WidgetChart(props: Props) {
         return (
           <BugNumChart
             data={data}
+            inGrid={!props.isPreview}
             compData={compData}
             colors={colors}
             onClick={onChartClick}
             label={
               metric.metricOf === 'sessionCount'
-              ? 'Number of Sessions'
-              : 'Number of Users'
+                ? 'Number of Sessions'
+                : 'Number of Users'
             }
           />
-        )
+        );
       }
     }
 
@@ -428,13 +455,27 @@ function WidgetChart(props: Props) {
 
     return <div>Unknown metric type</div>;
   };
+
   return (
     <div ref={ref}>
       <Loader loading={loading} style={{ height: `240px` }}>
-        <div style={{ minHeight: 240 }}>
+        <div
+          style={{
+            minHeight: 240,
+            paddingTop:
+              props.isPreview && metric.metricType === TIMESERIES
+                ? '1.5rem'
+                : 0,
+          }}
+        >
           {renderChart()}
-          {metric.metricType === TIMESERIES ? (
-            <WidgetDatatable defaultOpen={metric.viewType === 'table'} data={data} enabledRows={enabledRows} setEnabledRows={setEnabledRows} />
+          {props.isPreview && metric.metricType === TIMESERIES ? (
+            <WidgetDatatable
+              defaultOpen={metric.viewType === 'table'}
+              data={data}
+              enabledRows={enabledRows}
+              setEnabledRows={setEnabledRows}
+            />
           ) : null}
         </div>
       </Loader>

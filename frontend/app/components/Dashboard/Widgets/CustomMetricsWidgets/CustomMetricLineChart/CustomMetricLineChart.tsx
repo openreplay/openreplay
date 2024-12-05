@@ -27,6 +27,7 @@ interface Props {
   yaxis?: any;
   label?: string;
   hideLegend?: boolean;
+  inGrid?: boolean;
 }
 
 function CustomMetricLineChart(props: Props) {
@@ -39,6 +40,7 @@ function CustomMetricLineChart(props: Props) {
     yaxis = { ...Styles.yaxis },
     label = 'Number of Sessions',
     hideLegend = false,
+    inGrid,
   } = props;
 
   const resultChart = data.chart.map((item, i) => {
@@ -54,7 +56,7 @@ function CustomMetricLineChart(props: Props) {
         onClick={onClick}
       >
         {!hideLegend && (
-          <Legend iconType={'circle'} wrapperStyle={{ top: -26 }} />
+          <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
         )}
         <CartesianGrid
           strokeDasharray="3 3"

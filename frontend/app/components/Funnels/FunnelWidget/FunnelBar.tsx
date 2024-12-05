@@ -4,77 +4,162 @@ import FunnelStepText from './FunnelStepText';
 import { Icon } from 'UI';
 import { Space } from 'antd';
 import { Styles } from 'Components/Dashboard/Widgets/common';
+import cn from 'classnames';
 
 interface Props {
   filter: any;
+  compData?: any;
   index?: number;
   focusStage?: (index: number, isFocused: boolean) => void;
   focusedFilter?: number | null;
   metricLabel?: string;
+  isHorizontal?: boolean;
 }
 
 function FunnelBar(props: Props) {
-  const { filter, index, focusStage, focusedFilter, metricLabel = 'Sessions' } = props;
+  const { filter, index, focusStage, focusedFilter, compData, isHorizontal } = props;
 
-  const isFocused = focusedFilter && index ? focusedFilter === index - 1 : false;
+  const isFocused =
+    focusedFilter && index ? focusedFilter === index - 1 : false;
   return (
-    <div className="w-full mb-4">
+    <div className="w-full mb-2">
       <FunnelStepText filter={filter} />
+      <div className={isHorizontal ? 'flex gap-1' : 'flex flex-col'}>
+        <FunnelBarData
+          data={props.filter}
+          isHorizontal={isHorizontal}
+          isComp={false}
+          index={index}
+          isFocused={isFocused}
+          focusStage={focusStage}
+        />
+        {compData ? (
+          <FunnelBarData
+            data={props.compData}
+            isHorizontal={isHorizontal}
+            isComp
+            index={index}
+            isFocused={isFocused}
+            focusStage={focusStage}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function FunnelBarData({
+  data,
+  isComp,
+  isFocused,
+  focusStage,
+  index,
+  isHorizontal,
+}: {
+  data: any;
+  isComp?: boolean;
+  isFocused?: boolean;
+  focusStage?: (index: number, isFocused: boolean) => void;
+  index?: number;
+  isHorizontal?: boolean;
+}) {
+
+  const vertFillBarStyle = {
+    width: `${data.completedPercentageTotal}%`,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1]
+  };
+  const horizontalFillBarStyle = {
+    width: '100%',
+    height: `${data.completedPercentageTotal}%`,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1]
+  }
+
+  const vertEmptyBarStyle = {
+    width: `${100.1 - data.completedPercentageTotal}%`,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    background: isFocused
+                ? 'rgba(204, 0, 0, 0.3)'
+                : 'repeating-linear-gradient(325deg, lightgray, lightgray 2px, #FFF1F0 2px, #FFF1F0 6px)',
+    cursor: 'pointer',
+  }
+  const horizontalEmptyBarStyle = {
+    height: `${100.1 - data.completedPercentageTotal}%`,
+    width: '100%',
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    left: 0,
+    background: isFocused
+                ? 'rgba(204, 0, 0, 0.3)'
+                : 'repeating-linear-gradient(325deg, lightgray, lightgray 2px, #FFF1F0 2px, #FFF1F0 6px)',
+    cursor: 'pointer',
+  }
+
+  const fillBarStyle = isHorizontal ? horizontalFillBarStyle : vertFillBarStyle;
+  const emptyBarStyle = isHorizontal ? horizontalEmptyBarStyle : vertEmptyBarStyle
+  return (
+    <div>
       <div
+        className={isHorizontal ? 'rounded-t' : ''}
         style={{
-          height: '25px',
-          width: '99.8%',
+          height: isHorizontal ? '210px' : '21px',
+          width: isHorizontal ? '200px' : '99.8%',
           backgroundColor: '#f5f5f5',
           position: 'relative',
-          borderRadius: '.5rem',
-          overflow: 'hidden'
+          borderRadius: isHorizontal ? undefined : '.5rem',
+          overflow: 'hidden',
+          opacity: isComp ? 0.7 : 1,
         }}
       >
         <div
           className="flex items-center"
-          style={{
-            width: `${filter.completedPercentageTotal}%`,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: 0,
-            backgroundColor: Styles.compareColors[1]
-          }}
+          style={fillBarStyle}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
-            {filter.completedPercentageTotal}%
+            {data.completedPercentageTotal}%
           </div>
         </div>
         <div
-          style={{
-            width: `${100.1 - filter.completedPercentageTotal}%`,
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: isFocused ? 'rgba(204, 0, 0, 0.3)' : '#fff0f0',
-            cursor: 'pointer'
-          }}
-          onClick={() => focusStage?.(index! - 1, filter.isActive)}
-          className={'hover:opacity-75'}
+          style={emptyBarStyle}
+          onClick={() => focusStage?.(index! - 1, data.isActive)}
+          className={'hover:opacity-70'}
         />
       </div>
-      <div className="flex justify-between py-2">
+      <div
+        className={cn('flex justify-between', isComp ? 'opacity-60' : '')}
+      >
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="arrow-right-short" size="20" color="green" />
-          <span className="mx-1">{filter.count} {metricLabel}</span>
           <span className="color-gray-medium text-sm">
-            ({filter.completedPercentage}%) Completed
+            {`${data.completedPercentage}% . ${data.count}`}
           </span>
         </div>
         {index && index > 1 && (
           <Space className="items-center">
-            <Icon name="caret-down-fill" color={filter.droppedCount > 0 ? 'red' : 'gray-light'} size={16} />
+            <Icon
+              name="caret-down-fill"
+              color={data.droppedCount > 0 ? 'red' : 'gray-light'}
+              size={16}
+            />
             <span
-              className={'mx-1 ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>{filter.droppedCount} {metricLabel}</span>
-            <span
-              className={'text-sm ' + (filter.droppedCount > 0 ? 'color-red' : 'disabled')}>({filter.droppedPercentage}%) Dropped</span>
+              className={
+                'mx-1 ' + (data.droppedCount > 0 ? 'color-red' : 'disabled')
+              }
+            >
+              {data.droppedCount} Skipped
+            </span>
           </Space>
         )}
       </div>
@@ -86,7 +171,7 @@ export function UxTFunnelBar(props: Props) {
   const { filter } = props;
 
   return (
-    <div className="w-full mb-4">
+    <div className="w-full mb-2">
       <div className={'font-medium'}>{filter.title}</div>
       <div
         style={{
@@ -95,22 +180,28 @@ export function UxTFunnelBar(props: Props) {
           backgroundColor: '#f5f5f5',
           position: 'relative',
           borderRadius: '.5rem',
-          overflow: 'hidden'
+          overflow: 'hidden',
         }}
       >
         <div
           className="flex items-center"
           style={{
-            width: `${(filter.completed / (filter.completed + filter.skipped)) * 100}%`,
+            width: `${
+              (filter.completed / (filter.completed + filter.skipped)) * 100
+            }%`,
             position: 'absolute',
             top: 0,
             left: 0,
             bottom: 0,
-            backgroundColor: '#6272FF'
+            backgroundColor: '#6272FF',
           }}
         >
           <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
-            {((filter.completed / (filter.completed + filter.skipped)) * 100).toFixed(1)}%
+            {(
+              (filter.completed / (filter.completed + filter.skipped)) *
+              100
+            ).toFixed(1)}
+            %
           </div>
         </div>
       </div>
@@ -119,22 +210,22 @@ export function UxTFunnelBar(props: Props) {
         <div className={'flex items-center gap-4'}>
           <div className="flex items-center">
             <Icon name="arrow-right-short" size="20" color="green" />
-            <span className="mx-1 font-medium">{filter.completed}</span><span>completed this step</span>
+            <span className="mx-1 font-medium">{filter.completed}</span>
+            <span>completed this step</span>
           </div>
           <div className={'flex items-center'}>
             <Icon name="clock" size="16" />
             <span className="mx-1 font-medium">
               {durationFormatted(filter.avgCompletionTime)}
             </span>
-            <span>
-              avg. completion time
-            </span>
+            <span>avg. completion time</span>
           </div>
         </div>
         {/* @ts-ignore */}
         <div className="flex items-center">
           <Icon name="caret-down-fill" color="red" size={16} />
-          <span className="font-medium mx-1">{filter.skipped}</span><span> skipped</span>
+          <span className="font-medium mx-1">{filter.skipped}</span>
+          <span> skipped</span>
         </div>
       </div>
     </div>
@@ -142,11 +233,3 @@ export function UxTFunnelBar(props: Props) {
 }
 
 export default FunnelBar;
-
-const calculatePercentage = (completed: number, dropped: number) => {
-  const total = completed + dropped;
-  if (dropped === 0) return 100;
-  if (total === 0) return 0;
-
-  return Math.round((completed / dropped) * 100);
-};

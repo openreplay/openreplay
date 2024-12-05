@@ -7,7 +7,7 @@ function FunnelStepText(props: Props) {
     const { filter } = props;
     const total = filter.value.length;
     return (
-        <div className="mb-2 color-gray-medium">
+        <div className="color-gray-medium">
             <span className="color-gray-darkest">{filter.label}</span>
             <span className="mx-1">{filter.operator}</span>
             {filter.value.map((value: any, index: number) => (

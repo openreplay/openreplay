@@ -5,7 +5,13 @@ import { observer } from 'mobx-react-lite';
 import { Space } from 'antd';
 import RangeGranularity from "./RangeGranularity";
 
-function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeseries = false }: any) {
+function WidgetDateRange({
+  viewType = undefined,
+  label = 'Time Range',
+  hasGranularSettings = false,
+  hasGranularity = false,
+  hasComparison = false,
+}: any) {
   const { dashboardStore } = useStore();
   const density = dashboardStore.selectedDensity
   const onDensityChange = (density: number) => {
@@ -25,7 +31,9 @@ function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeser
   };
 
   const onChangeComparison = (period: any) => {
+    console.log(period)
     dashboardStore.setComparisonPeriod(period);
+    if (!period) return;
     const periodTimestamps = period.toTimestamps();
     const compFilter = dashboardStore.cloneCompFilter();
     compFilter.merge({
@@ -34,8 +42,6 @@ function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeser
     });
   }
 
-  const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(viewType);
-  const hasCompare = ['lineChart', 'barChart', 'table', 'progressChart'].includes(viewType);
   return (
     <Space>
       {label && <span className="mr-1 color-gray-medium">{label}</span>}
@@ -45,7 +51,7 @@ function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeser
         isAnt={true}
         useButtonStyle={true}
       />
-      {isTimeseries ? (
+      {hasGranularSettings ? (
         <>
           {hasGranularity ? (
             <RangeGranularity
@@ -54,7 +60,7 @@ function WidgetDateRange({ viewType = undefined, label = 'Time Range', isTimeser
               onDensityChange={onDensityChange}
             />
           ) : null}
-          {hasCompare ?
+          {hasComparison ?
             <SelectDateRange
               period={period}
               compPeriod={compPeriod}

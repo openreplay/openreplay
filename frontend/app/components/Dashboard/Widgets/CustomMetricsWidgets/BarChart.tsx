@@ -21,6 +21,7 @@ interface Props {
   yaxis?: any;
   label?: string;
   hideLegend?: boolean;
+  inGrid?: boolean;
 }
 
 const getPath = (x, y, width, height) => {
@@ -75,6 +76,7 @@ function CustomBarChart(props: Props) {
     yaxis = { ...Styles.yaxis },
     label = 'Number of Sessions',
     hideLegend = false,
+    inGrid,
   } = props;
 
   const resultChart = data.chart.map((item, i) => {
@@ -112,7 +114,7 @@ function CustomBarChart(props: Props) {
           </pattern>
         </defs>
         {!hideLegend && (
-          <Legend iconType={'circle'} wrapperStyle={{ top: -26 }} />
+          <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
         )}
         <CartesianGrid
           strokeDasharray="3 3"

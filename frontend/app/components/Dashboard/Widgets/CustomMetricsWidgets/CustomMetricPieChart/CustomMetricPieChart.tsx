@@ -17,10 +17,11 @@ interface Props {
   };
   colors: any;
   onClick?: (filters) => void;
+  inGrid?: boolean;
 }
 
 function CustomMetricPieChart(props: Props) {
-  const { metric, data, onClick = () => null } = props;
+  const { metric, data, onClick = () => null, inGrid } = props;
 
   const onClickHandler = (event) => {
     if (event && !event.payload.group) {
@@ -62,7 +63,7 @@ function CustomMetricPieChart(props: Props) {
     >
       <ResponsiveContainer height={240} width="100%">
         <PieChart>
-        <Legend iconType={'circle'} wrapperStyle={{ top: -26 }} />
+        <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
           <Pie
             isAnimationActive={false}
             data={values}

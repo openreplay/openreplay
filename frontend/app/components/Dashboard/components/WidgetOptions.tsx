@@ -22,6 +22,8 @@ import {
   Hash,
   Users,
   Library,
+  ChartColumnBig,
+  ChartBarBig,
 } from 'lucide-react';
 
 function WidgetOptions() {
@@ -32,6 +34,8 @@ function WidgetOptions() {
     metric.update({ metricFormat: value });
   };
 
+  // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
+  const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
   return (
     <div className={'flex items-center gap-2'}>
       {metric.metricType === USER_PATH && (
@@ -50,10 +54,7 @@ function WidgetOptions() {
       )}
 
       {metric.metricType === TIMESERIES ? (
-        <>
           <SeriesTypeOptions metric={metric} />
-          <WidgetViewTypeOptions metric={metric} />
-        </>
       ) : null}
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf != FilterKey.USERID &&
@@ -63,11 +64,12 @@ function WidgetOptions() {
             onChange={handleChange}
             variant="borderless"
             options={[
-              { value: 'sessionCount', label: 'Sessions' },
-              { value: 'userCount', label: 'Users' },
+              { value: 'sessionCount', label: 'All Sessions' },
+              { value: 'userCount', label: 'Unique Users' },
             ]}
           />
         )}
+      {hasViewTypes ? <WidgetViewTypeOptions metric={metric} /> : null}
 
       {metric.metricType === HEATMAP ? <ClickMapRagePicker /> : null}
     </div>
@@ -121,6 +123,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     progressChart: 'Bar',
     table: 'Table',
     metric: 'Metric',
+    chart: 'Funnel Bar',
+    columnChart: 'Funnel Column',
   };
   const chartIcons = {
     lineChart: <ChartLine size={16} strokeWidth={1} />,
@@ -130,16 +134,23 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     progressChart: <ChartBar size={16} strokeWidth={1} />,
     table: <Table size={16} strokeWidth={1} />,
     metric: <Hash size={16} strokeWidth={1} />,
+    // funnel specific
+    columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
+    chart: <ChartBarBig size={16} strokeWidth={1} />,
   };
+  const allowedTypes = {
+    [TIMESERIES]: ['lineChart', 'barChart', 'areaChart', 'pieChart', 'progressChart', 'table', 'metric',],
+    [FUNNEL]: ['chart', 'columnChart', ] // + table + metric
+  }
   return (
     <Dropdown
       menu={{
-        items: Object.entries(chartTypes).map(([key, name]) => ({
+        items: allowedTypes[metric.metricType].map((key) => ({
           key,
           label: (
             <div className={'flex items-center gap-2'}>
               {chartIcons[key]}
-              <div>{name}</div>
+              <div>{chartTypes[key]}</div>
             </div>
           ),
         })),

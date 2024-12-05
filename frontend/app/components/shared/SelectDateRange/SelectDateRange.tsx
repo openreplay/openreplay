@@ -52,7 +52,8 @@ function SelectDateRange(props: Props) {
   );
 
   const onChange = (value: any) => {
-    if (props.comparison) {
+    if (props.comparison && props.onChangeComparison) {
+      if (!value) return props.onChangeComparison(null);
       const newPeriod = new Period({
         start: props.period.start,
         end: props.period.end,
