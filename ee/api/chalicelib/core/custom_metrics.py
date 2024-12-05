@@ -5,7 +5,7 @@ from decouple import config
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import funnels, issues, heatmaps, sessions_insights, sessions_mobs, sessions_favorite, \
+from chalicelib.core import funnels, issues, heatmaps, sessions_mobs, sessions_favorite, \
     product_analytics, custom_metrics_predefined
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -93,15 +93,6 @@ def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas
                                          data=schemas.HeatMapSessionsSearch(
                                              **data.series[0].filter.model_dump()),
                                          include_mobs=include_mobs)
-
-
-# EE only
-def __get_insights_chart(project: schemas.ProjectContext, data: schemas.CardInsights, user_id: int = None):
-    return sessions_insights.fetch_selected(project_id=project.project_id,
-                                            data=schemas.GetInsightsSchema(startTimestamp=data.startTimestamp,
-                                                                           endTimestamp=data.endTimestamp,
-                                                                           metricValue=data.metric_value,
-                                                                           series=data.series))
 
 
 def __get_path_analysis_chart(project: schemas.ProjectContext, user_id: int, data: schemas.CardPathAnalysis):
@@ -195,7 +186,6 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
         schemas.MetricType.TABLE: __get_table_chart,
         schemas.MetricType.HEAT_MAP: __get_heat_map_chart,
         schemas.MetricType.FUNNEL: __get_funnel_chart,
-        schemas.MetricType.INSIGHTS: __get_insights_chart,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
     return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
