@@ -8,7 +8,7 @@ import SessionList from './components/SessionList';
 import { observer } from 'mobx-react-lite';
 import NoSessionsMessage from 'Shared/NoSessionsMessage/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar/MainSearchBar';
-import SessionSearch from 'Shared/SessionSearch/SessionSearch';
+import SearchActions from "../SearchActions";
 
 function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
@@ -28,8 +28,8 @@ function SessionsTabOverview() {
   return (
     <>
       <NoSessionsMessage />
+      <SearchActions />
       <MainSearchBar />
-      <SessionSearch />
       <div className="my-4" />
       <div className="widget-wrapper">
         {testingKey ? (

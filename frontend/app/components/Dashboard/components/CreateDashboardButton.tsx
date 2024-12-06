@@ -1,25 +1,45 @@
-import React from "react";
-import {PlusOutlined} from "@ant-design/icons";
-import NewDashboardModal from "Components/Dashboard/components/DashboardList/NewDashModal";
-import {Button} from "antd";
+import React from 'react';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { useStore } from 'App/mstore';
+import { useHistory } from 'react-router-dom';
 
 interface Props {
-    disabled?: boolean;
+  disabled?: boolean;
 }
 
-function CreateDashboardButton({disabled = false}: Props) {
-    const [showModal, setShowModal] = React.useState(false);
+function CreateDashboardButton({ disabled }: Props) {
+  const [dashboardCreating, setDashboardCreating] = React.useState(false);
+  const { projectsStore, dashboardStore } = useStore();
+  const siteId = projectsStore.siteId;
+  const history = useHistory();
 
-    return <>
-        <Button
-            icon={<PlusOutlined/>}
-            type="primary"
-            onClick={() => setShowModal(true)}
-        >
-            Create Dashboard
-        </Button>
-        <NewDashboardModal onClose={() => setShowModal(false)} open={showModal}/>
-    </>;
+  const createNewDashboard = async () => {
+    setDashboardCreating(true);
+    dashboardStore.initDashboard();
+    await dashboardStore
+      .save(dashboardStore.dashboardInstance)
+      .then(async (syncedDashboard) => {
+        dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
+        history.push(`/${siteId}/dashboard/${syncedDashboard.dashboardId}`);
+      })
+      .finally(() => {
+        setDashboardCreating(false);
+      });
+  };
+  return (
+    <>
+      <Button
+        loading={dashboardCreating}
+        icon={<PlusOutlined />}
+        disabled={disabled}
+        type="primary"
+        onClick={createNewDashboard}
+      >
+        Create Dashboard
+      </Button>
+    </>
+  );
 }
 
 export default CreateDashboardButton;

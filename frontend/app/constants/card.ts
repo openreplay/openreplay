@@ -19,7 +19,6 @@ export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';
 export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
-export const FEATURE_ADOPTION = 'featureAdoption';
 export const INSIGHTS = 'insights';
 export const PERFORMANCE = 'performance';
 

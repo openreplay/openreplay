@@ -21,7 +21,7 @@ export default class Funnel {
         }
         this.totalDropDueToIssues = json.totalDropDueToIssues;
 
-        if (json.stages.length >= 1) {
+        if (json.stages?.length >= 1) {
             const firstStage = json.stages[0]
             this.stages = json.stages ? json.stages.map((stage: any, index: number) => new FunnelStage().fromJSON(stage, firstStage.count, index > 0 ? json.stages[index - 1].count : stage.count)) : []
             const filteredStages = this.stages.filter((stage: any) => stage.isActive)
