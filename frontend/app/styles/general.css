@@ -158,7 +158,7 @@
 }
 
 .border-gray-light {
-  border: solid thin $gray-light
+  border: solid thin rgb(229 231 235  / var(--tw-text-opacity, 1))
 }
 
 .btn-disabled {

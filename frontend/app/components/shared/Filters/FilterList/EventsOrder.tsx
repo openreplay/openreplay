@@ -51,14 +51,13 @@ const EventsOrder = observer((props: {
   return (
     <div className="flex items-center gap-2">
       <Tooltip title="Select the operator to be applied between events." placement="bottom">
-        <div className="color-gray-medium text-sm">Events Order</div>
+        <div className="text-neutral-500/90 text-sm">Events Order</div>
       </Tooltip>
 
-      <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+      <Dropdown overlay={menu} trigger={['click']} placement="bottomRight" className="bg-white border border-neutral-200 rounded-lg px-1 py-0.5 hover:border-teal">
       <a onClick={(e) => e.preventDefault()} className="text-sm items-center gap-2 hover:text-teal">
         <Space className="text-sm">
         {options.find((item) => item.value === filter.eventsOrder)?.label || 'Select'} 
-        <DownOutlined className="mr-2 text-xs" />
         </Space>
       </a>
 

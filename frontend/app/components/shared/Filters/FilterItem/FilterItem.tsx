@@ -72,7 +72,7 @@ function FilterItem(props: Props) {
       <div className="flex items-start w-full">
         {!isFilter && !hideIndex && filterIndex >= 0 && (
           <div
-            className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-light-shade mr-2">
+            className="mt-1 flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter	 mr-2">
             <span>{filterIndex + 1}</span>
           </div>
         )}
@@ -113,7 +113,7 @@ function FilterItem(props: Props) {
               <>
                 {props.readonly ? (
                   <div
-                    className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip'}
+                    className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400'}
                   >
                     {filter.value.map((val: string) => {
                       return filter.options && filter.options.length

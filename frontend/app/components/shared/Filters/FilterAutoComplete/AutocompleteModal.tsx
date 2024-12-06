@@ -73,6 +73,7 @@ export function AutocompleteModal({
         loading={isLoading}
         onChange={(e) => handleInputChange(e.target.value)}
         placeholder={placeholder}
+        className='rounded-lg'
       />
       <Loader loading={isLoading}>
         <>
@@ -138,7 +139,7 @@ export function AutoCompleteContainer(props: Props) {
   return (
     <div
       className={
-        'rounded border border-gray-light px-2 relative w-fit whitespace-nowrap flex items-center'
+        'rounded-lg border border-gray-light px-2 relative w-full pr-4 whitespace-nowrap flex items-center bg-white hover:border-neutral-400'
       }
       style={{ height: 26 }}
       ref={filterValueContainer}
@@ -158,7 +159,7 @@ export function AutoCompleteContainer(props: Props) {
             </div>
             {props.value.length > 1 ? (
               <>
-                or
+                <span className='text-neutral-500/90	'>or</span>
                 {props.value.length === 2 ? (
                   <div
                     className={
@@ -182,8 +183,8 @@ export function AutoCompleteContainer(props: Props) {
             ) : null}
           </>
         ) : (
-          <div className={'text-disabled-text'}>
-            {props.placeholder ? props.placeholder : 'Select values'}
+          <div className={'text-neutral-500/90'}>
+            {props.placeholder ? props.placeholder : 'Select events'}
           </div>
         )}
       </div>
