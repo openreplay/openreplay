@@ -42,39 +42,39 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 const IconMap = {
-  [FilterKey.CLICK]: <Pointer size={18} />,
-  [FilterKey.LOCATION]: <Navigation size={18} />,
-  [FilterKey.INPUT]: <RectangleEllipsis size={18} />,
-  [FilterKey.CUSTOM]: <Code size={18} />,
-  [FilterKey.FETCH]: <ArrowUpDown size={18} />,
-  [FilterKey.GRAPHQL]: <Network size={18} />,
-  [FilterKey.STATEACTION]: <RectangleEllipsis size={18} />,
-  [FilterKey.ERROR]: <OctagonAlert size={18} />,
-  [FilterKey.ISSUE]: <CircleAlert size={18} />,
-  [FilterKey.FETCH_FAILED]: <Code size={18} />,
-  [FilterKey.DOM_COMPLETE]: <ArrowUpDown size={18} />,
-  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: <Network size={18} />,
-  [FilterKey.TTFB]: <Timer size={18} />,
-  [FilterKey.AVG_CPU_LOAD]: <Cpu size={18} />,
-  [FilterKey.AVG_MEMORY_USAGE]: <MemoryStick size={18} />,
-  [FilterKey.USERID]: <SquareUser size={18} />,
-  [FilterKey.USERANONYMOUSID]: <VenetianMask size={18} />,
-  [FilterKey.USER_CITY]: <Pin size={18} />,
-  [FilterKey.USER_STATE]: <MapPin size={18} />,
-  [FilterKey.USER_COUNTRY]: <Earth size={18} />,
-  [FilterKey.USER_DEVICE]: <Code size={18} />,
-  [FilterKey.USER_OS]: <AppWindow size={18} />,
-  [FilterKey.USER_BROWSER]: <Chrome size={18} />,
-  [FilterKey.PLATFORM]: <MonitorSmartphone size={18} />,
-  [FilterKey.REVID]: <FileStack size={18} />,
-  [FilterKey.REFERRER]: <Workflow size={18} />,
-  [FilterKey.DURATION]: <Clock2 size={18} />,
-  [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={18} />,
-  [FilterKey.METADATA]: <ContactRound size={18} />,
-  [FilterKey.UTM_SOURCE]: <CornerDownRight size={18} />,
-  [FilterKey.UTM_MEDIUM]: <Layers size={18} />,
-  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18} />,
-  [FilterKey.FEATURE_FLAG]: <Flag size={18} />,
+  [FilterKey.CLICK]: <Pointer size={14}/>,
+  [FilterKey.LOCATION]: <Navigation size={14} />,
+  [FilterKey.INPUT]: <RectangleEllipsis size={14} />,
+  [FilterKey.CUSTOM]: <Code size={14} />,
+  [FilterKey.FETCH]: <ArrowUpDown size={14} />,
+  [FilterKey.GRAPHQL]: <Network size={14} />,
+  [FilterKey.STATEACTION]: <RectangleEllipsis size={14} />,
+  [FilterKey.ERROR]: <OctagonAlert size={14} />,
+  [FilterKey.ISSUE]: <CircleAlert size={14} />,
+  [FilterKey.FETCH_FAILED]: <Code size={14} />,
+  [FilterKey.DOM_COMPLETE]: <ArrowUpDown size={14} />,
+  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: <Network size={14} />,
+  [FilterKey.TTFB]: <Timer size={14} />,
+  [FilterKey.AVG_CPU_LOAD]: <Cpu size={14} />,
+  [FilterKey.AVG_MEMORY_USAGE]: <MemoryStick size={14} />,
+  [FilterKey.USERID]: <SquareUser size={14} />,
+  [FilterKey.USERANONYMOUSID]: <VenetianMask size={14} />,
+  [FilterKey.USER_CITY]: <Pin size={14} />,
+  [FilterKey.USER_STATE]: <MapPin size={14} />,
+  [FilterKey.USER_COUNTRY]: <Earth size={14} />,
+  [FilterKey.USER_DEVICE]: <Code size={14} />,
+  [FilterKey.USER_OS]: <AppWindow size={14} />,
+  [FilterKey.USER_BROWSER]: <Chrome size={14} />,
+  [FilterKey.PLATFORM]: <MonitorSmartphone size={14} />,
+  [FilterKey.REVID]: <FileStack size={14} />,
+  [FilterKey.REFERRER]: <Workflow size={14} />,
+  [FilterKey.DURATION]: <Clock2 size={14} />,
+  [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={14} />,
+  [FilterKey.METADATA]: <ContactRound size={14} />,
+  [FilterKey.UTM_SOURCE]: <CornerDownRight size={14} />,
+  [FilterKey.UTM_MEDIUM]: <Layers size={14} />,
+  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={14} />,
+  [FilterKey.FEATURE_FLAG]: <Flag size={14} />,
 };
 
 function filterJson(
@@ -216,21 +216,21 @@ function FilterModal(props: Props) {
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '560px', height: '380px', borderRadius: '.5rem' }}
+      style={{ width: '560px', maxHeight: '380px' }}
     >
       <Input
-        className={'mb-4'}
+        className={'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'}
         placeholder={'Search'}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />
       <div className={'flex gap-2 items-start'}>
-        <div className={'flex flex-col gap-1'} style={{ flex: 1 }}>
+        <div className={'flex flex-col gap-1'}>
           {matchingCategories.map((key) => (
             <div
               key={key}
               onClick={() => setCategory(key)}
-              className={cn('rounded px-4 py-2 hover:bg-active-blue capitalize cursor-pointer', key === category ? 'bg-active-blue' : '')}
+              className={cn('rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium', key === category ? 'bg-active-blue text-teal' : '')}
             >
               {key.toLowerCase()}
             </div>
@@ -249,12 +249,12 @@ function FilterModal(props: Props) {
                   )}
                   onClick={() => onFilterClick({ ...filter })}
                 >
-                  {filter.category ? <div style={{ width: 150 }} className={'text-disabled-text w-full flex justify-between items-center'}>
+                  {filter.category ? <div style={{ width: 100 }} className={'text-neutral-500/90		 w-full flex justify-between items-center'}>
                     <span>{filter.category}</span>
                     <ChevronRight size={14} />
                   </div> : null}
                   <div className={'flex items-center gap-2'}>
-                    {getNewIcon(filter)}
+                    <span className='text-neutral-500/90	 text-xs'>{getNewIcon(filter)}</span>
                     <span>{filter.label}</span>
                   </div>
                 </div>

@@ -42,14 +42,48 @@ const EventsOrder = observer((props: {
             </Tooltip>
         </div>
 
-        <Select
-            size={"small"}
-            className="text-sm"
-            onChange={(v) => onChange(null, options.find((i) => i.value === v))}
-            value={filter.eventsOrder}
-            options={options}
-        />
+  const menu = (
+    <Menu
+      onClick={(e) => {
+        const selectedOption = options.find((item) => item.value === e.key);
+        if (selectedOption && !selectedOption.disabled) {
+          onChange(null, selectedOption);
+        }
+      }}
+    >
+      {options.map((item) => (
+        <Menu.Item key={item.value} disabled={item.disabled}>
+          {item.label}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
+
+  return (
+    <div className="flex items-center gap-2">
+      <Tooltip title="Select the operator to be applied between events." placement="bottom">
+        <div className="text-neutral-500/90 text-sm">Events Order</div>
+      </Tooltip>
+
+      <Dropdown overlay={menu} trigger={['click']} placement="bottomRight" className="bg-white border border-neutral-200 rounded-lg px-1 py-0.5 hover:border-teal">
+      <a onClick={(e) => e.preventDefault()} className="text-sm items-center gap-2 hover:text-teal">
+        <Space className="text-sm">
+        {options.find((item) => item.value === filter.eventsOrder)?.label || 'Select'} 
+        </Space>
+      </a>
+
+      </Dropdown>
+    </div>
+  );
     </div>;
 });
+        
+        //<Select
+          //  size={"small"}
+            //className="text-sm"
+          //  onChange={(v) => onChange(null, options.find((i) => i.value === v))}
+          //  value={filter.eventsOrder}
+          //  options={options}
+        ///>
 
 export default EventsOrder;

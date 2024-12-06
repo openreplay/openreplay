@@ -62,7 +62,7 @@ function FilterSelection(props: Props) {
         ) : (
           <div
             className={cn(
-              'rounded-lg py-1 px-2 flex items-center gap-1 cursor-pointer bg-white border border-gray-light text-ellipsis',
+              'rounded-lg py-1 px-2 flex items-center gap-1 cursor-pointer bg-white border border-gray-light text-ellipsis hover:border-neutral-400',
               { 'opacity-50 pointer-events-none': disabled }
             )}
             style={{
@@ -70,10 +70,10 @@ function FilterSelection(props: Props) {
             }}
             onClick={() => setShowModal(true)}
           >
-            <div>{getNewIcon(filter)}</div>
-            <div className={'text-disabled-text'}>{`${filter.category} .`}</div>
+            <div className='text-xs text-neutral-500/90'>{getNewIcon(filter)}</div>
+            <div className={'text-neutral-500/90 flex gap-2'}>{`${filter.category} •`}</div>
             <div
-              className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate"
+              className="rounded-lg overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate "
               style={{ textOverflow: 'ellipsis' }}
             >
               {label}
@@ -81,7 +81,7 @@ function FilterSelection(props: Props) {
           </div>
         )}
         {showModal && (
-          <div className="absolute mt-2 left-0 rounded-lg shadow bg-white z-50">
+          <div className="absolute mt-2 left-0 rounded-2xl shadow-lg bg-white z-50">
             <FilterModal
               isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
               onFilterClick={onAddFilter}

@@ -11,6 +11,7 @@ const dropdownStyles = {
       height: '26px',
       minHeight: '26px',
       backgroundColor: 'white',
+      borderRadius: '.5rem',
     }
     return obj;
   },

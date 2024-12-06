@@ -1,4 +1,4 @@
-import { GripHorizontal, Plus, Filter } from 'lucide-react';
+import { GripVertical, Plus, Filter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
@@ -55,7 +55,7 @@ export const FilterList = observer((props: Props) => {
       }}
     >
       <div className={'flex items-center mb-2'} style={{ gap: '0.65rem' }}>
-        <div className="font-semibold">Filters</div>
+        <div className="font-medium">Filters</div>
         <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter} disabled={readonly}>
           <Button icon={<Filter size={16} strokeWidth={1} />} type="default" size={'small'}>
             Add
@@ -66,7 +66,7 @@ export const FilterList = observer((props: Props) => {
         !filter.isEvent ? (
           <div
             key={`${filter.key}-${filterIndex}`}
-            className={'py-2 hover:bg-active-blue px-5'}
+            className={'py-2 hover:bg-active-blue px-5 '}
             style={{
               marginLeft: '-1.25rem',
               width: 'calc(100% + 2.5rem)',
@@ -187,7 +187,7 @@ export const EventsList = observer((props: Props) => {
       }}
     >
       <div className="flex items-center mb-2 gap-2">
-        <div className="font-semibold">Events</div>
+        <div className="font-medium">Events</div>
         <FilterSelection mode={'events'} filter={undefined} onFilterClick={onAddFilter}>
           <Button icon={<Plus size={16} strokeWidth={1} />} type="default" size={'small'}>
             Add
@@ -220,6 +220,9 @@ export const EventsList = observer((props: Props) => {
                     : '0.5rem',
                 marginLeft: '-1.25rem',
                 width: 'calc(100% + 2.5rem)',
+                alignItems: 'start',
+                
+                
               }}
               className={'hover:bg-active-blue px-5 gap-2 items-center flex'}
               id={`${filter.key}-${filterIndex}`}
@@ -229,7 +232,7 @@ export const EventsList = observer((props: Props) => {
             >
               {!!props.onFilterMove && eventsNum > 1 ? (
                 <div
-                  className={'p-2 cursor-grab'}
+                  className={'p-2 cursor-grab text-neutral-500/90 hover:bg-gray-lighter	px-1 pt-2 rounded-lg'}
                   draggable={!!props.onFilterMove}
                   onDragStart={(e) =>
                     handleDragStart(
@@ -239,7 +242,7 @@ export const EventsList = observer((props: Props) => {
                     )
                   }
                 >
-                  <GripHorizontal size={16} />
+                  <GripVertical size={16} />
                 </div>
               ) : null}
               <FilterItem
