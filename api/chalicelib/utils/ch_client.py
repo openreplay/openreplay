@@ -35,16 +35,16 @@ class ClickHouseClient:
     def __enter__(self):
         return self
 
-    def execute(self, query, params=None, **args):
+    def execute(self, query, parameters=None, **args):
         try:
-            results = self.__client.execute(query=query, params=params, with_column_types=True, **args)
+            results = self.__client.execute(query=query, params=parameters, with_column_types=True, **args)
             keys = tuple(x for x, y in results[1])
             return [dict(zip(keys, i)) for i in results[0]]
         except Exception as err:
             logger.error("--------- CH EXCEPTION -----------")
             logger.error(err)
             logger.error("--------- CH QUERY EXCEPTION -----------")
-            logger.error(self.format(query=query, params=params)
+            logger.error(self.format(query=query, parameters=parameters)
                          .replace('\n', '\\n')
                          .replace('    ', ' ')
                          .replace('        ', ' '))
@@ -57,10 +57,10 @@ class ClickHouseClient:
     def client(self):
         return self.__client
 
-    def format(self, query, params):
-        if params is None:
+    def format(self, query, parameters):
+        if parameters is None:
             return query
-        return self.__client.substitute_params(query, params, self.__client.connection.context)
+        return self.__client.substitute_params(query, parameters, self.__client.connection.context)
 
     def __exit__(self, *args):
         pass

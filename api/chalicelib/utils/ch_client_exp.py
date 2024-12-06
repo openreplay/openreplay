@@ -148,12 +148,12 @@ class ClickHouseClient:
     def __enter__(self):
         return self.__client
 
-    def format(self, query, *, params=None):
-        if params is None:
+    def format(self, query, *, parameters=None):
+        if parameters is None:
             return query
         return query % {
             key: f"'{value}'" if isinstance(value, str) else value
-            for key, value in params.items()
+            for key, value in parameters.items()
         }
 
     def __exit__(self, *args):
