@@ -1,4 +1,8 @@
-# 15.0.2
+## 15.0.3
+
+- fixing `failuresOnly` option for network
+
+## 15.0.2
 
 - fixing crossdomain access check
 
