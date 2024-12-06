@@ -18,6 +18,14 @@ if config('ch_receive_timeout', cast=int, default=-1) > 0:
     logging.info(f"CH-receive_timeout set to {config('ch_receive_timeout')}s")
     settings = {**settings, "receive_timeout": config('ch_receive_timeout', cast=int)}
 
+logger.info("-- CH config --")
+logger.info(f'host={config("ch_host")}')
+logger.info(f'database={config("ch_database", default="default")}')
+logger.info(f'user={config("ch_user", default="default")}')
+logger.info(f'password={config("ch_password", default="")}')
+logger.info(f'port={config("ch_port_http", cast=int)}')
+logger.info(f'settings={settings}')
+
 extra_args = {}
 if config("CH_COMPRESSION", cast=bool, default=True):
     extra_args["compression"] = "lz4"
