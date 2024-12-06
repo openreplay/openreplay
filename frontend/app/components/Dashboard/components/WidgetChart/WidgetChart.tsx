@@ -6,6 +6,7 @@ import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
 import { Icon, Loader } from 'UI';
 import { useStore } from 'App/mstore';
+import FunnelTable from "../../../Funnels/FunnelWidget/FunnelTable";
 import AreaChart from '../../Widgets/CustomMetricsWidgets/AreaChart';
 import BarChart from '../../Widgets/CustomMetricsWidgets/BarChart';
 import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
@@ -215,6 +216,42 @@ function WidgetChart(props: Props) {
     const metricWithData = { ...metric, data };
 
     if (metricType === FUNNEL) {
+      console.log(data, compData);
+      if (viewType === 'table') {
+        return (
+          <FunnelTable data={data} compData={compData} />
+        )
+      }
+      if (viewType === 'metric') {
+        const values: {
+          value: number;
+          compData?: number;
+          series: string;
+          valueLabel?: string;
+        }[] = [
+          {
+            value: data.funnel.totalConversionsPercentage,
+            compData: compData
+              ? compData.funnel.totalConversionsPercentage
+              : undefined,
+            series: 'Dynamic',
+            valueLabel: '%'
+          },
+        ];
+
+        return (
+          <BugNumChart
+            values={values}
+            inGrid={!props.isPreview}
+            colors={colors}
+            onClick={onChartClick}
+            label={
+              'Conversion'
+            }
+          />
+        );
+      }
+
       return (
         <FunnelWidget
           metric={metric}
@@ -347,11 +384,22 @@ function WidgetChart(props: Props) {
         return null;
       }
       if (viewType === 'metric') {
+        const values: { value: number, compData?: number, series: string }[] = [];
+        for (let i = 0; i < data.namesMap.length; i++) {
+          if (!data.namesMap[i]) {
+            continue;
+          }
+
+          values.push({
+            value: data.chart.reduce((acc, curr) => acc + curr[data.namesMap[i]], 0),
+            compData: compData ? compData.chart.reduce((acc, curr) => acc + curr[compData.namesMap[i]], 0) : undefined,
+            series: data.namesMap[i],
+          });
+        }
         return (
           <BugNumChart
-            data={data}
+            values={values}
             inGrid={!props.isPreview}
-            compData={compData}
             colors={colors}
             onClick={onChartClick}
             label={
@@ -475,6 +523,7 @@ function WidgetChart(props: Props) {
               data={data}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}
+              metric={metric}
             />
           ) : null}
         </div>

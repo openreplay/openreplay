@@ -82,7 +82,7 @@ function FunnelWidget(props: Props) {
       }
       show={!stages || stages.length === 0}
     >
-      <div className={cn('w-full border-b -mx-4 px-4', isHorizontal ? 'flex gap-2 flex-wrap justify-around' : '')}>
+      <div className={cn('w-full border-b -mx-4 px-4', isHorizontal ? 'overflow-x-scroll custom-scrollbar flex gap-2 justify-around' : '')}>
         {!isWidget &&
           shownStages.map((stage: any, index: any) => (
             <Stage

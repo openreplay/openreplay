@@ -54,7 +54,7 @@ function WidgetOptions() {
       )}
 
       {metric.metricType === TIMESERIES ? (
-          <SeriesTypeOptions metric={metric} />
+        <SeriesTypeOptions metric={metric} />
       ) : null}
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf != FilterKey.USERID &&
@@ -80,7 +80,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
   const items = {
     sessionCount: 'Total Sessions',
     userCount: 'Unique Users',
-  }
+  };
   const chartIcons = {
     sessionCount: <Library size={16} strokeWidth={1} />,
     userCount: <Users size={16} strokeWidth={1} />,
@@ -112,7 +112,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
       </Button>
     </Dropdown>
   );
-})
+});
 
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
@@ -139,9 +139,17 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     chart: <ChartBarBig size={16} strokeWidth={1} />,
   };
   const allowedTypes = {
-    [TIMESERIES]: ['lineChart', 'barChart', 'areaChart', 'pieChart', 'progressChart', 'table', 'metric',],
-    [FUNNEL]: ['chart', 'columnChart', ] // + table + metric
-  }
+    [TIMESERIES]: [
+      'lineChart',
+      'barChart',
+      'areaChart',
+      'pieChart',
+      'progressChart',
+      'table',
+      'metric',
+    ],
+    [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
+  };
   return (
     <Dropdown
       menu={{
@@ -168,6 +176,6 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       </Button>
     </Dropdown>
   );
-})
+});
 
 export default observer(WidgetOptions);
