@@ -44,12 +44,18 @@ function SeriesName(props: Props) {
           onChange={write}
           onBlur={onBlur}
           onFocus={() => setEditing(true)}
-          className='bg-white text-lg font-medium rounded-lg'
+          className='bg-white'
         />
       ) : (
-        <Tooltip placement='bottom' title='Double click to edit'><div className="text-lg font-medium hover:bg-teal-light/10 px-2 rounded-lg cursor-pointer" onDoubleClick={() => setEditing(true)}>{name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name }</div>
-        </Tooltip>
+        <div className="text-base h-8 flex items-center border-transparent">{name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name }</div>
       )}
+      
+
+      <div className="ml-3 cursor-pointer " onClick={() => setEditing(true)}>
+        <Tooltip title='Rename' placement='bottom'>
+          <Icon name="pencil" size="14" />
+        </Tooltip>
+      </div>
     </div>
   );
 }

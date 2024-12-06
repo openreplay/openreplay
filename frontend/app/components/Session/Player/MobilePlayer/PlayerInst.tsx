@@ -72,7 +72,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
+  }, [bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
 
   React.useEffect(() => {
     playerContext.player.addFullscreenBoundary(props.fullscreen || fullView);

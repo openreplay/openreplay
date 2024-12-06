@@ -4,6 +4,7 @@ import type { TableProps } from 'antd';
 import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
+import { TableExporter } from "../../../Funnels/FunnelWidget/FunnelTable";
 
 const initTableProps = [
   {
@@ -27,6 +28,7 @@ interface Props {
   enabledRows: string[];
   setEnabledRows: (rows: string[]) => void;
   defaultOpen?: boolean;
+  metric: { name: string };
 }
 
 function WidgetDatatable(props: Props) {
@@ -137,20 +139,11 @@ function WidgetDatatable(props: Props) {
             size={'small'}
             scroll={{ x: 'max-content' }}
           />
-          {/* 1.23+ export menu floater */}
-          {/*<div className={'absolute top-0 -right-1'}>*/}
-          {/*  <ItemMenu*/}
-          {/*    items={[*/}
-          {/*      { icon: 'pencil', text: 'Rename', onClick: () => null },*/}
-          {/*    ]}*/}
-          {/*    bold*/}
-          {/*    customTrigger={*/}
-          {/*    <div className={'flex items-center justify-center bg-gray-lighter cursor-pointer hover:bg-gray-light'} style={{ height: 38, width: 38, boxShadow: '-2px 0px 3px 0px rgba(0, 0, 0, 0.05)' }}>*/}
-          {/*      <EllipsisVertical size={16} />*/}
-          {/*    </div>*/}
-          {/*  }*/}
-          {/*  />*/}
-          {/*</div>*/}
+          <TableExporter
+            tableData={tableData}
+            tableColumns={tableProps}
+            filename={props.metric.name}
+          />
         </div>
       ) : null}
     </div>

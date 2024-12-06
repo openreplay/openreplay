@@ -2,35 +2,19 @@ import React from 'react'
 import { CompareTag } from "./CustomChartTooltip";
 
 interface Props {
-  data: { chart: any[], namesMap: string[] };
-  compData: { chart: any[], namesMap: string[] } | null;
   colors: any;
   onClick?: (event, index) => void;
   yaxis?: any;
   label?: string;
   hideLegend?: boolean;
+  values: { value: number, compData?: number, series: string, valueLabel?: string }[];
 }
 function BigNumChart(props: Props) {
   const {
-    data = { chart: [], namesMap: [] },
-    compData = { chart: [], namesMap: [] },
     colors,
-    onClick = () => null,
     label = 'Number of Sessions',
+    values,
   } = props;
-
-  const values: { value: number, compData?: number, series: string }[] = [];
-  for (let i = 0; i < data.namesMap.length; i++) {
-    if (!data.namesMap[i]) {
-      continue;
-    }
-
-    values.push({
-      value: data.chart.reduce((acc, curr) => acc + curr[data.namesMap[i]], 0),
-      compData: compData ? compData.chart.reduce((acc, curr) => acc + curr[compData.namesMap[i]], 0) : undefined,
-      series: data.namesMap[i],
-    });
-  }
   return (
     <div className={'flex justify-around gap-2 w-full'} style={{ height: 240 }}>
       {values.map((val, i) => (
@@ -41,18 +25,20 @@ function BigNumChart(props: Props) {
           value={val.value}
           label={label}
           compData={val.compData}
+          valueLabel={val.valueLabel}
         />
       ))}
     </div>
   )
 }
 
-function BigNum({ color, series, value, label, compData }: {
+function BigNum({ color, series, value, label, compData, valueLabel }: {
   color: string,
   series: string,
   value: number,
   label: string,
   compData?: number,
+  valueLabel?: string,
 }) {
   const formattedNumber = (num: number) => {
     return Intl.NumberFormat().format(num);
@@ -69,7 +55,7 @@ function BigNum({ color, series, value, label, compData }: {
         <div>{series}</div>
       </div>
       <div className={'font-bold leading-none'} style={{ fontSize: 56 }}>
-        {formattedNumber(value)}
+        {formattedNumber(value)}{valueLabel ? `${valueLabel}` : null}
       </div>
       <div className={'text-disabled-text text-xs'}>
         {label}

@@ -23,7 +23,7 @@ function FunnelBar(props: Props) {
     focusedFilter && index ? focusedFilter === index - 1 : false;
   return (
     <div className="w-full mb-2">
-      <FunnelStepText filter={filter} />
+      <FunnelStepText filter={filter} isHorizontal={isHorizontal} />
       <div className={isHorizontal ? 'flex gap-1' : 'flex flex-col'}>
         <FunnelBarData
           data={props.filter}

@@ -27,7 +27,7 @@ func (d *dataDogClient) FetchSessionData(credentials interface{}, sessionID uint
 		// Not a struct, will try to parse as JSON string
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = datadogConfig{}
 		if site, ok := strCfg["site"].(string); ok {

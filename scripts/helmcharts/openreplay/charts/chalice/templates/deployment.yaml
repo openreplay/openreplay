@@ -54,6 +54,8 @@ spec:
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port
               value: "{{ .Values.global.clickhouse.service.webPort }}"
+            - name: ch_port_http
+              value: "{{ .Values.global.clickhouse.service.dataPort }}"
             - name: sourcemaps_reader
               value: "http://sourcemapreader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/%s/sourcemaps"
             - name: ASSIST_URL

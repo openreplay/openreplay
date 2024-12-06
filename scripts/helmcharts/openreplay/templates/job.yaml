@@ -213,6 +213,8 @@ spec:
             value: "{{.Values.global.clickhouse.chHost}}"
           - name: CH_PORT
             value: "{{.Values.global.clickhouse.service.webPort}}"
+          - name: CH_PORT_HTTP
+            value: "{{.Values.global.clickhouse.service.dataPort}}"
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD
@@ -458,6 +460,8 @@ spec:
             value: "{{.Values.global.clickhouse.chHost}}"
           - name: CH_PORT
             value: "{{.Values.global.clickhouse.service.webPort}}"
+          - name: CH_PORT_HTTP
+            value: "{{.Values.global.clickhouse.service.dataPort}}"
           - name: CH_USERNAME
             value: "{{.Values.global.clickhouse.username}}"
           - name: CH_PASSWORD

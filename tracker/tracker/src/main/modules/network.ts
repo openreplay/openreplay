@@ -136,6 +136,9 @@ export default function (app: App, opts: Partial<Options> = {}) {
         setSessionTokenHeader,
         sanitize,
         (message) => {
+          if (options.failuresOnly && message.status < 400) {
+            return
+          }
           app.send(
             NetworkRequest(
               message.requestType,

@@ -61,20 +61,6 @@ class SignalsSchema(BaseModel):
     data: dict = Field(default={})
 
 
-class InsightCategories(str, Enum):
-    ERRORS = "errors"
-    NETWORK = "network"
-    RAGE = "rage"
-    RESOURCES = "resources"
-
-
-class GetInsightsSchema(schemas._TimedSchema):
-    startTimestamp: int = Field(default=TimeUTC.now(-7))
-    endTimestamp: int = Field(default=TimeUTC.now())
-    metricValue: List[InsightCategories] = Field(default=[])
-    series: List[schemas.CardSeriesSchema] = Field(default=[])
-
-
 class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(default=None)
 
@@ -150,15 +136,3 @@ class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema, schemas._TimedSc
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     order: Literal["asc", "desc"] = Field(default="desc")
-
-
-# TODO: move these to schema when Insights is supported on PG
-class CardInsights(schemas.CardInsights):
-    metric_value: List[InsightCategories] = Field(default=[])
-
-    @model_validator(mode="after")
-    def restrictions(self):
-        return self
-
-
-CardSchema = ORUnion(Union[schemas.__cards_union_base, CardInsights], discriminator='metric_type')

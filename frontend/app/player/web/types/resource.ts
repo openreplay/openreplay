@@ -115,7 +115,8 @@ export const Resource = (resource: IResource) => ({
 
 
 export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: number) {
-  const success = msg.duration > 0 // might be duration=0 when cached
+  // duration might be duration=0 when cached
+  const success = msg.duration > 0 || msg.encodedBodySize > 0 || msg.transferredSize > 0
   const type = getResourceType(msg.initiator, msg.url)
   return Resource({
     ...msg,

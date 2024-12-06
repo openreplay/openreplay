@@ -56,7 +56,7 @@ const FilterSeriesHeader = observer(
     };
     return (
       <div
-        className={cn('ps-2 pr-4 h-12 flex items-center relative bg-white border-t border-l border-r rounded-t-xl', {
+        className={cn('px-4 h-12 flex items-center relative bg-white border-gray-lighter border-t border-l border-r rounded-t-xl', {
           hidden: props.hidden,
           'rounded-b-xl': !props.expanded,
         })}
@@ -79,14 +79,12 @@ const FilterSeriesHeader = observer(
           <Button
             onClick={props.onRemove}
             size="small"
-            type='text'
             disabled={!props.canDelete}
             icon={<Trash size={14} />}
           />
           <Button
             onClick={props.toggleExpand}
             size="small"
-            type='text'
             icon={
               props.expanded ? (
                 <ChevronUp size={16} />

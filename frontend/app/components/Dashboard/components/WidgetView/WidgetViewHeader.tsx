@@ -19,7 +19,7 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
   return (
     <div
       className={cn(
-        'flex justify-between items-center bg-white rounded-xl p-2 border border-gray-lighter min-h-[54px]'
+        'flex justify-between items-center bg-white rounded px-4 py-2 border border-gray-lighter'
       )}
       onClick={onClick}
     >
