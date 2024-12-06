@@ -168,7 +168,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
 
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
 
         results = {
             "value": sum([r["value"] for r in rows]),
@@ -187,7 +187,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
                   **__get_constraint_values(args)}
 
-        count = ch.execute(query=ch_query, params=params)
+        count = ch.execute(query=ch_query, parameters=params)
 
         count = count[0]["count"]
 
@@ -234,7 +234,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
                   "endTimestamp": endTimestamp,
                   "step_size": step_size,
                   "status_code": status, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
         rows = __nested_array_to_dict_array(rows)
         neutral = __get_domains_errors_neutral(rows)
         rows = __merge_rows_with_neutral(rows, neutral)
@@ -289,9 +289,9 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
                         ORDER BY errors_count DESC
                         LIMIT %(limit)s OFFSET %(limit_s)s;"""
         logger.debug("-----------")
-        logger.debug(ch.format(query=ch_query, params=params))
+        logger.debug(ch.format(query=ch_query, parameters=params))
         logger.debug("-----------")
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
         response = {"count": 0, "total": 0, "values": []}
         if len(rows) > 0:
             response["count"] = rows[0]["count"]
@@ -328,8 +328,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(ch.format(query=ch_query, params=params))
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
         rows = helper.list_to_camel_case(rows)
 
     return __complete_missing_steps(rows=rows, start_time=startTimestamp,
@@ -416,8 +415,7 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(ch.format(query=ch_query, params=params))
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
     return helper.list_to_camel_case(__complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                               end_time=endTimestamp,
                                                               density=density,
@@ -466,7 +464,7 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
 
-    rows = ch.execute(query=ch_query, params=params)
+    rows = ch.execute(query=ch_query, parameters=params)
 
     return rows
 
@@ -490,7 +488,7 @@ def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, 
                     WHERE count>0
                     GROUP BY timestamp
                     ORDER BY timestamp;"""
-    rows = ch.execute(query=ch_query, params=params)
+    rows = ch.execute(query=ch_query, parameters=params)
     rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                     end_time=endTimestamp,
                                     density=density, neutral={"value": 0})
@@ -519,7 +517,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp,
                   "value": value, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
         result = rows[0]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
                               COUNT(1) AS value 
@@ -527,7 +525,8 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                       WHERE {" AND ".join(ch_sub_query_chart)}
                       GROUP BY timestamp
                       ORDER BY timestamp;"""
-        rows = ch.execute(query=ch_query, params={**params, **__get_constraint_values(args)})
+        params = {**params, **__get_constraint_values(args)}
+        rows = ch.execute(query=ch_query, parameters=params)
         rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                         end_time=endTimestamp,
                                         density=density, neutral={"value": 0})
@@ -559,7 +558,7 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
 
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
 
         results = {
             "value": sum([r["value"] for r in rows]),
@@ -578,7 +577,7 @@ def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
                   **__get_constraint_values(args)}
 
-        count = ch.execute(query=ch_query, params=params)
+        count = ch.execute(query=ch_query, parameters=params)
 
         count = count[0]["count"]
 
@@ -606,9 +605,9 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, params=params)
+        rows = ch.execute(query=ch_query, parameters=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(pages.speed_index),0) AS avg
                     FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages
                     WHERE {" AND ".join(ch_sub_query)};"""
-        avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
+        avg = ch.execute(query=ch_query, parameters=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.MILLISECOND}
