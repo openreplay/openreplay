@@ -89,6 +89,7 @@ apiCrons:
 chalice:
   env:
     ch_port: 9000
+    ch_port_http: 8123
     captcha_server: ''
     captcha_key: ''
     async_Token: ''

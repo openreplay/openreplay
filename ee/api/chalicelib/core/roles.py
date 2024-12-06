@@ -182,3 +182,20 @@ def delete(tenant_id, user_id, role_id):
                             {"tenant_id": tenant_id, "role_id": role_id})
         cur.execute(query=query)
     return get_roles(tenant_id=tenant_id)
+
+
+def get_role(tenant_id, role_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT roles.*
+                               FROM public.roles
+                               WHERE tenant_id =%(tenant_id)s
+                                    AND deleted_at IS NULL
+                                    AND not service_role
+                                    AND role_id = %(role_id)s
+                               LIMIT 1;""",
+                            {"tenant_id": tenant_id, "role_id": role_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+        if row is not None:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)

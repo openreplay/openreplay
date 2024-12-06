@@ -29,7 +29,7 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = elasticsearchConfig{}
 		if val, ok := strCfg["url"].(string); ok {

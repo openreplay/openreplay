@@ -211,7 +211,8 @@ class IssueTrackingJiraSchema(IssueTrackingIntegration):
 
 class WebhookSchema(BaseModel):
     webhook_id: Optional[int] = Field(default=None)
-    endpoint: AnyHttpUrl = Field(...)
+    processed_endpoint: AnyHttpUrl = Field(..., alias="endpoint")
+    endpoint: Optional[str] = Field(default=None, doc_hidden=True)
     auth_header: Optional[str] = Field(default=None)
     name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
@@ -920,7 +921,6 @@ class MetricType(str, Enum):
     RETENTION = "retention"
     STICKINESS = "stickiness"
     HEAT_MAP = "heatMap"
-    INSIGHTS = "insights"
 
 
 class MetricOfErrors(str, Enum):
@@ -1196,31 +1196,6 @@ class CardHeatMap(__CardSchema):
         return self
 
 
-class MetricOfInsights(str, Enum):
-    ISSUE_CATEGORIES = "issueCategories"
-
-
-class CardInsights(__CardSchema):
-    metric_type: Literal[MetricType.INSIGHTS]
-    metric_of: MetricOfInsights = Field(default=MetricOfInsights.ISSUE_CATEGORIES)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["view_type"] = MetricOtherViewType.LIST_CHART
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfInsights(self.metric_of)
-        return self
-
-    @model_validator(mode="after")
-    def restrictions(self):
-        raise ValueError(f"metricType:{MetricType.INSIGHTS} not supported yet.")
-
-
 class CardPathAnalysisSeriesSchema(CardSeriesSchema):
     name: Optional[str] = Field(default=None)
     filter: PathAnalysisSchema = Field(...)
@@ -1297,7 +1272,7 @@ __cards_union_base = Union[
     CardErrors,
     CardWebVital, CardHeatMap,
     CardPathAnalysis]
-CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
+CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 
 
 class UpdateCardStatusSchema(BaseModel):

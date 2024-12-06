@@ -13,15 +13,14 @@ from psycopg.rows import dict_row
 from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
-from chalicelib.utils import pg_client
+from chalicelib.utils import pg_client, ch_client
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
-from routers.subs import insights, metrics, v1_api, health, usability_tests, spot
+from routers.subs import insights, metrics, v1_api, health, usability_tests, spot, product_anaytics
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-
 
 
 class ORPYAsyncConnection(AsyncConnection):
@@ -39,6 +38,7 @@ async def lifespan(app: FastAPI):
 
     app.schedule = AsyncIOScheduler()
     await pg_client.init()
+    await ch_client.init()
     app.schedule.start()
 
     for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
@@ -128,3 +128,7 @@ app.include_router(usability_tests.app_apikey)
 app.include_router(spot.public_app)
 app.include_router(spot.app)
 app.include_router(spot.app_apikey)
+
+app.include_router(product_anaytics.public_app)
+app.include_router(product_anaytics.app)
+app.include_router(product_anaytics.app_apikey)

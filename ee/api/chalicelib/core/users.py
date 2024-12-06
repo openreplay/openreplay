@@ -199,6 +199,12 @@ def create_member(tenant_id, user_id, data: schemas.CreateMemberSchema, backgrou
     role_id = data.roleId
     if role_id is None:
         role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
+    else:
+        role = roles.get_role(tenant_id=tenant_id, role_id=role_id)
+        if role is None:
+            return {"errors": ["role not found"]}
+        if role["name"].lower() == "owner" and role["protected"]:
+            return {"errors": ["invalid role"]}
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data.email)
     if user is not None and user["tenantId"] == tenant_id:
@@ -333,7 +339,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
     if editor_id != user_id_to_update:
         admin = get_user_role(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
-            return {"errors": ["unauthorized"]}
+            return {"errors": ["unauthorized, you must have admin privileges"]}
         if admin["admin"] and user["superAdmin"]:
             return {"errors": ["only the owner can edit his own details"]}
     else:
@@ -343,10 +349,10 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
             return {"errors": ["cannot change your own admin privileges"]}
         if changes.roleId:
             if user["superAdmin"] and changes.roleId != user["roleId"]:
-                changes.roleId = None
                 return {"errors": ["owner's role cannot be changed"]}
-
-            if changes.roleId != user["roleId"]:
+            elif user["superAdmin"]:
+                changes.roleId = None
+            elif changes.roleId != user["roleId"]:
                 return {"errors": ["cannot change your own role"]}
 
     if changes.name and len(changes.name) > 0:
@@ -357,6 +363,12 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
 
     if changes.roleId is not None:
         _changes["roleId"] = changes.roleId
+        role = roles.get_role(tenant_id=tenant_id, role_id=changes.roleId)
+        if role is None:
+            return {"errors": ["role not found"]}
+        else:
+            if role["name"].lower() == "owner" and role["protected"]:
+                return {"errors": ["invalid role"]}
 
     if len(_changes.keys()) > 0:
         update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes, output=False)
