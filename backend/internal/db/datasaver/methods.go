@@ -8,10 +8,6 @@ import (
 	"openreplay/backend/pkg/sessions"
 )
 
-func (s *saverImpl) init() {
-	// noop
-}
-
 func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 	// Get session data
 	var (
@@ -28,6 +24,7 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 		log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 		return err
 	}
+	s.sendToFTS(msg, session.ProjectID)
 
 	// Handle message
 	switch m := msg.(type) {

@@ -3,7 +3,10 @@ package datasaver
 import (
 	"encoding/json"
 	"log"
+	"openreplay/backend/pkg/db/clickhouse"
+	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue"
 )
 
 type NetworkRequestFTS struct {
@@ -95,6 +98,13 @@ func WrapGraphQL(m *messages.GraphQL, projID uint32) *GraphQLFTS {
 		OperationName: m.OperationName,
 		Variables:     m.Variables,
 		Response:      m.Response,
+	}
+}
+
+func (s *saverImpl) init() {
+	s.pg.SetClickHouse(s.ch)
+	if s.cfg.UseQuickwit {
+		s.producer = queue.NewProducer(s.cfg.MessageSizeLimit, true)
 	}
 }
 
