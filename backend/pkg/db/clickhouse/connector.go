@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
@@ -61,24 +61,13 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
-func NewConnector(url string) Connector {
-	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/default")
-	userName := getEnv("CH_USERNAME", "default")
-	password := getEnv("CH_PASSWORD", "")
+func NewConnector(cfg common.Clickhouse) Connector {
 	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{url},
+		Addr: []string{cfg.GetTrimmedURL()},
 		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: userName,
-			Password: password,
+			Database: cfg.Database,
+			Username: cfg.LegacyUserName,
+			Password: cfg.LegacyPassword,
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,

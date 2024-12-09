@@ -10,7 +10,6 @@ import (
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
@@ -39,7 +38,7 @@ func main() {
 	pg := postgres.NewConn(log, pgConn)
 	defer pg.Close()
 
-	ch := clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
+	ch := clickhouse.NewConnector(cfg.Clickhouse)
 	if err := ch.Prepare(); err != nil {
 		log.Fatal(ctx, "can't prepare clickhouse: %s", err)
 	}
