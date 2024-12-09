@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"openreplay/backend/pkg/metrics/database"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/metrics/database"
 )
 
 type Bulk interface {

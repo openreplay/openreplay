@@ -30,11 +30,12 @@ type saverImpl struct {
 	tags     tags.Tags
 }
 
-func New(log logger.Logger, cfg *db.Config, pg *postgres.Conn, session sessions.Sessions, tags tags.Tags) Saver {
+func New(log logger.Logger, cfg *db.Config, pg *postgres.Conn, ch clickhouse.Connector, session sessions.Sessions, tags tags.Tags) Saver {
 	s := &saverImpl{
 		log:      log,
 		cfg:      cfg,
 		pg:       pg,
+		ch:       ch,
 		sessions: session,
 		tags:     tags,
 	}
@@ -215,6 +216,8 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		if err = s.pg.InsertTagTrigger(session, m); err != nil {
 			return err
 		}
+	case *PerformanceTrackAggr:
+		return s.pg.InsertWebStatsPerformance(m)
 	}
 	return nil
 }
