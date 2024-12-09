@@ -168,7 +168,7 @@ function GroupedIssue({
       <div
         onClick={onClick}
         className={
-          'h-5 w-5 cursor-pointer rounded-full bg-red text-white font-bold flex items-center justify-center text-sm'
+          'h-5 w-5 cursor-pointer rounded-full bg-red text-white font-bold flex items-center justify-center text-xs'
         }
       >
         {items.length}
