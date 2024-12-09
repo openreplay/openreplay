@@ -189,13 +189,13 @@ Pipfile.lock
 /chalicelib/core/assist.py
 /chalicelib/core/authorizers.py
 /chalicelib/core/autocomplete.py
+/chalicelib/core/autocomplete_exp.py
 /chalicelib/core/canvas.py
 /chalicelib/core/collaboration_base.py
 /chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
 /chalicelib/core/metrics.py
-/chalicelib/core/metrics_ch.py
 /chalicelib/core/custom_metrics.py
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py

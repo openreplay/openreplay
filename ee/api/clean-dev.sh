@@ -11,12 +11,12 @@ rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
 rm -rf ./chalicelib/core/autocomplete.py
+rm -rf ./chalicelib/core/autocomplete_exp.py
 rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/metrics.py
-rm -rf ./chalicelib/core/metrics_ch.py
 rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
