@@ -45,8 +45,6 @@ class JWTAuth(HTTPBearer):
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
-                logger.info("------ jwt_payload ------")
-                logger.info(jwt_payload)
                 auth_exists = jwt_payload is not None and users.auth_exists(user_id=jwt_payload.get("userId", -1),
                                                                             jwt_iat=jwt_payload.get("iat", 100))
                 if jwt_payload is None \
@@ -120,8 +118,7 @@ class JWTAuth(HTTPBearer):
             jwt_payload = None
         else:
             jwt_payload = authorizers.jwt_refresh_authorizer(scheme="Bearer", token=request.cookies["spotRefreshToken"])
-        logger.info("__process_spot_refresh_call")
-        logger.info(jwt_payload)
+
         if jwt_payload is None or jwt_payload.get("jti") is None:
             logger.warning("Null spotRefreshToken's payload, or null JTI.")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
