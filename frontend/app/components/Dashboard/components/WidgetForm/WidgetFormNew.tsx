@@ -68,7 +68,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
   // const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
-  const isSingleSeries = isTable || isFunnel || isClickMap || isInsights || isRetention;
+  const isSingleSeries = isTable || isFunnel || isClickMap || isInsights || isRetention || isPathAnalysis;
 
   // const onAddFilter = (filter: any) => {
   //     metric.series[0].filter.addFilter(filter);
