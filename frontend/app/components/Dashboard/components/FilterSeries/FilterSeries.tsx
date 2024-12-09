@@ -136,9 +136,10 @@ function FilterSeries(props: Props) {
                                     toggleExpand={() => setExpanded(!expanded)}/>
             )}
 
-            {expandable && (
+            {expandable && !expanded && (
                 <Space className="justify-between w-full px-5 py-2 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-                    <div>{!expanded && <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>}</div>
+                    <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>
+                    {/*<div>{!expanded && <FilterCountLabels filters={series.filter.filters} toggleExpand={() => setExpanded(!expanded)}/>}</div>*/}
                     <Button size="small"
                             icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
                 </Space>
@@ -156,13 +157,13 @@ function FilterSeries(props: Props) {
                                 supportsEmpty={supportsEmpty}
                                 onFilterMove={onFilterMove}
                                 excludeFilterKeys={excludeFilterKeys}
-                                // actions={[
-                                //     expandable && (
-                                //         <Button onClick={() => setExpanded(!expanded)}
-                                //                 size="small"
-                                //                 icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
-                                //     )
-                                // ]}
+                                actions={[
+                                    expandable && (
+                                        <Button onClick={() => setExpanded(!expanded)}
+                                                size="small"
+                                                icon={expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}/>
+                                    )
+                                ]}
                             />
                         ) : (
                             <div className="color-gray-medium">{emptyMessage}</div>
