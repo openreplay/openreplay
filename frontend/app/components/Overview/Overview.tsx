@@ -1,8 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
-import NoSessionsMessage from 'Shared/NoSessionsMessage';
-import MainSearchBar from 'Shared/MainSearchBar';
-import SessionSearch from 'Shared/SessionSearch';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
@@ -13,7 +10,6 @@ import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
 import NotesList from 'Shared/SessionsTabOverview/components/Notes/NoteList';
-import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {

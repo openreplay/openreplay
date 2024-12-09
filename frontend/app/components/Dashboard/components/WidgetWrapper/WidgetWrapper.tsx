@@ -7,12 +7,12 @@ import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
-import AlertButton from './AlertButton';
-import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
-import { TIMESERIES } from "App/constants/card";
+import { TIMESERIES } from 'App/constants/card';
 
-const WidgetChart = lazy(() => import('Components/Dashboard/components/WidgetChart'));
+const WidgetChart = lazy(
+  () => import('Components/Dashboard/components/WidgetChart')
+);
 
 interface Props {
   className?: string;
@@ -74,14 +74,20 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   });
 
   const onDelete = async () => {
-    dashboardStore.deleteDashboardWidget(dashboard?.dashboardId!, widget.widgetId);
+    dashboardStore.deleteDashboardWidget(
+      dashboard?.dashboardId!,
+      widget.widgetId
+    );
   };
 
   const onChartClick = () => {
     if (!isSaved || isPredefined) return;
 
     props.history.push(
-      withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
+      withSiteId(
+        dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),
+        siteId
+      )
     );
   };
 
@@ -90,7 +96,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   const addOverlay =
     isTemplate ||
     (!isPredefined &&
-     isSaved &&
+      isSaved &&
       widget.metricOf !== FilterKey.ERRORS &&
       widget.metricOf !== FilterKey.SESSIONS);
 
@@ -106,73 +112,39 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
         userSelect: 'none',
         opacity: isDragging ? 0.5 : 1,
         borderColor:
-          (canDrop && isOver) || active ? '#394EFF' : isPreview ? 'transparent' : '#EEEEEE',
+          (canDrop && isOver) || active
+            ? '#394EFF'
+            : isPreview
+            ? 'transparent'
+            : '#EEEEEE',
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => {}}
       id={`widget-${widget.widgetId}`}
     >
-      {!isTemplate && isSaved && isPredefined && (
-        <div
-          className={cn(
-            stl.drillDownMessage,
-            'disabled text-gray text-sm invisible group-hover:visible'
-          )}
-        >
-          {'Cannot drill down system provided metrics'}
-        </div>
+      {addOverlay && (
+        <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />
       )}
-
-      {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
-      <div
-        className={cn('p-3 pb-4 flex items-center justify-between', {
-          'cursor-move': !isTemplate && isSaved,
-        })}
-      >
-        {!props.hideName ? (
+      {!props.hideName ? (
+        <div
+          className={cn('p-3 pb-4 flex items-center justify-between', {
+            'cursor-move': !isTemplate && isSaved,
+          })}
+        >
           <div className="capitalize-first w-full font-medium">
             <TextEllipsis text={widget.name} />
           </div>
-        ) : null}
-        {isSaved && (
-          <div className="flex items-center" id="no-print">
-            {!isPredefined && isTimeSeries && !isGridView && (
-              <>
-                <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
-                <div className="mx-2" />
-              </>
-            )}
-
-            {!isTemplate && !isGridView && (
-              <ItemMenu
-                items={[
-                  {
-                    text:
-                      widget.metricType === 'predefined'
-                        ? 'Cannot edit system generated metrics'
-                        : 'Edit',
-                    onClick: onChartClick,
-                    disabled: widget.metricType === 'predefined',
-                  },
-                  {
-                    text: 'Hide',
-                    onClick: onDelete,
-                  },
-                ]}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-        <div className="px-4" onClick={onChartClick}>
-          <WidgetChart
-            isPreview={isPreview}
-            metric={widget}
-            isTemplate={isTemplate}
-            isSaved={isSaved}
-          />
         </div>
+      ) : null}
+
+      <div className="px-4" onClick={onChartClick}>
+        <WidgetChart
+          isPreview={isPreview}
+          metric={widget}
+          isTemplate={isTemplate}
+          isSaved={isSaved}
+        />
+      </div>
     </div>
   );
 }

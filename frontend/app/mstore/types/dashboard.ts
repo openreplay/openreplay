@@ -14,6 +14,7 @@ export default class Dashboard {
     widgets: Widget[] = []
     metrics: any[] = []
     isValid: boolean = false
+    id: string = ""
     currentWidget: Widget = new Widget()
     config: any = {}
     createdAt: number = new Date().getTime()

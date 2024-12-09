@@ -7,7 +7,7 @@ import { KEYS } from 'Types/filter/customFilter';
 import { capitalize } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import AssistSearchField from 'App/components/Assist/AssistSearchField';
+import AssistSearchField from 'App/components/Assist/AssistSearchActions';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
@@ -70,7 +70,7 @@ function AssistSessionsModal(props: ConnectProps) {
               icon="arrow-repeat"
             />
           </Tooltip>
-          <AssistSearchField />
+          <AssistSearchActions />
         </div>
         <div className="flex self-end items-center gap-2" w-full>
           <span className="color-gray-medium">Sort By</span>

@@ -550,3 +550,32 @@ const decodeJwt = (jwt: string): any => {
   const base64 = base64Url.replace("-", "+").replace("_", "/");
   return JSON.parse(atob(base64));
 };
+
+function saveAsFile(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
+  console.log(tableColumns, tableData)
+  const headers = tableColumns.map(col => col.title).join(',');
+  const rows = tableData.map(row => {
+    return tableColumns
+      .map(col => {
+        const value = col.dataIndex ? row[col.dataIndex] : '';
+        return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+      })
+      .join(',');
+  });
+
+  const csvContent = [headers, ...rows].join('\n');
+  console.log(csvContent)
+  // const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  // saveAsFile(blob, filename);
+}

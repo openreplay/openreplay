@@ -16,11 +16,11 @@ function SessionHeader() {
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
   const title = useMemo(() => {
-    if (activeTab.type === 'bookmarks') {
+    if (activeTab && activeTab.type === 'bookmarks') {
       return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
-  }, [activeTab.type, isEnterprise]);
+  }, [activeTab?.type, isEnterprise]);
 
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();

@@ -22,7 +22,10 @@ export default class DashboardStore {
   widgets: Widget[] = [];
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
+  comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
+  selectedDensity: number = 7 // depends on default drilldown, 7 points here!!!;
+  comparisonPeriod: Record<string, any> | null = null
   startTimestamp: number = 0;
   endTimestamp: number = 0;
   pendingRequests: number = 0;
@@ -53,6 +56,10 @@ export default class DashboardStore {
     makeAutoObservable(this);
 
     this.resetDrillDownFilter();
+  }
+
+  setDensity = (density: any) => {
+    this.selectedDensity = parseInt(density, 10);
   }
 
   get sortedDashboards() {
@@ -408,6 +415,24 @@ export default class DashboardStore {
     });
   }
 
+  setComparisonPeriod(period: any) {
+    if (!period) {
+      return this.comparisonPeriod = null
+    }
+    this.comparisonPeriod = Period({
+      start: period.start,
+      end: period.end,
+      rangeName: period.rangeName,
+    });
+  }
+
+  cloneCompFilter() {
+    const filterData = this.drillDownFilter.toData()
+    this.comparisonFilter = new Filter().fromData(filterData);
+
+    return this.comparisonFilter;
+  }
+
   toggleAlertModal(val: boolean) {
     this.showAlertModal = val;
   }
@@ -424,12 +449,13 @@ export default class DashboardStore {
     metric: Widget,
     data: any,
     isSaved: boolean = false,
-    period: Record<string, any>
+    period: Record<string, any>,
+    isComparison?: boolean
   ): Promise<any> {
     period = period.toTimestamps();
     const params = { ...period, ...data, key: metric.predefinedKey };
 
-    if (metric.page && metric.limit) {
+    if (!isComparison && metric.page && metric.limit) {
       params['page'] = metric.page;
       params['limit'] = metric.limit;
     }
@@ -437,13 +463,13 @@ export default class DashboardStore {
     return new Promise(async (resolve, reject) => {
       this.upPendingRequests()
 
-      if (metric.metricType === 'table' && metric.metricOf === 'jsException') {
+      if (!isComparison && metric.metricType === 'table' && metric.metricOf === 'jsException') {
         params.limit = 5;
       }
 
       try {
         const data = await metricService.getMetricChartData(metric, params, isSaved);
-        resolve(metric.setData(data, period));
+        resolve(metric.setData(data, period, isComparison));
       } catch (error) {
         reject(error);
       } finally {
