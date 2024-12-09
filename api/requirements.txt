@@ -1,4 +1,3 @@
-# Keep this version to not have conflicts between requests and boto3
 urllib3==2.2.3
 requests==2.32.3
 boto3==1.35.76

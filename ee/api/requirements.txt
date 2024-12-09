@@ -1,5 +1,4 @@
-# Keep this version to not have conflicts between requests and boto3
-urllib3==1.26.16
+urllib3==2.2.3
 requests==2.32.3
 boto3==1.35.76
 pyjwt==2.10.1
@@ -20,12 +19,13 @@ python-decouple==3.8
 pydantic[email]==2.10.3
 apscheduler==3.11.0
 
+redis==5.2.1
+
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
 python3-saml==1.16.0
 --no-binary=lxml
 python-multipart==0.0.17
 
-redis==5.2.0
 #confluent-kafka==2.1.0
-azure-storage-blob==12.23.1
+azure-storage-blob==12.24.0
