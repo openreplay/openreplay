@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 from functools import wraps
-from queue import Queue
+from queue import Queue, Empty
 
 import clickhouse_connect
 from clickhouse_connect.driver.query import QueryContext
@@ -34,6 +34,7 @@ if config("CH_COMPRESSION", cast=bool, default=True):
 def transform_result(original_function):
     @wraps(original_function)
     def wrapper(*args, **kwargs):
+        logger.info("Executing query on CH")
         result = original_function(*args, **kwargs)
         if isinstance(result, clickhouse_connect.driver.query.QueryResult):
             column_names = result.column_names

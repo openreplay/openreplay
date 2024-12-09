@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 sqlparse = "==0.5.2"
-urllib3 = "==1.26.16"
+urllib3 = "==2.2.3"
 requests = "==2.32.3"
 boto3 = "==1.35.76"
 pyjwt = "==2.10.1"
@@ -21,7 +21,7 @@ uvicorn = {extras = ["standard"], version = "==0.32.1"}
 python-decouple = "==3.8"
 pydantic = {extras = ["email"], version = "==2.10.3"}
 apscheduler = "==3.11.0"
-redis = "==5.2.0"
+redis = "==5.2.1"
 
 [dev-packages]
 
