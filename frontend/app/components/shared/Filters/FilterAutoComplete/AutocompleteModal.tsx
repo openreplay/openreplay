@@ -136,6 +136,7 @@ export function AutoCompleteContainer(props: Props) {
     props.onApplyValues(values);
     setShowValueModal(false);
   };
+
   return (
     <div
       className={

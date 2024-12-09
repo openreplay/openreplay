@@ -897,7 +897,9 @@ export const clickmapFilter = {
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
-    filter.value = filter.value ? [filter.value] : [''];
+    filter.value = filter.value
+      ? Array.isArray(filter.value) ? filter.value : [filter.value]
+      : [''];
     acc[filter.key] = filter;
     return acc;
   }, {});
