@@ -57,10 +57,10 @@ const PerformanceGraph = React.memo((props: Props) => {
       {disabled ? (
         <div
           className={
-            'absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center'
+            'absolute top-0 bottom-0 left-0 right-0 flex justify-center'
           }
         >
-          <div className={'text-disabled-text decoration-dotted'}>Disabled for all tabs</div>
+          <div className={'text-disabled-text decoration-dotted'}>Disabled for "All Tabs" View</div>
         </div>
       ) : null}
       <ResponsiveContainer height={35}>
