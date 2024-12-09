@@ -12,20 +12,6 @@ from chalicelib.utils.TimeUTC import TimeUTC
 logger = logging.getLogger(__name__)
 
 
-# TODO: refactor this to split
-#  timeseries /
-#  table of errors / table of issues / table of browsers / table of devices / table of countries / table of URLs
-# remove "table of" calls from this function
-def __try_live(project_id, data: schemas.CardSchema):
-    results = []
-    for i, s in enumerate(data.series):
-        results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                               view_type=data.view_type, metric_type=data.metric_type,
-                                               metric_of=data.metric_of, metric_value=data.metric_value))
-
-    return results
-
-
 def __get_table_of_series(project_id, data: schemas.CardSchema):
     results = []
     for i, s in enumerate(data.series):
@@ -43,9 +29,6 @@ def __get_funnel_chart(project: schemas.ProjectContext, data: schemas.CardFunnel
             "totalDropDueToIssues": 0
         }
 
-    # return funnels.get_top_insights_on_the_fly_widget(project_id=project_id,
-    #                                                   data=data.series[0].filter,
-    #                                                   metric_format=data.metric_format)
     return funnels.get_simple_funnel(project=project,
                                      data=data.series[0].filter,
                                      metric_format=data.metric_format)
@@ -93,7 +76,12 @@ def __get_path_analysis_chart(project: schemas.ProjectContext, user_id: int, dat
 
 
 def __get_timeseries_chart(project: schemas.ProjectContext, data: schemas.CardTimeSeries, user_id: int = None):
-    series_charts = __try_live(project_id=project.project_id, data=data)
+    series_charts = []
+    for i, s in enumerate(data.series):
+        series_charts.append(sessions.search2_series(data=s.filter, project_id=project.project_id, density=data.density,
+                                                     view_type=data.view_type, metric_type=data.metric_type,
+                                                     metric_of=data.metric_of, metric_value=data.metric_value))
+
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
@@ -179,12 +167,6 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
 
 
 def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    # No need for this because UI is sending the full payload
-    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if card is None:
-    #    return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**card)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
     if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
     results = []
@@ -553,17 +535,7 @@ def change_state(project_id, metric_id, user_id, status):
 
 
 def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
-                                 data: schemas.CardSessionsSchema
-                                 # , range_value=None, start_date=None, end_date=None
-                                 ):
-    # No need for this because UI is sending the full payload
-    # card: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    # if card is None:
-    #     return None
-    # metric: schemas.CardSchema = schemas.CardSchema(**card)
-    # metric: schemas.CardSchema = __merge_metric_with_data(metric=metric, data=data)
-    # if metric is None:
-    #     return None
+                                 data: schemas.CardSessionsSchema):
     if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
         return None
     for s in data.series:
