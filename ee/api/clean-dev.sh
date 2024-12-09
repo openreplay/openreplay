@@ -11,6 +11,7 @@ rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
 rm -rf ./chalicelib/core/autocomplete.py
+rm -rf ./chalicelib/core/autocomplete_exp.py
 rm -rf ./chalicelib/core/collaboration_base.py
 rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
