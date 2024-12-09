@@ -1,5 +1,4 @@
-# Keep this version to not have conflicts between requests and boto3
-urllib3==1.26.16
+urllib3==2.2.3
 requests==2.32.3
 boto3==1.35.76
 pyjwt==2.10.1
@@ -19,4 +18,4 @@ python-decouple==3.8
 pydantic[email]==2.10.3
 apscheduler==3.11.0
 
-azure-storage-blob==12.23.1
+azure-storage-blob==12.24.0

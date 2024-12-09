@@ -99,7 +99,7 @@ export default class MessageManager {
     closedTabs: [],
     sessionStart: 0,
     tabNames: {},
-  };
+};
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
@@ -179,6 +179,7 @@ export default class MessageManager {
       this.activityManager.end();
       this.state.update({ skipIntervals: this.activityManager.list });
     }
+
     Object.values(this.tabs).forEach((tab) => tab.onFileReadSuccess?.());
   };
 
@@ -317,6 +318,7 @@ export default class MessageManager {
     if (msg.tp === 9999) return;
     if (!this.tabs[msg.tabId]) {
       this.tabsAmount++;
+      this.state.update({ tabStates: { ...this.state.get().tabStates, [msg.tabId]: TabSessionManager.INITIAL_STATE } });
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
         this.state,

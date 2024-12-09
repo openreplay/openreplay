@@ -13,9 +13,10 @@ interface Props {
   isGraph?: boolean;
   zIndex?: number;
   noMargin?: boolean;
+  disabled?: boolean;
 }
 const EventRow = React.memo((props: Props) => {
-  const { title, className, list = [], endTime = 0, isGraph = false, message = '' } = props;
+  const { title, className, list = [], endTime = 0, isGraph = false, message = '', disabled } = props;
   const scale = 100 / endTime;
   const _list =
     isGraph ? [] :
@@ -82,7 +83,7 @@ const EventRow = React.memo((props: Props) => {
       }
 
       return groupedItems;
-    }, [list]);
+    }, [list.length]);
 
   return (
     <div
@@ -105,7 +106,7 @@ const EventRow = React.memo((props: Props) => {
       </div>
       <div className="relative w-full" style={{ zIndex: props.zIndex ? props.zIndex : undefined }}>
         {isGraph ? (
-          <PerformanceGraph list={list} />
+          <PerformanceGraph disabled={disabled} list={list} />
         ) : _list.length > 0 ? (
           _list.map((item: { items: any[], left: number, isGrouped: boolean }, index: number) => {
             const left = item.left

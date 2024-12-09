@@ -23,6 +23,7 @@ import stl from './performance.module.css';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import { useStore } from 'App/mstore'
+import { Segmented } from 'antd'
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -459,13 +460,16 @@ function Performance() {
       <BottomBlock.Header>
         <div className="flex items-center w-full">
           <div className="font-semibold color-gray-medium mr-auto">Performance</div>
-          <InfoLine>
-            <InfoLine.Point
-              label="Device Heap Size"
-              value={formatBytes(userDeviceHeapSize)}
-              display={true}
-            />
-          </InfoLine>
+          <div className={'flex items-center gap-2'}>
+            <Segmented options={[{ label: 'Current Tab', value: 'all' }]} />
+            <InfoLine>
+              <InfoLine.Point
+                label="Device Heap Size"
+                value={formatBytes(userDeviceHeapSize)}
+                display={true}
+              />
+            </InfoLine>
+          </div>
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>

@@ -28,6 +28,7 @@ import {
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
+import { MobEventsList, WebEventsList } from "../../../Session_/Player/Controls/EventsList";
 import useShortcuts from '../ReplayPlayer/useShortcuts';
 
 export const SKIP_INTERVALS = {
