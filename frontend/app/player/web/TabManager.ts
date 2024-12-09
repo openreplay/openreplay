@@ -163,15 +163,7 @@ export default class TabSessionManager {
    * Because we use main state (from messageManager), we have to update it this way
    * */
   updateLocalState(state: Partial<TabState>) {
-    this.state.update({
-      tabStates: {
-        ...this.state.get().tabStates,
-        [this.id]: {
-          ...this.state.get().tabStates[this.id],
-          ...state,
-        },
-      },
-    });
+    this.state.updateTabStates(this.id, state);
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
@@ -414,8 +406,9 @@ export default class TabSessionManager {
     }
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    Object.keys(stateToUpdate).length > 0 &&
+    if (Object.keys(stateToUpdate).length > 0) {
       this.updateLocalState(stateToUpdate);
+    }
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);

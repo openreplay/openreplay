@@ -10,6 +10,7 @@ import { typeList } from 'Types/session/stackEvent';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
 
 import StackEventModal from '../StackEventModal';
+import { Segmented } from 'antd'
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import { VList, VListHandle } from 'virtua';
@@ -175,15 +176,18 @@ const EventsPanel = observer(({
             border={false}
           />
         </div>
-        <Input
-          className="input-small h-8"
-          placeholder="Filter by keyword"
-          icon="search"
-          name="filter"
-          height={28}
-          onChange={onFilterChange}
-          value={filter}
-        />
+        <div className={'flex items-center gap-2'}>
+          <Segmented options={[{ label: 'All Tabs', value: 'all' }]} />
+          <Input
+            className="input-small h-8"
+            placeholder="Filter by keyword"
+            icon="search"
+            name="filter"
+            height={28}
+            onChange={onFilterChange}
+            value={filter}
+          />
+        </div>
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent

@@ -13,11 +13,7 @@ import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
 
-interface IProps {
-  isMobile?: boolean;
-}
-
-function Timeline(props: IProps) {
+function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
   const [wasPlaying, setWasPlaying] = useState(false);
   const [maxWidth, setMaxWidth] = useState(0);
@@ -126,6 +122,7 @@ function Timeline(props: IProps) {
     return Math.max(Math.round(p * targetTime), 0);
   };
 
+  console.log(devtoolsLoading , domLoading, !ready)
   return (
     <div
       className="flex items-center absolute w-full"
@@ -158,7 +155,7 @@ function Timeline(props: IProps) {
           {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
         </div>
 
-        {props.isMobile ? <MobEventsList scale={scale} /> : <WebEventsList scale={scale} />}
+        {isMobile ? <MobEventsList /> : <WebEventsList />}
         <NotesList scale={scale} />
         <SkipIntervalsList scale={scale} />
 

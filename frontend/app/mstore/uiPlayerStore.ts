@@ -66,9 +66,14 @@ export default class UiPlayerStore {
     endTs: 0,
   }
   zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
+  dataSource: 'all' | 'current' = 'all'
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  changeDataSource = (source: 'all' | 'current') => {
+    this.dataSource = source;
   }
 
   toggleFullscreen = (val?: boolean) => {

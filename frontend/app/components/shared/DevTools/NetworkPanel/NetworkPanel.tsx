@@ -1,7 +1,7 @@
 import { ResourceType, Timed } from 'Player';
 import MobilePlayer from 'Player/mobile/IOSPlayer';
 import WebPlayer from 'Player/web/WebPlayer';
-import { Duration } from 'luxon';
+import TabTag from "../TabTag";
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
 
@@ -20,10 +20,10 @@ import { WsChannel } from "App/player/web/messages";
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
+import TabSelector from "../TabSelector";
 import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import WSModal from './WSModal';
 import WSPanel from './WSPanel';
 
 const INDEX_KEY = 'network';
@@ -57,12 +57,6 @@ export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
 const DOM_LOADED_TIME_COLOR = 'teal';
 const LOAD_TIME_COLOR = 'red';
 
-function compare(a: any, b: any, key: string) {
-  if (a[key] > b[key]) return 1;
-  if (a[key] < b[key]) return -1;
-  return 0;
-}
-
 export function renderType(r: any) {
   return (
     <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
@@ -76,14 +70,6 @@ export function renderName(r: any) {
     <Tooltip style={{ width: '100%' }} title={<div>{r.url}</div>}>
       <div>{r.name}</div>
     </Tooltip>
-  );
-}
-
-export function renderStart(r: any) {
-  return (
-    <div className="flex justify-between items-center grow-0 w-full">
-      <span>{Duration.fromMillis(r.time).toFormat('mm:ss.SSS')}</span>
-    </div>
   );
 }
 
@@ -125,13 +111,10 @@ export function renderDuration(r: any) {
   if (!r.isRed && !r.isYellow) return text;
 
   let tooltipText;
-  let className = 'w-full h-full flex items-center ';
   if (r.isYellow) {
     tooltipText = 'Slower than average';
-    className += 'warn color-orange';
   } else {
     tooltipText = 'Much slower than average';
-    className += 'error color-red';
   }
 
   return (
@@ -184,7 +167,8 @@ function NetworkPanelCont({
   panelHeight: number;
 }) {
   const { player, store } = React.useContext(PlayerContext);
-  const { sessionStore } = useStore();
+  const { sessionStore, uiPlayerStore } = useStore();
+
   const startedAt = sessionStore.current.startedAt;
   const {
     domContentLoadedTime,
@@ -193,6 +177,10 @@ function NetworkPanelCont({
     tabStates,
     currentTab,
   } = store.get();
+  const tabsArr = Object.keys(tabStates);
+  const tabValues = Object.values(tabStates);
+  const dataSource = uiPlayerStore.dataSource;
+  const showSingleTab = dataSource === 'current';
   const {
     fetchList = [],
     resourceList = [],
@@ -200,7 +188,20 @@ function NetworkPanelCont({
     resourceListNow = [],
     websocketList = [],
     websocketListNow = [],
-  } = tabStates[currentTab];
+  } = React.useMemo(() => {
+    if (showSingleTab) {
+      return tabStates[currentTab] ?? {};
+    } else {
+      const fetchList = tabValues.flatMap((tab) => tab.fetchList);
+      const resourceList = tabValues.flatMap((tab) => tab.resourceList);
+      const fetchListNow = tabValues.flatMap((tab) => tab.fetchListNow).filter(Boolean);
+      const resourceListNow = tabValues.flatMap((tab) => tab.resourceListNow).filter(Boolean);
+      const websocketList = tabValues.flatMap((tab) => tab.websocketList);
+      const websocketListNow = tabValues.flatMap((tab) => tab.websocketListNow).filter(Boolean);
+      return { fetchList, resourceList, fetchListNow, resourceListNow, websocketList, websocketListNow };
+    }
+  }, [currentTab, tabStates, dataSource, tabValues]);
+  const getTabNum = (tab: string) => (tabsArr.findIndex((t) => t === tab) + 1);
 
   return (
     <NetworkPanelComp
@@ -216,6 +217,8 @@ function NetworkPanelCont({
       startedAt={startedAt}
       websocketList={websocketList as WSMessage[]}
       websocketListNow={websocketListNow as WSMessage[]}
+      getTabNum={getTabNum}
+      showSingleTab={showSingleTab}
     />
   );
 }
@@ -301,6 +304,8 @@ interface Props {
   onClose?: () => void;
   activeOutsideIndex?: number;
   isSpot?: boolean;
+  getTabNum?: (tab: string) => number;
+  showSingleTab?: boolean;
 }
 
 export const NetworkPanelComp = observer(
@@ -323,6 +328,8 @@ export const NetworkPanelComp = observer(
     onClose,
     activeOutsideIndex,
     isSpot,
+    getTabNum,
+    showSingleTab,
   }: Props) => {
     const [selectedWsChannel, setSelectedWsChannel] = React.useState<WsChannel[] | null>(null)
     const { showModal } = useModal();
@@ -507,6 +514,55 @@ export const NetworkPanelComp = observer(
       stopAutoscroll();
     };
 
+    const tableCols = React.useMemo(() => {
+      const cols: any[] = [
+        {
+          label: 'Status',
+          dataKey: 'status',
+          width: 90,
+          render: renderStatus,
+        },
+        {
+          label: 'Type',
+          dataKey: 'type',
+          width: 90,
+          render: renderType,
+        },
+        {
+          label: 'Method',
+          width: 80,
+          dataKey: 'method',
+        },
+        {
+          label: 'Name',
+          width: 240,
+          dataKey: 'name',
+          render: renderName,
+        },
+        {
+          label: 'Size',
+          width: 80,
+          dataKey: 'decodedBodySize',
+          render: renderSize,
+          hidden: activeTab === XHR,
+        },
+        {
+          label: 'Duration',
+          width: 80,
+          dataKey: 'duration',
+          render: renderDuration,
+        },
+      ]
+      if (!showSingleTab) {
+      cols.unshift({
+        label: 'Source',
+        width: 64,
+        render: (r: Record<string, any>) => <div>Tab {getTabNum?.(r.tabId) ?? 0}</div>,
+      })
+      }
+      return cols
+    }, [showSingleTab])
+
     return (
       <BottomBlock
         style={{ height: '100%' }}
@@ -529,16 +585,19 @@ export const NetworkPanelComp = observer(
               />
             )}
           </div>
-          <Input
-            className="input-small"
-            placeholder="Filter by name, type, method or value"
-            icon="search"
-            name="filter"
-            onChange={onFilterChange}
-            height={28}
-            width={280}
-            value={filter}
-          />
+          <div className={'flex items-center gap-2'}>
+            <TabSelector />
+            <Input
+              className="input-small"
+              placeholder="Filter by name, type, method or value"
+              icon="search"
+              name="filter"
+              onChange={onFilterChange}
+              height={28}
+              width={280}
+              value={filter}
+            />
+          </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
           <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
@@ -613,49 +672,7 @@ export const NetworkPanelComp = observer(
               }}
               activeIndex={activeIndex}
             >
-              {[
-                // {
-                //   label: 'Start',
-                //   width: 120,
-                //   render: renderStart,
-                // },
-                {
-                  label: 'Status',
-                  dataKey: 'status',
-                  width: 90,
-                  render: renderStatus,
-                },
-                {
-                  label: 'Type',
-                  dataKey: 'type',
-                  width: 90,
-                  render: renderType,
-                },
-                {
-                  label: 'Method',
-                  width: 80,
-                  dataKey: 'method',
-                },
-                {
-                  label: 'Name',
-                  width: 240,
-                  dataKey: 'name',
-                  render: renderName,
-                },
-                {
-                  label: 'Size',
-                  width: 80,
-                  dataKey: 'decodedBodySize',
-                  render: renderSize,
-                  hidden: activeTab === XHR,
-                },
-                {
-                  label: 'Duration',
-                  width: 80,
-                  dataKey: 'duration',
-                  render: renderDuration,
-                },
-              ]}
+              {tableCols}
             </TimeTable>
             {selectedWsChannel ? (
               <WSPanel socketMsgList={selectedWsChannel} onClose={() => setSelectedWsChannel(null)} />

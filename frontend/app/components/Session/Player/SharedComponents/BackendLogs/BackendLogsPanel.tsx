@@ -91,6 +91,7 @@ function BackendLogsPanel() {
           ) : null}
 
           <div className={'ml-auto'} />
+          <Segmented options={[{ label: 'All Tabs', value: 'all' }]} />
           <Input
             className="input-small h-8"
             placeholder="Filter by keyword"
