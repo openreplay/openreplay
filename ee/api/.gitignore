@@ -195,7 +195,6 @@ Pipfile.lock
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
 /chalicelib/core/metrics.py
-/chalicelib/core/metrics_ch.py
 /chalicelib/core/custom_metrics.py
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py

@@ -16,7 +16,6 @@ rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/metrics.py
-rm -rf ./chalicelib/core/metrics_ch.py
 rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
