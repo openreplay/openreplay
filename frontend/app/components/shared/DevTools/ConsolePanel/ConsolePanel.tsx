@@ -130,22 +130,17 @@ function ConsolePanel({
   }, [currentTab, tabStates, dataSource, tabValues, isLive])
   const getTabNum = (tab: string) => (tabsArr.findIndex((t) => t === tab) + 1);
 
-  const list = isLive
-    ? (useMemo(
-        () => logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time),
-        [logListNow.length, exceptionsListNow.length]
-      ) as ILog[])
-    : (useMemo(
-        () => logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-        [logList.length, exceptionsList.length]
-      ).filter((l) =>
-        zoomEnabled ? l.time >= zoomStartTs && l.time <= zoomEndTs : true
-      ) as ILog[]);
+  const list = useMemo(() => {
+    if (isLive) {
+      return logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time)
+    } else {
+      const logs = logList.concat(exceptionsList).sort((a, b) => a.time - b.time)
+      return zoomEnabled ? logs.filter(l => l.time >= zoomStartTs && l.time <= zoomEndTs) : logs
+    }
+  }, [isLive, logList.length, exceptionsList.length, logListNow.length, exceptionsListNow.length, zoomEnabled, zoomStartTs, zoomEndTs])
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
   filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
-  React.useEffect(() => {
-  }, [activeTab, filter]);
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) =>
     devTools.update(INDEX_KEY, { filter: value });
