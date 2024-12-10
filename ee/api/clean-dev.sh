@@ -108,4 +108,5 @@ rm -rf ./chalicelib/core/alerts/__init__.py
 rm -rf ./chalicelib/core/alerts/alerts.py
 rm -rf ./chalicelib/core/alerts/alerts_processor.py
 rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
+rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/sessions_ch.py

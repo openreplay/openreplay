@@ -289,4 +289,5 @@ Pipfile.lock
 /chalicelib/core/alerts/alerts.py
 /chalicelib/core/alerts/alerts_processor.py
 /chalicelib/core/alerts/alerts_processor_ch.py
+/chalicelib/core/alerts/alerts_listener.py
 /chalicelib/core/sessions_ch.py

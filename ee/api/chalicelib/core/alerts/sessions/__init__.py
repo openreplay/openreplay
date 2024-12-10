@@ -1,5 +1,6 @@
 from decouple import config
 
+TENANT_ID = "tenant_id"
 if config("EXP_ALERTS", cast=bool, default=False):
     if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
         from chalicelib.core.sessions import *
