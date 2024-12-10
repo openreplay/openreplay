@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Loader, Icon } from 'UI';
+import { Loader } from 'UI';
+import {Button, Tooltip} from 'antd';
+import {CloseOutlined} from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { compareJsonObjects } from 'App/utils';
 
-import Select from 'Shared/Select';
+import {Select, Form} from 'antd';
 
 const JUMP_OFFSET = 1000;
 interface Props {
@@ -58,34 +60,29 @@ function PageInsightsPanel({ setActiveTab }: Props) {
     };
 
     return (
-        <div className="p-4 bg-white">
-            <div className="pb-3 flex items-center" style={{ maxWidth: '241px', paddingTop: '5px' }}>
-                <div className="flex items-center">
-                    <span className="mr-1 text-xl">Clicks</span>
-                </div>
-                <div
-                    onClick={() => {
-                        setActiveTab('');
-                    }}
-                    className="ml-auto flex items-center justify-center bg-white cursor-pointer"
-                >
-                    <Icon name="close" size="18" />
-                </div>
-            </div>
-            <div className="mb-4 flex items-center">
-                <div className="mr-2 flex-shrink-0">In Page</div>
-                <Select
-                    isSearchable={true}
-                    right
-                    placeholder="change"
-                    options={urlOptions}
-                    name="url"
-                    defaultValue={defaultValue}
-                    onChange={onPageSelect}
-                    id="change-dropdown"
-                    className="w-full"
-                    style={{ width: '100%' }}
+        <div className="p-2 py-4 bg-white">
+            <div className="flex items-center gap-2 mb-3 overflow-hidden">
+                <div className="flex-shrink-0 font-medium">Page</div>
+                <Form.Item name="url" className='mb-0 w-[176px]'>
+                    <Select
+                        showSearch
+                        placeholder="change"
+                        options={urlOptions}
+                        defaultValue={defaultValue}
+                        onChange={onPageSelect}
+                        id="change-dropdown"
+                        className="w-full rounded-lg max-w-[270px]"
+                        dropdownStyle={{ }}
+                    />
+                </Form.Item>
+                <Tooltip title="Close Panel" placement='bottomRight'>
+                <Button
+                    className="ml-2"
+                    type='text'
+                    onClick={() => { setActiveTab(''); }}
+                    icon={<CloseOutlined />}
                 />
+                </Tooltip>
             </div>
             <Loader loading={loading}>
                 <SelectorsList />

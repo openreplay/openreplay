@@ -236,6 +236,7 @@ export default class MessageLoader {
     try {
       await this.loadMobs();
     } catch (sessionLoadError) {
+      console.info('!', sessionLoadError);
       try {
         await this.loadEFSMobs();
       } catch (unprocessedLoadError) {

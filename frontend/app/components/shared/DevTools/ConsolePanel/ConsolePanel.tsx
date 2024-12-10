@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
-import { Tabs, Input, Icon, NoContent } from 'UI';
+import { Tabs, Icon, NoContent } from 'UI';
+import {Input} from 'antd';
+import {SearchOutlined, InfoCircleOutlined} from '@ant-design/icons';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -9,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
+import TabSelector from "../TabSelector";
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import { VList, VListHandle } from "virtua";
@@ -93,6 +96,7 @@ function ConsolePanel({
     sessionStore: { devTools },
     uiPlayerStore,
   } = useStore();
+
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -109,12 +113,22 @@ function ConsolePanel({
   const jump = (t: number) => player.jump(t);
 
   const { currentTab, tabStates } = store.get();
-  const {
-    logList = [],
-    exceptionsList = [],
-    logListNow = [],
-    exceptionsListNow = [],
-  } = tabStates[currentTab] ?? {};
+  const tabsArr = Object.keys(tabStates);
+  const tabValues = Object.values(tabStates);
+  const dataSource = uiPlayerStore.dataSource;
+  const showSingleTab = dataSource === 'current';
+  const { logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [] } = React.useMemo(() => {
+    if (showSingleTab) {
+      return tabStates[currentTab] ?? {};
+    } else {
+      const logList = tabValues.flatMap(tab => tab.logList);
+      const exceptionsList = tabValues.flatMap(tab => tab.exceptionsList);
+      const logListNow = isLive ? tabValues.flatMap(tab => tab.logListNow) : [];
+      const exceptionsListNow = isLive ? tabValues.flatMap(tab => tab.exceptionsListNow) : [];
+      return { logList, exceptionsList, logListNow, exceptionsListNow }
+    }
+  }, [currentTab, tabStates, dataSource, tabValues, isLive])
+  const getTabNum = (tab: string) => (tabsArr.findIndex((t) => t === tab) + 1);
 
   const list = isLive
     ? (useMemo(
@@ -180,23 +194,26 @@ function ConsolePanel({
           <span className="font-semibold color-gray-medium mr-4">Console</span>
           <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={false} />
         </div>
-        <Input
-          className="input-small h-8"
-          placeholder="Filter by keyword"
-          icon="search"
-          name="filter"
-          height={28}
-          onChange={onFilterChange}
-          value={filter}
-        />
+        <div className={'flex items-center gap-2'}>
+          <TabSelector />
+          <Input
+            className="rounded-lg"
+            placeholder="Filter by keyword"
+            name="filter"
+            onChange={onFilterChange}
+            value={filter}
+            size='small'
+            prefix={<SearchOutlined className='text-neutral-400' />}
+          />
+        </div>
         {/* @ts-ignore */}
       </BottomBlock.Header>
       {/* @ts-ignore */}
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="capitalize flex items-center mt-16 gap-2">
+              <InfoCircleOutlined size={18} />
               No Data
             </div>
           }
@@ -211,6 +228,8 @@ function ConsolePanel({
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
+                showSingleTab={showSingleTab}
+                getTabNum={getTabNum}
               />
             ))}
           </VList>

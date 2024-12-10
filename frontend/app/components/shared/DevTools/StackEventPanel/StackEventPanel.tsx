@@ -1,7 +1,9 @@
 import { Timed } from 'Player';
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Tabs, Input, NoContent, Icon } from 'UI';
+import { Tabs, NoContent, Icon } from 'UI';
+import {Input} from 'antd';
+import {SearchOutlined, InfoCircleOutlined} from '@ant-design/icons';
 import { PlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
@@ -10,6 +12,7 @@ import { typeList } from 'Types/session/stackEvent';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
 
 import StackEventModal from '../StackEventModal';
+import { Segmented, Tooltip } from 'antd'
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
 import { VList, VListHandle } from 'virtua';
@@ -175,21 +178,37 @@ const EventsPanel = observer(({
             border={false}
           />
         </div>
-        <Input
-          className="input-small h-8"
-          placeholder="Filter by keyword"
-          icon="search"
-          name="filter"
-          height={28}
-          onChange={onFilterChange}
-          value={filter}
-        />
+        <div className={'flex items-center gap-2'}>
+          <Segmented
+              options={[
+                { label: 'All Tabs', value: 'all',   },
+                { label: (
+                  <Tooltip title="Stack Events overview is available only for all tabs combined.">
+                     <span>Current Tab</span>
+                     </Tooltip>),
+                  value: 'current', disabled: true},
+              ]}
+              defaultValue="all" 
+              size="small"
+              className="rounded-full font-medium"
+          />
+          <Input
+            className="rounded-lg"
+            placeholder="Filter by keyword"
+            name="filter"
+            height={28}
+            onChange={onFilterChange}
+            value={filter}
+            size='small'
+            prefix={<SearchOutlined className='text-neutral-400' />}
+          />
+        </div>
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="capitalize flex items-center mt-16 gap-2">
+              <InfoCircleOutlined size={18} />
               No Data
             </div>
           }

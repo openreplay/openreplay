@@ -1,7 +1,5 @@
 .wrapper {
-  padding: 10px;
-  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
-  border-radius: 3px;  
+  padding: 1rem;
   background-color: $gray-lightest;
   margin-bottom: 15px;
 
@@ -18,8 +16,6 @@
     border-radius: 10px;
     background-color: $tealx;
     flex-shrink: 0;    
-    border: solid thin white;
-    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;

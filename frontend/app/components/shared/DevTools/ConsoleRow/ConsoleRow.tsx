@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
+import { Tag } from 'antd';
+import TabTag from "../TabTag";
 
 interface Props {
   log: any;
@@ -10,6 +12,8 @@ interface Props {
   renderWithNL?: any;
   style?: any;
   onClick?: () => void;
+  getTabNum: (tab: string) => number;
+  showSingleTab: boolean;
 }
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style } = props;
@@ -41,11 +45,12 @@ function ConsoleRow(props: Props) {
 
   const titleLine = lines[0];
   const restLines = lines.slice(1);
+  const logSource = props.showSingleTab ? -1 : props.getTabNum(log.tabId);
   return (
     <div
       style={style}
       className={cn(
-        'border-b flex items-start py-1 px-4 pe-8 overflow-hidden group relative',
+        'border-b border-neutral-950/5 flex items-start gap-2 py-1 px-4 pe-8 overflow-hidden group relative',
         {
           info: !log.isYellow && !log.isRed,
           warn: log.isYellow,
@@ -55,11 +60,10 @@ function ConsoleRow(props: Props) {
       )}
       onClick={clickable ? () => (!!log.errorId ? props.onClick?.() : toggleExpand()) : undefined}
     >
-      <div className="mr-2">
-        <Icon size="14" {...iconProps} />
-      </div>
+      {logSource !== -1 && <TabTag tabNum={logSource} />}
+      <Icon size="14" {...iconProps} className='mt-0.5' />
       <div key={log.key} data-scroll-item={log.isRed}>
-        <div className="flex items-start text-sm ">
+        <div className="flex items-start text-sm">
           <div className={cn('flex items-start', { 'cursor-pointer underline decoration-dotted decoration-gray-400': !!log.errorId })}>
             {canExpand && (
               <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />

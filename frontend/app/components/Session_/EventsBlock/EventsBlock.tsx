@@ -196,7 +196,7 @@ function EventsBlock(props: IProps) {
 
   return (
     <>
-      <div className={cn(styles.header, 'p-4')}>
+      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]'  )}>
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
             <video
@@ -219,14 +219,14 @@ function EventsBlock(props: IProps) {
             </div>
           </div>
         ) : null}
-        <div className={cn(styles.hAndProgress, 'mt-3')}>
+        <div className={cn(styles.hAndProgress, 'mt-0')}>
           <EventSearch
             onChange={write}
             setActiveTab={setActiveTab}
             value={query}
+            eventsText={usedEvents.length ? `${usedEvents.length} Events` : '0 Events'}
           />
         </div>
-        <div className="mt-1 color-gray-medium">{eventsText}</div>
       </div>
       <div
         className={cn('flex-1 pb-4', styles.eventsList)}

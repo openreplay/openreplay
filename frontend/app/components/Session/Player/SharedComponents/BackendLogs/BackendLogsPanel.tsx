@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Segmented } from 'antd';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
 import { PlayerContext } from "App/components/Session/playerContext";
@@ -12,7 +11,9 @@ import {
 } from 'App/components/Client/Integrations/apiMethods';
 import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
 import { capitalize } from 'App/utils';
-import { Icon, Input } from 'UI';
+import { Icon } from 'UI';
+import { Segmented, Input, Tooltip } from 'antd';
+import {SearchOutlined} from '@ant-design/icons';
 import { client } from 'App/mstore';
 import { FailedFetch, LoadingFetch } from "./StatusMessages";
 import {
@@ -82,25 +83,44 @@ function BackendLogsPanel() {
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
-        <div className={'flex gap-2 items-center w-full'}>
-          <div className={'font-semibold'}>Traces</div>
-          {tabs.length && tab ? (
-            <div>
-              <Segmented options={tabs} value={tab} onChange={setTab} />
+        <div className='flex items-center justify-between w-full'>
+            <div className={'flex gap-2 items-center'}>
+              <div className={'font-semibold'}>Traces</div>
+              {tabs.length && tab ? (
+                <div>
+                  <Segmented options={tabs} value={tab} onChange={setTab} size='small' />
+                </div>
+              ) : null}
             </div>
-          ) : null}
 
-          <div className={'ml-auto'} />
-          <Input
-            className="input-small h-8"
-            placeholder="Filter by keyword"
-            icon="search"
-            name="filter"
-            height={28}
-            onChange={onFilterChange}
-            value={filter}
+            <div className='flex items-center gap-2'>
+              <Segmented
+              options={[
+                { label: 'All Tabs', value: 'all',   },
+                { label: (
+                  <Tooltip title="Backend logs are fetched for all tabs combined.">
+                     <span>Current Tab</span>
+                     </Tooltip>),
+                  value: 'current', disabled: true},
+              ]}
+              defaultValue="all" 
+              size="small"
+              className="rounded-full font-medium"
           />
-        </div>
+
+
+                <Input
+                  className="rounded-lg"
+                  placeholder="Filter by keyword"
+                  name="filter"
+                  onChange={onFilterChange}
+                  value={filter}
+                  size='small'
+                  prefix={<SearchOutlined className='text-neutral-400' />}
+                />
+              </div>
+           
+        </div>  
       </BottomBlock.Header>
 
       <BottomBlock.Content className="overflow-y-auto">
