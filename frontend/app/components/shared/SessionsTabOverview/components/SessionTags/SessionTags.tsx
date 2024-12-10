@@ -38,7 +38,6 @@ const SessionTags = () => {
           }))}
         value={activeTab[0]}
         onChange={(value: any) => searchStore.toggleTag(value)}
-        size={'small'}
       />
     </div>
   );

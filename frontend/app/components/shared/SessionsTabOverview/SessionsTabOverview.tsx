@@ -31,16 +31,16 @@ function SessionsTabOverview() {
       <MainSearchBar />
       <SessionSearch />
       <div className="my-4" />
+      {testingKey ? (
+        <Input
+          value={query}
+          onKeyDown={handleKeyDown}
+          onChange={(e) => setQuery(e.target.value)}
+          className={'mb-2'}
+          placeholder={'ask session ai'}
+        />
+      ) : null}
       <div className="widget-wrapper">
-        {testingKey ? (
-          <Input
-            value={query}
-            onKeyDown={handleKeyDown}
-            onChange={(e) => setQuery(e.target.value)}
-            className={'mb-2'}
-            placeholder={'ask session ai'}
-          />
-        ) : null}
         <SessionHeader />
         <div className="border-b" />
         <LatestSessionsMessage />
