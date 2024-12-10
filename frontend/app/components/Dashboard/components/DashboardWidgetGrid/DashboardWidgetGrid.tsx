@@ -57,8 +57,6 @@ function DashboardWidgetGrid(props: Props) {
                 className={cn(
                   'invisible group-hover:visible ',
                   'absolute -left-2 top-1/2 -translate-y-1/2',
-                  // 'bg-white border shadow flex items-center p-1 rounded-full',
-                  // 'cursor-pointer'
                 )}
               >
                 <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection fit inCards />} trigger={'click'}>
