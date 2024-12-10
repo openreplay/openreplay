@@ -3,6 +3,7 @@ package com.openreplay.reactnative
 import android.content.Context
 import android.graphics.PointF
 import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -41,57 +42,70 @@ class RnTrackerTouchManager : ViewGroupManager<FrameLayout>() {
 
 class RnTrackerRootLayout(context: Context) : FrameLayout(context) {
   private val touchStart = PointF()
+  private val gestureDetector: GestureDetector
+
+  private var currentTappedView: View? = null
+
+  // Variables to track total movement
+  private var totalDeltaX: Float = 0f
+  private var totalDeltaY: Float = 0f
+
+  init {
+    gestureDetector = GestureDetector(context, GestureListener())
+  }
 
   override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+    // Pass all touch events to the GestureDetector
+    gestureDetector.onTouchEvent(ev)
+
     when (ev.action) {
       MotionEvent.ACTION_DOWN -> {
-        // Record the starting point for swipe/tap differentiation
+        // Record the starting point for potential swipe
         touchStart.x = ev.x
         touchStart.y = ev.y
-        Log.d("RnTrackerRootLayout", "ACTION_DOWN at global: (${ev.rawX}, ${ev.rawY})")
+        // Reset total movement
+        totalDeltaX = 0f
+        totalDeltaY = 0f
+        // Find and store the view that was touched
+        currentTappedView = findViewAt(this, ev.x.toInt(), ev.y.toInt())
+//        Log.d(
+//          "RnTrackerRootLayout",
+//          "ACTION_DOWN at global: (${ev.rawX}, ${ev.rawY}) on view: $currentTappedView"
+//        )
       }
-      MotionEvent.ACTION_UP -> {
+      MotionEvent.ACTION_MOVE -> {
+        // Accumulate movement
         val deltaX = ev.x - touchStart.x
         val deltaY = ev.y - touchStart.y
-        val distance = sqrt(deltaX * deltaX + deltaY * deltaY)
+        totalDeltaX += deltaX
+        totalDeltaY += deltaY
+        // Update touchStart for the next move event
+        touchStart.x = ev.x
+        touchStart.y = ev.y
+//        Log.d("RnTrackerRootLayout", "Accumulated movement - X: $totalDeltaX, Y: $totalDeltaY")
+      }
+      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+        // Determine if the accumulated movement qualifies as a swipe
+        val distance = sqrt(totalDeltaX * totalDeltaX + totalDeltaY * totalDeltaY)
 
-        // Find the exact view that was tapped
-        val tappedView = findViewAt(this, ev.x.toInt(), ev.y.toInt())
-
-        if (distance > 10) {
-          // Consider this a swipe
-          val direction = if (abs(deltaX) > abs(deltaY)) {
-            if (deltaX > 0) "RIGHT" else "LEFT"
+        if (distance > SWIPE_DISTANCE_THRESHOLD) {
+          val direction = if (abs(totalDeltaX) > abs(totalDeltaY)) {
+            if (totalDeltaX > 0) "RIGHT" else "LEFT"
           } else {
-            if (deltaY > 0) "DOWN" else "UP"
+            if (totalDeltaY > 0) "DOWN" else "UP"
           }
           Log.d("RnTrackerRootLayout", "Swipe detected: $direction")
           Analytics.sendSwipe(SwipeDirection.valueOf(direction), ev.rawX, ev.rawY)
-        } else {
-          // Consider this a tap
-          val label = tappedView?.contentDescription?.toString() ?: "Button"
-          Log.d("RnTrackerRootLayout", "Tap detected on $tappedView with label: $label")
-
-          val currentTime = android.os.SystemClock.uptimeMillis()
-          val syntheticEvent = MotionEvent.obtain(
-            currentTime,
-            currentTime,
-            MotionEvent.ACTION_UP,
-            ev.rawX,
-            ev.rawY,
-            0
-          )
-
-          Analytics.sendClick(syntheticEvent, label)
-          syntheticEvent.recycle()
-
-          // Perform the click on the tapped view
-          tappedView?.performClick()
         }
       }
     }
-    // Call super to ensure normal behavior (scrolling, clicks, etc.) is not disturbed
+
+    // Ensure normal event propagation
     return super.dispatchTouchEvent(ev)
+  }
+
+  companion object {
+    private const val SWIPE_DISTANCE_THRESHOLD = 100f // Adjust as needed
   }
 
   private fun findViewAt(parent: ViewGroup, x: Int, y: Int): View? {
@@ -113,5 +127,15 @@ class RnTrackerRootLayout(context: Context) : FrameLayout(context) {
 
   private fun isPointInsideView(x: Int, y: Int, view: View): Boolean {
     return x >= view.left && x <= view.right && y >= view.top && y <= view.bottom
+  }
+
+  inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
+    override fun onSingleTapUp(e: MotionEvent): Boolean {
+      Log.d("GestureListener", "Single tap detected at: (${e.rawX}, ${e.rawY})")
+      val label = currentTappedView?.contentDescription?.toString() ?: "Button"
+      Analytics.sendClick(e, label)
+      currentTappedView?.performClick()
+      return super.onSingleTapUp(e)
+    }
   }
 }
