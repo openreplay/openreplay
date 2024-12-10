@@ -18,7 +18,7 @@ function RightBlock({
   switch (activeTab) {
     case 'EVENTS':
       return (
-        <div className={cn('flex flex-col bg-white border-l', stl.panel)}>
+        <div className={cn('flex flex-col border-l', stl.panel)}>
           <EventsBlock setActiveTab={setActiveTab} />
         </div>
       );

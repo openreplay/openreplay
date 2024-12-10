@@ -29,7 +29,7 @@ function TimelineZoomButton() {
   }, [])
   return (
     <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selection." placement='top'>
-    <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-semibold'}>
+    <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-medium'}>
       Focus Mode: {enabled ? 'On' : 'Off'}
     </Button>
     </Tooltip>

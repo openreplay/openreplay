@@ -71,7 +71,7 @@ export function FrustrationElement({ item, createEventClickHandler }: CommonProp
   const elData = getFrustration(item);
   return (
     <Tooltip
-      placement={'right'}
+      placement={'top'}
       title={
         <div className="">
           <b>{elData.name}</b>

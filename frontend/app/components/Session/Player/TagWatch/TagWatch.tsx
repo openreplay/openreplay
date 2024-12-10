@@ -2,14 +2,51 @@ import { useStore } from 'App/mstore';
 import SaveModal from 'Components/Session/Player/TagWatch/SaveModal';
 import React from 'react';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { Button, Input } from 'antd';
-import { CopyButton } from 'UI';
-import { SearchOutlined, ZoomInOutlined } from '@ant-design/icons';
+import { Button, Input, Tooltip } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { ZoomInOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
-import { FilterKey } from "App/types/filter/filterType";
-import { addOptionsToFilter } from "App/types/filter/newFilter";
+import { FilterKey } from 'App/types/filter/filterType';
+import { addOptionsToFilter } from 'App/types/filter/newFilter';
+
+interface CopyableTextAreaProps {
+  selector: string;
+  setSelector: (value: string) => void;
+}
+
+const CopyableTextArea: React.FC<CopyableTextAreaProps> = ({ selector, setSelector }) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(selector);
+  };
+
+  return (
+    <div className="w-full relative">
+      <Input.TextArea
+        value={selector}
+        onChange={(e) => setSelector(e.target.value)}
+        className="rounded-lg font-mono text-sm  placeholder:font-sans placeholder:text-base placeholder:text-gray-400"
+        rows={4}
+        style={{ paddingRight: '40px' }}
+        placeholder='Enter selector to tag elements. E.g. .btn-primary'
+      />
+      <Tooltip title="Copy">
+        <Button
+          type="text"
+          icon={<CopyOutlined />}
+          onClick={handleCopy}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            zIndex: 1,
+          }}
+        />
+      </Tooltip>
+    </div>
+  );
+};
 
 function TagWatch() {
   const { tagWatchStore, searchStore } = useStore();
@@ -50,7 +87,7 @@ function TagWatch() {
         ignoreClickRage: ignoreClRage,
         ignoreDeadClick: ignoreDeadCl,
       });
-      const tags = await tagWatchStore.getTags()
+      const tags = await tagWatchStore.getTags();
       if (tags) {
         addOptionsToFilter(
           FilterKey.TAGGED_ELEMENT,
@@ -58,40 +95,39 @@ function TagWatch() {
         );
         searchStore.refreshFilterOptions();
       }
-      // @ts-ignore
       toast.success('Tag created');
       setSelector('');
-      return tag
+      return tag;
     } catch {
-      // @ts-ignore
       toast.error('Failed to create tag');
     }
   };
+
   const openSaveModal = () => {
     if (selector === '') {
       return;
     }
     showModal(<SaveModal onSave={onSave} hideModal={hideModal} />, { right: true, width: 400 });
   };
+
   return (
-    <div className={'w-full h-full p-2 flex flex-col gap-2'}>
-      <div className={'flex items-center justify-between'}>
-        <div className={'font-semibold text-xl'}>Element Selector</div>
-        <CopyButton content={selector} />
+    <div className="w-full h-full p-4 flex flex-col gap-2">
+      <div className="flex flex-col items-center justify-between">
+        <p>Select elements in the session play area to tag by class selector and filter sessions to verify their rendering.</p>
+        
       </div>
-      <Input.TextArea value={selector} onChange={(e) => setSelector(e.target.value)} />
+      
+      <CopyableTextArea selector={selector} setSelector={setSelector} />
+
       <Button
         onClick={openSaveModal}
-        type={'primary'}
+        type="primary"
         ghost
         icon={<ZoomInOutlined />}
         disabled={selector === ''}
       >
         Tag Element
       </Button>
-      <div className={'text-disabled-text text-sm'}>
-        Create and filter sessions by ‘watch elements’ to determine if they rendered or not.
-      </div>
     </div>
   );
 }

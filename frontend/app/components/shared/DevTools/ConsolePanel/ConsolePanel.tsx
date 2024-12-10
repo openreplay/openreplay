@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
-import { Tabs, Input, Icon, NoContent } from 'UI';
+import { Tabs, Icon, NoContent } from 'UI';
+import {Input} from 'antd';
+import {SearchOutlined, InfoCircleOutlined} from '@ant-design/icons';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -195,13 +197,13 @@ function ConsolePanel({
         <div className={'flex items-center gap-2'}>
           <TabSelector />
           <Input
-            className="input-small h-8"
+            className="rounded-lg"
             placeholder="Filter by keyword"
-            icon="search"
             name="filter"
-            height={28}
             onChange={onFilterChange}
             value={filter}
+            size='small'
+            prefix={<SearchOutlined className='text-neutral-400' />}
           />
         </div>
         {/* @ts-ignore */}
@@ -210,8 +212,8 @@ function ConsolePanel({
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="capitalize flex items-center mt-16 gap-2">
+              <InfoCircleOutlined size={18} />
               No Data
             </div>
           }

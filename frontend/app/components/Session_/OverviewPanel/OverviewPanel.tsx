@@ -1,4 +1,5 @@
 import { Segmented } from 'antd';
+import {InfoCircleOutlined} from '@ant-design/icons'
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -343,13 +344,13 @@ function PanelComponent({
             ) : null}
           </div>
           {isSpot ? null : (
-            <div className="flex items-center h-20 mr-4 gap-2">
-              <TabSelector />
-              <TimelineZoomButton />
+            <div className="flex items-center h-20 mr-4 gap-3">
               <FeatureSelection
                 list={selectedFeatures}
                 updateList={setSelectedFeatures}
               />
+              <TabSelector />
+              <TimelineZoomButton />
             </div>
           )}
         </BottomBlock.Header>
@@ -366,7 +367,7 @@ function PanelComponent({
                 style={{ height: '60px', minHeight: 'unset', padding: 0 }}
                 title={
                   <div className="flex items-center">
-                    <Icon name="info-circle" className="mr-2" size="18" />
+                    <InfoCircleOutlined size={18} />
                     Select a debug option to visualize on timeline.
                   </div>
                 }

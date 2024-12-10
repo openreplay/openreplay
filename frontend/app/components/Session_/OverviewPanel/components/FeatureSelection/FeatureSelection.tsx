@@ -1,6 +1,8 @@
 import React from 'react';
-import { Popover, Checkbox } from 'antd';
+import { Popover, Checkbox, Button } from 'antd';
+import {EyeInvisibleOutlined} from '@ant-design/icons';
 import { Icon } from 'UI'
+import Funnel from '@/types/funnel';
 
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
@@ -59,7 +61,7 @@ function FeatureSelection(props: Props) {
       <Popover
         trigger="click"
         content={
-          <div>
+          <div className='flex flex-col gap-3'>
             <div
               className={'flex items-center gap-2 cursor-pointer'}
               onClick={() => toggleAllFeatures()}
@@ -81,10 +83,9 @@ function FeatureSelection(props: Props) {
           </div>
         }
       >
-        <div className={'font-semibold flex items-center gap-2 text-main cursor-pointer'}>
-          <Icon size={16} name={'funnel'} color={'main'} />
-          <div>X-Ray Events</div>
-        </div>
+        <Button color='primary' size='small' type='text' className={'font-medium'} icon={<EyeInvisibleOutlined size={12} />} >
+          Hide / Show
+        </Button>
       </Popover>
     </React.Fragment>
   );
