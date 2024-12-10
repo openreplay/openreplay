@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import colors from 'tailwindcss/colors';
 
-import { gradientBox } from 'App/components/shared/SessionSearchField/AiSessionSearchField';
+import { gradientBox } from 'App/components/shared/SessionFilters/AiSessionSearchField';
 import aiSpinner from 'App/lottie/aiSpinner.json';
 import { useStore } from 'App/mstore';
 import { Icon, Input } from 'UI';

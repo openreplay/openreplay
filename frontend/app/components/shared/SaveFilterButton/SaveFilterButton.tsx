@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
-import { Button } from 'UI';
+import { Button } from 'antd';
 import SaveSearchModal from 'Shared/SaveSearchModal';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-
-function SaveFilterButton() {
+function SaveFilterButton({ disabled }: { disabled?: boolean }) {
   const { searchStore } = useStore();
   const savedSearch = searchStore.savedSearch;
   const [showModal, setshowModal] = useState(false);
   return (
     <div>
       <Button
-        variant="text-primary"
-        className="mr-2"
+        type="link"
+        disabled={disabled}
         onClick={() => setshowModal(true)}
-        icon="zoom-in">
-        {savedSearch.exists() ? 'UPDATE SEARCH' : 'SAVE SEARCH'}
+      >
+        {savedSearch.exists() ? 'Update Search' : 'Save Search'}
       </Button>
-      {showModal && (<SaveSearchModal show={showModal} closeHandler={() => setshowModal(false)} />)}
+      {showModal && (
+        <SaveSearchModal
+          show={showModal}
+          closeHandler={() => setshowModal(false)}
+        />
+      )}
     </div>
   );
 }

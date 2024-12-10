@@ -244,6 +244,7 @@ class SearchStore {
   addFilter(filter: any) {
     const index = filter.isEvent ? -1 : this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
 
+    console.log(filter)
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({

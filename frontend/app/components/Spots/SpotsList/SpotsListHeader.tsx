@@ -50,7 +50,7 @@ const SpotsListHeader = observer(
       <div className={'flex items-center justify-between w-full'}>
         <div className="flex gap-1 items-center">
           <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
-          <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={16} />
+          <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={14} />
         </div>
 
         {tenantHasSpots ? (
