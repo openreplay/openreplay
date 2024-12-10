@@ -3,7 +3,6 @@ import cn from 'classnames';
 import stl from './tabs.module.css';
 import { Segmented } from 'antd';
 import { Icon } from 'UI'
-import { size } from '@floating-ui/react-dom-interactions';
 
 interface Props {
   tabs: Array<any>;

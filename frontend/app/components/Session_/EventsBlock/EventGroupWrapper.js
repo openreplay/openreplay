@@ -8,6 +8,7 @@ import { Icon, TextEllipsis } from 'UI';
 import Event from './Event';
 import NoteEvent from './NoteEvent';
 import stl from './eventGroupWrapper.module.css';
+import cn from 'classnames'
 
 function EventGroupWrapper(props) {
   const { userStore } = useStore();
@@ -132,7 +133,7 @@ function EventGroupWrapper(props) {
         {isFirst && isLocation && event.referrer && (
           <TextEllipsis>
             <div className={stl.referrer}>
-              Referrer: <span className={`${stl.url} !font-normal`}>{safeRef}</span>
+              Referrer: <span className={cn(stl.url, '!font-normal')}>{safeRef}</span>
             </div>
           </TextEllipsis>
         )}

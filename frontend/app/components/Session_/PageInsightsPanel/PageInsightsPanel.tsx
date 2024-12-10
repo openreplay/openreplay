@@ -8,7 +8,6 @@ import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { compareJsonObjects } from 'App/utils';
 
-// import Select from 'Shared/Select';
 import {Select, Form} from 'antd';
 
 const JUMP_OFFSET = 1000;

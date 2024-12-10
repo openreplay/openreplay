@@ -1,8 +1,8 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
-import {CaretRightOutlined} from '@ant-design/icons'
-import {Button} from 'antd';
-import { shortDurationFromMs } from "App/date";
+import { Tooltip } from 'UI';
+import { CaretRightOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { shortDurationFromMs } from 'App/date';
 
 interface Props {
   onClick: any;
@@ -14,22 +14,24 @@ function JumpButton(props: Props) {
   return (
     <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center">
       <Tooltip title={tooltip} disabled={!tooltip}>
-        <Button 
-        type="default"
-        size='small'
-        className='hidden group-hover:flex rounded-lg text-xs p-1 py-0 gap-0 h-6'
-        iconPosition='end'
-        onClick={(e: any) => {
-          e.stopPropagation();
-          props.onClick();
-        }}
-        icon={<CaretRightOutlined />}
+        <Button
+          type="default"
+          size="small"
+          className="hidden group-hover:flex rounded-lg text-xs p-1 py-0 gap-0 h-6"
+          iconPosition="end"
+          onClick={(e: any) => {
+            e.stopPropagation();
+            props.onClick();
+          }}
+          icon={<CaretRightOutlined />}
         >
-        JUMP
+          JUMP
         </Button>
-        {props.time ? <div className={'block group-hover:hidden mr-2 text-sm'}>
-          {shortDurationFromMs(props.time)}
-        </div> : null}
+        {props.time ? (
+          <div className={'block group-hover:hidden mr-2 text-sm'}>
+            {shortDurationFromMs(props.time)}
+          </div>
+        ) : null}
       </Tooltip>
     </div>
   );
