@@ -604,7 +604,7 @@ export const NetworkPanelComp = observer(
             )}
           </div>
           <div className={'flex items-center gap-2'}>
-            <TabSelector />
+            {!isMobile ? <TabSelector /> : null}
             <Input
               className="rounded-lg"
               placeholder="Filter by name, type, method or value"

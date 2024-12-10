@@ -91,7 +91,7 @@
     "@babel/preset-typescript": "^7.23.2",
     "@babel/runtime": "^7.23.2",
     "@jest/globals": "^29.7.0",
-    "@openreplay/sourcemap-uploader": "^3.0.8",
+    "@openreplay/sourcemap-uploader": "^3.0.10",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.7.8",

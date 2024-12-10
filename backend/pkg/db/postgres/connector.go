@@ -19,20 +19,17 @@ type Conn struct {
 	Pool    pool.Pool
 	batches *batch.BatchSet
 	bulks   *BulkSet
-	chConn  CH // hack for autocomplete inserts, TODO: rewrite
+	chConn  CH
 }
 
-func (conn *Conn) SetClickHouse(ch CH) {
-	conn.chConn = ch
-}
-
-func NewConn(log logger.Logger, pool pool.Pool) *Conn {
+func NewConn(log logger.Logger, pool pool.Pool, ch CH) *Conn {
 	if pool == nil {
 		log.Fatal(context.Background(), "pg pool is empty")
 	}
 	return &Conn{
 		log:     log,
 		Pool:    pool,
+		chConn:  ch,
 		bulks:   NewBulkSet(log, pool),
 		batches: batch.NewBatchSet(log, pool),
 	}

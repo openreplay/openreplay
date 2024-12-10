@@ -17,17 +17,6 @@ def get_main_sessions_table(timestamp=0):
     return "experimental.sessions"
 
 
-def get_user_favorite_sessions_table(timestamp=0):
-    return "experimental.user_favorite_sessions"
-
-
-def get_user_viewed_sessions_table(timestamp=0):
-    return "experimental.user_viewed_sessions"
-
-
-def get_user_viewed_errors_table(timestamp=0):
-    return "experimental.user_viewed_errors"
-
 
 def get_main_js_errors_sessions_table(timestamp=0):
     return get_main_events_table(timestamp=timestamp)

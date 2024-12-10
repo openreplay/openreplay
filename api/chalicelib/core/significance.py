@@ -765,30 +765,6 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-def get_top_insights(filter_d: schemas.CardSeriesFilterSchema, project_id,
-                     metric_format: schemas.MetricExtendedFormatType):
-    output = []
-    stages = filter_d.events
-
-    if len(stages) == 0:
-        logger.debug("no stages found")
-        return output, 0
-
-    # The result of the multi-stage query
-    rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
-    # Obtain the first part of the output
-    stages_list = get_stages(stages, rows, metric_format=metric_format)
-    if len(rows) == 0:
-        return stages_list, 0
-
-    # Obtain the second part of the output
-    total_drop_due_to_issues = get_issues(stages, rows,
-                                          first_stage=1,
-                                          last_stage=len(filter_d.events),
-                                          drop_only=True)
-    return stages_list, total_drop_due_to_issues
-
-
 def get_issues_list(filter_d: schemas.CardSeriesFilterSchema, project_id, first_stage=None, last_stage=None):
     output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
     stages = filter_d.events

@@ -57,10 +57,18 @@ type Redshift struct {
 // Clickhouse config
 
 type Clickhouse struct {
-	URL      string `env:"CLICKHOUSE_STRING"`
-	Database string `env:"CLICKHOUSE_DATABASE,default=default"`
-	UserName string `env:"CLICKHOUSE_USERNAME,default=default"`
-	Password string `env:"CLICKHOUSE_PASSWORD,default="`
+	URL            string `env:"CLICKHOUSE_STRING"`
+	Database       string `env:"CLICKHOUSE_DATABASE,default=default"`
+	UserName       string `env:"CLICKHOUSE_USERNAME,default=default"`
+	Password       string `env:"CLICKHOUSE_PASSWORD,default="`
+	LegacyUserName string `env:"CH_USERNAME,default=default"`
+	LegacyPassword string `env:"CH_PASSWORD,default="`
+}
+
+func (cfg *Clickhouse) GetTrimmedURL() string {
+	chUrl := strings.TrimPrefix(cfg.URL, "tcp://")
+	chUrl = strings.TrimSuffix(chUrl, "/default")
+	return chUrl
 }
 
 // ElasticSearch config

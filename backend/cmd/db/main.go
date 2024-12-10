@@ -6,6 +6,7 @@ import (
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
 	"openreplay/backend/internal/db/datasaver"
+	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
@@ -33,9 +34,15 @@ func main() {
 	}
 	defer pgConn.Close()
 
-	// Init events module
-	pg := postgres.NewConn(log, pgConn)
-	defer pg.Close()
+	chConn := clickhouse.NewConnector(cfg.Clickhouse)
+	if err := chConn.Prepare(); err != nil {
+		log.Fatal(ctx, "can't prepare clickhouse: %s", err)
+	}
+	defer chConn.Stop()
+
+	// Init db proxy module (postgres + clickhouse + batches)
+	dbProxy := postgres.NewConn(log, pgConn, chConn)
+	defer dbProxy.Close()
 
 	// Init redis connection
 	redisClient, err := redis.New(&cfg.Redis)
@@ -49,7 +56,7 @@ func main() {
 	tagsManager := tags.New(log, pgConn)
 
 	// Init data saver
-	saver := datasaver.New(log, cfg, pg, sessManager, tagsManager)
+	saver := datasaver.New(log, cfg, dbProxy, chConn, sessManager, tagsManager)
 
 	// Message filter
 	msgFilter := []int{

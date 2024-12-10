@@ -22,7 +22,6 @@ const Tabs = ({ tabs, active, onClick, border = true, className }: Props) => {
   return (
     <div className={cn(stl.tabs, className, { [stl.bordered]: border })} role="tablist">
       <Segmented
-      className='w-full'
         size="small"
         value={active}
         options={tabs.map(({ key, text, hidden = false, disabled = false, iconComp = null }) => ({

@@ -16,7 +16,7 @@ type Sessions interface {
 	AddUnStarted(session *UnStartedSession) error
 	AddCached(sessionID uint64, data map[string]string) error
 	Get(sessionID uint64) (*Session, error)
-	GetUpdated(sessionID uint64) (*Session, error)
+	GetUpdated(sessionID uint64, keepInCache bool) (*Session, error)
 	GetCached(sessionID uint64) (map[string]string, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
@@ -104,10 +104,13 @@ func (s *sessionsImpl) Get(sessionID uint64) (*Session, error) {
 }
 
 // Special method for clickhouse connector
-func (s *sessionsImpl) GetUpdated(sessionID uint64) (*Session, error) {
+func (s *sessionsImpl) GetUpdated(sessionID uint64, keepInCache bool) (*Session, error) {
 	session, err := s.getFromDB(sessionID)
 	if err != nil {
 		return nil, err
+	}
+	if !keepInCache {
+		return session, nil
 	}
 	if err := s.cache.Set(session); err != nil {
 		ctx := context.WithValue(context.Background(), "sessionID", sessionID)
