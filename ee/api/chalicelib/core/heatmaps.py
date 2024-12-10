@@ -7,7 +7,7 @@ from chalicelib.core import sessions_mobs, events
 from chalicelib.utils import sql_helper as sh
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
-    from chalicelib.core import sessions_exp as sessions
+    from chalicelib.core import sessions_ch as sessions
 else:
     from chalicelib.core import sessions
 

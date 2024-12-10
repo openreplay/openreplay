@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI
 
-from chalicelib.core import alerts_processor
+from chalicelib.core.alerts import alerts_processor
 from chalicelib.utils import pg_client
 
 

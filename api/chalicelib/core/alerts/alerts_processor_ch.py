@@ -3,9 +3,9 @@ import logging
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
-from chalicelib.core import alerts
-from chalicelib.core import alerts_listener, alerts_processor
-from chalicelib.core import sessions_exp as sessions
+from chalicelib.core.alerts import alerts
+from chalicelib.core.alerts import alerts_listener, alerts_processor
+from chalicelib.core.alerts import sessions
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 

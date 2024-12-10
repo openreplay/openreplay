@@ -6,7 +6,6 @@ rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh
 rm -rf ./build_alerts.sh
 rm -rf ./build_crons.sh
-rm -rf ./chalicelib/core/alerts.py
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
@@ -105,3 +104,8 @@ rm -rf ./chalicelib/core/product_anaytics2.py
 rm -rf ./chalicelib/utils/ch_client.py
 rm -rf ./chalicelib/utils/ch_client_exp.py
 rm -rf ./routers/subs/product_anaytics.py
+rm -rf ./chalicelib/core/alerts/__init__.py
+rm -rf ./chalicelib/core/alerts/alerts.py
+rm -rf ./chalicelib/core/alerts/alerts_processor.py
+rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
+rm -rf ./chalicelib/core/sessions_ch.py
