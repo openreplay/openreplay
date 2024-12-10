@@ -173,6 +173,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
     domBuildingTime,
     tabStates,
     currentTab,
+    tabNames,
   } = store.get();
   const tabsArr = Object.keys(tabStates);
   const tabValues = Object.values(tabStates);
@@ -212,7 +213,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
     }
   }, [currentTab, tabStates, dataSource, tabValues]);
   const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
-
+  const getTabName = (tabId: string) => tabNames[tabId]
   return (
     <NetworkPanelComp
       loadTime={loadTime}
@@ -228,6 +229,7 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
       websocketList={websocketList as WSMessage[]}
       websocketListNow={websocketListNow as WSMessage[]}
       getTabNum={getTabNum}
+      getTabName={getTabName}
       showSingleTab={showSingleTab}
     />
   );
@@ -311,6 +313,7 @@ interface Props {
   activeOutsideIndex?: number;
   isSpot?: boolean;
   getTabNum?: (tab: string) => number;
+  getTabName?: (tabId: string) => string;
   showSingleTab?: boolean;
 }
 
@@ -336,6 +339,7 @@ export const NetworkPanelComp = observer(
     isSpot,
     getTabNum,
     showSingleTab,
+    getTabName,
   }: Props) => {
     const [selectedWsChannel, setSelectedWsChannel] = React.useState<
       WsChannel[] | null
@@ -566,9 +570,8 @@ export const NetworkPanelComp = observer(
           label: 'Source',
           width: 64,
           render: (r: Record<string, any>) => (
-            <Tooltip title="@Nikita show tab title here..." placement="left">
+            <Tooltip title={`${getTabName?.(r.tabId) ?? `Tab ${getTabNum?.(r.tabId) ?? 0}`}`} placement="left">
               <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
-                {' '}
                 {getTabNum?.(r.tabId) ?? 0}
               </div>
             </Tooltip>

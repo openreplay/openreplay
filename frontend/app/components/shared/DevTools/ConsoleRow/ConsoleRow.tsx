@@ -46,6 +46,7 @@ function ConsoleRow(props: Props) {
   const titleLine = lines[0];
   const restLines = lines.slice(1);
   const logSource = props.showSingleTab ? -1 : props.getTabNum(log.tabId);
+  const logTabId = log.tabId
   return (
     <div
       style={style}
@@ -60,7 +61,7 @@ function ConsoleRow(props: Props) {
       )}
       onClick={clickable ? () => (!!log.errorId ? props.onClick?.() : toggleExpand()) : undefined}
     >
-      {logSource !== -1 && <TabTag tabNum={logSource} />}
+      {logSource !== -1 && <TabTag logSource={logSource} logTabId={logTabId} />}
       <Icon size="14" {...iconProps} className='mt-0.5' />
       <div key={log.key} data-scroll-item={log.isRed}>
         <div className="flex items-start text-sm">

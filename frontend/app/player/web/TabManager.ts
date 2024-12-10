@@ -194,6 +194,7 @@ export default class TabSessionManager {
     );
   }
 
+  firstTitleSet = false
   distributeMessage(msg: Message): void {
     this.lastMessageTs = msg.time;
     switch (msg.tp) {
@@ -234,6 +235,10 @@ export default class TabSessionManager {
       case MType.SetPageLocationDeprecated:
       case MType.SetPageLocation:
         this.locationManager.append(msg);
+        if ('documentTitle' in msg && !this.firstTitleSet) {
+          this.state.update({ tabNames: { ...this.state.get().tabNames, [this.id]: msg.documentTitle } });
+          this.firstTitleSet = true
+        }
         if (msg.navigationStart > 0) {
           this.loadedLocationManager.append(msg);
         }
