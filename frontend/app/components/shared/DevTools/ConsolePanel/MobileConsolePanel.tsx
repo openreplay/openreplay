@@ -12,6 +12,7 @@ import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorD
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import {InfoCircleOutlined} from '@ant-design/icons'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -139,20 +140,20 @@ function MobileConsolePanel() {
           <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={false} />
         </div>
         <Input
-          className="input-small h-8"
+          className="rounded-lg"
           placeholder="Filter by keyword"
-          icon="search"
           name="filter"
-          height={28}
           onChange={onFilterChange}
           value={filter}
+          size='small'
+          prefix={<SearchOutlined className='text-neutral-400' />}
         />
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="capitalize flex items-center mt-16 gap-2">
+              <InfoCircleOutlined size={18} />
               No Data
             </div>
           }

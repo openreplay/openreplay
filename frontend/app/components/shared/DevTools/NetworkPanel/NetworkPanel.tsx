@@ -13,7 +13,9 @@ import {
 import { formatMs } from 'App/date';
 import { useStore } from 'App/mstore';
 import { formatBytes } from 'App/utils';
-import { Icon, Input, NoContent, Tabs, Toggler, Tooltip } from 'UI';
+import { Icon, NoContent, Tabs } from 'UI';
+import {Tooltip, Input, Switch, Form  } from 'antd';
+import {SearchOutlined, InfoCircleOutlined} from '@ant-design/icons';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 import { WsChannel } from "App/player/web/messages";
@@ -134,7 +136,7 @@ function renderStatus({
   error?: string;
 }) {
   const displayedStatus = error ? (
-    <Tooltip delay={0} title={error}>
+    <Tooltip title={error}>
       <div
         style={{ width: 90 }}
         className={'overflow-hidden overflow-ellipsis'}
@@ -148,7 +150,7 @@ function renderStatus({
   return (
     <>
       {cached ? (
-        <Tooltip title={'Served from cache'}>
+        <Tooltip title={'Served from cache'} placement='top'>
           <div className="flex items-center">
             <span className="mr-1">{displayedStatus}</span>
             <Icon name="wifi" size={16} />
@@ -557,7 +559,11 @@ export const NetworkPanelComp = observer(
       cols.unshift({
         label: 'Source',
         width: 64,
-        render: (r: Record<string, any>) => <div>Tab {getTabNum?.(r.tabId) ?? 0}</div>,
+        render: (r: Record<string, any>) => 
+        <Tooltip title="@Nikita show tab title here..." placement='left'>
+        <div className='bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default'> {getTabNum?.(r.tabId) ?? 0}</div>
+        </Tooltip>
+        ,
       })
       }
       return cols
@@ -588,26 +594,30 @@ export const NetworkPanelComp = observer(
           <div className={'flex items-center gap-2'}>
             <TabSelector />
             <Input
-              className="input-small"
+              className="rounded-lg"
               placeholder="Filter by name, type, method or value"
-              icon="search"
               name="filter"
               onChange={onFilterChange}
-              height={28}
               width={280}
               value={filter}
+              size='small'
+              prefix={<SearchOutlined className='text-neutral-400' />}
             />
           </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
           <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
             <div>
-              <Toggler
-                checked={showOnlyErrors}
-                name="show-errors-only"
-                onChange={() => setShowOnlyErrors(!showOnlyErrors)}
-                label="4xx-5xx Only"
-              />
+            <Form.Item name="show-errors-only" className="mb-0">
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <Switch
+                  checked={showOnlyErrors}
+                  onChange={() => setShowOnlyErrors(!showOnlyErrors)}
+                  size="small"
+                />
+                <span className="text-sm ms-2">4xx-5xx Only</span>
+              </label>
+            </Form.Item>
             </div>
             <InfoLine>
               <InfoLine.Point
@@ -647,8 +657,8 @@ export const NetworkPanelComp = observer(
           </div>
           <NoContent
             title={
-              <div className="capitalize flex items-center">
-                <Icon name="info-circle" className="mr-2" size="18" />
+              <div className="capitalize flex items-center gap-2">
+                <InfoCircleOutlined size={18} />
                 No Data
               </div>
             }

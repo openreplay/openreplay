@@ -132,7 +132,7 @@ function EventGroupWrapper(props) {
         {isFirst && isLocation && event.referrer && (
           <TextEllipsis>
             <div className={stl.referrer}>
-              Referrer: <span className={stl.url}>{safeRef}</span>
+              Referrer: <span className={`${stl.url} !font-normal`}>{safeRef}</span>
             </div>
           </TextEllipsis>
         )}

@@ -17,20 +17,20 @@ export default function SelectorCard({ index = 1, target, showContent }: Props) 
 
     return (
         // @ts-ignore TODO for Alex
-        <div className={cn(stl.wrapper, { [stl.active]: showContent })} onClick={() => activeTarget(index)}>
+        <div className={cn(stl.wrapper, 'rounded-xl', { [stl.active]: showContent })} onClick={() => activeTarget(index)}>
             <div className={stl.top}>
                 {/* @ts-ignore */}
                 <Tooltip position="top" title="Rank of the most clicked element">
                     <div className={stl.index}>{index + 1}</div>
                 </Tooltip>
-                <div className="truncate">{target.selector}</div>
+                <div className="truncate font-mono">{target.selector}</div>
             </div>
             {showContent && (
                 <div className={stl.counts}>
                     <div>
-                        {target.count} Clicks - {target.percent}%
+                    {target.count} Click{target.count > 1 ? 's' : ''} - {target.percent}%
                     </div>
-                    <div className="color-gray-medium">TOTAL CLICKS</div>
+                    <div className="text-neutral-400">TOTAL CLICKS</div>
                 </div>
             )}
         </div>

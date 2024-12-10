@@ -1,5 +1,7 @@
 import React from 'react';
 import { Icon, Tooltip } from 'UI';
+import {CaretRightOutlined} from '@ant-design/icons'
+import {Button} from 'antd';
 import { shortDurationFromMs } from "App/date";
 
 interface Props {
@@ -12,17 +14,20 @@ function JumpButton(props: Props) {
   return (
     <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center">
       <Tooltip title={tooltip} disabled={!tooltip}>
-        <div
-          className="border cursor-pointer hidden group-hover:flex rounded bg-white text-xs items-center px-2 py-1 color-teal hover:shadow h-6"
-          onClick={(e: any) => {
-            e.stopPropagation();
-            props.onClick();
-          }}
+        <Button 
+        type="default"
+        size='small'
+        className='hidden group-hover:flex rounded-lg text-xs p-1 py-0 gap-0 h-6'
+        iconPosition='end'
+        onClick={(e: any) => {
+          e.stopPropagation();
+          props.onClick();
+        }}
+        icon={<CaretRightOutlined />}
         >
-          <Icon name="caret-right-fill" size="12" color="teal" />
-          <span>JUMP</span>
-        </div>
-        {props.time ? <div className={'block group-hover:hidden mr-2'}>
+        JUMP
+        </Button>
+        {props.time ? <div className={'block group-hover:hidden mr-2 text-sm'}>
           {shortDurationFromMs(props.time)}
         </div> : null}
       </Tooltip>

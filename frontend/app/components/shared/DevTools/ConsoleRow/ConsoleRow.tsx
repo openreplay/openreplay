@@ -50,7 +50,7 @@ function ConsoleRow(props: Props) {
     <div
       style={style}
       className={cn(
-        'border-b flex items-start gap-1 py-1 px-4 pe-8 overflow-hidden group relative',
+        'border-b border-neutral-950/5 flex items-start gap-2 py-1 px-4 pe-8 overflow-hidden group relative',
         {
           info: !log.isYellow && !log.isRed,
           warn: log.isYellow,
@@ -61,7 +61,7 @@ function ConsoleRow(props: Props) {
       onClick={clickable ? () => (!!log.errorId ? props.onClick?.() : toggleExpand()) : undefined}
     >
       {logSource !== -1 && <TabTag tabNum={logSource} />}
-      <Icon size="14" {...iconProps} />
+      <Icon size="14" {...iconProps} className='mt-0.5' />
       <div key={log.key} data-scroll-item={log.isRed}>
         <div className="flex items-start text-sm">
           <div className={cn('flex items-start', { 'cursor-pointer underline decoration-dotted decoration-gray-400': !!log.errorId })}>
