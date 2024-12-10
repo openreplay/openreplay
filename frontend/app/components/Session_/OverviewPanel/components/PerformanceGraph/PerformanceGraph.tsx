@@ -58,11 +58,12 @@ const PerformanceGraph = React.memo((props: Props) => {
       {disabled ? (
         <div
           className={
-            'flex justify-start'
+            'flex justify-center'
           }
         >
           <div className={'text-xs text-neutral-400 ps-2'}>
-          Multi-tab performance overview is not available.</div>
+            Multi-tab performance overview is not available.
+          </div>
         </div>
       ) : null}
       <ResponsiveContainer height={35}>

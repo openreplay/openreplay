@@ -2471,15 +2471,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openreplay/sourcemap-uploader@npm:^3.0.8":
-  version: 3.0.10
-  resolution: "@openreplay/sourcemap-uploader@npm:3.0.10"
+"@openreplay/sourcemap-uploader@npm:^3.0.10":
+  version: 3.0.13
+  resolution: "@openreplay/sourcemap-uploader@npm:3.0.13"
   dependencies:
     argparse: "npm:^2.0.1"
+    glob: "npm:^8.0.3"
     glob-promise: "npm:^6.0.7"
   bin:
     sourcemap-uploader: cli.js
-  checksum: 10c1/aa22a161020f55e96c3835cb719f4c530728ccb55e90d1a0bbc96c5243bffb900e204dd6275f1dee2927db3c4439b5d33c38c60774e5340ccb36acab95f30cc5
+  checksum: 10c1/1bab68b1a2f348973d9c027e00b9e027a833cec998e9a8a6c2872585d46fcdfb6f1492b98fd42f04ed2e6c4f913ec19e44a24be95460e1f7d1e08f6edf15eabe
   languageName: node
   linkType: hard
 
@@ -8058,7 +8059,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^8.0.1":
+"glob@npm:^8.0.1, glob@npm:^8.0.3":
   version: 8.1.0
   resolution: "glob@npm:8.1.0"
   dependencies:
@@ -11308,7 +11309,7 @@ __metadata:
     "@floating-ui/react-dom-interactions": "npm:^0.10.3"
     "@jest/globals": "npm:^29.7.0"
     "@medv/finder": "npm:^3.1.0"
-    "@openreplay/sourcemap-uploader": "npm:^3.0.8"
+    "@openreplay/sourcemap-uploader": "npm:^3.0.10"
     "@sentry/browser": "npm:^5.21.1"
     "@svg-maps/world": "npm:^1.0.1"
     "@tanstack/react-query": "npm:^5.56.2"
