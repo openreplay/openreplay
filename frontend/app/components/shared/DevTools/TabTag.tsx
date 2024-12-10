@@ -1,15 +1,23 @@
 import React from 'react';
 import { Tooltip } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { PlayerContext } from 'Components/Session/playerContext';
 
-function TabTag({ tabNum }: { tabNum?: React.ReactNode }) {
+function TabTag({ logSource }: { logSource: number; logTabId: string }) {
+  const { store } = React.useContext(PlayerContext);
+  const { tabNames } = store.get();
+
   return (
-
-    <Tooltip title="@Nikita show tab title here..." placement='left'>
-    <div className={'bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default'}>
-      {tabNum}
-    </div>
+    <Tooltip title={`${tabNames[logSource] ?? `Tab ${logSource}`}`} placement="left">
+      <div
+        className={
+          'bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default'
+        }
+      >
+        {logSource}
+      </div>
     </Tooltip>
-  )
+  );
 }
 
-export default TabTag
+export default observer(TabTag);
