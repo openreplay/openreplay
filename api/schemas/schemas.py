@@ -11,59 +11,6 @@ from .transformers_validators import transform_email, remove_whitespace, remove_
     force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric
 
 
-def transform_old_filter_type(cls, values):
-    if values.get("type") is None:
-        return values
-    values["type"] = {
-        # filters
-        "USEROS": FilterType.USER_OS.value,
-        "USERBROWSER": FilterType.USER_BROWSER.value,
-        "USERDEVICE": FilterType.USER_DEVICE.value,
-        "USERCOUNTRY": FilterType.USER_COUNTRY.value,
-        "USERID": FilterType.USER_ID.value,
-        "USERANONYMOUSID": FilterType.USER_ANONYMOUS_ID.value,
-        "REFERRER": FilterType.REFERRER.value,
-        "REVID": FilterType.REV_ID.value,
-        "USEROS_IOS": FilterType.USER_OS_MOBILE.value,
-        "USERDEVICE_IOS": FilterType.USER_DEVICE_MOBILE.value,
-        "USERCOUNTRY_IOS": FilterType.USER_COUNTRY_MOBILE.value,
-        "USERID_IOS": FilterType.USER_ID_MOBILE.value,
-        "USERANONYMOUSID_IOS": FilterType.USER_ANONYMOUS_ID_MOBILE.value,
-        "REVID_IOS": FilterType.REV_ID_MOBILE.value,
-        "DURATION": FilterType.DURATION.value,
-        "PLATFORM": FilterType.PLATFORM.value,
-        "METADATA": FilterType.METADATA.value,
-        "ISSUE": FilterType.ISSUE.value,
-        "EVENTS_COUNT": FilterType.EVENTS_COUNT.value,
-        "UTM_SOURCE": FilterType.UTM_SOURCE.value,
-        "UTM_MEDIUM": FilterType.UTM_MEDIUM.value,
-        "UTM_CAMPAIGN": FilterType.UTM_CAMPAIGN.value,
-        # events:
-        "CLICK": EventType.CLICK.value,
-        "INPUT": EventType.INPUT.value,
-        "LOCATION": EventType.LOCATION.value,
-        "CUSTOM": EventType.CUSTOM.value,
-        "REQUEST": EventType.REQUEST.value,
-        "FETCH": EventType.REQUEST_DETAILS.value,
-        "GRAPHQL": EventType.GRAPHQL.value,
-        "STATEACTION": EventType.STATE_ACTION.value,
-        "ERROR": EventType.ERROR.value,
-        "CLICK_IOS": EventType.CLICK_MOBILE.value,
-        "INPUT_IOS": EventType.INPUT_MOBILE.value,
-        "VIEW_IOS": EventType.VIEW_MOBILE.value,
-        "CUSTOM_IOS": EventType.CUSTOM_MOBILE.value,
-        "REQUEST_IOS": EventType.REQUEST_MOBILE.value,
-        "ERROR_IOS": EventType.ERROR_MOBILE.value,
-        "DOM_COMPLETE": PerformanceEventType.LOCATION_DOM_COMPLETE.value,
-        "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME.value,
-        "TTFB": PerformanceEventType.LOCATION_TTFB.value,
-        "AVG_CPU_LOAD": PerformanceEventType.LOCATION_AVG_CPU_LOAD.value,
-        "AVG_MEMORY_USAGE": PerformanceEventType.LOCATION_AVG_MEMORY_USAGE.value,
-        "FETCH_FAILED": PerformanceEventType.FETCH_FAILED.value,
-    }.get(values["type"], values["type"])
-    return values
-
-
 class _GRecaptcha(BaseModel):
     g_recaptcha_response: Optional[str] = Field(default=None, alias='g-recaptcha-response')
 
@@ -602,7 +549,6 @@ class SessionSearchEventSchema2(BaseModel):
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
-    _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode="after")
     def event_validator(self):
@@ -639,7 +585,6 @@ class SessionSearchFilterSchema(BaseModel):
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
-    _transform = model_validator(mode='before')(transform_old_filter_type)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
 
     @model_validator(mode="before")
@@ -898,6 +843,11 @@ class CardSeriesSchema(BaseModel):
 class MetricTimeseriesViewType(str, Enum):
     LINE_CHART = "lineChart"
     AREA_CHART = "areaChart"
+    BAR_CHART = "barChart"
+    PIE_CHART = "pieChart"
+    PROGRESS_CHART = "progressChart"
+    TABLE_CHART = "table"
+    METRIC_CHART = "metric"
 
 
 class MetricTableViewType(str, Enum):
@@ -1355,8 +1305,6 @@ class LiveSessionSearchFilterSchema(BaseModel):
     source: Optional[str] = Field(default=None)
     operator: Literal[SearchEventOperator.IS, SearchEventOperator.CONTAINS] \
         = Field(default=SearchEventOperator.CONTAINS)
-
-    _transform = model_validator(mode='before')(transform_old_filter_type)
 
     @model_validator(mode="after")
     def __validator(self):
