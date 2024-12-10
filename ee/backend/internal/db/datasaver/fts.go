@@ -102,7 +102,6 @@ func WrapGraphQL(m *messages.GraphQL, projID uint32) *GraphQLFTS {
 }
 
 func (s *saverImpl) init() {
-	s.pg.SetClickHouse(s.ch)
 	if s.cfg.UseQuickwit {
 		s.producer = queue.NewProducer(s.cfg.MessageSizeLimit, true)
 	}
