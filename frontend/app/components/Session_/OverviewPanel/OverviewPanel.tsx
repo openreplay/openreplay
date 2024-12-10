@@ -194,8 +194,6 @@ function WebOverviewPanelCont() {
     }
   }, [tabStates, currentTab, dataSource, tabValues]);
 
-  console.log(showSingleTab, frustrationsList, performanceChartData);
-
   const fetchPresented = fetchList.length > 0;
   const resourceList = resourceListUnmap
     .filter((r: any) => r.isRed || r.isYellow)
