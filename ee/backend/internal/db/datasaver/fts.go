@@ -3,8 +3,7 @@ package datasaver
 import (
 	"encoding/json"
 	"log"
-	"openreplay/backend/pkg/db/clickhouse"
-	"openreplay/backend/pkg/env"
+
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 )
