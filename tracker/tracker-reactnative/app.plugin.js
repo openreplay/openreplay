@@ -1,9 +1,4 @@
-// module.exports = function (config) {
-//   // Modify the config as needed
-//   return config;
-// };
-
-const { withAppBuildGradle, withMainApplication } = require('@expo/config-plugins');
+const { withMainApplication } = require('@expo/config-plugins');
 
 function addPackageToMainApplication(src) {
   console.log('Adding OpenReplay package to MainApplication.java', src);
