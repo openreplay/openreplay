@@ -183,6 +183,7 @@ function MobileConsolePanel() {
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
+                showSingleTab
               />
             ))}
           </VList>
