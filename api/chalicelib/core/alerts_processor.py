@@ -11,6 +11,7 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
+
 LeftToDb = {
     schemas.AlertColumn.PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE: {
         "table": "events.pages INNER JOIN public.sessions USING(session_id)",
