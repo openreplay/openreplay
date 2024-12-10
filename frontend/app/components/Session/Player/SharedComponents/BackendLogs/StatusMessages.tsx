@@ -12,7 +12,7 @@ export function LoadingFetch({ provider }: { provider: string }) {
         'w-full h-full flex items-center justify-center flex-col gap-2'
       }
     >
-      <LoadingOutlined style={{ fontSize: 32 }} />
+      <LoadingOutlined size={32} />
       <div>Fetching logs from {provider}...</div>
     </div>
   );
@@ -33,16 +33,23 @@ export function FailedFetch({
         'w-full h-full flex flex-col items-center justify-center gap-2'
       }
     >
-      <Icon name={'exclamation-circle'} size={32} />
-      <div className={'flex items-center gap-1'}>
+      
+      <div className={'flex items-center gap-1 font-medium'}>
+        <Icon name={'exclamation-circle'} size={14} /> 
         <span>Failed to fetch logs from {provider}. </span>
-        <div className={'link'} onClick={onRetry}>
+      </div>
+
+      <div className='flex items-center gap-3'>
+
+      <Button  type='text' size='small' onClick={onRetry}>
           Retry
-        </div>
-      </div>
-      <div className={'link'} onClick={() => history.push(intPath)}>
+        </Button>
+
+      <Button  type='text' size='small'  onClick={() => history.push(intPath)}>
         Check Configuration
+      </Button>
       </div>
+      
     </div>
   );
 }

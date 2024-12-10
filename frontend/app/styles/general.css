@@ -442,3 +442,7 @@ input[type="number"]::-webkit-outer-spin-button {
   appearance: none;
   margin: 0; /* Fix margin if necessary */
 }
+
+.ant-segmented-item{
+  border-radius: .5rem !important;
+}

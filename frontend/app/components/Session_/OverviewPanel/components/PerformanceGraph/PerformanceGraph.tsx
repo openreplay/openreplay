@@ -1,5 +1,6 @@
 import React from 'react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import {InfoCircleOutlined} from '@ant-design/icons'
 
 interface Props {
   list: any;
@@ -57,10 +58,11 @@ const PerformanceGraph = React.memo((props: Props) => {
       {disabled ? (
         <div
           className={
-            'absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center'
+            'flex justify-start'
           }
         >
-          <div className={'text-disabled-text decoration-dotted'}>Disabled for all tabs</div>
+          <div className={'text-xs text-neutral-400 ps-2'}>
+          Multi-tab performance overview is not available.</div>
         </div>
       ) : null}
       <ResponsiveContainer height={35}>

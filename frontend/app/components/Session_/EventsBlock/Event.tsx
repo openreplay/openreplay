@@ -159,7 +159,7 @@ const Event: React.FC<Props> = ({
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div
-            className={cn('flex items-center w-full', { 'px-4': isLocation })}
+            className={cn('flex items-start w-full', { 'px-4': isLocation })}
           >
             <div style={{ minWidth: '16px' }}>
               {event.type && iconName ? (
@@ -169,20 +169,18 @@ const Event: React.FC<Props> = ({
               )}
             </div>
             <div className="ml-3 w-full">
-              <div className="flex w-full items-first justify-between">
+              <div className="flex w-full items-start">
                 <div
-                  className="flex items-center w-full"
+                  className="flex flex-col justify-center items-start w-full"
                   style={{ minWidth: '0' }}
                 >
-                  <span
-                    className={cn(cls.title, { 'font-medium': isLocation })}
-                  >
+                  <span className={cn(cls.title, 'font-medium')}>
                     {title}
                   </span>
                   {body && !isLocation && (
                     <TextEllipsis
-                      maxWidth="60%"
-                      className="w-full ml-2 text-sm color-gray-medium"
+                      maxWidth="80%"
+                      className="w-full text-sm color-gray-medium"
                       text={body}
                     />
                   )}
@@ -202,8 +200,7 @@ const Event: React.FC<Props> = ({
           {isLocation && (
             <div className="pt-1 px-4">
               <TextEllipsis
-                maxWidth="80%"
-                className="text-sm font-normal color-gray-medium"
+                className="text-sm ms-8 font-normal color-gray-medium"
                 text={body}
               />
             </div>

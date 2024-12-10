@@ -122,7 +122,6 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     return Math.max(Math.round(p * targetTime), 0);
   };
 
-  console.log(devtoolsLoading , domLoading, !ready)
   return (
     <div
       className="flex items-center absolute w-full"
