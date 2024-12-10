@@ -9,7 +9,6 @@ import {
 import React from 'react';
 
 import ExCard from './ExCard';
-import { size } from '@floating-ui/react-dom-interactions';
 
 const TYPES = {
   Frustrations: 'frustrations',

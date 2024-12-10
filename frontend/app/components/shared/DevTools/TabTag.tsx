@@ -1,10 +1,14 @@
-import React from 'react'
+import React from 'react';
+import { Tooltip } from 'antd';
 
 function TabTag({ tabNum }: { tabNum?: React.ReactNode }) {
   return (
-    <div className={'w-fit px-2 border border-gray-light rounded text-sm whitespace-nowrap'}>
+
+    <Tooltip title="@Nikita show tab title here..." placement='left'>
+    <div className={'bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default'}>
       {tabNum}
     </div>
+    </Tooltip>
   )
 }
 

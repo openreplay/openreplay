@@ -3,15 +3,15 @@ import cn from 'classnames';
 import cls from './infoLine.module.css';
 
 const InfoLine = ({ children }) => (
-	<div className={ cls.info }>
+	<div className={ cn(cls.info, 'text-sm')}>
 		{ children }
 	</div>
 )
 
 const Point = ({ label = '', value = '', display=true, color, dotColor }) => display 
-	? <div className={ cls.infoPoint } style={{ color }}>
+	? <div className={ cn(cls.infoPoint, 'text-sm') } style={{ color }}>
 			{ dotColor != null && <div className={ cn(cls.dot, `bg-${dotColor}`) } />  } 
-			<span className={cls.label}>{ `${label}` }</span> { value }
+			<span className={cn(cls.label, 'text-sm')}>{ `${label}` }</span> { value }
 		</div>
 	: null;
 
