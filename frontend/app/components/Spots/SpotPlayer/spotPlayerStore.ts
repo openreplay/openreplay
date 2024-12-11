@@ -204,10 +204,13 @@ class SpotPlayerStore {
 
     this.network = network.map((request) => {
       const ev = { ...request, timestamp: request.time };
-      return getResourceFromNetworkRequest(
+      const req = getResourceFromNetworkRequest(
         mapSpotNetworkToEv(ev),
         this.startTs
       );
+      return {
+        ...req, timestamp: request.timestamp,
+      }
     });
   }
 
