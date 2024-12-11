@@ -3,6 +3,7 @@ import SessionSearchField from 'Shared/SessionSearchField';
 import AiSessionSearchField from 'Shared/SessionSearchField/AiSessionSearchField';
 import SavedSearch from 'Shared/SavedSearch';
 import { Button } from 'antd';
+import { checkIsSaas } from "App/utils";
 import TagList from './components/TagList';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -21,9 +22,7 @@ const MainSearchBar = (props: Props) => {
   const hasSavedSearch = savedSearch && savedSearch.exists();
   const hasSearch = hasFilters || hasSavedSearch;
 
-  // @ts-ignore
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
+  const isSaas = checkIsSaas()
 
   React.useEffect(() => {
     if (projectId !== currSite.current && currSite.current !== undefined) {

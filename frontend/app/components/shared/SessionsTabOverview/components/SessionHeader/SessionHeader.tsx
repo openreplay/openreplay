@@ -6,7 +6,6 @@ import SessionSort from '../SessionSort';
 import { Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import cn from 'classnames'
 
 function SessionHeader() {
   const { searchStore, userStore } = useStore();
@@ -33,16 +32,10 @@ function SessionHeader() {
     void searchStore.fetchSessions(true);
   };
 
-  const hasTabs = title === 'Sessions';
   return (
-    <div className="flex w-full flex-col">
-      <div className="px-4 py-2">
-        <div className={cn('text-2xl font-semibold capitalize')}>{title}</div>
-        {hasTabs ? <div className={cn()}>
-          Clips
-        </div> : null}
-      </div>
-      <div className="py-2 px-4 flex items-center w-full justify-end">
+    <div className="flex items-center px-4 py-1 justify-between w-full">
+      <h2 className="text-2xl capitalize mr-4">{title}</h2>
+      <div className="flex items-center w-full justify-end">
         {activeTab.type !== 'bookmarks' && <SessionTags />}
         <div className="mr-auto" />
         <Space>

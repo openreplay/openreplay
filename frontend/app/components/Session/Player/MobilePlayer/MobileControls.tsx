@@ -12,7 +12,7 @@ import {
   LaunchEventsShortcut,
   LaunchNetworkShortcut,
   LaunchPerformanceShortcut,
-  LaunchXRaShortcut
+  LaunchXRaShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import PlayerControls from 'Components/Session_/Player/Controls/components/PlayerControls';
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
@@ -23,13 +23,13 @@ import {
   NETWORK,
   OVERVIEW,
   PERFORMANCE,
-  STACKEVENTS
+  STACKEVENTS,
 } from 'App/mstore/uiPlayerStore';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
-import { MobEventsList, WebEventsList } from "../../../Session_/Player/Controls/EventsList";
 import useShortcuts from '../ReplayPlayer/useShortcuts';
+import { checkIsSaas } from 'App/utils';
 
 export const SKIP_INTERVALS = {
   2: 2e3,
@@ -38,13 +38,18 @@ export const SKIP_INTERVALS = {
   15: 15e3,
   20: 2e4,
   30: 3e4,
-  60: 6e4
+  60: 6e4,
 };
 
 function Controls(props: any) {
   const { sessionStore, userStore } = useStore();
   const permissions = userStore.account.permissions || [];
-  const disableDevtools = userStore.isEnterprise && !(permissions.includes('DEV_TOOLS') || permissions.includes('SERVICE_DEV_TOOLS'));
+  const disableDevtools =
+    userStore.isEnterprise &&
+    !(
+      permissions.includes('DEV_TOOLS') ||
+      permissions.includes('SERVICE_DEV_TOOLS')
+    );
   const { player, store } = React.useContext(MobilePlayerContext);
   const history = useHistory();
   const { playing, completed, skip, speed, messagesLoading } = store.get();
@@ -57,9 +62,7 @@ function Controls(props: any) {
   const changeSkipInterval = uiPlayerStore.changeSkipInterval;
   const skipInterval = uiPlayerStore.skipInterval;
   const siteId = projectsStore.siteId;
-  const {
-    setActiveTab,
-  } = props;
+  const { setActiveTab } = props;
   const session = sessionStore.current;
   const previousSessionId = sessionStore.previousId;
   const nextSessionId = sessionStore.nextId;
@@ -83,7 +86,7 @@ function Controls(props: any) {
     openNextSession: nextHandler,
     openPrevSession: prevHandler,
     setActiveTab,
-    disableDevtools
+    disableDevtools,
   });
 
   const forthTenSeconds = () => {
@@ -103,8 +106,8 @@ function Controls(props: any) {
   const state = completed
     ? PlayingState.Completed
     : playing
-      ? PlayingState.Playing
-      : PlayingState.Paused;
+    ? PlayingState.Playing
+    : PlayingState.Paused;
 
   return (
     <div className={styles.controls}>
@@ -166,117 +169,115 @@ interface DevtoolsButtonsProps {
   bottomBlock: number;
 }
 
-const DevtoolsButtons = observer(({
-                                    toggleBottomTools,
-                                    bottomBlock
-                                  }: DevtoolsButtonsProps) => {
-  const { aiSummaryStore } = useStore();
+const DevtoolsButtons = observer(
+  ({ toggleBottomTools, bottomBlock }: DevtoolsButtonsProps) => {
+    const { aiSummaryStore } = useStore();
 
-  const { store, player } = React.useContext(MobilePlayerContext);
+    const { store, player } = React.useContext(MobilePlayerContext);
 
-  const {
-    exceptionsList,
-    logMarkedCountNow,
-    messagesLoading,
-    stackMarkedCountNow,
-    resourceMarkedCountNow
-  } = store.get();
+    const {
+      exceptionsList,
+      logMarkedCountNow,
+      messagesLoading,
+      stackMarkedCountNow,
+      resourceMarkedCountNow,
+    } = store.get();
 
-  const showExceptions = exceptionsList.length > 0;
-  // @ts-ignore
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
+    const showExceptions = exceptionsList.length > 0;
+    // @ts-ignore
+    const isSaas = checkIsSaas();
 
-  const showSummary = () => {
-    player.pause();
-    if (bottomBlock !== OVERVIEW) {
-      toggleBottomTools(OVERVIEW);
-    }
-    aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
-  };
-  return (
-    <>
-      {isSaas ? (
-        <SummaryButton
-          onClick={showSummary}
-          withToggle={bottomBlock === OVERVIEW}
-          toggleValue={aiSummaryStore.toggleSummary}
-        />
-      ) : null}
-      <ControlButton
-        popover={
-          <div className={'flex items-center gap-2'}>
-            <LaunchXRaShortcut />
-            <div>Get a quick overview on the issues in this session.</div>
-          </div>
-        }
-        label={'X-Ray'}
-        onClick={() => toggleBottomTools(OVERVIEW)}
-        active={bottomBlock === OVERVIEW}
-      />
-      <ControlButton
-        popover={
-          <div className={'flex gap-2 items-center'}>
-            <LaunchConsoleShortcut />
-            <div>Launch Logs</div>
-          </div>
-        }
-        disabled={messagesLoading}
-        onClick={() => toggleBottomTools(CONSOLE)}
-        active={bottomBlock === CONSOLE}
-        label="Logs"
-        hasErrors={logMarkedCountNow > 0 || showExceptions}
-      />
-      <ControlButton
-        popover={
-          <div className={'flex gap-2 items-center'}>
-            <LaunchNetworkShortcut />
-            <div>Launch Network</div>
-          </div>
-        }
-        disabled={messagesLoading}
-        onClick={() => toggleBottomTools(NETWORK)}
-        active={bottomBlock === NETWORK}
-        label="Network"
-        hasErrors={resourceMarkedCountNow > 0}
-      />
-      {showExceptions ? (
+    const showSummary = () => {
+      player.pause();
+      if (bottomBlock !== OVERVIEW) {
+        toggleBottomTools(OVERVIEW);
+      }
+      aiSummaryStore.setToggleSummary(!aiSummaryStore.toggleSummary);
+    };
+    return (
+      <>
+        {isSaas ? (
+          <SummaryButton
+            onClick={showSummary}
+            withToggle={bottomBlock === OVERVIEW}
+            toggleValue={aiSummaryStore.toggleSummary}
+          />
+        ) : null}
         <ControlButton
-          disabled={messagesLoading}
-          onClick={() => toggleBottomTools(EXCEPTIONS)}
-          active={bottomBlock === EXCEPTIONS}
-          hasErrors={showExceptions}
-          label="Exceptions"
+          popover={
+            <div className={'flex items-center gap-2'}>
+              <LaunchXRaShortcut />
+              <div>Get a quick overview on the issues in this session.</div>
+            </div>
+          }
+          label={'X-Ray'}
+          onClick={() => toggleBottomTools(OVERVIEW)}
+          active={bottomBlock === OVERVIEW}
         />
-      ) : null}
-      <ControlButton
-        popover={
-          <div className={'flex gap-2 items-center'}>
-            <LaunchEventsShortcut />
-            <div>Launch Events</div>
-          </div>
-        }
-        disabled={messagesLoading}
-        onClick={() => toggleBottomTools(STACKEVENTS)}
-        active={bottomBlock === STACKEVENTS}
-        label="Events"
-      />
-      <ControlButton
-        popover={
-          <div className={'flex gap-2 items-center'}>
-            <LaunchPerformanceShortcut />
-            <div>Launch Performance</div>
-          </div>
-        }
-        disabled={messagesLoading}
-        onClick={() => toggleBottomTools(PERFORMANCE)}
-        active={bottomBlock === PERFORMANCE}
-        label="Performance"
-      />
-    </>
-  );
-});
+        <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchConsoleShortcut />
+              <div>Launch Logs</div>
+            </div>
+          }
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(CONSOLE)}
+          active={bottomBlock === CONSOLE}
+          label="Logs"
+          hasErrors={logMarkedCountNow > 0 || showExceptions}
+        />
+        <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchNetworkShortcut />
+              <div>Launch Network</div>
+            </div>
+          }
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(NETWORK)}
+          active={bottomBlock === NETWORK}
+          label="Network"
+          hasErrors={resourceMarkedCountNow > 0}
+        />
+        {showExceptions ? (
+          <ControlButton
+            disabled={messagesLoading}
+            onClick={() => toggleBottomTools(EXCEPTIONS)}
+            active={bottomBlock === EXCEPTIONS}
+            hasErrors={showExceptions}
+            label="Exceptions"
+          />
+        ) : null}
+        <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchEventsShortcut />
+              <div>Launch Events</div>
+            </div>
+          }
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(STACKEVENTS)}
+          active={bottomBlock === STACKEVENTS}
+          label="Events"
+        />
+        <ControlButton
+          popover={
+            <div className={'flex gap-2 items-center'}>
+              <LaunchPerformanceShortcut />
+              <div>Launch Performance</div>
+            </div>
+          }
+          disabled={messagesLoading}
+          onClick={() => toggleBottomTools(PERFORMANCE)}
+          active={bottomBlock === PERFORMANCE}
+          label="Performance"
+        />
+      </>
+    );
+  }
+);
 
 const ControlPlayer = observer(Controls);
 
-export default ControlPlayer
+export default ControlPlayer;

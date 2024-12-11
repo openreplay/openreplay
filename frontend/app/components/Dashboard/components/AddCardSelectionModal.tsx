@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import NewDashboardModal from 'Components/Dashboard/components/DashboardList/NewDashModal';
+import { checkIsSaas } from "App/utils";
 
 import AiQuery from './DashboardView/AiQuery';
 
@@ -30,8 +31,7 @@ function AddCardSelectionModal(props: Props) {
     setOpen(true);
   };
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
+  const isSaas = checkIsSaas();
   return (
     <>
       <Modal

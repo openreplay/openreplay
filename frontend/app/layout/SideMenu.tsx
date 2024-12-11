@@ -19,6 +19,7 @@ import {
 import { MODULES } from 'Components/Client/Modules';
 import { Icon } from 'UI';
 import SVG from 'UI/SVG';
+import { checkIsSaas } from "../utils";
 
 import InitORCard from './InitORCard';
 import SpotToOpenReplayPrompt from './SpotToOpenReplayPrompt';
@@ -110,8 +111,8 @@ function SideMenu(props: Props) {
             if (item.hidden) return item;
 
             const isHidden = [
-              item.key === MENU.RECOMMENDATIONS &&
-              modules.includes(MODULES.RECOMMENDATIONS),
+              item.key === MENU.CLIPS &&
+              modules.includes(MODULES.CLIPS),
               item.key === MENU.FEATURE_FLAGS &&
               modules.includes(MODULES.FEATURE_FLAGS),
               item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
@@ -160,6 +161,7 @@ function SideMenu(props: Props) {
     [MENU.PREFERENCES]: () => client(CLIENT_DEFAULT_TAB),
     [MENU.USABILITY_TESTS]: () => withSiteId(routes.usabilityTesting(), siteId),
     [MENU.SPOTS]: () => withSiteId(routes.spotsList(), siteId),
+    [MENU.CLIPS]: () => checkIsSaas() ? withSiteId(routes.clips(), siteId) : undefined,
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
     [PREFERENCES_MENU.SESSION_LISTING]: () =>
       client(CLIENT_TABS.SESSIONS_LISTING),
@@ -172,7 +174,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
-    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES)
+    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
   };
 
   const handleClick = (item: any) => {

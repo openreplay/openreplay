@@ -32,6 +32,7 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
+import { checkIsSaas } from "App/utils";
 
 import ControlButton from './ControlButton';
 import { WebEventsList } from "./EventsList";
@@ -227,9 +228,7 @@ const DevtoolsButtons = observer(
     const { aiSummaryStore, integrationsStore } = useStore();
     const { store, player } = React.useContext(PlayerContext);
 
-    // @ts-ignore
-    const originStr = window.env.ORIGIN || window.location.origin;
-    const isSaas = /app\.openreplay\.com/.test(originStr);
+    const isSaas = checkIsSaas()
 
     const { inspectorMode, currentTab, tabStates } = store.get();
 

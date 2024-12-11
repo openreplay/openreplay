@@ -146,6 +146,8 @@ export const spotsList = (): string => '/spots';
 export const spot = (id = ':spotId', hash?: string | number): string => hashed(`/view-spot/${id}`, hash);
 export const scopeSetup = (): string => '/scope-setup';
 
+export const clips = () => '/clips';
+
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
@@ -188,6 +190,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   usabilityTestingCreate(),
   usabilityTestingEdit(''),
   usabilityTestingView(''),
+
+  clips(),
 ];
 const routeNeedsSiteId = (path: string): boolean => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId'): string => {

@@ -8,7 +8,7 @@ OFFLINE_RECORDINGS = 'offline-recordings',
   ALERTS = 'alerts',
   ASSIST_STATS = 'assist-stats',
   FEATURE_FLAGS = 'feature-flags',
-  RECOMMENDATIONS = 'recommendations',
+  CLIPS = 'clips',
   USABILITY_TESTS = 'usability-tests',
 }
 
@@ -62,9 +62,9 @@ export const modules = [
     icon: 'toggles'
   },
   {
-    label: 'Recommendations',
+    label: 'Clips',
     description: 'Get personalized recommendations for sessions to watch, based on your replay history and search preferences.',
-    key: MODULES.RECOMMENDATIONS,
+    key: MODULES.CLIPS,
     icon: 'magic',
     hidden: true
   },

@@ -550,3 +550,8 @@ const decodeJwt = (jwt: string): any => {
   const base64 = base64Url.replace("-", "+").replace("_", "/");
   return JSON.parse(atob(base64));
 };
+
+export const checkIsSaas = () => {
+  const originStr = window.env.ORIGIN || window.location.origin;
+  return /app\.openreplay\.com/.test(originStr);
+}

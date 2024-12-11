@@ -14,6 +14,7 @@ import withReport from 'App/components/hocs/withReport';
 import DashboardHeader from '../DashboardHeader';
 import {useHistory} from "react-router";
 import AiQuery from "./AiQuery";
+import { checkIsSaas } from "App/utils";
 
 interface IProps {
     siteId: string;
@@ -94,8 +95,7 @@ function DashboardView(props: Props) {
 
     if (!dashboard) return null;
 
-    const originStr = window.env.ORIGIN || window.location.origin;
-    const isSaas = /app\.openreplay\.com/.test(originStr);
+    const isSaas = checkIsSaas()
     return (
         <Loader loading={loading}>
             <div style={{maxWidth: '1360px', margin: 'auto'}}>

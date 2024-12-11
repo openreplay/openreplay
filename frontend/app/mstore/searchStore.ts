@@ -55,7 +55,7 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' }
+  clips: { name: 'Clips', type: 'clips' },
 };
 
 class SearchStore {

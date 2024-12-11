@@ -13,6 +13,7 @@ import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
 import { Icon, NoContent } from 'UI';
+import { checkIsSaas } from "App/utils";
 import TabSelector from "../../shared/DevTools/TabSelector";
 
 import BottomBlock from '../BottomBlock';
@@ -97,8 +98,7 @@ function MobileOverviewPanelCont() {
     player.scale();
   }, [selectedFeatures]);
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
+  const isSaas = checkIsSaas()
   return (
     <PanelComponent
       resources={resources}
@@ -229,8 +229,7 @@ function WebOverviewPanelCont() {
     frustrationsList.length,
   ]);
 
-  const originStr = window.env.ORIGIN || window.location.origin;
-  const isSaas = /app\.openreplay\.com/.test(originStr);
+  const isSaas = checkIsSaas()
   return (
     <PanelComponent
       resources={resources}

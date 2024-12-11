@@ -1,4 +1,5 @@
 import React from 'react';
+import { checkIsSaas } from "../utils";
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -37,7 +38,7 @@ export const enum PREFERENCES_MENU {
 
 export const enum MENU {
   SESSIONS = 'sessions',
-  RECOMMENDATIONS = 'recommendations',
+  CLIPS = 'clips',
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
   NOTES = 'notes',
@@ -61,7 +62,7 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
+      { label: 'Clips', key: MENU.CLIPS, icon: 'magic', hidden: !checkIsSaas() },
       { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
