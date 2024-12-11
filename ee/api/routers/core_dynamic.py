@@ -8,13 +8,12 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import scope
-from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite, sessions_notes, sessions_replay, signup, feature_flags
-from chalicelib.core import sessions_viewed
+from chalicelib.core import assist, heatmaps, errors, errors_viewed, errors_favorite, signup, feature_flags
+from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
+    sessions_viewed, unprocessed_sessions
 from chalicelib.core import tenants, users, projects, license
-from chalicelib.core import unprocessed_sessions
 from chalicelib.core import webhook
-from chalicelib.core.collaboration_slack import Slack
+from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import SAML2_helper, smtp
 from chalicelib.utils import captcha
 from chalicelib.utils import helper

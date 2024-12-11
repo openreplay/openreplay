@@ -8,9 +8,9 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import scope
-from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, heatmaps, \
+from chalicelib.core import errors, errors_viewed, errors_favorite, heatmaps, \
     assist, signup, feature_flags
-from chalicelib.core.sessions import sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
+from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
     sessions_assignments, unprocessed_sessions
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
