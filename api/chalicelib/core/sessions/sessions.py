@@ -2,7 +2,8 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, performance_event, sessions_favorite
+from chalicelib.core import events, metadata, projects
+from chalicelib.core.sessions import sessions_favorite, performance_event
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
 

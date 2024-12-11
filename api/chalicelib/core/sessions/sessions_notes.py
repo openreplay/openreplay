@@ -4,8 +4,8 @@ from urllib.parse import urljoin
 from decouple import config
 
 import schemas
-from chalicelib.core.collaboration_msteams import MSTeams
-from chalicelib.core.collaboration_slack import Slack
+from chalicelib.core.collaborations.collaboration_msteams import MSTeams
+from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC

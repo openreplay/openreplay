@@ -1,4 +1,4 @@
-from chalicelib.core import integration_github, integration_jira_cloud
+from chalicelib.core.issue_tracking import integration_github, integration_jira_cloud
 from chalicelib.utils import pg_client
 
 SUPPORTED_TOOLS = [integration_github.PROVIDER, integration_jira_cloud.PROVIDER]

@@ -1,6 +1,6 @@
 import schemas
-from chalicelib.core import integration_base
-from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
+from chalicelib.core.issue_tracking import integration_base
+from chalicelib.core.issue_tracking.integration_jira_cloud_issue import JIRACloudIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
 PROVIDER = schemas.IntegrationType.JIRA

@@ -2,7 +2,7 @@ from decouple import config
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import pg_client
-from chalicelib.core import integrations_manager, integration_base_issue
+from chalicelib.core.issue_tracking import integrations_manager, integration_base_issue
 import json
 
 

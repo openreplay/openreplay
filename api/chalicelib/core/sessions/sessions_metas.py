@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import autocomplete
+from chalicelib.core.autocomplete import autocomplete
 from chalicelib.utils.event_filter_definition import SupportedFilter
 
 SUPPORTED_TYPES = {
@@ -42,7 +42,7 @@ SUPPORTED_TYPES = {
     schemas.FilterType.UTM_SOURCE: SupportedFilter(
         get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.UTM_SOURCE),
         query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.UTM_SOURCE)),
-    # IOS
+    # Mobile
     schemas.FilterType.USER_OS_MOBILE: SupportedFilter(
         get=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.USER_OS_MOBILE),
         query=autocomplete.__generic_autocomplete_metas(typename=schemas.FilterType.USER_OS_MOBILE)),

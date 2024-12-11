@@ -1,4 +1,4 @@
-from chalicelib.core.integration_base_issue import BaseIntegrationIssue
+from chalicelib.core.issue_tracking.integration_base_issue import BaseIntegrationIssue
 from chalicelib.utils import github_client_v3
 from chalicelib.utils.github_client_v3 import github_formatters as formatter
 

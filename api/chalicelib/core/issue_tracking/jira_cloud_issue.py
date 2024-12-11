@@ -1,5 +1,5 @@
 from chalicelib.utils import jira_client
-from chalicelib.core.integration_base_issue import BaseIntegrationIssue
+from chalicelib.core.issue_tracking.integration_base_issue import BaseIntegrationIssue
 
 
 class JIRACloudIntegrationIssue(BaseIntegrationIssue):

@@ -61,11 +61,11 @@ def __get_autocomplete_table(value, project_id):
         try:
             cur.execute(query)
         except Exception as err:
-            print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
-            print(query.decode('UTF-8'))
-            print("--------- VALUE -----------")
-            print(value)
-            print("--------------------")
+            logger.exception("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
+            logger.exception(query.decode('UTF-8'))
+            logger.exception("--------- VALUE -----------")
+            logger.exception(value)
+            logger.exception("--------------------")
             raise err
         results = cur.fetchall()
     for r in results:

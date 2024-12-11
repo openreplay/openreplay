@@ -1,4 +1,5 @@
 import schemas
+from chalicelib.core.issue_tracking.modules import TENANT_CONDITION
 from chalicelib.utils import pg_client
 
 
@@ -51,10 +52,10 @@ def get_global_integrations_status(tenant_id, user_id, project_id):
                                         AND provider='elasticsearch')) AS {schemas.IntegrationType.ELASTICSEARCH.value},
                            EXISTS((SELECT 1
                                    FROM public.webhooks
-                                   WHERE type='slack' AND deleted_at ISNULL)) AS {schemas.IntegrationType.SLACK.value},
+                                   WHERE type='slack' AND deleted_at ISNULL AND {TENANT_CONDITION})) AS {schemas.IntegrationType.SLACK.value},
                            EXISTS((SELECT 1
                                    FROM public.webhooks
-                                   WHERE type='msteams' AND deleted_at ISNULL)) AS {schemas.IntegrationType.MS_TEAMS.value},
+                                   WHERE type='msteams' AND deleted_at ISNULL AND {TENANT_CONDITION})) AS {schemas.IntegrationType.MS_TEAMS.value},
                            EXISTS((SELECT 1
                                    FROM public.integrations
                                    WHERE project_id=%(project_id)s AND provider='dynatrace')) AS {schemas.IntegrationType.DYNATRACE.value};""",

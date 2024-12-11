@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import webhook
-from chalicelib.core.collaboration_base import BaseCollaboration
+from chalicelib.core.collaborations.collaboration_base import BaseCollaboration
 
 logger = logging.getLogger(__name__)
 

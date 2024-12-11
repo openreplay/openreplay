@@ -1,5 +1,6 @@
 from chalicelib.utils import pg_client, helper
 import json
+from chalicelib.core.log_tools.modules import TENANT_CONDITION
 
 EXCEPT = ["jira_server", "jira_cloud"]
 
@@ -94,11 +95,11 @@ def get_all_by_tenant(tenant_id, integration):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT integrations.* 
+                f"""SELECT integrations.* 
                     FROM public.integrations INNER JOIN public.projects USING(project_id) 
-                    WHERE provider = %(provider)s 
+                    WHERE provider = %(provider)s AND {TENANT_CONDITION} 
                         AND projects.deleted_at ISNULL;""",
-                {"provider": integration})
+                {"tenant_id": tenant_id, "provider": integration})
         )
         r = cur.fetchall()
     return helper.list_to_camel_case(r, flatten=True)

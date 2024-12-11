@@ -1,3 +1,4 @@
+import logging
 import schemas
 from chalicelib.core import countries, events, metadata
 from chalicelib.utils import ch_client
@@ -5,6 +6,7 @@ from chalicelib.utils import helper, exp_ch_helper
 from chalicelib.utils.event_filter_definition import Event
 from chalicelib.utils.or_cache import CachedResponse
 
+logger = logging.getLogger(__name__)
 TABLE = "experimental.autocomplete"
 
 
@@ -59,13 +61,13 @@ def __get_autocomplete_table(value, project_id):
         try:
             results = cur.execute(query=query, params=params)
         except Exception as err:
-            print("--------- CH AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
-            print(cur.format(query=query, params=params))
-            print("--------- PARAMS -----------")
-            print(params)
-            print("--------- VALUE -----------")
-            print(value)
-            print("--------------------")
+            logger.exception("--------- CH AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
+            logger.exception(cur.format(query=query, params=params))
+            logger.exception("--------- PARAMS -----------")
+            logger.exception(params)
+            logger.exception("--------- VALUE -----------")
+            logger.exception(value)
+            logger.exception("--------------------")
             raise err
     for r in results:
         r["type"] = r.pop("_type")

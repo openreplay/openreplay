@@ -1,6 +1,6 @@
 import schemas
-from chalicelib.core import integration_base
-from chalicelib.core.integration_github_issue import GithubIntegrationIssue
+from chalicelib.core.issue_tracking import integration_base
+from chalicelib.core.issue_tracking.integration_github_issue import GithubIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
 PROVIDER = schemas.IntegrationType.GITHUB
