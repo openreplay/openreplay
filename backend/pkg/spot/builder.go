@@ -1,19 +1,19 @@
 package spot
 
 import (
-	"openreplay/backend/pkg/metrics/web"
-	"openreplay/backend/pkg/server/tracer"
 	"time"
 
 	"openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/keys"
 	"openreplay/backend/pkg/server/limiter"
+	"openreplay/backend/pkg/server/tracer"
 	spotAPI "openreplay/backend/pkg/spot/api"
 	"openreplay/backend/pkg/spot/service"
 	"openreplay/backend/pkg/spot/transcoder"

@@ -143,7 +143,7 @@ export default class IOSPlayer extends Player {
 
   clean = () => {
     super.clean();
-    this.screen.clean();
+    this.screen?.clean();
     // @ts-ignore
     this.screen = undefined;
     this.messageLoader.clean();

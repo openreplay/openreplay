@@ -11,11 +11,13 @@ from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.storage import extra
 
-if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
-    logging.info(">>> Using experimental error search")
-    from . import errors_exp as errors
-else:
-    from . import errors as errors
+# TODO: fix this import
+from . import errors as errors
+# if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
+#     logging.info(">>> Using experimental error search")
+#     from . import errors_exp as errors
+# else:
+#     from . import errors as errors
 
 if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
     from chalicelib.core import sessions

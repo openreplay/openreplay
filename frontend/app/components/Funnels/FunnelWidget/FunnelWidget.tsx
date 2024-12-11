@@ -8,6 +8,8 @@ import { observer } from 'mobx-react-lite';
 import { NoContent, Icon } from 'UI';
 import { Tag, Tooltip } from 'antd';
 import { useModal } from 'App/components/Modal';
+import { useStore } from '@/mstore';
+import Filter from '@/mstore/types/filter';
 
 interface Props {
     metric?: Widget;
@@ -17,19 +19,30 @@ interface Props {
 }
 
 function FunnelWidget(props: Props) {
+  const { dashboardStore, searchStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
   const { isWidget = false, data, metric, compData } = props;
   const funnel = data.funnel || { stages: [] };
   const totalSteps = funnel.stages.length;
-  const stages = isWidget
-    ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]]
-    : funnel.stages;
+  const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
   const hasMoreSteps = funnel.stages.length > 2;
   const lastStage = funnel.stages[funnel.stages.length - 1];
   const remainingSteps = totalSteps - 2;
   const { hideModal } = useModal();
-  const metricLabel =
-    metric?.metricFormat == 'userCount' ? 'Users' : 'Sessions';
+  const metricLabel = metric?.metricFormat == 'userCount' ? 'Users' : 'Sessions';
+  const drillDownFilter = dashboardStore.drillDownFilter;
+  const drillDownPeriod = dashboardStore.drillDownPeriod;
+  const metricFilters = metric?.series[0]?.filter.filters || [];
+
+  const applyDrillDown = (index: number) => {
+    const filter = new Filter().fromData({ filters: metricFilters.slice(0, index + 1) });
+    const periodTimestamps = drillDownPeriod.toTimestamps();
+    drillDownFilter.merge({
+      filters: filter.toJson().filters,
+      startTimestamp: periodTimestamps.startTimestamp,
+      endTimestamp: periodTimestamps.endTimestamp
+    });
+  };
 
   useEffect(() => {
     return () => {
@@ -53,6 +66,8 @@ function FunnelWidget(props: Props) {
         }
       }
     });
+
+    applyDrillDown(focusedFilter === index ? -1 : index);
   };
 
   const shownStages = React.useMemo(() => {

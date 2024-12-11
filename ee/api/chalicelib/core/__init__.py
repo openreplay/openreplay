@@ -11,7 +11,7 @@ from . import metrics as metrics_legacy
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     logging.info(">>> Using experimental sessions search")
-    from . import sessions_exp as sessions
+    from . import sessions_ch as sessions
 else:
     from . import sessions as sessions
 
@@ -33,12 +33,6 @@ else:
 
 if config("EXP_SESSIONS_SEARCH_METRIC", cast=bool, default=False):
     logging.info(">>> Using experimental sessions search for metrics")
-
-if config("EXP_ALERTS", cast=bool, default=False):
-    logging.info(">>> Using experimental alerts")
-    from . import alerts_processor_exp as alerts_processor
-else:
-    from . import alerts_processor as alerts_processor
 
 if config("EXP_FUNNELS", cast=bool, default=False):
     logging.info(">>> Using experimental funnels")

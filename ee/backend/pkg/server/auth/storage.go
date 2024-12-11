@@ -2,11 +2,13 @@ package auth
 
 import (
 	"fmt"
-	"openreplay/backend/pkg/db/postgres/pool"
 	"strings"
+
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/server/user"
 )
 
-func authUser(conn pool.Pool, userID, tenantID, jwtIAT int, isExtension bool) (*User, error) {
+func authUser(conn pool.Pool, userID, tenantID, jwtIAT int, isExtension bool) (*user.User, error) {
 	sql := `SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM spot_jwt_iat)::BIGINT AS spot_jwt_iat, roles.permissions
 		FROM users
 		JOIN tenants on users.tenant_id = tenants.tenant_id
@@ -15,7 +17,7 @@ func authUser(conn pool.Pool, userID, tenantID, jwtIAT int, isExtension bool) (*
 	if !isExtension {
 		sql = strings.ReplaceAll(sql, "spot_jwt_iat", "jwt_iat")
 	}
-	user := &User{}
+	user := &user.User{}
 	var permissions []string
 	if err := conn.QueryRow(sql, userID, tenantID).
 		Scan(&user.ID, &user.TenantID, &user.Name, &user.Email, &user.JwtIat, &permissions); err != nil {
@@ -32,4 +34,11 @@ func authUser(conn pool.Pool, userID, tenantID, jwtIAT int, isExtension bool) (*
 		return nil, fmt.Errorf("user has no permissions")
 	}
 	return user, nil
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

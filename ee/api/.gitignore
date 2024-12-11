@@ -184,7 +184,6 @@ Pipfile.lock
 /build.sh
 /build_alerts.sh
 /build_crons.sh
-/chalicelib/core/alerts.py
 /chalicelib/core/announcements.py
 /chalicelib/core/assist.py
 /chalicelib/core/authorizers.py
@@ -286,3 +285,8 @@ Pipfile.lock
 /chalicelib/utils/ch_client.py
 /chalicelib/utils/ch_client_exp.py
 /routers/subs/product_anaytics.py
+/chalicelib/core/alerts/__init__.py
+/chalicelib/core/alerts/alerts.py
+/chalicelib/core/alerts/alerts_processor.py
+/chalicelib/core/alerts/alerts_processor_ch.py
+/chalicelib/core/sessions_ch.py

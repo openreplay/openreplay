@@ -11,6 +11,7 @@ import (
 type Config struct {
 	common.Config
 	common.Postgres
+	common.Clickhouse
 	redis.Redis
 	ProjectExpiration  time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
 	LoggerTimeout      int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`

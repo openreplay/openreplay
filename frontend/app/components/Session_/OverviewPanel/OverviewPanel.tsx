@@ -135,7 +135,6 @@ function WebOverviewPanelCont() {
     'ERRORS',
     'NETWORK',
   ]);
-  const globalTabs = ['FRUSTRATIONS', 'ERRORS']
 
   const { endTime, currentTab, tabStates } = store.get();
 
@@ -347,7 +346,7 @@ function PanelComponent({
                 list={selectedFeatures}
                 updateList={setSelectedFeatures}
               />
-              <TabSelector />
+              {!isMobile ? <TabSelector /> : null}
               <TimelineZoomButton />
             </div>
           )}
@@ -370,7 +369,14 @@ function PanelComponent({
                   </div>
                 }
               >
-                {isSpot ? <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} /> : <VerticalPointerLine />}
+                {isSpot ? (
+                  <VerticalPointerLineComp
+                    time={spotTime}
+                    endTime={spotEndTime}
+                  />
+                ) : (
+                  <VerticalPointerLine />
+                )}
                 {selectedFeatures.map((feature: any, index: number) => (
                   <div
                     key={feature}
@@ -381,7 +387,7 @@ function PanelComponent({
                     <EventRow
                       isGraph={feature === 'PERFORMANCE'}
                       title={feature}
-                      disabled={!showSingleTab}
+                      disabled={!isMobile && !showSingleTab}
                       list={resources[feature]}
                       renderElement={(pointer: any[], isGrouped: boolean) => (
                         <TimelinePointer

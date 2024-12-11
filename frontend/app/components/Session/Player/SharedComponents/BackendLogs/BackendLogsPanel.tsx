@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
-import { PlayerContext } from "App/components/Session/playerContext";
+import { PlayerContext } from 'App/components/Session/playerContext';
 import { processLog, UnifiedLog } from './utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -13,13 +13,10 @@ import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
 import { capitalize } from 'App/utils';
 import { Icon } from 'UI';
 import { Segmented, Input, Tooltip } from 'antd';
-import {SearchOutlined} from '@ant-design/icons';
+import { SearchOutlined } from '@ant-design/icons';
 import { client } from 'App/mstore';
-import { FailedFetch, LoadingFetch } from "./StatusMessages";
-import {
-  TableHeader,
-  LogRow
-} from './Table'
+import { FailedFetch, LoadingFetch } from './StatusMessages';
+import { TableHeader, LogRow } from './Table';
 
 async function fetchLogs(
   tab: string,
@@ -31,23 +28,24 @@ async function fetchLogs(
   );
   const json = await data.json();
   try {
-    const logsResp = await fetch(json.url)
+    const logsResp = await fetch(json.url);
     if (logsResp.ok) {
-      const logJson = await logsResp.json()
-      if (logJson.length === 0) return []
-      return processLog(logJson)
+      const logJson = await logsResp.json();
+      if (logJson.length === 0) return [];
+      return processLog(logJson);
     } else {
-      throw new Error('Failed to fetch logs')
+      throw new Error('Failed to fetch logs');
     }
   } catch (e) {
-    console.log(e)
-    throw e
+    console.log(e);
+    throw e;
   }
 }
 
 function BackendLogsPanel() {
   const { projectsStore, sessionStore, integrationsStore } = useStore();
-  const integratedServices = integrationsStore.integrations.backendLogIntegrations;
+  const integratedServices =
+    integrationsStore.integrations.backendLogIntegrations;
   const defaultTab = integratedServices[0]!.name;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
@@ -83,59 +81,59 @@ function BackendLogsPanel() {
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
-        <div className='flex items-center justify-between w-full'>
-            <div className={'flex gap-2 items-center'}>
-              <div className={'font-semibold'}>Traces</div>
-              {tabs.length && tab ? (
-                <div>
-                  <Segmented options={tabs} value={tab} onChange={setTab} size='small' />
-                </div>
-              ) : null}
-            </div>
-
-            <div className='flex items-center gap-2'>
-              <Segmented
-              options={[
-                { label: 'All Tabs', value: 'all',   },
-                { label: (
-                  <Tooltip title="Backend logs are fetched for all tabs combined.">
-                     <span>Current Tab</span>
-                     </Tooltip>),
-                  value: 'current', disabled: true},
-              ]}
-              defaultValue="all" 
-              size="small"
-              className="rounded-full font-medium"
-          />
-
-
-                <Input
-                  className="rounded-lg"
-                  placeholder="Filter by keyword"
-                  name="filter"
-                  onChange={onFilterChange}
-                  value={filter}
-                  size='small'
-                  prefix={<SearchOutlined className='text-neutral-400' />}
+        <div className="flex items-center justify-between w-full">
+          <div className={'flex gap-2 items-center'}>
+            <div className={'font-semibold'}>Traces</div>
+            {tabs.length && tab ? (
+              <div>
+                <Segmented
+                  options={tabs}
+                  value={tab}
+                  onChange={setTab}
+                  size="small"
                 />
               </div>
-           
-        </div>  
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Segmented
+              options={[
+                { label: 'All Tabs', value: 'all' },
+                {
+                  label: (
+                    <Tooltip title="Backend logs are fetched for all tabs combined.">
+                      <span>Current Tab</span>
+                    </Tooltip>
+                  ),
+                  value: 'current',
+                  disabled: true,
+                },
+              ]}
+              defaultValue="all"
+              size="small"
+              className="rounded-full font-medium"
+            />
+
+            <Input
+              className="rounded-lg"
+              placeholder="Filter by keyword"
+              name="filter"
+              onChange={onFilterChange}
+              value={filter}
+              size="small"
+              prefix={<SearchOutlined className="text-neutral-400" />}
+            />
+          </div>
+        </div>
       </BottomBlock.Header>
 
       <BottomBlock.Content className="overflow-y-auto">
-        {isPending ? (
-          <LoadingFetch provider={capitalize(tab)} />
-        ) : null}
+        {isPending ? <LoadingFetch provider={capitalize(tab)} /> : null}
         {isError ? (
-          <FailedFetch
-            provider={capitalize(tab)}
-            onRetry={refetch}
-          />
+          <FailedFetch provider={capitalize(tab)} onRetry={refetch} />
         ) : null}
-        {isSuccess ? (
-          <LogsTable data={data} />
-        ) : null}
+        {isSuccess ? <LogsTable data={data} /> : null}
       </BottomBlock.Content>
     </BottomBlock>
   );
@@ -148,8 +146,10 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
   const _list = React.useRef<VListHandle>(null);
   const activeIndex = React.useMemo(() => {
     const currTs = time + sessionStart;
-    const index = data.findIndex(
-      (log) => log.timestamp !== 'N/A' ? new Date(log.timestamp).getTime() >= currTs : false
+    const index = data.findIndex((log) =>
+      log.timestamp !== 'N/A'
+        ? new Date(log.timestamp).getTime() >= currTs
+        : false
     );
     return index === -1 ? data.length - 1 : index;
   }, [time, data.length]);
@@ -161,17 +161,22 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
 
   const onJump = (ts: number) => {
     player.jump(ts - sessionStart);
-  }
+  };
   return (
     <>
       <TableHeader size={data.length} />
       <VList ref={_list} count={data.length}>
         {data.map((log, index) => (
-          <LogRow key={index} isActive={index === activeIndex} log={log} onJump={onJump} />
+          <LogRow
+            key={index}
+            isActive={index === activeIndex}
+            log={log}
+            onJump={onJump}
+          />
         ))}
       </VList>
     </>
-  )
+  );
 });
 
 export default observer(BackendLogsPanel);
