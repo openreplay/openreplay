@@ -20,7 +20,7 @@
   "dependencies": {
     "@maxmind/geoip2-node": "^4.2.0",
     "@socket.io/redis-adapter": "^8.2.1",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "prom-client": "^15.0.0",
     "redis": "^4.6.10",
