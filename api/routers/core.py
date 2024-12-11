@@ -9,8 +9,8 @@ from chalicelib.core import sourcemaps, events, projects, alerts, issues, \
     log_tools, sessions, announcements, \
     weekly_report, assist, mobile, tenants, boarding, \
     notifications, webhook, users, custom_metrics, saved_search, tags, autocomplete
-from chalicelib.core.issue_tracking import integration_github, integrations_global, integrations_manager, \
-    integration_jira_cloud
+from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
+    jira_cloud
 from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
     sentry, bugsnag, cloudwatch, sumologic, rollbar
 from chalicelib.core.sessions import sessions_assignments
@@ -70,16 +70,16 @@ def get_integrations_status(projectId: int, context: schemas.CurrentContext = De
 
 
 @app.post('/{projectId}/integrations/{integration}/notify/{webhookId}/{source}/{sourceId}', tags=["integrations"])
-def integration_notify(projectId: int, integration: str, webhookId: int, source: str, sourceId: str,
-                       data: schemas.IntegrationNotificationSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
+def notify(projectId: int, integration: str, webhookId: int, source: str, sourceId: str,
+           data: schemas.IntegrationNotificationSchema = Body(...),
+           context: schemas.CurrentContext = Depends(OR_context)):
     comment = None
     if data.comment:
         comment = data.comment
 
     args = {"tenant_id": context.tenant_id,
             "user": context.email, "comment": comment, "project_id": projectId,
-            "integration_id": webhookId,
+            "id": webhookId,
             "project_name": context.project.name}
     if integration == schemas.WebhookType.SLACK:
         if source == "sessions":
@@ -310,7 +310,7 @@ def delete_sumologic(projectId: int, _=Body(None), context: schemas.CurrentConte
 
 
 @app.get('/integrations/issues', tags=["integrations"])
-def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
+def get_status(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
@@ -319,20 +319,20 @@ def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)
 
 
 @app.get('/integrations/jira', tags=["integrations"])
-def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
+def get_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
-                                                              tool=integration_jira_cloud.PROVIDER)
+                                                              tool=jira_cloud.PROVIDER)
     if error is not None and integration is None:
         return error
     return {"data": integration.get_obfuscated()}
 
 
 @app.get('/integrations/github', tags=["integrations"])
-def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_context)):
+def get_status_github(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
-                                                              tool=integration_github.PROVIDER)
+                                                              tool=github.PROVIDER)
     if error is not None and integration is None:
         return error
     return {"data": integration.get_obfuscated()}
@@ -343,7 +343,7 @@ def add_edit_jira_cloud(data: schemas.IssueTrackingJiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     if not str(data.url).rstrip('/').endswith('atlassian.net'):
         return {"errors": ["url must be a valid JIRA URL (example.atlassian.net)"]}
-    error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
+    error, integration = integrations_manager.get_integration(tool=jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
@@ -354,7 +354,7 @@ def add_edit_jira_cloud(data: schemas.IssueTrackingJiraSchema = Body(...),
 @app.post('/integrations/github', tags=["integrations"])
 def add_edit_github(data: schemas.IssueTrackingGithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
+    error, integration = integrations_manager.get_integration(tool=github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -373,7 +373,7 @@ def delete_default_issue_tracking_tool(_=Body(None), context: schemas.CurrentCon
 
 @app.delete('/integrations/jira', tags=["integrations"])
 def delete_jira_cloud(_=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
+    error, integration = integrations_manager.get_integration(tool=jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
                                                               for_delete=True)
@@ -384,7 +384,7 @@ def delete_jira_cloud(_=Body(None), context: schemas.CurrentContext = Depends(OR
 
 @app.delete('/integrations/github', tags=["integrations"])
 def delete_github(_=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
+    error, integration = integrations_manager.get_integration(tool=github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
                                                               for_delete=True)
@@ -409,7 +409,7 @@ def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR
 
 
 @app.get('/integrations/issues/{integrationProjectId}', tags=["integrations"])
-def get_integration_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -731,7 +731,7 @@ def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/integrations/slack/{integrationId}', tags=["integrations"])
 def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)}
+    return {"data": Slack.get_integration(tenant_id=context.tenant_id, id=integrationId)}
 
 
 @app.delete('/integrations/slack/{integrationId}', tags=["integrations"])
@@ -834,7 +834,7 @@ def add_msteams_integration(data: schemas.AddCollaborationSchema,
 def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url.unicode_string()) > 0:
-        old = MSTeams.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)
+        old = MSTeams.get_integration(tenant_id=context.tenant_id, id=webhookId)
         if not old:
             return {"errors": ["MsTeams integration not found."]}
         if old["endpoint"] != data.url.unicode_string():

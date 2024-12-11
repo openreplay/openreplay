@@ -1,7 +1,7 @@
-from chalicelib.core.issue_tracking import integration_github, integration_jira_cloud
+from chalicelib.core.issue_tracking import github, jira_cloud
 from chalicelib.utils import pg_client
 
-SUPPORTED_TOOLS = [integration_github.PROVIDER, integration_jira_cloud.PROVIDER]
+SUPPORTED_TOOLS = [github.PROVIDER, jira_cloud.PROVIDER]
 
 
 def get_available_integrations(user_id):
@@ -23,7 +23,7 @@ def get_available_integrations(user_id):
 
 def __get_default_integration(user_id):
     current_integrations = get_available_integrations(user_id)
-    return integration_github.PROVIDER if current_integrations["github"] else integration_jira_cloud.PROVIDER if \
+    return github.PROVIDER if current_integrations["github"] else jira_cloud.PROVIDER if \
         current_integrations["jira"] else None
 
 
@@ -35,11 +35,11 @@ def get_integration(tenant_id, user_id, tool=None, for_delete=False):
     tool = tool.upper()
     if tool not in SUPPORTED_TOOLS:
         return {"errors": [f"issue tracking tool not supported yet, available: {SUPPORTED_TOOLS}"]}, None
-    if tool == integration_jira_cloud.PROVIDER:
-        integration = integration_jira_cloud.JIRAIntegration(tenant_id=tenant_id, user_id=user_id)
+    if tool == jira_cloud.PROVIDER:
+        integration = jira_cloud.JIRAIntegration(tenant_id=tenant_id, user_id=user_id)
         if not for_delete and integration.integration is not None and not integration.integration.get("valid", True):
             return {"errors": ["JIRA: connexion issue/unauthorized"]}, integration
         return None, integration
-    elif tool == integration_github.PROVIDER:
-        return None, integration_github.GitHubIntegration(tenant_id=tenant_id, user_id=user_id)
+    elif tool == github.PROVIDER:
+        return None, github.GitHubIntegration(tenant_id=tenant_id, user_id=user_id)
     return {"errors": ["lost integration"]}, None
