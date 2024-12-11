@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
-import { Tabs, Input, Icon, NoContent } from 'UI';
+import { Tabs, Input, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
-import { IOSPlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
+import {
+  IOSPlayerContext,
+  MobilePlayerContext,
+} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { VList, VListHandle } from 'virtua';
 import { useStore } from 'App/mstore';
@@ -12,6 +15,7 @@ import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorD
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
+import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -26,7 +30,10 @@ const LEVEL_TAB = {
   [LogLevel.EXCEPTION]: ERRORS,
 } as const;
 
-const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
+const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({
+  text: tab,
+  key: tab,
+}));
 
 function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
@@ -73,20 +80,23 @@ function MobileConsolePanel() {
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } = React.useContext<IOSPlayerContext>(MobilePlayerContext);
+  const { player, store } =
+    React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const jump = (t: number) => player.jump(t);
 
-  const {
-    logList,
-    logListNow,
-    exceptionsListNow,
-  } = store.get();
+  const { logList, logListNow, exceptionsListNow } = store.get();
 
   const list = logList as ILog[];
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
-  filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
+  filteredList = useTabListFilterMemo(
+    filteredList,
+    (l) => LEVEL_TAB[l.level],
+    ALL,
+    activeTab
+  );
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
+  const onTabClick = (activeTab: any) =>
+    devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) =>
     devTools.update(INDEX_KEY, { filter: value });
 
@@ -136,34 +146,35 @@ function MobileConsolePanel() {
       <BottomBlock.Header>
         <div className="flex items-center">
           <span className="font-semibold color-gray-medium mr-4">Console</span>
-          <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={false} />
+          <Tabs
+            tabs={TABS}
+            active={activeTab}
+            onClick={onTabClick}
+            border={false}
+          />
         </div>
         <Input
-          className="input-small h-8"
+          className="rounded-lg"
           placeholder="Filter by keyword"
-          icon="search"
           name="filter"
-          height={28}
           onChange={onFilterChange}
           value={filter}
+          size="small"
+          prefix={<SearchOutlined className="text-neutral-400" />}
         />
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
           title={
-            <div className="capitalize flex items-center mt-16">
-              <Icon name="info-circle" className="mr-2" size="18" />
+            <div className="capitalize flex items-center mt-16 gap-2">
+              <InfoCircleOutlined size={18} />
               No Data
             </div>
           }
           size="small"
           show={filteredList.length === 0}
         >
-          <VList
-            ref={_list}
-            itemSize={25}
-            count={filteredList.length || 1}
-          >
+          <VList ref={_list} itemSize={25} count={filteredList.length || 1}>
             {filteredList.map((log, index) => (
               <ConsoleRow
                 key={log.time + index}
@@ -172,6 +183,7 @@ function MobileConsolePanel() {
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
+                showSingleTab
               />
             ))}
           </VList>

@@ -1,4 +1,5 @@
 import Openreplay
+import React
 
 @objc(RnTrackedInputManager)
 class RnTrackedInputManager: RCTViewManager {

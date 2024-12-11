@@ -10,16 +10,8 @@ import com.openreplay.tracker.models.OROptions
 class ReactNativeModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
-  //  private val context = reactContext.acti
   override fun getName(): String {
     return NAME
-  }
-
-  // Example method
-  // See https://reactnative.dev/docs/native-modules-android
-  @ReactMethod
-  fun multiply(a: Double, b: Double, promise: Promise) {
-    promise.resolve(a * b * 2)
   }
 
   companion object {
@@ -33,14 +25,13 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     val logs: Boolean = true,
     val screen: Boolean = true,
     val debugLogs: Boolean = false,
-    val wifiOnly: Boolean = true  // assuming you want this as well
+    val wifiOnly: Boolean = true
   )
 
   private fun getBooleanOrDefault(map: ReadableMap, key: String, default: Boolean): Boolean {
     return if (map.hasKey(key)) map.getBoolean(key) else default
   }
 
-  //    optionsMap: ReadableMap?,
   @ReactMethod
   fun startSession(
     projectKey: String,
@@ -95,14 +86,25 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun getSessionID(promise: Promise) {
+    try {
+      val sessionId = OpenReplay.getSessionID()
+      promise.resolve(sessionId)
+    } catch (e: Exception) {
+      promise.reject("GET_SESSION_ID_ERROR", "Failed to retrieve session ID", e)
+    }
+  }
+
+  @ReactMethod
   fun networkRequest(
     url: String,
     method: String,
     requestJSON: String,
     responseJSON: String,
     status: Int,
-    duration: ULong
+    duration: Double
   ) {
-    OpenReplay.networkRequest(url, method, requestJSON, responseJSON, status, duration)
+    val durationULong = duration.toLong().toULong()
+    OpenReplay.networkRequest(url, method, requestJSON, responseJSON, status, durationULong)
   }
 }

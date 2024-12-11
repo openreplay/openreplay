@@ -106,11 +106,11 @@ const WarnBadge = React.memo(
           >
             <div>
               <div>
-                Tracker version({version}) for this recording is{' '}
+                Tracker version ({version}) for this recording is{' '}
                 {trackerVerDiff === VersionComparison.Lower
                   ? 'lower '
                   : 'ahead of '}
-                the current({trackerVersion}) version.
+                the current ({trackerVersion}) version.
               </div>
               <div>
                 <span>Some recording might display incorrectly.</span>

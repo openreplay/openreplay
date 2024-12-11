@@ -70,6 +70,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
                 jump={jump}
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
+                showSingleTab
               />
             ))}
           </VList>

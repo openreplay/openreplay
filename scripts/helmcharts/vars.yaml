@@ -29,6 +29,7 @@ clickhouse: &clickhouse
   password: ""
   service:
     webPort: 9000
+    dataPort: 8123
 
 # For enterpriseEdition
 quickwit: &quickwit

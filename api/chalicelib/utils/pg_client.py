@@ -166,7 +166,7 @@ class PostgresClient:
 
 
 async def init():
-    logger.info(f">PG_POOL:{config('PG_POOL', default=None)}")
+    logger.info(f">use PG_POOL:{config('PG_POOL', default=True)}")
     if config('PG_POOL', cast=bool, default=True):
         make_pool()
 

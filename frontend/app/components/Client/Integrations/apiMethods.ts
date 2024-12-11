@@ -35,6 +35,13 @@ export function useIntegration<T>(
       return initialValues;
     },
     initialData: initialValues,
+    retry: (failureCount, error) => {
+      const status = error.status || error.response.status
+      if (status === 404) {
+        return false;
+      }
+      return failureCount < 4;
+    }
   });
 
   const saveMutation = useMutation({

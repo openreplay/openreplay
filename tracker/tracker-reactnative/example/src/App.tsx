@@ -31,6 +31,11 @@ export default function App() {
     Openreplay.tracker.setUserID('react-native@connector.me');
   };
 
+  const showId = async () => {
+    const id = await Openreplay.tracker.getSessionID();
+    console.log(id, 'test');
+  };
+
   const apiTest = () => {
     fetch('https://pokeapi.co/api/v2/pokemon/ditto')
       .then((res) => {
@@ -46,6 +51,10 @@ export default function App() {
       <View style={styles.container}>
         <TouchableOpacity onPress={setMetadata}>
           <Text>Set Metadata</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={showId}>
+          <Text>Show ID</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={event}>

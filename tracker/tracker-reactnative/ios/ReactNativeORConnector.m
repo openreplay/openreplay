@@ -12,6 +12,8 @@ RCT_EXTERN_METHOD(startSession:(NSString *)projectKey
 
 RCT_EXTERN_METHOD(stop)
 
+RCT_EXTERN_METHOD(getSessionID:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(setMetadata:(NSString *)key value:(NSString *)value)
 
 RCT_EXTERN_METHOD(event:(NSString *)name object:(NSString *)object)

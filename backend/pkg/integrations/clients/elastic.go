@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8"
@@ -29,7 +28,7 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = elasticsearchConfig{}
 		if val, ok := strCfg["url"].(string); ok {
@@ -55,7 +54,7 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 	// Create Elasticsearch client
 	es, err := elasticsearch.NewClient(clientCfg)
 	if err != nil {
-		log.Fatalf("Error creating the client: %s", err)
+		return nil, fmt.Errorf("error creating the client: %s", err)
 	}
 
 	var buf strings.Builder
@@ -79,17 +78,17 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 		es.Search.WithTrackTotalHits(true),
 	)
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		return nil, fmt.Errorf("error getting response: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Fatalf("Error: %s", res.String())
+		return nil, fmt.Errorf("error: %s", res.String())
 	}
 
 	var r map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Fatalf("Error parsing the response body: %s", err)
+		return nil, fmt.Errorf("error parsing the response body: %s", err)
 	}
 	if r["hits"] == nil {
 		return nil, fmt.Errorf("no logs found")

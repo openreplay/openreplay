@@ -17,12 +17,14 @@ import {
 } from 'recharts';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
+import {Tooltip as TooltipANT} from 'antd';
 
 import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import { useStore } from 'App/mstore'
+import { Segmented } from 'antd'
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -457,15 +459,33 @@ function Performance() {
   return (
     <BottomBlock>
       <BottomBlock.Header>
-        <div className="flex items-center w-full">
-          <div className="font-semibold color-gray-medium mr-auto">Performance</div>
-          <InfoLine>
-            <InfoLine.Point
-              label="Device Heap Size"
-              value={formatBytes(userDeviceHeapSize)}
-              display={true}
-            />
-          </InfoLine>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-3 items-center">
+            <div className="font-semibold color-gray-medium mr-auto">Performance</div>
+            <InfoLine>
+                <InfoLine.Point
+                  label="Device Heap Size"
+                  value={formatBytes(userDeviceHeapSize)}
+                  display={true}
+                />
+              </InfoLine>
+          </div>
+          
+          <div className={'flex items-center gap-3'}>
+            <Segmented
+              options={[
+                {  label: (
+                  <TooltipANT title="Performance overview isn't supported across tabs.">
+                    <span>All Tabs</span>
+                  </TooltipANT>
+                ), value: 'all',  disabled: true, },
+                { label: 'Current Tab', value: 'current' },
+              ]}
+              defaultValue="current" 
+              size="small"
+              className="rounded-full font-medium"
+          />
+          </div>
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>

@@ -436,3 +436,7 @@ p {
   display: flex;
   align-items: center;
 }
+
+.ant-segmented-item{
+  border-radius: .5rem !important;
+}

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Input, Button } from 'UI';
+import {Input, Button, Tooltip} from 'antd';
+import {CloseOutlined, SearchOutlined} from '@ant-design/icons';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 function EventSearch(props) {
   const { player } = React.useContext(PlayerContext);
 
-  const { onChange, value, header, setActiveTab } = props;
+  const { onChange, value, header, setActiveTab, eventsText } = props;
 
   const toggleEvents = () => player.toggleEvents();
 
@@ -16,25 +17,25 @@ function EventSearch(props) {
           <Input
             autoFocus
             type="text"
-            placeholder="Filter"
-            className="inset-0 w-full"
+            placeholder={`Filter ${eventsText}`}
+            className="w-full rounded-lg"
             name="query"
             value={value}
             onChange={onChange}
-            wrapperClassName="w-full"
-            style={{ height: '32px' }}
-            autoComplete="off chromebugfix"
+            prefix={<SearchOutlined />}
           />
 
-          <Button
-            className="ml-2"
-            icon="close"
-            variant="text"
-            onClick={() => {
-              setActiveTab('');
-              toggleEvents();
-            }}
-          />
+          <Tooltip title="Close Panel" placement='bottom' >
+              <Button
+                className="ml-2"
+                type='text'
+                onClick={() => {
+                  setActiveTab('');
+                  toggleEvents();
+                }}
+                icon={<CloseOutlined />}
+              />
+          </Tooltip>
         </div>
       </div>
     </div>

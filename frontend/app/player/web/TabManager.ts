@@ -163,15 +163,7 @@ export default class TabSessionManager {
    * Because we use main state (from messageManager), we have to update it this way
    * */
   updateLocalState(state: Partial<TabState>) {
-    this.state.update({
-      tabStates: {
-        ...this.state.get().tabStates,
-        [this.id]: {
-          ...this.state.get().tabStates[this.id],
-          ...state,
-        },
-      },
-    });
+    this.state.updateTabStates(this.id, state);
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
@@ -202,6 +194,7 @@ export default class TabSessionManager {
     );
   }
 
+  firstTitleSet = false
   distributeMessage(msg: Message): void {
     this.lastMessageTs = msg.time;
     switch (msg.tp) {
@@ -242,6 +235,10 @@ export default class TabSessionManager {
       case MType.SetPageLocationDeprecated:
       case MType.SetPageLocation:
         this.locationManager.append(msg);
+        if ('documentTitle' in msg && !this.firstTitleSet) {
+          this.state.update({ tabNames: { ...this.state.get().tabNames, [this.id]: msg.documentTitle } });
+          this.firstTitleSet = true
+        }
         if (msg.navigationStart > 0) {
           this.loadedLocationManager.append(msg);
         }
@@ -414,8 +411,9 @@ export default class TabSessionManager {
     }
 
     Object.assign(stateToUpdate, this.lists.moveGetState(t));
-    Object.keys(stateToUpdate).length > 0 &&
+    if (Object.keys(stateToUpdate).length > 0) {
       this.updateLocalState(stateToUpdate);
+    }
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
     const lastResize = this.resizeManager.moveGetLast(t, index);

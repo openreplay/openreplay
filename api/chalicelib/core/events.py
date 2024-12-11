@@ -1,9 +1,9 @@
 from typing import Optional
 
 import schemas
-from chalicelib.core import autocomplete
+from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core import issues
-from chalicelib.core import sessions_metas
+from chalicelib.core.sessions import sessions_metas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event

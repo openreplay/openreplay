@@ -105,7 +105,7 @@ function PlayerBlockHeader(props: any) {
           )}
         </div>
       </div>
-        <div className="relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
+        <div className="px-2 relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
           <Tabs
             tabs={TABS}
             active={activeTab}

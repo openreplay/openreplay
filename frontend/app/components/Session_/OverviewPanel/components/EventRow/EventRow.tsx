@@ -1,7 +1,9 @@
 import React from 'react';
 import cn from 'classnames';
 import { getTimelinePosition } from 'App/utils';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
+import { InfoCircleOutlined} from '@ant-design/icons'
+import {Tooltip} from 'antd';
 import PerformanceGraph from '../PerformanceGraph';
 interface Props {
   list?: any[];
@@ -13,9 +15,10 @@ interface Props {
   isGraph?: boolean;
   zIndex?: number;
   noMargin?: boolean;
+  disabled?: boolean;
 }
 const EventRow = React.memo((props: Props) => {
-  const { title, className, list = [], endTime = 0, isGraph = false, message = '' } = props;
+  const { title, className, list = [], endTime = 0, isGraph = false, message = '', disabled } = props;
   const scale = 100 / endTime;
   const _list =
     isGraph ? [] :
@@ -82,7 +85,7 @@ const EventRow = React.memo((props: Props) => {
       }
 
       return groupedItems;
-    }, [list]);
+    }, [list.length]);
 
   return (
     <div
@@ -91,21 +94,24 @@ const EventRow = React.memo((props: Props) => {
     >
       <div
         className={cn(
-          'uppercase text-sm flex items-center py-1',
+          'uppercase text-sm flex items-center py-1 gap-1',
           props.noMargin ? '' : 'ml-2'
         )}
       >
         <div
           style={{ zIndex: props.zIndex ? props.zIndex : undefined }}
-          className="mr-2 leading-none"
+          className="leading-none mt-0.5"
         >
           {title}
         </div>
-        {message ? <RowInfo message={message} /> : null}
+        
+        <Tooltip title={message} placement='left'>
+            <InfoCircleOutlined className='text-neutral-400' />
+        </Tooltip>
       </div>
       <div className="relative w-full" style={{ zIndex: props.zIndex ? props.zIndex : undefined }}>
         {isGraph ? (
-          <PerformanceGraph list={list} />
+          <PerformanceGraph disabled={disabled} list={list} />
         ) : _list.length > 0 ? (
           _list.map((item: { items: any[], left: number, isGrouped: boolean }, index: number) => {
             const left = item.left
@@ -123,7 +129,7 @@ const EventRow = React.memo((props: Props) => {
             );
           })
         ) : (
-          <div className={cn('color-gray-medium text-sm', props.noMargin ? '' : 'ml-4')}>
+          <div className={cn('color-gray-medium text-xs', props.noMargin ? '' : 'ml-2')}>
             None captured.
           </div>
         )}
@@ -133,11 +139,3 @@ const EventRow = React.memo((props: Props) => {
 });
 
 export default EventRow;
-
-function RowInfo({ message }: any) {
-  return (
-    <Tooltip title={message} delay={0}>
-      <Icon name="info-circle" color="gray-medium" />
-    </Tooltip>
-  );
-}

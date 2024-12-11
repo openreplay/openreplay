@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -35,7 +34,7 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials, got: %+v", credentials)
+			return nil, fmt.Errorf("invalid credentials")
 		}
 		cfg = sentryConfig{}
 		if val, ok := strCfg["organization_slug"].(string); ok {
@@ -62,7 +61,7 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	// Create a new request
 	req, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
 	// Add Authorization header
@@ -72,26 +71,26 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
+		return nil, fmt.Errorf("failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Check if the response status is OK
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Failed to fetch logs, status code: %v", resp.StatusCode)
+		return nil, fmt.Errorf("failed to fetch logs, status code: %v", resp.StatusCode)
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
 	// Parse the JSON response
 	var events []SentryEvent
 	err = json.Unmarshal(body, &events)
 	if err != nil {
-		log.Fatalf("Failed to parse JSON: %v", err)
+		return nil, fmt.Errorf("failed to parse JSON: %v", err)
 	}
 	if events == nil || len(events) == 0 {
 		return nil, fmt.Errorf("no logs found")

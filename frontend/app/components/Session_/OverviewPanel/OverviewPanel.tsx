@@ -1,4 +1,5 @@
 import { Segmented } from 'antd';
+import {InfoCircleOutlined} from '@ant-design/icons'
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -12,6 +13,7 @@ import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import { SummaryButton } from 'Components/Session_/Player/Controls/Controls';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
 import { Icon, NoContent } from 'UI';
+import TabSelector from "../../shared/DevTools/TabSelector";
 
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
@@ -136,14 +138,60 @@ function WebOverviewPanelCont() {
 
   const { endTime, currentTab, tabStates } = store.get();
 
-  const stackEventList = tabStates[currentTab]?.stackList || [];
-  const frustrationsList = tabStates[currentTab]?.frustrationsList || [];
-  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-  const resourceListUnmap = tabStates[currentTab]?.resourceList || [];
-  const fetchList = tabStates[currentTab]?.fetchList || [];
-  const graphqlList = tabStates[currentTab]?.graphqlList || [];
-  const performanceChartData =
-    tabStates[currentTab]?.performanceChartData || [];
+  const tabValues = Object.values(tabStates);
+  const dataSource = uiPlayerStore.dataSource;
+  const showSingleTab = dataSource === 'current';
+
+  const {
+    stackEventList = [],
+    frustrationsList = [],
+    exceptionsList = [],
+    resourceListUnmap = [],
+    fetchList = [],
+    graphqlList = [],
+    performanceChartData = [],
+  } = React.useMemo(() => {
+    if (showSingleTab) {
+      const stackEventList = tabStates[currentTab].stackList;
+      const frustrationsList = tabStates[currentTab].frustrationsList;
+      const exceptionsList = tabStates[currentTab].exceptionsList;
+      const resourceListUnmap = tabStates[currentTab].resourceList;
+      const fetchList = tabStates[currentTab].fetchList;
+      const graphqlList = tabStates[currentTab].graphqlList;
+      const performanceChartData =
+        tabStates[currentTab].performanceChartData;
+
+      return {
+        stackEventList,
+        frustrationsList,
+        exceptionsList,
+        resourceListUnmap,
+        fetchList,
+        graphqlList,
+        performanceChartData,
+      }
+    } else {
+      const stackEventList = tabValues.flatMap((tab) => tab.stackList);
+      // these two are global
+      const frustrationsList = tabValues[0].frustrationsList;
+      const exceptionsList = tabValues[0].exceptionsList;
+      // we can't compute global chart data because some tabs coexist
+      const performanceChartData: any = [];
+      const resourceListUnmap = tabValues.flatMap((tab) => tab.resourceList);
+      const fetchList = tabValues.flatMap((tab) => tab.fetchList);
+      const graphqlList = tabValues.flatMap((tab) => tab.graphqlList);
+
+      return {
+        stackEventList,
+        frustrationsList,
+        exceptionsList,
+        resourceListUnmap,
+        fetchList,
+        graphqlList,
+        performanceChartData,
+      }
+    }
+  }, [tabStates, currentTab, dataSource, tabValues]);
 
   const fetchPresented = fetchList.length > 0;
   const resourceList = resourceListUnmap
@@ -168,7 +216,18 @@ function WebOverviewPanelCont() {
       PERFORMANCE: checkInZoomRange(performanceChartData),
       FRUSTRATIONS: checkInZoomRange(frustrationsList),
     };
-  }, [tabStates, currentTab, zoomEnabled, zoomStartTs, zoomEndTs]);
+  }, [
+    tabStates,
+    currentTab,
+    zoomEnabled,
+    zoomStartTs,
+    zoomEndTs,
+    resourceList.length,
+    exceptionsList.length,
+    stackEventList.length,
+    performanceChartData.length,
+    frustrationsList.length,
+  ]);
 
   const originStr = window.env.ORIGIN || window.location.origin;
   const isSaas = /app\.openreplay\.com/.test(originStr);
@@ -187,6 +246,7 @@ function WebOverviewPanelCont() {
       sessionId={sessionId}
       setZoomTab={setZoomTab}
       zoomTab={zoomTab}
+      showSingleTab={showSingleTab}
     />
   );
 }
@@ -238,6 +298,7 @@ function PanelComponent({
   spotTime,
   spotEndTime,
   onClose,
+  showSingleTab,
 }: any) {
   return (
     <React.Fragment>
@@ -280,12 +341,13 @@ function PanelComponent({
             ) : null}
           </div>
           {isSpot ? null : (
-            <div className="flex items-center h-20 mr-4 gap-2">
-              <TimelineZoomButton />
+            <div className="flex items-center h-20 mr-4 gap-3">
               <FeatureSelection
                 list={selectedFeatures}
                 updateList={setSelectedFeatures}
               />
+              {!isMobile ? <TabSelector /> : null}
+              <TimelineZoomButton />
             </div>
           )}
         </BottomBlock.Header>
@@ -302,12 +364,19 @@ function PanelComponent({
                 style={{ height: '60px', minHeight: 'unset', padding: 0 }}
                 title={
                   <div className="flex items-center">
-                    <Icon name="info-circle" className="mr-2" size="18" />
+                    <InfoCircleOutlined size={18} />
                     Select a debug option to visualize on timeline.
                   </div>
                 }
               >
-                {isSpot ? <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} /> : <VerticalPointerLine />}
+                {isSpot ? (
+                  <VerticalPointerLineComp
+                    time={spotTime}
+                    endTime={spotEndTime}
+                  />
+                ) : (
+                  <VerticalPointerLine />
+                )}
                 {selectedFeatures.map((feature: any, index: number) => (
                   <div
                     key={feature}
@@ -318,6 +387,7 @@ function PanelComponent({
                     <EventRow
                       isGraph={feature === 'PERFORMANCE'}
                       title={feature}
+                      disabled={!isMobile && !showSingleTab}
                       list={resources[feature]}
                       renderElement={(pointer: any[], isGrouped: boolean) => (
                         <TimelinePointer

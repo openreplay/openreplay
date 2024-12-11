@@ -231,6 +231,9 @@ class SearchStore {
       filter.startDate = newTimestamps.startDate;
       filter.endDate = newTimestamps.endDate;
     }
+    // TODO - dedicated API endpoint to get the count of latest sessions, or show X+ sessions
+    delete filter.limit;
+    delete filter.page;
     searchService.checkLatestSessions(filter).then((response: any) => {
       runInAction(() => {
         this.latestList = List(response);

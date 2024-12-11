@@ -1,7 +1,7 @@
 from typing import Optional
 
 from chalicelib.core import roles, traces, assist_records, sessions
-from chalicelib.core import sessions_insights, assist_stats
+from chalicelib.core import assist_stats
 from chalicelib.core import unlock, signals
 from chalicelib.utils import assist_helper
 
@@ -130,13 +130,6 @@ def send_interactions(projectId: int, data: schemas.SignalsSchema = Body(...),
     if "errors" in data:
         return data
     return {'data': data}
-
-
-@app.post('/{projectId}/dashboard/insights', tags=["insights"])
-@app.post('/{projectId}/dashboard/insights', tags=["insights"])
-def sessions_search(projectId: int, data: schemas.GetInsightsSchema = Body(...),
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId)}
 
 
 @public_app.get('/{project_id}/assist-stats/avg', tags=["assist-stats"])

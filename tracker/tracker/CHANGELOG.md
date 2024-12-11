@@ -1,7 +1,24 @@
-# 15.0.0
+## 15.0.3
+
+- fixing `failuresOnly` option for network
+
+## 15.0.2
+
+- fixing crossdomain access check
+
+## 15.0.1
+
+- update dependencies
+- fix for cjs build process
+
+## 15.0.0
 
 - new webvitals messages source (new msg type)
 - new structure for string dictionary (new msg type)
+
+## 14.0.14
+
+- more improvements for crossdomain iframe tracking
 
 ## 14.0.13
 
