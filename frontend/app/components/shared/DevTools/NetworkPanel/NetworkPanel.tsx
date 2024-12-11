@@ -565,7 +565,7 @@ export const NetworkPanelComp = observer(
           render: renderDuration,
         },
       ];
-      if (!showSingleTab) {
+      if (!showSingleTab && !isSpot) {
         cols.unshift({
           label: 'Source',
           width: 64,
@@ -604,7 +604,7 @@ export const NetworkPanelComp = observer(
             )}
           </div>
           <div className={'flex items-center gap-2'}>
-            {!isMobile ? <TabSelector /> : null}
+            {!isMobile && !isSpot ? <TabSelector /> : null}
             <Input
               className="rounded-lg"
               placeholder="Filter by name, type, method or value"

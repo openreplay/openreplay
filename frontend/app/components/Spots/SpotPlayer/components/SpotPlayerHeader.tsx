@@ -143,7 +143,7 @@ function SpotPlayerHeader({
             {browserVersion && (
               <>
                 <div>·</div>
-                <div className="capitalize">Chrome v{browserVersion}</div>
+                <div>Chromium v{browserVersion}</div>
               </>
             )}
             {resolution && (

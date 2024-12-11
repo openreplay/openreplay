@@ -12,7 +12,7 @@ interface Props {
   renderWithNL?: any;
   style?: any;
   onClick?: () => void;
-  getTabNum: (tab: string) => number;
+  getTabNum?: (tab: string) => number;
   showSingleTab: boolean;
 }
 function ConsoleRow(props: Props) {
@@ -45,7 +45,7 @@ function ConsoleRow(props: Props) {
 
   const titleLine = lines[0];
   const restLines = lines.slice(1);
-  const logSource = props.showSingleTab ? -1 : props.getTabNum(log.tabId);
+  const logSource = props.showSingleTab ? -1 : props.getTabNum?.(log.tabId);
   const logTabId = log.tabId
   return (
     <div

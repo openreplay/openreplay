@@ -116,6 +116,7 @@
     "cypress": "^13.3.0",
     "cypress-image-snapshot": "^4.0.1",
     "dotenv": "^6.2.0",
+    "esbuild-loader": "^4.2.2",
     "eslint": "^8.15.0",
     "eslint-plugin-react": "^7.29.4",
     "file-loader": "^6.2.0",
