@@ -17,6 +17,7 @@ rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/custom_metrics_predefined.py
 rm -rf ./chalicelib/core/dashboards.py
 rm -rf ./chalicelib/core/errors_favorite.py
+rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_mobile.py
 rm -rf ./chalicelib/core/feature_flags.py
 rm -rf ./chalicelib/core/funnels.py
@@ -96,3 +97,4 @@ rm -rf ./chalicelib/core/alerts/alerts_processor.py
 rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
 rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/alerts/modules/helpers.py
+rm -rf ./chalicelib/core/errors

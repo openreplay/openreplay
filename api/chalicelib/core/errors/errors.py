@@ -1,18 +1,12 @@
 import json
 
-from decouple import config
-
 import schemas
 from chalicelib.core import sourcemaps
+from chalicelib.core.errors.modules import sessions
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
-
-if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
-    from chalicelib.core import sessions_legacy as sessions
-else:
-    from chalicelib.core import sessions
 
 
 def get(error_id, family=False):

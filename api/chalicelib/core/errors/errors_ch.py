@@ -1,7 +1,7 @@
 from decouple import config
 
 import schemas
-from chalicelib.core import errors_legacy
+from . import errors as errors_legacy
 from chalicelib.core import metrics, metadata
 from chalicelib.core import sessions
 from chalicelib.utils import ch_client, exp_ch_helper
@@ -151,9 +151,6 @@ def __process_tags_map(row):
 
 
 def get_details(project_id, error_id, user_id, **data):
-    if not config("EXP_ERRORS_GET", cast=bool, default=False):
-        return errors_legacy.get_details(project_id, error_id, user_id, **data)
-
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(0)
     MAIN_ERR_SESS_TABLE = exp_ch_helper.get_main_js_errors_sessions_table(0)
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
@@ -166,7 +163,6 @@ def get_details(project_id, error_id, user_id, **data):
     ch_sub_query30.append("error_id = %(error_id)s")
     ch_basic_query = __get_basic_constraints(time_constraint=False)
     ch_basic_query.append("error_id = %(error_id)s")
-
 
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)

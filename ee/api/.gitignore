@@ -196,6 +196,7 @@ Pipfile.lock
 /chalicelib/core/custom_metrics_predefined.py
 /chalicelib/core/dashboards.py
 /chalicelib/core/errors_favorite.py
+/chalicelib/core/events.py
 /chalicelib/core/events_mobile.py
 /chalicelib/core/feature_flags.py
 /chalicelib/core/funnels.py
@@ -276,3 +277,4 @@ Pipfile.lock
 /chalicelib/core/alerts/alerts_processor_ch.py
 /chalicelib/core/alerts/alerts_listener.py
 /chalicelib/core/alerts/modules/helpers.py
+/chalicelib/core/errors/*

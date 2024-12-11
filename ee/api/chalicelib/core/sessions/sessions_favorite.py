@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import sessions_favorite_exp, sessions_mobs, sessions_devtool
+from chalicelib.core.sessions import sessions_favorite_exp, sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client
 from chalicelib.utils.storage import extra
 from decouple import config
@@ -16,7 +16,8 @@ def add_favorite_session(context: schemas.CurrentContext, project_id, session_id
         )
         row = cur.fetchone()
     if row:
-        sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
+        sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=context.user_id,
+                                                   session_id=session_id)
         return {"data": {"sessionId": session_id}}
     return {"errors": ["something went wrong"]}
 
@@ -33,7 +34,8 @@ def remove_favorite_session(context: schemas.CurrentContext, project_id, session
         )
         row = cur.fetchone()
     if row:
-        sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
+        sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=context.user_id,
+                                                      session_id=session_id)
         return {"data": {"sessionId": session_id}}
     return {"errors": ["something went wrong"]}
 
