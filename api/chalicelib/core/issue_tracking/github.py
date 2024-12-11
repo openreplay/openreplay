@@ -1,12 +1,12 @@
 import schemas
-from chalicelib.core.issue_tracking import integration_base
-from chalicelib.core.issue_tracking.integration_github_issue import GithubIntegrationIssue
+from chalicelib.core.issue_tracking import base
+from chalicelib.core.issue_tracking.github_issue import GithubIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
 PROVIDER = schemas.IntegrationType.GITHUB
 
 
-class GitHubIntegration(integration_base.BaseIntegration):
+class GitHubIntegration(base.BaseIntegration):
 
     def __init__(self, tenant_id, user_id):
         self.__tenant_id = tenant_id

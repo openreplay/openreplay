@@ -1,6 +1,6 @@
 import schemas
-from chalicelib.core.issue_tracking import integration_base
-from chalicelib.core.issue_tracking.integration_jira_cloud_issue import JIRACloudIntegrationIssue
+from chalicelib.core.issue_tracking import base
+from chalicelib.core.issue_tracking.jira_cloud_issue import JIRACloudIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
 PROVIDER = schemas.IntegrationType.JIRA
@@ -10,7 +10,7 @@ def obfuscate_string(string):
     return "*" * (len(string) - 4) + string[-4:]
 
 
-class JIRAIntegration(integration_base.BaseIntegration):
+class JIRAIntegration(base.BaseIntegration):
     def __init__(self, tenant_id, user_id):
         self.__tenant_id = tenant_id
         # TODO: enable super-constructor when OAuth is done
