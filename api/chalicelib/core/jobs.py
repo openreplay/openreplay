@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core import sessions_mobs, sessions_devtool
+from chalicelib.core.sessions import sessions_mobs, sessions_devtool
 
 
 class Actions:

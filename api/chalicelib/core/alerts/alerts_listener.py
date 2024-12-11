@@ -1,9 +1,10 @@
+from chalicelib.core.alerts.modules import TENANT_ID
 from chalicelib.utils import pg_client, helper
 
 
 def get_all_alerts():
     with pg_client.PostgresClient(long_query=True) as cur:
-        query = """SELECT -1 AS tenant_id,
+        query = f"""SELECT {TENANT_ID} AS tenant_id,
                            alert_id,
                            projects.project_id,
                            projects.name AS project_name,
