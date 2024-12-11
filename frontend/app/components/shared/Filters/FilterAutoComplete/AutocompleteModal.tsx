@@ -13,6 +13,7 @@ export function AutocompleteModal({
   options,
   isLoading,
   placeholder,
+  commaQuery,
 }: {
   values: string[];
   onClose: () => void;
@@ -22,10 +23,11 @@ export function AutocompleteModal({
   options: { value: string; label: string }[];
   placeholder?: string;
   isLoading?: boolean;
+  commaQuery?: boolean;
 }) {
   const [query, setQuery] = React.useState('');
   const [selectedValues, setSelectedValues] = React.useState<string[]>(
-    values.filter((i) => i.length > 0)
+    values.filter((i) => i && i.length > 0)
   );
 
   const handleInputChange = (value: string) => {
@@ -48,6 +50,11 @@ export function AutocompleteModal({
     onApply(selectedValues);
   };
 
+  const applyQuery = () => {
+    const vals = commaQuery ? query.split(',').map(i => i.trim()) : [query];
+    onApply(vals);
+  }
+
   const sortedOptions = React.useMemo(() => {
     if (values[0] && values[0].length) {
       const sorted = options.sort((a, b) => {
@@ -56,13 +63,30 @@ export function AutocompleteModal({
       return sorted;
     }
     return options;
-  }, [options.length, values]);
+  }, [options, values]);
+
+  const queryBlocks = commaQuery ? query.split(',') : [query];
+  const blocksAmount = queryBlocks.length;
+  // x,y and z
+  const queryStr = React.useMemo(() => {
+    let str = ''
+    queryBlocks.forEach((block, index) => {
+      if (index === blocksAmount - 1 && blocksAmount > 1) {
+        str += ' and '
+      }
+      str += `"${block.trim()}"`
+      if (index < blocksAmount - 2) {
+        str += ', '
+      }
+    })
+    return str;
+  }, [query])
   return (
     <OutsideClickDetectingDiv
       className={cn(
         'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10'
       )}
-      style={{ minWidth: 320, minHeight: 100, top: '100%' }}
+      style={{ width: 360, minHeight: 100, top: '100%' }}
       onClickOutside={() => {
         onClose();
       }}
@@ -73,12 +97,14 @@ export function AutocompleteModal({
         loading={isLoading}
         onChange={(e) => handleInputChange(e.target.value)}
         placeholder={placeholder}
-        className='rounded-lg'
+        className="rounded-lg"
       />
       <Loader loading={isLoading}>
         <>
           <div
-            className={'flex flex-col gap-2 overflow-y-auto py-2'}
+            className={
+              'flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis'
+            }
             style={{ maxHeight: 200 }}
           >
             {sortedOptions.map((item) => (
@@ -97,11 +123,11 @@ export function AutocompleteModal({
             <div className={'border-y border-y-gray-light py-2'}>
               <div
                 className={
-                  'rounded cursor-pointer text-blue hover:bg-active-blue px-2 py-1'
+                  'whitespace-normal rounded cursor-pointer text-blue hover:bg-active-blue px-2 py-1'
                 }
-                onClick={() => onApply([query])}
+                onClick={applyQuery}
               >
-                Apply "{query}"
+                Apply {queryStr}
               </div>
             </div>
           ) : null}
@@ -130,7 +156,7 @@ interface Props {
 export function AutoCompleteContainer(props: Props) {
   const filterValueContainer = useRef<HTMLDivElement>(null);
   const [showValueModal, setShowValueModal] = useState(false);
-  const isEmpty = props.value.length === 0 || !props.value[0].length;
+  const isEmpty = props.value.length === 0 || !props.value[0];
   const onClose = () => setShowValueModal(false);
   const onApply = (values: string[]) => {
     props.onApplyValues(values);

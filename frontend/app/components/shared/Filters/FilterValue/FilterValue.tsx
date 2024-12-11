@@ -95,10 +95,12 @@ function FilterValue(props: Props) {
       <FilterAutoCompleteLocal
         value={value}
         showCloseButton={showCloseButton}
-        onAddValue={onAddValue}
+        onApplyValues={onApplyValues}
         onRemoveValue={(index) => onRemoveValue(index)}
         onSelect={(e, item, index) => debounceOnSelect(e, item, index)}
         icon={filter.icon}
+        placeholder={filter.placeholder}
+        modalProps={{ placeholder: '' }}
         {...props}
       />
     );
