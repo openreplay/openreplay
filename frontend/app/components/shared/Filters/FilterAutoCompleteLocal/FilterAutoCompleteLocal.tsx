@@ -29,7 +29,7 @@ function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose
     values,
   } = props;
   const [options, setOptions] = useState<{ value: string; label: string }[]>(
-    values.map((value) => ({ value, label: value }))
+    values.filter(val => val.length).map((value) => ({ value, label: value }))
   );
 
   const onApplyValues = (values: string[]) => {
