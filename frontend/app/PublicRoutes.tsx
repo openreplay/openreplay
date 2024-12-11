@@ -7,7 +7,6 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import * as routes from 'App/routes';
 
-
 const LOGIN_PATH = routes.login();
 const SIGNUP_PATH = routes.signup();
 const FORGOT_PASSWORD = routes.forgotPassword();

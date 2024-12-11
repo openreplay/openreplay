@@ -19,9 +19,6 @@ const components: any = {
   SessionsOverviewPure: lazy(() => import('Components/Overview')),
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
   FunnelDetailsPure: lazy(() => import('Components/Funnels/FunnelDetails')),
-  FunnelIssueDetails: lazy(
-    () => import('Components/Funnels/FunnelIssueDetails')
-  ),
   FunnelPagePure: lazy(() => import('Components/Funnels/FunnelPage')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   UsabilityTestingPure: lazy(
@@ -36,6 +33,7 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
+  ClipsPure: lazy(() => import('Components/Clips')),
 };
 
 const enhancedComponents: any = {
@@ -48,13 +46,13 @@ const enhancedComponents: any = {
   Onboarding: withSiteIdUpdater(components.OnboardingPure),
   FunnelPage: withSiteIdUpdater(components.FunnelPagePure),
   FunnelsDetails: withSiteIdUpdater(components.FunnelDetailsPure),
-  FunnelIssue: withSiteIdUpdater(components.FunnelIssueDetails),
   Multiview: withSiteIdUpdater(components.MultiviewPure),
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(
     components.UsabilityTestOverviewPure
   ),
+  Clips: withSiteIdUpdater(components.ClipsPure),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
@@ -104,6 +102,8 @@ const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
+
+const CLIPS_PATH = routes.clips();
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore } = useStore();
@@ -251,12 +251,6 @@ function PrivateRoutes() {
         <Route
           exact
           strict
-          path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelIssue}
-        />
-        <Route
-          exact
-          strict
           path={[
             withSiteId(SESSIONS_PATH, siteIdList),
             withSiteId(FFLAGS_PATH, siteIdList),
@@ -279,6 +273,12 @@ function PrivateRoutes() {
           strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(CLIPS_PATH, siteIdList)}
+          component={enhancedComponents.Clips}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />

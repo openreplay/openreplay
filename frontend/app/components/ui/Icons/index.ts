@@ -262,6 +262,7 @@ export { default as Filters_user_alt } from './filters_user_alt';
 export { default as Filters_userid } from './filters_userid';
 export { default as Filters_view } from './filters_view';
 export { default as Flag_na } from './flag_na';
+export { default as Flashlight } from './flashlight';
 export { default as Folder_plus } from './folder_plus';
 export { default as Folder2 } from './folder2';
 export { default as Fullscreen } from './fullscreen';

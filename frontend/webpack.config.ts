@@ -131,6 +131,7 @@ const config: Configuration = {
   performance: {
     hints: false,
   },
+  watchOptions: { ignored: "**/node_modules/**" },
   devServer: {
     // static: path.join(__dirname, "public"),
     historyApiFallback: true,
