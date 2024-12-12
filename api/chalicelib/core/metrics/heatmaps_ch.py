@@ -3,13 +3,9 @@ import logging
 from decouple import config
 
 import schemas
-from chalicelib.core import sessions_mobs, events
+from chalicelib.core import events
+from chalicelib.core.metrics.modules import sessions, sessions_mobs
 from chalicelib.utils import sql_helper as sh
-
-if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
-    from chalicelib.core import sessions_ch as sessions
-else:
-    from chalicelib.core import sessions
 
 from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 

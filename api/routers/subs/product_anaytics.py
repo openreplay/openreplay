@@ -1,8 +1,6 @@
-from typing import Union
-
 import schemas
-from chalicelib.core import product_anaytics2
-from fastapi import Body, Depends
+from chalicelib.core.metrics import product_anaytics2
+from fastapi import Depends
 from or_dependencies import OR_context
 from routers.base import get_routers
 

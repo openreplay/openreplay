@@ -8,7 +8,9 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import scope
-from chalicelib.core import assist, heatmaps, errors, errors_viewed, errors_favorite, signup, feature_flags
+from chalicelib.core import assist, signup, feature_flags
+from chalicelib.core.errors import errors, errors_viewed, errors_favorite
+from chalicelib.core.metrics import heatmaps
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
     sessions_viewed, unprocessed_sessions
 from chalicelib.core import tenants, users, projects, license

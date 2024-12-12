@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 import schemas
-from chalicelib.core import metrics
+from chalicelib.core.metrics import metrics
 
 logger = logging.getLogger(__name__)
 

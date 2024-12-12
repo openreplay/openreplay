@@ -1,7 +1,7 @@
 from typing import List
 
 import schemas
-from chalicelib.core import significance
+from chalicelib.core.metrics.modules import significance
 from chalicelib.utils import helper
 from chalicelib.utils import sql_helper as sh
 

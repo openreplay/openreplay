@@ -1,20 +1,15 @@
 import logging
-
-import schemas
-from chalicelib.core import events, metadata
-from chalicelib.utils import sql_helper as sh
-
-"""
-todo: remove LIMIT from the query
-"""
-
-from typing import List
 import math
 import warnings
 from collections import defaultdict
+from typing import List
 
 from psycopg2.extras import RealDictRow
+
+import schemas
+from chalicelib.core import events, metadata
 from chalicelib.utils import pg_client, helper
+from chalicelib.utils import sql_helper as sh
 
 logger = logging.getLogger(__name__)
 SIGNIFICANCE_THRSH = 0.4

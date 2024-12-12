@@ -1,5 +1,6 @@
 from decouple import config
 
+import schemas
 from chalicelib.utils.storage import StorageClient
 
 
@@ -13,7 +14,7 @@ def __get_devtools_keys(project_id, session_id):
     ]
 
 
-def get_urls(session_id, project_id, check_existence: bool = True):
+def get_urls(session_id, project_id, context: schemas.CurrentContext, check_existence: bool = True):
     results = []
     for k in __get_devtools_keys(project_id=project_id, session_id=session_id):
         if check_existence and not StorageClient.exists(bucket=config("sessions_bucket"), key=k):

@@ -4,6 +4,7 @@ from chalicelib.core import events, metadata, events_mobile, \
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
+from chalicelib.core.modules import MOB_KEY
 
 
 def __is_mobile_session(platform):
@@ -42,6 +43,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
             SELECT
                 s.*,
                 s.session_id::text AS session_id,
+                {MOB_KEY}
                 (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata.column_names()]) + ") AS project_metadata") if group_metadata else ''}
@@ -63,7 +65,7 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 else:
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id, check_existence=False)
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
-                                                                    check_existence=False)
+                                                                    context=context, check_existence=False)
                     data['canvasURL'] = canvas.get_canvas_presigned_urls(session_id=session_id, project_id=project_id)
                     if user_testing.has_test_signals(session_id=session_id, project_id=project_id):
                         data['utxVideo'] = user_testing.get_ux_webcam_signed_url(session_id=session_id,

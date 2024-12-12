@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import requests
 from decouple import config
 
-from chalicelib.core import sourcemaps_parser
+from chalicelib.core.sourcemaps import sourcemaps_parser
 from chalicelib.utils.storage import StorageClient, generators
 
 

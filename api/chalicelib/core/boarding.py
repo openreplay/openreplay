@@ -1,8 +1,8 @@
-from chalicelib.utils import pg_client
 from chalicelib.core import projects
-from chalicelib.core.log_tools import datadog, stackdriver, sentry
-
 from chalicelib.core import users
+from chalicelib.core.log_tools import datadog, stackdriver, sentry
+from chalicelib.core.modules import TENANT_CONDITION
+from chalicelib.utils import pg_client
 
 
 def get_state(tenant_id):
@@ -21,21 +21,23 @@ def get_state(tenant_id):
             recorded = cur.fetchone()["exists"]
             meta = False
             if recorded:
-                cur.execute("""SELECT EXISTS((SELECT 1
+                query = cur.mogrify("""SELECT EXISTS((SELECT 1
                                FROM public.projects AS p
                                         LEFT JOIN LATERAL ( SELECT 1
                                                             FROM public.sessions
                                                             WHERE sessions.project_id = p.project_id
                                                               AND sessions.user_id IS NOT NULL
                                                             LIMIT 1) AS sessions(user_id) ON (TRUE)
-                               WHERE p.deleted_at ISNULL
+                               WHERE {TENANT_CONDITION} AND p.deleted_at ISNULL
                                  AND ( sessions.user_id IS NOT NULL OR p.metadata_1 IS NOT NULL
                                        OR p.metadata_2 IS NOT NULL OR p.metadata_3 IS NOT NULL
                                        OR p.metadata_4 IS NOT NULL OR p.metadata_5 IS NOT NULL
                                        OR p.metadata_6 IS NOT NULL OR p.metadata_7 IS NOT NULL
                                        OR p.metadata_8 IS NOT NULL OR p.metadata_9 IS NOT NULL
                                        OR p.metadata_10 IS NOT NULL )
-                                   )) AS exists;""")
+                                   )) AS exists;""",
+                                    {"tenant_id": tenant_id})
+                cur.execute(query)
 
                 meta = cur.fetchone()["exists"]
 
@@ -78,21 +80,23 @@ def get_state_installing(tenant_id):
 
 def get_state_identify_users(tenant_id):
     with pg_client.PostgresClient() as cur:
-        cur.execute("""SELECT EXISTS((SELECT 1
+        query = cur.mogrify(f"""SELECT EXISTS((SELECT 1
                                        FROM public.projects AS p
                                                 LEFT JOIN LATERAL ( SELECT 1
                                                                     FROM public.sessions
                                                                     WHERE sessions.project_id = p.project_id
                                                                       AND sessions.user_id IS NOT NULL
                                                                     LIMIT 1) AS sessions(user_id) ON (TRUE)
-                                       WHERE p.deleted_at ISNULL
+                                       WHERE {TENANT_CONDITION} AND p.deleted_at ISNULL
                                          AND ( sessions.user_id IS NOT NULL OR p.metadata_1 IS NOT NULL
                                                OR p.metadata_2 IS NOT NULL OR p.metadata_3 IS NOT NULL
                                                OR p.metadata_4 IS NOT NULL OR p.metadata_5 IS NOT NULL
                                                OR p.metadata_6 IS NOT NULL OR p.metadata_7 IS NOT NULL
                                                OR p.metadata_8 IS NOT NULL OR p.metadata_9 IS NOT NULL
                                                OR p.metadata_10 IS NOT NULL )
-                                           )) AS exists;""")
+                                           )) AS exists;""",
+                            {"tenant_id": tenant_id})
+        cur.execute(query)
 
         meta = cur.fetchone()["exists"]
 
