@@ -160,7 +160,17 @@ export default class MetricStore {
   }
 
   changeType(value: string) {
-    const obj: any = { metricType: value };
+    const defaultData = {
+      sessionId: '',
+      sessions: [],
+      issues: [],
+      total: 0,
+      chart: [],
+      namesMap: {},
+      avg: 0,
+      percentiles: []
+    };
+    const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
 
     obj.series = obj.series.slice(0, 1);

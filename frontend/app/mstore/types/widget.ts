@@ -261,6 +261,7 @@ export default class Widget {
     }
 
     update(data: any) {
+        console.log(this.data, data.data)
         runInAction(() => {
             Object.assign(this, data);
         });

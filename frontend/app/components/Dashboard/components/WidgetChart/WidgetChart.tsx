@@ -52,6 +52,7 @@ function WidgetChart(props: Props) {
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
   const _metric: any = metricStore.instance;
+  const data = _metric.data;
   const period = dashboardStore.period;
   const drillDownPeriod = dashboardStore.drillDownPeriod;
   const drillDownFilter = dashboardStore.drillDownFilter;
@@ -61,7 +62,6 @@ function WidgetChart(props: Props) {
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
-  const [data, setData] = useState<any>(metric.data);
   const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState([]);
   const isTableWidget =
@@ -134,10 +134,7 @@ function WidgetChart(props: Props) {
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
-        if (isMounted()) {
-          if (isComparison) setCompData(res);
-          else setData(res);
-        }
+        if (isComparison) setCompData(res);
       })
       .finally(() => {
         setLoading(false);
@@ -210,13 +207,12 @@ function WidgetChart(props: Props) {
   ]);
   useEffect(loadPage, [_metric.page]);
 
-  const renderChart = () => {
+  const renderChart = React.useCallback(() => {
     const { metricType, metricOf } = metric;
     const viewType = metric.viewType;
     const metricWithData = { ...metric, data };
 
     if (metricType === FUNNEL) {
-      console.log(data, compData);
       if (viewType === 'table') {
         return (
           <FunnelTable data={data} compData={compData} />
@@ -503,7 +499,7 @@ function WidgetChart(props: Props) {
 
     console.log('Unknown metric type', metricType, viewType);
     return <div>Unknown metric type</div>;
-  };
+  }, [data, compData, enabledRows, metric]);
 
   return (
     <div ref={ref}>

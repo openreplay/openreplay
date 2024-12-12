@@ -1,10 +1,5 @@
-import React, { useState } from 'react';
-import { formatTimeOrDate } from 'App/date';
-import { Button, Table } from 'antd';
-import type { TableProps } from 'antd';
+import React from 'react';
 import CustomTooltip from "../CustomChartTooltip";
-
-import { Eye, EyeOff } from 'lucide-react';
 import { Styles } from '../../common';
 import {
   ResponsiveContainer,
@@ -16,7 +11,7 @@ import {
   Line,
   Legend,
 } from 'recharts';
-import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   data: any;
@@ -34,7 +29,6 @@ function CustomMetricLineChart(props: Props) {
   const {
     data = { chart: [], namesMap: [] },
     compData = { chart: [], namesMap: [] },
-    params,
     colors,
     onClick = () => null,
     yaxis = { ...Styles.yaxis },
@@ -117,4 +111,4 @@ function CustomMetricLineChart(props: Props) {
   );
 }
 
-export default CustomMetricLineChart;
+export default observer(CustomMetricLineChart);

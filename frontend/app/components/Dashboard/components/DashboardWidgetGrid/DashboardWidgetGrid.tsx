@@ -1,7 +1,6 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
-import { Loader } from 'UI';
 import { observer } from 'mobx-react-lite';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import cn from 'classnames';
