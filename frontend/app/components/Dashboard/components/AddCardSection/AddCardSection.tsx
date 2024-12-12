@@ -235,11 +235,19 @@ const AddCardSection = observer(
       );
     };
     return (
-      <div className={'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2'}>
+      <div
+        className={
+          'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2'
+        }
+      >
         <div className={'flex justify-between p-2'}>
-          <div className={'text-xl font-medium mb-1'}>What do you want to visualize?</div>
+          <div className={'text-xl font-medium mb-1'}>
+            What do you want to visualize?
+          </div>
           {isSaas ? (
-            <div className={'font-medium flex items-center gap-2 cursor-pointer'}>
+            <div
+              className={'font-medium flex items-center gap-2 cursor-pointer'}
+            >
               <Sparkles color={'#3C00FFD8'} size={16} />
               <div className={'ai-gradient'}>Ask AI</div>
             </div>
@@ -253,14 +261,25 @@ const AddCardSection = observer(
           />
         </div>
 
-        <div className='py-2'>
-        <CategoryTab tab={tab} inCards={inCards} />
+        <div className="py-2">
+          <CategoryTab tab={tab} inCards={inCards} />
         </div>
-        <div className={'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'}>
-          <Button className='w-full mt-4 hover:bg-active-blue hover:text-teal' type='text' variant='text' onClick={onExistingClick}>
+        {inCards ? null :
+          <div
+            className={
+              'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
+            }
+          >
+            <Button
+              className="w-full mt-4 hover:bg-active-blue hover:text-teal"
+              type="text"
+              variant="text"
+              onClick={onExistingClick}
+            >
               <FolderOutlined /> Add existing card
-          </Button>
-        </div>
+            </Button>
+          </div>
+        }
       </div>
     );
   }

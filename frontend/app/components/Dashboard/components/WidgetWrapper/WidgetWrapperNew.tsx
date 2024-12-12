@@ -109,7 +109,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => null}
-      id={`widget-${widget.widgetId}`}
+      id={`widget-${widget.metricId}`}
       title={!props.hideName ? widget.name : null}
       extra={[
         <div className="flex items-center" id="no-print">

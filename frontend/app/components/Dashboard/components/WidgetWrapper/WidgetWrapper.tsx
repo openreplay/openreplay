@@ -92,7 +92,8 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   };
 
   const ref: any = useRef(null);
-  const dragDropRef: any = dragRef(dropRef(ref));
+  const dragDropRef: any = isPreview ? null : dragRef(dropRef(ref));
+
   const addOverlay =
     isTemplate ||
     (!isPredefined &&
@@ -120,7 +121,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => {}}
-      id={`widget-${widget.widgetId}`}
+      id={`widget-${widget.metricId}`}
     >
       {addOverlay && (
         <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />

@@ -66,7 +66,7 @@ function WidgetDatatable(props: Props) {
       avg[s] = { itemsCount: 0, total: 0 };
     });
     const tableCols: {
-      title: string;
+      title: React.ReactNode;
       dataIndex: string;
       key: string;
       sorter: any;
@@ -74,7 +74,7 @@ function WidgetDatatable(props: Props) {
     const uniqueColArr = Array.from(columnNames);
     uniqueColArr.forEach((name: string, i) => {
       tableCols.push({
-        title: name,
+        title: <span className={'font-medium'}>{name}</span>,
         dataIndex: name,
         key: name,
         sorter: (a, b) => a[name] - b[name],
