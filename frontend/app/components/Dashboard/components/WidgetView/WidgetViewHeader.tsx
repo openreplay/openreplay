@@ -2,10 +2,13 @@ import React from 'react';
 import cn from 'classnames';
 import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import AddToDashboardButton from 'Components/Dashboard/components/AddToDashboardButton';
 import { Button, Space } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
+import { Link } from 'lucide-react'
+import copy from 'copy-to-clipboard';
+import MetricTypeSelector from "../MetricTypeSelector";
 
 interface Props {
   onClick?: () => void;
@@ -14,8 +17,12 @@ interface Props {
 
 function WidgetViewHeader({ onClick, onSave }: Props) {
   const { metricStore } = useStore();
-  const widget = useObserver(() => metricStore.instance);
+  const widget = metricStore.instance;
 
+  const copyUrl = () => {
+    const url = window.location.href;
+    copy(url)
+  }
   return (
     <div
       className={cn(
@@ -32,6 +39,8 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
       </h1>
       <Space>
         <AddToDashboardButton metricId={widget.metricId} />
+        <MetricTypeSelector />
+        <Button onClick={copyUrl} icon={<Link size={16} strokeWidth={1} />}></Button>
         <Button
           type="primary"
           onClick={onSave}
@@ -46,4 +55,4 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
   );
 }
 
-export default WidgetViewHeader;
+export default observer(WidgetViewHeader);

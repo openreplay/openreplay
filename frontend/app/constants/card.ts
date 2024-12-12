@@ -19,7 +19,7 @@ export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';
 export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
-export const INSIGHTS = 'insights';
+export const INSIGHTS = 'insights'; // SaaS and EE
 export const PERFORMANCE = 'performance';
 
 export interface Option {
@@ -51,22 +51,22 @@ export const TYPES: CardType[] = [
     slug: HEATMAP,
     subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
-  {
-    title: 'Table',
-    icon: 'list-alt',
-    description: 'Create custom tables of users, sessions, errors, issues and more.',
-    slug: TABLE,
-    subTypes: [
-      { title: 'Users', slug: FilterKey.USERID, description: '' },
-      { title: 'Sessions', slug: FilterKey.SESSIONS, description: '' },
-      { title: 'JS Errors', slug: FilterKey.ERRORS, description: '' },
-      { title: 'Issues', slug: FilterKey.ISSUE, description: '' },
-      { title: 'Browser', slug: FilterKey.USER_BROWSER, description: '' },
-      { title: 'Devices', slug: FilterKey.USER_DEVICE, description: '' },
-      { title: 'Countries', slug: FilterKey.USER_COUNTRY, description: '' },
-      { title: 'URLs', slug: FilterKey.LOCATION, description: '' },
-    ],
-  },
+  // {
+  //   title: 'Table',
+  //   icon: 'list-alt',
+  //   description: 'Create custom tables of users, sessions, errors, issues and more.',
+  //   slug: TABLE,
+  //   subTypes: [
+  //     { title: 'Users', slug: FilterKey.USERID, description: '' },
+  //     { title: 'Sessions', slug: FilterKey.SESSIONS, description: '' },
+  //     { title: 'JS Errors', slug: FilterKey.ERRORS, description: '' },
+  //     { title: 'Issues', slug: FilterKey.ISSUE, description: '' },
+  //     { title: 'Browser', slug: FilterKey.USER_BROWSER, description: '' },
+  //     { title: 'Devices', slug: FilterKey.USER_DEVICE, description: '' },
+  //     { title: 'Countries', slug: FilterKey.USER_COUNTRY, description: '' },
+  //     { title: 'URLs', slug: FilterKey.LOCATION, description: '' },
+  //   ],
+  // },
   {
     title: 'Funnel',
     icon: 'funnel',

@@ -177,7 +177,7 @@ export const EventsList = observer((props: Props) => {
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
-      className={'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter overflow-hidden'}
+      className={'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter'}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,

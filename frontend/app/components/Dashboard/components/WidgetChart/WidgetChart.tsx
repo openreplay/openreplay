@@ -501,6 +501,7 @@ function WidgetChart(props: Props) {
       }
     }
 
+    console.log('Unknown metric type', metricType, viewType);
     return <div>Unknown metric type</div>;
   };
 
@@ -509,7 +510,7 @@ function WidgetChart(props: Props) {
       <Loader loading={loading} style={{ height: `240px` }}>
         <div
           style={{
-            minHeight: 240,
+            minHeight: props.isPreview ? undefined : 240,
             paddingTop:
               props.isPreview && metric.metricType === TIMESERIES
                 ? '1.5rem'
