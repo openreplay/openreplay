@@ -97,8 +97,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
   return (
     <Card
       className={cn(
-        'relative group rounded-lg hover:border-teal transition-all duration-200',
-        'col-span-' + widget.config.col,
+        'relative group rounded-lg hover:border-teal transition-all duration-200 w-full',
         { 'hover:shadow-sm': !isTemplate && isWidget },
       )}
       style={{

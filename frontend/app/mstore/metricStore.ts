@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from "mobx";
 import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
@@ -11,10 +11,34 @@ import {
   INSIGHTS,
   HEATMAP,
   USER_PATH,
-  RETENTION
+  RETENTION,
+  CATEGORIES,
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
+import { FilterKey } from 'Types/filter/filterType';
+
+const cardToCategory = (cardType: string) => {
+  switch (cardType) {
+    case TIMESERIES:
+    case FUNNEL:
+    case USER_PATH:
+    case HEATMAP:
+      return CATEGORIES.product_analytics;
+    case FilterKey.ERRORS:
+    case FilterKey.FETCH:
+    case TIMESERIES + '_4xx_requests':
+    case TIMESERIES + '_slow_network_requests':
+      return CATEGORIES.monitors;
+    case FilterKey.LOCATION:
+    case FilterKey.USER_BROWSER:
+    case FilterKey.REFERRER:
+    case FilterKey.USERID:
+      return CATEGORIES.web_analytics;
+    default:
+      return CATEGORIES.product_analytics;
+  }
+}
 
 interface MetricFilter {
   query?: string;
@@ -43,6 +67,8 @@ export default class MetricStore {
 
   clickMapSearch = '';
   clickMapLabel = '';
+
+  cardCategory: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -77,6 +103,10 @@ export default class MetricStore {
   // State Actions
   init(metric?: Widget | null) {
     this.instance.update(metric || new Widget());
+  }
+
+  setCardCategory(category: string) {
+    this.cardCategory = category;
   }
 
   updateKey(key: string, value: any) {
@@ -283,7 +313,12 @@ export default class MetricStore {
     return metricService
       .getMetric(id)
       .then((metric: any) => {
-        return (this.instance = new Widget().fromJson(metric, period));
+        const inst = new Widget().fromJson(metric, period)
+        runInAction(() => {
+          this.instance = inst;
+          this.cardCategory = cardToCategory(inst.metricType);
+        })
+        return inst;
       })
       .finally(() => {
         this.setLoading(false);

@@ -27,6 +27,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
+  CATEGORIES,
 } from 'App/constants/card';
 import { useHistory } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
@@ -40,8 +41,8 @@ interface TabItem {
   description: string;
   type: string;
 }
-const tabItems: Record<string, TabItem[]> = {
-  product_analytics: [
+export const tabItems: Record<string, TabItem[]> = {
+  [CATEGORIES.product_analytics]: [
     {
       icon: <LineChart width={16} />,
       title: 'Trends',
@@ -75,7 +76,7 @@ const tabItems: Record<string, TabItem[]> = {
       description: 'Visualize user interaction patterns on your pages.',
     },
   ],
-  monitors: [
+  [CATEGORIES.monitors]: [
     {
       icon: (
         <Icon name={'dashboards/circle-alert'} color={'inherit'} size={16} />
@@ -103,7 +104,7 @@ const tabItems: Record<string, TabItem[]> = {
       description: 'Pinpoint the slowest network requests causing delays.',
     },
   ],
-  web_analytics: [
+  [CATEGORIES.web_analytics]: [
     {
       icon: <FileStack width={16} />,
       title: 'Top Pages',
@@ -168,6 +169,7 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
       cardData.series.filter = [];
     }
 
+    metricStore.setCardCategory(tab);
     metricStore.merge(cardData);
     metricStore.instance.resetDefaults();
 

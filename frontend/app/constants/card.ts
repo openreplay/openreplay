@@ -22,6 +22,13 @@ export const RETENTION = 'retention';
 export const INSIGHTS = 'insights'; // SaaS and EE
 export const PERFORMANCE = 'performance';
 
+export const CATEGORIES = {
+  product_analytics: 'product_analytics',
+  monitors: 'monitors',
+  web_analytics: 'web_analytics',
+}
+
+
 export interface Option {
   label: string;
   icon: string;

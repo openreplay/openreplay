@@ -33,13 +33,13 @@ function DashboardWidgetGrid(props: Props) {
         </div>
       ) : (
         <div
-          className="pb-10 px-4 pt-2 flex flex-col gap-2 rounded"
+          className="pb-10 px-4 pt-2 grid gap-2 rounded grid-cols-4 items-start "
           id={props.id}
         >
           {list?.map((item: any, index: any) => (
             <div
               key={item.widgetId}
-              className={cn('grid gap-4 grid-cols-4 items-start group relative px-6 py-2 hover:bg-active-blue w-full')}
+              className={cn('col-span-' + item.config.col, 'group relative px-6 py-2 hover:bg-active-blue w-full')}
             >
               <WidgetWrapperNew
                 index={index}
