@@ -384,7 +384,7 @@ WITH {initial_sessions_cte}
 SELECT *
 FROM pre_ranked_events;"""
         logger.debug("---------Q1-----------")
-        ch.execute(query=ch_query1, params=params)
+        ch.execute(query=ch_query1, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
             logger.warning(ch.format(ch_query1, params))
@@ -411,7 +411,7 @@ WITH pre_ranked_events AS (SELECT *
 SELECT *
 FROM ranked_events;"""
         logger.debug("---------Q2-----------")
-        ch.execute(query=ch_query2, params=params)
+        ch.execute(query=ch_query2, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
             logger.warning(ch.format(ch_query2, params))
@@ -426,7 +426,7 @@ SELECT *
 FROM ({" UNION ALL ".join(projection_query)}) AS chart_steps
 ORDER BY event_number_in_session;"""
         logger.debug("---------Q3-----------")
-        rows = ch.execute(query=ch_query3, params=params)
+        rows = ch.execute(query=ch_query3, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
             logger.warning(ch.format(ch_query3, params))
