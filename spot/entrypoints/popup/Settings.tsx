@@ -2,26 +2,29 @@ import { createSignal, onMount } from "solid-js";
 import orLogo from "~/assets/orSpot.svg";
 import arrowLeft from "~/assets/arrow-left.svg";
 
+const defaultIngest = "https://app.openreplay.com";
+
 function Settings({ goBack }: { goBack: () => void }) {
   const [includeDevTools, setIncludeDevTools] = createSignal(true);
   const [openInNewTab, setOpenInNewTab] = createSignal(true);
   const [showIngest, setShowIngest] = createSignal(false);
-  const [ingest, setIngest] = createSignal("https://app.openreplay.com");
+  const [ingest, setIngest] = createSignal(defaultIngest);
   const [editIngest, setEditIngest] = createSignal(false);
   const [tempIngest, setTempIngest] = createSignal("");
 
   onMount(() => {
     chrome.storage.local.get("settings", (data: any) => {
       if (data.settings) {
+        console.log('update state', data.settings)
         const ingest =
-          data.settings.ingestPoint || "https://app.openreplay.com";
+          data.settings.ingestPoint || defaultIngest;
         const devToolsEnabled =
           data.settings.consoleLogs && data.settings.networkLogs;
         setOpenInNewTab(data.settings.openInNewTab ?? false);
         setIncludeDevTools(devToolsEnabled);
         setIngest(ingest);
         setTempIngest(ingest);
-        setShowIngest(ingest !== "https://app.openreplay.com");
+        setShowIngest(ingest !== defaultIngest);
         setEditIngest(!data.settings.ingestPoint);
       }
     });
@@ -38,15 +41,19 @@ function Settings({ goBack }: { goBack: () => void }) {
     });
   };
 
-  const toggleShowIngest = (e: Event) => {
+  const toggleShowIngest = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
-    const value = showIngest();
-    setShowIngest(!value);
+    const value = e.target.checked
+    const newSettings = { showIngest: value }
+    if (!value) {
+      newSettings['ingestPoint'] = defaultIngest
+    }
     chrome.runtime.sendMessage({
       type: "ort:settings",
-      settings: { showIngest: !value },
+      settings: newSettings,
     });
+    setShowIngest(value);
   };
 
   const applyIngest = () => {
