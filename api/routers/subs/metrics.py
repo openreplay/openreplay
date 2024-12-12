@@ -1,7 +1,7 @@
 from typing import Union
 
 import schemas
-from chalicelib.core import dashboards, custom_metrics
+from chalicelib.core.metrics import custom_metrics, dashboards
 from fastapi import Body, Depends
 from or_dependencies import OR_context
 from routers.base import get_routers

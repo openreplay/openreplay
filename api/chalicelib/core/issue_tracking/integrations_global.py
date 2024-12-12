@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core.issue_tracking.modules import TENANT_CONDITION
+from chalicelib.core.modules import TENANT_CONDITION
 from chalicelib.utils import pg_client
 
 
