@@ -21,7 +21,7 @@ interface Props<Value extends ValueObject> {
   onChange: (newValue: { name: string, value: Value }) => void;
   name?: string;
   placeholder?: string;
-
+  className?: string;
   [x: string]: any;
 }
 
@@ -37,6 +37,7 @@ export default function <Value extends ValueObject>({
   styles = {},
   defaultValue = '',
   controlStyle = {},
+  className = '',
   ...rest
 }: Props<Value>) {
 
@@ -143,6 +144,7 @@ export default function <Value extends ValueObject>({
 
   return (
     <Select
+      className={className}
       options={options}
       isSearchable={isSearchable}
       defaultValue={defaultSelected}

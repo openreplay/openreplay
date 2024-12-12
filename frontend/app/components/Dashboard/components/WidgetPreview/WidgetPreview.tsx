@@ -38,7 +38,7 @@ function WidgetPreview(props: Props) {
             <WidgetOptions />
           </div>
         </div>
-        <div className="pt-0">
+        <div className="py-4">
           <WidgetWrapper
             widget={metric}
             isPreview={true}

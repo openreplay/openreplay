@@ -1,6 +1,6 @@
 import React from 'react';
 import { FolderOutlined } from '@ant-design/icons';
-import { Segmented } from 'antd';
+import { Segmented, Button } from 'antd';
 import {
   LineChart,
   AlignStartVertical,
@@ -185,19 +185,19 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
     }
   };
   return (
-    <div className={'flex flex-col'}>
+    <div className={'flex flex-col gap-3'}>
       {items.map((item, index) => (
         <div
           onClick={() => handleCardSelection(item.type)}
           key={index}
           className={
-            'flex items-start gap-2 p-2 hover:bg-active-blue rounded-xl hover:text-blue group cursor-pointer'
+            'flex items-start gap-2 p-2 hover:bg-active-blue rounded-xl hover:text-teal group cursor-pointer'
           }
         >
           {item.icon}
           <div className={'leading-none'}>
             <div>{item.title}</div>
-            <div className={'text-disabled-text group-hover:text-blue text-sm'}>
+            <div className={'text-disabled-text group-hover:text-teal/60 text-sm'}>
               {item.description}
             </div>
           </div>
@@ -235,20 +235,11 @@ const AddCardSection = observer(
       );
     };
     return (
-      <div
-        className={
-          'py-8 px-8 rounded-xl bg-white border border-gray-lighter flex flex-col gap-4'
-        }
-        style={{ width: fit ? 390 : 520, height: 400 }}
-      >
-        <div
-          className={'flex justify-between border-b border-b-gray-lighter p-2'}
-        >
-          <div className={'font-semibold text-lg'}>Add a card to dashboard</div>
+      <div className={'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2'}>
+        <div className={'flex justify-between p-2'}>
+          <div className={'text-xl font-medium mb-1'}>What do you want to visualize?</div>
           {isSaas ? (
-            <div
-              className={'font-semibold flex items-center gap-2 cursor-pointer'}
-            >
+            <div className={'font-medium flex items-center gap-2 cursor-pointer'}>
               <Sparkles color={'#3C00FFD8'} size={16} />
               <div className={'ai-gradient'}>Ask AI</div>
             </div>
@@ -261,16 +252,14 @@ const AddCardSection = observer(
             onChange={(value) => setTab(value)}
           />
         </div>
+
+        <div className='py-2'>
         <CategoryTab tab={tab} inCards={inCards} />
-        <div
-          className={
-            'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
-          }
-        >
-          <FolderOutlined />
-          <div className={'font-semibold'} onClick={onExistingClick}>
-            Add existing card
-          </div>
+        </div>
+        <div className={'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'}>
+          <Button className='w-full mt-4 hover:bg-active-blue hover:text-teal' type='text' variant='text' onClick={onExistingClick}>
+              <FolderOutlined /> Add existing card
+          </Button>
         </div>
       </div>
     );
