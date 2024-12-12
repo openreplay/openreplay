@@ -1,6 +1,6 @@
-import { DownOutlined, CloseOutlined } from '@ant-design/icons';
+import { DownOutlined, SyncOutlined } from '@ant-design/icons';
 import Period from 'Types/app/period';
-import { Dropdown } from 'antd';
+import { Dropdown, Button, Tooltip } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -24,7 +24,7 @@ interface Props {
   timezone?: string;
   isAnt?: boolean;
   small?: boolean;
-  useButtonStyle?: boolean; // New prop to control button style
+  useButtonStyle?: boolean; 
   compPeriod?: any | null;
   onChangeComparison?: (data: any) => void;
   comparison?: boolean;
@@ -125,7 +125,7 @@ function SelectDateRange(props: Props) {
         }}
         period={period}
         right={true}
-        style={{ width: '100%' }}
+        style={{ width: '100%', }}
       />
       {isCustom && (
         <OutsideClickDetectingDiv
@@ -196,36 +196,37 @@ function AndDateRange({
     <div className={'relative'}>
       {comparison ? (
         <div className={'flex items-center gap-0'}>
-          <Dropdown menu={menuProps} className={'px-2 py-1'}>
-            <div
-              className={
-                'cursor-pointer flex items-center gap-2 border-l border-t border-b border-gray-light rounded-l !border-r-0'
-              }
-            >
-              <span>
-                {`Compare to ${comparisonValue || ''}`}
-              </span>
-              <DownOutlined />
-            </div>
+          <Dropdown menu={menuProps} trigger={['click']} className={'px-2 py-1 gap-1'}>
+            <Button type='text' variant='text' className='flex items-center' size='small'>
+              <span>{`Compare to ${comparisonValue || ''}`}</span>
+              {selectedValue && (
+                <Tooltip title='Reset'>
+                <SyncOutlined
+                  className='cursor-pointer p-2 py-1.5 hover:bg-neutral-200/50 text-sm'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(null);
+                  }}
+                />
+                </Tooltip>
+              )}
+              <DownOutlined className='ms-1' />
+            </Button>
           </Dropdown>
-          <div
-            className={
-              'flex items-center justify-center border border-gray-light p-2 hover:border-main rounded-r'
-            }
-            style={{ height: 30 }}
-            onClick={() => onChange(null)}
-          >
-            <CloseOutlined />
-          </div>
+          
         </div>
       ) : (
-        <AntlikeDropdown
-          label={isCustomRange ? customRange : selectedValue?.label}
-          menuProps={menuProps}
-          useButtonStyle={useButtonStyle}
-          leftIcon={useButtonStyle ? <Calendar size={16} /> : null}
-          rightIcon={<DownOutlined />}
-        />
+        <Dropdown menu={menuProps} trigger={['click']}>
+          <Button 
+            type="text" 
+            size='small'
+            className="flex items-center"
+            icon={useButtonStyle ? <Calendar size={16}  /> : null}
+          >
+            {isCustomRange ? customRange : selectedValue?.label}
+            <DownOutlined />
+          </Button>
+        </Dropdown>
       )}
       {isCustom && (
         <OutsideClickDetectingDiv

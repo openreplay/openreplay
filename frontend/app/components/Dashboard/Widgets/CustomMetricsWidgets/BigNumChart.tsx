@@ -50,7 +50,7 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
   }, [value, compData])
   return (
     <div className={'flex flex-col gap-2 py-8 items-center'}>
-      <div className={'flex items-center gap-2 font-semibold text-gray-darkest'}>
+      <div className={'flex items-center gap-2 font-medium text-gray-darkest'}>
         <div className={'rounded w-4 h-4'} style={{ background: color }} />
         <div>{series}</div>
       </div>

@@ -54,7 +54,7 @@ function CustomTooltip({ active, payload, label }: Props) {
             >
               <div className={'invert text-sm'}>{index + 1}</div>
             </div>
-            <div className={'font-semibold'}>{p.name}</div>
+            <div className={'font-medium'}>{p.name}</div>
           </div>
           <div
             style={{ borderLeft: `2px solid ${p.color}` }}
@@ -64,7 +64,7 @@ function CustomTooltip({ active, payload, label }: Props) {
               {label}, {formatTimeOrDate(p.payload.timestamp)}
             </div>
             <div className={'flex items-center gap-2'}>
-              <div className={'font-semibold'}>{p.value}</div>
+              <div className={'font-medium'}>{p.value}</div>
               {p.prevValue !== null ? (
                 <CompareTag
                   isHigher={isHigher(p)}

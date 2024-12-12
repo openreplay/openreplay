@@ -8,14 +8,14 @@ import { TableExporter } from "../../../Funnels/FunnelWidget/FunnelTable";
 
 const initTableProps = [
   {
-    title: 'Series',
+    title: <span className="font-medium">Series</span>,
     dataIndex: 'seriesName',
     key: 'seriesName',
     sorter: (a, b) => a.seriesName.localeCompare(b.seriesName),
     fixed: 'left',
   },
   {
-    title: 'Avg.',
+    title: <span className="font-medium">Avg.</span>,
     dataIndex: 'average',
     key: 'average',
     sorter: (a, b) => a.average - b.average,
@@ -57,7 +57,7 @@ function WidgetDatatable(props: Props) {
     setTableProps(initTableProps);
     columnNames.clear();
     data.chart.forEach((p: any) => {
-      columnNames.add(p.time);
+    columnNames.add(p.time);
     }); // for example: mon, tue, wed, thu, fri, sat, sun
     const avg: any = {}; // { seriesName: {itemsCount: 0, total: 0} }
     const items: Record<string, any>[] = []; // as many items (rows) as we have series in filter

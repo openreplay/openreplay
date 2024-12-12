@@ -41,7 +41,7 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
     <>
       {!inModal ? <div className={"flex items-center mb-2 gap-2"}>
         <Icon name={"sparkles"} size={16} />
-        <div className={"font-semibold"}>What would you like to visualize?</div>
+        <div className={"font-medium"}>What would you like to visualize?</div>
       </div> : null}
       <div style={gradientBox}>
         <Input
@@ -114,7 +114,7 @@ function Loader() {
   return (
     <div
       className={
-        'flex items-center justify-center flex-col font-semibold text-xl min-h-80'
+        'flex items-center justify-center flex-col font-medium text-xl min-h-80'
       }
     >
       <div style={{ width: 150, height: 150 }}>

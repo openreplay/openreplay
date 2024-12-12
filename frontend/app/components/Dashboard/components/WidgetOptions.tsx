@@ -59,15 +59,22 @@ function WidgetOptions() {
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf != FilterKey.USERID &&
         metric.metricOf != FilterKey.ERRORS && (
-          <Select
-            defaultValue={metric.metricFormat}
-            onChange={handleChange}
-            variant="borderless"
-            options={[
-              { value: 'sessionCount', label: 'All Sessions' },
-              { value: 'userCount', label: 'Unique Users' },
-            ]}
-          />
+          <Dropdown
+                trigger={['click']}
+                menu={{
+                  selectable: true,
+                  items: [
+                    { key: 'sessionCount', label: 'All Sessions' },
+                    { key: 'userCount', label: 'Unique Users' },
+                  ],
+                  onClick: (info: { key: string }) => handleChange(info.key)
+                }}
+              >
+                <Button type='text' variant='text' size='small'>
+                  {metric.metricFormat === 'sessionCount' ? 'All Sessions' : 'Unique Users'}
+                  <DownOutlined className='text-sm' />
+                </Button>
+          </Dropdown>
         )}
       {hasViewTypes ? <WidgetViewTypeOptions metric={metric} /> : null}
 
@@ -88,7 +95,9 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 
   return (
     <Dropdown
+      trigger={['click']}
       menu={{
+        selectable: true,
         items: Object.entries(items).map(([key, name]) => ({
           key,
           label: (
@@ -103,11 +112,11 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         },
       }}
     >
-      <Button>
+      <Button type='text' variant='text' size='small'>
         <Space>
           {chartIcons[metric.metricOf]}
           <div>{items[metric.metricOf] || 'Total Sessions'}</div>
-          <DownOutlined />
+          <DownOutlined className='text-sm' />
         </Space>
       </Button>
     </Dropdown>
@@ -152,11 +161,13 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   };
   return (
     <Dropdown
+      trigger={['click']}
       menu={{
+        selectable: true,
         items: allowedTypes[metric.metricType].map((key) => ({
           key,
           label: (
-            <div className={'flex items-center gap-2'}>
+            <div className='flex gap-2 items-center'>
               {chartIcons[key]}
               <div>{chartTypes[key]}</div>
             </div>
@@ -166,12 +177,13 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           metric.updateKey('viewType', key);
         },
       }}
+      
     >
-      <Button>
+      <Button type='text' variant='text' size='small'>
         <Space>
           {chartIcons[metric.viewType]}
           <div>{chartTypes[metric.viewType]}</div>
-          <DownOutlined />
+          <DownOutlined className='text-sm '   /> 
         </Space>
       </Button>
     </Dropdown>

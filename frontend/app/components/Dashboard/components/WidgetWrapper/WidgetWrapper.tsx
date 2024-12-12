@@ -103,7 +103,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   return (
     <div
       className={cn(
-        'relative rounded bg-white border group rounded-lg',
+        'relative bg-white border group rounded-lg',
         'col-span-' + widget.config.col,
         { 'hover:shadow-border-gray': !isTemplate && isSaved },
         { 'hover:shadow-border-main': isTemplate }

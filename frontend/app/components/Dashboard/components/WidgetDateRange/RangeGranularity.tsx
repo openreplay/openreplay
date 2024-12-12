@@ -1,6 +1,7 @@
 import React from 'react'
-import AntlikeDropdown from "Shared/Dropdown";
 import { DownOutlined } from "@ant-design/icons";
+import { Button, Dropdown, MenuProps } from 'antd';
+
 
 function RangeGranularity({
   period,
@@ -19,9 +20,9 @@ function RangeGranularity({
   }, [period]);
 
 
-  const menuProps = {
+  const menuProps: MenuProps = {
     items: granularityOptions,
-    onClick: (item: any) => onDensityChange(item.key),
+    onClick: (item: any)  => onDensityChange(Number(item.key)),
   }
   const selected = React.useMemo(() => {
     let selected = 'Custom';
@@ -41,12 +42,12 @@ function RangeGranularity({
   }, [period, granularityOptions.length]);
 
   return (
-    <AntlikeDropdown
-      useButtonStyle
-      label={selected}
-      rightIcon={<DownOutlined />}
-      menuProps={menuProps}
-    />
+    <Dropdown menu={menuProps} trigger={['click']}>
+      <Button type='text' variant='text' size='small'>
+        <span>{selected}</span>
+        <DownOutlined  />
+      </Button>
+  </Dropdown>
   )
 }
 
