@@ -7,6 +7,8 @@ import schemas
 from chalicelib.utils import ch_client
 from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import helper
+from chalicelib.utils import sql_helper as sh
+from chalicelib.core import events
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +210,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
     sequences = []
     projections = []
     for i, s in enumerate(n_stages_query):
-        projections.append(f"SUM(T{i + 1}) AS stage{i + 1}")
+        projections.append(f"coalesce(SUM(T{i + 1}),0) AS stage{i + 1}")
         if i == 0:
             sequences.append(f"anyIf(1,{s}) AS T1")
         else:
@@ -226,11 +228,10 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
          FROM (SELECT {",".join(sequences)}
                FROM {MAIN_EVENTS_TABLE} AS e {extra_from}
                WHERE {" AND ".join(constraints)}
-               GROUP BY {group_by}) AS raw;
-    """
+               GROUP BY {group_by}) AS raw;"""
 
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(n_stages_query, full_args)
+        query = cur.format(query=n_stages_query, parameters=full_args)
         logger.debug("---------------------------------------------------")
         logger.debug(query)
         logger.debug("---------------------------------------------------")
