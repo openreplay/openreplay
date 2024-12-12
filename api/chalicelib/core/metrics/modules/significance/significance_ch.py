@@ -210,7 +210,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
     sequences = []
     projections = []
     for i, s in enumerate(n_stages_query):
-        projections.append(f"SUM(T{i + 1}) AS stage{i + 1}")
+        projections.append(f"coalesce(SUM(T{i + 1}),0) AS stage{i + 1}")
         if i == 0:
             sequences.append(f"anyIf(1,{s}) AS T1")
         else:
