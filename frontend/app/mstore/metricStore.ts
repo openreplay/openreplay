@@ -68,7 +68,7 @@ export default class MetricStore {
   clickMapSearch = '';
   clickMapLabel = '';
 
-  cardCategory: string | null = null;
+  cardCategory: string | null = CATEGORIES.product_analytics;
 
   constructor() {
     makeAutoObservable(this);
@@ -159,7 +159,7 @@ export default class MetricStore {
     this.instance.updateKey('hasChanged', updateChangeFlag);
   }
 
-  changeType(value: string) {
+  changeType(value: string, metricOf?: string) {
     const defaultData = {
       sessionId: '',
       sessions: [],
@@ -168,7 +168,8 @@ export default class MetricStore {
       chart: [],
       namesMap: {},
       avg: 0,
-      percentiles: []
+      percentiles: [],
+      values: [],
     };
     const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
@@ -231,6 +232,10 @@ export default class MetricStore {
           value: [''],
         });
       }
+    }
+
+    if (metricOf) {
+      obj['metricOf'] = metricOf;
     }
 
     this.instance.update(obj);
@@ -326,7 +331,8 @@ export default class MetricStore {
         const inst = new Widget().fromJson(metric, period)
         runInAction(() => {
           this.instance = inst;
-          this.cardCategory = cardToCategory(inst.metricType);
+          const type = inst.metricType === 'table' ? inst.metricOf : inst.metricType
+          this.cardCategory = cardToCategory(type);
         })
         return inst;
       })

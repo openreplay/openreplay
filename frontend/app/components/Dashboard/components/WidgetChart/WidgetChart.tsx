@@ -433,7 +433,7 @@ function WidgetChart(props: Props) {
         return (
           <SessionsBy
             metric={metric}
-            data={data[0]}
+            data={data}
             onClick={onChartClick}
             isTemplate={isTemplate}
           />
@@ -496,8 +496,6 @@ function WidgetChart(props: Props) {
         return <CohortCard data={data[0]} />;
       }
     }
-
-    console.log('Unknown metric type', metricType, viewType);
     return <div>Unknown metric type</div>;
   }, [data, compData, enabledRows, metric]);
 

@@ -325,7 +325,7 @@ export default class Widget {
             _data.funnel = new Funnel().fromJSON(data);
         } else if (this.metricType === TABLE) {
             const total = data[0]['total'];
-            _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, total, this.metricOf));
+            _data['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, total, this.metricOf));
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;

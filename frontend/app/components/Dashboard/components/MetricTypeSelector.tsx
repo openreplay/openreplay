@@ -3,6 +3,9 @@ import { Segmented } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { tabItems } from 'Components/Dashboard/components/AddCardSection/AddCardSection'
+import {
+  CARD_LIST,
+} from 'Components/Dashboard/components/DashboardList/NewDashModal/ExampleCards';
 
 function MetricTypeSelector() {
   const { metricStore } = useStore();
@@ -16,10 +19,19 @@ function MetricTypeSelector() {
     icon: opt.icon,
   }))
   const onChange = (type: string) => {
-    metricStore.changeType(type);
+    const selectedCard = CARD_LIST.find((i) => i.key === type);
+    if (selectedCard) {
+      metricStore.changeType(selectedCard.cardType, selectedCard.metricOf);
+    }
   };
 
-  const selected = options.find((i) => i.value === metric.metricType) || options[0];
+  const selected = options.find(
+    (i) => {
+      if (metric.metricType === 'table') {
+        return i.value === metric.metricOf;
+      }
+      return i.value === metric.metricType
+    }) || options[0];
   return (
     <Segmented onChange={onChange} options={options} value={selected.value} />
   );
