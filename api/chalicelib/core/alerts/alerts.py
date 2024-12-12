@@ -7,8 +7,8 @@ from decouple import config
 
 import schemas
 from chalicelib.core import notifications, webhook
-from chalicelib.core.collaboration_msteams import MSTeams
-from chalicelib.core.collaboration_slack import Slack
+from chalicelib.core.collaborations.collaboration_msteams import MSTeams
+from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 

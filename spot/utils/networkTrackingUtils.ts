@@ -39,6 +39,7 @@ export interface SpotNetworkRequest {
   responseBody: string;
   requestHeaders: Record<string, string>;
   responseHeaders: Record<string, string>;
+  timestamp: number;
 }
 
 export const sensitiveParams = new Set([

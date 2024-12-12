@@ -3,9 +3,8 @@ import logging
 from pydantic_core._pydantic_core import ValidationError
 
 import schemas
-from chalicelib.core.alerts import alerts
-from chalicelib.core.alerts import alerts_listener, alerts_processor
-from chalicelib.core.alerts import sessions
+from chalicelib.core.alerts import alerts, alerts_listener
+from chalicelib.core.alerts.modules import sessions, alert_helpers
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -162,7 +161,7 @@ def process():
         for alert in all_alerts:
             if alert["query"]["left"] != "CUSTOM":
                 continue
-            if alerts_processor.can_check(alert):
+            if alert_helpers.can_check(alert):
                 query, params = Build(alert)
                 try:
                     query = ch_cur.format(query, params)
@@ -180,7 +179,7 @@ def process():
 
                     if result["valid"]:
                         logger.info("Valid alert, notifying users")
-                        notifications.append(alerts_processor.generate_notification(alert, result))
+                        notifications.append(alert_helpers.generate_notification(alert, result))
                 except Exception as e:
                     logger.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
                     logger.error(str(e))

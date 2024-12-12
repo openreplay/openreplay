@@ -4,8 +4,8 @@ import logging
 from fastapi import HTTPException, status
 
 import schemas
-from chalicelib.core import sessions, funnels, errors, issues, heatmaps, product_analytics, \
-    custom_metrics_predefined
+from chalicelib.core import funnels, errors, issues, heatmaps, product_analytics, custom_metrics_predefined
+from chalicelib.core.sessions import sessions
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 

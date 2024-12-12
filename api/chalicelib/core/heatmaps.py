@@ -1,7 +1,8 @@
 import logging
 
 import schemas
-from chalicelib.core import sessions_mobs, sessions
+from chalicelib.core import sessions
+from chalicelib.core.sessions import sessions_mobs
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils import sql_helper as sh
 

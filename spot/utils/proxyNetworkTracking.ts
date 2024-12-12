@@ -78,6 +78,7 @@ export function createSpotNetworkRequest(
     requestHeaders: reqHeaders,
     responseHeaders: resHeaders,
     time: msg.startTime,
+    timestamp: Date.now(),
     statusCode: msg.status || 0,
     error: undefined,
     url: tryFilterUrl(msg.url),
