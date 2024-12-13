@@ -47,7 +47,7 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
           loading={metricStore.isSaving}
           disabled={metricStore.isSaving || !widget.hasChanged}
         >
-          Update
+          {widget.exists() ? 'Update' : 'Create'}
         </Button>
         <CardViewMenu />
       </Space>

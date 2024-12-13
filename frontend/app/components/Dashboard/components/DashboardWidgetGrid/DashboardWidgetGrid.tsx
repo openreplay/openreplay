@@ -59,7 +59,7 @@ function DashboardWidgetGrid(props: Props) {
                   'absolute -left-2 top-1/2 -translate-y-1/2',
                 )}
               >
-                <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection fit inCards />} trigger={'click'}>
+                <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection />} trigger={'click'}>
                   <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
                 </Popover>
               </div>

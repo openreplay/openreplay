@@ -7,6 +7,8 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Dropdown,
+  Button,
 } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -17,8 +19,8 @@ import { useStore } from 'App/mstore';
 import Dashboard from 'App/mstore/types/dashboard';
 import { dashboardSelected, withSiteId } from 'App/routes';
 import CreateDashboardButton from 'Components/Dashboard/components/CreateDashboardButton';
-import { ItemMenu, confirm } from 'UI';
-
+import { Icon, confirm } from 'UI';
+import { EllipsisVertical } from "lucide-react";
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
@@ -26,6 +28,7 @@ import DashboardEditModal from '../DashboardEditModal';
 function DashboardList() {
   const { dashboardStore, projectsStore } = useStore();
   const siteId = projectsStore.siteId;
+  const optionsRef = React.useRef<HTMLDivElement>(null);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
 
@@ -124,20 +127,44 @@ function DashboardList() {
       title: 'Options',
       dataIndex: 'dashboardId',
       width: '5%',
-      onCell: () => ({ onClick: (e) => e.stopPropagation() }),
       render: (id) => (
-        <ItemMenu
-          bold
-          items={[
-            { icon: 'pencil', text: 'Rename', onClick: () => onEdit(id, true) },
-            {
-              icon: 'users',
-              text: 'Visibility & Access',
-              onClick: () => onEdit(id, false),
+        <Dropdown
+          arrow={false}
+          trigger={'click'}
+          menu={{
+            items: [
+              {
+                icon: <Icon name={'pencil'} />,
+                key: 'rename',
+                label: 'Rename',
+                onClick: () => onEdit(id, true),
+              },
+              {
+                icon: <Icon name={'users'} />,
+                key: 'access',
+                label: 'Visibility & Access',
+                onClick: () => onEdit(id, false),
+              },
+              {
+                icon: <Icon name={'trash'} />,
+                key: 'delete',
+                label: 'Delete',
+                onClick: () => onDelete(id),
+              },
+            ],
+            onClick: ({ key }) => {
+              if (key === 'rename') {
+                onEdit(id, true);
+              } else if (key === 'access') {
+                onEdit(id, false);
+              } else if (key === 'delete') {
+                void onDelete(id);
+              }
             },
-            { icon: 'trash', text: 'Delete', onClick: () => onDelete(id) },
-          ]}
-        />
+          }}
+        >
+          <Button ref={optionsRef} icon={<EllipsisVertical size={16} />} />
+        </Dropdown>
       ),
     },
   ];
@@ -200,7 +227,15 @@ function DashboardList() {
           size: 'small',
         }}
         onRow={(record) => ({
-          onClick: () => {
+          onClick: (e) => {
+            if (optionsRef.current) {
+              if (optionsRef.current.contains(e.target) || e.target === optionsRef.current) {
+                return;
+              }
+            }
+            if (e.target.classList.contains('lucide')) {
+              return;
+            }
             dashboardStore.selectDashboardById(record.dashboardId);
             const path = withSiteId(
               dashboardSelected(record.dashboardId),
