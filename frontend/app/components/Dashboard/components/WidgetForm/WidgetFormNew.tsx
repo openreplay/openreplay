@@ -24,9 +24,9 @@ function WidgetFormNew() {
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
-  const isClickMap = metric.metricType === HEATMAP;
+  const isHeatMap = metric.metricType === HEATMAP;
   const isPathAnalysis = metric.metricType === USER_PATH;
-  const excludeFilterKeys = isClickMap || isPathAnalysis ? eventKeys : [];
+  const excludeFilterKeys = isHeatMap || isPathAnalysis ? eventKeys : [];
   const isPredefined = metric.metricType === ERRORS
 
   return isPredefined ? <PredefinedMessage /> : (
@@ -41,15 +41,14 @@ export default observer(WidgetFormNew);
 
 const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const isTable = metric.metricType === TABLE;
-  const isClickMap = metric.metricType === HEATMAP;
+  const isHeatMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
   const isInsights = metric.metricType === INSIGHTS;
   const isPathAnalysis = metric.metricType === USER_PATH;
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
 
-  const isSingleSeries = isTable || isFunnel || isClickMap || isInsights || isRetention;
-
+  const isSingleSeries = isTable || isFunnel || isHeatMap || isInsights || isRetention;
   return (
     <>
       {metric.series.length > 0 &&
@@ -58,13 +57,14 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           .map((series: any, index: number) => (
             <div className="mb-2 rounded-xl border border-gray-lighter" key={series.name}>
               <FilterSeries
+                isHeatmap={isHeatMap}
                 canExclude={isPathAnalysis}
-                supportsEmpty={!isClickMap && !isPathAnalysis}
+                supportsEmpty={!isHeatMap && !isPathAnalysis}
                 excludeFilterKeys={excludeFilterKeys}
                 observeChanges={() => metric.updateKey('hasChanged', true)}
                 hideHeader={
                   isTable ||
-                  isClickMap ||
+                  isHeatMap ||
                   isInsights ||
                   isPathAnalysis ||
                   isFunnel

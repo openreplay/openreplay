@@ -111,6 +111,7 @@ interface Props {
   excludeFilterKeys?: Array<string>;
   canExclude?: boolean;
   expandable?: boolean;
+  isHeatmap?: boolean;
 }
 
 function FilterSeries(props: Props) {
@@ -123,6 +124,7 @@ function FilterSeries(props: Props) {
     excludeFilterKeys = [],
     canExclude = false,
     expandable = false,
+    isHeatmap,
   } = props;
   const [expanded, setExpanded] = useState(hideHeader || !expandable);
   const { series, seriesIndex } = props;
@@ -215,6 +217,7 @@ function FilterSeries(props: Props) {
           onAddFilter={onAddFilter}
           mergeUp={!hideHeader}
           mergeDown
+          cannotAdd={isHeatmap}
         />
         <FilterList
           filter={series.filter}

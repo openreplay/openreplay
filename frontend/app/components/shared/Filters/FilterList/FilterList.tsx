@@ -25,6 +25,7 @@ interface Props {
   mergeDown?: boolean;
   mergeUp?: boolean;
   borderless?: boolean;
+  cannotAdd?: boolean;
 }
 
 export const FilterList = observer((props: Props) => {
@@ -35,7 +36,7 @@ export const FilterList = observer((props: Props) => {
     isConditional,
     onAddFilter,
     readonly,
-    borderless
+    borderless,
   } = props;
 
   const filters = filter.filters;
@@ -46,7 +47,10 @@ export const FilterList = observer((props: Props) => {
   };
   return (
     <div
-      className={cn('bg-white', borderless ? '' : 'py-2 px-4 rounded-xl  border border-gray-lighter')}
+      className={cn(
+        'bg-white',
+        borderless ? '' : 'py-2 px-4 rounded-xl  border border-gray-lighter'
+      )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
@@ -56,8 +60,17 @@ export const FilterList = observer((props: Props) => {
     >
       <div className={'flex items-center mb-2'} style={{ gap: '0.65rem' }}>
         <div className="font-medium">Filters</div>
-        <FilterSelection mode={'filters'} filter={undefined} onFilterClick={onAddFilter} disabled={readonly}>
-          <Button icon={<Filter size={16} strokeWidth={1} />} type="default" size={'small'}>
+        <FilterSelection
+          mode={'filters'}
+          filter={undefined}
+          onFilterClick={onAddFilter}
+          disabled={readonly}
+        >
+          <Button
+            icon={<Filter size={16} strokeWidth={1} />}
+            type="default"
+            size={'small'}
+          >
             Add
           </Button>
         </FilterSelection>
@@ -101,6 +114,7 @@ export const EventsList = observer((props: Props) => {
     isConditional,
     actions = [],
     onAddFilter,
+    cannotAdd,
   } = props;
 
   const filters = filter.filters;
@@ -177,7 +191,9 @@ export const EventsList = observer((props: Props) => {
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
-      className={'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter'}
+      className={
+        'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter'
+      }
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
@@ -188,11 +204,21 @@ export const EventsList = observer((props: Props) => {
     >
       <div className="flex items-center mb-2 gap-2">
         <div className="font-medium">Events</div>
-        <FilterSelection mode={'events'} filter={undefined} onFilterClick={onAddFilter}>
-          <Button icon={<Plus size={16} strokeWidth={1} />} type="default" size={'small'}>
-            Add
-          </Button>
-        </FilterSelection>
+        {cannotAdd ? null : (
+          <FilterSelection
+            mode={'events'}
+            filter={undefined}
+            onFilterClick={onAddFilter}
+          >
+            <Button
+              icon={<Plus size={16} strokeWidth={1} />}
+              type="default"
+              size={'small'}
+            >
+              Add
+            </Button>
+          </FilterSelection>
+        )}
 
         <div className={'ml-auto'}>
           {!hideEventsOrder && (
@@ -221,8 +247,6 @@ export const EventsList = observer((props: Props) => {
                 marginLeft: '-1.25rem',
                 width: 'calc(100% + 2.5rem)',
                 alignItems: 'start',
-                
-                
               }}
               className={'hover:bg-active-blue px-5 gap-2 items-center flex'}
               id={`${filter.key}-${filterIndex}`}
@@ -232,7 +256,9 @@ export const EventsList = observer((props: Props) => {
             >
               {!!props.onFilterMove && eventsNum > 1 ? (
                 <div
-                  className={'p-2 cursor-grab text-neutral-500/90 hover:bg-gray-lighter	px-1 pt-2 rounded-lg'}
+                  className={
+                    'p-2 cursor-grab text-neutral-500/90 hover:bg-gray-lighter	px-1 pt-2 rounded-lg'
+                  }
                   draggable={!!props.onFilterMove}
                   onDragStart={(e) =>
                     handleDragStart(
