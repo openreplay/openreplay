@@ -887,7 +887,7 @@ export const nonConditionalFlagFilters = filters.filter(i => {
 export const clickmapFilter = {
   key: FilterKey.LOCATION,
   type: FilterType.MULTIPLE,
-  category: FilterCategory.SESSION,
+  category: FilterCategory.AUTOCAPTURE,
   label: 'Visited URL', placeholder: 'Enter URL or path',
   operator: filterOptions.pageUrlOperators[0].value,
   operatorOptions: filterOptions.pageUrlOperators,
