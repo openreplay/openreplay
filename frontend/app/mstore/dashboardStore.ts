@@ -453,6 +453,7 @@ export default class DashboardStore {
     isComparison?: boolean
   ): Promise<any> {
     period = period.toTimestamps();
+    const density = data.density;
     const params = { ...period, ...data, key: metric.predefinedKey };
 
     if (!isComparison && metric.page && metric.limit) {
@@ -469,7 +470,7 @@ export default class DashboardStore {
 
       try {
         const data = await metricService.getMetricChartData(metric, params, isSaved);
-        resolve(metric.setData(data, period, isComparison));
+        resolve(metric.setData(data, period, isComparison, density));
       } catch (error) {
         reject(error);
       } finally {

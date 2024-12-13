@@ -294,7 +294,7 @@ export default class Widget {
         this.page = page;
     }
 
-    setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison?: boolean) {
+    setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison: boolean = false, density?: number) {
         if (!data) return;
         const _data: any = {};
         if (isComparison && this.metricType === TIMESERIES) {
@@ -335,7 +335,7 @@ export default class Widget {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;
                 _data['unit'] = data.unit;
-                _data['chart'] = getChartFormatter(period)(data.chart);
+                _data['chart'] = getChartFormatter(period, density)(data.chart);
                 _data['namesMap'] = data.chart
                     .map((i: any) => Object.keys(i))
                     .flat()
@@ -347,7 +347,7 @@ export default class Widget {
                         return unique;
                     }, []);
             } else {
-                _data['chart'] = getChartFormatter(period)(data);
+                _data['chart'] = getChartFormatter(period, density)(data);
                 _data['namesMap'] = Array.isArray(data)
                   ? data
                     .map((i) => Object.keys(i))

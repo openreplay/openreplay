@@ -48,8 +48,8 @@ const PillBar = (props) => {
       <rect
         width={width}
         height={height}
-        rx={Math.min(width / 2, height / 2)}
-        ry={Math.min(width / 2, height / 2)}
+        rx={10}
+        ry={10}
         fill={fill}
       />
       {striped && (
