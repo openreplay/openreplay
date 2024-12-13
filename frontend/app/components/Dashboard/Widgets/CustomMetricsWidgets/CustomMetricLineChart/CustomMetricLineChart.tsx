@@ -82,9 +82,7 @@ function CustomMetricLineChart(props: Props) {
              strokeOpacity={key === 'Total' ? 0 : 0.6}
              legendType={key === 'Total' ? 'none' : 'line'}
              dot={false}
-             activeDot={{
-               fill: key === 'Total' ? 'transparent' : colors[index],
-             }}
+             activeDot={{ fill: colors[index]}}
            />
          ) : null)}
         {compData?.namesMap.map((key, i) => data.namesMap[i] ? (

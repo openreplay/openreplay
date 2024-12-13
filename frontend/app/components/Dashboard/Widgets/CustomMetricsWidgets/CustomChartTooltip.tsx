@@ -13,9 +13,11 @@ interface Props {
   active: boolean;
   payload: PayloadItem[];
   label: string;
+  activeKey?: string;
 }
 
-function CustomTooltip({ active, payload, label }: Props) {
+function CustomTooltip(props: Props) {
+  const { active, payload, label, activeKey } = props;
   if (!active || !payload?.length) return null;
 
   const shownPayloads: PayloadItem[] = payload.filter((p) => !p.hide);
@@ -38,8 +40,12 @@ function CustomTooltip({ active, payload, label }: Props) {
       prevValue,
     };
   });
+
   const isHigher = (item: { value: number; prevValue: number }) => {
     return item.prevValue !== null && item.prevValue < item.value;
+  };
+  const getPercentDelta = (val, prevVal) => {
+    return (((val - prevVal) / prevVal) * 100).toFixed(2);
   };
   return (
     <div
@@ -63,12 +69,13 @@ function CustomTooltip({ active, payload, label }: Props) {
             <div className={'text-disabled-text text-sm'}>
               {label}, {formatTimeOrDate(p.payload.timestamp)}
             </div>
-            <div className={'flex items-center gap-2'}>
+            <div className={'flex items-center gap-1'}>
               <div className={'font-medium'}>{p.value}</div>
-              {p.prevValue !== null ? (
+              {p.prevValue ? (
                 <CompareTag
                   isHigher={isHigher(p)}
-                  prevValue={p.prevValue}
+                  absDelta={Math.abs(p.value - p.prevValue)}
+                  delta={getPercentDelta(p.value, p.prevValue)}
                 />
               ) : null}
             </div>
@@ -81,20 +88,23 @@ function CustomTooltip({ active, payload, label }: Props) {
 
 export function CompareTag({
   isHigher,
-  prevValue,
+  absDelta,
+  delta,
 }: {
   isHigher: boolean;
-  prevValue: number | string;
+  absDelta?: number | string;
+  delta?: string;
 }) {
   return (
     <div
       className={cn(
-        'px-2 py-1 rounded flex items-center gap-1',
+        'px-2 py-1 w-fit rounded flex items-center gap-1',
         isHigher ? 'bg-green2 text-xs' : 'bg-red2 text-xs'
       )}
     >
       {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
-      <div>{prevValue}</div>
+      <div>{absDelta}</div>
+      <div>({delta}%)</div>
     </div>
   );
 }

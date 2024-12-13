@@ -20,7 +20,7 @@ import Dashboard from 'App/mstore/types/dashboard';
 import { dashboardSelected, withSiteId } from 'App/routes';
 import CreateDashboardButton from 'Components/Dashboard/components/CreateDashboardButton';
 import { Icon, confirm } from 'UI';
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical } from 'lucide-react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
@@ -130,40 +130,38 @@ function DashboardList() {
       render: (id) => (
         <Dropdown
           arrow={false}
-          trigger={'click'}
+          trigger={['click']}
+          className={'ignore-prop-dp'}
           menu={{
             items: [
               {
                 icon: <Icon name={'pencil'} />,
                 key: 'rename',
                 label: 'Rename',
-                onClick: () => onEdit(id, true),
               },
               {
                 icon: <Icon name={'users'} />,
                 key: 'access',
                 label: 'Visibility & Access',
-                onClick: () => onEdit(id, false),
               },
               {
                 icon: <Icon name={'trash'} />,
                 key: 'delete',
                 label: 'Delete',
-                onClick: () => onDelete(id),
               },
             ],
-            onClick: ({ key }) => {
+            onClick: async ({ key }) => {
               if (key === 'rename') {
                 onEdit(id, true);
               } else if (key === 'access') {
                 onEdit(id, false);
               } else if (key === 'delete') {
-                void onDelete(id);
+                await onDelete(id);
               }
             },
           }}
         >
-          <Button ref={optionsRef} icon={<EllipsisVertical size={16} />} />
+          <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
         </Dropdown>
       ),
     },
@@ -228,12 +226,13 @@ function DashboardList() {
         }}
         onRow={(record) => ({
           onClick: (e) => {
-            if (optionsRef.current) {
-              if (optionsRef.current.contains(e.target) || e.target === optionsRef.current) {
-                return;
-              }
-            }
-            if (e.target.classList.contains('lucide')) {
+            const possibleDropdown =
+              document.querySelector('.ant-dropdown-menu');
+            if (
+              e.target.classList.contains('lucide') ||
+              e.target.id === 'ignore-prop' ||
+              possibleDropdown?.contains(e.target)
+            ) {
               return;
             }
             dashboardStore.selectDashboardById(record.dashboardId);
