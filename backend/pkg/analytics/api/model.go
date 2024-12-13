@@ -1,4 +1,4 @@
-package api
+package models
 
 type Dashboard struct {
 	DashboardID int    `json:"dashboard_id"`
