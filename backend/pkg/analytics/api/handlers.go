@@ -1,4 +1,4 @@
-package api
+package models
 
 import (
 	config "openreplay/backend/internal/config/analytics"
@@ -25,6 +25,13 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
+		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
+		{"/v1/analytics/{projectId}/cards", e.getCards, "GET"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/v1/analytics/{projectId}/cards/{id}/chart", e.getCardChartData, "POST"},
+		{"/v1/analytics/{projectId}/cards/{id}/try", e.getCardChartData, "POST"},
 	}
 }
 
