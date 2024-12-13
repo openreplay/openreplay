@@ -150,6 +150,7 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
       metricType: selectedCard.cardType,
       name: selectedCard.title,
       metricOf: selectedCard.metricOf,
+      category: card,
     };
 
     if (selectedCard.filters) {
@@ -166,12 +167,14 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
     // TODO This code here makes 0 sense
     if (selectedCard.cardType === FUNNEL) {
       cardData.series = [];
-      cardData.series.filter = [];
+      cardData.series.push(new FilterSeries());
+      cardData.series[0].filter.addFunnelDefaultFilters();
+      cardData.series[0].filter.eventsOrder = 'then';
+      cardData.series[0].filter.eventsOrderSupport = ['then'];
     }
 
     metricStore.setCardCategory(tab);
     metricStore.merge(cardData);
-    metricStore.instance.resetDefaults();
 
     if (projectsStore.activeSiteId) {
       if (inCards) {

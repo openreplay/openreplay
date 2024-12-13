@@ -6,6 +6,7 @@ import AddCardSection from '../AddCardSection/AddCardSection';
 import cn from 'classnames';
 import { Button, Popover } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
+import { Loader } from 'UI';
 
 interface Props {
   siteId: string;

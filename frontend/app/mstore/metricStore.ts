@@ -130,11 +130,13 @@ export default class MetricStore {
   merge(obj: any, updateChangeFlag: boolean = true) {
     const type = obj.metricType;
 
-    // handle metricType change
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
         this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and']
       })
+      if (type === HEATMAP && 'series' in obj) {
+       delete obj['series']
+      }
       this.changeType(type);
     }
 

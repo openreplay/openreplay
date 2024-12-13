@@ -51,7 +51,7 @@ function WidgetChart(props: Props) {
   });
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
-  const _metric: any = metricStore.instance;
+  const _metric: any = props.isPreview ? metricStore.instance : props.metric;
   const data = _metric.data;
   const period = dashboardStore.period;
   const drillDownPeriod = dashboardStore.drillDownPeriod;
@@ -65,9 +65,9 @@ function WidgetChart(props: Props) {
   const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState([]);
   const isTableWidget =
-    metric.metricType === 'table' && metric.viewType === 'table';
+    _metric.metricType === 'table' && _metric.viewType === 'table';
   const isPieChart =
-    metric.metricType === 'table' && metric.viewType === 'pieChart';
+    _metric.metricType === 'table' && _metric.viewType === 'pieChart';
 
   useEffect(() => {
     return () => {
@@ -147,17 +147,17 @@ function WidgetChart(props: Props) {
   );
   const loadPage = () => {
     if (!inView) return;
-    if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
-      prevMetricRef.current = metric;
+    if (prevMetricRef.current && prevMetricRef.current.name !== _metric.name) {
+      prevMetricRef.current = _metric;
       return;
     }
-    prevMetricRef.current = metric;
+    prevMetricRef.current = _metric;
     const timestmaps = drillDownPeriod.toTimestamps();
     const payload = isSaved
       ? { ...metricParams }
-      : { ...params, ...timestmaps, ...metric.toJson() };
+      : { ...params, ...timestmaps, ..._metric.toJson() };
     debounceRequest(
-      metric,
+      _metric,
       payload,
       isSaved,
       !isSaved ? drillDownPeriod : period
@@ -172,11 +172,11 @@ function WidgetChart(props: Props) {
     const payload = {
       ...params,
       ...timestamps,
-      ...metric.toJson(),
+      ..._metric.toJson(),
       viewType: 'lineChart',
     };
     fetchMetricChartData(
-      metric,
+      _metric,
       payload,
       isSaved,
       dashboardStore.comparisonPeriod,
@@ -198,19 +198,19 @@ function WidgetChart(props: Props) {
     period,
     depsString,
     dashboardStore.selectedDensity,
-    metric.metricType,
-    metric.metricOf,
-    metric.metricValue,
-    metric.startType,
-    metric.metricFormat,
+    _metric.metricType,
+    _metric.metricOf,
+    _metric.metricValue,
+    _metric.startType,
+    _metric.metricFormat,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);
 
   const renderChart = React.useCallback(() => {
-    const { metricType, metricOf } = metric;
-    const viewType = metric.viewType;
-    const metricWithData = { ...metric, data };
+    const { metricType, metricOf } = _metric;
+    const viewType = _metric.viewType;
+    const metricWithData = { ..._metric, data };
 
     if (metricType === FUNNEL) {
       if (viewType === 'table') {
@@ -250,7 +250,7 @@ function WidgetChart(props: Props) {
 
       return (
         <FunnelWidget
-          metric={metric}
+          metric={_metric}
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
@@ -260,7 +260,7 @@ function WidgetChart(props: Props) {
 
     if (metricType === 'predefined' || metricType === ERRORS) {
       const defaultMetric =
-        metric.data.chart && metric.data.chart.length === 0
+        _metric.data.chart && _metric.data.chart.length === 0
           ? metricWithData
           : metric;
       return (
@@ -268,7 +268,7 @@ function WidgetChart(props: Props) {
           isTemplate={isTemplate}
           metric={defaultMetric}
           data={data}
-          predefinedKey={metric.metricOf}
+          predefinedKey={_metric.metricOf}
         />
       );
     }
@@ -288,7 +288,7 @@ function WidgetChart(props: Props) {
             params={params}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -304,7 +304,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -321,7 +321,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -338,7 +338,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -349,12 +349,12 @@ function WidgetChart(props: Props) {
         return (
           <CustomMetricPieChart
             inGrid={!props.isPreview}
-            metric={metric}
+            metric={_metric}
             data={chartData}
             colors={colors}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -369,7 +369,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             params={params}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -399,7 +399,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             onClick={onChartClick}
             label={
-              metric.metricOf === 'sessionCount'
+              _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
                 : 'Number of Users'
             }
@@ -412,7 +412,7 @@ function WidgetChart(props: Props) {
       if (metricOf === FilterKey.SESSIONS) {
         return (
           <CustomMetricTableSessions
-            metric={metric}
+            metric={_metric}
             data={data}
             isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
@@ -422,7 +422,7 @@ function WidgetChart(props: Props) {
       if (metricOf === FilterKey.ERRORS) {
         return (
           <CustomMetricTableErrors
-            metric={metric}
+            metric={_metric}
             data={data}
             // isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
@@ -432,7 +432,7 @@ function WidgetChart(props: Props) {
       if (viewType === TABLE) {
         return (
           <SessionsBy
-            metric={metric}
+            metric={_metric}
             data={data}
             onClick={onChartClick}
             isTemplate={isTemplate}
@@ -442,7 +442,7 @@ function WidgetChart(props: Props) {
     }
     if (metricType === HEATMAP) {
       if (!props.isPreview) {
-        return metric.thumbnail ? (
+        return _metric.thumbnail ? (
           <div
             style={{
               height: '229px',
@@ -450,7 +450,7 @@ function WidgetChart(props: Props) {
               marginBottom: '10px',
             }}
           >
-            <img src={metric.thumbnail} alt="clickmap thumbnail" />
+            <img src={_metric.thumbnail} alt="clickmap thumbnail" />
           </div>
         ) : (
           <div
@@ -497,7 +497,7 @@ function WidgetChart(props: Props) {
       }
     }
     return <div>Unknown metric type</div>;
-  }, [data, compData, enabledRows, metric]);
+  }, [data, compData, enabledRows, _metric]);
 
   return (
     <div ref={ref}>
@@ -506,19 +506,19 @@ function WidgetChart(props: Props) {
           style={{
             minHeight: props.isPreview ? undefined : 240,
             paddingTop:
-              props.isPreview && metric.metricType === TIMESERIES
+              props.isPreview && _metric.metricType === TIMESERIES
                 ? '1.5rem'
                 : 0,
           }}
         >
           {renderChart()}
-          {props.isPreview && metric.metricType === TIMESERIES ? (
+          {props.isPreview && _metric.metricType === TIMESERIES ? (
             <WidgetDatatable
-              defaultOpen={metric.viewType === 'table'}
+              defaultOpen={_metric.viewType === 'table'}
               data={data}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}
-              metric={metric}
+              metric={_metric}
             />
           ) : null}
         </div>

@@ -100,6 +100,7 @@ export default class Widget {
         sessions: [],
         issues: [],
         total: 0,
+        values: [],
         chart: [],
         namesMap: {},
         avg: 0,
@@ -261,7 +262,6 @@ export default class Widget {
     }
 
     update(data: any) {
-        console.log(this.data, data.data)
         runInAction(() => {
             Object.assign(this, data);
         });
@@ -295,6 +295,7 @@ export default class Widget {
     }
 
     setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison?: boolean) {
+        if (!data) return;
         const _data: any = {};
         if (isComparison && this.metricType === TIMESERIES) {
             data.forEach((point, i) => {
@@ -304,6 +305,10 @@ export default class Widget {
                   delete point[key];
               })
             })
+        }
+
+        if (this.metricType === HEATMAP) {
+            return;
         }
 
         if (this.metricType === USER_PATH) {
@@ -342,10 +347,9 @@ export default class Widget {
                         return unique;
                     }, []);
             } else {
-                const updatedData: any = data; // we don't use total anymore this.calculateTotalSeries(data);
-                _data['chart'] = getChartFormatter(period)(updatedData);
-                _data['namesMap'] = Array.isArray(updatedData)
-                  ? updatedData
+                _data['chart'] = getChartFormatter(period)(data);
+                _data['namesMap'] = Array.isArray(data)
+                  ? data
                     .map((i) => Object.keys(i))
                     .flat()
                     .filter((i) => i !== 'time' && i !== 'timestamp')
@@ -359,8 +363,11 @@ export default class Widget {
             }
         }
 
+
         if (!isComparison) {
-            Object.assign(this.data, _data);
+            runInAction(() => {
+                    Object.assign(this.data, _data);
+            })
         }
         return _data;
     }
