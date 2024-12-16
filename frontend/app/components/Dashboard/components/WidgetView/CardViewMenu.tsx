@@ -36,6 +36,7 @@ const CardViewMenu = () => {
       key: 'remove',
       label: 'Delete',
       icon: <TrashIcon size={16} />,
+      disabled: !widget.exists(),
       onClick: () => {
         Modal.confirm({
           title: 'Confirm Card Deletion',

@@ -4,9 +4,9 @@ import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import AddToDashboardButton from 'Components/Dashboard/components/AddToDashboardButton';
-import { Button, Space } from 'antd';
+import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
-import { Link } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 import copy from 'copy-to-clipboard';
 import MetricTypeSelector from "../MetricTypeSelector";
 
@@ -15,13 +15,18 @@ interface Props {
   onSave: () => void;
 }
 
+const defaultText = 'Copy link to clipboard'
+
 function WidgetViewHeader({ onClick, onSave }: Props) {
+  const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
   const widget = metricStore.instance;
 
   const copyUrl = () => {
     const url = window.location.href;
     copy(url)
+    setTooltipText('Link copied to clipboard!');
+    setTimeout(() => setTooltipText(defaultText), 2000);
   }
   return (
     <div
@@ -40,12 +45,14 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
       <Space>
         <AddToDashboardButton metricId={widget.metricId} />
         <MetricTypeSelector />
-        <Button onClick={copyUrl} icon={<Link size={16} strokeWidth={1} />}></Button>
+        <Tooltip title={tooltipText}>
+          <Button disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1} />}></Button>
+        </Tooltip>
         <Button
           type="primary"
           onClick={onSave}
           loading={metricStore.isSaving}
-          disabled={metricStore.isSaving || !widget.hasChanged}
+          disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
         >
           {widget.exists() ? 'Update' : 'Create'}
         </Button>
