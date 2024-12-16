@@ -10,6 +10,7 @@ import (
 
 type Service interface {
 	GetDashboard(projectId int, dashboardId int, userId uint64) (*models.GetDashboardResponse, error)
+	GetDashboardsPaginated(projectId int, userId uint64, req *models.GetDashboardsRequest) (*models.GetDashboardsResponsePaginated, error)
 	GetDashboards(projectId int, userId uint64) (*models.GetDashboardsResponse, error)
 	CreateDashboard(projectId int, userId uint64, req *models.CreateDashboardRequest) (*models.GetDashboardResponse, error)
 	UpdateDashboard(projectId int, dashboardId int, userId uint64, req *models.UpdateDashboardRequest) (*models.GetDashboardResponse, error)

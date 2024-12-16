@@ -104,12 +104,14 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 	u := r.Context().Value("userData").(*user.User)
 	res, err := e.service.GetDashboard(projectID, dashboardID, u.ID)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	if res == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, fmt.Errorf("Dashboard not found"), startTime, r.URL.Path, bodySize)
+		// Map errors to appropriate HTTP status codes
+		if err.Error() == "not_found: dashboard not found" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 
@@ -138,6 +140,20 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bodySize = len(bodyBytes)
+
+	u := r.Context().Value("userData").(*user.User)
+	_, err = e.service.GetDashboard(projectID, dashboardID, u.ID)
+	if err != nil {
+		// Map errors to appropriate HTTP status codes
+		if err.Error() == "not_found: dashboard not found" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
+		return
+	}
 
 	req := &models.UpdateDashboardRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
@@ -168,6 +184,19 @@ func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := r.Context().Value("userData").(*user.User)
+	_, err = e.service.GetDashboard(projectID, dashboardID, u.ID)
+	if err != nil {
+		// Map errors to appropriate HTTP status codes
+		if err.Error() == "not_found: dashboard not found" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else if err.Error() == "access_denied: user does not have access" {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
+		return
+	}
+
 	err = e.service.DeleteDashboard(projectID, dashboardID, u.ID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)

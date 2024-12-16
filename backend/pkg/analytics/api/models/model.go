@@ -42,9 +42,10 @@ type CreateDashboardRequest struct {
 type GetDashboardsRequest struct {
 	Page     uint64 `json:"page"`
 	Limit    uint64 `json:"limit"`
+	IsPublic bool   `json:"is_public"`
 	Order    string `json:"order"`
 	Query    string `json:"query"`
-	FilterBy string `json:"filterBy"`
+	OrderBy  string `json:"orderBy"`
 }
 
 type UpdateDashboardRequest struct {
