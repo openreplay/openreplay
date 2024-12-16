@@ -122,6 +122,7 @@ const config: Configuration = {
     },
   },
   plugins: [
+    new webpack.ProgressPlugin(),
     (isDevelopment ? false : new CompressionPlugin({
       test: /\.(js|css|html|svg)$/,
       algorithm: 'brotliCompress',
@@ -141,7 +142,7 @@ const config: Configuration = {
       ],
     }),
     new MiniCssExtractPlugin({ ignoreOrder: true }),
-  ],
+],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
     hints: false,
