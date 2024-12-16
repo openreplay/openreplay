@@ -37,23 +37,46 @@ export interface Option {
   disabled?: boolean;
 }
 
+export const TYPE_ICONS = {
+  [LIBRARY]: 'grid',
+  [TIMESERIES]: 'graph-up',
+  [TABLE]: 'list-alt',
+  [HEATMAP]: 'puzzle-piece',
+  [FUNNEL]: 'funnel',
+  [ERRORS]: 'exclamation-triangle',
+  [USER_PATH]: 'signpost-split',
+  [TABLE]: 'list-alt',
+} as const
+export const TYPE_NAMES = {
+  [LIBRARY]: 'Library',
+  [TIMESERIES]: 'Timeseries',
+  [TABLE]: 'Table',
+  [HEATMAP]: 'Heatmap',
+  [FUNNEL]: 'Funnel',
+  [ERRORS]: 'Errors',
+  [USER_PATH]: 'User Path',
+  [RETENTION]: 'Retention',
+  [INSIGHTS]: 'Insights',
+  [PERFORMANCE]: 'Performance',
+} as const
+
 export const TYPES: CardType[] = [
   {
     title: 'Add from Library',
-    icon: 'grid',
+    icon: TYPE_ICONS[LIBRARY],
     description: 'Select an existing card from your library',
     slug: LIBRARY,
   },
   {
-    title: 'Timeseries',
-    icon: 'graph-up',
+    title: TYPE_NAMES[TIMESERIES],
+    icon: TYPE_ICONS[TIMESERIES],
     description: 'Combine captured events and filters to track trends over time.',
     slug: TIMESERIES,
     subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
   },
   {
-    title: 'Heatmap',
-    icon: 'puzzle-piece',
+    title: TYPE_NAMES[HEATMAP],
+    icon: TYPE_ICONS[HEATMAP],
     description: 'See where users click and where they get frustrated.',
     slug: HEATMAP,
     subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
@@ -75,14 +98,14 @@ export const TYPES: CardType[] = [
   //   ],
   // },
   {
-    title: 'Funnel',
-    icon: 'funnel',
+    title: TYPE_NAMES[FUNNEL],
+    icon: TYPE_ICONS[FUNNEL],
     description: 'Find out where users are dropping and understand why.',
     slug: FUNNEL,
   },
   {
-    title: 'Path Analysis',
-    icon: 'signpost-split',
+    title: TYPE_NAMES[USER_PATH],
+    icon: TYPE_ICONS[USER_PATH],
     description: 'See where users are flowing and explore their journeys.',
     slug: USER_PATH,
   },
