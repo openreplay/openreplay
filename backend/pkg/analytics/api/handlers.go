@@ -1,4 +1,4 @@
-package models
+package api
 
 import (
 	config "openreplay/backend/internal/config/analytics"

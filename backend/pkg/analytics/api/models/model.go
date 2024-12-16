@@ -2,6 +2,7 @@ package models
 
 type Dashboard struct {
 	DashboardID int    `json:"dashboard_id"`
+	UserID      int    `json:"user_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	IsPublic    bool   `json:"is_public"`
@@ -16,9 +17,13 @@ type GetDashboardResponse struct {
 	Dashboard
 }
 
-type GetDashboardsResponse struct {
+type GetDashboardsResponsePaginated struct {
 	Dashboards []Dashboard `json:"dashboards"`
 	Total      uint64      `json:"total"`
+}
+
+type GetDashboardsResponse struct {
+	Dashboards []Dashboard `json:"dashboards"`
 }
 
 // REQUESTS

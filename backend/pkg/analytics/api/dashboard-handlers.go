@@ -1,26 +1,27 @@
-package models
+package api
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"openreplay/backend/pkg/analytics/api/models"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
 	"strconv"
 	"time"
 )
 
-func getDashboardId(r *http.Request) (int, error) {
+func getIDFromRequest(r *http.Request, key string) (int, error) {
 	vars := mux.Vars(r)
-	idStr := vars["id"]
+	idStr := vars[key]
 	if idStr == "" {
-		return 0, fmt.Errorf("invalid dashboard ID")
+		return 0, fmt.Errorf("missing %s in request", key)
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return 0, fmt.Errorf("invalid dashboard ID")
+		return 0, fmt.Errorf("invalid %s format", key)
 	}
 
 	return id, nil
@@ -37,14 +38,14 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &CreateDashboardRequest{}
+	req := &models.CreateDashboardRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	resp := &GetDashboardResponse{
-		Dashboard: Dashboard{
+	resp := &models.GetDashboardResponse{
+		Dashboard: models.Dashboard{
 			DashboardID: 1,
 			Name:        req.Name,
 			Description: req.Description,
@@ -64,23 +65,17 @@ func (e *handlersImpl) getDashboards(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getDashboardId(r)
-	//if err != nil {
-	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-	//	return
-	//}
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 
-	resp := &GetDashboardsResponse{
-		Dashboards: []Dashboard{
-			{
-				DashboardID: 1,
-				Name:        "Dashboard",
-				Description: "Description",
-				IsPublic:    true,
-				IsPinned:    false,
-			},
-		},
-		Total: 1,
+	u := r.Context().Value("userData").(*user.User)
+	resp, err := e.service.GetDashboards(projectID, u.ID)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
@@ -90,23 +85,31 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	id, err := getDashboardId(r)
+	projectID, err := getIDFromRequest(r, "projectId")
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	resp := &GetDashboardResponse{
-		Dashboard: Dashboard{
-			DashboardID: id,
-			Name:        "Dashboard",
-			Description: "Description",
-			IsPublic:    true,
-			IsPinned:    false,
-		},
+	dashboardID, err := getIDFromRequest(r, "id")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
 	}
 
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+	u := r.Context().Value("userData").(*user.User)
+	res, err := e.service.GetDashboard(projectID, dashboardID, u.ID)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	if res == nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, fmt.Errorf("Dashboard not found"), startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, res, startTime, r.URL.Path, bodySize)
 }
 
 func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
@@ -126,14 +129,14 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &UpdateDashboardRequest{}
+	req := &models.UpdateDashboardRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	resp := &GetDashboardResponse{
-		Dashboard: Dashboard{
+	resp := &models.GetDashboardResponse{
+		Dashboard: models.Dashboard{
 			DashboardID: 1,
 			Name:        req.Name,
 			Description: req.Description,
