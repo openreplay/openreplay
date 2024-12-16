@@ -7,21 +7,5 @@ module.exports = {
   plugins: [
     'babel-plugin-react-require',
     ['@babel/plugin-proposal-decorators', { legacy: true }],
-    [
-      'prismjs',
-      {
-        languages: [
-          'javascript',
-          'css',
-          'bash',
-          'typescript',
-          'jsx',
-          'kotlin',
-          'swift',
-        ],
-        theme: 'default',
-        css: true,
-      },
-    ],
   ],
 };

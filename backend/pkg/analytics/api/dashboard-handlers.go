@@ -1,4 +1,4 @@
-package api
+package models
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func getId(r *http.Request) (int, error) {
+func getDashboardId(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	if idStr == "" {
@@ -64,7 +64,7 @@ func (e *handlersImpl) getDashboards(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return
@@ -90,7 +90,7 @@ func (e *handlersImpl) getDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	id, err := getId(r)
+	id, err := getDashboardId(r)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -113,7 +113,7 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return
@@ -149,7 +149,7 @@ func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return
@@ -163,7 +163,7 @@ func (e *handlersImpl) pinDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return
@@ -179,7 +179,7 @@ func (e *handlersImpl) addCardToDashboard(w http.ResponseWriter, r *http.Request
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return
@@ -195,7 +195,7 @@ func (e *handlersImpl) removeCardFromDashboard(w http.ResponseWriter, r *http.Re
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getId(r)
+	//id, err := getDashboardId(r)
 	//if err != nil {
 	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 	//	return

@@ -1,6 +1,11 @@
 const colors = require('./app/theme/colors');
 const defaultColors = require('tailwindcss/colors');
 
+const deprecatedDefaults = ['lightBlue', 'warmGray', 'trueGray', 'coolGray', 'blueGray']
+deprecatedDefaults.forEach(color => {
+  delete defaultColors[color]
+})
+
 module.exports = {
   content: [
     './app/**/*.tsx',

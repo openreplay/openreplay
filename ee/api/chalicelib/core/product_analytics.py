@@ -1,8 +1,8 @@
 from typing import List
 
 import schemas
-from chalicelib.core.metrics_ch import __get_basic_constraints, __get_meta_constraint
-from chalicelib.core.metrics_ch import __get_constraint_values, __complete_missing_steps
+from chalicelib.core.metrics.metrics_ch import __get_basic_constraints, __get_meta_constraint, __get_constraint_values, \
+    __complete_missing_steps
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
