@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 
-export default function CodeBlock({ code }) {
-  const language = 'javascript'
+export default function CodeBlock({ code, language = 'javascript' }) {
   useEffect(() => {
     setTimeout(() => {
       if (window.Prism) {
