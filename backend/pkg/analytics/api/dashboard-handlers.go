@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"net/http"
 	"openreplay/backend/pkg/analytics/api/models"
@@ -31,12 +32,6 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	projectID, err := getIDFromRequest(r, "projectId")
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
 	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
@@ -46,6 +41,19 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 
 	req := &models.CreateDashboardRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(req)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}

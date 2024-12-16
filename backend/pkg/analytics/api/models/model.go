@@ -32,7 +32,7 @@ type GetDashboardsResponse struct {
 // REQUESTS
 
 type CreateDashboardRequest struct {
-	Name        string `json:"name" validate:"required"`
+	Name        string `json:"name" validate:"required,max=150"`
 	Description string `json:"description"`
 	IsPublic    bool   `json:"is_public"`
 	IsPinned    bool   `json:"is_pinned"`
