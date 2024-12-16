@@ -48,7 +48,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
 
-  const isSingleSeries = isTable || isFunnel || isHeatMap || isInsights || isRetention;
+  const isSingleSeries = isTable || isFunnel || isHeatMap || isInsights || isRetention || isPathAnalysis;
   return (
     <>
       {metric.series.length > 0 &&

@@ -65,20 +65,6 @@ function MetricViewHeader() {
             }
           />
         </div>
-
-        <div className="flex items-center gap-6">
-          <ListViewToggler />
-
-          {/* <Toggler
-                        label='My Cards'
-                        checked={filter.showMine}
-                        name='test'
-                        className='font-medium mr-2'
-                        onChange={() =>
-                            metricStore.updateKey('filter', { ...filter, showMine: !filter.showMine })
-                        }
-                    /> */}
-        </div>
       </div>
     </div>
   );
