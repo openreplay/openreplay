@@ -6,7 +6,7 @@ psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.3
 clickhouse-driver[lz4]==0.2.9
 clickhouse-connect==0.8.9
-elasticsearch==8.16.0
+elasticsearch==8.17.0
 jira==3.8.0
 cachetools==5.5.0
 
