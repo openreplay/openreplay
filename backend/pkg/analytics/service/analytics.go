@@ -2,17 +2,24 @@ package service
 
 import (
 	"errors"
+	"openreplay/backend/pkg/analytics/api/models"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 )
 
 type Service interface {
+	GetDashboard(projectId int, dashboardId int, userId uint64) (*models.GetDashboardResponse, error)
+	GetDashboardsPaginated(projectId int, userId uint64, req *models.GetDashboardsRequest) (*models.GetDashboardsResponsePaginated, error)
+	GetDashboards(projectId int, userId uint64) (*models.GetDashboardsResponse, error)
+	CreateDashboard(projectId int, userId uint64, req *models.CreateDashboardRequest) (*models.GetDashboardResponse, error)
+	UpdateDashboard(projectId int, dashboardId int, userId uint64, req *models.UpdateDashboardRequest) (*models.GetDashboardResponse, error)
+	DeleteDashboard(projectId int, dashboardId int, userId uint64) error
 }
 
 type serviceImpl struct {
 	log     logger.Logger
-	conn    pool.Pool
+	pgconn  pool.Pool
 	storage objectstorage.ObjectStorage
 }
 
@@ -28,7 +35,7 @@ func NewService(log logger.Logger, conn pool.Pool, storage objectstorage.ObjectS
 
 	return &serviceImpl{
 		log:     log,
-		conn:    conn,
+		pgconn:  conn,
 		storage: storage,
 	}, nil
 }

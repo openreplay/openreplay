@@ -1,10 +1,11 @@
-package models
+package api
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"openreplay/backend/pkg/analytics/api/models"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
 	"strconv"
@@ -40,7 +41,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &CardCreateRequest{}
+	req := &models.CardCreateRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -55,8 +56,8 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 
 	// TODO save card to DB
 
-	resp := &CardGetResponse{
-		Card: Card{
+	resp := &models.CardGetResponse{
+		Card: models.Card{
 			CardID:    1,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -64,7 +65,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 			EditedAt:  nil,
 			ProjectID: 1,
 			UserID:    1,
-			CardBase: CardBase{
+			CardBase: models.CardBase{
 				Name:       req.Name,
 				IsPublic:   req.IsPublic,
 				Thumbnail:  req.Thumbnail,
@@ -96,8 +97,8 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 
 	// TODO get card from DB
 
-	resp := &CardGetResponse{
-		Card: Card{
+	resp := &models.CardGetResponse{
+		Card: models.Card{
 			CardID:    id,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -105,7 +106,7 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 			EditedAt:  nil,
 			ProjectID: 1,
 			UserID:    1,
-			CardBase: CardBase{
+			CardBase: models.CardBase{
 				Name:       "My Card",
 				IsPublic:   true,
 				Thumbnail:  &thumbnail,
@@ -126,8 +127,8 @@ func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
 	// TODO get cards from DB
 	thumbnail := "https://example.com/image.png"
 
-	resp := &GetCardsResponse{
-		Cards: []Card{
+	resp := &models.GetCardsResponse{
+		Cards: []models.Card{
 			{
 				CardID:    1,
 				CreatedAt: time.Now(),
@@ -136,7 +137,7 @@ func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
 				EditedAt:  nil,
 				ProjectID: 1,
 				UserID:    1,
-				CardBase: CardBase{
+				CardBase: models.CardBase{
 					Name:       "My Card",
 					IsPublic:   true,
 					Thumbnail:  &thumbnail,
@@ -168,7 +169,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &CardUpdateRequest{}
+	req := &models.CardUpdateRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -183,8 +184,8 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 
 	// TODO update card in DB
 
-	resp := &CardGetResponse{
-		Card: Card{
+	resp := &models.CardGetResponse{
+		Card: models.Card{
 			CardID:    id,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -192,7 +193,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 			EditedAt:  nil,
 			ProjectID: 1,
 			UserID:    1,
-			CardBase: CardBase{
+			CardBase: models.CardBase{
 				Name:       req.Name,
 				IsPublic:   req.IsPublic,
 				Thumbnail:  req.Thumbnail,
@@ -231,7 +232,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 	bodySize = len(bodyBytes)
 
-	req := &GetCardChartDataRequest{}
+	req := &models.GetCardChartDataRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -257,7 +258,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 		]
 	}`
 
-	var resp GetCardChartDataResponse
+	var resp models.GetCardChartDataResponse
 	err = json.Unmarshal([]byte(jsonInput), &resp)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)

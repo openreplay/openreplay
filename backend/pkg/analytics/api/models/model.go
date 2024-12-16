@@ -1,11 +1,15 @@
 package models
 
 type Dashboard struct {
-	DashboardID int    `json:"dashboard_id"`
+	DashboardID int    `json:"dashboardId"`
+	ProjectID   int    `json:"projectId"`
+	UserID      int    `json:"userId"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	IsPublic    bool   `json:"is_public"`
-	IsPinned    bool   `json:"is_pinned"`
+	IsPublic    bool   `json:"isPublic"`
+	IsPinned    bool   `json:"isPinned"`
+	OwnerEmail  string `json:"ownerEmail"`
+	OwnerName   string `json:"ownerName"`
 }
 
 type CreateDashboardResponse struct {
@@ -16,16 +20,20 @@ type GetDashboardResponse struct {
 	Dashboard
 }
 
-type GetDashboardsResponse struct {
+type GetDashboardsResponsePaginated struct {
 	Dashboards []Dashboard `json:"dashboards"`
 	Total      uint64      `json:"total"`
+}
+
+type GetDashboardsResponse struct {
+	Dashboards []Dashboard `json:"dashboards"`
 }
 
 // REQUESTS
 
 type CreateDashboardRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string `json:"name" validate:"required,min=3,max=150"`
+	Description string `json:"description" validate:"max=500"`
 	IsPublic    bool   `json:"is_public"`
 	IsPinned    bool   `json:"is_pinned"`
 	Metrics     []int  `json:"metrics"`
@@ -34,9 +42,10 @@ type CreateDashboardRequest struct {
 type GetDashboardsRequest struct {
 	Page     uint64 `json:"page"`
 	Limit    uint64 `json:"limit"`
+	IsPublic bool   `json:"is_public"`
 	Order    string `json:"order"`
 	Query    string `json:"query"`
-	FilterBy string `json:"filterBy"`
+	OrderBy  string `json:"orderBy"`
 }
 
 type UpdateDashboardRequest struct {
