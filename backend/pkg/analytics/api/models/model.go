@@ -1,12 +1,15 @@
 package models
 
 type Dashboard struct {
-	DashboardID int    `json:"dashboard_id"`
-	UserID      int    `json:"user_id"`
+	DashboardID int    `json:"dashboardId"`
+	ProjectID   int    `json:"projectId"`
+	UserID      int    `json:"userId"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	IsPublic    bool   `json:"is_public"`
-	IsPinned    bool   `json:"is_pinned"`
+	IsPublic    bool   `json:"isPublic"`
+	IsPinned    bool   `json:"isPinned"`
+	OwnerEmail  string `json:"ownerEmail"`
+	OwnerName   string `json:"ownerName"`
 }
 
 type CreateDashboardResponse struct {
@@ -29,7 +32,7 @@ type GetDashboardsResponse struct {
 // REQUESTS
 
 type CreateDashboardRequest struct {
-	Name        string `json:"name"`
+	Name        string `json:"name" validate:"required"`
 	Description string `json:"description"`
 	IsPublic    bool   `json:"is_public"`
 	IsPinned    bool   `json:"is_pinned"`

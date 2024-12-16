@@ -31,6 +31,12 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
 	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
@@ -44,18 +50,8 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := &models.GetDashboardResponse{
-		Dashboard: models.Dashboard{
-			DashboardID: 1,
-			Name:        req.Name,
-			Description: req.Description,
-			IsPublic:    req.IsPublic,
-			IsPinned:    req.IsPinned,
-		},
-	}
-
 	currentUser := r.Context().Value("userData").(*user.User)
-	e.log.Info(r.Context(), "User ID: ", currentUser.ID)
+	resp, err := e.service.CreateDashboard(projectID, currentUser.ID, req)
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
@@ -116,11 +112,17 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getDashboardId(r)
-	//if err != nil {
-	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-	//	return
-	//}
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	dashboardID, err := getIDFromRequest(r, "id")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
 	if err != nil {
@@ -135,15 +137,8 @@ func (e *handlersImpl) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := &models.GetDashboardResponse{
-		Dashboard: models.Dashboard{
-			DashboardID: 1,
-			Name:        req.Name,
-			Description: req.Description,
-			IsPublic:    req.IsPublic,
-			IsPinned:    req.IsPinned,
-		},
-	}
+	currentUser := r.Context().Value("userData").(*user.User)
+	resp, err := e.service.UpdateDashboard(projectID, dashboardID, currentUser.ID, req)
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }
@@ -152,12 +147,24 @@ func (e *handlersImpl) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	//id, err := getDashboardId(r)
-	//if err != nil {
-	//	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-	//	return
-	//}
-	e.log.Info(r.Context(), "Dashboard deleted")
+	projectID, err := getIDFromRequest(r, "projectId")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	dashboardID, err := getIDFromRequest(r, "id")
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		return
+	}
+
+	u := r.Context().Value("userData").(*user.User)
+	err = e.service.DeleteDashboard(projectID, dashboardID, u.ID)
+	if err != nil {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		return
+	}
 
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
