@@ -191,7 +191,10 @@ function WidgetChart(props: Props) {
     loadComparisonData();
   }, [dashboardStore.comparisonPeriod]);
   useEffect(() => {
+    dashboardStore.setComparisonPeriod(null)
+    setCompData(null);
     _metric.updateKey('page', 1);
+    _metric.updateKey()
     loadPage();
   }, [
     drillDownPeriod,

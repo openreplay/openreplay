@@ -85,7 +85,7 @@ function CustomMetricLineChart(props: Props) {
              activeDot={{ fill: colors[index]}}
            />
          ) : null)}
-        {compData?.namesMap.map((key, i) => data.namesMap[i] ? (
+        {compData?.namesMap?.map((key, i) => data.namesMap[i] ? (
           <Line
             key={key}
             name={key}

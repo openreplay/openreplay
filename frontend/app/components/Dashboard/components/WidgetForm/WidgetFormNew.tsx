@@ -55,10 +55,11 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
         metric.series
           .slice(0, isSingleSeries ? 1 : metric.series.length)
           .map((series: any, index: number) => (
-            <div className="mb-2 rounded-xl border border-gray-lighter" key={series.name}>
+            <div className="mb-2 rounded-xl" key={series.name}>
               <FilterSeries
                 isHeatmap={isHeatMap}
                 canExclude={isPathAnalysis}
+                removeEvents={isPathAnalysis}
                 supportsEmpty={!isHeatMap && !isPathAnalysis}
                 excludeFilterKeys={excludeFilterKeys}
                 observeChanges={() => metric.updateKey('hasChanged', true)}

@@ -112,6 +112,7 @@ interface Props {
   canExclude?: boolean;
   expandable?: boolean;
   isHeatmap?: boolean;
+  removeEvents?: boolean;
 }
 
 function FilterSeries(props: Props) {
@@ -125,6 +126,7 @@ function FilterSeries(props: Props) {
     canExclude = false,
     expandable = false,
     isHeatmap,
+    removeEvents,
   } = props;
   const [expanded, setExpanded] = useState(hideHeader || !expandable);
   const { series, seriesIndex } = props;
@@ -206,30 +208,32 @@ function FilterSeries(props: Props) {
 
       {expanded ? (
         <>
-        <EventsList
-          filter={series.filter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          supportsEmpty={supportsEmpty}
-          onFilterMove={onFilterMove}
-          excludeFilterKeys={excludeFilterKeys}
-          onAddFilter={onAddFilter}
-          mergeUp={!hideHeader}
-          mergeDown
-          cannotAdd={isHeatmap}
-        />
-        <FilterList
-          filter={series.filter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          supportsEmpty={supportsEmpty}
-          onFilterMove={onFilterMove}
-          excludeFilterKeys={excludeFilterKeys}
-          onAddFilter={onAddFilter}
-          mergeUp
-        />
+          {removeEvents ? null :
+            <EventsList
+              filter={series.filter}
+              onUpdateFilter={onUpdateFilter}
+              onRemoveFilter={onRemoveFilter}
+              onChangeEventsOrder={onChangeEventsOrder}
+              supportsEmpty={supportsEmpty}
+              onFilterMove={onFilterMove}
+              excludeFilterKeys={excludeFilterKeys}
+              onAddFilter={onAddFilter}
+              mergeUp={!hideHeader}
+              mergeDown
+              cannotAdd={isHeatmap}
+            />
+          }
+          <FilterList
+            filter={series.filter}
+            onUpdateFilter={onUpdateFilter}
+            onRemoveFilter={onRemoveFilter}
+            onChangeEventsOrder={onChangeEventsOrder}
+            supportsEmpty={supportsEmpty}
+            onFilterMove={onFilterMove}
+            excludeFilterKeys={excludeFilterKeys}
+            onAddFilter={onAddFilter}
+            mergeUp={!removeEvents}
+          />
         </>
       ) : null}
     </div>
