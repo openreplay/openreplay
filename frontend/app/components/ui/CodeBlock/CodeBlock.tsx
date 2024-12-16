@@ -1,20 +1,20 @@
-import React, { useEffect } from "react";
-import Prism from "prismjs";
+import React, { useEffect } from 'react';
 
-interface IProps {
-  code: string;
-  language: string;
-}
-
-const CodeBlock = ({ code, language }: IProps) => {
+export default function CodeBlock({ code }) {
+  const language = 'javascript'
   useEffect(() => {
-    Prism.highlightAll(false);
-  }, []);
+    setTimeout(() => {
+      if (window.Prism) {
+        Prism.highlightAll();
+      }
+    }, 0)
+  }, [code, language]);
+
   return (
     <pre>
-      <code children={code} className={`language-${language}`} />
+      <code className={`language-${language}`}>
+        {code}
+      </code>
     </pre>
   );
-};
-
-export default CodeBlock;
+}
