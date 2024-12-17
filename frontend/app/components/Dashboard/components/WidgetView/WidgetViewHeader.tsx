@@ -3,7 +3,7 @@ import cn from 'classnames';
 import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import AddToDashboardButton from 'Components/Dashboard/components/AddToDashboardButton';
+
 import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react'
@@ -31,11 +31,11 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
   return (
     <div
       className={cn(
-        'flex justify-between items-center bg-white rounded px-4 py-2 border border-gray-lighter'
+        'flex justify-between items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title'
       )}
       onClick={onClick}
     >
-      <h1 className="mb-0 text-2xl mr-4 min-w-fit">
+      <h1 className="mb-0 text-2xl mr-4 min-w-fit ">
         <WidgetName
           name={widget.name}
           onUpdate={(name) => metricStore.merge({ name })}
@@ -43,20 +43,28 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
         />
       </h1>
       <Space>
-        <AddToDashboardButton metricId={widget.metricId} />
-        <MetricTypeSelector />
-        <Tooltip title={tooltipText}>
-          <Button disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1} />}></Button>
-        </Tooltip>
-        <Button
-          type="primary"
+      
+      <Button
+          type={
+            metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
+          }
           onClick={onSave}
           loading={metricStore.isSaving}
           disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
+          className='font-medium btn-update-card'
         >
           {widget.exists() ? 'Update' : 'Create'}
         </Button>
+
+        <MetricTypeSelector />
+        
+        <Tooltip title={tooltipText}>
+          <Button type='text' className='btn-copy-card-url' disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1}/> }></Button>
+        </Tooltip>
+        
         <CardViewMenu />
+
+        
       </Space>
     </div>
   );

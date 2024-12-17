@@ -43,7 +43,7 @@ function RangeGranularity({
 
   return (
     <Dropdown menu={menuProps} trigger={['click']}>
-      <Button type='text' variant='text' size='small'>
+      <Button type='text' variant='text' size='small' className='btn-granularity'>
         <span>{selected}</span>
         <DownOutlined  />
       </Button>

@@ -1,61 +1,68 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
-import {Input, Tooltip} from 'antd';
+import { Input, Tooltip } from 'antd';
 
 interface Props {
   name: string;
-  onUpdate: (name) => void;
+  onUpdate: (name: string) => void;
   seriesIndex?: number;
 }
+
 function SeriesName(props: Props) {
   const { seriesIndex = 1 } = props;
-  const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(props.name)
-  const ref = useRef<any>(null)
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(props.name);
+  const ref = useRef<any>(null);
 
-  const write = ({ target: { value, name } }) => {
-    setName(value)
-  }
+  const write = ({ target: { value } }) => {
+    setName(value);
+  };
 
   const onBlur = () => {
-    setEditing(false)
-    props.onUpdate(name)
-  }
+    setEditing(false);
+    props.onUpdate(name);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setEditing(false);
+      props.onUpdate(name);
+    }
+  };
 
   useEffect(() => {
     if (editing) {
-      ref.current.focus()
+      ref.current.focus();
     }
-  }, [editing])
+  }, [editing]);
 
   useEffect(() => {
-    setName(props.name)
-  }, [props.name])
-  
-  // const { name } = props;
+    setName(props.name);
+  }, [props.name]);
+
   return (
     <div className="flex items-center">
-      { editing ? (
+      {editing ? (
         <Input
-          ref={ ref }
+          ref={ref}
           name="name"
           value={name}
-          // readOnly={!editing} 
           onChange={write}
           onBlur={onBlur}
-          onFocus={() => setEditing(true)}
-          className='bg-white'
+          onKeyDown={onKeyDown}
+          className="bg-white text-lg border-transparent rounded-lg font-medium ps-2"
         />
       ) : (
-        <div className="text-base h-8 flex items-center border-transparent">{name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name }</div>
-      )}
-      
-
-      <div className="ml-3 cursor-pointer " onClick={() => setEditing(true)}>
-        <Tooltip title='Rename' placement='bottom'>
-          <Icon name="pencil" size="14" />
+        <Tooltip title="Double click to rename.">
+          <div
+            className="text-lg font-medium h-8 flex items-center border-transparent p-2 hover:bg-teal/10 cursor-pointer rounded-lg input-rename-series"
+            onClick={() => setEditing(true)}
+            data-event='input-rename-series'
+          >
+            {name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name}
+          </div>
         </Tooltip>
-      </div>
+      )}
     </div>
   );
 }

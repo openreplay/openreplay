@@ -125,6 +125,7 @@ function WidgetDatatable(props: Props) {
           size={'small'}
           type={'default'}
           onClick={() => setShowTable(!showTable)}
+          className='btn-show-hide-table'
         >
           {showTable ? 'Hide Table' : 'Show Table'}
         </Button>

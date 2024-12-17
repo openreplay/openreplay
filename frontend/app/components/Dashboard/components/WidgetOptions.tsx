@@ -112,7 +112,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         },
       }}
     >
-      <Button type='text' variant='text' size='small'>
+      <Button type='text' variant='text' size='small' className='btn-aggregator'>
         <Space>
           {chartIcons[metric.metricOf]}
           <div>{items[metric.metricOf] || 'Total Sessions'}</div>
@@ -179,7 +179,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       }}
       
     >
-      <Button type='text' variant='text' size='small'>
+      <Button type='text' variant='text' size='small' className='btn-visualization-type'>
         <Space>
           {chartIcons[metric.viewType]}
           <div>{chartTypes[metric.viewType]}</div>

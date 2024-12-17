@@ -197,7 +197,7 @@ function AndDateRange({
       {comparison ? (
         <div className={'flex items-center gap-0'}>
           <Dropdown menu={menuProps} trigger={['click']} className={'px-2 py-1 gap-1'}>
-            <Button type='text' variant='text' className='flex items-center' size='small'>
+            <Button type='text' variant='text' className='flex items-center btn-compare-card-data' size='small'>
               <span>{`Compare to ${comparisonValue || ''}`}</span>
               {selectedValue && (
                 <Tooltip title='Reset'>
@@ -220,7 +220,7 @@ function AndDateRange({
           <Button 
             type="text" 
             size='small'
-            className="flex items-center"
+            className="flex items-center btn-card-period-range"
             icon={useButtonStyle ? <Calendar size={16}  /> : null}
           >
             {isCustomRange ? customRange : selectedValue?.label}

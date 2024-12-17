@@ -517,7 +517,8 @@ function WidgetChart(props: Props) {
           {renderChart()}
           {props.isPreview && _metric.metricType === TIMESERIES ? (
             <WidgetDatatable
-              defaultOpen={_metric.viewType === 'table'}
+              //defaultOpen={_metric.viewType === 'table'}
+              defaultOpen={true}
               data={data}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}

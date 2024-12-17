@@ -1,3 +1,4 @@
+import { backgroundClip } from 'html2canvas/dist/types/css/property-descriptors/background-clip';
 import React from 'react';
 import Select from 'Shared/Select';
 
@@ -5,14 +6,18 @@ const dropdownStyles = {
   control: (provided: any) => {
     const obj = {
       ...provided,
-      border: 'solid thin #ddd !important',
+      border: 'solid thin #ddd',
       boxShadow: 'none !important',
       cursor: 'pointer',
       height: '26px',
       minHeight: '26px',
       backgroundColor: 'white',
       borderRadius: '.5rem',
+      '&:hover': {
+      borderColor: 'rgb(115 115 115 / 0.9)', 
     }
+    }
+    
     return obj;
   },
   valueContainer: (provided: any) => ({
@@ -79,6 +84,7 @@ function FilterOperator(props: Props) {
         isDisabled={isDisabled}
         value={value ? options?.find((i: any) => i.value === value) : null}
         onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
+        className='btn-event-operator'
       />
     </div>
   );

@@ -134,10 +134,10 @@ export function AutocompleteModal({
         </>
       </Loader>
       <div className={'flex gap-2 items-center pt-2'}>
-        <Button type={'primary'} onClick={applyValues}>
+        <Button type={'primary'} onClick={applyValues} className='btn-apply-event-value'>
           Apply
         </Button>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} className='btn-cancel-event-value'>Cancel</Button>
       </div>
     </OutsideClickDetectingDiv>
   );
