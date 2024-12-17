@@ -99,7 +99,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
       dataIndex: 'name',
       key: 'title',
-      className: 'cap-first',
+      className: 'cap-first pl-4',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -164,7 +164,7 @@ const ListView: React.FC<Props> = (props: Props) => {
     {
       title: '',
       key: 'options',
-      className: 'text-right',
+      className: 'text-right pr-4',
       width: '5%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -178,12 +178,13 @@ const ListView: React.FC<Props> = (props: Props) => {
   ];
 
   return (
+    
     <Table
       columns={columns}
       dataSource={paginatedData}
       rowKey="metricId"
       onChange={handleTableChange}
-      size='middle'
+      size='default'
       rowSelection={
         !disableSelection
           ? {
@@ -196,13 +197,6 @@ const ListView: React.FC<Props> = (props: Props) => {
           }
           : undefined
       }
-      // footer={() => (
-      //   <div className="flex justify-end">
-      //     <Checkbox name="slack" checked={allSelected} onClick={toggleAll}>
-      //       Select All
-      //     </Checkbox>
-      //   </div>
-      // )}
       pagination={{
         current: pagination.current,
         pageSize: pagination.pageSize,
@@ -211,7 +205,8 @@ const ListView: React.FC<Props> = (props: Props) => {
         className: 'px-4',
         showLessItems: true,
         showTotal: () => totalMessage,
-        showQuickJumper: true
+        showQuickJumper: true,
+        size: 'small'
       }}
     />
   );

@@ -170,7 +170,7 @@ const MetricListItem: React.FC<Props> = ({
     case 'options':
       return (
         <>
-        <div className='flex justify-end'>
+        <div className='flex justify-end pr-4'>
           <Dropdown
             menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}

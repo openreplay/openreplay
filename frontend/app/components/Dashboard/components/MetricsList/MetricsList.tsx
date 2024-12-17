@@ -61,7 +61,12 @@ function MetricsList({
             </div>
           </div>
         }
-        subtext="Utilize cards to visualize key user interactions or product performance metrics."
+        
+        subtext={
+          metricsSearch !== ''
+            ? ''
+            : 'Utilize cards to visualize key user interactions or product performance metrics.'
+        }
       >
         {listView ? (
           <ListView
@@ -87,8 +92,8 @@ function MetricsList({
             <div className="w-full flex items-center justify-between py-4 px-6 border-t">
               <div className="">
                 Showing{' '}
-                <span className="font-semibold">{Math.min(cards.length, metricStore.pageSize)}</span> out
-                of <span className="font-semibold">{cards.length}</span> cards
+                <span className="font-medium">{Math.min(cards.length, metricStore.pageSize)}</span> out
+                of <span className="font-medium">{cards.length}</span> cards
               </div>
               <Pagination
                 page={metricStore.page}
