@@ -47,12 +47,12 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 			cfg.Token = val
 		}
 	}
-	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", cfg.OrganizationSlug, cfg.ProjectSlug)
+	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/issues/", cfg.OrganizationSlug, cfg.ProjectSlug)
 
 	testCallLimit := 1
 	params := url.Values{}
 	if sessionID != 0 {
-		params.Add("query", fmt.Sprintf("openReplaySession.id=%d", sessionID))
+		params.Add("query", fmt.Sprintf("openReplaySession.id:%d", sessionID))
 	} else {
 		params.Add("per_page", fmt.Sprintf("%d", testCallLimit))
 	}
