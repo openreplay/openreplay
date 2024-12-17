@@ -38,14 +38,15 @@ const EventsOrder = observer(
           title="Select the operator to be applied between events."
           placement="bottom"
         >
-          <div className="text-neutral-500/90 text-sm">Events Order</div>
+          <div className="text-neutral-500/90 text-sm font-normal">Events Order</div>
         </Tooltip>
 
         <Dropdown
           menu={{ items: menuItems, onClick }}
           trigger={['click']}
           placement="bottomRight"
-          className="bg-white border border-neutral-200 rounded-lg px-1 py-0.5 hover:border-teal"
+          className="bg-white border font-normal text-sm border-neutral-200 rounded-lg px-1 py-0.5 hover:border-teal btn-events-order"
+          data-event="btn-events-order"
         >
           <Button size={'small'}>{selected || 'Select'}</Button>
         </Dropdown>

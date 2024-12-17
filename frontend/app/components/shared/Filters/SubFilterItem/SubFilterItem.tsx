@@ -23,7 +23,7 @@ export default function SubFilterItem(props: Props) {
             <FilterOperator
               options={filter.operatorOptions}
               onChange={onOperatorChange}
-              className="mx-2 flex-shrink-0"
+              className="mx-2 flex-shrink-0 btn-filter-operator"
               value={filter.operator}
             />
 

@@ -91,7 +91,7 @@ function FilterItem(props: Props) {
             <FilterOperator
               options={filter.sourceOperatorOptions}
               onChange={onSourceOperatorChange}
-              className="mx-2 flex-shrink-0"
+              className="mx-2 flex-shrink-0 btn-event-operator"
               value={filter.sourceOperator}
               isDisabled={filter.operatorDisabled || props.readonly}
             />
@@ -105,7 +105,7 @@ function FilterItem(props: Props) {
             <FilterOperator
               options={filter.operatorOptions}
               onChange={onOperatorChange}
-              className="mx-2 flex-shrink-0"
+              className="mx-2 flex-shrink-0 btn-sub-event-operator"
               value={filter.operator}
               isDisabled={filter.operatorDisabled || props.readonly}
             />
@@ -157,6 +157,7 @@ function FilterItem(props: Props) {
             type="text"
             onClick={props.onRemoveFilter}
             size="small"
+            className='btn-remove-step'
           >
             <CircleMinus size={14} />
           </Button>

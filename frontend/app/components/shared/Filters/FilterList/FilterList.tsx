@@ -70,6 +70,7 @@ export const FilterList = observer((props: Props) => {
             icon={<Filter size={16} strokeWidth={1} />}
             type="default"
             size={'small'}
+            className='btn-add-filter'
           >
             Add
           </Button>
@@ -214,6 +215,7 @@ export const EventsList = observer((props: Props) => {
               icon={<Plus size={16} strokeWidth={1} />}
               type="default"
               size={'small'}
+              className='btn-add-event'
             >
               Add
             </Button>
@@ -228,27 +230,39 @@ export const EventsList = observer((props: Props) => {
             actions.map((action, index) => <div key={index}>{action}</div>)}
         </div>
       </div>
-      <div className={'flex flex-col'}>
+      <div className={'flex flex-col '}>
         {filters.map((filter: any, filterIndex: number) =>
           filter.isEvent ? (
             <div
+            className={cn(
+              'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
+              {
+                'bg-[#f6f6f6]': hoveredItem.i === filterIndex, 
+              }
+            )}
               style={{
                 pointerEvents: 'unset',
                 paddingTop:
-                  hoveredItem.i === filterIndex &&
-                  hoveredItem.position === 'top'
+                  hoveredItem.i === filterIndex && hoveredItem.position === 'top'
                     ? '1.5rem'
                     : '0.5rem',
                 paddingBottom:
-                  hoveredItem.i === filterIndex &&
-                  hoveredItem.position === 'bottom'
+                  hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
                     ? '1.5rem'
                     : '0.5rem',
-                marginLeft: '-1.25rem',
-                width: 'calc(100% + 2.5rem)',
+                marginLeft: '-1rem',
+                width: 'calc(100% + 2rem)',
                 alignItems: 'start',
+                borderTop:
+                  hoveredItem.i === filterIndex && hoveredItem.position === 'top'
+                    ? '1px dashed #888'
+                    : undefined,
+                borderBottom:
+                  hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
+                    ? '1px dashed #888'
+                    : undefined,
               }}
-              className={'hover:bg-active-blue px-5 gap-2 items-center flex'}
+              
               id={`${filter.key}-${filterIndex}`}
               onDragOver={(e) => handleDragOverEv(e, filterIndex)}
               onDrop={(e) => handleDrop(e)}
@@ -257,16 +271,19 @@ export const EventsList = observer((props: Props) => {
               {!!props.onFilterMove && eventsNum > 1 ? (
                 <div
                   className={
-                    'p-2 cursor-grab text-neutral-500/90 hover:bg-gray-lighter	px-1 pt-2 rounded-lg'
+                    'p-2 cursor-grab text-neutral-500/90 hover:bg-white px-1 pt-2 rounded-lg'
                   }
                   draggable={!!props.onFilterMove}
                   onDragStart={(e) =>
-                    handleDragStart(
-                      e,
-                      filterIndex,
-                      `${filter.key}-${filterIndex}`
-                    )
+                    handleDragStart(e, filterIndex, `${filter.key}-${filterIndex}`)
                   }
+                  onDragEnd={() => {
+                    setHoveredItem({ i: null, position: null });
+                    setDraggedItem(null);
+                  }}
+                  style={{
+                    cursor: draggedInd !== null ? 'grabbing' : 'grab',
+                  }}
                 >
                   <GripVertical size={16} />
                 </div>

@@ -94,7 +94,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
               if (!canAddSeries) return;
               metric.addSeries();
             }}
-            className="w-full cursor-pointer flex items-center py-2 justify-center gap-2"
+            className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal"
           >
               <PlusIcon size={16} />
               Add Series

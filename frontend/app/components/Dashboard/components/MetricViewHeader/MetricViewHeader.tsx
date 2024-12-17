@@ -5,6 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
+import {Select as AntSelect} from 'antd';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
@@ -44,9 +45,9 @@ function MetricViewHeader() {
 
       <div className="border-y px-6 py-1 mt-2 flex items-center w-full justify-between">
         <div className="items-center flex gap-4">
-          <Select
+          <AntSelect
             options={[
-              { label: 'All Types', value: 'all' },
+              { label: 'All Card Types', value: 'all' },
               ...DROPDOWN_OPTIONS,
             ]}
             name="type"
@@ -54,8 +55,7 @@ function MetricViewHeader() {
             onChange={({ value }) =>
               metricStore.updateKey('filter', { ...filter, type: value.value })
             }
-            plain={true}
-            isSearchable={true}
+
           />
 
           <DashboardDropdown

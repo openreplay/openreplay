@@ -1,10 +1,10 @@
 import React from 'react';
-import { Table } from 'antd';
+import { Table, Tooltip } from 'antd';
 import type { TableProps } from 'antd';
 import Widget from 'App/mstore/types/widget';
 import Funnel from 'App/mstore/types/funnel';
 import { ItemMenu } from 'UI';
-import { EllipsisVertical } from 'lucide-react';
+import { EllipsisVertical, FileDown } from 'lucide-react';
 import { exportAntCsv } from '../../../utils';
 
 interface Props {
@@ -101,30 +101,27 @@ export function TableExporter({
 }) {
   const onClick = () => exportAntCsv(tableColumns, tableData, filename);
   return (
+    <Tooltip title='Export Data to CSV'>
     <div
       className={`absolute ${top ? top : 'top-0'} ${
         right ? right : '-right-1'
       }`}
     >
       <ItemMenu
-        items={[{ icon: 'pencil', text: 'Export', onClick }]}
+        items={[{ icon: 'download', text: 'Export to CSV', onClick }]}
         bold
         customTrigger={
-          <div
-            className={
-              'flex items-center justify-center bg-gray-lighter cursor-pointer hover:bg-gray-light'
-            }
-            style={{
-              height: 38,
-              width: 38,
-              boxShadow: '-2px 0px 3px 0px rgba(0, 0, 0, 0.05)',
-            }}
-          >
+              <div
+                className={
+                  'flex items-center justify-center bg-gradient-to-r from-[#fafafa] to-neutral-200 cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data'
+                }
+              >
             <EllipsisVertical size={16} />
           </div>
         }
       />
     </div>
+    </Tooltip>
   );
 }
 

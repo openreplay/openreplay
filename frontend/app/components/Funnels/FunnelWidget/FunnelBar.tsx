@@ -90,7 +90,7 @@ function FunnelBarData({
     bottom: 0,
     background: isFocused
                 ? 'rgba(204, 0, 0, 0.3)'
-                : 'repeating-linear-gradient(325deg, lightgray, lightgray 2px, #FFF1F0 2px, #FFF1F0 6px)',
+                : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
     cursor: 'pointer',
   }
   const horizontalEmptyBarStyle = {
@@ -102,7 +102,7 @@ function FunnelBarData({
     left: 0,
     background: isFocused
                 ? 'rgba(204, 0, 0, 0.3)'
-                : 'repeating-linear-gradient(325deg, lightgray, lightgray 2px, #FFF1F0 2px, #FFF1F0 6px)',
+                : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
     cursor: 'pointer',
   }
 
