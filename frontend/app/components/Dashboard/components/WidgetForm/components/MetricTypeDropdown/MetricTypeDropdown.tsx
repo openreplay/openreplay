@@ -14,8 +14,8 @@ interface Props {
 }
 function MetricTypeDropdown(props: Props) {
   const { metricStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
   const metric: any = metricStore.instance;
+  const isEnterprise = userStore.isEnterprise;
 
   const options = React.useMemo(() => {
     return DROPDOWN_OPTIONS.map((option: any) => {
@@ -24,18 +24,6 @@ function MetricTypeDropdown(props: Props) {
         disabled: !isEnterprise && option.value === INSIGHTS,
       };
     });
-  }, []);
-
-  React.useEffect(() => {
-    const queryCardType = props.query.get('type');
-    if (queryCardType && options.length > 0 && metric.metricType) {
-      const type: Option = options.find((i) => i.value === queryCardType) as Option;
-      if (type.disabled) {
-        return;
-      }
-      setTimeout(() => onChange(type.value), 0);
-    }
-    // setTimeout(() => onChange(USER_PATH), 0);
   }, []);
 
   const onChange = (type: string) => {
@@ -51,7 +39,7 @@ function MetricTypeDropdown(props: Props) {
       value={
         DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) || DROPDOWN_OPTIONS[0]
       }
-      onChange={props.onSelect}
+      onChange={({ value }) => onChange(value.value)}
       components={{
         SingleValue: ({ children, ...props }: any) => {
           const {

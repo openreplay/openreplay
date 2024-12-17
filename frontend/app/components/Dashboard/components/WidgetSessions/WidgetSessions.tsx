@@ -116,7 +116,7 @@ function WidgetSessions(props: Props) {
   };
 
   return (
-    <div className={cn(className, 'bg-white p-3 pb-0 rounded-lg shadow-sm border mt-3')}>
+    <div className={cn(className, 'bg-white p-3 pb-0 rounded-xl shadow-sm border mt-3')}>
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-baseline">

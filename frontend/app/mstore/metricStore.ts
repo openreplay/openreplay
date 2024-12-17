@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from "mobx";
 import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
@@ -11,10 +11,34 @@ import {
   INSIGHTS,
   HEATMAP,
   USER_PATH,
-  RETENTION
+  RETENTION,
+  CATEGORIES,
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
+import { FilterKey } from 'Types/filter/filterType';
+
+const cardToCategory = (cardType: string) => {
+  switch (cardType) {
+    case TIMESERIES:
+    case FUNNEL:
+    case USER_PATH:
+    case HEATMAP:
+      return CATEGORIES.product_analytics;
+    case FilterKey.ERRORS:
+    case FilterKey.FETCH:
+    case TIMESERIES + '_4xx_requests':
+    case TIMESERIES + '_slow_network_requests':
+      return CATEGORIES.monitors;
+    case FilterKey.LOCATION:
+    case FilterKey.USER_BROWSER:
+    case FilterKey.REFERRER:
+    case FilterKey.USERID:
+      return CATEGORIES.web_analytics;
+    default:
+      return CATEGORIES.product_analytics;
+  }
+}
 
 interface MetricFilter {
   query?: string;
@@ -43,6 +67,8 @@ export default class MetricStore {
 
   clickMapSearch = '';
   clickMapLabel = '';
+
+  cardCategory: string | null = CATEGORIES.product_analytics;
 
   constructor() {
     makeAutoObservable(this);
@@ -79,6 +105,10 @@ export default class MetricStore {
     this.instance.update(metric || new Widget());
   }
 
+  setCardCategory(category: string) {
+    this.cardCategory = category;
+  }
+
   updateKey(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
@@ -100,11 +130,13 @@ export default class MetricStore {
   merge(obj: any, updateChangeFlag: boolean = true) {
     const type = obj.metricType;
 
-    // handle metricType change
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
         this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and']
       })
+      if (type === HEATMAP && 'series' in obj) {
+       delete obj['series']
+      }
       this.changeType(type);
     }
 
@@ -129,8 +161,19 @@ export default class MetricStore {
     this.instance.updateKey('hasChanged', updateChangeFlag);
   }
 
-  changeType(value: string) {
-    const obj: any = { metricType: value };
+  changeType(value: string, metricOf?: string) {
+    const defaultData = {
+      sessionId: '',
+      sessions: [],
+      issues: [],
+      total: 0,
+      chart: [],
+      namesMap: {},
+      avg: 0,
+      percentiles: [],
+      values: [],
+    };
+    const obj: any = { metricType: value, data: defaultData };
     obj.series = this.instance.series;
 
     obj.series = obj.series.slice(0, 1);
@@ -191,6 +234,10 @@ export default class MetricStore {
           value: [''],
         });
       }
+    }
+
+    if (metricOf) {
+      obj['metricOf'] = metricOf;
     }
 
     this.instance.update(obj);
@@ -283,7 +330,13 @@ export default class MetricStore {
     return metricService
       .getMetric(id)
       .then((metric: any) => {
-        return (this.instance = new Widget().fromJson(metric, period));
+        const inst = new Widget().fromJson(metric, period)
+        runInAction(() => {
+          this.instance = inst;
+          const type = inst.metricType === 'table' ? inst.metricOf : inst.metricType
+          this.cardCategory = cardToCategory(type);
+        })
+        return inst;
       })
       .finally(() => {
         this.setLoading(false);

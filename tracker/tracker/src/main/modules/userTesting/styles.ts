@@ -19,7 +19,7 @@ export const containerStyle = {
   alignItems: 'center',
   padding: '1.5rem',
   borderRadius: '2px',
-  border: '1px solid #D9D9D9',
+  border: '1px solid rgb(255 255 255 / var(--tw-bg-opacity, 1))',
   background: '#FFF',
   width: '22rem',
 }
@@ -31,7 +31,7 @@ export const containerWidgetStyle = {
   padding: 'unset',
   fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"`,
   'border-radius': '2px',
-  border: '1px solid #D9D9D9',
+  border: '1px solid rgb(255 255 255 / var(--tw-bg-opacity, 1))',
   background: 'rgba(255, 255, 255, 0.75)',
   width: '22rem',
 }
@@ -129,7 +129,7 @@ export const descriptionWidgetStyle = {
   boxSizing: 'border-box',
   display: 'block',
   width: '100%',
-  borderBottom: '1px solid #D9D9D9',
+  borderBottom: '1px solid rgb(255 255 255 / var(--tw-bg-opacity, 1))',
   background: '#FFF',
   padding: '0.65rem',
   alignSelf: 'stretch',
