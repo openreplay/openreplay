@@ -121,6 +121,10 @@ export default class TabSessionManager {
     return this.pagesManager.getNode(id);
   };
 
+  public injectSpriteMap = (spriteMapEl: SVGElement) => {
+    this.pagesManager.injectSpriteMap(spriteMapEl);
+  }
+
   public updateLists(lists: Partial<InitialLists>) {
     Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
       const currentList = this.lists.lists[key];

@@ -105,13 +105,26 @@ export interface IResourceRequest extends IResource {
   decodedBodySize?: number,
 }
 
+const getGraphqlReqName = (resource: IResource) => {
+  try {
+    if (!resource.request) return getResourceName(resource.url)
+    const req = JSON.parse(resource.request)
+    const body = JSON.parse(req.body)
+    return /query (\w+)/.exec(body.query)?.[1]
+  } catch (e) {
+    return getResourceName(resource.url)
+  }
+}
 
-export const Resource = (resource: IResource) => ({
-  ...resource,
-  name: getResourceName(resource.url),
-  isRed: !resource.success || resource.error, //|| resource.score >= RED_BOUND,
-  isYellow: false, // resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
-})
+export const Resource = (resource: IResource) => {
+  const name = resource.type === 'graphql' ? getGraphqlReqName(resource) : getResourceName(resource.url)
+  return {
+    ...resource,
+    name,
+    isRed: !resource.success || resource.error, //|| resource.score >= RED_BOUND,
+    isYellow: false, // resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
+  }
+}
 
 
 export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: number) {

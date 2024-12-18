@@ -181,7 +181,7 @@ export default class Screen {
 
   getElementFromInternalPoint({ x, y }: Point): Element | null {
     // elementFromPoint && elementFromPoints require viewpoint-related coordinates,
-    //                                                 not document-related
+    // not document-related
     return this.document?.elementFromPoint(x, y) || null;
   }
 

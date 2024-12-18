@@ -9,6 +9,7 @@ import {
   MoveNode,
   RemoveNode,
   UnbindNodes,
+  SetNodeAttribute,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -16,9 +17,66 @@ import {
   isTextNode,
   isElementNode,
   isSVGElement,
+  isUseElement,
   hasTag,
   isCommentNode,
 } from '../guards.js'
+
+const iconCache = {}
+const domParser = new DOMParser()
+
+async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl') {
+  try {
+    const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
+    if (!href) {
+      console.debug('Openreplay: xlink:href or href not found on <use>.')
+      return
+    }
+
+    const [url, symbolId] = href.split('#')
+    if (!url || !symbolId) {
+      console.debug('Openreplay: Invalid xlink:href or href found on <use>.')
+      return
+    }
+
+    if (iconCache[symbolId]) {
+      return iconCache[symbolId]
+    }
+
+    const response = await fetch(url)
+    const svgText = await response.text()
+
+    const svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+    const symbol = svgDoc.getElementById(symbolId)
+
+    if (!symbol) {
+      console.debug('Openreplay: Symbol not found in SVG.')
+      return
+    }
+
+    if (mode === 'inline') {
+      const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
+      iconCache[symbolId] = res
+      return res
+    } else if (mode === 'dataurl') {
+      const inlineSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
+          ${symbol.innerHTML}
+        </svg>
+      `
+      const encodedSvg = btoa(inlineSvg)
+      const dataUrl = `data:image/svg+xml;base64,${encodedSvg}`
+
+      iconCache[symbolId] = dataUrl
+
+      return dataUrl
+    } else {
+      console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
+    }
+  } catch (error) {
+    console.error('Openreplay: Error processing <use> element:', error)
+  }
+}
 
 function isIgnored(node: Node): boolean {
   if (isCommentNode(node)) {
@@ -146,8 +204,8 @@ export default abstract class Observer {
           {
             acceptNode: (node) =>
               isIgnored(node) || this.app.nodes.getID(node) === undefined
-              ? NodeFilter.FILTER_REJECT
-              : NodeFilter.FILTER_ACCEPT,
+                ? NodeFilter.FILTER_REJECT
+                : NodeFilter.FILTER_ACCEPT,
           },
           // @ts-ignore
           false,
@@ -178,13 +236,28 @@ export default abstract class Observer {
       }
       if (value === null) {
         this.app.send(RemoveNodeAttribute(id, name))
-      } else if (name === 'href') {
-        if (value.length > 1e5) {
+      }
+
+      if (isUseElement(node) && name === 'href') {
+        parseUseEl(node, 'dataurl')
+          .then((dataUrl) => {
+            if (dataUrl) {
+              this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${dataUrl}`))
+            }
+          })
+          .catch((e: any) => {
+            console.error('Openreplay: Error parsing <use> element:', e)
+          })
+        return
+      }
+
+      if (name === 'href') {
+        if (value!.length > 1e5) {
           value = ''
         }
-        this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
+        this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
       } else {
-        this.app.attributeSender.sendSetAttribute(id, name, value)
+        this.app.attributeSender.sendSetAttribute(id, name, value!)
       }
       return
     }
