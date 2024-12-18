@@ -15,7 +15,7 @@ export function processLog(log: any): UnifiedLog[] {
   } else if (isDynatraceLog(log)) {
     return log.map(processDynatraceLog);
   } else {
-    throw new Error("Unknown log format");
+    console.error("Unknown log format");
   }
 }
 
@@ -37,7 +37,7 @@ function isElasticLog(log: any): boolean {
 }
 
 function isSentryLog(log: any): boolean {
-  return log && log[0].id && log[0].message && log[0].title;
+  return log && 'id' in log[0] && 'message' in log[0] && 'title' in log[0];
 }
 
 function processDynatraceLog(log: any): UnifiedLog {
