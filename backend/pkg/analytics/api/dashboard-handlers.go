@@ -2,31 +2,13 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/gorilla/mux"
 	"net/http"
 	"openreplay/backend/pkg/analytics/api/models"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
-	"strconv"
 	"time"
 )
-
-func getIDFromRequest(r *http.Request, key string) (int, error) {
-	vars := mux.Vars(r)
-	idStr := vars[key]
-	if idStr == "" {
-		return 0, fmt.Errorf("missing %s in request", key)
-	}
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, fmt.Errorf("invalid %s format", key)
-	}
-
-	return id, nil
-}
 
 func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
