@@ -5,6 +5,7 @@ import { Input, Tooltip } from 'antd';
 interface Props {
   name: string;
   onUpdate: (name: string) => void;
+  onChange: () => void; 
   seriesIndex?: number;
 }
 
@@ -16,6 +17,7 @@ function SeriesName(props: Props) {
 
   const write = ({ target: { value } }) => {
     setName(value);
+    props.onChange(); 
   };
 
   const onBlur = () => {
@@ -51,6 +53,7 @@ function SeriesName(props: Props) {
           onBlur={onBlur}
           onKeyDown={onKeyDown}
           className="bg-white text-lg border-transparent rounded-lg font-medium ps-2"
+          maxLength={22}
         />
       ) : (
         <Tooltip title="Double click to rename.">

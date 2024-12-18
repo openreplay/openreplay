@@ -4,7 +4,7 @@ import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/Widg
 import { observer } from 'mobx-react-lite';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import cn from 'classnames';
-import { Button, Popover } from 'antd'
+import { Button, Popover, Tooltip } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { Loader } from 'UI';
 
@@ -39,7 +39,7 @@ function DashboardWidgetGrid(props: Props) {
           {list?.map((item: any, index: any) => (
             <div
               key={item.widgetId}
-              className={cn('col-span-' + item.config.col, 'group relative px-6 py-2 hover:bg-active-blue w-full')}
+              className={cn('col-span-' + item.config.col, 'group relative pl-6 pr-4 py-4 hover:bg-active-blue w-full rounded-xl')}
             >
               <WidgetWrapperNew
                 index={index}
@@ -60,7 +60,9 @@ function DashboardWidgetGrid(props: Props) {
                 )}
               >
                 <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection />} trigger={'click'}>
+                <Tooltip title="Add Card">
                   <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
+                </Tooltip>
                 </Popover>
               </div>
             </div>

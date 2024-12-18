@@ -205,8 +205,8 @@ const ListView: React.FC<Props> = (props: Props) => {
         className: 'px-4',
         showLessItems: true,
         showTotal: () => totalMessage,
-        showQuickJumper: true,
-        size: 'small'
+        size: 'small',
+        simple: 'true',
       }}
     />
   );

@@ -105,6 +105,7 @@ function DashboardList() {
               }
               checkedChildren={'Team'}
               unCheckedChildren={'Private'}
+              className='toggle-team-private'
             />
           </Tooltip>
         </div>
@@ -160,7 +161,7 @@ function DashboardList() {
             },
           }}
         >
-          <Button id={'ignore-prop'} icon={<MoreOutlined />} type='text' />
+          <Button id={'ignore-prop'} icon={<MoreOutlined />} type='text' className='btn-dashboards-list-item-more-options' />
         </Dropdown>
       ),
     },
@@ -222,6 +223,8 @@ function DashboardList() {
           showTotal: (total, range) =>
             `Showing ${range[0]}-${range[1]} of ${total} items`,
           size: 'small',
+          simple: 'true',
+          className: 'px-4 pr-8 mb-0',
         }}
         onRow={(record) => ({
           onClick: (e) => {

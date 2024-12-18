@@ -22,7 +22,7 @@ interface Props extends RouteComponentProps {
 function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
-      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" />}  size="small" className="bg-tealx-lightest mr-2" />
+      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" />}  size="default" className="bg-tealx-lightest mr-2 cursor-default avatar-card-list-item" />
     </Tooltip>
   );
 }
@@ -175,7 +175,7 @@ const MetricListItem: React.FC<Props> = ({
             menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}
           >
-            <Button type="text" icon={<MoreOutlined />} />
+            <Button type="text" icon={<MoreOutlined />} className='btn-cards-list-item-more-options' />
           </Dropdown>
           </div>
           {renderModal()}

@@ -30,9 +30,9 @@ function MetricViewHeader() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between  pr-4">
         <div className="flex items-center gap-2 ps-4">
-          <PageTitle title="Cards" className="" />
+          <PageTitle title="Cards" className="cursor-default" />
           <Space>
             <Dropdown overlay={menu} trigger={['click']} className=''>
               <Button type="text" size='small' className='mt-1'>
@@ -53,6 +53,7 @@ function MetricViewHeader() {
               type="primary"
               onClick={() => setShowAddCardModal(true)}
               icon={<PlusOutlined />}
+              className='btn-create-card'
             >
               Create Card
             </Button>

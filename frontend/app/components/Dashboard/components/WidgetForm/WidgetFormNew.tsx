@@ -85,21 +85,18 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           ))}
 
       {!isSingleSeries && canAddSeries && (
-        <Card
-          styles={{ body: { padding: '4px' } }}
-          className="rounded-xl shadow-sm mb-2"
-        >
-          <div
-            onClick={() => {
-              if (!canAddSeries) return;
-              metric.addSeries();
-            }}
-            className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal"
-          >
-              <PlusIcon size={16} />
-              Add Series
-          </div>
-        </Card>
+       <Button
+       onClick={() => {
+         if (!canAddSeries) return;
+         metric.addSeries();
+       }}
+       size='small'
+       type='text'
+       className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal btn-add-series"
+     >
+         <PlusIcon size={16} />
+         Add Series
+     </Button>
       )}
     </>
   );

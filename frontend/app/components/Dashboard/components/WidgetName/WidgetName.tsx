@@ -56,7 +56,7 @@ function WidgetName(props: Props) {
           onBlur={() => onBlur()}
           onKeyDown={onKeyDown}
           onFocus={() => setEditing(true)}
-          maxLength={80}
+          maxLength={32}
           className="bg-white text-2xl ps-2 rounded-lg h-8"
         />
       ) : (

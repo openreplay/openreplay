@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import cn from 'classnames';
 import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
@@ -8,7 +8,7 @@ import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react'
 import copy from 'copy-to-clipboard';
-import MetricTypeSelector from "../MetricTypeSelector";
+//import MetricTypeSelector from "../MetricTypeSelector";
 
 interface Props {
   onClick?: () => void;
@@ -21,6 +21,12 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
   const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
   const widget = metricStore.instance;
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  const handleSave = () => {
+    onSave();
+    setUnsavedChanges(false); 
+  };
 
   const copyUrl = () => {
     const url = window.location.href;
@@ -36,11 +42,14 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
       onClick={onClick}
     >
       <h1 className="mb-0 text-2xl mr-4 min-w-fit ">
-        <WidgetName
-          name={widget.name}
-          onUpdate={(name) => metricStore.merge({ name })}
-          canEdit={true}
-        />
+      <WidgetName
+        name={widget.name}
+        onUpdate={(name) => {
+          metricStore.merge({ name });
+          setUnsavedChanges(true); 
+        }}
+        canEdit={true}
+      />
       </h1>
       <Space>
       
@@ -48,7 +57,7 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
           type={
             metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
           }
-          onClick={onSave}
+          onClick={handleSave}
           loading={metricStore.isSaving}
           disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
           className='font-medium btn-update-card'
@@ -56,7 +65,7 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
           {widget.exists() ? 'Update' : 'Create'}
         </Button>
 
-        <MetricTypeSelector />
+        {/* <MetricTypeSelector /> */}
         
         <Tooltip title={tooltipText}>
           <Button type='text' className='btn-copy-card-url' disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1}/> }></Button>

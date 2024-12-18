@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NoContent, Loader, Pagination, Button } from 'UI';
+import { NoContent, Loader, Pagination } from 'UI';
+import {Button} from 'antd';
 import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
@@ -133,7 +134,7 @@ function WidgetSessions(props: Props) {
         </div>
 
         <div className="flex items-center gap-4">
-          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
+          {hasFilters && <Button type='text' size='small' onClick={clearFilters}>Remove Selection</Button>}
           {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
             <div className="flex items-center ml-6">
               <span className="mr-2 color-gray-medium">Filter by Series</span>
