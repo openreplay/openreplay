@@ -129,14 +129,14 @@ export const Resource = (resource: IResource) => {
 
 export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: number) {
   // duration might be duration=0 when cached
-  const success = msg.duration > 0 || msg.encodedBodySize > 0 || msg.transferredSize > 0
+  const failed = msg.duration === 0 && msg.ttfb === 0 && msg.headerSize === 0 && msg.encodedBodySize === 0 && msg.transferredSize === 0
   const type = getResourceType(msg.initiator, msg.url)
   return Resource({
     ...msg,
     type,
     method: type === ResourceType.FETCH ? ".." : "GET", // should be GET for all non-XHR/Fetch resources, right?
-    success,
-    status: success ? '2xx-3xx' : '4xx-5xx', 
+    success: !failed,
+    status: !failed ? '2xx-3xx' : '4xx-5xx',
     time: Math.max(0, msg.timestamp - sessStart)
   })
 }
