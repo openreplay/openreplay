@@ -25,7 +25,7 @@ import {
 const iconCache = {}
 const domParser = new DOMParser()
 
-async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl') {
+async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' | 'svgtext') {
   try {
     const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
     if (!href) {
@@ -58,7 +58,19 @@ async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl')
       const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
       iconCache[symbolId] = res
       return res
-    } else if (mode === 'dataurl') {
+    }
+    if (mode === 'svgtext') {
+      const inlineSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
+          ${symbol.innerHTML}
+        </svg>
+      `.trim()
+
+      iconCache[symbolId] = inlineSvg
+
+      return inlineSvg
+    }
+    if (mode === 'dataurl') {
       const inlineSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
           ${symbol.innerHTML}
@@ -70,9 +82,8 @@ async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl')
       iconCache[symbolId] = dataUrl
 
       return dataUrl
-    } else {
-      console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
     }
+    console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
   } catch (error) {
     console.error('Openreplay: Error processing <use> element:', error)
   }
@@ -239,10 +250,10 @@ export default abstract class Observer {
       }
 
       if (isUseElement(node) && name === 'href') {
-        parseUseEl(node, 'dataurl')
-          .then((dataUrl) => {
-            if (dataUrl) {
-              this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${dataUrl}`))
+        parseUseEl(node, 'svgtext')
+          .then((svgData) => {
+            if (svgData) {
+              this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
             }
           })
           .catch((e: any) => {

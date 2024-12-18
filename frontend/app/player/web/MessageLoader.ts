@@ -455,13 +455,12 @@ function findBrokenNodes(nodes: any[]) {
 }
 
 function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParser, msg: Record<string, any>, spriteMapSvg: SVGElement, i: number) {
-  const [_, dataUrl] = msg.value.split('_$OPENREPLAY_SPRITE$_');
-  const potentialSprite = potentialSpriteMap[dataUrl];
+  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
+  const potentialSprite = potentialSpriteMap[svgData];
   if (potentialSprite) {
     msg.value = potentialSprite;
   } else {
-    const svgText = atob(dataUrl.split(",")[1]);
-    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+    const svgDoc = parser.parseFromString(svgData, "image/svg+xml");
     const originalSvg = svgDoc.querySelector("svg");
     if (originalSvg) {
       const symbol = document.createElementNS("http://www.w3.org/2000/svg", "symbol");
@@ -472,7 +471,7 @@ function handleSprites(potentialSpriteMap: Record<string, any>, parser: DOMParse
 
       spriteMapSvg.appendChild(symbol);
       msg.value = `#${symbolId}`;
-      potentialSpriteMap[dataUrl] = `#${symbolId}`;
+      potentialSpriteMap[svgData] = `#${symbolId}`;
     }
   }
 }
