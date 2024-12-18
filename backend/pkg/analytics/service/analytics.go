@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+
 	"openreplay/backend/pkg/analytics/api/models"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"

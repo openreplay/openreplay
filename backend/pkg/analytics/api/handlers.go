@@ -2,15 +2,16 @@ package api
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
+
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/service"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/keys"
-	"strconv"
 )
 
 type handlersImpl struct {
@@ -18,7 +19,6 @@ type handlersImpl struct {
 	responser     *api.Responser
 	objStorage    objectstorage.ObjectStorage
 	jsonSizeLimit int64
-	keys          keys.Keys
 	service       service.Service
 }
 
@@ -39,13 +39,12 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, objStore objectstorage.ObjectStorage, keys keys.Keys, service service.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, objStore objectstorage.ObjectStorage, service service.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		objStorage:    objStore,
 		jsonSizeLimit: cfg.JsonSizeLimit,
-		keys:          keys,
 		service:       service,
 	}, nil
 }
