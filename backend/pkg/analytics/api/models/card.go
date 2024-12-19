@@ -11,6 +11,7 @@ type CardBase struct {
 	Name          string           `json:"name" validate:"required"`
 	IsPublic      bool             `json:"isPublic" validate:"omitempty"`
 	DefaultConfig map[string]any   `json:"defaultConfig"`
+	Config        map[string]any   `json:"config"`
 	Thumbnail     *string          `json:"thumbnail" validate:"omitempty,url"`
 	MetricType    string           `json:"metricType" validate:"required,oneof=timeseries table funnel"`
 	MetricOf      string           `json:"metricOf" validate:"required,oneof=session_count user_count"`

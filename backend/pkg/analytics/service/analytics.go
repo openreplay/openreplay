@@ -17,6 +17,8 @@ type Service interface {
 	CreateDashboard(projectId int, userId uint64, req *models.CreateDashboardRequest) (*models.GetDashboardResponse, error)
 	UpdateDashboard(projectId int, dashboardId int, userId uint64, req *models.UpdateDashboardRequest) (*models.GetDashboardResponse, error)
 	DeleteDashboard(projectId int, dashboardId int, userId uint64) error
+	AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *models.AddCardToDashboardRequest) error
+	DeleteCardFromDashboard(dashboardId int, cardId int) error
 	GetCard(projectId int, cardId int) (*models.CardGetResponse, error)
 	GetCardWithSeries(projectId int, cardId int) (*models.CardGetResponse, error)
 	GetCards(projectId int) (*models.GetCardsResponse, error)

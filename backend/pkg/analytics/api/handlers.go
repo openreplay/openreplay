@@ -29,6 +29,8 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.getDashboard, "GET"},
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.updateDashboard, "PUT"},
 		{"/v1/analytics/{projectId}/dashboards/{id}", e.deleteDashboard, "DELETE"},
+		{"/v1/analytics/{projectId}/dashboards/{id}/cards", e.addCardToDashboard, "POST"},
+		{"/v1/analytics/{projectId}/dashboards/{id}/cards/{cardId}", e.removeCardFromDashboard, "DELETE"},
 		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
 		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
