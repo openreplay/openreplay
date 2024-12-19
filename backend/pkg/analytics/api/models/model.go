@@ -1,15 +1,16 @@
 package models
 
 type Dashboard struct {
-	DashboardID int    `json:"dashboardId"`
-	ProjectID   int    `json:"projectId"`
-	UserID      int    `json:"userId"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsPublic    bool   `json:"isPublic"`
-	IsPinned    bool   `json:"isPinned"`
-	OwnerEmail  string `json:"ownerEmail"`
-	OwnerName   string `json:"ownerName"`
+	DashboardID int        `json:"dashboardId"`
+	ProjectID   int        `json:"projectId"`
+	UserID      int        `json:"userId"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	IsPublic    bool       `json:"isPublic"`
+	IsPinned    bool       `json:"isPinned"`
+	OwnerEmail  string     `json:"ownerEmail"`
+	OwnerName   string     `json:"ownerName"`
+	Metrics     []CardBase `json:"cards"`
 }
 
 type CreateDashboardResponse struct {
@@ -61,9 +62,6 @@ type PinDashboardRequest struct {
 }
 
 type AddCardToDashboardRequest struct {
-	CardIDs []int `json:"card_ids"`
-}
-
-type DeleteCardFromDashboardRequest struct {
-	CardIDs []int `json:"card_ids"`
+	MetricIDs []int                  `json:"metric_ids" validate:"required,min=1,dive,gt=0"`
+	Config    map[string]interface{} `json:"config"` // Optional
 }
