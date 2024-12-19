@@ -1,6 +1,7 @@
 import json
-from typing import Optional, List
+import logging
 from collections import Counter
+from typing import Optional, List
 
 from fastapi import HTTPException, status
 
@@ -8,6 +9,8 @@ import schemas
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
 
 
 def __exists_by_name(name: str, exclude_id: Optional[int]) -> bool:
@@ -410,7 +413,7 @@ def update_project_conditions(project_id, conditions):
         create_project_conditions(project_id, to_be_created)
 
     if to_be_updated:
-        print(to_be_updated)
+        logger.debug(to_be_updated)
         update_project_condition(project_id, to_be_updated)
 
     return get_conditions(project_id)

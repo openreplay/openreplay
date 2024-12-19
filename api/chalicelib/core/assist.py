@@ -1,3 +1,4 @@
+import logging
 from os import access, R_OK
 from os.path import exists as path_exists, getsize
 
@@ -9,6 +10,8 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import projects
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
 
 ASSIST_KEY = config("ASSIST_KEY")
 ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
@@ -52,21 +55,21 @@ def __get_live_sessions_ws(project_id, data):
         results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
-            print(results.text)
+            logger.error(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
+            logger.error(results.text)
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
     except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
+        logger.error("!! Timeout getting Assist response")
         live_peers = {"total": 0, "sessions": []}
     except Exception as e:
-        print("!! Issue getting Live-Assist response")
-        print(str(e))
-        print("expected JSON, received:")
+        logger.error("!! Issue getting Live-Assist response")
+        logger.exception(e)
+        logger.error("expected JSON, received:")
         try:
-            print(results.text)
+            logger.error(results.text)
         except:
-            print("couldn't get response")
+            logger.error("couldn't get response")
         live_peers = {"total": 0, "sessions": []}
     _live_peers = live_peers
     if "sessions" in live_peers:
@@ -102,8 +105,8 @@ def get_live_session_by_id(project_id, session_id):
         results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
-            print(results.text)
+            logger.error(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
+            logger.error(results.text)
             return None
         results = results.json().get("data")
         if results is None:
@@ -111,16 +114,16 @@ def get_live_session_by_id(project_id, session_id):
         results["live"] = True
         results["agentToken"] = __get_agent_token(project_id=project_id, project_key=project_key, session_id=session_id)
     except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
+        logger.error("!! Timeout getting Assist response")
         return None
     except Exception as e:
-        print("!! Issue getting Assist response")
-        print(str(e))
-        print("expected JSON, received:")
+        logger.error("!! Issue getting Assist response")
+        logger.exception(e)
+        logger.error("expected JSON, received:")
         try:
-            print(results.text)
+            logger.error(results.text)
         except:
-            print("couldn't get response")
+            logger.error("couldn't get response")
         return None
     return results
 
@@ -132,21 +135,21 @@ def is_live(project_id, session_id, project_key=None):
         results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code} for is_live")
-            print(results.text)
+            logger.error(f"!! issue with the peer-server code:{results.status_code} for is_live")
+            logger.error(results.text)
             return False
         results = results.json().get("data")
     except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
+        logger.error("!! Timeout getting Assist response")
         return False
     except Exception as e:
-        print("!! Issue getting Assist response")
-        print(str(e))
-        print("expected JSON, received:")
+        logger.error("!! Issue getting Assist response")
+        logger.exception(e)
+        logger.error("expected JSON, received:")
         try:
-            print(results.text)
+            logger.error(results.text)
         except:
-            print("couldn't get response")
+            logger.error("couldn't get response")
         return False
     return str(session_id) == results
 
@@ -161,21 +164,21 @@ def autocomplete(project_id, q: str, key: str = None):
             ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code} for autocomplete")
-            print(results.text)
+            logger.error(f"!! issue with the peer-server code:{results.status_code} for autocomplete")
+            logger.error(results.text)
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
     except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
+        logger.error("!! Timeout getting Assist response")
         return {"errors": ["Assist request timeout"]}
     except Exception as e:
-        print("!! Issue getting Assist response")
-        print(str(e))
-        print("expected JSON, received:")
+        logger.error("!! Issue getting Assist response")
+        logger.exception(e)
+        logger.error("expected JSON, received:")
         try:
-            print(results.text)
+            logger.error(results.text)
         except:
-            print("couldn't get response")
+            logger.error("couldn't get response")
         return {"errors": ["Something went wrong wile calling assist"]}
     for r in results:
         r["type"] = __change_keys(r["type"])
@@ -239,24 +242,24 @@ def session_exists(project_id, session_id):
         results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print(f"!! issue with the peer-server code:{results.status_code} for session_exists")
-            print(results.text)
+            logger.error(f"!! issue with the peer-server code:{results.status_code} for session_exists")
+            logger.error(results.text)
             return None
         results = results.json().get("data")
         if results is None:
             return False
         return True
     except requests.exceptions.Timeout:
-        print("!! Timeout getting Assist response")
+        logger.error("!! Timeout getting Assist response")
         return False
     except Exception as e:
-        print("!! Issue getting Assist response")
-        print(str(e))
-        print("expected JSON, received:")
+        logger.error("!! Issue getting Assist response")
+        logger.exception(e)
+        logger.error("expected JSON, received:")
         try:
-            print(results.text)
+            logger.error(results.text)
         except:
-            print("couldn't get response")
+            logger.error("couldn't get response")
         return False
 
 
