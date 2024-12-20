@@ -21,22 +21,12 @@ const CustomNode: React.FC<CustomNodeProps> = (props) => {
     return (
         <Layer key={`CustomNode${index}`} style={{cursor: 'pointer'}}>
             <Rectangle x={x} y={y} width={width} height={height} fill='#394EFF' fillOpacity='1'/>
-
-            {/*<foreignObject*/}
-            {/*  x={isOut ? x - 6 : x + width + 5}*/}
-            {/*  y={0}*/}
-            {/*  height={48}*/}
-            {/*  style={{ width: '150px', padding: '2px' }}*/}
-            {/*>*/}
-            {/*  <NodeDropdown payload={payload} />*/}
-            {/*</foreignObject>*/}
-
             {!isDemo ? (
                 <foreignObject
                     x={isOut ? x - 6 : x + width + 5}
                     y={y + 5}
                     height="25"
-                    style={{width: "150px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}
+                    style={{width: "180px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}
                 >
                     <NodeButton payload={payload}/>
                 </foreignObject>
