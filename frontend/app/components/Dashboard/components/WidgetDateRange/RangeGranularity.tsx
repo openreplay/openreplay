@@ -51,9 +51,9 @@ function RangeGranularity({
   )
 }
 
+const PAST_24_HR_MS = 24 * 60 * 60 * 1000
 function calculateGranularities(periodDurationMs: number) {
   const granularities = [
-    { label: 'By minute', durationMs: 60 * 1000 },
     { label: 'Hourly', durationMs: 60 * 60 * 1000 },
     { label: 'Daily', durationMs: 24 * 60 * 60 * 1000 },
     { label: 'Weekly', durationMs: 7 * 24 * 60 * 60 * 1000 },
@@ -62,6 +62,12 @@ function calculateGranularities(periodDurationMs: number) {
   ];
 
   const result = [];
+  if (periodDurationMs === PAST_24_HR_MS) {
+    // if showing for 1 day, show by minute split as well
+    granularities.push(
+      { label: 'By minute', durationMs: 60 * 1000 },
+    )
+  }
 
   for (const granularity of granularities) {
     if (periodDurationMs >= granularity.durationMs) {

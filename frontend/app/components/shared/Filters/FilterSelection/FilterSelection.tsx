@@ -44,17 +44,16 @@ function FilterSelection(props: Props) {
     <div className="relative flex-shrink-0">
       <OutsideClickDetectingDiv
         className="relative"
-        onClickOutside={() =>
-          setTimeout(function () {
+        onClickOutside={() => {
+          setTimeout(() => {
             setShowModal(false);
-          }, 200)
+          }, 0)
+        }
         }
       >
         {children ? (
           React.cloneElement(children, {
             onClick: (e) => {
-              e.stopPropagation();
-              e.preventDefault();
               setShowModal(true);
             },
             disabled: disabled,

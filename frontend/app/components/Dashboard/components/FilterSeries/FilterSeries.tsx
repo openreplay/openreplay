@@ -117,6 +117,7 @@ interface Props {
   expandable?: boolean;
   isHeatmap?: boolean;
   removeEvents?: boolean;
+  defaultClosed?: boolean;
 }
 
 function FilterSeries(props: Props) {
@@ -131,8 +132,9 @@ function FilterSeries(props: Props) {
     expandable = false,
     isHeatmap,
     removeEvents,
+    defaultClosed,
   } = props;
-  const [expanded, setExpanded] = useState(hideHeader || !expandable);
+  const [expanded, setExpanded] = useState(!defaultClosed || hideHeader);
   const { series, seriesIndex } = props;
   const [prevLength, setPrevLength] = useState(0);
 
@@ -140,12 +142,13 @@ function FilterSeries(props: Props) {
     if (
       series.filter.filters.length === 1 &&
       prevLength === 0 &&
-      seriesIndex === 0
+      seriesIndex === 0 &&
+      !defaultClosed
     ) {
       setExpanded(true);
     }
     setPrevLength(series.filter.filters.length);
-  }, [series.filter.filters.length]);
+  }, [series.filter.filters.length, defaultClosed]);
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter);

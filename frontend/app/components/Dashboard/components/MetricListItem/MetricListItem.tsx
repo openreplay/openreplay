@@ -9,6 +9,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
+import { EllipsisVertical } from "lucide-react";
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -175,7 +176,7 @@ const MetricListItem: React.FC<Props> = ({
             menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}
           >
-            <Button type="text" icon={<MoreOutlined />} />
+            <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
           </Dropdown>
           </div>
           {renderModal()}

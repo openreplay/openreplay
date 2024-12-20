@@ -63,31 +63,20 @@ function FunnelBarData({
   index?: number;
   isHorizontal?: boolean;
 }) {
-
   const vertFillBarStyle = {
     width: `${data.completedPercentageTotal}%`,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1]
+    height: '100%',
+    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1],
   };
   const horizontalFillBarStyle = {
     width: '100%',
     height: `${data.completedPercentageTotal}%`,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1]
+    backgroundColor: isComp ? Styles.compareColors[2] : Styles.compareColors[1],
   }
 
   const vertEmptyBarStyle = {
     width: `${100.1 - data.completedPercentageTotal}%`,
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
+    height: '100%',
     background: isFocused
                 ? 'rgba(204, 0, 0, 0.3)'
                 : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
@@ -96,10 +85,6 @@ function FunnelBarData({
   const horizontalEmptyBarStyle = {
     height: `${100.1 - data.completedPercentageTotal}%`,
     width: '100%',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
     background: isFocused
                 ? 'rgba(204, 0, 0, 0.3)'
                 : 'repeating-linear-gradient(325deg, lightgray, lightgray 1px, #FFF1F0 1px, #FFF1F0 6px)',
@@ -120,13 +105,15 @@ function FunnelBarData({
           borderRadius: isHorizontal ? undefined : '.5rem',
           overflow: 'hidden',
           opacity: isComp ? 0.7 : 1,
+          display: 'flex',
+          flexDirection: isHorizontal ? 'column-reverse' : 'row',
         }}
       >
         <div
-          className="flex items-center"
+          className={cn("flex", isHorizontal ? 'justify-center items-start pt-1' : 'justify-end items-center pr-1')}
           style={fillBarStyle}
         >
-          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
+          <div className="color-white flex items-center font-medium leading-3">
             {data.completedPercentageTotal}%
           </div>
         </div>

@@ -49,7 +49,7 @@ function CustomTooltip(props: Props) {
   };
   return (
     <div
-      className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-30'}
+      className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-50'}
     >
       {transformedArray.map((p, index) => (
         <React.Fragment key={p.name + index}>
