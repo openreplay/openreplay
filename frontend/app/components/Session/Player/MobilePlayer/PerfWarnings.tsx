@@ -13,7 +13,8 @@ type warningsType =
   | 'memoryWarning'
   | 'lowDiskSpace'
   | 'isLowPowerModeEnabled'
-  | 'batteryLevel';
+  | 'batteryLevel'
+  | 'background';
 
 const elements = {
   thermalState: {
@@ -36,12 +37,16 @@ const elements = {
     title: 'Low Battery',
     icon: 'battery',
   },
+  background: {
+    title: 'In Background',
+    icon: 'eye-slash'
+  },
 } as const;
 
 function PerfWarnings({ userDevice }: { userDevice: string }) {
   const { store } = React.useContext(MobilePlayerContext);
   const { uiPlayerStore } = useStore();
-  const { scale, performanceListNow, performanceList } = store.get()
+  const { scale, performanceListNow, performanceList, inBackground } = store.get()
   const bottomBlock = uiPlayerStore.bottomBlock;
   const allElements = Object.keys(elements) as warningsType[];
   const list = React.useMemo(() => allElements
@@ -65,7 +70,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
 
   const activeWarnings = React.useMemo(() => {
     const warnings: warningsType[] = []
-    performanceListNow.forEach((warn: IosPerformanceEvent & { techName: warningsType }) => {
+    performanceListNow.forEach((warn: MobilePerformanceEvent & { techName: warningsType }) => {
       switch (warn.techName) {
         case 'thermalState':
           if (warn.value > 1) warnings.push(warn.techName) // 2 = serious 3 = overheating
@@ -84,13 +89,22 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
           break;
       }
     })
-
     return warnings
   }, [performanceListNow.length]);
   if (bottomBlock !== NONE) return null;
-
   return (
     <div style={contStyles}>
+      {inBackground ? (
+        <div
+          className={cn(
+            'transition-all flex items-center gap-1 bg-white border rounded px-2 py-1',
+            'opacity-100',
+          )}
+        >
+          <Icon name={elements.background.icon} size={16} />
+          <span>{elements.background.title}</span>
+        </div>
+      ) : null}
       {list.map((w) => (
         <div
           className={cn(

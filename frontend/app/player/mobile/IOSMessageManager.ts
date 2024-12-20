@@ -12,6 +12,7 @@ import Lists, {
   INITIAL_STATE as LISTS_INITIAL_STATE,
   State as ListsState,
 } from './IOSLists';
+import ListWalker from '../common/ListWalker';
 import IOSPerformanceTrackManager, {
   PerformanceChartPoint,
 } from 'Player/mobile/managers/IOSPerformanceTrackManager';
@@ -75,6 +76,7 @@ export interface State extends ScreenState, ListsState {
   eventCount: number;
   updateWarnings: number;
   currentSnapshot: TarFile | null;
+  inBackground: boolean;
 }
 
 const userEvents = [
@@ -100,6 +102,7 @@ export default class IOSMessageManager implements IMessageManager {
     messagesProcessed: false,
     messagesLoading: false,
     currentSnapshot: null,
+    inBackground: false,
   };
 
   private activityManager: ActivityManager | null = null;
@@ -110,6 +113,7 @@ export default class IOSMessageManager implements IMessageManager {
   private touchManager: TouchManager;
   private lists: Lists;
   public snapshotManager: SnapshotManager;
+  private appFocusTracker = new ListWalker<{tp: 102, time: number, timestamp: number, value: number, name: string}>();
 
   constructor(
     private readonly session: Record<string, any>,
@@ -198,9 +202,16 @@ export default class IOSMessageManager implements IMessageManager {
     const stateToUpdate: Record<string, any> = {};
 
     const lastPerformanceTrackMessage = this.performanceManager.moveGetLast(t);
+    const lastAppFocusMessage = this.appFocusTracker.moveGetLast(t);
     if (lastPerformanceTrackMessage) {
       Object.assign(stateToUpdate, {
         performanceChartTime: lastPerformanceTrackMessage.time,
+      });
+    }
+    if (lastAppFocusMessage) {
+      console.log(lastAppFocusMessage)
+      Object.assign(stateToUpdate, {
+        inBackground: lastAppFocusMessage.value === 1,
       });
     }
 
@@ -237,6 +248,9 @@ export default class IOSMessageManager implements IMessageManager {
         const performanceStats = ['background', 'memoryUsage', 'mainThreadCPU'];
         if (performanceStats.includes(msg.name)) {
           this.performanceManager.append(msg);
+          if (msg.name === 'background') {
+            this.appFocusTracker.append(msg);
+          }
         }
         if (performanceWarnings.includes(msg.name)) {
           // @ts-ignore
