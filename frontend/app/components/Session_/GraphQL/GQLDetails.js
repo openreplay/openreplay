@@ -35,9 +35,9 @@ export default class GQLDetails extends React.PureComponent {
           </div>
         </div>
 
-        <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>
+        <div style={{ height: 'calc(100vh - 264px)', overflowY: 'auto' }} className={'border-t border-t-gray-light mt-2 py-2'}>
           <div>
-            <div className="flex justify-between items-start mt-6 mb-2">
+            <div className="flex justify-between items-start mb-2">
               <h5 className="mt-1 mr-1">{'Variables'}</h5>
             </div>
             <div className={dataClass}>

@@ -468,8 +468,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     if len(data.filters) > 0:
         meta_keys = None
         for i, f in enumerate(data.filters):
-            if not isinstance(f.value, list):
-                f.value = [f.value]
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"

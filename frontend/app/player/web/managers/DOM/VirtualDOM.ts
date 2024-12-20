@@ -53,7 +53,7 @@ export abstract class VNode<T extends Node = Node> {
 	public abstract applyChanges(): void
 }
 
-type VChild = VElement | VText
+type VChild = VElement | VText | VSpriteMap
 abstract class VParent<T extends Node = Node> extends VNode<T>{
 	/**
 	 */
@@ -139,6 +139,44 @@ export class VShadowRoot extends VParent<ShadowRoot> {
 }
 
 export type VRoot = VDocument | VShadowRoot
+
+export class VSpriteMap extends VParent<Element> {
+  parentNode: VParent | null =
+    null; /** Should be modified only by he parent itself */
+  private newAttributes: Map<string, string | false> = new Map();
+
+  constructor(
+    readonly tagName: string,
+    readonly isSVG = true,
+    public readonly index: number,
+    private readonly nodeId: number
+  ) {
+    super();
+		this.createNode();
+  }
+  protected createNode() {
+    try {
+      const element = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        this.tagName
+      );
+      element.dataset['openreplayId'] = this.nodeId.toString();
+      return element;
+    } catch (e) {
+      console.error(
+        'Openreplay: Player received invalid html tag',
+        this.tagName,
+        e
+      );
+      return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
+    }
+  }
+
+  applyChanges() {
+		// this is a hack to prevent the sprite map from being removed from the DOM
+    return null;
+  }
+}
 
 export class VElement extends VParent<Element> {
 	parentNode: VParent | null = null /** Should be modified only by he parent itself */

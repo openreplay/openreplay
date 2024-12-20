@@ -30,16 +30,50 @@ export const recordGraphQL = tracker.use(createGraphqlMiddleware());
 ### Relay
 
 If you're using [Relay network tools](https://github.com/relay-tools/react-relay-network-modern),
-you can simply [create a middleware](https://github.com/relay-tools/react-relay-network-modern/tree/master?tab=readme-ov-file#example-of-injecting-networklayer-with-middlewares-on-the-client-side)
+you can simply [create a middleware](https://github.com/relay-tools/react-relay-network-modern/tree/master?tab=readme-ov-file#example-of-injecting-networklayer-with-middlewares-on-the-client-side) (async based); otherwise this will require wrapping fetch function with Observable.
 
 ```js
 import { createRelayMiddleware } from '@openreplay/tracker-graphql';
+import { Observable } from 'relay-runtime';
 
-const trackerMiddleware = tracker.use(createRelayMiddleware());
+const withTracker = tracker.use(createRelayMiddleware())
+function createFetchObservable(operation, variables) {
+  return Observable.create(sink => {
+    fetch(`YOUR URL`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: operation.text, variables }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      })
+      .then(data => {
+        sink.next(data);
+        sink.complete();
+      })
+      .catch(error => {
+        sink.error(error);
+      })
+  });
+}
+
+const network = Network.create(withTracker(createFetchObservable));
+
+const environment = new Environment({
+  network,
+  store: new Store(new RecordSource()),
+});
+```
+
+```js
+import { createRelayToolsMiddleware } from '@openreplay/tracker-graphql';
+
+const trackerMiddleware = tracker.use(createRelayToolsMiddleware());
 
 const network = new RelayNetworkLayer([
-  // your middleware
-  // ,
   trackerMiddleware,
 ]);
 ```

@@ -59,31 +59,6 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 """
 
 
-def _multiple_conditions(condition, values, value_key="value", is_not=False):
-    query = []
-    for i in range(len(values)):
-        k = f"{value_key}_{i}"
-        query.append(condition.replace(value_key, k))
-    return "(" + (" AND " if is_not else " OR ").join(query) + ")"
-
-
-def _multiple_values(values, value_key="value"):
-    query_values = {}
-    if values is not None and isinstance(values, list):
-        for i in range(len(values)):
-            k = f"{value_key}_{i}"
-            query_values[k] = values[i]
-    return query_values
-
-
-def _isAny_opreator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator.ON_ANY, schemas.SearchEventOperator.IS_ANY]
-
-
-def _isUndefined_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator.IS_UNDEFINED]
-
-
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.ALL, count_only=False, issue=None, ids_only=False,
@@ -508,7 +483,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
                                               type=schemas.FilterType.ISSUE.value,
-                                              operator='is')
+                                              operator=schemas.SearchEventOperator.IS.value)
         )
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
@@ -541,16 +516,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
         include_in_events = False
         for i, f in enumerate(data.filters):
-            if not isinstance(f.value, list):
-                f.value = [f.value]
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
+            full_args = {**full_args, f_k: f.value, **sh.multi_values(f.value, value_key=f_k)}
             op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
-            is_any = _isAny_opreator(f.operator)
-            is_undefined = _isUndefined_operator(f.operator)
+            is_any = sh.isAny_opreator(f.operator)
+            is_undefined = sh.isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
@@ -562,9 +535,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_browser)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
                 if is_any:
@@ -572,9 +546,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_os)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
                 if is_any:
@@ -582,9 +556,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_device)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
                 if is_any:
@@ -592,9 +566,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_country)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type in schemas.FilterType.USER_CITY:
                 if is_any:
@@ -602,9 +577,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_city)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in schemas.FilterType.USER_STATE:
                 if is_any:
@@ -612,9 +587,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_state)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.UTM_SOURCE]:
                 if is_any:
@@ -625,11 +600,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_source)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.utm_medium)')
@@ -639,11 +614,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_medium')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.utm_campaign)')
@@ -653,11 +628,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_campaign)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type == schemas.FilterType.DURATION:
                 if len(f.value) > 0 and f.value[0] is not None:
@@ -674,11 +649,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.base_referrer)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
@@ -693,11 +668,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
                     else:
                         extra_constraints.append(
-                            _multiple_conditions(
+                            sh.multi_conditions(
                                 f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            _multiple_conditions(
+                            sh.multi_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
@@ -709,11 +684,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.user_id)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
                                  schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
                 if is_any:
@@ -724,11 +699,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.user_anonymous_id)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.rev_id)')
@@ -738,19 +713,19 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.rev_id)')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type == schemas.FilterType.PLATFORM:
                 # op = sh.get_sql_operator(f.operator)
                 extra_constraints.append(
-                    _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
                 ss_constraints.append(
-                    _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
             elif filter_type == schemas.FilterType.ISSUE:
                 if is_any:
                     extra_constraints.append("notEmpty(s.issue_types)")
@@ -760,21 +735,21 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         issues.append(f)
 
                     extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
-                    # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                    # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
                     #                      value_key=f_k))
                     ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
-                    #     _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                    #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                     #                          value_key=f_k))
                     if is_not:
                         extra_constraints[-1] = f"not({extra_constraints[-1]})"
                         ss_constraints[-1] = f"not({ss_constraints[-1]})"
             elif filter_type == schemas.FilterType.EVENTS_COUNT:
                 extra_constraints.append(
-                    _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
                 ss_constraints.append(
-                    _multiple_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
             else:
                 continue
             include_in_events = True
@@ -788,7 +763,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if len(data.events) > 0:
         valid_events_count = 0
         for event in data.events:
-            is_any = _isAny_opreator(event.operator)
+            is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if __is_valid_event(is_any=is_any, event=event):
@@ -800,7 +775,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         or_events = data.events_order == schemas.SearchEventOrder.OR
         for i, event in enumerate(data.events):
             event_type = event.type
-            is_any = _isAny_opreator(event.operator)
+            is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if not __is_valid_event(is_any=is_any, event=event):
@@ -822,8 +797,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
 
             event.value = helper.values_for_operator(value=event.value, op=event.operator)
             full_args = {**full_args,
-                         **_multiple_values(event.value, value_key=e_k),
-                         **_multiple_values(event.source, value_key=s_k)}
+                         **sh.multi_values(event.value, value_key=e_k),
+                         **sh.multi_values(event.source, value_key=s_k)}
 
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -835,19 +810,19 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     if not is_any:
                         if schemas.ClickEventExtraOperator.has_value(event.operator):
                             event_where.append(
-                                _multiple_conditions(f"main.selector {op} %({e_k})s", event.value, value_key=e_k))
+                                sh.multi_conditions(f"main.selector {op} %({e_k})s", event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
                             if is_not:
-                                event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                        value_key=e_k))
+                                event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                       value_key=e_k))
                                 events_conditions_not.append(
                                     {
                                         "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                                 events_conditions_not[-1]["condition"] = event_where[-1]
                             else:
-                                event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                        value_key=e_k))
+                                event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                       value_key=e_k))
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
                     _column = events.EventType.CLICK_MOBILE.column
@@ -856,15 +831,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions_not.append(
                                 {
                                     "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.INPUT.ui_type:
@@ -876,20 +851,20 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions_not.append(
                                 {
                                     "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                     if event.source is not None and len(event.source) > 0:
-                        event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
-                                                                value_key=f"custom{i}"))
-                        full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
+                        event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                               value_key=f"custom{i}"))
+                        full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
                 else:
                     _column = events.EventType.INPUT_MOBILE.column
                     event_where.append(
@@ -897,15 +872,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions_not.append(
                                 {
                                     "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.LOCATION.ui_type:
@@ -917,15 +892,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions_not.append(
                                 {
                                     "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                    event.value, value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                   event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                 else:
                     _column = events.EventType.VIEW_MOBILE.column
@@ -934,15 +909,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                    value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                   value_key=e_k))
                             events_conditions_not.append(
                                 {
                                     "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                    event.value, value_key=e_k))
+                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                   event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -951,14 +926,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.REQUEST.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -967,14 +942,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.STATEACTION.ui_type:
@@ -984,14 +959,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             # TODO: isNot for ERROR
             elif event_type == events.EventType.ERROR.ui_type:
@@ -1003,12 +978,12 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = []
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                            event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
                 if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
+                    event_where.append(sh.multi_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
 
@@ -1021,14 +996,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.INPUT_MOBILE.ui_type:
                 _column = events.EventType.INPUT_MOBILE.column
@@ -1036,14 +1011,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.VIEW_MOBILE.ui_type:
                 _column = events.EventType.VIEW_MOBILE.column
@@ -1051,14 +1026,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
                 _column = events.EventType.CUSTOM_MOBILE.column
@@ -1066,14 +1041,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.REQUEST_MOBILE.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
@@ -1082,14 +1057,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CRASH_MOBILE.ui_type:
                 _column = events.EventType.CRASH_MOBILE.column
@@ -1097,14 +1072,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform != "web":
                 _column = events.EventType.SWIPE_MOBILE.column
@@ -1112,14 +1087,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == schemas.PerformanceEventType.FETCH_FAILED:
@@ -1130,14 +1105,14 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions[-1]["condition"] = []
                 if not is_any:
                     if is_not:
-                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
-                                                                value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                               value_key=e_k))
                         events_conditions_not.append(
                             {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                event.value, value_key=e_k))
+                        event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
+                                                               event.value, value_key=e_k))
                         events_conditions[-1]["condition"].append(event_where[-1])
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
@@ -1157,15 +1132,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.url_path {op} %({e_k})s",
+                                            event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
                 event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-                                                        event.source, value_key=e_k))
+                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                       event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             # TODO: isNot for PerformanceEvent
@@ -1180,15 +1155,15 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.url_path {op} %({e_k})s",
+                                            event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
                 event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-                                                        event.source, value_key=e_k))
+                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                       event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
@@ -1199,44 +1174,44 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 apply = False
                 events_conditions[-1]["condition"] = []
                 for j, f in enumerate(event.filters):
-                    is_any = _isAny_opreator(f.operator)
+                    is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_fetch{j}"
-                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType.FETCH_URL:
                         event_where.append(
-                            _multiple_conditions(f"main.url_path {op} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.url_path {op} %({e_k_f})s", f.value,
+                                                value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_STATUS_CODE:
                         event_where.append(
-                            _multiple_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
+                                                value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_METHOD:
                         event_where.append(
-                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_DURATION:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value,
+                                                value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_REQUEST_BODY:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_RESPONSE_BODY:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     else:
@@ -1252,29 +1227,29 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 for j, f in enumerate(event.filters):
-                    is_any = _isAny_opreator(f.operator)
+                    is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
-                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                                                value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_METHOD:
                         event_where.append(
-                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_REQUEST_BODY:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_RESPONSE_BODY:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     else:
                         logging.warning(f"undefined GRAPHQL filter: {f.type}")
@@ -1464,9 +1439,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         for i, f in enumerate(issues):
             f_k_v = f"f_issue_v{i}"
             f_k_s = f_k_v + "_source"
-            full_args = {**full_args, **_multiple_values(f.value, value_key=f_k_v), f_k_s: f.source}
-            issues_conditions.append(_multiple_conditions(f"issues.type=%({f_k_v})s", f.value,
-                                                          value_key=f_k_v))
+            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            issues_conditions.append(sh.multi_conditions(f"issues.type=%({f_k_v})s", f.value,
+                                                         value_key=f_k_v))
             issues_conditions[-1] = f"({issues_conditions[-1]} AND issues.context_string=%({f_k_s})s)"
         extra_join = f"""INNER JOIN (SELECT DISTINCT events.session_id
                                  FROM experimental.issues
@@ -1483,17 +1458,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if _isAny_opreator(c.operator):
+                if sh.isAny_opreator(c.operator):
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
-                             **_multiple_values(c.value, value_key=e_k)}
+                             **sh.multi_values(c.value, value_key=e_k)}
                 if c.type == events.EventType.LOCATION.ui_type:
                     _extra_or_condition.append(
-                        _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
-                                             c.value, value_key=e_k))
+                        sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                            c.value, value_key=e_k))
                 else:
                     logging.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:

@@ -12,12 +12,14 @@ import { toast } from 'react-toastify';
 import DocLink from 'Shared/DocLink/DocLink';
 
 interface SentryConfig {
+  url: string;
   organization_slug: string;
   project_slug: string;
   token: string;
 }
 
 const initialValues = {
+  url: 'https://sentry.io',
   organization_slug: '',
   project_slug: '',
   token: '',
@@ -39,6 +41,9 @@ function SentryForm({
     removeMutation,
   } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
   const { values, errors, handleChange, hasErrors, checkErrors, } = useForm(data, {
+    url: {
+      required: false,
+    },
     organization_slug: {
       required: true,
     },
@@ -96,11 +101,18 @@ function SentryForm({
 
         <Loader loading={isPending}>
           <FormField
+            label="URL"
+            name="url"
+            value={values.url}
+            onChange={handleChange}
+            errors={errors.url}
+          />
+          <FormField
             label="Organization Slug"
             name="organization_slug"
             value={values.organization_slug}
             onChange={handleChange}
-            errors={errors.url}
+            errors={errors.organization_slug}
             autoFocus
           />
           <FormField

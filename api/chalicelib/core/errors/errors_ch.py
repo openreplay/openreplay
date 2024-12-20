@@ -1,12 +1,11 @@
-from decouple import config
-
 import schemas
-from . import errors as errors_legacy
-from chalicelib.core import metrics, metadata
+from chalicelib.core import metadata
 from chalicelib.core import sessions
+from chalicelib.core.metrics import metrics
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from . import errors as errors_legacy
 
 
 def _multiple_values(values, value_key="value"):
@@ -290,7 +289,7 @@ def get_details(project_id, error_id, user_id, **data):
         # print("--------------------")
         # print(ch.format(main_ch_query, params))
         # print("--------------------")
-        row = ch.execute(query=main_ch_query, params=params)
+        row = ch.execute(query=main_ch_query, parameters=params)
         if len(row) == 0:
             return {"errors": ["error not found"]}
         row = row[0]
@@ -309,7 +308,7 @@ def get_details(project_id, error_id, user_id, **data):
         # print("--------------------")
         # print(ch.format(query, params))
         # print("--------------------")
-        status = ch.execute(query=query, params=params)
+        status = ch.execute(query=query, parameters=params)
 
     if status is not None:
         status = status[0]
@@ -650,7 +649,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         # print(ch.format(main_ch_query, params))
         # print("------------")
 
-        rows = ch.execute(query=main_ch_query, params=params)
+        rows = ch.execute(query=main_ch_query, parameters=params)
         total = rows[0]["total"] if len(rows) > 0 else 0
 
     for r in rows:

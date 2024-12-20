@@ -7,7 +7,7 @@ import ListWalker from '../../../common/ListWalker';
 import StylesManager from './StylesManager';
 import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
-import type { StyleElement } from './VirtualDOM';
+import { StyleElement, VSpriteMap } from "./VirtualDOM";
 import {
   OnloadStyleSheet,
   VDocument,
@@ -157,6 +157,12 @@ export default class DOMManager extends ListWalker<Message> {
       return;
     }
     const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID);
+    if ('tagName' in child && child.tagName === 'BODY') {
+      const spriteMap = new VSpriteMap('svg', true, Number.MAX_SAFE_INTEGER - 100, Number.MAX_SAFE_INTEGER - 100);
+      spriteMap.node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
+      spriteMap.node.setAttribute('style', 'display: none;');
+      child.insertChildAt(spriteMap, Number.MAX_SAFE_INTEGER - 100);
+    }
     if (!parent) {
       logger.error(
         `${id} Insert error. Parent vNode ${parentID} not found`,

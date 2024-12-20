@@ -1,6 +1,10 @@
+import logging
+
 from chalicelib.utils import pg_client, helper, email_helper, smtp
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import get_issue_title
+
+logger = logging.getLogger(__name__)
 
 LOWEST_BAR_VALUE = 3
 
@@ -30,7 +34,7 @@ def edit_config(user_id, weekly_report):
 
 def cron():
     if not smtp.has_smtp():
-        print("!!! No SMTP configuration found, ignoring weekly report")
+        logger.info("!!! No SMTP configuration found, ignoring weekly report")
         return
     _now = TimeUTC.now()
     with pg_client.PostgresClient(unlimited_query=True) as cur:
@@ -88,17 +92,17 @@ def cron():
                      ) AS month_1_issues ON (TRUE);"""), params)
         projects_data = cur.fetchall()
         _now2 = TimeUTC.now()
-        print(f">> Weekly report query: {_now2 - _now} ms")
+        logger.debug(f">> Weekly report query: {_now2 - _now} ms")
         _now = _now2
         emails_to_send = []
         for p in projects_data:
             params["project_id"] = p["project_id"]
-            print(f"checking {p['project_name']} : {p['project_id']}")
+            logger.debug(f"checking {p['project_name']} : {p['project_id']}")
             if len(p["emails"]) == 0 \
                     or p["this_week_issues_count"] + p["past_week_issues_count"] + p["past_month_issues_count"] == 0:
-                print('ignore')
+                logger.debug('ignore')
                 continue
-            print("valid")
+            logger.debug("valid")
             p["past_week_issues_evolution"] = helper.__decimal_limit(
                 helper.__progress(p["this_week_issues_count"], p["past_week_issues_count"]), 1)
             p["past_month_issues_evolution"] = helper.__decimal_limit(
@@ -121,7 +125,7 @@ def cron():
                 ORDER BY timestamp_i;""", params))
             days_partition = cur.fetchall()
             _now2 = TimeUTC.now()
-            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            logger.debug(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
             max_days_partition = max(x['issues_count'] for x in days_partition)
             for d in days_partition:
@@ -140,7 +144,7 @@ def cron():
             LIMIT 4;""", params))
             issues_by_type = cur.fetchall()
             _now2 = TimeUTC.now()
-            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            logger.debug(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
             max_issues_by_type = sum(i["count"] for i in issues_by_type)
             for i in issues_by_type:
@@ -172,7 +176,7 @@ def cron():
                 ORDER BY timestamp_i;""", params))
             issues_breakdown_by_day = cur.fetchall()
             _now2 = TimeUTC.now()
-            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            logger.debug(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
             for i in issues_breakdown_by_day:
                 i["sum"] = sum(x["count"] for x in i["partition"])
@@ -221,7 +225,7 @@ def cron():
                 ORDER BY issue_count DESC;""", params))
             issues_breakdown_list = cur.fetchall()
             _now2 = TimeUTC.now()
-            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            logger.debug(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
             _now = _now2
             if len(issues_breakdown_list) > 4:
                 others = {"type": "Others",
@@ -255,6 +259,6 @@ def cron():
                                        "issues_breakdown_by_day": issues_breakdown_by_day,
                                        "issues_breakdown_list": issues_breakdown_list
                                    }})
-        print(f">>> Sending weekly report to {len(emails_to_send)} email-group")
+        logger.info(f">>> Sending weekly report to {len(emails_to_send)} email-group")
         for e in emails_to_send:
             email_helper.weekly_report2(recipients=e["email"], data=e["data"])

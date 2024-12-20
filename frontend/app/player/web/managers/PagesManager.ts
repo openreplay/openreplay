@@ -79,15 +79,41 @@ export default class PagesManager extends ListWalker<DOMManager> {
     return this.currentPage?.getNode(id);
   }
 
+  spriteMapEl: SVGElement | null = null;
+  injectSpriteMap = (spriteEl: SVGElement) => {
+    this.spriteMapEl = spriteEl;
+    this.refreshSprites();
+  };
+
+  refreshSprites = () => {
+    const int = setInterval(() => {
+      const potential = this.screen.document?.body.querySelector(
+        '#OPENREPLAY_SPRITES_MAP'
+      );
+      if (potential) {
+        potential.innerHTML = this.spriteMapEl!.innerHTML;
+        clearInterval(int);
+      }
+    }, 250);
+  }
+
   moveReady(t: number): Promise<void> {
     const requiredPage = this.moveGetLast(t);
+    let changed = false;
     if (requiredPage != null) {
       this.currentPage?.clearSelectionManager();
       this.currentPage = requiredPage;
       this.currentPage.reset(); // Otherwise it won't apply create_document
+      changed = true;
     }
     if (this.currentPage != null) {
-      return this.currentPage.moveReady(t);
+      return this.currentPage.moveReady(t).then(() => {
+        if (changed && this.spriteMapEl) {
+          setTimeout(() => {
+            this.refreshSprites();
+          }, 0)
+        }
+      })
     }
     return Promise.resolve();
   }

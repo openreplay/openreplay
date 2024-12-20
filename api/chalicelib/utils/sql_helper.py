@@ -1,5 +1,5 @@
 from typing import Union
-
+from enum import Enum
 import schemas
 
 
@@ -49,7 +49,7 @@ def multi_values(values, value_key="value"):
     if values is not None and isinstance(values, list):
         for i in range(len(values)):
             k = f"{value_key}_{i}"
-            query_values[k] = values[i]
+            query_values[k] = values[i].value if isinstance(values[i], Enum) else values[i]
     return query_values
 
 

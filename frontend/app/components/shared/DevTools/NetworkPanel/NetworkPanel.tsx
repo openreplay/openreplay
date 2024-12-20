@@ -37,6 +37,7 @@ const IMG = 'img';
 const MEDIA = 'media';
 const OTHER = 'other';
 const WS = 'websocket';
+const GRAPHQL = 'graphql';
 
 const TYPE_TO_TAB = {
   [ResourceType.XHR]: XHR,
@@ -47,9 +48,10 @@ const TYPE_TO_TAB = {
   [ResourceType.MEDIA]: MEDIA,
   [ResourceType.WS]: WS,
   [ResourceType.OTHER]: OTHER,
+  [ResourceType.GRAPHQL]: GRAPHQL,
 };
 
-const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS] as const;
+const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS, GRAPHQL] as const;
 export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
