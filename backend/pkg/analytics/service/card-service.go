@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func (s serviceImpl) CreateCard(projectId int, userID uint64, req *models.CardCreateRequest) (*models.CardGetResponse, error) {
+func (s *serviceImpl) CreateCard(projectId int, userID uint64, req *models.CardCreateRequest) (*models.CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
@@ -73,7 +73,7 @@ func (s serviceImpl) CreateCard(projectId int, userID uint64, req *models.CardCr
 	return card, nil
 }
 
-func (s serviceImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64, series []models.CardSeriesBase) []models.CardSeries {
+func (s *serviceImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64, series []models.CardSeriesBase) []models.CardSeries {
 	if len(series) == 0 {
 		return nil // No series to create
 	}
@@ -127,7 +127,7 @@ func (s serviceImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64
 	return seriesList
 }
 
-func (s serviceImpl) GetCard(projectId int, cardID int) (*models.CardGetResponse, error) {
+func (s *serviceImpl) GetCard(projectId int, cardID int) (*models.CardGetResponse, error) {
 	sql :=
 		`SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
 	FROM public.metrics
@@ -145,7 +145,7 @@ func (s serviceImpl) GetCard(projectId int, cardID int) (*models.CardGetResponse
 	return card, nil
 }
 
-func (s serviceImpl) GetCardWithSeries(projectId int, cardID int) (*models.CardGetResponse, error) {
+func (s *serviceImpl) GetCardWithSeries(projectId int, cardID int) (*models.CardGetResponse, error) {
 	sql := `
         SELECT m.metric_id, m.project_id, m.user_id, m.name, m.metric_type, m.view_type, m.metric_of, 
                m.metric_value, m.metric_format, m.is_public, m.created_at, m.edited_at,
@@ -184,7 +184,7 @@ func (s serviceImpl) GetCardWithSeries(projectId int, cardID int) (*models.CardG
 	return card, nil
 }
 
-func (s serviceImpl) GetCards(projectId int) (*models.GetCardsResponse, error) {
+func (s *serviceImpl) GetCards(projectId int) (*models.GetCardsResponse, error) {
 	sql := `
 		SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
 		FROM public.metrics
@@ -211,7 +211,7 @@ func (s serviceImpl) GetCards(projectId int) (*models.GetCardsResponse, error) {
 	return &models.GetCardsResponse{Cards: cards}, nil
 }
 
-func (s serviceImpl) GetCardsPaginated(
+func (s *serviceImpl) GetCardsPaginated(
 	projectId int,
 	filters models.CardListFilter,
 	sort models.CardListSort,
@@ -321,7 +321,7 @@ func (s serviceImpl) GetCardsPaginated(
 	}, nil
 }
 
-func (s serviceImpl) UpdateCard(projectId int, cardID int64, userID uint64, req *models.CardUpdateRequest) (*models.CardGetResponse, error) {
+func (s *serviceImpl) UpdateCard(projectId int, cardID int64, userID uint64, req *models.CardUpdateRequest) (*models.CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
@@ -380,7 +380,7 @@ func (s serviceImpl) UpdateCard(projectId int, cardID int64, userID uint64, req 
 	return card, nil
 }
 
-func (s serviceImpl) DeleteCardSeries(cardId int64) error {
+func (s *serviceImpl) DeleteCardSeries(cardId int64) error {
 	sql := `DELETE FROM public.metric_series WHERE metric_id = $1`
 	err := s.pgconn.Exec(sql, cardId)
 	if err != nil {
@@ -389,7 +389,7 @@ func (s serviceImpl) DeleteCardSeries(cardId int64) error {
 	return nil
 }
 
-func (s serviceImpl) DeleteCard(projectId int, cardID int64, userID uint64) error {
+func (s *serviceImpl) DeleteCard(projectId int, cardID int64, userID uint64) error {
 	sql := `
 		UPDATE public.metrics
 		SET deleted_at = now()
@@ -402,7 +402,7 @@ func (s serviceImpl) DeleteCard(projectId int, cardID int64, userID uint64) erro
 	return nil
 }
 
-func (s serviceImpl) GetCardChartData(projectId int, userID uint64, req *models.GetCardChartDataRequest) ([]models.DataPoint, error) {
+func (s *serviceImpl) GetCardChartData(projectId int, userID uint64, req *models.GetCardChartDataRequest) ([]models.DataPoint, error) {
 	jsonInput := `
     {
         "data": [
