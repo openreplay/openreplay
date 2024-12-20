@@ -15,7 +15,7 @@ export function processLog(log: any): UnifiedLog[] {
   } else if (isDynatraceLog(log)) {
     return log.map(processDynatraceLog);
   } else {
-    console.error("Unknown log format");
+    throw new Error("Unknown log format");
   }
 }
 
