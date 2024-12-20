@@ -56,7 +56,7 @@ function WidgetChart(props: Props) {
   const period = dashboardStore.period;
   const drillDownPeriod = dashboardStore.drillDownPeriod;
   const drillDownFilter = dashboardStore.drillDownFilter;
-  const colors = Styles.customMetricColors;
+  const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const params = { density: dashboardStore.selectedDensity };
   const metricParams = _metric.params;

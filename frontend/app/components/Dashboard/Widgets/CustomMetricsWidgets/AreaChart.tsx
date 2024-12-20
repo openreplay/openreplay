@@ -44,9 +44,9 @@ function CustomAreaChart(props: Props) {
           <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
         )}
         <CartesianGrid
-          strokeDasharray="3 3"
+          strokeDasharray="1 3"
           vertical={false}
-          stroke="#EEEEEE"
+          stroke="rgba(0,0,0,.15)"
         />
         <XAxis {...Styles.xaxis} dataKey="time" interval={'equidistantPreserveStart'} />
         <YAxis
@@ -64,10 +64,11 @@ function CustomAreaChart(props: Props) {
            <Area
              key={key}
              name={key}
-             type="monotone"
+             type="linear"
              dataKey={key}
              stroke={colors[index]}
-             color={colors[index]}
+             fill={colors[index]}
+             fillOpacity={0.3}
              legendType={key === 'Total' ? 'none' : 'line'}
              dot={false}
              // strokeDasharray={'4 3'} FOR COPMARISON ONLY

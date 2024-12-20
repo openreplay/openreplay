@@ -63,15 +63,14 @@ function CustomMetricPieChart(props: Props) {
     >
       <ResponsiveContainer height={240} width="100%">
         <PieChart>
-        <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
+        <Legend iconType={'triangle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
           <Pie
             isAnimationActive={false}
             data={values}
             cx="50%"
             cy="50%"
-            innerRadius={40}
-            outerRadius={70}
-            // fill={colors[0]}
+            innerRadius={20}
+            outerRadius={60}
             activeIndex={1}
             onClick={onClickHandler}
             labelLine={({
@@ -149,7 +148,7 @@ function CustomMetricPieChart(props: Props) {
             {values && values.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={Styles.colorsPie[index % Styles.colorsPie.length]}
+                  fill={Styles.safeColors[index % Styles.safeColors.length]}
                 />
               ))}
           </Pie>

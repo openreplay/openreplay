@@ -57,7 +57,7 @@ function AreaChartCard(props: Props) {
                             margin={Styles.chartMargins}
                         >
                             {gradientDef}
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEEEEE"/>
+                            <CartesianGrid strokeDasharray="1 3" vertical={false} stroke="rgba(0,0,0,1.5)"/>
                             <XAxis {...Styles.xaxis} dataKey="time" interval={3}/>
                             <YAxis
                                 {...Styles.yaxis}
