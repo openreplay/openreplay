@@ -3,9 +3,9 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, sessions
+from chalicelib.core import events, metadata, projects
 from chalicelib.core.metrics import metrics
-from chalicelib.core.sessions import sessions_favorite, performance_event
+from chalicelib.core.sessions import sessions_favorite, performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
 
@@ -83,17 +83,18 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     meta_keys = []
     with ch_client.ClickHouseClient() as cur:
         if errors_only:
-            main_query = cur.format(f"""SELECT DISTINCT er.error_id,
-                                        COALESCE((SELECT TRUE
-                                                 FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
-                                                 WHERE er.error_id = ve.error_id
-                                                   AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                                        {query_part};""", full_args)
+            main_query = cur.format(query=f"""SELECT DISTINCT er.error_id,
+                                              COALESCE((SELECT TRUE
+                                                        FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
+                                                        WHERE er.error_id = ve.error_id
+                                                            AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
+                                              {query_part};""", parameters=full_args)
 
         elif count_only:
-            main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
-                                                COUNT(DISTINCT s.user_uuid) AS count_users
-                                        {query_part};""", full_args)
+            main_query = cur.format(query=f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
+                                                     COUNT(DISTINCT s.user_uuid) AS count_users
+                                              {query_part};""",
+                                    parameters=full_args)
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
@@ -126,11 +127,11 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ) AS users_sessions;""",
                                      full_args)
         elif ids_only:
-            main_query = cur.format(f"""SELECT DISTINCT ON(s.session_id) s.session_id
-                                             {query_part}
-                                             ORDER BY s.session_id desc
-                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
-                                    full_args)
+            main_query = cur.format(query=f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                              {query_part}
+                                              ORDER BY s.session_id desc
+                                              LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                    parameters=full_args)
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.DESC.value
@@ -144,21 +145,22 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             meta_keys = metadata.get(project_id=project_id)
             meta_map = ",'metadata',toString(map(%s))" \
                        % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
-            main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
-                                        FROM (SELECT total, details
-                                              FROM (SELECT COUNT() OVER () AS total,
-                                                    s.{sort} AS sort_key,
-                                                    map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
-                                                {query_part}
+            main_query = cur.format(query=f"""SELECT any(total) AS count, 
+                                                     groupArray(%(sessions_limit)s)(details) AS sessions
+                                              FROM (SELECT total, details
+                                                    FROM (SELECT COUNT() OVER () AS total,
+                                                          s.{sort} AS sort_key,
+                                                          map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
+                                                      {query_part}
                                               LEFT JOIN (SELECT DISTINCT session_id
-                                                FROM experimental.user_viewed_sessions
-                                                WHERE user_id = %(userId)s AND project_id=%(project_id)s
-                                                  AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
-                                               ON (viewed_sessions.session_id = s.session_id)
-                                             ) AS raw
-                                        ORDER BY sort_key {data.order}
-                                        LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
-                                    full_args)
+                                                         FROM experimental.user_viewed_sessions
+                                                         WHERE user_id = %(userId)s AND project_id=%(project_id)s
+                                                           AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
+                                                         ON (viewed_sessions.session_id = s.session_id)
+                                              ) AS raw
+                                              ORDER BY sort_key {data.order}
+                                              LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
+                                    parameters=full_args)
         logging.debug("--------------------")
         logging.debug(main_query)
         logging.debug("--------------------")
@@ -243,7 +245,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             ORDER BY timestamp;"""
             else:
                 raise Exception(f"Unsupported metricOf:{metric_of}")
-            main_query = cur.format(query, full_args)
+            main_query = cur.format(query=query, parameters=full_args)
 
             logging.debug("--------------------")
             logging.debug(main_query)
@@ -282,7 +284,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.MetricOfTable.VISITED_URL:
                     main_col = "url_path"
                     extra_col = "s.url_path"
-                main_query = cur.format(f"""{pre_query}
+                main_query = cur.format(query=f"""{pre_query}
                                             SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                                  {main_col} AS name,
                                                  count(DISTINCT session_id) AS session_count
@@ -294,7 +296,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                             GROUP BY {main_col}
                                             ORDER BY session_count DESC
                                             LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
-                                        full_args)
+                                        parameters=full_args)
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
@@ -439,7 +441,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                 ORDER BY total DESC
                                 LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
 
-            main_query = cur.format(main_query, full_args)
+            main_query = cur.format(query=main_query, parameters=full_args)
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
@@ -1620,12 +1622,12 @@ def get_session_user(project_id, user_id):
 
 def session_exists(project_id, session_id):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(f"""SELECT 1 
-                               FROM {exp_ch_helper.get_main_sessions_table()} 
-                               WHERE session_id=%(session_id)s 
-                                    AND project_id=%(project_id)s
-                               LIMIT 1""",
-                           {"project_id": project_id, "session_id": session_id})
+        query = cur.format(query=f"""SELECT 1 
+                                     FROM {exp_ch_helper.get_main_sessions_table()} 
+                                     WHERE session_id=%(session_id)s 
+                                          AND project_id=%(project_id)s
+                                     LIMIT 1""",
+                           parameters={"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None
 
@@ -1662,4 +1664,4 @@ def check_recording_status(project_id: int) -> dict:
 # TODO: rewrite this function to use ClickHouse
 def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
                            ascending: bool = False) -> dict:
-    return sessions.search_sessions_by_ids(project_id, session_ids, sort_by, ascending)
+    return sessions_legacy.search_sessions_by_ids(project_id, session_ids, sort_by, ascending)
