@@ -1,6 +1,7 @@
 import logging
 
-from chalicelib.core import sessions, assist
+from chalicelib.core import assist
+from chalicelib.core.sessions import sessions_search
 from chalicelib.core.db_request_handler import DatabaseRequestHandler
 from chalicelib.core.usability_testing.schema import UTTestCreate, UTTestSearch, UTTestUpdate
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -312,7 +313,7 @@ def ut_tests_sessions(project_id: int, test_id: int, page: int, limit: int, user
 
     session_ids = handler.fetchall()
     session_ids = [session['session_id'] for session in session_ids]
-    sessions_list = sessions.search_sessions_by_ids(project_id=project_id, session_ids=session_ids)
+    sessions_list = sessions_search.search_sessions_by_ids(project_id=project_id, session_ids=session_ids)
     sessions_list['page'] = page
 
     return sessions_list
