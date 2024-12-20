@@ -81,8 +81,8 @@ def __get_timeseries_chart(project: schemas.ProjectContext, data: schemas.CardTi
     series_charts = []
     for i, s in enumerate(data.series):
         series_charts.append(sessions.search2_series(data=s.filter, project_id=project.project_id, density=data.density,
-                                                     view_type=data.view_type, metric_type=data.metric_type,
-                                                     metric_of=data.metric_of, metric_value=data.metric_value))
+                                                     metric_type=data.metric_type, metric_of=data.metric_of,
+                                                     metric_value=data.metric_value))
 
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):

@@ -3,7 +3,8 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects, metrics, sessions
+from chalicelib.core import events, metadata, projects, sessions
+from chalicelib.core.metrics import metrics
 from chalicelib.core.sessions import sessions_favorite, performance_event
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
@@ -196,18 +197,18 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
-                   metric_of: schemas.MetricOfTable, metric_value: List):
+                   metric_type: schemas.MetricType, metric_of: schemas.MetricOfTimeseries | schemas.MetricOfTable,
+                   metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
                                                    density=density))
     extra_event = None
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
-                            FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                            WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
-                              AND ev.datetime <= toDateTime(%(endDate)s / 1000)
-                              AND ev.project_id = %(project_id)s
-                              AND ev.event_type = 'LOCATION'"""
+                          FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                          WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
+                            AND ev.datetime <= toDateTime(%(endDate)s / 1000)
+                            AND ev.project_id = %(project_id)s
+                            AND ev.event_type = 'LOCATION'"""
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
                                                               operator=schemas.SearchEventOperator.IS))
@@ -218,45 +219,39 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     sessions = []
     with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.TIMESERIES:
-            if view_type == schemas.MetricTimeseriesViewType.LINE_CHART:
-                if metric_of == schemas.MetricOfTimeseries.SESSION_COUNT:
-                    query = f"""SELECT toUnixTimestamp(
-                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                        ) * 1000 AS timestamp,
-                                    COUNT(processed_sessions.session_id) AS count
-                                FROM (SELECT s.session_id AS session_id,
-                                            s.datetime AS datetime
-                                        {query_part}) AS processed_sessions
-                                GROUP BY timestamp
-                                ORDER BY timestamp;"""
-                elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
-                    query = f"""SELECT toUnixTimestamp(
-                                        toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                        ) * 1000 AS timestamp,
-                                    COUNT(DISTINCT processed_sessions.user_id) AS count
-                                FROM (SELECT s.user_id AS user_id,
-                                            s.datetime AS datetime
-                                        {query_part}
-                                      WHERE isNotNull(s.user_id)
-                                        AND s.user_id != '') AS processed_sessions
-                                GROUP BY timestamp
-                                ORDER BY timestamp;"""
-                else:
-                    raise Exception(f"Unsupported metricOf:{metric_of}")
-                main_query = cur.format(query, full_args)
+            if metric_of == schemas.MetricOfTimeseries.SESSION_COUNT:
+                query = f"""SELECT toUnixTimestamp(
+                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                    ) * 1000 AS timestamp,
+                                COUNT(processed_sessions.session_id) AS count
+                            FROM (SELECT s.session_id AS session_id,
+                                        s.datetime AS datetime
+                                    {query_part}) AS processed_sessions
+                            GROUP BY timestamp
+                            ORDER BY timestamp;"""
+            elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
+                query = f"""SELECT toUnixTimestamp(
+                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                    ) * 1000 AS timestamp,
+                                COUNT(DISTINCT processed_sessions.user_id) AS count
+                            FROM (SELECT s.user_id AS user_id,
+                                        s.datetime AS datetime
+                                    {query_part}
+                                  WHERE isNotNull(s.user_id)
+                                    AND s.user_id != '') AS processed_sessions
+                            GROUP BY timestamp
+                            ORDER BY timestamp;"""
             else:
-                main_query = cur.format(f"""SELECT count(DISTINCT s.session_id) AS count
-                                            {query_part};""", full_args)
+                raise Exception(f"Unsupported metricOf:{metric_of}")
+            main_query = cur.format(query, full_args)
 
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
             sessions = cur.execute(main_query)
-            if view_type == schemas.MetricTimeseriesViewType.LINE_CHART:
-                sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
-                                                            density=density, neutral={"count": 0}, rows=sessions)
-            else:
-                sessions = sessions[0]["count"] if len(sessions) > 0 else 0
+            sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
+                                                        density=density, neutral={"count": 0}, rows=sessions)
+
         elif metric_type == schemas.MetricType.TABLE:
             full_args["limit_s"] = 0
             full_args["limit_e"] = 200
