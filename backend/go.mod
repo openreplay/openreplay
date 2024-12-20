@@ -39,7 +39,7 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20241012191800-bbb40edc15aa
 	go.uber.org/zap v1.17.0
-	golang.org/x/net v0.23.0
+	golang.org/x/net v0.33.0
 	google.golang.org/api v0.169.0
 )
 
