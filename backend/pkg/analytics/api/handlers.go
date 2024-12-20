@@ -10,14 +10,12 @@ import (
 	config "openreplay/backend/internal/config/analytics"
 	"openreplay/backend/pkg/analytics/service"
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/server/api"
 )
 
 type handlersImpl struct {
 	log           logger.Logger
 	responser     *api.Responser
-	objStorage    objectstorage.ObjectStorage
 	jsonSizeLimit int64
 	service       service.Service
 }
@@ -41,11 +39,10 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, objStore objectstorage.ObjectStorage, service service.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, service service.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
-		objStorage:    objStore,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		service:       service,
 	}, nil

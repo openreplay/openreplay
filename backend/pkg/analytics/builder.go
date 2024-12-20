@@ -9,7 +9,6 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/web"
-	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/auth"
 	"openreplay/backend/pkg/server/limiter"
@@ -24,11 +23,6 @@ type ServicesBuilder struct {
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool) (*ServicesBuilder, error) {
-	objStore, err := store.NewStore(&cfg.ObjectsConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	responser := api.NewResponser(webMetrics)
 
 	audiTrail, err := tracer.NewTracer(log, pgconn)
@@ -36,12 +30,12 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 		return nil, err
 	}
 
-	analyticsService, err := service.NewService(log, pgconn, objStore)
+	analyticsService, err := service.NewService(log, pgconn)
 	if err != nil {
 		return nil, err
 	}
 
-	handlers, err := analyticsAPI.NewHandlers(log, cfg, responser, objStore, analyticsService)
+	handlers, err := analyticsAPI.NewHandlers(log, cfg, responser, analyticsService)
 	if err != nil {
 		return nil, err
 	}
