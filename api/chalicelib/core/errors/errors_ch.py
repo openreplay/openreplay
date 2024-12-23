@@ -339,7 +339,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
         main_ch_query = f"""\
                 SELECT details.error_id AS error_id, 
-                        name, message, users, total, viewed,
+                        name, message, users, total, 
                         sessions, last_occurrence, first_occurrence, chart
                 FROM (SELECT error_id,
                              name,
@@ -348,13 +348,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                              COUNT(DISTINCT events.session_id) AS sessions,
                              MAX(datetime)              AS max_datetime,
                              MIN(datetime)              AS min_datetime,
-                             COUNT(DISTINCT events.error_id) OVER() AS total,
-                             any(isNotNull(viewed_error_id)) AS viewed
+                             COUNT(DISTINCT events.error_id) OVER() AS total
                       FROM {MAIN_EVENTS_TABLE} AS events
-                            LEFT JOIN (SELECT error_id AS viewed_error_id
-                                        FROM {exp_ch_helper.get_user_viewed_errors_table()}
-                                        WHERE project_id=%(project_id)s
-                                            AND user_id=%(userId)s) AS viewed_errors ON(events.error_id=viewed_errors.viewed_error_id)
                             INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
                                         FROM {MAIN_SESSIONS_TABLE} AS s
                                                 {subquery_part}
