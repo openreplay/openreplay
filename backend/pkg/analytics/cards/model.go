@@ -1,4 +1,4 @@
-package models
+package cards
 
 import (
 	"github.com/go-playground/validator/v10"

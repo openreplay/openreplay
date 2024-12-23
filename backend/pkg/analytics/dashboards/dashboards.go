@@ -1,21 +1,46 @@
-package service
+package dashboards
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"openreplay/backend/pkg/analytics/api/models"
+
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/logger"
 )
 
+type Dashboards interface {
+	GetDashboard(projectId int, dashboardId int, userId uint64) (*GetDashboardResponse, error)
+	GetDashboardsPaginated(projectId int, userId uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error)
+	GetDashboards(projectId int, userId uint64) (*GetDashboardsResponse, error)
+	CreateDashboard(projectId int, userId uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error)
+	UpdateDashboard(projectId int, dashboardId int, userId uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error)
+	DeleteDashboard(projectId int, dashboardId int, userId uint64) error
+	AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
+	DeleteCardFromDashboard(dashboardId int, cardId int) error
+}
+
+type dashboardsImpl struct {
+	log    logger.Logger
+	pgconn pool.Pool
+}
+
+func New(log logger.Logger, conn pool.Pool) (Dashboards, error) {
+	return &dashboardsImpl{
+		log:    log,
+		pgconn: conn,
+	}, nil
+}
+
 // CreateDashboard Create a new dashboard
-func (s *serviceImpl) CreateDashboard(projectId int, userID uint64, req *models.CreateDashboardRequest) (*models.GetDashboardResponse, error) {
+func (s *dashboardsImpl) CreateDashboard(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned`
 
-	dashboard := &models.GetDashboardResponse{}
+	dashboard := &GetDashboardResponse{}
 	err := s.pgconn.QueryRow(sql, projectId, userID, req.Name, req.Description, req.IsPublic, req.IsPinned).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
@@ -32,7 +57,7 @@ func (s *serviceImpl) CreateDashboard(projectId int, userID uint64, req *models.
 }
 
 // GetDashboard Fetch a specific dashboard by ID
-func (s *serviceImpl) GetDashboard(projectId int, dashboardID int, userID uint64) (*models.GetDashboardResponse, error) {
+func (s *dashboardsImpl) GetDashboard(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
 	sql := `
 		WITH series_agg AS (
 			SELECT 
@@ -75,7 +100,7 @@ func (s *serviceImpl) GetDashboard(projectId int, dashboardID int, userID uint64
 		WHERE d.dashboard_id = $1 AND d.project_id = $2 AND d.deleted_at IS NULL
 		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id`
 
-	dashboard := &models.GetDashboardResponse{}
+	dashboard := &GetDashboardResponse{}
 	var ownerID int
 	var metricsJSON []byte
 
@@ -108,7 +133,7 @@ func (s *serviceImpl) GetDashboard(projectId int, dashboardID int, userID uint64
 	return dashboard, nil
 }
 
-func (s *serviceImpl) GetDashboards(projectId int, userID uint64) (*models.GetDashboardsResponse, error) {
+func (s *dashboardsImpl) GetDashboards(projectId int, userID uint64) (*GetDashboardsResponse, error) {
 	sql := `
 		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name
 		FROM dashboards d
@@ -121,9 +146,9 @@ func (s *serviceImpl) GetDashboards(projectId int, userID uint64) (*models.GetDa
 	}
 	defer rows.Close()
 
-	var dashboards []models.Dashboard
+	var dashboards []Dashboard
 	for rows.Next() {
-		var dashboard models.Dashboard
+		var dashboard Dashboard
 
 		err := rows.Scan(&dashboard.DashboardID, &dashboard.UserID, &dashboard.ProjectID, &dashboard.Name, &dashboard.Description, &dashboard.IsPublic, &dashboard.IsPinned, &dashboard.OwnerEmail, &dashboard.OwnerName)
 		if err != nil {
@@ -137,13 +162,13 @@ func (s *serviceImpl) GetDashboards(projectId int, userID uint64) (*models.GetDa
 		return nil, err
 	}
 
-	return &models.GetDashboardsResponse{
+	return &GetDashboardsResponse{
 		Dashboards: dashboards,
 	}, nil
 }
 
 // GetDashboardsPaginated Fetch dashboards with pagination
-func (s *serviceImpl) GetDashboardsPaginated(projectId int, userID uint64, req *models.GetDashboardsRequest) (*models.GetDashboardsResponsePaginated, error) {
+func (s *dashboardsImpl) GetDashboardsPaginated(projectId int, userID uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error) {
 	baseSQL, args := buildBaseQuery(projectId, userID, req)
 
 	// Count total dashboards
@@ -165,9 +190,9 @@ func (s *serviceImpl) GetDashboardsPaginated(projectId int, userID uint64, req *
 	}
 	defer rows.Close()
 
-	var dashboards []models.Dashboard
+	var dashboards []Dashboard
 	for rows.Next() {
-		var dashboard models.Dashboard
+		var dashboard Dashboard
 		err := rows.Scan(
 			&dashboard.DashboardID,
 			&dashboard.UserID,
@@ -185,21 +210,21 @@ func (s *serviceImpl) GetDashboardsPaginated(projectId int, userID uint64, req *
 		dashboards = append(dashboards, dashboard)
 	}
 
-	return &models.GetDashboardsResponsePaginated{
+	return &GetDashboardsResponsePaginated{
 		Dashboards: dashboards,
 		Total:      total,
 	}, nil
 }
 
 // UpdateDashboard Update a dashboard
-func (s *serviceImpl) UpdateDashboard(projectId int, dashboardID int, userID uint64, req *models.UpdateDashboardRequest) (*models.GetDashboardResponse, error) {
+func (s *dashboardsImpl) UpdateDashboard(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		UPDATE dashboards
 		SET name = $1, description = $2, is_public = $3, is_pinned = $4
 		WHERE dashboard_id = $5 AND project_id = $6 AND user_id = $7 AND deleted_at IS NULL
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned`
 
-	dashboard := &models.GetDashboardResponse{}
+	dashboard := &GetDashboardResponse{}
 	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId, userID).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
@@ -216,7 +241,7 @@ func (s *serviceImpl) UpdateDashboard(projectId int, dashboardID int, userID uin
 }
 
 // DeleteDashboard Soft-delete a dashboard
-func (s *serviceImpl) DeleteDashboard(projectId int, dashboardID int, userID uint64) error {
+func (s *dashboardsImpl) DeleteDashboard(projectId int, dashboardID int, userID uint64) error {
 	sql := `
 		UPDATE dashboards
 		SET deleted_at = now()
@@ -231,7 +256,7 @@ func (s *serviceImpl) DeleteDashboard(projectId int, dashboardID int, userID uin
 }
 
 // Helper to build the base query for dashboards
-func buildBaseQuery(projectId int, userID uint64, req *models.GetDashboardsRequest) (string, []interface{}) {
+func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (string, []interface{}) {
 	var conditions []string
 	args := []interface{}{projectId}
 
@@ -282,7 +307,7 @@ func getOrder(order string) string {
 	return "ASC"
 }
 
-func (s *serviceImpl) CardsExist(projectId int, cardIDs []int) (bool, error) {
+func (s *dashboardsImpl) CardsExist(projectId int, cardIDs []int) (bool, error) {
 	sql := `
 		SELECT COUNT(*) FROM public.metrics
 		WHERE project_id = $1 AND metric_id = ANY($2)
@@ -295,7 +320,7 @@ func (s *serviceImpl) CardsExist(projectId int, cardIDs []int) (bool, error) {
 	return count == len(cardIDs), nil
 }
 
-func (s *serviceImpl) AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *models.AddCardToDashboardRequest) error {
+func (s *dashboardsImpl) AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
 	_, err := s.GetDashboard(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
@@ -370,7 +395,7 @@ func (s *serviceImpl) AddCardsToDashboard(projectId int, dashboardId int, userId
 	return nil
 }
 
-func (s *serviceImpl) DeleteCardFromDashboard(dashboardId int, cardId int) error {
+func (s *dashboardsImpl) DeleteCardFromDashboard(dashboardId int, cardId int) error {
 	sql := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = $1 AND metric_id = $2`
 	err := s.pgconn.Exec(sql, dashboardId, cardId)
 	if err != nil {
