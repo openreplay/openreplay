@@ -20,6 +20,7 @@ type sentryConfig struct {
 	OrganizationSlug string `json:"organization_slug"`
 	ProjectSlug      string `json:"project_slug"`
 	Token            string `json:"token"`
+	URL              string `json:"url"`
 }
 
 type SentryEvent struct {
@@ -46,13 +47,19 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 		if val, ok := strCfg["token"].(string); ok {
 			cfg.Token = val
 		}
+		if val, ok := strCfg["url"].(string); ok {
+			cfg.URL = val
+		}
 	}
-	requestUrl := fmt.Sprintf("https://sentry.io/api/0/projects/%s/%s/events/", cfg.OrganizationSlug, cfg.ProjectSlug)
+	if cfg.URL == "" {
+		cfg.URL = "https://sentry.io" // Default to hosted Sentry if not specified
+	}
+	requestUrl := fmt.Sprintf("%s/api/0/projects/%s/%s/issues/", cfg.URL, cfg.OrganizationSlug, cfg.ProjectSlug)
 
 	testCallLimit := 1
 	params := url.Values{}
 	if sessionID != 0 {
-		params.Add("query", fmt.Sprintf("openReplaySession.id=%d", sessionID))
+		params.Add("query", fmt.Sprintf("openReplaySession.id:%d", sessionID))
 	} else {
 		params.Add("per_page", fmt.Sprintf("%d", testCallLimit))
 	}

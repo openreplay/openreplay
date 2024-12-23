@@ -52,6 +52,9 @@ export default {
     tickFormatterBytes: val => Math.round(val / 1024 / 1024),
     chartMargins: {left: 0, right: 20, top: 10, bottom: 5},
     tooltip: {
+        wrapperStyle: {
+            zIndex: 999,
+        },
         contentStyle: {
             padding: '5px',
             background: 'white',

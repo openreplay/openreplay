@@ -1,3 +1,8 @@
+## 15.0.4
+
+- support for spritemaps (svg with `use` tags)
+- improvements for missing resources tracking
+
 ## 15.0.3
 
 - fixing `failuresOnly` option for network

@@ -64,8 +64,10 @@ const FilterAutoComplete = observer(
     const filterKey = `${_params.type}${_params.key || ''}`;
     const topValues = filterStore.topValues[filterKey] || [];
 
-    const loadTopValues = () => {
-      void filterStore.fetchTopValues(_params.type, _params.key);
+    const loadTopValues = async () => {
+      setLoading(true)
+      await filterStore.fetchTopValues(_params.type, _params.key);
+      setLoading(false)
     };
 
     useEffect(() => {
@@ -78,7 +80,7 @@ const FilterAutoComplete = observer(
       }
     }, [topValues, initialFocus]);
 
-    useEffect(loadTopValues, [_params.type]);
+    useEffect(() => { void loadTopValues() }, [_params.type]);
 
     const loadOptions = async (
       inputValue: string,

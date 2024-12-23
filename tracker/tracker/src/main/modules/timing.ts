@@ -121,6 +121,24 @@ export default function (app: App, opts: Partial<Options>): void {
     if (shouldSkip) {
       return
     }
+    const failed = entry.responseEnd === 0
+                   || (entry.transferSize === 0 && entry.decodedBodySize === 0)
+    if (failed) {
+      app.send(
+        ResourceTiming(
+          entry.startTime + getTimeOrigin(),
+          0,
+          0,
+          0,
+          0,
+          0,
+          entry.name,
+          entry.initiatorType,
+          0,
+          true,
+        ),
+      )
+    }
     app.send(
       ResourceTiming(
         entry.startTime + getTimeOrigin(),

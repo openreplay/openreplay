@@ -1,6 +1,6 @@
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NoContent, Pagination, Icon, Loader } from 'UI';
+import { NoContent, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
 import GridView from './GridView';
@@ -8,24 +8,35 @@ import ListView from './ListView';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function MetricsList({
-                       siteId,
-                       onSelectionChange
-                     }: {
+  siteId,
+  onSelectionChange,
+}: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
 }) {
   const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.filter.query;
-  const listView = useObserver(() => metricStore.listView);
+  const listView = metricStore.listView;
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   const dashboard = dashboardStore.selectedDashboard;
-  const existingCardIds = useMemo(() => dashboard?.widgets?.map(i => parseInt(i.metricId)), [dashboard]);
-  const cards = useMemo(() => !!onSelectionChange ? metricStore.filteredCards.filter(i => !existingCardIds?.includes(parseInt(i.metricId))) : metricStore.filteredCards, [metricStore.filteredCards]);
+  const existingCardIds = useMemo(
+    () => dashboard?.widgets?.map((i) => parseInt(i.metricId)),
+    [dashboard]
+  );
+  const cards = useMemo(
+    () =>
+      !!onSelectionChange
+        ? metricStore.filteredCards.filter(
+            (i) => !existingCardIds?.includes(parseInt(i.metricId))
+          )
+        : metricStore.filteredCards,
+    [metricStore.filteredCards]
+  );
   const loading = metricStore.isLoading;
 
   useEffect(() => {
-    metricStore.fetchList();
+    void metricStore.fetchList();
   }, []);
 
   useEffect(() => {
@@ -43,25 +54,30 @@ function MetricsList({
     }
   };
 
-  const lenth = cards.length;
+  const length = cards.length;
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
   }, []);
 
+  const showOwn = metricStore.filter.showMine;
+  const toggleOwn = () => {
+    metricStore.updateKey('showMine', !showOwn);
+  }
   return (
     <Loader loading={loading}>
       <NoContent
-        show={lenth === 0}
+        show={length === 0}
         title={
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_CARDS} size={60} />
             <div className="text-center mt-4  text-lg font-medium">
-              {metricsSearch !== '' ? 'No matching results' : 'You haven\'t created any cards yet'}
+              {metricsSearch !== ''
+                ? 'No matching results'
+                : "You haven't created any cards yet"}
             </div>
           </div>
         }
-        
         subtext={
           metricsSearch !== ''
             ? ''
@@ -77,6 +93,8 @@ function MetricsList({
             existingCardIds={existingCardIds}
             toggleSelection={toggleMetricSelection}
             allSelected={cards.length === selectedMetrics.length}
+            showOwn={showOwn}
+            toggleOwn={toggleOwn}
             toggleAll={({ target: { checked, name } }) =>
               setSelectedMetrics(checked ? cards.map((i: any) => i.metricId).slice(0, 30 - existingCardIds!.length) : [])
             }

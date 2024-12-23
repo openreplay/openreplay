@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import cn from 'classnames';
 import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
@@ -8,7 +8,6 @@ import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react'
 import copy from 'copy-to-clipboard';
-//import MetricTypeSelector from "../MetricTypeSelector";
 
 interface Props {
   onClick?: () => void;
@@ -21,11 +20,9 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
   const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
   const widget = metricStore.instance;
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const handleSave = () => {
     onSave();
-    setUnsavedChanges(false); 
   };
 
   const copyUrl = () => {
@@ -46,13 +43,12 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
         name={widget.name}
         onUpdate={(name) => {
           metricStore.merge({ name });
-          setUnsavedChanges(true); 
         }}
         canEdit={true}
       />
       </h1>
       <Space>
-      
+
       <Button
           type={
             metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
@@ -66,14 +62,12 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
         </Button>
 
         {/* <MetricTypeSelector /> */}
-        
+
         <Tooltip title={tooltipText}>
           <Button type='text' className='btn-copy-card-url' disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1}/> }></Button>
         </Tooltip>
-        
-        <CardViewMenu />
 
-        
+        <CardViewMenu />
       </Space>
     </div>
   );

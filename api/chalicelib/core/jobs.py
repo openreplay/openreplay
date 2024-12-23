@@ -1,6 +1,10 @@
+import logging
+
+from chalicelib.core.sessions import sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core.sessions import sessions_mobs, sessions_devtool
+
+logger = logging.getLogger(__name__)
 
 
 class Actions:
@@ -150,23 +154,23 @@ def get_scheduled_jobs():
 def execute_jobs():
     jobs = get_scheduled_jobs()
     for job in jobs:
-        print(f"Executing jobId:{job['jobId']}")
+        logger.info(f"Executing jobId:{job['jobId']}")
         try:
             if job["action"] == Actions.DELETE_USER_DATA:
                 session_ids = __get_session_ids_by_user_ids(project_id=job["projectId"],
                                                             user_ids=[job["referenceId"]])
                 if len(session_ids) > 0:
-                    print(f"Deleting {len(session_ids)} sessions")
+                    logger.info(f"Deleting {len(session_ids)} sessions")
                     __delete_sessions_by_session_ids(session_ids=session_ids)
                     __delete_session_mobs_by_session_ids(session_ids=session_ids, project_id=job["projectId"])
             else:
                 raise Exception(f"The action '{job['action']}' not supported.")
 
             job["status"] = JobStatus.COMPLETED
-            print(f"Job completed {job['jobId']}")
+            logger.info(f"Job completed {job['jobId']}")
         except Exception as e:
             job["status"] = JobStatus.FAILED
             job["errors"] = str(e)
-            print(f"Job failed {job['jobId']}")
+            logger.error(f"Job failed {job['jobId']}")
 
         update(job["jobId"], job)

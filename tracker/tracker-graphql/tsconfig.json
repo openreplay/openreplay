@@ -3,11 +3,12 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "alwaysStrict": true,
-    "target": "es6",
-    "module": "es6",
+    "target": "es2020",
+    "module": "ESNext",
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "./lib",
     "allowSyntheticDefaultImports": true
-  }
+  },
+    "include": ["src/**/*.ts"],
 }

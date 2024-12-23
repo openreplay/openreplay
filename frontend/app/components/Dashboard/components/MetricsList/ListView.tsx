@@ -3,6 +3,8 @@ import { Checkbox, Table, Typography } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import Widget from 'App/mstore/types/widget';
+import { LockOutlined, TeamOutlined } from ".store/@ant-design-icons-virtual-981121729b/package";
+import { Switch, Tag, Tooltip } from ".store/antd-virtual-9b6c8c01be/package";
 
 const { Text } = Typography;
 
@@ -23,6 +25,8 @@ interface Props {
   disableSelection?: boolean;
   allSelected?: boolean;
   existingCardIds?: number[];
+  showOwn?: boolean;
+  toggleOwn: () => void;
 }
 
 const ListView: React.FC<Props> = (props: Props) => {
@@ -33,7 +37,9 @@ const ListView: React.FC<Props> = (props: Props) => {
     toggleSelection,
     disableSelection = false,
     allSelected = false,
-    toggleAll
+    toggleAll,
+    showOwn,
+    toggleOwn,
   } = props;
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
@@ -101,6 +107,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       key: 'title',
       className: 'cap-first pl-4',
       sorter: true,
+      width: '25%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
@@ -121,7 +128,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'owner',
       key: 'owner',
       className: 'capitalize',
-      width: '30%',
+      width: '16.67%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -162,9 +169,40 @@ const ListView: React.FC<Props> = (props: Props) => {
     //   )
     // },
     {
-      title: '',
+      title: (
+        <div className={'flex items-center justify-start gap-2'}>
+          <div>Visibility</div>
+          <Tooltip
+            title="Toggle to view your own or team's cards."
+            placement="topRight"
+          >
+            <Switch
+              checked={!showOwn}
+              onChange={() =>
+                toggleOwn()
+              }
+              checkedChildren={'Team'}
+              unCheckedChildren={'Private'}
+            />
+          </Tooltip>
+        </div>
+      ),
+      width: '16.67%',
+      dataIndex: 'isPublic',
+      render: (isPublic: boolean) => (
+        <Tag
+          icon={isPublic ? <TeamOutlined /> : <LockOutlined />}
+          bordered={false}
+          className="rounded-lg"
+        >
+          {isPublic ? 'Team' : 'Private'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Options',
       key: 'options',
-      className: 'text-right pr-4',
+      className: 'text-right',
       width: '5%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -178,13 +216,11 @@ const ListView: React.FC<Props> = (props: Props) => {
   ];
 
   return (
-    
     <Table
       columns={columns}
       dataSource={paginatedData}
       rowKey="metricId"
       onChange={handleTableChange}
-      size='default'
       rowSelection={
         !disableSelection
           ? {

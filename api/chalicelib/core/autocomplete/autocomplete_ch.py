@@ -59,10 +59,10 @@ def __get_autocomplete_table(value, project_id):
                   "c_list": tuple(c_list)}
         results = []
         try:
-            results = cur.execute(query=query, params=params)
+            results = cur.execute(query=query, parameters=params)
         except Exception as err:
             logger.exception("--------- CH AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
-            logger.exception(cur.format(query=query, params=params))
+            logger.exception(cur.format(query=query, parameters=params))
             logger.exception("--------- PARAMS -----------")
             logger.exception(params)
             logger.exception("--------- VALUE -----------")
@@ -119,7 +119,7 @@ def __generic_autocomplete(event: Event):
             query = __generic_query(event.ui_type, value_length=len(value))
             params = {"project_id": project_id, "value": helper.string_to_sql_like(value),
                       "svalue": helper.string_to_sql_like("^" + value)}
-            results = cur.execute(query=query, params=params)
+            results = cur.execute(query=query, parameters=params)
             return helper.list_to_camel_case(results)
 
     return f
@@ -137,7 +137,7 @@ def __generic_autocomplete_metas(typename):
                     return []
 
             query = __generic_query(typename, value_length=len(text))
-            rows = cur.execute(query=query, params=params)
+            rows = cur.execute(query=query, parameters=params)
         return rows
 
     return f
@@ -335,5 +335,5 @@ def get_top_values(project_id, event_type, event_key=None):
                         SELECT c_value AS value, row_count, truncate(row_count * 100 / total_count,2) AS row_percentage
                         FROM raw;"""
         params = {"project_id": project_id}
-        results = cur.execute(query=query, params=params)
+        results = cur.execute(query=query, parameters=params)
         return helper.list_to_camel_case(results)

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from 'UI';
 import { Input, Tooltip } from 'antd';
 import cn from 'classnames';
 
@@ -56,7 +55,7 @@ function WidgetName(props: Props) {
           onBlur={() => onBlur()}
           onKeyDown={onKeyDown}
           onFocus={() => setEditing(true)}
-          maxLength={32}
+          maxLength={80}
           className="bg-white text-2xl ps-2 rounded-lg h-8"
         />
       ) : (

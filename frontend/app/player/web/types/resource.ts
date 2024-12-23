@@ -105,25 +105,38 @@ export interface IResourceRequest extends IResource {
   decodedBodySize?: number,
 }
 
+const getGraphqlReqName = (resource: IResource) => {
+  try {
+    if (!resource.request) return getResourceName(resource.url)
+    const req = JSON.parse(resource.request)
+    const body = JSON.parse(req.body)
+    return /query (\w+)/.exec(body.query)?.[1]
+  } catch (e) {
+    return getResourceName(resource.url)
+  }
+}
 
-export const Resource = (resource: IResource) => ({
-  ...resource,
-  name: getResourceName(resource.url),
-  isRed: !resource.success || resource.error, //|| resource.score >= RED_BOUND,
-  isYellow: false, // resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
-})
+export const Resource = (resource: IResource) => {
+  const name = resource.type === 'graphql' ? getGraphqlReqName(resource) : getResourceName(resource.url)
+  return {
+    ...resource,
+    name,
+    isRed: !resource.success || resource.error, //|| resource.score >= RED_BOUND,
+    isYellow: false, // resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
+  }
+}
 
 
 export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: number) {
   // duration might be duration=0 when cached
-  const success = msg.duration > 0 || msg.encodedBodySize > 0 || msg.transferredSize > 0
+  const failed = msg.duration === 0 && msg.ttfb === 0 && msg.headerSize === 0 && msg.encodedBodySize === 0 && msg.transferredSize === 0
   const type = getResourceType(msg.initiator, msg.url)
   return Resource({
     ...msg,
     type,
     method: type === ResourceType.FETCH ? ".." : "GET", // should be GET for all non-XHR/Fetch resources, right?
-    success,
-    status: success ? '2xx-3xx' : '4xx-5xx', 
+    success: !failed,
+    status: !failed ? '2xx-3xx' : '4xx-5xx',
     time: Math.max(0, msg.timestamp - sessStart)
   })
 }

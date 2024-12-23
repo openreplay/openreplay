@@ -16,7 +16,7 @@ interface Props {
   active: boolean;
   payload: PayloadItem[];
   label: string;
-  hoveredSeries: string | null; 
+  hoveredSeries: string | null;
 }
 
 function CustomTooltip(props: Props) {
@@ -25,8 +25,8 @@ function CustomTooltip(props: Props) {
 
   // Find the current and comparison payloads
   const currentPayload = payload.find(p => p.name === hoveredSeries);
-  const comparisonPayload = payload.find(p => 
-    p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` || 
+  const comparisonPayload = payload.find(p =>
+    p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` ||
     p.name === `${hoveredSeries} (Comparison)`
   );
 
@@ -45,7 +45,7 @@ function CustomTooltip(props: Props) {
     (((val - prevVal) / prevVal) * 100).toFixed(2);
 
   return (
-    <div className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-30'}>
+    <div className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-50'}>
       {transformedArray.map((p, index) => (
         <React.Fragment key={p.name + index}>
           <div className={'flex gap-2 items-center'}>

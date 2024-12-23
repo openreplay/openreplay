@@ -8,7 +8,7 @@ import ListWalker from '../common/ListWalker';
 import MouseMoveManager from './managers/MouseMoveManager';
 
 import ActivityManager from './managers/ActivityManager';
-import TabClosingManager from "./managers/TabClosingManager";
+import TabClosingManager from './managers/TabClosingManager';
 
 import { MouseThrashing, MType } from './messages';
 import type { Message, MouseClick } from './messages';
@@ -52,7 +52,7 @@ export interface State extends ScreenState {
   };
   tabNames: {
     [tabId: string]: string;
-  }
+  };
 
   domContentLoadedTime?: { time: number; value: number };
   domBuildingTime?: number;
@@ -99,7 +99,7 @@ export default class MessageManager {
     closedTabs: [],
     sessionStart: 0,
     tabNames: {},
-};
+  };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
@@ -128,7 +128,9 @@ export default class MessageManager {
     this.mouseMoveManager = new MouseMoveManager(screen);
     this.sessionStart = this.session.startedAt;
     state.update({ sessionStart: this.sessionStart });
-    this.activityManager = new ActivityManager(this.session.duration.milliseconds); // only if not-live
+    this.activityManager = new ActivityManager(
+      this.session.duration.milliseconds
+    ); // only if not-live
   }
 
   public getListsFullState = () => {
@@ -139,12 +141,18 @@ export default class MessageManager {
     return Object.values(this.tabs)[0].getListsFullState();
   };
 
+  public injectSpriteMap = (spriteEl: SVGElement) => {
+    Object.values(this.tabs).forEach((tab) => {
+      tab.injectSpriteMap(spriteEl)
+    })
+  };
+
   public setSession = (session: SessionFilesInfo) => {
     this.session = session;
     this.sessionStart = this.session.startedAt;
     this.state.update({ sessionStart: this.sessionStart });
     Object.values(this.tabs).forEach((tab) => tab.setSession(session));
-  }
+  };
 
   public updateLists(lists: RawList) {
     Object.keys(this.tabs).forEach((tab) => {
@@ -198,26 +206,26 @@ export default class MessageManager {
    * Scan tab managers for last message ts
    * */
   public createTabCloseEvents = () => {
-    const lastMsgArr: [string, number][] = []
+    const lastMsgArr: [string, number][] = [];
     if (this.tabsAmount === 1) {
       return this.tabCloseManager.append({
         tabId: Object.keys(this.tabs)[0],
-        time: this.session.durationMs - 100
-      })
+        time: this.session.durationMs - 100,
+      });
     }
 
     for (const [tabId, tab] of Object.entries(this.tabs)) {
-      const { lastMessageTs } = tab
+      const { lastMessageTs } = tab;
       if (lastMessageTs && tabId) {
-        lastMsgArr.push([tabId, lastMessageTs])
+        lastMsgArr.push([tabId, lastMessageTs]);
       }
     }
 
-    lastMsgArr.sort((a, b) => a[1] - b[1])
+    lastMsgArr.sort((a, b) => a[1] - b[1]);
     lastMsgArr.forEach(([tabId, lastMessageTs]) => {
-      this.tabCloseManager.append({ tabId, time: lastMessageTs })
-    })
-  }
+      this.tabCloseManager.append({ tabId, time: lastMessageTs });
+    });
+  };
 
   public startLoading = () => {
     this.waitingForFiles = true;
@@ -238,15 +246,15 @@ export default class MessageManager {
     // usually means waiting for messages from live session
     if (Object.keys(this.tabs).length === 0) return;
     this.activeTabManager.moveReady(t).then(async (tabId) => {
-      const closeMessage = await this.tabCloseManager.moveReady(t)
+      const closeMessage = await this.tabCloseManager.moveReady(t);
       if (closeMessage) {
-        const closedTabs = this.tabCloseManager.closedTabs
+        const closedTabs = this.tabCloseManager.closedTabs;
         if (closedTabs.size === this.tabsAmount) {
           if (this.session.durationMs - t < 250) {
-            this.state.update({ closedTabs: Array.from(closedTabs) })
+            this.state.update({ closedTabs: Array.from(closedTabs) });
           }
         } else {
-          this.state.update({ closedTabs: Array.from(closedTabs) })
+          this.state.update({ closedTabs: Array.from(closedTabs) });
         }
       }
       // Moving mouse and setting :hover classes on ready view
@@ -261,7 +269,8 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
       if (!this.activeTab) {
-        this.activeTab = this.state.get().currentTab ?? Object.keys(this.tabs)[0];
+        this.activeTab =
+          this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
 
       if (tabId) {
@@ -291,8 +300,7 @@ export default class MessageManager {
     });
     if (
       this.waitingForFiles ||
-      (this.lastMessageTime <= t &&
-      t < this.session.durationMs)
+      (this.lastMessageTime <= t && t < this.session.durationMs)
     ) {
       this.setMessagesLoading(true);
     }
@@ -318,7 +326,12 @@ export default class MessageManager {
     if (msg.tp === 9999) return;
     if (!this.tabs[msg.tabId]) {
       this.tabsAmount++;
-      this.state.update({ tabStates: { ...this.state.get().tabStates, [msg.tabId]: TabSessionManager.INITIAL_STATE } });
+      this.state.update({
+        tabStates: {
+          ...this.state.get().tabStates,
+          [msg.tabId]: TabSessionManager.INITIAL_STATE,
+        },
+      });
       this.tabs[msg.tabId] = new TabSessionManager(
         this.session,
         this.state,
@@ -368,7 +381,11 @@ export default class MessageManager {
         switch (msg.tp) {
           case MType.CreateDocument:
             if (!this.firstVisualEventSet) {
-              this.activeTabManager.unshift({ tp: MType.TabChange, tabId: msg.tabId, time: 0 });
+              this.activeTabManager.unshift({
+                tp: MType.TabChange,
+                tabId: msg.tabId,
+                time: 0,
+              });
               this.state.update({
                 firstVisualEvent: msg.time,
                 currentTab: msg.tabId,
@@ -387,9 +404,11 @@ export default class MessageManager {
       this.updateChangeEvents();
     }
     this.screen.display(!messagesLoading);
-    const cssLoading = Object.values(this.state.get().tabStates).some((tab) => tab.cssLoading);
-    const isReady = !messagesLoading && !cssLoading
-    this.state.update({ messagesLoading, ready: isReady});
+    const cssLoading = Object.values(this.state.get().tabStates).some(
+      (tab) => tab.cssLoading
+    );
+    const isReady = !messagesLoading && !cssLoading;
+    this.state.update({ messagesLoading, ready: isReady });
   };
 
   decodeMessage(msg: Message) {

@@ -1,3 +1,7 @@
+import React, { useEffect } from 'react';
+import { PageTitle } from 'UI';
+import { Button, Popover } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 import { PageTitle, Icon } from 'UI';
 import { Segmented, Button, Popover, Space, Dropdown, Menu } from 'antd';
@@ -5,14 +9,17 @@ import { PlusOutlined, DownOutlined } from '@ant-design/icons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
-import { observer, useObserver } from 'mobx-react-lite';
-import { DROPDOWN_OPTIONS } from 'App/constants/card';
+import { observer } from 'mobx-react-lite';
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
   const filter = metricStore.filter;
   const [showAddCardModal, setShowAddCardModal] = useState(false);
 
+  useEffect(() => {
+  // Set the default sort order to 'desc'
+    metricStore.updateKey('sort', { by: 'desc' });
+  }, [metricStore]);
   // Handler for dropdown menu selection
   const handleMenuClick = ({ key }) => {
     metricStore.updateKey('filter', { ...filter, type: key });
@@ -51,17 +58,19 @@ function MetricViewHeader() {
           >
             <Button
               type="primary"
-              onClick={() => setShowAddCardModal(true)}
               icon={<PlusOutlined />}
               className='btn-create-card'
             >
               Create Card
             </Button>
           </Popover>
-          
+
           <Space>
             <MetricsSearch />
           </Space>
+        </div>
+      </div>
+          </div>
         </div>
       </div>
     </div>
@@ -69,41 +78,4 @@ function MetricViewHeader() {
 }
 
 export default observer(MetricViewHeader);
-  function ListViewToggler() {
-  const { metricStore } = useStore();
-  const listView = useObserver(() => metricStore.listView);
 
-  return (
-    <div className="flex items-center">
-      <Segmented
-        size="small"
-        options={[
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <Icon name={'list-alt'} color={'inherit'} />
-                <div>List</div>
-              </div>
-            ),
-            value: 'list',
-          },
-
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <Icon name={'grid'} color={'inherit'} />
-                <div>Grid</div>
-              </div>
-            ),
-            value: 'grid',
-          },
-        ]}
-
-        onChange={(val) => {
-          metricStore.updateKey('listView', val === 'list');
-        }}
-        value={listView ? 'list' : 'grid'}
-      />
-    </div>
-  );
-}
