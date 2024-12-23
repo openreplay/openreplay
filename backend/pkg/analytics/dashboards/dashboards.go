@@ -33,7 +33,6 @@ func New(log logger.Logger, conn pool.Pool) (Dashboards, error) {
 	}, nil
 }
 
-// CreateDashboard Create a new dashboard
 func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
@@ -56,7 +55,6 @@ func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboa
 	return dashboard, nil
 }
 
-// GetDashboard Fetch a specific dashboard by ID
 func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
 	sql := `
 		WITH series_agg AS (
@@ -167,7 +165,6 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 	}, nil
 }
 
-// GetDashboardsPaginated Fetch dashboards with pagination
 func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error) {
 	baseSQL, args := buildBaseQuery(projectId, userID, req)
 
@@ -216,7 +213,6 @@ func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetD
 	}, nil
 }
 
-// UpdateDashboard Update a dashboard
 func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		UPDATE dashboards
@@ -240,7 +236,6 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 	return dashboard, nil
 }
 
-// DeleteDashboard Soft-delete a dashboard
 func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) error {
 	sql := `
 		UPDATE dashboards
@@ -255,7 +250,6 @@ func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) e
 	return nil
 }
 
-// Helper to build the base query for dashboards
 func buildBaseQuery(projectId int, userID uint64, req *GetDashboardsRequest) (string, []interface{}) {
 	var conditions []string
 	args := []interface{}{projectId}
