@@ -1,6 +1,7 @@
 package analytics
 
 import (
+	"openreplay/backend/pkg/analytics/charts"
 	"time"
 
 	"openreplay/backend/internal/config/analytics"
@@ -21,6 +22,7 @@ type ServicesBuilder struct {
 	AuditTrail    tracer.Tracer
 	CardsAPI      api.Handlers
 	DashboardsAPI api.Handlers
+	ChartsAPI     api.Handlers
 }
 
 func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.Web, pgconn pool.Pool) (*ServicesBuilder, error) {
@@ -45,11 +47,20 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
+	chartsService, err := charts.New(log, pgconn)
+	if err != nil {
+		return nil, err
+	}
+	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService)
+	if err != nil {
+		return nil, err
+	}
 	return &ServicesBuilder{
 		Auth:          auth.NewAuth(log, cfg.JWTSecret, cfg.JWTSpotSecret, pgconn, nil),
 		RateLimiter:   limiter.NewUserRateLimiter(10, 30, 1*time.Minute, 5*time.Minute),
 		AuditTrail:    audiTrail,
 		CardsAPI:      cardsHandlers,
 		DashboardsAPI: dashboardsHandlers,
+		ChartsAPI:     chartsHandlers,
 	}, nil
 }
