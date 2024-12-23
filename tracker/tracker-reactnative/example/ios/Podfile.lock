@@ -9,14 +9,14 @@ PODS:
   - hermes-engine (0.74.0):
     - hermes-engine/Pre-built (= 0.74.0)
   - hermes-engine/Pre-built (0.74.0)
-  - Openreplay (1.0.14):
+  - Openreplay (1.0.15):
     - DeviceKit
     - SWCompression
   - openreplay-react-native (0.6.6):
     - DoubleConversion
     - glog
     - hermes-engine
-    - Openreplay (= 1.0.14)
+    - Openreplay (= 1.0.15)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
