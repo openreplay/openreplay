@@ -33,6 +33,7 @@ import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetr
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
 import SankeyChart from 'Shared/Insights/SankeyChart';
+import { filterMinorPaths } from 'Shared/Insights/SankeyChart/utils'
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import { useInView } from 'react-intersection-observer';
@@ -120,7 +121,7 @@ function WidgetChart(props: Props) {
     ..._metric.series,
     ..._metric.excludes,
     ..._metric.startPoint,
-    hideExcess: _metric.hideExcess,
+    hideExcess: false,
   });
   const fetchMetricChartData = (
     metric: any,
@@ -473,11 +474,12 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      // return <PathAnalysis data={data}/>;
+      const usedData = _metric.hideExcess ? filterMinorPaths(data) : data;
       return (
         <SankeyChart
           height={props.isPreview ? 500 : 240}
-          data={data}
+          data={usedData}
+          iterations={_metric.hideExcess ? 0 : 128}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}

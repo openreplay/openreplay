@@ -44,6 +44,7 @@ function WidgetOptions() {
           onClick={(e) => {
             e.preventDefault();
             metric.update({ hideExcess: !metric.hideExcess });
+            metric.updateKey('hasChanged', true);
           }}
         >
           <Space>
@@ -113,6 +114,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         })),
         onClick: ({ key }: any) => {
           metric.updateKey('metricOf', key);
+          metric.updateKey('hasChanged', true)
         },
       }}
     >
