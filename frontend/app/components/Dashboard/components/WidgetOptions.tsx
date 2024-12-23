@@ -60,20 +60,22 @@ function WidgetOptions() {
         metric.metricOf != FilterKey.USERID &&
         metric.metricOf != FilterKey.ERRORS && (
           <Dropdown
-                trigger={['click']}
-                menu={{
-                  selectable: true,
-                  items: [
-                    { key: 'sessionCount', label: 'All Sessions' },
-                    { key: 'userCount', label: 'Unique Users' },
-                  ],
-                  onClick: (info: { key: string }) => handleChange(info.key)
-                }}
-              >
-                <Button type='text' variant='text' size='small'>
-                  {metric.metricFormat === 'sessionCount' ? 'All Sessions' : 'Unique Users'}
-                  <DownOutlined className='text-sm' />
-                </Button>
+            trigger={['click']}
+            menu={{
+              selectable: true,
+              items: [
+                { key: 'sessionCount', label: 'All Sessions' },
+                { key: 'userCount', label: 'Unique Users' },
+              ],
+              onClick: (info: { key: string }) => handleChange(info.key),
+            }}
+          >
+            <Button type="text" variant="text" size="small">
+              {metric.metricFormat === 'sessionCount'
+                ? 'All Sessions'
+                : 'Unique Users'}
+              <DownOutlined className="text-sm" />
+            </Button>
           </Dropdown>
         )}
       {hasViewTypes ? <WidgetViewTypeOptions metric={metric} /> : null}
@@ -102,8 +104,10 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
           key,
           label: (
             <div className={'flex items-center gap-2'}>
-              {chartIcons[key]}
-              <div>{name}</div>
+              <>
+                {chartIcons[key]}
+                <div>{name}</div>
+              </>
             </div>
           ),
         })),
@@ -112,11 +116,16 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         },
       }}
     >
-      <Button type='text' variant='text' size='small' className='btn-aggregator'>
+      <Button
+        type="text"
+        variant="text"
+        size="small"
+        className="btn-aggregator"
+      >
         <Space>
           {chartIcons[metric.metricOf]}
           <div>{items[metric.metricOf] || 'Total Sessions'}</div>
-          <DownOutlined className='text-sm' />
+          <DownOutlined className="text-sm" />
         </Space>
       </Button>
     </Dropdown>
@@ -167,9 +176,11 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
         items: allowedTypes[metric.metricType].map((key) => ({
           key,
           label: (
-            <div className='flex gap-2 items-center'>
-              {chartIcons[key]}
-              <div>{chartTypes[key]}</div>
+            <div className="flex gap-2 items-center">
+              <>
+                {chartIcons[key]}
+                <div>{chartTypes[key]}</div>
+              </>
             </div>
           ),
         })),
@@ -177,13 +188,17 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           metric.updateKey('viewType', key);
         },
       }}
-      
     >
-      <Button type='text' variant='text' size='small' className='btn-visualization-type'>
+      <Button
+        type="text"
+        variant="text"
+        size="small"
+        className="btn-visualization-type"
+      >
         <Space>
           {chartIcons[metric.viewType]}
           <div>{chartTypes[metric.viewType]}</div>
-          <DownOutlined className='text-sm '   /> 
+          <DownOutlined className="text-sm " />
         </Space>
       </Button>
     </Dropdown>

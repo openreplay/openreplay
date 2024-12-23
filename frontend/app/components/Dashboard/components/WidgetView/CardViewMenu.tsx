@@ -1,4 +1,3 @@
-// Components/CardViewMenu.tsx
 import { useHistory } from 'react-router';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
