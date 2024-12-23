@@ -3,13 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"openreplay/backend/pkg/db/postgres/pool"
-	"openreplay/backend/pkg/db/redis"
-	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/memory"
-	"openreplay/backend/pkg/projects"
-	"openreplay/backend/pkg/queue/types"
-	"openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
 	"strings"
@@ -19,12 +12,19 @@ import (
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/db/postgres/pool"
+	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/intervals"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/memory"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	enderMetrics "openreplay/backend/pkg/metrics/ender"
+	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue"
+	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 )
 
 func main() {

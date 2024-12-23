@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"openreplay/backend/pkg/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 	"openreplay/backend/internal/assets"
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	assetsMetrics "openreplay/backend/pkg/metrics/assets"
