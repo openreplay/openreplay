@@ -362,7 +362,9 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
         _now = time()
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
-                  "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
+                  # This is ignored because UI will take care of it
+                  # "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
+                  "eventThresholdNumberInGroup": 8,
                   **extra_values}
 
         ch_query1 = f"""\
