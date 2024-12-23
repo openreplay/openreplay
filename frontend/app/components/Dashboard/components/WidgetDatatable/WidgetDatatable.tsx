@@ -4,7 +4,7 @@ import type { TableProps } from 'antd';
 import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
-import { TableExporter } from "../../../Funnels/FunnelWidget/FunnelTable";
+import { TableExporter } from '../../../Funnels/FunnelWidget/FunnelTable';
 
 const initTableProps = [
   {
@@ -29,6 +29,7 @@ interface Props {
   setEnabledRows: (rows: string[]) => void;
   defaultOpen?: boolean;
   metric: { name: string };
+  isTableView?: boolean;
 }
 
 function WidgetDatatable(props: Props) {
@@ -49,15 +50,17 @@ function WidgetDatatable(props: Props) {
    * + average for each row
    * [ { seriesName: 'series1', mon: 1, tue: 2, wed: 3, average: 2 }, ... ]
    * */
-  const series = !data.chart[0] ? [] : Object.keys(data.chart[0]).filter(
-    (key) => key !== 'time' && key !== 'timestamp'
-  );
+  const series = !data.chart[0]
+    ? []
+    : Object.keys(data.chart[0]).filter(
+        (key) => key !== 'time' && key !== 'timestamp'
+      );
   React.useEffect(() => {
     if (!data.chart) return;
     setTableProps(initTableProps);
     columnNames.clear();
     data.chart.forEach((p: any) => {
-    columnNames.add(p.time);
+      columnNames.add(p.time);
     }); // for example: mon, tue, wed, thu, fri, sat, sun
     const avg: any = {}; // { seriesName: {itemsCount: 0, total: 0} }
     const items: Record<string, any>[] = []; // as many items (rows) as we have series in filter
@@ -110,27 +113,31 @@ function WidgetDatatable(props: Props) {
     type: 'checkbox',
   };
   return (
-    <div className={cn('relative -mx-4 px-2', showTable ? 'pt-6' : '')}>
-      <div
-        className={cn(
-          'absolute left-0 right-0 -top-3 border-t border-t-gray-lighter', 
-          { 'hidden': !showTable }
-        )}
-      />
-      <div
-        className={'absolute -top-3 left-1/2 z-10'}
-        style={{ transform: 'translate(-50%, -50%)' }}
-      >
-        <Button
-          icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
-          size={'small'}
-          type={'default'}
-          onClick={() => setShowTable(!showTable)}
-          className='btn-show-hide-table'
-        >
-          {showTable ? 'Hide Table' : 'Show Table'}
-        </Button>
-      </div>
+    <div className={cn('relative -mx-4 px-2', !props.isTableView && showTable ? 'pt-6' : '')}>
+      {props.isTableView ? null : (
+        <>
+          <div
+            className={cn(
+              'absolute left-0 right-0 -top-3 border-t border-t-gray-lighter',
+              { hidden: !showTable }
+            )}
+          />
+          <div
+            className={'absolute -top-3 left-1/2 z-10'}
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
+            <Button
+              icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
+              size={'small'}
+              type={'default'}
+              onClick={() => setShowTable(!showTable)}
+              className="btn-show-hide-table"
+            >
+              {showTable ? 'Hide Table' : 'Show Table'}
+            </Button>
+          </div>
+        </>
+      )}
       {showTable ? (
         <div className={'relative pb-2'}>
           <Table
@@ -149,7 +156,7 @@ function WidgetDatatable(props: Props) {
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export default WidgetDatatable;

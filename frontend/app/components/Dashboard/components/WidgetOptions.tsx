@@ -188,6 +188,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
         })),
         onClick: ({ key }: any) => {
           metric.updateKey('viewType', key);
+          metric.updateKey('hasChanged', true);
         },
       }}
     >
