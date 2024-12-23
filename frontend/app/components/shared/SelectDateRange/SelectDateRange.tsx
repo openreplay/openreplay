@@ -208,7 +208,7 @@ function AndDateRange({
   isTileDisabled,
 }: Props) {
   const menuProps = {
-    items: options.map((opt) => ({
+    items: options.map((opt: any) => ({
       label: opt.label,
       key: opt.value,
     })),
