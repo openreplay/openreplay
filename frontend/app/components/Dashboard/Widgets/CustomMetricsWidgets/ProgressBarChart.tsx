@@ -32,50 +32,86 @@ function ProgressBarChart(props: Props) {
     return Intl.NumberFormat().format(num);
   }
 
-  // we mix 1 original, then 1 comparison, etc
-  const mergedNameMap: { data: any, isComp: boolean, index: number }[] = [];
+  // Group the data into pairs (original + comparison)
+  const groupedData: Array<{ original: any, comparison: any }> = [];
   for (let i = 0; i < data.namesMap.length; i++) {
-    if (!data.namesMap[i]) {
-      continue;
-    }
-    mergedNameMap.push({ data: data.namesMap[i], isComp: false, index: i });
-    if (compData && compData.namesMap[i]) {
-      mergedNameMap.push({ data: compData.namesMap[i], isComp: true, index: i });
-    }
+    if (!data.namesMap[i]) continue;
+    
+    const original = {
+      name: data.namesMap[i],
+      value: getTotalForSeries(data.namesMap[i], false),
+      isComp: false,
+      index: i
+    };
+    
+    const comparison = compData && compData.namesMap[i] ? {
+      name: compData.namesMap[i],
+      value: getTotalForSeries(compData.namesMap[i], true),
+      isComp: true,
+      index: i
+    } : null;
+
+    groupedData.push({ original, comparison });
   }
 
-  const values = mergedNameMap.map((k, i) => {
-    return {
-      name: k.data,
-      value: getTotalForSeries(k.data, k.isComp),
-      isComp: k.isComp,
-      index: k.index,
-    }
-  })
-  const highest = values.reduce(
-    (acc, curr) =>
-      acc.value > curr.value ? acc : curr,
-    { name: '', value: 0 });
+  // Find highest value among all data points
+  const highest = groupedData.reduce((acc, curr) => {
+    const maxInGroup = Math.max(
+      curr.original.value,
+      curr.comparison ? curr.comparison.value : 0
+    );
+    return Math.max(acc, maxInGroup);
+  }, 0);
+
   return (
-    <div className={'w-full'} style={{ height: 240 }}>
-      {values.map((val, i) => (
-        <div key={i} className={'flex items-center gap-1'}>
-          <div className={'flex items-center'} style={{ flex: 1}}>
-            <div className={'w-4 h-4 rounded-full mr-2'} style={{ backgroundColor: colors[val.index] }} />
-            <span>{val.name}</span>
+    <div className="w-full flex flex-col gap-3 ps-3 justify-center" style={{ height: 240 }}>
+      {groupedData.map((group, i) => (
+        <div key={i}           className={`flex flex-col ${i < groupedData.length - 1 && group.comparison ? 'border-b border-dashed border-[0,0,0,.15] pb-3' : ''}`}>
+          <div className="flex items-center">
+            <div className="flex items-center" style={{ flex: 1 }}>
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: colors[group.original.index] }} 
+              />
+              <span>{group.original.name}</span>
+            </div>
+            <div className="flex items-center gap-2" style={{ flex: 4 }}>
+              <div
+                style={{
+                  height: 8,
+                  borderRadius: 8,
+                  backgroundColor: colors[group.original.index],
+                  width: `${(group.original.value/highest)*100}%`
+                }}
+              />
+              <div>{formattedNumber(group.original.value)}</div>
+            </div>
+            <div style={{ flex: 1 }} />
           </div>
-          <div className={'flex items-center gap-2'} style={{ flex: 4 }}>
-            <div style={{
-              height: 16,
-              borderRadius: 16,
-              backgroundImage: val.isComp ? `linear-gradient(45deg, #ffffff 25%, ${colors[val.index]} 25%, ${colors[val.index]} 50%, #ffffff 50%, #ffffff 75%, ${colors[val.index]} 75%, ${colors[val.index]} 100%)` : undefined,
-              backgroundSize: val.isComp ? '20px 20px' : undefined,
-              backgroundColor: val.isComp ? undefined : colors[val.index],
-              width: `${(val.value/highest.value)*100}%` }}
-            />
-            <div>{formattedNumber(val.value)}</div>
-          </div>
-          <div style={{ flex: 1}}/>
+          {group.comparison && (
+            <div className="flex items-center">
+              <div className="invisible flex items-center" style={{ flex:   1 }}>
+                <div 
+                  className="w-4 h-4 rounded-full mr-2" 
+                  style={{ backgroundColor: colors[group.comparison.index] }} 
+                />
+                <span>{group.comparison.name}</span>
+              </div>
+              <div className="flex items-center gap-2" style={{ flex: 4 }}>
+                <div
+                  style={{
+                    height: 8,
+                    borderRadius: 8,
+                    backgroundImage: `repeating-linear-gradient(45deg, #ffffff 0px, #ffffff 1.5px, ${colors[group.comparison.index]} 1.5px, ${colors[group.comparison.index]} 4.5px)`,
+                    backgroundSize: '20px 20px',
+                    width: `${(group.comparison.value/highest)*100}%`
+                  }}
+                />
+                <div>{formattedNumber(group.comparison.value)}</div>
+              </div>
+              <div style={{ flex: 1 }} />
+            </div>
+          )}
         </div>
       ))}
     </div>

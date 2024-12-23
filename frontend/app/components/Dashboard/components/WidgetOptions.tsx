@@ -135,14 +135,14 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
     lineChart: 'Chart',
-    barChart: 'Column',
     areaChart: 'Area',
-    pieChart: 'Pie',
+    barChart: 'Column',
     progressChart: 'Bar',
-    table: 'Table',
-    metric: 'Metric',
     chart: 'Funnel Bar',
     columnChart: 'Funnel Column',
+    pieChart: 'Pie',
+    table: 'Table',
+    metric: 'Metric',
   };
   const chartIcons = {
     lineChart: <ChartLine size={16} strokeWidth={1} />,
@@ -159,14 +159,14 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const allowedTypes = {
     [TIMESERIES]: [
       'lineChart',
-      'barChart',
       'areaChart',
-      'pieChart',
+      'barChart',
       'progressChart',
-      'table',
+      'pieChart',
       'metric',
+      'table',
     ],
-    [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
+    [FUNNEL]: ['lineChart', 'areaChart', 'barChart', 'progressChart', 'pieChart', 'metric', 'table'],
   };
   return (
     <Dropdown

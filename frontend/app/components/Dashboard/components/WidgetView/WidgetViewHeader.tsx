@@ -12,11 +12,13 @@ import copy from 'copy-to-clipboard';
 interface Props {
   onClick?: () => void;
   onSave: () => void;
+  undoChanges: () => void;
+  layoutControl?: React.ReactNode;
 }
 
 const defaultText = 'Copy link to clipboard'
 
-function WidgetViewHeader({ onClick, onSave }: Props) {
+function WidgetViewHeader({ onClick, onSave, layoutControl }: Props) {
   const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
   const widget = metricStore.instance;
@@ -48,25 +50,25 @@ function WidgetViewHeader({ onClick, onSave }: Props) {
       />
       </h1>
       <Space>
-
-      <Button
-          type={
-            metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
-          }
-          onClick={handleSave}
-          loading={metricStore.isSaving}
-          disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
-          className='font-medium btn-update-card'
-        >
-          {widget.exists() ? 'Update' : 'Create'}
-        </Button>
+        <Button
+              type={
+                metricStore.isSaving || (widget.exists() && !widget.hasChanged) ? 'text' : 'primary'
+              }
+              onClick={handleSave}
+              loading={metricStore.isSaving}
+              disabled={metricStore.isSaving || (widget.exists() && !widget.hasChanged)}
+              className='font-medium btn-update-card'
+              size='small'
+            >
+              {widget.exists() ? 'Update' : 'Create'}
+          </Button>
 
         {/* <MetricTypeSelector /> */}
 
         <Tooltip title={tooltipText}>
           <Button type='text' className='btn-copy-card-url' disabled={!widget.exists()} onClick={copyUrl} icon={<Link2 size={16} strokeWidth={1}/> }></Button>
         </Tooltip>
-
+        {layoutControl}
         <CardViewMenu />
       </Space>
     </div>

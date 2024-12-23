@@ -94,6 +94,7 @@ function CustomBarChart(props: Props) {
         margin={Styles.chartMargins}
         onClick={onClick}
         barSize={10}
+        style={{ backgroundColor: 'transparent' }} 
       >
         <defs>
           <clipPath id="pillClip">

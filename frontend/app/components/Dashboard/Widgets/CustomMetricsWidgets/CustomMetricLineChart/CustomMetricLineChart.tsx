@@ -98,71 +98,74 @@ function CustomMetricLineChart(props: Props) {
         <Tooltip {...Styles.tooltip} content={<CustomTooltip hoveredSeries={hoveredSeries} />} />
         
         {Array.isArray(data.namesMap) &&
-          data.namesMap.map((key, index) =>
-            key ? (
-              <Line
-                key={key}
-                name={key}
-                type="linear"
-                dataKey={key}
-                stroke={colors[index]}
-                fillOpacity={1}
-                strokeWidth={2}
-                strokeOpacity={hoveredSeries && hoveredSeries !== key ? 0.2 : 1}
-                legendType={key === 'Total' ? 'none' : 'line'}
-                dot={false}
-                activeDot={
-                  hoveredSeries === key
-                    ? {
-                        r: 8, 
-                        stroke: '#fff', 
-                        strokeWidth: 2, 
-                        fill: colors[index],
-                        filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))', 
-                      }
-                    : false
-                }
-                onMouseOver={handleMouseOver(key)}
-                style={{ cursor: 'pointer' }}
-                animationDuration={1000}       
-                animationEasing="ease-in-out"
-                
-              />
-            ) : null
-          )}
-        
-        {compData?.namesMap?.map((key, i) =>
-          data.namesMap[i] ? (
-            <Line
-                key={key}
-                name={`${key} (Comparison)`}
-                type="linear"               
-                dataKey={`${key}_comparison`}
-                stroke={colors[i]}
-                fillOpacity={1}
-                strokeWidth={2}
-                strokeOpacity={0.6}           
-                legendType="line"
-                dot={false}
-                strokeDasharray="4 2"   
-                onMouseOver={handleMouseOver(`${key} (Comparison)`)}      
-                activeDot={
-                  hoveredSeries === `${key} (Comparison)`
-                    ? {
-                        r: 8,
-                        stroke: '#fff',
-                        strokeWidth: 2,
-                        fill: colors[i],
-                        filter: 'drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.2))',
-                      }
-                    : false
-                }
-                style={{ cursor: 'pointer' }}
-                animationDuration={1000}      
-                animationEasing="ease-in-out" 
-              />
-          ) : null
-        )}
+  data.namesMap.map((key, index) =>
+    key ? (
+      <Line
+        key={key}
+        name={key}
+        type="linear"
+        dataKey={key}
+        stroke={colors[index]}
+        fillOpacity={1}
+        strokeWidth={2}
+        strokeOpacity={
+          hoveredSeries && hoveredSeries !== key && hoveredSeries !== `${key} (Comparison)` ? 0.2 : 1
+        }
+        legendType={key === 'Total' ? 'none' : 'line'}
+        dot={false}
+        activeDot={
+          hoveredSeries === key
+            ? {
+                r: 8,
+                stroke: '#fff',
+                strokeWidth: 2,
+                fill: colors[index],
+                filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))',
+              }
+            : false
+        }
+        onMouseOver={handleMouseOver(key)}
+        style={{ cursor: 'pointer' }}
+        animationDuration={200}
+        animationEasing="ease-in-out"
+      />
+    ) : null
+  )}
+
+{compData?.namesMap?.map((key, i) =>
+  data.namesMap[i] ? (
+    <Line
+      key={key}
+      name={`${key} (Comparison)`}
+      type="linear"
+      dataKey={`${key}_comparison`}
+      stroke={colors[i]}
+      fillOpacity={1}
+      strokeWidth={2}
+      strokeOpacity={
+        hoveredSeries && hoveredSeries !== key && hoveredSeries !== `${key} (Comparison)` ? 0.2 : 1
+      }
+      legendType="line"
+      dot={false}
+      strokeDasharray="4 2"
+      onMouseOver={handleMouseOver(`${key} (Comparison)`)}
+      activeDot={
+        hoveredSeries === `${key} (Comparison)`
+          ? {
+              r: 8,
+              stroke: '#fff',
+              strokeWidth: 2,
+              fill: colors[i],
+              filter: 'drop-shadow(0px 0px 0px rgba(0, 0, 0, 0.2))',
+            }
+          : false
+      }
+      style={{ cursor: 'pointer' }}
+      animationDuration={1000}
+      animationEasing="ease-in-out"
+    />
+  ) : null
+)}
       </LineChart>
     </ResponsiveContainer>
   );

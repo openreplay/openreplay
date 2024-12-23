@@ -16,7 +16,7 @@ function BigNumChart(props: Props) {
     values,
   } = props;
   return (
-    <div className={'flex flex-row flex-wrap gap-2  -mt-6'} style={{ height: 240 }}>
+    <div className={'flex flex-row flex-wrap gap-2'} style={{ height: 240 }}>
       {values.map((val, i) => (
         <BigNum
           key={i}
@@ -49,7 +49,7 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
     return `${(((value - compData) / compData) * 100).toFixed(2)}%`;
   }, [value, compData])
   return (
-    <div className={'flex flex-col flex-auto justify-center items-center hover:bg-teal/5'}>
+    <div className={'flex flex-col flex-auto justify-center items-center rounded-lg transition-all hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer'}>
       <div className={'flex items-center gap-2 font-medium text-gray-darkest'}>
         <div className={'rounded w-4 h-4'} style={{ background: color }} />
         <div>{series}</div>

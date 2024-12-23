@@ -283,6 +283,7 @@ function WidgetChart(props: Props) {
         : chartData.namesMap;
       if (viewType === 'lineChart') {
         return (
+          <div className='pt-3'>
           <CustomMetricLineChart
             inGrid={!props.isPreview}
             data={chartData}
@@ -296,10 +297,12 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
+          </div>
         );
       }
       if (viewType === 'areaChart') {
         return (
+          <div className='pt-3'>
           <AreaChart
             data={chartData}
             inGrid={!props.isPreview}
@@ -312,10 +315,12 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
+          </div>
         );
       }
       if (viewType === 'barChart') {
         return (
+          <div className='pt-3'>
           <BarChart
             inGrid={!props.isPreview}
             data={chartData}
@@ -329,8 +334,10 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
+          </div>
         );
       }
+     
       if (viewType === 'progressChart') {
         return (
           <ProgressBarChart
@@ -350,6 +357,7 @@ function WidgetChart(props: Props) {
       }
       if (viewType === 'pieChart') {
         return (
+          <div className='pt-3'>
           <CustomMetricPieChart
             inGrid={!props.isPreview}
             metric={_metric}
@@ -362,6 +370,7 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
+          </div>
         );
       }
       if (viewType === 'progress') {
@@ -505,15 +514,7 @@ function WidgetChart(props: Props) {
   return (
     <div ref={ref}>
       <Loader loading={loading} style={{ height: `240px` }}>
-        <div
-          style={{
-            minHeight: props.isPreview ? undefined : 240,
-            paddingTop:
-              props.isPreview && _metric.metricType === TIMESERIES
-                ? '1.5rem'
-                : 0,
-          }}
-        >
+        <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
           {props.isPreview && _metric.metricType === TIMESERIES ? (
             <WidgetDatatable
