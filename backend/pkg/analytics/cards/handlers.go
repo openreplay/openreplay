@@ -45,8 +45,6 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
-		{"/v1/analytics/{projectId}/cards/{id}/chart", e.getCardChartData, "POST"},
-		{"/v1/analytics/{projectId}/cards/{id}/try", e.getCardChartData, "POST"},
 	}
 }
 
@@ -90,7 +88,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.cards.CreateCard(projectID, currentUser.ID, req)
+	resp, err := e.cards.Create(projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -116,7 +114,7 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.cards.GetCardWithSeries(projectID, id)
+	resp, err := e.cards.GetWithSeries(projectID, id)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -136,7 +134,7 @@ func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.cards.GetCards(projectID)
+	resp, err := e.cards.GetAll(projectID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -219,7 +217,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Call the service
-	resp, err := e.cards.GetCardsPaginated(projectID, filters, sort, limit, offset)
+	resp, err := e.cards.GetAllPaginated(projectID, filters, sort, limit, offset)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -266,7 +264,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.cards.UpdateCard(projectID, int64(cardId), currentUser.ID, req)
+	resp, err := e.cards.Update(projectID, int64(cardId), currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -292,51 +290,11 @@ func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	err = e.cards.DeleteCard(projectID, int64(cardId), currentUser.ID)
+	err = e.cards.Delete(projectID, int64(cardId), currentUser.ID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, nil, startTime, r.URL.Path, bodySize)
-}
-
-func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	projectID, err := getIDFromRequest(r, "projectId")
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodySize = len(bodyBytes)
-
-	req := &GetCardChartDataRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.cards.GetCardChartData(projectID, currentUser.ID, req)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

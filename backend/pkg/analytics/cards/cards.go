@@ -14,14 +14,13 @@ import (
 )
 
 type Cards interface {
-	GetCard(projectId int, cardId int) (*CardGetResponse, error)
-	GetCardWithSeries(projectId int, cardId int) (*CardGetResponse, error)
-	GetCards(projectId int) (*GetCardsResponse, error)
-	GetCardsPaginated(projectId int, filters CardListFilter, sort CardListSort, limit int, offset int) (*GetCardsResponsePaginated, error)
-	CreateCard(projectId int, userId uint64, req *CardCreateRequest) (*CardGetResponse, error)
-	UpdateCard(projectId int, cardId int64, userId uint64, req *CardUpdateRequest) (*CardGetResponse, error)
-	DeleteCard(projectId int, cardId int64, userId uint64) error
-	GetCardChartData(projectId int, userId uint64, req *GetCardChartDataRequest) ([]DataPoint, error)
+	Create(projectId int, userId uint64, req *CardCreateRequest) (*CardGetResponse, error)
+	Get(projectId int, cardId int) (*CardGetResponse, error)
+	GetWithSeries(projectId int, cardId int) (*CardGetResponse, error)
+	GetAll(projectId int) (*GetCardsResponse, error)
+	GetAllPaginated(projectId int, filters CardListFilter, sort CardListSort, limit int, offset int) (*GetCardsResponsePaginated, error)
+	Update(projectId int, cardId int64, userId uint64, req *CardUpdateRequest) (*CardGetResponse, error)
+	Delete(projectId int, cardId int64, userId uint64) error
 }
 
 type cardsImpl struct {
@@ -36,7 +35,7 @@ func New(log logger.Logger, conn pool.Pool) (Cards, error) {
 	}, nil
 }
 
-func (s *cardsImpl) CreateCard(projectId int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error) {
+func (s *cardsImpl) Create(projectId int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
@@ -153,7 +152,7 @@ func (s *cardsImpl) CreateSeries(ctx context.Context, tx pgx.Tx, metricId int64,
 	return seriesList
 }
 
-func (s *cardsImpl) GetCard(projectId int, cardID int) (*CardGetResponse, error) {
+func (s *cardsImpl) Get(projectId int, cardID int) (*CardGetResponse, error) {
 	sql :=
 		`SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
 	FROM public.metrics
@@ -171,7 +170,7 @@ func (s *cardsImpl) GetCard(projectId int, cardID int) (*CardGetResponse, error)
 	return card, nil
 }
 
-func (s *cardsImpl) GetCardWithSeries(projectId int, cardID int) (*CardGetResponse, error) {
+func (s *cardsImpl) GetWithSeries(projectId int, cardID int) (*CardGetResponse, error) {
 	sql := `
         SELECT m.metric_id, m.project_id, m.user_id, m.name, m.metric_type, m.view_type, m.metric_of, 
                m.metric_value, m.metric_format, m.is_public, m.created_at, m.edited_at,
@@ -210,7 +209,7 @@ func (s *cardsImpl) GetCardWithSeries(projectId int, cardID int) (*CardGetRespon
 	return card, nil
 }
 
-func (s *cardsImpl) GetCards(projectId int) (*GetCardsResponse, error) {
+func (s *cardsImpl) GetAll(projectId int) (*GetCardsResponse, error) {
 	sql := `
 		SELECT metric_id, project_id, user_id, name, metric_type, view_type, metric_of, metric_value, metric_format, is_public, created_at, edited_at
 		FROM public.metrics
@@ -237,7 +236,7 @@ func (s *cardsImpl) GetCards(projectId int) (*GetCardsResponse, error) {
 	return &GetCardsResponse{Cards: cards}, nil
 }
 
-func (s *cardsImpl) GetCardsPaginated(
+func (s *cardsImpl) GetAllPaginated(
 	projectId int,
 	filters CardListFilter,
 	sort CardListSort,
@@ -347,7 +346,7 @@ func (s *cardsImpl) GetCardsPaginated(
 	}, nil
 }
 
-func (s *cardsImpl) UpdateCard(projectId int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {
+func (s *cardsImpl) Update(projectId int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {
 	if req.MetricValue == nil {
 		req.MetricValue = []string{}
 	}
@@ -415,7 +414,7 @@ func (s *cardsImpl) DeleteCardSeries(cardId int64) error {
 	return nil
 }
 
-func (s *cardsImpl) DeleteCard(projectId int, cardID int64, userID uint64) error {
+func (s *cardsImpl) Delete(projectId int, cardID int64, userID uint64) error {
 	sql := `
 		UPDATE public.metrics
 		SET deleted_at = now()
@@ -426,29 +425,4 @@ func (s *cardsImpl) DeleteCard(projectId int, cardID int64, userID uint64) error
 		return fmt.Errorf("failed to delete card: %w", err)
 	}
 	return nil
-}
-
-func (s *cardsImpl) GetCardChartData(projectId int, userID uint64, req *GetCardChartDataRequest) ([]DataPoint, error) {
-	jsonInput := `
-    {
-        "data": [
-            {
-                "timestamp": 1733934939000,
-                "Series A": 100,
-                "Series B": 200
-            },
-            {
-                "timestamp": 1733935939000,
-                "Series A": 150,
-                "Series B": 250
-            }
-        ]
-    }`
-
-	var resp GetCardChartDataResponse
-	if err := json.Unmarshal([]byte(jsonInput), &resp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return resp.Data, nil
 }

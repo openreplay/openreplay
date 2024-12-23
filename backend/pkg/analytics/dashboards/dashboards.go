@@ -11,14 +11,14 @@ import (
 )
 
 type Dashboards interface {
-	GetDashboard(projectId int, dashboardId int, userId uint64) (*GetDashboardResponse, error)
-	GetDashboardsPaginated(projectId int, userId uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error)
-	GetDashboards(projectId int, userId uint64) (*GetDashboardsResponse, error)
-	CreateDashboard(projectId int, userId uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error)
-	UpdateDashboard(projectId int, dashboardId int, userId uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error)
-	DeleteDashboard(projectId int, dashboardId int, userId uint64) error
-	AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
-	DeleteCardFromDashboard(dashboardId int, cardId int) error
+	Create(projectId int, userId uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error)
+	Get(projectId int, dashboardId int, userId uint64) (*GetDashboardResponse, error)
+	GetAll(projectId int, userId uint64) (*GetDashboardsResponse, error)
+	GetAllPaginated(projectId int, userId uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error)
+	Update(projectId int, dashboardId int, userId uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error)
+	Delete(projectId int, dashboardId int, userId uint64) error
+	AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error
+	DeleteCard(dashboardId int, cardId int) error
 }
 
 type dashboardsImpl struct {
@@ -34,7 +34,7 @@ func New(log logger.Logger, conn pool.Pool) (Dashboards, error) {
 }
 
 // CreateDashboard Create a new dashboard
-func (s *dashboardsImpl) CreateDashboard(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
+func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -57,7 +57,7 @@ func (s *dashboardsImpl) CreateDashboard(projectId int, userID uint64, req *Crea
 }
 
 // GetDashboard Fetch a specific dashboard by ID
-func (s *dashboardsImpl) GetDashboard(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
+func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*GetDashboardResponse, error) {
 	sql := `
 		WITH series_agg AS (
 			SELECT 
@@ -133,7 +133,7 @@ func (s *dashboardsImpl) GetDashboard(projectId int, dashboardID int, userID uin
 	return dashboard, nil
 }
 
-func (s *dashboardsImpl) GetDashboards(projectId int, userID uint64) (*GetDashboardsResponse, error) {
+func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsResponse, error) {
 	sql := `
 		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name
 		FROM dashboards d
@@ -168,7 +168,7 @@ func (s *dashboardsImpl) GetDashboards(projectId int, userID uint64) (*GetDashbo
 }
 
 // GetDashboardsPaginated Fetch dashboards with pagination
-func (s *dashboardsImpl) GetDashboardsPaginated(projectId int, userID uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error) {
+func (s *dashboardsImpl) GetAllPaginated(projectId int, userID uint64, req *GetDashboardsRequest) (*GetDashboardsResponsePaginated, error) {
 	baseSQL, args := buildBaseQuery(projectId, userID, req)
 
 	// Count total dashboards
@@ -217,7 +217,7 @@ func (s *dashboardsImpl) GetDashboardsPaginated(projectId int, userID uint64, re
 }
 
 // UpdateDashboard Update a dashboard
-func (s *dashboardsImpl) UpdateDashboard(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
+func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, req *UpdateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		UPDATE dashboards
 		SET name = $1, description = $2, is_public = $3, is_pinned = $4
@@ -241,7 +241,7 @@ func (s *dashboardsImpl) UpdateDashboard(projectId int, dashboardID int, userID 
 }
 
 // DeleteDashboard Soft-delete a dashboard
-func (s *dashboardsImpl) DeleteDashboard(projectId int, dashboardID int, userID uint64) error {
+func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) error {
 	sql := `
 		UPDATE dashboards
 		SET deleted_at = now()
@@ -320,8 +320,8 @@ func (s *dashboardsImpl) CardsExist(projectId int, cardIDs []int) (bool, error) 
 	return count == len(cardIDs), nil
 }
 
-func (s *dashboardsImpl) AddCardsToDashboard(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
-	_, err := s.GetDashboard(projectId, dashboardId, userId)
+func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64, req *AddCardToDashboardRequest) error {
+	_, err := s.Get(projectId, dashboardId, userId)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard: %w", err)
 	}
@@ -395,7 +395,7 @@ func (s *dashboardsImpl) AddCardsToDashboard(projectId int, dashboardId int, use
 	return nil
 }
 
-func (s *dashboardsImpl) DeleteCardFromDashboard(dashboardId int, cardId int) error {
+func (s *dashboardsImpl) DeleteCard(dashboardId int, cardId int) error {
 	sql := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = $1 AND metric_id = $2`
 	err := s.pgconn.Exec(sql, dashboardId, cardId)
 	if err != nil {
