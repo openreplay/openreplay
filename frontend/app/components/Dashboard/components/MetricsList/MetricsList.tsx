@@ -1,6 +1,6 @@
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NoContent, Pagination, Loader } from 'UI';
+import { NoContent, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
 import GridView from './GridView';
@@ -16,6 +16,7 @@ function MetricsList({
 }) {
   const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.filter.query;
+  const listView = metricStore.listView;
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   const dashboard = dashboardStore.selectedDashboard;
@@ -77,28 +78,51 @@ function MetricsList({
             </div>
           </div>
         }
-        subtext="Utilize cards to visualize key user interactions or product performance metrics."
+        subtext={
+          metricsSearch !== ''
+            ? ''
+            : 'Utilize cards to visualize key user interactions or product performance metrics.'
+        }
       >
-        <ListView
-          disableSelection={!onSelectionChange}
-          siteId={siteId}
-          list={cards}
-          selectedList={selectedMetrics}
-          existingCardIds={existingCardIds}
-          toggleSelection={toggleMetricSelection}
-          allSelected={cards.length === selectedMetrics.length}
-          toggleAll={({ target: { checked, name } }) =>
-            setSelectedMetrics(
-              checked
-              ? cards
-                .map((i: any) => i.metricId)
-                .slice(0, 30 - existingCardIds!.length)
-              : []
-            )
-          }
-          showOwn={showOwn}
-          toggleOwn={toggleOwn}
-        />
+        {listView ? (
+          <ListView
+            disableSelection={!onSelectionChange}
+            siteId={siteId}
+            list={cards}
+            selectedList={selectedMetrics}
+            existingCardIds={existingCardIds}
+            toggleSelection={toggleMetricSelection}
+            allSelected={cards.length === selectedMetrics.length}
+            showOwn={showOwn}
+            toggleOwn={toggleOwn}
+            toggleAll={({ target: { checked, name } }) =>
+              setSelectedMetrics(checked ? cards.map((i: any) => i.metricId).slice(0, 30 - existingCardIds!.length) : [])
+            }
+          />
+        ) : (
+          <>
+            <GridView
+              siteId={siteId}
+              list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
+              selectedList={selectedMetrics}
+              toggleSelection={toggleMetricSelection}
+            />
+            <div className="w-full flex items-center justify-between py-4 px-6 border-t">
+              <div className="">
+                Showing{' '}
+                <span className="font-medium">{Math.min(cards.length, metricStore.pageSize)}</span> out
+                of <span className="font-medium">{cards.length}</span> cards
+              </div>
+              <Pagination
+                page={metricStore.page}
+                total={lenth}
+                onPageChange={(page) => metricStore.updateKey('page', page)}
+                limit={metricStore.pageSize}
+                debounceRequest={100}
+              />
+            </div>
+          </>
+        )}
       </NoContent>
     </Loader>
   );

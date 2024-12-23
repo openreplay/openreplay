@@ -9,7 +9,7 @@ import { getNewIcon } from "../FilterModal/FilterModal";
 const ASSIST_ROUTE = assistRoute();
 
 interface Props {
-  filter?: any; // event/filter
+  filter?: any;
   onFilterClick: (filter: any) => void;
   children?: any;
   excludeFilterKeys?: Array<string>;
@@ -69,7 +69,7 @@ function FilterSelection(props: Props) {
             }}
             onClick={() => setShowModal(true)}
           >
-            <div className='text-xs text-neutral-500/90 hover:border-neutral-400 '>{getNewIcon(filter)}</div>
+            <div className='text-xs text-neutral-500/90 hover:border-neutral-400'>{getNewIcon(filter)}</div>
             <div className={'text-neutral-500/90 flex gap-2 hover:border-neutral-400 '}>{`${filter.category} •`}</div>
             <div
               className="rounded-lg overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate "

@@ -105,7 +105,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
       dataIndex: 'name',
       key: 'title',
-      className: 'cap-first',
+      className: 'cap-first pl-4',
       sorter: true,
       width: '25%',
       render: (text: string, metric: Metric) => (
@@ -233,13 +233,6 @@ const ListView: React.FC<Props> = (props: Props) => {
           }
           : undefined
       }
-      // footer={() => (
-      //   <div className="flex justify-end">
-      //     <Checkbox name="slack" checked={allSelected} onClick={toggleAll}>
-      //       Select All
-      //     </Checkbox>
-      //   </div>
-      // )}
       pagination={{
         current: pagination.current,
         pageSize: pagination.pageSize,
@@ -248,7 +241,8 @@ const ListView: React.FC<Props> = (props: Props) => {
         className: 'px-4',
         showLessItems: true,
         showTotal: () => totalMessage,
-        showQuickJumper: true
+        size: 'small',
+        simple: 'true',
       }}
     />
   );

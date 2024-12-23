@@ -50,6 +50,7 @@ const FilterSeriesHeader = observer(
     onRemove: (seriesIndex: any) => void;
     canDelete: boolean | undefined;
     toggleExpand: () => void;
+    onChange: () => void;
   }) => {
     const onUpdate = (name: any) => {
       props.series.update('name', name);
@@ -66,6 +67,7 @@ const FilterSeriesHeader = observer(
             seriesIndex={props.seriesIndex}
             name={props.series.name}
             onUpdate={onUpdate}
+            onChange={props.onChange}
           />
           {!props.expanded && (
             <FilterCountLabels

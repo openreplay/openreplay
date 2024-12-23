@@ -8,49 +8,44 @@ interface PayloadItem {
   name: string;
   value: number;
   prevValue?: number;
+  color?: string;
+  payload?: any;
 }
+
 interface Props {
   active: boolean;
   payload: PayloadItem[];
   label: string;
-  activeKey?: string;
+  hoveredSeries: string | null;
 }
 
 function CustomTooltip(props: Props) {
-  const { active, payload, label, activeKey } = props;
-  if (!active || !payload?.length) return null;
+  const { active, payload, label, hoveredSeries } = props;
+  if (!active || !payload?.length || !hoveredSeries) return null;
 
-  const shownPayloads: PayloadItem[] = payload.filter((p) => !p.hide);
-  const currentSeries: PayloadItem[] = [];
-  const previousSeriesMap: Record<string, any> = {};
+  // Find the current and comparison payloads
+  const currentPayload = payload.find(p => p.name === hoveredSeries);
+  const comparisonPayload = payload.find(p =>
+    p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` ||
+    p.name === `${hoveredSeries} (Comparison)`
+  );
 
-  shownPayloads.forEach((item) => {
-    if (item.name.startsWith('Previous ')) {
-      const originalName = item.name.replace('Previous ', '');
-      previousSeriesMap[originalName] = item.value;
-    } else {
-      currentSeries.push(item);
-    }
-  });
+  if (!currentPayload) return null;
 
-  const transformedArray = currentSeries.map((item) => {
-    const prevValue = previousSeriesMap[item.name] || null;
-    return {
-      ...item,
-      prevValue,
-    };
-  });
+  // Create transformed array with comparison data
+  const transformedArray = [{
+    ...currentPayload,
+    prevValue: comparisonPayload ? comparisonPayload.value : null
+  }];
 
-  const isHigher = (item: { value: number; prevValue: number }) => {
-    return item.prevValue !== null && item.prevValue < item.value;
-  };
-  const getPercentDelta = (val, prevVal) => {
-    return (((val - prevVal) / prevVal) * 100).toFixed(2);
-  };
+  const isHigher = (item: { value: number; prevValue: number }) =>
+    item.prevValue !== null && item.prevValue < item.value;
+
+  const getPercentDelta = (val: number, prevVal: number) =>
+    (((val - prevVal) / prevVal) * 100).toFixed(2);
+
   return (
-    <div
-      className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-50'}
-    >
+    <div className={'flex flex-col gap-1 bg-white shadow border rounded p-2 z-50'}>
       {transformedArray.map((p, index) => (
         <React.Fragment key={p.name + index}>
           <div className={'flex gap-2 items-center'}>
@@ -64,20 +59,20 @@ function CustomTooltip(props: Props) {
           </div>
           <div
             style={{ borderLeft: `2px solid ${p.color}` }}
-            className={'flex flex-col py-2 px-2 ml-2'}
+            className={'flex flex-col px-2 ml-2 '}
           >
-            <div className={'text-disabled-text text-sm'}>
+            <div className={'text-neutral-600 text-sm'}>
               {label}, {formatTimeOrDate(p.payload.timestamp)}
             </div>
             <div className={'flex items-center gap-1'}>
               <div className={'font-medium'}>{p.value}</div>
-              {p.prevValue ? (
+              {p.prevValue !== null && (
                 <CompareTag
                   isHigher={isHigher(p)}
                   absDelta={Math.abs(p.value - p.prevValue)}
                   delta={getPercentDelta(p.value, p.prevValue)}
                 />
-              ) : null}
+              )}
             </div>
           </div>
         </React.Fragment>
@@ -99,7 +94,7 @@ export function CompareTag({
     <div
       className={cn(
         'px-2 py-1 w-fit rounded flex items-center gap-1',
-        isHigher ? 'bg-green2 text-xs' : 'bg-red2 text-xs'
+        isHigher ? 'bg-green2/10 text-xs' : 'bg-red2/10 text-xs'
       )}
     >
       {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}

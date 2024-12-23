@@ -142,7 +142,7 @@ function FunnelBarData({
             />
             <span
               className={
-                'mx-1 ' + (data.droppedCount > 0 ? 'color-red' : 'disabled')
+                'mr-1 text-sm' + (data.droppedCount > 0 ? 'color-red' : 'disabled')
               }
             >
               {data.droppedCount} Skipped
@@ -183,7 +183,7 @@ export function UxTFunnelBar(props: Props) {
             backgroundColor: '#6272FF',
           }}
         >
-          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
+          <div className="color-white absolute right-0 flex items-center font-medium mr-1 leading-3 text-sm">
             {(
               (filter.completed / (filter.completed + filter.skipped)) *
               100

@@ -112,12 +112,13 @@ function WidgetDatatable(props: Props) {
   return (
     <div className={cn('relative -mx-4 px-2', showTable ? 'pt-6' : '')}>
       <div
-        className={
-          'absolute left-0 right-0 top-0 border-t border-t-gray-lighter'
-        }
+        className={cn(
+          'absolute left-0 right-0 -top-3 border-t border-t-gray-lighter', 
+          { 'hidden': !showTable }
+        )}
       />
       <div
-        className={'absolute top-0 left-1/2 z-10'}
+        className={'absolute -top-3 left-1/2 z-10'}
         style={{ transform: 'translate(-50%, -50%)' }}
       >
         <Button

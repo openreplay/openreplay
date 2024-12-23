@@ -2,7 +2,8 @@ import React from 'react';
 import BackButton from 'Shared/Breadcrumb/BackButton';
 import { withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { PageTitle, confirm, Tooltip } from 'UI';
+import { PageTitle, confirm } from 'UI';
+import { Tooltip } from 'antd';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
 import DashboardOptions from '../DashboardOptions';
@@ -53,7 +54,8 @@ function DashboardHeader(props: Props) {
         focusTitle={focusTitle}
       />
 
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-b-gray-light">
+
+      <div className="flex items-center justify-between px-4 pt-4  bg-white">
         <div className="flex items-center gap-2" style={{ flex: 3 }}>
           <BackButton siteId={siteId} compact />
 

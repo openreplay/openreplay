@@ -1,4 +1,7 @@
-import { LockOutlined, TeamOutlined } from '@ant-design/icons';
+
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useHistory } from 'react-router';
 import {
   Empty,
   Switch,
@@ -10,17 +13,13 @@ import {
   Dropdown,
   Button,
 } from 'antd';
-import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useHistory } from 'react-router';
-
+import { LockOutlined, TeamOutlined, MoreOutlined } from '@ant-design/icons';
 import { checkForRecent } from 'App/date';
 import { useStore } from 'App/mstore';
 import Dashboard from 'App/mstore/types/dashboard';
 import { dashboardSelected, withSiteId } from 'App/routes';
 import CreateDashboardButton from 'Components/Dashboard/components/CreateDashboardButton';
 import { Icon, confirm } from 'UI';
-import { EllipsisVertical } from 'lucide-react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
@@ -106,6 +105,7 @@ function DashboardList() {
               }
               checkedChildren={'Team'}
               unCheckedChildren={'Private'}
+              className='toggle-team-private'
             />
           </Tooltip>
         </div>
@@ -124,7 +124,7 @@ function DashboardList() {
     },
 
     {
-      title: 'Options',
+      title: '',
       dataIndex: 'dashboardId',
       width: '5%',
       render: (id) => (
@@ -161,7 +161,7 @@ function DashboardList() {
             },
           }}
         >
-          <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
+          <Button id={'ignore-prop'} icon={<MoreOutlined />} type='text' className='btn-dashboards-list-item-more-options' />
         </Dropdown>
       ),
     },
@@ -223,6 +223,8 @@ function DashboardList() {
           showTotal: (total, range) =>
             `Showing ${range[0]}-${range[1]} of ${total} items`,
           size: 'small',
+          simple: 'true',
+          className: 'px-4 pr-8 mb-0',
         }}
         onRow={(record) => ({
           onClick: (e) => {

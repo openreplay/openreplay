@@ -25,17 +25,15 @@ interface Props {
 }
 
 const getPath = (x, y, width, height) => {
-  const radius = Math.min(width / 2, height / 2);
+  const radius = 4;
   return `
     M${x + radius},${y}
     H${x + width - radius}
-    A${radius},${radius} 0 0 1 ${x + width},${y + radius}
-    V${y + height - radius}
-    A${radius},${radius} 0 0 1 ${x + width - radius},${y + height}
-    H${x + radius}
-    A${radius},${radius} 0 0 1 ${x},${y + height - radius}
+    Q${x + width},${y} ${x + width},${y + radius}
+    V${y + height}
+    H${x}
     V${y + radius}
-    A${radius},${radius} 0 0 1 ${x + radius},${y}
+    Q${x},${y} ${x + radius},${y}
     Z
   `;
 };
@@ -45,17 +43,13 @@ const PillBar = (props) => {
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      <rect
-        width={width}
-        height={height}
-        rx={10}
-        ry={10}
+      <path
+        d={getPath(0, 0, width, height)}
         fill={fill}
       />
       {striped && (
-        <rect
-          width={width}
-          height={height}
+        <path
+          d={getPath(0, 0, width, height)}
           clipPath="url(#pillClip)"
           fill="url(#diagonalStripes)"
         />
@@ -63,8 +57,6 @@ const PillBar = (props) => {
     </g>
   );
 };
-
-
 
 function CustomBarChart(props: Props) {
   const {
@@ -84,7 +76,6 @@ function CustomBarChart(props: Props) {
     return item;
   });
 
-  // we mix 1 original, then 1 comparison, etc
   const mergedNameMap: { data: any, isComp: boolean, index: number }[] = [];
   for (let i = 0; i < data.namesMap.length; i++) {
     mergedNameMap.push({ data: data.namesMap[i], isComp: false, index: i });
@@ -92,34 +83,55 @@ function CustomBarChart(props: Props) {
       mergedNameMap.push({ data: compData.namesMap[i], isComp: true, index: i });
     }
   }
+
+  // Filter out comparison items for legend
+  const legendItems = mergedNameMap.filter(item => !item.isComp);
+
   return (
     <ResponsiveContainer height={240} width="100%">
       <BarChart
         data={resultChart}
         margin={Styles.chartMargins}
         onClick={onClick}
+        barSize={10}
       >
         <defs>
           <clipPath id="pillClip">
-            <rect x="0" y="0" width="100%" height="100%" rx="10" ry="10" />
+            <rect x="0" y="0" width="100%" height="100%" rx="4" ry="4" />
           </clipPath>
           <pattern
             id="diagonalStripes"
             patternUnits="userSpaceOnUse"
-            width="8"
-            height="8"
+            width="4"
+            height="4"
             patternTransform="rotate(45)"
           >
-            <line x1="0" y="0" x2="0" y2="8" stroke="white" strokeWidth="6" />
+            <line 
+              x1="0" 
+              y1="0" 
+              x2="0" 
+              y2="4" 
+              stroke="#FFFFFF" 
+              strokeWidth="2"
+            />
           </pattern>
         </defs>
         {!hideLegend && (
-          <Legend iconType={'circle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
+          <Legend 
+            iconType="rect" 
+            wrapperStyle={{ top: inGrid ? undefined : -18 }}
+            payload={legendItems.map(item => ({
+              value: item.data,
+              type: 'rect',
+              color: colors[item.index],
+              id: item.data
+            }))}
+          />
         )}
         <CartesianGrid
-          strokeDasharray="3 3"
+          strokeDasharray="1 3"
           vertical={false}
-          stroke="#EEEEEE"
+          stroke="rgba(0,0,0,.15)"
         />
         <XAxis
           {...Styles.xaxis}
@@ -145,11 +157,22 @@ function CustomBarChart(props: Props) {
             fill={colors[item.index]}
             stroke={colors[item.index]}
             shape={(barProps: any) => (
-              <PillBar {...barProps} fill={colors[item.index]} barKey={item.index} stroke={colors[item.index]} striped={item.isComp} />
+              <PillBar
+                {...barProps}
+                fill={colors[item.index]}
+                barKey={item.index}
+                stroke={colors[item.index]}
+                striped={item.isComp}
+              />
             )}
-            legendType={'line'}
+            legendType="rect"
             activeBar={
-              <PillBar fill={colors[item.index]} stroke={colors[item.index]} barKey={item.index} striped={item.isComp} />
+              <PillBar
+                fill={colors[item.index]}
+                stroke={colors[item.index]}
+                barKey={item.index}
+                striped={item.isComp}
+              />
             }
           />
         ))}

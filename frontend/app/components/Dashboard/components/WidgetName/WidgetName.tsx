@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from 'UI';
 import { Input, Tooltip } from 'antd';
 import cn from 'classnames';
 
