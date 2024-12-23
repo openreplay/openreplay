@@ -204,11 +204,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         else:
             if len(statuses) == 0:
                 query = cur.mogrify(
-                    """SELECT error_id,
-                            COALESCE((SELECT TRUE
-                                         FROM public.user_viewed_errors AS ve
-                                         WHERE errors.error_id = ve.error_id
-                                           AND ve.user_id = %(user_id)s LIMIT 1), FALSE) AS viewed
+                    """SELECT error_id
                         FROM public.errors 
                         WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
@@ -221,10 +217,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
     for r in rows:
         r.pop("full_count")
-        if r["error_id"] in statuses:
-            r["viewed"] = statuses[r["error_id"]]["viewed"]
-        else:
-            r["viewed"] = False
 
     return {
         'total': total,
