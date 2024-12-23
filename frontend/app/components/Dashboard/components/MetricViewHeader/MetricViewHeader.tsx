@@ -1,23 +1,19 @@
 import React, { useEffect } from 'react';
 import { PageTitle } from 'UI';
-import { Button, Popover } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import React, { useState } from 'react';
-import { PageTitle, Icon } from 'UI';
-import { Segmented, Button, Popover, Space, Dropdown, Menu } from 'antd';
+import { Button, Popover, Space, Dropdown, Menu } from 'antd';
 import { PlusOutlined, DownOutlined } from '@ant-design/icons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { DROPDOWN_OPTIONS } from 'App/constants/card';
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
   const filter = metricStore.filter;
-  const [showAddCardModal, setShowAddCardModal] = useState(false);
 
   useEffect(() => {
-  // Set the default sort order to 'desc'
+    // Set the default sort order to 'desc'
     metricStore.updateKey('sort', { by: 'desc' });
   }, [metricStore]);
   // Handler for dropdown menu selection
@@ -41,9 +37,12 @@ function MetricViewHeader() {
         <div className="flex items-center gap-2 ps-4">
           <PageTitle title="Cards" className="cursor-default" />
           <Space>
-            <Dropdown overlay={menu} trigger={['click']} className=''>
-              <Button type="text" size='small' className='mt-1'>
-                {filter.type === 'all' ? 'All Types' : DROPDOWN_OPTIONS.find(opt => opt.value === filter.type)?.label || 'Select Type'}
+            <Dropdown overlay={menu} trigger={['click']} className="">
+              <Button type="text" size="small" className="mt-1">
+                {filter.type === 'all'
+                  ? 'All Types'
+                  : DROPDOWN_OPTIONS.find((opt) => opt.value === filter.type)
+                      ?.label || 'Select Type'}
                 <DownOutlined />
               </Button>
             </Dropdown>
@@ -59,7 +58,7 @@ function MetricViewHeader() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              className='btn-create-card'
+              className="btn-create-card"
             >
               Create Card
             </Button>
@@ -70,12 +69,8 @@ function MetricViewHeader() {
           </Space>
         </div>
       </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
 export default observer(MetricViewHeader);
-
