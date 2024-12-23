@@ -6170,9 +6170,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:^13.3.0":
-  version: 13.15.2
-  resolution: "cypress@npm:13.15.2"
+"cypress@npm:13.17.0":
+  version: 13.17.0
+  resolution: "cypress@npm:13.17.0"
   dependencies:
     "@cypress/request": "npm:^3.0.6"
     "@cypress/xvfb": "npm:^1.2.4"
@@ -6219,7 +6219,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10c1/e0a23aafc6a7ab882b3396351387843de4cdeb68f83e829a96bbe8b954c398a943e7f71e201272c61a3c66eb3f704b5efb63876d319b9b83fe556e9e4bf50e16
+  checksum: 10c1/390ea671a12960bc7b2940fe9a54fdc1580ad17e1191100b455fecda82940ec975202cd2b5200343169ba67d84d9d77126a12e7e1e511ad51ce650ccbd9b65e0
   languageName: node
   linkType: hard
 
@@ -11604,7 +11604,7 @@ __metadata:
     country-flag-icons: "npm:^1.5.7"
     css-loader: "npm:^7.1.2"
     cssnano: "npm:^7.0.6"
-    cypress: "npm:^13.3.0"
+    cypress: "npm:13.17.0"
     cypress-image-snapshot: "npm:^4.0.1"
     dotenv: "npm:^6.2.0"
     esbuild-loader: "npm:^4.2.2"
