@@ -41,7 +41,7 @@ import stl from './FilterModal.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-const IconMap = {
+export const IconMap = {
   [FilterKey.CLICK]: <Pointer size={14}/>,
   [FilterKey.LOCATION]: <Navigation size={14} />,
   [FilterKey.INPUT]: <RectangleEllipsis size={14} />,
