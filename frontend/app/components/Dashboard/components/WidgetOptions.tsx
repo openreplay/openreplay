@@ -32,6 +32,7 @@ function WidgetOptions() {
 
   const handleChange = (value: any) => {
     metric.update({ metricFormat: value });
+    metric.updateKey('hasChanged', true);
   };
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
@@ -44,6 +45,7 @@ function WidgetOptions() {
           onClick={(e) => {
             e.preventDefault();
             metric.update({ hideExcess: !metric.hideExcess });
+            metric.updateKey('hasChanged', true);
           }}
         >
           <Space>
@@ -53,12 +55,10 @@ function WidgetOptions() {
         </a>
       )}
 
-      {metric.metricType === TIMESERIES ? (
-        <SeriesTypeOptions metric={metric} />
-      ) : null}
+      {metric.metricType === TIMESERIES && <SeriesTypeOptions metric={metric} />}
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
-        metric.metricOf != FilterKey.USERID &&
-        metric.metricOf != FilterKey.ERRORS && (
+        metric.metricOf !== FilterKey.USERID &&
+        metric.metricOf !== FilterKey.ERRORS && (
           <Dropdown
             trigger={['click']}
             menu={{
@@ -78,9 +78,8 @@ function WidgetOptions() {
             </Button>
           </Dropdown>
         )}
-      {hasViewTypes ? <WidgetViewTypeOptions metric={metric} /> : null}
-
-      {metric.metricType === HEATMAP ? <ClickMapRagePicker /> : null}
+      {hasViewTypes && <WidgetViewTypeOptions metric={metric} />}
+      {metric.metricType === HEATMAP && <ClickMapRagePicker />}
     </div>
   );
 }
@@ -113,6 +112,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         })),
         onClick: ({ key }: any) => {
           metric.updateKey('metricOf', key);
+          metric.updateKey('hasChanged', true);
         },
       }}
     >
@@ -134,11 +134,11 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
-    lineChart: 'Chart',
-    areaChart: 'Area',
+    lineChart: 'Line',
+    chart: 'Area Bar',
     barChart: 'Column',
-    progressChart: 'Bar',
-    chart: 'Funnel Bar',
+    progressChart: 'Funnel Bar',
+    
     columnChart: 'Funnel Column',
     pieChart: 'Pie',
     table: 'Table',
@@ -177,15 +177,14 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           key,
           label: (
             <div className="flex gap-2 items-center">
-              <>
                 {chartIcons[key]}
                 <div>{chartTypes[key]}</div>
-              </>
             </div>
           ),
         })),
         onClick: ({ key }: any) => {
           metric.updateKey('viewType', key);
+          metric.updateKey('hasChanged', true);
         },
       }}
     >

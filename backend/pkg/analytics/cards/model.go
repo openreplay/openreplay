@@ -1,4 +1,4 @@
-package models
+package cards
 
 import (
 	"github.com/go-playground/validator/v10"
@@ -83,24 +83,6 @@ type GetCardsResponse struct {
 type GetCardsResponsePaginated struct {
 	Cards []Card `json:"cards"`
 	Total int    `json:"total"`
-}
-
-type DataPoint struct {
-	Timestamp int64            `json:"timestamp"`
-	Series    map[string]int64 `json:"series"`
-}
-
-type GetCardChartDataRequest struct {
-	MetricType   string       `json:"metricType" validate:"required,oneof=timeseries table funnel"`
-	MetricOf     string       `json:"metricOf" validate:"required,oneof=session_count user_count"`
-	ViewType     string       `json:"viewType" validate:"required,oneof=line_chart table_view"`
-	MetricFormat string       `json:"metricFormat" validate:"required,oneof=default percentage"`
-	SessionID    int64        `json:"sessionId"`
-	Series       []CardSeries `json:"series" validate:"required,dive"`
-}
-
-type GetCardChartDataResponse struct {
-	Data []DataPoint `json:"data"`
 }
 
 /************************************************************

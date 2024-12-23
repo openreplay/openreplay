@@ -293,3 +293,4 @@ Pipfile.lock
 /chalicelib/core/errors/errors_ch.py
 /chalicelib/core/errors/errors_favorite.py
 /chalicelib/core/errors/errors_viewed.py
+/chalicelib/core/errors/errors_details.py

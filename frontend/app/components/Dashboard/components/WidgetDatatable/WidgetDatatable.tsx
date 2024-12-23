@@ -4,7 +4,7 @@ import type { TableProps } from 'antd';
 import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
-import { TableExporter } from "../../../Funnels/FunnelWidget/FunnelTable";
+import { TableExporter } from '../../../Funnels/FunnelWidget/FunnelTable';
 
 const initTableProps = [
   {
@@ -49,15 +49,17 @@ function WidgetDatatable(props: Props) {
    * + average for each row
    * [ { seriesName: 'series1', mon: 1, tue: 2, wed: 3, average: 2 }, ... ]
    * */
-  const series = !data.chart[0] ? [] : Object.keys(data.chart[0]).filter(
-    (key) => key !== 'time' && key !== 'timestamp'
-  );
+  const series = !data.chart[0]
+    ? []
+    : Object.keys(data.chart[0]).filter(
+        (key) => key !== 'time' && key !== 'timestamp'
+      );
   React.useEffect(() => {
     if (!data.chart) return;
     setTableProps(initTableProps);
     columnNames.clear();
     data.chart.forEach((p: any) => {
-    columnNames.add(p.time);
+      columnNames.add(p.time);
     }); // for example: mon, tue, wed, thu, fri, sat, sun
     const avg: any = {}; // { seriesName: {itemsCount: 0, total: 0} }
     const items: Record<string, any>[] = []; // as many items (rows) as we have series in filter
@@ -148,7 +150,7 @@ function WidgetDatatable(props: Props) {
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 export default WidgetDatatable;

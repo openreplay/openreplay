@@ -211,7 +211,7 @@ export function AutoCompleteContainer(props: Props) {
           </>
         ) : (
           <div className={'text-neutral-500/90'}>
-            {props.placeholder ? props.placeholder : 'Select events'}
+            {props.placeholder ? props.placeholder : 'Select value(s)'}
           </div>
         )}
       </div>

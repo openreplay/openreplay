@@ -7,7 +7,7 @@ import schemas
 from chalicelib.core import issues
 from chalicelib.core.errors import errors
 from chalicelib.core.metrics import heatmaps, product_analytics, funnels, custom_metrics_predefined
-from chalicelib.core.sessions import sessions
+from chalicelib.core.sessions import sessions, sessions_search
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -52,7 +52,7 @@ def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.
             "total": 0,
             "sessions": []
         }
-    return sessions.search_sessions(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
+    return sessions_search.search_sessions(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
 
 
 def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
@@ -174,7 +174,7 @@ def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSe
     results = []
     for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
@@ -189,7 +189,7 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
             s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
 
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 

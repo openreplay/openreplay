@@ -8,9 +8,9 @@ from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Re
 
 import schemas
 from chalicelib.core import scope
-from chalicelib.core import errors, assist, signup, feature_flags
+from chalicelib.core import assist, signup, feature_flags
 from chalicelib.core.metrics import heatmaps
-from chalicelib.core.errors import errors_favorite, errors_viewed
+from chalicelib.core.errors import errors_favorite, errors_viewed, errors, errors_details
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
     sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.core import tenants, users, projects, license
@@ -331,8 +331,8 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                              **{"density24": density24, "density30": density30})
+    data = errors_details.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                      **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
         background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
                                   error_id=errorId)

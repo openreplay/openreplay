@@ -169,7 +169,7 @@ function FilterValue(props: Props) {
             placeholder={filter.placeholder}
             onSelect={(e, item, index) => onChange(e, item, index)}
             icon={filter.icon}
-            modalProps={{ placeholder: isEvent ? 'Search event' : 'Filter by'}}
+            modalProps={{ placeholder: 'Search' }}
           />
         );
     }
