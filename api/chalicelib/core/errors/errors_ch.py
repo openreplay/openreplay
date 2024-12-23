@@ -62,8 +62,6 @@ def get_batch(error_ids):
     return errors_legacy.get_batch(error_ids=error_ids)
 
 
-
-
 def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
                             endTime_arg_name="endDate", type_condition=True, project_key="project_id", table_name=None):
     ch_sub_query = [f"{project_key} =toUInt16(%(project_id)s)"]
@@ -413,48 +411,3 @@ def get_sessions(start_date, end_date, project_id, user_id, error_id):
                                       project_id=project_id,
                                       user_id=user_id,
                                       error_id=error_id)
-
-
-def change_state(project_id, user_id, error_id, action):
-    return errors_legacy.change_state(project_id=project_id, user_id=user_id, error_id=error_id, action=action)
-
-
-MAX_RANK = 2
-
-
-def __status_rank(status):
-    return {
-        'unresolved': MAX_RANK - 2,
-        'ignored': MAX_RANK - 1,
-        'resolved': MAX_RANK
-    }.get(status)
-
-
-def merge(error_ids):
-    error_ids = list(set(error_ids))
-    errors = get_batch(error_ids)
-    if len(error_ids) <= 1 or len(error_ids) > len(errors):
-        return {"errors": ["invalid list of ids"]}
-    error_ids = [e["errorId"] for e in errors]
-    parent_error_id = error_ids[0]
-    status = "unresolved"
-    for e in errors:
-        if __status_rank(status) < __status_rank(e["status"]):
-            status = e["status"]
-            if __status_rank(status) == MAX_RANK:
-                break
-    params = {
-        "error_ids": tuple(error_ids),
-        "parent_error_id": parent_error_id,
-        "status": status
-    }
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """UPDATE public.errors
-                SET parent_error_id = %(parent_error_id)s, status = %(status)s
-                WHERE error_id IN %(error_ids)s OR parent_error_id IN %(error_ids)s;""",
-            params)
-        cur.execute(query=query)
-        # row = cur.fetchone()
-
-    return {"data": "success"}

@@ -23,6 +23,10 @@ DELETE
 FROM public.metrics
 WHERE metrics.metric_type = 'insights';
 
+DROP TABLE IF EXISTS public.user_favorite_errors;
+DROP TABLE IF EXISTS public.user_viewed_errors;
+
+
 COMMIT;
 
 \elif :is_next
