@@ -1,4 +1,4 @@
-from chalicelib.core import sourcemaps
+from chalicelib.core.sourcemaps import sourcemaps
 
 
 def format_first_stack_frame(error):

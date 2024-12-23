@@ -147,7 +147,12 @@ class PostgresClient:
             logger.error(f"!!! Error of type:{type(error)} while executing query:")
             logger.error(query)
             logger.info("starting rollback to allow future execution")
-            self.connection.rollback()
+            try:
+                self.connection.rollback()
+            except psycopg2.InterfaceError as e:
+                logger.error("!!! Error while rollbacking connection", e)
+                logger.error("!!! Trying to recreate the cursor")
+                self.recreate_cursor()
             raise error
         return result
 

@@ -1,16 +1,18 @@
-package models
+package dashboards
+
+import "openreplay/backend/pkg/analytics/cards"
 
 type Dashboard struct {
-	DashboardID int        `json:"dashboardId"`
-	ProjectID   int        `json:"projectId"`
-	UserID      int        `json:"userId"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	IsPublic    bool       `json:"isPublic"`
-	IsPinned    bool       `json:"isPinned"`
-	OwnerEmail  string     `json:"ownerEmail"`
-	OwnerName   string     `json:"ownerName"`
-	Metrics     []CardBase `json:"cards"`
+	DashboardID int              `json:"dashboardId"`
+	ProjectID   int              `json:"projectId"`
+	UserID      int              `json:"userId"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	IsPublic    bool             `json:"isPublic"`
+	IsPinned    bool             `json:"isPinned"`
+	OwnerEmail  string           `json:"ownerEmail"`
+	OwnerName   string           `json:"ownerName"`
+	Metrics     []cards.CardBase `json:"cards"`
 }
 
 type CreateDashboardResponse struct {

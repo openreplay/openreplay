@@ -1,17 +1,61 @@
-package api
+package cards
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"openreplay/backend/pkg/analytics/api/models"
-	"openreplay/backend/pkg/server/api"
-	"openreplay/backend/pkg/server/user"
 	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
+
+	config "openreplay/backend/internal/config/analytics"
+	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/user"
 )
+
+func getIDFromRequest(r *http.Request, key string) (int, error) {
+	vars := mux.Vars(r)
+	idStr := vars[key]
+	if idStr == "" {
+		return 0, fmt.Errorf("missing %s in request", key)
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s format", key)
+	}
+
+	return id, nil
+}
+
+type handlersImpl struct {
+	log           logger.Logger
+	responser     *api.Responser
+	jsonSizeLimit int64
+	cards         Cards
+}
+
+func (e *handlersImpl) GetAll() []*api.Description {
+	return []*api.Description{
+		{"/v1/analytics/{projectId}/cards", e.createCard, "POST"},
+		{"/v1/analytics/{projectId}/cards", e.getCardsPaginated, "GET"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
+		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+	}
+}
+
+func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, cards Cards) (api.Handlers, error) {
+	return &handlersImpl{
+		log:           log,
+		responser:     responser,
+		jsonSizeLimit: cfg.JsonSizeLimit,
+		cards:         cards,
+	}, nil
+}
 
 func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
@@ -24,7 +68,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &models.CardCreateRequest{}
+	req := &CardCreateRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -44,7 +88,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.service.CreateCard(projectID, currentUser.ID, req)
+	resp, err := e.cards.Create(projectID, currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -70,7 +114,7 @@ func (e *handlersImpl) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := e.service.GetCardWithSeries(projectID, id)
+	resp, err := e.cards.GetWithSeries(projectID, id)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -90,7 +134,7 @@ func (e *handlersImpl) getCards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.service.GetCards(projectID)
+	resp, err := e.cards.GetAll(projectID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -114,7 +158,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	query := r.URL.Query()
 
 	// Filters
-	filters := models.CardListFilter{
+	filters := CardListFilter{
 		Filters: make(map[string]interface{}),
 	}
 
@@ -136,7 +180,7 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Sorting
-	sort := models.CardListSort{
+	sort := CardListSort{
 		Field: query.Get("sort_field"),
 		Order: query.Get("sort_order"),
 	}
@@ -163,17 +207,17 @@ func (e *handlersImpl) getCardsPaginated(w http.ResponseWriter, r *http.Request)
 	offset := (page - 1) * limit
 
 	// Validate inputs
-	if err := models.ValidateStruct(filters); err != nil {
+	if err := ValidateStruct(filters); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid filters: %w", err), startTime, r.URL.Path, bodySize)
 		return
 	}
-	if err := models.ValidateStruct(sort); err != nil {
+	if err := ValidateStruct(sort); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, fmt.Errorf("invalid sort: %w", err), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Call the service
-	resp, err := e.service.GetCardsPaginated(projectID, filters, sort, limit, offset)
+	resp, err := e.cards.GetAllPaginated(projectID, filters, sort, limit, offset)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -206,7 +250,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &models.CardUpdateRequest{}
+	req := &CardUpdateRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
@@ -220,7 +264,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.service.UpdateCard(projectID, int64(cardId), currentUser.ID, req)
+	resp, err := e.cards.Update(projectID, int64(cardId), currentUser.ID, req)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
@@ -246,51 +290,11 @@ func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	err = e.service.DeleteCard(projectID, int64(cardId), currentUser.ID)
+	err = e.cards.Delete(projectID, int64(cardId), currentUser.ID)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, nil, startTime, r.URL.Path, bodySize)
-}
-
-func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	projectID, err := getIDFromRequest(r, "projectId")
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	bodyBytes, err := api.ReadBody(e.log, w, r, e.jsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodySize = len(bodyBytes)
-
-	req := &models.GetCardChartDataRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.service.GetCardChartData(projectID, currentUser.ID, req)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
 }

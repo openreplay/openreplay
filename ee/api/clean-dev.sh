@@ -113,3 +113,4 @@ rm -rf /chalicelib/core/errors/errors.py
 rm -rf /chalicelib/core/errors/errors_ch.py
 rm -rf /chalicelib/core/errors/errors_favorite.py
 rm -rf /chalicelib/core/errors/errors_viewed.py
+rm -rf /chalicelib/core/errors/errors_details.py
