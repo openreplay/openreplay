@@ -63,7 +63,6 @@ function MetricViewHeader() {
               Create Card
             </Button>
           </Popover>
-
           <Space>
             <MetricsSearch />
           </Space>
@@ -74,3 +73,4 @@ function MetricViewHeader() {
 }
 
 export default observer(MetricViewHeader);
+
