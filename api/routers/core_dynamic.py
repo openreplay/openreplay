@@ -12,7 +12,7 @@ from chalicelib.core import errors, assist, signup, feature_flags
 from chalicelib.core.metrics import heatmaps
 from chalicelib.core.errors import errors_favorite, errors_viewed
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
-    sessions_assignments, unprocessed_sessions
+    sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
@@ -242,8 +242,8 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     if len(key) == 0:
         return {"errors": ["please provide a key for search"]}
     return {
-        "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
-                                            m_key=key, project_id=projectId)}
+        "data": sessions_search.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
+                                                   m_key=key, project_id=projectId)}
 
 
 @app.get('/projects', tags=['projects'])
@@ -252,18 +252,18 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
-                                    platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+                                           platform=context.project.platform)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
-                                    platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+                                           platform=context.project.platform)
     return {'data': data}
 
 

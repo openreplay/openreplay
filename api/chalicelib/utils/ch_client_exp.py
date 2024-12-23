@@ -130,14 +130,16 @@ class ClickHouseClient:
 
     def __init__(self, database=None):
         if self.__client is None:
-            if database is None and config('CH_POOL', cast=bool, default=True):
-                self.__client = CH_pool.get_connection()
-            else:
+            if database is not None or not config('CH_POOL', cast=bool, default=True):
                 self.__client = clickhouse_connect.get_client(**CH_CONFIG,
                                                               database=database if database else config("ch_database",
                                                                                                         default="default"),
                                                               settings=settings,
                                                               **extra_args)
+
+            else:
+                self.__client = CH_pool.get_connection()
+
             self.__client.execute = transform_result(self.__client.query)
             self.__client.format = self.format
 

@@ -1,20 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { Checkbox, Table, Typography } from 'antd';
+import { Checkbox, Table, Typography, Switch, Tag, Tooltip } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import Widget from 'App/mstore/types/widget';
-import { LockOutlined, TeamOutlined } from ".store/@ant-design-icons-virtual-981121729b/package";
-import { Switch, Tag, Tooltip } from ".store/antd-virtual-9b6c8c01be/package";
+import { LockOutlined, TeamOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
-// interface Metric {
-//   metricId: number;
-//   name: string;
-//   owner: string;
-//   lastModified: string;
-//   visibility: string;
-// }
+interface Metric {
+  metricId: number;
+  name: string;
+  owner: string;
+  lastModified: string;
+  visibility: string;
+}
 
 interface Props {
   list: Widget[];

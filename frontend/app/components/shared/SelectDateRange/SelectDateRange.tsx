@@ -14,7 +14,6 @@ import { Calendar } from 'lucide-react';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import Select from 'Shared/Select';
-import AntlikeDropdown from "Shared/Dropdown";
 
 interface Props {
   period: any | null;
@@ -24,7 +23,7 @@ interface Props {
   timezone?: string;
   isAnt?: boolean;
   small?: boolean;
-  useButtonStyle?: boolean; 
+  useButtonStyle?: boolean;
   compPeriod?: any | null;
   onChangeComparison?: (data: any) => void;
   comparison?: boolean;
@@ -52,37 +51,55 @@ function SelectDateRange(props: Props) {
   );
 
   const onChange = (value: any) => {
+    if (value === CUSTOM_RANGE) {
+      setTimeout(() => {
+        setIsCustom(true);
+      }, 1);
+      return;
+    }
     if (props.comparison && props.onChangeComparison) {
       if (!value) return props.onChangeComparison(null);
       const newPeriod = new Period({
         start: props.period.start,
         end: props.period.end,
-        substract: value
+        substract: value,
       });
       props.onChangeComparison(newPeriod);
       return;
-    }
-
-    if (value === CUSTOM_RANGE) {
-      setTimeout(() => {
-        setIsCustom(true);
-      }, 1);
     } else {
       props.onChange(new Period({ rangeName: value }));
     }
   };
 
-  const onApplyDateRange = (value: any) => {
-    const range = new Period({
-      rangeName: CUSTOM_RANGE,
-      start: value.start,
-      end: value.end,
-    });
-    props.onChange(range);
+  const onApplyDateRange = (value: { start: any; end: any }) => {
+    if (props.comparison) {
+      const day = 86400000;
+      const originalPeriodLength = Math.ceil(
+        (props.period.end - props.period.start) / day
+      );
+      const start = value.start.ts;
+      const end = value.start.ts + originalPeriodLength * day;
+
+      const compRange = new Period({
+        start,
+        end,
+        rangeName: CUSTOM_RANGE,
+      });
+      props.onChangeComparison(compRange);
+    } else {
+      const range = new Period({
+        rangeName: CUSTOM_RANGE,
+        start: value.start,
+        end: value.end,
+      });
+      props.onChange(range);
+    }
     setIsCustom(false);
   };
 
-  const isCustomRange = usedPeriod ? usedPeriod.rangeName === CUSTOM_RANGE : false;
+  const isCustomRange = usedPeriod
+    ? usedPeriod.rangeName === CUSTOM_RANGE
+    : false;
   const isUSLocale =
     navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const customRange = isCustomRange
@@ -91,20 +108,29 @@ function SelectDateRange(props: Props) {
       )
     : '';
 
+  const isTileDisabled = ({ date, view }) => {
+    if (view !== 'month' || !props.comparison) return false;
+    return (
+      date.getTime() >= props.period.start && date.getTime() <= props.period.end
+    );
+  };
   if (props.isAnt) {
-    return <AndDateRange
-      {...props}
-      options={options}
-      selectedValue={selectedValue}
-      onChange={onChange}
-      isCustomRange={isCustomRange}
-      isCustom={isCustom}
-      customRange={customRange}
-      setIsCustom={setIsCustom}
-      onApplyDateRange={onApplyDateRange}
-      isUSLocale={isUSLocale}
-      useButtonStyle={useButtonStyle}
-    />;
+    return (
+      <AndDateRange
+        {...props}
+        options={options}
+        selectedValue={selectedValue}
+        onChange={onChange}
+        isCustomRange={isCustomRange}
+        isCustom={isCustom}
+        customRange={customRange}
+        setIsCustom={setIsCustom}
+        onApplyDateRange={onApplyDateRange}
+        isUSLocale={isUSLocale}
+        useButtonStyle={useButtonStyle}
+        isTileDisabled={isTileDisabled}
+      />
+    );
   }
 
   return (
@@ -125,7 +151,7 @@ function SelectDateRange(props: Props) {
         }}
         period={period}
         right={true}
-        style={{ width: '100%', }}
+        style={{ width: '100%' }}
       />
       {isCustom && (
         <OutsideClickDetectingDiv
@@ -179,6 +205,7 @@ function AndDateRange({
   isCustom,
   isUSLocale,
   onApplyDateRange,
+  isTileDisabled,
 }: Props) {
   const menuProps = {
     items: options.map((opt) => ({
@@ -191,37 +218,46 @@ function AndDateRange({
     },
   };
 
-  const comparisonValue = isCustomRange && selectedValue ? customRange : selectedValue?.label;
+  const comparisonValue =
+    isCustomRange && selectedValue ? customRange : selectedValue?.label;
   return (
     <div className={'relative'}>
       {comparison ? (
         <div className={'flex items-center gap-0'}>
-          <Dropdown menu={menuProps} trigger={['click']} className={'px-2 py-1 gap-1'}>
-            <Button type='text' variant='text' className='flex items-center btn-compare-card-data' size='small'>
+          <Dropdown
+            menu={menuProps}
+            trigger={['click']}
+            className={'px-2 py-1 gap-1'}
+          >
+            <Button
+              type="text"
+              variant="text"
+              className="flex items-center btn-compare-card-data"
+              size="small"
+            >
               <span>{`Compare to ${comparisonValue || ''}`}</span>
               {selectedValue && (
-                <Tooltip title='Reset'>
-                <SyncOutlined
-                  className='cursor-pointer p-2 py-1.5 hover:bg-neutral-200/50 text-sm'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange(null);
-                  }}
-                />
+                <Tooltip title="Reset">
+                  <SyncOutlined
+                    className="cursor-pointer p-2 py-1.5 hover:bg-neutral-200/50 text-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange(null);
+                    }}
+                  />
                 </Tooltip>
               )}
-              <DownOutlined className='ms-1' />
+              <DownOutlined className="ms-1" />
             </Button>
           </Dropdown>
-          
         </div>
       ) : (
         <Dropdown menu={menuProps} trigger={['click']}>
-          <Button 
-            type="text" 
-            size='small'
+          <Button
+            type="text"
+            size="small"
             className="flex items-center btn-card-period-range"
-            icon={useButtonStyle ? <Calendar size={16}  /> : null}
+            icon={useButtonStyle ? <Calendar size={16} /> : null}
           >
             {isCustomRange ? customRange : selectedValue?.label}
             <DownOutlined />
@@ -260,6 +296,8 @@ function AndDateRange({
               onCancel={() => setIsCustom(false)}
               selectedDateRange={period.range}
               className="h-fit"
+              isTileDisabled={isTileDisabled}
+              singleDay={comparison}
             />
           </div>
         </OutsideClickDetectingDiv>

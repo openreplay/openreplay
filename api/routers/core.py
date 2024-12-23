@@ -4,12 +4,10 @@ from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
-from chalicelib.core import sourcemaps, events, projects, alerts, issues, \
-    metadata, reset_password, \
-    log_tools, sessions, announcements, \
-    weekly_report, assist, mobile, tenants, boarding, \
-    notifications, webhook, users, saved_search, tags
+from chalicelib.core import sourcemaps, events, projects, issues, metadata, reset_password, log_tools, sessions, \
+    announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, saved_search, tags
 from chalicelib.core.metrics import custom_metrics
+from chalicelib.core.alerts import alerts
 from chalicelib.core.autocomplete import autocomplete
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
     jira_cloud

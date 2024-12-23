@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/heuristics"
 	"openreplay/backend/pkg/builders"
