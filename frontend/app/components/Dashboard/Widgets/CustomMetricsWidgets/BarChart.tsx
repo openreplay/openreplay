@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CustomTooltip from "./CustomChartTooltip";
 import { Styles } from '../common';
 import {
@@ -71,8 +71,26 @@ function CustomBarChart(props: Props) {
     inGrid,
   } = props;
 
+  const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
+
+  const handleMouseOver = (key) => () => {
+    setHoveredSeries(key);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredSeries(null);
+  };
+
   const resultChart = data.chart.map((item, i) => {
-    if (compData && compData.chart[i]) return { ...compData.chart[i], ...item };
+    if (compData && compData.chart[i]) {
+      const comparisonItem: Record<string, any> = {};
+      Object.keys(compData.chart[i]).forEach(key => {
+        if (key !== 'time') {
+          comparisonItem[`${key}_comparison`] = (compData.chart[i] as any)[key];
+        }
+      });
+      return { ...item, ...comparisonItem };
+    }
     return item;
   });
 
@@ -84,7 +102,6 @@ function CustomBarChart(props: Props) {
     }
   }
 
-  // Filter out comparison items for legend
   const legendItems = mergedNameMap.filter(item => !item.isComp);
 
   return (
@@ -93,6 +110,7 @@ function CustomBarChart(props: Props) {
         data={resultChart}
         margin={Styles.chartMargins}
         onClick={onClick}
+        onMouseLeave={handleMouseLeave}
         barSize={10}
         style={{ backgroundColor: 'transparent' }} 
       >
@@ -148,15 +166,16 @@ function CustomBarChart(props: Props) {
             value: label || 'Number of Sessions',
           }}
         />
-        <Tooltip {...Styles.tooltip} content={CustomTooltip} />
+        <Tooltip {...Styles.tooltip} content={<CustomTooltip hoveredSeries={hoveredSeries} />} />
         {mergedNameMap.map((item) => (
           <Bar
             key={item.data}
-            name={item.data}
+            name={item.isComp ? `${item.data} (Comparison)` : item.data}
             type="monotone"
-            dataKey={item.data}
+            dataKey={item.isComp ? `${item.data}_comparison` : item.data}
             fill={colors[item.index]}
             stroke={colors[item.index]}
+            onMouseOver={handleMouseOver(item.isComp ? `${item.data} (Comparison)` : item.data)}
             shape={(barProps: any) => (
               <PillBar
                 {...barProps}
@@ -166,6 +185,11 @@ function CustomBarChart(props: Props) {
                 striped={item.isComp}
               />
             )}
+            fillOpacity={
+              hoveredSeries && 
+              hoveredSeries !== item.data && 
+              hoveredSeries !== `${item.data} (Comparison)` ? 0.2 : 1
+            }
             legendType="rect"
             activeBar={
               <PillBar
