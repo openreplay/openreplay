@@ -36,6 +36,7 @@ type handlersImpl struct {
 	responser     *api.Responser
 	jsonSizeLimit int64
 	cards         Cards
+	validator     *validator.Validate
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
@@ -48,12 +49,13 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, cards Cards) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, cards Cards, validator *validator.Validate) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		cards:         cards,
+		validator:     validator,
 	}, nil
 }
 
@@ -74,9 +76,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
+	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -256,9 +256,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
+	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
