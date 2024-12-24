@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, Space, Button, Alert, Form } from 'antd';
-
+import { Card, Space, Button, Alert, Form, Select } from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -18,7 +17,7 @@ import { PlusIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterKey } from 'Types/filter/filterType';
-import Select from 'Shared/Select';
+//import Select from 'Shared/Select';
 
 function WidgetFormNew() {
   const { metricStore } = useStore();
@@ -113,31 +112,51 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'custom', label: 'Custom' }
   ];
   return (
-    <Card styles={{ body: { padding: '20px 20px' } }}>
+    <Card styles={{ body: { padding: '20px 20px' } }}  className='rounded-lg'>
       <Form.Item>
-        <Space>
-          <Select
-            name="startType"
-            options={[
-              { value: 'start', label: 'With Start Point' },
-              { value: 'end', label: 'With End Point' }
-            ]}
-            defaultValue={metric.startType}
-            onChange={writeOption}
-            placeholder="All Issues"
-          />
-          <span className="mx-3">showing</span>
-          <Select
-            name="metricValue"
-            options={metricValueOptions}
-            value={metric.metricValue}
-            isMulti={true}
-            onChange={writeOption}
-            placeholder="All Issues"
-          />
-        </Space>
+  <div className="flex flex-wrap gap-2 items-center justify-start">
+  {/* Start Type Selector */}
+  <span className='font-medium'>User journeys with: </span>
+  
+  <div className='flex flex-wrap gap-2 w-full items-center'>
+  <Select
+    className="w-36 rounded-xl"
+    name="startType"
+    options={[
+      { value: 'start', label: 'Start Point' },
+      { value: 'end', label: 'End Point' },
+    ]}
+    defaultValue={metric.startType || 'start'} 
+    onChange={(value) => writeOption({ name: 'startType', value })}
+    placeholder="Select Start Type" 
+    size="small"
+  />
+
+  <span className="text-neutral-400">showing</span>
+
+  {/* Metric Value Selector */}
+  <Select
+    mode="multiple"
+    className="min-w-36 rounded-xl"
+    allowClear 
+    name="metricValue"
+    options={[
+      { value: 'location', label: 'Pages' },
+      { value: 'click', label: 'Clicks' },
+      { value: 'input', label: 'Input' },
+      { value: 'custom', label: 'Custom' },
+    ]}
+    value={metric.metricValue || []}
+    onChange={(value) => writeOption({ name: 'metricValue', value })}
+    placeholder="Select Metrics" 
+    size="small"
+  />
+  </div>
+</div>
       </Form.Item>
-      <Form.Item label={metric.startType === 'start' ? 'Start Point' : 'End Point'} className="mb-0">
+      <div className='flex items-center'>
+      <Form.Item label={metric.startType === 'start' ? 'Specify Start Point' : 'Specify End Point'} className="m0-0 font-medium p-0">
+        <span className='font-normal'>
         <FilterItem
           hideDelete
           filter={metric.startPoint}
@@ -146,7 +165,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           onRemoveFilter={() => {
           }}
         />
+        </span>
       </Form.Item>
+      </div>
     </Card>
   );
 });
