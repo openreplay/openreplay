@@ -41,7 +41,7 @@ export const TYPE_ICONS = {
   [LIBRARY]: 'grid',
   [TIMESERIES]: 'graph-up',
   [TABLE]: 'list-alt',
-  [HEATMAP]: 'puzzle-piece',
+  [HEATMAP]: 'dashboards/heatmap-2',
   [FUNNEL]: 'funnel',
   [ERRORS]: 'exclamation-triangle',
   [USER_PATH]: 'signpost-split',
