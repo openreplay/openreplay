@@ -176,7 +176,7 @@ const MetricListItem: React.FC<Props> = ({
             menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}
           >
-            <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} className='btn-cards-list-item-more-options' />
+            <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} className='btn-cards-list-item-more-options' type='text'/>
           </Dropdown>
           </div>
           {renderModal()}

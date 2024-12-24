@@ -49,7 +49,7 @@ export const FilterList = observer((props: Props) => {
     <div
       className={cn(
         'bg-white',
-        borderless ? '' : 'py-2 px-4 rounded-xl  border border-gray-lighter'
+        borderless ? '' : 'pt-2 px-4 rounded-xl border border-gray-lighter'
       )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
@@ -58,7 +58,7 @@ export const FilterList = observer((props: Props) => {
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
       }}
     >
-      <div className={'flex items-center mb-2'} style={{ gap: '0.65rem' }}>
+      <div className={'flex items-center py-2'} style={{ gap: '0.65rem' }}>
         <div className="font-medium">Filters</div>
         <FilterSelection
           mode={'filters'}
@@ -193,7 +193,7 @@ export const EventsList = observer((props: Props) => {
   return (
     <div
       className={
-        'border-b border-b-gray-lighter py-2 px-4 rounded-xl bg-white border border-gray-lighter'
+        'border-b border-b-gray-lighter pt-2 px-4 rounded-xl bg-white border border-gray-lighter'
       }
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
@@ -244,12 +244,12 @@ export const EventsList = observer((props: Props) => {
                 pointerEvents: 'unset',
                 paddingTop:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'top'
-                    ? '1.5rem'
-                    : '0.5rem',
+                    ? ''
+                    : '',
                 paddingBottom:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
-                    ? '1.5rem'
-                    : '0.5rem',
+                    ? ''
+                    : '',
                 marginLeft: '-1rem',
                 width: 'calc(100% + 2rem)',
                 alignItems: 'start',
@@ -271,7 +271,7 @@ export const EventsList = observer((props: Props) => {
               {!!props.onFilterMove && eventsNum > 1 ? (
                 <div
                   className={
-                    'p-2 cursor-grab text-neutral-500/90 hover:bg-white px-1 pt-2 rounded-lg'
+                    'cursor-grab text-neutral-500/90 hover:bg-white px-1 mt-2.5 rounded-lg'
                   }
                   draggable={!!props.onFilterMove}
                   onDragStart={(e) =>

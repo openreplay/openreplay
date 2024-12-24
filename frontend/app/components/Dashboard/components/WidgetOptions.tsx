@@ -24,7 +24,7 @@ import {
   Library,
   ChartColumnBig,
   ChartBarBig,
-} from 'lucide-react';
+}  from 'lucide-react';
 
 function WidgetOptions() {
   const { metricStore } = useStore();
@@ -69,6 +69,7 @@ function WidgetOptions() {
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
+
           >
             <Button type="text" variant="text" size="small">
               {metric.metricFormat === 'sessionCount'
@@ -135,23 +136,22 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
     lineChart: 'Line',
-    chart: 'Area Bar',
+    areaChart: 'Area',
     barChart: 'Column',
-    progressChart: 'Funnel Bar',
-    
-    columnChart: 'Funnel Column',
+    progressChart: 'Vertical Bar',
+    columnChart: 'Horizontal Bar',
     pieChart: 'Pie',
-    table: 'Table',
     metric: 'Metric',
+    table: 'Table',
   };
   const chartIcons = {
-    lineChart: <ChartLine size={16} strokeWidth={1} />,
+    lineChart: <ChartLine size={16} strokeWidth={1} /> ,
     barChart: <ChartColumn size={16} strokeWidth={1} />,
     areaChart: <ChartArea size={16} strokeWidth={1} />,
     pieChart: <ChartPie size={16} strokeWidth={1} />,
     progressChart: <ChartBar size={16} strokeWidth={1} />,
-    table: <Table size={16} strokeWidth={1} />,
     metric: <Hash size={16} strokeWidth={1} />,
+    table: <Table size={16} strokeWidth={1} />,
     // funnel specific
     columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
     chart: <ChartBarBig size={16} strokeWidth={1} />,

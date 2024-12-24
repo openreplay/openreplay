@@ -41,7 +41,7 @@ function FilterSelection(props: Props) {
 
   const label = filter?.category === 'Issue' ? 'Issue' : filter?.label;
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0 my-1.5">
       <OutsideClickDetectingDiv
         className="relative"
         onClickOutside={() => {

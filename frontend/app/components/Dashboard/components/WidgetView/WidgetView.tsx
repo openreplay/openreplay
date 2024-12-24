@@ -170,25 +170,27 @@ function WidgetView(props: Props) {
               }
             />
             <div className={layout === 'horizontal' ? 'flex gap-4' : ''}>
-              <div className={layout === 'horizontal' ? 'w-1/3' : 'w-full'}>
+              <div className={layout === 'horizontal' ? 'w-1/3 ' : 'w-full'}>
                 <WidgetFormNew />
               </div>
               <div className={layout === 'horizontal' ? 'w-2/3' : 'w-full'}>
                 <WidgetPreview name={widget.name} isEditing={expanded} />
+
+                    {widget.metricOf !== FilterKey.SESSIONS &&
+                    widget.metricOf !== FilterKey.ERRORS &&
+                    (widget.metricType === TABLE ||
+                    widget.metricType === TIMESERIES ||
+                    widget.metricType === HEATMAP ||
+                    widget.metricType === INSIGHTS ||
+                    widget.metricType === FUNNEL ||
+                    widget.metricType === USER_PATH ? (
+                      <WidgetSessions />
+                    ) : null)}
+                  {widget.metricType === RETENTION && <CardUserList />}
               </div>
             </div>
 
-            {widget.metricOf !== FilterKey.SESSIONS &&
-              widget.metricOf !== FilterKey.ERRORS &&
-              (widget.metricType === TABLE ||
-              widget.metricType === TIMESERIES ||
-              widget.metricType === HEATMAP ||
-              widget.metricType === INSIGHTS ||
-              widget.metricType === FUNNEL ||
-              widget.metricType === USER_PATH ? (
-                <WidgetSessions />
-              ) : null)}
-            {widget.metricType === RETENTION && <CardUserList />}
+            
           </Space>
         </NoContent>
       </div>

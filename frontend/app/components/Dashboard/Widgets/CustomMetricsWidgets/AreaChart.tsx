@@ -58,7 +58,7 @@ function CustomAreaChart(props: Props) {
       >
         {!hideLegend && (
           <Legend
-            iconType={'circle'}
+            iconType={'wye'}
             className='font-normal'
             wrapperStyle={{ top: inGrid ? undefined : -18 }}
             payload={

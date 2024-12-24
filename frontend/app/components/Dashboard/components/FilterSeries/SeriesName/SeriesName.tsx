@@ -51,13 +51,14 @@ function SeriesName(props: Props) {
           onChange={write}
           onBlur={onBlur}
           onKeyDown={onKeyDown}
-          className="bg-white text-lg border-transparent rounded-lg font-medium ps-2"
+          className="bg-white text-lg border-transparent rounded-lg font-medium ps-2 input-rename-series"
           maxLength={22}
+          size='small'
         />
       ) : (
-        <Tooltip title="Double click to rename.">
+        <Tooltip title="Click to rename">
           <div
-            className="text-lg font-medium h-8 flex items-center border-transparent p-2 hover:bg-teal/10 cursor-pointer rounded-lg input-rename-series"
+            className="text-lg font-medium h-8 flex items-center border-transparent p-2 hover:bg-teal/10 cursor-pointer rounded-lg btn-input-rename-series"
             onClick={() => setEditing(true)}
             data-event='input-rename-series'
           >

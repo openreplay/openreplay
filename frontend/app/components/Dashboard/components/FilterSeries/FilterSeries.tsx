@@ -16,10 +16,10 @@ const FilterCountLabels = observer(
         <Space>
           {events > 0 && (
             <Button
-              type="primary"
-              ghost
+              type="text"
               size="small"
               onClick={props.toggleExpand}
+              className='btn-series-event-count'
             >
               {`${events} Event${events > 1 ? 's' : ''}`}
             </Button>
@@ -27,10 +27,10 @@ const FilterCountLabels = observer(
 
           {filters > 0 && (
             <Button
-              type="primary"
-              ghost
+              type="text"
               size="small"
               onClick={props.toggleExpand}
+              className='btn-series-filter-count'
             >
               {`${filters} Filter${filters > 1 ? 's' : ''}`}
             </Button>
@@ -69,23 +69,25 @@ const FilterSeriesHeader = observer(
             onUpdate={onUpdate}
             onChange={props.onChange}
           />
-          {!props.expanded && (
+        </Space>
+
+        <Space>
+           {!props.expanded && (
             <FilterCountLabels
               filters={props.series.filter.filters}
               toggleExpand={props.toggleExpand}
             />
           )}
-        </Space>
-
-        <Space>
           <Button
             onClick={props.onRemove}
             size="small"
             disabled={!props.canDelete}
             icon={<Trash size={14} />}
             type='text'
-            className='btn-delete-series'
-          />
+            className={cn(
+              'btn-delete-series', 'disabled:hidden' 
+            )}
+            />
           <Button
             onClick={props.toggleExpand}
             size="small"
