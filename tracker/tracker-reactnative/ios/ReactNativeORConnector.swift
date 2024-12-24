@@ -80,4 +80,9 @@ public class ORTrackerConnector: NSObject {
         let sessionID = Openreplay.shared.getSessionID()
         resolve(sessionID)
     }
+
+    @objc(sendMessage:msg:)
+    open func sendMessage(_ msgType: String, msg: String) {
+        Openreplay.shared.sendMessage(msgType: msgType, msg: msg)
+    }
 }

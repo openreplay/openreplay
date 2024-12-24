@@ -32,6 +32,11 @@ interface IORTrackerConnector {
     optionsDict: Options,
     projectUrl?: string
   ) => void;
+  /**
+   * @param type - type of message (only gql at the moment)
+   * @param msg - JSON string containing message to be sent
+   * */
+  sendMessage: (type: string, msg: string) => void;
   stop: () => void;
   getSessionID: () => Promise<string>;
   setMetadata: (key: string, value: string) => void;
@@ -76,6 +81,28 @@ export function setMetadata(key: string, value: string) {
 export function setUserID(userID: string) {
   ORTrackerConnector.setUserID(userID);
 }
+
+export function sendMessage(type: string, msg: string) {
+  ORTrackerConnector.sendMessage(type, msg);
+}
+
+/**
+ * Using with gql plugin:
+ * const appWrapper = {
+ *   active: () => true,
+ *   send: (gqlMsg) => {
+ *     const type = 'gql';
+ *     const msg = JSON.stringify({
+ *       operationKind: gqlMsg[1],
+ *       operationName: gqlMsg[2],
+ *       variables: gqlMsg[3],
+ *       response: gqlMsg[4],
+ *       duration: gqlMsg[5],
+ *     })
+ *     ORTrackerConnector.sendMessage(type, msg);
+ *   }
+ * }
+ * */
 
 let patched = false;
 const patchNetwork = (

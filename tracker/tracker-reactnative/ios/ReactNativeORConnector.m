@@ -34,4 +34,6 @@ RCT_EXTERN_METHOD(networkRequest:(NSString *)url
   return NO;
 }
 
+RCT_EXTERN_METHOD(sendMessage:(NSString *)msgType msg:(NSString *)msg)
+
 @end

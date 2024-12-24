@@ -303,6 +303,9 @@ export default class IOSMessageManager implements IMessageManager {
         // @ts-ignore
         this.lists.lists.log.append(Log(log));
         break;
+      case MType.GraphQl:
+        this.lists.lists.graphql.insert(msg);
+        break;
       default:
         console.log(msg);
         // stuff

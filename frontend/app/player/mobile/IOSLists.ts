@@ -3,19 +3,14 @@ import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 import type { Timed } from '../common/types';
 
 const SIMPLE_LIST_NAMES = [
-  'event',
-  'exceptions',
-  'profiles',
-  'frustrations',
-  'performance',
-] as const;
-const MARKED_LIST_NAMES = [
-  'log',
-  'resource',
-  'fetch',
-  'stack',
-  'websocket',
-] as const;
+  "event",
+  "exceptions",
+  "profiles",
+  "frustrations",
+  "performance",
+  "graphql",
+] as const
+const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack", "websocket" ] as const
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES] as const;
 
@@ -100,4 +95,5 @@ export default class Lists {
       }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
     ) as State;
   }
+
 }

@@ -2,7 +2,7 @@ import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { PlayerContext, MobilePlayerContext } from 'App/components/Session/playerContext';
 import { getRE } from 'App/utils';
 import TimeTable from 'Components/shared/DevTools/TimeTable';
 import { CloseButton, Input, NoContent, SlideModal } from 'UI';
@@ -10,6 +10,7 @@ import { CloseButton, Input, NoContent, SlideModal } from 'UI';
 import BottomBlock from '../BottomBlock';
 import GQLDetails from './GQLDetails';
 import { useTranslation } from 'react-i18next';
+import { IWebPlayerStore, IIOSPlayerStore } from 'App/player/create';
 
 export function renderStart(r) {
   return (
@@ -29,15 +30,125 @@ export function renderStart(r) {
   );
 }
 
-function renderDefaultStatus() {
-  return '2xx-3xx';
+interface Props {
+  onFilterChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  filteredList: Array<any>;
+  current: any;
+  renderName: (item: any) => React.ReactNode;
+  panelHeight: number;
+  closeModal: () => void;
+  currentIndex: number;
+  setCurrent: (item: any, index: number) => void;
+  lastActiveItem?: any;
+  onJump?: ({ time }: { time: number }) => void;
 }
 
-function GraphQL({ panelHeight }: { panelHeight: number }) {
-  const { player, store } = React.useContext(PlayerContext);
-  const { time, livePlay, tabStates, currentTab } = store.get();
-  const { graphqlList: list = [], graphqlListNow: listNow = [] } =
-    tabStates[currentTab];
+const GraphQLComponent = ({
+  onFilterChange,
+  filteredList,
+  current,
+  renderName,
+  panelHeight,
+  closeModal,
+  currentIndex,
+  setCurrent,
+  lastActiveItem,
+  onJump,
+}: Props) => {
+  return (
+    <React.Fragment>
+      <SlideModal
+        size="middle"
+        right
+        title={
+          <div className="flex justify-between">
+            <h1>GraphQL</h1>
+            <div className="flex items-center">
+              <CloseButton onClick={closeModal} size="18" className="ml-2" />
+            </div>
+          </div>
+        }
+        isDisplayed={current != null}
+        content={
+          current && (
+            <GQLDetails
+              gql={current}
+              first={currentIndex === 0}
+              last={currentIndex === filteredList.length - 1}
+            />
+          )
+        }
+        onClose={closeModal}
+      />
+      <BottomBlock>
+        <BottomBlock.Header>
+          <span className="font-semibold color-gray-medium mr-4">GraphQL</span>
+          <div className="flex items-center">
+            <Input
+              // className="input-small"
+              placeholder="Filter by name or type"
+              icon="search"
+              name="filter"
+              onChange={onFilterChange}
+            />
+          </div>
+        </BottomBlock.Header>
+        <BottomBlock.Content>
+          <NoContent
+            size="small"
+            title="No recordings found"
+            show={filteredList.length === 0}
+          >
+            <TimeTable
+              rows={filteredList}
+              onRowClick={setCurrent}
+              tableHeight={panelHeight - 102}
+              hoverable
+              activeIndex={lastActiveItem}
+              onJump={onJump}
+            >
+              {[
+                {
+                  label: 'Start',
+                  width: 90,
+                  render: renderStart,
+                },
+                {
+                  label: 'Type',
+                  dataKey: 'operationKind',
+                  width: 80,
+                },
+                {
+                  label: 'Name',
+                  width: 300,
+                  render: renderName,
+                },
+              ]}
+            </TimeTable>
+          </NoContent>
+        </BottomBlock.Content>
+      </BottomBlock>
+    </React.Fragment>
+  );
+};
+
+function GraphQL({ panelHeight, isMobile }: { panelHeight: number, isMobile?: boolean }) {
+  const context = isMobile ? MobilePlayerContext : PlayerContext;
+  // @ts-ignore
+  const { player, store } = React.useContext(context);
+  const { time, livePlay } = store.get();
+  let list: any[] = [];
+  let listNow: any[] = [];
+  if (isMobile) {
+    const { graphqlList = [], graphqlListNow = [] } = (store as unknown as IIOSPlayerStore).get();
+    list = graphqlList;
+    listNow = graphqlListNow;
+  } else {
+    const { tabStates, currentTab } = (store as unknown as IWebPlayerStore).get();
+    const { graphqlList = [], graphqlListNow = [] } = tabStates[currentTab];
+    list = graphqlList;
+    listNow = graphqlListNow;
+  }
 
   const defaultState = {
     filter: '',
@@ -123,81 +234,18 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
   const { current, currentIndex, filteredList, lastActiveItem } = state;
 
   return (
-    <>
-      <SlideModal
-        size="middle"
-        right
-        title={
-          <div className="flex justify-between">
-            <h1>{t('GraphQL')}</h1>
-            <div className="flex items-center">
-              <CloseButton onClick={closeModal} size="18" className="ml-2" />
-            </div>
-          </div>
-        }
-        isDisplayed={current != null}
-        content={
-          current && (
-            <GQLDetails
-              gql={current}
-              first={currentIndex === 0}
-              last={currentIndex === filteredList.length - 1}
-            />
-          )
-        }
-        onClose={closeModal}
-      />
-      <BottomBlock>
-        <BottomBlock.Header>
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('GraphQL')}
-          </span>
-          <div className="flex items-center">
-            <Input
-              // className="input-small"
-              placeholder={t('Filter by name or type')}
-              icon="search"
-              name="filter"
-              onChange={onFilterChange}
-            />
-          </div>
-        </BottomBlock.Header>
-        <BottomBlock.Content>
-          <NoContent
-            size="small"
-            title={t('No recordings found')}
-            show={filteredList.length === 0}
-          >
-            <TimeTable
-              rows={filteredList}
-              onRowClick={setCurrent}
-              tableHeight={panelHeight - 102}
-              hoverable
-              activeIndex={lastActiveItem}
-              onJump={onJump}
-            >
-              {[
-                {
-                  label: t('Start'),
-                  width: 90,
-                  render: renderStart,
-                },
-                {
-                  label: t('Type'),
-                  dataKey: 'operationKind',
-                  width: 80,
-                },
-                {
-                  label: t('Name'),
-                  width: 300,
-                  render: renderName,
-                },
-              ]}
-            </TimeTable>
-          </NoContent>
-        </BottomBlock.Content>
-      </BottomBlock>
-    </>
+    <GraphQLComponent
+      onFilterChange={onFilterChange}
+      filteredList={filteredList}
+      current={current}
+      renderName={renderName}
+      panelHeight={panelHeight}
+      closeModal={closeModal}
+      currentIndex={currentIndex}
+      setCurrent={setCurrent}
+      lastActiveItem={lastActiveItem}
+      onJump={onJump}
+    />
   );
 }
 
