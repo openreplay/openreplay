@@ -513,12 +513,14 @@ function WidgetChart(props: Props) {
     return <div>Unknown metric type</div>;
   }, [data, compData, enabledRows, _metric]);
 
+
+  const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE)
   return (
     <div ref={ref}>
       <Loader loading={loading} style={{ height: `240px` }}>
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
-          {props.isPreview && _metric.metricType === TIMESERIES ? (
+          {showTable ? (
             <WidgetDatatable
               defaultOpen={true}
               isTableView={_metric.viewType === 'table'}

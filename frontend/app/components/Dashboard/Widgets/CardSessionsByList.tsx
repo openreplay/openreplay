@@ -17,7 +17,7 @@ interface Props {
 function CardSessionsByList({ list, selected, paginated, onClickHandler = () => null, metric, total }: Props) {
   const { dashboardStore, metricStore, sessionStore } = useStore();
   const drillDownPeriod = dashboardStore.drillDownPeriod;
-  const params = { density: 70 };
+  const params = { density: 35 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
   const data = paginated ? metric?.data[0]?.values : list;

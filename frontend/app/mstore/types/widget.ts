@@ -85,7 +85,7 @@ export default class Widget {
     page: number = 1;
     limit: number = 20;
     thumbnail?: string;
-    params: any = {density: 70};
+    params: any = {density: 35};
     startType: string = 'start';
     startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
     excludes: FilterItem[] = [];
