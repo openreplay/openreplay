@@ -178,9 +178,9 @@ function FilterValue(props: Props) {
   return (
     <div
       id={`ignore-outside`}
-      className={cn('grid gap-3', {
+      className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
         'grid-cols-2': filter.hasSource,
-        'grid-cols-3': !filter.hasSource,
+         //'lg:grid-cols-3': !filter.hasSource,
       })}
     >
       {renderValueFiled(filter.value)}

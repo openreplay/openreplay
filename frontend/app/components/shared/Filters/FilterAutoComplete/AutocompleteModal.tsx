@@ -1,8 +1,38 @@
-import React, { useRef, useState } from 'react';
-import { Button, Checkbox, Input } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
+import { Button, Checkbox, Input, Tooltip } from 'antd';
 import cn from 'classnames';
 import { Loader } from 'UI';
 import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
+
+
+function TruncatedText({ text, maxWidth }: { text?: string; maxWidth?: string;}) {
+  const textRef = useRef<HTMLDivElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsTruncated(textRef.current.scrollWidth > textRef.current.offsetWidth);
+    }
+  }, [text]);
+
+  return (
+    <Tooltip title={isTruncated ? text : ''}>
+      <div
+        ref={textRef}
+        className="truncate"
+        style={{
+          maxWidth,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {text}
+      </div>
+    </Tooltip>
+  );
+}
+
 
 export function AutocompleteModal({
   onClose,
@@ -51,9 +81,9 @@ export function AutocompleteModal({
   };
 
   const applyQuery = () => {
-    const vals = commaQuery ? query.split(',').map(i => i.trim()) : [query];
+    const vals = commaQuery ? query.split(',').map((i) => i.trim()) : [query];
     onApply(vals);
-  }
+  };
 
   const sortedOptions = React.useMemo(() => {
     if (values[0] && values[0].length) {
@@ -67,20 +97,20 @@ export function AutocompleteModal({
 
   const queryBlocks = commaQuery ? query.split(',') : [query];
   const blocksAmount = queryBlocks.length;
-  // x,y and z
   const queryStr = React.useMemo(() => {
-    let str = ''
+    let str = '';
     queryBlocks.forEach((block, index) => {
       if (index === blocksAmount - 1 && blocksAmount > 1) {
-        str += ' and '
+        str += ' and ';
       }
-      str += `"${block.trim()}"`
+      str += `"${block.trim()}"`;
       if (index < blocksAmount - 2) {
-        str += ', '
+        str += ', ';
       }
-    })
+    });
     return str;
-  }, [query])
+  }, [query]);
+
   return (
     <OutsideClickDetectingDiv
       className={cn(
@@ -134,15 +164,18 @@ export function AutocompleteModal({
         </>
       </Loader>
       <div className={'flex gap-2 items-center pt-2'}>
-        <Button type={'primary'} onClick={applyValues} className='btn-apply-event-value'>
+        <Button type={'primary'} onClick={applyValues} className="btn-apply-event-value">
           Apply
         </Button>
-        <Button onClick={onClose} className='btn-cancel-event-value'>Cancel</Button>
+        <Button onClick={onClose} className="btn-cancel-event-value">
+          Cancel
+        </Button>
       </div>
     </OutsideClickDetectingDiv>
   );
 }
 
+// Props interface
 interface Props {
   value: string[];
   params?: any;
@@ -153,6 +186,7 @@ interface Props {
   mapValues?: (value: string) => string;
 }
 
+// AutoCompleteContainer component
 export function AutoCompleteContainer(props: Props) {
   const filterValueContainer = useRef<HTMLDivElement>(null);
   const [showValueModal, setShowValueModal] = useState(false);
@@ -177,40 +211,28 @@ export function AutoCompleteContainer(props: Props) {
       >
         {!isEmpty ? (
           <>
-            <div
-              className={'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'}
-            >
-              {props.mapValues
-                ? props.mapValues(props.value[0])
-                : props.value[0]}
-            </div>
-            {props.value.length > 1 ? (
+            <TruncatedText
+              text={props.mapValues ? props.mapValues(props.value[0]) : props.value[0]}
+              maxWidth="8rem"
+            />
+            {props.value.length > 1 && (
               <>
-                <span className='text-neutral-500/90	'>or</span>
-                {props.value.length === 2 ? (
-                  <div
-                    className={
-                      'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
-                    }
-                  >
-                    {props.mapValues
-                      ? props.mapValues(props.value[1])
-                      : props.value[1]}
-                  </div>
-                ) : (
-                  <div
-                    className={
-                      'rounded-xl bg-gray-lighter leading-none px-1 py-0.5'
-                    }
-                  >
-                    + {props.value.length - 1} More
-                  </div>
+                <span className="text-neutral-500/90">or</span>
+                <TruncatedText
+                  text={props.mapValues ? props.mapValues(props.value[1]) : props.value[1]}
+                  maxWidth="8rem"
+                />
+                {props.value.length > 2 && (
+                  <TruncatedText
+                    text={`+ ${props.value.length - 1} More`}
+                    maxWidth="8rem"
+                  />
                 )}
               </>
-            ) : null}
+            )}
           </>
         ) : (
-          <div className={'text-neutral-500/90'}>
+          <div className="text-neutral-500/90">
             {props.placeholder ? props.placeholder : 'Select value(s)'}
           </div>
         )}

@@ -144,7 +144,7 @@ export default function <Value extends ValueObject>({
 
   return (
     <Select
-      className={className}
+      className={`${className} btn-event-condition`}
       options={options}
       isSearchable={isSearchable}
       defaultValue={defaultSelected}

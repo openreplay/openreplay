@@ -69,10 +69,10 @@ function FilterItem(props: Props) {
 
   return (
     <div className="flex items-center w-full">
-      <div className="flex items-start w-full">
+      <div className="flex items-center w-full flex-wrap">
         {!isFilter && !hideIndex && filterIndex >= 0 && (
           <div
-            className="mt-1 flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter	 mr-2">
+            className="flex-shrink-0 w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-lighter	 mr-2">
             <span>{filterIndex + 1}</span>
           </div>
         )}
@@ -157,7 +157,7 @@ function FilterItem(props: Props) {
             type="text"
             onClick={props.onRemoveFilter}
             size="small"
-            className='btn-remove-step'
+            className='btn-remove-step mt-2'
           >
             <CircleMinus size={14} />
           </Button>

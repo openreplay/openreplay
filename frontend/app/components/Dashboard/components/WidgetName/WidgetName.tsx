@@ -60,9 +60,9 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip delay={200} title="Double click to edit" disabled={!canEdit}>
+        <Tooltip delay={200} title="Click to edit" disabled={!canEdit}>
           <div
-            onDoubleClick={() => setEditing(true)}
+            onClick={() => setEditing(true)}
             className={cn(
               "text-2xl h-8 flex items-center p-2 rounded-lg",
               canEdit && 'cursor-pointer select-none ps-2 hover:bg-teal/10'

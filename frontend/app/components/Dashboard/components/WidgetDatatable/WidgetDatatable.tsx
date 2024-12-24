@@ -1,4 +1,4 @@
-import { Button, Table } from 'antd';
+import { Button, Table, Divider } from 'antd';
 import type { TableProps } from 'antd';
 
 import { Eye, EyeOff } from 'lucide-react';
@@ -28,8 +28,7 @@ interface Props {
   enabledRows: string[];
   setEnabledRows: (rows: string[]) => void;
   defaultOpen?: boolean;
-  metric: { name: string };
-  isTableView?: boolean;
+  metric: { name: string; viewType: string };
 }
 
 function WidgetDatatable(props: Props) {
@@ -112,33 +111,28 @@ function WidgetDatatable(props: Props) {
     }),
     type: 'checkbox',
   };
+
+  const isTableOnlyMode = props.metric.viewType === 'table';
+
   return (
-    <div className={cn('relative -mx-4 px-2', !props.isTableView && showTable ? 'pt-6' : '')}>
-      {props.isTableView ? null : (
-        <>
-          <div
-            className={cn(
-              'absolute left-0 right-0 -top-3 border-t border-t-gray-lighter',
-              { hidden: !showTable }
-            )}
-          />
-          <div
-            className={'absolute -top-3 left-1/2 z-10'}
-            style={{ transform: 'translate(-50%, -50%)' }}
-          >
+    <div className={cn('relative -mx-4 px-2', showTable ? '' : '')}>
+      {!isTableOnlyMode && (
+        <div className='flex gap-2'>
+          <Divider style={{ borderColor: showTable ? '#efefef' : 'transparent', borderStyle:  'dashed'}} variant="dashed">
             <Button
               icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
               size={'small'}
               type={'default'}
               onClick={() => setShowTable(!showTable)}
-              className="btn-show-hide-table"
+              className='btn-show-hide-table'
             >
               {showTable ? 'Hide Table' : 'Show Table'}
             </Button>
-          </div>
-        </>
+          </Divider>
+        </div>
       )}
-      {showTable ? (
+
+      {(showTable || isTableOnlyMode) ? (
         <div className={'relative pb-2'}>
           <Table
             columns={tableProps}

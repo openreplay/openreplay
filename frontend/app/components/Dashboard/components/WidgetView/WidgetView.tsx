@@ -21,9 +21,11 @@ import {
 import CardUserList from '../CardUserList/CardUserList';
 import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
 import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
-import { Space } from 'antd';
+import { Space, Segmented, Tooltip } from 'antd';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import Widget from 'App/mstore/types/widget';
+import { LayoutPanelTop, LayoutPanelLeft } from 'lucide-react';
+import classNames from 'classnames';
 
 interface Props {
   history: any;
@@ -32,6 +34,7 @@ interface Props {
 }
 
 function WidgetView(props: Props) {
+  const [layout, setLayout] = useState('horizontal');
   const {
     match: {
       params: { siteId, dashboardId, metricId },
@@ -137,21 +140,57 @@ function WidgetView(props: Props) {
           }
         >
           <Space direction="vertical" className="w-full" size={14}>
-            <WidgetViewHeader onSave={onSave} undoChanges={undoChanges} />
-            <WidgetFormNew />
-            <WidgetPreview name={widget.name} isEditing={expanded} />
+          <WidgetViewHeader 
+              onSave={onSave} 
+              undoChanges={undoChanges}
+              layoutControl={
+                <Segmented
+                  size='small'
+                  value={layout}
+                  onChange={setLayout}
+                  options={[
+                    {
+                      value: 'horizontal',
+                      icon: (
+                        <Tooltip title="Horizontal Layout">
+                          <LayoutPanelLeft size={16} />
+                        </Tooltip>
+                      )
+                    },
+                    {
+                      value: 'vertical',
+                      icon: (
+                        <Tooltip title="Vertical Layout">
+                          <LayoutPanelTop size={16} />
+                        </Tooltip>
+                      )
+                    }
+                  ]}
+                />
+              }
+            />
+            <div className={layout === 'horizontal' ? 'flex gap-4' : ''}>
+              <div className={layout === 'horizontal' ? 'w-1/3 ' : 'w-full'}>
+                <WidgetFormNew />
+              </div>
+              <div className={layout === 'horizontal' ? 'w-2/3' : 'w-full'}>
+                <WidgetPreview name={widget.name} isEditing={expanded} />
 
-            {widget.metricOf !== FilterKey.SESSIONS &&
-              widget.metricOf !== FilterKey.ERRORS &&
-              (widget.metricType === TABLE ||
-              widget.metricType === TIMESERIES ||
-              widget.metricType === HEATMAP ||
-              widget.metricType === INSIGHTS ||
-              widget.metricType === FUNNEL ||
-              widget.metricType === USER_PATH ? (
-                <WidgetSessions />
-              ) : null)}
-            {widget.metricType === RETENTION && <CardUserList />}
+                    {widget.metricOf !== FilterKey.SESSIONS &&
+                    widget.metricOf !== FilterKey.ERRORS &&
+                    (widget.metricType === TABLE ||
+                    widget.metricType === TIMESERIES ||
+                    widget.metricType === HEATMAP ||
+                    widget.metricType === INSIGHTS ||
+                    widget.metricType === FUNNEL ||
+                    widget.metricType === USER_PATH ? (
+                      <WidgetSessions />
+                    ) : null)}
+                  {widget.metricType === RETENTION && <CardUserList />}
+              </div>
+            </div>
+
+            
           </Space>
         </NoContent>
       </div>

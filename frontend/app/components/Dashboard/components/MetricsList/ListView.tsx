@@ -4,6 +4,7 @@ import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import Widget from 'App/mstore/types/widget';
 import { LockOutlined, TeamOutlined } from "@ant-design/icons";
+import classNames from 'classnames';
 
 const { Text } = Typography;
 
@@ -172,16 +173,15 @@ const ListView: React.FC<Props> = (props: Props) => {
         <div className={'flex items-center justify-start gap-2'}>
           <div>Visibility</div>
           <Tooltip
-            title="Toggle to view your own or team's cards."
+            title="Toggle to view your or team's cards."
             placement="topRight"
           >
             <Switch
               checked={!showOwn}
-              onChange={() =>
-                toggleOwn()
-              }
+              onChange={() => toggleOwn()}
               checkedChildren={'Team'}
               unCheckedChildren={'Private'}
+              className={classNames( '!bg-tealx')}
             />
           </Tooltip>
         </div>

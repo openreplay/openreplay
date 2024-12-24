@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { Styles } from '../../common';
 import { NoContent } from 'UI';
 import { filtersMap } from 'Types/filter/newFilter';
 import { numberWithCommas } from 'App/utils';
+import CustomTooltip from '../CustomChartTooltip'; 
 
 interface Props {
   metric: {
@@ -22,6 +23,8 @@ interface Props {
 
 function CustomMetricPieChart(props: Props) {
   const { metric, data, onClick = () => null, inGrid } = props;
+
+  const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
 
   const onClickHandler = (event) => {
     if (event && !event.payload.group) {
@@ -41,19 +44,22 @@ function CustomMetricPieChart(props: Props) {
     }
   };
 
-    const getTotalForSeries = (series: string) => {
-        return data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0
-    }
-    const values = data.namesMap.map((k, i) => {
-        return {
-            name: k,
-            value: getTotalForSeries(k)
-        }
-    })
-    const highest = values.reduce(
-      (acc, curr) =>
-        acc.value > curr.value ? acc : curr,
-      { name: '', value: 0 });
+  const handleMouseOver = (name: string) => setHoveredSeries(name);
+  const handleMouseLeave = () => setHoveredSeries(null);
+
+  const getTotalForSeries = (series: string) =>
+    data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0;
+
+  const values = data.namesMap.map((k) => ({
+    name: k,
+    value: getTotalForSeries(k),
+  }));
+
+  const highest = values.reduce(
+    (acc, curr) => (acc.value > curr.value ? acc : curr),
+    { name: '', value: 0 }
+  );
+
   return (
     <NoContent
       size="small"
@@ -63,16 +69,21 @@ function CustomMetricPieChart(props: Props) {
     >
       <ResponsiveContainer height={240} width="100%">
         <PieChart>
-        <Legend iconType={'triangle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
+          <Legend iconType={'triangle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
+          <Tooltip
+            content={<CustomTooltip hoveredSeries={hoveredSeries} />}
+          />
           <Pie
             isAnimationActive={false}
             data={values}
             cx="50%"
-            cy="50%"
-            innerRadius={20}
-            outerRadius={60}
+            cy="60%"
+            innerRadius={60}
+            outerRadius={100}
             activeIndex={1}
             onClick={onClickHandler}
+            onMouseOver={({ name }) => handleMouseOver(name)}
+            onMouseLeave={handleMouseLeave}
             labelLine={({
               cx,
               cy,
@@ -89,9 +100,7 @@ function CustomMetricPieChart(props: Props) {
               let x1 = cx + radius2 * Math.cos(-midAngle * RADIAN);
               let y1 = cy + radius2 * Math.sin(-midAngle * RADIAN);
 
-              const percentage =
-                (value * 100) /
-                highest.value;
+              const percentage = (value * 100) / highest.value;
 
               if (percentage < 3) {
                 return null;
@@ -121,9 +130,7 @@ function CustomMetricPieChart(props: Props) {
               let radius = 20 + innerRadius + (outerRadius - innerRadius);
               let x = cx + radius * Math.cos(-midAngle * RADIAN);
               let y = cy + radius * Math.sin(-midAngle * RADIAN);
-              const percentage =
-                (value / highest.value) *
-                100;
+              const percentage = (value / highest.value) * 100;
               let name = values[index].name || 'Unidentified';
               name = name.length > 20 ? name.substring(0, 20) + '...' : name;
               if (percentage < 3) {
@@ -135,7 +142,6 @@ function CustomMetricPieChart(props: Props) {
                   y={y}
                   fontWeight="400"
                   fontSize="12px"
-                  // fontFamily="'Source Sans Pro', 'Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'"
                   textAnchor={x > cx ? 'start' : 'end'}
                   dominantBaseline="central"
                   fill="#666"
@@ -145,14 +151,13 @@ function CustomMetricPieChart(props: Props) {
               );
             }}
           >
-            {values && values.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={Styles.safeColors[index % Styles.safeColors.length]}
-                />
-              ))}
+            {values.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={Styles.safeColors[index % Styles.safeColors.length]}
+              />
+            ))}
           </Pie>
-          <Tooltip {...Styles.tooltip} />
         </PieChart>
       </ResponsiveContainer>
     </NoContent>

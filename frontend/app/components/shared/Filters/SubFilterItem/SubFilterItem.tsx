@@ -18,7 +18,7 @@ export default function SubFilterItem(props: Props) {
     }
 
     return (
-        <div className="flex items-center hover:bg-active-blue pb-4">
+        <div className="flex items-center hover:bg-active-blue">
             <div className="flex-shrink-0 py-1">{filter.label}</div>
             <FilterOperator
               options={filter.operatorOptions}

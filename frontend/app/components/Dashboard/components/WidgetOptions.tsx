@@ -24,7 +24,7 @@ import {
   Library,
   ChartColumnBig,
   ChartBarBig,
-} from 'lucide-react';
+}  from 'lucide-react';
 
 function WidgetOptions() {
   const { metricStore } = useStore();
@@ -32,6 +32,7 @@ function WidgetOptions() {
 
   const handleChange = (value: any) => {
     metric.update({ metricFormat: value });
+    metric.updateKey('hasChanged', true);
   };
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
@@ -54,12 +55,10 @@ function WidgetOptions() {
         </a>
       )}
 
-      {metric.metricType === TIMESERIES ? (
-        <SeriesTypeOptions metric={metric} />
-      ) : null}
+      {metric.metricType === TIMESERIES && <SeriesTypeOptions metric={metric} />}
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
-        metric.metricOf != FilterKey.USERID &&
-        metric.metricOf != FilterKey.ERRORS && (
+        metric.metricOf !== FilterKey.USERID &&
+        metric.metricOf !== FilterKey.ERRORS && (
           <Dropdown
             trigger={['click']}
             menu={{
@@ -70,6 +69,7 @@ function WidgetOptions() {
               ],
               onClick: (info: { key: string }) => handleChange(info.key),
             }}
+
           >
             <Button type="text" variant="text" size="small">
               {metric.metricFormat === 'sessionCount'
@@ -79,9 +79,8 @@ function WidgetOptions() {
             </Button>
           </Dropdown>
         )}
-      {hasViewTypes ? <WidgetViewTypeOptions metric={metric} /> : null}
-
-      {metric.metricType === HEATMAP ? <ClickMapRagePicker /> : null}
+      {hasViewTypes && <WidgetViewTypeOptions metric={metric} />}
+      {metric.metricType === HEATMAP && <ClickMapRagePicker />}
     </div>
   );
 }
@@ -114,7 +113,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         })),
         onClick: ({ key }: any) => {
           metric.updateKey('metricOf', key);
-          metric.updateKey('hasChanged', true)
+          metric.updateKey('hasChanged', true);
         },
       }}
     >
@@ -137,23 +136,22 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
     lineChart: 'Line',
-    barChart: 'Column',
     areaChart: 'Area',
+    barChart: 'Column',
+    progressChart: 'Vertical Bar',
+    columnChart: 'Horizontal Bar',
     pieChart: 'Pie',
-    progressChart: 'Bar',
-    table: 'Table',
     metric: 'Metric',
-    chart: 'Funnel Bar',
-    columnChart: 'Funnel Column',
+    table: 'Table',
   };
   const chartIcons = {
-    lineChart: <ChartLine size={16} strokeWidth={1} />,
+    lineChart: <ChartLine size={16} strokeWidth={1} /> ,
     barChart: <ChartColumn size={16} strokeWidth={1} />,
     areaChart: <ChartArea size={16} strokeWidth={1} />,
     pieChart: <ChartPie size={16} strokeWidth={1} />,
     progressChart: <ChartBar size={16} strokeWidth={1} />,
-    table: <Table size={16} strokeWidth={1} />,
     metric: <Hash size={16} strokeWidth={1} />,
+    table: <Table size={16} strokeWidth={1} />,
     // funnel specific
     columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
     chart: <ChartBarBig size={16} strokeWidth={1} />,
@@ -161,14 +159,14 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const allowedTypes = {
     [TIMESERIES]: [
       'lineChart',
-      'barChart',
       'areaChart',
-      'pieChart',
+      'barChart',
       'progressChart',
-      'table',
+      'pieChart',
       'metric',
+      'table',
     ],
-    [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
+    [FUNNEL]: ['lineChart', 'areaChart', 'barChart', 'progressChart', 'pieChart', 'metric', 'table'],
   };
   return (
     <Dropdown
@@ -179,10 +177,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           key,
           label: (
             <div className="flex gap-2 items-center">
-              <>
                 {chartIcons[key]}
                 <div>{chartTypes[key]}</div>
-              </>
             </div>
           ),
         })),
