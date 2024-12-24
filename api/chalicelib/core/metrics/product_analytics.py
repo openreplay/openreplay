@@ -403,7 +403,9 @@ WITH sub_sessions AS (SELECT session_id {sub_sessions_extra_projection}
 {"UNION ALL".join(projection_query)};"""
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
-                  "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
+                  # This is ignored because UI will take care of it
+                  # "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
+                  "eventThresholdNumberInGroup": 8,
                   **extra_values}
         query = cur.mogrify(pg_query, params)
         _now = time()
