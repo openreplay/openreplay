@@ -1,19 +1,23 @@
 import json
 
 import schemas
-from chalicelib.core import sourcemaps
-from chalicelib.core.errors.modules import sessions
+from chalicelib.core.sourcemaps import sourcemaps
+from chalicelib.core.sessions import sessions_search
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
+from typing import Optional, List, Union, Literal
 
 
-def get(error_id, family=False):
+def get(error_id, family=False) -> dict | List[dict]:
     if family:
         return get_batch([error_id])
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            "SELECT * FROM public.errors WHERE error_id = %(error_id)s LIMIT 1;",
+            """SELECT * 
+               FROM public.errors 
+               WHERE error_id = %(error_id)s 
+               LIMIT 1;""",
             {"error_id": error_id})
         cur.execute(query=query)
         result = cur.fetchone()
@@ -47,9 +51,10 @@ def get_batch(error_ids):
         return helper.list_to_camel_case(errors)
 
 
-def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
-                            endTime_arg_name="endDate", chart=False, step_size_name="step_size",
-                            project_key="project_id"):
+def __get_basic_constraints(platform: Optional[schemas.PlatformType] = None, time_constraint: bool = True,
+                            startTime_arg_name: str = "startDate", endTime_arg_name: str = "endDate",
+                            chart: bool = False, step_size_name: str = "step_size",
+                            project_key: Optional[str] = "project_id"):
     if project_key is None:
         ch_sub_query = []
     else:
@@ -102,8 +107,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                            error_status=data.status)
+        statuses = sessions_search.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+                                                   error_status=data.status)
         if len(statuses) == 0:
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
@@ -199,11 +204,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         else:
             if len(statuses) == 0:
                 query = cur.mogrify(
-                    """SELECT error_id,
-                            COALESCE((SELECT TRUE
-                                         FROM public.user_viewed_errors AS ve
-                                         WHERE errors.error_id = ve.error_id
-                                           AND ve.user_id = %(user_id)s LIMIT 1), FALSE) AS viewed
+                    """SELECT error_id
                         FROM public.errors 
                         WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
@@ -216,10 +217,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
 
     for r in rows:
         r.pop("full_count")
-        if r["error_id"] in statuses:
-            r["viewed"] = statuses[r["error_id"]]["viewed"]
-        else:
-            r["viewed"] = False
 
     return {
         'total': total,
@@ -314,41 +311,3 @@ def get_sessions(start_date, end_date, project_id, user_id, error_id):
         'total': total,
         'sessions': helper.list_to_camel_case(sessions_list)
     }
-
-
-ACTION_STATE = {
-    "unsolve": 'unresolved',
-    "solve": 'resolved',
-    "ignore": 'ignored'
-}
-
-
-def change_state(project_id, user_id, error_id, action):
-    errors = get(error_id, family=True)
-    print(len(errors))
-    status = ACTION_STATE.get(action)
-    if errors is None or len(errors) == 0:
-        return {"errors": ["error not found"]}
-    if errors[0]["status"] == status:
-        return {"errors": [f"error is already {status}"]}
-
-    if errors[0]["status"] == ACTION_STATE["solve"] and status == ACTION_STATE["ignore"]:
-        return {"errors": [f"state transition not permitted {errors[0]['status']} -> {status}"]}
-
-    params = {
-        "userId": user_id,
-        "error_ids": tuple([e["errorId"] for e in errors]),
-        "status": status}
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """UPDATE public.errors
-                SET status = %(status)s
-                WHERE error_id IN %(error_ids)s
-                RETURNING status""",
-            params)
-        cur.execute(query=query)
-        row = cur.fetchone()
-    if row is not None:
-        for e in errors:
-            e["status"] = row["status"]
-    return {"data": errors}

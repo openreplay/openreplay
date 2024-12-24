@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "analytics.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "analytics.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $key, $val := .Values.service.ports }}
+    - port: {{ $val }}
+      targetPort: {{ $key }}
+      protocol: TCP
+      name: {{ $key }}
+    {{- end}}
+  selector:
+    {{- include "analytics.selectorLabels" . | nindent 4 }}

@@ -108,9 +108,7 @@ rm -rf ./chalicelib/core/alerts/alerts_processor.py
 rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
 rm -rf ./chalicelib/core/alerts/alerts_listener.py
 rm -rf ./chalicelib/core/alerts/modules/helpers.py
-rm -rf /chalicelib/core/errors/modules
-rm -rf /chalicelib/core/errors/errors.py
-rm -rf /chalicelib/core/errors/errors_ch.py
-rm -rf /chalicelib/core/errors/errors_favorite.py
-rm -rf /chalicelib/core/errors/errors_viewed.py
-rm -rf /chalicelib/core/errors/errors_details.py
+rm -rf ./chalicelib/core/errors/modules
+rm -rf ./chalicelib/core/errors/errors.py
+rm -rf ./chalicelib/core/errors/errors_ch.py
+rm -rf ./chalicelib/core/errors/errors_details.py

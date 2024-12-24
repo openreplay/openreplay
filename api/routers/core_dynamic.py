@@ -10,7 +10,7 @@ import schemas
 from chalicelib.core import scope
 from chalicelib.core import assist, signup, feature_flags
 from chalicelib.core.metrics import heatmaps
-from chalicelib.core.errors import errors_favorite, errors_viewed, errors, errors_details
+from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_viewed, \
     sessions_assignments, unprocessed_sessions, sessions_search
 from chalicelib.core import tenants, users, projects, license
@@ -329,13 +329,10 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
 
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
-                       density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
+def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
+                       context: schemas.CurrentContext = Depends(OR_context)):
     data = errors_details.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                       **{"density24": density24, "density30": density30})
-    if data.get("data") is not None:
-        background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
-                                  error_id=errorId)
     return data
 
 
@@ -350,22 +347,15 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
-def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
-                              endDate: int = TimeUTC.now(),
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    if action == "favorite":
-        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
-    elif action == "sessions":
-        start_date = startDate
-        end_date = endDate
-        return {
-            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                        start_date=start_date, end_date=end_date)}
-    elif action in list(errors.ACTION_STATE.keys()):
-        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
-    else:
-        return {"errors": ["undefined action"]}
+@app.get('/{projectId}/errors/{errorId}/sessions', tags=["errors"])
+def get_errors_sessions(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
+                        endDate: int = TimeUTC.now(),
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    start_date = startDate
+    end_date = endDate
+    return {
+        "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                    start_date=start_date, end_date=end_date)}
 
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])

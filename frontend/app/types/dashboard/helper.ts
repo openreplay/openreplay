@@ -16,7 +16,7 @@ export const getTimeString = (ts, period, density,) => {
       return weekdays[ date.getDay() ];
     } else {
       const isPM = date.getHours() >= 12;
-      return `${ isPM ? date.getHours() - 12 : date.getHours() }:${ startWithZero(date.getMinutes()) } ${isPM? 'pm' : 'am'}`;
+      return `${weekdays[ date.getDay() ]} ${ isPM ? date.getHours() - 12 : date.getHours() }:${ startWithZero(date.getMinutes()) } ${isPM? 'pm' : 'am'}`;
     }
   }
   return `${ date.getDate() }/${ startWithZero(date.getMonth() + 1) } `;
