@@ -118,7 +118,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   {/* Start Type Selector */}
   <span className='font-medium'>User journeys with: </span>
   
-  <div className='flex flex-wrap gap-2 w-full items-center'>
+  <div className='flex sm:flex-wrap lg:flex-nowrap gap-2 items-start'>
   <Select
     className="w-36 rounded-xl"
     name="startType"
@@ -132,7 +132,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     size="small"
   />
 
-  <span className="text-neutral-400">showing</span>
+  <span className="text-neutral-400 mt-.5">showing</span>
 
   {/* Metric Value Selector */}
   <Select
@@ -155,7 +155,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
 </div>
       </Form.Item>
       <div className='flex items-center'>
-      <Form.Item label={metric.startType === 'start' ? 'Specify Start Point' : 'Specify End Point'} className="m0-0 font-medium p-0">
+      <Form.Item label={metric.startType === 'start' ? 'Specify Start Point' : 'Specify End Point'} className="m0-0 font-medium p-0 h-fit">
         <span className='font-normal'>
         <FilterItem
           hideDelete
@@ -184,6 +184,7 @@ const InsightsFilter = observer(({ metric, writeOption }: any) => {
             onChange={writeOption}
             isMulti
             placeholder="All Categories"
+            allowClear
           />
         </Space>
       </Form.Item>
