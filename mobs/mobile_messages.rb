@@ -168,3 +168,13 @@ message 111, 'MobileIssueEvent', :replayer => true do
   string 'Context'
   string 'Payload'
 end
+
+message 89, 'MobileGraphQL', :replayer => true do
+    uint 'Timestamp'
+    uint 'Length'
+    string 'OperationKind'
+    string 'OperationName'
+    string 'Variables'
+    string 'Response'
+    uint 'Duration'
+end

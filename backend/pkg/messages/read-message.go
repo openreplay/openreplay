@@ -2202,6 +2202,33 @@ func DecodeMobileIssueEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeMobileGraphQL(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MobileGraphQL{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Length, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.OperationKind, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.OperationName, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Variables, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	switch t {
 	case 0:
@@ -2448,6 +2475,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeMobilePerformanceAggregated(reader)
 	case 111:
 		return DecodeMobileIssueEvent(reader)
+	case 89:
+		return DecodeMobileGraphQL(reader)
 	}
 	return nil, fmt.Errorf("unknown message code: %v", t)
 }

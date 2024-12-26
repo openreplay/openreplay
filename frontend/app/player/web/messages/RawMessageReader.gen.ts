@@ -1109,6 +1109,26 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 89: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const length = this.readUint(); if (length === null) { return resetPointer() }
+      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
+      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
+      const variables = this.readString(); if (variables === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      return {
+        tp: MType.MobileGraphQl,
+        timestamp,
+        length,
+        operationKind,
+        operationName,
+        variables,
+        response,
+        duration,
+      };
+    }
+
     default:
       throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
     }

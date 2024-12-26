@@ -86,4 +86,5 @@ export const TP_MAP = {
   105: MType.MobileNetworkCall,
   106: MType.MobileSwipeEvent,
   111: MType.MobileIssueEvent,
+  89: MType.MobileGraphQl,
 } as const

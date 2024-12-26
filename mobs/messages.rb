@@ -667,4 +667,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 87, 88, 89
+# FREE 2, 34, 35, 36, 65, 85, 86, 87, 88
