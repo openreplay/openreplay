@@ -20,8 +20,13 @@ interface DataNode {
   avgTimeFromPrevious: any,
   id: string,
 }
-export function filterMinorPaths(data: { links: Link[], nodes: DataNode[] }, startNode: number = 0): Data {
-  const original: { links: Link[], nodes: DataNode[] } = JSON.parse(JSON.stringify(data));
+
+interface DataType { links: Link[], nodes: DataNode[] }
+export function filterMinorPaths(data: DataType, startNode: number = 0): DataType {
+  if (!data.nodes.length || !data.links.length) {
+    return data;
+  }
+  const original: DataType = JSON.parse(JSON.stringify(data));
   const eventType = data.nodes[startNode].eventType;
   const sourceLinks: Map<number, Link[]> = new Map();
   for (const link of original.links) {

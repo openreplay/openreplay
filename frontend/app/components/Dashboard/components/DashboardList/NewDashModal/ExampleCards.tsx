@@ -100,7 +100,7 @@ export const CARD_LIST: CardType[] = [
     example: HeatmapsExample
   },
   {
-    title: 'Path Finder',
+    title: 'Journey',
     key: USER_PATH,
     cardType: USER_PATH,
     category: CARD_CATEGORIES[0].key,
