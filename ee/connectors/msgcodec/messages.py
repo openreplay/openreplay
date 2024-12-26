@@ -1227,3 +1227,16 @@ class MobileIssueEvent(Message):
         self.payload = payload
 
 
+class MobileGraphQL(Message):
+    __id__ = 89
+
+    def __init__(self, timestamp, length, operation_kind, operation_name, variables, response, duration):
+        self.timestamp = timestamp
+        self.length = length
+        self.operation_kind = operation_kind
+        self.operation_name = operation_name
+        self.variables = variables
+        self.response = response
+        self.duration = duration
+
+

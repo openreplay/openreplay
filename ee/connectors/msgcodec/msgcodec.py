@@ -1070,3 +1070,14 @@ class MessageCodec(Codec):
                 payload=self.read_string(reader)
             )
 
+        if message_id == 89:
+            return MobileGraphQL(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                operation_kind=self.read_string(reader),
+                operation_name=self.read_string(reader),
+                variables=self.read_string(reader),
+                response=self.read_string(reader),
+                duration=self.read_uint(reader)
+            )
+
