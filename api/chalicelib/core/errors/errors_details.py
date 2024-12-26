@@ -2,7 +2,7 @@ from chalicelib.core.errors import errors_legacy as errors
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
+from chalicelib.utils.metrics_helper import get_step_size
 
 
 def __flatten_sort_key_count_version(data, merge_nested=False):
@@ -67,9 +67,9 @@ def get_details(project_id, error_id, user_id, **data):
         data["startDate30"] = TimeUTC.now(-30)
         data["endDate30"] = TimeUTC.now()
         density24 = int(data.get("density24", 24))
-        step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24, factor=1)
+        step_size24 = get_step_size(data["startDate24"], data["endDate24"], density24, factor=1)
         density30 = int(data.get("density30", 30))
-        step_size30 = __get_step_size(data["startDate30"], data["endDate30"], density30, factor=1)
+        step_size30 = get_step_size(data["startDate30"], data["endDate30"], density30, factor=1)
         params = {
             "startDate24": data['startDate24'],
             "endDate24": data['endDate24'],
