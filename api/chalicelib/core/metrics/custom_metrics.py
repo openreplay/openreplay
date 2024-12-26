@@ -451,6 +451,8 @@ def delete_card(project_id, metric_id, user_id):
 
 
 def __get_global_attributes(row):
+    if row is None or row.get("cardInfo") is None:
+        return row
     card_info = row.get("cardInfo", {})
     row["compareTo"] = card_info.get("compareTo", [])
     return row
