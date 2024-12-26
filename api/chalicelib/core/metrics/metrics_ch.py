@@ -6,7 +6,7 @@ from chalicelib.utils import ch_client
 from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
+from chalicelib.utils.metrics_helper import get_step_size
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def __add_missing_keys(original, complete):
 def __complete_missing_steps(start_time, end_time, density, neutral, rows, time_key="timestamp", time_coefficient=1000):
     if len(rows) == density:
         return rows
-    step = __get_step_size(start_time, end_time, density, decimal=True)
+    step = get_step_size(start_time, end_time, density, decimal=True)
     optimal = [(int(i * time_coefficient), int((i + step) * time_coefficient)) for i in
                __frange(start_time // time_coefficient, end_time // time_coefficient, step)]
     result = []
@@ -150,7 +150,7 @@ def __get_generic_constraint(data, table_name):
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(),
                            density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
     meta_condition = __get_meta_constraint(args)
@@ -211,7 +211,7 @@ def __merge_rows_with_neutral(rows, neutral):
 
 def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                      endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
     ch_sub_query.append("requests.event_type='REQUEST'")
     ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
@@ -306,7 +306,7 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True,
                                                  data=args)
     ch_sub_query_chart.append("(events.event_type = 'REQUEST' OR events.event_type = 'ERROR')")
@@ -339,7 +339,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
 
 def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="errors", round_start=True, data=args)
     ch_sub_query_chart.append("errors.event_type='ERROR'")
     ch_sub_query_chart.append("errors.source == 'js_exception'")
@@ -379,7 +379,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
 
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
     ch_sub_query.append("requests.event_type='REQUEST'")
     ch_sub_query.append("requests.success = 0")
@@ -470,7 +470,7 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
 
 
 def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, endTimestamp, density=20, **args):
-    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
+    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
     ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
@@ -497,7 +497,7 @@ def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, 
 
 def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                    endTimestamp=TimeUTC.now(), value=None, density=20, **args):
-    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
+    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
     ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
@@ -538,7 +538,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
 def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(),
                      density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density)
+    step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
     meta_condition = __get_meta_constraint(args)
