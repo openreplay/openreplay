@@ -104,7 +104,16 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
     status: Int,
     duration: Double
   ) {
-    val durationULong = duration.toLong().toULong()
-    OpenReplay.networkRequest(url, method, requestJSON, responseJSON, status, durationULong)
+    // val durationLong: Long = duration.toLong()
+    val durationULong: ULong = duration.toLong().toULong()
+
+    OpenReplay.networkRequest(
+      url = url,
+      method = method,
+      requestJSON = requestJSON,
+      responseJSON = responseJSON,
+      status = status,
+      duration = durationULong
+    )
   }
 }

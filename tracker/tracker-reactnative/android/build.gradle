@@ -58,7 +58,6 @@ android {
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
-
   }
 
   buildTypes {
@@ -91,16 +90,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation("com.facebook.react:react-native:0.20.1")
   implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-  implementation("com.github.openreplay:android-tracker:v1.1.4")
+  implementation("com.github.openreplay:android-tracker:v1.1.5")
 }
-
-//allprojects {
-//  repositories {
-//    maven { url = uri("https://jitpack.io") }
-//    google()
-//    mavenCentral()
-//  }
-//}
-
 
 
