@@ -131,6 +131,7 @@ export default class Widget {
     }
 
     addSeries() {
+        this.hasChanged = true;
         const series = new FilterSeries();
         series.name = 'Series ' + (this.series.length + 1);
         this.series.push(series);
