@@ -22,6 +22,8 @@ RCT_EXTERN_METHOD(setUserID:(NSString *)userID)
 
 RCT_EXTERN_METHOD(userAnonymousID:(NSString *)userID)
 
+RCT_EXTERN_METHOD(sendMessage:(NSString *)msgType msg:(NSString *)msg)
+
 RCT_EXTERN_METHOD(networkRequest:(NSString *)url
                            method:(NSString *)method
                       requestJSON:(NSString *)requestJSON
@@ -33,7 +35,5 @@ RCT_EXTERN_METHOD(networkRequest:(NSString *)url
 {
   return NO;
 }
-
-RCT_EXTERN_METHOD(sendMessage:(NSString *)msgType msg:(NSString *)msg)
 
 @end

@@ -46,6 +46,33 @@ export default function App() {
       });
   };
 
+  const gqlTest = () => {
+    const appWrapper = {
+      active: () => true,
+      send: (gqlMsg) => {
+        const type = 'gql';
+        const msg = JSON.stringify({
+          operationKind: gqlMsg[1],
+          operationName: gqlMsg[2],
+          variables: gqlMsg[3],
+          response: gqlMsg[4],
+          duration: gqlMsg[5],
+        });
+        Openreplay.sendCustomMessage(type, msg);
+      },
+    };
+    // just a mock
+    const mockMsg = [
+      'message id',
+      'query',
+      'operationName',
+      { data: 'some imporatnt data' },
+      { response: 'some response data' },
+      100,
+    ];
+    appWrapper.send(mockMsg);
+  };
+
   return (
     <Openreplay.ORTouchTrackingView style={styles.container}>
       <View style={styles.container}>
@@ -67,6 +94,10 @@ export default function App() {
 
         <TouchableOpacity style={styles.button} onPress={apiTest}>
           <Text>Request</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={gqlTest}>
+          <Text>GraphQL</Text>
         </TouchableOpacity>
 
         <Openreplay.ORTrackedInput

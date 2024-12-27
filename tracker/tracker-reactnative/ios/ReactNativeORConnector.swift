@@ -83,6 +83,6 @@ public class ORTrackerConnector: NSObject {
 
     @objc(sendMessage:msg:)
     open func sendMessage(_ msgType: String, msg: String) {
-        Openreplay.shared.sendMessage(msgType: msgType, msg: msg)
+        Openreplay.shared.sendMessage(msgType, msg)
     }
 }

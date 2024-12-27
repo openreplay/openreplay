@@ -17,6 +17,8 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
+console.log(Object.keys(ORTrackerConnector));
+
 interface Options {
   crashes?: boolean;
   analytics?: boolean;
@@ -82,12 +84,9 @@ export function setUserID(userID: string) {
   ORTrackerConnector.setUserID(userID);
 }
 
-export function sendMessage(type: string, msg: string) {
-  ORTrackerConnector.sendMessage(type, msg);
-}
-
 /**
- * Using with gql plugin:
+ * Can be used with OR gql (Relay/Apollo) plugin:
+ * ```
  * const appWrapper = {
  *   active: () => true,
  *   send: (gqlMsg) => {
@@ -99,10 +98,15 @@ export function sendMessage(type: string, msg: string) {
  *       response: gqlMsg[4],
  *       duration: gqlMsg[5],
  *     })
- *     ORTrackerConnector.sendMessage(type, msg);
+ *     sendMessage(type, msg);
  *   }
  * }
+ * ```
  * */
+export function sendMessage(type: string, msg: string) {
+  ORTrackerConnector.sendMessage(type, msg);
+}
+
 
 let patched = false;
 const patchNetwork = (
@@ -118,6 +122,7 @@ const patchNetwork = (
 
 export default {
   tracker: ORTrackerConnector as IORTrackerConnector,
+  sendCustomMessage: sendMessage,
   patchNetwork: patchNetwork,
   ORTouchTrackingView: RnTrackerTouchTrackingView,
   ORTrackedInput: ORTrackedInput,
