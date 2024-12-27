@@ -14,6 +14,7 @@ function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
+  const activeTab = searchStore.activeTab;
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
@@ -41,7 +42,7 @@ function SessionsTabOverview() {
             placeholder={'ask session ai'}
           />
         ) : null}
-        <SessionHeader />
+        {activeTab.type !== 'bookmarks' && <SessionHeader />}
         <div className="border-b" />
         <LatestSessionsMessage />
         <SessionList />

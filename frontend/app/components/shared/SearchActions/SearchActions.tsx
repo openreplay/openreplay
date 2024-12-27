@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useMemo } from "react";
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import SaveFilterButton from 'Shared/SaveFilterButton';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import TagList from '../MainSearchBar/components/TagList';
 import SavedSearch from '../SavedSearch/SavedSearch';
 import { Button } from 'antd';
+import AiSessionSearchField from 'Shared/SessionFilters/AiSessionSearchField';
 
 function SearchActions() {
-  const { aiFiltersStore, searchStore, customFieldStore } = useStore();
+  const { aiFiltersStore, searchStore, customFieldStore, userStore } = useStore();
   const appliedFilter = searchStore.instance;
+  const activeTab = searchStore.activeTab;
+  const isEnterprise = userStore.isEnterprise;
   const metaLoading = customFieldStore.isLoading;
   const hasEvents =
     appliedFilter.filters.filter((i: any) => i.isEvent).length > 0;
@@ -19,12 +20,23 @@ function SearchActions() {
   const hasSavedSearch = savedSearch && savedSearch.exists();
   const hasSearch = hasFilters || hasSavedSearch;
 
+  const title = useMemo(() => {
+    if (activeTab && activeTab.type === 'bookmarks') {
+      return isEnterprise ? 'Vault' : 'Bookmarks';
+    }
+    return 'Sessions';
+  }, [activeTab?.type, isEnterprise]);
+
+  // @ts-ignore
+  const originStr = window.env.ORIGIN || window.location.origin;
+  const isSaas = /app\.openreplay\.com/.test(originStr);
+  const showAiField = isSaas && activeTab.type === 'sessions';
   const showPanel = hasEvents || hasFilters || aiFiltersStore.isLoading;
   return !metaLoading ? (
     <div className={'mb-2'}>
       <div className={'flex items-center gap-2 w-full'}>
-        <TagList />
-        <SavedSearch />
+        <h2 className="text-2xl capitalize mr-4">{title}</h2>
+        {isSaas && showAiField ? <AiSessionSearchField /> : null}
         <div className={'ml-auto'} />
         <Button
           type="link"
@@ -32,9 +44,9 @@ function SearchActions() {
           onClick={() => searchStore.clearSearch()}
           className="font-medium"
         >
-          Clear Search
+          Clear
         </Button>
-        <SaveFilterButton disabled={!hasEvents && !hasFilters} />
+        <SavedSearch />
       </div>
       {showPanel ? (
         <>
