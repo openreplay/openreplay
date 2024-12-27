@@ -5,7 +5,7 @@ from chalicelib.core import metadata
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
+from chalicelib.utils.metrics_helper import get_step_size
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def __get_meta_constraint(project_id, data):
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(),
                            density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
@@ -146,7 +146,7 @@ def __merge_rows_with_neutral(rows, neutral):
 
 def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                      endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="requests", time_column="timestamp", project=False,
@@ -244,7 +244,7 @@ def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(d
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
@@ -307,7 +307,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
 
 def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
@@ -388,7 +388,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
 
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
@@ -475,7 +475,7 @@ def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTi
 
 
 def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
-    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
@@ -506,7 +506,7 @@ def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
 
 def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                    endTimestamp=TimeUTC.now(), value=None, density=20, **args):
-    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -550,7 +550,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
 def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(),
                      density=7, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
+    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)

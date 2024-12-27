@@ -105,9 +105,9 @@ def get_details(project_id, error_id, user_id, **data):
         data["endDate30"] = TimeUTC.now()
 
         density24 = int(data.get("density24", 24))
-        step_size24 = errors.__get_step_size(data["startDate24"], data["endDate24"], density24)
+        step_size24 = errors.get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
-        step_size30 = errors.__get_step_size(data["startDate30"], data["endDate30"], density30)
+        step_size30 = errors.get_step_size(data["startDate30"], data["endDate30"], density30)
         params = {
             "startDate24": data['startDate24'],
             "endDate24": data['endDate24'],

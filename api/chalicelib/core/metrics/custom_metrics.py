@@ -208,11 +208,15 @@ def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.Card
     return supported.get(data.metric_type, not_supported)()
 
 
+def __get_global_card_info(data: schemas.CardSchema):
+    r = {"hideExcess": data.hide_excess, "compareTo": data.compare_to}
+    return r
+
+
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "excludes": [e.model_dump() for e in data.excludes],
-         "hideExcess": data.hide_excess}
+         "excludes": [e.model_dump() for e in data.excludes]}
     return r
 
 
@@ -237,8 +241,10 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
                   "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
+        params["card_info"] = __get_global_card_info(data=data)
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-            params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+            params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
+        params["card_info"] = json.dumps(params["card_info"])
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
@@ -298,15 +304,17 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
         if i not in u_series_ids:
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
-    params["card_info"] = None
     params["session_data"] = json.dumps(metric["data"])
+    params["card_info"] = __get_global_card_info(data=data)
     if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-        params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+        params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
     elif data.metric_type == schemas.MetricType.HEAT_MAP:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})
         elif metric.get("data") and metric["data"].get("sessionId"):
             params["session_data"] = json.dumps({"sessionId": metric["data"]["sessionId"]})
+
+    params["card_info"] = json.dumps(params["card_info"])
 
     with pg_client.PostgresClient() as cur:
         sub_queries = []
@@ -442,8 +450,16 @@ def delete_card(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
+def __get_global_attributes(row):
+    if row is None or row.get("cardInfo") is None:
+        return row
+    card_info = row.get("cardInfo", {})
+    row["compareTo"] = card_info.get("compareTo", [])
+    return row
+
+
 def __get_path_analysis_attributes(row):
-    card_info = row.pop("cardInfo")
+    card_info = row.get("cardInfo", {})
     row["excludes"] = card_info.get("excludes", [])
     row["startPoint"] = card_info.get("startPoint", [])
     row["startType"] = card_info.get("startType", "start")
@@ -496,6 +512,8 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         row = helper.dict_to_camel_case(row)
         if row["metricType"] == schemas.MetricType.PATH_ANALYSIS:
             row = __get_path_analysis_attributes(row=row)
+        row = __get_global_attributes(row=row)
+        row.pop("cardInfo")
     return row
 
 

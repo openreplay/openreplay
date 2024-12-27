@@ -1,12 +1,12 @@
 import json
+from typing import Optional, List
 
 import schemas
-from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.core.sessions import sessions_search
+from chalicelib.core.sourcemaps import sourcemaps
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
-from typing import Optional, List, Union, Literal
+from chalicelib.utils.metrics_helper import get_step_size
 
 
 def get(error_id, family=False) -> dict | List[dict]:
@@ -113,7 +113,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density, factor=1)
+        step_size = get_step_size(data.startTimestamp, data.endTimestamp, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
