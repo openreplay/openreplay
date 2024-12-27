@@ -64,7 +64,7 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
-  const [enabledRows, setEnabledRows] = useState([]);
+  const [enabledRows, setEnabledRows] = useState<string[]>([]);
   const isTableWidget =
     _metric.metricType === 'table' && _metric.viewType === 'table';
   const isPieChart =
@@ -524,7 +524,6 @@ function WidgetChart(props: Props) {
             <WidgetDatatable
               inBuilder={props.isPreview}
               defaultOpen={true}
-              isTableView={_metric.viewType === 'table'}
               data={data}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}
