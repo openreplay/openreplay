@@ -213,7 +213,7 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
 }
 
 const AddCardSection = observer(
-  ({ inCards }: { inCards?: boolean }) => {
+  ({ inCards, handleOpenChange }: { inCards?: boolean, handleOpenChange?: (isOpen: boolean) => void }) => {
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
     const [tab, setTab] = React.useState('product_analytics');
@@ -238,6 +238,7 @@ const AddCardSection = observer(
           },
         }
       );
+      handleOpenChange?.(false);
     };
     return (
       <div

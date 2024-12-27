@@ -522,6 +522,7 @@ function WidgetChart(props: Props) {
           {renderChart()}
           {showTable ? (
             <WidgetDatatable
+              inBuilder={props.isPreview}
               defaultOpen={true}
               isTableView={_metric.viewType === 'table'}
               data={data}

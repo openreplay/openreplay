@@ -29,6 +29,7 @@ interface Props {
   setEnabledRows: (rows: string[]) => void;
   defaultOpen?: boolean;
   metric: { name: string; viewType: string };
+  inBuilder?: boolean;
 }
 
 function WidgetDatatable(props: Props) {
@@ -117,14 +118,20 @@ function WidgetDatatable(props: Props) {
   return (
     <div className={cn('relative -mx-4 px-2', showTable ? '' : '')}>
       {!isTableOnlyMode && (
-        <div className='flex gap-2'>
-          <Divider style={{ borderColor: showTable ? '#efefef' : 'transparent', borderStyle:  'dashed'}} variant="dashed">
+        <div className="flex gap-2">
+          <Divider
+            style={{
+              borderColor: showTable ? '#efefef' : 'transparent',
+              borderStyle: 'dashed',
+            }}
+            variant="dashed"
+          >
             <Button
               icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
               size={'small'}
               type={'default'}
               onClick={() => setShowTable(!showTable)}
-              className='btn-show-hide-table'
+              className="btn-show-hide-table"
             >
               {showTable ? 'Hide Table' : 'Show Table'}
             </Button>
@@ -132,7 +139,7 @@ function WidgetDatatable(props: Props) {
         </div>
       )}
 
-      {(showTable || isTableOnlyMode) ? (
+      {showTable || isTableOnlyMode ? (
         <div className={'relative pb-2'}>
           <Table
             columns={tableProps}
@@ -142,11 +149,13 @@ function WidgetDatatable(props: Props) {
             size={'small'}
             scroll={{ x: 'max-content' }}
           />
-          <TableExporter
-            tableData={tableData}
-            tableColumns={tableProps}
-            filename={props.metric.name}
-          />
+          {props.inBuilder ? (
+            <TableExporter
+              tableData={tableData}
+              tableColumns={tableProps}
+              filename={props.metric.name}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>
