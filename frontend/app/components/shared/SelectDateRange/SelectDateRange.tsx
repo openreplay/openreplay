@@ -27,6 +27,7 @@ interface Props {
   compPeriod?: any | null;
   onChangeComparison?: (data: any) => void;
   comparison?: boolean;
+  updateInstComparison?: (range: [start: string, end?: string] | null) => void;
   [x: string]: any;
 }
 
@@ -58,12 +59,16 @@ function SelectDateRange(props: Props) {
       return;
     }
     if (props.comparison && props.onChangeComparison) {
-      if (!value) return props.onChangeComparison(null);
+      if (!value) {
+        props.updateInstComparison?.(null)
+        return props.onChangeComparison(null);
+      }
       const newPeriod = new Period({
         start: props.period.start,
         end: props.period.end,
         substract: value,
       });
+      props.updateInstComparison?.([value])
       props.onChangeComparison(newPeriod);
       return;
     } else {
@@ -85,6 +90,7 @@ function SelectDateRange(props: Props) {
         end,
         rangeName: CUSTOM_RANGE,
       });
+      props.updateInstComparison?.([start.toString(), end.toString()])
       props.onChangeComparison(compRange);
     } else {
       const range = new Period({

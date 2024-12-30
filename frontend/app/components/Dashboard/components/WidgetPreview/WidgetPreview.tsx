@@ -22,6 +22,8 @@ function WidgetPreview(props: Props) {
   const hasGranularSettings = [TIMESERIES, FUNNEL].includes(metric.metricType)
   const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(metric.viewType);
   const hasComparison = metric.metricType === FUNNEL || ['lineChart', 'barChart', 'table', 'progressChart'].includes(metric.viewType);
+  // [rangeStart, rangeEnd] or [period_name] -- have to check options
+  const presetComparison = metric.compareTo;
   return (
     <>
       <div
@@ -33,6 +35,7 @@ function WidgetPreview(props: Props) {
              hasGranularSettings={hasGranularSettings}
              hasGranularity={hasGranularity}
              hasComparison={hasComparison}
+             presetComparison={presetComparison}
           />
           <div className="ml-auto">
             <WidgetOptions />

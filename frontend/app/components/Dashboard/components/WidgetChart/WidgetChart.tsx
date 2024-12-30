@@ -72,6 +72,7 @@ function WidgetChart(props: Props) {
 
   useEffect(() => {
     return () => {
+      dashboardStore.setComparisonPeriod(null, _metric.metricId);
       dashboardStore.resetDrillDownFilter();
     };
   }, []);
@@ -164,11 +165,11 @@ function WidgetChart(props: Props) {
       !isSaved ? drillDownPeriod : period
     );
   };
-  const loadComparisonData = () => {
-    if (!inView) return;
-    if (!dashboardStore.comparisonPeriod) return setCompData(null);
 
-    const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
+  const loadComparisonData = () => {
+    if (!dashboardStore.comparisonPeriods[_metric.metricId]) return setCompData(null);
+
+    const timestamps = dashboardStore.comparisonPeriods[_metric.metricId].toTimestamps();
     // TODO: remove after backend adds support for more view types
     const payload = {
       ...params,
@@ -180,19 +181,15 @@ function WidgetChart(props: Props) {
       _metric,
       payload,
       isSaved,
-      dashboardStore.comparisonPeriod,
+      dashboardStore.comparisonPeriods[_metric.metricId],
       true
     );
   };
   useEffect(() => {
-    if (!dashboardStore.comparisonPeriod) {
-      setCompData(null);
-      return;
-    }
+    if (!inView || !props.isPreview) return;
     loadComparisonData();
-  }, [dashboardStore.comparisonPeriod]);
+  }, [dashboardStore.comparisonPeriods[_metric.metricId], _metric.metricId, inView, props.isPreview]);
   useEffect(() => {
-    dashboardStore.setComparisonPeriod(null)
     setCompData(null);
     _metric.updateKey('page', 1);
     _metric.updateKey()
@@ -282,6 +279,7 @@ function WidgetChart(props: Props) {
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
+
       if (viewType === 'lineChart') {
         return (
           <div className='pt-3'>
