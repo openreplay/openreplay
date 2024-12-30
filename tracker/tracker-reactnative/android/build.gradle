@@ -90,7 +90,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation("com.facebook.react:react-native:0.20.1")
   implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-  implementation("com.github.openreplay:android-tracker:v1.1.6")
+  implementation("com.github.openreplay:android-tracker:v1.1.7")
 }
 
 
