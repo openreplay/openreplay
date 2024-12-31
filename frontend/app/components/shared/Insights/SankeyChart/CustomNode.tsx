@@ -17,10 +17,18 @@ const CustomNode: React.FC<CustomNodeProps> = (props) => {
     const {x, y, width, height, index, payload, containerWidth} = props;
     const isOut = x + width + 6 > containerWidth;
     const isDemo = payload.isDemo;
+    const isDropoff = payload.name === 'Dropoff';
 
     return (
         <Layer key={`CustomNode${index}`} style={{cursor: 'pointer'}}>
-            <Rectangle x={x} y={y} width={width} height={height} fill='#394EFF' fillOpacity='1'/>
+            <Rectangle 
+                x={x} 
+                y={y} 
+                width={width} 
+                height={height} 
+                fill={isDropoff ? '#454545' : '#394EFF'} 
+                fillOpacity='1'
+            />
             {!isDemo ? (
                 <foreignObject
                     x={isOut ? x - 6 : x + width + 5}

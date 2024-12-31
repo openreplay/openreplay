@@ -100,7 +100,7 @@ const ListView: React.FC<Props> = (props: Props) => {
               onClick={toggleAll}
             />
           )}
-          <span>Title</span>
+            <span>Title</span>
         </div>
       ),
       dataIndex: 'name',
@@ -168,38 +168,38 @@ const ListView: React.FC<Props> = (props: Props) => {
     //     />
     //   )
     // },
+    // {
+    //   title: (
+    //     <div className={'flex items-center justify-start gap-2'}>
+    //       <div>Visibility</div>
+    //       <Tooltip
+    //         title="Toggle to view your or team's cards."
+    //         placement="topRight"
+    //       >
+    //         <Switch
+    //           checked={!showOwn}
+    //           onChange={() => toggleOwn()}
+    //           checkedChildren={'Team'}
+    //           unCheckedChildren={'Private'}
+    //           className={classNames( '!bg-tealx')}
+    //         />
+    //       </Tooltip>
+    //     </div>
+    //   ),
+    //   width: '16.67%',
+    //   dataIndex: 'isPublic',
+    //   render: (isPublic: boolean) => (
+    //     <Tag
+    //       icon={isPublic ? <TeamOutlined /> : <LockOutlined />}
+    //       bordered={false}
+    //       className="rounded-lg"
+    //     >
+    //       {isPublic ? 'Team' : 'Private'}
+    //     </Tag>
+    //   ),
+    // },
     {
-      title: (
-        <div className={'flex items-center justify-start gap-2'}>
-          <div>Visibility</div>
-          <Tooltip
-            title="Toggle to view your or team's cards."
-            placement="topRight"
-          >
-            <Switch
-              checked={!showOwn}
-              onChange={() => toggleOwn()}
-              checkedChildren={'Team'}
-              unCheckedChildren={'Private'}
-              className={classNames( '!bg-tealx')}
-            />
-          </Tooltip>
-        </div>
-      ),
-      width: '16.67%',
-      dataIndex: 'isPublic',
-      render: (isPublic: boolean) => (
-        <Tag
-          icon={isPublic ? <TeamOutlined /> : <LockOutlined />}
-          bordered={false}
-          className="rounded-lg"
-        >
-          {isPublic ? 'Team' : 'Private'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Options',
+      title: '',
       key: 'options',
       className: 'text-right',
       width: '5%',
@@ -216,6 +216,7 @@ const ListView: React.FC<Props> = (props: Props) => {
 
   return (
     <Table
+    className='table-sorting-tooltip-placement'
       columns={columns}
       dataSource={paginatedData}
       rowKey="metricId"

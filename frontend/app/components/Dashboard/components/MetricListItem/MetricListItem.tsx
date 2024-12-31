@@ -23,7 +23,7 @@ interface Props extends RouteComponentProps {
 function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
-      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" />}  size="default" className="bg-tealx-lightest mr-2 cursor-default avatar-card-list-item" />
+      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" strokeColor="tealx" />}  size="default" className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item" />
     </Tooltip>
   );
 }

@@ -3,7 +3,7 @@ import { FolderOutlined } from '@ant-design/icons';
 import { Segmented, Button } from 'antd';
 import {
   LineChart,
-  AlignStartVertical,
+  Filter,
   ArrowUpDown,
   WifiOff,
   Turtle,
@@ -50,7 +50,7 @@ export const tabItems: Record<string, TabItem[]> = {
       description: 'Track session trends over time.',
     },
     {
-      icon: <AlignStartVertical width={16} />,
+      icon: <Filter width={16} />,
       title: 'Funnels',
       type: FUNNEL,
       description: 'Visualize user progression through critical steps.',
