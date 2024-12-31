@@ -28,7 +28,7 @@ const getBodyFromUWSResponse = async function (res) {
 const extractProjectKeyFromRequest = function (req) {
     if (process.env.uws === "true") {
         if (req.getParameter(0)) {
-            debug && console.log(`[WS]where projectKey=${req.getParameter(0)}`);
+            logger.debug(`[WS]where projectKey=${req.getParameter(0)}`);
             return req.getParameter(0);
         }
     } else {
@@ -39,7 +39,7 @@ const extractProjectKeyFromRequest = function (req) {
 const extractSessionIdFromRequest = function (req) {
     if (process.env.uws === "true") {
         if (req.getParameter(1)) {
-            debug && console.log(`[WS]where projectKey=${req.getParameter(1)}`);
+            logger.debug(`[WS]where projectKey=${req.getParameter(1)}`);
             return req.getParameter(1);
         }
     } else {
@@ -54,15 +54,15 @@ const extractPayloadFromRequest = async function (req, res) {
     };
     if (process.env.uws === "true") {
         if (req.getQuery("q")) {
-            debug && console.log(`[WS]where q=${req.getQuery("q")}`);
+            logger.debug(`[WS]where q=${req.getQuery("q")}`);
             filters.query.value = req.getQuery("q");
         }
         if (req.getQuery("key")) {
-            debug && console.log(`[WS]where key=${req.getQuery("key")}`);
+            logger.debug(`[WS]where key=${req.getQuery("key")}`);
             filters.query.key = req.getQuery("key");
         }
         if (req.getQuery("userId")) {
-            debug && console.log(`[WS]where userId=${req.getQuery("userId")}`);
+            logger.debug(`[WS]where userId=${req.getQuery("userId")}`);
             filters.filter.userID = [req.getQuery("userId")];
         }
         if (!filters.query.value) {
@@ -88,7 +88,7 @@ const extractPayloadFromRequest = async function (req, res) {
     }
     filters.filter = helper.objectToObjectOfArrays(filters.filter);
     filters.filter = helper.transformFilters(filters.filter);
-    debug && console.log("payload/filters:" + JSON.stringify(filters))
+    logger.debug("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 const getAvailableRooms = async function (io) {
