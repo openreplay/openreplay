@@ -4,11 +4,12 @@ import { Tooltip, Input, Button, Dropdown, Menu, Tag, Modal as AntdModal, Form, 
 import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import { RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
-import { TYPES } from 'App/constants/card';
+import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
+import { EllipsisVertical } from "lucide-react";
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -20,15 +21,9 @@ interface Props extends RouteComponentProps {
 }
 
 function MetricTypeIcon({ type }: any) {
-  const [card, setCard] = useState<any>('');
-  useEffect(() => {
-    const t = TYPES.find((i) => i.slug === type);
-    setCard(t || {});
-  }, [type]);
-
   return (
-    <Tooltip title={<div className="capitalize">{card.title}</div>}>
-      <Avatar src={card.icon && <Icon name={card.icon} size="16" color="tealx" />}  size="small" className="bg-tealx-lightest mr-2" />
+    <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
+      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" />}  size="default" className="bg-tealx-lightest mr-2 cursor-default avatar-card-list-item" />
     </Tooltip>
   );
 }
@@ -176,12 +171,12 @@ const MetricListItem: React.FC<Props> = ({
     case 'options':
       return (
         <>
-        <div className='flex justify-end'>
+        <div className='flex justify-end pr-4'>
           <Dropdown
             menu={{ items: menuItems, onClick: onMenuClick }}
             trigger={['click']}
           >
-            <Button type="text" icon={<MoreOutlined />} />
+            <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} className='btn-cards-list-item-more-options' type='text'/>
           </Dropdown>
           </div>
           {renderModal()}

@@ -21,24 +21,25 @@ interface Props<Value extends ValueObject> {
   onChange: (newValue: { name: string, value: Value }) => void;
   name?: string;
   placeholder?: string;
-
+  className?: string;
   [x: string]: any;
 }
 
 export default function <Value extends ValueObject>({
-                                                      placeholder = 'Select',
-                                                      name = '',
-                                                      onChange,
-                                                      right = false,
-                                                      plain = false,
-                                                      options,
-                                                      isSearchable = false,
-                                                      components = {},
-                                                      styles = {},
-                                                      defaultValue = '',
-                                                      controlStyle = {},
-                                                      ...rest
-                                                    }: Props<Value>) {
+  placeholder = 'Select',
+  name = '',
+  onChange,
+  right = false,
+  plain = false,
+  options,
+  isSearchable = false,
+  components = {},
+  styles = {},
+  defaultValue = '',
+  controlStyle = {},
+  className = '',
+  ...rest
+}: Props<Value>) {
 
   const defaultSelected = Array.isArray(defaultValue) ?
     defaultValue.map((value) => options.find((option) => option.value === value)) :
@@ -79,7 +80,7 @@ export default function <Value extends ValueObject>({
     }),
     menuList: (provided: any, state: any) => ({
       ...provided,
-      padding: 0
+      padding: 0,
     }),
     control: (provided: any) => {
       const obj = {
@@ -143,6 +144,7 @@ export default function <Value extends ValueObject>({
 
   return (
     <Select
+      className={`${className} btn-event-condition`}
       options={options}
       isSearchable={isSearchable}
       defaultValue={defaultSelected}

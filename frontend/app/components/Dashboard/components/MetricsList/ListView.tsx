@@ -1,18 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { Checkbox, Table, Typography } from 'antd';
+import { Checkbox, Table, Typography, Switch, Tag, Tooltip } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import Widget from 'App/mstore/types/widget';
+import { LockOutlined, TeamOutlined } from "@ant-design/icons";
+import classNames from 'classnames';
 
 const { Text } = Typography;
 
-// interface Metric {
-//   metricId: number;
-//   name: string;
-//   owner: string;
-//   lastModified: string;
-//   visibility: string;
-// }
+interface Metric {
+  metricId: number;
+  name: string;
+  owner: string;
+  lastModified: string;
+  visibility: string;
+}
 
 interface Props {
   list: Widget[];
@@ -23,6 +25,8 @@ interface Props {
   disableSelection?: boolean;
   allSelected?: boolean;
   existingCardIds?: number[];
+  showOwn?: boolean;
+  toggleOwn: () => void;
 }
 
 const ListView: React.FC<Props> = (props: Props) => {
@@ -33,7 +37,9 @@ const ListView: React.FC<Props> = (props: Props) => {
     toggleSelection,
     disableSelection = false,
     allSelected = false,
-    toggleAll
+    toggleAll,
+    showOwn,
+    toggleOwn,
   } = props;
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
@@ -99,8 +105,9 @@ const ListView: React.FC<Props> = (props: Props) => {
       ),
       dataIndex: 'name',
       key: 'title',
-      className: 'cap-first',
+      className: 'cap-first pl-4',
       sorter: true,
+      width: '25%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
@@ -121,7 +128,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'owner',
       key: 'owner',
       className: 'capitalize',
-      width: '30%',
+      width: '16.67%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -162,7 +169,37 @@ const ListView: React.FC<Props> = (props: Props) => {
     //   )
     // },
     {
-      title: '',
+      title: (
+        <div className={'flex items-center justify-start gap-2'}>
+          <div>Visibility</div>
+          <Tooltip
+            title="Toggle to view your or team's cards."
+            placement="topRight"
+          >
+            <Switch
+              checked={!showOwn}
+              onChange={() => toggleOwn()}
+              checkedChildren={'Team'}
+              unCheckedChildren={'Private'}
+              className={classNames( '!bg-tealx')}
+            />
+          </Tooltip>
+        </div>
+      ),
+      width: '16.67%',
+      dataIndex: 'isPublic',
+      render: (isPublic: boolean) => (
+        <Tag
+          icon={isPublic ? <TeamOutlined /> : <LockOutlined />}
+          bordered={false}
+          className="rounded-lg"
+        >
+          {isPublic ? 'Team' : 'Private'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Options',
       key: 'options',
       className: 'text-right',
       width: '5%',
@@ -183,7 +220,6 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataSource={paginatedData}
       rowKey="metricId"
       onChange={handleTableChange}
-      size='middle'
       rowSelection={
         !disableSelection
           ? {
@@ -196,13 +232,6 @@ const ListView: React.FC<Props> = (props: Props) => {
           }
           : undefined
       }
-      // footer={() => (
-      //   <div className="flex justify-end">
-      //     <Checkbox name="slack" checked={allSelected} onClick={toggleAll}>
-      //       Select All
-      //     </Checkbox>
-      //   </div>
-      // )}
       pagination={{
         current: pagination.current,
         pageSize: pagination.pageSize,
@@ -211,7 +240,8 @@ const ListView: React.FC<Props> = (props: Props) => {
         className: 'px-4',
         showLessItems: true,
         showTotal: () => totalMessage,
-        showQuickJumper: true
+        size: 'small',
+        simple: 'true',
       }}
     />
   );

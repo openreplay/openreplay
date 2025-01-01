@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
 import { useModal } from 'App/components/Modal';
-import SessionSearchField from 'Shared/SessionSearchField';
 import { MODULES } from 'Components/Client/Modules';
 
 import AssistStats from '../../AssistStats';
@@ -9,7 +8,7 @@ import Recordings from '../RecordingsList/Recordings';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-function AssistSearchField() {
+function AssistSearchActions() {
   const { searchStoreLive, userStore } = useStore();
   const modules = userStore.account.settings?.modules ?? [];
   const isEnterprise = userStore.isEnterprise
@@ -27,9 +26,6 @@ function AssistSearchField() {
   };
   return (
     <div className="flex items-center w-full gap-2">
-      <div style={{ width: '60%' }}>
-        <SessionSearchField />
-      </div>
       {isEnterprise && modules.includes(MODULES.OFFLINE_RECORDINGS)
         ? <Button type="primary" ghost onClick={showRecords}>Training Videos</Button> : null
       }
@@ -50,4 +46,4 @@ function AssistSearchField() {
   );
 }
 
-export default observer(AssistSearchField);
+export default observer(AssistSearchActions);

@@ -33,9 +33,14 @@ const Signup: React.FC<SignupProps> = ({ history }) => {
 
   const getHealth = async () => {
     setHealthStatusLoading(true);
-    const { healthMap } = await getHealthRequest(true);
-    setHealthStatus(healthMap);
-    setHealthStatusLoading(false);
+    try {
+      const { healthMap } = await getHealthRequest(true);
+      setHealthStatus(healthMap);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setHealthStatusLoading(false);
+    }
   };
 
   useEffect(() => {

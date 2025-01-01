@@ -17,7 +17,10 @@ function HealthModal({
 }: {
   getHealth: () => void;
   isLoading: boolean;
-  healthResponse: { overallHealth: boolean; healthMap: Record<string, IServiceStats> };
+  healthResponse: {
+    overallHealth: boolean;
+    healthMap: Record<string, IServiceStats>;
+  };
   setShowModal: (isOpen: boolean) => void;
   setPassed?: () => void;
 }) {
@@ -39,7 +42,7 @@ function HealthModal({
     setShowModal(false);
   };
 
-  const isSetup = document.location.pathname.includes('/signup')
+  const isSetup = document.location.pathname.includes('/signup');
 
   return (
     <div
@@ -64,7 +67,9 @@ function HealthModal({
           transform: 'translate(-50%, -50%)',
         }}
         onClick={(e) => e.stopPropagation()}
-        className={'flex flex-col bg-white rounded border border-figmaColors-divider'}
+        className={
+          'flex flex-col bg-white rounded border border-figmaColors-divider'
+        }
       >
         <div
           className={
@@ -83,46 +88,64 @@ function HealthModal({
         </div>
 
         <Loader loading={isLoading}>
-          <div className={'flex w-full'}>
-            <div className={'flex flex-col h-full'} style={{ flex: 1 }}>
-              {isLoading ? null
-                : Object.keys(healthResponse.healthMap).map((service) => (
-                  <React.Fragment key={service}>
-                    <Category
-                      onClick={() => setSelectedService(service)}
-                      healthOk={healthResponse.healthMap[service].healthOk}
-                      name={healthResponse.healthMap[service].name}
-                      isSelectable
-                      isSelected={selectedService === service}
+          {healthResponse ? (
+            <>
+              <div className={'flex w-full'}>
+                <div className={'flex flex-col h-full'} style={{ flex: 1 }}>
+                  {isLoading
+                    ? null
+                    : Object.keys(healthResponse.healthMap).map((service) => (
+                        <React.Fragment key={service}>
+                          <Category
+                            onClick={() => setSelectedService(service)}
+                            healthOk={
+                              healthResponse.healthMap[service].healthOk
+                            }
+                            name={healthResponse.healthMap[service].name}
+                            isSelectable
+                            isSelected={selectedService === service}
+                          />
+                        </React.Fragment>
+                      ))}
+                </div>
+                <div
+                  className={
+                    'bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative'
+                  }
+                  style={{ flex: 2, height: 420 }}
+                >
+                  {isLoading ? null : selectedService ? (
+                    <ServiceStatus
+                      service={healthResponse.healthMap[selectedService]}
                     />
-                  </React.Fragment>
-                ))}
+                  ) : (
+                    <img src={slide} width={392} />
+                  )}
+                </div>
+              </div>
+              {isSetup ? (
+                <div
+                  className={
+                    'p-4 mt-auto w-full border-t border-figmaColors-divider'
+                  }
+                >
+                  <Button
+                    disabled={!healthResponse?.overallHealth}
+                    loading={isLoading}
+                    variant={'primary'}
+                    className={'ml-auto'}
+                    onClick={() => setPassed?.()}
+                  >
+                    Create Account
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className={'w-full h-full flex items-center justify-center'}>
+              <div>Error while fetching data...</div>
             </div>
-            <div
-              className={
-                'bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative'
-              }
-              style={{ flex: 2, height: 420 }}
-            >
-              {isLoading ? null : selectedService ? (
-                <ServiceStatus service={healthResponse.healthMap[selectedService]} />
-              ) : <img src={slide} width={392} />
-              }
-            </div>
-          </div>
-          {isSetup ? (
-            <div className={'p-4 mt-auto w-full border-t border-figmaColors-divider'}>
-              <Button
-                disabled={!healthResponse?.overallHealth}
-                loading={isLoading}
-                variant={'primary'}
-                className={'ml-auto'}
-                onClick={() => setPassed?.()}
-              >
-                Create Account
-              </Button>
-            </div>
-          ) : null}
+          )}
         </Loader>
         <Footer isSetup={isSetup} />
       </div>
@@ -137,7 +160,10 @@ function ServiceStatus({ service }: { service: Record<string, any> }) {
       <div className={'border rounded border-light-gray'}>
         {Object.keys(subservices).map((subservice: string) => (
           <React.Fragment key={subservice}>
-            <SubserviceHealth name={subservice} subservice={subservices[subservice]} />
+            <SubserviceHealth
+              name={subservice}
+              subservice={subservices[subservice]}
+            />
           </React.Fragment>
         ))}
       </div>

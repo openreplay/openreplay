@@ -13,8 +13,8 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
-  PERFORMANCE,
-} from 'App/constants/card';
+  PERFORMANCE, RETENTION
+} from "App/constants/card";
 import { FilterKey } from 'Types/filter/filterType';
 import { BarChart, TrendingUp, SearchSlash } from 'lucide-react';
 import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues';
@@ -100,14 +100,14 @@ export const CARD_LIST: CardType[] = [
     example: HeatmapsExample
   },
   {
-    title: 'Path Finder',
+    title: 'Journey',
     key: USER_PATH,
     cardType: USER_PATH,
     category: CARD_CATEGORIES[0].key,
     example: ExamplePath
   },
   {
-    title: 'Sessions Trend',
+    title: 'Trend',
     key: TIMESERIES,
     cardType: TIMESERIES,
     metricOf: 'sessionCount',

@@ -29,9 +29,10 @@ interface Props {
     nodeWidth?: number;
     height?: number;
     onChartClick?: (filters: any[]) => void;
+    iterations: number
 }
 
-const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props) => {
+const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick, iterations}: Props) => {
     const [highlightedLinks, setHighlightedLinks] = useState<string[]>([]);
     const [hoveredLinks, setHoveredLinks] = useState<string[]>([]);
 
@@ -115,7 +116,7 @@ const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props)
                     nodePadding={20}
                     sort={true}
                     nodeWidth={4}
-                    iterations={128}
+                    iterations={iterations}
                     // linkCurvature={0.9}
                     onClick={clickHandler}
                     link={({source, target, id, ...linkProps}, index) => (

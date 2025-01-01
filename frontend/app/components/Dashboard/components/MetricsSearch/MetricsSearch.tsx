@@ -27,7 +27,7 @@ function MetricsSearch() {
         value={query}
         allowClear
         name="metricsSearch"
-        className="w-full"
+        className="w-full input-search-card"
         placeholder="Filter by title or owner"
         onChange={write}
       />

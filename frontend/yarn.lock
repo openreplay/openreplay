@@ -10637,12 +10637,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^0.396.0":
-  version: 0.396.0
-  resolution: "lucide-react@npm:0.396.0"
+"lucide-react@npm:0.454.0":
+  version: 0.454.0
+  resolution: "lucide-react@npm:0.454.0"
   peerDependencies:
-    react: ^16.5.1 || ^17.0.0 || ^18.0.0
-  checksum: 10c1/f07aa9b36cf50488120893d9e7b6198927fb0dfce09a78a8e1c3051754d5a822f5b06088abd398a78c8b70b3723da5209e2b35eb0744f2f53e6c1995d9d885f2
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+  checksum: 10c1/74a826345610813f909a52e0c74c4ec374fb3c23fdae598670a7b80001610672afc97b7e887546164e7464e5ba69e2eb386ba1dbfbca73e4cb1f707a9a69dc3c
   languageName: node
   linkType: hard
 
@@ -11624,7 +11624,7 @@ __metadata:
     jshint: "npm:^2.11.1"
     jspdf: "npm:^2.5.1"
     lottie-react: "npm:^2.4.0"
-    lucide-react: "npm:^0.396.0"
+    lucide-react: "npm:0.454.0"
     luxon: "npm:^3.5.0"
     microdiff: "npm:^1.4.0"
     mini-css-extract-plugin: "npm:^2.6.0"

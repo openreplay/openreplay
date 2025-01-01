@@ -64,8 +64,8 @@ function SessionsModal(props: Props) {
       <div className='w-full flex items-center justify-between p-4 absolute bottom-0 bg-white'>
         <div className='text-disabled-text'>
           Showing <span
-          className='font-semibold'>{Math.min(length, 10)}</span> out of{' '}
-          <span className='font-semibold'>{total}</span> Issues
+          className='font-medium'>{Math.min(length, 10)}</span> out of{' '}
+          <span className='font-medium'>{total}</span> Issues
         </div>
         <Pagination
           page={page}
