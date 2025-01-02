@@ -9,11 +9,13 @@ import { observer } from 'mobx-react-lite';
 import NoSessionsMessage from 'Shared/NoSessionsMessage/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar/MainSearchBar';
 import SessionSearch from 'Shared/SessionSearch/SessionSearch';
+import usePageTitle from '@/hooks/usePageTitle';
 
 function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
+  usePageTitle('Sessions - OpenReplay');
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {

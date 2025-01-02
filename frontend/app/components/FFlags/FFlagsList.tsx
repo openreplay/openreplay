@@ -1,6 +1,5 @@
 import React from 'react';
 import { numberWithCommas } from 'App/utils';
-import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions';
 import FFlagsListHeader from 'Components/FFlags/FFlagsListHeader';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -9,8 +8,10 @@ import FFlagItem from './FFlagItem';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import Select from 'Shared/Select';
+import usePageTitle from '@/hooks/usePageTitle';
 
 function FFlagsList({ siteId }: { siteId: string }) {
+  usePageTitle('Feature Flags - OpenReplay');
   const { featureFlagsStore, userStore } = useStore();
 
   React.useEffect(() => {
@@ -31,7 +32,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
             options={[
               { label: 'All', value: '0' as const },
               { label: 'Enabled', value: '1' as const },
-              { label: 'Disabled', value: '2' as const },
+              { label: 'Disabled', value: '2' as const }
             ]}
             defaultValue={featureFlagsStore.activity}
             plain
@@ -45,7 +46,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
           <Select
             options={[
               { label: 'Newest', value: 'DESC' },
-              { label: 'Oldest', value: 'ASC' },
+              { label: 'Oldest', value: 'ASC' }
             ]}
             defaultValue={featureFlagsStore.sort.order}
             plain
@@ -65,7 +66,7 @@ function FFlagsList({ siteId }: { siteId: string }) {
                 <AnimatedSVG name={ICONS.NO_FFLAGS} size={60} />
                 <div className="text-center  mt-4  text-lg font-medium">
                   {featureFlagsStore.sort.query === ''
-                    ? "You haven't created any feature flags yet"
+                    ? 'You haven\'t created any feature flags yet'
                     : 'No matching results'}
                 </div>
               </div>
@@ -121,6 +122,4 @@ function FFlagsList({ siteId }: { siteId: string }) {
   );
 }
 
-export default withPageTitle('Feature Flags')(
-  withPermissions(['FEATURE_FLAGS'])(observer(FFlagsList))
-);
+export default withPermissions(['FEATURE_FLAGS'])(observer(FFlagsList));
