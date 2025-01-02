@@ -94,12 +94,19 @@ class DevTools {
   }
 }
 
-
+interface Bookmarks {
+  list: Session[];
+  page: number;
+  total: number;
+  pageSize: number;
+  loading: boolean;
+}
 
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
   devTools: DevTools = new DevTools();
   list: Session[] = [];
+  bookmarks: Bookmarks = { list: [], page: 1, total: 0, pageSize: 10, loading: false };
   sessionIds: string[] = [];
   current = new Session();
   total = 0;
@@ -529,9 +536,33 @@ export default class SessionStore {
     this.list = [];
     this.total = 0;
     this.sessionIds = [];
+    this.bookmarks = { list: [], page: 1, total: 0, pageSize: 10, loading: false };
   }
 
   setLastPlayedSessionId = (sessionId: string) => {
     this.lastPlayedSessionId = sessionId;
+  }
+
+  async fetchBookmarkedSessions() {
+    try {
+      this.bookmarks.loading = true;
+      const params = {
+        page: this.bookmarks.page,
+        limit: this.bookmarks.pageSize,
+        bookmarked: true,
+      }
+      const data = await sessionService.getSessions(params);
+      this.bookmarks.list = data.sessions.map((s: any) => new Session(s));
+      this.bookmarks.total = data.total;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.bookmarks.loading = false;
+    }
+  }
+
+  updateBookmarksPage(page: number) {
+    this.bookmarks.page = page;
+    void this.fetchBookmarkedSessions();
   }
 }
