@@ -332,6 +332,7 @@ class SearchStore {
 
     if (this.activeTags[0] && this.activeTags[0] !== 'all') {
       const tagFilter = filtersMap[FilterKey.ISSUE];
+      tagFilter.type = tagFilter.type.toLowerCase();
       tagFilter.value = [issues_types.find((i: any) => i.type === this.activeTags[0])?.type];
       delete tagFilter.operatorOptions;
       delete tagFilter.options;
