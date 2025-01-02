@@ -6,8 +6,10 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
+import usePageTitle from '@/hooks/usePageTitle';
 
 function NotesList() {
+  usePageTitle('Notes - OpenReplay');
   const { notesStore } = useStore();
 
   React.useEffect(() => {

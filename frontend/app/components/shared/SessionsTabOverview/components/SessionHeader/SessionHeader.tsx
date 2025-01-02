@@ -16,11 +16,12 @@ function SessionHeader() {
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
   const title = useMemo(() => {
+    if (!activeTab) return;
     if (activeTab.type === 'bookmarks') {
       return isEnterprise ? 'Vault' : 'Bookmarks';
     }
     return 'Sessions';
-  }, [activeTab.type, isEnterprise]);
+  }, [isEnterprise, activeTab]);
 
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
@@ -32,10 +33,10 @@ function SessionHeader() {
     <div className="flex items-center px-4 py-1 justify-between w-full">
       <h2 className="text-2xl capitalize mr-4">{title}</h2>
       <div className="flex items-center w-full justify-end">
-        {activeTab.type !== 'bookmarks' && <SessionTags />}
+        {activeTab?.type !== 'bookmarks' && <SessionTags />}
         <div className="mr-auto" />
         <Space>
-          {activeTab.type !== 'bookmarks' &&
+          {activeTab?.type !== 'bookmarks' &&
             <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />}
           <SessionSort />
         </Space>
