@@ -9,14 +9,14 @@ PODS:
   - hermes-engine (0.74.0):
     - hermes-engine/Pre-built (= 0.74.0)
   - hermes-engine/Pre-built (0.74.0)
-  - Openreplay (1.0.15):
+  - Openreplay (1.0.17):
     - DeviceKit
     - SWCompression
   - openreplay-react-native (0.6.11):
     - DoubleConversion
     - glog
     - hermes-engine
-    - Openreplay (= 1.0.15)
+    - Openreplay (= 1.0.17)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1423,8 +1423,8 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 6eae7edb2f563ee41d7c1f91f4f2e57c26d8a5c3
-  Openreplay: ae72a7ca1a05d7da026b7ee8f4f84dcdfaa44021
-  openreplay-react-native: 0cfa1842c5b2457f6e9d5fa564f746192317b20c
+  Openreplay: 2bffa68a1606c95cd04618f0095864649d076d40
+  openreplay-react-native: e77361570814a3c92483423b463011536b2346b6
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: 3ca8b6c36bfb302e1895b72cfe7db0de0c92cd47
   RCTRequired: 9fc183af555fd0c89a366c34c1ae70b7e03b1dc5
