@@ -467,6 +467,7 @@ export { default as Turtle } from './turtle';
 export { default as User_alt } from './user_alt';
 export { default as User_circle } from './user_circle';
 export { default as User_friends } from './user_friends';
+export { default as User_journey } from './user_journey';
 export { default as User_switch } from './user_switch';
 export { default as Users } from './users';
 export { default as Vendors_graphql } from './vendors_graphql';

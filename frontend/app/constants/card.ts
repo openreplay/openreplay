@@ -43,8 +43,8 @@ export const TYPE_ICONS = {
   [TABLE]: 'list-alt',
   [HEATMAP]: 'dashboards/heatmap-2',
   [FUNNEL]: 'funnel',
-  [ERRORS]: 'exclamation-triangle',
-  [USER_PATH]: 'signpost-split',
+  [ERRORS]: 'exclamation-circle',
+  [USER_PATH]: 'user-journey',
   [TABLE]: 'list-alt',
 } as const
 export const TYPE_NAMES = {

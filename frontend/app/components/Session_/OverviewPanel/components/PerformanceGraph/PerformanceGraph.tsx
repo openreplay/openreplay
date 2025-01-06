@@ -58,7 +58,7 @@ const PerformanceGraph = React.memo((props: Props) => {
       {disabled ? (
         <div
           className={
-            'flex justify-center'
+            'flex justify-start'
           }
         >
           <div className={'text-xs text-neutral-400 ps-2'}>
