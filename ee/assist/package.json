@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
+    "@fastify/deepmerge": "^2.0.1",
     "@maxmind/geoip2-node": "^4.2.0",
     "@socket.io/redis-adapter": "^8.2.1",
     "express": "^4.21.1",

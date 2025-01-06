@@ -10,6 +10,7 @@ import FlagView from 'Components/FFlags/FlagView/FlagView';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
 import NotesList from 'Shared/SessionsTabOverview/components/Notes/NoteList';
+import Bookmarks from 'Shared/SessionsTabOverview/components/Bookmarks/Bookmarks';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -34,9 +35,15 @@ function Overview({ match: { params } }: IProps) {
   return (
     <Switch>
       <Route exact strict
-             path={[withSiteId(sessions(), siteId), withSiteId(bookmarks(), siteId)]}>
+             path={withSiteId(sessions(), siteId)}>
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <SessionsTabOverview />
+        </div>
+      </Route>
+      <Route exact strict
+             path={withSiteId(bookmarks(), siteId)}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+          <Bookmarks />
         </div>
       </Route>
       <Route exact strict path={withSiteId(notes(), siteId)}>
