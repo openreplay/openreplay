@@ -56,18 +56,18 @@ export function customTooltipFormatter(uuid: string) {
     const isPrevious = /^Previous\s+/.test(seriesName);
     const baseName = seriesName.replace(/^Previous\s+/, '');
     const timestamp = (window as any).__timestampMap?.[uuid]?.[dataIndex];
+    const comparisonTimestamp = (window as any).__timestampCompMap?.[uuid]?.[dataIndex];
 
     // Get partner’s value from some global map
     const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
     const partnerVal = (window as any).__seriesValueMap?.[uuid]?.[partnerName]?.[dataIndex];
-    const partnerTimestamp = (window as any).__timestampCompMap?.[uuid]?.[dataIndex];
 
     const categoryLabel = (window as any).__categoryMap[uuid]
                           ? (window as any).__categoryMap[uuid][dataIndex]
                           : dataIndex;
 
-    const firstTs = isPrevious ? partnerTimestamp : timestamp;
-    const secondTs = isPrevious ? timestamp : partnerTimestamp;
+    const firstTs = isPrevious ? comparisonTimestamp : timestamp;
+    const secondTs = isPrevious ? timestamp : comparisonTimestamp;
     let tooltipContent = `
     <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
       <div class="flex gap-2 items-center">
