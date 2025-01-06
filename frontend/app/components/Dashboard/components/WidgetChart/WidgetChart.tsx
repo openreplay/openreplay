@@ -168,11 +168,9 @@ function WidgetChart(props: Props) {
   const loadComparisonData = () => {
     if (!dashboardStore.comparisonPeriods[_metric.metricId]) return setCompData(null);
 
-    const timestamps = dashboardStore.comparisonPeriods[_metric.metricId].toTimestamps();
     // TODO: remove after backend adds support for more view types
     const payload = {
       ...params,
-      ...timestamps,
       ..._metric.toJson(),
       viewType: 'lineChart',
     };

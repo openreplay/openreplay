@@ -419,11 +419,7 @@ export default class DashboardStore {
     if (!period) {
       return this.comparisonPeriods[metricId] = null
     }
-    this.comparisonPeriods[metricId] = Period({
-      start: period.start,
-      end: period.end,
-      rangeName: period.rangeName,
-    });
+    this.comparisonPeriods[metricId] = period;
   }
 
   cloneCompFilter() {

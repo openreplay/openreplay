@@ -37,13 +37,6 @@ function WidgetDateRange({
 
   const onChangeComparison = (period: any) => {
     dashboardStore.setComparisonPeriod(period, metricStore.instance.metricId);
-    if (!period) return;
-    const periodTimestamps = period.toTimestamps();
-    const compFilter = dashboardStore.cloneCompFilter();
-    compFilter.merge({
-      startTimestamp: periodTimestamps.startTimestamp,
-      endTimestamp: periodTimestamps.endTimestamp,
-    });
   }
 
   React.useEffect(() => {
