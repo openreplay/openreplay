@@ -55,15 +55,19 @@ export function customTooltipFormatter(uuid: string) {
 
     const isPrevious = /^Previous\s+/.test(seriesName);
     const baseName = seriesName.replace(/^Previous\s+/, '');
-    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
+    const timestamp = (window as any).__timestampMap?.[uuid]?.[dataIndex];
 
     // Get partner’s value from some global map
+    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
     const partnerVal = (window as any).__seriesValueMap?.[uuid]?.[partnerName]?.[dataIndex];
-    const timestamp = (window as any).__timestampMap?.[uuid]?.[dataIndex];
+    const partnerTimestamp = (window as any).__timestampCompMap?.[uuid]?.[dataIndex];
+
     const categoryLabel = (window as any).__categoryMap[uuid]
                           ? (window as any).__categoryMap[uuid][dataIndex]
                           : dataIndex;
 
+    const firstTs = isPrevious ? partnerTimestamp : timestamp;
+    const secondTs = isPrevious ? timestamp : partnerTimestamp;
     let tooltipContent = `
     <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
       <div class="flex gap-2 items-center">
@@ -78,7 +82,7 @@ export function customTooltipFormatter(uuid: string) {
 
       <div style="border-left: 2px solid ${params.color};" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
-          ${isPrevious ? '' : timestamp ? formatTimeOrDate(timestamp) : categoryLabel}
+          ${firstTs ? formatTimeOrDate(firstTs) : categoryLabel}
         </div>
         <div class="flex items-center gap-1">
           <div class="font-medium text-black">${value ?? '—'}</div>
@@ -101,7 +105,7 @@ export function customTooltipFormatter(uuid: string) {
       </div>
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
-          ${!isPrevious ? '' : timestamp ? formatTimeOrDate(timestamp) : categoryLabel}
+          ${secondTs ? formatTimeOrDate(secondTs) : categoryLabel}
         </div>
         <div class="flex items-center gap-1">
           <div class="font-medium">${partnerVal ?? '—'}</div>

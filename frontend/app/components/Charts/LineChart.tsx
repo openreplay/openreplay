@@ -25,7 +25,7 @@ function ORLineChart(props: Props) {
     const categories = buildCategories(props.data);
     const { datasets, series } = buildDatasetsAndSeries(props);
 
-    initWindowStorages(chartUuid.current, categories, props.data.chart);
+    initWindowStorages(chartUuid.current, categories, props.data.chart, props.compData?.chart ?? []);
 
     series.forEach((s: any) => {
       if (props.isArea) {
@@ -89,6 +89,7 @@ function ORLineChart(props: Props) {
       delete (window as any).__seriesColorMap[chartUuid.current];
       delete (window as any).__categoryMap[chartUuid.current];
       delete (window as any).__timestampMap[chartUuid.current];
+      delete (window as any).__timestampCompMap[chartUuid.current];
     };
   }, [props.data, props.compData]);
 

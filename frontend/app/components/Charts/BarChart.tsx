@@ -25,7 +25,7 @@ function ORBarChart(props: BarChartProps) {
     const categories = buildCategories(props.data);
     const { datasets, series } = buildBarDatasetsAndSeries(props, props.horizontal ?? false);
 
-    initWindowStorages(chartUuid.current, categories, props.data.chart);
+    initWindowStorages(chartUuid.current, categories, props.data.chart, props.compData?.chart ?? []);
     series.forEach((s: any) => {
       (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
       const ds = datasets.find((d) => d.id === s.datasetId);
@@ -76,6 +76,7 @@ function ORBarChart(props: BarChartProps) {
       delete (window as any).__seriesColorMap[chartUuid.current];
       delete (window as any).__categoryMap[chartUuid.current];
       delete (window as any).__timestampMap[chartUuid.current];
+      delete (window as any).__timestampCompMap[chartUuid.current];
     };
   }, [props.data, props.compData, props.horizontal]);
 
