@@ -40,6 +40,7 @@ export default observer(WidgetFormNew);
 
 const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const defaultClosed = React.useRef(metric.exists())
+  const defaultSeries = React.useRef(metric.series.map(s => s.name))
   const isTable = metric.metricType === TABLE;
   const isHeatMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
@@ -74,7 +75,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
                 series={series}
                 onRemoveSeries={() => metric.removeSeries(index)}
                 canDelete={metric.series.length > 1}
-                defaultClosed={defaultClosed.current}
+                defaultClosed={metric.hasChanged ? defaultSeries.current.includes(series.name) : defaultClosed.current}
                 emptyMessage={
                   isTable
                     ? 'Filter data using any event or attribute. Use Add Step button below to do so.'

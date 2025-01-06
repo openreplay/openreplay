@@ -933,6 +933,8 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     # events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
     filters: List[GroupedFilterType] = Field(default=[])
 
+    compare_to: Optional[List[str]] = Field(default=None)
+
     # Used mainly for PathAnalysis, and could be used by other cards
     hide_excess: Optional[bool] = Field(default=False, description="Hide extra values")
 
@@ -1237,8 +1239,7 @@ class CardPathAnalysis(__CardSchema):
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
-    CardErrors,
-    CardWebVital, CardHeatMap,
+    CardErrors, CardWebVital, CardHeatMap,
     CardPathAnalysis]
 CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 

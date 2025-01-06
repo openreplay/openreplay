@@ -90,6 +90,7 @@ export default class Widget {
     startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
     excludes: FilterItem[] = [];
     hideExcess?: boolean = false;
+    compareTo: [startDate?: string, endDate?: string] | null = null
 
     period: Record<string, any> = Period({rangeName: LAST_24_HOURS}); // temp value in detail view
     hasChanged: boolean = false;
@@ -102,7 +103,7 @@ export default class Widget {
         total: 0,
         values: [],
         chart: [],
-        namesMap: {},
+        namesMap: [],
         avg: 0,
         percentiles: []
     };
@@ -131,6 +132,7 @@ export default class Widget {
     }
 
     addSeries() {
+        this.hasChanged = true;
         const series = new FilterSeries();
         series.name = 'Series ' + (this.series.length + 1);
         this.series.push(series);
@@ -152,6 +154,7 @@ export default class Widget {
             this.metricFormat = json.metricFormat;
             this.viewType = json.viewType;
             this.name = json.name;
+            this.compareTo = json.compareTo || null;
             this.series =
                 json.series && json.series.length > 0
                     ? json.series.map((series: any) => new FilterSeries().fromJson(series, this.metricType === HEATMAP))
@@ -226,6 +229,7 @@ export default class Widget {
             sessionId: this.data.sessionId,
             page: this.page,
             limit: this.limit,
+            compareTo: this.compareTo,
             config: {
                 ...this.config,
                 col:
@@ -412,6 +416,10 @@ export default class Widget {
                 issues: []
             };
         }
+    }
+
+    setComparisonRange(range: [start: string, end?: string] | null) {
+        this.compareTo = range;
     }
 
 

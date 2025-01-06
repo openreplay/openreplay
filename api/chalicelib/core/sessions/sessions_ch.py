@@ -11,11 +11,12 @@ from chalicelib.utils import sql_helper as sh
 
 logger = logging.getLogger(__name__)
 
+
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    metric_type: schemas.MetricType, metric_of: schemas.MetricOfTimeseries | schemas.MetricOfTable,
                    metric_value: List):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                   density=density))
+    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                 density=density))
     extra_event = None
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
@@ -128,8 +129,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                   metric_of: schemas.MetricOfTable, metric_value: List,
                   metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                   density=density))
+    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                 density=density))
     extra_event = None
     extra_deduplication = []
     extra_conditions = None
@@ -1307,7 +1308,6 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     return full_args, query_part
 
 
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
@@ -1385,29 +1385,4 @@ def session_exists(project_id, session_id):
 
 # TODO: support this for CH
 def check_recording_status(project_id: int) -> dict:
-    query = f"""
-        WITH project_sessions AS (SELECT COUNT(1)                                      AS full_count,
-                                 COUNT(1) FILTER ( WHERE duration IS NOT NULL) AS nn_duration_count
-                          FROM public.sessions
-                          WHERE project_id = %(project_id)s
-                            AND start_ts >= (extract(EPOCH FROM now() - INTERVAL '1 day')) * 1000
-                            AND start_ts <= (extract(EPOCH FROM now() + INTERVAL '1 day')) * 1000)
-        SELECT CASE
-                   WHEN full_count = 0 THEN 0
-                   WHEN nn_duration_count = 0 THEN 1
-                   ELSE 2
-                   END    AS recording_status,
-               full_count AS sessions_count
-        FROM project_sessions;
-    """
-
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(query, {"project_id": project_id})
-        cur.execute(query)
-        row = cur.fetchone()
-
-    return {
-        "recordingStatus": row["recording_status"],
-        "sessionsCount": row["sessions_count"]
-    }
-
+    return sessions_legacy.check_recording_status(project_id=project_id)

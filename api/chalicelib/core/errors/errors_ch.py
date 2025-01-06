@@ -3,7 +3,7 @@ from chalicelib.core import metadata
 from chalicelib.core import sessions
 from chalicelib.core.metrics import metrics
 from chalicelib.utils import ch_client, exp_ch_helper
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from . import errors as errors_legacy
 
@@ -79,11 +79,6 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
-
-
-def __get_step_size(startTimestamp, endTimestamp, density):
-    step_size = (int(endTimestamp) // 1000 - int(startTimestamp) // 1000) // (int(density) - 1)
-    return step_size
 
 
 def __get_sort_key(key):
@@ -302,7 +297,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                          value_key=f_k))
 
     with ch_client.ClickHouseClient() as ch:
-        step_size = __get_step_size(data.startTimestamp, data.endTimestamp, data.density)
+        step_size = metrics_helper.get_step_size(data.startTimestamp, data.endTimestamp, data.density)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)

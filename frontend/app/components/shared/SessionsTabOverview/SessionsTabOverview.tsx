@@ -9,11 +9,14 @@ import { observer } from 'mobx-react-lite';
 import NoSessionsMessage from 'Shared/NoSessionsMessage/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar/MainSearchBar';
 import SearchActions from "../SearchActions";
+import usePageTitle from '@/hooks/usePageTitle';
 
 function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
+  const activeTab = searchStore.activeTab;
+  usePageTitle('Sessions - OpenReplay');
 
   const handleKeyDown = (event: any) => {
     if (event.key === 'Enter') {
@@ -41,7 +44,7 @@ function SessionsTabOverview() {
             placeholder={'ask session ai'}
           />
         ) : null}
-        <SessionHeader />
+        {activeTab.type !== 'bookmarks' && <SessionHeader />}
         <div className="border-b" />
         <LatestSessionsMessage />
         <SessionList />

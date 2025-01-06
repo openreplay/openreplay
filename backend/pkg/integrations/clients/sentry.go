@@ -31,11 +31,40 @@ type SentryEvent struct {
 }
 
 func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint64) (interface{}, error) {
+	cfg, err := parseSentryConfig(credentials)
+	if err != nil {
+		return nil, err
+	}
+	// Fetch sentry events
+	requestUrl := prepareURLWithParams(cfg, sessionID, true)
+	list, err := makeRequest(cfg, requestUrl)
+	if err != nil {
+		return nil, err
+	}
+	if list == nil || len(list) == 0 {
+		// Fetch sentry issues if no events found
+		requestUrl = prepareURLWithParams(cfg, sessionID, false)
+		list, err = makeRequest(cfg, requestUrl)
+		if err != nil {
+			return nil, err
+		}
+		if list == nil || len(list) == 0 {
+			return nil, fmt.Errorf("no logs found")
+		}
+	}
+	result, err := json.Marshal(list)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func parseSentryConfig(credentials interface{}) (sentryConfig, error) {
 	cfg, ok := credentials.(sentryConfig)
 	if !ok {
 		strCfg, ok := credentials.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid credentials")
+			return cfg, fmt.Errorf("invalid credentials")
 		}
 		cfg = sentryConfig{}
 		if val, ok := strCfg["organization_slug"].(string); ok {
@@ -52,29 +81,37 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 		}
 	}
 	if cfg.URL == "" {
-		cfg.URL = "https://sentry.io" // Default to hosted Sentry if not specified
+		cfg.URL = "https://sentry.io"
 	}
-	requestUrl := fmt.Sprintf("%s/api/0/projects/%s/%s/issues/", cfg.URL, cfg.OrganizationSlug, cfg.ProjectSlug)
+	return cfg, nil
+}
 
-	testCallLimit := 1
+func prepareURLWithParams(cfg sentryConfig, sessionID uint64, isEvents bool) string {
+	entities := "issues"
+	if isEvents {
+		entities = "events"
+	}
+	requestUrl := fmt.Sprintf("%s/api/0/projects/%s/%s/%s/", cfg.URL, cfg.OrganizationSlug, cfg.ProjectSlug, entities)
 	params := url.Values{}
-	if sessionID != 0 {
-		params.Add("query", fmt.Sprintf("openReplaySession.id:%d", sessionID))
-	} else {
-		params.Add("per_page", fmt.Sprintf("%d", testCallLimit))
+	querySign := ":"
+	if isEvents {
+		querySign = "="
 	}
-	requestUrl += "?" + params.Encode()
+	if sessionID != 0 {
+		params.Add("query", fmt.Sprintf("openReplaySession.id%s%d", querySign, sessionID))
+	} else {
+		params.Add("per_page", "1")
+	}
+	return requestUrl + "?" + params.Encode()
+}
 
-	// Create a new request
+func makeRequest(cfg sentryConfig, requestUrl string) ([]SentryEvent, error) {
 	req, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
-
-	// Add Authorization header
 	req.Header.Set("Authorization", "Bearer "+cfg.Token)
 
-	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -82,30 +119,19 @@ func (s *sentryClient) FetchSessionData(credentials interface{}, sessionID uint6
 	}
 	defer resp.Body.Close()
 
-	// Check if the response status is OK
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch logs, status code: %v", resp.StatusCode)
 	}
 
-	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	// Parse the JSON response
 	var events []SentryEvent
 	err = json.Unmarshal(body, &events)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JSON: %v", err)
 	}
-	if events == nil || len(events) == 0 {
-		return nil, fmt.Errorf("no logs found")
-	}
-
-	result, err := json.Marshal(events)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return events, nil
 }

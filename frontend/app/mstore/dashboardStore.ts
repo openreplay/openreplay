@@ -25,7 +25,7 @@ export default class DashboardStore {
   comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
   selectedDensity: number = 7 // depends on default drilldown, 7 points here!!!;
-  comparisonPeriod: Record<string, any> | null = null
+  comparisonPeriods: Record<string, any> = {}
   startTimestamp: number = 0;
   endTimestamp: number = 0;
   pendingRequests: number = 0;
@@ -415,15 +415,11 @@ export default class DashboardStore {
     });
   }
 
-  setComparisonPeriod(period: any) {
+  setComparisonPeriod(period: any, metricId: string) {
     if (!period) {
-      return this.comparisonPeriod = null
+      return this.comparisonPeriods[metricId] = null
     }
-    this.comparisonPeriod = Period({
-      start: period.start,
-      end: period.end,
-      rangeName: period.rangeName,
-    });
+    this.comparisonPeriods[metricId] = period;
   }
 
   cloneCompFilter() {

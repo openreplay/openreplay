@@ -33,8 +33,8 @@ function AssistSessionsModal(props: ConnectProps) {
 
   const sortOptions = metaList
     .map((i: any) => ({
-      label: capitalize(i),
-      value: i
+      label: capitalize(i.key),
+      value: i.key
     }));
 
   React.useEffect(() => {

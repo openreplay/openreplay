@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import CustomMetricLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricLineChart';
+import LineChart from 'App/components/Charts/LineChart'
+import BarChart from 'App/components/Charts/BarChart'
+import PieChart from 'App/components/Charts/PieChart'
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
-import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
 import { Icon, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import FunnelTable from "../../../Funnels/FunnelWidget/FunnelTable";
-import AreaChart from '../../Widgets/CustomMetricsWidgets/AreaChart';
-import BarChart from '../../Widgets/CustomMetricsWidgets/BarChart';
 import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
@@ -64,7 +63,7 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
-  const [enabledRows, setEnabledRows] = useState([]);
+  const [enabledRows, setEnabledRows] = useState<string[]>([]);
   const isTableWidget =
     _metric.metricType === 'table' && _metric.viewType === 'table';
   const isPieChart =
@@ -72,6 +71,7 @@ function WidgetChart(props: Props) {
 
   useEffect(() => {
     return () => {
+      dashboardStore.setComparisonPeriod(null, _metric.metricId);
       dashboardStore.resetDrillDownFilter();
     };
   }, []);
@@ -164,15 +164,13 @@ function WidgetChart(props: Props) {
       !isSaved ? drillDownPeriod : period
     );
   };
-  const loadComparisonData = () => {
-    if (!inView) return;
-    if (!dashboardStore.comparisonPeriod) return setCompData(null);
 
-    const timestamps = dashboardStore.comparisonPeriod.toTimestamps();
+  const loadComparisonData = () => {
+    if (!dashboardStore.comparisonPeriods[_metric.metricId]) return setCompData(null);
+
     // TODO: remove after backend adds support for more view types
     const payload = {
       ...params,
-      ...timestamps,
       ..._metric.toJson(),
       viewType: 'lineChart',
     };
@@ -180,19 +178,15 @@ function WidgetChart(props: Props) {
       _metric,
       payload,
       isSaved,
-      dashboardStore.comparisonPeriod,
+      dashboardStore.comparisonPeriods[_metric.metricId],
       true
     );
   };
   useEffect(() => {
-    if (!dashboardStore.comparisonPeriod) {
-      setCompData(null);
-      return;
-    }
+    if (!inView || !props.isPreview) return;
     loadComparisonData();
-  }, [dashboardStore.comparisonPeriod]);
+  }, [dashboardStore.comparisonPeriods[_metric.metricId], _metric.metricId, inView, props.isPreview]);
   useEffect(() => {
-    dashboardStore.setComparisonPeriod(null)
     setCompData(null);
     _metric.updateKey('page', 1);
     _metric.updateKey()
@@ -282,15 +276,15 @@ function WidgetChart(props: Props) {
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
+
       if (viewType === 'lineChart') {
         return (
           <div className='pt-3'>
-          <CustomMetricLineChart
+          <LineChart
+            chartName={_metric.name}
             inGrid={!props.isPreview}
             data={chartData}
             compData={compData}
-            colors={colors}
-            params={params}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -304,11 +298,11 @@ function WidgetChart(props: Props) {
       if (viewType === 'areaChart') {
         return (
           <div className='pt-3'>
-          <AreaChart
+          <LineChart
+            isArea
+            chartName={_metric.name}
             data={chartData}
             inGrid={!props.isPreview}
-            params={params}
-            colors={colors}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -359,11 +353,9 @@ function WidgetChart(props: Props) {
       if (viewType === 'pieChart') {
         return (
           <div className='pt-3'>
-          <CustomMetricPieChart
+          <PieChart
             inGrid={!props.isPreview}
-            metric={_metric}
             data={chartData}
-            colors={colors}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -499,7 +491,7 @@ function WidgetChart(props: Props) {
     if (metricType === RETENTION) {
       if (viewType === 'trend') {
         return (
-          <CustomMetricLineChart
+          <LineChart
             data={data}
             colors={colors}
             params={params}
@@ -522,8 +514,8 @@ function WidgetChart(props: Props) {
           {renderChart()}
           {showTable ? (
             <WidgetDatatable
+              inBuilder={props.isPreview}
               defaultOpen={true}
-              isTableView={_metric.viewType === 'table'}
               data={data}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}

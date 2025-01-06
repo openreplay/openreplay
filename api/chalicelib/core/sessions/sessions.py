@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    metric_type: schemas.MetricType, metric_of: schemas.MetricOfTimeseries | schemas.MetricOfTable,
                    metric_value: List):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                   density=density, factor=1, decimal=True))
+    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                 density=density, factor=1, decimal=True))
     extra_event = None
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = "events.pages"
@@ -133,8 +133,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                   metric_of: schemas.MetricOfTable, metric_value: List,
                   metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
-    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                   density=density, factor=1, decimal=True))
+    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                                 density=density, factor=1, decimal=True))
     extra_event = None
     extra_conditions = None
     if metric_of == schemas.MetricOfTable.VISITED_URL:

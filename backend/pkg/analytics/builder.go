@@ -1,6 +1,7 @@
 package analytics
 
 import (
+	"github.com/go-playground/validator/v10"
 	"openreplay/backend/pkg/analytics/charts"
 	"time"
 
@@ -31,11 +32,12 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
+	reqValidator := validator.New()
 	cardsService, err := cards.New(log, pgconn)
 	if err != nil {
 		return nil, err
 	}
-	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService)
+	cardsHandlers, err := cards.NewHandlers(log, cfg, responser, cardsService, reqValidator)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +45,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
-	dashboardsHandlers, err := dashboards.NewHandlers(log, cfg, responser, dashboardsService)
+	dashboardsHandlers, err := dashboards.NewHandlers(log, cfg, responser, dashboardsService, reqValidator)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +53,7 @@ func NewServiceBuilder(log logger.Logger, cfg *analytics.Config, webMetrics web.
 	if err != nil {
 		return nil, err
 	}
-	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService)
+	chartsHandlers, err := charts.NewHandlers(log, cfg, responser, chartsService, reqValidator)
 	if err != nil {
 		return nil, err
 	}

@@ -1,3 +1,7 @@
+## 15.0.5
+
+- update medv/finder to 4.0.2 for better support of css-in-js libs
+
 ## 15.0.4
 
 - support for spritemaps (svg with `use` tags)

@@ -2549,10 +2549,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@medv/finder@npm:^3.1.0":
-  version: 3.2.0
-  resolution: "@medv/finder@npm:3.2.0"
-  checksum: 10c1/5088ae315138074fa168c51d4092a17ab962c85fbb7de97bbce396adc99a525b2d9c4d92231419bbd0ee13944f16c39672d81a1d2bce3e9cbeac527cfb6790f0
+"@medv/finder@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "@medv/finder@npm:4.0.2"
+  checksum: 10c1/067a99e0ce8ddecebd554edf36d6211bc630d6cae351ed93b2110c450f2bbea4852887a2978c2f94f6319d7aa055aeb8723e1514e9cc512faa628627930773b2
   languageName: node
   linkType: hard
 
@@ -6835,6 +6835,16 @@ __metadata:
     jsbn: "npm:~0.1.0"
     safer-buffer: "npm:^2.1.0"
   checksum: 10c1/c86e40e413f8033780b14dfe4ed3280aef2861513af9964c9694174392595f52add9a2d956e34c107208fce71e3857829fd243dd20c186149c582e7a22946aed
+  languageName: node
+  linkType: hard
+
+"echarts@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "echarts@npm:5.6.0"
+  dependencies:
+    tslib: "npm:2.3.0"
+    zrender: "npm:5.6.1"
+  checksum: 10c1/0695d5951f0cfccfb54a0e223a2c23313bd789aa7529caa1b6d8f8b48cc24f480aa6dcc7fecbd9cef260492b5806470a0a0dafa2305a68d0326c4b6a0be0e3ba
   languageName: node
   linkType: hard
 
@@ -11572,7 +11582,7 @@ __metadata:
     "@babel/runtime": "npm:^7.23.2"
     "@floating-ui/react-dom-interactions": "npm:^0.10.3"
     "@jest/globals": "npm:^29.7.0"
-    "@medv/finder": "npm:^3.1.0"
+    "@medv/finder": "npm:^4.0.2"
     "@openreplay/sourcemap-uploader": "npm:^3.0.10"
     "@sentry/browser": "npm:^5.21.1"
     "@svg-maps/world": "npm:^1.0.1"
@@ -11607,6 +11617,7 @@ __metadata:
     cypress: "npm:13.17.0"
     cypress-image-snapshot: "npm:^4.0.1"
     dotenv: "npm:^6.2.0"
+    echarts: "npm:^5.6.0"
     esbuild-loader: "npm:^4.2.2"
     eslint: "npm:^8.15.0"
     eslint-plugin-react: "npm:^7.29.4"
@@ -11672,7 +11683,7 @@ __metadata:
     ts-jest: "npm:^29.0.5"
     ts-node: "npm:^10.7.0"
     typescript: "npm:^4.6.4"
-    virtua: "npm:^0.35.1"
+    virtua: "npm:^0.39.2"
     webpack: "npm:^5.96.0"
     webpack-cli: "npm:^5.1.4"
     webpack-dev-server: "npm:^5.1.0"
@@ -15762,6 +15773,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:2.3.0":
+  version: 2.3.0
+  resolution: "tslib@npm:2.3.0"
+  checksum: 10c1/851bc4c307068b0a65c428e0dab91abb30b8c145fa249d7204281efd1146edd170c8152780347270dc550c2eaf0e47743e3c3fabcf4f66180457471e6e66179e
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^1.8.1, tslib@npm:^1.9.3":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
@@ -16237,14 +16255,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"virtua@npm:^0.35.1":
-  version: 0.35.1
-  resolution: "virtua@npm:0.35.1"
+"virtua@npm:^0.39.2":
+  version: 0.39.2
+  resolution: "virtua@npm:0.39.2"
   peerDependencies:
     react: ">=16.14.0"
     react-dom: ">=16.14.0"
     solid-js: ">=1.0"
-    svelte: ">=4.0"
+    svelte: ">=5.0"
     vue: ">=3.2"
   peerDependenciesMeta:
     react:
@@ -16257,7 +16275,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c1/ea747bb9a3b6c41cfa08d2d57d7287224e4bbdf815dcf8736f310372df83472c9bbc4b8286341a8b5bc9d9065baf49ded5233b6013b877fbe1f00a8fc9a6ae0c
+  checksum: 10c1/4aae200bea816a167beb2ea0985be1dc6ac6da4d9410bd7d64af816ae4e41bf15d84bdb0f0bbb636b9d8d9ff01f72d6d73c1f38ff80f86143600dc1451ecf76d
   languageName: node
   linkType: hard
 
@@ -16874,5 +16892,14 @@ __metadata:
   version: 1.1.1
   resolution: "yocto-queue@npm:1.1.1"
   checksum: 10c1/3c46904537cf83a416bb8373a2e6c1cac4568528888b605a6f8a319c4a84ae4ac368b31f0a54df59d3e33efd7aef2d2499ca8210d329e18028a1d039e1bb5722
+  languageName: node
+  linkType: hard
+
+"zrender@npm:5.6.1":
+  version: 5.6.1
+  resolution: "zrender@npm:5.6.1"
+  dependencies:
+    tslib: "npm:2.3.0"
+  checksum: 10c1/593dd84b3ea01f4e7941fd15f103550251b769218f4d524af935595bb628fa6e94e4c091654ec390e1c7176dd60ca8a7c7341d372d310ee3beebfe602792c1c6
   languageName: node
   linkType: hard

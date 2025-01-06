@@ -21,6 +21,13 @@ function SessionFilters() {
   const metaLoading = customFieldStore.isLoading;
   const saveRequestPayloads =
     projectsStore.instance?.saveRequestPayloads ?? false;
+  const activeProject = projectsStore.active
+
+  useEffect(() => {
+    if (searchStore.instance.filters.length === 0 && activeProject?.platform !== 'web') {
+      searchStore.addFilterByKeyAndValue(FilterKey.LOCATION, '', 'isAny')
+    }
+  }, [projectsStore.activeSiteId, activeProject])
 
   useSessionSearchQueryHandler({
     appliedFilter,

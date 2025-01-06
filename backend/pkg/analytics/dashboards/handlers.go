@@ -36,6 +36,7 @@ type handlersImpl struct {
 	responser     *api.Responser
 	jsonSizeLimit int64
 	dashboards    Dashboards
+	validator     *validator.Validate
 }
 
 func (e *handlersImpl) GetAll() []*api.Description {
@@ -50,12 +51,13 @@ func (e *handlersImpl) GetAll() []*api.Description {
 	}
 }
 
-func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, dashboards Dashboards) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, cfg *config.Config, responser *api.Responser, dashboards Dashboards, validator *validator.Validate) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		dashboards:    dashboards,
+		validator:     validator,
 	}, nil
 }
 
@@ -76,9 +78,7 @@ func (e *handlersImpl) createDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
+	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -279,9 +279,7 @@ func (e *handlersImpl) addCardToDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	validate := validator.New()
-	err = validate.Struct(req)
-	if err != nil {
+	if err = e.validator.Struct(req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}

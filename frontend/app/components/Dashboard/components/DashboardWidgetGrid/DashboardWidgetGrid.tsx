@@ -37,40 +37,66 @@ function DashboardWidgetGrid(props: Props) {
           id={props.id}
         >
           {list?.map((item: any, index: any) => (
-            <div
+            <GridItem
               key={item.widgetId}
-              className={cn('col-span-' + item.config.col, 'group relative pl-6 pr-4 py-4 hover:bg-active-blue w-full rounded-xl')}
-            >
-              <WidgetWrapperNew
-                index={index}
-                widget={item}
-                moveListItem={(dragIndex: any, hoverIndex: any) =>
-                  dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
-                }
-                dashboardId={dashboardId}
-                siteId={siteId}
-                grid="other"
-                showMenu={true}
-                isSaved={true}
-              />
-              <div
-                className={cn(
-                  'invisible group-hover:visible ',
-                  'absolute -left-2 top-1/2 -translate-y-1/2',
-                )}
-              >
-                <Popover arrow={false} overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }} content={<AddCardSection />} trigger={'click'}>
-                <Tooltip title="Add Card">
-                  <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
-                </Tooltip>
-                </Popover>
-              </div>
-            </div>
+              item={item}
+              index={index}
+              dashboard={dashboard}
+              dashboardId={dashboardId}
+              siteId={siteId}
+            />
           ))}
         </div>
       )}
     </Loader>
   );
 }
+
+function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setPopoverOpen(open);
+  };
+
+  return (
+    <div
+      key={item.widgetId}
+      className={cn('col-span-' + item.config.col, 'group relative pl-6 pr-4 py-4 hover:bg-active-blue w-full rounded-xl')}
+    >
+      <WidgetWrapperNew
+        index={index}
+        widget={item}
+        moveListItem={(dragIndex: any, hoverIndex: any) =>
+          dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
+        }
+        dashboardId={dashboardId}
+        siteId={siteId}
+        grid="other"
+        showMenu={true}
+        isSaved={true}
+      />
+      <div
+        className={cn(
+          'invisible group-hover:visible ',
+          'absolute -left-2 top-1/2 -translate-y-1/2',
+        )}
+      >
+        <Popover
+          open={popoverOpen}
+          onOpenChange={handleOpenChange}
+          arrow={false}
+          overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+          content={<AddCardSection handleOpenChange={handleOpenChange} />}
+          trigger={'click'}
+        >
+          <Tooltip title="Add Card">
+            <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
+          </Tooltip>
+        </Popover>
+      </div>
+    </div>
+  )
+}
+
 
 export default observer(DashboardWidgetGrid);
