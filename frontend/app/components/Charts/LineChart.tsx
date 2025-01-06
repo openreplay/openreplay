@@ -1,5 +1,5 @@
 import React from 'react';
-import { echarts, defaultOptions } from './init';
+import { echarts, defaultOptions, initWindowStorages } from './init';
 import { customTooltipFormatter, buildCategories, buildDatasetsAndSeries } from './utils'
 import type { DataProps } from './utils'
 import { LineChart } from 'echarts/charts';
@@ -15,6 +15,7 @@ interface Props extends DataProps {
 }
 
 function ORLineChart(props: Props) {
+  const chartUuid = React.useRef<string>(Math.random().toString(36).substring(7));
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -24,22 +25,16 @@ function ORLineChart(props: Props) {
     const categories = buildCategories(props.data);
     const { datasets, series } = buildDatasetsAndSeries(props);
 
-    // Create a quick map of name => dataIndex => value, for partner lookups
-    // and a map for colors. We'll store them on window in this example for brevity.
-    (window as any).__seriesValueMap = {};
-    (window as any).__seriesColorMap = {};
-    (window as any).__timestampMap = props.data.chart.map(item => item.timestamp);
-    (window as any).__categoryMap = categories;
+    initWindowStorages(chartUuid.current, categories, props.data.chart);
 
     series.forEach((s: any) => {
       if (props.isArea) {
         s.areaStyle = {};
-        s.stack = 'Total'
-        // s.emphasis = { focus: 'series' };
+        s.stack = 'Total';
       } else {
         s.areaStyle = null;
       }
-      (window as any).__seriesColorMap[s.name] = s.itemStyle?.color ?? '#999';
+      (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
       const datasetId = s.datasetId || 'current';
       const ds = datasets.find((d) => d.id === datasetId);
       if (!ds) return;
@@ -47,10 +42,10 @@ function ORLineChart(props: Props) {
       const yDimIndex = ds.dimensions.indexOf(yDim);
       if (yDimIndex < 0) return;
 
-      (window as any).__seriesValueMap[s.name] = {};
+      (window as any).__seriesValueMap[chartUuid.current][s.name] = {};
       ds.source.forEach((row: any[]) => {
         const rowIdx = row[0];
-        (window as any).__seriesValueMap[s.name][rowIdx] = row[yDimIndex];
+        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] = row[yDimIndex];
       });
     });
 
@@ -77,23 +72,23 @@ function ORLineChart(props: Props) {
       },
       tooltip: {
         ...defaultOptions.tooltip,
-        formatter: customTooltipFormatter,
+        formatter: customTooltipFormatter(chartUuid.current),
       },
       dataset: datasets,
       series,
     });
     chart.on('click', (event) => {
       const index = event.dataIndex;
-      const timestamp = (window as any).__timestampMap?.[index];
+      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
       props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
     })
 
     return () => {
       chart.dispose();
-      delete (window as any).__seriesValueMap;
-      delete (window as any).__seriesColorMap;
-      delete (window as any).__categoryMap;
-      delete (window as any).__timestampMap;
+      delete (window as any).__seriesValueMap[chartUuid.current];
+      delete (window as any).__seriesColorMap[chartUuid.current];
+      delete (window as any).__categoryMap[chartUuid.current];
+      delete (window as any).__timestampMap[chartUuid.current];
     };
   }, [props.data, props.compData]);
 

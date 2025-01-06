@@ -5,7 +5,7 @@ import {
   customTooltipFormatter
 } from './utils';
 import { buildBarDatasetsAndSeries } from './barUtils';
-import { defaultOptions, echarts } from './init';
+import { defaultOptions, echarts, initWindowStorages } from "./init";
 import { BarChart } from 'echarts/charts';
 
 echarts.use([BarChart]);
@@ -16,6 +16,7 @@ interface BarChartProps extends DataProps {
 }
 
 function ORBarChart(props: BarChartProps) {
+  const chartUuid = React.useRef<string>(Math.random().toString(36).substring(7));
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -24,23 +25,19 @@ function ORBarChart(props: BarChartProps) {
     const categories = buildCategories(props.data);
     const { datasets, series } = buildBarDatasetsAndSeries(props, props.horizontal ?? false);
 
-    (window as any).__seriesValueMap = {};
-    (window as any).__seriesColorMap = {};
-    (window as any).__timestampMap = props.data.chart.map((item) => item.timestamp);
-    (window as any).__categoryMap = categories;
-
+    initWindowStorages(chartUuid.current, categories, props.data.chart);
     series.forEach((s: any) => {
-      (window as any).__seriesColorMap[s.name] = s.itemStyle?.color ?? '#999';
+      (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
       const ds = datasets.find((d) => d.id === s.datasetId);
       if (!ds) return;
       const yDim = props.horizontal ? s.encode.x : s.encode.y;
       const yDimIndex = ds.dimensions.indexOf(yDim);
       if (yDimIndex < 0) return;
 
-      (window as any).__seriesValueMap[s.name] = {};
+      (window as any).__seriesValueMap[chartUuid.current][s.name] = {};
       ds.source.forEach((row: any[]) => {
         const rowIdx = row[0]; // 'idx'
-        (window as any).__seriesValueMap[s.name][rowIdx] = row[yDimIndex];
+        (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] = row[yDimIndex];
       });
     });
 
@@ -65,7 +62,7 @@ function ORBarChart(props: BarChartProps) {
       },
       tooltip: {
         ...defaultOptions.tooltip,
-        formatter: customTooltipFormatter,
+        formatter: customTooltipFormatter(chartUuid.current),
       },
       xAxis,
       yAxis,
@@ -75,10 +72,10 @@ function ORBarChart(props: BarChartProps) {
 
     return () => {
       chart.dispose();
-      delete (window as any).__seriesValueMap;
-      delete (window as any).__seriesColorMap;
-      delete (window as any).__categoryMap;
-      delete (window as any).__timestampMap;
+      delete (window as any).__seriesValueMap[chartUuid.current];
+      delete (window as any).__seriesColorMap[chartUuid.current];
+      delete (window as any).__categoryMap[chartUuid.current];
+      delete (window as any).__timestampMap[chartUuid.current];
     };
   }, [props.data, props.compData, props.horizontal]);
 

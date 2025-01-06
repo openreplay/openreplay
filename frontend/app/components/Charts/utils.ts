@@ -42,28 +42,29 @@ export function assignColorsByBaseName(series: any[]) {
 /**
  *  Show the hovered “current” or “previous” line + the matching partner (if it exists).
  */
-export function customTooltipFormatter(params: any): string {
-  // With trigger='item', params is a single object describing the hovered point
-  // { seriesName, dataIndex, data, marker, color, encode, ... }
-  if (!params) return '';
-  const { seriesName, dataIndex } = params;
+export function customTooltipFormatter(uuid: string) {
+  return (params: any): string => {
+    // With trigger='item', params is a single object describing the hovered point
+    // { seriesName, dataIndex, data, marker, color, encode, ... }
+    if (!params) return '';
+    const { seriesName, dataIndex } = params;
 
-  // 'value' of the hovered point
-  const yKey = params.encode.y[0]; // "Series 1"
-  const value = params.data?.[yKey];
+    // 'value' of the hovered point
+    const yKey = params.encode.y[0]; // "Series 1"
+    const value = params.data?.[yKey];
 
-  const isPrevious = /^Previous\s+/.test(seriesName);
-  const baseName = seriesName.replace(/^Previous\s+/, '');
-  const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
+    const isPrevious = /^Previous\s+/.test(seriesName);
+    const baseName = seriesName.replace(/^Previous\s+/, '');
+    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
 
-  // Get partner’s value from some global map
-  const partnerVal = (window as any).__seriesValueMap?.[partnerName]?.[dataIndex];
-  const timestamp = (window as any).__timestampMap?.[dataIndex];
-  const categoryLabel = (window as any).__categoryMap
-                        ? (window as any).__categoryMap[dataIndex]
-                        : dataIndex;
+    // Get partner’s value from some global map
+    const partnerVal = (window as any).__seriesValueMap?.[uuid]?.[partnerName]?.[dataIndex];
+    const timestamp = (window as any).__timestampMap?.[uuid]?.[dataIndex];
+    const categoryLabel = (window as any).__categoryMap[uuid]
+                          ? (window as any).__categoryMap[uuid][dataIndex]
+                          : dataIndex;
 
-  let tooltipContent = `
+    let tooltipContent = `
     <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
       <div class="flex gap-2 items-center">
         <div style="
@@ -86,9 +87,9 @@ export function customTooltipFormatter(params: any): string {
       </div>
   `;
 
-  if (partnerVal !== undefined) {
-    const partnerColor = (window as any).__seriesColorMap?.[partnerName] || '#999';
-    tooltipContent += `
+    if (partnerVal !== undefined) {
+      const partnerColor = (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
+      tooltipContent += `
       <div class="flex gap-2 items-center mt-2">
         <div style="
           border-radius: 99px; 
@@ -108,10 +109,11 @@ export function customTooltipFormatter(params: any): string {
         </div>
       </div>
     `;
-  }
+    }
 
-  tooltipContent += '</div>';
-  return tooltipContent;
+    tooltipContent += '</div>';
+    return tooltipContent;
+  }
 }
 
 /**
