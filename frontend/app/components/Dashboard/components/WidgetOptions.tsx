@@ -136,7 +136,7 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
 const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
   const chartTypes = {
     lineChart: 'Line',
-    areaChart: 'Area',
+    areaChart: 'Stacked Area',
     barChart: 'Column',
     progressChart: 'Vertical Bar',
     columnChart: 'Horizontal Bar',

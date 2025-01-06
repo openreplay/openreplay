@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import CustomMetricLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricLineChart';
+import LineChart from 'App/components/Charts/LineChart'
+import BarChart from 'App/components/Charts/BarChart'
+import PieChart from 'App/components/Charts/PieChart'
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
-import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
 import { Icon, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import FunnelTable from "../../../Funnels/FunnelWidget/FunnelTable";
-import AreaChart from '../../Widgets/CustomMetricsWidgets/AreaChart';
-import BarChart from '../../Widgets/CustomMetricsWidgets/BarChart';
 import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
@@ -283,12 +282,11 @@ function WidgetChart(props: Props) {
       if (viewType === 'lineChart') {
         return (
           <div className='pt-3'>
-          <CustomMetricLineChart
+          <LineChart
+            chartName={_metric.name}
             inGrid={!props.isPreview}
             data={chartData}
             compData={compData}
-            colors={colors}
-            params={params}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -302,11 +300,11 @@ function WidgetChart(props: Props) {
       if (viewType === 'areaChart') {
         return (
           <div className='pt-3'>
-          <AreaChart
+          <LineChart
+            isArea
+            chartName={_metric.name}
             data={chartData}
             inGrid={!props.isPreview}
-            params={params}
-            colors={colors}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -357,11 +355,9 @@ function WidgetChart(props: Props) {
       if (viewType === 'pieChart') {
         return (
           <div className='pt-3'>
-          <CustomMetricPieChart
+          <PieChart
             inGrid={!props.isPreview}
-            metric={_metric}
             data={chartData}
-            colors={colors}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -497,7 +493,7 @@ function WidgetChart(props: Props) {
     if (metricType === RETENTION) {
       if (viewType === 'trend') {
         return (
-          <CustomMetricLineChart
+          <LineChart
             data={data}
             colors={colors}
             params={params}

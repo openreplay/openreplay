@@ -6838,6 +6838,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"echarts@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "echarts@npm:5.6.0"
+  dependencies:
+    tslib: "npm:2.3.0"
+    zrender: "npm:5.6.1"
+  checksum: 10c1/0695d5951f0cfccfb54a0e223a2c23313bd789aa7529caa1b6d8f8b48cc24f480aa6dcc7fecbd9cef260492b5806470a0a0dafa2305a68d0326c4b6a0be0e3ba
+  languageName: node
+  linkType: hard
+
 "ee-first@npm:1.1.1":
   version: 1.1.1
   resolution: "ee-first@npm:1.1.1"
@@ -11607,6 +11617,7 @@ __metadata:
     cypress: "npm:13.17.0"
     cypress-image-snapshot: "npm:^4.0.1"
     dotenv: "npm:^6.2.0"
+    echarts: "npm:^5.6.0"
     esbuild-loader: "npm:^4.2.2"
     eslint: "npm:^8.15.0"
     eslint-plugin-react: "npm:^7.29.4"
@@ -15762,6 +15773,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:2.3.0":
+  version: 2.3.0
+  resolution: "tslib@npm:2.3.0"
+  checksum: 10c1/851bc4c307068b0a65c428e0dab91abb30b8c145fa249d7204281efd1146edd170c8152780347270dc550c2eaf0e47743e3c3fabcf4f66180457471e6e66179e
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^1.8.1, tslib@npm:^1.9.3":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
@@ -16874,5 +16892,14 @@ __metadata:
   version: 1.1.1
   resolution: "yocto-queue@npm:1.1.1"
   checksum: 10c1/3c46904537cf83a416bb8373a2e6c1cac4568528888b605a6f8a319c4a84ae4ac368b31f0a54df59d3e33efd7aef2d2499ca8210d329e18028a1d039e1bb5722
+  languageName: node
+  linkType: hard
+
+"zrender@npm:5.6.1":
+  version: 5.6.1
+  resolution: "zrender@npm:5.6.1"
+  dependencies:
+    tslib: "npm:2.3.0"
+  checksum: 10c1/593dd84b3ea01f4e7941fd15f103550251b769218f4d524af935595bb628fa6e94e4c091654ec390e1c7176dd60ca8a7c7341d372d310ee3beebfe602792c1c6
   languageName: node
   linkType: hard
