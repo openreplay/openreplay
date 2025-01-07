@@ -58,7 +58,8 @@ function Projects() {
       ]}
     >
       <Layout>
-        <Layout.Sider width={300} trigger={null} className="!bg-white border-r">
+        <Layout.Sider width={300} trigger={null}
+                      className="!bg-white border-r">
           <ProjectList />
         </Layout.Sider>
 

@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { useStore } from '@/mstore';
-import { List, Button, Typography, Space } from 'antd';
+import { List, Button, Typography, Space, Empty } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { PencilIcon, ScanSearch } from 'lucide-react';
 import { useModal } from 'Components/ModalContext';
 import TagForm from 'Components/Client/Projects/TagForm';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function ProjectTags() {
   const { tagWatchStore, projectsStore } = useStore();
@@ -36,6 +37,9 @@ function ProjectTags() {
         </ul>
       </Space>
       <List
+        locale={{
+          emptyText: <Empty description="No tags found" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />
+        }}
         loading={tagWatchStore.isLoading}
         dataSource={list}
         renderItem={(item) => (

@@ -9,11 +9,7 @@ import * as routes from 'App/routes';
 import {
   CLIENT_DEFAULT_TAB,
   CLIENT_TABS,
-  bookmarks,
   client,
-  fflags,
-  notes,
-  sessions,
   withSiteId
 } from 'App/routes';
 import { MODULES } from 'Components/Client/Modules';
@@ -32,13 +28,6 @@ import {
 import { useStore } from 'App/mstore';
 
 const { Text } = Typography;
-
-const TabToUrlMap = {
-  all: sessions() as '/sessions',
-  bookmark: bookmarks() as '/bookmarks',
-  notes: notes() as '/notes',
-  flags: fflags() as '/feature-flags'
-};
 
 interface Props extends RouteComponentProps {
   siteId?: string;
@@ -135,16 +124,6 @@ function SideMenu(props: Props) {
       });
   }, [isAdmin, isEnterprise, isPreferencesActive, modules, spotOnly, siteId]);
 
-  React.useEffect(() => {
-    const currentLocation = location.pathname;
-    // const tab = Object.keys(TabToUrlMap).find((tab: keyof typeof TabToUrlMap) =>
-    //   currentLocation.includes(TabToUrlMap[tab])
-    // );
-    // if (tab && tab !== searchStore.activeTab && siteId) {
-    //   searchStore.setActiveTab({ type: tab });
-    // }
-  }, [location.pathname]);
-
   const menuRoutes: any = {
     [MENU.EXIT]: () =>
       props.history.push(withSiteId(routes.sessions(), siteId)),
@@ -164,7 +143,6 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.SESSION_LISTING]: () =>
       client(CLIENT_TABS.SESSIONS_LISTING),
     [PREFERENCES_MENU.INTEGRATIONS]: () => client(CLIENT_TABS.INTEGRATIONS),
-    [PREFERENCES_MENU.METADATA]: () => client(CLIENT_TABS.CUSTOM_FIELDS),
     [PREFERENCES_MENU.WEBHOOKS]: () => client(CLIENT_TABS.WEBHOOKS),
     [PREFERENCES_MENU.PROJECTS]: () => client(CLIENT_TABS.SITES),
     [PREFERENCES_MENU.ROLES_ACCESS]: () => client(CLIENT_TABS.MANAGE_ROLES),

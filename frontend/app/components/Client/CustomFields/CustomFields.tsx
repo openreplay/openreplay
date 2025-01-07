@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { NoContent } from 'UI';
 import CustomFieldForm from './CustomFieldForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
@@ -8,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { List, Space, Typography, Button, Tooltip } from 'antd';
 import { PencilIcon, PlusIcon, Tags } from 'lucide-react';
 import usePageTitle from '@/hooks/usePageTitle';
+import { Empty } from '.store/antd-virtual-7db13b4af6/package';
 
 const CustomFields = () => {
   usePageTitle('Metadata - OpenReplay Preferences');
@@ -59,36 +59,26 @@ const CustomFields = () => {
         </Typography.Text>
       </Space>
 
-
-      <NoContent
-        title={
-          <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={ICONS.NO_METADATA} size={60} />
-            <div className="text-center my-4">None added yet</div>
-          </div>
-        }
-        size="small"
-        show={fields.length === 0}
-      >
-        <List
-          loading={loading}
-          dataSource={fields}
-          renderItem={(field: any) => (
-            <List.Item
-              // disabled={deletingItem !== null && deletingItem === field.index}
-              onClick={() => handleInit(field)}
-              className="cursor-pointer group hover:bg-active-blue !px-4"
-              actions={[
-                <Button className="opacity-0 group-hover:!opacity-100" icon={<PencilIcon size={14} />} />
-              ]}
-            >
-              <List.Item.Meta
-                title={field.key}
-                avatar={<Tags size={20} />}
-              />
-            </List.Item>
-          )} />
-      </NoContent>
+      <List
+        locale={{
+          emptyText: <Empty description="None added yet" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />
+        }}
+        loading={loading}
+        dataSource={fields}
+        renderItem={(field: any) => (
+          <List.Item
+            onClick={() => handleInit(field)}
+            className="cursor-pointer group hover:bg-active-blue !px-4"
+            actions={[
+              <Button className="opacity-0 group-hover:!opacity-100" icon={<PencilIcon size={14} />} />
+            ]}
+          >
+            <List.Item.Meta
+              title={field.key}
+              avatar={<Tags size={20} />}
+            />
+          </List.Item>
+        )} />
     </div>
   );
 };
