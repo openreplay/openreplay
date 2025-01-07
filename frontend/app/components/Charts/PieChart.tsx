@@ -101,6 +101,8 @@ function PieChart(props: PieChartProps) {
     };
 
     chartInstance.setOption(option);
+    const obs = new ResizeObserver(() => chartInstance.resize())
+    obs.observe(chartRef.current);
 
     chartInstance.on('click', function (params) {
       onClick([{ name: params.name, value: params.value }]);
@@ -108,6 +110,7 @@ function PieChart(props: PieChartProps) {
 
     return () => {
       chartInstance.dispose();
+      obs.disconnect();
     };
   }, [data, label, onClick, inGrid]);
 

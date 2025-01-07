@@ -22,6 +22,9 @@ function ORBarChart(props: BarChartProps) {
   React.useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
+    const obs = new ResizeObserver(() => chart.resize())
+    obs.observe(chartRef.current);
+
     const categories = buildCategories(props.data);
     const { datasets, series } = buildBarDatasetsAndSeries(props, props.horizontal ?? false);
 
@@ -72,6 +75,7 @@ function ORBarChart(props: BarChartProps) {
 
     return () => {
       chart.dispose();
+      obs.disconnect();
       delete (window as any).__seriesValueMap[chartUuid.current];
       delete (window as any).__seriesColorMap[chartUuid.current];
       delete (window as any).__categoryMap[chartUuid.current];

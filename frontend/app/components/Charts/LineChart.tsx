@@ -21,6 +21,8 @@ function ORLineChart(props: Props) {
   React.useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
+    const obs = new ResizeObserver(() => chart.resize())
+    obs.observe(chartRef.current);
 
     const categories = buildCategories(props.data);
     const { datasets, series } = buildDatasetsAndSeries(props);
@@ -85,6 +87,7 @@ function ORLineChart(props: Props) {
 
     return () => {
       chart.dispose();
+      obs.disconnect();
       delete (window as any).__seriesValueMap[chartUuid.current];
       delete (window as any).__seriesColorMap[chartUuid.current];
       delete (window as any).__categoryMap[chartUuid.current];
