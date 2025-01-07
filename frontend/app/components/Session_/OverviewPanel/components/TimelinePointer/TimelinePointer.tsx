@@ -158,7 +158,7 @@ function GroupedIssue({
               onClick={createEventClickHandler(pointer, type)}
               className={'flex items-center gap-2 mb-1 cursor-pointer border-b border-transparent hover:border-gray-lightest'}
             >
-              <div className={'text-disabled-text'}>@{shortDurationFromMs(pointer.time)}</div>
+              <div className={'text-secondary'}>@{shortDurationFromMs(pointer.time)}</div>
               <RenderLineData type={type} item={pointer} />
             </div>
           ))}

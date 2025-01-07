@@ -315,6 +315,7 @@ function PanelComponent({
                 />
                 {summaryChecked ? (
                   <Segmented
+                    size='small'
                     value={zoomTab}
                     onChange={(val) => setZoomTab(val)}
                     options={[

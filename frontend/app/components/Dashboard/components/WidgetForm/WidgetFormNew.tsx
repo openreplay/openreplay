@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, Space, Button, Alert, Form } from 'antd';
-
+import { Card, Space, Button, Alert, Form, Select } from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -10,7 +9,7 @@ import {
   INSIGHTS,
   RETENTION,
   TABLE,
-  USER_PATH
+  USER_PATH,
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 import { issueCategories } from 'App/constants/filterOptions';
@@ -18,7 +17,6 @@ import { PlusIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
 import { FilterKey } from 'Types/filter/filterType';
-import Select from 'Shared/Select';
 
 function WidgetFormNew() {
   const { metricStore } = useStore();
@@ -27,9 +25,11 @@ function WidgetFormNew() {
   const isHeatMap = metric.metricType === HEATMAP;
   const isPathAnalysis = metric.metricType === USER_PATH;
   const excludeFilterKeys = isHeatMap || isPathAnalysis ? eventKeys : [];
-  const isPredefined = metric.metricType === ERRORS
+  const isPredefined = metric.metricType === ERRORS;
 
-  return isPredefined ? <PredefinedMessage /> : (
+  return isPredefined ? (
+    <PredefinedMessage />
+  ) : (
     <Space direction="vertical" className="w-full">
       <AdditionalFilters />
       <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />
@@ -40,8 +40,8 @@ function WidgetFormNew() {
 export default observer(WidgetFormNew);
 
 const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
-  const defaultClosed = React.useRef(metric.exists())
-  const defaultSeries = React.useRef(metric.series.map(s => s.name))
+  const defaultClosed = React.useRef(metric.exists());
+  const defaultSeries = React.useRef(metric.series.map((s) => s.name));
   const isTable = metric.metricType === TABLE;
   const isHeatMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
@@ -50,7 +50,13 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
 
-  const isSingleSeries = isTable || isFunnel || isHeatMap || isInsights || isRetention || isPathAnalysis;
+  const isSingleSeries =
+    isTable ||
+    isFunnel ||
+    isHeatMap ||
+    isInsights ||
+    isRetention ||
+    isPathAnalysis;
   return (
     <>
       {metric.series.length > 0 &&
@@ -76,7 +82,11 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
                 series={series}
                 onRemoveSeries={() => metric.removeSeries(index)}
                 canDelete={metric.series.length > 1}
-                defaultClosed={metric.hasChanged ? defaultSeries.current.includes(series.name) : defaultClosed.current}
+                defaultClosed={
+                  metric.hasChanged
+                    ? defaultSeries.current.includes(series.name)
+                    : defaultClosed.current
+                }
                 emptyMessage={
                   isTable
                     ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
@@ -88,66 +98,91 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
           ))}
 
       {!isSingleSeries && canAddSeries && (
-       <Button
-       onClick={() => {
-         if (!canAddSeries) return;
-         metric.addSeries();
-       }}
-       size='small'
-       type='text'
-       className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal btn-add-series"
-     >
-         <PlusIcon size={16} />
-         Add Series
-     </Button>
+        <Button
+          onClick={() => {
+            if (!canAddSeries) return;
+            metric.addSeries();
+          }}
+          size="small"
+          type="text"
+          className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal btn-add-series"
+        >
+          <PlusIcon size={16} />
+          Add Series
+        </Button>
       )}
     </>
   );
 });
-
 
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const metricValueOptions = [
     { value: 'location', label: 'Pages' },
     { value: 'click', label: 'Clicks' },
     { value: 'input', label: 'Input' },
-    { value: 'custom', label: 'Custom' }
+    { value: 'custom', label: 'Custom' },
   ];
   return (
-    <Card styles={{ body: { padding: '20px 20px' } }}>
+    <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
       <Form.Item>
-        <Space>
-          <Select
-            name="startType"
-            options={[
-              { value: 'start', label: 'With Start Point' },
-              { value: 'end', label: 'With End Point' }
-            ]}
-            defaultValue={metric.startType}
-            onChange={writeOption}
-            placeholder="All Issues"
-          />
-          <span className="mx-3">showing</span>
-          <Select
-            name="metricValue"
-            options={metricValueOptions}
-            value={metric.metricValue}
-            isMulti={true}
-            onChange={writeOption}
-            placeholder="All Issues"
-          />
-        </Space>
+        <div className="flex flex-wrap gap-2 items-center justify-start">
+          <span className="font-medium">User journeys with: </span>
+
+          <div className="flex sm:flex-wrap lg:flex-nowrap gap-2 items-start">
+            <Select
+              className="w-36 rounded-xl"
+              name="startType"
+              options={[
+                { value: 'start', label: 'Start Point' },
+                { value: 'end', label: 'End Point' },
+              ]}
+              defaultValue={metric.startType || 'start'}
+              onChange={(value) => writeOption({ name: 'startType', value })}
+              placeholder="Select Start Type"
+              size="small"
+            />
+
+            <span className="text-neutral-400 mt-.5">showing</span>
+
+            <Select
+              mode="multiple"
+              className="min-w-36 rounded-xl"
+              allowClear
+              name="metricValue"
+              options={metricValueOptions}
+              value={metric.metricValue || []}
+              onChange={(value) => writeOption({ name: 'metricValue', value })}
+              placeholder="Select Metrics"
+              size="small"
+            />
+          </div>
+        </div>
       </Form.Item>
-      <Form.Item label={metric.startType === 'start' ? 'Start Point' : 'End Point'} className="mb-0">
-        <FilterItem
-          hideDelete
-          filter={metric.startPoint}
-          allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
-          onUpdate={val => metric.updateStartPoint(val)}
-          onRemoveFilter={() => {
-          }}
-        />
-      </Form.Item>
+      <div className="flex items-center">
+        <Form.Item
+          label={
+            metric.startType === 'start'
+              ? 'Specify Start Point'
+              : 'Specify End Point'
+          }
+          className="m0-0 font-medium p-0 h-fit"
+        >
+          <span className="font-normal">
+            <FilterItem
+              hideDelete
+              filter={metric.startPoint}
+              allowedFilterKeys={[
+                FilterKey.LOCATION,
+                FilterKey.CLICK,
+                FilterKey.INPUT,
+                FilterKey.CUSTOM,
+              ]}
+              onUpdate={(val) => metric.updateStartPoint(val)}
+              onRemoveFilter={() => {}}
+            />
+          </span>
+        </Form.Item>
+      </div>
     </Card>
   );
 });
@@ -164,6 +199,7 @@ const InsightsFilter = observer(({ metric, writeOption }: any) => {
             onChange={writeOption}
             isMulti
             placeholder="All Categories"
+            allowClear
           />
         </Space>
       </Form.Item>
@@ -183,14 +219,22 @@ const AdditionalFilters = observer(() => {
 
   return (
     <>
-      {metric.metricType === USER_PATH && <PathAnalysisFilter metric={metric} writeOption={writeOption} />}
-      {metric.metricType === INSIGHTS && <InsightsFilter metric={metric} writeOption={writeOption} />}
+      {metric.metricType === USER_PATH && (
+        <PathAnalysisFilter metric={metric} writeOption={writeOption} />
+      )}
+      {metric.metricType === INSIGHTS && (
+        <InsightsFilter metric={metric} writeOption={writeOption} />
+      )}
     </>
   );
 });
 
-
 const PredefinedMessage = () => (
-  <Alert message="Drilldown or filtering isn't supported on this legacy card." type="warning" showIcon closable
-         className="border-transparent rounded-lg" />
+  <Alert
+    message="Drilldown or filtering isn't supported on this legacy card."
+    type="warning"
+    showIcon
+    closable
+    className="border-transparent rounded-lg"
+  />
 );

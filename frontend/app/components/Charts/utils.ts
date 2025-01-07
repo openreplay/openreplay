@@ -1,6 +1,7 @@
 import { formatTimeOrDate } from "App/date";
 
-export const colors = ['#6774E2', '#929ACD', '#3EAAAF', '#565D97', '#8F9F9F', '#376F72'];
+export const colors = ['#394EFF', '#3EAAAF', '#9276da', '#ceba64', "#bc6f9d", '#966fbc', '#64ce86', '#e06da3', '#6dabe0'];
+//export const colors = ['#6774E2', '#929ACD', '#3EAAAF', '#565D97', '#8F9F9F', '#376F72'];
 // const colorsTeal = ['#1E889A', '#239DB2', '#28B2C9', '#36C0D7', '#65CFE1'];
 // const colorsx = ['#256669', '#38999e', '#3eaaaf', '#51b3b7', '#78c4c7', '#9fd5d7', '#c5e6e7'].reverse();
 // const compareColors = ['#192EDB', '#6272FF', '#808DFF', '#B3BBFF', '#C9CFFF'];
@@ -204,11 +205,19 @@ export function createSeries(
       datasetId,
       encode: { x: 'idx', y: fullName },
       lineStyle: dashed ? { type: 'dashed' } : undefined,
-      showSymbol: true,
-      symbolSize: 9,
-      symbol: 'circle',
+      showSymbol: false,
       // custom flag to hide prev data from legend
       _hideInLegend: hideFromLegend,
+      itemStyle: { opacity: 1 },
+      emphasis: {
+        focus: 'series', 
+        itemStyle: { opacity: 1 }, 
+        lineStyle: { opacity: 1 }, 
+      },
+      blur: {
+        itemStyle: { opacity: 0.2 },
+        lineStyle: { opacity: 0.2 },
+      },
     };
   });
 }
