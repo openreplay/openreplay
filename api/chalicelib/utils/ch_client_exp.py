@@ -6,7 +6,6 @@ from queue import Queue, Empty
 
 import clickhouse_connect
 from clickhouse_connect.driver.query import QueryContext
-from clickhouse_connect.driver.exceptions import DatabaseError
 from decouple import config
 
 logger = logging.getLogger(__name__)
@@ -32,9 +31,10 @@ if config("CH_COMPRESSION", cast=bool, default=True):
     extra_args["compression"] = "lz4"
 
 
-def transform_result(original_function):
+def transform_result(self, original_function):
     @wraps(original_function)
     def wrapper(*args, **kwargs):
+        logger.debug(self.format(query=kwargs.get("query"), parameters=kwargs.get("parameters")))
         result = original_function(*args, **kwargs)
         if isinstance(result, clickhouse_connect.driver.query.QueryResult):
             column_names = result.column_names
@@ -140,7 +140,7 @@ class ClickHouseClient:
             else:
                 self.__client = CH_pool.get_connection()
 
-            self.__client.execute = transform_result(self.__client.query)
+            self.__client.execute = transform_result(self, self.__client.query)
             self.__client.format = self.format
 
     def __enter__(self):
