@@ -33,9 +33,13 @@ function TagForm(props: Props) {
 
   const onSave = async () => {
     setLoading(true);
-    tagWatchStore.updateTagName(tag.tagId, name, projectId).finally(() => {
-      setLoading(false);
-    });
+    tagWatchStore.updateTagName(tag.tagId, name, projectId)
+      .then(() => {
+        closeModal();
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (

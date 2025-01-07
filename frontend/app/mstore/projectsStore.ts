@@ -34,6 +34,13 @@ export default class ProjectsStore {
     return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
   }
 
+  syncProjectInList = (project: Partial<Project>) => {
+    const index = this.list.findIndex(site => site.id === project.id);
+    if (index !== -1) {
+      this.list[index] = this.list[index].edit(project);
+    }
+  }
+
   getSiteId = () => {
     return {
       siteId: this.siteId,
@@ -89,6 +96,15 @@ export default class ProjectsStore {
       const gdprData = this.instance.gdpr.toData();
       const response = await projectsService.saveGDPR(siteId, gdprData);
       this.editGDPR(response.data);
+
+      try {
+        this.syncProjectInList({
+          id: siteId,
+          gdpr: response.data
+        })
+      } catch (error) {
+        console.error('Failed to sync project in list:', error);
+      }
     } catch (error) {
       console.error('Failed to save GDPR:', error);
     }

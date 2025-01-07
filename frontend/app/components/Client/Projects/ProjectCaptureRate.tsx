@@ -40,7 +40,7 @@ function ProjectCaptureRate(props: Props) {
     }
   }, [projectId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setConditions(captureConditions.map((condition: any) => new Conditions(condition, true, isMobile)));
   }, [captureConditions]);
 

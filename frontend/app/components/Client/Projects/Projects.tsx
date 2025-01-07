@@ -1,5 +1,5 @@
 import React from 'react';
-import { App, Button, Card, Layout, Space, Typography } from 'antd';
+import { App, Button, Card, Layout, Space, Tooltip, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
@@ -52,7 +52,7 @@ function Projects() {
       }}
       title="Projects"
       extra={[
-        <Button key="1" onClick={createProject} icon={<PlusIcon />}>
+        <Button onClick={createProject} icon={<PlusIcon size={18} />}>
           Create Project
         </Button>
       ]}
@@ -68,8 +68,10 @@ function Projects() {
                          style={{ height: 46 }}>
             <div className="flex items-center gap-4">
               <Typography.Title level={5}
-                                className="capitalize !m-0 whitespace-nowrap truncate">{project?.name}</Typography.Title>
-              <ProjectKeyButton />
+                                className="capitalize !m-0 whitespace-nowrap truncate">
+                {project?.name}
+              </Typography.Title>
+              <ProjectKeyButton project={project} />
             </div>
             <ProjectTabs />
           </Layout.Header>
@@ -90,9 +92,7 @@ function Projects() {
 
 export default observer(Projects);
 
-function ProjectKeyButton() {
-  const { projectsStore } = useStore();
-  const { project } = projectsStore.config;
+function ProjectKeyButton({ project }: { project: Project | null }) {
   const { message } = App.useApp();
 
   const copyKey = () => {
@@ -105,6 +105,8 @@ function ProjectKeyButton() {
   };
 
   return (
-    <Button onClick={copyKey} icon={<KeyIcon size={14} />} size="small" />
+    <Tooltip title="Copy Project Key">
+      <Button onClick={copyKey} icon={<KeyIcon size={14} />} size="small" />
+    </Tooltip>
   );
 }
