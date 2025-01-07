@@ -54,6 +54,7 @@ const FilterSeriesHeader = observer(
   }) => {
     const onUpdate = (name: any) => {
       props.series.update('name', name);
+      props.onChange();
     };
     return (
       <div
@@ -67,7 +68,7 @@ const FilterSeriesHeader = observer(
             seriesIndex={props.seriesIndex}
             name={props.series.name}
             onUpdate={onUpdate}
-            onChange={props.onChange}
+            onChange={() => null}
           />
         </Space>
 
@@ -187,6 +188,7 @@ function FilterSeries(props: Props) {
         <FilterSeriesHeader
           hidden={hideHeader}
           seriesIndex={seriesIndex}
+          onChange={observeChanges}
           series={series}
           onRemove={props.onRemoveSeries}
           canDelete={canDelete}

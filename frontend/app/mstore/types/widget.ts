@@ -125,6 +125,7 @@ export default class Widget {
 
     removeSeries(index: number) {
         this.series.splice(index, 1);
+        this.hasChanged = true;
     }
 
     setSeries(series: FilterSeries[]) {
