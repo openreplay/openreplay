@@ -18,7 +18,7 @@ interface Props {
 function SessionsBy(props: Props) {
   const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
   const [selected, setSelected] = React.useState<any>(null);
-  const total = data.count;
+  const total = data.total;
   const { openModal, closeModal } = useModal();
   const modalMetric = React.useMemo(() => Object.assign(new Widget(), metric), [metric]);
 
