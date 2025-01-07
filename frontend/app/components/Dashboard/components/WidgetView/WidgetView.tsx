@@ -25,7 +25,7 @@ import { Space, Segmented, Tooltip } from 'antd';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import Widget from 'App/mstore/types/widget';
 import { LayoutPanelTop, LayoutPanelLeft } from 'lucide-react';
-import classNames from 'classnames';
+import cn from 'classnames'
 
 interface Props {
   history: any;
@@ -34,13 +34,13 @@ interface Props {
 }
 
 function WidgetView(props: Props) {
-  const [layout, setLayout] = useState('horizontal');
+  const [layout, setLayout] = useState('flex-row');
   const {
     match: {
       params: { siteId, dashboardId, metricId },
     },
   } = props;
-  const { metricStore, dashboardStore } = useStore();
+  const { metricStore, dashboardStore, settingsStore } = useStore();
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
   const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
@@ -65,6 +65,7 @@ function WidgetView(props: Props) {
         metricStore.init();
       }
     }
+    settingsStore.updateMenuCollapsed(true)
   }, []);
 
   const undoChanges = () => {
@@ -150,7 +151,7 @@ function WidgetView(props: Props) {
                   onChange={setLayout}
                   options={[
                     {
-                      value: 'horizontal',
+                      value: 'flex-row',
                       icon: (
                         <Tooltip title="Horizontal Layout">
                           <LayoutPanelLeft size={16} />
@@ -158,10 +159,18 @@ function WidgetView(props: Props) {
                       )
                     },
                     {
-                      value: 'vertical',
+                      value: 'flex-col',
                       icon: (
                         <Tooltip title="Vertical Layout">
                           <LayoutPanelTop size={16} />
+                        </Tooltip>
+                      )
+                    },
+                    {
+                      value: 'flex-row-reverse',
+                      icon: (
+                        <Tooltip title="Reversed Horizontal Layout">
+                          <div className={'rotate-180'}><LayoutPanelLeft size={16} /></div>
                         </Tooltip>
                       )
                     }
@@ -169,11 +178,11 @@ function WidgetView(props: Props) {
                 />
               }
             />
-            <div className={layout === 'horizontal' ? 'flex gap-4' : ''}>
-              <div className={layout === 'horizontal' ? 'w-1/3 ' : 'w-full'}>
+            <div className={cn('flex gap-4', layout)}>
+              <div className={layout.startsWith('flex-row') ? 'w-1/3 ' : 'w-full'}>
                 <WidgetFormNew />
               </div>
-              <div className={layout === 'horizontal' ? 'w-2/3' : 'w-full'}>
+              <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
                 <WidgetPreview name={widget.name} isEditing={expanded} />
 
                     {widget.metricOf !== FilterKey.SESSIONS &&

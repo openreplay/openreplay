@@ -1,5 +1,5 @@
 import type { DataProps, DataItem } from './utils';
-import { createDataset, assignColorsByBaseName } from './utils';
+import { createDataset, assignColorsByBaseName, assignColorsByCategory } from './utils';
 
 export function createBarSeries(
   data: DataProps['data'],
@@ -48,94 +48,82 @@ export function buildBarDatasetsAndSeries(props: DataProps) {
 }
 
 
+// START GEN
 function sumSeries(chart: DataItem[], seriesName: string): number {
   return chart.reduce((acc, row) => acc + (Number(row[seriesName]) || 0), 0);
 }
 
-export function buildColumnChart(chartUuid: string, data: DataProps['data'], compData: DataProps['compData'],) {
-  const baseNamesSet = new Set<string>();
+/**
+ * Build a horizontal bar chart with:
+ * - yAxis categories = each name in data.namesMap
+ * - 1 bar series for "Current"
+ * - 1 bar series for "Previous" (optional, if compData present)
+ */
+export function buildColumnChart(
+  chartUuid: string,
+  data: DataProps['data'],
+  compData: DataProps['compData']
+) {
+  const categories = data.namesMap.filter(Boolean);
 
-  data.namesMap.filter(Boolean).forEach((fullName) => {
-    const baseName = fullName.replace(/^Previous\s+/, '');
-    baseNamesSet.add(baseName);
+  const currentValues = categories.map((name) => {
+    const val = sumSeries(data.chart, name);
+    (window as any).__seriesValueMap[chartUuid][name] = val;
+    return val;
   });
 
+  let previousValues: number[] = [];
   if (compData && compData.chart?.length) {
-    compData.namesMap.filter(Boolean).forEach((fullName) => {
-      const baseName = fullName.replace(/^Previous\s+/, '');
-      baseNamesSet.add(baseName);
+    previousValues = categories.map((name) => {
+      const val = sumSeries(compData.chart, `Previous ${name}`);
+      (window as any).__seriesValueMap[chartUuid][`Previous ${name}`] = val;
+      return val;
     });
   }
 
-  const baseNames = Array.from(baseNamesSet); // e.g. ["Series 1","Series 2"]
+  const currentSeries = {
+    name: 'Current',
+    type: 'bar',
+    barWidth: 16,
+    data: currentValues,
+    _baseName: 'Current',
+    itemStyle: {
+      borderRadius: [0, 6, 6, 0],
+    },
+  };
 
-  const yAxisData = baseNames;
-
-  const series: any[] = [];
-
-  data.namesMap.filter(Boolean).forEach((fullName) => {
-    const baseName = fullName.replace(/^Previous\s+/, '');
-    const idx = baseNames.indexOf(baseName);
-
-    const val = sumSeries(data.chart, fullName);
-    const dataArr = new Array(baseNames.length).fill(0);
-    dataArr[idx] = val;
-    (window as any).__seriesValueMap[chartUuid][
-      `Previous ${fullName}`
-      ] = val;
-    series.push({
-      name: fullName,
+  let previousSeries: any = null;
+  if (previousValues.length > 0) {
+    previousSeries = {
+      name: 'Previous',
       type: 'bar',
       barWidth: 16,
-      data: dataArr,
-      _hideInLegend: false,
-      _baseName: baseName,
+      data: previousValues,
+      _baseName: 'Previous',
       itemStyle: {
         borderRadius: [0, 6, 6, 0],
-      },
-    });
-  });
-
-  if (compData && compData.chart?.length) {
-    compData.namesMap.filter(Boolean).forEach((fullName) => {
-      const baseName = fullName.replace(/^Previous\s+/, '');
-      const idx = baseNames.indexOf(baseName);
-      const val = sumSeries(compData.chart, fullName);
-
-      const dataArr = new Array(baseNames.length).fill(0);
-      dataArr[idx] = val;
-      (window as any).__seriesValueMap[chartUuid][baseName] = val;
-      series.push({
-        name: fullName,
-        type: 'bar',
-        barWidth: 16,
-        barGap: '1%',
-        data: dataArr,
-        _hideInLegend: true,
-        _baseName: baseName,
-        itemStyle: {
-          borderRadius: [0, 6, 6, 0],
-          decal: {
-            show: true,
-            symbol: 'line',
-            symbolSize: 6,
-            rotation: 1,
-            dashArrayX: 4,
-            dashArrayY: 4,
-          },
+        decal: {
+          show: true,
+          symbol: 'line',
+          symbolSize: 6,
+          rotation: 1,
+          dashArrayX: 4,
+          dashArrayY: 4,
         },
-      });
-    });
+      },
+    };
   }
 
-  assignColorsByBaseName(series);
+  const series = previousSeries ? [currentSeries, previousSeries] : [currentSeries];
+
+  assignColorsByCategory(series, categories);
+
   series.forEach((s) => {
-    (window as any).__seriesColorMap[chartUuid][s.name] =
-      s.itemStyle.color;
+    (window as any).__seriesColorMap[chartUuid][s.name] = s.itemStyle.color;
   });
 
   return {
-    yAxisData,
+    yAxisData: categories,
     series,
-  }
+  };
 }

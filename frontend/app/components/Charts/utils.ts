@@ -40,12 +40,50 @@ export function assignColorsByBaseName(series: any[]) {
     }
   });
 
-  // Then apply color to each series
   series.forEach((s) => {
     const baseName = s._baseName || s.name;
     const color = colorMap[baseName];
     s.itemStyle = { ...s.itemStyle, color };
     s.lineStyle = { ...(s.lineStyle || {}), color };
+  });
+}
+
+function buildCategoryColorMap(categories: string[]): Record<number, string> {
+  const colorMap: Record<number, string> = {};
+  categories.forEach((_, i) => {
+    colorMap[i] = colors[i % colors.length];
+  });
+  return colorMap;
+}
+
+/**
+ * For each series, transform its data array to an array of objects
+ * with `value` and `itemStyle.color` based on the category index.
+ */
+export function assignColorsByCategory(
+  series: any[],
+  categories: string[]
+) {
+  const categoryColorMap = buildCategoryColorMap(categories);
+
+  series.forEach((s, si) => {
+    s.data = s.data.map((val: any, i: number) => {
+      const color = categoryColorMap[i];
+      if (typeof val === 'number') {
+        return {
+          value: val,
+          itemStyle: { color },
+        };
+      }
+      return {
+        ...val,
+        itemStyle: {
+          ...(val.itemStyle || {}),
+          color,
+        },
+      };
+    });
+    s.itemStyle = { ...s.itemStyle, color: colors[si] };
   });
 }
 

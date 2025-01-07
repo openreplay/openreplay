@@ -44,6 +44,7 @@ function ColumnChart(props: ColumnChartProps) {
 
     const { yAxisData, series } = buildColumnChart(chartUuid.current, data, compData);
 
+    console.log(yAxisData)
     chart.setOption({
       ...defaultOptions,
       tooltip: {
@@ -51,6 +52,7 @@ function ColumnChart(props: ColumnChartProps) {
         formatter: customTooltipFormatter(chartUuid.current),
       },
       legend: {
+        ...defaultOptions.legend,
         data: series
           .filter((s: any) => !s._hideInLegend)
           .map((s: any) => s.name),
@@ -64,7 +66,6 @@ function ColumnChart(props: ColumnChartProps) {
       },
       xAxis: {
         type: 'value',
-        boundaryGap: [0, 0.01],
         name: label ?? 'Total',
         nameLocation: 'middle',
         nameGap: 35,
