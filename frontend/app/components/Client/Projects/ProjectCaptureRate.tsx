@@ -35,6 +35,7 @@ function ProjectCaptureRate(props: Props) {
 
   useEffect(() => {
     if (projectId) {
+      setChanged(false);
       void fetchCaptureConditions(projectId);
     }
   }, [projectId]);
