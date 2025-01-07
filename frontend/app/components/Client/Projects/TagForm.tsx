@@ -31,8 +31,11 @@ function TagForm(props: Props) {
     });
   };
 
-  const onSave = () => {
-    void tagWatchStore.updateTagName(tag.tagId, name, projectId);
+  const onSave = async () => {
+    setLoading(true);
+    tagWatchStore.updateTagName(tag.tagId, name, projectId).finally(() => {
+      setLoading(false);
+    });
   };
 
   return (
@@ -52,7 +55,7 @@ function TagForm(props: Props) {
         <Space>
           <Button
             onClick={onSave}
-            disabled={name.length === 0}
+            disabled={name.length === 0 || name === tag.name || loading}
             loading={loading}
             type="primary"
             className="float-left mr-2"

@@ -10,7 +10,6 @@ function ProjectList() {
   const list = projectsStore.list;
   const [search, setSearch] = React.useState('');
   const config = projectsStore.config;
-  console.log('config', config.pid);
 
   const onSearch = (value: string) => {
     setSearch(value);
@@ -21,16 +20,15 @@ function ProjectList() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <Input.Search placeholder="Search" onSearch={onSearch} />
-      <div className="my-3" />
       <List
         dataSource={list.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))}
         renderItem={(item: Project) => (
           <List.Item
             key={item.id}
             onClick={() => onProjectClick(item)}
-            className={`!py-2 mb-2 rounded-lg cursor-pointer !border-b-0 ${config.pid == item.projectId ? 'bg-teal-light' : 'bg-white'}`}
+            className={`!py-2 mb-2 rounded-lg cursor-pointer !border-b-0 ${config.project?.projectId === item.projectId ? 'bg-teal-light' : 'bg-white'}`}
           >
             <List.Item.Meta
               className="flex !items-center px-2 overflow-hidden"

@@ -52,11 +52,11 @@ function ProjectTags() {
             />
           </List.Item>
         )}
-        pagination={{
-          pageSize: 5,
-          showSizeChanger: false,
-          size: 'small'
-        }}
+        // pagination={{
+        //   pageSize: 5,
+        //   showSizeChanger: false,
+        //   size: 'small'
+        // }}
       />
     </div>
   );

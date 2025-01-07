@@ -7,11 +7,14 @@ import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import { PlusIcon } from 'lucide-react';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
+import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
+import { useModal } from 'Components/ModalContext';
 
 function Projects() {
   const { projectsStore } = useStore();
   const history = useHistory();
   const { project, pid, tab } = projectsStore.config;
+  const { openModal, closeModal } = useModal();
 
   React.useEffect(() => {
     const params = new URLSearchParams(history.location.search);
@@ -33,6 +36,12 @@ function Projects() {
     history.push({ search: params.toString() });
   }, [pid, tab]);
 
+  const createProject = () => {
+    openModal(<NewSiteForm onClose={closeModal} />, {
+      title: 'New Project'
+    });
+  };
+
   return (
     <Card
       title="Projects"
@@ -43,8 +52,9 @@ function Projects() {
       style={{ height: 'calc(100vh - 140px)' }}
       extra={
         <Space>
-          <Button type="primary" onClick={() => projectsStore.setConfigProject(undefined)} icon={<PlusIcon />}>Create
-            Project</Button>
+          <Button type="primary" onClick={createProject} icon={<PlusIcon />}>
+            Create Project
+          </Button>
         </Space>
       }
     >
