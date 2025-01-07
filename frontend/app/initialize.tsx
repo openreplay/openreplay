@@ -1,5 +1,5 @@
 import './styles/index.css';
-import './styles/global.css'
+import './styles/global.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './init';
@@ -7,19 +7,19 @@ import Router from './Router';
 import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import { ConfigProvider, theme, ThemeConfig } from 'antd';
+import { ConfigProvider, App, theme, ThemeConfig } from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
 import {
   QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
+  QueryClientProvider
+} from '@tanstack/react-query';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 const customTheme: ThemeConfig = {
   // algorithm: theme.compactAlgorithm,
   components: {
@@ -29,7 +29,7 @@ const customTheme: ThemeConfig = {
     },
     Segmented: {
       itemSelectedBg: '#FFFFFF',
-      itemSelectedColor: colors['main'],
+      itemSelectedColor: colors['main']
     },
     Menu: {
       colorPrimary: colors.teal,
@@ -48,7 +48,7 @@ const customTheme: ThemeConfig = {
       itemMarginBlock: 0,
       itemPaddingInline: 50,
       iconMarginInlineEnd: 14,
-      collapsedWidth: 180,
+      collapsedWidth: 180
     },
     Button: {
       colorPrimary: colors.teal
@@ -73,21 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // @ts-ignore
   const root = createRoot(container);
 
-
   // const theme = window.localStorage.getItem('theme');
   root.render(
     <QueryClientProvider client={queryClient}>
-    <ConfigProvider theme={customTheme}>
-        <StoreProvider store={new RootStore()}>
-          <DndProvider backend={HTML5Backend}>
-            <BrowserRouter>
-              <Notification />
-              <Router />
-            </BrowserRouter>
-          </DndProvider>
-          <MountPoint />
-        </StoreProvider>
-    </ConfigProvider>
+      <ConfigProvider theme={customTheme}>
+        <App>
+          <StoreProvider store={new RootStore()}>
+            <DndProvider backend={HTML5Backend}>
+              <BrowserRouter>
+                <Notification />
+                <Router />
+              </BrowserRouter>
+            </DndProvider>
+            <MountPoint />
+          </StoreProvider>
+        </App>
+      </ConfigProvider>
     </QueryClientProvider>
   );
 });

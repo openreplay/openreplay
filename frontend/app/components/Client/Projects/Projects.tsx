@@ -1,11 +1,11 @@
 import React from 'react';
-import { Button, Card, Col, Divider, Row, Space, Typography } from 'antd';
+import { App, Button, Card, Layout, Space, Typography } from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
-import { PlusIcon } from 'lucide-react';
+import { KeyIcon, PlusIcon } from 'lucide-react';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
@@ -45,39 +45,65 @@ function Projects() {
 
   return (
     <Card
-      title="Projects"
+      style={{ height: 'calc(100vh - 130px)' }}
       classNames={{
-        cover: '!rounded-lg border shadow-sm',
-        body: '!p-0'
+        header: '!border-b',
+        body: '!p-0 !border-t'
       }}
-      style={{ height: 'calc(100vh - 140px)' }}
-      extra={
-        <Space>
-          <Button onClick={createProject} icon={<PlusIcon />}>
-            Create Project
-          </Button>
-        </Space>
-      }
+      title="Projects"
+      extra={[
+        <Button key="1" onClick={createProject} icon={<PlusIcon />}>
+          Create Project
+        </Button>
+      ]}
     >
-      <Row className="h-full">
-        <Col span={6} className="border-r !p-4 flex flex-col">
-          <div className="flex-1 !overflow-y-auto">
-            <ProjectList />
-          </div>
-        </Col>
-        <Col span={18} className="!p-4 flex flex-col">
-        <Space className="flex justify-between">
-            <Typography.Title level={5} className="capitalize !m-0">{project?.name}</Typography.Title>
+      <Layout>
+        <Layout.Sider width={300} trigger={null} className="!bg-white border-r">
+          <ProjectList />
+        </Layout.Sider>
+
+        <Layout>
+          <Layout.Header className="flex justify-between items-center p-4 !bg-white border-b"
+                         style={{ height: 46 }}>
+            <div className="flex items-center gap-4">
+              <Typography.Title level={5}
+                                className="capitalize !m-0 whitespace-nowrap truncate">{project?.name}</Typography.Title>
+              <ProjectKeyButton />
+            </div>
             <ProjectTabs />
-          </Space>
-          <Divider style={{ margin: '0px' }} />
-          <div className="flex-1 !overflow-y-auto my-4">
+          </Layout.Header>
+          <Layout.Content
+            style={{
+              padding: 24,
+              height: 'calc(100vh - 260px)'
+            }}
+            className="bg-white overflow-y-auto"
+          >
             {project && <ProjectTabContent />}
-          </div>
-        </Col>
-      </Row>
+          </Layout.Content>
+        </Layout>
+      </Layout>
     </Card>
   );
 }
 
 export default observer(Projects);
+
+function ProjectKeyButton() {
+  const { projectsStore } = useStore();
+  const { project } = projectsStore.config;
+  const { message } = App.useApp();
+
+  const copyKey = () => {
+    if (!project || !project.projectKey) {
+      void message.error('Project key not found');
+      return;
+    }
+    void navigator.clipboard.writeText(project?.projectKey || '');
+    void message.success('Project key copied to clipboard');
+  };
+
+  return (
+    <Button onClick={copyKey} icon={<KeyIcon size={14} />} size="small" />
+  );
+}

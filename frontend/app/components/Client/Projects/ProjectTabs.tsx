@@ -16,7 +16,7 @@ function ProjectTabs() {
     { key: 'captureRate', label: 'Capture Rate', content: <div>Capture Rate Content</div> },
     { key: 'metadata', label: 'Metadata', content: <div>Metadata Content</div> },
     { key: 'tags', label: 'Tags', content: <div>Tags Content</div> },
-    { key: 'groupKeys', label: 'Group Keys', content: <div>Group Keys Content</div> }
+    // { key: 'groupKeys', label: 'Group Keys', content: <div>Group Keys Content</div> }
   ];
 
   const onTabChange = (key: string) => {

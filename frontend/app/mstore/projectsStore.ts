@@ -3,6 +3,7 @@ import Project from './types/project';
 import GDPR from './types/gdpr';
 import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
+import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
 
 interface Config {
   project: Project | null;
@@ -143,8 +144,9 @@ export default class ProjectsStore {
         this.setSiteId(newSite.id);
         this.active = newSite;
       });
-    } catch (error) {
-      console.error('Failed to save site:', error);
+      return response;
+    } catch (error: any) {
+      throw error || 'An error occurred while saving the project.';
     } finally {
       this.setLoading(false);
     }
