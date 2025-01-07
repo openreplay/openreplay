@@ -96,14 +96,17 @@ export function customTooltipFormatter(uuid: string) {
     // { seriesName, dataIndex, data, marker, color, encode, ... }
     if (!params) return '';
     const { seriesName, dataIndex } = params;
-    const isPrevious = /^Previous\s+/.test(seriesName);
     const baseName = seriesName.replace(/^Previous\s+/, '');
-    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
 
     if (!Array.isArray(params.data)) {
+      const isPrevious = /Previous/.test(seriesName);
+      const categoryName = (window as any).__yAxisData?.[uuid]?.[dataIndex];
+      const fullname = isPrevious ? `Previous ${categoryName}` : categoryName;
+      const partnerName = isPrevious ? categoryName : `Previous ${categoryName}`;
       const partnerValue = (window as any).__seriesValueMap?.[uuid]?.[
-        seriesName
+        partnerName
       ];
+
       let str = `
         <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
           <div class="flex gap-2 items-center">
@@ -113,7 +116,7 @@ export function customTooltipFormatter(uuid: string) {
               width: 1rem; 
               height: 1rem;">
             </div>
-            <div class="font-medium text-black">${seriesName}</div>
+            <div class="font-medium text-black">${fullname}</div>
           </div>
     
           <div style="border-left: 2px solid ${
@@ -152,6 +155,8 @@ export function customTooltipFormatter(uuid: string) {
 
       return str;
     }
+    const isPrevious = /^Previous\s+/.test(seriesName);
+    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
     // 'value' of the hovered point
     const yKey = params.encode.y[0]; // "Series 1"
     const value = params.data?.[yKey];

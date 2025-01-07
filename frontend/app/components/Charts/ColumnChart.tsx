@@ -41,10 +41,11 @@ function ColumnChart(props: ColumnChartProps) {
     (window as any).__seriesValueMap[chartUuid.current] = {};
     (window as any).__seriesColorMap = (window as any).__seriesColorMap ?? {};
     (window as any).__seriesColorMap[chartUuid.current] = {};
+    (window as any).__yAxisData = (window as any).__yAxisData ?? {}
 
     const { yAxisData, series } = buildColumnChart(chartUuid.current, data, compData);
+    (window as any).__yAxisData[chartUuid.current] = yAxisData
 
-    console.log(yAxisData)
     chart.setOption({
       ...defaultOptions,
       tooltip: {
@@ -85,6 +86,7 @@ function ColumnChart(props: ColumnChartProps) {
       obs.disconnect();
       delete (window as any).__seriesValueMap[chartUuid.current];
       delete (window as any).__seriesColorMap[chartUuid.current];
+      delete (window as any).__yAxisData[chartUuid.current];
     };
   }, [data, compData, label]);
 
