@@ -20,14 +20,14 @@ inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 const ProjectCodeSnippet = props  => {
   const { projectsStore } = useStore();
   const site = props.site;
-  const gdpr = projectsStore.instance.gdpr;
+  const gdpr = site.gdpr;
   const saveGdpr = projectsStore.saveGDPR;
   const editGdpr = projectsStore.editGDPR;
   const [changed, setChanged] = useState(false)
 
   const saveGDPR = () => {
     setChanged(true)
-    saveGdpr(site.id);
+    void saveGdpr(site.id);
   }
 
   const onChangeSelect = ({ name, value }) => {
@@ -39,7 +39,7 @@ const ProjectCodeSnippet = props  => {
     editGdpr({ [ name ]: checked });
     saveGDPR()
   }
-  
+
   return (
     <div>
       <div className="mb-4">
