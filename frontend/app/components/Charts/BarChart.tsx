@@ -12,7 +12,6 @@ echarts.use([BarChart]);
 
 interface BarChartProps extends DataProps {
   label?: string;
-  horizontal?: boolean;
 }
 
 function ORBarChart(props: BarChartProps) {
@@ -26,14 +25,14 @@ function ORBarChart(props: BarChartProps) {
     obs.observe(chartRef.current);
 
     const categories = buildCategories(props.data);
-    const { datasets, series } = buildBarDatasetsAndSeries(props, props.horizontal ?? false);
+    const { datasets, series } = buildBarDatasetsAndSeries(props);
 
     initWindowStorages(chartUuid.current, categories, props.data.chart, props.compData?.chart ?? []);
     series.forEach((s: any) => {
       (window as any).__seriesColorMap[chartUuid.current][s.name] = s.itemStyle?.color ?? '#999';
       const ds = datasets.find((d) => d.id === s.datasetId);
       if (!ds) return;
-      const yDim = props.horizontal ? s.encode.x : s.encode.y;
+      const yDim = s.encode.y;
       const yDimIndex = ds.dimensions.indexOf(yDim);
       if (yDimIndex < 0) return;
 
@@ -46,12 +45,12 @@ function ORBarChart(props: BarChartProps) {
 
 
     const xAxis: any = {
-      type: props.horizontal ? 'value' : 'category',
-      data: props.horizontal ? undefined : categories,
+      type: 'category',
+      data: categories,
     };
     const yAxis: any = {
-      type: props.horizontal ? 'category' : 'value',
-      data: props.horizontal ? categories : undefined,
+      type: 'value',
+      data: undefined,
       name: props.label ?? 'Number of Sessions',
       nameLocation: 'middle',
       nameGap: 35,
@@ -82,7 +81,7 @@ function ORBarChart(props: BarChartProps) {
       delete (window as any).__timestampMap[chartUuid.current];
       delete (window as any).__timestampCompMap[chartUuid.current];
     };
-  }, [props.data, props.compData, props.horizontal]);
+  }, [props.data, props.compData]);
 
   return <div ref={chartRef} style={{ width: '100%', height: 240 }} />;
 }

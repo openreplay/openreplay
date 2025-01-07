@@ -1,6 +1,16 @@
-import { formatTimeOrDate } from "App/date";
+import { formatTimeOrDate } from 'App/date';
 
-export const colors = ['#394EFF', '#3EAAAF', '#9276da', '#ceba64', "#bc6f9d", '#966fbc', '#64ce86', '#e06da3', '#6dabe0'];
+export const colors = [
+  '#394EFF',
+  '#3EAAAF',
+  '#9276da',
+  '#ceba64',
+  '#bc6f9d',
+  '#966fbc',
+  '#64ce86',
+  '#e06da3',
+  '#6dabe0',
+];
 //export const colors = ['#6774E2', '#929ACD', '#3EAAAF', '#565D97', '#8F9F9F', '#376F72'];
 // const colorsTeal = ['#1E889A', '#239DB2', '#28B2C9', '#36C0D7', '#65CFE1'];
 // const colorsx = ['#256669', '#38999e', '#3eaaaf', '#51b3b7', '#78c4c7', '#9fd5d7', '#c5e6e7'].reverse();
@@ -39,7 +49,6 @@ export function assignColorsByBaseName(series: any[]) {
   });
 }
 
-
 /**
  *  Show the hovered “current” or “previous” line + the matching partner (if it exists).
  */
@@ -49,23 +58,80 @@ export function customTooltipFormatter(uuid: string) {
     // { seriesName, dataIndex, data, marker, color, encode, ... }
     if (!params) return '';
     const { seriesName, dataIndex } = params;
+    const isPrevious = /^Previous\s+/.test(seriesName);
+    const baseName = seriesName.replace(/^Previous\s+/, '');
+    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
 
+    if (!Array.isArray(params.data)) {
+      const partnerValue = (window as any).__seriesValueMap?.[uuid]?.[
+        seriesName
+      ];
+      let str = `
+        <div class="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
+          <div class="flex gap-2 items-center">
+            <div style="
+              border-radius: 99px; 
+              background: ${params.color}; 
+              width: 1rem; 
+              height: 1rem;">
+            </div>
+            <div class="font-medium text-black">${seriesName}</div>
+          </div>
+    
+          <div style="border-left: 2px solid ${
+            params.color
+          };" class="flex flex-col px-2 ml-2">
+            <div class="text-neutral-600 text-sm"> 
+              Total:
+            </div>
+            <div class="flex items-center gap-1">
+              <div class="font-medium text-black">${params.value}</div>
+              ${buildCompareTag(params.value, partnerValue)}
+            </div>
+          </div>
+      `;
+      if (partnerValue !== undefined) {
+        const partnerColor =
+          (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
+        str += `<div class="flex gap-2 items-center mt-2">
+        <div style="
+          border-radius: 99px; 
+          background: ${partnerColor}; 
+          width: 1rem; 
+          height: 1rem;">
+        </div>
+        <div class="font-medium">${partnerName}</div>
+      </div>
+      <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
+        <div class="flex items-center gap-1">
+          <div class="font-medium">${partnerValue ?? '—'}</div>
+          ${buildCompareTag(partnerValue, params.value)}
+        </div>
+      </div>`;
+      }
+
+      str += '</div>';
+
+      return str;
+    }
     // 'value' of the hovered point
     const yKey = params.encode.y[0]; // "Series 1"
     const value = params.data?.[yKey];
 
-    const isPrevious = /^Previous\s+/.test(seriesName);
-    const baseName = seriesName.replace(/^Previous\s+/, '');
     const timestamp = (window as any).__timestampMap?.[uuid]?.[dataIndex];
-    const comparisonTimestamp = (window as any).__timestampCompMap?.[uuid]?.[dataIndex];
+    const comparisonTimestamp = (window as any).__timestampCompMap?.[uuid]?.[
+      dataIndex
+    ];
 
     // Get partner’s value from some global map
-    const partnerName = isPrevious ? baseName : `Previous ${baseName}`;
-    const partnerVal = (window as any).__seriesValueMap?.[uuid]?.[partnerName]?.[dataIndex];
+
+    const partnerVal = (window as any).__seriesValueMap?.[uuid]?.[
+      partnerName
+    ]?.[dataIndex];
 
     const categoryLabel = (window as any).__categoryMap[uuid]
-                          ? (window as any).__categoryMap[uuid][dataIndex]
-                          : dataIndex;
+      ? (window as any).__categoryMap[uuid][dataIndex]
+      : dataIndex;
 
     const firstTs = isPrevious ? comparisonTimestamp : timestamp;
     const secondTs = isPrevious ? timestamp : comparisonTimestamp;
@@ -81,7 +147,9 @@ export function customTooltipFormatter(uuid: string) {
         <div class="font-medium text-black">${seriesName}</div>
       </div>
 
-      <div style="border-left: 2px solid ${params.color};" class="flex flex-col px-2 ml-2">
+      <div style="border-left: 2px solid ${
+        params.color
+      };" class="flex flex-col px-2 ml-2">
         <div class="text-neutral-600 text-sm"> 
           ${firstTs ? formatTimeOrDate(firstTs) : categoryLabel}
         </div>
@@ -93,7 +161,8 @@ export function customTooltipFormatter(uuid: string) {
   `;
 
     if (partnerVal !== undefined) {
-      const partnerColor = (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
+      const partnerColor =
+        (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
       tooltipContent += `
       <div class="flex gap-2 items-center mt-2">
         <div style="
@@ -118,7 +187,7 @@ export function customTooltipFormatter(uuid: string) {
 
     tooltipContent += '</div>';
     return tooltipContent;
-  }
+  };
 }
 
 /**
@@ -156,7 +225,6 @@ function buildCompareTag(val: number, prevVal: number): string {
   `;
 }
 
-
 /**
  * Build category labels (["Sun", "Mon", ...]) from the "current" data only
  */
@@ -169,15 +237,13 @@ export function buildCategories(data: DataProps['data']): string[] {
  * The `idx` dimension aligns with xAxis = "category"
  * (which is dates in our case)
  */
-export function createDataset(
-  id: string,
-  data: DataProps['data']
-) {
+export function createDataset(id: string, data: DataProps['data']) {
   const dimensions = ['idx', ...data.namesMap];
   const source = data.chart.map((item, idx) => {
     const row: (number | undefined)[] = [idx];
     data.namesMap.forEach((name) => {
-      const val = typeof item[name] === 'number' ? (item[name] as number) : undefined;
+      const val =
+        typeof item[name] === 'number' ? (item[name] as number) : undefined;
       row.push(val);
     });
     return row;
@@ -210,9 +276,9 @@ export function createSeries(
       _hideInLegend: hideFromLegend,
       itemStyle: { opacity: 1 },
       emphasis: {
-        focus: 'series', 
-        itemStyle: { opacity: 1 }, 
-        lineStyle: { opacity: 1 }, 
+        focus: 'series',
+        itemStyle: { opacity: 1 },
+        lineStyle: { opacity: 1 },
       },
       blur: {
         itemStyle: { opacity: 0.2 },
@@ -240,8 +306,7 @@ export function buildDatasetsAndSeries(props: DataProps) {
   return { datasets, series };
 }
 
-
-interface DataItem {
+export interface DataItem {
   time: string;
   timestamp: number;
   [seriesName: string]: number | string;

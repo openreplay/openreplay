@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import LineChart from 'App/components/Charts/LineChart'
 import BarChart from 'App/components/Charts/BarChart'
 import PieChart from 'App/components/Charts/PieChart'
+import ColumnChart from 'App/components/Charts/ColumnChart'
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
 import { Icon, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import FunnelTable from "../../../Funnels/FunnelWidget/FunnelTable";
-import ProgressBarChart from '../../Widgets/CustomMetricsWidgets/ProgressBarChart';
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
@@ -335,8 +335,9 @@ function WidgetChart(props: Props) {
      
       if (viewType === 'progressChart') {
         return (
-          <ProgressBarChart
+          <ColumnChart
             inGrid={!props.isPreview}
+            horizontal
             data={chartData}
             compData={compData}
             params={params}
