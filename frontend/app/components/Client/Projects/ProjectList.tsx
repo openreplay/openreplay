@@ -21,7 +21,12 @@ function ProjectList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Input.Search placeholder="Search" onSearch={onSearch} />
+      <Input.Search
+        placeholder="Search"
+        onSearch={onSearch}
+        onClear={() => setSearch('')}
+        allowClear
+      />
       <List
         dataSource={list.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))}
         renderItem={(item: Project) => (

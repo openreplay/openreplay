@@ -7,8 +7,9 @@ import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import { PlusIcon } from 'lucide-react';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
-import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/ModalContext';
+import ProjectForm from 'Components/Client/Projects/ProjectForm';
+import Project from '@/mstore/types/project';
 
 function Projects() {
   const { projectsStore } = useStore();
@@ -37,7 +38,7 @@ function Projects() {
   }, [pid, tab]);
 
   const createProject = () => {
-    openModal(<NewSiteForm onClose={closeModal} />, {
+    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
       title: 'New Project'
     });
   };
@@ -52,23 +53,25 @@ function Projects() {
       style={{ height: 'calc(100vh - 140px)' }}
       extra={
         <Space>
-          <Button type="primary" onClick={createProject} icon={<PlusIcon />}>
+          <Button onClick={createProject} icon={<PlusIcon />}>
             Create Project
           </Button>
         </Space>
       }
     >
-      <Row className="items-stretch">
-        <Col span={6} className="border-r !p-4">
-          <ProjectList />
+      <Row className="h-full">
+        <Col span={6} className="border-r !p-4 flex flex-col">
+          <div className="flex-1 !overflow-y-auto">
+            <ProjectList />
+          </div>
         </Col>
-        <Col span={18} className="!p-4 !overflow-hidden">
-          <Space className="flex justify-between">
+        <Col span={18} className="!p-4 flex flex-col">
+        <Space className="flex justify-between">
             <Typography.Title level={5} className="capitalize !m-0">{project?.name}</Typography.Title>
             <ProjectTabs />
           </Space>
-          <Divider />
-          <div className="!overflow-y-auto">
+          <Divider style={{ margin: '0px' }} />
+          <div className="flex-1 !overflow-y-auto my-4">
             {project && <ProjectTabContent />}
           </div>
         </Col>

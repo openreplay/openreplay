@@ -1,7 +1,11 @@
 import React from 'react';
-import { Tabs } from 'antd';
+import { Tabs, TabsProps } from 'antd';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
+
+const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
+  <DefaultTabBar {...props} className="!mb-0" />
+);
 
 function ProjectTabs() {
   const { projectsStore } = useStore();
@@ -22,14 +26,14 @@ function ProjectTabs() {
   return (
     <Tabs
       type="line"
-      defaultActiveKey="installation"
+      defaultActiveKey={tabItems[0].key}
       activeKey={activeTab}
       style={{ borderBottom: 'none' }}
       onChange={onTabChange}
+      renderTabBar={customTabBar}
       items={tabItems.map((tab) => ({
         key: tab.key,
         label: tab.label
-        // children: tab.content,
       }))}
     />
   );
