@@ -12,27 +12,27 @@ export interface Tag extends CreateTag {
 }
 
 export default class TagWatchService extends BaseService {
-  createTag(data: CreateTag) {
-    return this.client.post('/tags', data)
-      .then(r => r.json())
-      .then((response: { data: any; }) => response.data || {})
+  async createTag(projectId: number, data: CreateTag) {
+    const r = await this.client.post(`/${projectId}/tags`, data);
+    const response = await r.json();
+    return response.data || {};
   }
 
-  getTags() {
-    return this.client.get('/tags')
-      .then(r => r.json())
-      .then((response: { data: any; }) => response.data || {})
+  async getTags(projectId: number) {
+    const r = await this.client.get(`/${projectId}/tags`);
+    const response = await r.json();
+    return response.data || {};
   }
 
-  deleteTag(id: number) {
-    return this.client.delete(`/tags/${id}`)
-      .then(r => r.json())
-      .then((response: { data: any; }) => response.data || {})
+  async deleteTag(projectId: number, id: number) {
+    const r = await this.client.delete(`/${projectId}/tags/${id}`);
+    const response = await r.json();
+    return response.data || {};
   }
 
-  updateTagName(id: number, name: string) {
-    return this.client.put(`/tags/${id}`, { name })
-      .then(r => r.json())
-      .then((response: { data: any; }) => response.data || {})
+  async updateTagName(projectId: number, id: number, name: string) {
+    const r = await this.client.put(`/${projectId}/tags/${id}`, { name });
+    const response = await r.json();
+    return response.data || {};
   }
 }

@@ -8,6 +8,7 @@ import Integrations from './Integrations';
 import UserView from './Users/UsersView';
 import AuditView from './Audit/AuditView';
 import Sites from './Sites';
+import Projects from './Projects';
 import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
 import Notifications from './Notifications';
@@ -31,7 +32,7 @@ export default class Client extends React.PureComponent {
       <Route exact strict path={clientRoute(CLIENT_TABS.SESSIONS_LISTING)} component={SessionsListingSettings} />
       <Route exact strict path={clientRoute(CLIENT_TABS.INTEGRATIONS)} component={Integrations} />
       <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_USERS)} component={UserView} />
-      <Route exact strict path={clientRoute(CLIENT_TABS.SITES)} component={Sites} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.SITES)} component={Projects} />
       <Route exact strict path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)} component={CustomFields} />
       <Route exact strict path={clientRoute(CLIENT_TABS.WEBHOOKS)} component={Webhooks} />
       <Route exact strict path={clientRoute(CLIENT_TABS.NOTIFICATIONS)} component={Notifications} />

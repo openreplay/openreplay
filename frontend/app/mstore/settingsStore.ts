@@ -6,6 +6,7 @@ import Webhook, { IWebhook } from 'Types/webhook';
 import { webhookService } from 'App/services';
 import { GettingStarted } from './types/gettingStarted';
 import { MENU_COLLAPSED } from 'App/constants/storageKeys';
+import { projectStore } from '@/mstore/index';
 
 interface CaptureConditions {
   rate: number;
@@ -102,6 +103,15 @@ export default class SettingsStore {
           conditionalCapture: data.conditionalCapture,
           captureConditions: data.conditions,
         });
+
+        try {
+          projectStore.syncProjectInList({
+            id: projectId + '',
+            sampleRate: data.rate,
+          })
+        } catch (e) {
+          console.error('Failed to update project in list:', e);
+        }
         toast.success('Settings updated successfully');
       })
       .catch((err) => {
