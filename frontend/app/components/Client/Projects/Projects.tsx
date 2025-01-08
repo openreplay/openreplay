@@ -47,10 +47,10 @@ function Projects() {
     <Card
       style={{ height: 'calc(100vh - 130px)' }}
       classNames={{
-        header: '!border-b',
+        header: '!border-b !px-4',
         body: '!p-0 !border-t'
       }}
-      title="Projects"
+      title={<Typography.Title level={4} className="!m-0">Projects</Typography.Title>}
       extra={[
         <Button onClick={createProject} icon={<PlusIcon size={18} />}>
           Create Project
@@ -58,7 +58,7 @@ function Projects() {
       ]}
     >
       <Layout>
-        <Layout.Sider width={300} trigger={null}
+        <Layout.Sider width={260} trigger={null}
                       className="!bg-white border-r">
           <ProjectList />
         </Layout.Sider>

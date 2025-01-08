@@ -46,13 +46,13 @@ const customTheme: ThemeConfig = {
       itemSelectedColor: colors['teal'],
 
       itemMarginBlock: 0,
-      itemPaddingInline: 50,
-      iconMarginInlineEnd: 14,
+      // itemPaddingInline: 50,
+      // iconMarginInlineEnd: 14,
       collapsedWidth: 180
     },
     Button: {
       colorPrimary: colors.teal
-    }
+    },
   },
   token: {
     colorPrimary: colors.teal,
@@ -64,7 +64,8 @@ const customTheme: ThemeConfig = {
 
     borderRadius: 4,
     fontSize: 14,
-    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\''
+    fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
+    fontWeightStrong: 400,
   }
 };
 
