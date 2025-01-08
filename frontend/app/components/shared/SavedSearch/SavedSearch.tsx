@@ -28,7 +28,7 @@ function SavedSearch() {
         <Button onClick={toggleModal} disabled={searchStore.instance.filters.length === 0} style={{ borderRadius: '0.5rem 0 0 0.5rem', borderRight: 0 }}>
           {savedSearch.exists() ? 'Update' : 'Save'} Search
         </Button>
-        <Button onClick={toggleList} style={{ borderRadius: '0 0.5rem 0.5rem 0' }}>
+        <Button disabled={searchStore.list.length === 0} onClick={toggleList} style={{ borderRadius: '0 0.5rem 0.5rem 0' }}>
           <MoreOutlined />
         </Button>
       </div>
