@@ -228,7 +228,7 @@ function buildCompareTag(val: number, prevVal: number): string {
   const isHigher = delta > 0;
   const arrow = isHigher ? '▲' : '▼';
   const absDelta = Math.abs(delta);
-  const ratio = prevVal !== 0 ? ((delta / prevVal) * 100).toFixed(2) : '∞';
+  const ratio = prevVal !== 0 ? ((delta / prevVal) * 100).toFixed(2) : null;
 
   const tagColor = isHigher ? '#D1FADF' : '#FEE2E2';
   const arrowColor = isHigher ? '#059669' : '#DC2626';
@@ -245,7 +245,7 @@ function buildCompareTag(val: number, prevVal: number): string {
       font-size: 0.75rem;">
       <span>${arrow}</span>
       <span>${absDelta}</span>
-      <span>(${ratio}%)</span>
+      <span>${ratio ? `(${ratio}%)` : ''}</span>
     </div>
   `;
 }

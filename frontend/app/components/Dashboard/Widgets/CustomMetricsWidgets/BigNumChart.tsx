@@ -48,6 +48,10 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
     if (!compData || compData === 0) return '0%';
     return `${(((value - compData) / compData) * 100).toFixed(2)}%`;
   }, [value, compData])
+  const change = React.useMemo(() => {
+    if (!compData) return 0;
+    return value - compData;
+  }, [value, compData])
   return (
     <div className={'flex flex-col flex-auto justify-center items-center rounded-lg transition-all hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer'}>
       <div className={'flex items-center gap-2 font-medium text-gray-darkest'}>
@@ -61,7 +65,7 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
         {label}
       </div>
       {compData ? (
-        <CompareTag isHigher={value > compData} prevValue={changePercent} />
+        <CompareTag isHigher={value > compData} absDelta={change} delta={changePercent} />
       ) : null}
     </div>
   )

@@ -398,6 +398,7 @@ function WidgetChart(props: Props) {
             series: data.namesMap[i],
           });
         }
+
         return (
           <BugNumChart
             values={values}

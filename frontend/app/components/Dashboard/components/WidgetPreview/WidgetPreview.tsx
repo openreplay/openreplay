@@ -21,7 +21,7 @@ function WidgetPreview(props: Props) {
 
   const hasGranularSettings = [TIMESERIES, FUNNEL].includes(metric.metricType)
   const hasGranularity = ['lineChart', 'barChart', 'areaChart'].includes(metric.viewType);
-  const hasComparison = metric.metricType === FUNNEL || ['lineChart', 'barChart', 'table', 'progressChart'].includes(metric.viewType);
+  const hasComparison = metric.metricType === FUNNEL || ['lineChart', 'barChart', 'table', 'progressChart', 'metric'].includes(metric.viewType);
   // [rangeStart, rangeEnd] or [period_name] -- have to check options
   const presetComparison = metric.compareTo;
   return (

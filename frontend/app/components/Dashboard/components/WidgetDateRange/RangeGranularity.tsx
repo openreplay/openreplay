@@ -64,7 +64,7 @@ function calculateGranularities(periodDurationMs: number) {
   const result = [];
   if (periodDurationMs === PAST_24_HR_MS) {
     // if showing for 1 day, show by minute split as well
-    granularities.push(
+    granularities.unshift(
       { label: 'By minute', durationMs: 60 * 1000 },
     )
   }
