@@ -27,13 +27,7 @@ function TooltipIcon(props: ITooltipIcon) {
   );
 }
 
-interface Props {
-  applySavedSearch: (item: SavedSearch) => void;
-  remove: (itemId: number) => void;
-  editSavedSearch: (item: SavedSearch) => void;
-}
-
-function SavedSearchModal(props: Props) {
+function SavedSearchModal() {
   const { hideModal } = useModal();
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
