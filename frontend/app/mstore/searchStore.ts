@@ -211,7 +211,7 @@ class SearchStore {
     await this.fetchSavedSearchList();
 
     if (isNew) {
-      const lastSavedSearch = this.list.last();
+      const lastSavedSearch = this.list[this.list.length - 1];
       this.applySavedSearch(lastSavedSearch);
     }
   }
