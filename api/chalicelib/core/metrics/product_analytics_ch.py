@@ -27,7 +27,7 @@ JOURNEY_TYPES = {
 # query: Q5, the result is correct,
 # startPoints are computed before ranked_events to reduce the number of window functions over rows
 # replaced time_to_target by time_from_previous
-# compute avg_time_from_previous at the same level as sessions_count
+# compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
 # sort by top 5 according to sessions_count at the CTE level
 # final part project data without grouping
 # if start-point is selected, the selected event is ranked n°1
@@ -331,7 +331,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                     e_value,
                                     next_type,
                                     next_value,
-                                    AVG(time_from_previous) AS avg_time_from_previous,
                                     COUNT(1) AS sessions_count
                              FROM ranked_events
                              WHERE event_number_in_session = 1
@@ -344,8 +343,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                   e_value,
                                   next_type,
                                   next_value,
-                                  sessions_count,
-                                  avg_time_from_previous
+                                  sessions_count
                            FROM n1"""]
     for i in range(2, data.density + 1):
         steps_query.append(f"""n{i} AS (SELECT *
@@ -354,7 +352,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                                      re.e_value AS e_value,
                                                      re.next_type AS next_type,
                                                      re.next_value AS next_value,
-                                                     AVG(re.time_from_previous) AS avg_time_from_previous,
                                                      COUNT(1) AS sessions_count
                                               FROM n{i - 1} INNER JOIN ranked_events AS re
                                                     ON (n{i - 1}.next_value = re.e_value AND n{i - 1}.next_type = re.event_type)
@@ -367,8 +364,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                            e_value,
                                            next_type,
                                            next_value,
-                                           sessions_count,
-                                           avg_time_from_previous
+                                           sessions_count
                                     FROM n{i}""")
 
     with ch_client.ClickHouseClient(database="experimental") as ch:
@@ -418,11 +414,7 @@ WITH pre_ranked_events AS (SELECT *
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
                               leadInFrame(toNullable(event_type))
                                           OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
-                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type,
-                              abs(lagInFrame(toNullable(datetime))
-                                              OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
-                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-                                                - pre_ranked_events.datetime) AS time_from_previous
+                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
 FROM ranked_events;"""
