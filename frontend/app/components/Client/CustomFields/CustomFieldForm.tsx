@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Form, Input, confirm } from 'UI';
+import { Form, Input } from 'UI';
 import styles from './customFieldForm.module.css';
 import { useStore } from 'App/mstore';
 import { useModal } from 'Components/Modal';
 import { toast } from 'react-toastify';
-import { Button } from 'antd';
+import { Button, Modal } from 'antd';
 import { Trash } from 'UI/Icons';
 import { observer } from 'mobx-react-lite';
 
@@ -23,16 +23,14 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
   const exists = field?.exists();
 
   const onDelete = async () => {
-    if (
-      await confirm({
-        header: 'Metadata',
-        confirmation: `Are you sure you want to remove?`
-      })
-    ) {
-      store.remove(siteId, field?.index!).then(() => {
+    Modal.confirm({
+      title: 'Metadata',
+      content: `Are you sure you want to remove?`,
+      onOk: async () => {
+        await store.remove(siteId, field?.index!);
         hideModal();
-      });
-    }
+      }
+    });
   };
 
   const onSave = (field: any) => {
@@ -48,7 +46,7 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
       toast.error('An error occurred while saving metadata.');
     }).finally(() => {
       setLoading(false);
-    })
+    });
   };
 
   return (

@@ -2,7 +2,14 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import Project from './types/project';
 import GDPR from './types/gdpr';
 import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
-import { projectsService } from "App/services";
+import { projectsService } from 'App/services';
+import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
+
+interface Config {
+  project: Project | null;
+  pid: number | undefined;
+  tab: string;
+}
 
 export default class ProjectsStore {
   list: Project[] = [];
@@ -11,6 +18,11 @@ export default class ProjectsStore {
   active: Project | null = null;
   sitesLoading = true;
   loading = false;
+  config: Config = {
+    project: null,
+    pid: undefined,
+    tab: 'installation'
+  };
 
   constructor() {
     const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
@@ -22,45 +34,52 @@ export default class ProjectsStore {
     return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
   }
 
+  syncProjectInList = (project: Partial<Project>) => {
+    const index = this.list.findIndex(site => site.id === project.id);
+    if (index !== -1) {
+      this.list[index] = this.list[index].edit(project);
+    }
+  }
+
   getSiteId = () => {
     return {
       siteId: this.siteId,
-      active: this.active,
+      active: this.active
     };
-  }
+  };
 
   initProject = (project: Partial<Project>) => {
     this.instance = new Project(project);
-  }
+  };
 
   setSitesLoading = (loading: boolean) => {
     this.sitesLoading = loading;
-  }
+  };
 
   setLoading = (loading: boolean) => {
     this.loading = loading;
-  }
+  };
 
   setSiteId = (siteId: string) => {
     localStorage.setItem(SITE_ID_STORAGE_KEY, siteId.toString());
     this.siteId = siteId;
     this.active = this.list.find((site) => site.id! === siteId) ?? null;
-  }
+  };
 
   editGDPR = (gdprData: Partial<GDPR>) => {
     if (this.instance) {
       this.instance.gdpr.edit(gdprData);
     }
-  }
+  };
 
   editInstance = (instance: Partial<Project>) => {
     if (!this.instance) return;
     this.instance = this.instance.edit(instance);
-  }
+  };
 
   fetchGDPR = async (siteId: string) => {
     try {
-      const response = await projectsService.fetchGDPR(siteId)
+      const response = await projectsService.fetchGDPR(siteId);
       runInAction(() => {
         if (this.instance) {
           Object.assign(this.instance.gdpr, response.data);
@@ -69,7 +88,7 @@ export default class ProjectsStore {
     } catch (error) {
       console.error('Failed to fetch GDPR:', error);
     }
-  }
+  };
 
   saveGDPR = async (siteId: string) => {
     if (!this.instance) return;
@@ -77,10 +96,19 @@ export default class ProjectsStore {
       const gdprData = this.instance.gdpr.toData();
       const response = await projectsService.saveGDPR(siteId, gdprData);
       this.editGDPR(response.data);
+
+      try {
+        this.syncProjectInList({
+          id: siteId,
+          gdpr: response.data
+        })
+      } catch (error) {
+        console.error('Failed to sync project in list:', error);
+      }
     } catch (error) {
       console.error('Failed to save GDPR:', error);
     }
-  }
+  };
 
   fetchList = async (siteIdFromPath?: string) => {
     this.setSitesLoading(true);
@@ -115,7 +143,7 @@ export default class ProjectsStore {
     } finally {
       this.setSitesLoading(false);
     }
-  }
+  };
 
   save = async (projectData: Partial<Project>) => {
     this.setLoading(true);
@@ -132,12 +160,13 @@ export default class ProjectsStore {
         this.setSiteId(newSite.id);
         this.active = newSite;
       });
-    } catch (error) {
-      console.error('Failed to save site:', error);
+      return response;
+    } catch (error: any) {
+      throw error || 'An error occurred while saving the project.';
     } finally {
       this.setLoading(false);
     }
-  }
+  };
 
   updateProjectRecordingStatus = (siteId: string, status: boolean) => {
     const site = this.list.find(site => site.id === siteId);
@@ -150,7 +179,7 @@ export default class ProjectsStore {
         localStorage.removeItem(GLOBAL_HAS_NO_RECORDINGS);
       }
     }
-  }
+  };
 
   removeProject = async (projectId: string) => {
     this.setLoading(true);
@@ -161,13 +190,13 @@ export default class ProjectsStore {
         if (this.siteId === projectId) {
           this.setSiteId(this.list[0].id!);
         }
-      })
+      });
     } catch (e) {
       console.error('Failed to remove project:', e);
     } finally {
       this.setLoading(false);
     }
-  }
+  };
 
   updateProject = async (projectId: string, projectData: Partial<Project>) => {
     this.setLoading(true);
@@ -183,7 +212,24 @@ export default class ProjectsStore {
     } catch (error) {
       console.error('Failed to update site:', error);
     } finally {
-      this.setLoading(false)
+      this.setLoading(false);
     }
-  }
+  };
+
+  setConfigProject = (pid?: number) => {
+    if (!pid) {
+      const firstProject = this.list[0];
+      this.config.pid = firstProject?.projectId ?? undefined;
+      this.config.project = firstProject ?? null;
+      return;
+    }
+
+    const project = this.list.find(site => site.projectId === pid);
+    this.config.pid = project?.projectId ?? undefined;
+    this.config.project = project ?? null;
+  };
+
+  setConfigTab = (tab: string | null) => {
+    this.config.tab = tab ?? 'installation';
+  };
 }
