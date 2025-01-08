@@ -138,7 +138,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     lineChart: 'Line',
     areaChart: 'Stacked Area',
     barChart: 'Column',
-    progressChart: 'Vertical Bar',
+    progressChart: 'Bar',
     columnChart: 'Horizontal Bar',
     pieChart: 'Pie',
     metric: 'Metric',

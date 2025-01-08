@@ -33,8 +33,15 @@ interface Props {
   siteId: any;
 }
 
+const LAYOUT_KEY = '$__layout__$'
+
+function getDefaultState() {
+  const layout = localStorage.getItem(LAYOUT_KEY)
+  return layout || 'flex-row'
+}
+
 function WidgetView(props: Props) {
-  const [layout, setLayout] = useState('flex-row');
+  const [layout, setLayout] = useState(getDefaultState);
   const {
     match: {
       params: { siteId, dashboardId, metricId },
@@ -65,7 +72,13 @@ function WidgetView(props: Props) {
         metricStore.init();
       }
     }
+    const wasCollapsed = settingsStore.menuCollapsed;
     settingsStore.updateMenuCollapsed(true)
+    return () => {
+      if (!wasCollapsed) {
+        settingsStore.updateMenuCollapsed(false)
+      }
+    }
   }, []);
 
   const undoChanges = () => {
@@ -103,6 +116,11 @@ function WidgetView(props: Props) {
       }
     }
   };
+
+  const updateLayout = (layout: string) => {
+    localStorage.setItem(LAYOUT_KEY, layout)
+    setLayout(layout)
+  }
 
   return (
     <Loader loading={loading}>
@@ -148,7 +166,7 @@ function WidgetView(props: Props) {
                 <Segmented
                   size='small'
                   value={layout}
-                  onChange={setLayout}
+                  onChange={updateLayout}
                   options={[
                     {
                       value: 'flex-row',
