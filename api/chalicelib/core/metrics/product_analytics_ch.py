@@ -35,15 +35,29 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_conditions = []
     step_0_conditions = []
+    step_1_post_conditions = ["event_number_in_session <= %(density)s"]
+
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.LOCATION)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["column"],
                            "eventType": schemas.ProductAnalyticsSelectedEventType.LOCATION.value})
     else:
+        if len(data.start_point) > 0:
+            extra_metric_values = []
+            for s in data.start_point:
+                if s.type not in data.metric_value:
+                    sub_events.append({"column": JOURNEY_TYPES[s.type]["column"],
+                                       "eventType": JOURNEY_TYPES[s.type]["eventType"]})
+                    step_1_post_conditions.append(
+                        f"(event_type!='{JOURNEY_TYPES[s.type]["eventType"]}' OR event_number_in_session = 1)")
+                    extra_metric_values.append(s.type)
+            data.metric_value += extra_metric_values
+
         for v in data.metric_value:
             if JOURNEY_TYPES.get(v):
                 sub_events.append({"column": JOURNEY_TYPES[v]["column"],
                                    "eventType": JOURNEY_TYPES[v]["eventType"]})
+
     if len(sub_events) == 1:
         main_column = sub_events[0]['column']
     else:
@@ -382,7 +396,7 @@ WITH {initial_sessions_cte}
                                  FROM {main_events_table} {"INNER JOIN sub_sessions ON (sub_sessions.session_id = events.session_id)" if len(sessions_conditions) > 0 else ""}
                                  WHERE {" AND ".join(ch_sub_query)}
                                  ) AS full_ranked_events
-                           WHERE event_number_in_session <= %(density)s)
+                           WHERE {" AND ".join(step_1_post_conditions)})
 SELECT *
 FROM pre_ranked_events;"""
         logger.debug("---------Q1-----------")
