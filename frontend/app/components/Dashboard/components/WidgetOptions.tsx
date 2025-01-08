@@ -144,6 +144,13 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     metric: 'Metric',
     table: 'Table',
   };
+  const funnelChartTypes = {
+    chart: 'Funnel Bar',
+    columnChart: 'Funnel Column',
+    metric: 'Metric',
+    table: 'Table',
+  }
+  const usedChartTypes = metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
   const chartIcons = {
     lineChart: <ChartLine size={16} strokeWidth={1} /> ,
     barChart: <ChartColumn size={16} strokeWidth={1} />,
@@ -166,7 +173,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       'metric',
       'table',
     ],
-    [FUNNEL]: ['lineChart', 'areaChart', 'barChart', 'progressChart', 'pieChart', 'metric', 'table'],
+    [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
   };
   return (
     <Dropdown
@@ -178,7 +185,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           label: (
             <div className="flex gap-2 items-center">
                 {chartIcons[key]}
-                <div>{chartTypes[key]}</div>
+                <div>{usedChartTypes[key]}</div>
             </div>
           ),
         })),
@@ -196,7 +203,7 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
       >
         <Space>
           {chartIcons[metric.viewType]}
-          <div>{chartTypes[metric.viewType]}</div>
+          <div>{usedChartTypes[metric.viewType]}</div>
           <DownOutlined className="text-sm " />
         </Space>
       </Button>
