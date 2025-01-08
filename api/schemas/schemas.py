@@ -1209,10 +1209,10 @@ class CardPathAnalysis(__CardSchema):
             if len(s.value) == 0:
                 continue
             start_point.append(s)
-            self.metric_value.append(s.type)
+            # self.metric_value.append(s.type)
 
         self.start_point = start_point
-        self.metric_value = remove_duplicate_values(self.metric_value)
+        # self.metric_value = remove_duplicate_values(self.metric_value)
 
         return self
 
