@@ -185,7 +185,16 @@ function WidgetChart(props: Props) {
   useEffect(() => {
     if (!inView || !props.isPreview) return;
     loadComparisonData();
-  }, [dashboardStore.comparisonPeriods[_metric.metricId], _metric.metricId, inView, props.isPreview]);
+  }, [
+    dashboardStore.comparisonPeriods[_metric.metricId],
+    _metric.metricId,
+    inView,
+    props.isPreview,
+    drillDownPeriod,
+    period,
+    depsString,
+    dashboardStore.selectedDensity,
+  ]);
   useEffect(() => {
     setCompData(null);
     _metric.updateKey('page', 1);

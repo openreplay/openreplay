@@ -7,20 +7,21 @@ import { useStore } from 'App/mstore';
 function SaveFilterButton({ disabled }: { disabled?: boolean }) {
   const { searchStore } = useStore();
   const savedSearch = searchStore.savedSearch;
-  const [showModal, setshowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <div>
       <Button
         type="link"
         disabled={disabled}
-        onClick={() => setshowModal(true)}
+        onClick={() => setShowModal(true)}
       >
         {savedSearch.exists() ? 'Update Search' : 'Save Search'}
       </Button>
       {showModal && (
         <SaveSearchModal
           show={showModal}
-          closeHandler={() => setshowModal(false)}
+          closeHandler={() => setShowModal(false)}
         />
       )}
     </div>

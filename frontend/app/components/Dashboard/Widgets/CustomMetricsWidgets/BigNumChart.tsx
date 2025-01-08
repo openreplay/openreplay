@@ -45,8 +45,8 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
   }
 
   const changePercent = React.useMemo(() => {
-    if (!compData || compData === 0) return '0%';
-    return `${(((value - compData) / compData) * 100).toFixed(2)}%`;
+    if (!compData || compData === 0) return '0';
+    return `${(((value - compData) / compData) * 100).toFixed(2)}`;
   }, [value, compData])
   const change = React.useMemo(() => {
     if (!compData) return 0;
