@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Dropdown } from 'antd';
+import { Dropdown, Button } from 'antd';
+import { MoreOutlined } from "@ant-design/icons";
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import SaveSearchModal from "../SaveSearchModal/SaveSearchModal";
@@ -21,9 +22,16 @@ function SavedSearch() {
   }
   return (
     <>
-    <Dropdown.Button onClick={toggleModal} menu={{ items: options }} className={'w-fit'}>
-      {savedSearch.exists() ? 'Update' : 'Save'} Search
-    </Dropdown.Button>
+      <div style={{ display: 'inline-flex' }}>
+        <Button onClick={toggleModal} disabled={searchStore.instance.filters.length === 0} style={{ borderRadius: '0.5rem 0 0 0.5rem', borderRight: 0 }}>
+          {savedSearch.exists() ? 'Update' : 'Save'} Search
+        </Button>
+        <Dropdown menu={{ items: options }} placement="bottomRight">
+          <Button style={{ borderRadius: '0 0.5rem 0.5rem 0' }}>
+            <MoreOutlined />
+          </Button>
+        </Dropdown>
+      </div>
       {showModal && (
         <SaveSearchModal
           show={showModal}
