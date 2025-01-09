@@ -27,7 +27,9 @@ const ProjectList: React.FC = () => {
   };
 
   const projectEditHandler = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation();
+    // e.stopPropagation();
+
+    projectsStore.initProject(project);
 
     openModal(<ProjectForm onClose={closeModal} project={project} />, {
       title: 'Edit Project'
@@ -38,8 +40,8 @@ const ProjectList: React.FC = () => {
   const menuItems: MenuItem[] = filteredProjects.map((project) => ({
     key: project.id + '',
     label: <Typography.Text style={{ color: 'inherit' }} ellipsis={true}>{project.name}</Typography.Text>,
-    extra: <Button onClick={(e) => projectEditHandler(e, project)} className="opacity-0 group-hover:!opacity-100"
-                   size="small" type="link" icon={<PencilIcon size={14} />} />,
+    extra: <Button onClick={(e) => projectEditHandler(e, project)} className="flex opacity-0 group-hover:!opacity-100"
+                    size="small" type="link" icon={<PencilIcon size={14} />} />,
     className: 'group',
     icon: (
       <ProjectIconWithProgress
