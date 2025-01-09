@@ -15,29 +15,18 @@ function ProjectForm(props: Props) {
   const [form] = Form.useForm();
   const { onClose } = props;
   const { projectsStore } = useStore();
-  // const project = projectsStore.instance as Project;
-  // const project = new Project(props.project || {});
   const [project, setProject] = React.useState<Project>(new Project(props.project || {}));
   const loading = projectsStore.loading;
   const canDelete = projectsStore.list.length > 1;
-  const pathname = window.location.pathname;
+  // const pathname = window.location.pathname;
   const mstore = useStore();
 
-  // useEffect(() => {
-  //   if (project) {
-  //     projectsStore.initProject(project);
-  //   } else {
-  //     projectsStore.initProject({});
-  //   }
-  // }, [project]);
-
   const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
-    // projectsStore.editInstance({ [name]: value });
     setProject((prev: Project) => (new Project({ ...prev, [name]: value })));
   };
 
   const onSubmit = (e: FormEvent) => {
-    if (!projectsStore.instance) return;
+    if (!project) return;
     if (project.id && project.exists()) {
       projectsStore
         .updateProject(project.id, project)
