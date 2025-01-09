@@ -1,4 +1,10 @@
 import { isTokenExpired } from "~/utils/jwt";
+import {
+  startTrackingNetwork,
+  getFinalRequests,
+  stopTrackingNetwork,
+} from "~/utils/networkTracking";
+import { mergeRequests } from "~/utils/networkTrackingUtils";
 
 let checkBusy = false;
 
@@ -136,6 +142,7 @@ export default defineBackground(() => {
   let finalVideoBase64 = "";
   let finalReady = false;
   let finalSpotObj: SpotObj = defaultSpotObj;
+  let injectNetworkRequests = [];
   let onStop: (() => void) | null = null;
   let settings = defaultSettings;
   let recordingState = {
@@ -339,6 +346,7 @@ export default defineBackground(() => {
         recording: REC_STATE.stopped,
         audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
       };
+      startTrackingNetwork();
       if (request.area === "tab") {
         browser.tabs
           .query({
@@ -577,7 +585,7 @@ export default defineBackground(() => {
       return "pong";
     }
     if (request.type === messages.injected.from.bumpNetwork) {
-      finalSpotObj.network.push(request.event);
+      injectNetworkRequests.push(request.event);
       return "pong";
     }
     if (request.type === messages.content.from.bumpClicks) {
@@ -649,7 +657,7 @@ export default defineBackground(() => {
           title: "JS Error",
           time: (l.time - finalSpotObj.startTs) / 1000,
         }));
-      const network = finalSpotObj.network
+      const network = [...injectNetworkRequests, ...finalSpotObj.network]
         .filter((net) => net.statusCode >= 400 || net.error)
         .map((n) => ({
           title: "Network Error",
@@ -665,8 +673,19 @@ export default defineBackground(() => {
     }
     if (request.type === messages.content.from.toStop) {
       if (recordingState.recording === REC_STATE.stopped) {
-        return console.error('Calling stopped recording?')
+        return console.error("Calling stopped recording?");
       }
+      const networkRequests = getFinalRequests(
+        recordingState.activeTabId ?? false,
+      );
+
+      stopTrackingNetwork();
+      const mappedNetwork = mergeRequests(
+        networkRequests,
+        injectNetworkRequests,
+      );
+      injectNetworkRequests = [];
+      finalSpotObj.network = mappedNetwork;
       browser.runtime
         .sendMessage({
           type: messages.offscreen.to.stopRecording,
@@ -749,12 +768,12 @@ export default defineBackground(() => {
     if (request.type === messages.content.from.saveSpotVidChunk) {
       finalVideoBase64 += request.part;
       finalReady = request.index === request.total - 1;
-      const getPlatformData = async () => {
-        const vendor = await browser.runtime.getPlatformInfo();
-        const platform = `${vendor.os} ${vendor.arch}`;
-        return { platform };
-      };
       if (finalReady) {
+        const getPlatformData = async () => {
+          const vendor = await browser.runtime.getPlatformInfo();
+          const platform = `${vendor.os} ${vendor.arch}`;
+          return { platform };
+        };
         const duration = finalSpotObj.crop
           ? finalSpotObj.crop[1] - finalSpotObj.crop[0]
           : finalSpotObj.duration;
@@ -1155,7 +1174,7 @@ export default defineBackground(() => {
         if (state === REC_STATE.stopped) {
           return stopNavListening();
         }
-        contentArmy[details.tabId] = false
+        contentArmy[details.tabId] = false;
 
         if (area === "tab" && (!trackedTab || details.tabId !== trackedTab)) {
           return;
@@ -1179,10 +1198,10 @@ export default defineBackground(() => {
       }
 
       function startNavListening() {
-        browser.webNavigation.onCompleted.addListener(tabNavigatedListener)
+        browser.webNavigation.onCompleted.addListener(tabNavigatedListener);
       }
       function stopNavListening() {
-        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener)
+        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener);
       }
 
       /** discards recording if was recording single tab and its now closed */

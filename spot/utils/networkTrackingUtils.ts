@@ -82,7 +82,9 @@ export const sensitiveParams = new Set([
   "account_key",
 ]);
 
-export function filterHeaders(headers: Record<string, string> | { name: string; value: string }[]) {
+export function filterHeaders(
+  headers: Record<string, string> | { name: string; value: string }[],
+) {
   const filteredHeaders: Record<string, string> = {};
   if (Array.isArray(headers)) {
     headers.forEach(({ name, value }) => {
