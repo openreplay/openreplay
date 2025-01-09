@@ -270,16 +270,16 @@ export default defineContentScript({
       document.head.appendChild(scriptEl);
     }
     function startConsoleTracking() {
-      injectScript()
+      injectScript();
       setTimeout(() => {
         window.postMessage({ type: "injected:c-start" });
       }, 100);
     }
     function startNetworkTracking() {
-      injectScript()
+      injectScript();
       setTimeout(() => {
         window.postMessage({ type: "injected:n-start" });
-      }, 100)
+      }, 100);
     }
 
     function stopConsoleTracking() {
@@ -325,7 +325,7 @@ export default defineContentScript({
 
     setInterval(() => {
       void browser.runtime.sendMessage({ type: "ort:content-ready" });
-    }, 250)
+    }, 250);
     // @ts-ignore false positive
     browser.runtime.onMessage.addListener((message: any, resp) => {
       if (message.type === "content:mount") {

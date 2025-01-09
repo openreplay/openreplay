@@ -26,6 +26,8 @@ export default defineConfig({
       "offscreen",
       "unlimitedStorage",
       "webNavigation",
+      "webRequest",
+      "<all_urls>",
     ],
   },
 });
