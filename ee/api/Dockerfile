@@ -17,7 +17,7 @@ COPY requirements.txt ./requirements.txt
 #RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
 #RUN uv pip install --no-cache-dir --upgrade python3-saml==1.16.0 --no-binary=lxml --system
 #RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
-RUN pip install --no-cache-dir --upgrade -r requirements.txt --system
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 RUN mv env.default .env
