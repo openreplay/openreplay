@@ -13,6 +13,8 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# This code is used to solve 'lxml & xmlsec libxml2 library version mismatch' error
+RUN pip uninstall lxml && pip install lxml
 
 COPY . .
 RUN mv env.default .env
