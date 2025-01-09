@@ -11,5 +11,3 @@ if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     from . import errors_details_exp as errors_details
 else:
     from . import errors
-
-from . import errors_viewed_ee as errors_viewed
