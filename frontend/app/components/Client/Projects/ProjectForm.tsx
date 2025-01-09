@@ -15,19 +15,20 @@ function ProjectForm(props: Props) {
   const [form] = Form.useForm();
   const { onClose } = props;
   const { projectsStore } = useStore();
-  const project = projectsStore.instance as Project;
+  // const project = projectsStore.instance as Project;
+  const project = props.project || new Project();
   const loading = projectsStore.loading;
   const canDelete = projectsStore.list.length > 1;
   const pathname = window.location.pathname;
   const mstore = useStore();
 
   useEffect(() => {
-    if (props.project && props.project.id) {
+    if (props.project) {
       projectsStore.initProject(props.project);
     } else {
       projectsStore.initProject({});
     }
-  }, []);
+  }, [props.project]);
 
   const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
     projectsStore.editInstance({ [name]: value });
@@ -85,14 +86,16 @@ function ProjectForm(props: Props) {
     });
   };
 
+  console.log('ProjectForm', project);
+
   return (
     <Form
       form={form}
       layout="vertical"
       requiredMark={false}
       onFinish={onSubmit}
+      initialValues={{ ...project }}
     >
-
       <Form.Item
         label="Name"
         name="name"
