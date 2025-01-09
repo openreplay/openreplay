@@ -80,6 +80,7 @@ import type {
   RawMobileNetworkCall,
   RawMobileSwipeEvent,
   RawMobileIssueEvent,
+  RawMobileGraphQl,
 } from './raw.gen'
 
 export type Message = RawMessage & Timed
@@ -236,4 +237,6 @@ export type MobileNetworkCall = RawMobileNetworkCall & Timed
 export type MobileSwipeEvent = RawMobileSwipeEvent & Timed
 
 export type MobileIssueEvent = RawMobileIssueEvent & Timed
+
+export type MobileGraphQl = RawMobileGraphQl & Timed
 

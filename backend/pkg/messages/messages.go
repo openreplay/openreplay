@@ -117,6 +117,7 @@ const (
 	MsgMobileBatchMeta                = 107
 	MsgMobilePerformanceAggregated    = 110
 	MsgMobileIssueEvent               = 111
+	MsgMobileGraphQL                  = 89
 )
 
 type Timestamp struct {
@@ -3209,4 +3210,37 @@ func (msg *MobileIssueEvent) Decode() Message {
 
 func (msg *MobileIssueEvent) TypeID() int {
 	return 111
+}
+
+type MobileGraphQL struct {
+	message
+	Timestamp     uint64
+	Length        uint64
+	OperationKind string
+	OperationName string
+	Variables     string
+	Response      string
+	Duration      uint64
+}
+
+func (msg *MobileGraphQL) Encode() []byte {
+	buf := make([]byte, 71+len(msg.OperationKind)+len(msg.OperationName)+len(msg.Variables)+len(msg.Response))
+	buf[0] = 89
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Length, buf, p)
+	p = WriteString(msg.OperationKind, buf, p)
+	p = WriteString(msg.OperationName, buf, p)
+	p = WriteString(msg.Variables, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *MobileGraphQL) Decode() Message {
+	return msg
+}
+
+func (msg *MobileGraphQL) TypeID() int {
+	return 89
 }
