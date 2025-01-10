@@ -71,6 +71,7 @@ function ProjectForm(props: Props) {
           if (onClose) {
             onClose(null);
           }
+          projectsStore.setConfigProject(parseInt(projectStore.list[0].id!));
           if (project.id === projectsStore.active?.id) {
             projectsStore.setSiteId(projectStore.list[0].id!);
           }
