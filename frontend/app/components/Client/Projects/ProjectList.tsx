@@ -1,15 +1,19 @@
 import React from 'react';
-import { Avatar, Input, Menu, MenuProps, Progress } from 'antd';
+import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography } from 'antd';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
-import { AppWindowMac, Smartphone } from 'lucide-react';
+import { AppWindowMac, EditIcon, Smartphone } from 'lucide-react';
+import { PencilIcon } from '.store/lucide-react-virtual-3cff663764/package';
+import ProjectForm from 'Components/Client/Projects/ProjectForm';
+import { useModal } from 'Components/ModalContext';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
 const ProjectList: React.FC = () => {
   const { projectsStore } = useStore();
   const [search, setSearch] = React.useState('');
+  const { openModal, closeModal } = useModal();
 
   const filteredProjects = projectsStore.list.filter((project: Project) =>
     project.name.toLowerCase().includes(search.toLowerCase())
@@ -22,9 +26,23 @@ const ProjectList: React.FC = () => {
     projectsStore.setConfigProject(pid);
   };
 
+  const projectEditHandler = (e: React.MouseEvent, project: Project) => {
+    // e.stopPropagation();
+
+    projectsStore.initProject(project);
+
+    openModal(<ProjectForm onClose={closeModal} project={project} />, {
+      title: 'Edit Project'
+    });
+
+  };
+
   const menuItems: MenuItem[] = filteredProjects.map((project) => ({
     key: project.id + '',
-    label: project.name,
+    label: <Typography.Text style={{ color: 'inherit' }} ellipsis={true}>{project.name}</Typography.Text>,
+    extra: <Button onClick={(e) => projectEditHandler(e, project)} className="flex opacity-0 group-hover:!opacity-100"
+                    size="small" type="link" icon={<PencilIcon size={14} />} />,
+    className: 'group',
     icon: (
       <ProjectIconWithProgress
         platform={project.platform}

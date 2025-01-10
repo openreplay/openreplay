@@ -18,10 +18,7 @@ def __transform_journey(rows, reverse_path=False):
             break
         number_of_step1 += 1
         total_100p += r["sessions_count"]
-    # for i in range(number_of_step1):
-    #     rows[i]["value"] = 100 / number_of_step1
 
-    # for i in range(number_of_step1, len(rows)):
     for i in range(len(rows)):
         rows[i]["value"] = rows[i]["sessions_count"] * 100 / total_100p
 
@@ -32,22 +29,17 @@ def __transform_journey(rows, reverse_path=False):
         source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
-            nodes_values.append({"name": r['e_value'], "eventType": r['event_type'],
-                                 "avgTimeFromPrevious": 0, "sessionsCount": 0})
+            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
         if r['next_value']:
             target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
             if target not in nodes:
                 nodes.append(target)
-                nodes_values.append({"name": r['next_value'], "eventType": r['next_type'],
-                                     "avgTimeFromPrevious": 0, "sessionsCount": 0})
+                nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
 
             sr_idx = nodes.index(source)
             tg_idx = nodes.index(target)
-            if r["avg_time_from_previous"] is not None:
-                nodes_values[tg_idx]["avgTimeFromPrevious"] += r["avg_time_from_previous"] * r["sessions_count"]
-                nodes_values[tg_idx]["sessionsCount"] += r["sessions_count"]
-            link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],
-                    "value": r["value"], "avgTimeFromPrevious": r["avg_time_from_previous"]}
+
+            link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],"value": r["value"]}
             if not reverse_path:
                 link["source"] = sr_idx
                 link["target"] = tg_idx
@@ -55,12 +47,6 @@ def __transform_journey(rows, reverse_path=False):
                 link["source"] = tg_idx
                 link["target"] = sr_idx
             links.append(link)
-    for n in nodes_values:
-        if n["sessionsCount"] > 0:
-            n["avgTimeFromPrevious"] = n["avgTimeFromPrevious"] / n["sessionsCount"]
-        else:
-            n["avgTimeFromPrevious"] = None
-        n.pop("sessionsCount")
 
     return {"nodes": nodes_values,
             "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}

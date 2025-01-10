@@ -15,37 +15,29 @@ function ProjectForm(props: Props) {
   const [form] = Form.useForm();
   const { onClose } = props;
   const { projectsStore } = useStore();
-  const project = projectsStore.instance as Project;
+  const [project, setProject] = React.useState<Project>(new Project(props.project || {}));
   const loading = projectsStore.loading;
   const canDelete = projectsStore.list.length > 1;
-  const pathname = window.location.pathname;
+  // const pathname = window.location.pathname;
   const mstore = useStore();
 
-  useEffect(() => {
-    if (props.project && props.project.id) {
-      projectsStore.initProject(props.project);
-    } else {
-      projectsStore.initProject({});
-    }
-  }, []);
-
   const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
-    projectsStore.editInstance({ [name]: value });
+    setProject((prev: Project) => (new Project({ ...prev, [name]: value })));
   };
 
   const onSubmit = (e: FormEvent) => {
-    if (!projectsStore.instance) return;
-    if (projectsStore.instance.id && projectsStore.instance.exists()) {
+    if (!project) return;
+    if (project.id && project.exists()) {
       projectsStore
-        .updateProject(projectsStore.instance.id, project)
+        .updateProject(project.id, project)
         .then((response: any) => {
           if (!response || !response.errors || response.errors.size === 0) {
             if (onClose) {
               onClose(null);
             }
-            if (!pathname.includes('onboarding')) {
-              void projectsStore.fetchList();
-            }
+            // if (!pathname.includes('onboarding')) {
+            //   void projectsStore.fetchList();
+            // }
             toast.success('Project updated successfully');
           } else {
             toast.error(response.errors[0]);
@@ -53,14 +45,16 @@ function ProjectForm(props: Props) {
         });
     } else {
       projectsStore
-        .save(projectsStore.instance!)
-        .then(() => {
+        .save(project!)
+        .then((resp: Project) => {
           toast.success('Project created successfully');
           onClose?.(null);
 
           mstore.searchStore.clearSearch();
           mstore.searchStoreLive.clearSearch();
           mstore.initClient();
+
+          projectsStore.setConfigProject(parseInt(resp.id!));
         })
         .catch((error: string) => {
           toast.error(error || 'An error occurred while creating the project');
@@ -77,6 +71,7 @@ function ProjectForm(props: Props) {
           if (onClose) {
             onClose(null);
           }
+          projectsStore.setConfigProject(parseInt(projectStore.list[0].id!));
           if (project.id === projectsStore.active?.id) {
             projectsStore.setSiteId(projectStore.list[0].id!);
           }
@@ -85,14 +80,16 @@ function ProjectForm(props: Props) {
     });
   };
 
+  console.log('ProjectForm', project);
+
   return (
     <Form
       form={form}
       layout="vertical"
       requiredMark={false}
       onFinish={onSubmit}
+      initialValues={{ ...project }}
     >
-
       <Form.Item
         label="Name"
         name="name"
@@ -121,7 +118,8 @@ function ProjectForm(props: Props) {
             ]}
             value={project.platform}
             onChange={(value) => {
-              projectsStore.editInstance({ platform: value });
+              // projectsStore.editInstance({ platform: value });
+              setProject((prev: Project) => (new Project({ ...prev, platform: value })));
             }}
           />
         </div>
