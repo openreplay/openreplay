@@ -128,11 +128,7 @@ function SpotListItem({
   };
 
   return (
-    <div
-      className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
-        isSelected ? 'border-teal/30' : 'border-transparent'
-      } transition flex flex-col items-start hover:border-teal`}
-    >
+    <>
       {isEdit ? (
         <EditItemModal
           onSave={onSave}
@@ -140,6 +136,85 @@ function SpotListItem({
           itemName={spot.title}
         />
       ) : null}
+      <GridItem
+        modifier={
+          <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
+            <Tooltip title={tooltipText}>
+              <div
+                className={
+                  'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
+                }
+                onClick={copyToClipboard}
+                style={{ cursor: 'pointer' }}
+              >
+                <Link2 size={16} strokeWidth={1} />
+              </div>
+            </Tooltip>
+            <div
+              className={
+                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal'
+              }
+            >
+              {spot.duration}
+            </div>
+          </div>
+        }
+        onSave={onSave}
+        setIsEdit={setIsEdit}
+        isEdit={isEdit}
+        title={spot.title}
+        onItemClick={onSpotClick}
+        thumbnail={spot.thumbnail}
+        setLoading={setLoading}
+        loading={loading}
+        isSelected={isSelected}
+        tooltipText={tooltipText}
+        copyToClipboard={copyToClipboard}
+        duration={spot.duration}
+        onSelect={onSelect}
+        user={spot.user}
+        createdAt={spot.createdAt}
+        menuItems={menuItems}
+        onMenuClick={onMenuClick}
+      />
+    </>
+  );
+}
+
+export function GridItem({
+  title,
+  onItemClick,
+  thumbnail,
+  setLoading,
+  loading,
+  isSelected,
+  onSelect,
+  user,
+  createdAt,
+  menuItems,
+  onMenuClick,
+  modifier,
+}: {
+  title: string;
+  onItemClick: () => void;
+  thumbnail: string;
+  setLoading: (loading: boolean) => void;
+  loading?: boolean;
+  isSelected?: boolean;
+  copyToClipboard: () => void;
+  onSelect?: (selected: boolean) => void;
+  user: string;
+  createdAt: string;
+  menuItems: any[];
+  onMenuClick: (key: any) => void;
+  modifier: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`bg-white rounded-lg overflow-hidden shadow-sm border ${
+        isSelected ? 'border-teal/30' : 'border-transparent'
+      } transition flex flex-col items-start hover:border-teal`}
+    >
       <div
         className="relative group overflow-hidden"
         style={{
@@ -157,11 +232,11 @@ function SpotListItem({
         )}
         <div
           className="block w-full h-full cursor-pointer transition hover:bg-teal/70 relative"
-          onClick={onSpotClick}
+          onClick={onItemClick}
         >
           <img
-            src={spot.thumbnail}
-            alt={spot.title}
+            src={thumbnail}
+            alt={title}
             className={'w-full h-full object-cover opacity-80'}
             onLoad={() => setLoading(false)}
             onError={() => setLoading(false)}
@@ -175,49 +250,38 @@ function SpotListItem({
           </div>
         </div>
 
-        <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-          <Tooltip title={tooltipText}>
-            <div
-              className={
-                'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
-              }
-              onClick={copyToClipboard}
-              style={{ cursor: 'pointer' }}
-            >
-              <Link2 size={16} strokeWidth={1} />
-            </div>
-          </Tooltip>
-          <div
-            className={
-              'bg-black/70 text-white p-1 px-2 text-xs rounded-lg flex items-center cursor-normal'
-            }
-          >
-            {spot.duration}
-          </div>
-        </div>
+        {modifier}
       </div>
       <div className={'px-4 py-4 w-full border-t'}>
         <div className={'flex items-center gap-2'}>
-          <Checkbox
-            checked={isSelected} 
-            onChange={({ target: { checked } }) => onSelect(checked)}
-            className={`flex cursor-pointer w-full hover:text-teal ${isSelected ? 'text-teal' : ''}`}
-          >
+          {onSelect ? (
+            <Checkbox
+              checked={isSelected}
+              onChange={({ target: { checked } }) => onSelect(checked)}
+              className={`flex cursor-pointer w-full hover:text-teal ${
+                isSelected ? 'text-teal' : ''
+              }`}
+            >
+              <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
+                {title}
+              </span>
+            </Checkbox>
+          ) : (
             <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
-              {spot.title}
+              {title}
             </span>
-          </Checkbox>
+          )}
         </div>
         <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
           <div>
             <UserOutlined />
           </div>
-          <div>{spot.user}</div>
-          <div className="ms-4">
+          <div>{user}</div>
+          <div className="ml-auto">
             <ClockCircleOutlined />
           </div>
-          <div>{spot.createdAt}</div>
-          <div className={'ml-auto'}>
+          <div>{createdAt}</div>
+          <div>
             <Dropdown
               menu={{ items: menuItems, onClick: onMenuClick }}
               trigger={['click']}

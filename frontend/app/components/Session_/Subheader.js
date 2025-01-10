@@ -1,29 +1,40 @@
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton, Switch, Tooltip } from 'antd';
+import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
-import { Link2 } from 'lucide-react';
+import { useModal } from "Components/Modal";
+import IssuesModal from "Components/Session_/Issues/IssuesModal";
+import { Link2, Keyboard } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-
+import { MoreOutlined } from '@ant-design/icons'
+import { Icon } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { IFRAME } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
 import { checkParam, truncateStringToFit } from 'App/utils';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
-import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import WarnBadge from 'Components/Session_/WarnBadge';
-
-import Bookmark from 'Shared/Bookmark';
+import { toast } from "react-toastify";
+import HighlightButton from './Highlight/HighlightButton';
 
 import SharePopup from '../shared/SharePopup/SharePopup';
-import Issues from './Issues/Issues';
 import QueueControls from './QueueControls';
-import NotePopup from './components/NotePopup';
+import { Bookmark as BookmarkIcn, BookmarkCheck, Vault } from "lucide-react";
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
-  const { uxtestingStore, integrationsStore, sessionStore, projectsStore } = useStore();
+  const {
+    uxtestingStore,
+    integrationsStore,
+    sessionStore,
+    projectsStore,
+    userStore,
+    issueReportingStore,
+  } = useStore();
+  const favorite = sessionStore.current.favorite;
+  const isEnterprise = userStore.isEnterprise;
   const currentSession = sessionStore.current
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
@@ -31,6 +42,9 @@ function SubHeader(props) {
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const [hideTools, setHideTools] = React.useState(false);
+  const [isFavorite, setIsFavorite] = React.useState(favorite);
+  const { showModal, hideModal } = useModal();
+
   React.useEffect(() => {
     const hideDevtools = checkParam('hideTools');
     if (hideDevtools) {
@@ -46,6 +60,27 @@ function SubHeader(props) {
     return integrations.some((i) => i.token);
   }, [integrations]);
 
+  const issuesIntegrationList = integrationsStore.issues.list;
+  const handleOpenIssueModal = () => {
+    issueReportingStore.init();
+    if (!issueReportingStore.projectsFetched) {
+      issueReportingStore.fetchProjects().then((projects) => {
+        if (projects && projects[0]) {
+          void issueReportingStore.fetchMeta(projects[0].id);
+        }
+      });
+    }
+    showModal(
+      <IssuesModal
+        provider={reportingProvider}
+        sessionId={currentSession.sessionId}
+        closeHandler={hideModal}
+      />
+    )
+  };
+
+  const reportingProvider = issuesIntegrationList[0]?.provider || '';
+
   const locationTruncated = truncateStringToFit(
     currentLocation,
     window.innerWidth - 200
@@ -55,6 +90,32 @@ function SubHeader(props) {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
     uxtestingStore.setHideDevtools(!enabled);
   };
+  
+  const showKbHelp = () => {
+    showModal(<ShortcutGrid />, { right: true, width: 320 });
+  }
+
+  const vaultIcon = isEnterprise ? (
+    <Vault size={16} strokeWidth={1} />
+  ) : isFavorite ? (
+    <BookmarkCheck size={16} strokeWidth={1} />
+  ) : (
+    <BookmarkIcn size={16} strokeWidth={1} />
+  );
+  const toggleFavorite = () => {
+    const onToggleFavorite = sessionStore.toggleFavorite;
+    const ADDED_MESSAGE = isEnterprise
+      ? 'Session added to vault'
+      : 'Session added to your bookmarks';
+    const REMOVED_MESSAGE = isEnterprise
+      ? 'Session removed from vault'
+      : 'Session removed from your bookmarks';
+
+    onToggleFavorite(currentSession.sessionId).then(() => {
+      toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
+      setIsFavorite(!isFavorite);
+    });
+  }
 
   return (
     <>
@@ -84,10 +145,6 @@ function SubHeader(props) {
             )}
             style={{ width: 'max-content' }}
           >
-            <KeyboardHelp />
-            <Bookmark sessionId={currentSession.sessionId} />
-            <NotePopup />
-            {enabledIntegration && <Issues sessionId={currentSession.sessionId} />}
             <SharePopup
               showCopyLink={true}
               trigger={
@@ -103,6 +160,43 @@ function SubHeader(props) {
                 </div>
               }
             />
+            <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: '1',
+                    label: <div className={'flex items-center gap-2'}>
+                      <Keyboard size={16} strokeWidth={1} />
+                      <span>Keyboard Shortcuts</span>
+                    </div>,
+                    onClick: showKbHelp
+                  },
+                  {
+                    key: '2',
+                    label: <div className={'flex items-center gap-2'}>
+                      {vaultIcon}
+                      <span>{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+                    </div>,
+                    onClick: toggleFavorite
+                  },
+                  {
+                    key: '4',
+                    label: <div className={'flex items-center gap-2'}>
+                      <Icon name={`integrations/${reportingProvider || 'github'}`} />
+                      <span>Issues</span>
+                    </div>,
+                    disabled: !enabledIntegration,
+                    onClick: handleOpenIssueModal,
+                  }
+                ]
+              }}
+            >
+              <AntButton size={'small'}>
+                <MoreOutlined />
+              </AntButton>
+            </Dropdown>
+
 
             {uxtestingStore.isUxt() ? (
               <Switch

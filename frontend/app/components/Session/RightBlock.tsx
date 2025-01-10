@@ -1,7 +1,6 @@
-import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import React from 'react';
-import Session from 'Types/session/session';
 import EventsBlock from '../Session_/EventsBlock';
+import HighlightPanel from "../Session_/Highlight/HighlightPanel";
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
 import TagWatch from 'Components/Session/Player/TagWatch';
 
@@ -34,6 +33,12 @@ function RightBlock({
           <TagWatch />
         </div>
       );
+    case 'HIGHLIGHT':
+      return (
+        <div className={cn('bg-white border-l', stl.panel)}>
+          <HighlightPanel onClose={() => setActiveTab('')} />
+        </div>
+      )
     default:
       return null;
   }

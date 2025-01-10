@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, confirm } from 'UI';
-import PlayLink from 'Shared/SessionItem/PlayLink';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
