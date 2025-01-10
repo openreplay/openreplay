@@ -414,6 +414,17 @@ p {
   background-color: #E6E9FA;
 }
 
+.pref-projects-menu .ant-menu-light .ant-menu-item-selected{
+  background-color: #F6F7FF;
+  color: rgba(0,0,0,.7);
+  font-weight: 500;
+}
+
+.pref-projects-menu .ant-menu-light .ant-menu-item{
+  margin-bottom: .5rem;
+  border-radius: .75rem;
+}
+
 .dashboardDataPeriodSelector .dashboardMoreOptionsLabel{
   display: none;
 }

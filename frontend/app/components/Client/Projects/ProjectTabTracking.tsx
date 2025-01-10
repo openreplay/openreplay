@@ -1,7 +1,7 @@
 import React from 'react';
 import Project from '@/mstore/types/project';
 import { Tabs } from 'UI';
-
+import {AppleOutlined, AndroidOutlined, CodeOutlined, JavaScriptOutlined} from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
 import InstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs';
 import ProjectCodeSnippet from 'Components/Client/Projects/ProjectCodeSnippet';
@@ -41,18 +41,32 @@ function WebSnippet({ project }: { project: Project }) {
   const [isNpm, setIsNpm] = React.useState(true);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="">
       <Segmented
-        options={[
-          { label: 'Using NPM', value: true },
-          { label: 'Using Script', value: false }
-        ]}
-        value={isNpm}
-        onChange={setIsNpm}
-        block={true}
-        style={{ maxWidth: '200px' }}
-        className="!align-middle"
-      />
+  options={[
+    {
+      label: (
+        <div className="flex items-center gap-2">
+          <CodeOutlined />
+          <span>NPM</span>
+        </div>
+      ),
+      value: true,
+    },
+    {
+      label: (
+        <div className="flex items-center gap-2">
+          <JavaScriptOutlined />
+          <span>Script</span>
+        </div>
+      ),
+      value: false,
+    },
+  ]}
+  value={isNpm}
+  onChange={setIsNpm}
+  className="!align-middle text-center rounded-lg"
+/>
 
       {isNpm ? (
         <InstallDocs site={project} />
@@ -68,25 +82,39 @@ function MobileSnippet({ project }: { project: Project }) {
   const ingestPoint = `https://${window.location.hostname}/ingest`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div>
       <Segmented
         options={[
-          { label: 'iOS', value: true },
-          { label: 'Android', value: false }
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <AppleOutlined />
+                <span>iOS</span>
+              </div>
+            ),
+            value: true,
+          },
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <AndroidOutlined />
+                <span>Android</span>
+              </div>
+            ),
+            value: false,
+          },
         ]}
         value={isIos}
         onChange={setIsIos}
-        block={true}
-        style={{ maxWidth: '150px' }}
-        className="!align-middle"
+        className='rounded-lg'
       />
-
-
+      
       {isIos ? (
         <MobileInstallDocs site={project} ingestPoint={ingestPoint} />
       ) : (
         <AndroidInstallDocs site={project} ingestPoint={ingestPoint} />
       )}
+
     </div>
   );
 }

@@ -75,13 +75,13 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
   const _usageCode = usageCode.replace('INGEST_POINT', ingestPoint).replace('PROJECT_KEY', site.projectKey);
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="font-semibold mb-2 flex items-center">
+    <div className='flex flex-col gap-4 mt-4'>
+      <div>
+        <div className="font-medium  flex gap-2 items-center">
           <CircleNumber text="1" />
-          Install the Swift Package
+          <span>Install the Swift Package</span>
         </div>
-        <div className={cn(stl.snippetWrapper, 'ml-10')}>
+        <div className={cn(stl.snippetWrapper, 'ml-8')}>
           <div className="absolute mt-1 mr-2 right-0">
             <CopyButton content={installationCommand} />
           </div>
@@ -89,78 +89,91 @@ function MobileInstallDocs({ site, ingestPoint }: any) {
         </div>
       </div>
 
-      <div className="font-semibold mb-2 flex items-center">
-        <CircleNumber text="2" />
-        Add to your app
-      </div>
-      <div className="flex ml-10 mt-4">
-        <div className="w-full">
-          <div className={cn(stl.snippetWrapper)}>
-            <div className="absolute mt-1 mr-2 right-0">
-              <CopyButton content={_usageCode} />
+      <div>
+        <div className="font-medium gap-2 flex items-center">
+          <CircleNumber text="2" />
+          <span>Add to your app</span>
+        </div>
+        <div className="flex ml-8">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <div className="absolute mt-1 mr-2 right-0">
+                <CopyButton content={_usageCode} />
+              </div>
+              <CodeBlock code={_usageCode} language={'swift'} />
             </div>
-            <CodeBlock code={_usageCode} language={'swift'} />
           </div>
         </div>
       </div>
 
-      <div className="font-semibold mb-2 mt-4 flex items-center">
-        <CircleNumber text="3" />
-        Configuration
-      </div>
-      <div className="flex ml-10 mt-4">
-        <div className="w-full">
-          <div className={cn(stl.snippetWrapper)}>
-            <CodeBlock code={configuration} language={'swift'} />
-            <div className={"mt-2"}>By default, all options equals <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code></div>
+      <div>
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="3" />
+          <span>Configuration</span>
+        </div>
+        <div className="flex ml-8 ">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <CodeBlock code={configuration} language={'swift'} />
+              <div className={"mt-2"}>By default, all options equals <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="font-semibold mb-2 mt-4 flex items-center">
-        <CircleNumber text="4" />
-        Set up touch events listener
-      </div>
-      <div className="flex ml-10 mt-4">
-        <div className="w-full">
-          <div className={cn(stl.snippetWrapper)}>
-            <div className="absolute mt-1 mr-2 right-0">
-              <CopyButton content={touches} />
+
+
+      <div>
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="4" />
+        <span> Set up touch events listener</span>
+        </div>
+        <div className="flex ml-8">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <div className="absolute mt-1 mr-2 right-0">
+                <CopyButton content={touches} />
+              </div>
+              <CodeBlock code={touches} language={'swift'} />
             </div>
-            <CodeBlock code={touches} language={'swift'} />
           </div>
         </div>
       </div>
 
-      <div className="font-semibold mb-2 mt-4 flex items-center">
-        <CircleNumber text="5" />
-        Hide sensitive views
-      </div>
-      <div className="flex ml-10 mt-4">
-        <div className="w-full">
-          <div className={cn(stl.snippetWrapper)}>
-            <div className="absolute mt-1 mr-2 right-0">
-              <CopyButton content={sensitive} />
+      <div>
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="5" />
+          <span>Hide sensitive views</span>
+        </div>
+        <div className="flex ml-8">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <div className="absolute mt-1 mr-2 right-0">
+                <CopyButton content={sensitive} />
+              </div>
+              <CodeBlock code={sensitive} language={'swift'} />
             </div>
-            <CodeBlock code={sensitive} language={'swift'} />
           </div>
         </div>
       </div>
 
-      <div className="font-semibold mb-2 mt-4 flex items-center">
-        <CircleNumber text="6" />
-        Track inputs
-      </div>
-      <div className="flex ml-10 mt-4">
-        <div className="w-full">
-          <div className={cn(stl.snippetWrapper)}>
-            <div className="absolute mt-1 mr-2 right-0">
-              <CopyButton content={inputs} />
+      <div>
+        <div className="font-medium flex gap-2 items-center">
+          <CircleNumber text="6" />
+        <span> Track inputs</span>
+        </div>
+        <div className="flex ml-8">
+          <div className="w-full">
+            <div className={cn(stl.snippetWrapper)}>
+              <div className="absolute mt-1 mr-2 right-0">
+                <CopyButton content={inputs} />
+              </div>
+              <CodeBlock code={inputs} language={'swift'} />
             </div>
-            <CodeBlock code={inputs} language={'swift'} />
           </div>
         </div>
       </div>
+
     </div>
   );
 }

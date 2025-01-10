@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Checkbox, Loader, Toggler } from 'UI';
+import { Loader } from 'UI';
+import { Switch, Checkbox, Tag } from 'antd';
 import GDPR from 'App/mstore/types/gdpr';
 import cn from 'classnames';
 import stl from './projectCodeSnippet.module.css';
@@ -18,7 +19,7 @@ interface InputModeOption {
 const inputModeOptions: InputModeOption[] = [
   { label: 'Record all inputs', value: 'plain' },
   { label: 'Ignore all inputs', value: 'obscured' },
-  { label: 'Obscure all inputs', value: 'hidden' }
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 const inputModeOptionsMap: Record<string, number> = {};
@@ -28,7 +29,7 @@ interface Props {
   project: Project;
 }
 
-const ProjectCodeSnippet: React.FC = (props: Props) => {
+const ProjectCodeSnippet: React.FC<Props> = (props) => {
   const { projectsStore } = useStore();
   const siteId = projectsStore.siteId;
   const site = props.project;
@@ -58,8 +59,7 @@ const ProjectCodeSnippet: React.FC = (props: Props) => {
     saveGDPR();
   };
 
-  const onChangeOption = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = event.target;
+  const onChangeOption = (name: string, checked: boolean) => {
     editGDPR({ [name]: checked });
     saveGDPR();
   };
@@ -73,13 +73,14 @@ const ProjectCodeSnippet: React.FC = (props: Props) => {
   }, [isAssistEnabled]);
 
   return (
-    <div>
-      <div className="mb-4">
-        <div className="font-semibold mb-2 flex items-center">
-          <CircleNumber text="1" /> Choose data recording options
+    <div className="flex flex-col gap-8 mt-4">
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
+          <CircleNumber text="1" />
+          <span>Choose data recording options</span>
         </div>
 
-        <div className="ml-10 mb-4" style={{ maxWidth: '50%' }}>
+        <div className="ml-8 mb-4 w-fit">
           <Select
             name="defaultInputMode"
             options={inputModeOptions}
@@ -91,67 +92,70 @@ const ProjectCodeSnippet: React.FC = (props: Props) => {
           />
         </div>
 
-        <div className="mx-4" />
-        <div className="flex items-center ml-10">
+        <div className="flex items-center ml-8">
           <Checkbox
-            name="maskNumbers"
-            type="checkbox"
             checked={gdpr.maskNumbers}
-            onChange={onChangeOption}
+            onChange={(e) => onChangeOption('maskNumbers', e.target.checked)}
             className="mr-2"
-            label="Do not record any numeric text"
-          />
+          >
+            Do not record any numeric text
+          </Checkbox>
 
           <div className="mx-4" />
 
           <Checkbox
-            name="maskEmails"
-            type="checkbox"
             checked={gdpr.maskEmails}
-            onChange={onChangeOption}
+            onChange={(e) => onChangeOption('maskEmails', e.target.checked)}
             className="mr-2"
-            label="Do not record email addresses"
-          />
+          >
+            Do not record email addresses
+          </Checkbox>
+        </div>
+        <div className={cn(stl.info, 'rounded-lg bg-gray mb-4 ml-8 bg-amber-50 w-fit text-sm mt-2', { hidden: !changed })}>
+          The code snippet below changes based on the selected data recording options and should be used for implementation.
         </div>
       </div>
-      <div className={cn(stl.info, 'rounded bg-gray mt-2 mb-4 ml-10', { hidden: !changed })}>
-        Below code snippet changes depending on the data recording options chosen.
-      </div>
 
-      <div className={cn(stl.instructions, 'mt-8')}>
-        <div className="font-semibold flex items-center">
+      <div className={cn(stl.instructions, 'flex flex-col !items-start !justify-start')}>
+        <div className="font-medium flex gap-1 items-center">
           <CircleNumber text="2" />
           <span>Enable Assist (Optional)</span>
         </div>
-      </div>
-      <div className="ml-10">
-        <p>
-          OpenReplay Assist allows you to support your users by seeing their live screen and
-          instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen
-          sharing software.
-        </p>
-        <Toggler
-          label="Yes"
-          checked={isAssistEnabled}
-          name="test"
-          className="font-medium mr-2"
-          onChange={() => setAssistEnabled(!isAssistEnabled)}
-        />
-      </div>
 
-      <div className={cn(stl.instructions, 'mt-8')}>
-        <div className="font-semibold flex items-center">
-          <CircleNumber text="3" />
-          <span>Install SDK</span>
+        <div className="ml-7">
+          <div className="flex gap-2 items-center">
+            <Switch
+              checked={isAssistEnabled}
+              className="font-normal"
+              onChange={() => setAssistEnabled(!isAssistEnabled)}
+              size="small"
+            />
+            <span>Enable</span>
+          </div>
+
+          <span className="text-sm text-neutral-400">
+            OpenReplay Assist allows you to support your users by seeing their
+            live screen and instantly hopping on call (WebRTC) with them without
+            requiring any 3rd-party screen sharing software.
+          </span>
         </div>
       </div>
 
-      <div className="ml-10 mb-2">
-        Paste this snippet <span>{'before the '}</span>
-        <span className={stl.highLight}> {'</head>'} </span>
-        <span>{' tag of your page.'}</span>
-      </div>
-      <div className={cn(stl.snippetsWrapper, 'ml-10')}>
+      <div className={cn(stl.instructions, '')}>
+        <div className='flex flex-col w-full'>
+          <div className='flex flex-col items-start justify-start gap-2'>
+            <div className="font-medium flex gap-2 items-center">
+              <CircleNumber text="3" />
+              <span>Install SDK</span>
+            </div>
+
+            <div className="ml-8 flex gap-2 items-center">
+              <div>Paste this snippet <span>{'before the '}</span></div>
+              <Tag color="red" bordered={false} className='rounded-lg text-base mr-0'> {'</head>'} </Tag>
+              <span>{' tag of your page.'}</span>
+            </div>
+          </div> 
+        <div className={cn(stl.snippetsWrapper, 'ml-8')}>
         {showLoader ? (
           <div style={{ height: '474px' }}>
             <Loader loading={true} />
@@ -168,6 +172,12 @@ const ProjectCodeSnippet: React.FC = (props: Props) => {
           />
         )}
       </div>
+      </div>
+
+      </div>
+
+      
+      
     </div>
   );
 };
