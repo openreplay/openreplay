@@ -1,10 +1,16 @@
 import React from 'react';
-import { Icon } from 'UI';
-import {Keyboard} from 'lucide-react'
+import { Keyboard } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
-import { useModal } from "../../../../Modal";
+import { useModal } from 'Components/Modal';
 
-const Key = ({ label }: { label: string }) => <div style={{ minWidth: 52 }} className="whitespace-nowrap font-normal bg-indigo-50 rounded-lg px-2 py-1 text-figmaColors-text-primary text-center font-mono">{label}</div>;
+const Key = ({ label }: { label: string }) => (
+  <div
+    style={{ minWidth: 52 }}
+    className="whitespace-nowrap font-normal bg-indigo-50 rounded-lg px-2 py-1 text-figmaColors-text-primary text-center font-mono"
+  >
+    {label}
+  </div>
+);
 function Cell({ shortcut, text }: any) {
   return (
     <div className="flex items-center gap-2 justify-start rounded">
@@ -14,25 +20,24 @@ function Cell({ shortcut, text }: any) {
   );
 }
 
+export const LaunchConsoleShortcut = () => <Key label={'⇧ + C'} />;
+export const LaunchNetworkShortcut = () => <Key label={'⇧ + N'} />;
+export const LaunchPerformanceShortcut = () => <Key label={'⇧ + P'} />;
+export const LaunchStateShortcut = () => <Key label={'⇧ + R'} />;
+export const LaunchEventsShortcut = () => <Key label={'⇧ + E'} />;
+export const PlaySessionInFullscreenShortcut = () => <Key label={'⇧ + F'} />;
+export const PlayPauseSessionShortcut = () => <Key label={'Space'} />;
+export const LaunchXRaShortcut = () => <Key label={'⇧ + X'} />;
+export const LaunchUserActionsShortcut = () => <Key label={'⇧ + A'} />;
+export const LaunchMoreUserInfoShortcut = () => <Key label={'⇧ + I'} />;
+export const LaunchOptionsMenuShortcut = () => <Key label={'⇧ + M'} />;
+export const PlayNextSessionShortcut = () => <Key label={'⇧ + >'} />;
+export const PlayPreviousSessionShortcut = () => <Key label={'⇧ + <'} />;
+export const SkipForwardShortcut = () => <Key label={'→'} />;
+export const SkipBackwardShortcut = () => <Key label={'←'} />;
+export const PlaybackSpeedShortcut = () => <Key label={'↑ / ↓'} />;
 
-export const LaunchConsoleShortcut = () => <Key label={"⇧ + C"} />
-export const LaunchNetworkShortcut = () => <Key label={"⇧ + N"} />
-export const LaunchPerformanceShortcut = () => <Key label={"⇧ + P"} />
-export const LaunchStateShortcut = () => <Key label={"⇧ + R"} />
-export const LaunchEventsShortcut = () => <Key label={"⇧ + E"} />
-export const PlaySessionInFullscreenShortcut = () => <Key label={"⇧ + F"} />
-export const PlayPauseSessionShortcut = () => <Key label={"Space"} />
-export const LaunchXRaShortcut = () => <Key label={"⇧ + X"} />
-export const LaunchUserActionsShortcut = () => <Key label={"⇧ + A"} />
-export const LaunchMoreUserInfoShortcut = () => <Key label={"⇧ + I"} />
-export const LaunchOptionsMenuShortcut = () => <Key label={"⇧ + M"} />
-export const PlayNextSessionShortcut = () => <Key label={"⇧ + >"} />
-export const PlayPreviousSessionShortcut = () => <Key label={"⇧ + <"} />
-export const SkipForwardShortcut = () => <Key label={"→"} />
-export const SkipBackwardShortcut = () => <Key label={"←"} />
-export const PlaybackSpeedShortcut = () => <Key label={"↑ / ↓"} />
-
-function ShortcutGrid() {
+export function ShortcutGrid() {
   return (
     <div className={'p-4 overflow-y-auto h-screen'}>
       <div className={'mb-4 font-semibold text-xl'}>Keyboard Shortcuts</div>
@@ -63,16 +68,16 @@ function ShortcutGrid() {
 function KeyboardHelp() {
   const { showModal } = useModal();
   return (
-    <Tooltip placement='bottom' title='Keyboard Shortcuts'>
-    <Button
-      size={'small'}
-      className={'flex items-center justify-center'}
-      onClick={() => {
-        showModal(<ShortcutGrid />, { right: true, width: 320 })
-      }}
-    >
-      <Keyboard size={18}/>
-    </Button>
+    <Tooltip placement="bottom" title="Keyboard Shortcuts">
+      <Button
+        size={'small'}
+        className={'flex items-center justify-center'}
+        onClick={() => {
+          showModal(<ShortcutGrid />, { right: true, width: 320 });
+        }}
+      >
+        <Keyboard size={18} />
+      </Button>
     </Tooltip>
   );
 }

@@ -394,21 +394,23 @@ export default class SessionStore {
         const wasInFavorite =
           this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
 
-        if (session) {
-          session.favorite = !wasInFavorite;
-          this.list[sessionIdx] = session;
-        }
-        if (current.sessionId === id) {
-          this.current.favorite = !wasInFavorite;
-        }
+        runInAction(() => {
+          if (session) {
+            session.favorite = !wasInFavorite;
+            this.list[sessionIdx] = session;
+          }
+          if (current.sessionId === id) {
+            this.current.favorite = !wasInFavorite;
+          }
 
-        if (wasInFavorite) {
-          this.favoriteList = this.favoriteList.filter(
-            ({ sessionId }) => sessionId !== id
-          );
-        } else {
-          this.favoriteList.push(session);
-        }
+          if (wasInFavorite) {
+            this.favoriteList = this.favoriteList.filter(
+              ({ sessionId }) => sessionId !== id
+            );
+          } else {
+            this.favoriteList.push(session);
+          }
+        })
       } else {
         console.error(r);
       }

@@ -40,6 +40,7 @@ export const enum MENU {
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
   NOTES = 'notes',
+  HIGHLIGHTS = 'highlights',
   LIVE_SESSIONS = 'live-sessions',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
@@ -63,7 +64,8 @@ export const categories: Category[] = [
       { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
       { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
-      { label: 'Notes', key: MENU.NOTES, icon: 'stickies' }
+      { label: 'Notes', key: MENU.NOTES, icon: 'stickies' },
+      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'stickies' }
     ]
   },
   {
