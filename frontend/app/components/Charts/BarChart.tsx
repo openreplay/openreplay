@@ -12,6 +12,7 @@ echarts.use([BarChart]);
 
 interface BarChartProps extends DataProps {
   label?: string;
+  onClick?: (event: any) => void;
 }
 
 function ORBarChart(props: BarChartProps) {
@@ -71,6 +72,11 @@ function ORBarChart(props: BarChartProps) {
       dataset: datasets,
       series,
     });
+    chart.on('click', (event) => {
+      const index = event.dataIndex;
+      const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
+      props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
+    })
 
     return () => {
       chart.dispose();

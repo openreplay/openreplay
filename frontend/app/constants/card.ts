@@ -49,12 +49,12 @@ export const TYPE_ICONS = {
 } as const
 export const TYPE_NAMES = {
   [LIBRARY]: 'Library',
-  [TIMESERIES]: 'Timeseries',
+  [TIMESERIES]: 'Trend',
   [TABLE]: 'Table',
   [HEATMAP]: 'Heatmap',
   [FUNNEL]: 'Funnel',
   [ERRORS]: 'Errors',
-  [USER_PATH]: 'User Path',
+  [USER_PATH]: 'Journeys',
   [RETENTION]: 'Retention',
   [INSIGHTS]: 'Insights',
   [PERFORMANCE]: 'Performance',

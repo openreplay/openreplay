@@ -76,6 +76,7 @@ const NewAlert = (props: IProps) => {
     triggerOptions,
     loading,
   } = alertsStore
+
   const deleting = loading
   const webhooks = settingsStore.webhooks
   const fetchWebhooks = settingsStore.fetchWebhooks

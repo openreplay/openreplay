@@ -3,8 +3,7 @@ import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography } from 'an
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
-import { AppWindowMac, EditIcon, Smartphone } from 'lucide-react';
-import { PencilIcon } from '.store/lucide-react-virtual-3cff663764/package';
+import { AppWindowMac, EditIcon, Smartphone, PencilIcon } from 'lucide-react';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 

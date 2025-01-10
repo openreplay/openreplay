@@ -52,11 +52,15 @@ function AlertForm(props) {
         onDelete,
         style = {height: "calc('100vh - 40px')"},
     } = props;
-    const {alertsStore} = useStore()
+    const {alertsStore, metricStore} = useStore()
     const {
-        triggerOptions,
+        triggerOptions: allTriggerSeries,
         loading,
     } = alertsStore
+
+    const triggerOptions = metricStore.instance.series.length > 0 ? allTriggerSeries.filter(s => {
+        return metricStore.instance.series.findIndex(ms => ms.seriesId === s.value) !== -1
+    }) : allTriggerSeries
     const instance = alertsStore.instance
     const deleting = loading
 
