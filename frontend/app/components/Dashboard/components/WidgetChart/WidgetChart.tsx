@@ -289,6 +289,12 @@ function WidgetChart(props: Props) {
       chartData.namesMap = Array.isArray(chartData.namesMap)
         ? chartData.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : chartData.namesMap;
+      const compDataCopy = { ...compData };
+      compDataCopy.namesMap = Array.isArray(compDataCopy.namesMap)
+        ? compDataCopy.namesMap.map((n) =>
+            enabledRows.includes(n) ? n : null
+          )
+        : compDataCopy.namesMap;
 
       if (viewType === 'lineChart') {
         return (
@@ -297,7 +303,7 @@ function WidgetChart(props: Props) {
             chartName={_metric.name}
             inGrid={!props.isPreview}
             data={chartData}
-            compData={compData}
+            compData={compDataCopy}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -332,7 +338,7 @@ function WidgetChart(props: Props) {
           <BarChart
             inGrid={!props.isPreview}
             data={chartData}
-            compData={compData}
+            compData={compDataCopy}
             params={params}
             colors={colors}
             onClick={onChartClick}
@@ -352,7 +358,7 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             horizontal
             data={chartData}
-            compData={compData}
+            compData={compDataCopy}
             params={params}
             colors={colors}
             onSeriesFocus={onFocus}
@@ -529,6 +535,7 @@ function WidgetChart(props: Props) {
           {renderChart()}
           {showTable ? (
             <WidgetDatatable
+              compData={compData}
               inBuilder={props.isPreview}
               defaultOpen={true}
               data={data}

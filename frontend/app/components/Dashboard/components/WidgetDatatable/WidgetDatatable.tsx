@@ -25,6 +25,7 @@ const initTableProps = [
 
 interface Props {
   data: { chart: any[]; namesMap: string[] };
+  compData?: { chart: any[]; namesMap: string[] };
   enabledRows: string[];
   setEnabledRows: (rows: string[]) => void;
   defaultOpen?: boolean;
@@ -35,10 +36,30 @@ interface Props {
 function WidgetDatatable(props: Props) {
   const [tableProps, setTableProps] =
     useState<TableProps['columns']>(initTableProps);
-  const data = props.data;
+  const data = React.useMemo(() => {
+    const dataObj = { ...props.data }
+    if (props.compData) {
+      dataObj.chart = dataObj.chart.map((item, i) => {
+        const compItem = props.compData!.chart[i];
+        const newItem = { ...item };
+        Object.keys(compItem).forEach((key) => {
+          if (key !== 'timestamp' && key !== 'time') {
+            newItem[key] = compItem[key];
+          }
+        });
+        return newItem;
+      });
+      const blank = new Array(dataObj.namesMap.length * 2).fill('');
+      dataObj.namesMap = blank.map((_, i) => {
+        return i % 2 !== 0
+          ? `Previous ${dataObj.namesMap[i / 2]}`
+          : dataObj.namesMap[i / 2];
+      })
+    }
+    return dataObj
+  }, [props.data, props.compData]);
 
   const [showTable, setShowTable] = useState(props.defaultOpen);
-  const hasMultipleSeries = data.namesMap.length > 1;
   const [tableData, setTableData] = useState([]);
 
   const columnNames = new Set();
@@ -52,9 +73,8 @@ function WidgetDatatable(props: Props) {
    * */
   const series = !data.chart[0]
     ? []
-    : Object.keys(data.chart[0]).filter(
-        (key) => key !== 'time' && key !== 'timestamp'
-      );
+    : data.namesMap;
+
   React.useEffect(() => {
     if (!data.chart) return;
     setTableProps(initTableProps);
@@ -99,6 +119,7 @@ function WidgetDatatable(props: Props) {
 
     setTableProps((prev) => [...prev, ...tableCols]);
     setTableData(items);
+    props.setEnabledRows(data.namesMap);
   }, [data.chart]);
 
   const rowSelection: TableProps['rowSelection'] = {
@@ -114,7 +135,6 @@ function WidgetDatatable(props: Props) {
   };
 
   const isTableOnlyMode = props.metric.viewType === 'table';
-
   return (
     <div className={cn('relative -mx-4 px-2', showTable ? '' : '')}>
       {!isTableOnlyMode && (
