@@ -7,6 +7,7 @@ import FilterSource from '../FilterSource';
 import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
 import { CircleMinus } from 'lucide-react';
+import cn from 'classnames'
 
 interface Props {
   filterIndex?: number;
@@ -67,6 +68,7 @@ function FilterItem(props: Props) {
     });
   };
 
+  const isReversed = filter.key === FilterKey.TAGGED_ELEMENT
   return (
     <div className="flex items-center w-full">
       <div className="flex items-center w-full flex-wrap">
@@ -85,49 +87,51 @@ function FilterItem(props: Props) {
           disabled={disableDelete || props.readonly}
         />
 
-        {/* Filter with Source */}
-        {filter.hasSource && (
-          <>
-            <FilterOperator
-              options={filter.sourceOperatorOptions}
-              onChange={onSourceOperatorChange}
-              className="mx-2 flex-shrink-0 btn-event-operator"
-              value={filter.sourceOperator}
-              isDisabled={filter.operatorDisabled || props.readonly}
-            />
-            <FilterSource filter={filter} onUpdate={props.onUpdate}/>
-          </>
-        )}
+        <div className={cn('flex items-center flex-wrap', isReversed ? 'flex-row-reverse ml-2' : 'flex-row')}>
+          {/* Filter with Source */}
+          {filter.hasSource && (
+            <>
+              <FilterOperator
+                options={filter.sourceOperatorOptions}
+                onChange={onSourceOperatorChange}
+                className="mx-2 flex-shrink-0 btn-event-operator"
+                value={filter.sourceOperator}
+                isDisabled={filter.operatorDisabled || props.readonly}
+              />
+              <FilterSource filter={filter} onUpdate={props.onUpdate}/>
+            </>
+          )}
 
-        {/* Filter values */}
-        {!isSubFilter && filter.operatorOptions && (
-          <>
-            <FilterOperator
-              options={filter.operatorOptions}
-              onChange={onOperatorChange}
-              className="mx-2 flex-shrink-0 btn-sub-event-operator"
-              value={filter.operator}
-              isDisabled={filter.operatorDisabled || props.readonly}
-            />
-            {canShowValues && (
-              <>
-                {props.readonly ? (
-                  <div
-                    className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400'}
-                  >
-                    {filter.value.map((val: string) => {
-                      return filter.options && filter.options.length
-                        ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label ?? val
-                        : val
-                    }).join(', ')}
-                  </div>
-                ) : (
-                  <FilterValue isConditional={isConditional} filter={filter} onUpdate={props.onUpdate}/>
-                )}
-              </>
-            )}
-          </>
-        )}
+          {/* Filter values */}
+          {!isSubFilter && filter.operatorOptions && (
+            <>
+              <FilterOperator
+                options={filter.operatorOptions}
+                onChange={onOperatorChange}
+                className="mx-2 flex-shrink-0 btn-sub-event-operator"
+                value={filter.operator}
+                isDisabled={filter.operatorDisabled || props.readonly}
+              />
+              {canShowValues && (
+                <>
+                  {props.readonly ? (
+                    <div
+                      className={'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip hover:border-neutral-400'}
+                    >
+                      {filter.value.map((val: string) => {
+                        return filter.options && filter.options.length
+                          ? filter.options[filter.options.findIndex((i: any) => i.value === val)]?.label ?? val
+                          : val
+                      }).join(', ')}
+                    </div>
+                  ) : (
+                    <FilterValue isConditional={isConditional} filter={filter} onUpdate={props.onUpdate}/>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
 
         {/* filters */}
         {isSubFilter && (
