@@ -18,6 +18,37 @@ import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
 
+const handleFilter = (card: Widget, filterType?: string) => {
+  const metricType = card.metricType;
+  if (filterType === 'all' || !filterType || !metricType) {
+    return true;
+  }
+  if ([CATEGORIES.monitors, CATEGORIES.web_analytics].includes(filterType)) {
+    if (metricType !== 'table') return false;
+    const metricOf = card.metricOf;
+    if (filterType === CATEGORIES.monitors) {
+      return [
+        FilterKey.ERRORS,
+        FilterKey.FETCH,
+        TIMESERIES + '_4xx_requests',
+        TIMESERIES + '_slow_network_requests'
+      ].includes(metricOf)
+    }
+    if (filterType === CATEGORIES.web_analytics) {
+      return [
+        FilterKey.LOCATION,
+        FilterKey.USER_BROWSER,
+        FilterKey.REFERRER,
+        FilterKey.USERID,
+        FilterKey.LOCATION,
+        FilterKey.USER_DEVICE,
+      ].includes(metricOf)
+    }
+  } else {
+    return filterType === metricType;
+  }
+}
+
 const cardToCategory = (cardType: string) => {
   switch (cardType) {
     case TIMESERIES:
@@ -70,6 +101,8 @@ export default class MetricStore {
 
   cardCategory: string | null = CATEGORIES.product_analytics;
 
+  focusedSeriesName: string | null = null;
+
   constructor() {
     makeAutoObservable(this);
   }
@@ -89,7 +122,7 @@ export default class MetricStore {
           (this.filter.showMine
             ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
             : true) &&
-          (this.filter.type === 'all' || card.metricType === this.filter.type) &&
+          handleFilter(card, this.filter.type) &&
           (!dbIds.length ||
             card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
           // @ts-ignore
@@ -103,6 +136,14 @@ export default class MetricStore {
   // State Actions
   init(metric?: Widget | null) {
     this.instance.update(metric || new Widget());
+  }
+
+  setFocusedSeriesName(name: string | null, resetOnSame = true) {
+    if (this.focusedSeriesName === name && resetOnSame) {
+      this.focusedSeriesName = null;
+    } else {
+      this.focusedSeriesName = name;
+    }
   }
 
   setCardCategory(category: string) {

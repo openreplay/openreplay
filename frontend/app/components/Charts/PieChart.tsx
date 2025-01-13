@@ -18,7 +18,7 @@ interface PieChartProps {
   };
   label?: string;
   inGrid?: boolean;
-  onClick?: (filters: any[]) => void;
+  onSeriesFocus?: (seriesName: string) => void;
 }
 
 function PieChart(props: PieChartProps) {
@@ -40,10 +40,10 @@ function PieChart(props: PieChartProps) {
       return;
     }
 
-    const largestSlice = pieData.reduce((acc, curr) =>
-      curr.value > acc.value ? curr : acc
-    );
-    const largestVal = largestSlice.value || 1; // avoid divide-by-zero
+    // const largestSlice = pieData.reduce((acc, curr) =>
+    //   curr.value > acc.value ? curr : acc
+    // );
+    // const largestVal = largestSlice.value || 1; // avoid divide-by-zero
 
     const option = {
       ...defaultOptions,
@@ -75,14 +75,14 @@ function PieChart(props: PieChartProps) {
               name: d.name,
               value: d.value,
               label: {
-                show: d.value / largestVal >= 0.03,
+                show: false, //d.value / largestVal >= 0.03,
                 position: 'outside',
                 formatter: (params: any) => {
                   return params.value;
                 },
               },
               labelLine: {
-                show: d.value / largestVal >= 0.03,
+                show: false, // d.value / largestVal >= 0.03,
                 length: 10,
                 length2: 20,
                 lineStyle: { color: '#3EAAAF' },
@@ -105,7 +105,8 @@ function PieChart(props: PieChartProps) {
     obs.observe(chartRef.current);
 
     chartInstance.on('click', function (params) {
-      onClick([{ name: params.name, value: params.value }]);
+      const focusedSeriesName = params.name
+      props.onSeriesFocus?.(focusedSeriesName);
     });
 
     return () => {

@@ -25,6 +25,7 @@ export interface DataProps {
 
 interface ColumnChartProps extends DataProps {
   label?: string;
+  onSeriesFocus?: (name: string) => void;
 }
 
 function ColumnChart(props: ColumnChartProps) {
@@ -80,6 +81,10 @@ function ColumnChart(props: ColumnChartProps) {
 
     const obs = new ResizeObserver(() => chart.resize());
     obs.observe(chartRef.current);
+    chart.on('click', (event) => {
+      const focusedSeriesName = event.name;
+      props.onSeriesFocus?.(focusedSeriesName);
+    })
 
     return () => {
       chart.dispose();

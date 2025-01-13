@@ -24,8 +24,10 @@ function WidgetSessions(props: Props) {
   const [data, setData] = useState<any>([]);
   const isMounted = useIsMounted();
   const [loading, setLoading] = useState(false);
-  const filteredSessions = getListSessionsBySeries(data, activeSeries);
+  // all filtering done through series now
+  const filteredSessions = getListSessionsBySeries(data, 'all');
   const { dashboardStore, metricStore, sessionStore, customFieldStore } = useStore();
+  const focusedSeries = metricStore.focusedSeriesName;
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
@@ -44,15 +46,14 @@ function WidgetSessions(props: Props) {
     )
   }));
 
-  const writeOption = ({ value }: any) => setActiveSeries(value.value);
   useEffect(() => {
-    if (!data) return;
-    const seriesOptions = data.map((item: any) => ({
-      label: item.seriesName,
+    if (!widget.series) return;
+    const seriesOptions = widget.series.map((item: any) => ({
+      label: item.name,
       value: item.seriesId
     }));
     setSeriesOptions([{ label: 'All', value: 'all' }, ...seriesOptions]);
-  }, [data]);
+  }, [widget.series]);
 
   const fetchSessions = (metricId: any, filter: any) => {
     if (!isMounted()) return;
@@ -99,9 +100,10 @@ function WidgetSessions(props: Props) {
       };
       debounceClickMapSearch(customFilter);
     } else {
+      const usedSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series;
       debounceRequest(widget.metricId, {
         ...filter,
-        series: widget.series.map((s) => s.toJson()),
+        series: usedSeries.map((s) => s.toJson()),
         page: metricStore.sessionsPage,
         limit: metricStore.sessionsPageSize
       });
@@ -116,9 +118,23 @@ function WidgetSessions(props: Props) {
     filter.filters,
     depsString,
     metricStore.clickMapSearch,
-    activeSeries
+    focusedSeries
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
+  useEffect(() => {
+    if (activeSeries === 'all') {
+      metricStore.setFocusedSeriesName(null);
+    } else {
+      metricStore.setFocusedSeriesName(seriesOptions.find((option) => option.value === activeSeries)?.label, false);
+    }
+  }, [activeSeries])
+  useEffect(() => {
+    if (focusedSeries) {
+      setActiveSeries(seriesOptions.find((option) => option.label === focusedSeries)?.value || 'all');
+    } else {
+      setActiveSeries('all');
+    }
+  }, [focusedSeries])
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);

@@ -8,25 +8,40 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
 
+const options = [
+  {
+    key: 'all',
+    label: 'All Types',
+  },
+  ...DROPDOWN_OPTIONS.map((option) => ({
+    key: option.value,
+    label: option.label,
+  })),
+  {
+    key: 'monitors',
+    label: 'Monitors',
+  },
+  {
+    key: 'web_analytics',
+    label: 'Web Analytics',
+  },
+]
+
 function MetricViewHeader() {
   const { metricStore } = useStore();
   const filter = metricStore.filter;
 
   useEffect(() => {
-    // Set the default sort order to 'desc'
     metricStore.updateKey('sort', { by: 'desc' });
   }, [metricStore]);
-  // Handler for dropdown menu selection
   const handleMenuClick = ({ key }) => {
     metricStore.updateKey('filter', { ...filter, type: key });
   };
 
-  // Dropdown menu options
   const menu = (
     <Menu onClick={handleMenuClick}>
-      <Menu.Item key="all">All Types</Menu.Item>
-      {DROPDOWN_OPTIONS.map((option) => (
-        <Menu.Item key={option.value}>{option.label}</Menu.Item>
+      {options.map((option) => (
+        <Menu.Item key={option.key}>{option.label}</Menu.Item>
       ))}
     </Menu>
   );
@@ -39,10 +54,7 @@ function MetricViewHeader() {
           <Space>
             <Dropdown overlay={menu} trigger={['click']} className="">
               <Button type="text" size="small" className="mt-1">
-                {filter.type === 'all'
-                  ? 'All Types'
-                  : DROPDOWN_OPTIONS.find((opt) => opt.value === filter.type)
-                      ?.label || 'Select Type'}
+                {options.find(opt => opt.key === filter.type)?.label || 'Select Type'}
                 <DownOutlined />
               </Button>
             </Dropdown>

@@ -214,6 +214,10 @@ function WidgetChart(props: Props) {
   ]);
   useEffect(loadPage, [_metric.page]);
 
+  const onFocus = (seriesName: string)=> {
+    metricStore.setFocusedSeriesName(seriesName);
+  }
+
   const renderChart = React.useCallback(() => {
     const { metricType, metricOf } = _metric;
     const viewType = _metric.viewType;
@@ -351,7 +355,7 @@ function WidgetChart(props: Props) {
             compData={compData}
             params={params}
             colors={colors}
-            onClick={onChartClick}
+            onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
@@ -366,7 +370,7 @@ function WidgetChart(props: Props) {
           <PieChart
             inGrid={!props.isPreview}
             data={chartData}
-            onClick={onChartClick}
+            onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
@@ -413,7 +417,7 @@ function WidgetChart(props: Props) {
             values={values}
             inGrid={!props.isPreview}
             colors={colors}
-            onClick={onChartClick}
+            onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'

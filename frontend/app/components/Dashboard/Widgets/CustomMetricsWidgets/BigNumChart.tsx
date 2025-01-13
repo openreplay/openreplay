@@ -1,19 +1,21 @@
 import React from 'react'
 import { CompareTag } from "./CustomChartTooltip";
+import cn from 'classnames'
 
 interface Props {
   colors: any;
-  onClick?: (event, index) => void;
   yaxis?: any;
   label?: string;
   hideLegend?: boolean;
   values: { value: number, compData?: number, series: string, valueLabel?: string }[];
+  onSeriesFocus?: (name: string) => void;
 }
 function BigNumChart(props: Props) {
   const {
     colors,
     label = 'Number of Sessions',
     values,
+    onSeriesFocus,
   } = props;
   return (
     <div className={'flex flex-row flex-wrap gap-2'} style={{ height: 240 }}>
@@ -26,19 +28,21 @@ function BigNumChart(props: Props) {
           label={label}
           compData={val.compData}
           valueLabel={val.valueLabel}
+          onSeriesFocus={onSeriesFocus}
         />
       ))}
     </div>
   )
 }
 
-function BigNum({ color, series, value, label, compData, valueLabel }: {
+function BigNum({ color, series, value, label, compData, valueLabel, onSeriesFocus }: {
   color: string,
   series: string,
   value: number,
   label: string,
   compData?: number,
   valueLabel?: string,
+  onSeriesFocus?: (name: string) => void
 }) {
   const formattedNumber = (num: number) => {
     return Intl.NumberFormat().format(num);
@@ -53,7 +57,13 @@ function BigNum({ color, series, value, label, compData, valueLabel }: {
     return value - compData;
   }, [value, compData])
   return (
-    <div className={'flex flex-col flex-auto justify-center items-center rounded-lg transition-all hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer'}>
+    <div
+      onClick={() => onSeriesFocus?.(series)}
+      className={cn(
+        'flex flex-col flex-auto justify-center items-center rounded-lg transition-all',
+        'hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer'
+      )}
+    >
       <div className={'flex items-center gap-2 font-medium text-gray-darkest'}>
         <div className={'rounded w-4 h-4'} style={{ background: color }} />
         <div>{series}</div>

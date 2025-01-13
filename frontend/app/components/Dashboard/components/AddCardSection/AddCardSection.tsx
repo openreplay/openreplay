@@ -12,6 +12,8 @@ import {
   Combine,
   Users,
   Sparkles,
+  Globe,
+  MonitorSmartphone,
 } from 'lucide-react';
 import { Icon } from 'UI';
 import FilterSeries from 'App/mstore/types/filterSeries';
@@ -129,6 +131,18 @@ export const tabItems: Record<string, TabItem[]> = {
       type: FilterKey.USERID,
       description: 'Identify the users with the most interactions.',
     },
+    {
+      icon: <Globe width={16} />,
+      title: 'Top Countries',
+      type: FilterKey.LOCATION,
+      description: 'Track the geographical distribution of your audience.',
+    },
+    {
+      icon: <MonitorSmartphone width={16} />,
+      title: 'Top Devices',
+      type: FilterKey.USER_DEVICE,
+      description: 'Explore the devices used by your users.',
+    }
     // { TODO: 1.23+ maybe
     //   icon: <ArrowDown10 width={16} />,
     //   title: 'Speed Index by Country',
