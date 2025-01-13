@@ -134,7 +134,7 @@ export const tabItems: Record<string, TabItem[]> = {
     {
       icon: <Globe width={16} />,
       title: 'Top Countries',
-      type: FilterKey.LOCATION,
+      type: FilterKey.USER_COUNTRY,
       description: 'Track the geographical distribution of your audience.',
     },
     {
