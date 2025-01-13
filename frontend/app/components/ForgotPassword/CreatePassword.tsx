@@ -32,13 +32,7 @@ function CreatePassword(props: Props) {
     if (!validatePassword(password)) {
       return;
     }
-    resetPassword({ invitation, pass, password }).then((response: any) => {
-      if (response && response.errors && response.errors.length > 0) {
-        setError(response.errors[0]);
-      } else {
-        setUpdated(true);
-      }
-    });
+    void resetPassword({ invitation, pass, password });
   };
 
   const onSubmit = (e: any) => {
@@ -102,7 +96,7 @@ function CreatePassword(props: Props) {
                   />
                 </Form.Field>
                 <Form.Field>
-                  <label>{'Cofirm password'}</label>
+                  <label>{'Confirm password'}</label>
                   <Input
                     autoComplete="new-password"
                     type="password"
