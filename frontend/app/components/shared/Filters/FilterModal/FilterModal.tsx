@@ -36,7 +36,7 @@ import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Input } from 'antd';
 
-import { FilterCategory, FilterKey } from "Types/filter/filterType";
+import { FilterCategory, FilterKey, FilterType } from "Types/filter/filterType";
 import stl from './FilterModal.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -194,6 +194,9 @@ function FilterModal(props: Props) {
       filter.value = [filter.key.substring(1)];
       filter.key = FilterKey.CUSTOM;
       filter.label = 'Custom Events'
+    }
+    if (filter.type === FilterType.ISSUE && filter.key.startsWith(`${FilterKey.ISSUE}_`)) {
+      filter.key = FilterKey.ISSUE;
     }
     onFilterClick(filter)
   }
