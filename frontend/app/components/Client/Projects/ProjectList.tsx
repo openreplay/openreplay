@@ -1,10 +1,10 @@
 import React from 'react';
-import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography } from 'antd';
+import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography, Tooltip } from 'antd';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
-import { AppWindowMac, EditIcon, Smartphone } from 'lucide-react';
-import { PencilIcon } from '.store/lucide-react-virtual-3cff663764/package';
+import { AppWindowMac, EditIcon, Smartphone,  } from 'lucide-react';
+import {PlusOutlined, SearchOutlined, EditOutlined} from '@ant-design/icons'
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 
@@ -41,7 +41,7 @@ const ProjectList: React.FC = () => {
     key: project.id + '',
     label: <Typography.Text style={{ color: 'inherit' }} ellipsis={true}>{project.name}</Typography.Text>,
     extra: <Button onClick={(e) => projectEditHandler(e, project)} className="flex opacity-0 group-hover:!opacity-100"
-                    size="small" type="link" icon={<PencilIcon size={14} />} />,
+                    size="small" type="link" icon={<EditOutlined size={14} />} />,
     className: 'group',
     icon: (
       <ProjectIconWithProgress
@@ -51,25 +51,36 @@ const ProjectList: React.FC = () => {
     )
   }));
 
+  const createProject = () => {
+    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
+      title: 'New Project'
+    });
+  };
+
   return (
     <div className="h-full flex flex-col gap-4">
-      <div className="px-4 mt-4">
-        <Input.Search
+      <div className="flex flex-row gap-2 items-center p-3">
+        <Tooltip title='Create Project' placement='bottom'>
+          <Button onClick={createProject} type='primary' ghost size='middle' shape="circle" icon={<PlusOutlined size={16}/>}></Button>
+        </Tooltip>
+        <Input
           placeholder="Search projects"
-          onSearch={handleSearch}
+          // onSearch={handleSearch}
+          prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}
           allowClear
+          className='rounded-lg'
         />
       </div>
       <div
-        className="overflow-y-auto"
+        className="overflow-y-auto pref-projects-menu"
         style={{ height: 'calc(100vh - 250px)' }}
       >
         <Menu
           mode="inline"
           onClick={onClick}
           selectedKeys={[String(projectsStore.config.pid)]}
-          className="w-full !bg-white !border-0"
+          className="w-full !bg-white !border-0 "
           inlineIndent={11}
           items={menuItems}
         />
@@ -84,6 +95,7 @@ const ProjectIconWithProgress: React.FC<{
   platform: string;
   progress: number;
 }> = ({ platform, progress }) => (
+  <Tooltip title={`${progress}% Capture Rate`}>
   <div className="relative flex items-center justify-center mr-2 leading-none">
     <Progress
       type="circle"
@@ -107,4 +119,5 @@ const ProjectIconWithProgress: React.FC<{
       />
     </div>
   </div>
+  </Tooltip>
 );

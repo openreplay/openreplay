@@ -37,25 +37,16 @@ function Projects() {
     history.push({ search: params.toString() });
   }, [pid, tab]);
 
-  const createProject = () => {
-    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
-      title: 'New Project'
-    });
-  };
 
   return (
     <Card
       style={{ height: 'calc(100vh - 130px)' }}
+      className="rounded-lg shadow-sm"
       classNames={{
         header: '!border-b !px-4',
-        body: '!p-0 !border-t'
+        body: '!p-0 !border-t',
       }}
       title={<Typography.Title level={4} className="!m-0">Projects</Typography.Title>}
-      extra={[
-        <Button onClick={createProject} icon={<PlusIcon size={18} />}>
-          Create Project
-        </Button>
-      ]}
     >
       <Layout>
         <Layout.Sider width={260} trigger={null}
@@ -68,7 +59,7 @@ function Projects() {
                          style={{ height: 46 }}>
             <div className="flex items-center gap-4">
               <Typography.Title level={5}
-                                className="capitalize !m-0 whitespace-nowrap truncate">
+                                className="capitalize !m-0 whitespace-nowrap truncate !font-medium">
                 {project?.name}
               </Typography.Title>
               <ProjectKeyButton project={project} />
@@ -77,10 +68,10 @@ function Projects() {
           </Layout.Header>
           <Layout.Content
             style={{
-              padding: 24,
+              padding:'1.5rem 1rem',
               height: 'calc(100vh - 260px)'
             }}
-            className="bg-white overflow-y-auto"
+            className="bg-white overflow-y-auto "
           >
             {project && <ProjectTabContent />}
           </Layout.Content>
