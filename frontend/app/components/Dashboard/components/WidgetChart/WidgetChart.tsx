@@ -89,6 +89,7 @@ function WidgetChart(props: Props) {
   }, [data.chart]);
 
   const onChartClick = (event: any) => {
+    metricStore.setDrillDown(true);
     if (event) {
       if (isTableWidget || isPieChart) {
         // get the filter of clicked row
@@ -216,6 +217,7 @@ function WidgetChart(props: Props) {
 
   const onFocus = (seriesName: string)=> {
     metricStore.setFocusedSeriesName(seriesName);
+    metricStore.setDrillDown(true)
   }
 
   const renderChart = React.useCallback(() => {

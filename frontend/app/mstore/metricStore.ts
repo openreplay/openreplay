@@ -102,6 +102,7 @@ export default class MetricStore {
   cardCategory: string | null = CATEGORIES.product_analytics;
 
   focusedSeriesName: string | null = null;
+  drillDown = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -136,6 +137,10 @@ export default class MetricStore {
   // State Actions
   init(metric?: Widget | null) {
     this.instance.update(metric || new Widget());
+  }
+
+  setDrillDown(val: boolean) {
+    this.drillDown = val;
   }
 
   setFocusedSeriesName(name: string | null, resetOnSame = true) {

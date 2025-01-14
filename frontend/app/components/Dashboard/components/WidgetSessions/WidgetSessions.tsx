@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
-import {Button, Tag, Tooltip, Select, Dropdown} from 'antd';
+import {Button, Tag, Tooltip, Dropdown, notification} from 'antd';
 import {UndoOutlined, DownOutlined} from '@ant-design/icons'
-//import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
@@ -19,6 +18,7 @@ interface Props {
 }
 
 function WidgetSessions(props: Props) {
+  const listRef = React.useRef<HTMLDivElement>(null);
   const { className = '' } = props;
   const [activeSeries, setActiveSeries] = useState('all');
   const [data, setData] = useState<any>([]);
@@ -63,6 +63,17 @@ function WidgetSessions(props: Props) {
       .fetchSessions(metricId, filter)
       .then((res: any) => {
         setData(res);
+        if (metricStore.drillDown) {
+          setTimeout(() => {
+            notification.open({
+              placement: 'top',
+              role: 'status',
+              message: 'Sessions Refreshed!'
+            })
+            listRef.current?.scrollIntoView({ behavior: 'smooth' });
+            metricStore.setDrillDown(false);
+          }, 0)
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -181,7 +192,7 @@ function WidgetSessions(props: Props) {
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3" >
         <Loader loading={loading}>
           <NoContent
             title={
@@ -202,7 +213,7 @@ function WidgetSessions(props: Props) {
               </React.Fragment>
             ))}
 
-            <div className="flex items-center justify-between p-5">
+            <div className="flex items-center justify-between p-5" ref={listRef}>
               <div>
                 Showing{' '}
                 <span className="font-medium">
