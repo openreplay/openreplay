@@ -21,17 +21,24 @@ function maskDuration(input: string): string {
   return `${limitedDigits.slice(0, 2)}:${limitedDigits.slice(2)}`;
 }
 
-function HighlightPanel({ onClose }: { onClose: () => void }) {
-  const { uiPlayerStore } = useStore();
+function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: () => void }) {
+  const { uiPlayerStore, notesStore, sessionStore } = useStore();
+  const editNote = editNoteId ? notesStore.getNoteById(editNoteId) : undefined;
+  const [message, setMessage] = React.useState(editNote?.message ?? '');
+  const [isPublic, setIsPublic] = React.useState(editNote?.isPublic ?? false);
+  const [withTs, setWithTs] = React.useState(!!editNote?.timestamp);
   const { store, player } = React.useContext(PlayerContext);
   const currentTime = store.get().time;
+
   const startTsStr = shortDurationFromMs(
-    uiPlayerStore.highlightSelection.startTs
+    editNote?.startAt ?? uiPlayerStore.highlightSelection.startTs
   );
-  const endTsStr = shortDurationFromMs(uiPlayerStore.highlightSelection.endTs);
+  const endTsStr = shortDurationFromMs(
+    editNote?.endAt ?? uiPlayerStore.highlightSelection.endTs
+  );
   const [startTs, setStartTs] = React.useState(startTsStr);
   const [endTs, setEndTs] = React.useState(endTsStr);
-  const [tag, setTag] = React.useState('');
+  const [tag, setTag] = React.useState(editNote?.tag ?? '');
 
   const onStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartTs(maskDuration(e.target.value));
@@ -81,7 +88,23 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   };
 
   const onSave = () => {
-    toast.success('Highlight saved');
+    const note = {
+      message,
+      tag: tag,
+      isPublic,
+      timestamp: withTs ? currentTime : undefined,
+      startAt: startTs,
+      endAt: endTs,
+      thumbnail: '',
+    }
+    if (editNoteId) {
+      notesStore.updateNote(editNoteId, note);
+      toast.success('Highlight updated');
+    } else {
+      const sessionId = sessionStore.current.sessionId;
+      notesStore.addNote(sessionId, note);
+      toast.success('Highlight saved');
+    }
     onClose();
   }
 
@@ -115,9 +138,17 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       <div>
         <div className={'flex items-center gap-2'}>
           <div className={'font-semibold'}>Add Note</div>
-          <Checkbox>at {shortDurationFromMs(currentTime)}</Checkbox>
+          <Checkbox
+            onChange={(e) => setWithTs(e.target.checked)}
+            value={withTs}
+          >
+            at {shortDurationFromMs(currentTime)}
+          </Checkbox>
         </div>
-        <Input.TextArea placeholder={'Enter Comments'} />
+        <Input.TextArea
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={'Enter Comments'}
+        />
       </div>
       <div className={'flex items-center gap-1 flex-wrap'}>
         {TAGS.map((tag) => (
@@ -138,7 +169,12 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         ))}
       </div>
       <div>
-        <Checkbox>Visible to team members</Checkbox>
+        <Checkbox
+          onChange={(e) => setIsPublic(e.target.checked)}
+          value={isPublic}
+        >
+          Visible to team members
+        </Checkbox>
       </div>
       <div className={'flex items-center gap-2'}>
         <Button
