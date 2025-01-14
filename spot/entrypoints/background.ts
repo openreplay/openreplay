@@ -4,76 +4,22 @@ import {
   getFinalRequests,
   stopTrackingNetwork,
 } from "~/utils/networkTracking";
-import { mergeRequests } from "~/utils/networkTrackingUtils";
+import { mergeRequests, SpotNetworkRequest } from "~/utils/networkTrackingUtils";
+import { safeApiUrl } from '~/utils/smallUtils'
+import {
+  attachDebuggerToTab,
+  detachDebuggerFromTab,
+  getRequests as getDebuggerRequests,
+  resetMap
+} from "~/utils/networkDebuggerTracking";
+import { messages } from '~/utils/messages'
 
 let checkBusy = false;
 
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = "1.0.10";
-
-  const messages = {
-    popup: {
-      from: {
-        updateSettings: "ort:settings",
-        start: "popup:start",
-      },
-      to: {
-        micStatus: "popup:mic-status",
-        stopped: "popup:stopped",
-        started: "popup:started",
-        noLogin: "popup:no-login",
-      },
-      stop: "popup:stop",
-      checkStatus: "popup:check-status",
-      loginExist: "popup:login",
-      getAudioPerms: "popup:get-audio-perm",
-    },
-    content: {
-      from: {
-        bumpVitals: "ort:bump-vitals",
-        bumpClicks: "ort:bump-clicks",
-        bumpLocation: "ort:bump-location",
-        discard: "ort:discard",
-        checkLogin: "ort:get-login",
-        checkRecStatus: "ort:check-status",
-        checkMicStatus: "ort:getMicStatus",
-        setLoginToken: "ort:login-token",
-        invalidateToken: "ort:invalidate-token",
-        saveSpotData: "ort:save-spot",
-        saveSpotVidChunk: "ort:save-spot-part",
-        countEnd: "ort:countend",
-        contentReady: "ort:content-ready",
-        checkNewTab: "ort:check-new-tab",
-        started: "ort:started",
-        stopped: "ort:stopped",
-        toStop: "ort:stop",
-        restart: "ort:restart",
-        getErrorEvents: "ort:get-error-events",
-      },
-      to: {
-        setJWT: "content:set-jwt",
-        micStatus: "content:mic-status",
-        unmount: "content:unmount",
-        notification: "notif:display",
-        updateErrorEvents: "content:error-events",
-      },
-    },
-    injected: {
-      from: {
-        bumpLogs: "ort:bump-logs",
-        bumpNetwork: "ort:bump-network",
-      },
-    },
-    offscreen: {
-      to: {
-        checkRecStatus: "offscr:check-status",
-        startRecording: "offscr:start-recording",
-        stopRecording: "offscr:stop-recording",
-      },
-    },
-  };
+  const VER = "1.0.14";
 
   interface SpotObj {
     name: string;
@@ -116,6 +62,7 @@ export default defineBackground(() => {
     openInNewTab: true,
     consoleLogs: true,
     networkLogs: true,
+    useDebugger: false,
     ingestPoint: "https://app.openreplay.com",
   };
   const defaultSpotObj = {
@@ -145,12 +92,18 @@ export default defineBackground(() => {
   let injectNetworkRequests = [];
   let onStop: (() => void) | null = null;
   let settings = defaultSettings;
-  let recordingState = {
+  type recState = {
+    activeTabId: number | null;
+    area: string | null;
+    recording: string;
+    audioPerm: number;
+  }
+  let recordingState: recState = {
     activeTabId: null,
     area: null,
     recording: REC_STATE.stopped,
     audioPerm: 0,
-  } as Record<string, any>;
+  }
   let jwtToken = "";
   let refreshInt: any;
   let pingInt: any;
@@ -185,17 +138,6 @@ export default defineBackground(() => {
         clearInterval(pingInt);
       }
     }
-  }
-
-  function safeApiUrl(url: string) {
-    let str = url;
-    if (str.endsWith("/")) {
-      str = str.slice(0, -1);
-    }
-    if (str.includes("app.openreplay.com")) {
-      str = str.replace("app.openreplay.com", "api.openreplay.com");
-    }
-    return str;
   }
 
   let slackChannels: { name: string; webhookId: number }[] = [];
@@ -346,7 +288,6 @@ export default defineBackground(() => {
         recording: REC_STATE.stopped,
         audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
       };
-      startTrackingNetwork();
       if (request.area === "tab") {
         browser.tabs
           .query({
@@ -358,6 +299,12 @@ export default defineBackground(() => {
             if (active) {
               recordingState.activeTabId = active.id;
             }
+            if (settings.useDebugger) {
+              resetMap();
+              void attachDebuggerToTab(active.id);
+            } else {
+              startTrackingNetwork();
+            }
             void sendToActiveTab({
               type: "content:mount",
               area: request.area,
@@ -367,12 +314,22 @@ export default defineBackground(() => {
             });
           });
       } else {
+        if (!settings.useDebugger) {
+          startTrackingNetwork();
+        }
         void sendToActiveTab({
           type: "content:mount",
           area: request.area,
           mic: request.mic,
           audioId: request.selectedAudioDevice,
           audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
+        }, (tabId) => {
+          if (settings.useDebugger) {
+            resetMap();
+            void attachDebuggerToTab(tabId);
+          } else {
+            startTrackingNetwork();
+          }
         });
       }
     }
@@ -675,15 +632,21 @@ export default defineBackground(() => {
       if (recordingState.recording === REC_STATE.stopped) {
         return console.error("Calling stopped recording?");
       }
-      const networkRequests = getFinalRequests(
-        recordingState.activeTabId ?? false,
-      );
-
-      stopTrackingNetwork();
-      const mappedNetwork = mergeRequests(
-        networkRequests,
-        injectNetworkRequests,
-      );
+      let networkRequests;
+      let mappedNetwork;
+      if (settings.useDebugger && recordingState.area === "tab") {
+        void detachDebuggerFromTab(recordingState.activeTabId);
+        mappedNetwork = getDebuggerRequests();
+      } else {
+        networkRequests = getFinalRequests(
+          recordingState.activeTabId ?? false,
+        );
+        stopTrackingNetwork();
+        mappedNetwork = mergeRequests(
+          networkRequests,
+          injectNetworkRequests,
+        );
+      }
       injectNetworkRequests = [];
       finalSpotObj.network = mappedNetwork;
       browser.runtime
@@ -1012,7 +975,7 @@ export default defineBackground(() => {
     data?: any;
     activeTabId?: number;
     [key: string]: any;
-  }) {
+  }, onSent?: (tabId: number) => void) {
     let activeTabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
@@ -1038,6 +1001,7 @@ export default defineBackground(() => {
         message,
       );
       await browser.tabs.sendMessage(sendTo, message);
+      onSent?.(sendTo);
     }
   }
 
@@ -1135,6 +1099,7 @@ export default defineBackground(() => {
           stopTabActivationListening();
         }
         if (tabId !== previousTab) {
+          detachDebuggerFromTab(previousTab)
           browser.runtime
             .sendMessage({
               type: messages.offscreen.to.checkRecStatus,
@@ -1148,6 +1113,7 @@ export default defineBackground(() => {
                 state: getRecState(),
                 activeTabId: null,
               };
+              attachDebuggerToTab(tabId)
               void sendToActiveTab(msg);
             });
           if (previousTab) {
