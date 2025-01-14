@@ -33,26 +33,27 @@ function InstallDocs({ site }) {
   const _usageCodeSST = usageCodeSST.replace('PROJECT_KEY', site.projectKey);
   const [isSpa, setIsSpa] = useState(true);
   return (
-    <div>
-      <div className="mb-6">
-        <div className="font-semibold mb-2 flex items-center">
+    <div className='flex flex-col gap-4 mt-4'>
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="1" />
-          Install the npm package.
+          <span>Install the npm package.</span>
         </div>
-        <div className={cn(stl.snippetWrapper, 'ml-10')}>
+        <div className={cn(stl.snippetWrapper, 'ml-8')}>
           <div className="absolute mt-1 mr-2 right-0">
             <CopyButton content={installationCommand} />
           </div>
           <CodeBlock code={installationCommand} language={'bash'} />
         </div>
       </div>
-      <div className={'mb-6'}>
-        <div className="font-semibold mb-2 flex items-center">
+
+      <div>
+        <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="2" />
-          Continue with one of the following options.
+          <span>Continue with one of the following options.</span>
         </div>
 
-        <div className="flex items-center ml-10 cursor-pointer">
+        <div className="flex items-center ml-8 cursor-pointer">
           <div className="mr-2" onClick={() => setIsSpa(!isSpa)}>
             Server-Side-Rendered (SSR)?
           </div>
@@ -63,8 +64,9 @@ function InstallDocs({ site }) {
             // style={{ lineHeight: '23px' }}
           />
         </div>
+        
 
-        <div className="flex ml-10 mt-4">
+        <div className="flex ml-8">
           <div className="w-full">
             {isSpa && (
               <div>
@@ -102,14 +104,14 @@ function InstallDocs({ site }) {
       </div>
 
       <div>
-        <div className="font-semibold mb-2 flex items-center">
+        <div className="font-medium mb-2 flex gap-2 items-center">
           <CircleNumber text="3" />
-          Enable Assist (Optional)
+          <span>Enable Assist (Optional)</span>
         </div>
-        <div className="flex ml-10 mt-4">
+        <div className="flex ml-8 mt-4">
           <div className="w-full">
             <div>
-              <div className="mb-2">
+              <div className='-mb-2'>
                 Install the plugin via npm:
               </div>
               <div className={cn(stl.snippetWrapper)}>
@@ -120,7 +122,7 @@ function InstallDocs({ site }) {
               </div>
             </div>
             <div>
-              <div className={'mb-2'}>
+              <div className='-mb-2'>
                 Then enable it with your tracker:
               </div>
               <div className={cn(stl.snippetWrapper)}>

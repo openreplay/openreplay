@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react';
 import copy from 'copy-to-clipboard';
-import { Button } from 'UI';
+import { Button } from 'antd';
 
 function CopyButton({ content, variant="text-primary",  className = '', btnText = 'copy' }) {
   const [copied, setCopied] = useState(false)
@@ -16,9 +16,10 @@ function CopyButton({ content, variant="text-primary",  className = '', btnText 
   
   return (
     <Button
-      variant={variant}
-      className={ className + ' capitalize' }
+      type='text'
       onClick={ copyHandler }
+      size='small'
+      className='capitalize mt-2 font-medium text-neutral-400'
     >
       { copied ? 'copied' : btnText }
     </Button>
