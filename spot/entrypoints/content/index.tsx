@@ -6,7 +6,7 @@ import {
   stopClickRecording,
 } from "./eventTrackers";
 import ControlsBox from "~/entrypoints/content/ControlsBox";
-
+import { messages } from '~/utils/messages';
 import { convertBlobToBase64, getChromeFullVersion } from "./utils";
 import "./style.css";
 import "~/assets/main.css";
@@ -55,7 +55,7 @@ export default defineContentScript({
     const getMicStatus = async () => {
       return new Promise((res) => {
         browser.runtime.sendMessage({
-          type: "ort:getMicStatus",
+          type: messages.content.from.checkMicStatus,
         });
         let int = setInterval(() => {
           if (micResponse !== null) {
@@ -124,7 +124,7 @@ export default defineContentScript({
       recState = "stopped";
       stopClickRecording();
       stopLocationRecording();
-      const result = await browser.runtime.sendMessage({ type: "ort:stop" });
+      const result = await browser.runtime.sendMessage({ type: messages.content.from.toStop });
       if (result.status === "full") {
         chunksReady = true;
         data = result;
@@ -149,20 +149,20 @@ export default defineContentScript({
 
     const pause = () => {
       recState = "paused";
-      browser.runtime.sendMessage({ type: "ort:pause" });
+      browser.runtime.sendMessage({ type: messages.content.from.pause });
     };
 
     const resume = () => {
       recState = "recording";
-      browser.runtime.sendMessage({ type: "ort:resume" });
+      browser.runtime.sendMessage({ type: messages.content.from.resume });
     };
 
     const muteMic = () => {
-      browser.runtime.sendMessage({ type: "ort:mute-microphone" });
+      browser.runtime.sendMessage({ type: messages.content.from.muteMic });
     };
 
     const unmuteMic = () => {
-      browser.runtime.sendMessage({ type: "ort:unmute-microphone" });
+      browser.runtime.sendMessage({ type: messages.content.from.unmuteMic });
     };
 
     const onClose = async (
@@ -202,14 +202,14 @@ export default defineContentScript({
 
       try {
         await browser.runtime.sendMessage({
-          type: "ort:save-spot",
+          type: messages.content.from.saveSpotData,
           spot,
         });
         let index = 0;
         for (let part of videoData.result) {
           if (part) {
             await browser.runtime.sendMessage({
-              type: "ort:save-spot-part",
+              type: messages.content.from.saveSpotVidChunk,
               part,
               index,
               total: videoData.result.length,
@@ -238,24 +238,24 @@ export default defineContentScript({
       if (event.data.type === "orspot:token") {
         window.postMessage({ type: "orspot:logged" }, "*");
         void browser.runtime.sendMessage({
-          type: "ort:login-token",
+          type: messages.content.from.setLoginToken,
           token: event.data.token,
         });
       }
       if (event.data.type === "orspot:invalidate") {
         void browser.runtime.sendMessage({
-          type: "ort:invalidate-token",
+          type: messages.content.from.invalidateToken,
         });
       }
       if (event.data.type === "ort:bump-logs") {
         void chrome.runtime.sendMessage({
-          type: "ort:bump-logs",
+          type:  messages.injected.from.bumpLogs,
           logs: event.data.logs,
         });
       }
       if (event.data.type === "ort:bump-network") {
         void chrome.runtime.sendMessage({
-          type: "ort:bump-network",
+          type: messages.injected.from.bumpNetwork,
           event: event.data.event,
         });
       }
@@ -292,7 +292,7 @@ export default defineContentScript({
 
     function onRestart() {
       chrome.runtime.sendMessage({
-        type: "ort:restart",
+        type: messages.content.from.restart,
       });
       stopClickRecording();
       stopLocationRecording();
@@ -316,7 +316,7 @@ export default defineContentScript({
     let onEndObj = {};
     async function countEnd(): Promise<boolean> {
       return browser.runtime
-        .sendMessage({ ...onEndObj, type: "ort:countend" })
+        .sendMessage({ ...onEndObj, type: messages.content.from.countEnd })
         .then((r: boolean) => {
           onEndObj = {};
           return r;
@@ -324,11 +324,11 @@ export default defineContentScript({
     }
 
     setInterval(() => {
-      void browser.runtime.sendMessage({ type: "ort:content-ready" });
+      void browser.runtime.sendMessage({ type: messages.content.from.contentReady });
     }, 250);
     // @ts-ignore false positive
     browser.runtime.onMessage.addListener((message: any, resp) => {
-      if (message.type === "content:mount") {
+      if (message.type === messages.content.to.mount) {
         if (recState === "count") return;
         recState = "count";
         onEndObj = {
@@ -339,7 +339,7 @@ export default defineContentScript({
         audioPerm = message.audioPerm;
         ui.mount();
       }
-      if (message.type === "content:start") {
+      if (message.type === messages.content.to.start) {
         if (recState === "recording") return;
         clockStart = message.time;
         recState = "recording";
@@ -352,13 +352,13 @@ export default defineContentScript({
         if (message.withNetwork) {
           startNetworkTracking();
         }
-        browser.runtime.sendMessage({ type: "ort:started" });
+        browser.runtime.sendMessage({ type: messages.content.from.started });
         if (message.shouldMount) {
           ui.mount();
         }
         return "pong";
       }
-      if (message.type === "notif:display") {
+      if (message.type === messages.content.to.notification) {
         window.postMessage(
           {
             type: "ornotif:display",
@@ -367,7 +367,7 @@ export default defineContentScript({
           "*",
         );
       }
-      if (message.type === "content:unmount") {
+      if (message.type === messages.content.to.unmount) {
         stopClickRecording();
         stopLocationRecording();
         stopConsoleTracking();
@@ -376,22 +376,22 @@ export default defineContentScript({
         ui.remove();
         return "unmounted";
       }
-      if (message.type === "content:video-chunk") {
+      if (message.type === messages.content.to.videoChunk) {
         videoChunks[message.index] = message.data;
         if (message.total === message.index + 1) {
           chunksReady = true;
         }
       }
-      if (message.type === "content:spot-saved") {
+      if (message.type === messages.content.to.spotSaved) {
         window.postMessage({ type: "ornotif:copy", url: message.url });
       }
-      if (message.type === "content:stop") {
+      if (message.type === messages.content.to.stop) {
         window.postMessage({ type: "content:trigger-stop" }, "*");
       }
-      if (message.type === "content:mic-status") {
+      if (message.type === messages.content.to.micStatus) {
         micResponse = message.micStatus;
       }
-      if (message.type === "content:error-events") {
+      if (message.type === messages.content.to.updateErrorEvents) {
         errorsReady = true;
         errorData.push(...message.errorData);
       }

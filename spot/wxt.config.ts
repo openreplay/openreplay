@@ -28,6 +28,7 @@ export default defineConfig({
       "webNavigation",
       "webRequest",
       "<all_urls>",
+      "debugger",
     ],
   },
 });
