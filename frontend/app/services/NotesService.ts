@@ -17,8 +17,9 @@ export interface WriteNote {
   tag: iTag
   isPublic: boolean
   timestamp: number
-  noteId?: string
-  author?: string
+  startAt: number
+  endAt: number
+  thumbnail: string
 }
 
 export interface Note {
@@ -33,6 +34,9 @@ export interface Note {
   timestamp: number
   userId: number
   userName: string
+  startAt: number
+  endAt: number
+  thumbnail: string
 }
 
 export interface NotesFilter {
