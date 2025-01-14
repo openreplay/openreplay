@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Space, Button, Alert, Form, Select } from 'antd';
+import { Card, Space, Button, Alert, Form, Select, Tooltip } from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -13,18 +13,37 @@ import {
 } from 'App/constants/card';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 import { issueCategories } from 'App/constants/filterOptions';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, ChevronUp } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import FilterItem from 'Shared/Filters/FilterItem';
-import { FilterKey } from 'Types/filter/filterType';
+import { FilterKey, FilterCategory } from 'Types/filter/filterType';
 
-function WidgetFormNew() {
+const getExcludedKeys = (metricType: string) => {
+  switch (metricType) {
+    case USER_PATH:
+    case HEATMAP:
+      return eventKeys;
+    default:
+      return [];
+  }
+}
+
+const getExcludedCategories = (metricType: string) => {
+  switch (metricType) {
+    case USER_PATH:
+    case FUNNEL:
+      return [FilterCategory.DEVTOOLS]
+    default:
+      return [];
+  }
+}
+
+function WidgetFormNew({ layout }: { layout: string }) {
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
+  const excludeFilterKeys = getExcludedKeys(metric.metricType);
+  const excludeCategory = getExcludedCategories(metric.metricType);
 
-  const isHeatMap = metric.metricType === HEATMAP;
-  const isPathAnalysis = metric.metricType === USER_PATH;
-  const excludeFilterKeys = isHeatMap || isPathAnalysis ? eventKeys : [];
   const isPredefined = metric.metricType === ERRORS;
 
   return isPredefined ? (
@@ -32,16 +51,36 @@ function WidgetFormNew() {
   ) : (
     <Space direction="vertical" className="w-full">
       <AdditionalFilters />
-      <FilterSection metric={metric} excludeFilterKeys={excludeFilterKeys} />
+      <FilterSection
+        layout={layout}
+        metric={metric}
+        excludeCategory={excludeCategory}
+        excludeFilterKeys={excludeFilterKeys}
+      />
     </Space>
   );
 }
 
 export default observer(WidgetFormNew);
 
-const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
-  const defaultClosed = React.useRef(metric.exists());
-  const defaultSeries = React.useRef(metric.series.map((s) => s.name));
+const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCategory }: any) => {
+  const allOpen = layout.startsWith('flex-row');
+  const defaultClosed = React.useRef(!allOpen && metric.exists());
+  const [seriesCollapseState, setSeriesCollapseState] = React.useState<Record<number, boolean>>({});
+
+  React.useEffect(() => {
+    const defaultSeriesCollapseState: Record<number, boolean> = {};
+    metric.series.forEach((s: any) => {
+      defaultSeriesCollapseState[s.seriesId] = defaultSeriesCollapseState[
+        s.seriesId
+      ]
+        ? defaultSeriesCollapseState[s.seriesId]
+        : allOpen
+        ? false
+        : defaultClosed.current;
+    });
+    setSeriesCollapseState(defaultSeriesCollapseState);
+  }, [metric.series]);
   const isTable = metric.metricType === TABLE;
   const isHeatMap = metric.metricType === HEATMAP;
   const isFunnel = metric.metricType === FUNNEL;
@@ -57,6 +96,27 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
     isInsights ||
     isRetention ||
     isPathAnalysis;
+
+  const collapseAll = () => {
+    setSeriesCollapseState((seriesCollapseState) => {
+      const newState = { ...seriesCollapseState };
+      Object.keys(newState).forEach((key) => {
+        newState[key] = true;
+      });
+      return newState;
+    });
+  }
+  const expandAll = () => {
+    setSeriesCollapseState((seriesCollapseState) => {
+      const newState = { ...seriesCollapseState };
+      Object.keys(newState).forEach((key) => {
+        newState[key] = false;
+      });
+      return newState;
+    });
+  }
+  
+  const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
   return (
     <>
       {metric.series.length > 0 &&
@@ -70,6 +130,7 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
                 removeEvents={isPathAnalysis}
                 supportsEmpty={!isHeatMap && !isPathAnalysis}
                 excludeFilterKeys={excludeFilterKeys}
+                excludeCategory={excludeCategory}
                 observeChanges={() => metric.updateKey('hasChanged', true)}
                 hideHeader={
                   isTable ||
@@ -82,11 +143,13 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
                 series={series}
                 onRemoveSeries={() => metric.removeSeries(index)}
                 canDelete={metric.series.length > 1}
-                defaultClosed={
-                  metric.hasChanged
-                    ? defaultSeries.current.includes(series.name)
-                    : defaultClosed.current
-                }
+                collapseState={seriesCollapseState[series.seriesId]}
+                onToggleCollapse={() => {
+                  setSeriesCollapseState((seriesCollapseState) => ({
+                    ...seriesCollapseState,
+                    [series.seriesId]: !seriesCollapseState[series.seriesId],
+                  }));
+                }}
                 emptyMessage={
                   isTable
                     ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
@@ -96,21 +159,30 @@ const FilterSection = observer(({ metric, excludeFilterKeys }: any) => {
               />
             </div>
           ))}
-
-      {!isSingleSeries && canAddSeries && (
+      <div className={'mx-auto flex items-center gap-2 w-fit'}>
+        <Tooltip title={canAddSeries ? '' : 'Maximum of 3 series reached.'}>
+          <Button
+            onClick={() => {
+              if (!canAddSeries) return;
+              metric.addSeries();
+            }}
+            disabled={!canAddSeries || isSingleSeries}
+            size="small"
+            type="primary"
+            icon={<PlusIcon size={16} />}
+          >
+            Add Series
+          </Button>
+        </Tooltip>
         <Button
-          onClick={() => {
-            if (!canAddSeries) return;
-            metric.addSeries();
-          }}
-          size="small"
-          type="text"
-          className="w-full cursor-pointer flex items-center py-2 justify-center gap-2 font-medium hover:text-teal btn-add-series"
+          size={'small'}
+          type={'text'}
+          icon={<ChevronUp size={16} className={allCollapsed ? 'rotate-180' : ''} />}
+          onClick={allCollapsed ? expandAll : collapseAll}
         >
-          <PlusIcon size={16} />
-          Add Series
+          {allCollapsed ? 'Expand' : 'Collapse'} All
         </Button>
-      )}
+      </div>
     </>
   );
 });

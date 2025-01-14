@@ -135,7 +135,7 @@ export const filters = [
   {
     key: FilterKey.CUSTOM,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.DEVTOOLS,
+    category: FilterCategory.EVENTS,
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
@@ -951,6 +951,7 @@ export const clearMetaFilters = () => {
  * @param {*} operator
  * @param {*} operatorOptions
  * @param {*} icon
+ * @param {*} isEvent
  */
 export const addElementToFiltersMap = (
   category = FilterCategory.METADATA,
@@ -958,7 +959,8 @@ export const addElementToFiltersMap = (
   type = FilterType.MULTIPLE,
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata'
+  icon = 'filters/metadata',
+  isEvent = false
 ) => {
   filtersMap[key] = {
     key,
@@ -969,7 +971,8 @@ export const addElementToFiltersMap = (
     operator: operator,
     operatorOptions,
     icon,
-    isLive: true
+    isLive: true,
+    isEvent,
   };
 };
 
@@ -992,7 +995,8 @@ export const addElementToFlagConditionsMap = (
   type = FilterType.MULTIPLE,
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata'
+  icon = 'filters/metadata',
+  isEvent = false
 ) => {
   fflagsConditionsMap[key] = {
     key,
@@ -1002,7 +1006,8 @@ export const addElementToFlagConditionsMap = (
     operator: operator,
     operatorOptions,
     icon,
-    isLive: true
+    isLive: true,
+    isEvent,
   };
 };
 
@@ -1012,7 +1017,8 @@ export const addElementToConditionalFiltersMap = (
   type = FilterType.MULTIPLE,
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata'
+  icon = 'filters/metadata',
+  isEvent = false
 ) => {
   conditionalFiltersMap[key] = {
     key,
@@ -1022,7 +1028,8 @@ export const addElementToConditionalFiltersMap = (
     operator: operator,
     operatorOptions,
     icon,
-    isLive: true
+    isLive: true,
+    isEvent,
   };
 };
 
@@ -1032,7 +1039,8 @@ export const addElementToMobileConditionalFiltersMap = (
   type = FilterType.MULTIPLE,
   operator = 'is',
   operatorOptions = filterOptions.stringOperators,
-  icon = 'filters/metadata'
+  icon = 'filters/metadata',
+  isEvent = false
 ) => {
   mobileConditionalFiltersMap[key] = {
     key,
@@ -1042,7 +1050,8 @@ export const addElementToMobileConditionalFiltersMap = (
     operator: operator,
     operatorOptions,
     icon,
-    isLive: true
+    isLive: true,
+    isEvent,
   };
 };
 

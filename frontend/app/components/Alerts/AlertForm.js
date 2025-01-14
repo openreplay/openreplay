@@ -60,6 +60,13 @@ function AlertForm(props) {
 
     const triggerOptions = metricStore.instance.series.length > 0 ? allTriggerSeries.filter(s => {
         return metricStore.instance.series.findIndex(ms => ms.seriesId === s.value) !== -1
+    }).map(v => {
+        const labelArr = v.label.split('.')
+        labelArr.shift()
+        return {
+            ...v,
+            label: labelArr.join('.')
+        }
     }) : allTriggerSeries
     const instance = alertsStore.instance
     const deleting = loading

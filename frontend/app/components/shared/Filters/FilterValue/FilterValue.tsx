@@ -18,9 +18,8 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
-  const isEvent = filter.isEvent;
   const [durationValues, setDurationValues] = useState({
-    minDuration: filter.value[0],
+    minDuration: filter.value?.[0],
     maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
   });
   const showCloseButton = filter.value.length > 1;

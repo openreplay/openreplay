@@ -13,6 +13,7 @@ interface Props {
   onFilterClick: (filter: any) => void;
   children?: any;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: Array<string>;
   allowedFilterKeys?: Array<string>;
   disabled?: boolean;
   isConditional?: boolean;
@@ -26,6 +27,7 @@ function FilterSelection(props: Props) {
     onFilterClick,
     children,
     excludeFilterKeys = [],
+    excludeCategory = [],
     allowedFilterKeys = [],
     disabled = false,
     isConditional,
@@ -86,6 +88,7 @@ function FilterSelection(props: Props) {
               onFilterClick={onAddFilter}
               excludeFilterKeys={excludeFilterKeys}
               allowedFilterKeys={allowedFilterKeys}
+              excludeCategory={excludeCategory}
               isConditional={isConditional}
               isMobile={isMobile}
               mode={mode}

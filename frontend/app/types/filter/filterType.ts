@@ -1,10 +1,11 @@
 export enum FilterCategory {
   AUTOCAPTURE = 'Autocapture',
-  DEVTOOLS = 'Devtools',
+  DEVTOOLS = 'DevTools',
   USER = 'User',
   METADATA = 'Metadata',
   SESSION = 'Session',
   ISSUE = 'Issue',
+  EVENTS = 'Events',
 }
 
 export const setQueryParamKeyFromFilterkey = (filterKey: string) => {

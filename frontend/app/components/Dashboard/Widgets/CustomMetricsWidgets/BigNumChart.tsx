@@ -18,19 +18,21 @@ function BigNumChart(props: Props) {
     onSeriesFocus,
   } = props;
   return (
-    <div className={'flex flex-row flex-wrap gap-2'} style={{ height: 240 }}>
-      {values.map((val, i) => (
-        <BigNum
-          key={i}
-          color={colors[i]}
-          series={val.series}
-          value={val.value}
-          label={label}
-          compData={val.compData}
-          valueLabel={val.valueLabel}
-          onSeriesFocus={onSeriesFocus}
-        />
-      ))}
+    <div className={'pb-3'}>
+      <div className={'flex flex-row flex-wrap gap-2'} style={{ height: 240 }}>
+        {values.map((val, i) => (
+          <BigNum
+            key={i}
+            color={colors[i]}
+            series={val.series}
+            value={val.value}
+            label={label}
+            compData={val.compData}
+            valueLabel={val.valueLabel}
+            onSeriesFocus={onSeriesFocus}
+          />
+        ))}
+      </div>
     </div>
   )
 }

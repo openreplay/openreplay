@@ -1,17 +1,16 @@
 import { makeAutoObservable } from 'mobx';
-import { customFieldService } from 'App/services';
-
+import { customFieldService, filterService } from 'App/services';
 import {
   addElementToConditionalFiltersMap,
   addElementToMobileConditionalFiltersMap,
   addElementToFiltersMap,
   addElementToFlagConditionsMap,
   addElementToLiveFiltersMap,
-  clearMetaFilters
+  clearMetaFilters,
 } from 'Types/filter/newFilter';
-import { FilterCategory } from 'Types/filter/filterType';
+import { FilterCategory, FilterType } from "Types/filter/filterType";
 import CustomField from 'App/mstore/types/customField';
-import customFields from 'Components/Client/CustomFields';
+import filterOptions from 'App/constants';
 
 class CustomFieldStore {
   isLoading: boolean = false;
@@ -48,14 +47,40 @@ class CustomFieldStore {
       const response = await customFieldService.fetchList(siteId);
       clearMetaFilters();
       response.forEach((item: any) => {
-        addElementToFiltersMap(FilterCategory.METADATA, '_' + item.key);
-        addElementToLiveFiltersMap(FilterCategory.METADATA, '_' + item.key);
-        addElementToFlagConditionsMap(FilterCategory.METADATA, '_' + item.key);
-        addElementToConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key);
-        addElementToMobileConditionalFiltersMap(FilterCategory.METADATA, '_' + item.key);
+        const calls = [
+          addElementToFiltersMap,
+          addElementToLiveFiltersMap,
+          addElementToFlagConditionsMap,
+          addElementToConditionalFiltersMap,
+          addElementToMobileConditionalFiltersMap,
+        ];
+        calls.forEach((call) => {
+          call(FilterCategory.METADATA, '_' + item.key);
+        });
       });
       this.list = response.map((item_1: any) => new CustomField(item_1));
       this.fetchedMetadata = true;
+      filterService.fetchTopValues('custom', undefined).then((response: []) => {
+        response.forEach((item: any) => {
+          const calls = [
+            addElementToFiltersMap,
+            addElementToFlagConditionsMap,
+            addElementToConditionalFiltersMap,
+            addElementToMobileConditionalFiltersMap,
+          ];
+          calls.forEach((call) => {
+            call(
+              FilterCategory.EVENTS,
+              '_' + item.value,
+              FilterType.MULTIPLE,
+              'is',
+              filterOptions.stringOperators,
+              'filters/custom',
+              true
+            );
+          });
+        });
+      });
     } finally {
       this.isLoading = false;
     }
@@ -65,11 +90,14 @@ class CustomFieldStore {
     this.isLoading = true;
     try {
       const response = await customFieldService.get('/integration/sources');
-      this.sources = response.map(({ value, ...item }: any) => new CustomField({
-        label: value,
-        key: value,
-        ...item
-      }));
+      this.sources = response.map(
+        ({ value, ...item }: any) =>
+          new CustomField({
+            label: value,
+            key: value,
+            ...item,
+          })
+      );
     } finally {
       this.isLoading = false;
     }
@@ -79,16 +107,18 @@ class CustomFieldStore {
     this.isSaving = true;
     try {
       const wasCreating = !instance.exists();
-      const response = wasCreating ? await customFieldService.create(siteId, instance.toData()) :
-        await customFieldService.update(siteId, instance.toData());
+      const response = wasCreating
+        ? await customFieldService.create(siteId, instance.toData())
+        : await customFieldService.update(siteId, instance.toData());
       const updatedInstance = new CustomField(response);
 
       if (wasCreating) {
         this.list.push(updatedInstance);
       } else {
-        const index = this.list.findIndex(item => item.index === instance.index);
-        if (index >= 0)
-          this.list[index] = updatedInstance;
+        const index = this.list.findIndex(
+          (item) => item.index === instance.index
+        );
+        if (index >= 0) this.list[index] = updatedInstance;
       }
     } finally {
       this.isSaving = false;
@@ -99,7 +129,7 @@ class CustomFieldStore {
     this.isSaving = true;
     try {
       await customFieldService.delete(siteId, index);
-      this.list = this.list.filter(item => item.index !== index);
+      this.list = this.list.filter((item) => item.index !== index);
     } finally {
       this.isSaving = false;
     }
@@ -114,6 +144,5 @@ class CustomFieldStore {
     }
   }
 }
-
 
 export default CustomFieldStore;

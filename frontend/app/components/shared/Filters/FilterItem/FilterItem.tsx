@@ -18,6 +18,7 @@ interface Props {
   saveRequestPayloads?: boolean;
   disableDelete?: boolean;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: Array<string>;
   allowedFilterKeys?: Array<string>;
   readonly?: boolean;
   hideIndex?: boolean;
@@ -35,6 +36,7 @@ function FilterItem(props: Props) {
     hideDelete = false,
     allowedFilterKeys = [],
     excludeFilterKeys = [],
+    excludeCategory = [],
     isConditional,
     hideIndex = false,
   } = props;
@@ -84,6 +86,7 @@ function FilterItem(props: Props) {
           onFilterClick={replaceFilter}
           allowedFilterKeys={allowedFilterKeys}
           excludeFilterKeys={excludeFilterKeys}
+          excludeCategory={excludeCategory}
           disabled={disableDelete || props.readonly}
         />
 

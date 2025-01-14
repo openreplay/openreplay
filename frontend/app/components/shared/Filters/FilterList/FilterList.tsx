@@ -8,7 +8,7 @@ import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
 import FilterSelection from '../FilterSelection/FilterSelection';
 
 interface Props {
-  filter?: any; // event/filter
+  filter?: any;
   onUpdateFilter: (filterIndex: any, filter: any) => void;
   onFilterMove?: (filters: any) => void;
   onRemoveFilter: (filterIndex: any) => void;
@@ -19,6 +19,7 @@ interface Props {
   supportsEmpty?: boolean;
   readonly?: boolean;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: string[];
   isConditional?: boolean;
   actions?: React.ReactNode[];
   onAddFilter: (filter: any) => void;
@@ -37,6 +38,7 @@ export const FilterList = observer((props: Props) => {
     onAddFilter,
     readonly,
     borderless,
+    excludeCategory,
   } = props;
 
   const filters = filter.filters;
@@ -65,6 +67,8 @@ export const FilterList = observer((props: Props) => {
           filter={undefined}
           onFilterClick={onAddFilter}
           disabled={readonly}
+          excludeFilterKeys={excludeFilterKeys}
+          excludeCategory={excludeCategory}
         >
           <Button
             icon={<Filter size={16} strokeWidth={1} />}
@@ -116,6 +120,7 @@ export const EventsList = observer((props: Props) => {
     actions = [],
     onAddFilter,
     cannotAdd,
+    excludeCategory,
   } = props;
 
   const filters = filter.filters;
@@ -210,6 +215,7 @@ export const EventsList = observer((props: Props) => {
             mode={'events'}
             filter={undefined}
             onFilterClick={onAddFilter}
+            excludeCategory={excludeCategory}
           >
             <Button
               icon={<Plus size={16} strokeWidth={1} />}
@@ -298,6 +304,7 @@ export const EventsList = observer((props: Props) => {
                 excludeFilterKeys={excludeFilterKeys}
                 readonly={props.readonly}
                 isConditional={isConditional}
+                excludeCategory={excludeCategory}
               />
             </div>
           ) : null

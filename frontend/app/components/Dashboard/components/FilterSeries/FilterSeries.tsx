@@ -118,11 +118,13 @@ interface Props {
   emptyMessage?: any;
   observeChanges?: () => void;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: string[]
   canExclude?: boolean;
   expandable?: boolean;
   isHeatmap?: boolean;
   removeEvents?: boolean;
-  defaultClosed?: boolean;
+  collapseState: boolean;
+  onToggleCollapse: () => void;
 }
 
 function FilterSeries(props: Props) {
@@ -137,23 +139,13 @@ function FilterSeries(props: Props) {
     expandable = false,
     isHeatmap,
     removeEvents,
-    defaultClosed,
+    collapseState,
+    onToggleCollapse,
+    excludeCategory
   } = props;
-  const [expanded, setExpanded] = useState(!defaultClosed || hideHeader);
+  const expanded = !collapseState
+  const setExpanded = onToggleCollapse
   const { series, seriesIndex } = props;
-  const [prevLength, setPrevLength] = useState(0);
-
-  useEffect(() => {
-    if (
-      series.filter.filters.length === 1 &&
-      prevLength === 0 &&
-      seriesIndex === 0 &&
-      !defaultClosed
-    ) {
-      setExpanded(true);
-    }
-    setPrevLength(series.filter.filters.length);
-  }, [series.filter.filters.length, defaultClosed]);
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter);
@@ -234,6 +226,7 @@ function FilterSeries(props: Props) {
               mergeUp={!hideHeader}
               mergeDown
               cannotAdd={isHeatmap}
+              excludeCategory={excludeCategory}
             />
           }
           <FilterList
@@ -246,6 +239,7 @@ function FilterSeries(props: Props) {
             excludeFilterKeys={excludeFilterKeys}
             onAddFilter={onAddFilter}
             mergeUp={!removeEvents}
+            excludeCategory={excludeCategory}
           />
         </>
       ) : null}

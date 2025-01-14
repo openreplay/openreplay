@@ -36,7 +36,7 @@ import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Input } from 'antd';
 
-import { FilterKey } from 'Types/filter/filterType';
+import { FilterCategory, FilterKey } from "Types/filter/filterType";
 import stl from './FilterModal.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -80,13 +80,15 @@ export const IconMap = {
 function filterJson(
   jsonObj: Record<string, any>,
   excludeKeys: string[] = [],
+  excludeCategory: string[] = [],
   allowedFilterKeys: string[] = [],
   mode: 'filters' | 'events'
 ): Record<string, any> {
   return Object.fromEntries(
     Object.entries(jsonObj)
       .map(([key, value]) => {
-        const arr = value.filter((i: { key: string, isEvent: boolean }) => {
+        const arr = value.filter((i: { key: string, isEvent: boolean, category: string }) => {
+          if (excludeCategory.includes(i.category)) return false;
           if (excludeKeys.includes(i.key)) return false;
           if (mode === 'events' && !i.isEvent) return false;
           if (mode === 'filters' && i.isEvent) return false;
@@ -139,6 +141,7 @@ interface Props {
   isMainSearch?: boolean;
   searchQuery?: string;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: Array<string>;
   allowedFilterKeys?: Array<string>;
   isConditional?: boolean;
   isMobile?: boolean;
@@ -162,6 +165,7 @@ function FilterModal(props: Props) {
     onFilterClick = () => null,
     isMainSearch = false,
     excludeFilterKeys = [],
+    excludeCategory = [],
     allowedFilterKeys = [],
     isConditional,
     mode,
@@ -185,10 +189,18 @@ function FilterModal(props: Props) {
     ? searchStoreLive.loadingFilterSearch
     : searchStore.loadingFilterSearch;
 
+  const parseAndAdd = (filter) => {
+    if (filter.category === FilterCategory.EVENTS && filter.key.startsWith('_')) {
+      filter.value = [filter.key.substring(1)];
+      filter.key = FilterKey.CUSTOM;
+      filter.label = 'Custom Events'
+    }
+    onFilterClick(filter)
+  }
   const onFilterSearchClick = (filter: any) => {
     const _filter = { ...filtersMap[filter.type] };
     _filter.value = [filter.value];
-    onFilterClick(_filter);
+    parseAndAdd(_filter);
   };
 
   const filterJsonObj = isConditional
@@ -198,7 +210,7 @@ function FilterModal(props: Props) {
     : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys, mode)
+    filterJson(filterJsonObj, excludeFilterKeys, excludeCategory, allowedFilterKeys, mode)
   );
 
   const isResultEmpty =
@@ -247,7 +259,7 @@ function FilterModal(props: Props) {
                   className={cn(
                     'flex items-center p-2 cursor-pointer gap-1 rounded-lg hover:bg-active-blue'
                   )}
-                  onClick={() => onFilterClick({ ...filter })}
+                  onClick={() => parseAndAdd({ ...filter })}
                 >
                   {filter.category ? <div style={{ width: 100 }} className={'text-neutral-500/90		 w-full flex justify-between items-center'}>
                     <span>{filter.category}</span>

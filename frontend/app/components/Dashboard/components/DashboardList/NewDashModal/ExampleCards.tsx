@@ -9,24 +9,13 @@ import {
   HEATMAP,
   ERRORS,
   FUNNEL,
-  INSIGHTS,
   TABLE,
   TIMESERIES,
   USER_PATH,
-  PERFORMANCE, RETENTION
 } from "App/constants/card";
 import { FilterKey } from 'Types/filter/filterType';
 import { BarChart, TrendingUp, SearchSlash } from 'lucide-react';
-import ByIssues from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByIssues';
-import InsightsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/InsightsExample';
 import ByUser from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByUser';
-import BarChartCard from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/BarChart';
-import SpeedIndexByLocationExample
-  from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SpeedIndexByLocationExample';
-import CallsWithErrorsExample
-  from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/CallsWithErrorsExample';
-import SlowestDomains
-  from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/SlowestDomains';
 import HeatmapsExample from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/HeatmapsExample';
 import ByReferrer from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByRferrer';
 import ByFetch from 'Components/Dashboard/components/DashboardList/NewDashModal/Examples/SessionsBy/ByFecth';
@@ -60,7 +49,7 @@ export interface CardType {
 
 export const CARD_LIST: CardType[] = [
   {
-    title: 'Funnel',
+    title: 'Untitled Funnel',
     key: FUNNEL,
     cardType: FUNNEL,
     category: CARD_CATEGORIES[0].key,
@@ -92,7 +81,7 @@ export const CARD_LIST: CardType[] = [
     }
   },
   {
-    title: 'Heatmaps',
+    title: 'Untitled Heatmaps',
     key: HEATMAP,
     cardType: HEATMAP,
     metricOf: 'heatMapUrl',
@@ -100,14 +89,14 @@ export const CARD_LIST: CardType[] = [
     example: HeatmapsExample
   },
   {
-    title: 'Journey',
+    title: 'Untitled Journey',
     key: USER_PATH,
     cardType: USER_PATH,
     category: CARD_CATEGORIES[0].key,
     example: ExamplePath
   },
   {
-    title: 'Trend',
+    title: 'Untitled Trend',
     key: TIMESERIES,
     cardType: TIMESERIES,
     metricOf: 'sessionCount',
@@ -122,7 +111,7 @@ export const CARD_LIST: CardType[] = [
     example: ExampleTrend
   },
   {
-    title: 'Users Trend',
+    title: 'Untitled Users Trend',
     key: TIMESERIES + '_userCount',
     cardType: TIMESERIES,
     metricOf: 'userCount',
@@ -140,7 +129,7 @@ export const CARD_LIST: CardType[] = [
 
   // Web analytics
   {
-    title: 'Top Users',
+    title: 'Untitled Top Users',
     key: FilterKey.USERID,
     cardType: TABLE,
     metricOf: FilterKey.USERID,
@@ -149,7 +138,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Top Browsers',
+    title: 'Untitled Top Browsers',
     key: FilterKey.USER_BROWSER,
     cardType: TABLE,
     metricOf: FilterKey.USER_BROWSER,
@@ -165,7 +154,7 @@ export const CARD_LIST: CardType[] = [
   //     example: BySystem,
   // },
   {
-    title: 'Top Countries',
+    title: 'Untitled Top Countries',
     key: FilterKey.USER_COUNTRY,
     cardType: TABLE,
     metricOf: FilterKey.USER_COUNTRY,
@@ -174,7 +163,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Top Devices',
+    title: 'Untitled Top Devices',
     key: FilterKey.USER_DEVICE,
     cardType: TABLE,
     metricOf: FilterKey.USER_DEVICE,
@@ -182,7 +171,7 @@ export const CARD_LIST: CardType[] = [
     example: BySystem
   },
   {
-    title: 'Top Pages',
+    title: 'Untitled Top Pages',
     key: FilterKey.LOCATION,
     cardType: TABLE,
     metricOf: FilterKey.LOCATION,
@@ -191,7 +180,7 @@ export const CARD_LIST: CardType[] = [
   },
 
   {
-    title: 'Top Referrer',
+    title: 'Untitled Top Referrer',
     key: FilterKey.REFERRER,
     cardType: TABLE,
     metricOf: FilterKey.REFERRER,
@@ -201,7 +190,7 @@ export const CARD_LIST: CardType[] = [
 
   // Monitors
   {
-    title: 'Table of Errors',
+    title: 'Untitled Table of Errors',
     key: FilterKey.ERRORS,
     cardType: TABLE,
     metricOf: FilterKey.ERRORS,
@@ -216,7 +205,7 @@ export const CARD_LIST: CardType[] = [
     example: TableOfErrors
   },
   {
-    title: 'Top Network Requests',
+    title: 'Untitled Top Network Requests',
     key: FilterKey.FETCH,
     cardType: TABLE,
     metricOf: FilterKey.FETCH,
@@ -224,7 +213,7 @@ export const CARD_LIST: CardType[] = [
     example: ByFetch
   },
   {
-    title: 'Sessions with 4xx/5xx Requests',
+    title: 'Untitled Sessions with 4xx/5xx Requests',
     key: TIMESERIES + '_4xx_requests',
     cardType: TIMESERIES,
     metricOf: 'sessionCount',
@@ -258,7 +247,7 @@ export const CARD_LIST: CardType[] = [
     example: ExampleTrend
   },
   {
-    title: 'Sessions with Slow Network Requests',
+    title: 'Untitled Sessions with Slow Network Requests',
     key: TIMESERIES + '_slow_network_requests',
     cardType: TIMESERIES,
     metricOf: 'sessionCount',
