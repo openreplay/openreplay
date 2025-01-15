@@ -253,6 +253,7 @@ function WidgetChart(props: Props) {
             values={values}
             inGrid={!props.isPreview}
             colors={colors}
+            hideLegend
             onClick={onChartClick}
             label={
               'Conversion'

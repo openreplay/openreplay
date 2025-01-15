@@ -11,19 +11,21 @@ const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], v
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }];
 
 const filterOrder = {
-  [FilterCategory.AUTOCAPTURE]: 0,
-  [FilterCategory.DEVTOOLS]: 1,
-  [FilterCategory.USER]: 2,
-  [FilterCategory.SESSION]: 3,
-  [FilterCategory.ISSUE]: 4,
-  [FilterCategory.METADATA]: 5
+  [FilterCategory.EVENTS]: 0,
+  [FilterCategory.AUTOCAPTURE]: 1,
+  [FilterCategory.DEVTOOLS]: 2,
+  [FilterCategory.USER]: 3,
+  [FilterCategory.SESSION]: 4,
+  [FilterCategory.ISSUE]: 5,
+  [FilterCategory.METADATA]: 6
 };
 
 export const mobileFilters = [
   {
     key: FilterKey.CLICK_MOBILE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Tap',
     operator: 'on',
     operatorOptions: filterOptions.targetOperators,
@@ -33,7 +35,8 @@ export const mobileFilters = [
   {
     key: FilterKey.INPUT_MOBILE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Text Input',
     placeholder: 'Enter input label name',
     operator: 'is',
@@ -44,7 +47,8 @@ export const mobileFilters = [
   {
     key: FilterKey.VIEW_MOBILE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Screen',
     placeholder: 'Enter screen name',
     operator: 'is',
@@ -55,7 +59,7 @@ export const mobileFilters = [
   {
     key: FilterKey.CUSTOM_MOBILE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
     label: 'Custom Events',
     placeholder: 'Enter event key',
     operator: 'is',
@@ -77,7 +81,8 @@ export const mobileFilters = [
   {
     key: FilterKey.SWIPE_MOBILE,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Swipe',
     operator: 'on',
     operatorOptions: filterOptions.targetOperators,
@@ -103,7 +108,8 @@ export const filters = [
   {
     key: FilterKey.CLICK,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Click',
     operator: 'on',
     operatorOptions: filterOptions.targetOperators.concat(clickSelectorOperators),
@@ -113,7 +119,8 @@ export const filters = [
   {
     key: FilterKey.INPUT,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Text Input',
     placeholder: 'Enter input label name',
     operator: 'is',
@@ -124,13 +131,26 @@ export const filters = [
   {
     key: FilterKey.LOCATION,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Visited URL',
     placeholder: 'Enter path',
     operator: 'is',
     operatorOptions: filterOptions.stringOperators,
     icon: 'filters/location',
     isEvent: true
+  },
+  {
+    key: FilterKey.TAGGED_ELEMENT,
+    type: FilterType.MULTIPLE_DROPDOWN,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
+    label: 'Tagged Element',
+    operator: 'is',
+    isEvent: true,
+    icon: 'filters/tag-element',
+    operatorOptions: filterOptions.tagElementOperators,
+    options: []
   },
   {
     key: FilterKey.CUSTOM,
@@ -305,17 +325,6 @@ export const filters = [
     operator: 'is',
     operatorOptions: filterOptions.getOperatorsByKeys(['is']),
     icon: 'filters/duration'
-  },
-  {
-    key: FilterKey.TAGGED_ELEMENT,
-    type: FilterType.MULTIPLE_DROPDOWN,
-    category: FilterCategory.AUTOCAPTURE,
-    label: 'Tagged Element',
-    operator: 'is',
-    isEvent: true,
-    icon: 'filters/tag-element',
-    operatorOptions: filterOptions.tagElementOperators,
-    options: []
   },
   {
     key: FilterKey.UTM_SOURCE,
@@ -587,7 +596,8 @@ export const conditionalFilters = [
   {
     key: FilterKey.CLICK,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Click',
     operator: 'on',
     operatorOptions: filterOptions.targetConditional,
@@ -597,7 +607,8 @@ export const conditionalFilters = [
   {
     key: FilterKey.LOCATION,
     type: FilterType.MULTIPLE,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Visited URL',
     placeholder: 'Enter path',
     operator: 'is',
@@ -817,7 +828,8 @@ export const mobileConditionalFilters = [
   {
     key: 'viewComponent',
     type: FilterType.STRING,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'View on screen',
     placeholder: 'View Name',
     operator: 'is',
@@ -857,7 +869,8 @@ export const mobileConditionalFilters = [
   {
     key: 'clickEvent',
     type: FilterType.STRING,
-    category: FilterCategory.AUTOCAPTURE,
+    category: FilterCategory.EVENTS,
+    subCategory: FilterCategory.AUTOCAPTURE,
     label: 'Tap on view',
     placeholder: 'View Name',
     operator: 'is',
@@ -887,7 +900,8 @@ export const nonConditionalFlagFilters = filters.filter(i => {
 export const clickmapFilter = {
   key: FilterKey.LOCATION,
   type: FilterType.MULTIPLE,
-  category: FilterCategory.AUTOCAPTURE,
+  category: FilterCategory.EVENTS,
+  subCategory: FilterCategory.AUTOCAPTURE,
   label: 'Visited URL', placeholder: 'Enter URL or path',
   operator: filterOptions.pageUrlOperators[0].value,
   operatorOptions: filterOptions.pageUrlOperators,
@@ -910,7 +924,7 @@ const mapLiveFilters = (list) => {
   const obj = {};
   list.forEach(filter => {
     if (
-      filter.category !== FilterCategory.AUTOCAPTURE &&
+      filter.category !== FilterCategory.EVENTS &&
       filter.category !== FilterCategory.DEVTOOLS &&
       filter.key !== FilterKey.DURATION &&
       filter.key !== FilterKey.REFERRER &&

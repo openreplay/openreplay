@@ -60,27 +60,28 @@ class CustomFieldStore {
       });
       this.list = response.map((item_1: any) => new CustomField(item_1));
       this.fetchedMetadata = true;
-      filterService.fetchTopValues('custom', undefined).then((response: []) => {
-        response.forEach((item: any) => {
-          const calls = [
-            addElementToFiltersMap,
-            addElementToFlagConditionsMap,
-            addElementToConditionalFiltersMap,
-            addElementToMobileConditionalFiltersMap,
-          ];
-          calls.forEach((call) => {
-            call(
-              FilterCategory.EVENTS,
-              '_' + item.value,
-              FilterType.MULTIPLE,
-              'is',
-              filterOptions.stringOperators,
-              'filters/custom',
-              true
-            );
-          });
-        });
-      });
+      // custom_event values fetcher; turned off for now; useful for later
+      // filterService.fetchTopValues('custom', undefined).then((response: []) => {
+      //   response.forEach((item: any) => {
+      //     const calls = [
+      //       addElementToFiltersMap,
+      //       addElementToFlagConditionsMap,
+      //       addElementToConditionalFiltersMap,
+      //       addElementToMobileConditionalFiltersMap,
+      //     ];
+      //     calls.forEach((call) => {
+      //       call(
+      //         FilterCategory.EVENTS,
+      //         '_' + item.value,
+      //         FilterType.MULTIPLE,
+      //         'is',
+      //         filterOptions.stringOperators,
+      //         'filters/custom',
+      //         true
+      //       );
+      //     });
+      //   });
+      // });
     } finally {
       this.isLoading = false;
     }

@@ -159,30 +159,37 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
               />
             </div>
           ))}
-      <div className={'mx-auto flex items-center gap-2 w-fit'}>
-        <Tooltip title={canAddSeries ? '' : 'Maximum of 3 series reached.'}>
+      {isSingleSeries ? null :
+        <div className={'mx-auto flex items-center gap-2 w-fit'}>
+          <Tooltip title={canAddSeries ? '' : 'Maximum of 3 series reached.'}>
+            <Button
+              onClick={() => {
+                if (!canAddSeries) return;
+                metric.addSeries();
+              }}
+              disabled={!canAddSeries}
+              size="small"
+              type="primary"
+              icon={<PlusIcon size={16} />}
+            >
+              Add Series
+            </Button>
+          </Tooltip>
           <Button
-            onClick={() => {
-              if (!canAddSeries) return;
-              metric.addSeries();
-            }}
-            disabled={!canAddSeries || isSingleSeries}
-            size="small"
-            type="primary"
-            icon={<PlusIcon size={16} />}
+            size={'small'}
+            type={'text'}
+            icon={
+              <ChevronUp
+                size={16}
+                className={allCollapsed ? 'rotate-180' : ''}
+              />
+            }
+            onClick={allCollapsed ? expandAll : collapseAll}
           >
-            Add Series
+            {allCollapsed ? 'Expand' : 'Collapse'} All
           </Button>
-        </Tooltip>
-        <Button
-          size={'small'}
-          type={'text'}
-          icon={<ChevronUp size={16} className={allCollapsed ? 'rotate-180' : ''} />}
-          onClick={allCollapsed ? expandAll : collapseAll}
-        >
-          {allCollapsed ? 'Expand' : 'Collapse'} All
-        </Button>
-      </div>
+        </div>
+      }
     </>
   );
 });

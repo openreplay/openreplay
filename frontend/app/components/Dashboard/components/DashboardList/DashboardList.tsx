@@ -1,4 +1,3 @@
-
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useHistory } from 'react-router';
@@ -105,7 +104,7 @@ function DashboardList() {
               }
               checkedChildren={'Team'}
               unCheckedChildren={'Private'}
-              className='toggle-team-private'
+              className="toggle-team-private"
             />
           </Tooltip>
         </div>
@@ -128,41 +127,48 @@ function DashboardList() {
       dataIndex: 'dashboardId',
       width: '5%',
       render: (id) => (
-        <Dropdown
-          arrow={false}
-          trigger={['click']}
-          className={'ignore-prop-dp'}
-          menu={{
-            items: [
-              {
-                icon: <Icon name={'pencil'} />,
-                key: 'rename',
-                label: 'Rename',
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            arrow={false}
+            trigger={['click']}
+            className={'ignore-prop-dp'}
+            menu={{
+              items: [
+                {
+                  icon: <Icon name={'pencil'} />,
+                  key: 'rename',
+                  label: 'Rename',
+                },
+                {
+                  icon: <Icon name={'users'} />,
+                  key: 'access',
+                  label: 'Visibility & Access',
+                },
+                {
+                  icon: <Icon name={'trash'} />,
+                  key: 'delete',
+                  label: 'Delete',
+                },
+              ],
+              onClick: async ({ key }) => {
+                if (key === 'rename') {
+                  onEdit(id, true);
+                } else if (key === 'access') {
+                  onEdit(id, false);
+                } else if (key === 'delete') {
+                  await onDelete(id);
+                }
               },
-              {
-                icon: <Icon name={'users'} />,
-                key: 'access',
-                label: 'Visibility & Access',
-              },
-              {
-                icon: <Icon name={'trash'} />,
-                key: 'delete',
-                label: 'Delete',
-              },
-            ],
-            onClick: async ({ key }) => {
-              if (key === 'rename') {
-                onEdit(id, true);
-              } else if (key === 'access') {
-                onEdit(id, false);
-              } else if (key === 'delete') {
-                await onDelete(id);
-              }
-            },
-          }}
-        >
-          <Button id={'ignore-prop'} icon={<MoreOutlined />} type='text' className='btn-dashboards-list-item-more-options' />
-        </Dropdown>
+            }}
+          >
+            <Button
+              id={'ignore-prop'}
+              icon={<MoreOutlined />}
+              type="text"
+              className="btn-dashboards-list-item-more-options"
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
@@ -230,10 +236,12 @@ function DashboardList() {
           onClick: (e) => {
             const possibleDropdown =
               document.querySelector('.ant-dropdown-menu');
+            const btn = document.querySelector('#ignore-prop');
             if (
               e.target.classList.contains('lucide') ||
               e.target.id === 'ignore-prop' ||
-              possibleDropdown?.contains(e.target)
+              possibleDropdown?.contains(e.target) ||
+              btn?.contains(e.target)
             ) {
               return;
             }

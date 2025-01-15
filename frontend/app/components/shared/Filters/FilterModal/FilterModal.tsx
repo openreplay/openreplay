@@ -112,7 +112,7 @@ export const getMatchingEntries = (
 
   if (lowerCaseQuery.length === 0)
     return {
-      matchingCategories: ['ALL', ...Object.keys(filters)],
+      matchingCategories: ['All', ...Object.keys(filters)],
       matchingFilters: filters,
     };
 
@@ -130,7 +130,7 @@ export const getMatchingEntries = (
     }
   });
 
-  return { matchingCategories: ['ALL', ...matchingCategories], matchingFilters };
+  return { matchingCategories: ['All', ...matchingCategories], matchingFilters };
 };
 
 interface Props {
@@ -171,7 +171,7 @@ function FilterModal(props: Props) {
     mode,
   } = props;
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [category, setCategory] = React.useState('ALL');
+  const [category, setCategory] = React.useState('All');
   const { searchStore, searchStoreLive, projectsStore } = useStore();
   const isMobile = projectsStore.active?.platform === 'ios'; // TODO - should be using mobile once the app is changed
   const filters = isLive
@@ -222,12 +222,14 @@ function FilterModal(props: Props) {
     Object.keys(matchingFilters).length === 0;
 
   const displayedFilters =
-    category === 'ALL'
+    category === 'All'
       ? Object.entries(matchingFilters).flatMap(([category, filters]) =>
           filters.map((f: any) => ({ ...f, category }))
         )
       : matchingFilters[category];
 
+
+  console.log(displayedFilters)
   return (
     <div
       className={stl.wrapper}
@@ -247,7 +249,7 @@ function FilterModal(props: Props) {
               onClick={() => setCategory(key)}
               className={cn('rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium', key === category ? 'bg-active-blue text-teal' : '')}
             >
-              {key.toLowerCase()}
+              {key}
             </div>
           ))}
         </div>
@@ -265,7 +267,7 @@ function FilterModal(props: Props) {
                   onClick={() => parseAndAdd({ ...filter })}
                 >
                   {filter.category ? <div style={{ width: 100 }} className={'text-neutral-500/90		 w-full flex justify-between items-center'}>
-                    <span>{filter.category}</span>
+                    <span>{filter.subCategory ? filter.subCategory : filter.category}</span>
                     <ChevronRight size={14} />
                   </div> : null}
                   <div className={'flex items-center gap-2'}>

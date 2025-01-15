@@ -16,6 +16,7 @@ function BigNumChart(props: Props) {
     label = 'Number of Sessions',
     values,
     onSeriesFocus,
+    hideLegend,
   } = props;
   return (
     <div className={'pb-3'}>
@@ -23,6 +24,7 @@ function BigNumChart(props: Props) {
         {values.map((val, i) => (
           <BigNum
             key={i}
+            hideLegend={hideLegend}
             color={colors[i]}
             series={val.series}
             value={val.value}
@@ -37,7 +39,7 @@ function BigNumChart(props: Props) {
   )
 }
 
-function BigNum({ color, series, value, label, compData, valueLabel, onSeriesFocus }: {
+function BigNum({ color, series, value, label, compData, valueLabel, onSeriesFocus, hideLegend }: {
   color: string,
   series: string,
   value: number,
@@ -45,6 +47,7 @@ function BigNum({ color, series, value, label, compData, valueLabel, onSeriesFoc
   compData?: number,
   valueLabel?: string,
   onSeriesFocus?: (name: string) => void
+  hideLegend?: boolean
 }) {
   const formattedNumber = (num: number) => {
     return Intl.NumberFormat().format(num);
@@ -66,21 +69,28 @@ function BigNum({ color, series, value, label, compData, valueLabel, onSeriesFoc
         'hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer'
       )}
     >
-      <div className={'flex items-center gap-2 font-medium text-gray-darkest'}>
-        <div className={'rounded w-4 h-4'} style={{ background: color }} />
-        <div>{series}</div>
-      </div>
+      {hideLegend ? null :
+        <div
+          className={'flex items-center gap-2 font-medium text-gray-darkest'}
+        >
+          <div className={'rounded w-4 h-4'} style={{ background: color }} />
+          <div>{series}</div>
+        </div>
+      }
       <div className={'font-bold leading-none'} style={{ fontSize: 56 }}>
-        {formattedNumber(value)}{valueLabel ? `${valueLabel}` : null}
+        {formattedNumber(value)}
+        {valueLabel ? `${valueLabel}` : null}
       </div>
-      <div className={'text-disabled-text text-xs'}>
-        {label}
-      </div>
+      <div className={'text-disabled-text text-xs'}>{label}</div>
       {compData ? (
-        <CompareTag isHigher={value > compData} absDelta={change} delta={changePercent} />
+        <CompareTag
+          isHigher={value > compData}
+          absDelta={change}
+          delta={changePercent}
+        />
       ) : null}
     </div>
-  )
+  );
 }
 
 export default BigNumChart;

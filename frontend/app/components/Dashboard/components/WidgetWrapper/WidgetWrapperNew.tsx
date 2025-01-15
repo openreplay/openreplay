@@ -36,7 +36,7 @@ interface Props {
 }
 
 function WidgetWrapperNew(props: Props & RouteComponentProps) {
-  const { dashboardStore } = useStore();
+  const { dashboardStore, metricStore } = useStore();
   const {
     isWidget = false,
     active = false,
@@ -94,6 +94,9 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
       widget.metricOf !== FilterKey.ERRORS &&
       widget.metricOf !== FilterKey.SESSIONS);
 
+  const beforeAlertInit = () => {
+    metricStore.init(widget)
+  }
   return (
     <Card
       className={cn(
@@ -113,7 +116,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
       extra={[
         <div className="flex items-center" id="no-print">
           {!isPredefined && isTimeSeries && !isGridView && (
-            <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
+            <AlertButton initAlert={beforeAlertInit} seriesId={widget.series[0] && widget.series[0].seriesId} />
           )}
 
           {showMenu && (
