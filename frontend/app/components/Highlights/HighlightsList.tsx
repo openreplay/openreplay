@@ -48,7 +48,7 @@ function HighlightsList() {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex p-2 px-4 w-full border-b gap-4 items-center'}>
-        <div className={'font-semibold text-xl'}>Highlights</div>
+        <h1 className={'text-2xl capitalize mr-2'}>Highlights</h1>
         <Segmented
           size="small"
           options={[
@@ -112,6 +112,7 @@ function HighlightsList() {
             onChange={handleInputChange}
             onSearch={onSearch}
             className="rounded-lg"
+            size='small'
           />
         </div>
       </div>
@@ -156,7 +157,7 @@ function HighlightsList() {
               value={noteText}
             />
             <div>{noteText.length}/200 Characters remaining</div>
-            <Checkbox>Team can see and edit the dashboard.</Checkbox>
+            <Checkbox>Team can see and edit this Highlight.</Checkbox>
           </div>
         </Modal>
       </div>
@@ -236,7 +237,7 @@ function HighlightClip({
         const res = await confirm({
           header: 'Are you sure delete this Highlight?',
           confirmation:
-            'Deleting a Highlight will only remove this instance and its associated notes. It will not affect the original session.',
+            'Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.',
           confirmButton: 'Yes, Delete',
         });
         console.log(res);
