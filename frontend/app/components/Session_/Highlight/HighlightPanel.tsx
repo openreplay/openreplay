@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Checkbox, Input, Tag } from 'antd';
-import { MessageSquare, SquareMousePointer, X } from 'lucide-react';
+import { MessageSquareQuote, X } from 'lucide-react';
 import { TAGS, iTag, tagProps } from 'App/services/NotesService';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
@@ -103,7 +103,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
     } else {
       const sessionId = sessionStore.current.sessionId;
       notesStore.addNote(sessionId, note);
-      toast.success('Highlight saved');
+      toast.success('Highlight saved. Find it in Home > Highlights');
     }
     onClose();
   }
@@ -115,13 +115,13 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
       onClick={(e) => e.stopPropagation()}
     >
       <div className={'flex items-center gap-2'}>
-        <MessageSquare size={16} strokeWidth={1} />
+        <MessageSquareQuote size={16} strokeWidth={1.5} />
         <h3 className={'text-xl font-semibold'}>Highlight</h3>
         <div className={'cursor-pointer ml-auto'} onClick={onClose}>
           <X size={18} strokeWidth={2} />
         </div>
       </div>
-      <div>
+      <div className='text-sm text-neutral-500'>
         Save key moments from sessions. Access them anytime on the ‘Highlights’
         page to share with your team.
       </div>
@@ -155,11 +155,11 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
           <Tag
             onClick={() => addTag(tag)}
             key={tag}
-            className="cursor-pointer rounded-lg hover:bg-indigo-50"
+            className="cursor-pointer rounded-lg hover:bg-indigo-50 mr-0"
             color={tagProps[tag]}
             bordered={false}
           >
-            <div className={'flex items-center gap-1'}>
+            <div className={'flex items-center gap-1 text-sm'}>
               {tagActive(tag) ? (
                 <Icon name="check-circle-fill" color="inherit" size={13} />
               ) : null}
@@ -180,7 +180,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
         <Button
           onClick={onSave}
           type={'primary'}
-          icon={<SquareMousePointer size={14} strokeWidth={1} />}
+          icon={<MessageSquareQuote size={14} strokeWidth={1} />}
         >
           Save Highlight
         </Button>

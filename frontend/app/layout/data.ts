@@ -64,8 +64,8 @@ export const categories: Category[] = [
       { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
       { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
-      { label: 'Notes', key: MENU.NOTES, icon: 'stickies' },
-      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'stickies' }
+      //{ label: 'Notes', key: MENU.NOTES, icon: 'stickies' },
+      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' }
     ]
   },
   {

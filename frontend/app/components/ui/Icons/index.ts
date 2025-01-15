@@ -449,6 +449,7 @@ export { default as Social_trello } from './social_trello';
 export { default as Sparkles } from './sparkles';
 export { default as Speedometer2 } from './speedometer2';
 export { default as Spinner } from './spinner';
+export { default as Square_mouse_pointer } from './square_mouse_pointer';
 export { default as Star } from './star';
 export { default as Step_forward } from './step_forward';
 export { default as Stickies } from './stickies';

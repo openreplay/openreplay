@@ -161,9 +161,9 @@ function DraggableMarkers({
   }, []);
 
   const barSize = 104;
-  const centering = -46;
+  const centering = -36;
   const topPadding = 41;
-  const uiSize = 24;
+  const uiSize = 16;
 
   const startRangeStr = shortDurationFromMs(Math.max(defaultStartPos, 0));
   const endRangeStr = shortDurationFromMs(
@@ -197,9 +197,9 @@ function DraggableMarkers({
           zIndex: 100,
           display: 'flex',
           alignItems: 'center',
-          paddingRight: 3,
-          paddingLeft: 6,
-          width: 18,
+          paddingRight: 1,
+          paddingLeft: 3,
+          width: 10,
           opacity: dragging && dragging !== 'start' ? 0.8 : 1,
         }}
       >
@@ -213,37 +213,43 @@ function DraggableMarkers({
           </div>
         ) : null}
         <div
-          className={'bg-black rounded-xl'}
+          className={'bg-black/20 rounded-xl'}
           style={{
             zIndex: 101,
-            height: 18,
-            width: 2,
-            marginRight: 3,
+            height: 16,
+            width: 1,
+            marginRight: 2,
             overflow: 'hidden',
           }}
         />
         <div
-          className={'bg-black rounded-xl'}
-          style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }}
+          className={'bg-black/20 rounded-xl'}
+          style={{ zIndex: 101, height: 16, width: 1, overflow: 'hidden' }}
         />
       </div>
       <div
-        className="slider-body"
-        onMouseDown={startDrag('body')}
-        style={{
-          position: 'absolute',
-          left: `calc(${startPos}% + 18px)`,
-          width: `calc(${endPos - startPos}% - 18px)`,
-          height: uiSize,
-          top: topPadding,
-          background: 'rgba(252, 193, 0, 0.10)',
-          borderTop: `2px solid ${dragging ? '#c2970a' : '#FCC100'}`,
-          borderBottom: `2px solid ${dragging ? '#c2970a' : '#FCC100'}`,
-          cursor: 'grab',
-          zIndex: 100,
-          opacity: dragging ? 0.8 : 1,
-        }}
-      />
+          className="slider-body"
+          onMouseDown={startDrag('body')}
+          style={{
+            position: 'absolute',
+            left: `calc(${startPos}% + 10px)`,
+            width: `calc(${endPos - startPos}% - 10px)`,
+            height: uiSize,
+            top: topPadding,
+            background: `repeating-linear-gradient(
+              -45deg,
+              rgba(252, 193, 0, 0.3),
+              rgba(252, 193, 0, 0.3) 4px,
+              transparent 4px,
+              transparent 8px
+            )`,
+            borderTop: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
+            borderBottom: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
+            cursor: 'grab',
+            zIndex: 100,
+            opacity: dragging ? 0.8 : 1,
+          }}
+        />
       <div
         className="marker end"
         onMouseDown={startDrag('end')}
@@ -259,9 +265,9 @@ function DraggableMarkers({
           zIndex: 100,
           display: 'flex',
           alignItems: 'center',
-          paddingLeft: 3,
-          paddingRight: 6,
-          width: 18,
+          paddingLeft: 1,
+          paddingRight: 1,
+          width: 10,
           opacity: dragging && dragging !== 'end' ? 0.8 : 1,
         }}
       >
@@ -275,19 +281,19 @@ function DraggableMarkers({
           </div>
         ) : null}
         <div
-          className={'bg-black rounded-xl'}
+          className={'bg-black/20 rounded-xl'}
           style={{
             zIndex: 101,
-            height: 18,
-            width: 2,
-            marginRight: 3,
+            height: 16,
+            width: 1,
+            marginRight: 2,
             marginLeft: 2,
             overflow: 'hidden',
           }}
         />
         <div
-          className={'bg-black rounded-xl'}
-          style={{ zIndex: 101, height: 18, width: 2, overflow: 'hidden' }}
+          className={'bg-black/20 rounded-xl'}
+          style={{ zIndex: 101, height: 16, width: 1, overflow: 'hidden' }}
         />
       </div>
     </div>
