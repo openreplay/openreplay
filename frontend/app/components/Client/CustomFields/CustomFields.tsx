@@ -6,6 +6,7 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { List, Space, Typography, Button, Tooltip } from 'antd';
 import { PencilIcon, PlusIcon, Tags } from 'lucide-react';
+import {EditOutlined } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
 import { Empty } from '.store/antd-virtual-7db13b4af6/package';
 
@@ -37,7 +38,7 @@ const CustomFields = () => {
     <div className="flex flex-col gap-6">
       <Typography.Text>
         Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user
-        sessions. Learn More.
+        sessions.
         <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">
           Learn more
         </a>
@@ -47,7 +48,7 @@ const CustomFields = () => {
         <Tooltip
           title={remaining > 0 ? '' : 'You\'ve reached the limit of 10 metadata.'}
         >
-          <Button icon={<PlusIcon size={18} />} type="primary"
+          <Button icon={<PlusIcon size={18} />} type="primary" size='small'
                   disabled={remaining === 0}
                   onClick={() => handleInit()}>
             Add Metadata
@@ -70,7 +71,7 @@ const CustomFields = () => {
             onClick={() => handleInit(field)}
             className="cursor-pointer group hover:bg-active-blue !px-4"
             actions={[
-              <Button className="opacity-0 group-hover:!opacity-100" icon={<PencilIcon size={14} />} />
+              <Button type='link' className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />
             ]}
           >
             <List.Item.Meta

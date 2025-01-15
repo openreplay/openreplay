@@ -44,7 +44,7 @@ function TagForm(props: Props) {
 
   return (
     <Form layout="vertical">
-      <Form.Item label="Name:">
+      <Form.Item label="Name:" className='font-medium'>
         <Input
           autoFocus
           name="name"
@@ -52,6 +52,7 @@ function TagForm(props: Props) {
           onChange={write}
           placeholder="Name"
           maxLength={50}
+          className='font-normal rounded-lg'
         />
       </Form.Item>
 
@@ -62,11 +63,11 @@ function TagForm(props: Props) {
             disabled={name.length === 0 || name === tag.name || loading}
             loading={loading}
             type="primary"
-            className="float-left mr-2"
+            className="float-left mr-1"
           >
             Update
           </Button>
-          <Button onClick={closeModal}>
+          <Button type='text' onClick={closeModal}>
             Cancel
           </Button>
         </Space>

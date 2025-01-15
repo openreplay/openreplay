@@ -51,7 +51,7 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
 
   return (
     <div className="bg-white h-screen overflow-y-auto">
-      <h3 className="p-5 text-2xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
+      <h3 className="p-5 text-xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
       <Form className={styles.wrapper}>
         <Form.Field>
           <label>{'Field Name'}</label>
@@ -60,7 +60,7 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
             name="key"
             value={field?.key}
             onChange={write}
-            placeholder="Field Name"
+            placeholder="E.g. plan"
             maxLength={50}
           />
         </Form.Field>
@@ -76,7 +76,7 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
             >
               {exists ? 'Update' : 'Add'}
             </Button>
-            <Button data-hidden={!exists} onClick={hideModal}>
+            <Button type='text' data-hidden={!exists} onClick={hideModal}>
               {'Cancel'}
             </Button>
           </div>
