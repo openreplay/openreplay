@@ -4,21 +4,26 @@ const WEEK = DAY * 8;
 const startWithZero = (num: number) => (num < 10 ? `0${ num }` : `${ num }`);
 const weekdays = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ];
 
-export const getTimeString = (ts, period) => {
+export const getTimeString = (ts, period, density,) => {
   const date = new Date(ts);
   const diff = period.endTimestamp - period.startTimestamp;
   if (diff <= DAY) {
-    var isPM = date.getHours() >= 12;
+    const isPM = date.getHours() >= 12;
     return `${ isPM ? date.getHours() - 12 : date.getHours() }:${ startWithZero(date.getMinutes()) } ${isPM? 'pm' : 'am'}`;
   }
   if (diff <= WEEK) {
-    return weekdays[ date.getDay() ];
+    if (density < 20) {
+      return weekdays[ date.getDay() ];
+    } else {
+      const isPM = date.getHours() >= 12;
+      return `${weekdays[ date.getDay() ]} ${ isPM ? date.getHours() - 12 : date.getHours() }:${ startWithZero(date.getMinutes()) } ${isPM? 'pm' : 'am'}`;
+    }
   }
   return `${ date.getDate() }/${ startWithZero(date.getMonth() + 1) } `;
 };
 
-export const getChartFormatter = period => (data = []) =>
-  data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period), ...rest, timestamp }));
+export const getChartFormatter = (period, density) => (data = []) =>
+  data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period, density), ...rest, timestamp }));
 
 export const getStartAndEndTimestampsByDensity = (current: number, start: number, end: number, density: number) => {
   const diff = end - start;

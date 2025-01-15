@@ -59,8 +59,8 @@ function CardUserList(props: RouteComponentProps<Props>) {
 
             <div className="w-full flex items-center justify-between pt-4">
                 <div className="text-disabled-text">
-                Showing <span className="font-semibold">{Math.min(data.length, pageSize)}</span> out of{' '}
-                <span className="font-semibold">{data.length}</span> Issues
+                Showing <span className="font-medium">{Math.min(data.length, pageSize)}</span> out of{' '}
+                <span className="font-medium">{data.length}</span> Issues
                 </div>
                 <Pagination
                     page={metricStore.sessionsPage}

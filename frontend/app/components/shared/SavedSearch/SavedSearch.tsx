@@ -1,49 +1,44 @@
-import React, { useEffect } from 'react';
-import { Icon } from 'UI';
+import React, { useState } from "react";
 import { Button } from 'antd';
-import cn from 'classnames';
-import stl from './SavedSearch.module.css';
-import { useModal } from 'App/components/Modal';
-import SavedSearchModal from './components/SavedSearchModal';
+import { MoreOutlined } from "@ant-design/icons";
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import SaveSearchModal from "../SaveSearchModal/SaveSearchModal";
+import SavedSearchModal from "./components/SavedSearchModal";
+import { useModal } from 'App/components/Modal';
 
 function SavedSearch() {
-  const { showModal } = useModal();
-  const { searchStore, customFieldStore } = useStore();
+  const [showModal, setShowModal] = useState(false);
+  const { searchStore } = useStore();
   const savedSearch = searchStore.savedSearch;
-  const list = searchStore.list;
-  const fetchedMeta = customFieldStore.fetchedMetadata;
 
-  // useEffect(() => {
-  //   if (list.size === 0 && !fetchedMeta) {
-  //     void searchStore.fetchSavedSearchList();
-  //   }
-  // }, [fetchedMeta]);
+  const { showModal: showListModal } = useModal();
 
+  const toggleModal = () => {
+    if (searchStore.instance.filters.length === 0) return;
+    setShowModal(true);
+  }
+
+  const toggleList = () => {
+    showListModal(<SavedSearchModal />, { right: true });
+  }
   return (
-    <div className={cn('flex items-center', { [stl.disabled]: list.size === 0 })}>
-      <Button
-        // variant="outline"
-        type="primary"
-        ghost
-        onClick={() => showModal(<SavedSearchModal />, { right: true, width: 450 })}
-        className="flex gap-1"
-      >
-        <span className="mr-1">Saved Search</span>
-        <span className="font-meidum">{list.size}</span>
-        <Icon name="ellipsis-v" color="teal" size="14" />
-      </Button>
-      {savedSearch.exists() && (
-        <div className="flex items-center ml-2">
-          <Icon name="search" size="14" />
-          <span className="color-gray-medium px-1">Viewing:</span>
-          <span className="font-medium" style={{ whiteSpace: 'nowrap', width: '30%' }}>
-            {savedSearch.name.length > 15 ? `${savedSearch.name.slice(0, 15)}...` : savedSearch.name}
-          </span>
-        </div>
+    <>
+      <div style={{ display: 'inline-flex' }}>
+        <Button onClick={toggleModal} disabled={searchStore.instance.filters.length === 0} style={{ borderRadius: '0.5rem 0 0 0.5rem', borderRight: 0 }}>
+          {savedSearch.exists() ? 'Update' : 'Save'} Search
+        </Button>
+        <Button disabled={searchStore.list.length === 0} onClick={toggleList} style={{ borderRadius: '0 0.5rem 0.5rem 0' }}>
+          <MoreOutlined />
+        </Button>
+      </div>
+      {showModal && (
+        <SaveSearchModal
+          show={showModal}
+          closeHandler={() => setShowModal(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
 

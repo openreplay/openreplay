@@ -4,7 +4,7 @@ import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
 import { AppWindowMac, EditIcon, Smartphone,  } from 'lucide-react';
-import {PlusOutlined, SearchOutlined, EditOutlined} from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, EditOutlined } from '@ant-design/icons'
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 
@@ -65,7 +65,6 @@ const ProjectList: React.FC = () => {
         </Tooltip>
         <Input
           placeholder="Search projects"
-          // onSearch={handleSearch}
           prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}
           allowClear
@@ -80,7 +79,7 @@ const ProjectList: React.FC = () => {
           mode="inline"
           onClick={onClick}
           selectedKeys={[String(projectsStore.config.pid)]}
-          className="w-full !bg-white !border-0 "
+          className="w-full !bg-white !border-0"
           inlineIndent={11}
           items={menuItems}
         />
@@ -96,28 +95,28 @@ const ProjectIconWithProgress: React.FC<{
   progress: number;
 }> = ({ platform, progress }) => (
   <Tooltip title={`${progress}% Capture Rate`}>
-  <div className="relative flex items-center justify-center mr-2 leading-none">
-    <Progress
-      type="circle"
-      percent={progress}
-      size={28}
-      format={() => ''}
-      strokeWidth={4}
-      strokeColor="#23959a"
-    />
-    <div className="absolute">
-      <Avatar
-        className="bg-tealx-light"
-        size={26}
-        icon={
-          platform === 'web' ? (
-            <AppWindowMac size={16} color="teal" />
-          ) : (
-            <Smartphone size={16} color="teal" />
-          )
-        }
+    <div className="relative flex items-center justify-center mr-2 leading-none">
+      <Progress
+        type="circle"
+        percent={progress}
+        size={28}
+        format={() => ''}
+        strokeWidth={4}
+        strokeColor="#23959a"
       />
+      <div className="absolute">
+        <Avatar
+          className="bg-tealx-light"
+          size={26}
+          icon={
+            platform === 'web' ? (
+              <AppWindowMac size={16} color="teal" />
+            ) : (
+              <Smartphone size={16} color="teal" />
+            )
+          }
+        />
+      </div>
     </div>
-  </div>
   </Tooltip>
 );

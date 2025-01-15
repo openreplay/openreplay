@@ -158,7 +158,7 @@
 }
 
 .border-gray-light {
-  border: solid thin $gray-light
+  border: solid thin rgb(229 231 235  / var(--tw-text-opacity, 1))
 }
 
 .btn-disabled {
@@ -363,8 +363,8 @@ p {
     135deg,
     transparent,
     transparent 2px,
-    #ccc 2px,
-    #ccc 4px
+    #ccc 1px,
+    #ccc 1px
   );
 }
 
@@ -446,6 +446,12 @@ p {
 .ant-segmented-item-label {
   display: flex;
   align-items: center;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Remove default styling */
+  appearance: none;
+  margin: 0; /* Fix margin if necessary */
 }
 
 .ant-segmented-item{

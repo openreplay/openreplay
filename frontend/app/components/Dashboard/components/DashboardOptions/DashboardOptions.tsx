@@ -1,31 +1,57 @@
 import React from 'react';
-import { ItemMenu } from 'UI';
 import { observer } from 'mobx-react-lite';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { Dropdown, Button } from 'antd';
+import { EllipsisVertical } from 'lucide-react';
+import { Icon } from 'UI';
 
 interface Props {
-    editHandler: (isTitle: boolean) => void;
-    deleteHandler: any;
-    renderReport: any;
+  editHandler: (isTitle: boolean) => void;
+  deleteHandler: any;
+  renderReport: any;
 }
 function DashboardOptions(props: Props) {
-    const { userStore } = useStore();
-    const isEnterprise = userStore.isEnterprise;
-    const { editHandler, deleteHandler, renderReport } = props;
-    const menuItems = [
-        { icon: 'pencil', text: 'Rename', onClick: () => editHandler(true) },
-        { icon: 'users', text: 'Visibility & Access', onClick: editHandler },
-        { icon: 'trash', text: 'Delete', onClick: deleteHandler },
-        { icon: 'pdf-download', text: 'Download Report', onClick: renderReport, disabled: !isEnterprise, tooltipTitle: ENTERPRISE_REQUEIRED }
-    ]
+  const { userStore } = useStore();
+  const isEnterprise = userStore.isEnterprise;
+  const { editHandler, deleteHandler, renderReport } = props;
 
-    return (
-        <ItemMenu
-            bold
-            items={menuItems}
-        />
-    );
+  const menu = {
+    items: [
+      {
+        icon: <Icon name={'pencil'} />,
+        key: 'rename',
+        label: 'Rename',
+        onClick: () => editHandler(true),
+      },
+      {
+        icon: <Icon name={'users'} />,
+        key: 'visibility',
+        label: 'Visibility & Access',
+        onClick: editHandler,
+      },
+      {
+        icon: <Icon name={'trash'} />,
+        key: 'delete',
+        label: 'Delete',
+        onClick: deleteHandler,
+      },
+      {
+        icon: <Icon name={'pdf-download'} />,
+        key: 'download',
+        label: 'Download Report',
+        onClick: renderReport,
+        disabled: !isEnterprise,
+        tooltipTitle: ENTERPRISE_REQUEIRED,
+      },
+    ],
+  };
+
+  return (
+    <Dropdown menu={menu}>
+      <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
+    </Dropdown>
+  );
 }
 
 export default observer(DashboardOptions);

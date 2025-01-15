@@ -1,3 +1,4 @@
+import { backgroundClip } from 'html2canvas/dist/types/css/property-descriptors/background-clip';
 import React from 'react';
 import Select from 'Shared/Select';
 
@@ -5,22 +6,24 @@ const dropdownStyles = {
   control: (provided: any) => {
     const obj = {
       ...provided,
-      border: 'solid thin #ddd !important',
+      border: 'solid thin #ddd',
       boxShadow: 'none !important',
       cursor: 'pointer',
       height: '26px',
       minHeight: '26px',
-      backgroundColor: '#f6f6f6',
+      backgroundColor: 'white',
+      borderRadius: '.5rem',
       '&:hover': {
-        backgroundColor: '#EEEEEE',
-      },
+      borderColor: 'rgb(115 115 115 / 0.9)', 
     }
+    }
+    
     return obj;
   },
   valueContainer: (provided: any) => ({
     ...provided,
-    paddingRight: '0px',
     width: 'fit-content',
+    height: 26,
     '& input': {
       marginTop: '-3px',
     },
@@ -29,9 +32,7 @@ const dropdownStyles = {
     ...provided,
   }),
   indicatorsContainer: (provided: any) => ({
-    ...provided,
-    padding: '0px',
-    height: '26px',
+    display: 'none',
   }),
   // option: (provided: any, state: any) => ({
   //   ...provided,
@@ -39,11 +40,13 @@ const dropdownStyles = {
   // }),
   menu: (provided: any, state: any) => ({
       ...provided,
-      top: 20,
+      marginTop: '0.5rem',
       left: 0,
       minWidth: 'fit-content',
       overflow: 'hidden',
       zIndex: 100,
+      border: 'none',
+      boxShadow: '0px 4px 10px rgba(0,0,0, 0.15)',
   }),
   container: (provided: any) => ({
       ...provided,
@@ -81,6 +84,7 @@ function FilterOperator(props: Props) {
         isDisabled={isDisabled}
         value={value ? options?.find((i: any) => i.value === value) : null}
         onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
+        className='btn-event-operator'
       />
     </div>
   );

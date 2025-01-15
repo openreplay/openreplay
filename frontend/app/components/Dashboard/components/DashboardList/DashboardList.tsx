@@ -1,4 +1,6 @@
-import { LockOutlined, TeamOutlined } from '@ant-design/icons';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useHistory } from 'react-router';
 import {
   Empty,
   Switch,
@@ -7,18 +9,16 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Dropdown,
+  Button,
 } from 'antd';
-import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useHistory } from 'react-router';
-
+import { LockOutlined, TeamOutlined, MoreOutlined } from '@ant-design/icons';
 import { checkForRecent } from 'App/date';
 import { useStore } from 'App/mstore';
 import Dashboard from 'App/mstore/types/dashboard';
 import { dashboardSelected, withSiteId } from 'App/routes';
 import CreateDashboardButton from 'Components/Dashboard/components/CreateDashboardButton';
-import { ItemMenu, confirm } from 'UI';
-
+import { Icon, confirm } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import DashboardEditModal from '../DashboardEditModal';
@@ -26,6 +26,7 @@ import DashboardEditModal from '../DashboardEditModal';
 function DashboardList() {
   const { dashboardStore, projectsStore } = useStore();
   const siteId = projectsStore.siteId;
+  const optionsRef = React.useRef<HTMLDivElement>(null);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
 
@@ -103,6 +104,7 @@ function DashboardList() {
               }
               checkedChildren={'Team'}
               unCheckedChildren={'Private'}
+              className="toggle-team-private"
             />
           </Tooltip>
         </div>
@@ -121,23 +123,52 @@ function DashboardList() {
     },
 
     {
-      title: 'Options',
+      title: '',
       dataIndex: 'dashboardId',
       width: '5%',
-      onCell: () => ({ onClick: (e) => e.stopPropagation() }),
       render: (id) => (
-        <ItemMenu
-          bold
-          items={[
-            { icon: 'pencil', text: 'Rename', onClick: () => onEdit(id, true) },
-            {
-              icon: 'users',
-              text: 'Visibility & Access',
-              onClick: () => onEdit(id, false),
-            },
-            { icon: 'trash', text: 'Delete', onClick: () => onDelete(id) },
-          ]}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            arrow={false}
+            trigger={['click']}
+            className={'ignore-prop-dp'}
+            menu={{
+              items: [
+                {
+                  icon: <Icon name={'pencil'} />,
+                  key: 'rename',
+                  label: 'Rename',
+                },
+                {
+                  icon: <Icon name={'users'} />,
+                  key: 'access',
+                  label: 'Visibility & Access',
+                },
+                {
+                  icon: <Icon name={'trash'} />,
+                  key: 'delete',
+                  label: 'Delete',
+                },
+              ],
+              onClick: async ({ key }) => {
+                if (key === 'rename') {
+                  onEdit(id, true);
+                } else if (key === 'access') {
+                  onEdit(id, false);
+                } else if (key === 'delete') {
+                  await onDelete(id);
+                }
+              },
+            }}
+          >
+            <Button
+              id={'ignore-prop'}
+              icon={<MoreOutlined />}
+              type="text"
+              className="btn-dashboards-list-item-more-options"
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
@@ -198,9 +229,22 @@ function DashboardList() {
           showTotal: (total, range) =>
             `Showing ${range[0]}-${range[1]} of ${total} items`,
           size: 'small',
+          simple: 'true',
+          className: 'px-4 pr-8 mb-0',
         }}
         onRow={(record) => ({
-          onClick: () => {
+          onClick: (e) => {
+            const possibleDropdown =
+              document.querySelector('.ant-dropdown-menu');
+            const btn = document.querySelector('#ignore-prop');
+            if (
+              e.target.classList.contains('lucide') ||
+              e.target.id === 'ignore-prop' ||
+              possibleDropdown?.contains(e.target) ||
+              btn?.contains(e.target)
+            ) {
+              return;
+            }
             dashboardStore.selectDashboardById(record.dashboardId);
             const path = withSiteId(
               dashboardSelected(record.dashboardId),
