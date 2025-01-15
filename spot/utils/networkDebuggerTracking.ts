@@ -1,54 +1,63 @@
-let requestMap = {}
+let requestMaps = {};
+const potentialActiveTabs: Array<string | number> = [];
 
-export function resetMap() {
-  requestMap = {}
+export function resetMap(tabId?: string) {
+  if (tabId) delete requestMaps[tabId];
+  else requestMaps = {};
 }
 
 export async function attachDebuggerToTab(tabId: string | number) {
+  if (requestMaps[tabId] && potentialActiveTabs.includes(tabId)) return;
   await new Promise((resolve, reject) => {
     chrome.debugger.attach({ tabId }, "1.3", () => {
-      if (chrome.runtime.lastError)
-        return reject(chrome.runtime.lastError.message);
+      if (chrome.runtime.lastError) return reject(chrome.runtime.lastError.message);
+      if (!requestMaps[tabId]) requestMaps[tabId] = {};
+      potentialActiveTabs.push(tabId);
       chrome.debugger.sendCommand({ tabId }, "Network.enable", {}, resolve);
     });
     chrome.debugger.onEvent.addListener(handleRequestIntercept);
   });
 }
-export async function detachDebuggerFromTab(tabId: string) {
-  return new Promise((resolve, reject) => {
-    chrome.debugger.detach({ tabId }, resolve);
-    chrome.debugger.onEvent.removeListener(handleRequestIntercept);
-  });
+
+export function stopDebugger(tabId?: string | number) {
+  if (tabId) {
+    chrome.debugger.detach({ tabId });
+    const index = potentialActiveTabs.indexOf(tabId);
+    if (index > -1) potentialActiveTabs.splice(index, 1);
+  } else {
+    potentialActiveTabs.forEach((tabId) => {
+      chrome.debugger.detach({ tabId });
+    });
+    potentialActiveTabs.length = 0;
+  }
 }
 
 const getType = (requestType: string) => {
-  switch (requestType) {
-    case "Fetch":
-    case "XHR":
+  switch (requestType.toLowerCase()) {
+    case "fetch":
+    case "xhr":
     case "xmlhttprequest":
       return 'xmlhttprequest'
     default:
       return requestType
   }
 }
+
 function handleRequestIntercept(source, method, params) {
-  if (!source.tabId) return; // Not our target tab
-  if (!params.request) return; // No request object
-  if (params.request.method === "OPTIONS") return; // Ignore preflight requests
+  if (!source.tabId) return;
+  const tabId = source.tabId;
+  if (!requestMaps[tabId]) return;
+  if (params.request && params.request.method === "OPTIONS") return;
+  const reqId = `${tabId}_${params.requestId}`;
 
   switch (method) {
     case "Network.requestWillBeSent":
-      const reqType = params.type ? getType(params.type) : "resource";
-      if (reqType !== "xmlhttprequest") {
-        console.log(params);
-      }
-
-      requestMap[params.requestId] = {
+      requestMaps[tabId][reqId] = {
         encodedBodySize: 0,
         responseBodySize: 0,
         duration: 0,
         method: params.request.method,
-        type: reqType,
+        type: params.type ? getType(params.type) : "resource",
         statusCode: 0,
         url: params.request.url,
         body: params.request.postData || "",
@@ -57,54 +66,40 @@ function handleRequestIntercept(source, method, params) {
         requestHeaders: params.request.headers || {},
         responseHeaders: {},
         timestamp: Date.now(),
+        time: Date.now(),
       };
       break;
-
     case "Network.responseReceived":
-      if (!requestMap[params.requestId]) return;
-      requestMap[params.requestId].statusCode = params.response.status;
-      requestMap[params.requestId].responseHeaders =
-        params.response.headers || {};
-      // fromDiskCache or fromServiceWorker if available
-      if (params.response.fromDiskCache)
-        requestMap[params.requestId].fromCache = true;
+      if (!requestMaps[tabId][reqId]) return;
+      requestMaps[tabId][reqId].statusCode = params.response.status;
+      requestMaps[tabId][reqId].responseHeaders = params.response.headers || {};
+      if (params.response.fromDiskCache) requestMaps[tabId][reqId].fromCache = true;
       break;
-
     case "Network.dataReceived":
-      if (!requestMap[params.requestId]) return;
-      requestMap[params.requestId].encodedBodySize += params.dataLength;
-      // There's no direct content-encoding size from debugger
+      if (!requestMaps[tabId][reqId]) return;
+      requestMaps[tabId][reqId].encodedBodySize += params.dataLength;
       break;
-
     case "Network.loadingFinished":
-      if (!requestMap[params.requestId]) return;
-      requestMap[params.requestId].duration =
-        Date.now() - requestMap[params.requestId].time;
-      requestMap[params.requestId].responseBodySize =
-        requestMap[params.requestId].encodedBodySize;
-      chrome.debugger.sendCommand(
-        { tabId: source.tabId },
-        "Network.getResponseBody",
-        { requestId: params.requestId },
-        (res) => {
-          if (!res || res.error) {
-            requestMap[params.requestId].error = res?.error || "Unknown";
-          } else {
-            requestMap[params.requestId].responseBody = res.base64Encoded
-              ? atob(res.body)
-              : res.body;
-          }
-        },
-      );
+      if (!requestMaps[tabId][reqId]) return;
+      requestMaps[tabId][reqId].duration = Date.now() - requestMaps[tabId][reqId].timestamp;
+      requestMaps[tabId][reqId].responseBodySize = requestMaps[tabId][reqId].encodedBodySize;
+      chrome.debugger.sendCommand({ tabId }, "Network.getResponseBody", { requestId: params.requestId }, (res) => {
+        if (!res || res.error) {
+          requestMaps[tabId][reqId].error = res?.error || "Unknown";
+        } else {
+          requestMaps[tabId][reqId].responseBody = res.base64Encoded ? 'base64 payload' : res.body;
+        }
+      });
       break;
-
     case "Network.loadingFailed":
-      if (!requestMap[params.requestId]) return;
-      requestMap[params.requestId].error = params.errorText || "Unknown";
+      if (!requestMaps[tabId][reqId]) return;
+      requestMaps[tabId][reqId].error = params.errorText || "Unknown";
       break;
   }
 }
 
-export const getRequests = () => {
-  return Object.values(requestMap);
-};
+export function getRequests(tabId?: string) {
+  if (tabId) {
+    return Object.values(requestMaps[tabId] || {});
+  }
+}

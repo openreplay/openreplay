@@ -8,9 +8,9 @@ import { mergeRequests, SpotNetworkRequest } from "~/utils/networkTrackingUtils"
 import { safeApiUrl } from '~/utils/smallUtils'
 import {
   attachDebuggerToTab,
-  detachDebuggerFromTab,
+  stopDebugger,
   getRequests as getDebuggerRequests,
-  resetMap
+  resetMap,
 } from "~/utils/networkDebuggerTracking";
 import { messages } from '~/utils/messages'
 
@@ -299,12 +299,6 @@ export default defineBackground(() => {
             if (active) {
               recordingState.activeTabId = active.id;
             }
-            if (settings.useDebugger) {
-              resetMap();
-              void attachDebuggerToTab(active.id);
-            } else {
-              startTrackingNetwork();
-            }
             void sendToActiveTab({
               type: "content:mount",
               area: request.area,
@@ -323,13 +317,6 @@ export default defineBackground(() => {
           mic: request.mic,
           audioId: request.selectedAudioDevice,
           audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
-        }, (tabId) => {
-          if (settings.useDebugger) {
-            resetMap();
-            void attachDebuggerToTab(tabId);
-          } else {
-            startTrackingNetwork();
-          }
         });
       }
     }
@@ -349,6 +336,24 @@ export default defineBackground(() => {
       finalVideoBase64 = "";
       const recArea = request.area;
       finalSpotObj.startTs = Date.now();
+      if (settings.networkLogs) {
+        if (settings.useDebugger) {
+          resetMap();
+          browser.tabs.query({
+            active: true,
+            currentWindow: true,
+          }).then((tabs) => {
+            if (tabs.length === 0) {
+              return console.error("No active tab found");
+            }
+            recordingState.activeTabId = tabs[0].id;
+            void attachDebuggerToTab(recordingState.activeTabId)
+          })
+        } else {
+          console.log(settings.useDebugger, 'tab', recordingState.activeTabId)
+          startTrackingNetwork();
+        }
+      }
       if (recArea === "tab") {
         function signalTabRecording() {
           recordingState = {
@@ -632,20 +637,22 @@ export default defineBackground(() => {
       if (recordingState.recording === REC_STATE.stopped) {
         return console.error("Calling stopped recording?");
       }
-      let networkRequests;
-      let mappedNetwork;
-      if (settings.useDebugger && recordingState.area === "tab") {
-        void detachDebuggerFromTab(recordingState.activeTabId);
-        mappedNetwork = getDebuggerRequests();
-      } else {
-        networkRequests = getFinalRequests(
-          recordingState.activeTabId ?? false,
-        );
-        stopTrackingNetwork();
-        mappedNetwork = mergeRequests(
-          networkRequests,
-          injectNetworkRequests,
-        );
+      let networkRequests: any = [];
+      let mappedNetwork: any = [];
+      if (settings.networkLogs) {
+        if (settings.useDebugger) {
+          stopDebugger();
+          mappedNetwork = getDebuggerRequests();
+        } else {
+          networkRequests = getFinalRequests(
+            recordingState.area === 'tab' ? recordingState.activeTabId! : undefined,
+          );
+          stopTrackingNetwork();
+          mappedNetwork = mergeRequests(
+            networkRequests,
+            injectNetworkRequests,
+          );
+        }
       }
       injectNetworkRequests = [];
       finalSpotObj.network = mappedNetwork;
@@ -1099,7 +1106,6 @@ export default defineBackground(() => {
           stopTabActivationListening();
         }
         if (tabId !== previousTab) {
-          detachDebuggerFromTab(previousTab)
           browser.runtime
             .sendMessage({
               type: messages.offscreen.to.checkRecStatus,
