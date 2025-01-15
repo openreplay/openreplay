@@ -10,7 +10,7 @@ export async function attachDebuggerToTab(tabId: string | number) {
   if (requestMaps[tabId] && potentialActiveTabs.includes(tabId)) return;
   await new Promise((resolve, reject) => {
     chrome.debugger.attach({ tabId }, "1.3", () => {
-      if (chrome.runtime.lastError) return reject(chrome.runtime.lastError.message);
+      if (chrome.runtime.lastError) return reject(`${chrome.runtime.lastError.message}, ${tabId}`);
       if (!requestMaps[tabId]) requestMaps[tabId] = {};
       potentialActiveTabs.push(tabId);
       chrome.debugger.sendCommand({ tabId }, "Network.enable", {}, resolve);
@@ -102,4 +102,5 @@ export function getRequests(tabId?: string) {
   if (tabId) {
     return Object.values(requestMaps[tabId] || {});
   }
+  return Object.values(requestMaps).reduce((acc, curr) => acc.concat(Object.values(curr)), []);
 }
