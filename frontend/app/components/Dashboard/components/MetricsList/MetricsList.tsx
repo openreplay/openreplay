@@ -10,13 +10,15 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 function MetricsList({
   siteId,
   onSelectionChange,
+  inLibrary,
 }: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
+  inLibrary?: boolean;
 }) {
   const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.filter.query;
-  const listView = metricStore.listView;
+  const listView = inLibrary ? true : metricStore.listView;
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   const dashboard = dashboardStore.selectedDashboard;
@@ -47,10 +49,14 @@ function MetricsList({
   }, [selectedMetrics]);
 
   const toggleMetricSelection = (id: any) => {
+    if (Array.isArray(id)) {
+      setSelectedMetrics(id);
+      return
+    }
     if (selectedMetrics.includes(id)) {
-      setSelectedMetrics(selectedMetrics.filter((i: number) => i !== id));
+      setSelectedMetrics((prev) => prev.filter((i: number) => i !== id));
     } else {
-      setSelectedMetrics([...selectedMetrics, id]);
+      setSelectedMetrics((prev) => [...prev, id]);
     }
   };
 
@@ -89,6 +95,7 @@ function MetricsList({
             disableSelection={!onSelectionChange}
             siteId={siteId}
             list={cards}
+            inLibrary={inLibrary}
             selectedList={selectedMetrics}
             existingCardIds={existingCardIds}
             toggleSelection={toggleMetricSelection}

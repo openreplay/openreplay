@@ -1,7 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Icon, Modal } from 'UI';
-import { Tooltip, Input, Button, Dropdown, Menu, Tag, Modal as AntdModal, Form, Avatar } from 'antd';
-import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+  Tooltip,
+  Input,
+  Button,
+  Dropdown,
+  Menu,
+  Tag,
+  Modal as AntdModal,
+  Form,
+  Avatar,
+} from 'antd';
+import {
+  TeamOutlined,
+  LockOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+} from '@ant-design/icons';
 import { RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 import { TYPE_ICONS, TYPE_NAMES } from 'App/constants/card';
@@ -9,33 +25,45 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical } from 'lucide-react';
+import cn from 'classnames'
 
 interface Props extends RouteComponentProps {
   metric: any;
   siteId: string;
-  selected?: boolean;
   toggleSelection?: any;
   disableSelection?: boolean;
   renderColumn: string;
+  inLibrary?: boolean;
 }
 
 function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
-      <Avatar src={<Icon name={TYPE_ICONS[type]} size="16" color="tealx" strokeColor="tealx" />}  size="default" className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item" />
+      <Avatar
+        src={
+          <Icon
+            name={TYPE_ICONS[type]}
+            size="16"
+            color="tealx"
+            strokeColor="tealx"
+          />
+        }
+        size="default"
+        className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item"
+      />
     </Tooltip>
   );
 }
 
 const MetricListItem: React.FC<Props> = ({
-                                           metric,
-                                           siteId,
-                                           toggleSelection = () => {
-                                           },
-                                           disableSelection = false,
-                                           renderColumn
-                                         }) => {
+  metric,
+  siteId,
+  toggleSelection = () => {},
+  disableSelection = false,
+  renderColumn,
+  inLibrary,
+}) => {
   const history = useHistory();
   const { metricStore } = useStore();
   const [isEdit, setIsEdit] = useState(false);
@@ -62,7 +90,7 @@ const MetricListItem: React.FC<Props> = ({
         cancelText: 'No',
         onOk: async () => {
           await metricStore.delete(metric);
-        }
+        },
       });
     }
     if (key === 'rename') {
@@ -127,29 +155,34 @@ const MetricListItem: React.FC<Props> = ({
     } else if (diffDays <= 3) {
       return `${diffDays} days ago at ${formatTime(date)}`;
     } else {
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} at ${formatTime(date)}`;
+      return `${date.getDate()}/${
+        date.getMonth() + 1
+      }/${date.getFullYear()} at ${formatTime(date)}`;
     }
   };
 
   const menuItems = [
     {
-      key: "rename",
+      key: 'rename',
       icon: <EditOutlined />,
-      label: "Rename"
+      label: 'Rename',
     },
     {
-      key: "delete",
+      key: 'delete',
       icon: <DeleteOutlined />,
-      label: "Delete"
-    }
-  ]
+      label: 'Delete',
+    },
+  ];
   switch (renderColumn) {
     case 'title':
       return (
         <>
-          <div className="flex items-center cursor-pointer" onClick={onItemClick}>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={inLibrary ? undefined : onItemClick}
+          >
             <MetricTypeIcon type={metric.metricType} />
-            <div className="capitalize-first link block">{metric.name}</div>
+            <div className={cn('capitalize-first block', inLibrary ? '' : 'link')}>{metric.name}</div>
           </div>
           {renderModal()}
         </>
@@ -160,7 +193,11 @@ const MetricListItem: React.FC<Props> = ({
       return (
         <div className="flex items-center">
           <Tag className="rounded-lg" bordered={false}>
-            {metric.isPublic ? <TeamOutlined className="mr-2" /> : <LockOutlined className="mr-2" />}
+            {metric.isPublic ? (
+              <TeamOutlined className="mr-2" />
+            ) : (
+              <LockOutlined className="mr-2" />
+            )}
             {metric.isPublic ? 'Team' : 'Private'}
           </Tag>
         </div>
@@ -171,13 +208,18 @@ const MetricListItem: React.FC<Props> = ({
     case 'options':
       return (
         <>
-        <div className='flex justify-end pr-4'>
-          <Dropdown
-            menu={{ items: menuItems, onClick: onMenuClick }}
-            trigger={['click']}
-          >
-            <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} className='btn-cards-list-item-more-options' type='text'/>
-          </Dropdown>
+          <div className="flex justify-end pr-4">
+            <Dropdown
+              menu={{ items: menuItems, onClick: onMenuClick }}
+              trigger={['click']}
+            >
+              <Button
+                id={'ignore-prop'}
+                icon={<EllipsisVertical size={16} />}
+                className="btn-cards-list-item-more-options"
+                type="text"
+              />
+            </Dropdown>
           </div>
           {renderModal()}
         </>

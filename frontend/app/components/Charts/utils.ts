@@ -126,16 +126,11 @@ export function customTooltipFormatter(uuid: string) {
       if (partnerValue !== undefined) {
         const partnerColor =
           (window as any).__seriesColorMap?.[uuid]?.[partnerName] || '#999';
-        str += `<div class="flex gap-2 items-center mt-2">
-        <div style="
-          border-radius: 99px; 
-          background: ${partnerColor}; 
-          width: 1rem; 
-          height: 1rem;">
-        </div>
-        <div class="font-medium">${partnerName}</div>
-      </div>
+        str += `
       <div style="border-left: 2px dashed ${partnerColor};" class="flex flex-col px-2 ml-2">
+        <div class="text-neutral-600 text-sm"> 
+          ${isPrevious ? 'Current' : 'Previous'} Total:
+        </div>
         <div class="flex items-center gap-1">
           <div class="font-medium">${partnerValue ?? '—'}</div>
           ${buildCompareTag(partnerValue, params.value)}

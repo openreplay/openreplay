@@ -4,7 +4,7 @@ import type { TableProps } from 'antd';
 import { Eye, EyeOff } from 'lucide-react';
 import cn from 'classnames';
 import React, { useState } from 'react';
-import { TableExporter } from '../../../Funnels/FunnelWidget/FunnelTable';
+import { TableExporter } from 'Components/Funnels/FunnelWidget/FunnelTable';
 
 const initTableProps = [
   {
@@ -62,15 +62,7 @@ function WidgetDatatable(props: Props) {
   const [showTable, setShowTable] = useState(props.defaultOpen);
   const [tableData, setTableData] = useState([]);
 
-  const columnNames = new Set();
-  /**
-   * basically we have an array of
-   * { time: some_date, series1: 1, series2: 2, series3: 3, timestamp: 123456 }
-   * which we turn into a table where each series of filters = row;
-   * and each unique time = column
-   * + average for each row
-   * [ { seriesName: 'series1', mon: 1, tue: 2, wed: 3, average: 2 }, ... ]
-   * */
+  const columnNames = [];
   const series = !data.chart[0]
     ? []
     : data.namesMap;
@@ -78,15 +70,16 @@ function WidgetDatatable(props: Props) {
   React.useEffect(() => {
     if (!data.chart) return;
     setTableProps(initTableProps);
-    columnNames.clear();
-    data.chart.forEach((p: any) => {
-      columnNames.add(p.time);
-    }); // for example: mon, tue, wed, thu, fri, sat, sun
-    const avg: any = {}; // { seriesName: {itemsCount: 0, total: 0} }
-    const items: Record<string, any>[] = []; // as many items (rows) as we have series in filter
+    columnNames.length = data.chart.length;
+    // for example: mon, tue, wed, thu, fri, sat, sun
+    data.chart.forEach((p: any, i) => {
+      columnNames[i] = p.time;
+    });
+
+    // as many items (rows) as we have series in filter
+    const items: Record<string, any>[] = [];
     series.forEach((s, i) => {
       items.push({ seriesName: s, average: 0, key: s });
-      avg[s] = { itemsCount: 0, total: 0 };
     });
     const tableCols: {
       title: React.ReactNode;
@@ -94,27 +87,30 @@ function WidgetDatatable(props: Props) {
       key: string;
       sorter: any;
     }[] = [];
-    const uniqueColArr = Array.from(columnNames);
-    uniqueColArr.forEach((name: string, i) => {
+    columnNames.forEach((name: string, i) => {
       tableCols.push({
         title: <span className={'font-medium'}>{name}</span>,
-        dataIndex: name,
-        key: name,
-        sorter: (a, b) => a[name] - b[name],
+        dataIndex: name+'_'+i,
+        key: name+'_'+i,
+        sorter: (a, b) => a[name+'_'+i] - b[name+'_'+i],
       });
-      const values = data.chart.filter((p) => p.time === name);
+      const values = data.chart[i];
       series.forEach((s) => {
-        avg[s].itemsCount += 1;
-        avg[s].total += values.reduce((acc, curr) => acc + curr[s], 0);
         const ind = items.findIndex((item) => item.seriesName === s);
         if (ind === -1) return;
-        items[ind][name] = values.reduce((acc, curr) => acc + curr[s], 0);
+        items[ind][name+'_'+i] = values[s];
       });
     });
-    Object.keys(avg).forEach((key) => {
-      const ind = items.findIndex((item) => item.seriesName === key);
-      if (ind === -1) return;
-      items[ind].average = (avg[key].total / avg[key].itemsCount).toFixed(2);
+    // calculating averages for each row
+    items.forEach((item) => {
+      const itemsLen = columnNames.length;
+      const keys = Object.keys(item).filter(k => !['seriesName', 'key', 'average'].includes(k));
+      let sum = 0;
+      const values = keys.map(k => item[k]);
+      values.forEach((v) => {
+        sum += v;
+      });
+      item.average = (sum / itemsLen).toFixed(1);
     });
 
     setTableProps((prev) => [...prev, ...tableCols]);
