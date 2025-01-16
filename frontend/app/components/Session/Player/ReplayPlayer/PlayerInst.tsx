@@ -118,13 +118,27 @@ function Player(props: IProps) {
 
   return (
     <div
-      className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}
+      className={cn(
+        stl.playerBody,
+        'flex-1 flex flex-col relative',
+        fullscreen && 'pb-2'
+      )}
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={cn('relative flex-1', 'overflow-hidden')} id={'player-container'}>
+      <div
+        className={cn('relative flex-1', 'overflow-hidden')}
+        id={'player-container'}
+      >
+        {activeTab === 'HIGHLIGHT' ? <div style={{ background: 'rgba(0,0,0, 0.3)' }} className={'w-full h-full z-50 absolute top-0 left-0'} /> : undefined}
         <Overlay nextId={nextId} />
-        <div className={cn(stl.screenWrapper, isInspMode ? stl.solidBg : stl.checkers)} ref={screenWrapper} />
+        <div
+          className={cn(
+            stl.screenWrapper,
+            isInspMode ? stl.solidBg : stl.checkers
+          )}
+          ref={screenWrapper}
+        />
       </div>
       {!fullscreen && !!bottomBlock && (
         <div
@@ -142,10 +156,14 @@ function Player(props: IProps) {
           />
           {bottomBlock === OVERVIEW && <OverviewPanel />}
           {bottomBlock === CONSOLE && <ConsolePanel />}
-          {bottomBlock === NETWORK && <WebNetworkPanel panelHeight={panelHeight} />}
+          {bottomBlock === NETWORK && (
+            <WebNetworkPanel panelHeight={panelHeight} />
+          )}
           {bottomBlock === STACKEVENTS && <WebStackEventPanel />}
           {bottomBlock === STORAGE && <Storage />}
-          {bottomBlock === PROFILER && <ProfilerPanel panelHeight={panelHeight} />}
+          {bottomBlock === PROFILER && (
+            <ProfilerPanel panelHeight={panelHeight} />
+          )}
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
           {bottomBlock === GRAPHQL && <GraphQL panelHeight={panelHeight} />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}
@@ -154,7 +172,9 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <Controls
-          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
+          setActiveTab={(tab: string) =>
+            activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
+          }
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
