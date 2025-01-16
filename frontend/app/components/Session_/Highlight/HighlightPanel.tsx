@@ -111,7 +111,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
   const onSave = async () => {
     try {
       notesStore.setSaving(true)
-      const playerContainer = document.querySelector('#player-container');
+      const playerContainer = document.querySelector('iframe')?.contentWindow?.document.body;
       let thumbnail;
       if (playerContainer) {
         thumbnail = await elementToImage(playerContainer);
@@ -228,6 +228,12 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
     </div>
   );
 }
+window.__debugElementToImage = (el) => elementToImage(el).then(img => {
+  const a = document.createElement('a');
+  a.href = img;
+  a.download = 'highlight.png';
+  a.click();
+});
 
 function elementToImage(el) {
   return import('html2canvas').then(({ default: html2canvas }) => {
@@ -235,14 +241,14 @@ function elementToImage(el) {
       el,
       {
         scale: 1,
-        // allowTaint: true,
+        allowTaint: true,
         useCORS: true,
-        foreignObjectRendering: true,
+        logging: true,
+        foreignObjectRendering: false,
         height: 900,
         width: 1200,
         x: 0,
         y: 0,
-        ignoreElements: (e) => e.id.includes('render-ignore'),
       }
     ).then((canvas) => {
       return canvas.toDataURL('img/png');
