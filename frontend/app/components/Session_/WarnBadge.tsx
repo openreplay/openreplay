@@ -137,4 +137,35 @@ const WarnBadge = React.memo(
   }
 );
 
+export function PartialSessionBadge() {
+  return (
+    <div
+      className="flex flex-col gap-2"
+      style={{
+        zIndex: 999,
+        position: 'absolute',
+        left: '50%',
+        bottom: '0',
+        transform: `translate(-50%, -30%)`,
+        fontWeight: 500,
+      }}
+    >
+        <div
+          className={
+            'px-3 py-2 border border-gray-lighter shadow rounded-lg bg-white flex items-center gap-2'
+          }
+        >
+          <div className={'rounded-full text-white bg-blue leading-none w-6 h-6 flex items-center justify-center'}>
+            <div>
+            i
+            </div>
+          </div>
+          <div>
+            You are viewing a portion of full session
+          </div>
+        </div>
+    </div>
+  )
+}
+
 export default WarnBadge;
