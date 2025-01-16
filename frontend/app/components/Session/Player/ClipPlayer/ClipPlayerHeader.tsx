@@ -9,6 +9,7 @@ import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
 import { useStore } from '@/mstore';
 import { LinkIcon, X } from 'lucide-react';
+import { PartialSessionBadge } from "Components/Session_/WarnBadge";
 
 interface Props {
   session: Session;
@@ -30,7 +31,8 @@ function ClipPlayerHeader(props: Props) {
     void message.success('Session link copied to clipboard');
   };
   return (
-    <div className="bg-white p-3 flex justify-between items-center border-b">
+    <div className="bg-white p-3 flex justify-between items-center border-b relative">
+      {isHighlight ? <PartialSessionBadge /> : null}
       <UserCard session={props.session} />
 
       <Space>
