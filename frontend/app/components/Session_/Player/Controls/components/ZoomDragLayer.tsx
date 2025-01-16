@@ -102,12 +102,16 @@ function DraggableMarkers({
   const [dragging, setDragging] = useState<string | null>(null);
 
   React.useEffect(() => {
+    if (dragging) {
+      return;
+    }
     setStartPos(getTimelinePosition(defaultStartPos, scale));
     setEndPos(getTimelinePosition(defaultEndPos, scale));
   }, [
     defaultEndPos,
     defaultStartPos,
     scale,
+    dragging
   ])
 
   const convertToPercentage = useCallback(
@@ -158,7 +162,9 @@ function DraggableMarkers({
           }
           setStartPos(newStartPos);
           setEndPos(newEndPos);
-          onDragEnd(newPos / scale, endPos / scale);
+          setTimeout(() => {
+            onDragEnd(newStartPos / scale, newEndPos / scale);
+          }, 1)
         }
       }
     },
@@ -170,7 +176,7 @@ function DraggableMarkers({
   }, []);
 
   const barSize = 104;
-  const centering = -36;
+  const centering = -41;
   const topPadding = 41;
   const uiSize = 16;
 
