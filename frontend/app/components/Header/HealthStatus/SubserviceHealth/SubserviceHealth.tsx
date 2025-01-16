@@ -32,9 +32,9 @@ function SubserviceHealth({
             </div>
           ) : null}
           {subservice?.details?.errors?.length ? (
-            <div className={'py-2 px-4 bg-white rounded border border-light-gray'}>
+            <div className={'py-2 px-4 bg-white rounded border border-light-gray flex gap-1 flex-wrap'}>
               <div>Error log:</div>
-              {subservice.details.errors.toString()}
+              <div>{subservice.details.errors.toString()}</div>
             </div>
           ) : subservice?.health ? null : (
             'Service not responding'
