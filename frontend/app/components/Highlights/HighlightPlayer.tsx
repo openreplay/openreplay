@@ -43,15 +43,20 @@ function HighlightPlayer({
 
   return (
     <div
+      className={'w-screen h-screen fixed top-0 left-0 flex items-center justify-center'}
+      style={{ zIndex: 100, background: 'rgba(0,0,0, 0.15)' }}
+    >
+    <div
       className={cn(
-      'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-lg overflow-hidden',
+      'rounded-lg overflow-hidden',
         'rounded shadow boarder bg-white'
       )}
-      style={{ zIndex: 100 }}
+      style={{ width: 960 }}
     >
       <Loader loading={notesStore.loading}>
         <ClipsPlayer isHighlight onClose={onClose} clip={clip} currentIndex={0} isCurrent={true} autoplay={false} />
       </Loader>
+    </div>
     </div>
   )
 }
