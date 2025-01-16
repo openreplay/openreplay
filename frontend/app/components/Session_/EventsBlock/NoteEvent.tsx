@@ -37,6 +37,8 @@ function NoteEvent(props: Props) {
           isPublic: props.note.isPublic,
           message: props.note.message,
           noteId: props.note.noteId.toString(),
+          startAt: props.note.startAt,
+          endAt: props.note.endAt
         }}
       />,
       { right: true, width: 380 }
