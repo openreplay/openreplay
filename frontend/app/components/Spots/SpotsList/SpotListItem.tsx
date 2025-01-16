@@ -14,6 +14,7 @@ import { Link2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { TextEllipsis } from "UI";
 
 import { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
@@ -262,21 +263,17 @@ export function GridItem({
                 isSelected ? 'text-teal' : ''
               }`}
             >
-              <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
-                {title}
-              </span>
+              <TextEllipsis text={title} />
             </Checkbox>
           ) : (
-            <span className="w-full text-nowrap text-ellipsis overflow-hidden max-w-80 mb-0 block">
-              {title}
-            </span>
+            <TextEllipsis text={title} />
           )}
         </div>
         <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
           <div>
             <UserOutlined />
           </div>
-          <div>{user}</div>
+          <TextEllipsis text={user} />
           <div className="ml-auto">
             <ClockCircleOutlined />
           </div>

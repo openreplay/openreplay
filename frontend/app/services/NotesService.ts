@@ -14,9 +14,9 @@ export const TAGS = Object.keys(tagProps) as unknown as (keyof typeof tagProps)[
 
 export interface WriteNote {
   message: string
-  tag: iTag
+  tag: string
   isPublic: boolean
-  timestamp: number
+  timestamp?: number
   startAt: number
   endAt: number
   thumbnail: string
@@ -47,6 +47,7 @@ export interface NotesFilter {
   tags: iTag[]
   sharedOnly: boolean
   mineOnly: boolean
+  query: string
 }
 
 export default class NotesService {
@@ -62,6 +63,12 @@ export default class NotesService {
 
   fetchNotes(filter: NotesFilter): Promise<{ notes: Note[], count: number }> {
     return this.client.post('/notes', filter).then(r => {
+      return r.json().then(r => r.data)
+    })
+  }
+
+  fetchNoteById(noteId: string): Promise<Note> {
+    return this.client.get(`/notes/${noteId}`).then(r => {
       return r.json().then(r => r.data)
     })
   }

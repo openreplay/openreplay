@@ -20,8 +20,9 @@ function maskDuration(input: string): string {
 
   return `${limitedDigits.slice(0, 2)}:${limitedDigits.slice(2)}`;
 }
+const duration = new RegExp(/(\d{2}):(\d{2})/);
 
-function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: () => void }) {
+function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: () => void }) {
   const { uiPlayerStore, notesStore, sessionStore } = useStore();
   const editNote = editNoteId ? notesStore.getNoteById(editNoteId) : undefined;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
@@ -41,11 +42,31 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
   const [tag, setTag] = React.useState(editNote?.tag ?? '');
 
   const onStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStartTs(maskDuration(e.target.value));
+    const newState = maskDuration(e.target.value)
+    setStartTs(newState);
+    if (duration.test(newState)) {
+      const [_, minutes, seconds] = duration.exec(newState) ?? [];
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const sessLength = store.get().endTime;
+      uiPlayerStore.toggleHighlightSelection({
+        enabled: true,
+        range: [Math.min(newTime, sessLength), uiPlayerStore.highlightSelection.endTs],
+      })
+    }
   };
 
   const onEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndTs(maskDuration(e.target.value));
+    const newState = maskDuration(e.target.value)
+    setEndTs(newState);
+    if (duration.test(newState)) {
+      const [_, minutes, seconds] = duration.exec(newState) ?? [];
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const sessLength = store.get().endTime;
+      uiPlayerStore.toggleHighlightSelection({
+        enabled: true,
+        range: [uiPlayerStore.highlightSelection.startTs, Math.min(newTime, sessLength)],
+      })
+    }
   };
 
   const playing = store.get().playing;
@@ -87,25 +108,37 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
     return tag === checkedTag;
   };
 
-  const onSave = () => {
-    const note = {
-      message,
-      tag: tag,
-      isPublic,
-      timestamp: withTs ? currentTime : undefined,
-      startAt: startTs,
-      endAt: endTs,
-      thumbnail: '',
+  const onSave = async () => {
+    try {
+      notesStore.setSaving(true)
+      const playerContainer = document.querySelector('#player-container');
+      let thumbnail;
+      if (playerContainer) {
+        thumbnail = await elementToImage(playerContainer);
+      }
+      const note = {
+        message,
+        tag: tag,
+        isPublic,
+        timestamp: withTs ? parseInt(currentTime, 10) : undefined,
+        startAt: parseInt(uiPlayerStore.highlightSelection.startTs, 10),
+        endAt: parseInt(uiPlayerStore.highlightSelection.endTs, 10),
+        thumbnail,
+      }
+      if (editNoteId) {
+        await notesStore.updateNote(editNoteId, note);
+        toast.success('Highlight updated');
+      } else {
+        const sessionId = sessionStore.current.sessionId;
+        await notesStore.addNote(sessionId, note);
+        toast.success('Highlight saved. Find it in Home > Highlights');
+      }
+      onClose();
+    } catch (e) {
+      toast.error('Failed to save highlight');
+    } finally {
+      notesStore.setSaving(false);
     }
-    if (editNoteId) {
-      notesStore.updateNote(editNoteId, note);
-      toast.success('Highlight updated');
-    } else {
-      const sessionId = sessionStore.current.sessionId;
-      notesStore.addNote(sessionId, note);
-      toast.success('Highlight saved. Find it in Home > Highlights');
-    }
-    onClose();
   }
 
   return (
@@ -148,6 +181,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
         <Input.TextArea
           onChange={(e) => setMessage(e.target.value)}
           placeholder={'Enter Comments'}
+          maxLength={200}
         />
       </div>
       <div className={'flex items-center gap-1 flex-wrap'}>
@@ -180,6 +214,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
         <Button
           onClick={onSave}
           type={'primary'}
+          loading={notesStore.isSaving}
           icon={<MessageSquareQuote size={14} strokeWidth={1} />}
         >
           Save Highlight
@@ -192,6 +227,30 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: number; onClose: 
       </div>
     </div>
   );
+}
+
+function elementToImage(el) {
+  return import('html2canvas').then(({ default: html2canvas }) => {
+    return html2canvas(
+      el,
+      {
+        scale: 1,
+        // allowTaint: true,
+        useCORS: true,
+        foreignObjectRendering: true,
+        height: 900,
+        width: 1200,
+        x: 0,
+        y: 0,
+        ignoreElements: (e) => e.id.includes('render-ignore'),
+      }
+    ).then((canvas) => {
+      return canvas.toDataURL('img/png');
+    }).catch(e => {
+      console.log(e);
+      return undefined
+    });
+  })
 }
 
 export default observer(HighlightPanel);

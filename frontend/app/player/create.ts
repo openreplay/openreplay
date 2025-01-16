@@ -88,3 +88,23 @@ export function createLiveWebPlayer(
 	const player = new WebLivePlayer(store, session, config, agentId, projectId, uiErrorHandler)
 	return [player, store]
 }
+
+export function createClipPlayer(
+  session: SessionFilesInfo,
+  wrapStore?: (s: IWebPlayerStore) => IWebPlayerStore,
+  uiErrorHandler?: { error: (msg: string) => void },
+  range?: [number, number]
+): [IWebPlayer, IWebPlayerStore] {
+  let store: WebPlayerStore = new SimpleStore<WebState>({
+    ...WebPlayer.INITIAL_STATE,
+  });
+  if (wrapStore) {
+    store = wrapStore(store);
+  }
+
+  const player = new WebPlayer(store, session, false, false, uiErrorHandler);
+  if (range && range[0] !== range[1]) {
+    player.toggleRange(range[0], range[1]);
+  }
+  return [player, store];
+}

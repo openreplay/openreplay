@@ -122,7 +122,7 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={cn('relative flex-1', 'overflow-hidden')}>
+      <div className={cn('relative flex-1', 'overflow-hidden')} id={'player-container'}>
         <Overlay nextId={nextId} />
         <div className={cn(stl.screenWrapper, isInspMode ? stl.solidBg : stl.checkers)} ref={screenWrapper} />
       </div>
