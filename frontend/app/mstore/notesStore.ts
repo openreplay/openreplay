@@ -9,15 +9,25 @@ export default class NotesStore {
   sessionNotes: Note[] = []
   loading: boolean
   page = 1
-  pageSize = 10
+  pageSize = 9
   activeTags: iTag[] = []
   sort = 'createdAt'
   order: 'DESC' | 'ASC' = 'DESC'
   ownOnly = false
   total = 0
+  isSaving = false;
+  query = ''
 
   constructor() {
     makeAutoObservable(this)
+  }
+
+  setQuery = (query: string) => {
+    this.query = query
+  }
+
+  setSaving = (saving: boolean) => {
+    this.isSaving = saving
   }
 
   setLoading(loading: boolean) {
@@ -40,7 +50,8 @@ export default class NotesStore {
       order: this.order,
       tags: this.activeTags,
       mineOnly: this.ownOnly,
-      sharedOnly: false
+      sharedOnly: false,
+      query: this.query,
     }
 
     this.setLoading(true)
@@ -48,7 +59,18 @@ export default class NotesStore {
       const { notes, count } = await notesService.fetchNotes(filter);
       this.setNotes(notes);
       this.setTotal(count)
-      return notes;
+      return { notes, total: count };
+    } catch (e) {
+      console.error(e)
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  fetchNoteById = async (noteId: string)=> {
+    this.setLoading(true)
+    try {
+      return await notesService.fetchNoteById(noteId);
     } catch (e) {
       console.error(e)
     } finally {
@@ -115,7 +137,7 @@ export default class NotesStore {
     }
   }
 
-  getNoteById(noteId: number, notes?: Note[]) {
+  getNoteById(noteId: any, notes?: Note[]) {
     const notesSource = notes ? notes : this.notes
 
     return notesSource.find(note => note.noteId === noteId)
@@ -128,10 +150,8 @@ export default class NotesStore {
   toggleTag(tag?: iTag) {
     if (!tag) {
       this.activeTags = []
-      this.fetchNotes()
     } else {
       this.activeTags = [tag]
-      this.fetchNotes()
     }
   }
 

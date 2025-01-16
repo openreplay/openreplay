@@ -1,52 +1,114 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { GridItem } from 'App/components/Spots/SpotsList/SpotListItem';
-import { Input, Tag, Segmented, Modal, Checkbox } from 'antd';
-import { iTag, tagProps, TAGS } from 'App/services/NotesService';
+import { Input, Segmented } from 'antd';
+import { iTag, TAGS } from 'App/services/NotesService';
 import { SortDropdown } from 'Shared/SessionsTabOverview/components/SessionSort/SessionSort';
-import { numberWithCommas } from '../../utils';
-import { Pagination, NoContent, confirm } from 'UI';
+import { useStore } from 'App/mstore';
+import { numberWithCommas } from 'App/utils';
+import { Pagination, NoContent, Loader } from 'UI';
 import cn from 'classnames';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Eye, Link } from 'lucide-react';
-import copy from 'copy-to-clipboard';
-import { toast } from 'react-toastify'
+import { withSiteId, highlights } from "App/routes";
+import HighlightClip from './HighlightClip';
+import { useQuery } from '@tanstack/react-query';
+import HighlightPlayer from "./HighlightPlayer";
+import { useLocation, useHistory } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import EditHlModal from "./EditHlModal";
 
 function HighlightsList() {
+  const { notesStore, projectsStore } = useStore();
+  const hist = useHistory();
   const [editModalOpen, setEditModalOpen] = React.useState(false);
-  const [noteText, setNoteText] = React.useState('');
-  // if range 0:0 == full session;
-  const [query, setQuery] = React.useState('');
-  const [page, setPage] = React.useState(1);
-  const limit = 9;
-  const listLength = 9;
-  const total = 100;
+  const [editHl, setEditHl] = React.useState<Record<string, any>>({
+    message: '',
+    isPublic: false,
+  });
+  const { search } = useLocation();
+  const highlight = new URLSearchParams(search).get('highlight');
+
+  const query = notesStore.query;
+  const limit = notesStore.pageSize;
+  const listLength = notesStore.notes.length;
+  const activeTags = notesStore.activeTags;
+  const page = notesStore.page;
+  const {
+    data = { notes: [], total: 0 },
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: ['notes', page, query, activeTags],
+    queryFn: () => notesStore.fetchNotes(),
+    retry: 3,
+  });
+  const { total, notes } = data;
 
   const onSearch = (value: string) => {
-    setQuery(value);
-    // void spotStore.fetchSpots();
+    notesStore.setQuery(value);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-    // debouncedFetch();
+    notesStore.setQuery(value);
   };
 
-  const activeTags = ['ALL'];
   const toggleTag = (tag?: iTag) => {
-    // void spotStore.toggleTag(tag);
+    notesStore.toggleTag(tag)
   };
 
   const onPageChange = (page: number) => {
-    setPage(page);
+    notesStore.changePage(page);
   };
 
-  const isEmpty = false; //true;
+  const onDelete = async (id: number) => {
+    await notesStore.deleteNote(id);
+    refetch();
+    toast.success('Highlight deleted successfully');
+  };
+
+  const onItemClick = (id: string) => {
+    hist.replace(`?highlight=${id}`);
+  }
+
+  const onClose = () => {
+    hist.replace(withSiteId(highlights(), projectsStore.active?.id));
+  }
+
+  const onEdit = (id: string) => {
+    const hl = notesStore.getNoteById(id);
+    if (!hl) {
+      return toast.error('Highlight not found in the list');
+    }
+    console.log(hl)
+    setEditHl(hl);
+    setEditModalOpen(true)
+  }
+
+  const onSave = async (noteText: string, visible: boolean) => {
+    if (!editHl) {
+      return;
+    }
+    const newNote = {
+      ...editHl,
+      message: noteText,
+      isPublic: visible,
+    }
+    try {
+      await notesStore.updateNote(editHl.noteId, newNote);
+      toast.success('Highlight updated successfully');
+    } catch (e) {
+      console.error(e);
+      toast.error('Error updating highlight');
+    }
+
+    setEditModalOpen(false);
+  }
+
+  const isEmpty = !isPending && total === 0;
   return (
     <div
       className={'relative w-full mx-auto bg-white rounded-lg'}
       style={{ maxWidth: 1360 }}
     >
+      {highlight && <HighlightPlayer onClose={onClose} hlId={highlight} />}
       <div className={'flex p-2 px-4 w-full border-b gap-4 items-center'}>
         <h1 className={'text-2xl capitalize mr-2'}>Highlights</h1>
         <Segmented
@@ -112,7 +174,7 @@ function HighlightsList() {
             onChange={handleInputChange}
             onSearch={onSearch}
             className="rounded-lg"
-            size='small'
+            size="small"
           />
         </div>
       </div>
@@ -124,42 +186,38 @@ function HighlightsList() {
             : ' grid grid-cols-3 gap-6'
         )}
       >
-        <NoContent
-          show={isEmpty}
-          subtext={
-            <div className={'w-full text-center'}>
-              Highlight and note observations during session replays and share
-              them with your team.
-            </div>
-          }
-        >
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-          <HighlightClip openEdit={() => setEditModalOpen(true)} />
-        </NoContent>
-        <Modal
-          title={'Edit Highlight'}
+        <Loader loading={isPending}>
+          <NoContent
+            show={isEmpty}
+            subtext={
+              <div className={'w-full text-center'}>
+                Highlight and note observations during session replays and share
+                them with your team.
+              </div>
+            }
+          >
+            {notes.map((note) => (
+              <HighlightClip
+                note={note.message}
+                tag={note.tag}
+                user={note.userName}
+                createdAt={note.createdAt}
+                hId={note.noteId}
+                thumbnail={note.thumbnail}
+                openEdit={() => onEdit(note.noteId)}
+                onDelete={() => onDelete(note.noteId)}
+                onItemClick={() => onItemClick(note.noteId)}
+              />
+            ))}
+          </NoContent>
+        </Loader>
+        <EditHlModal
           open={editModalOpen}
-          okText={'Save'}
-          width={350}
-          centered
-          onOk={() => setEditModalOpen(false)}
           onCancel={() => setEditModalOpen(false)}
-        >
-          <div className={'flex flex-col gap-2'}>
-            <Input.TextArea
-              placeholder={'Highlight note'}
-              onChange={(e) => setNoteText(e.target.value)}
-              maxLength={200}
-              value={noteText}
-            />
-            <div>{noteText.length}/200 Characters remaining</div>
-            <Checkbox>Team can see and edit this Highlight.</Checkbox>
-          </div>
-        </Modal>
+          text={editHl?.message}
+          visible={editHl?.isPublic}
+          onSave={onSave}
+        />
       </div>
       <div
         className={cn(
@@ -180,98 +238,10 @@ function HighlightsList() {
           total={total}
           onPageChange={onPageChange}
           limit={limit}
-          debounceRequest={500}
+          debounceRequest={250}
         />
       </div>
     </div>
-  );
-}
-
-function HighlightClip({
-  note = 'Highlight note',
-  tag = 'ISSUE',
-  user = 'user@openreplay.com',
-  createdAt = '12/12/2025',
-  hId = '1234',
-  openEdit = () => undefined,
-}) {
-  const copyToClipboard = () => {
-    copy(hId);
-  };
-  const onItemClick = () => {
-    console.log('Item clicked');
-  };
-
-  const menuItems = [
-    {
-      key: 'copy',
-      icon: <Link size={14} strokeWidth={1} />,
-      label: 'Copy Link',
-    },
-    {
-      key: 'edit',
-      icon: <EditOutlined />,
-      label: 'Edit',
-    },
-    {
-      key: 'visibility',
-      icon: <Eye strokeWidth={1} size={14} />,
-      label: 'Visibility',
-    },
-    {
-      key: 'delete',
-      icon: <DeleteOutlined />,
-      label: 'Delete',
-    },
-  ];
-
-  const onMenuClick = async ({ key }: any) => {
-    switch (key) {
-      case 'edit':
-        return openEdit();
-      case 'copy':
-        copyToClipboard();
-        toast.success('Highlight link copied to clipboard');
-        return
-      case 'delete':
-        const res = await confirm({
-          header: 'Are you sure delete this Highlight?',
-          confirmation:
-            'Deleting a Highlight will only remove this instance and its associated note. It will not affect the original session.',
-          confirmButton: 'Yes, Delete',
-        });
-        console.log(res);
-        return;
-      case 'visibility':
-        return openEdit();
-      default:
-        break;
-    }
-  };
-  return (
-    <GridItem
-      title={note}
-      onItemClick={onItemClick}
-      thumbnail={null}
-      setLoading={() => null}
-      loading={false}
-      copyToClipboard={copyToClipboard}
-      user={user}
-      createdAt={createdAt}
-      menuItems={menuItems}
-      onMenuClick={onMenuClick}
-      modifier={
-        <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-          <Tag
-            color={tagProps[tag]}
-            className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
-            bordered={false}
-          >
-            {tag.toLowerCase()}
-          </Tag>
-        </div>
-      }
-    />
   );
 }
 

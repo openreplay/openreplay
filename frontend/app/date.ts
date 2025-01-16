@@ -12,7 +12,8 @@ export function getDateFromString(date: string, format = 'yyyy-MM-dd HH:mm:ss:SS
 /**
  * Formats a given duration.
  *
- * @param {Duration | number} inputDuration - The duration to format. Can be a Duration object or a number representing milliseconds.
+ * @param {Duration | number} inputDuration - The duration to format. Can be a Duration object or a number representing
+ *   milliseconds.
  * @returns {string} - Formatted duration string.
  *
  * @example
@@ -163,7 +164,7 @@ export const checkForRecent = (date: DateTime, format: string): string => {
   // Formatted
   return date.toFormat(format);
 };
-export const resentOrDate = (ts) => {
+export const resentOrDate = (ts, short?: boolean) => {
   const date = DateTime.fromMillis(ts);
   const d = new Date();
   // Today
@@ -171,7 +172,7 @@ export const resentOrDate = (ts) => {
 
   // Yesterday
   if (date.hasSame(d.setDate(d.getDate() - 1), 'day')) return 'Yesterday at ' + date.toFormat('hh:mm a');
-  return date.toFormat('LLL dd, yyyy, hh:mm a');
+  return date.toFormat(`LLL dd, yyyy${short ? '' : ', hh:mm a'}`);
 }
 
 export const checkRecentTime = (date, format) => {

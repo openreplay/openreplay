@@ -1,0 +1,92 @@
+import React, { useEffect } from 'react';
+import cn from 'classnames';
+import stl from 'Components/Session_/Player/player.module.css';
+import {
+  IPlayerContext,
+  PlayerContext,
+} from 'Components/Session/playerContext';
+import ClipPlayerControls from 'Components/Session/Player/ClipPlayer/ClipPlayerControls';
+import { findDOMNode } from 'react-dom';
+import Session from 'Types/session';
+import styles from 'Components/Session_/playerBlock.module.css';
+import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
+import { observer } from 'mobx-react-lite';
+import { MessageSquare } from 'lucide-react'
+
+interface Props {
+  session: Session;
+  range: [number, number];
+  autoplay: boolean;
+  isHighlight?: boolean;
+  message?: string;
+}
+
+function ClipPlayerContent(props: Props) {
+  const playerContext = React.useContext<IPlayerContext>(PlayerContext);
+  const screenWrapper = React.useRef<HTMLDivElement>(null);
+  const { time } = playerContext.store.get();
+  const { range } = props;
+
+  React.useEffect(() => {
+    if (!playerContext.player) return;
+
+    const parentElement = findDOMNode(
+      screenWrapper.current
+    ) as HTMLDivElement | null;
+
+    if (parentElement && playerContext.player) {
+      playerContext.player?.attach(parentElement);
+      playerContext.player?.play();
+    }
+  }, [playerContext.player]);
+
+  React.useEffect(() => {
+    playerContext.player.scale();
+  }, [playerContext.player]);
+
+  useEffect(() => {
+    if (time < range[0]) {
+      playerContext.player?.jump(range[0]);
+    }
+    if (time > range[1]) {
+      playerContext.store.update({ completed: true });
+      playerContext.player?.pause();
+    }
+  }, [time]);
+
+  if (!playerContext.player) return null;
+
+  return (
+    <div
+      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
+    >
+      <div className={cn(stl.playerBody, 'flex-1 flex flex-col relative')}>
+        <div className={cn(stl.playerBody, 'flex flex-1 flex-col relative')}>
+          <div className="relative flex-1 overflow-hidden group">
+            <ClipPlayerOverlay autoplay={props.autoplay} />
+            <div
+              className={cn(stl.screenWrapper, stl.checkers)}
+              ref={screenWrapper}
+              data-openreplay-obscured
+              style={{ height: '500px' }}
+            />
+          </div>
+        </div>
+        {props.isHighlight && props.message ? (
+          <div className={'p-3 bg-yellow flex items-start gap-2 w-full'}>
+            <MessageSquare size={14} strokeWidth={1} />
+            <div className={'leading-none'}>
+              {props.message}
+            </div>
+          </div>
+        ) : null}
+        <ClipPlayerControls
+          session={props.session}
+          range={props.range}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default observer(ClipPlayerContent);

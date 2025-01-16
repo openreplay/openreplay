@@ -32,6 +32,7 @@ export default class Player extends Animator {
     autoplay: initialAutoplay,
     skip: initialSkip,
     speed: initialSpeed,
+    range: [0, 0] as [number, number],
   } as const
 
   constructor(private pState: Store<State & AnimatorGetState>, private manager: IMessageManager) {
@@ -105,8 +106,11 @@ export default class Player extends Animator {
     const { speed } = this.pState.get()
     this.updateSpeed(Math.max(1, speed / 2))
   }
-  /* === === */
 
+  // toggle range (start, end)
+  toggleRange(start: number, end: number) {
+    this.pState.update({ range: [start, end] })
+  }
 
   clean() {
     this.pause()

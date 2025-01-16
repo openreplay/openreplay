@@ -101,6 +101,15 @@ function DraggableMarkers({
   );
   const [dragging, setDragging] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    setStartPos(getTimelinePosition(defaultStartPos, scale));
+    setEndPos(getTimelinePosition(defaultEndPos, scale));
+  }, [
+    defaultEndPos,
+    defaultStartPos,
+    scale,
+  ])
+
   const convertToPercentage = useCallback(
     (clientX: number, element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
