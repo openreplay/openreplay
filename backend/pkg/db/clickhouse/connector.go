@@ -1,8 +1,12 @@
 package clickhouse
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"hash/fnv"
 	"log"
 	"strings"
 	"time"
@@ -101,27 +105,28 @@ func (c *connectorImpl) newBatch(name, query string) error {
 }
 
 var batches = map[string]string{
-	// Web
+	// Sessions
 	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, timezone, utm_source, utm_medium, utm_campaign) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
-	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, url_path, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?)",
-	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type, selector, normalized_x, normalized_y, url, url_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000))",
-	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type, transfer_size, url_path) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000))",
-	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type, url, url_path) VALUES (?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000))",
-	"issues":        "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
+	// Web events
+	"pages":        `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"clicks":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"inputs":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"errors":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"performance":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"requests":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"custom":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"graphql":      `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"issuesEvents": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"issues":       "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 	//Mobile
 	"ios_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
-	"ios_custom":   "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	"ios_clicks":   "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
-	"ios_swipes":   "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, label, direction, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	"ios_inputs":   "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
-	"ios_requests": "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
-	"ios_crashes":  "INSERT INTO experimental.ios_events (session_id, project_id, message_id, datetime, name, reason, stacktrace, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+	"ios_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"ios_clicks":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"ios_swipes":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"ios_inputs":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"ios_requests": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
+	"ios_crashes":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, distinct_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?)`,
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -153,11 +158,13 @@ func (c *connectorImpl) Stop() error {
 }
 
 func (c *connectorImpl) sendBulks(t *task) {
+	fmt.Printf("sending bulks")
 	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
 			log.Printf("can't send batch: %s", err)
 		}
 	}
+	fmt.Printf("sent bulks")
 }
 
 func (c *connectorImpl) worker() {
@@ -166,6 +173,7 @@ func (c *connectorImpl) worker() {
 		case t := <-c.workerTask:
 			c.sendBulks(t)
 		case <-c.done:
+			fmt.Printf("done")
 			for t := range c.workerTask {
 				c.sendBulks(t)
 			}
@@ -173,96 +181,6 @@ func (c *connectorImpl) worker() {
 			return
 		}
 	}
-}
-
-func (c *connectorImpl) checkError(name string, err error) {
-	if err != clickhouse.ErrBatchAlreadySent {
-		log.Printf("can't create %s batch after failed append operation: %s", name, err)
-	}
-}
-
-func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
-	if msg.Label == "" {
-		return nil
-	}
-	if err := c.batches["inputs"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Label,
-		"INPUT",
-		nullableUint16(uint16(msg.InputDuration)),
-		nullableUint32(uint32(msg.HesitationTime)),
-	); err != nil {
-		c.checkError("inputs", err)
-		return fmt.Errorf("can't append to inputs batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error {
-	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
-	// Insert issue event to batches
-	if err := c.batches["issuesEvents"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		issueID,
-		"mouse_thrashing",
-		"ISSUE",
-		msg.Url,
-		extractUrlPath(msg.Url),
-	); err != nil {
-		c.checkError("issuesEvents", err)
-		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
-	}
-	if err := c.batches["issues"].Append(
-		uint16(session.ProjectID),
-		issueID,
-		"mouse_thrashing",
-		msg.Url,
-	); err != nil {
-		c.checkError("issues", err)
-		return fmt.Errorf("can't append to issues batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error {
-	issueID := hashid.IssueID(session.ProjectID, msg)
-	// Check issue type before insert to avoid panic from clickhouse lib
-	switch msg.Type {
-	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception", "mouse_thrashing", "app_crash":
-	default:
-		return fmt.Errorf("unknown issueType: %s", msg.Type)
-	}
-	// Insert issue event to batches
-	if err := c.batches["issuesEvents"].Append(
-		session.SessionID,
-		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
-		issueID,
-		msg.Type,
-		"ISSUE",
-		msg.URL,
-		extractUrlPath(msg.URL),
-	); err != nil {
-		c.checkError("issuesEvents", err)
-		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
-	}
-	if err := c.batches["issues"].Append(
-		uint16(session.ProjectID),
-		issueID,
-		msg.Type,
-		msg.ContextString,
-	); err != nil {
-		c.checkError("issues", err)
-		return fmt.Errorf("can't append to issues batch: %s", err)
-	}
-	return nil
 }
 
 func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
@@ -313,40 +231,152 @@ func (c *connectorImpl) InsertWebSession(session *sessions.Session) error {
 	return nil
 }
 
-func extractUrlPath(fullUrl string) string {
-	_, path, query, err := url.GetURLParts(fullUrl)
+func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error {
+	if len(msgValue) == 0 {
+		return nil
+	}
+	if err := c.batches["autocompletes"].Append(
+		uint16(session.ProjectID),
+		msgType,
+		msgValue,
+	); err != nil {
+		c.checkError("autocompletes", err)
+		return fmt.Errorf("can't append to autocompletes batch: %s", err)
+	}
+	return nil
+}
+
+func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error {
+	if msg.Label == "" {
+		return nil
+	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"label":           msg.Label,
+		"duration":        nullableUint16(uint16(msg.InputDuration)),
+		"hesitation_time": nullableUint32(uint32(msg.HesitationTime)),
+	})
 	if err != nil {
-		log.Printf("can't parse url: %s", err)
-		return ""
+		return fmt.Errorf("can't marshal input event: %s", err)
 	}
-	pathQuery := path
-	if query != "" {
-		pathQuery += "?" + query
+	if err := c.batches["inputs"].Append(
+		session.SessionID,
+		uint16(session.ProjectID),
+		GetUUID(msg),
+		"INPUT",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
+	); err != nil {
+		c.checkError("inputs", err)
+		return fmt.Errorf("can't append to inputs batch: %s", err)
 	}
-	return strings.ToLower(pathQuery)
+	return nil
+}
+
+func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error {
+	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"issue_id":   issueID,
+		"issue_type": "mouse_thrashing",
+		"url":        msg.Url,
+		"url_path":   extractUrlPath(msg.Url),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
+	if err := c.batches["issuesEvents"].Append(
+		session.SessionID,
+		uint16(session.ProjectID),
+		GetUUID(msg),
+		"ISSUE",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
+	); err != nil {
+		c.checkError("issuesEvents", err)
+		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
+	}
+	if err := c.batches["issues"].Append(
+		uint16(session.ProjectID),
+		issueID,
+		"mouse_thrashing",
+		msg.Url,
+	); err != nil {
+		c.checkError("issues", err)
+		return fmt.Errorf("can't append to issues batch: %s", err)
+	}
+	return nil
+}
+
+func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error {
+	issueID := hashid.IssueID(session.ProjectID, msg)
+	// Check issue type before insert to avoid panic from clickhouse lib
+	switch msg.Type {
+	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception", "mouse_thrashing", "app_crash":
+	default:
+		return fmt.Errorf("unknown issueType: %s", msg.Type)
+	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"issue_id":   issueID,
+		"issue_type": msg.Type,
+		"url":        msg.Url,
+		"url_path":   extractUrlPath(msg.Url),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
+	if err := c.batches["issuesEvents"].Append(
+		session.SessionID,
+		uint16(session.ProjectID),
+		GetUUID(msg),
+		"ISSUE",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
+	); err != nil {
+		c.checkError("issuesEvents", err)
+		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
+	}
+	if err := c.batches["issues"].Append(
+		uint16(session.ProjectID),
+		issueID,
+		msg.Type,
+		msg.ContextString,
+	); err != nil {
+		c.checkError("issues", err)
+		return fmt.Errorf("can't append to issues batch: %s", err)
+	}
+	return nil
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"url":                            msg.URL,
+		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
+		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
+		"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
+		"dom_content_loaded_event_start": nullableUint16(uint16(msg.DomContentLoadedEventStart)),
+		"dom_content_loaded_event_end":   nullableUint16(uint16(msg.DomContentLoadedEventEnd)),
+		"load_event_start":               nullableUint16(uint16(msg.LoadEventStart)),
+		"load_event_end":                 nullableUint16(uint16(msg.LoadEventEnd)),
+		"first_paint":                    nullableUint16(uint16(msg.FirstPaint)),
+		"first_contentful_paint_time":    nullableUint16(uint16(msg.FirstContentfulPaint)),
+		"speed_index":                    nullableUint16(uint16(msg.SpeedIndex)),
+		"visually_complete":              nullableUint16(uint16(msg.VisuallyComplete)),
+		"time_to_interactive":            nullableUint16(uint16(msg.TimeToInteractive)),
+		"url_path":                       extractUrlPath(msg.URL),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
-		msg.URL,
-		nullableUint16(uint16(msg.RequestStart)),
-		nullableUint16(uint16(msg.ResponseStart)),
-		nullableUint16(uint16(msg.ResponseEnd)),
-		nullableUint16(uint16(msg.DomContentLoadedEventStart)),
-		nullableUint16(uint16(msg.DomContentLoadedEventEnd)),
-		nullableUint16(uint16(msg.LoadEventStart)),
-		nullableUint16(uint16(msg.LoadEventEnd)),
-		nullableUint16(uint16(msg.FirstPaint)),
-		nullableUint16(uint16(msg.FirstContentfulPaint)),
-		nullableUint16(uint16(msg.SpeedIndex)),
-		nullableUint16(uint16(msg.VisuallyComplete)),
-		nullableUint16(uint16(msg.TimeToInteractive)),
-		extractUrlPath(msg.URL),
+		GetUUID(msg),
 		"LOCATION",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("pages", err)
 		return fmt.Errorf("can't append to pages batch: %s", err)
@@ -373,19 +403,26 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		nYVal := normalizedY
 		nY = &nYVal
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"label":           msg.Label,
+		"hesitation_time": nullableUint32(uint32(msg.HesitationTime)),
+		"selector":        msg.Selector,
+		"normalized_x":    nX,
+		"normalized_y":    nY,
+		"url":             msg.Url,
+		"url_path":        extractUrlPath(msg.Url),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Label,
-		nullableUint32(uint32(msg.HesitationTime)),
+		GetUUID(msg),
 		"CLICK",
-		msg.Selector,
-		nX,
-		nY,
-		msg.Url,
-		extractUrlPath(msg.Url),
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
@@ -406,19 +443,25 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		return fmt.Errorf("unknown error source: %s", msg.Source)
 	}
 	msgID, _ := msg.ID(session.ProjectID)
-	// Insert event to batch
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"source":            msg.Source,
+		"name":              nullableString(msg.Name),
+		"message":           msg.Message,
+		"error_id":          msgID,
+		"error_tags_keys":   keys,
+		"error_tags_values": values,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
-		msg.Source,
-		nullableString(msg.Name),
-		msg.Message,
-		msgID,
+		msg.GetUUID(session.SessionID),
 		"ERROR",
-		keys,
-		values,
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("errors", err)
 		return fmt.Errorf("can't append to errors batch: %s", err)
@@ -428,43 +471,35 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 
 func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
 	var timestamp uint64 = (msg.TimestampStart + msg.TimestampEnd) / 2
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"url":                    nullableString(msg.Meta().Url),
+		"min_fps":                uint8(msg.MinFPS),
+		"avg_fps":                uint8(msg.AvgFPS),
+		"max_fps":                uint8(msg.MaxFPS),
+		"min_cpu":                uint8(msg.MinCPU),
+		"avg_cpu":                uint8(msg.AvgCPU),
+		"max_cpu":                uint8(msg.MaxCPU),
+		"min_total_js_heap_size": msg.MinTotalJSHeapSize,
+		"avg_total_js_heap_size": msg.AvgTotalJSHeapSize,
+		"max_total_js_heap_size": msg.MaxTotalJSHeapSize,
+		"min_used_js_heap_size":  msg.MinUsedJSHeapSize,
+		"avg_used_js_heap_size":  msg.AvgUsedJSHeapSize,
+		"max_used_js_heap_size":  msg.MaxUsedJSHeapSize,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		uint64(0), // TODO: find messageID for performance events
-		datetime(timestamp),
-		nullableString(msg.Meta().Url),
-		uint8(msg.MinFPS),
-		uint8(msg.AvgFPS),
-		uint8(msg.MaxFPS),
-		uint8(msg.MinCPU),
-		uint8(msg.AvgCPU),
-		uint8(msg.MaxCPU),
-		msg.MinTotalJSHeapSize,
-		msg.AvgTotalJSHeapSize,
-		msg.MaxTotalJSHeapSize,
-		msg.MinUsedJSHeapSize,
-		msg.AvgUsedJSHeapSize,
-		msg.MaxUsedJSHeapSize,
+		GetUUID(msg),
 		"PERFORMANCE",
+		datetime(timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("performance", err)
 		return fmt.Errorf("can't append to performance batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error {
-	if len(msgValue) == 0 {
-		return nil
-	}
-	if err := c.batches["autocompletes"].Append(
-		uint16(session.ProjectID),
-		msgType,
-		msgValue,
-	); err != nil {
-		c.checkError("autocompletes", err)
-		return fmt.Errorf("can't append to autocompletes batch: %s", err)
 	}
 	return nil
 }
@@ -479,21 +514,28 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		request = &msg.Request
 		response = &msg.Response
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"url":           msg.URL,
+		"request_body":  request,
+		"response_body": response,
+		"status":        uint16(msg.Status),
+		"method":        url.EnsureMethod(msg.Method),
+		"duration":      uint16(msg.Duration),
+		"success":       msg.Status < 400,
+		"transfer_size": uint32(msg.TransferredBodySize),
+		"url_path":      extractUrlPath(msg.URL),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.Meta().Index,
-		datetime(uint64(msg.Meta().Timestamp)),
-		msg.URL,
-		request,
-		response,
-		uint16(msg.Status),
-		url.EnsureMethod(msg.Method),
-		uint16(msg.Duration),
-		msg.Status < 400,
+		GetUUID(msg),
 		"REQUEST",
-		uint32(msg.TransferredBodySize),
-		extractUrlPath(msg.URL),
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("requests", err)
 		return fmt.Errorf("can't append to requests batch: %s", err)
@@ -502,14 +544,21 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 }
 
 func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.CustomEvent) error {
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"name":    msg.Name,
+		"payload": msg.Payload,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.Meta().Index,
-		datetime(uint64(msg.Meta().Timestamp)),
-		msg.Name,
-		msg.Payload,
+		GetUUID(msg),
 		"CUSTOM",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("custom", err)
 		return fmt.Errorf("can't append to custom batch: %s", err)
@@ -518,15 +567,22 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 }
 
 func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.GraphQL) error {
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"name":          msg.OperationName,
+		"request_body":  nullableString(msg.Variables),
+		"response_body": nullableString(msg.Response),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.Meta().Index,
-		datetime(uint64(msg.Meta().Timestamp)),
-		msg.OperationName,
-		nullableString(msg.Variables),
-		nullableString(msg.Response),
+		GetUUID(msg),
 		"GRAPHQL",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("graphql", err)
 		return fmt.Errorf("can't append to graphql batch: %s", err)
@@ -583,14 +639,21 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 }
 
 func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error {
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"name":    msg.Name,
+		"payload": msg.Payload,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.Meta().Index,
-		datetime(uint64(msg.Meta().Timestamp)),
-		msg.Name,
-		msg.Payload,
+		GetUUID(msg),
 		"CUSTOM",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_custom", err)
 		return fmt.Errorf("can't append to mobile custom batch: %s", err)
@@ -602,13 +665,20 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"label": msg.Label,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Label,
+		GetUUID(msg),
 		"TAP",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_clicks", err)
 		return fmt.Errorf("can't append to mobile clicks batch: %s", err)
@@ -620,14 +690,21 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"label":     msg.Label,
+		"direction": nullableString(msg.Direction),
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_swipes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Label,
-		nullableString(msg.Direction),
+		GetUUID(msg),
 		"SWIPE",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_clicks", err)
 		return fmt.Errorf("can't append to mobile clicks batch: %s", err)
@@ -639,13 +716,20 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 	if msg.Label == "" {
 		return nil
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"label": msg.Label,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Label,
+		GetUUID(msg),
 		"INPUT",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_inputs", err)
 		return fmt.Errorf("can't append to mobile inputs batch: %s", err)
@@ -663,19 +747,26 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		request = &msg.Request
 		response = &msg.Response
 	}
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"url":           msg.URL,
+		"request_body":  request,
+		"response_body": response,
+		"status":        uint16(msg.Status),
+		"method":        url.EnsureMethod(msg.Method),
+		"duration":      uint16(msg.Duration),
+		"success":       msg.Status < 400,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.Meta().Index,
-		datetime(uint64(msg.Meta().Timestamp)),
-		msg.URL,
-		request,
-		response,
-		uint16(msg.Status),
-		url.EnsureMethod(msg.Method),
-		uint16(msg.Duration),
-		msg.Status < 400,
+		GetUUID(msg),
 		"REQUEST",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_requests", err)
 		return fmt.Errorf("can't append to mobile requests batch: %s", err)
@@ -684,18 +775,63 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 }
 
 func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messages.MobileCrash) error {
+	jsonString, err := json.Marshal(map[string]interface{}{
+		"name":       msg.Name,
+		"reason":     msg.Reason,
+		"stacktrace": msg.Stacktrace,
+	})
+	if err != nil {
+		return fmt.Errorf("can't marshal input event: %s", err)
+	}
 	if err := c.batches["ios_crashes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MsgID(),
-		datetime(msg.Timestamp),
-		msg.Name,
-		msg.Reason,
-		msg.Stacktrace,
+		GetUUID(msg),
 		"CRASH",
+		datetime(msg.Timestamp),
+		session.UserUUID,
+		jsonString,
 	); err != nil {
 		c.checkError("ios_crashes", err)
 		return fmt.Errorf("can't append to mobile crashges batch: %s", err)
 	}
 	return nil
+}
+
+func (c *connectorImpl) checkError(name string, err error) {
+	if err != clickhouse.ErrBatchAlreadySent {
+		log.Printf("can't create %s batch after failed append operation: %s", name, err)
+	}
+}
+
+func extractUrlPath(fullUrl string) string {
+	_, path, query, err := url.GetURLParts(fullUrl)
+	if err != nil {
+		log.Printf("can't parse url: %s", err)
+		return ""
+	}
+	pathQuery := path
+	if query != "" {
+		pathQuery += "?" + query
+	}
+	return strings.ToLower(pathQuery)
+}
+
+func GetUUID(m messages.Message) string {
+	hash := fnv.New128a()
+	hash.Write(Uint64ToBytes(m.SessionID()))
+	hash.Write(Uint64ToBytes(m.MsgID()))
+	hash.Write(Uint64ToBytes(uint64(m.TypeID())))
+	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
+	if err != nil {
+		fmt.Printf("can't create uuid from bytes: %s", err)
+		uuidObj = uuid.New()
+	}
+	return uuidObj.String()
+}
+
+func Uint64ToBytes(num uint64) []byte {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, num)
+	return buf
 }
