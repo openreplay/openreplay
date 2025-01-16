@@ -30,6 +30,7 @@ def get_note(tenant_id, project_id, user_id, note_id, share=None):
         row = helper.dict_to_camel_case(row)
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+            row["updatedAt"] = TimeUTC.datetime_to_timestamp(row["updatedAt"])
     return row
 
 
