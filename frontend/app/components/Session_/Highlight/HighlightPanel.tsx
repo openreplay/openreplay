@@ -27,7 +27,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
   const editNote = editNoteId ? notesStore.getNoteById(editNoteId) : undefined;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
   const [isPublic, setIsPublic] = React.useState(editNote?.isPublic ?? false);
-  const [withTs, setWithTs] = React.useState(!!editNote?.timestamp);
+  const [withTs, setWithTs] = React.useState(!!editNote?.timestamp ?? true);
   const { store, player } = React.useContext(PlayerContext);
   const currentTime = store.get().time;
 
@@ -220,7 +220,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           Save Highlight
         </Button>
         <Button
-          onClick={onSave}
+          onClick={onClose}
         >
           Cancel
         </Button>
