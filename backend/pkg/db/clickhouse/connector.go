@@ -158,13 +158,11 @@ func (c *connectorImpl) Stop() error {
 }
 
 func (c *connectorImpl) sendBulks(t *task) {
-	fmt.Printf("sending bulks")
 	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
 			log.Printf("can't send batch: %s", err)
 		}
 	}
-	fmt.Printf("sent bulks")
 }
 
 func (c *connectorImpl) worker() {
@@ -173,7 +171,6 @@ func (c *connectorImpl) worker() {
 		case t := <-c.workerTask:
 			c.sendBulks(t)
 		case <-c.done:
-			fmt.Printf("done")
 			for t := range c.workerTask {
 				c.sendBulks(t)
 			}
@@ -282,7 +279,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		"url_path":   extractUrlPath(msg.Url),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
@@ -292,6 +289,8 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		datetime(msg.Timestamp),
 		session.UserUUID,
 		jsonString,
+		"mouse_thrashing",
+		issueID,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
@@ -323,7 +322,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		"url_path":   extractUrlPath(msg.Url),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal issue event: %s", err)
 	}
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
@@ -333,6 +332,8 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		datetime(msg.Timestamp),
 		session.UserUUID,
 		jsonString,
+		msg.Type,
+		issueID,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
@@ -367,7 +368,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"url_path":                       extractUrlPath(msg.URL),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal page event: %s", err)
 	}
 	if err := c.batches["pages"].Append(
 		session.SessionID,
@@ -413,7 +414,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		"url_path":        extractUrlPath(msg.Url),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal click event: %s", err)
 	}
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
@@ -452,7 +453,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 		"error_tags_values": values,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal error event: %s", err)
 	}
 	if err := c.batches["errors"].Append(
 		session.SessionID,
@@ -487,7 +488,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 		"max_used_js_heap_size":  msg.MaxUsedJSHeapSize,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal performance event: %s", err)
 	}
 	if err := c.batches["performance"].Append(
 		session.SessionID,
@@ -526,7 +527,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"url_path":      extractUrlPath(msg.URL),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal request event: %s", err)
 	}
 	if err := c.batches["requests"].Append(
 		session.SessionID,
@@ -549,7 +550,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 		"payload": msg.Payload,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal custom event: %s", err)
 	}
 	if err := c.batches["custom"].Append(
 		session.SessionID,
@@ -573,7 +574,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 		"response_body": nullableString(msg.Response),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal graphql event: %s", err)
 	}
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
@@ -644,7 +645,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		"payload": msg.Payload,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile custom event: %s", err)
 	}
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
@@ -669,7 +670,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		"label": msg.Label,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
 	}
 	if err := c.batches["ios_clicks"].Append(
 		session.SessionID,
@@ -695,7 +696,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		"direction": nullableString(msg.Direction),
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
 	}
 	if err := c.batches["ios_swipes"].Append(
 		session.SessionID,
@@ -707,7 +708,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		jsonString,
 	); err != nil {
 		c.checkError("ios_clicks", err)
-		return fmt.Errorf("can't append to mobile clicks batch: %s", err)
+		return fmt.Errorf("can't append to mobile swipe batch: %s", err)
 	}
 	return nil
 }
@@ -720,7 +721,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		"label": msg.Label,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile input event: %s", err)
 	}
 	if err := c.batches["ios_inputs"].Append(
 		session.SessionID,
@@ -757,7 +758,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		"success":       msg.Status < 400,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile request event: %s", err)
 	}
 	if err := c.batches["ios_requests"].Append(
 		session.SessionID,
@@ -781,7 +782,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		"stacktrace": msg.Stacktrace,
 	})
 	if err != nil {
-		return fmt.Errorf("can't marshal input event: %s", err)
+		return fmt.Errorf("can't marshal mobile crash event: %s", err)
 	}
 	if err := c.batches["ios_crashes"].Append(
 		session.SessionID,
@@ -793,13 +794,13 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		jsonString,
 	); err != nil {
 		c.checkError("ios_crashes", err)
-		return fmt.Errorf("can't append to mobile crashges batch: %s", err)
+		return fmt.Errorf("can't append to mobile crashs batch: %s", err)
 	}
 	return nil
 }
 
 func (c *connectorImpl) checkError(name string, err error) {
-	if err != clickhouse.ErrBatchAlreadySent {
+	if !errors.Is(err, clickhouse.ErrBatchAlreadySent) {
 		log.Printf("can't create %s batch after failed append operation: %s", name, err)
 	}
 }
