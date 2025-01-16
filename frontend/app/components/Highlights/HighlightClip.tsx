@@ -97,7 +97,7 @@ function HighlightClip({
       menuItems={menuItems}
       onMenuClick={onMenuClick}
       modifier={
-        <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
+        tag ? <div className="left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
           <Tag
             color={tagProps[tag]}
             className="border-0 rounded-lg hover:inherit gap-2 w-14 text-center capitalize"
@@ -105,7 +105,7 @@ function HighlightClip({
           >
             {tag.toLowerCase()}
           </Tag>
-        </div>
+        </div> : null
       }
     />
   );
