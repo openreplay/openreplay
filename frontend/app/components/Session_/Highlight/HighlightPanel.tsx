@@ -27,7 +27,6 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
   const editNote = editNoteId ? notesStore.getNoteById(editNoteId) : undefined;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
   const [isPublic, setIsPublic] = React.useState(editNote?.isPublic ?? false);
-  const [withTs, setWithTs] = React.useState(!!editNote?.timestamp ?? true);
   const { store, player } = React.useContext(PlayerContext);
   const currentTime = store.get().time;
 
@@ -120,7 +119,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         message,
         tag: tag,
         isPublic,
-        timestamp: withTs ? parseInt(currentTime, 10) : undefined,
+        timestamp: parseInt(currentTime, 10),
         startAt: parseInt(uiPlayerStore.highlightSelection.startTs, 10),
         endAt: parseInt(uiPlayerStore.highlightSelection.endTs, 10),
         thumbnail,
@@ -158,6 +157,16 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         Save key moments from sessions. Access them anytime on the ‘Highlights’
         page to share with your team.
       </div>
+      <div>
+        <Input.TextArea
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={'Enter Comments'}
+          maxLength={200}
+          rows={4}
+          value={message}
+        />
+        <div className={'text-disabled-text text-sm'}>{message.length}/200 characters remaining</div>
+      </div>
       <div className={'flex items-center gap-2'}>
         <div>
           <div className={'font-semibold'}>From</div>
@@ -167,22 +176,6 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           <div className={'font-semibold'}>To</div>
           <Input value={endTs} onChange={onEndChange} />
         </div>
-      </div>
-      <div>
-        <div className={'flex items-center gap-2'}>
-          <div className={'font-semibold'}>Add Note</div>
-          <Checkbox
-            onChange={(e) => setWithTs(e.target.checked)}
-            value={withTs}
-          >
-            at {shortDurationFromMs(currentTime)}
-          </Checkbox>
-        </div>
-        <Input.TextArea
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={'Enter Comments'}
-          maxLength={200}
-        />
       </div>
       <div className={'flex items-center gap-1 flex-wrap'}>
         {TAGS.map((tag) => (
@@ -214,6 +207,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         <Button
           onClick={onSave}
           type={'primary'}
+          disabled={message.length === 0}
           loading={notesStore.isSaving}
           icon={<MessageSquareQuote size={14} strokeWidth={1} />}
         >
