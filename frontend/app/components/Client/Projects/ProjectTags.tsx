@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useStore } from '@/mstore';
 import { List, Button, Typography, Space, Empty } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { PencilIcon, ScanSearch } from 'lucide-react';
+import { ScanSearch } from 'lucide-react';
+import {EditOutlined} from '@ant-design/icons'
 import { useModal } from 'Components/ModalContext';
 import TagForm from 'Components/Client/Projects/TagForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -46,7 +47,7 @@ function ProjectTags() {
           <List.Item
             className="cursor-pointer group hover:bg-active-blue !px-4"
             actions={[
-              <Button className="opacity-0 group-hover:!opacity-100" icon={<PencilIcon size={14} />} />
+              <Button type='link' className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />
             ]}
             onClick={() => handleInit(item)}
           >

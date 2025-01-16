@@ -15,7 +15,7 @@ const CustomFieldForm = ({ field, saving, errors, edit, save, onSave, onClose, o
 
   return (
     <div className="bg-white h-screen overflow-y-auto">
-      <h3 className="p-5 text-2xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
+      <h3 className="p-5 text-xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
       <Form className={styles.wrapper}>
         <Form.Field>
           <label>{'Field Name'}</label>
