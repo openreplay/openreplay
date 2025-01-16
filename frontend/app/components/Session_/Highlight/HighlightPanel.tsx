@@ -242,7 +242,7 @@ function elementToImage(el) {
       {
         scale: 1,
         allowTaint: true,
-        useCORS: true,
+        useCORS: false,
         logging: true,
         foreignObjectRendering: false,
         height: 900,
