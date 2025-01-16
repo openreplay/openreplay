@@ -288,9 +288,9 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 		"ISSUE",
 		datetime(msg.Timestamp),
 		session.UserUUID,
-		jsonString,
 		"mouse_thrashing",
 		issueID,
+		jsonString,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
@@ -331,9 +331,9 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 		"ISSUE",
 		datetime(msg.Timestamp),
 		session.UserUUID,
-		jsonString,
 		msg.Type,
 		issueID,
+		jsonString,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
