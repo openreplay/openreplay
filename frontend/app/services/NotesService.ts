@@ -5,7 +5,6 @@ export const tagProps = {
   'ISSUE': 'red',
   'DESIGN': 'geekblue',
   'NOTE': 'purple',
-  'OTHER': '',
 }
 
 export type iTag = keyof typeof tagProps | "ALL"
