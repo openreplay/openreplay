@@ -13,6 +13,7 @@ import { session } from 'App/routes';
 import { confirm } from 'UI';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 import { Tag } from 'antd'
+import { MessageSquareDot } from 'lucide-react'
 
 interface Props {
   note: Note;
@@ -80,9 +81,7 @@ function NoteEvent(props: Props) {
   return (
     <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: '#FFFEF5' }}>
       <div className="flex items-center w-full relative">
-        <div className="p-3 bg-gray-light rounded-full">
-          <Icon name="quotes" color="main" />
-        </div>
+        <MessageSquareDot size={16} strokeWidth={1} />
         <div className="ml-2">
           <div
             className="text-base"
