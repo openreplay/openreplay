@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"hash/fnv"
 	"log"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/google/uuid"
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/pkg/db/types"
@@ -258,7 +258,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 	if err := c.batches["inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"INPUT",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -275,8 +275,8 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 	jsonString, err := json.Marshal(map[string]interface{}{
 		"issue_id":   issueID,
 		"issue_type": "mouse_thrashing",
-		"url":        msg.Url,
-		"url_path":   extractUrlPath(msg.Url),
+		"url":        cropString(msg.Url),
+		"url_path":   cropString(extractUrlPath(msg.Url)),
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -284,7 +284,7 @@ func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *mes
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"ISSUE",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -318,8 +318,8 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 	jsonString, err := json.Marshal(map[string]interface{}{
 		"issue_id":   issueID,
 		"issue_type": msg.Type,
-		"url":        msg.Url,
-		"url_path":   extractUrlPath(msg.Url),
+		"url":        cropString(msg.Url),
+		"url_path":   cropString(extractUrlPath(msg.Url)),
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -327,7 +327,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"ISSUE",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -352,7 +352,7 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":                            msg.URL,
+		"url":                            cropString(msg.URL),
 		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
 		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
 		"response_end":                   nullableUint16(uint16(msg.ResponseEnd)),
@@ -365,7 +365,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"speed_index":                    nullableUint16(uint16(msg.SpeedIndex)),
 		"visually_complete":              nullableUint16(uint16(msg.VisuallyComplete)),
 		"time_to_interactive":            nullableUint16(uint16(msg.TimeToInteractive)),
-		"url_path":                       extractUrlPath(msg.URL),
+		"url_path":                       cropString(extractUrlPath(msg.URL)),
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
@@ -373,7 +373,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"LOCATION",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -410,8 +410,8 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		"selector":        msg.Selector,
 		"normalized_x":    nX,
 		"normalized_y":    nY,
-		"url":             msg.Url,
-		"url_path":        extractUrlPath(msg.Url),
+		"url":             cropString(msg.Url),
+		"url_path":        cropString(extractUrlPath(msg.Url)),
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal click event: %s", err)
@@ -419,7 +419,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"CLICK",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -471,9 +471,9 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 }
 
 func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
-	var timestamp uint64 = (msg.TimestampStart + msg.TimestampEnd) / 2
+	var timestamp = (msg.TimestampStart + msg.TimestampEnd) / 2
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":                    nullableString(msg.Meta().Url),
+		"url":                    nullableString(cropString(msg.Meta().Url)),
 		"min_fps":                uint8(msg.MinFPS),
 		"avg_fps":                uint8(msg.AvgFPS),
 		"max_fps":                uint8(msg.MaxFPS),
@@ -493,7 +493,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session,
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"PERFORMANCE",
 		datetime(timestamp),
 		session.UserUUID,
@@ -516,7 +516,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		response = &msg.Response
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":           msg.URL,
+		"url":           cropString(msg.URL),
 		"request_body":  request,
 		"response_body": response,
 		"status":        uint16(msg.Status),
@@ -524,7 +524,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"duration":      uint16(msg.Duration),
 		"success":       msg.Status < 400,
 		"transfer_size": uint32(msg.TransferredBodySize),
-		"url_path":      extractUrlPath(msg.URL),
+		"url_path":      cropString(extractUrlPath(msg.URL)),
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal request event: %s", err)
@@ -532,7 +532,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"REQUEST",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -555,7 +555,7 @@ func (c *connectorImpl) InsertCustom(session *sessions.Session, msg *messages.Cu
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"CUSTOM",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -579,7 +579,7 @@ func (c *connectorImpl) InsertGraphQL(session *sessions.Session, msg *messages.G
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"GRAPHQL",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -650,7 +650,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 	if err := c.batches["ios_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"CUSTOM",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -675,7 +675,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 	if err := c.batches["ios_clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"TAP",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -701,7 +701,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 	if err := c.batches["ios_swipes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"SWIPE",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -726,7 +726,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 	if err := c.batches["ios_inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"INPUT",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -749,7 +749,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		response = &msg.Response
 	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":           msg.URL,
+		"url":           cropString(msg.URL),
 		"request_body":  request,
 		"response_body": response,
 		"status":        uint16(msg.Status),
@@ -763,7 +763,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 	if err := c.batches["ios_requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"REQUEST",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -787,7 +787,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 	if err := c.batches["ios_crashes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		GetUUID(msg),
+		getUUID(msg),
 		"CRASH",
 		datetime(msg.Timestamp),
 		session.UserUUID,
@@ -818,11 +818,11 @@ func extractUrlPath(fullUrl string) string {
 	return strings.ToLower(pathQuery)
 }
 
-func GetUUID(m messages.Message) string {
+func getUUID(m messages.Message) string {
 	hash := fnv.New128a()
-	hash.Write(Uint64ToBytes(m.SessionID()))
-	hash.Write(Uint64ToBytes(m.MsgID()))
-	hash.Write(Uint64ToBytes(uint64(m.TypeID())))
+	hash.Write(uint64ToBytes(m.SessionID()))
+	hash.Write(uint64ToBytes(m.MsgID()))
+	hash.Write(uint64ToBytes(uint64(m.TypeID())))
 	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
 	if err != nil {
 		fmt.Printf("can't create uuid from bytes: %s", err)
@@ -831,8 +831,15 @@ func GetUUID(m messages.Message) string {
 	return uuidObj.String()
 }
 
-func Uint64ToBytes(num uint64) []byte {
+func uint64ToBytes(num uint64) []byte {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, num)
 	return buf
+}
+
+func cropString(s string) string {
+	if len(s) > 8000 {
+		return s[:8000]
+	}
+	return s
 }
