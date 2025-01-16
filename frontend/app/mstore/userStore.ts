@@ -385,6 +385,8 @@ class UserStore {
       const data = await userService.resetPassword(params);
       runInAction(() => {
         this.account = new Account(data.user);
+        this.jwt = data.jwt;
+        this.spotJwt = data.spotJwt;
       });
     } catch (error) {
       toast.error('Error resetting your password; please try again');

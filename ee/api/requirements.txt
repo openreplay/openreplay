@@ -1,30 +1,30 @@
-urllib3==2.2.3
+# Keep this version to not have conflicts between requests and boto3
+urllib3==1.26.16
 requests==2.32.3
-boto3==1.35.86
-pyjwt==2.10.1
+boto3==1.35.60
+pyjwt==2.9.0
 psycopg2-binary==2.9.10
 psycopg[pool,binary]==3.2.3
-clickhouse-driver[lz4]==0.2.9
-clickhouse-connect==0.8.11
-elasticsearch==8.17.0
+elasticsearch==8.16.0
 jira==3.8.0
 cachetools==5.5.0
 
 
 
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
 gunicorn==23.0.0
 python-decouple==3.8
-pydantic[email]==2.10.4
-apscheduler==3.11.0
+pydantic[email]==2.9.2
+apscheduler==3.10.4
 
-redis==5.2.1
-
+clickhouse-driver[lz4]==0.2.9
 # TODO: enable after xmlsec fix https://github.com/xmlsec/python-xmlsec/issues/252
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
+lxml >= 4.6.5, !=4.7.0, <=5.2.1
 python3-saml==1.16.0 --no-binary=lxml
-python-multipart==0.0.20
+python-multipart==0.0.17
 
+redis==5.2.0
 #confluent-kafka==2.1.0
-azure-storage-blob==12.24.0
+azure-storage-blob==12.23.1

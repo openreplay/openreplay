@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec tini
 
@@ -12,11 +12,9 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
 
 WORKDIR /work
 COPY requirements.txt ./requirements.txt
-# Caching the source build
-RUN pip install --no-cache-dir --upgrade uv
-RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
-RUN uv pip install --no-cache-dir --upgrade python3-saml==1.16.0 --no-binary=lxml --system
-RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# This code is used to solve 'lxml & xmlsec libxml2 library version mismatch' error
+RUN pip uninstall -y lxml && pip install lxml
 
 COPY . .
 RUN mv env.default .env

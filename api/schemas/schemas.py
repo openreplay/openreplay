@@ -1209,10 +1209,10 @@ class CardPathAnalysis(__CardSchema):
             if len(s.value) == 0:
                 continue
             start_point.append(s)
-            self.metric_value.append(s.type)
+            # self.metric_value.append(s.type)
 
         self.start_point = start_point
-        self.metric_value = remove_duplicate_values(self.metric_value)
+        # self.metric_value = remove_duplicate_values(self.metric_value)
 
         return self
 
@@ -1382,6 +1382,7 @@ class SearchNoteSchema(_PaginatedSchema):
     tags: Optional[List[str]] = Field(default=[])
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
+    search: Optional[str] = Field(default=None)
 
 
 class SessionNoteSchema(BaseModel):
@@ -1389,6 +1390,9 @@ class SessionNoteSchema(BaseModel):
     tag: Optional[str] = Field(default=None)
     timestamp: int = Field(default=-1)
     is_public: bool = Field(default=False)
+    thumbnail: Optional[str] = Field(default=None)
+    start_at: int = Field(default=None)
+    end_at: int = Field(default=None)
 
 
 class SessionUpdateNoteSchema(SessionNoteSchema):

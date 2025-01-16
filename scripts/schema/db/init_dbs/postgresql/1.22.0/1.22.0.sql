@@ -26,6 +26,11 @@ WHERE metrics.metric_type = 'insights';
 DROP TABLE IF EXISTS public.user_favorite_errors;
 DROP TABLE IF EXISTS public.user_viewed_errors;
 
+ALTER TABLE IF EXISTS public.sessions_notes
+    ADD COLUMN start_at   integer,
+    ADD COLUMN end_at     integer,
+    ADD COLUMN thumbnail  text,
+    ADD COLUMN updated_at timestamp DEFAULT NULL;
 
 COMMIT;
 

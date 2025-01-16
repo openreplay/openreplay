@@ -27,7 +27,7 @@ JOURNEY_TYPES = {
 # query: Q5, the result is correct,
 # startPoints are computed before ranked_events to reduce the number of window functions over rows
 # replaced time_to_target by time_from_previous
-# compute avg_time_from_previous at the same level as sessions_count
+# compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
 # sort by top 5 according to sessions_count at the CTE level
 # final part project data without grouping
 # if start-point is selected, the selected event is ranked n°1
@@ -35,15 +35,29 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     sub_events = []
     start_points_conditions = []
     step_0_conditions = []
+    step_1_post_conditions = ["event_number_in_session <= %(density)s"]
+
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.LOCATION)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["column"],
                            "eventType": schemas.ProductAnalyticsSelectedEventType.LOCATION.value})
     else:
+        if len(data.start_point) > 0:
+            extra_metric_values = []
+            for s in data.start_point:
+                if s.type not in data.metric_value:
+                    sub_events.append({"column": JOURNEY_TYPES[s.type]["column"],
+                                       "eventType": JOURNEY_TYPES[s.type]["eventType"]})
+                    step_1_post_conditions.append(
+                        f"(event_type!='{JOURNEY_TYPES[s.type]["eventType"]}' OR event_number_in_session = 1)")
+                    extra_metric_values.append(s.type)
+            data.metric_value += extra_metric_values
+
         for v in data.metric_value:
             if JOURNEY_TYPES.get(v):
                 sub_events.append({"column": JOURNEY_TYPES[v]["column"],
                                    "eventType": JOURNEY_TYPES[v]["eventType"]})
+
     if len(sub_events) == 1:
         main_column = sub_events[0]['column']
     else:
@@ -317,7 +331,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                     e_value,
                                     next_type,
                                     next_value,
-                                    AVG(time_from_previous) AS avg_time_from_previous,
                                     COUNT(1) AS sessions_count
                              FROM ranked_events
                              WHERE event_number_in_session = 1
@@ -330,8 +343,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                   e_value,
                                   next_type,
                                   next_value,
-                                  sessions_count,
-                                  avg_time_from_previous
+                                  sessions_count
                            FROM n1"""]
     for i in range(2, data.density + 1):
         steps_query.append(f"""n{i} AS (SELECT *
@@ -340,7 +352,6 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                                      re.e_value AS e_value,
                                                      re.next_type AS next_type,
                                                      re.next_value AS next_value,
-                                                     AVG(re.time_from_previous) AS avg_time_from_previous,
                                                      COUNT(1) AS sessions_count
                                               FROM n{i - 1} INNER JOIN ranked_events AS re
                                                     ON (n{i - 1}.next_value = re.e_value AND n{i - 1}.next_type = re.event_type)
@@ -353,8 +364,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                            e_value,
                                            next_type,
                                            next_value,
-                                           sessions_count,
-                                           avg_time_from_previous
+                                           sessions_count
                                     FROM n{i}""")
 
     with ch_client.ClickHouseClient(database="experimental") as ch:
@@ -382,7 +392,7 @@ WITH {initial_sessions_cte}
                                  FROM {main_events_table} {"INNER JOIN sub_sessions ON (sub_sessions.session_id = events.session_id)" if len(sessions_conditions) > 0 else ""}
                                  WHERE {" AND ".join(ch_sub_query)}
                                  ) AS full_ranked_events
-                           WHERE event_number_in_session <= %(density)s)
+                           WHERE {" AND ".join(step_1_post_conditions)})
 SELECT *
 FROM pre_ranked_events;"""
         logger.debug("---------Q1-----------")
@@ -404,11 +414,7 @@ WITH pre_ranked_events AS (SELECT *
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
                               leadInFrame(toNullable(event_type))
                                           OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
-                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type,
-                              abs(lagInFrame(toNullable(datetime))
-                                              OVER (PARTITION BY session_id ORDER BY datetime {path_direction}
-                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-                                                - pre_ranked_events.datetime) AS time_from_previous
+                                            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
 FROM ranked_events;"""

@@ -10,7 +10,7 @@ export default function CodeBlock({ code, language = 'javascript' }) {
   }, [code, language]);
 
   return (
-    <pre>
+    <pre className='rounded-lg'>
       <code className={`language-${language}`}>
         {code}
       </code>

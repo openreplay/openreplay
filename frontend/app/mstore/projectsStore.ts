@@ -39,7 +39,7 @@ export default class ProjectsStore {
     if (index !== -1) {
       this.list[index] = this.list[index].edit(project);
     }
-  }
+  };
 
   getSiteId = () => {
     return {
@@ -101,7 +101,7 @@ export default class ProjectsStore {
         this.syncProjectInList({
           id: siteId,
           gdpr: response.data
-        })
+        });
       } catch (error) {
         console.error('Failed to sync project in list:', error);
       }
@@ -149,18 +149,18 @@ export default class ProjectsStore {
     this.setLoading(true);
     try {
       const response = await projectsService.saveProject(projectData);
-      runInAction(() => {
-        const newSite = new Project(response.data);
-        const index = this.list.findIndex(site => site.id === newSite.id);
-        if (index !== -1) {
-          this.list[index] = newSite;
-        } else {
-          this.list.push(newSite);
-        }
-        this.setSiteId(newSite.id);
-        this.active = newSite;
-      });
-      return response;
+
+      const newSite = new Project(response.data);
+      const index = this.list.findIndex(site => site.id === newSite.id);
+      if (index !== -1) {
+        this.list[index] = newSite;
+      } else {
+        this.list.push(newSite);
+      }
+      this.setSiteId(newSite.id!);
+      this.active = newSite;
+      return newSite;
+
     } catch (error: any) {
       throw error || 'An error occurred while saving the project.';
     } finally {
@@ -201,7 +201,10 @@ export default class ProjectsStore {
   updateProject = async (projectId: string, projectData: Partial<Project>) => {
     this.setLoading(true);
     try {
-      const response = await projectsService.updateProject(projectId, projectData);
+      const response = await projectsService.updateProject(projectId, {
+        name: projectData.name,
+        platform: projectData.platform
+      });
       runInAction(() => {
         const updatedSite = new Project(response.data);
         const index = this.list.findIndex(site => site.id === updatedSite.id);

@@ -1,16 +1,19 @@
 import React from 'react';
 import Project from '@/mstore/types/project';
-import InstallMobileDocs from 'Shared/TrackingCodeModal/InstallIosDocs';
 import { Tabs } from 'UI';
-import ProjectCodeSnippet from 'Shared/TrackingCodeModal/ProjectCodeSnippet/ProjectCodeSnippet';
-import InstallDocs from 'Shared/TrackingCodeModal/InstallDocs';
+import {AppleOutlined, AndroidOutlined, CodeOutlined, JavaScriptOutlined} from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
+import InstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs';
+import ProjectCodeSnippet from 'Components/Client/Projects/ProjectCodeSnippet';
+import MobileInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/MobileInstallDocs';
+import { Segmented } from 'antd';
+import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
 
-const PROJECT = 'Using Script';
-const DOCUMENTATION = 'Using NPM';
+const JAVASCRIPT = 'Using Script';
+const NPM = 'Using NPM';
 const TABS = [
-  { key: DOCUMENTATION, text: DOCUMENTATION },
-  { key: PROJECT, text: PROJECT }
+  { key: NPM, text: NPM },
+  { key: JAVASCRIPT, text: JAVASCRIPT }
 ];
 
 interface Props {
@@ -20,35 +23,98 @@ interface Props {
 function ProjectTabTracking(props: Props) {
   usePageTitle('Installation - OpenReplay Preferences');
   const { project } = props;
-  const [activeTab, setActiveTab] = React.useState(PROJECT);
-  const ingestPoint = `https://${window.location.hostname}/ingest`;
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case PROJECT:
-        return <ProjectCodeSnippet site={project} />;
-      case DOCUMENTATION:
-        return <InstallDocs site={project} />;
-    }
-    return null;
-  };
 
   return (
     <div>
-      {project.platform === 'ios' ? (
-        <InstallMobileDocs site={project} ingestPoint={ingestPoint} />
+      {project.platform !== 'web' ? (
+        <MobileSnippet project={project} />
       ) : (
-        <div>
-          <Tabs
-            tabs={TABS}
-            active={activeTab}
-            onClick={(tab: string) => setActiveTab(tab)}
-          />
-          <div className="p-5">{renderActiveTab()}</div>
-        </div>
+        <WebSnippet project={project} />
       )}
     </div>
   );
 }
 
 export default ProjectTabTracking;
+
+function WebSnippet({ project }: { project: Project }) {
+  const [isNpm, setIsNpm] = React.useState(true);
+
+  return (
+    <div className="">
+      <Segmented
+  options={[
+    {
+      label: (
+        <div className="flex items-center gap-2">
+          <CodeOutlined />
+          <span>NPM</span>
+        </div>
+      ),
+      value: true,
+    },
+    {
+      label: (
+        <div className="flex items-center gap-2">
+          <JavaScriptOutlined />
+          <span>Script</span>
+        </div>
+      ),
+      value: false,
+    },
+  ]}
+  value={isNpm}
+  onChange={setIsNpm}
+  className="!align-middle text-center rounded-lg"
+/>
+
+      {isNpm ? (
+        <InstallDocs site={project} />
+      ) : (
+        <ProjectCodeSnippet project={project} />
+      )}
+    </div>
+  );
+}
+
+function MobileSnippet({ project }: { project: Project }) {
+  const [isIos, setIsIos] = React.useState(true);
+  const ingestPoint = `https://${window.location.hostname}/ingest`;
+
+  return (
+    <div>
+      <Segmented
+        options={[
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <AppleOutlined />
+                <span>iOS</span>
+              </div>
+            ),
+            value: true,
+          },
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <AndroidOutlined />
+                <span>Android</span>
+              </div>
+            ),
+            value: false,
+          },
+        ]}
+        value={isIos}
+        onChange={setIsIos}
+        className='rounded-lg'
+      />
+      
+      {isIos ? (
+        <MobileInstallDocs site={project} ingestPoint={ingestPoint} />
+      ) : (
+        <AndroidInstallDocs site={project} ingestPoint={ingestPoint} />
+      )}
+
+    </div>
+  );
+}
