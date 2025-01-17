@@ -207,7 +207,6 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         <Button
           onClick={onSave}
           type={'primary'}
-          disabled={message.length === 0}
           loading={notesStore.isSaving}
           icon={<MessageSquareQuote size={14} strokeWidth={1} />}
         >
