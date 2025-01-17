@@ -1,8 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Input, Segmented } from 'antd';
-import { iTag, TAGS } from 'App/services/NotesService';
-import { SortDropdown } from 'Shared/SessionsTabOverview/components/SessionSort/SessionSort';
+import { iTag } from 'App/services/NotesService';
 import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
@@ -14,6 +12,7 @@ import HighlightPlayer from "./HighlightPlayer";
 import { useLocation, useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import EditHlModal from "./EditHlModal";
+import HighlightsListHeader from './HighlightsListHeader'
 
 function HighlightsList() {
   const { notesStore, projectsStore } = useStore();
@@ -115,75 +114,15 @@ function HighlightsList() {
       style={{ maxWidth: 1360 }}
     >
       {highlight && <HighlightPlayer onClose={onClose} hlId={highlight} />}
-      <div className={'flex p-2 px-4 w-full border-b gap-4 items-center'}>
-        <h1 className={'text-2xl capitalize mr-2'}>Highlights</h1>
-        <Segmented
-          size="small"
-          options={[
-            {
-              value: 'ALL',
-              label: (
-                <div
-                  className={
-                    activeTags.includes('ALL') || activeTags.length === 0
-                      ? 'text-main'
-                      : ''
-                  }
-                >
-                  All
-                </div>
-              ),
-            },
-            ...TAGS.map((tag: iTag) => ({
-              value: tag,
-              label: (
-                <div
-                  className={
-                    activeTags.includes(tag)
-                      ? 'text-main capitalize'
-                      : 'capitalize'
-                  }
-                >
-                  {tag.toLowerCase()}
-                </div>
-              ),
-            })),
-          ]}
-          onChange={(value: iTag) =>
-            toggleTag(value === 'ALL' ? undefined : value)
-          }
-        />
-        <div className={'ml-auto'}>
-          <SortDropdown
-            sortOptions={[
-              {
-                key: 'own',
-                label: 'Personal',
-              },
-              {
-                key: 'team',
-                label: 'Team',
-              },
-            ]}
-            onSort={({ key }) => {
-              toggleShared(key === 'own');
-            }}
-            current={ownOnly ? 'Personal' : 'Team'}
-          />
-        </div>
-        <div className="w-56">
-          <Input.Search
-            value={query}
-            allowClear
-            name="spot-search"
-            placeholder="Filter by title"
-            onChange={handleInputChange}
-            onSearch={onSearch}
-            className="rounded-lg"
-            size="small"
-          />
-        </div>
-      </div>
+      <HighlightsListHeader
+        activeTags={activeTags}
+        ownOnly={ownOnly}
+        onSearch={onSearch}
+        handleInputChange={handleInputChange}
+        toggleTag={toggleTag}
+        toggleShared={toggleShared}
+        query={query}
+      />
       <div
         className={cn(
           'py-2 px-4 border-gray-lighter',
