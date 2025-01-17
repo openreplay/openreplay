@@ -21,8 +21,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                           FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                          WHERE ev.`_timestamp` >= toDateTime(%(startDate)s / 1000)
-                            AND ev.`_timestamp` <= toDateTime(%(endDate)s / 1000)
+                          WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
+                            AND ev.created_at <= toDateTime(%(endDate)s / 1000)
                             AND ev.project_id = %(project_id)s
                             AND ev.`$event_name` = 'LOCATION'"""
     elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
@@ -138,8 +138,8 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_event = f"""SELECT DISTINCT ev.session_id, 
                              JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
                   FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                  WHERE ev.`_timestamp` >= toDateTime(%(startDate)s / 1000)
-                    AND ev.`_timestamp` <= toDateTime(%(endDate)s / 1000)
+                  WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
+                    AND ev.created_at <= toDateTime(%(endDate)s / 1000)
                     AND ev.project_id = %(project_id)s
                     AND ev.`$event_name` = 'LOCATION'"""
         extra_deduplication.append("url_path")
@@ -162,8 +162,8 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
         extra_event = f"""SELECT DISTINCT ev.session_id, 
                                 JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
                   FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                  WHERE ev.`_timestamp` >= toDateTime(%(startDate)s / 1000)
-                    AND ev.`_timestamp` <= toDateTime(%(endDate)s / 1000)
+                  WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
+                    AND ev.created_at <= toDateTime(%(endDate)s / 1000)
                     AND ev.project_id = %(project_id)s
                     AND ev.`$event_name` = 'REQUEST'"""
 
@@ -367,11 +367,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     events_query_part = ""
     issues = []
     __events_where_basic = ["project_id = %(projectId)s",
-                            "`_timestamp` >= toDateTime(%(startDate)s/1000)",
-                            "`_timestamp` <= toDateTime(%(endDate)s/1000)"]
+                            "created_at >= toDateTime(%(startDate)s/1000)",
+                            "created_at <= toDateTime(%(endDate)s/1000)"]
     events_conditions_where = ["main.project_id = %(projectId)s",
-                               "main.`_timestamp` >= toDateTime(%(startDate)s/1000)",
-                               "main.`_timestamp` <= toDateTime(%(endDate)s/1000)"]
+                               "main.created_at >= toDateTime(%(startDate)s/1000)",
+                               "main.created_at <= toDateTime(%(endDate)s/1000)"]
     if len(data.filters) > 0:
         meta_keys = None
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
@@ -650,8 +650,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # event_from = f"%s INNER JOIN {MAIN_SESSIONS_TABLE} AS ms USING (session_id)"
             event_from = "%s"
             event_where = ["main.project_id = %(projectId)s",
-                           "main.`_timestamp` >= toDateTime(%(startDate)s/1000)",
-                           "main.`_timestamp` <= toDateTime(%(endDate)s/1000)"]
+                           "main.created_at >= toDateTime(%(startDate)s/1000)",
+                           "main.created_at <= toDateTime(%(endDate)s/1000)"]
 
             e_k = f"e_value{i}"
             s_k = e_k + "_source"
@@ -1224,7 +1224,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     pass
                 else:
                     events_query_from.append(f"""\
-            (SELECT main.session_id, {"MIN" if event_index < (valid_events_count - 1) else "MAX"}(main.`_timestamp`) AS datetime
+            (SELECT main.session_id, {"MIN" if event_index < (valid_events_count - 1) else "MAX"}(main.created_at) AS datetime
               FROM {event_from}
               WHERE {" AND ".join(event_where)}
               GROUP BY session_id
@@ -1292,13 +1292,13 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 del value_conditions_not
 
             if data.events_order == schemas.SearchEventOrder.THEN:
-                having = f"""HAVING sequenceMatch('{''.join(sequence_pattern)}')(main.`_timestamp`,{','.join(sequence_conditions)})"""
+                having = f"""HAVING sequenceMatch('{''.join(sequence_pattern)}')(toDateTime(main.created_at),{','.join(sequence_conditions)})"""
             else:
                 having = f"""HAVING {" AND ".join([f"countIf({c})>0" for c in list(set(sequence_conditions))])}"""
 
             events_query_part = f"""SELECT main.session_id,
-                                        MIN(main.`_timestamp`) AS first_event_ts,
-                                        MAX(main.`_timestamp`) AS last_event_ts
+                                        MIN(main.created_at) AS first_event_ts,
+                                        MAX(main.created_at) AS last_event_ts
                                     FROM {MAIN_EVENTS_TABLE} AS main {events_extra_join}
                                         {sub_join}
                                     WHERE {" AND ".join(events_conditions_where)}
@@ -1340,8 +1340,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions_where.append(f"({' OR '.join(events_conditions)})")
 
             events_query_part = f"""SELECT main.session_id,
-                                        MIN(main.`_timestamp`) AS first_event_ts,
-                                        MAX(main.`_timestamp`) AS last_event_ts
+                                        MIN(main.created_at) AS first_event_ts,
+                                        MAX(main.created_at) AS last_event_ts
                                     FROM {MAIN_EVENTS_TABLE} AS main {events_extra_join}
                                     WHERE {" AND ".join(events_conditions_where)}
                                     GROUP BY session_id"""
@@ -1364,8 +1364,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                              AND issues.project_id = %(projectId)s
                              AND events.project_id = %(projectId)s
                              AND events.issue_type = %(issue_type)s
-                             AND events.`_timestamp` >= toDateTime(%(startDate)s/1000)
-                             AND events.`_timestamp` <= toDateTime(%(endDate)s/1000)
+                             AND events.created_at >= toDateTime(%(startDate)s/1000)
+                             AND events.created_at <= toDateTime(%(endDate)s/1000)
                              ) AS issues ON (f.session_id = issues.session_id)
                 """
         full_args["issue_contextString"] = issue["contextString"]
@@ -1384,8 +1384,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                           INNER JOIN experimental.events USING (issue_id)
                                  WHERE issues.project_id = %(projectId)s
                                    AND events.project_id = %(projectId)s
-                                   AND events.`_timestamp` >= toDateTime(%(startDate)s/1000)
-                                   AND events.`_timestamp` <= toDateTime(%(endDate)s/1000)
+                                   AND events.created_at >= toDateTime(%(startDate)s/1000)
+                                   AND events.created_at <= toDateTime(%(endDate)s/1000)
                                    AND {" OR ".join(issues_conditions)}
                             ) AS issues USING (session_id)"""
 
@@ -1423,7 +1423,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             extra_join = f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}
-                                ORDER BY _timestamp DESC
+                                ORDER BY datetime DESC
                                 LIMIT 1 BY {",".join(deduplication_keys)}) AS s"""
         query_part = f"""\
                             FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}

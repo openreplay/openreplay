@@ -92,8 +92,8 @@ def __get_basic_constraints_events(platform=None, time_constraint=True, startTim
     if type_condition:
         ch_sub_query.append(f"{table_name}`$event_name`='ERROR'")
     if time_constraint:
-        ch_sub_query += [f"{table_name}_timestamp >= toDateTime(%({startTime_arg_name})s/1000)",
-                         f"{table_name}_timestamp < toDateTime(%({endTime_arg_name})s/1000)"]
+        ch_sub_query += [f"{table_name}created_at >= toDateTime(%({startTime_arg_name})s/1000)",
+                         f"{table_name}created_at < toDateTime(%({endTime_arg_name})s/1000)"]
     # if platform == schemas.PlatformType.MOBILE:
     #     ch_sub_query.append("user_device_type = 'mobile'")
     # elif platform == schemas.PlatformType.DESKTOP:
@@ -123,7 +123,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     ch_sub_query.append("JSONExtractString(toString(`$properties`), 'source') = 'js_exception'")
 
     # To ignore Script error
-    ch_sub_query.append("JSONExtractString(toString(`$properties`)) != 'Script error.'")
+    ch_sub_query.append("JSONExtractString(toString(`$properties`), 'message') != 'Script error.'")
     error_ids = None
 
     if data.startTimestamp is None:
@@ -361,8 +361,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                              JSONExtractString(toString(`$properties`), 'message') AS message,
                              COUNT(DISTINCT user_id)  AS users,
                              COUNT(DISTINCT events.session_id) AS sessions,
-                             MAX(_timestamp)              AS max_datetime,
-                             MIN(_timestamp)              AS min_datetime,
+                             MAX(created_at)              AS max_datetime,
+                             MIN(created_at)              AS min_datetime,
                              COUNT(DISTINCT JSONExtractString(toString(`$properties`), 'error_id')) 
                                 OVER() AS total
                       FROM {MAIN_EVENTS_TABLE} AS events
@@ -376,8 +376,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                       ORDER BY {sort} {order}
                       LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
                         INNER JOIN (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
-                                            toUnixTimestamp(MAX(_timestamp))*1000 AS last_occurrence, 
-                                            toUnixTimestamp(MIN(_timestamp))*1000 AS first_occurrence
+                                            toUnixTimestamp(MAX(created_at))*1000 AS last_occurrence, 
+                                            toUnixTimestamp(MIN(created_at))*1000 AS first_occurrence
                                      FROM {MAIN_EVENTS_TABLE}
                                      WHERE project_id=%(project_id)s
                                         AND `$event_name`='ERROR'
@@ -385,7 +385,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
                     FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
-                                 toUnixTimestamp(toStartOfInterval(_timestamp, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                                 toUnixTimestamp(toStartOfInterval(created_at, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                                  COUNT(DISTINCT session_id) AS count
                             FROM {MAIN_EVENTS_TABLE}
                             WHERE {" AND ".join(ch_sub_query)}
