@@ -8,13 +8,14 @@ logger = logging.getLogger(__name__)
 
 def get_main_events_table(timestamp=0, platform="web"):
     if platform == "web":
-        return "experimental.events"
+        return "product_analytics.events"
     else:
         return "experimental.ios_events"
 
 
 def get_main_sessions_table(timestamp=0):
     return "experimental.sessions"
+
 
 def get_user_favorite_sessions_table(timestamp=0):
     return "experimental.user_favorite_sessions"
