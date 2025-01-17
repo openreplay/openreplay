@@ -88,6 +88,7 @@ const SpotsListHeader = observer(
                 onChange={handleInputChange}
                 onSearch={onSearch}
                 className="rounded-lg"
+                size="small"
               />
             </div>
           </div>
