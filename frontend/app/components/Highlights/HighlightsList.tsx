@@ -31,6 +31,7 @@ function HighlightsList() {
   const listLength = notesStore.notes.length;
   const activeTags = notesStore.activeTags;
   const page = notesStore.page;
+  const ownOnly = notesStore.ownOnly
   const {
     data = { notes: [], total: 0 },
     isPending,
@@ -102,6 +103,11 @@ function HighlightsList() {
     setEditModalOpen(false);
   }
 
+  const toggleShared = (val: boolean) => {
+    notesStore.toggleShared(val);
+    refetch();
+  }
+
   const isEmpty = !isPending && total === 0;
   return (
     <div
@@ -160,9 +166,9 @@ function HighlightsList() {
               },
             ]}
             onSort={({ key }) => {
-              console.log(key);
+              toggleShared(key === 'own');
             }}
-            current={'Personal'}
+            current={ownOnly ? 'Personal' : 'Team'}
           />
         </div>
         <div className="w-56">

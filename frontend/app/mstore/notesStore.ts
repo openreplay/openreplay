@@ -157,15 +157,12 @@ export default class NotesStore {
 
   toggleShared(ownOnly: boolean) {
     this.ownOnly = ownOnly
-    this.fetchNotes()
   }
 
   toggleSort(sort: string) {
     const sortOrder = sort.split('-')[1]
     // @ts-ignore
     this.order = sortOrder
-
-    this.fetchNotes()
   }
 
   async sendSlackNotification(noteId: string, webhook: string) {
