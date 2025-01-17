@@ -1,5 +1,5 @@
 # Keep this version to not have conflicts between requests and boto3
-urllib3==1.26.16
+urllib3==2.3.0
 requests==2.32.3
 boto3==1.35.60
 pyjwt==2.9.0
@@ -23,7 +23,7 @@ clickhouse-driver[lz4]==0.2.9
 #--no-binary is used to avoid libxml2 library version incompatibilities between xmlsec and lxml
 lxml >= 4.6.5, !=4.7.0, <=5.2.1
 python3-saml==1.16.0 --no-binary=lxml
-python-multipart==0.0.17
+python-multipart==0.0.20
 
 redis==5.2.0
 #confluent-kafka==2.1.0
