@@ -48,7 +48,7 @@ function HighlightsList() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    notesStore.setQuery(value);
+    notesStore.setQuery(e.target.value);
   };
 
   const toggleTag = (tag?: iTag) => {
