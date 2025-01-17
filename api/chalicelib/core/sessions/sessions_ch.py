@@ -159,12 +159,14 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                         extra_conditions[e.operator].value.append(v)
         extra_conditions = list(extra_conditions.values())
     elif metric_of == schemas.MetricOfTable.FETCH:
-        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
-                            FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                            WHERE ev.`_timestamp` >= toDateTime(%(startDate)s / 1000)
-                              AND ev.`_timestamp` <= toDateTime(%(endDate)s / 1000)
-                              AND ev.project_id = %(project_id)s
-                              AND ev.`$event_name` = 'REQUEST'"""
+        extra_event = f"""SELECT DISTINCT ev.session_id, 
+                                JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
+                  FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
+                  WHERE ev.`_timestamp` >= toDateTime(%(startDate)s / 1000)
+                    AND ev.`_timestamp` <= toDateTime(%(endDate)s / 1000)
+                    AND ev.project_id = %(project_id)s
+                    AND ev.`$event_name` = 'REQUEST'"""
+
         extra_deduplication.append("url_path")
         extra_conditions = {}
         for e in data.events:
