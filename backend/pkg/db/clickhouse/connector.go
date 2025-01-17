@@ -275,11 +275,17 @@ func (c *connectorImpl) InsertWebInputDuration(session *sessions.Session, msg *m
 
 func (c *connectorImpl) InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error {
 	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":   issueID,
-		"issue_type": "mouse_thrashing",
-		"url":        cropString(msg.Url),
-		"url_path":   cropString(extractUrlPath(msg.Url)),
+		"issue_id":     issueID,
+		"issue_type":   "mouse_thrashing",
+		"url":          cropString(msg.Url),
+		"url_host":     host,
+		"url_path":     path,
+		"url_hostpath": hostpath,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -321,11 +327,17 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 	default:
 		return fmt.Errorf("unknown issueType: %s", msg.Type)
 	}
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"issue_id":   issueID,
-		"issue_type": msg.Type,
-		"url":        cropString(msg.Url),
-		"url_path":   cropString(extractUrlPath(msg.Url)),
+		"issue_id":     issueID,
+		"issue_type":   msg.Type,
+		"url":          cropString(msg.Url),
+		"url_host":     host,
+		"url_path":     path,
+		"url_hostpath": hostpath,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal issue event: %s", err)
@@ -360,6 +372,34 @@ func (c *connectorImpl) InsertIssue(session *sessions.Session, msg *messages.Iss
 }
 
 func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
+	host, path, hostpath, err := extractUrlParts(msg.URL)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
+	ttfb := nullableUint16(0)
+	if msg.ResponseStart >= msg.RequestStart {
+		ttfb = nullableUint16(uint16(msg.ResponseStart - msg.RequestStart))
+	}
+	ttlb := nullableUint16(0)
+	if msg.ResponseEnd >= msg.RequestStart {
+		ttlb = nullableUint16(uint16(msg.ResponseEnd - msg.RequestStart))
+	}
+	responseTime := nullableUint16(0)
+	if msg.ResponseEnd >= msg.ResponseStart {
+		responseTime = nullableUint16(uint16(msg.ResponseEnd - msg.ResponseStart))
+	}
+	domBuildingTime := nullableUint16(0)
+	if msg.DomContentLoadedEventStart >= msg.ResponseEnd {
+		domBuildingTime = nullableUint16(uint16(msg.DomContentLoadedEventStart - msg.ResponseEnd))
+	}
+	domContentLoadedEventTime := nullableUint16(0)
+	if msg.DomContentLoadedEventEnd >= msg.DomContentLoadedEventStart {
+		domContentLoadedEventTime = nullableUint16(uint16(msg.DomContentLoadedEventEnd - msg.DomContentLoadedEventStart))
+	}
+	loadEventTime := nullableUint16(0)
+	if msg.LoadEventEnd >= msg.LoadEventStart {
+		loadEventTime = nullableUint16(uint16(msg.LoadEventEnd - msg.LoadEventStart))
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
 		"request_start":                  nullableUint16(uint16(msg.RequestStart)),
 		"response_start":                 nullableUint16(uint16(msg.ResponseStart)),
@@ -373,7 +413,16 @@ func (c *connectorImpl) InsertWebPageEvent(session *sessions.Session, msg *messa
 		"speed_index":                    nullableUint16(uint16(msg.SpeedIndex)),
 		"visually_complete":              nullableUint16(uint16(msg.VisuallyComplete)),
 		"time_to_interactive":            nullableUint16(uint16(msg.TimeToInteractive)),
-		"url_path":                       cropString(extractUrlPath(msg.URL)),
+		"url":                            cropString(msg.URL),
+		"url_host":                       host,
+		"url_path":                       path,
+		"url_hostpath":                   hostpath,
+		"ttfb":                           ttfb,
+		"ttlb":                           ttlb,
+		"response_time":                  responseTime,
+		"dom_building_time":              domBuildingTime,
+		"dom_content_loaded_event_time":  domContentLoadedEventTime,
+		"load_event_time":                loadEventTime,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal page event: %s", err)
@@ -416,13 +465,20 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 		nYVal := normalizedY
 		nY = &nYVal
 	}
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
 		"label":           msg.Label,
 		"hesitation_time": nullableUint32(uint32(msg.HesitationTime)),
 		"selector":        msg.Selector,
 		"normalized_x":    nX,
 		"normalized_y":    nY,
-		"url_path":        cropString(extractUrlPath(msg.Url)),
+		"url":             cropString(msg.Url),
+		"url_host":        host,
+		"url_path":        path,
+		"url_hostpath":    hostpath,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal click event: %s", err)
@@ -490,8 +546,15 @@ func (c *connectorImpl) InsertWebErrorEvent(session *sessions.Session, msg *type
 
 func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
 	var timestamp = (msg.TimestampStart + msg.TimestampEnd) / 2
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":                    nullableString(cropString(msg.Meta().Url)),
+		"url":                    cropString(msg.Url),
+		"url_host":               host,
+		"url_path":               path,
+		"url_hostpath":           hostpath,
 		"min_fps":                uint8(msg.MinFPS),
 		"avg_fps":                uint8(msg.AvgFPS),
 		"max_fps":                uint8(msg.MaxFPS),
@@ -536,8 +599,11 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		request = &msg.Request
 		response = &msg.Response
 	}
+	host, path, hostpath, err := extractUrlParts(msg.URL)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
 	jsonString, err := json.Marshal(map[string]interface{}{
-		"url":           cropString(msg.URL),
 		"request_body":  request,
 		"response_body": response,
 		"status":        uint16(msg.Status),
@@ -545,7 +611,10 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"duration":      uint16(msg.Duration),
 		"success":       msg.Status < 400,
 		"transfer_size": uint32(msg.TransferredBodySize),
-		"url_path":      cropString(extractUrlPath(msg.URL)),
+		"url":           cropString(msg.URL),
+		"url_host":      host,
+		"url_path":      path,
+		"url_hostpath":  hostpath,
 	})
 	if err != nil {
 		return fmt.Errorf("can't marshal request event: %s", err)
@@ -851,6 +920,18 @@ func (c *connectorImpl) checkError(name string, err error) {
 	if !errors.Is(err, clickhouse.ErrBatchAlreadySent) {
 		log.Printf("can't create %s batch after failed append operation: %s", name, err)
 	}
+}
+
+func extractUrlParts(fullUrl string) (string, string, string, error) {
+	host, path, query, err := url.GetURLParts(strings.ToLower(fullUrl))
+	if err != nil {
+		return "", "", "", err
+	}
+	pathQuery := path
+	if query != "" {
+		pathQuery += "?" + query
+	}
+	return cropString(host), cropString(pathQuery), cropString(host + pathQuery), nil
 }
 
 func extractUrlPath(fullUrl string) string {
