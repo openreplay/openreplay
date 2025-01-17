@@ -287,7 +287,8 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
                         event.filters is None or len(event.filters) == 0))
 
 
-def json_condition(table_alias, json_column, json_key, op, values, value_key):
+def json_condition(table_alias, json_column, json_key, op, values, value_key, check_existence=False,
+                   numeric_check=False, numeric_type="float"):
     """
     Constructs a condition to filter a JSON column dynamically in SQL queries.
 
@@ -298,19 +299,39 @@ def json_condition(table_alias, json_column, json_key, op, values, value_key):
         op (str): SQL operator to apply (e.g., '=', 'ILIKE', etc.).
         values (str | list | tuple): Single value, list of values, or tuple to compare.
         value_key (str): The parameterized key for SQL (e.g., 'custom').
+        check_existence (bool): Whether to include a JSONHas condition to check if the key exists.
+        numeric_check (bool): Whether to include a numeric check on the extracted value.
+        numeric_type (str): Type for numeric extraction, "int" or "float".
 
     Returns:
         str: The constructed condition.
     """
-    # Normalize `values` to a list
     if isinstance(values, tuple):
         values = list(values)
     elif not isinstance(values, list):
         values = [values]
 
-    # Build the condition using `multi_conditions`
-    condition = f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
-    return sh.multi_conditions(condition, values, value_key=value_key)
+    conditions = []
+
+    # Add JSONHas condition if required
+    if check_existence:
+        conditions.append(f"JSONHas(toString({table_alias}.`{json_column}`), '{json_key}')")
+
+    # Determine the extraction function for numeric checks
+    if numeric_check:
+        extract_func = "JSONExtractFloat" if numeric_type == "float" else "JSONExtractInt"
+        conditions.append(f"{extract_func}(toString({table_alias}.`{json_column}`), '{json_key}') > 0")
+
+    # Add the main condition for value comparison
+    if numeric_check:
+        extract_func = "JSONExtractFloat" if numeric_type == "float" else "JSONExtractInt"
+        condition = f"{extract_func}(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
+    else:
+        condition = f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
+
+    conditions.append(sh.multi_conditions(condition, values, value_key=value_key))
+
+    return " AND ".join(conditions)
 
 
 # this function generates the query and return the generated-query with the dict of query arguments
@@ -655,9 +676,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
                             if is_not:
-                                event_where.append(
-                                    json_condition("sub", "$properties", _column, op, event.value, e_k)
-                                )
+                                event_where.append(json_condition(
+                                    "sub", "$properties", _column, op, event.value, e_k
+                                ))
                                 events_conditions_not.append(
                                     {
                                         "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
@@ -1041,9 +1062,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
-                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-                                                       event.source, value_key=e_k))
+                event_where.append(json_condition(
+                    tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
+                )
+
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             # TODO: isNot for PerformanceEvent
@@ -1065,9 +1087,10 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
-                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-                                                       event.source, value_key=e_k))
+                event_where.append(json_condition(
+                    tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
+                )
+
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
