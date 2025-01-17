@@ -51,7 +51,7 @@ export default class NotesStore {
       tags: this.activeTags,
       mineOnly: this.ownOnly,
       sharedOnly: false,
-      query: this.query,
+      search: this.query,
     }
 
     this.setLoading(true)

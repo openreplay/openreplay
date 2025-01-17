@@ -46,7 +46,7 @@ export interface NotesFilter {
   tags: iTag[]
   sharedOnly: boolean
   mineOnly: boolean
-  query: string
+  search: string
 }
 
 export default class NotesService {

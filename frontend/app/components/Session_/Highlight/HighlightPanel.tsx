@@ -74,7 +74,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
     player.pause();
     const time = store.get().time;
     const endTime = store.get().endTime;
-    const distance = endTime / 50;
+    const distance = Math.max(endTime / 40, 2500);
     uiPlayerStore.toggleHighlightSelection({
       enabled: true,
       range: [Math.max(time - distance, 0), Math.min(time + distance, endTime)],
