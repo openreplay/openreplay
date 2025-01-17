@@ -77,6 +77,7 @@ const SpotsListHeader = observer(
               value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
               onChange={handleSegmentChange}
               className="mr-4 lg:hidden xl:flex"
+              size={'small'}
             />
 
             <div className="w-56">
