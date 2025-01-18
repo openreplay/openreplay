@@ -9,7 +9,7 @@ function TimeTooltip() {
   const { time = 0, offset = 0, isVisible, localTime, userTime } = timeLineTooltip;
   return (
     <div
-      className={stl.timeTooltip}
+      className={`${stl.timeTooltip} p-2 rounded-lg min-w-40 max-w-64`}
       style={{
         top: 0,
         left: `calc(${offset}px - 0.5rem)`,

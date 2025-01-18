@@ -38,7 +38,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
   );
   const [startTs, setStartTs] = React.useState(startTsStr);
   const [endTs, setEndTs] = React.useState(endTsStr);
-  const [tag, setTag] = React.useState(editNote?.tag ?? '');
+  const [tag, setTag] = React.useState(editNote?.tag ?? TAGS[0]);
 
   const onStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newState = maskDuration(e.target.value)
@@ -147,7 +147,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
       onClick={(e) => e.stopPropagation()}
     >
       <div className={'flex items-center gap-2'}>
-        <MessageSquareQuote size={16} strokeWidth={1.5} />
+        <Icon name="chat-square-quote" color="inherit" size={16} />
         <h3 className={'text-xl font-semibold'}>Highlight</h3>
         <div className={'cursor-pointer ml-auto'} onClick={onClose}>
           <X size={18} strokeWidth={2} />
@@ -162,22 +162,24 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           onChange={(e) => setMessage(e.target.value)}
           placeholder={'Enter Comments'}
           maxLength={200}
-          rows={4}
+          rows={6}
           value={message}
+          className='rounded-lg'
+          autoFocus
         />
         <div className={'text-disabled-text text-sm'}>{message.length}/200 characters remaining</div>
       </div>
       <div className={'flex items-center gap-2'}>
         <div>
           <div className={'font-semibold'}>From</div>
-          <Input value={startTs} onChange={onStartChange} />
+          <Input value={startTs} onChange={onStartChange} className='rounded-lg' />
         </div>
         <div>
           <div className={'font-semibold'}>To</div>
-          <Input value={endTs} onChange={onEndChange} />
+          <Input value={endTs} onChange={onEndChange} className='rounded-lg'  />
         </div>
       </div>
-      <div className={'flex items-center gap-1 flex-wrap'}>
+      <div className={'flex items-center gap-2 flex-wrap'}>
         {TAGS.map((tag) => (
           <Tag
             onClick={() => addTag(tag)}
@@ -199,6 +201,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         <Checkbox
           onChange={(e) => setIsPublic(e.target.checked)}
           value={isPublic}
+          className='ms-2'
         >
           Visible to team members
         </Checkbox>
@@ -208,12 +211,14 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           onClick={onSave}
           type={'primary'}
           loading={notesStore.isSaving}
-          icon={<MessageSquareQuote size={14} strokeWidth={1} />}
+          className='font-medium'
         >
-          Save Highlight
+          <Icon name="chat-square-quote" color="inherit" size={14} /> Save Highlight
         </Button>
         <Button
           onClick={onClose}
+          type='text'
+          className='font-medium'
         >
           Cancel
         </Button>

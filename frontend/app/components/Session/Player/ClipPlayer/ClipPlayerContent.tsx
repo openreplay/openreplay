@@ -11,7 +11,8 @@ import Session from 'Types/session';
 import styles from 'Components/Session_/playerBlock.module.css';
 import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
 import { observer } from 'mobx-react-lite';
-import { MessageSquare } from 'lucide-react'
+import { Icon } from 'UI';
+
 
 interface Props {
   session: Session;
@@ -73,9 +74,9 @@ function ClipPlayerContent(props: Props) {
           </div>
         </div>
         {props.isHighlight && props.message ? (
-          <div className={'p-3 bg-yellow flex items-start gap-2 w-full'}>
-            <MessageSquare size={14} strokeWidth={1} />
-            <div className={'leading-none'}>
+          <div className={'shadow-inner p-3 bg-yellow flex gap-2 w-full items-center'}>
+            <Icon name="chat-square-quote" color="inherit" size={18} />
+            <div className={'leading-none font-medium'}>
               {props.message}
             </div>
           </div>

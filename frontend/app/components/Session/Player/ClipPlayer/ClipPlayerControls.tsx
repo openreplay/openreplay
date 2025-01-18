@@ -44,9 +44,9 @@ function ClipPlayerControls({
     <div className="relative flex items-center gap-4 p-3 border-t">
       <PlayButton state={state} togglePlay={togglePlay} iconSize={30} />
       <Timeline range={range} />
-      <Button size="small" onClick={showFullSession}>
+      <Button size="small" type='primary' onClick={showFullSession}>
         Play Full Session
-        <CirclePlay size={18} className="ml-2" />
+        <CirclePlay size={16}/>
       </Button>
     </div>
   );
