@@ -467,6 +467,17 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str,
     }
 
 
+@app.get('/{projectId}/notes/{noteId}', tags=["sessions", "notes"])
+def get_note_by_id(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_note(tenant_id=context.tenant_id, project_id=projectId, note_id=noteId,
+                                   user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
 @app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"])
 def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
