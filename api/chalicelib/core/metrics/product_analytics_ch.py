@@ -253,7 +253,7 @@ FROM (
          SELECT others_n.event_number_in_session,
                 'OTHER'             AS event_type,
                 NULL                AS e_value,
-                'OTHERS'            AS next_type,
+                'OTHER'            AS next_type,
                 NULL                AS next_value,
                 SUM(sessions_count) AS sessions_count
          FROM others_n

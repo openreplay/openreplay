@@ -11,9 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 def __transform_journey(rows, reverse_path=False):
-    print("---------------------------------")
-    print(rows)
-    print("---------------------------------")
     total_100p = 0
     number_of_step1 = 0
     for r in rows:
@@ -32,17 +29,21 @@ def __transform_journey(rows, reverse_path=False):
         source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
-            nodes_values.append({"name": r['e_value'], "eventType": r['event_type']})
+            nodes_values.append({"depth": r['event_number_in_session'] - 1,
+                                 "name": r['e_value'],
+                                 "eventType": r['event_type']})
         # if r['next_value']:
         target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
         if target not in nodes:
             nodes.append(target)
-            nodes_values.append({"name": r['next_value'], "eventType": r['next_type']})
+            nodes_values.append({"depth": r['event_number_in_session'],
+                                 "name": r['next_value'],
+                                 "eventType": r['next_type']})
 
         sr_idx = nodes.index(source)
         tg_idx = nodes.index(target)
 
-        link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"],"value": r["value"]}
+        link = {"eventType": r['event_type'], "sessionsCount": r["sessions_count"], "value": r["value"]}
         if not reverse_path:
             link["source"] = sr_idx
             link["target"] = tg_idx
