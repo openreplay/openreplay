@@ -1,6 +1,7 @@
 import React from 'react'
 import { Button, Tooltip } from 'antd';
 import { MessageSquareQuote } from 'lucide-react'
+import { Icon } from 'UI';
 
 function HighlightButton({ onClick }: { onClick: () => void }) {
 
@@ -10,7 +11,7 @@ function HighlightButton({ onClick }: { onClick: () => void }) {
   return (
     <Tooltip title={'Highlight a moment'} placement={'bottom'}>
       <Button onClick={openPanel} size={'small'}>
-        <MessageSquareQuote size={14} strokeWidth={1} />
+        <Icon name="chat-square-quote" color="inherit" size={15} />
       </Button>
     </Tooltip>
   )

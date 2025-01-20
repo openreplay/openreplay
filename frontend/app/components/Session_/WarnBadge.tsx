@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'antd';
 import { Icon } from 'UI';
 const localhostWarn = (project: string) => project + '_localhost_warn';
 
@@ -144,26 +145,12 @@ export function PartialSessionBadge() {
       style={{
         zIndex: 999,
         position: 'absolute',
-        left: '50%',
-        bottom: '0',
-        transform: `translate(-50%, -30%)`,
-        fontWeight: 500,
+        left: '61%',
+        bottom: '1.3rem',
       }}
     >
-        <div
-          className={
-            'px-3 py-2 border border-gray-lighter shadow rounded-lg bg-white flex items-center gap-2'
-          }
-        >
-          <div className={'rounded-full text-white bg-blue leading-none w-6 h-6 flex items-center justify-center'}>
-            <div>
-            i
-            </div>
-          </div>
-          <div>
-            You are viewing a portion of full session
-          </div>
-        </div>
+      <Alert message="You are viewing a portion of full session" type="info" className='border-0 rounded-lg py-0.5' showIcon/>
+        
     </div>
   )
 }
