@@ -1,7 +1,4 @@
-import { useModal } from 'Components/Modal';
-import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 import React from 'react';
-import { Icon } from 'UI';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -19,31 +16,16 @@ interface Props {
   note: Note;
   noEdit: boolean;
   filterOutNote: (id: number) => void;
+  setActiveTab: (tab: string) => void;
 }
 
 function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
-  const { showModal, hideModal } = useModal();
 
   const onEdit = () => {
-    showModal(
-      <CreateNote
-        hideModal={hideModal}
-        isEdit
-        time={props.note.timestamp}
-        editNote={{
-          timestamp: props.note.timestamp,
-          tag: props.note.tag,
-          isPublic: props.note.isPublic,
-          message: props.note.message,
-          noteId: props.note.noteId.toString(),
-          startAt: props.note.startAt,
-          endAt: props.note.endAt
-        }}
-      />,
-      { right: true, width: 380 }
-    );
+    notesStore.setEditNote(props.note);
+    props.setActiveTab('HIGHLIGHT')
   };
 
   const onCopy = () => {

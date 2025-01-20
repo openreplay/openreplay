@@ -22,9 +22,9 @@ function maskDuration(input: string): string {
 }
 const duration = new RegExp(/(\d{2}):(\d{2})/);
 
-function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: () => void }) {
+function HighlightPanel({ onClose }: { onClose: () => void }) {
   const { uiPlayerStore, notesStore, sessionStore } = useStore();
-  const editNote = editNoteId ? notesStore.getNoteById(editNoteId) : undefined;
+  const editNote = notesStore.editNote;
   const [message, setMessage] = React.useState(editNote?.message ?? '');
   const [isPublic, setIsPublic] = React.useState(editNote?.isPublic ?? false);
   const { store, player } = React.useContext(PlayerContext);
@@ -83,6 +83,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
       uiPlayerStore.toggleHighlightSelection({
         enabled: false,
       });
+      notesStore.setEditNote(null)
     };
   }, []);
   React.useEffect(() => {
@@ -148,12 +149,14 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
     >
       <div className={'flex items-center gap-2'}>
         <Icon name="chat-square-quote" color="inherit" size={16} />
-        <h3 className={'text-xl font-semibold'}>Highlight</h3>
+        <h3 className={'text-xl font-semibold'}>
+          {editNote ? 'Edit ' : ''}Highlight
+        </h3>
         <div className={'cursor-pointer ml-auto'} onClick={onClose}>
           <X size={18} strokeWidth={2} />
         </div>
       </div>
-      <div className='text-sm text-neutral-500'>
+      <div className="text-sm text-neutral-500">
         Save key moments from sessions. Access them anytime on the ‘Highlights’
         page to share with your team.
       </div>
@@ -164,19 +167,25 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           maxLength={200}
           rows={6}
           value={message}
-          className='rounded-lg'
+          className="rounded-lg"
           autoFocus
         />
-        <div className={'text-disabled-text text-sm'}>{message.length}/200 characters remaining</div>
+        <div className={'text-disabled-text text-sm'}>
+          {message.length}/200 characters remaining
+        </div>
       </div>
       <div className={'flex items-center gap-2'}>
         <div>
           <div className={'font-semibold'}>From</div>
-          <Input value={startTs} onChange={onStartChange} className='rounded-lg' />
+          <Input
+            value={startTs}
+            onChange={onStartChange}
+            className="rounded-lg"
+          />
         </div>
         <div>
           <div className={'font-semibold'}>To</div>
-          <Input value={endTs} onChange={onEndChange} className='rounded-lg'  />
+          <Input value={endTs} onChange={onEndChange} className="rounded-lg" />
         </div>
       </div>
       <div className={'flex items-center gap-2 flex-wrap'}>
@@ -201,7 +210,7 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
         <Checkbox
           onChange={(e) => setIsPublic(e.target.checked)}
           value={isPublic}
-          className='ms-2'
+          className="ms-2"
         >
           Visible to team members
         </Checkbox>
@@ -211,15 +220,12 @@ function HighlightPanel({ onClose, editNoteId }: { editNoteId: string; onClose: 
           onClick={onSave}
           type={'primary'}
           loading={notesStore.isSaving}
-          className='font-medium'
+          className="font-medium"
         >
-          <Icon name="chat-square-quote" color="inherit" size={14} /> Save Highlight
+          <Icon name="chat-square-quote" color="inherit" size={14} /> {editNote ? 'Update ' : 'Save '}
+          Highlight
         </Button>
-        <Button
-          onClick={onClose}
-          type='text'
-          className='font-medium'
-        >
+        <Button onClick={onClose} type="text" className="font-medium">
           Cancel
         </Button>
       </div>
