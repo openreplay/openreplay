@@ -187,6 +187,7 @@ function EventsBlock(props: IProps) {
         isTabChange={isTabChange}
         isPrev={isPrev}
         filterOutNote={filterOutNote}
+        setActiveTab={setActiveTab}
       />
     );
   };

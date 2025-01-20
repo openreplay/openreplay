@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Tag, Input } from 'antd';
 import { Duration } from 'luxon';
 import React from 'react';
 import { toast } from 'react-toastify';
@@ -12,6 +12,7 @@ import {
   tagProps,
 } from 'App/services/NotesService';
 import { Button, Checkbox, Icon } from 'UI';
+import { shortDurationFromMs } from 'App/date';
 
 import Select from 'Shared/Select';
 
@@ -208,7 +209,7 @@ function CreateNote({
 
       <div className="">
         <div className={'font-semibold'}>Note</div>
-        <textarea
+        <Input.TextArea
           ref={inputRef}
           name="message"
           id="message"
@@ -221,6 +222,16 @@ function CreateNote({
           }}
           className="text-area"
         />
+        <div className={'flex w-full items-center gap-1 my-2'}>
+          {editNote && editNote?.startAt ? (
+            <>
+              <span>From: </span>
+              <Input disabled readOnly value={shortDurationFromMs(editNote?.startAt)} />
+              <span>To: </span>
+              <Input disabled readOnly value={shortDurationFromMs(editNote?.endAt)} />
+            </>
+          ) : null}
+        </div>
 
         <div className="flex items-center gap-1" style={{ lineHeight: '15px' }}>
           {TAGS.map((tag) => (

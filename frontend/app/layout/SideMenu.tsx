@@ -150,7 +150,8 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.TEAM]: () => client(CLIENT_TABS.MANAGE_USERS),
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
-    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES)
+    [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
+    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
   };
 
   const handleClick = (item: any) => {

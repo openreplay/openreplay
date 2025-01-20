@@ -1,7 +1,4 @@
-import { useModal } from 'Components/Modal';
-import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 import React from 'react';
-import { Icon } from 'UI';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
@@ -13,34 +10,22 @@ import { session } from 'App/routes';
 import { confirm } from 'UI';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 import { Tag } from 'antd'
+import { MessageSquareDot } from 'lucide-react'
 
 interface Props {
   note: Note;
   noEdit: boolean;
   filterOutNote: (id: number) => void;
+  setActiveTab: (tab: string) => void;
 }
 
 function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
-  const { showModal, hideModal } = useModal();
 
   const onEdit = () => {
-    showModal(
-      <CreateNote
-        hideModal={hideModal}
-        isEdit
-        time={props.note.timestamp}
-        editNote={{
-          timestamp: props.note.timestamp,
-          tag: props.note.tag,
-          isPublic: props.note.isPublic,
-          message: props.note.message,
-          noteId: props.note.noteId.toString(),
-        }}
-      />,
-      { right: true, width: 380 }
-    );
+    notesStore.setEditNote(props.note);
+    props.setActiveTab('HIGHLIGHT')
   };
 
   const onCopy = () => {
@@ -78,9 +63,7 @@ function NoteEvent(props: Props) {
   return (
     <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: '#FFFEF5' }}>
       <div className="flex items-center w-full relative">
-        <div className="p-3 bg-gray-light rounded-full">
-          <Icon name="quotes" color="main" />
-        </div>
+        <MessageSquareDot size={16} strokeWidth={1} />
         <div className="ml-2">
           <div
             className="text-base"

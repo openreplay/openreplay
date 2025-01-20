@@ -36,6 +36,7 @@ const components: any = {
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
+  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
 };
 
 const enhancedComponents: any = {
@@ -58,6 +59,7 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
+  Highlights: components.HighlightsPure,
 };
 
 const withSiteId = routes.withSiteId;
@@ -104,6 +106,8 @@ const USABILITY_TESTING_VIEW_PATH = routes.usabilityTestingView();
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
+
+const HIGHLIGHTS_PATH = routes.highlights();
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore } = useStore();
@@ -235,6 +239,12 @@ function PrivateRoutes() {
           strict
           path={withSiteId(RECORDINGS_PATH, siteIdList)}
           component={enhancedComponents.Assist}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
+          component={enhancedComponents.Highlights}
         />
         <Route
           exact

@@ -22,7 +22,7 @@ export class Spot {
     this.comments = data.comments ?? [];
     this.thumbnail = data.previewURL
     this.title = data.name;
-    this.createdAt = resentOrDate(new Date(data.createdAt).getTime());
+    this.createdAt = resentOrDate(new Date(data.createdAt).getTime(), true);
     this.user = data.userEmail;
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id

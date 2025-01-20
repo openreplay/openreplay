@@ -167,3 +167,48 @@ export function tryFilterUrl(url: string) {
     return url;
   }
 }
+
+export function mergeRequests(
+  webTrackedRequests: SpotNetworkRequest[],
+  proxyNetworkRequests: SpotNetworkRequest[],
+): SpotNetworkRequest[] {
+  const map = new Map<string, SpotNetworkRequest>();
+  const webReqClone = webTrackedRequests.map((r) => ({ ...r }));
+  const makeKey = (r: SpotNetworkRequest) =>
+    `${r.statusCode}::${r.method}::${r.url}::${Math.round(r.timestamp).toString().slice(0, -2) + "00"}`;
+
+  for (const proxyReq of proxyNetworkRequests) {
+    map.set(makeKey(proxyReq), proxyReq);
+  }
+
+  const merged: SpotNetworkRequest[] = [];
+  for (const webReq of webReqClone) {
+    if (webReq.url.includes("ingest/v1/web/i")) {
+      continue;
+    }
+    const key = makeKey(webReq);
+    const found = map.get(key);
+    if (found) {
+      if (
+        found.responseBody &&
+        found.responseBody.length > 0 &&
+        found.responseBody !== "{}"
+      ) {
+        webReq.responseBody = found.responseBody;
+        webReq.responseBodySize = found.responseBodySize;
+        if (webReq.encodedBodySize < found.encodedBodySize) {
+          webReq.encodedBodySize = found.encodedBodySize;
+        }
+      }
+      merged.push(webReq);
+      map.delete(key);
+    } else {
+      webReq.responseBody = JSON.stringify({
+        message: "Spot was unable to track this request's data",
+      });
+      merged.push(webReq);
+    }
+  }
+
+  return merged;
+}

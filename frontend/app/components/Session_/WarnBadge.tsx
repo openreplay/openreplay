@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'antd';
 import { Icon } from 'UI';
 const localhostWarn = (project: string) => project + '_localhost_warn';
 
@@ -136,5 +137,22 @@ const WarnBadge = React.memo(
     );
   }
 );
+
+export function PartialSessionBadge() {
+  return (
+    <div
+      className="flex flex-col gap-2"
+      style={{
+        zIndex: 999,
+        position: 'absolute',
+        left: '61%',
+        bottom: '1.3rem',
+      }}
+    >
+      <Alert message="You are viewing a portion of full session" type="info" className='border-0 rounded-lg py-0.5' showIcon/>
+        
+    </div>
+  )
+}
 
 export default WarnBadge;
