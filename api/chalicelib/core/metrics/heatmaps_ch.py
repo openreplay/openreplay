@@ -365,19 +365,21 @@ def get_selected_session(project_id, session_id):
 
 def get_page_events(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
-        rows = cur.execute("""\
-                SELECT 
-                    event_id,
-                    toUnixTimestamp(created_at)*1000 AS timestamp,
-                    JSON_VALUE(CAST($properties AS String), '$.url_host') AS host,
-                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS path,
-                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS value,
-                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS url,
-                    'LOCATION' AS type
-                FROM product_analytics.events
-                WHERE session_id = %(session_id)s 
-                    AND `$event_name`='LOCATION'
-                    AND project_id= %(project_id)s
-                ORDER BY datetime,message_id;""", {"session_id": session_id, "project_id": project_id})
+        query = cur.format(query=f"""SELECT
+                                    event_id as message_id,
+                                    toUnixTimestamp(created_at)*1000 AS timestamp,
+                                    JSON_VALUE(CAST(`$properties` AS String), '$.url_host') AS host,
+                                    JSON_VALUE(CAST(`$properties` AS String), '$.url_path') AS path,
+                                    JSON_VALUE(CAST(`$properties` AS String), '$.url_path') AS value,
+                                    JSON_VALUE(CAST(`$properties` AS String), '$.url_path') AS url,
+                                    'LOCATION' AS type
+                                FROM product_analytics.events
+                                WHERE session_id = %(session_id)s 
+                                    AND `$event_name`='LOCATION'
+                                    AND project_id= %(project_id)s
+                                ORDER BY created_at,message_id;""",
+                           parameters={"session_id": session_id, "project_id": project_id})
+
+        rows = cur.execute(query=query)
         rows = helper.list_to_camel_case(rows)
     return rows
