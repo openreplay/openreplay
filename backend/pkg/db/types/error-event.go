@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"hash/fnv"
 	"strconv"
 
@@ -13,13 +15,14 @@ import (
 const SOURCE_JS = "js_exception"
 
 type ErrorEvent struct {
-	MessageID uint64
-	Timestamp uint64
-	Source    string
-	Name      string
-	Message   string
-	Payload   string
-	Tags      map[string]*string
+	MessageID  uint64
+	Timestamp  uint64
+	Source     string
+	Name       string
+	Message    string
+	Payload    string
+	Tags       map[string]*string
+	OriginType int
 }
 
 func unquote(s string) string {
@@ -60,24 +63,26 @@ func parseTags(tagsJSON string) (tags map[string]*string, err error) {
 func WrapJSException(m *JSException) (*ErrorEvent, error) {
 	meta, err := parseTags(m.Metadata)
 	return &ErrorEvent{
-		MessageID: m.Meta().Index,
-		Timestamp: m.Meta().Timestamp,
-		Source:    SOURCE_JS,
-		Name:      m.Name,
-		Message:   m.Message,
-		Payload:   m.Payload,
-		Tags:      meta,
+		MessageID:  m.Meta().Index,
+		Timestamp:  m.Meta().Timestamp,
+		Source:     SOURCE_JS,
+		Name:       m.Name,
+		Message:    m.Message,
+		Payload:    m.Payload,
+		Tags:       meta,
+		OriginType: m.TypeID(),
 	}, err
 }
 
 func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
 	return &ErrorEvent{
-		MessageID: m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
-		Timestamp: m.Timestamp,
-		Source:    m.Source,
-		Name:      m.Name,
-		Message:   m.Message,
-		Payload:   m.Payload,
+		MessageID:  m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
+		Timestamp:  m.Timestamp,
+		Source:     m.Source,
+		Name:       m.Name,
+		Message:    m.Message,
+		Payload:    m.Payload,
+		OriginType: m.TypeID(),
 	}
 }
 
@@ -128,4 +133,23 @@ func WrapCustomEvent(m *CustomEvent) *IssueEvent {
 	}
 	msg.Meta().SetMeta(m.Meta())
 	return msg
+}
+
+func (e *ErrorEvent) GetUUID(sessID uint64) string {
+	hash := fnv.New128a()
+	hash.Write(Uint64ToBytes(sessID))
+	hash.Write(Uint64ToBytes(e.MessageID))
+	hash.Write(Uint64ToBytes(uint64(e.OriginType)))
+	uuidObj, err := uuid.FromBytes(hash.Sum(nil))
+	if err != nil {
+		fmt.Printf("can't create uuid from bytes: %s", err)
+		uuidObj = uuid.New()
+	}
+	return uuidObj.String()
+}
+
+func Uint64ToBytes(num uint64) []byte {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, num)
+	return buf
 }

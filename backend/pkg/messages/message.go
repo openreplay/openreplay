@@ -1,6 +1,8 @@
 package messages
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Message interface {
 	Encode() []byte

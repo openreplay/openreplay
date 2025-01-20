@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.5.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.30.1
 	github.com/DataDog/datadog-api-client-go/v2 v2.34.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.1.1
@@ -14,6 +14,7 @@ require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.6.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-elasticsearch/v8 v8.17.0
 	github.com/fernet/fernet-go v0.0.0-20240119011108-303da6aec611
 	github.com/getsentry/sentry-go v0.30.0
@@ -37,12 +38,12 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20241012191800-bbb40edc15aa
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.33.0
+	golang.org/x/net v0.34.0
 )
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
-	github.com/ClickHouse/ch-go v0.61.5 // indirect
+	github.com/ClickHouse/ch-go v0.63.1 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -77,12 +78,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241216192217-9240e9c98484 // indirect
 	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+

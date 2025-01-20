@@ -31,7 +31,7 @@ func nullableString(v string) *string {
 func datetime(timestamp uint64) time.Time {
 	t := time.Unix(int64(timestamp/1e3), 0)
 	// Temporal solution for not correct timestamps in performance messages
-	if t.Year() < 2022 || t.Year() > 2025 {
+	if t.Year() < 2023 || t.Year() > 2026 {
 		return time.Now()
 	}
 	return t
