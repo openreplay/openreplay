@@ -470,7 +470,7 @@ ORDER BY event_number_in_session, sessions_count DESC;"""
                                            sessions_count
                                     FROM n{i}""")
 
-    with ch_client.ClickHouseClient(database="experimental") as ch:
+    with ch_client.ClickHouseClient(database="product_analytics") as ch:
         time_key = TimeUTC.now()
         _now = time()
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
