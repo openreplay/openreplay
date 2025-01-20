@@ -3,8 +3,8 @@ import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography, Tooltip }
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
-import { AppWindowMac, EditIcon, Smartphone,  } from 'lucide-react';
-import { PlusOutlined, SearchOutlined, EditOutlined } from '@ant-design/icons'
+import { Globe, Smartphone,  } from 'lucide-react';
+import {SearchOutlined, EditOutlined} from '@ant-design/icons'
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 
@@ -51,20 +51,14 @@ const ProjectList: React.FC = () => {
     )
   }));
 
-  const createProject = () => {
-    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
-      title: 'New Project'
-    });
-  };
+
 
   return (
     <div className="h-full flex flex-col gap-4">
       <div className="flex flex-row gap-2 items-center p-3">
-        <Tooltip title='Create Project' placement='bottom'>
-          <Button onClick={createProject} type='primary' ghost size='middle' shape="circle" icon={<PlusOutlined size={16}/>}></Button>
-        </Tooltip>
         <Input
           placeholder="Search projects"
+          // onSearch={handleSearch}
           prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}
           allowClear
@@ -95,28 +89,28 @@ const ProjectIconWithProgress: React.FC<{
   progress: number;
 }> = ({ platform, progress }) => (
   <Tooltip title={`${progress}% Capture Rate`}>
-    <div className="relative flex items-center justify-center mr-2 leading-none">
-      <Progress
-        type="circle"
-        percent={progress}
-        size={28}
-        format={() => ''}
-        strokeWidth={4}
-        strokeColor="#23959a"
+  <div className="relative flex items-center justify-center mr-2 leading-none">
+    <Progress
+      type="circle"
+      percent={progress}
+      size={28}
+      format={() => ''}
+      strokeWidth={4}
+      strokeColor="#23959a"
+    />
+    <div className="absolute">
+      <Avatar
+        className="bg-tealx-light"
+        size={26}
+        icon={
+          platform === 'web' ? (
+            <Globe size={16} color="teal" />
+          ) : (
+            <Smartphone size={16} color="teal" />
+          )
+        }
       />
-      <div className="absolute">
-        <Avatar
-          className="bg-tealx-light"
-          size={26}
-          icon={
-            platform === 'web' ? (
-              <AppWindowMac size={16} color="teal" />
-            ) : (
-              <Smartphone size={16} color="teal" />
-            )
-          }
-        />
-      </div>
     </div>
+  </div>
   </Tooltip>
 );

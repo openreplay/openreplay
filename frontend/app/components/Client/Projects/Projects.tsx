@@ -5,7 +5,7 @@ import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
-import { KeyIcon, PlusIcon } from 'lucide-react';
+import {PlusOutlined, KeyOutlined} from '@ant-design/icons'
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
@@ -37,6 +37,11 @@ function Projects() {
     history.push({ search: params.toString() });
   }, [pid, tab]);
 
+  const createProject = () => {
+    openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
+      title: 'Add Project'
+    });
+  };
 
   return (
     <Card
@@ -47,7 +52,8 @@ function Projects() {
         body: '!p-0 !border-t',
       }}
       title={<Typography.Title level={4} className="!m-0">Projects</Typography.Title>}
-    >
+      extra={<Button onClick={createProject} type='default' size='middle' icon={<PlusOutlined size={16}/>}>Add Project</Button>}
+       >
       <Layout>
         <Layout.Sider width={260} trigger={null}
                       className="!bg-white border-r">
@@ -97,7 +103,7 @@ function ProjectKeyButton({ project }: { project: Project | null }) {
 
   return (
     <Tooltip title="Copy Project Key">
-      <Button onClick={copyKey} icon={<KeyIcon size={14} />} size="small" />
+      <Button onClick={copyKey} icon={<KeyOutlined size={14} />} size="small" />
     </Tooltip>
   );
 }
