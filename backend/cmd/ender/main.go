@@ -93,25 +93,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			failedSessionEnds := make(map[uint64]uint64)
-			duplicatedSessionEnds := make(map[uint64]uint64)
-			negativeDuration := make(map[uint64]uint64)
-			shorterDuration := make(map[uint64]int64)
-			diffDuration := make(map[uint64]int64)
-			noSessionInDB := make(map[uint64]uint64)
-			updatedDurations := 0
-			newSessionEnds := 0
-
-			type SessionEndType int
-			const (
-				FailedSessionEnd SessionEndType = iota + 1
-				DuplicatedSessionEnd
-				NegativeDuration
-				ShorterDuration
-				DiffDuration
-				NewSessionEnd
-				NoSessionInDB
-			)
+			details := newDetails()
 
 			// Find ended sessions and send notification to other services
 			sessionEndGenerator.HandleEndedSessions(func(sessionID uint64, timestamp uint64) (bool, int) {
@@ -128,12 +110,12 @@ func main() {
 					newDur := timestamp - sess.Timestamp
 					// Skip if session was ended before with same duration
 					if currDuration == newDur {
-						duplicatedSessionEnds[sessionID] = currDuration
+						details.Duplicated[sessionID] = currDuration
 						return true, int(DuplicatedSessionEnd)
 					}
 					// Skip if session was ended before with longer duration
 					if currDuration > newDur {
-						shorterDuration[sessionID] = int64(currDuration) - int64(newDur)
+						details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
 						return true, int(ShorterDuration)
 					}
 				}
@@ -141,15 +123,15 @@ func main() {
 				if err != nil {
 					if strings.Contains(err.Error(), "integer out of range") {
 						// Skip session with broken duration
-						failedSessionEnds[sessionID] = timestamp
+						details.Failed[sessionID] = timestamp
 						return true, int(FailedSessionEnd)
 					}
 					if strings.Contains(err.Error(), "is less than zero for uint64") {
-						negativeDuration[sessionID] = timestamp
+						details.Negative[sessionID] = timestamp
 						return true, int(NegativeDuration)
 					}
 					if strings.Contains(err.Error(), "no rows in result set") {
-						noSessionInDB[sessionID] = timestamp
+						details.NotFound[sessionID] = timestamp
 						return true, int(NoSessionInDB)
 					}
 					log.Error(sessCtx, "can't update session duration, err: %s", err)
@@ -157,7 +139,7 @@ func main() {
 				}
 				// Check one more time just in case
 				if currDuration == newDuration {
-					duplicatedSessionEnds[sessionID] = currDuration
+					details.Duplicated[sessionID] = currDuration
 					return true, int(DuplicatedSessionEnd)
 				}
 				if cfg.UseEncryption {
@@ -191,25 +173,14 @@ func main() {
 				}
 
 				if currDuration != 0 {
-					diffDuration[sessionID] = int64(newDuration) - int64(currDuration)
-					updatedDurations++
+					details.Diff[sessionID] = int64(newDuration) - int64(currDuration)
+					details.Updated++
 				} else {
-					newSessionEnds++
+					details.New++
 				}
 				return true, int(NewSessionEnd)
 			})
-			if n := len(failedSessionEnds); n > 0 {
-				log.Info(ctx, "sessions with wrong duration: %d, %v", n, failedSessionEnds)
-			}
-			if n := len(negativeDuration); n > 0 {
-				log.Info(ctx, "sessions with negative duration: %d, %v", n, negativeDuration)
-			}
-			if n := len(noSessionInDB); n > 0 {
-				log.Info(ctx, "sessions without info in DB: %d, %v", n, noSessionInDB)
-			}
-			log.Info(ctx, "failed: %d, negative: %d, shorter: %d, same: %d, updated: %d, new: %d, not found: %d",
-				len(failedSessionEnds), len(negativeDuration), len(shorterDuration), len(duplicatedSessionEnds),
-				updatedDurations, newSessionEnds, len(noSessionInDB))
+			details.Log(log, ctx)
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
@@ -231,3 +202,87 @@ func main() {
 		}
 	}
 }
+
+type logDetails struct {
+	Failed     map[uint64]uint64
+	Duplicated map[uint64]uint64
+	Negative   map[uint64]uint64
+	Shorter    map[uint64]int64
+	NotFound   map[uint64]uint64
+	Diff       map[uint64]int64
+	Updated    int
+	New        int
+}
+
+func newDetails() *logDetails {
+	return &logDetails{
+		Failed:     make(map[uint64]uint64),
+		Duplicated: make(map[uint64]uint64),
+		Negative:   make(map[uint64]uint64),
+		Shorter:    make(map[uint64]int64),
+		NotFound:   make(map[uint64]uint64),
+		Diff:       make(map[uint64]int64),
+		Updated:    0,
+		New:        0,
+	}
+}
+
+func (l *logDetails) Log(log logger.Logger, ctx context.Context) {
+	if n := len(l.Failed); n > 0 {
+		log.Debug(ctx, "sessions with wrong duration: %d, %v", n, l.Failed)
+	}
+	if n := len(l.Negative); n > 0 {
+		log.Debug(ctx, "sessions with negative duration: %d, %v", n, l.Negative)
+	}
+	if n := len(l.NotFound); n > 0 {
+		log.Debug(ctx, "sessions without info in DB: %d, %v", n, l.NotFound)
+	}
+	var logBuilder strings.Builder
+	logValues := []interface{}{}
+
+	if len(l.Failed) > 0 {
+		logBuilder.WriteString("failed: %d, ")
+		logValues = append(logValues, len(l.Failed))
+	}
+	if len(l.Negative) > 0 {
+		logBuilder.WriteString("negative: %d, ")
+		logValues = append(logValues, len(l.Negative))
+	}
+	if len(l.Shorter) > 0 {
+		logBuilder.WriteString("shorter: %d, ")
+		logValues = append(logValues, len(l.Shorter))
+	}
+	if len(l.Duplicated) > 0 {
+		logBuilder.WriteString("same: %d, ")
+		logValues = append(logValues, len(l.Duplicated))
+	}
+	if l.Updated > 0 {
+		logBuilder.WriteString("updated: %d, ")
+		logValues = append(logValues, l.Updated)
+	}
+	if l.New > 0 {
+		logBuilder.WriteString("new: %d, ")
+		logValues = append(logValues, l.New)
+	}
+	if len(l.NotFound) > 0 {
+		logBuilder.WriteString("not found: %d, ")
+		logValues = append(logValues, len(l.NotFound))
+	}
+
+	if logBuilder.Len() > 0 {
+		logMessage := logBuilder.String()
+		logMessage = logMessage[:len(logMessage)-2]
+		log.Info(ctx, logMessage, logValues...)
+	}
+}
+
+type SessionEndType int
+
+const (
+	FailedSessionEnd SessionEndType = iota + 1
+	DuplicatedSessionEnd
+	NegativeDuration
+	ShorterDuration
+	NewSessionEnd
+	NoSessionInDB
+)
