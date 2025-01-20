@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { NoContent, Loader, Pagination, Button } from 'UI';
-import Select from 'Shared/Select';
+import { NoContent, Loader, Pagination } from 'UI';
+import {Button, Tag, Tooltip, Dropdown, notification} from 'antd';
+import {UndoOutlined, DownOutlined} from '@ant-design/icons'
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
@@ -11,20 +12,22 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import { HEATMAP } from 'App/constants/card';
-import { Tag } from 'antd';
 
 interface Props {
   className?: string;
 }
 
 function WidgetSessions(props: Props) {
+  const listRef = React.useRef<HTMLDivElement>(null);
   const { className = '' } = props;
   const [activeSeries, setActiveSeries] = useState('all');
   const [data, setData] = useState<any>([]);
   const isMounted = useIsMounted();
   const [loading, setLoading] = useState(false);
-  const filteredSessions = getListSessionsBySeries(data, activeSeries);
+  // all filtering done through series now
+  const filteredSessions = getListSessionsBySeries(data, 'all');
   const { dashboardStore, metricStore, sessionStore, customFieldStore } = useStore();
+  const focusedSeries = metricStore.focusedSeriesName;
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
@@ -34,15 +37,23 @@ function WidgetSessions(props: Props) {
   const filterText = filter.filters.length > 0 ? filter.filters[0].value : '';
   const metaList = customFieldStore.list.map((i: any) => i.key);
 
-  const writeOption = ({ value }: any) => setActiveSeries(value.value);
+  const seriesDropdownItems = seriesOptions.map((option) => ({
+    key: option.value,
+    label: (
+      <div onClick={() => setActiveSeries(option.value)}>
+        {option.label}
+      </div>
+    )
+  }));
+
   useEffect(() => {
-    if (!data) return;
-    const seriesOptions = data.map((item: any) => ({
-      label: item.seriesName,
+    if (!widget.series) return;
+    const seriesOptions = widget.series.map((item: any) => ({
+      label: item.name,
       value: item.seriesId
     }));
     setSeriesOptions([{ label: 'All', value: 'all' }, ...seriesOptions]);
-  }, [data]);
+  }, [widget.series]);
 
   const fetchSessions = (metricId: any, filter: any) => {
     if (!isMounted()) return;
@@ -52,6 +63,17 @@ function WidgetSessions(props: Props) {
       .fetchSessions(metricId, filter)
       .then((res: any) => {
         setData(res);
+        if (metricStore.drillDown) {
+          setTimeout(() => {
+            notification.open({
+              placement: 'top',
+              role: 'status',
+              message: 'Sessions Refreshed!'
+            })
+            listRef.current?.scrollIntoView({ behavior: 'smooth' });
+            metricStore.setDrillDown(false);
+          }, 0)
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -89,9 +111,10 @@ function WidgetSessions(props: Props) {
       };
       debounceClickMapSearch(customFilter);
     } else {
+      const usedSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series;
       debounceRequest(widget.metricId, {
         ...filter,
-        series: widget.series.map((s) => s.toJson()),
+        series: usedSeries.map((s) => s.toJson()),
         page: metricStore.sessionsPage,
         limit: metricStore.sessionsPageSize
       });
@@ -106,9 +129,23 @@ function WidgetSessions(props: Props) {
     filter.filters,
     depsString,
     metricStore.clickMapSearch,
-    activeSeries
+    focusedSeries
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
+  useEffect(() => {
+    if (activeSeries === 'all') {
+      metricStore.setFocusedSeriesName(null);
+    } else {
+      metricStore.setFocusedSeriesName(seriesOptions.find((option) => option.value === activeSeries)?.label, false);
+    }
+  }, [activeSeries])
+  useEffect(() => {
+    if (focusedSeries) {
+      setActiveSeries(seriesOptions.find((option) => option.label === focusedSeries)?.value || 'all');
+    } else {
+      setActiveSeries('all');
+    }
+  }, [focusedSeries])
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);
@@ -116,34 +153,46 @@ function WidgetSessions(props: Props) {
   };
 
   return (
-    <div className={cn(className, 'bg-white p-3 pb-0 rounded-lg shadow-sm border mt-3')}>
+    <div className={cn(className, 'bg-white p-3 pb-0 rounded-xl shadow-sm border mt-3')}>
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-baseline">
+          <div className="flex items-baseline gap-2">
             <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
             <div className="ml-2 color-gray-medium">
               {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
               between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
               <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
             </div>
+            {hasFilters && <Tooltip title='Clear Drilldown' placement='top'><Button type='text' size='small' onClick={clearFilters}><UndoOutlined /></Button></Tooltip>}
           </div>
 
-          {hasFilters && widget.metricType === 'table' &&
-            <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
+          {hasFilters && widget.metricType === 'table' &&  <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
+          
         </div>
 
         <div className="flex items-center gap-4">
-          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
-          {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
-            <div className="flex items-center ml-6">
-              <span className="mr-2 color-gray-medium">Filter by Series</span>
-              <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
-            </div>
-          )}
+        {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
+          <div className="flex items-center ml-6">
+            <span className="mr-2 color-gray-medium">Filter by Series</span>
+            <Dropdown 
+              menu={{ 
+                items: seriesDropdownItems, 
+                selectable: true,
+                selectedKeys: [activeSeries]
+              }}
+              trigger={['click']}
+            >
+              <Button type="text" size='small'>
+                {seriesOptions.find(option => option.value === activeSeries)?.label || 'Select Series'}
+                <DownOutlined />
+              </Button>
+            </Dropdown>
+          </div>
+        )}
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3" >
         <Loader loading={loading}>
           <NoContent
             title={
@@ -164,7 +213,7 @@ function WidgetSessions(props: Props) {
               </React.Fragment>
             ))}
 
-            <div className="flex items-center justify-between p-5">
+            <div className="flex items-center justify-between p-5" ref={listRef}>
               <div>
                 Showing{' '}
                 <span className="font-medium">

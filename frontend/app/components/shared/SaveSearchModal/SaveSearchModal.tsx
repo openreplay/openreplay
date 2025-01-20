@@ -30,6 +30,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
         closeHandler();
       })
       .catch((e) => {
+        console.error(e)
         toast.error('Something went wrong, please try again');
       });
   };

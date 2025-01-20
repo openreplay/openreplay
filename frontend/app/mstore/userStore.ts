@@ -619,7 +619,7 @@ type AuthDetails = {
   sso: string | null;
   ssoProvider: string | null;
   enforceSSO: boolean | null;
-  edition: 'foss' | 'ee' | 'msaas';
+  edition?: 'foss' | 'ee' | 'msaas';
 };
 
 class AuthStore {
@@ -641,10 +641,13 @@ class AuthStore {
         {
           key: 'authDetails',
           serialize: (ad) => {
+            delete ad['edition']
             return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
           },
           deserialize: (json) => {
-            return JSON.parse(json);
+            const ad = JSON.parse(json)
+            delete ad['edition']
+            return ad;
           }
         }
       ],

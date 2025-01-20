@@ -12,16 +12,15 @@ interface Props {
 }
 
 function AlertButton(props: Props) {
-    const {seriesId} = props;
-    const {dashboardStore, alertsStore} = useStore();
-    const {openModal, closeModal} = useModal();
+    const { seriesId, initAlert } = props;
+    const { alertsStore } = useStore();
+    const { openModal, closeModal } = useModal();
     const onClick = () => {
-        // dashboardStore.toggleAlertModal(true);
-        alertsStore.init({query: {left: seriesId}})
+        initAlert?.();
+        alertsStore.init({ query: { left: seriesId } })
         openModal(<AlertFormModal
             onClose={closeModal}
         />, {
-            // title: 'Set Alerts',
             placement: 'right',
             width: 620,
         });

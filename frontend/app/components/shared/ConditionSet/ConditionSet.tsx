@@ -1,9 +1,8 @@
 import React from 'react';
-import { Icon, Input, Button } from 'UI';
+import { Icon, Input } from 'UI';
 import cn from 'classnames';
-import FilterList from 'Shared/Filters/FilterList';
+import { FilterList } from 'Shared/Filters/FilterList';
 import { observer } from 'mobx-react-lite';
-import FilterSelection from 'Shared/Filters/FilterSelection';
 import { Typography } from 'antd';
 import { BranchesOutlined } from '@ant-design/icons';
 
@@ -84,29 +83,16 @@ function ConditionSetComponent({
             onRemoveFilter={onRemoveFilter}
             onChangeEventsOrder={onChangeEventsOrder}
             hideEventsOrder
+            onAddFilter={onAddFilter}
             excludeFilterKeys={excludeFilterKeys}
             readonly={readonly}
             isConditional={isConditional}
+            borderless
           />
           {readonly && !conditions.filter?.filters?.length ? (
             <div className={'p-2'}>No conditions</div>
           ) : null}
         </div>
-        {readonly ? null : (
-          <div className={'px-2'}>
-            <FilterSelection
-              isConditional={isConditional}
-              filter={undefined}
-              onFilterClick={onAddFilter}
-              excludeFilterKeys={excludeFilterKeys}
-              isMobile={isMobile}
-            >
-              <Button variant="text-primary" icon="plus">
-                Add Condition
-              </Button>
-            </FilterSelection>
-          </div>
-        )}
       </div>
       <div className={'px-4 py-2 flex items-center gap-2 border-t'}>
         <span>{bottomLine1}</span>

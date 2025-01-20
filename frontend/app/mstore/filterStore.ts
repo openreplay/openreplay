@@ -1,5 +1,4 @@
 import { makeAutoObservable } from 'mobx';
-import { filters } from 'Types/filter/newFilter';
 import { filterService } from 'App/services';
 
 interface TopValue {

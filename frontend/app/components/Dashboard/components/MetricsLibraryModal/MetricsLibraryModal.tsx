@@ -5,6 +5,7 @@ import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import FooterContent from './FooterContent';
+import { Input } from 'antd'
 
 interface Props {
   dashboardId?: number;
@@ -46,7 +47,7 @@ function MetricsLibraryModal(props: Props) {
       </Modal.Header>
       <Modal.Content className="p-4 pb-20">
         <div className="border">
-          <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} />
+          <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} inLibrary />
         </div>
       </Modal.Content>
       <Modal.Footer>
@@ -61,12 +62,11 @@ export default observer(MetricsLibraryModal);
 function MetricSearch({ onChange }: any) {
   return (
     <div className="relative">
-      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
-      <input
+      <Input.Search
         name="dashboardsSearch"
-        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
         placeholder="Filter by title or owner"
         onChange={onChange}
+        className={'rounded-lg'}
       />
     </div>
   );

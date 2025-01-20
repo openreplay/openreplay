@@ -60,8 +60,8 @@ function AlertsList({ siteId }: Props) {
 
         <div className='w-full flex items-center justify-between pt-4 px-6'>
           <div className=''>
-            Showing <span className='font-semibold'>{Math.min(list.length, pageSize)}</span> out of{' '}
-            <span className='font-semibold'>{list.length}</span> Alerts
+            Showing <span className='font-medium'>{Math.min(list.length, pageSize)}</span> out of{' '}
+            <span className='font-medium'>{list.length}</span> Alerts
           </div>
           <Pagination
             page={page}

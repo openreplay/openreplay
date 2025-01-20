@@ -8,7 +8,7 @@ import {FilterKey} from 'Types/filter/filterType';
 import Period, {LAST_24_HOURS} from 'Types/app/period';
 import Funnel from '../types/funnel';
 import {metricService} from 'App/services';
-import { FUNNEL, HEATMAP, INSIGHTS, TABLE, USER_PATH } from "App/constants/card";
+import { FUNNEL, HEATMAP, INSIGHTS, TABLE, TIMESERIES, USER_PATH } from "App/constants/card";
 import { ErrorInfo } from '../types/error';
 import {getChartFormatter} from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
@@ -85,11 +85,12 @@ export default class Widget {
     page: number = 1;
     limit: number = 20;
     thumbnail?: string;
-    params: any = {density: 70};
+    params: any = {density: 35};
     startType: string = 'start';
     startPoint: FilterItem = new FilterItem(filtersMap[FilterKey.LOCATION]);
     excludes: FilterItem[] = [];
     hideExcess?: boolean = false;
+    compareTo: [startDate?: string, endDate?: string] | null = null
 
     period: Record<string, any> = Period({rangeName: LAST_24_HOURS}); // temp value in detail view
     hasChanged: boolean = false;
@@ -100,8 +101,9 @@ export default class Widget {
         sessions: [],
         issues: [],
         total: 0,
+        values: [],
         chart: [],
-        namesMap: {},
+        namesMap: [],
         avg: 0,
         percentiles: []
     };
@@ -123,6 +125,7 @@ export default class Widget {
 
     removeSeries(index: number) {
         this.series.splice(index, 1);
+        this.hasChanged = true;
     }
 
     setSeries(series: FilterSeries[]) {
@@ -130,6 +133,7 @@ export default class Widget {
     }
 
     addSeries() {
+        this.hasChanged = true;
         const series = new FilterSeries();
         series.name = 'Series ' + (this.series.length + 1);
         this.series.push(series);
@@ -151,6 +155,7 @@ export default class Widget {
             this.metricFormat = json.metricFormat;
             this.viewType = json.viewType;
             this.name = json.name;
+            this.compareTo = json.compareTo || null;
             this.series =
                 json.series && json.series.length > 0
                     ? json.series.map((series: any) => new FilterSeries().fromJson(series, this.metricType === HEATMAP))
@@ -225,6 +230,7 @@ export default class Widget {
             sessionId: this.data.sessionId,
             page: this.page,
             limit: this.limit,
+            compareTo: this.compareTo,
             config: {
                 ...this.config,
                 col:
@@ -293,8 +299,22 @@ export default class Widget {
         this.page = page;
     }
 
-    setData(data: any, period: any) {
-        const _data: any = {...data};
+    setData(data: { timestamp: number, [seriesName: string]: number}[], period: any, isComparison: boolean = false, density?: number) {
+        if (!data) return;
+        const _data: any = {};
+        if (isComparison && this.metricType === TIMESERIES) {
+            data.forEach((point, i) => {
+              Object.keys(point).forEach((key) => {
+                  if (key === 'timestamp') return;
+                  point[`Previous ${key}`] = point[key];
+                  delete point[key];
+              })
+            })
+        }
+
+        if (this.metricType === HEATMAP) {
+            return;
+        }
 
         if (this.metricType === USER_PATH) {
             const _data = processData(data);
@@ -312,16 +332,16 @@ export default class Widget {
                         new InsightIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
                 );
         } else if (this.metricType === FUNNEL) {
-            _data.funnel = new Funnel().fromJSON(_data);
+            _data.funnel = new Funnel().fromJSON(data);
         } else if (this.metricType === TABLE) {
             // const total = data[0]['total'];
             const count = data[0]['count'];
-            _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, count, this.metricOf));
+            _data['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, count, this.metricOf));
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;
                 _data['unit'] = data.unit;
-                _data['chart'] = getChartFormatter(period)(data.chart);
+                _data['chart'] = getChartFormatter(period, density)(data.chart);
                 _data['namesMap'] = data.chart
                     .map((i: any) => Object.keys(i))
                     .flat()
@@ -333,10 +353,9 @@ export default class Widget {
                         return unique;
                     }, []);
             } else {
-                const updatedData: any = this.calculateTotalSeries(data);
-                _data['chart'] = getChartFormatter(period)(updatedData);
-                _data['namesMap'] = Array.isArray(updatedData)
-                  ? updatedData
+                _data['chart'] = getChartFormatter(period, density)(data);
+                _data['namesMap'] = Array.isArray(data)
+                  ? data
                     .map((i) => Object.keys(i))
                     .flat()
                     .filter((i) => i !== 'time' && i !== 'timestamp')
@@ -350,7 +369,12 @@ export default class Widget {
             }
         }
 
-        Object.assign(this.data, _data);
+
+        if (!isComparison) {
+            runInAction(() => {
+                    Object.assign(this.data, _data);
+            })
+        }
         return _data;
     }
 
@@ -394,6 +418,10 @@ export default class Widget {
                 issues: []
             };
         }
+    }
+
+    setComparisonRange(range: [start: string, end?: string] | null) {
+        this.compareTo = range;
     }
 
 

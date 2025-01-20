@@ -17,12 +17,26 @@ import { DateTime, Interval } from 'luxon';
 import styles from './dateRangePopup.module.css';
 
 function DateRangePopup(props: any) {
-  const [range, setRange] = React.useState(props.selectedDateRange || Interval.fromDateTimes(DateTime.now(), DateTime.now()));
+  const [range, setRange] = React.useState(
+    props.selectedDateRange ||
+      Interval.fromDateTimes(DateTime.now(), DateTime.now())
+  );
   const [value, setValue] = React.useState<string | null>(null);
 
   const selectCustomRange = (range) => {
-    const updatedRange = Interval.fromDateTimes(DateTime.fromJSDate(range[0]), DateTime.fromJSDate(range[1]));
-    setRange(updatedRange);
+    let newRange;
+    if (props.singleDay) {
+      newRange = Interval.fromDateTimes(
+        DateTime.fromJSDate(range),
+        DateTime.fromJSDate(range)
+      );
+    } else {
+      newRange = Interval.fromDateTimes(
+        DateTime.fromJSDate(range[0]),
+        DateTime.fromJSDate(range[1])
+      );
+    }
+    setRange(newRange);
     setValue(CUSTOM_RANGE);
   };
 
@@ -53,8 +67,12 @@ function DateRangePopup(props: any) {
   };
 
   const { onCancel } = props;
-  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
-  const rangeForDisplay = [range.start!.startOf('day').ts, range.end!.startOf('day').ts]
+  const isUSLocale =
+    navigator.language === 'en-US' || navigator.language.startsWith('en-US');
+
+  const rangeForDisplay = props.singleDay
+    ? range.start.ts
+    : [range.start!.startOf('day').ts, range.end!.startOf('day').ts];
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.body} h-fit`}>
@@ -84,41 +102,51 @@ function DateRangePopup(props: any) {
             isOpen
             maxDate={new Date()}
             value={rangeForDisplay}
+            calendarProps={{
+              tileDisabled: props.isTileDisabled,
+              selectRange: props.singleDay ? false : true,
+            }}
           />
         </div>
       </div>
       <div className="flex items-center justify-between py-2 px-3">
-        <div className="flex items-center gap-2">
-          <label>From: </label>
-          <span>{range.start.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
-          <TimePicker
-            format={isUSLocale ? 'hh:mm a' : "HH:mm"}
-            value={range.start}
-            onChange={setRangeTimeStart}
-            needConfirm={false}
-            showNow={false}
-            style={{ width: isUSLocale ? 102 : 76 }}
-          />
-          <label>To: </label>
-          <span>{range.end.toFormat(isUSLocale ? "MM/dd" : "dd/MM")} </span>
-          <TimePicker
-            format={isUSLocale ? 'hh:mm a' : "HH:mm"}
-            value={range.end}
-            onChange={setRangeTimeEnd}
-            needConfirm={false}
-            showNow={false}
-            style={{ width: isUSLocale ? 102 : 76 }}
-          />
-        </div>
+        {props.singleDay ? (
+          <div>
+            Compare from {range.start.toFormat('MMM dd, yyyy')}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <label>From: </label>
+            <span>{range.start.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')} </span>
+            <TimePicker
+              format={isUSLocale ? 'hh:mm a' : 'HH:mm'}
+              value={range.start}
+              onChange={setRangeTimeStart}
+              needConfirm={false}
+              showNow={false}
+              style={{ width: isUSLocale ? 102 : 76 }}
+            />
+            <label>To: </label>
+            <span>{range.end.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')} </span>
+            <TimePicker
+              format={isUSLocale ? 'hh:mm a' : 'HH:mm'}
+              value={range.end}
+              onChange={setRangeTimeEnd}
+              needConfirm={false}
+              showNow={false}
+              style={{ width: isUSLocale ? 102 : 76 }}
+            />
+          </div>
+        )}
         <div className="flex items-center">
-          <Button onClick={onCancel}>{"Cancel"}</Button>
+          <Button onClick={onCancel}>{'Cancel'}</Button>
           <Button
             type="primary"
             className="ml-2"
             onClick={onApply}
             disabled={!range}
           >
-            {"Apply"}
+            {'Apply'}
           </Button>
         </div>
       </div>
