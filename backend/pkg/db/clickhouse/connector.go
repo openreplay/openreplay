@@ -26,7 +26,6 @@ type Connector interface {
 	Prepare() error
 	Commit() error
 	Stop() error
-	// Web
 	InsertWebSession(session *sessions.Session) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
@@ -39,7 +38,6 @@ type Connector interface {
 	InsertIssue(session *sessions.Session, msg *messages.IssueEvent) error
 	InsertWebInputDuration(session *sessions.Session, msg *messages.InputChange) error
 	InsertMouseThrashing(session *sessions.Session, msg *messages.MouseThrashing) error
-	// Mobile
 	InsertMobileSession(session *sessions.Session) error
 	InsertMobileCustom(session *sessions.Session, msg *messages.MobileEvent) error
 	InsertMobileClick(session *sessions.Session, msg *messages.MobileClickEvent) error
@@ -105,28 +103,25 @@ func (c *connectorImpl) newBatch(name, query string) error {
 }
 
 var batches = map[string]string{
-	// Sessions
-	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, timezone, utm_source, utm_medium, utm_campaign) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?)",
-	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
-	// Web events
-	"pages":        `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"clicks":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"inputs":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"errors":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"performance":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"requests":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"custom":       `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?,	?, ?)`,
-	"graphql":      `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"issuesEvents": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"issues":       "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
-	//Mobile
-	"ios_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
-	"ios_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"ios_clicks":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"ios_swipes":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"ios_inputs":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"ios_requests": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-	"ios_crashes":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"sessions":        "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, timezone, utm_source, utm_medium, utm_campaign) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?, ?, ?)",
+	"autocompletes":   "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, SUBSTR(?, 1, 8000))",
+	"pages":           `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"clicks":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$current_url", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"inputs":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"errors":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"performance":     `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"requests":        `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$duration_s", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"custom":          `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?,	?, ?)`,
+	"graphql":         `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"issuesEvents":    `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", issue_type, issue_id, "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"issues":          "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
+	"mobile_sessions": "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, user_state, user_city, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, platform, timezone) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), ?, ?)",
+	"mobile_custom":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_clicks":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_swipes":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_inputs":   `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_requests": `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	"mobile_crashes":  `INSERT INTO product_analytics.events (session_id, project_id, event_id, "$event_name", created_at, "$time", distinct_id, "$auto_captured", "$properties") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -608,7 +603,6 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		"response_body": response,
 		"status":        uint16(msg.Status),
 		"method":        url.EnsureMethod(msg.Method),
-		"duration":      uint16(msg.Duration),
 		"success":       msg.Status < 400,
 		"transfer_size": uint32(msg.TransferredBodySize),
 		"url":           cropString(msg.URL),
@@ -629,6 +623,7 @@ func (c *connectorImpl) InsertRequest(session *sessions.Session, msg *messages.N
 		eventTime.Unix(),
 		session.UserUUID,
 		true,
+		nullableUint16(uint16(msg.Duration)),
 		jsonString,
 	); err != nil {
 		c.checkError("requests", err)
@@ -696,7 +691,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert mobile session with nil duration")
 	}
-	if err := c.batches["ios_sessions"].Append(
+	if err := c.batches["mobile_sessions"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		session.UserID,
@@ -732,7 +727,7 @@ func (c *connectorImpl) InsertMobileSession(session *sessions.Session) error {
 		"ios",
 		session.Timezone,
 	); err != nil {
-		c.checkError("ios_sessions", err)
+		c.checkError("mobile_sessions", err)
 		return fmt.Errorf("can't append to sessions batch: %s", err)
 	}
 	return nil
@@ -747,7 +742,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		return fmt.Errorf("can't marshal mobile custom event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_custom"].Append(
+	if err := c.batches["mobile_custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -758,7 +753,7 @@ func (c *connectorImpl) InsertMobileCustom(session *sessions.Session, msg *messa
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_custom", err)
+		c.checkError("mobile_custom", err)
 		return fmt.Errorf("can't append to mobile custom batch: %s", err)
 	}
 	return nil
@@ -775,7 +770,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile clicks event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_clicks"].Append(
+	if err := c.batches["mobile_clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -786,7 +781,7 @@ func (c *connectorImpl) InsertMobileClick(session *sessions.Session, msg *messag
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_clicks", err)
+		c.checkError("mobile_clicks", err)
 		return fmt.Errorf("can't append to mobile clicks batch: %s", err)
 	}
 	return nil
@@ -804,7 +799,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile swipe event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_swipes"].Append(
+	if err := c.batches["mobile_swipes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -815,7 +810,7 @@ func (c *connectorImpl) InsertMobileSwipe(session *sessions.Session, msg *messag
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_clicks", err)
+		c.checkError("mobile_swipes", err)
 		return fmt.Errorf("can't append to mobile swipe batch: %s", err)
 	}
 	return nil
@@ -832,7 +827,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile input event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_inputs"].Append(
+	if err := c.batches["mobile_inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -843,7 +838,7 @@ func (c *connectorImpl) InsertMobileInput(session *sessions.Session, msg *messag
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_inputs", err)
+		c.checkError("mobile_inputs", err)
 		return fmt.Errorf("can't append to mobile inputs batch: %s", err)
 	}
 	return nil
@@ -872,7 +867,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		return fmt.Errorf("can't marshal mobile request event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_requests"].Append(
+	if err := c.batches["mobile_requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -883,7 +878,7 @@ func (c *connectorImpl) InsertMobileRequest(session *sessions.Session, msg *mess
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_requests", err)
+		c.checkError("mobile_requests", err)
 		return fmt.Errorf("can't append to mobile requests batch: %s", err)
 	}
 	return nil
@@ -899,7 +894,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		return fmt.Errorf("can't marshal mobile crash event: %s", err)
 	}
 	eventTime := datetime(msg.Timestamp)
-	if err := c.batches["ios_crashes"].Append(
+	if err := c.batches["mobile_crashes"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		getUUID(msg),
@@ -910,7 +905,7 @@ func (c *connectorImpl) InsertMobileCrash(session *sessions.Session, msg *messag
 		true,
 		jsonString,
 	); err != nil {
-		c.checkError("ios_crashes", err)
+		c.checkError("mobile_crashes", err)
 		return fmt.Errorf("can't append to mobile crashs batch: %s", err)
 	}
 	return nil
@@ -932,19 +927,6 @@ func extractUrlParts(fullUrl string) (string, string, string, error) {
 		pathQuery += "?" + query
 	}
 	return cropString(host), cropString(pathQuery), cropString(host + pathQuery), nil
-}
-
-func extractUrlPath(fullUrl string) string {
-	_, path, query, err := url.GetURLParts(fullUrl)
-	if err != nil {
-		log.Printf("can't parse url: %s", err)
-		return ""
-	}
-	pathQuery := path
-	if query != "" {
-		pathQuery += "?" + query
-	}
-	return strings.ToLower(pathQuery)
 }
 
 func getUUID(m messages.Message) string {
