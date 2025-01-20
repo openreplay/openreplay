@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.5.0
-	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.30.1
 	github.com/DataDog/datadog-api-client-go/v2 v2.34.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.1.1
@@ -88,4 +88,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/ClickHouse/clickhouse-go/v2 => github.com/zavorotynskiy/clickhouse-go/v2 v2.30.1-0.20250110230205-a22b6d524deb
