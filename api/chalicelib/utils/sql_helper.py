@@ -3,7 +3,7 @@ from enum import Enum
 import schemas
 
 
-def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
+def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator, schemas.MathOperator]):
     return {
         schemas.SearchEventOperator.IS: "=",
         schemas.SearchEventOperator.ON: "=",
@@ -21,6 +21,11 @@ def get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventEx
         schemas.ClickEventExtraOperator.NOT_CONTAINS: "NOT ILIKE",
         schemas.ClickEventExtraOperator.STARTS_WITH: "ILIKE",
         schemas.ClickEventExtraOperator.ENDS_WITH: "ILIKE",
+
+        schemas.MathOperator.GREATER: ">",
+        schemas.MathOperator.GREATER_EQ: ">=",
+        schemas.MathOperator.LESS: "<",
+        schemas.MathOperator.LESS_EQ: "<=",
     }.get(op, "=")
 
 

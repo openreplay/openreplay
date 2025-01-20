@@ -257,9 +257,9 @@ def __search_metadata(project_id, value, key=None, source=None):
                                 WHERE project_id = %(project_id)s
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)""")
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(f"""SELECT key, value, 'METADATA' AS TYPE
+        query = cur.format(query=f"""SELECT key, value, 'METADATA' AS TYPE
                                 FROM({" UNION ALL ".join(sub_from)}) AS all_metas
-                                LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                                LIMIT 5;""", parameters={"project_id": project_id, "value": helper.string_to_sql_like(value),
                                               "svalue": helper.string_to_sql_like("^" + value)})
         results = cur.execute(query)
     return helper.list_to_camel_case(results)

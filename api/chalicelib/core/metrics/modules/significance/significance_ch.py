@@ -19,9 +19,9 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
     filters: List[schemas.SessionSearchFilterSchema] = filter_d.filters
     platform = project.platform
     constraints = ["e.project_id = %(project_id)s",
-                   "e.datetime >= toDateTime(%(startTimestamp)s/1000)",
-                   "e.datetime <= toDateTime(%(endTimestamp)s/1000)",
-                   "e.event_type IN %(eventTypes)s"]
+                   "e.created_at >= toDateTime(%(startTimestamp)s/1000)",
+                   "e.created_at <= toDateTime(%(endTimestamp)s/1000)",
+                   "e.`$event_name` IN %(eventTypes)s"]
 
     full_args = {"project_id": project.project_id, "startTimestamp": filter_d.startTimestamp,
                  "endTimestamp": filter_d.endTimestamp}
@@ -157,16 +157,23 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         if next_event_type not in event_types:
             event_types.append(next_event_type)
         full_args[f"event_type_{i}"] = next_event_type
-        n_stages_query.append(f"event_type=%(event_type_{i})s")
+        n_stages_query.append(f"`$event_name`=%(event_type_{i})s")
         if is_not:
             n_stages_query_not.append(n_stages_query[-1] + " AND " +
-                                      (sh.multi_conditions(f' {next_col_name} {op} %({e_k})s', s.value,
-                                                           is_not=is_not, value_key=e_k)
-                                       if not specific_condition else specific_condition))
+                                      (sh.multi_conditions(
+                                          f"JSON_VALUE(CAST(`$properties` AS String), '$.{next_col_name}') {op} %({e_k})s",
+                                          s.value,
+                                          is_not=is_not,
+                                          value_key=e_k
+                                      ) if not specific_condition else specific_condition))
         elif not is_any:
-            n_stages_query[-1] += " AND " + (sh.multi_conditions(f' {next_col_name} {op} %({e_k})s', s.value,
-                                                                 is_not=is_not, value_key=e_k)
-                                             if not specific_condition else specific_condition)
+            n_stages_query[-1] += " AND " + (
+                sh.multi_conditions(
+                    f"JSON_VALUE(CAST(`$properties` AS String), '$.{next_col_name}') {op} %({e_k})s",
+                    s.value,
+                    is_not=is_not,
+                    value_key=e_k
+                ) if not specific_condition else specific_condition)
 
     full_args = {"eventTypes": tuple(event_types), **full_args, **values}
     n_stages = len(n_stages_query)
@@ -188,8 +195,8 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
 
     if len(n_stages_query_not) > 0:
         value_conditions_not_base = ["project_id = %(project_id)s",
-                                     "datetime >= toDateTime(%(startTimestamp)s/1000)",
-                                     "datetime <= toDateTime(%(endTimestamp)s/1000)"]
+                                     "created_at >= toDateTime(%(startTimestamp)s/1000)",
+                                     "created_at <= toDateTime(%(endTimestamp)s/1000)"]
         _value_conditions_not = []
         value_conditions_not = []
         for c in n_stages_query_not:
@@ -221,7 +228,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
                 pattern += f"(?{j + 1})"
                 conditions.append(n_stages_query[j])
                 j += 1
-            sequences.append(f"sequenceMatch('{pattern}')(e.datetime, {','.join(conditions)}) AS T{i + 1}")
+            sequences.append(f"sequenceMatch('{pattern}')(toDateTime(e.created_at), {','.join(conditions)}) AS T{i + 1}")
 
     n_stages_query = f"""
          SELECT {",".join(projections)}

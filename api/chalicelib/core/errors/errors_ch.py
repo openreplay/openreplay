@@ -1,6 +1,6 @@
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core import sessions
+from chalicelib.core.errors.modules import sessions
 from chalicelib.core.metrics import metrics
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, metrics_helper
@@ -70,7 +70,7 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     else:
         table_name = ""
     if type_condition:
-        ch_sub_query.append(f"{table_name}event_type='ERROR'")
+        ch_sub_query.append(f"{table_name}`$event_name`='ERROR'")
     if time_constraint:
         ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
@@ -78,6 +78,26 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
         ch_sub_query.append("user_device_type = 'mobile'")
     elif platform == schemas.PlatformType.DESKTOP:
         ch_sub_query.append("user_device_type = 'desktop'")
+    return ch_sub_query
+
+
+def __get_basic_constraints_events(platform=None, time_constraint=True, startTime_arg_name="startDate",
+                                   endTime_arg_name="endDate", type_condition=True, project_key="project_id",
+                                   table_name=None):
+    ch_sub_query = [f"{project_key} =toUInt16(%(project_id)s)"]
+    if table_name is not None:
+        table_name = table_name + "."
+    else:
+        table_name = ""
+    if type_condition:
+        ch_sub_query.append(f"{table_name}`$event_name`='ERROR'")
+    if time_constraint:
+        ch_sub_query += [f"{table_name}created_at >= toDateTime(%({startTime_arg_name})s/1000)",
+                         f"{table_name}created_at < toDateTime(%({endTime_arg_name})s/1000)"]
+    # if platform == schemas.PlatformType.MOBILE:
+    #     ch_sub_query.append("user_device_type = 'mobile'")
+    # elif platform == schemas.PlatformType.DESKTOP:
+    #     ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
 
@@ -99,10 +119,11 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             platform = f.value[0]
     ch_sessions_sub_query = __get_basic_constraints(platform, type_condition=False)
     # ignore platform for errors table
-    ch_sub_query = __get_basic_constraints(None, type_condition=True)
-    ch_sub_query.append("source ='js_exception'")
+    ch_sub_query = __get_basic_constraints_events(None, type_condition=True)
+    ch_sub_query.append("JSONExtractString(toString(`$properties`), 'source') = 'js_exception'")
+
     # To ignore Script error
-    ch_sub_query.append("message!='Script error.'")
+    ch_sub_query.append("JSONExtractString(toString(`$properties`), 'message') != 'Script error.'")
     error_ids = None
 
     if data.startTimestamp is None:
@@ -182,7 +203,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     ch_sessions_sub_query.append(
                         _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not,
                                              value_key=f_k))
-
 
             elif filter_type in [schemas.FilterType.UTM_SOURCE]:
                 if is_any:
@@ -333,17 +353,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             ch_sub_query.append("error_id IN %(error_ids)s")
 
         main_ch_query = f"""\
-                SELECT details.error_id AS error_id, 
+                SELECT details.error_id as error_id,
                         name, message, users, total, 
                         sessions, last_occurrence, first_occurrence, chart
-                FROM (SELECT error_id,
-                             name,
-                             message,
+                FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id,
+                             JSONExtractString(toString(`$properties`), 'name') AS name,
+                             JSONExtractString(toString(`$properties`), 'message') AS message,
                              COUNT(DISTINCT user_id)  AS users,
                              COUNT(DISTINCT events.session_id) AS sessions,
-                             MAX(datetime)              AS max_datetime,
-                             MIN(datetime)              AS min_datetime,
-                             COUNT(DISTINCT events.error_id) OVER() AS total
+                             MAX(created_at)              AS max_datetime,
+                             MIN(created_at)              AS min_datetime,
+                             COUNT(DISTINCT JSONExtractString(toString(`$properties`), 'error_id')) 
+                                OVER() AS total
                       FROM {MAIN_EVENTS_TABLE} AS events
                             INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
                                         FROM {MAIN_SESSIONS_TABLE} AS s
@@ -354,17 +375,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                       GROUP BY error_id, name, message
                       ORDER BY {sort} {order}
                       LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
-                        INNER JOIN (SELECT error_id AS error_id, 
-                                            toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, 
-                                            toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                        INNER JOIN (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
+                                            toUnixTimestamp(MAX(created_at))*1000 AS last_occurrence, 
+                                            toUnixTimestamp(MIN(created_at))*1000 AS first_occurrence
                                      FROM {MAIN_EVENTS_TABLE}
                                      WHERE project_id=%(project_id)s
-                                        AND event_type='ERROR'
+                                        AND `$event_name`='ERROR'
                                      GROUP BY error_id) AS time_details
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
-                    FROM (SELECT error_id, toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                            COUNT(DISTINCT session_id) AS count
+                    FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
+                                 toUnixTimestamp(toStartOfInterval(created_at, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                                 COUNT(DISTINCT session_id) AS count
                             FROM {MAIN_EVENTS_TABLE}
                             WHERE {" AND ".join(ch_sub_query)}
                             GROUP BY error_id, timestamp
@@ -374,8 +396,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         # print("------------")
         # print(ch.format(main_ch_query, params))
         # print("------------")
+        query = ch.format(query=main_ch_query, parameters=params)
 
-        rows = ch.execute(query=main_ch_query, parameters=params)
+        rows = ch.execute(query)
         total = rows[0]["total"] if len(rows) > 0 else 0
 
     for r in rows:
