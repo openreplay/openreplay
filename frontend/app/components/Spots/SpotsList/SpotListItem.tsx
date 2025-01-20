@@ -140,7 +140,7 @@ function SpotListItem({
       <GridItem
         modifier={
           <div className="absolute left-0 bottom-8 flex relative gap-2 justify-end pe-2 pb-2 ">
-            <Tooltip title={tooltipText}>
+            <Tooltip title={tooltipText} className='capitalize'>
               <div
                 className={
                   'bg-black/70 text-white p-1 px-2 text-xs rounded-lg transition-transform transform translate-y-14 group-hover:translate-y-0 '
@@ -253,9 +253,10 @@ export function GridItem({
 
         {modifier}
       </div>
-      <div className={'px-4 py-4 w-full border-t'}>
+      <div className={'w-full border-t'}>
         <div className={'flex items-center gap-2'}>
           {onSelect ? (
+            <div className='px-3 pt-2'>
             <Checkbox
               checked={isSelected}
               onChange={({ target: { checked } }) => onSelect(checked)}
@@ -263,17 +264,18 @@ export function GridItem({
                 isSelected ? 'text-teal' : ''
               }`}
             >
-              <TextEllipsis text={title} />
+              <TextEllipsis text={title} className='w-full'/>
             </Checkbox>
+            </div>
           ) : (
-            <TextEllipsis text={title} />
+            <div className='bg-yellow/50 mx-2 mt-2 px-2 w-full rounded '><TextEllipsis text={title} className='capitalize'  /></div>
           )}
         </div>
-        <div className={'flex items-center gap-1 leading-4 text-xs opacity-50'}>
+        <div className={'flex items-center gap-1 leading-4 text-xs opacity-50 p-3'}>
           <div>
             <UserOutlined />
           </div>
-          <TextEllipsis text={user} />
+          <TextEllipsis text={user} className='capitalize' />
           <div className="ml-auto">
             <ClockCircleOutlined />
           </div>

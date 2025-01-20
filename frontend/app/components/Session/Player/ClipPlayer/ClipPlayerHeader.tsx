@@ -36,7 +36,7 @@ function ClipPlayerHeader(props: Props) {
       <UserCard session={props.session} />
 
       <Space>
-        <Tooltip title="Copy session link" placement="bottom">
+        <Tooltip title="Copy link to clipboard" placement="bottom">
           <Button
             onClick={copyHandler}
             size={'small'}

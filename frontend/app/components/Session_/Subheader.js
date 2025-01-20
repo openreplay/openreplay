@@ -164,14 +164,7 @@ function SubHeader(props) {
             <Dropdown
               menu={{
                 items: [
-                  {
-                    key: '1',
-                    label: <div className={'flex items-center gap-2'}>
-                      <Keyboard size={16} strokeWidth={1} />
-                      <span>Keyboard Shortcuts</span>
-                    </div>,
-                    onClick: showKbHelp
-                  },
+                  
                   {
                     key: '2',
                     label: <div className={'flex items-center gap-2'}>
@@ -188,6 +181,14 @@ function SubHeader(props) {
                     </div>,
                     disabled: !enabledIntegration,
                     onClick: handleOpenIssueModal,
+                  },
+                  {
+                    key: '1',
+                    label: <div className={'flex items-center gap-2'}>
+                      <Keyboard size={16} strokeWidth={1} />
+                      <span>Keyboard Shortcuts</span>
+                    </div>,
+                    onClick: showKbHelp
                   }
                 ]
               }}
