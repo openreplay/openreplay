@@ -353,7 +353,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             ch_sub_query.append("error_id IN %(error_ids)s")
 
         main_ch_query = f"""\
-                SELECT details.error_id,
+                SELECT details.error_id as error_id,
                         name, message, users, total, 
                         sessions, last_occurrence, first_occurrence, chart
                 FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id,
