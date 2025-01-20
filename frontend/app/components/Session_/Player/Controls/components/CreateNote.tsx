@@ -184,7 +184,6 @@ function CreateNote({
     }
   };
 
-  console.log(editNote)
   return (
     <div
       className={'bg-white h-screen w-full p-4 flex flex-col gap-4'}

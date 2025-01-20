@@ -47,6 +47,7 @@ function EventGroupWrapper(props) {
     if (isNote) {
       return (
         <NoteEvent
+          setActiveTab={props.setActiveTab}
           note={event}
           filterOutNote={filterOutNote}
           noEdit={currentUserId !== event.userId}

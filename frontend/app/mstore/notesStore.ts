@@ -17,9 +17,14 @@ export default class NotesStore {
   total = 0
   isSaving = false;
   query = ''
+  editNote: Note | null = null
 
   constructor() {
     makeAutoObservable(this)
+  }
+
+  setEditNote = (note: Note | null) => {
+    this.editNote = note
   }
 
   setQuery = (query: string) => {
