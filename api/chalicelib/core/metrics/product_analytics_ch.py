@@ -23,246 +23,237 @@ JOURNEY_TYPES = {
 }
 
 
-# Q6: use events as a sub_query to support filter of materialized columns when doing a join
-# query: Q5, the result is correct,
-# startPoints are computed before ranked_events to reduce the number of window functions over rows
-# replaced time_to_target by time_from_previous
-# compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
-# sort by top 5 according to sessions_count at the CTE level
-# final part project data without grouping
-# if start-point is selected, the selected event is ranked n°1
-def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
-    # This code is used for testing only
+def __get_test_data():
     with ch_client.ClickHouseClient(database="experimental") as ch:
         ch_query1 = """
-CREATE TEMPORARY TABLE pre_ranked_events_1736344377403 AS
-    (WITH initial_event AS (SELECT events.session_id, MIN(datetime) AS start_event_timestamp
-                            FROM experimental.events AS events
-                            WHERE ((event_type = 'LOCATION' AND (url_path = '/en/deployment/')))
-                              AND events.project_id = toUInt16(65)
-                              AND events.datetime >= toDateTime(1735599600000 / 1000)
-                              AND events.datetime < toDateTime(1736290799999 / 1000)
-                            GROUP BY 1),
-          pre_ranked_events AS (SELECT *
-                                FROM (SELECT session_id,
-                                             event_type,
-                                             datetime,
-                                             url_path             AS e_value,
-                                             row_number() OVER (PARTITION BY session_id
-                                                 ORDER BY datetime ,
-                                                     message_id ) AS event_number_in_session
-                                      FROM experimental.events AS events
-                                               INNER JOIN initial_event ON (events.session_id = initial_event.session_id)
-                                      WHERE events.project_id = toUInt16(65)
-                                        AND events.datetime >= toDateTime(1735599600000 / 1000)
-                                        AND events.datetime < toDateTime(1736290799999 / 1000)
-                                        AND (events.event_type = 'LOCATION')
-                                        AND events.datetime >= initial_event.start_event_timestamp
-                                         ) AS full_ranked_events
-                                WHERE event_number_in_session <= 5)
-     SELECT *
-     FROM pre_ranked_events);
-        """
+    CREATE TEMPORARY TABLE pre_ranked_events_1736344377403 AS
+        (WITH initial_event AS (SELECT events.session_id, MIN(datetime) AS start_event_timestamp
+                                FROM experimental.events AS events
+                                WHERE ((event_type = 'LOCATION' AND (url_path = '/en/deployment/')))
+                                  AND events.project_id = toUInt16(65)
+                                  AND events.datetime >= toDateTime(1735599600000 / 1000)
+                                  AND events.datetime < toDateTime(1736290799999 / 1000)
+                                GROUP BY 1),
+              pre_ranked_events AS (SELECT *
+                                    FROM (SELECT session_id,
+                                                 event_type,
+                                                 datetime,
+                                                 url_path             AS e_value,
+                                                 row_number() OVER (PARTITION BY session_id
+                                                     ORDER BY datetime ,
+                                                         message_id ) AS event_number_in_session
+                                          FROM experimental.events AS events
+                                                   INNER JOIN initial_event ON (events.session_id = initial_event.session_id)
+                                          WHERE events.project_id = toUInt16(65)
+                                            AND events.datetime >= toDateTime(1735599600000 / 1000)
+                                            AND events.datetime < toDateTime(1736290799999 / 1000)
+                                            AND (events.event_type = 'LOCATION')
+                                            AND events.datetime >= initial_event.start_event_timestamp
+                                             ) AS full_ranked_events
+                                    WHERE event_number_in_session <= 5)
+         SELECT *
+         FROM pre_ranked_events);
+            """
         ch.execute(query=ch_query1, parameters={})
         ch_query1 = """
-        CREATE TEMPORARY TABLE ranked_events_1736344377403 AS
-    (WITH pre_ranked_events AS (SELECT *
-                                FROM pre_ranked_events_1736344377403),
-          start_points AS (SELECT DISTINCT session_id
-                           FROM pre_ranked_events
-                           WHERE ((event_type = 'LOCATION' AND (e_value = '/en/deployment/')))
-                             AND pre_ranked_events.event_number_in_session = 1),
-          ranked_events AS (SELECT pre_ranked_events.*,
-                                   leadInFrame(e_value)
-                                               OVER (PARTITION BY session_id ORDER BY datetime
-                                                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
-                                   leadInFrame(toNullable(event_type))
-                                               OVER (PARTITION BY session_id ORDER BY datetime
-                                                   ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
-                            FROM start_points
-                                     INNER JOIN pre_ranked_events USING (session_id))
-     SELECT *
-     FROM ranked_events);
-        """
+            CREATE TEMPORARY TABLE ranked_events_1736344377403 AS
+        (WITH pre_ranked_events AS (SELECT *
+                                    FROM pre_ranked_events_1736344377403),
+              start_points AS (SELECT DISTINCT session_id
+                               FROM pre_ranked_events
+                               WHERE ((event_type = 'LOCATION' AND (e_value = '/en/deployment/')))
+                                 AND pre_ranked_events.event_number_in_session = 1),
+              ranked_events AS (SELECT pre_ranked_events.*,
+                                       leadInFrame(e_value)
+                                                   OVER (PARTITION BY session_id ORDER BY datetime
+                                                       ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_value,
+                                       leadInFrame(toNullable(event_type))
+                                                   OVER (PARTITION BY session_id ORDER BY datetime
+                                                       ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
+                                FROM start_points
+                                         INNER JOIN pre_ranked_events USING (session_id))
+         SELECT *
+         FROM ranked_events);
+            """
         ch.execute(query=ch_query1, parameters={})
         ch_query1 = """
-        WITH ranked_events AS (SELECT *
-                       FROM ranked_events_1736344377403),
-     n1 AS (SELECT event_number_in_session,
-                   event_type,
-                   e_value,
-                   next_type,
-                   next_value,
-                   COUNT(1) AS sessions_count
-            FROM ranked_events
-            WHERE event_number_in_session = 1
-            GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
-            ORDER BY sessions_count DESC),
-     n2 AS (SELECT event_number_in_session,
-                   event_type,
-                   e_value,
-                   next_type,
-                   next_value,
-                   COUNT(1) AS sessions_count
-            FROM ranked_events
-            WHERE event_number_in_session = 2
-            GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
-            ORDER BY sessions_count DESC),
-     n3 AS (SELECT event_number_in_session,
-                   event_type,
-                   e_value,
-                   next_type,
-                   next_value,
-                   COUNT(1) AS sessions_count
-            FROM ranked_events
-            WHERE event_number_in_session = 3
-            GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
-            ORDER BY sessions_count DESC),
+            WITH ranked_events AS (SELECT *
+                           FROM ranked_events_1736344377403),
+         n1 AS (SELECT event_number_in_session,
+                       event_type,
+                       e_value,
+                       next_type,
+                       next_value,
+                       COUNT(1) AS sessions_count
+                FROM ranked_events
+                WHERE event_number_in_session = 1
+                GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
+                ORDER BY sessions_count DESC),
+         n2 AS (SELECT event_number_in_session,
+                       event_type,
+                       e_value,
+                       next_type,
+                       next_value,
+                       COUNT(1) AS sessions_count
+                FROM ranked_events
+                WHERE event_number_in_session = 2
+                GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
+                ORDER BY sessions_count DESC),
+         n3 AS (SELECT event_number_in_session,
+                       event_type,
+                       e_value,
+                       next_type,
+                       next_value,
+                       COUNT(1) AS sessions_count
+                FROM ranked_events
+                WHERE event_number_in_session = 3
+                GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
+                ORDER BY sessions_count DESC),
 
-     drop_n AS (-- STEP 1
-         SELECT event_number_in_session,
-                event_type,
-                e_value,
-                'DROP' AS next_type,
-                NULL   AS next_value,
-                sessions_count
-         FROM n1
-         WHERE isNull(n1.next_type)
-         UNION ALL
-         -- STEP 2
-         SELECT event_number_in_session,
-                event_type,
-                e_value,
-                'DROP' AS next_type,
-                NULL   AS next_value,
-                sessions_count
-         FROM n2
-         WHERE isNull(n2.next_type)),
-     top_n AS (SELECT event_number_in_session,
-                      event_type,
-                      e_value,
-                      SUM(sessions_count) AS sessions_count
-               FROM n1
-               GROUP BY event_number_in_session, event_type, e_value
-               LIMIT 1
-               UNION ALL
-               -- STEP 2
-               SELECT event_number_in_session,
-                      event_type,
-                      e_value,
-                      SUM(sessions_count) AS sessions_count
-               FROM n2
-               GROUP BY event_number_in_session, event_type, e_value
-               ORDER BY sessions_count DESC
-               LIMIT 3
-               UNION ALL
-               -- STEP 3
-               SELECT event_number_in_session,
-                      event_type,
-                      e_value,
-                      SUM(sessions_count) AS sessions_count
-               FROM n3
-               GROUP BY event_number_in_session, event_type, e_value
-               ORDER BY sessions_count DESC
-               LIMIT 3),
-     top_n_with_next AS (SELECT n1.*
-                         FROM n1
-                         UNION ALL
-                         SELECT n2.*
-                         FROM n2
-                                  INNER JOIN top_n ON (n2.event_number_in_session = top_n.event_number_in_session
-                             AND n2.event_type = top_n.event_type
-                             AND n2.e_value = top_n.e_value)),
-     others_n AS (
-         -- STEP 2
-         SELECT n2.*
-         FROM n2
-         WHERE (n2.event_number_in_session, n2.event_type, n2.e_value) NOT IN
-               (SELECT event_number_in_session, event_type, e_value
-                FROM top_n
-                WHERE top_n.event_number_in_session = 2)
-         UNION ALL
-         -- STEP 3
-         SELECT n3.*
-         FROM n3
-         WHERE (n3.event_number_in_session, n3.event_type, n3.e_value) NOT IN
-               (SELECT event_number_in_session, event_type, e_value
-                FROM top_n
-                WHERE top_n.event_number_in_session = 3))
-SELECT *
-FROM (
--- Top to Top: valid
-         SELECT top_n_with_next.*
-         FROM top_n_with_next
-                  INNER JOIN top_n
-                             ON (top_n_with_next.event_number_in_session + 1 = top_n.event_number_in_session
-                                 AND top_n_with_next.next_type = top_n.event_type
-                                 AND top_n_with_next.next_value = top_n.e_value)
-         UNION ALL
--- Top to Others: valid
-         SELECT top_n_with_next.event_number_in_session,
-                top_n_with_next.event_type,
-                top_n_with_next.e_value,
-                'OTHER'                             AS next_type,
-                NULL                                AS next_value,
-                SUM(top_n_with_next.sessions_count) AS sessions_count
-         FROM top_n_with_next
-         WHERE (top_n_with_next.event_number_in_session + 1, top_n_with_next.next_type, top_n_with_next.next_value) IN
-               (SELECT others_n.event_number_in_session, others_n.event_type, others_n.e_value FROM others_n)
-         GROUP BY top_n_with_next.event_number_in_session, top_n_with_next.event_type, top_n_with_next.e_value
-         UNION ALL
--- Top go to Drop: valid
-         SELECT drop_n.event_number_in_session,
-                drop_n.event_type,
-                drop_n.e_value,
-                drop_n.next_type,
-                drop_n.next_value,
-                drop_n.sessions_count
-         FROM drop_n
-                  INNER JOIN top_n ON (drop_n.event_number_in_session = top_n.event_number_in_session
-             AND drop_n.event_type = top_n.event_type
-             AND drop_n.e_value = top_n.e_value)
-         ORDER BY drop_n.event_number_in_session
-         UNION ALL
--- Others got to Drop: valid
-         SELECT others_n.event_number_in_session,
-                'OTHER'                      AS event_type,
-                NULL                         AS e_value,
-                'DROP'                       AS next_type,
-                NULL                         AS next_value,
-                SUM(others_n.sessions_count) AS sessions_count
-         FROM others_n
-         WHERE isNull(others_n.next_type)
-           AND others_n.event_number_in_session < 3
-         GROUP BY others_n.event_number_in_session, next_type, next_value
-         UNION ALL
--- Others got to Top:valid
-         SELECT others_n.event_number_in_session,
-                'OTHER'                      AS event_type,
-                NULL                         AS e_value,
-                others_n.next_type,
-                others_n.next_value,
-                SUM(others_n.sessions_count) AS sessions_count
-         FROM others_n
-         WHERE isNotNull(others_n.next_type)
-           AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) IN
-               (SELECT top_n.event_number_in_session, top_n.event_type, top_n.e_value FROM top_n)
-         GROUP BY others_n.event_number_in_session, others_n.next_type, others_n.next_value
-         UNION ALL
--- Others got to Others
-         SELECT others_n.event_number_in_session,
-                'OTHER'             AS event_type,
-                NULL                AS e_value,
-                'OTHER'            AS next_type,
-                NULL                AS next_value,
-                SUM(sessions_count) AS sessions_count
-         FROM others_n
-         WHERE isNotNull(others_n.next_type)
-           AND others_n.event_number_in_session < 3
-           AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) NOT IN
-               (SELECT event_number_in_session, event_type, e_value FROM top_n)
-         GROUP BY others_n.event_number_in_session)
-ORDER BY event_number_in_session, sessions_count DESC;"""
+         drop_n AS (-- STEP 1
+             SELECT event_number_in_session,
+                    event_type,
+                    e_value,
+                    'DROP' AS next_type,
+                    NULL   AS next_value,
+                    sessions_count
+             FROM n1
+             WHERE isNull(n1.next_type)
+             UNION ALL
+             -- STEP 2
+             SELECT event_number_in_session,
+                    event_type,
+                    e_value,
+                    'DROP' AS next_type,
+                    NULL   AS next_value,
+                    sessions_count
+             FROM n2
+             WHERE isNull(n2.next_type)),
+         top_n AS (SELECT event_number_in_session,
+                          event_type,
+                          e_value,
+                          SUM(sessions_count) AS sessions_count
+                   FROM n1
+                   GROUP BY event_number_in_session, event_type, e_value
+                   LIMIT 1
+                   UNION ALL
+                   -- STEP 2
+                   SELECT event_number_in_session,
+                          event_type,
+                          e_value,
+                          SUM(sessions_count) AS sessions_count
+                   FROM n2
+                   GROUP BY event_number_in_session, event_type, e_value
+                   ORDER BY sessions_count DESC
+                   LIMIT 3
+                   UNION ALL
+                   -- STEP 3
+                   SELECT event_number_in_session,
+                          event_type,
+                          e_value,
+                          SUM(sessions_count) AS sessions_count
+                   FROM n3
+                   GROUP BY event_number_in_session, event_type, e_value
+                   ORDER BY sessions_count DESC
+                   LIMIT 3),
+         top_n_with_next AS (SELECT n1.*
+                             FROM n1
+                             UNION ALL
+                             SELECT n2.*
+                             FROM n2
+                                      INNER JOIN top_n ON (n2.event_number_in_session = top_n.event_number_in_session
+                                 AND n2.event_type = top_n.event_type
+                                 AND n2.e_value = top_n.e_value)),
+         others_n AS (
+             -- STEP 2
+             SELECT n2.*
+             FROM n2
+             WHERE (n2.event_number_in_session, n2.event_type, n2.e_value) NOT IN
+                   (SELECT event_number_in_session, event_type, e_value
+                    FROM top_n
+                    WHERE top_n.event_number_in_session = 2)
+             UNION ALL
+             -- STEP 3
+             SELECT n3.*
+             FROM n3
+             WHERE (n3.event_number_in_session, n3.event_type, n3.e_value) NOT IN
+                   (SELECT event_number_in_session, event_type, e_value
+                    FROM top_n
+                    WHERE top_n.event_number_in_session = 3))
+    SELECT *
+    FROM (
+    -- Top to Top: valid
+             SELECT top_n_with_next.*
+             FROM top_n_with_next
+                      INNER JOIN top_n
+                                 ON (top_n_with_next.event_number_in_session + 1 = top_n.event_number_in_session
+                                     AND top_n_with_next.next_type = top_n.event_type
+                                     AND top_n_with_next.next_value = top_n.e_value)
+             UNION ALL
+    -- Top to Others: valid
+             SELECT top_n_with_next.event_number_in_session,
+                    top_n_with_next.event_type,
+                    top_n_with_next.e_value,
+                    'OTHER'                             AS next_type,
+                    NULL                                AS next_value,
+                    SUM(top_n_with_next.sessions_count) AS sessions_count
+             FROM top_n_with_next
+             WHERE (top_n_with_next.event_number_in_session + 1, top_n_with_next.next_type, top_n_with_next.next_value) IN
+                   (SELECT others_n.event_number_in_session, others_n.event_type, others_n.e_value FROM others_n)
+             GROUP BY top_n_with_next.event_number_in_session, top_n_with_next.event_type, top_n_with_next.e_value
+             UNION ALL
+    -- Top go to Drop: valid
+             SELECT drop_n.event_number_in_session,
+                    drop_n.event_type,
+                    drop_n.e_value,
+                    drop_n.next_type,
+                    drop_n.next_value,
+                    drop_n.sessions_count
+             FROM drop_n
+                      INNER JOIN top_n ON (drop_n.event_number_in_session = top_n.event_number_in_session
+                 AND drop_n.event_type = top_n.event_type
+                 AND drop_n.e_value = top_n.e_value)
+             ORDER BY drop_n.event_number_in_session
+             UNION ALL
+    -- Others got to Drop: valid
+             SELECT others_n.event_number_in_session,
+                    'OTHER'                      AS event_type,
+                    NULL                         AS e_value,
+                    'DROP'                       AS next_type,
+                    NULL                         AS next_value,
+                    SUM(others_n.sessions_count) AS sessions_count
+             FROM others_n
+             WHERE isNull(others_n.next_type)
+               AND others_n.event_number_in_session < 3
+             GROUP BY others_n.event_number_in_session, next_type, next_value
+             UNION ALL
+    -- Others got to Top:valid
+             SELECT others_n.event_number_in_session,
+                    'OTHER'                      AS event_type,
+                    NULL                         AS e_value,
+                    others_n.next_type,
+                    others_n.next_value,
+                    SUM(others_n.sessions_count) AS sessions_count
+             FROM others_n
+             WHERE isNotNull(others_n.next_type)
+               AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) IN
+                   (SELECT top_n.event_number_in_session, top_n.event_type, top_n.e_value FROM top_n)
+             GROUP BY others_n.event_number_in_session, others_n.next_type, others_n.next_value
+             UNION ALL
+    -- Others got to Others
+             SELECT others_n.event_number_in_session,
+                    'OTHER'             AS event_type,
+                    NULL                AS e_value,
+                    'OTHER'            AS next_type,
+                    NULL                AS next_value,
+                    SUM(sessions_count) AS sessions_count
+             FROM others_n
+             WHERE isNotNull(others_n.next_type)
+               AND others_n.event_number_in_session < 3
+               AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) NOT IN
+                   (SELECT event_number_in_session, event_type, e_value FROM top_n)
+             GROUP BY others_n.event_number_in_session)
+    ORDER BY event_number_in_session, sessions_count DESC;"""
     rows = ch.execute(query=ch_query1, parameters={})
     drop = 0
     for r in rows:
@@ -271,6 +262,14 @@ ORDER BY event_number_in_session, sessions_count DESC;"""
             r["sessions_count"] = drop
 
     return __transform_journey(rows=rows, reverse_path=False)
+
+
+# startPoints are computed before ranked_events to reduce the number of window functions over rows
+# compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
+# if start-point is selected, the selected event is ranked n°1
+def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
+    # # This code is used for testing only
+    # return __get_test_data()
 
     # ------ end of testing code ---
     sub_events = []
@@ -567,55 +566,71 @@ ORDER BY event_number_in_session, sessions_count DESC;"""
         main_events_table += " INNER JOIN initial_event ON (events.session_id = initial_event.session_id)"
         sessions_conditions = []
 
-    steps_query = ["""n1 AS (SELECT event_number_in_session,
-                                    event_type,
-                                    e_value,
-                                    next_type,
-                                    next_value,
-                                    COUNT(1) AS sessions_count
-                             FROM ranked_events
-                             WHERE event_number_in_session = 1
-                               AND isNotNull(next_value)
-                             GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
-                             ORDER BY sessions_count DESC
-                             LIMIT %(eventThresholdNumberInGroup)s)"""]
-    projection_query = ["""SELECT event_number_in_session,
-                                  event_type,
-                                  e_value,
-                                  next_type,
-                                  next_value,
-                                  sessions_count
-                           FROM n1"""]
-    for i in range(2, data.density + 1):
-        steps_query.append(f"""n{i} AS (SELECT *
-                                        FROM (SELECT re.event_number_in_session AS event_number_in_session,
-                                                     re.event_type AS event_type,
-                                                     re.e_value AS e_value,
-                                                     re.next_type AS next_type,
-                                                     re.next_value AS next_value,
-                                                     COUNT(1) AS sessions_count
-                                              FROM n{i - 1} INNER JOIN ranked_events AS re
-                                                    ON (n{i - 1}.next_value = re.e_value AND n{i - 1}.next_type = re.event_type)
-                                              WHERE re.event_number_in_session = {i}
-                                              GROUP BY re.event_number_in_session, re.event_type, re.e_value, re.next_type, re.next_value) AS sub_level
-                                        ORDER BY sessions_count DESC
-                                        LIMIT %(eventThresholdNumberInGroup)s)""")
+    steps_query = []
+    # This is used if data.hideExcess is True
+    projection_query = []
+    drop_query = []
+    top_query = []
+    top_with_next_query = []
+    other_query = []
+    for i in range(1, data.density + 1):
+        steps_query.append(f"""n{i} AS (SELECT event_number_in_session,
+                                               event_type,
+                                               e_value,
+                                               next_type,
+                                               next_value,
+                                               COUNT(1) AS sessions_count
+                                        FROM ranked_events
+                                        WHERE event_number_in_session = {i}
+                                        GROUP BY event_number_in_session, event_type, e_value, next_type, next_value
+                                        ORDER BY sessions_count DESC)""")
         projection_query.append(f"""SELECT event_number_in_session,
                                            event_type,
                                            e_value,
                                            next_type,
                                            next_value,
                                            sessions_count
-                                    FROM n{i}""")
+                                    FROM n{i}
+                                    WHERE isNotNull(next_type)""")
+        top_query.append(f"""SELECT event_number_in_session,
+                                    event_type,
+                                    e_value,
+                                    SUM(sessions_count) AS sessions_count
+                             FROM n{i}
+                             GROUP BY event_number_in_session, event_type, e_value
+                             ORDER BY sessions_count DESC
+                             LIMIT %(visibleRows)s""")
+
+        if i < data.density:
+            drop_query.append(f"""SELECT event_number_in_session,
+                                                 event_type,
+                                                 e_value,
+                                                 'DROP' AS next_type,
+                                                 NULL   AS next_value,
+                                                 sessions_count
+                                          FROM n{i}
+                                          WHERE isNull(n{i}.next_type)""")
+            top_with_next_query.append(f"""SELECT n{i}.*
+                                           FROM n{i} 
+                                              INNER JOIN top_n 
+                                                  ON (n{i}.event_number_in_session = top_n.event_number_in_session
+                                                      AND n{i}.event_type = top_n.event_type
+                                                      AND n{i}.e_value = top_n.e_value)""")
+
+        if i > 1:
+            other_query.append(f"""SELECT n{i}.*
+                                   FROM n{i}
+                                   WHERE (event_number_in_session, event_type, e_value) NOT IN
+                                         (SELECT event_number_in_session, event_type, e_value
+                                          FROM top_n
+                                          WHERE top_n.event_number_in_session = {i})""")
 
     with ch_client.ClickHouseClient(database="experimental") as ch:
         time_key = TimeUTC.now()
         _now = time()
         params = {"project_id": project_id, "startTimestamp": data.startTimestamp,
                   "endTimestamp": data.endTimestamp, "density": data.density,
-                  # This is ignored because UI will take care of it
-                  # "eventThresholdNumberInGroup": 4 if data.hide_excess else 8,
-                  "eventThresholdNumberInGroup": 8,
+                  "visibleRows": data.rows,
                   **extra_values}
 
         ch_query1 = f"""\
@@ -640,7 +655,7 @@ FROM pre_ranked_events;"""
         ch.execute(query=ch_query1, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(ch_query1, params))
+            logger.warning(ch.format(query=ch_query1, parameters=params))
             logger.warning("----------------------")
         _now = time()
 
@@ -663,22 +678,98 @@ FROM ranked_events;"""
         ch.execute(query=ch_query2, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(ch_query2, params))
+            logger.warning(ch.format(query=ch_query2, parameters=params))
             logger.warning("----------------------")
         _now = time()
 
         ch_query3 = f"""\
 WITH ranked_events AS (SELECT *
                        FROM ranked_events_{time_key}),
-    {",".join(steps_query)}
+    {",\n".join(steps_query)},
+    drop_n AS ({"\nUNION ALL\n".join(drop_query)}),
+    top_n AS ({"\nUNION ALL\n".join(top_query)}),
+    top_n_with_next AS ({"\nUNION ALL\n".join(top_with_next_query)}),
+    others_n AS ({"\nUNION ALL\n".join(other_query)})
 SELECT *
-FROM ({" UNION ALL ".join(projection_query)}) AS chart_steps
-ORDER BY event_number_in_session;"""
+FROM (
+-- Top to Top: valid
+         SELECT top_n_with_next.*
+         FROM top_n_with_next
+                  INNER JOIN top_n
+                             ON (top_n_with_next.event_number_in_session + 1 = top_n.event_number_in_session
+                                 AND top_n_with_next.next_type = top_n.event_type
+                                 AND top_n_with_next.next_value = top_n.e_value)
+         UNION ALL
+-- Top to Others: valid
+         SELECT top_n_with_next.event_number_in_session,
+                top_n_with_next.event_type,
+                top_n_with_next.e_value,
+                'OTHER'                             AS next_type,
+                NULL                                AS next_value,
+                SUM(top_n_with_next.sessions_count) AS sessions_count
+         FROM top_n_with_next
+         WHERE (top_n_with_next.event_number_in_session + 1, top_n_with_next.next_type, top_n_with_next.next_value) IN
+               (SELECT others_n.event_number_in_session, others_n.event_type, others_n.e_value FROM others_n)
+         GROUP BY top_n_with_next.event_number_in_session, top_n_with_next.event_type, top_n_with_next.e_value
+         UNION ALL
+-- Top go to Drop: valid
+         SELECT drop_n.event_number_in_session,
+                drop_n.event_type,
+                drop_n.e_value,
+                drop_n.next_type,
+                drop_n.next_value,
+                drop_n.sessions_count
+         FROM drop_n
+                  INNER JOIN top_n ON (drop_n.event_number_in_session = top_n.event_number_in_session
+             AND drop_n.event_type = top_n.event_type
+             AND drop_n.e_value = top_n.e_value)
+         ORDER BY drop_n.event_number_in_session
+         UNION ALL
+-- Others got to Drop: valid
+         SELECT others_n.event_number_in_session,
+                'OTHER'                      AS event_type,
+                NULL                         AS e_value,
+                'DROP'                       AS next_type,
+                NULL                         AS next_value,
+                SUM(others_n.sessions_count) AS sessions_count
+         FROM others_n
+         WHERE isNull(others_n.next_type)
+           AND others_n.event_number_in_session < 3
+         GROUP BY others_n.event_number_in_session, next_type, next_value
+         UNION ALL
+-- Others got to Top:valid
+         SELECT others_n.event_number_in_session,
+                'OTHER'                      AS event_type,
+                NULL                         AS e_value,
+                others_n.next_type,
+                others_n.next_value,
+                SUM(others_n.sessions_count) AS sessions_count
+         FROM others_n
+         WHERE isNotNull(others_n.next_type)
+           AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) IN
+               (SELECT top_n.event_number_in_session, top_n.event_type, top_n.e_value FROM top_n)
+         GROUP BY others_n.event_number_in_session, others_n.next_type, others_n.next_value
+         UNION ALL
+-- Others got to Others
+         SELECT others_n.event_number_in_session,
+                'OTHER'             AS event_type,
+                NULL                AS e_value,
+                'OTHER'             AS next_type,
+                NULL                AS next_value,
+                SUM(sessions_count) AS sessions_count
+         FROM others_n
+         WHERE isNotNull(others_n.next_type)
+           AND others_n.event_number_in_session < %(density)s
+           AND (others_n.event_number_in_session + 1, others_n.next_type, others_n.next_value) NOT IN
+               (SELECT event_number_in_session, event_type, e_value FROM top_n)
+         GROUP BY others_n.event_number_in_session
+) AS chart_steps
+ORDER BY event_number_in_session, sessions_count DESC;"""
         logger.debug("---------Q3-----------")
         rows = ch.execute(query=ch_query3, parameters=params)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(ch_query3, params))
+            logger.warning(ch.format(query=ch_query3, parameters=params))
             logger.warning("----------------------")
 
     return __transform_journey(rows=rows, reverse_path=reverse)
