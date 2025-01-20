@@ -77,7 +77,6 @@ function HighlightsList() {
     if (!hl) {
       return toast.error('Highlight not found in the list');
     }
-    console.log(hl)
     setEditHl(hl);
     setEditModalOpen(true)
   }

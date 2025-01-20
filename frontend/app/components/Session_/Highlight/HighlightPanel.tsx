@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Checkbox, Input, Tag } from 'antd';
-import { MessageSquareQuote, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { TAGS, iTag, tagProps } from 'App/services/NotesService';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
