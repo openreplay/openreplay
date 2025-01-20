@@ -17,15 +17,18 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         return []
     args = {"startDate": data.startTimestamp, "endDate": data.endTimestamp,
             "project_id": project_id, "url": data.url}
-    constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
-                   "main_events.datetime >= toDateTime(%(startDate)s/1000)",
-                   "main_events.datetime <= toDateTime(%(endDate)s/1000)",
-                   "main_events.event_type='CLICK'",
-                   "isNotNull(main_events.normalized_x)"]
+    constraints = [
+        "main_events.project_id = toUInt16(%(project_id)s)",
+        "main_events.created_at >= toDateTime(%(startDate)s / 1000)",
+        "main_events.created_at <= toDateTime(%(endDate)s / 1000)",
+        "main_events.`$event_name` = 'CLICK'",
+        "isNotNull(JSON_VALUE(CAST(main_events.`$properties` AS String), '$.normalized_x'))"
+    ]
+
     if data.operator == schemas.SearchEventOperator.IS:
-        constraints.append("url_path= %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
     else:
-        constraints.append("url_path ILIKE %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(data.startTimestamp)} AS main_events"
@@ -70,11 +73,12 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
     #     query_from += """ LEFT JOIN experimental.events AS issues_t ON (main_events.session_id=issues_t.session_id)
     #                    LEFT JOIN experimental.issues AS mis ON (issues_t.issue_id=mis.issue_id)"""
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(query=f"""SELECT main_events.normalized_x AS normalized_x, 
-                                            main_events.normalized_y AS normalized_y
-                                FROM {query_from}
-                                WHERE {" AND ".join(constraints)}
-                                LIMIT 500;""",
+        query = cur.format(query=f"""SELECT 
+                                JSON_VALUE(CAST(`$properties` AS String), '$.normalized_x') AS normalized_x, 
+                                JSON_VALUE(CAST(`$properties` AS String), '$.normalized_y') AS normalized_y
+                             FROM {query_from}
+                             WHERE {" AND ".join(constraints)}
+                             LIMIT 500;""",
                            parameters=args)
         logger.debug("---------")
         logger.debug(query)
@@ -94,14 +98,16 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
 
 def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatMapPayloadSchema):
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
-    constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
-                   "main_events.session_id = %(session_id)s",
-                   "main_events.event_type='CLICK'",
-                   "isNotNull(main_events.normalized_x)"]
+    constraints = [
+        "main_events.project_id = toUInt16(%(project_id)s)",
+        "main_events.session_id = %(session_id)s",
+        "main_events.`$event_name`='CLICK'",
+        "isNotNull(JSON_VALUE(CAST(main_events.`$properties` AS String), '$.normalized_x'))"
+    ]
     if data.operator == schemas.SearchEventOperator.IS:
-        constraints.append("main_events.url_path = %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
     else:
-        constraints.append("main_events.url_path ILIKE %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
@@ -132,11 +138,12 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
     args = {"project_id": project_id, "session_id": session_id, "url": data.url}
     constraints = ["main_events.project_id = toUInt16(%(project_id)s)",
                    "main_events.session_id = %(session_id)s",
-                   "main_events.event_type='CLICK'"]
+                   "main_events.`$event_name`='CLICK'"]
+
     if data.operator == schemas.SearchEventOperator.IS:
-        constraints.append("main_events.url_path = %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') = %(url)s")
     else:
-        constraints.append("main_events.url_path ILIKE %(url)s")
+        constraints.append("JSON_VALUE(CAST(main_events.`$properties` AS String), '$.url_path') ILIKE %(url)s")
         args["url"] = helper.values_for_operator(data.url, data.operator)
 
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
@@ -181,7 +188,7 @@ def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, se
         "start_time": start_time,
         "end_time": end_time,
     }
-    sub_condition = ["session_id = %(sessionId)s", "event_type = 'CLICK'", "project_id = %(projectId)s"]
+    sub_condition = ["session_id = %(sessionId)s", "`$event_name` = 'CLICK'", "project_id = %(projectId)s"]
     if location_condition and len(location_condition.value) > 0:
         f_k = "LOC"
         op = sh.get_sql_operator(location_condition.operator)
@@ -190,19 +197,25 @@ def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, se
             sh.multi_conditions(f'path {op} %({f_k})s', location_condition.value, is_not=False,
                                 value_key=f_k))
     with ch_client.ClickHouseClient() as cur:
-        main_query = cur.format(query=f"""WITH paths AS (SELECT DISTINCT url_path
-                                                    FROM experimental.events
-                                                    WHERE {" AND ".join(sub_condition)})
-                                     SELECT url_path, COUNT(1) AS count
-                                     FROM experimental.events
-                                              INNER JOIN paths USING (url_path)
-                                     WHERE event_type = 'CLICK'
-                                       AND project_id = %(projectId)s
-                                       AND datetime >= toDateTime(%(start_time)s / 1000)
-                                       AND datetime <= toDateTime(%(end_time)s / 1000)
-                                     GROUP BY url_path
-                                     ORDER BY count DESC
-                                     LIMIT 1;""",
+        main_query = cur.format(query=f"""WITH paths AS (
+                                     SELECT DISTINCT 
+                                         JSON_VALUE(CAST(`$properties` AS String), '$.url_path') AS url_path
+                                     FROM product_analytics.events
+                                     WHERE {" AND ".join(sub_condition)}
+                                  )
+                                  SELECT 
+                                      paths.url_path, 
+                                      COUNT(*) AS count
+                                  FROM product_analytics.events
+                                  INNER JOIN paths 
+                                      ON JSON_VALUE(CAST(product_analytics.events.$properties AS String), '$.url_path') = paths.url_path
+                                  WHERE `$event_name` = 'CLICK'
+                                    AND project_id = %(projectId)s
+                                    AND created_at >= toDateTime(%(start_time)s / 1000)
+                                    AND created_at <= toDateTime(%(end_time)s / 1000)
+                                  GROUP BY paths.url_path
+                                  ORDER BY count DESC
+                                  LIMIT 1;""",
                                 parameters=full_args)
         logger.debug("--------------------")
         logger.debug(main_query)
@@ -354,16 +367,16 @@ def get_page_events(session_id, project_id):
     with ch_client.ClickHouseClient() as cur:
         rows = cur.execute("""\
                 SELECT 
-                    message_id,
-                    toUnixTimestamp(datetime)*1000 AS timestamp,
-                    url_host AS host,
-                    url_path AS path,
-                    url_path AS value,
-                    url_path AS url,
+                    event_id,
+                    toUnixTimestamp(created_at)*1000 AS timestamp,
+                    JSON_VALUE(CAST($properties AS String), '$.url_host') AS host,
+                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS path,
+                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS value,
+                    JSON_VALUE(CAST($properties AS String), '$.url_path') AS url,
                     'LOCATION' AS type
-                FROM experimental.events
+                FROM product_analytics.events
                 WHERE session_id = %(session_id)s 
-                    AND event_type='LOCATION'
+                    AND `$event_name`='LOCATION'
                     AND project_id= %(project_id)s
                 ORDER BY datetime,message_id;""", {"session_id": session_id, "project_id": project_id})
         rows = helper.list_to_camel_case(rows)
