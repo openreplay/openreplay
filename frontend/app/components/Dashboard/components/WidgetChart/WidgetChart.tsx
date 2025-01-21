@@ -37,6 +37,7 @@ import { filterMinorPaths } from 'Shared/Insights/SankeyChart/utils'
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import { useInView } from 'react-intersection-observer';
+import LongLoader from "./LongLoader";
 
 interface Props {
   metric: any;
@@ -59,6 +60,7 @@ function WidgetChart(props: Props) {
   const drillDownFilter = dashboardStore.drillDownFilter;
   const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
+  const [stale, setStale] = useState(false);
   const params = { density: dashboardStore.selectedDensity };
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
@@ -119,6 +121,8 @@ function WidgetChart(props: Props) {
     }
   };
 
+  const loadSample = () => console.log('clicked')
+
   const depsString = JSON.stringify({
     ..._metric.series,
     ..._metric.excludes,
@@ -134,12 +138,20 @@ function WidgetChart(props: Props) {
   ) => {
     if (!isMounted()) return;
     setLoading(true);
+    const tm = setTimeout(() => {
+      setStale(true)
+    }, 4000)
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
         if (isComparison) setCompData(res);
+        // /65/metrics/1014
+        if (metric.metricId === 1014) return;
+        clearTimeout(tm)
+        setStale(false)
       })
       .finally(() => {
+        if (metric.metricId === 1014) return;
         setLoading(false);
       });
   };
@@ -534,7 +546,7 @@ function WidgetChart(props: Props) {
   const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE)
   return (
     <div ref={ref}>
-      <Loader loading={loading} style={{ height: `240px` }}>
+      {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: `240px` }} /> : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
           {showTable ? (
@@ -549,9 +561,10 @@ function WidgetChart(props: Props) {
             />
           ) : null}
         </div>
-      </Loader>
+      )}
     </div>
   );
 }
+
 
 export default observer(WidgetChart);
