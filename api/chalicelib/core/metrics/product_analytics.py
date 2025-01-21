@@ -12,15 +12,10 @@ logger = logging.getLogger(__name__)
 
 def __transform_journey(rows, reverse_path=False):
     total_100p = 0
-    number_of_step1 = 0
     for r in rows:
         if r["event_number_in_session"] > 1:
             break
-        number_of_step1 += 1
         total_100p += r["sessions_count"]
-
-    for i in range(len(rows)):
-        rows[i]["value"] = rows[i]["sessions_count"] * 100 / total_100p
 
     nodes = []
     nodes_values = []
@@ -28,6 +23,7 @@ def __transform_journey(rows, reverse_path=False):
     drops = []
     max_depth = 0
     for r in rows:
+        r["value"] = r["sessions_count"] * 100 / total_100p
         source = f"{r['event_number_in_session'] - 1}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
@@ -79,7 +75,9 @@ def __transform_journey(rows, reverse_path=False):
                                      "eventType": "DROP"})
                 tg_idx = len(nodes) - 1
 
-            link = {"eventType": "DROP", "sessionsCount": drops[i]["sessions_count"], "value": None}
+            link = {"eventType": "DROP",
+                    "sessionsCount": drops[i]["sessions_count"],
+                    "value": drops[i]["sessions_count"] * 100 / total_100p}
             if not reverse_path:
                 link["source"] = sr_idx
                 link["target"] = tg_idx
