@@ -29,14 +29,16 @@ def __transform_journey(rows, reverse_path=False):
             nodes.append(source)
             nodes_values.append({"depth": r['event_number_in_session'] - 1,
                                  "name": r['e_value'],
-                                 "eventType": r['event_type']})
+                                 "eventType": r['event_type'],
+                                 "id": len(nodes_values)})
 
         target = f"{r['event_number_in_session']}_{r['next_type']}_{r['next_value']}"
         if target not in nodes:
             nodes.append(target)
             nodes_values.append({"depth": r['event_number_in_session'],
                                  "name": r['next_value'],
-                                 "eventType": r['next_type']})
+                                 "eventType": r['next_type'],
+                                 "id": len(nodes_values)})
 
         sr_idx = nodes.index(source)
         tg_idx = nodes.index(target)
@@ -72,7 +74,8 @@ def __transform_journey(rows, reverse_path=False):
                 nodes.append(target)
                 nodes_values.append({"depth": drops[i]["depth"] + 1,
                                      "name": None,
-                                     "eventType": "DROP"})
+                                     "eventType": "DROP",
+                                     "id": len(nodes_values)})
                 tg_idx = len(nodes) - 1
 
             link = {"eventType": "DROP",
