@@ -25,15 +25,17 @@ def __transform_journey(rows, reverse_path=False):
     nodes = []
     nodes_values = []
     links = []
+    drops = []
+    max_depth = 0
     for r in rows:
-        source = f"{r['event_number_in_session']}_{r['event_type']}_{r['e_value']}"
+        source = f"{r['event_number_in_session'] - 1}_{r['event_type']}_{r['e_value']}"
         if source not in nodes:
             nodes.append(source)
             nodes_values.append({"depth": r['event_number_in_session'] - 1,
                                  "name": r['e_value'],
                                  "eventType": r['event_type']})
-        # if r['next_value']:
-        target = f"{r['event_number_in_session'] + 1}_{r['next_type']}_{r['next_value']}"
+
+        target = f"{r['event_number_in_session']}_{r['next_type']}_{r['next_value']}"
         if target not in nodes:
             nodes.append(target)
             nodes_values.append({"depth": r['event_number_in_session'],
@@ -51,6 +53,40 @@ def __transform_journey(rows, reverse_path=False):
             link["source"] = tg_idx
             link["target"] = sr_idx
         links.append(link)
+
+        max_depth = r['event_number_in_session']
+        if r["next_type"] == "DROP":
+            for d in drops:
+                if d["depth"] == r['event_number_in_session']:
+                    d["sessions_count"] += r["sessions_count"]
+                    break
+            else:
+                drops.append({"depth": r['event_number_in_session'], "sessions_count": r["sessions_count"]})
+
+    for i in range(len(drops)):
+
+        if drops[i]["depth"] < max_depth:
+            source = f"{drops[i]['depth']}_DROP_None"
+            target = f"{drops[i]['depth'] + 1}_DROP_None"
+            sr_idx = nodes.index(source)
+
+            if i < len(drops) - 1 and drops[i]["depth"] + 1 == drops[i + 1]["depth"]:
+                tg_idx = nodes.index(target)
+            else:
+                nodes.append(target)
+                nodes_values.append({"depth": drops[i]["depth"] + 1,
+                                     "name": None,
+                                     "eventType": "DROP"})
+                tg_idx = len(nodes) - 1
+
+            link = {"eventType": "DROP", "sessionsCount": drops[i]["sessions_count"], "value": None}
+            if not reverse_path:
+                link["source"] = sr_idx
+                link["target"] = tg_idx
+            else:
+                link["source"] = tg_idx
+                link["target"] = sr_idx
+            links.append(link)
 
     return {"nodes": nodes_values,
             "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
