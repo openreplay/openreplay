@@ -18,8 +18,9 @@ export default class FilterStore {
     makeAutoObservable(this);
   }
 
-  setTopValues = (key: string, values: TopValue[]) => {
-    this.topValues[key] = values?.filter((value) => value !== null && value.value !== '');
+  setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
+    const vals = Array.isArray(values) ? values : values.data
+    this.topValues[key] = vals?.filter((value) => value !== null && value.value !== '');
   };
 
   fetchTopValues = async (key: string, source?: string) => {
