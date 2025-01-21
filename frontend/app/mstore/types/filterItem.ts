@@ -85,12 +85,12 @@ export default class FilterItem {
     if (this.isConditional) {
       if (this.isMobile) {
         _filter =
-          mobileConditionalFiltersMap[json.type] ||
-          mobileConditionalFiltersMap[json.source];
+          mobileConditionalFiltersMap[_filter.key] ||
+          mobileConditionalFiltersMap[_filter.source];
       } else {
         _filter =
-          conditionalFiltersMap[json.type] ||
-          conditionalFiltersMap[json.source];
+          conditionalFiltersMap[_filter.key] ||
+          conditionalFiltersMap[_filter.source];
       }
     }
     if (mainFilterKey) {
