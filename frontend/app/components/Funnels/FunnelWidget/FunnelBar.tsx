@@ -59,7 +59,7 @@ function FunnelBarData({
   data: any;
   isComp?: boolean;
   isFocused?: boolean;
-  focusStage?: (index: number, isFocused: boolean) => void;
+  focusStage?: (index: number, isComparison: boolean) => void;
   index?: number;
   isHorizontal?: boolean;
 }) {
@@ -119,7 +119,7 @@ function FunnelBarData({
         </div>
         <div
           style={emptyBarStyle}
-          onClick={() => focusStage?.(index! - 1, data.isActive)}
+          onClick={() => focusStage?.(index! - 1, isComp)}
           className={'hover:opacity-70'}
         />
       </div>

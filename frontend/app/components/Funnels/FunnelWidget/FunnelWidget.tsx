@@ -32,11 +32,12 @@ function FunnelWidget(props: Props) {
   const metricLabel = metric?.metricFormat == 'userCount' ? 'Users' : 'Sessions';
   const drillDownFilter = dashboardStore.drillDownFilter;
   const drillDownPeriod = dashboardStore.drillDownPeriod;
+  const comparisonPeriod = metric ? dashboardStore.comparisonPeriods[metric.metricId] : undefined
   const metricFilters = metric?.series[0]?.filter.filters || [];
 
-  const applyDrillDown = (index: number) => {
+  const applyDrillDown = (index: number, isComp?: boolean) => {
     const filter = new Filter().fromData({ filters: metricFilters.slice(0, index + 1) });
-    const periodTimestamps = drillDownPeriod.toTimestamps();
+    const periodTimestamps = isComp && index > -1 ? comparisonPeriod.toTimestamps() : drillDownPeriod.toTimestamps();
     drillDownFilter.merge({
       filters: filter.toJson().filters,
       startTimestamp: periodTimestamps.startTimestamp,
@@ -51,7 +52,7 @@ function FunnelWidget(props: Props) {
     };
   }, []);
 
-  const focusStage = (index: number) => {
+  const focusStage = (index: number, isComp?: boolean) => {
     funnel.stages.forEach((s, i) => {
       // turning on all filters if one was focused already
       if (focusedFilter === index) {
@@ -67,7 +68,7 @@ function FunnelWidget(props: Props) {
       }
     });
 
-    applyDrillDown(focusedFilter === index ? -1 : index);
+    applyDrillDown(focusedFilter === index ? -1 : index, isComp);
   };
 
   const shownStages = React.useMemo(() => {
