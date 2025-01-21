@@ -3,6 +3,8 @@ import LineChart from 'App/components/Charts/LineChart'
 import BarChart from 'App/components/Charts/BarChart'
 import PieChart from 'App/components/Charts/PieChart'
 import ColumnChart from 'App/components/Charts/ColumnChart'
+import SankeyChart from 'Components/Charts/SankeyChart';
+
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
@@ -31,7 +33,6 @@ import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMe
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
-import SankeyChart from 'Shared/Insights/SankeyChart';
 import { filterMinorPaths } from 'Shared/Insights/SankeyChart/utils'
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
@@ -504,7 +505,6 @@ function WidgetChart(props: Props) {
         <SankeyChart
           height={props.isPreview ? 500 : 240}
           data={usedData}
-          iterations={_metric.hideExcess ? 0 : 128}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}
@@ -526,6 +526,7 @@ function WidgetChart(props: Props) {
         return <CohortCard data={data[0]} />;
       }
     }
+    console.log('Unknown metric type', metricType);
     return <div>Unknown metric type</div>;
   }, [data, compData, enabledRows, _metric]);
 

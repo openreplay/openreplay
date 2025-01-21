@@ -11,7 +11,7 @@ interface Props {
 function NodeButton(props: Props) {
   const { payload } = props;
 
-  const payloadStr = payload.name;
+  const payloadStr = payload.name ?? payload.eventType;
 
   // we need to only trim the middle, so its readable
   const safePName =

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, Modal } from 'UI';
+import { Icon } from 'UI';
 import {
   Tooltip,
   Input,
   Button,
   Dropdown,
-  Menu,
   Tag,
   Modal as AntdModal,
-  Form,
   Avatar,
 } from 'antd';
 import {
@@ -16,7 +14,6 @@ import {
   LockOutlined,
   EditOutlined,
   DeleteOutlined,
-  MoreOutlined,
 } from '@ant-design/icons';
 import { RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
