@@ -1130,9 +1130,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_DURATION:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'duration', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            sh.multi_conditions(f"main.`$duration_s` {f.operator} %({e_k_f})s/1000", f.value,
+                                                value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_REQUEST_BODY:
@@ -1423,7 +1423,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             extra_join = f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_join} {extra_event}
                                 WHERE {" AND ".join(extra_constraints)}
-                                ORDER BY datetime DESC
+                                ORDER BY _timestamp DESC
                                 LIMIT 1 BY {",".join(deduplication_keys)}) AS s"""
         query_part = f"""\
                             FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}
