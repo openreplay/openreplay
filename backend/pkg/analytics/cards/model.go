@@ -192,3 +192,34 @@ func (s *CardListSort) GetSQLField() string {
 func (s *CardListSort) GetSQLOrder() string {
 	return strings.ToUpper(s.Order)
 }
+
+// ---
+
+/*
+class IssueType(str, Enum):
+
+	CLICK_RAGE = 'click_rage'
+	DEAD_CLICK = 'dead_click'
+	EXCESSIVE_SCROLLING = 'excessive_scrolling'
+	BAD_REQUEST = 'bad_request'
+	MISSING_RESOURCE = 'missing_resource'
+	MEMORY = 'memory'
+	CPU = 'cpu'
+	SLOW_RESOURCE = 'slow_resource'
+	SLOW_PAGE_LOAD = 'slow_page_load'
+	CRASH = 'crash'
+	CUSTOM = 'custom'
+	JS_EXCEPTION = 'js_exception'
+	MOUSE_THRASHING = 'mouse_thrashing'
+	# IOS
+	TAP_RAGE = 'tap_rage'
+*/
+type IssueType string
+type ChartData struct {
+	StartTs     uint64       `json:"startTs"`
+	EndTs       uint64       `json:"endTs"`
+	Density     uint64       `json:"density"`
+	Filters     []FilterItem `json:"filter"`
+	MetricOf    string       `json:"metricOf"`
+	MetricValue []IssueType  `json:"metricValue"`
+}

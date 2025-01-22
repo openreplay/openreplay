@@ -8,9 +8,9 @@ type DataPoint struct {
 }
 
 type GetCardChartDataRequest struct {
-	MetricType   string             `json:"metricType" validate:"required,oneof=timeseries table funnel"`
-	MetricOf     string             `json:"metricOf" validate:"required,oneof=session_count user_count"`
-	ViewType     string             `json:"viewType" validate:"required,oneof=line_chart table_view"`
+	MetricType   string             `json:"metricType" validate:"required,oneof=timeseries table funnel errors performance resources webVitals pathAnalysis retention stickiness heatMap"`
+	MetricOf     string             `json:"metricOf" validate:"required,oneof=sessionCount userCount"`
+	ViewType     string             `json:"viewType" validate:"required,oneof=lineChart areaChart barChart pieChart progressChart table metric"`
 	MetricFormat string             `json:"metricFormat" validate:"required,oneof=default percentage"`
 	SessionID    int64              `json:"sessionId"`
 	Series       []cards.CardSeries `json:"series" validate:"required,dive"`
