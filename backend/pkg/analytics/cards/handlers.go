@@ -46,6 +46,7 @@ func (e *handlersImpl) GetAll() []*api.Description {
 		{"/v1/analytics/{projectId}/cards/{id}", e.getCard, "GET"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.updateCard, "PUT"},
 		{"/v1/analytics/{projectId}/cards/{id}", e.deleteCard, "DELETE"},
+		{"/v1/analytics/{projectId}/cards/{id}/sessions", e.getCardSessions, "POST"},
 	}
 }
 
@@ -295,4 +296,9 @@ func (e *handlersImpl) deleteCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, nil, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) getCardSessions(w http.ResponseWriter, r *http.Request) {
+	// TODO: implement this
+	e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotImplemented, fmt.Errorf("not implemented"), time.Now(), r.URL.Path, 0)
 }
