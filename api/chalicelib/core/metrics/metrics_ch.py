@@ -27,6 +27,22 @@ def __get_basic_constraints(table_name=None, time_constraint=True, round_start=F
     return ch_sub_query + __get_generic_constraint(data=data, table_name=table_name)
 
 
+def __get_basic_constraints_events(table_name=None, time_constraint=True, round_start=False, data={}, identifier="project_id"):
+    if table_name:
+        table_name += "."
+    else:
+        table_name = ""
+    ch_sub_query = [f"{table_name}{identifier} =toUInt16(%({identifier})s)"]
+    if time_constraint:
+        if round_start:
+            ch_sub_query.append(
+                f"toStartOfInterval({table_name}created_at, INTERVAL %(step_size)s second) >= toDateTime(%(startTimestamp)s/1000)")
+        else:
+            ch_sub_query.append(f"{table_name}created_at >= toDateTime(%(startTimestamp)s/1000)")
+        ch_sub_query.append(f"{table_name}created_at < toDateTime(%(endTimestamp)s/1000)")
+    return ch_sub_query + __get_generic_constraint(data=data, table_name=table_name)
+
+
 def __frange(start, stop, step):
     result = []
     i = start
