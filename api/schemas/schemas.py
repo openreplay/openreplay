@@ -133,7 +133,7 @@ class _TimedSchema(BaseModel):
 
 
 class NotificationsViewSchema(_TimedSchema):
-    ids: List[int] = Field(default=[])
+    ids: List[int] = Field(default_factory=list)
     startTimestamp: Optional[int] = Field(default=None)
     endTimestamp: Optional[int] = Field(default=None)
 
@@ -545,7 +545,7 @@ class SessionSearchEventSchema2(BaseModel):
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
-    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default=[])
+    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(default_factory=list)
 
     _remove_duplicate_values = field_validator('value', mode='before')(remove_duplicate_values)
     _single_to_list_values = field_validator('value', mode='before')(single_to_list)
@@ -579,7 +579,7 @@ class SessionSearchEventSchema2(BaseModel):
 
 class SessionSearchFilterSchema(BaseModel):
     is_event: Literal[False] = False
-    value: List[Union[IssueType, PlatformType, int, str]] = Field(default=[])
+    value: List[Union[IssueType, PlatformType, int, str]] = Field(default_factory=list)
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
@@ -658,8 +658,8 @@ Field(discriminator='is_event'), BeforeValidator(add_missing_is_event)]
 
 
 class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
-    events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
-    filters: List[GroupedFilterType] = Field(default=[])
+    events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
+    filters: List[GroupedFilterType] = Field(default_factory=list)
     sort: str = Field(default="startTs")
     order: SortOrderType = Field(default=SortOrderType.DESC)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder.THEN)
@@ -816,7 +816,7 @@ Field(discriminator='is_event')]
 
 class PathAnalysisSchema(_TimedSchema, _PaginatedSchema):
     density: int = Field(default=7)
-    filters: List[ProductAnalyticsFilter] = Field(default=[])
+    filters: List[ProductAnalyticsFilter] = Field(default_factory=list)
     type: Optional[str] = Field(default=None)
 
     _transform_filters = field_validator('filters', mode='before') \
@@ -928,10 +928,10 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     density: int = Field(default=7, ge=1, le=200)
-    series: List[CardSeriesSchema] = Field(default=[])
+    series: List[CardSeriesSchema] = Field(default_factory=list)
 
-    # events: List[SessionSearchEventSchema2] = Field(default=[], doc_hidden=True)
-    filters: List[GroupedFilterType] = Field(default=[])
+    # events: List[SessionSearchEventSchema2] = Field(default_factory=list, doc_hidden=True)
+    filters: List[GroupedFilterType] = Field(default_factory=list)
 
     compare_to: Optional[List[str]] = Field(default=None)
 
@@ -1037,9 +1037,11 @@ class __CardSchema(CardSessionsSchema):
     view_type: Any
     metric_type: MetricType = Field(...)
     metric_of: Any
-    metric_value: List[IssueType] = Field(default=[])
+    metric_value: List[IssueType] = Field(default_factory=list)
     # This is used to save the selected session for heatmaps
     session_id: Optional[int] = Field(default=None)
+    # This is used to specify the number of top values for PathAnalysis
+    rows: int = Field(default=3, ge=1, le=10)
 
     @computed_field
     @property
@@ -1185,14 +1187,15 @@ class CardPathAnalysis(__CardSchema):
     metric_type: Literal[MetricType.PATH_ANALYSIS]
     metric_of: MetricOfPathAnalysis = Field(default=MetricOfPathAnalysis.session_count)
     view_type: MetricOtherViewType = Field(...)
-    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default=[])
+    metric_value: List[ProductAnalyticsSelectedEventType] = Field(default_factory=list)
     density: int = Field(default=4, ge=2, le=10)
+    rows: int = Field(default=3, ge=1, le=10)
 
     start_type: Literal["start", "end"] = Field(default="start")
-    start_point: List[PathAnalysisSubFilterSchema] = Field(default=[])
-    excludes: List[PathAnalysisSubFilterSchema] = Field(default=[])
+    start_point: List[PathAnalysisSubFilterSchema] = Field(default_factory=list)
+    excludes: List[PathAnalysisSubFilterSchema] = Field(default_factory=list)
 
-    series: List[CardPathAnalysisSeriesSchema] = Field(default=[])
+    series: List[CardPathAnalysisSeriesSchema] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -1258,13 +1261,13 @@ class ProjectConditions(BaseModel):
     condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     capture_rate: int = Field(..., ge=0, le=100)
-    filters: List[GroupedFilterType] = Field(default=[])
+    filters: List[GroupedFilterType] = Field(default_factory=list)
 
 
 class ProjectSettings(BaseModel):
     rate: int = Field(..., ge=0, le=100)
     conditional_capture: bool = Field(default=False)
-    conditions: List[ProjectConditions] = Field(default=[])
+    conditions: List[ProjectConditions] = Field(default_factory=list)
 
 
 class CreateDashboardSchema(BaseModel):
@@ -1272,7 +1275,7 @@ class CreateDashboardSchema(BaseModel):
     description: Optional[str] = Field(default='')
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
-    metrics: Optional[List[int]] = Field(default=[])
+    metrics: Optional[List[int]] = Field(default_factory=list)
 
 
 class EditDashboardSchema(CreateDashboardSchema):
@@ -1281,7 +1284,7 @@ class EditDashboardSchema(CreateDashboardSchema):
 
 
 class UpdateWidgetPayloadSchema(BaseModel):
-    config: dict = Field(default={})
+    config: dict = Field(default_factory=dict)
 
 
 class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
@@ -1379,7 +1382,7 @@ class IntegrationType(str, Enum):
 class SearchNoteSchema(_PaginatedSchema):
     sort: str = Field(default="createdAt")
     order: SortOrderType = Field(default=SortOrderType.DESC)
-    tags: Optional[List[str]] = Field(default=[])
+    tags: Optional[List[str]] = Field(default_factory=list)
     shared_only: bool = Field(default=False)
     mine_only: bool = Field(default=False)
     search: Optional[str] = Field(default=None)
@@ -1426,8 +1429,8 @@ class _HeatMapSearchEventRaw(SessionSearchEventSchema2):
 
 
 class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
-    events: Optional[List[_HeatMapSearchEventRaw]] = Field(default=[])
-    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default=[])
+    events: Optional[List[_HeatMapSearchEventRaw]] = Field(default_factory=list)
+    filters: List[Union[SessionSearchFilterSchema, _HeatMapSearchEventRaw]] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -1442,14 +1445,14 @@ class HeatMapSessionsSearch(SessionsSearchPayloadSchema):
 
 
 class HeatMapFilterSchema(BaseModel):
-    value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(default=[])
+    value: List[Literal[IssueType.CLICK_RAGE, IssueType.DEAD_CLICK]] = Field(default_factory=list)
     type: Literal[FilterType.ISSUE] = Field(...)
     operator: Literal[SearchEventOperator.IS, MathOperator.EQUAL] = Field(...)
 
 
 class GetHeatMapPayloadSchema(_TimedSchema):
     url: Optional[str] = Field(default=None)
-    filters: List[HeatMapFilterSchema] = Field(default=[])
+    filters: List[HeatMapFilterSchema] = Field(default_factory=list)
     click_rage: bool = Field(default=False)
     operator: Literal[SearchEventOperator.IS, SearchEventOperator.STARTS_WITH,
     SearchEventOperator.CONTAINS, SearchEventOperator.ENDS_WITH] = Field(default=SearchEventOperator.STARTS_WITH)
@@ -1470,7 +1473,7 @@ class FeatureFlagVariant(BaseModel):
 class FeatureFlagConditionFilterSchema(BaseModel):
     is_event: Literal[False] = False
     type: FilterType = Field(...)
-    value: List[str] = Field(default=[], min_length=1)
+    value: List[str] = Field(default_factory=list, min_length=1)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[str] = Field(default=None)
     sourceOperator: Optional[Union[SearchEventOperator, MathOperator]] = Field(default=None)
@@ -1486,7 +1489,7 @@ class FeatureFlagCondition(BaseModel):
     condition_id: Optional[int] = Field(default=None)
     name: str = Field(...)
     rollout_percentage: Optional[int] = Field(default=0)
-    filters: List[FeatureFlagConditionFilterSchema] = Field(default=[])
+    filters: List[FeatureFlagConditionFilterSchema] = Field(default_factory=list)
 
 
 class SearchFlagsSchema(_PaginatedSchema):
@@ -1513,8 +1516,8 @@ class FeatureFlagSchema(BaseModel):
     flag_type: FeatureFlagType = Field(default=FeatureFlagType.SINGLE_VARIANT)
     is_persist: Optional[bool] = Field(default=False)
     is_active: Optional[bool] = Field(default=True)
-    conditions: List[FeatureFlagCondition] = Field(default=[], min_length=1)
-    variants: List[FeatureFlagVariant] = Field(default=[])
+    conditions: List[FeatureFlagCondition] = Field(default_factory=list, min_length=1)
+    variants: List[FeatureFlagVariant] = Field(default_factory=list)
 
 
 class ModuleType(str, Enum):

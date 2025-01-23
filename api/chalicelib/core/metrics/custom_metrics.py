@@ -209,14 +209,15 @@ def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.Card
 
 
 def __get_global_card_info(data: schemas.CardSchema):
-    r = {"hideExcess": data.hide_excess, "compareTo": data.compare_to}
+    r = {"hideExcess": data.hide_excess, "compareTo": data.compare_to, "rows": data.rows}
     return r
 
 
 def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
-         "excludes": [e.model_dump() for e in data.excludes]}
+         "excludes": [e.model_dump() for e in data.excludes],
+         "rows": data.rows}
     return r
 
 

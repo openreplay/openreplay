@@ -9,10 +9,11 @@ export class Conditions {
 
   constructor(data?: Record<string, any>, isConditional?: boolean, isMobile?: boolean) {
     makeAutoObservable(this);
+    console.log('data', data)
     this.name = data?.name;
     if (data && (data.rolloutPercentage || data.captureRate)) {
       this.rolloutPercentage = data.rolloutPercentage ?? data.captureRate;
-      this.filter = new Filter(isConditional, isMobile).fromJson(data);
+      this.filter = new Filter([], isConditional, isMobile).fromJson(data);
     }
   }
 

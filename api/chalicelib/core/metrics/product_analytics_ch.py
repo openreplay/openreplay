@@ -23,6 +23,7 @@ JOURNEY_TYPES = {
 }
 
 
+
 # startPoints are computed before ranked_events to reduce the number of window functions over rows
 # compute avg_time_from_previous at the same level as sessions_count (this was removed in v1.22)
 # if start-point is selected, the selected event is ranked n°1
