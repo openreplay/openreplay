@@ -289,7 +289,7 @@ const AddCardSection = observer(
     const options = isMobile
       ? [
           { label: 'Product Analytics', value: 'product_analytics' },
-          { label: 'Web Analytics', value: 'web_analytics' },
+          { label: 'Mobile Analytics', value: 'web_analytics' },
         ]
       : [
           { label: 'Product Analytics', value: 'product_analytics' },
