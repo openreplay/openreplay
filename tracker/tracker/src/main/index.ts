@@ -242,15 +242,15 @@ export default class API {
 
   signalStartIssue = (reason: string, missingApi: string[]) => {
     const doNotTrack = this.checkDoNotTrack()
-    const req = new XMLHttpRequest()
-    const orig = this.options.ingestPoint || DEFAULT_INGEST_POINT
-    req.open('POST', orig + '/v1/web/not-started')
-    req.send(
+    console.log(
+      "Tracker couldn't start due to:",
       JSON.stringify({
         trackerVersion: 'TRACKER_VERSION',
         projectKey: this.options.projectKey,
         doNotTrack,
-        reason: missingApi.length ? `missing api: ${missingApi.join(',')}` : reason,
+        reason: missingApi.length
+                ? `missing api: ${missingApi.join(',')}`
+                : reason,
       }),
     )
   }
