@@ -248,9 +248,7 @@ export default class API {
         trackerVersion: 'TRACKER_VERSION',
         projectKey: this.options.projectKey,
         doNotTrack,
-        reason: missingApi.length
-                ? `missing api: ${missingApi.join(',')}`
-                : reason,
+        reason: missingApi.length ? `missing api: ${missingApi.join(',')}` : reason,
       }),
     )
   }
