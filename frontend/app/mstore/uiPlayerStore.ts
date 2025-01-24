@@ -65,6 +65,11 @@ export default class UiPlayerStore {
     startTs: 0,
     endTs: 0,
   }
+  highlightSelection = {
+    enabled: false,
+    startTs: 0,
+    endTs: 0,
+  }
   zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
   dataSource: 'all' | 'current' = 'all'
 
@@ -111,6 +116,12 @@ export default class UiPlayerStore {
     this.timelineZoom.enabled = payload.enabled;
     this.timelineZoom.startTs = payload.range?.[0] ?? 0;
     this.timelineZoom.endTs = payload.range?.[1] ?? 0;
+  }
+
+  toggleHighlightSelection = (payload: ToggleZoomPayload) => {
+    this.highlightSelection.enabled = payload.enabled;
+    this.highlightSelection.startTs = payload.range?.[0] ?? 0;
+    this.highlightSelection.endTs = payload.range?.[1] ?? 0;
   }
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {

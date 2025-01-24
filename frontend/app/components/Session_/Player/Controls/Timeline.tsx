@@ -1,4 +1,3 @@
-import DraggableMarkers from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
 import stl from './timeline.module.css';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
@@ -12,6 +11,7 @@ import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
+import { ZoomDragLayer, HighlightDragLayer } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -24,6 +24,7 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const timezone = sessionStore.current.timezone;
   const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
+  const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
 
   const progressRef = useRef<HTMLDivElement>(null);
@@ -132,7 +133,8 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         left: '0.5rem',
       }}
     >
-      {timelineZoomEnabled ? <DraggableMarkers scale={scale} /> : null}
+      {timelineZoomEnabled ? <ZoomDragLayer scale={scale} /> : null}
+      {highlightEnabled ? <HighlightDragLayer scale={scale} /> : null}
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
@@ -143,15 +145,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
-        <CustomDragLayer
-          onDrag={onDrag}
-          minX={0}
-          maxX={maxWidth}
-        />
+        {highlightEnabled ? null : <TimelineTracker scale={scale} onDragEnd={onDragEnd} />}
+        <CustomDragLayer onDrag={onDrag} minX={0} maxX={maxWidth} />
 
         <div className={stl.timeline} ref={timelineRef}>
-          {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
+          {devtoolsLoading || domLoading || !ready ? (
+            <div className={stl.stripes} />
+          ) : null}
         </div>
 
         {isMobile ? <MobEventsList /> : <WebEventsList />}

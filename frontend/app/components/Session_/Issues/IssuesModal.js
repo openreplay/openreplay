@@ -1,13 +1,14 @@
 import React from 'react';
 import stl from './issuesModal.module.css';
 import IssueForm from './IssueForm';
+import cn from 'classnames'
 
 const IssuesModal = ({
   sessionId,
   closeHandler,
 }) => {
   return (
-    <div className={ stl.wrapper }>
+    <div className={cn(stl.wrapper, 'h-screen')}>
       <h3 className="text-xl font-semibold">
         <span>Create Issue</span>
       </h3>

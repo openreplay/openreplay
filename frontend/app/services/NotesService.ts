@@ -3,9 +3,8 @@ import APIClient from 'App/api_client';
 
 export const tagProps = {
   'ISSUE': 'red',
-  'QUERY': 'geekblue',
-  'TASK': 'purple',
-  'OTHER': '',
+  'DESIGN': 'geekblue',
+  'NOTE': 'purple',
 }
 
 export type iTag = keyof typeof tagProps | "ALL"
@@ -14,11 +13,12 @@ export const TAGS = Object.keys(tagProps) as unknown as (keyof typeof tagProps)[
 
 export interface WriteNote {
   message: string
-  tag: iTag
+  tag: string
   isPublic: boolean
-  timestamp: number
-  noteId?: string
-  author?: string
+  timestamp?: number
+  startAt: number
+  endAt: number
+  thumbnail: string
 }
 
 export interface Note {
@@ -33,6 +33,9 @@ export interface Note {
   timestamp: number
   userId: number
   userName: string
+  startAt: number
+  endAt: number
+  thumbnail: string
 }
 
 export interface NotesFilter {
@@ -43,6 +46,7 @@ export interface NotesFilter {
   tags: iTag[]
   sharedOnly: boolean
   mineOnly: boolean
+  search: string
 }
 
 export default class NotesService {
@@ -58,6 +62,12 @@ export default class NotesService {
 
   fetchNotes(filter: NotesFilter): Promise<{ notes: Note[], count: number }> {
     return this.client.post('/notes', filter).then(r => {
+      return r.json().then(r => r.data)
+    })
+  }
+
+  fetchNoteById(noteId: string): Promise<Note> {
+    return this.client.get(`/notes/${noteId}`).then(r => {
       return r.json().then(r => r.data)
     })
   }
