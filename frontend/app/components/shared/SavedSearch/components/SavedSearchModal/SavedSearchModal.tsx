@@ -27,13 +27,7 @@ function TooltipIcon(props: ITooltipIcon) {
   );
 }
 
-interface Props {
-  applySavedSearch: (item: SavedSearch) => void;
-  remove: (itemId: number) => void;
-  editSavedSearch: (item: SavedSearch) => void;
-}
-
-function SavedSearchModal(props: Props) {
+function SavedSearchModal() {
   const { hideModal } = useModal();
   const [showModal, setshowModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
@@ -67,10 +61,10 @@ function SavedSearchModal(props: Props) {
     <div className="bg-white box-shadow h-screen">
       <div className="p-6">
         <h1 className="text-2xl">
-          Saved Search <span className="color-gray-medium">{searchStore.list.size}</span>
+          Saved Search <span className="color-gray-medium">{searchStore.list.length}</span>
         </h1>
       </div>
-      {searchStore.list.size > 1 && (
+      {searchStore.list.length > 1 && (
         <div className="mb-6 w-full px-4">
           <Input
             icon="search"

@@ -34,6 +34,10 @@ export default class ProjectsStore {
     return this.active ? ['ios', 'android'].includes(this.active.platform) : false;
   }
 
+  get activeSiteId() {
+    return this.active?.id || this.siteId;
+  }
+
   syncProjectInList = (project: Partial<Project>) => {
     const index = this.list.findIndex(site => site.id === project.id);
     if (index !== -1) {

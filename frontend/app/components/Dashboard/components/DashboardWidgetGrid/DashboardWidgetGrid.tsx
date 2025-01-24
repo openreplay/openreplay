@@ -1,10 +1,12 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
-import { Empty } from 'antd';
-import { NoContent, Loader } from 'UI';
-import { useObserver } from 'mobx-react-lite';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { observer } from 'mobx-react-lite';
+import AddCardSection from '../AddCardSection/AddCardSection';
+import cn from 'classnames';
+import { Button, Popover, Tooltip } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
+import { Loader } from 'UI';
 
 interface Props {
   siteId: string;
@@ -16,56 +18,85 @@ interface Props {
 function DashboardWidgetGrid(props: Props) {
   const { dashboardId, siteId } = props;
   const { dashboardStore } = useStore();
-  const loading = useObserver(() => dashboardStore.isLoading);
+  const loading = dashboardStore.isLoading;
   const dashboard = dashboardStore.selectedDashboard;
-  const list = useObserver(() => dashboard?.widgets);
+  const list = dashboard?.widgets;
 
-  return useObserver(() => (
+  return (
     <Loader loading={loading}>
-      {
-        list?.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-5">
-            <NoContent
-              show={true}
-              icon="no-metrics-chart"
-              title={
-                <div className="text-center">
-                   <div className='mb-4'>
-                   <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
-                   </div>
-                  <div className="text-xl font-medium mb-2">
-                    There are no cards in this dashboard
-                  </div>
-                  <div className="text-base font-normal">
-                  Create a card by clicking the "Add Card" button to visualize insights here.
-                  </div>
-                </div>
-              }
+      {list?.length === 0 ? (
+        <div
+          className={'flex-1 flex justify-center items-center pt-10'}
+          style={{ minHeight: 620 }}
+        >
+          <AddCardSection />
+        </div>
+      ) : (
+        <div
+          className="pb-10 px-4 pt-2 grid gap-2 rounded grid-cols-4 items-start "
+          id={props.id}
+        >
+          {list?.map((item: any, index: any) => (
+            <GridItem
+              key={item.widgetId}
+              item={item}
+              index={index}
+              dashboard={dashboard}
+              dashboardId={dashboardId}
+              siteId={siteId}
             />
-          </div>
-        ) : (
-          <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
-            {list?.map((item: any, index: any) => (
-              <React.Fragment key={item.widgetId}>
-                <WidgetWrapperNew
-                  index={index}
-                  widget={item}
-                  moveListItem={(dragIndex: any, hoverIndex: any) =>
-                    dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
-                  }
-                  dashboardId={dashboardId}
-                  siteId={siteId}
-                  grid="other"
-                  showMenu={true}
-                  isSaved={true}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-        )
-      }
+          ))}
+        </div>
+      )}
     </Loader>
-  ));
+  );
 }
 
-export default DashboardWidgetGrid;
+function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setPopoverOpen(open);
+  };
+
+  return (
+    <div
+      key={item.widgetId}
+      className={cn('col-span-' + item.config.col, 'group relative pl-6 pr-4 py-4 hover:bg-active-blue w-full rounded-xl')}
+    >
+      <WidgetWrapperNew
+        index={index}
+        widget={item}
+        moveListItem={(dragIndex: any, hoverIndex: any) =>
+          dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
+        }
+        dashboardId={dashboardId}
+        siteId={siteId}
+        grid="other"
+        showMenu={true}
+        isSaved={true}
+      />
+      <div
+        className={cn(
+          'invisible group-hover:visible ',
+          'absolute -left-2 top-1/2 -translate-y-1/2',
+        )}
+      >
+        <Popover
+          open={popoverOpen}
+          onOpenChange={handleOpenChange}
+          arrow={false}
+          overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+          content={<AddCardSection handleOpenChange={handleOpenChange} />}
+          trigger={'click'}
+        >
+          <Tooltip title="Add Card">
+            <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
+          </Tooltip>
+        </Popover>
+      </div>
+    </div>
+  )
+}
+
+
+export default observer(DashboardWidgetGrid);

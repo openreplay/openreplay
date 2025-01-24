@@ -19,7 +19,7 @@ function removeOutsideClickListener(ref) {
 function handleClickOutside(e) {
   refs.forEach((ref, i) => {
     if (ref.current !== null) {
-      const node = findDOMNode(ref.current);
+      const node = ref.current;
       if (node && !node.contains(e.target)) {
         callbacks[i](e);
       }

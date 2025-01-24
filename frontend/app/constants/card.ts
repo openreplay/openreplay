@@ -19,9 +19,15 @@ export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';
 export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
-export const FEATURE_ADOPTION = 'featureAdoption';
-export const INSIGHTS = 'insights';
+export const INSIGHTS = 'insights'; // SaaS and EE
 export const PERFORMANCE = 'performance';
+
+export const CATEGORIES = {
+  product_analytics: 'product_analytics',
+  monitors: 'monitors',
+  web_analytics: 'web_analytics',
+}
+
 
 export interface Option {
   label: string;
@@ -31,52 +37,75 @@ export interface Option {
   disabled?: boolean;
 }
 
+export const TYPE_ICONS = {
+  [LIBRARY]: 'grid',
+  [TIMESERIES]: 'graph-up',
+  [TABLE]: 'list-alt',
+  [HEATMAP]: 'dashboards/heatmap-2',
+  [FUNNEL]: 'funnel',
+  [ERRORS]: 'exclamation-circle',
+  [USER_PATH]: 'user-journey',
+  [TABLE]: 'list-alt',
+} as const
+export const TYPE_NAMES = {
+  [LIBRARY]: 'Library',
+  [TIMESERIES]: 'Trend',
+  [TABLE]: 'Table',
+  [HEATMAP]: 'Heatmap',
+  [FUNNEL]: 'Funnel',
+  [ERRORS]: 'Errors',
+  [USER_PATH]: 'Journeys',
+  [RETENTION]: 'Retention',
+  [INSIGHTS]: 'Insights',
+  [PERFORMANCE]: 'Performance',
+} as const
+
 export const TYPES: CardType[] = [
   {
     title: 'Add from Library',
-    icon: 'grid',
+    icon: TYPE_ICONS[LIBRARY],
     description: 'Select an existing card from your library',
     slug: LIBRARY,
   },
   {
-    title: 'Timeseries',
-    icon: 'graph-up',
+    title: TYPE_NAMES[TIMESERIES],
+    icon: TYPE_ICONS[TIMESERIES],
     description: 'Combine captured events and filters to track trends over time.',
     slug: TIMESERIES,
     subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
   },
   {
-    title: 'Heatmap',
-    icon: 'puzzle-piece',
+    title: TYPE_NAMES[HEATMAP],
+    icon: TYPE_ICONS[HEATMAP],
     description: 'See where users click and where they get frustrated.',
     slug: HEATMAP,
     subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
+  // {
+  //   title: 'Table',
+  //   icon: 'list-alt',
+  //   description: 'Create custom tables of users, sessions, errors, issues and more.',
+  //   slug: TABLE,
+  //   subTypes: [
+  //     { title: 'Users', slug: FilterKey.USERID, description: '' },
+  //     { title: 'Sessions', slug: FilterKey.SESSIONS, description: '' },
+  //     { title: 'JS Errors', slug: FilterKey.ERRORS, description: '' },
+  //     { title: 'Issues', slug: FilterKey.ISSUE, description: '' },
+  //     { title: 'Browser', slug: FilterKey.USER_BROWSER, description: '' },
+  //     { title: 'Devices', slug: FilterKey.USER_DEVICE, description: '' },
+  //     { title: 'Countries', slug: FilterKey.USER_COUNTRY, description: '' },
+  //     { title: 'URLs', slug: FilterKey.LOCATION, description: '' },
+  //   ],
+  // },
   {
-    title: 'Table',
-    icon: 'list-alt',
-    description: 'Create custom tables of users, sessions, errors, issues and more.',
-    slug: TABLE,
-    subTypes: [
-      { title: 'Users', slug: FilterKey.USERID, description: '' },
-      { title: 'Sessions', slug: FilterKey.SESSIONS, description: '' },
-      { title: 'JS Errors', slug: FilterKey.ERRORS, description: '' },
-      { title: 'Issues', slug: FilterKey.ISSUE, description: '' },
-      { title: 'Browser', slug: FilterKey.USER_BROWSER, description: '' },
-      { title: 'Devices', slug: FilterKey.USER_DEVICE, description: '' },
-      { title: 'Countries', slug: FilterKey.USER_COUNTRY, description: '' },
-      { title: 'URLs', slug: FilterKey.LOCATION, description: '' },
-    ],
-  },
-  {
-    title: 'Funnel',
-    icon: 'funnel',
+    title: TYPE_NAMES[FUNNEL],
+    icon: TYPE_ICONS[FUNNEL],
     description: 'Find out where users are dropping and understand why.',
     slug: FUNNEL,
   },
   {
-    title: 'Path Analysis',
-    icon: 'signpost-split',
+    title: TYPE_NAMES[USER_PATH],
+    icon: TYPE_ICONS[USER_PATH],
     description: 'See where users are flowing and explore their journeys.',
     slug: USER_PATH,
   },

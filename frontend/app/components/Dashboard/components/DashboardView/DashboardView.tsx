@@ -98,7 +98,7 @@ function DashboardView(props: Props) {
     const isSaas = /app\.openreplay\.com/.test(originStr);
     return (
         <Loader loading={loading}>
-            <div style={{maxWidth: '1360px', margin: 'auto'}}>
+            <div style={{maxWidth: '1360px', margin: 'auto'}} className={'rounded-lg shadow-sm overflow-hidden bg-white border'}>
                 {/* @ts-ignore */}
                 <DashboardHeader renderReport={props.renderReport} siteId={siteId} dashboardId={dashboardId}/>
                 {isSaas ? <AiQuery /> : null}

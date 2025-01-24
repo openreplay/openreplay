@@ -1,11 +1,11 @@
 export enum FilterCategory {
-  INTERACTIONS = 'Interactions',
-  GEAR = 'Gear',
-  RECORDING_ATTRIBUTES = 'Recording Attributes',
-  TECHNICAL = 'Technical',
-  USER = 'User Identification',
-  METADATA = 'Session & User Metadata',
-  PERFORMANCE = 'Performance',
+  AUTOCAPTURE = 'Autocapture',
+  DEVTOOLS = 'DevTools',
+  USER = 'User',
+  METADATA = 'Metadata',
+  SESSION = 'Session',
+  ISSUE = 'Issue',
+  EVENTS = 'Events',
 }
 
 export const setQueryParamKeyFromFilterkey = (filterKey: string) => {

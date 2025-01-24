@@ -8,6 +8,7 @@ const compareColors = ['#192EDB', '#6272FF', '#808DFF', '#B3BBFF', '#C9CFFF'];
 const compareColorsx = ["#222F99", "#2E3ECC", "#394EFF", "#6171FF", "#8895FF", "#B0B8FF", "#D7DCFF"].reverse();
 const customMetricColors = ['#394EFF', '#3EAAAF', '#565D97'];
 const colorsPie = colors.concat(["#DDDDDD"]);
+const safeColors = ['#394EFF', '#3EAAAF', '#9276da', '#ceba64', "#bc6f9d", '#966fbc', '#64ce86', '#e06da3', '#6dabe0'];
 
 const countView = count => {
     const isMoreThanK = count >= 1000;
@@ -22,6 +23,7 @@ export default {
     colorsx,
     compareColors,
     compareColorsx,
+    safeColors,
     lineColor: '#2A7B7F',
     lineColorCompare: '#394EFF',
     strokeColor: compareColors[0],
@@ -29,13 +31,13 @@ export default {
         axisLine: {stroke: '#CCCCCC'},
         interval: 0,
         dataKey: "time",
-        tick: {fill: '#999999', fontSize: 9},
+        tick: {fill: '#000000', fontSize: 9},
         tickLine: {stroke: '#CCCCCC'},
         strokeWidth: 0.5
     },
     yaxis: {
         axisLine: {stroke: '#CCCCCC'},
-        tick: {fill: '#999999', fontSize: 9},
+        tick: {fill: '#000000', fontSize: 9},
         tickLine: {stroke: '#CCCCCC'},
     },
     axisLabelLeft: {
@@ -50,8 +52,8 @@ export default {
     tickFormatterBytes: val => Math.round(val / 1024 / 1024),
     chartMargins: {left: 0, right: 20, top: 10, bottom: 5},
     tooltip: {
-        cursor: {
-            fill: '#f6f6f6'
+        wrapperStyle: {
+            zIndex: 999,
         },
         contentStyle: {
             padding: '5px',
@@ -73,6 +75,9 @@ export default {
             lineHeight: '0.75rem',
             color: '#000',
             fontSize: '12px'
+        },
+        cursor: {
+            fill: '#eee'
         }
     },
     gradientDef: () => (

@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './FilterDuration.module.css';
-import { Input } from 'UI'
+import { Input } from 'antd'
 
 const fromMs = value => value ? `${ value / 1000 / 60 }` : ''
 const toMs = value => value !== '' ? value * 1000 * 60 : null

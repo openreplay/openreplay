@@ -10,11 +10,11 @@ interface Props {
 export default function MetaItem(props: Props) {
     const { className = '', label, value } = props
     return (
-        <div className={cn("flex items-center rounded", className)}>
-            <span className="rounded-tl rounded-bl bg-gray-light-shade px-2 color-gray-medium capitalize" style={{ maxWidth: "150px"}}>
+        <div className={cn("flex items-center rounded border border-gray-light-shade", className)}>
+            <span className="rounded-tl rounded-bl bg-gray-light-shade px-2" style={{ maxWidth: "150px"}}>
                 <TextEllipsis text={label} className="p-0" popupProps={{ size: 'small', disabled: true }}  />
             </span>
-            <span className="rounded-tr rounded-br bg-gray-lightest px-2 color-gray-dark" style={{ maxWidth: "150px"}}>
+            <span className="rounded-tr rounded-br bg-white px-2" style={{ maxWidth: "150px"}}>
                 <TextEllipsis text={value} className="p-0" popupProps={{ size: 'small', disabled: true }}  />
             </span>
         </div>

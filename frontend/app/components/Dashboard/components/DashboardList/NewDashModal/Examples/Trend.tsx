@@ -1,8 +1,7 @@
 import React from 'react';
 
 import ExCard from './ExCard';
-import AreaChartCard from "Components/Dashboard/components/DashboardList/NewDashModal/Examples/AreaChartCard";
-import CustomMetricLineChart from "Components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricLineChart";
+import LineChart from 'App/components/Charts/LineChart'
 import {Styles} from "Components/Dashboard/Widgets/common";
 
 interface Props {
@@ -24,7 +23,7 @@ function ExampleTrend(props: Props) {
             }
         >
             {/*<AreaChartCard data={props.data} label={props.data?.label}/>*/}
-            <CustomMetricLineChart
+            <LineChart
                 data={props.data}
                 colors={Styles.compareColors}
                 params={{

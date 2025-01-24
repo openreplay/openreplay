@@ -9,6 +9,7 @@ interface IProps {
   height?: number
   width?: number
   color?: string
+  strokeColor?: string
   className?: string
   style?: object
   marginRight?: number
@@ -22,6 +23,7 @@ const Icon: React.FunctionComponent<IProps> = ({
   height = size,
   width = size,
   color = 'gray-medium',
+  strokeColor,
   className = '',
   style={},
   marginRight = 0,
@@ -38,7 +40,10 @@ const Icon: React.FunctionComponent<IProps> = ({
     _style.marginRight = `${ marginRight }px`;
   }
 
-  const additionalStyles = color === 'inherit' ? { fill: 'currentcolor' } : {}
+  const additionalStyles = {
+    ...(color === 'inherit' ? { fill: 'currentColor' } : {}),
+    ...(strokeColor ? { stroke: strokeColor } : {}), 
+  };
 
   return (
     <span
@@ -47,7 +52,7 @@ const Icon: React.FunctionComponent<IProps> = ({
       className={ cn(className, styles.wrapper, `fill-${ color }`) }
       data-inline={ inline }
     >
-      <SVG name={ name } height={ height } width={ width } />
+      <SVG name={ name } height={ height } width={ width }  style={strokeColor ? { stroke: strokeColor } : undefined}  />
     </span>
   );
 }

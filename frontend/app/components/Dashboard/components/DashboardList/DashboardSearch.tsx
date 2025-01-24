@@ -28,7 +28,7 @@ function DashboardSearch() {
       value={query}
       allowClear
       name="dashboardsSearch"
-      className="w-full"
+      className="w-full btn-search-dashboard"
       placeholder="Filter by dashboard title"
       onChange={write}
       onSearch={(value) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value })}

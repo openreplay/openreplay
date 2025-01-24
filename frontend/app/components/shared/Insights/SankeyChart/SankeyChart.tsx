@@ -115,7 +115,6 @@ const SankeyChart: React.FC<Props> = ({data, height = 240, onChartClick}: Props)
                     nodePadding={20}
                     sort={true}
                     nodeWidth={4}
-                    iterations={128}
                     // linkCurvature={0.9}
                     onClick={clickHandler}
                     link={({source, target, id, ...linkProps}, index) => (

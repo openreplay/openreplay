@@ -96,9 +96,9 @@ function AddMetric({ history, siteId, title, description }: IProps) {
         <div className="py-4 border-t px-8 bg-white w-full flex items-center justify-between">
           <div>
             {'Selected '}
-            <span className="font-semibold">{selectedWidgetIds.length}</span>
+            <span className="font-medium">{selectedWidgetIds.length}</span>
             {' out of '}
-            <span className="font-semibold">{metrics ? metrics.length : 0}</span>
+            <span className="font-medium">{metrics ? metrics.length : 0}</span>
           </div>
           <Button variant="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
             Add Selected

@@ -7,11 +7,14 @@ import {
   CircleAlert,
   Clock2,
   Code,
-  ContactRound, CornerDownRight,
+  ContactRound,
+  CornerDownRight,
   Cpu,
   Earth,
-  FileStack, Layers,
-  MapPin, Megaphone,
+  FileStack,
+  Layers,
+  MapPin,
+  Megaphone,
   MemoryStick,
   MonitorSmartphone,
   Navigation,
@@ -25,63 +28,70 @@ import {
   Timer,
   VenetianMask,
   Workflow,
-  Flag
+  Flag,
+  ChevronRight,
 } from 'lucide-react';
 import React from 'react';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Input } from 'antd';
 
-import { FilterKey } from 'Types/filter/filterType';
+import { FilterCategory, FilterKey, FilterType } from "Types/filter/filterType";
 import stl from './FilterModal.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-const IconMap = {
-  [FilterKey.CLICK]: <Pointer size={18} />,
-  [FilterKey.LOCATION]: <Navigation size={18} />,
-  [FilterKey.INPUT]: <RectangleEllipsis size={18} />,
-  [FilterKey.CUSTOM]: <Code size={18} />,
-  [FilterKey.FETCH]: <ArrowUpDown size={18} />,
-  [FilterKey.GRAPHQL]: <Network size={18} />,
-  [FilterKey.STATEACTION]: <RectangleEllipsis size={18} />,
-  [FilterKey.ERROR]: <OctagonAlert size={18} />,
-  [FilterKey.ISSUE]: <CircleAlert size={18} />,
-  [FilterKey.FETCH_FAILED]: <Code size={18} />,
-  [FilterKey.DOM_COMPLETE]: <ArrowUpDown size={18} />,
-  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: <Network size={18} />,
-  [FilterKey.TTFB]: <Timer size={18} />,
-  [FilterKey.AVG_CPU_LOAD]: <Cpu size={18} />,
-  [FilterKey.AVG_MEMORY_USAGE]: <MemoryStick size={18} />,
-  [FilterKey.USERID]: <SquareUser size={18} />,
-  [FilterKey.USERANONYMOUSID]: <VenetianMask size={18} />,
-  [FilterKey.USER_CITY]: <Pin size={18} />,
-  [FilterKey.USER_STATE]: <MapPin size={18} />,
-  [FilterKey.USER_COUNTRY]: <Earth size={18} />,
-  [FilterKey.USER_DEVICE]: <Code size={18} />,
-  [FilterKey.USER_OS]: <AppWindow size={18} />,
-  [FilterKey.USER_BROWSER]: <Chrome size={18} />,
-  [FilterKey.PLATFORM]: <MonitorSmartphone size={18} />,
-  [FilterKey.REVID]: <FileStack size={18} />,
-  [FilterKey.REFERRER]: <Workflow size={18} />,
-  [FilterKey.DURATION]: <Clock2 size={18} />,
-  [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={18} />,
-  [FilterKey.METADATA]: <ContactRound size={18} />,
-  [FilterKey.UTM_SOURCE]: <CornerDownRight size={18} />,
-  [FilterKey.UTM_MEDIUM]: <Layers size={18} />,
-  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={18} />,
-  [FilterKey.FEATURE_FLAG]: <Flag size={18} />
+export const IconMap = {
+  [FilterKey.CLICK]: <Pointer size={14}/>,
+  [FilterKey.LOCATION]: <Navigation size={14} />,
+  [FilterKey.INPUT]: <RectangleEllipsis size={14} />,
+  [FilterKey.CUSTOM]: <Code size={14} />,
+  [FilterKey.FETCH]: <ArrowUpDown size={14} />,
+  [FilterKey.GRAPHQL]: <Network size={14} />,
+  [FilterKey.STATEACTION]: <RectangleEllipsis size={14} />,
+  [FilterKey.ERROR]: <OctagonAlert size={14} />,
+  [FilterKey.ISSUE]: <CircleAlert size={14} />,
+  [FilterKey.FETCH_FAILED]: <Code size={14} />,
+  [FilterKey.DOM_COMPLETE]: <ArrowUpDown size={14} />,
+  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: <Network size={14} />,
+  [FilterKey.TTFB]: <Timer size={14} />,
+  [FilterKey.AVG_CPU_LOAD]: <Cpu size={14} />,
+  [FilterKey.AVG_MEMORY_USAGE]: <MemoryStick size={14} />,
+  [FilterKey.USERID]: <SquareUser size={14} />,
+  [FilterKey.USERANONYMOUSID]: <VenetianMask size={14} />,
+  [FilterKey.USER_CITY]: <Pin size={14} />,
+  [FilterKey.USER_STATE]: <MapPin size={14} />,
+  [FilterKey.USER_COUNTRY]: <Earth size={14} />,
+  [FilterKey.USER_DEVICE]: <Code size={14} />,
+  [FilterKey.USER_OS]: <AppWindow size={14} />,
+  [FilterKey.USER_BROWSER]: <Chrome size={14} />,
+  [FilterKey.PLATFORM]: <MonitorSmartphone size={14} />,
+  [FilterKey.REVID]: <FileStack size={14} />,
+  [FilterKey.REFERRER]: <Workflow size={14} />,
+  [FilterKey.DURATION]: <Clock2 size={14} />,
+  [FilterKey.TAGGED_ELEMENT]: <SquareMousePointer size={14} />,
+  [FilterKey.METADATA]: <ContactRound size={14} />,
+  [FilterKey.UTM_SOURCE]: <CornerDownRight size={14} />,
+  [FilterKey.UTM_MEDIUM]: <Layers size={14} />,
+  [FilterKey.UTM_CAMPAIGN]: <Megaphone size={14} />,
+  [FilterKey.FEATURE_FLAG]: <Flag size={14} />,
 };
 
 function filterJson(
   jsonObj: Record<string, any>,
   excludeKeys: string[] = [],
-  allowedFilterKeys: string[] = []
+  excludeCategory: string[] = [],
+  allowedFilterKeys: string[] = [],
+  mode: 'filters' | 'events'
 ): Record<string, any> {
   return Object.fromEntries(
     Object.entries(jsonObj)
       .map(([key, value]) => {
-        const arr = value.filter((i: { key: string }) => {
+        const arr = value.filter((i: { key: string, isEvent: boolean, category: string }) => {
+          if (excludeCategory.includes(i.category)) return false;
           if (excludeKeys.includes(i.key)) return false;
+          if (mode === 'events' && !i.isEvent) return false;
+          if (mode === 'filters' && i.isEvent) return false;
           return !(
             allowedFilterKeys.length > 0 && !allowedFilterKeys.includes(i.key)
           );
@@ -102,8 +112,8 @@ export const getMatchingEntries = (
 
   if (lowerCaseQuery.length === 0)
     return {
-      matchingCategories: Object.keys(filters),
-      matchingFilters: filters
+      matchingCategories: ['All', ...Object.keys(filters)],
+      matchingFilters: filters,
     };
 
   Object.keys(filters).forEach((name) => {
@@ -120,7 +130,7 @@ export const getMatchingEntries = (
     }
   });
 
-  return { matchingCategories, matchingFilters };
+  return { matchingCategories: ['All', ...matchingCategories], matchingFilters };
 };
 
 interface Props {
@@ -131,42 +141,79 @@ interface Props {
   isMainSearch?: boolean;
   searchQuery?: string;
   excludeFilterKeys?: Array<string>;
+  excludeCategory?: Array<string>;
   allowedFilterKeys?: Array<string>;
   isConditional?: boolean;
   isMobile?: boolean;
+  mode: 'filters' | 'events';
 }
+
+export const getNewIcon = (filter: Record<string, any>) => {
+  if (filter.icon?.includes('metadata')) {
+    return IconMap[FilterKey.METADATA];
+  }
+  // @ts-ignore
+  if (IconMap[filter.key]) {
+    // @ts-ignore
+    return IconMap[filter.key];
+  } else return <Icon name={filter.icon} size={16} />;
+};
 
 function FilterModal(props: Props) {
   const {
     isLive,
     onFilterClick = () => null,
     isMainSearch = false,
-    searchQuery = '',
     excludeFilterKeys = [],
+    excludeCategory = [],
     allowedFilterKeys = [],
     isConditional,
+    mode,
   } = props;
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [category, setCategory] = React.useState('All');
   const { searchStore, searchStoreLive, projectsStore } = useStore();
   const isMobile = projectsStore.active?.platform === 'ios'; // TODO - should be using mobile once the app is changed
-  const filters = isLive ? searchStoreLive.filterListLive : (isMobile ? searchStore.filterListMobile : searchStoreLive.filterList);
+  const filters = isLive
+    ? searchStoreLive.filterListLive
+    : isMobile
+    ? searchStore.filterListMobile
+    : searchStoreLive.filterList;
   const conditionalFilters = searchStore.filterListConditional;
   const mobileConditionalFilters = searchStore.filterListMobileConditional;
   const showSearchList = isMainSearch && searchQuery.length > 0;
-  const filterSearchList = isLive ? searchStoreLive.filterSearchList : searchStore.filterSearchList;
-  const fetchingFilterSearchList = isLive ? searchStoreLive.loadingFilterSearch : searchStore.loadingFilterSearch;
+  const filterSearchList = isLive
+    ? searchStoreLive.filterSearchList
+    : searchStore.filterSearchList;
+  const fetchingFilterSearchList = isLive
+    ? searchStoreLive.loadingFilterSearch
+    : searchStore.loadingFilterSearch;
 
+  const parseAndAdd = (filter) => {
+    if (filter.category === FilterCategory.EVENTS && filter.key.startsWith('_')) {
+      filter.value = [filter.key.substring(1)];
+      filter.key = FilterKey.CUSTOM;
+      filter.label = 'Custom Events'
+    }
+    if (filter.type === FilterType.ISSUE && filter.key.startsWith(`${FilterKey.ISSUE}_`)) {
+      filter.key = FilterKey.ISSUE;
+    }
+    onFilterClick(filter)
+  }
   const onFilterSearchClick = (filter: any) => {
     const _filter = { ...filtersMap[filter.type] };
     _filter.value = [filter.value];
-    onFilterClick(_filter);
+    parseAndAdd(_filter);
   };
 
   const filterJsonObj = isConditional
-    ? isMobile ? mobileConditionalFilters : conditionalFilters
+    ? isMobile
+      ? mobileConditionalFilters
+      : conditionalFilters
     : filters;
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(filterJsonObj, excludeFilterKeys, allowedFilterKeys)
+    filterJson(filterJsonObj, excludeFilterKeys, excludeCategory, allowedFilterKeys, mode)
   );
 
   const isResultEmpty =
@@ -174,53 +221,63 @@ function FilterModal(props: Props) {
     matchingCategories.length === 0 &&
     Object.keys(matchingFilters).length === 0;
 
-  const getNewIcon = (filter: Record<string, any>) => {
-    if (filter.icon?.includes('metadata')) {
-      return IconMap[FilterKey.METADATA];
-    }
-    // @ts-ignore
-    if (IconMap[filter.key]) {
-      // @ts-ignore
-      return IconMap[filter.key];
-    } else return <Icon name={filter.icon} size={16} />;
-  };
+  const displayedFilters =
+    category === 'All'
+      ? Object.entries(matchingFilters).flatMap(([category, filters]) =>
+          filters.map((f: any) => ({ ...f, category }))
+        )
+      : matchingFilters[category];
+
+
+  console.log(displayedFilters)
   return (
     <div
       className={stl.wrapper}
-      style={{ width: '480px', maxHeight: '380px', overflowY: 'auto', borderRadius: '.5rem' }}
+      style={{ width: '560px', maxHeight: '380px' }}
     >
-      <div
-        className={searchQuery && !isResultEmpty ? 'mb-6' : ''}
-        style={{ columns: matchingCategories.length > 1 ? 'auto 200px' : 1 }}
-      >
-        {matchingCategories.map((key) => {
-          return (
+      <Input
+        className={'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'}
+        placeholder={'Search'}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+      <div className={'flex gap-2 items-start'}>
+        <div className={'flex flex-col gap-1'}>
+          {matchingCategories.map((key) => (
             <div
-              className="mb-6 flex flex-col gap-2 break-inside-avoid"
               key={key}
+              onClick={() => setCategory(key)}
+              className={cn('rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium', key === category ? 'bg-active-blue text-teal' : '')}
             >
-              <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">
-                {key}
-              </div>
-              <div>
-                {matchingFilters[key] &&
-                  matchingFilters[key].map((filter: Record<string, any>) => (
-                    <div
-                      key={filter.label}
-                      className={cn(
-                        stl.optionItem,
-                        'flex items-center py-2 cursor-pointer -mx-2 px-2 gap-2 rounded-lg hover:shadow-sm'
-                      )}
-                      onClick={() => onFilterClick({ ...filter, value: [''] })}
-                    >
-                      {getNewIcon(filter)}
-                      <span>{filter.label}</span>
-                    </div>
-                  ))}
-              </div>
+              {key}
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div
+          className={'flex flex-col gap-1 overflow-y-auto w-full'}
+          style={{ maxHeight: 300, flex: 2 }}
+        >
+          {displayedFilters.length
+            ? displayedFilters.map((filter: Record<string, any>) => (
+                <div
+                  key={filter.label}
+                  className={cn(
+                    'flex items-center p-2 cursor-pointer gap-1 rounded-lg hover:bg-active-blue'
+                  )}
+                  onClick={() => parseAndAdd({ ...filter })}
+                >
+                  {filter.category ? <div style={{ width: 100 }} className={'text-neutral-500/90		 w-full flex justify-between items-center'}>
+                    <span>{filter.subCategory ? filter.subCategory : filter.category}</span>
+                    <ChevronRight size={14} />
+                  </div> : null}
+                  <div className={'flex items-center gap-2'}>
+                    <span className='text-neutral-500/90	 text-xs'>{getNewIcon(filter)}</span>
+                    <span>{filter.label}</span>
+                  </div>
+                </div>
+              ))
+            : null}
+        </div>
       </div>
       {showSearchList && (
         <Loader loading={fetchingFilterSearchList}>

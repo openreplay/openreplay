@@ -29,8 +29,9 @@ const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading }: 
           const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
           const json = getFilterFromJson(converter.toJSON());
           const filter = new Search(json);
-          searchStore.applyFilter(filter, true);
           searchStore.setUrlParsed();
+          if (filter.filters.length === 0) return;
+          searchStore.applyFilter(filter, true);
         } catch (error) {
           console.error('Error applying filter from query:', error);
         }

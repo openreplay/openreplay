@@ -1,90 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from 'UI';
 import stl from './FilterAutoCompleteLocal.module.css';
+import { Input } from 'antd';
+import { AutocompleteModal, AutoCompleteContainer } from 'Shared/Filters/FilterAutoComplete/AutocompleteModal';
+
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;
-  onRemoveValue?: () => void;
-  onAddValue?: () => void;
+  onRemoveValue?: (index: number) => void;
+  onAddValue?: (index: number) => void;
   placeholder?: string;
-  onSelect: (e, item) => void;
+  onSelect: (e: any, item: Record<string, any>, index: number) => void;
   value: any;
   icon?: string;
   type?: string;
-  isMultilple?: boolean;
+  isMultiple?: boolean;
   allowDecimals?: boolean;
+  modalProps?: Record<string, any>;
+  onApplyValues: (values: string[]) => void;
 }
 
-function FilterAutoCompleteLocal(props: Props) {
+function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) {
   const {
-      showCloseButton = false,
-      placeholder = 'Enter',
-      showOrButton = false,
-      onRemoveValue = () => null,
-      onAddValue = () => null,
-      value = '',
-      icon = null,
-      type = "text",
-      isMultilple = true,
-      allowDecimals = true,
+    params = {},
+    onClose,
+    onApply,
+    placeholder = 'Enter',
+    values,
   } = props;
-  const [showModal, setShowModal] = useState(true)
-  const [query, setQuery] = useState(value);
-
-  const onInputChange = (e) => {
-    if(allowDecimals) {
-      const value = e.target.value;
-      setQuery(value);
-      props.onSelect(null, value);
-    } else {
-      const value = e.target.value.replace(/[^\d]/, "");
-      if (+value !== 0) {
-        setQuery(value);
-        props.onSelect(null, value);
-      }
-    }
-  };
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value])
-
-  const onBlur = (e) => {
-    setTimeout(() => { setShowModal(false) }, 200)
-    props.onSelect(e, { value: query })
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      props.onSelect(e, { value: query })
-    }
-  }
-
-  return (
-    <div className="relative flex items-center">
-      <div className={stl.wrapper}>
-        <input
-          name="query"
-          onInput={ onInputChange }
-          // onBlur={ onBlur }
-          onFocus={ () => setShowModal(true)}
-          value={ query }
-          autoFocus={ true }
-          type={ type }
-          placeholder={ placeholder }
-          onKeyDown={handleKeyDown}
-        />
-        <div
-          className={stl.right}
-        >
-          { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="12" /></div> }
-          { showOrButton && <div onClick={onAddValue} className="color-teal"><span className="px-1">or</span></div> }
-        </div>
-      </div>
-
-      { !showOrButton && isMultilple && <div className="ml-3">or</div> }
-    </div>
+  const [options, setOptions] = useState<{ value: string; label: string }[]>(
+    values.filter(val => val.length).map((value) => ({ value, label: value }))
   );
+
+  const onApplyValues = (values: string[]) => {
+    setOptions(values.map((value) => ({ value, label: value })));
+    onApply(values);
+  }
+
+  const splitValues = (value: string) => {
+    const values = value.split(',').filter(v => v.length)
+    setOptions(values.map((value) => ({ value, label: value })));
+  }
+
+  return <AutocompleteModal
+    values={values}
+    onClose={onClose}
+    onApply={onApplyValues}
+    loadOptions={splitValues}
+    options={options}
+    isLoading={false}
+    placeholder={placeholder}
+    commaQuery
+  />
 }
 
-export default FilterAutoCompleteLocal;
+function FilterLocalController(props: Props) {
+  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoCompleteLocal} />
+}
+
+export default FilterLocalController;

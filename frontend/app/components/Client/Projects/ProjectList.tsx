@@ -57,7 +57,7 @@ const ProjectList: React.FC = () => {
     <div className="h-full flex flex-col gap-4">
       <div className="flex flex-row gap-2 items-center p-3">
         <Input
-          placeholder="Search"
+          placeholder="Search projects"
           // onSearch={handleSearch}
           prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}
@@ -73,7 +73,7 @@ const ProjectList: React.FC = () => {
           mode="inline"
           onClick={onClick}
           selectedKeys={[String(projectsStore.config.pid)]}
-          className="w-full !bg-white !border-0 "
+          className="w-full !bg-white !border-0"
           inlineIndent={11}
           items={menuItems}
         />

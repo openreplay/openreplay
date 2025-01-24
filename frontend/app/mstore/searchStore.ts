@@ -5,7 +5,7 @@ import {
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap
+  mobileConditionalFiltersMap,
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -28,18 +28,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-                            category,
-                            value,
-                            key,
-                            operator,
-                            sourceOperator,
-                            source,
-                            custom,
-                            isEvent,
-                            filters,
-                            sort,
-                            order
-                          }: any) => ({
+  category,
+  value,
+  key,
+  operator,
+  sourceOperator,
+  source,
+  custom,
+  isEvent,
+  filters,
+  sort,
+  order,
+}: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -47,7 +47,7 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : []
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 export const TAB_MAP: any = {
@@ -55,11 +55,11 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' }
+  recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
 class SearchStore {
-  list = List();
+  list: SavedSearch[] = [];
   latestRequestTime: number | null = null;
   latestList = List();
   alertMetricId: number | null = null;
@@ -107,13 +107,19 @@ class SearchStore {
 
   applySavedSearch(savedSearch: ISavedSearch) {
     this.savedSearch = savedSearch;
-    this.edit({ filters: savedSearch.filter ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i)) : [] });
+    this.edit({
+      filters: savedSearch.filter
+        ? savedSearch.filter.filters.map((i: FilterItem) =>
+            new FilterItem().fromJson(i)
+          )
+        : [],
+    });
     this.currentPage = 1;
   }
 
   async fetchSavedSearchList() {
     const response = await searchService.fetchSavedSearch();
-    this.list = List(response.map((item: any) => new SavedSearch(item)));
+    this.list = response.map((item: any) => new SavedSearch(item));
   }
 
   edit(instance: Partial<Search>) {
@@ -122,7 +128,9 @@ class SearchStore {
   }
 
   editSavedSearch(instance: Partial<SavedSearch>) {
-    this.savedSearch = new SavedSearch(Object.assign(this.savedSearch.toData(), instance));
+    this.savedSearch = new SavedSearch(
+      Object.assign(this.savedSearch.toData(), instance)
+    );
   }
 
   apply(filter: any, fromUrl: boolean) {
@@ -145,7 +153,10 @@ class SearchStore {
       .fetchFilterSearch(params)
       .then((response: any[]) => {
         this.filterSearchList = response.reduce(
-          (acc: Record<string, { projectId: number; value: string }[]>, item: any) => {
+          (
+            acc: Record<string, { projectId: number; value: string }[]>,
+            item: any
+          ) => {
             const { projectId, type, value } = item;
             if (!acc[type]) acc[type] = [];
             acc[type].push({ projectId, value });
@@ -200,23 +211,25 @@ class SearchStore {
     await this.fetchSavedSearchList();
 
     if (isNew) {
-      const lastSavedSearch = this.list.last();
+      const lastSavedSearch = this.list[this.list.length - 1];
       this.applySavedSearch(lastSavedSearch);
     }
   }
 
   clearList() {
-    this.list = List();
+    this.list = [];
   }
 
   clearSearch() {
     const instance = this.instance;
-    this.edit(new Search({
-      rangeValue: instance.rangeValue,
-      startDate: instance.startDate,
-      endDate: instance.endDate,
-      filters: []
-    }));
+    this.edit(
+      new Search({
+        rangeValue: instance.rangeValue,
+        startDate: instance.startDate,
+        endDate: instance.endDate,
+        filters: [],
+      })
+    );
 
     this.savedSearch = new SavedSearch({});
     sessionStore.clearList();
@@ -226,7 +239,11 @@ class SearchStore {
   checkForLatestSessions() {
     const filter = this.instance.toSearch();
     if (this.latestRequestTime) {
-      const period = Period({ rangeName: CUSTOM_RANGE, start: this.latestRequestTime, end: Date.now() });
+      const period = Period({
+        rangeName: CUSTOM_RANGE,
+        start: this.latestRequestTime,
+        end: Date.now(),
+      });
       const newTimestamps: any = period.toJSON();
       filter.startDate = newTimestamps.startDate;
       filter.endDate = newTimestamps.endDate;
@@ -242,28 +259,32 @@ class SearchStore {
   }
 
   addFilter(filter: any) {
-    const index = filter.isEvent ? -1 : this.instance.filters.findIndex((i: FilterItem) => i.key === filter.key);
+    const index = filter.isEvent
+      ? -1
+      : this.instance.filters.findIndex(
+          (i: FilterItem) => i.key === filter.key
+        );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-        ...subFilter,
-        value: checkFilterValue(subFilter.value)
-      }))
+          ...subFilter,
+          value: checkFilterValue(subFilter.value),
+        }))
       : null;
 
     if (index > -1) {
       const oldFilter = new FilterItem(this.instance.filters[index]);
       const updatedFilter = {
         ...oldFilter,
-        value: oldFilter.value.concat(filter.value)
+        value: oldFilter.value.concat(filter.value),
       };
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
     } else {
       this.instance.filters.push(filter);
       this.instance = new Search({
-        ...this.instance.toData()
+        ...this.instance.toData(),
       });
     }
 
@@ -274,7 +295,13 @@ class SearchStore {
     }
   }
 
-  addFilterByKeyAndValue(key: any, value: any, operator?: string, sourceOperator?: string, source?: string) {
+  addFilterByKeyAndValue(
+    key: any,
+    value: any,
+    operator?: string,
+    sourceOperator?: string,
+    source?: string
+  ) {
     let defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
 
@@ -304,7 +331,7 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
@@ -315,7 +342,7 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters
+      filters: newFilters,
     });
   };
 
@@ -327,13 +354,18 @@ class SearchStore {
     // TODO
   }
 
-  async fetchSessions(force: boolean = false, bookmarked: boolean = false): Promise<void> {
+  async fetchSessions(
+    force: boolean = false,
+    bookmarked: boolean = false
+  ): Promise<void> {
     const filter = this.instance.toSearch();
 
     if (this.activeTags[0] && this.activeTags[0] !== 'all') {
       const tagFilter = filtersMap[FilterKey.ISSUE];
       tagFilter.type = tagFilter.type.toLowerCase();
-      tagFilter.value = [issues_types.find((i: any) => i.type === this.activeTags[0])?.type];
+      tagFilter.value = [
+        issues_types.find((i: any) => i.type === this.activeTags[0])?.type,
+      ];
       delete tagFilter.operatorOptions;
       delete tagFilter.options;
       delete tagFilter.placeholder;
@@ -345,14 +377,17 @@ class SearchStore {
     this.latestRequestTime = Date.now();
     this.latestList = List();
 
-    await sessionStore.fetchSessions({
-      ...filter,
-      page: this.currentPage,
-      perPage: this.pageSize,
-      tab: this.activeTab.type,
-      bookmarked: bookmarked ? true : undefined
-    }, force);
-  };
+    await sessionStore.fetchSessions(
+      {
+        ...filter,
+        page: this.currentPage,
+        perPage: this.pageSize,
+        tab: this.activeTab.type,
+        bookmarked: bookmarked ? true : undefined,
+      },
+      force
+    );
+  }
 }
 
 export default SearchStore;

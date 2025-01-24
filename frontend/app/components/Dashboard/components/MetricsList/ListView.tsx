@@ -1,28 +1,33 @@
 import React, { useState, useMemo } from 'react';
-import { Checkbox, Table, Typography } from 'antd';
+import { Checkbox, Table, Typography, Switch, Tag, Tooltip } from 'antd';
 import MetricListItem from '../MetricListItem';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import Widget from 'App/mstore/types/widget';
+import { LockOutlined, TeamOutlined } from "@ant-design/icons";
+import classNames from 'classnames';
 
 const { Text } = Typography;
 
-// interface Metric {
-//   metricId: number;
-//   name: string;
-//   owner: string;
-//   lastModified: string;
-//   visibility: string;
-// }
+interface Metric {
+  metricId: number;
+  name: string;
+  owner: string;
+  lastModified: string;
+  visibility: string;
+}
 
 interface Props {
   list: Widget[];
   siteId: string;
   selectedList: number[];
-  toggleSelection?: (metricId: number) => void;
+  toggleSelection?: (metricId: number | Array<number>) => void;
   toggleAll?: (e: any) => void;
   disableSelection?: boolean;
   allSelected?: boolean;
   existingCardIds?: number[];
+  showOwn?: boolean;
+  toggleOwn: () => void;
+  inLibrary?: boolean;
 }
 
 const ListView: React.FC<Props> = (props: Props) => {
@@ -32,8 +37,7 @@ const ListView: React.FC<Props> = (props: Props) => {
     selectedList,
     toggleSelection,
     disableSelection = false,
-    allSelected = false,
-    toggleAll
+    inLibrary = false
   } = props;
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
@@ -66,7 +70,7 @@ const ListView: React.FC<Props> = (props: Props) => {
   const paginatedData = useMemo(() => {
     const start = (pagination.current! - 1) * pagination.pageSize!;
     const end = start + pagination.pageSize!;
-    return sortedData.slice(start, end);
+    return sortedData.slice(start, end).map(metric => ({ ...metric, key: metric.metricId}));
   }, [sortedData, pagination]);
 
   const handleTableChange = (
@@ -84,34 +88,19 @@ const ListView: React.FC<Props> = (props: Props) => {
 
   const columns = [
     {
-      title: (
-        <div className="flex items-center">
-          {!disableSelection && (
-            <Checkbox
-              name="slack"
-              className="mr-4"
-              checked={allSelected}
-              onClick={toggleAll}
-            />
-          )}
-          <span>Title</span>
-        </div>
-      ),
+      title: 'Title',
       dataIndex: 'name',
       key: 'title',
-      className: 'cap-first',
+      className: 'cap-first pl-4',
       sorter: true,
+      width: '25%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
           metric={metric}
           siteId={siteId}
-          disableSelection={disableSelection}
-          selected={selectedList.includes(metric.metricId)}
-          toggleSelection={(e: any) => {
-            e.stopPropagation();
-            toggleSelection && toggleSelection(metric.metricId);
-          }}
+          inLibrary={inLibrary}
+          disableSelection={!inLibrary}
           renderColumn="title"
         />
       )
@@ -121,7 +110,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'owner',
       key: 'owner',
       className: 'capitalize',
-      width: '30%',
+      width: '25%',
       sorter: true,
       render: (text: string, metric: Metric) => (
         <MetricListItem
@@ -137,7 +126,7 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataIndex: 'lastModified',
       key: 'lastModified',
       sorter: true,
-      width: '16.67%',
+      width: '25%',
       render: (text: string, metric: Metric) => (
         <MetricListItem
           key={metric.metricId}
@@ -147,35 +136,27 @@ const ListView: React.FC<Props> = (props: Props) => {
         />
       )
     },
-    // {
-    //   title: 'Visibility',
-    //   dataIndex: 'visibility',
-    //   key: 'visibility',
-    //   width: '10%',
-    //   render: (text: string, metric: Metric) => (
-    //     <MetricListItem
-    //       key={metric.metricId}
-    //       metric={metric}
-    //       siteId={siteId}
-    //       renderColumn="visibility"
-    //     />
-    //   )
-    // },
-    {
-      title: '',
-      key: 'options',
-      className: 'text-right',
-      width: '5%',
-      render: (text: string, metric: Metric) => (
-        <MetricListItem
-          key={metric.metricId}
-          metric={metric}
-          siteId={siteId}
-          renderColumn="options"
-        />
-      )
-    }
   ];
+  if (!inLibrary) {
+    columns.push({
+        title: '',
+        key: 'options',
+        className: 'text-right',
+        width: '5%',
+        render: (text: string, metric: Metric) => (
+          <MetricListItem
+            key={metric.metricId}
+            metric={metric}
+            siteId={siteId}
+            renderColumn="options"
+          />
+        )
+    })
+  } else {
+    columns.forEach(col => {
+      col.width = '31%';
+    })
+  }
 
   return (
     <Table
@@ -183,26 +164,20 @@ const ListView: React.FC<Props> = (props: Props) => {
       dataSource={paginatedData}
       rowKey="metricId"
       onChange={handleTableChange}
-      size='middle'
+      onRow={inLibrary ? (record) => ({
+        onClick: () => disableSelection ? null : toggleSelection?.(record.metricId)
+      }) : undefined}
       rowSelection={
         !disableSelection
           ? {
-            selectedRowKeys: selectedList.map((id: number) => id.toString()),
+            selectedRowKeys: selectedList,
             onChange: (selectedRowKeys) => {
-              selectedRowKeys.forEach((key: any) => {
-                toggleSelection && toggleSelection(parseInt(key));
-              });
-            }
+              toggleSelection(selectedRowKeys);
+            },
+            columnWidth: 16,
           }
           : undefined
       }
-      // footer={() => (
-      //   <div className="flex justify-end">
-      //     <Checkbox name="slack" checked={allSelected} onClick={toggleAll}>
-      //       Select All
-      //     </Checkbox>
-      //   </div>
-      // )}
       pagination={{
         current: pagination.current,
         pageSize: pagination.pageSize,
@@ -211,7 +186,8 @@ const ListView: React.FC<Props> = (props: Props) => {
         className: 'px-4',
         showLessItems: true,
         showTotal: () => totalMessage,
-        showQuickJumper: true
+        size: 'small',
+        simple: 'true',
       }}
     />
   );
