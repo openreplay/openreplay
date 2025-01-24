@@ -142,7 +142,7 @@ export const tabItems: Record<string, TabItem[]> = {
       title: 'Top Devices',
       type: FilterKey.USER_DEVICE,
       description: 'Explore the devices used by your users.',
-    }
+    },
     // { TODO: 1.23+ maybe
     //   icon: <ArrowDown10 width={16} />,
     //   title: 'Speed Index by Country',
@@ -152,8 +152,53 @@ export const tabItems: Record<string, TabItem[]> = {
   ],
 };
 
-function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
-  const items = tabItems[tab];
+export const mobileTabItems: Record<string, TabItem[]> = {
+  [CATEGORIES.product_analytics]: [
+    {
+      icon: <LineChart width={16} />,
+      title: 'Trends',
+      type: TIMESERIES,
+      description: 'Track session trends over time.',
+    },
+    {
+      icon: <Filter width={16} />,
+      title: 'Funnels',
+      type: FUNNEL,
+      description: 'Visualize user progression through critical steps.',
+    },
+  ],
+  [CATEGORIES.web_analytics]: [
+    {
+      icon: <Users width={16} />,
+      title: 'Top Users',
+      type: FilterKey.USERID,
+      description: 'Identify the users with the most interactions.',
+    },
+    {
+      icon: <Globe width={16} />,
+      title: 'Top Countries',
+      type: FilterKey.USER_COUNTRY,
+      description: 'Track the geographical distribution of your audience.',
+    },
+    {
+      icon: <MonitorSmartphone width={16} />,
+      title: 'Top Devices',
+      type: FilterKey.USER_DEVICE,
+      description: 'Explore the devices used by your users.',
+    },
+  ],
+};
+
+function CategoryTab({
+  tab,
+  inCards,
+  isMobile,
+}: {
+  tab: string;
+  isMobile?: boolean;
+  inCards?: boolean;
+}) {
+  const items = isMobile ? mobileTabItems[tab] : tabItems[tab];
   const { metricStore, projectsStore, dashboardStore } = useStore();
   const history = useHistory();
 
@@ -216,7 +261,9 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
           {item.icon}
           <div className={'leading-none'}>
             <div>{item.title}</div>
-            <div className={'text-disabled-text group-hover:text-teal/60 text-sm'}>
+            <div
+              className={'text-disabled-text group-hover:text-teal/60 text-sm'}
+            >
               {item.description}
             </div>
           </div>
@@ -227,15 +274,28 @@ function CategoryTab({ tab, inCards }: { tab: string; inCards?: boolean }) {
 }
 
 const AddCardSection = observer(
-  ({ inCards, handleOpenChange }: { inCards?: boolean, handleOpenChange?: (isOpen: boolean) => void }) => {
+  ({
+    inCards,
+    handleOpenChange,
+  }: {
+    inCards?: boolean;
+    handleOpenChange?: (isOpen: boolean) => void;
+  }) => {
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
+    const isMobile = projectsStore.isMobile;
     const [tab, setTab] = React.useState('product_analytics');
-    const options = [
-      { label: 'Product Analytics', value: 'product_analytics' },
-      { label: 'Monitors', value: 'monitors' },
-      { label: 'Web Analytics', value: 'web_analytics' },
-    ];
+
+    const options = isMobile
+      ? [
+          { label: 'Product Analytics', value: 'product_analytics' },
+          { label: 'Web Analytics', value: 'web_analytics' },
+        ]
+      : [
+          { label: 'Product Analytics', value: 'product_analytics' },
+          { label: 'Monitors', value: 'monitors' },
+          { label: 'Web Analytics', value: 'web_analytics' },
+        ];
 
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /api\.openreplay\.com/.test(originStr);
@@ -282,9 +342,9 @@ const AddCardSection = observer(
         </div>
 
         <div className="py-2">
-          <CategoryTab tab={tab} inCards={inCards} />
+          <CategoryTab isMobile={isMobile} tab={tab} inCards={inCards} />
         </div>
-        {inCards ? null :
+        {inCards ? null : (
           <div
             className={
               'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
@@ -299,7 +359,7 @@ const AddCardSection = observer(
               <FolderOutlined /> Add existing card
             </Button>
           </div>
-        }
+        )}
       </div>
     );
   }
