@@ -2,7 +2,7 @@
   "name": "spot",
   "description": "manifest.json description",
   "private": true,
-  "version": "1.0.15",
+  "version": "1.0.16",
   "type": "module",
   "scripts": {
     "dev": "wxt",

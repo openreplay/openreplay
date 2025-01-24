@@ -16,6 +16,10 @@ export default defineContentScript({
   cssInjectionMode: "ui",
 
   async main(ctx) {
+    if (!ctx.isValid) {
+      console.error("Spot: context is invalidated on mount")
+      return;
+    }
     const ui = await createShadowRootUi(ctx, {
       name: "spot-ui",
       position: "inline",
