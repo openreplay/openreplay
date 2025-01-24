@@ -13,7 +13,6 @@ import (
 
 type Sessions interface {
 	Add(session *Session) error
-	AddUnStarted(session *UnStartedSession) error
 	AddCached(sessionID uint64, data map[string]string) error
 	Get(sessionID uint64) (*Session, error)
 	GetUpdated(sessionID uint64, keepInCache bool) (*Session, error)
@@ -68,11 +67,6 @@ func (s *sessionsImpl) Add(session *Session) error {
 		s.log.Warn(ctx, "failed to cache session: %s", err)
 	}
 	return nil
-}
-
-// AddUnStarted usage: /not-started endpoint in http service
-func (s *sessionsImpl) AddUnStarted(sess *UnStartedSession) error {
-	return s.storage.AddUnStarted(sess)
 }
 
 func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {

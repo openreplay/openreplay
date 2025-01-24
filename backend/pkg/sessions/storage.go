@@ -10,7 +10,6 @@ import (
 
 type Storage interface {
 	Add(sess *Session) error
-	AddUnStarted(sess *UnStartedSession) error
 	Get(sessionID uint64) (*Session, error)
 	GetDuration(sessionID uint64) (uint64, error)
 	UpdateDuration(sessionID uint64, timestamp uint64) (uint64, error)
@@ -60,35 +59,6 @@ func (s *storageImpl) Add(sess *Session) error {
 		sess.Platform,
 		sess.UserBrowser, sess.UserBrowserVersion, sess.UserDeviceMemorySize, sess.UserDeviceHeapSize,
 		sess.UserID, sess.UserState, sess.UserCity, sess.Timezone, sess.ScreenWidth, sess.ScreenHeight,
-	)
-}
-
-func (s *storageImpl) AddUnStarted(sess *UnStartedSession) error {
-	return s.db.Exec(`
-		INSERT INTO unstarted_sessions (
-			project_id, 
-			tracker_version, do_not_track, 
-			platform, 
-			user_os, user_os_version, 
-			user_browser, user_browser_version,
-			user_device, user_device_type, 
-			user_country, user_state, user_city
-		) VALUES (
-			(SELECT project_id FROM projects WHERE project_key = $1), 
-			$2, $3,
-			$4, 
-			$5, $6, 
-			$7, $8,
-			$9, $10,
-			$11, NULLIF($12, ''), NULLIF($13, '')
-		)`,
-		sess.ProjectKey,
-		sess.TrackerVersion, sess.DoNotTrack,
-		sess.Platform,
-		sess.UserOS, sess.UserOSVersion,
-		sess.UserBrowser, sess.UserBrowserVersion,
-		sess.UserDevice, sess.UserDeviceType,
-		sess.UserCountry, sess.UserState, sess.UserCity,
 	)
 }
 

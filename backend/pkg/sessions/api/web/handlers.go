@@ -73,7 +73,6 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser *api.Response
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
-		{"/v1/web/not-started", e.notStartedHandlerWeb, "POST"},
 		{"/v1/web/start", e.startSessionHandlerWeb, "POST"},
 		{"/v1/web/i", e.pushMessagesHandlerWeb, "POST"},
 		{"/v1/web/images", e.imagesUploaderHandlerWeb, "POST"},
@@ -356,79 +355,6 @@ func (e *handlersImpl) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Req
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, errors.New("token expired"), startTime, r.URL.Path, bodySize)
 		return
 	}
-	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
-}
-
-func (e *handlersImpl) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	if r.Body == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodyBytes, err := api.ReadCompressedBody(e.log, w, r, e.cfg.JsonSizeLimit)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-	bodySize = len(bodyBytes)
-
-	req := &NotStartedRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	// Add tracker version to context
-	r = r.WithContext(context.WithValue(r.Context(), "tracker", req.TrackerVersion))
-
-	// Handler's logic
-	if req.ProjectKey == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
-		return
-	}
-	p, err := e.projects.GetProjectByKey(*req.ProjectKey)
-	if err != nil {
-		if postgres.IsNoRowsErr(err) {
-			logErr := fmt.Errorf("project doesn't exist or is not active, key: %s", *req.ProjectKey)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, logErr, startTime, r.URL.Path, bodySize)
-		} else {
-			e.log.Error(r.Context(), "can't find a project: %s", err)
-			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't find a project"), startTime, r.URL.Path, bodySize)
-		}
-		return
-	}
-
-	// Add projectID to context
-	r = r.WithContext(context.WithValue(r.Context(), "projectID", fmt.Sprintf("%d", p.ProjectID)))
-
-	ua := e.uaParser.ParseFromHTTPRequest(r)
-	if ua == nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, fmt.Errorf("browser not recognized, user-agent: %s", r.Header.Get("User-Agent")), startTime, r.URL.Path, bodySize)
-		return
-	}
-	geoInfo := e.geoIP.ExtractGeoData(r)
-	err = e.sessions.AddUnStarted(&sessions.UnStartedSession{
-		ProjectKey:         *req.ProjectKey,
-		TrackerVersion:     req.TrackerVersion,
-		DoNotTrack:         req.DoNotTrack,
-		Platform:           "web",
-		UserAgent:          r.Header.Get("User-Agent"),
-		UserOS:             ua.OS,
-		UserOSVersion:      ua.OSVersion,
-		UserBrowser:        ua.Browser,
-		UserBrowserVersion: ua.BrowserVersion,
-		UserDevice:         ua.Device,
-		UserDeviceType:     ua.DeviceType,
-		UserCountry:        geoInfo.Country,
-		UserState:          geoInfo.State,
-		UserCity:           geoInfo.City,
-	})
-	if err != nil {
-		e.log.Warn(r.Context(), "can't insert un-started session: %s", err)
-	}
-	// response ok anyway
 	e.responser.ResponseOK(e.log, r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 
