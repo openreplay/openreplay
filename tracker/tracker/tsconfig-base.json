@@ -6,7 +6,7 @@
     "strictNullChecks": true,
     "alwaysStrict": false,
     "target": "es2020",
-    "lib": ["DOM", "ES2020"],
+    "lib": ["DOM", "ES2022"],
     "module": "ES2022",
     "moduleResolution":  "node",
     "esModuleInterop": true,

@@ -81,8 +81,8 @@ export default function (app: App, opts: Partial<Options> = {}) {
 
   const ignoreHeaders = options.ignoreHeaders
   const isHIgnored = Array.isArray(ignoreHeaders)
-    ? (name: string) => ignoreHeaders.includes(name)
-    : () => ignoreHeaders
+                     ? (name: string) => ignoreHeaders.includes(name)
+                     : () => ignoreHeaders
 
   const stHeader =
     options.sessionTokenHeader === true ? 'X-OpenReplay-SessionToken' : options.sessionTokenHeader

@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "15.0.5",
+  "version": "15.0.6",
   "keywords": [
     "logging",
     "replay"
@@ -80,5 +80,5 @@
   "engines": {
     "node": ">=14.0"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.6.0"
 }

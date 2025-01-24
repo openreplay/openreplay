@@ -10,8 +10,7 @@ function _getSelector(target: Element, document: Document, options?: MouseHandle
     root: document.body,
     seedMinLength: 3,
     optimizedMinLength: options?.minSelectorDepth || 2,
-    threshold: options?.nthThreshold || 1000,
-    maxNumberOfTries: options?.maxOptimiseTries || 10_000,
+    maxNumberOfPathChecks: options?.maxOptimiseTries || 10_000,
   })
 
   return selector

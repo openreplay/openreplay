@@ -2,7 +2,7 @@
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "lib": ["es2020", "dom"],
+    "lib": ["es2022", "dom"],
     "declaration": true,
     "declarationDir": "../../dist/types",
   }
