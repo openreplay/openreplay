@@ -241,18 +241,20 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
 
 function elementToImage(doc: Document) {
   const el = doc.body;
+  const srcMap = new WeakMap()
   return import('html2canvas').then(({ default: html2canvas }) => {
     const images = doc.querySelectorAll('img');
     images.forEach((img) => {
-      img.setAttribute('crossorigin', 'Anonymous');
+      srcMap.set(img, img.src);
+      img.src = ""
     })
     return html2canvas(
       el,
       {
         scale: 1,
         allowTaint: true,
-        foreignObjectRendering: true,
-        useCORS: true,
+        foreignObjectRendering: false,
+        useCORS: false,
         logging: true,
         height: 900,
         width: 1200,
@@ -260,6 +262,9 @@ function elementToImage(doc: Document) {
         y: 0,
       }
     ).then((canvas) => {
+      images.forEach((img) => {
+        img.src = srcMap.get(img)
+      })
       return canvas.toDataURL('img/png');
     }).catch(e => {
       console.log(e);
