@@ -105,6 +105,7 @@ function createSpotNetworkRequest(
     responseBody: "",
     requestHeaders,
     responseHeaders,
+    time: trackedRequest.timeStamp,
     timestamp: trackedRequest.timeStamp,
     statusCode: status,
     error: trackedRequest.error,

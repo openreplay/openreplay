@@ -350,7 +350,6 @@ export default defineBackground(() => {
             void attachDebuggerToTab(recordingState.activeTabId)
           })
         } else {
-          console.log(settings.useDebugger, 'tab', recordingState.activeTabId)
           startTrackingNetwork();
         }
       }
@@ -360,6 +359,7 @@ export default defineBackground(() => {
             activeTabId: recordingState.activeTabId,
             area: "tab",
             recording: REC_STATE.recording,
+            audioPerm: recordingState.audioPerm,
           };
           const microphone = request.mic;
           micStatus = microphone ? "on" : "off";
@@ -401,6 +401,7 @@ export default defineBackground(() => {
           activeTabId: null,
           area: "desktop",
           recording: REC_STATE.recording,
+          audioPerm: recordingState.audioPerm
         };
         startRecording(
           recArea,
@@ -588,6 +589,7 @@ export default defineBackground(() => {
         activeTabId: null,
         area: null,
         recording: REC_STATE.stopped,
+        audioPerm: recordingState.audioPerm
       };
     }
     if (request.type === messages.content.from.restart) {
@@ -849,6 +851,7 @@ export default defineBackground(() => {
                     activeTabId: null,
                     area: null,
                     recording: REC_STATE.stopped,
+                    audioPerm: recordingState.audioPerm
                   };
                   // id of spot, mobURL - for events, videoURL - for video
                   if (!resp || !resp.id) {
@@ -934,14 +937,16 @@ export default defineBackground(() => {
         active: true,
       });
     }
-    // in future:
-    // const tabs = await browser.tabs.query({}) as chrome.tabs.Tab[]
-    // for (const tab of tabs) {
-    //   if (tab.id) {
-    // this will require more permissions, do we even want this?
-    //     void chrome.tabs.executeScript(tab.id, {file: "content"});
-    //   }
-    // }
+    for (const tab of await chrome.tabs.query({})) {
+      if (tab.url?.match(/(chrome|chrome-extension):\/\//gi)) {
+        continue;
+      }
+      const res = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["/content-scripts/content.js"],
+      });
+      console.log('restoring content at', res)
+    }
     await checkTokenValidity();
     await initializeOffscreenDocument();
   });
@@ -1073,6 +1078,7 @@ export default defineBackground(() => {
           activeTabId: null,
           area: null,
           recording: REC_STATE.stopped,
+          audioPerm: recordingState.audioPerm
         };
         void sendToActiveTab({
           type: messages.content.to.unmount,
@@ -1084,7 +1090,7 @@ export default defineBackground(() => {
         return;
       }
       const mountMsg = {
-        type: "content:start",
+        type: messages.content.to.start,
         microphone,
         time: 0,
         slackChannels,
@@ -1119,6 +1125,7 @@ export default defineBackground(() => {
                 state: getRecState(),
                 activeTabId: null,
               };
+              console.log(tabId, 'activation for new')
               attachDebuggerToTab(tabId)
               void sendToActiveTab(msg);
             });
@@ -1190,6 +1197,7 @@ export default defineBackground(() => {
             activeTabId: null,
             area: null,
             recording: REC_STATE.stopped,
+            audioPerm: recordingState.audioPerm
           };
         }
       }
