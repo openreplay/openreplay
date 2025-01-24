@@ -120,7 +120,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
       finalRequestData.response.body = filterBody(finalRequestData.response.body)
     }
     finalRequestData.request.headers = filterHeaders(finalRequestData.request.headers)
-    finalRequestData.response.headers = filterHeaders(finalRequestData.response)
+    finalRequestData.response.headers = filterHeaders(finalRequestData.response.headers)
 
     return finalRequestData
   }

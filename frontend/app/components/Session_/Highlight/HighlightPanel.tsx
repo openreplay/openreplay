@@ -111,7 +111,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const onSave = async () => {
     try {
       notesStore.setSaving(true)
-      const playerContainer = document.querySelector('iframe')?.contentWindow?.document.body;
+      const playerContainer = document.querySelector('iframe')?.contentWindow?.document;
       let thumbnail;
       if (playerContainer) {
         thumbnail = await elementToImage(playerContainer);
@@ -125,8 +125,8 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         endAt: parseInt(uiPlayerStore.highlightSelection.endTs, 10),
         thumbnail,
       }
-      if (editNoteId) {
-        await notesStore.updateNote(editNoteId, note);
+      if (editNote) {
+        await notesStore.updateNote(editNote.noteId, note);
         toast.success('Highlight updated');
       } else {
         const sessionId = sessionStore.current.sessionId;
@@ -239,16 +239,21 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
   a.click();
 });
 
-function elementToImage(el) {
+function elementToImage(doc: Document) {
+  const el = doc.body;
   return import('html2canvas').then(({ default: html2canvas }) => {
+    const images = doc.querySelectorAll('img');
+    images.forEach((img) => {
+      img.setAttribute('crossorigin', 'Anonymous');
+    })
     return html2canvas(
       el,
       {
         scale: 1,
         allowTaint: true,
-        useCORS: false,
+        foreignObjectRendering: true,
+        useCORS: true,
         logging: true,
-        foreignObjectRendering: false,
         height: 900,
         width: 1200,
         x: 0,
@@ -262,5 +267,37 @@ function elementToImage(el) {
     });
   })
 }
+
+const convertAllImagesToBase64 = (proxyURL, cloned) => {
+  const pendingImagesPromises = [];
+  const pendingPromisesData = [];
+
+  const images = cloned.getElementsByTagName('img');
+
+  for (let i = 0; i < images.length; i += 1) {
+    const promise = new Promise((resolve, reject) => {
+      pendingPromisesData.push({
+        index: i, resolve, reject,
+      });
+    });
+    pendingImagesPromises.push(promise);
+  }
+
+  for (let i = 0; i < images.length; i += 1) {
+    fetch(`${proxyURL}?url=${images[i].src}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const pending = pendingPromisesData.find((p) => p.index === i);
+        images[i].src = data;
+        pending.resolve(data);
+      })
+      .catch((e) => {
+        const pending = pendingPromisesData.find((p) => p.index === i);
+        pending.reject(e);
+      });
+  }
+
+  return Promise.all(pendingImagesPromises);
+};
 
 export default observer(HighlightPanel);
