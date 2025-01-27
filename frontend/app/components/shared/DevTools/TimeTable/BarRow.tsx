@@ -26,40 +26,7 @@ const BarRow = ({
 }: Props) => {
   const timeOffset = time - timestart;
   ttfb = ttfb || 0;
-  // TODO fix the tooltip
 
-  const content = (
-    <React.Fragment>
-      {ttfb != null && (
-        <div className={styles.popupRow}>
-          <div className={styles.title}>{'Waiting (TTFB)'}</div>
-          <div className={styles.popupBarWrapper}>
-            <div
-              className={styles.ttfbBar}
-              style={{
-                left: 0,
-                width: `${percentOf(ttfb, duration)}%`,
-              }}
-            />
-          </div>
-          <div className={styles.time}>{formatTime(ttfb)}</div>
-        </div>
-      )}
-      <div className={styles.popupRow}>
-        <div className={styles.title}>{'Content Download'}</div>
-        <div className={styles.popupBarWrapper}>
-          <div
-            className={styles.downloadBar}
-            style={{
-              left: `${percentOf(ttfb, duration)}%`,
-              width: `${percentOf(duration - ttfb, duration)}%`,
-            }}
-          />
-        </div>
-        <div className={styles.time}>{formatTime(duration - ttfb)}</div>
-      </div>
-    </React.Fragment>
-  );
   const trigger = (
     <div
       className={styles.barWrapper}
@@ -101,4 +68,4 @@ const BarRow = ({
 
 BarRow.displayName = 'BarRow';
 
-export default BarRow;
+export default React.memo(BarRow);

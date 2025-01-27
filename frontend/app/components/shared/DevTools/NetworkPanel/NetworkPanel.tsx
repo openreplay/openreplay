@@ -181,39 +181,37 @@ function NetworkPanelCont({ panelHeight }: { panelHeight: number }) {
   const tabValues = Object.values(tabStates);
   const dataSource = uiPlayerStore.dataSource;
   const showSingleTab = dataSource === 'current';
-  const {
-    fetchList = [],
-    resourceList = [],
-    fetchListNow = [],
-    resourceListNow = [],
-    websocketList = [],
-    websocketListNow = [],
-  } = React.useMemo(() => {
-    if (showSingleTab) {
-      return tabStates[currentTab] ?? {};
-    } else {
-      const fetchList = tabValues.flatMap((tab) => tab.fetchList);
-      const resourceList = tabValues.flatMap((tab) => tab.resourceList);
-      const fetchListNow = tabValues
-        .flatMap((tab) => tab.fetchListNow)
-        .filter(Boolean);
-      const resourceListNow = tabValues
-        .flatMap((tab) => tab.resourceListNow)
-        .filter(Boolean);
-      const websocketList = tabValues.flatMap((tab) => tab.websocketList);
-      const websocketListNow = tabValues
-        .flatMap((tab) => tab.websocketListNow)
-        .filter(Boolean);
-      return {
-        fetchList,
-        resourceList,
-        fetchListNow,
-        resourceListNow,
-        websocketList,
-        websocketListNow,
-      };
-    }
-  }, [currentTab, tabStates, dataSource, tabValues]);
+
+  let fetchList = [];
+  let resourceList = [];
+  let fetchListNow = [];
+  let resourceListNow = [];
+  let websocketList = [];
+  let websocketListNow = [];
+
+  if (showSingleTab) {
+    const state = tabStates[currentTab] ?? {};
+    fetchList = state.fetchList ?? [];
+    resourceList = state.resourceList ?? [];
+    fetchListNow = state.fetchListNow ?? [];
+    resourceListNow = state.resourceListNow ?? [];
+    websocketList = state.websocketList ?? [];
+    websocketListNow = state.websocketListNow ?? [];
+  } else {
+    fetchList = tabValues.flatMap((tab) => tab.fetchList);
+    resourceList = tabValues.flatMap((tab) => tab.resourceList);
+    fetchListNow = tabValues
+    .flatMap((tab) => tab.fetchListNow)
+    .filter(Boolean);
+    resourceListNow = tabValues
+    .flatMap((tab) => tab.resourceListNow)
+    .filter(Boolean);
+    websocketList = tabValues.flatMap((tab) => tab.websocketList);
+    websocketListNow = tabValues
+    .flatMap((tab) => tab.websocketListNow)
+    .filter(Boolean);
+  }
+
   const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
   const getTabName = (tabId: string) => tabNames[tabId]
   return (
@@ -416,7 +414,7 @@ export const NetworkPanelComp = observer(
               : true
           )
           .sort((a, b) => a.time - b.time),
-      [resourceList.length, fetchList.length, socketList]
+      [resourceList.length, fetchList.length, socketList.length]
     );
 
     let filteredList = useMemo(() => {
@@ -453,7 +451,7 @@ export const NetworkPanelComp = observer(
       activeIndex,
       (index) => devTools.update(INDEX_KEY, { index })
     );
-    const onMouseEnter = stopAutoscroll;
+    const onMouseEnter = () => stopAutoscroll;
     const onMouseLeave = () => {
       if (isDetailsModalActive) {
         return;

@@ -16,9 +16,9 @@ function useAutoupdate<T>(
   updadteValue: (value: T) => void,
 ) {
   const [ autoupdate, setAutoupdate ] = useState(savedValue === resetValue)
-  
+
   const [ timeoutStartAutoupdate, stopAutoupdate ] = useCancelableTimeout(
-    () => setAutoupdate(true), 
+    () => setAutoupdate(true),
     () => setAutoupdate(false),
     TIMEOUT_DURATION,
   )
