@@ -19,6 +19,7 @@ interface Props {
   isConditional?: boolean;
   isMobile?: boolean;
   mode: 'filters' | 'events';
+  isLive?: boolean;
 }
 
 function FilterSelection(props: Props) {
@@ -33,6 +34,7 @@ function FilterSelection(props: Props) {
     isConditional,
     isMobile,
     mode,
+    isLive,
   } = props;
   const [showModal, setShowModal] = useState(false);
 
@@ -84,7 +86,7 @@ function FilterSelection(props: Props) {
         {showModal && (
           <div className="absolute mt-2 left-0 rounded-2xl shadow-lg bg-white z-50">
             <FilterModal
-              isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
+              isLive={isRoute(ASSIST_ROUTE, window.location.pathname) || isLive}
               onFilterClick={onAddFilter}
               excludeFilterKeys={excludeFilterKeys}
               allowedFilterKeys={allowedFilterKeys}

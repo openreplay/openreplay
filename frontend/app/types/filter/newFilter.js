@@ -920,15 +920,28 @@ const mapFilters = (list) => {
 };
 
 const liveFilterSupportedOperators = ['is', 'contains'];
+const liveFilterKeys = [
+  FilterKey.METADATA,
+  FilterKey.USERID,
+  FilterKey.USER_COUNTRY,
+  FilterKey.USER_CITY,
+  FilterKey.USER_STATE,
+  FilterKey.USERANONYMOUSID,
+  FilterKey.USER_BROWSER,
+  FilterKey.USER_OS,
+  FilterKey.USER_DEVICE,
+  FilterKey.PLATFORM,
+  FilterKey.UTM_MEDIUM,
+  FilterKey.UTM_SOURCE,
+  FilterKey.UTM_CAMPAIGN,
+]
 const mapLiveFilters = (list) => {
   const obj = {};
   list.forEach(filter => {
     if (
       filter.category !== FilterCategory.EVENTS &&
       filter.category !== FilterCategory.DEVTOOLS &&
-      filter.key !== FilterKey.DURATION &&
-      filter.key !== FilterKey.REFERRER &&
-      filter.key !== FilterKey.TAGGED_ELEMENT
+      liveFilterKeys.includes(filter.key)
     ) {
       obj[filter.key] = { ...filter };
       obj[filter.key].operatorOptions = filter.operatorOptions.filter(operator => liveFilterSupportedOperators.includes(operator.value));

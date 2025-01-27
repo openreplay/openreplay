@@ -134,7 +134,7 @@ export const getMatchingEntries = (
 };
 
 interface Props {
-  isLive: boolean;
+  isLive?: boolean;
   conditionalFilters: any;
   mobileConditionalFilters: any;
   onFilterClick?: (filter: any) => void;
