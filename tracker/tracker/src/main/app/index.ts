@@ -347,6 +347,8 @@ export default class App {
     ) {
       const host = location.hostname.split('.').slice(-2).join('_')
       this.bc = new BroadcastChannel(`rick_${host}`)
+    } else if (this.options.forceSingleTab) {
+      this.allowAppStart()
     }
 
     this.revID = this.options.revID
