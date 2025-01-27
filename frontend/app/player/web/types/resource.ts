@@ -131,7 +131,6 @@ export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: nu
   // duration might be duration=0 when cached
   const failed = msg.duration === 0 && msg.ttfb === 0 && msg.headerSize === 0 && msg.encodedBodySize === 0 && msg.transferredSize === 0
   const type = getResourceType(msg.initiator, msg.url)
-  console.log(msg.url, msg.timestamp - sessStart)
   return Resource({
     ...msg,
     type,
@@ -143,7 +142,6 @@ export function getResourceFromResourceTiming(msg: ResourceTiming, sessStart: nu
 }
 
 export function getResourceFromNetworkRequest(msg: NetworkRequest | Fetch | MobileNetworkCall, sessStart: number) {
-  console.log(msg.url, msg.timestamp - sessStart)
   return Resource({
     ...msg,
     // @ts-ignore

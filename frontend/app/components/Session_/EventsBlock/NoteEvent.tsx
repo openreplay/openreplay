@@ -3,13 +3,13 @@ import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { ItemMenu } from 'UI';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
-import { confirm } from 'UI';
+import { confirm, Icon } from 'UI';
 import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
-import { Tag } from 'antd'
+import { Tag, Dropdown, Button } from 'antd'
+import { MoreOutlined } from "@ant-design/icons";
 import { MessageSquareDot } from 'lucide-react'
 
 interface Props {
@@ -56,9 +56,9 @@ function NoteEvent(props: Props) {
     }
   };
   const menuItems = [
-    { icon: 'pencil', text: 'Edit', onClick: onEdit, disabled: props.noEdit },
-    { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
-    { icon: 'trash', text: 'Delete', onClick: onDelete },
+    { icon: <Icon name={'pencil'} />, label: 'Edit', key: '1', onClick: onEdit, disabled: props.noEdit },
+    { icon: <Icon name={'link-45deg'} />, label: 'Copy URL', key: '2', onClick: onCopy },
+    { icon: <Icon name={'trash'} />, label: 'Delete', key: '3', onClick: onDelete },
   ];
   return (
     <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: '#FFFEF5' }}>
@@ -81,7 +81,11 @@ function NoteEvent(props: Props) {
           </div>
         </div>
         <div className="cursor-pointer absolute" style={{ right: -5 }}>
-          <ItemMenu bold items={menuItems} />
+          <Dropdown menu={{ items: menuItems }}>
+            <Button size={'small'}>
+              <MoreOutlined />
+            </Button>
+          </Dropdown>
         </div>
       </div>
       <div
