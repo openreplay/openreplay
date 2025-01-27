@@ -182,7 +182,7 @@ func (s *serviceImpl) fetchSessionData(provider string, credentials interface{},
 func (s *serviceImpl) uploadSessionData(provider string, sessionID uint64, data interface{}) error {
 	key := fmt.Sprintf("%d/%s.logs", sessionID, provider)
 	dataBytes, _ := data.([]byte)
-	return s.storage.Upload(bytes.NewReader(dataBytes), key, "text/plain", objectstorage.NoCompression)
+	return s.storage.Upload(bytes.NewReader(dataBytes), key, "text/plain", objectstorage.NoContentEncoding, objectstorage.NoCompression)
 }
 
 func (s *serviceImpl) markSessionData(projectID uint64, provider string, sessionID uint64) error {

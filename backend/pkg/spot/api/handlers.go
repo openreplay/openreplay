@@ -99,7 +99,7 @@ func (e *handlersImpl) createSpot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	previewName := fmt.Sprintf("%d/preview.jpeg", newSpot.ID)
-	if err = e.objStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoCompression); err != nil {
+	if err = e.objStorage.Upload(bytes.NewReader(previewImage), previewName, "image/jpeg", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
 		e.log.Error(r.Context(), "can't upload preview image: %s", err)
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, errors.New("can't upload preview image"), startTime, r.URL.Path, bodySize)
 		return
