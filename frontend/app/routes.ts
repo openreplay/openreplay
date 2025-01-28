@@ -159,6 +159,9 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
 export const highlights = (): string => '/highlights';
 
 export const kai = (): string => '/kai';
+export const dataManagement = {
+  activity: () => '/data-management/activity',
+}
 
 const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,

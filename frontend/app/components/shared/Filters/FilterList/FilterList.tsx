@@ -28,6 +28,8 @@ interface Props {
   mergeUp?: boolean;
   borderless?: boolean;
   cannotAdd?: boolean;
+  heading?: React.ReactNode;
+  isLive?: boolean;
 }
 
 export const FilterList = observer((props: Props) => {
@@ -41,6 +43,7 @@ export const FilterList = observer((props: Props) => {
     readonly,
     borderless,
     excludeCategory,
+    isLive
   } = props;
 
   const { filters } = filter;
@@ -73,6 +76,7 @@ export const FilterList = observer((props: Props) => {
           disabled={readonly}
           excludeFilterKeys={excludeFilterKeys}
           excludeCategory={excludeCategory}
+          isLive={isLive}
         >
           <Button type="default" size="small" className="btn-add-filter">
             <div className={'flex items-center gap-1'}>
@@ -98,6 +102,7 @@ export const FilterList = observer((props: Props) => {
               isFilter
               filterIndex={filterIndex}
               filter={filter}
+              isLive={isLive}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
               onRemoveFilter={() => onRemoveFilter(filterIndex)}
               excludeFilterKeys={excludeFilterKeys}
@@ -224,6 +229,7 @@ export const EventsList = observer((props: Props) => {
         marginBottom: props.mergeDown ? '-1px' : undefined,
       }}
     >
+      {props.heading ? props.heading : null}
       <div className="flex items-center mb-2 gap-2">
         <div className="font-medium">{t('Events')}</div>
         {cannotAdd ? null : (

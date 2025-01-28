@@ -115,6 +115,7 @@ function ${titleCase(fileName)}(props: Props) {
           /clipRule="evenoddCustomFill"/g,
           'clipRule="evenodd" fillRule="evenodd"'
         )
+        .replaceAll(`stroke="no-fill"`, 'fill="none"')
         .replaceAll(/fill-rule/g, 'fillRule')
         .replaceAll(/fill-opacity/g, 'fillOpacity')
         .replaceAll(/stop-color/g, 'stopColor')
