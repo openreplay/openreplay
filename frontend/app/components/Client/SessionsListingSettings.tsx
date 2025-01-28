@@ -6,6 +6,7 @@ import DefaultPlaying from 'Shared/SessionSettings/components/DefaultPlaying';
 import DefaultTimezone from 'Shared/SessionSettings/components/DefaultTimezone';
 import ListingVisibility from 'Shared/SessionSettings/components/ListingVisibility';
 import MouseTrailSettings from 'Shared/SessionSettings/components/MouseTrailSettings';
+import DebugLog from "./DebugLog";
 
 function SessionsListingSettings() {
   return (
@@ -29,8 +30,9 @@ function SessionsListingSettings() {
         </div>
         <Divider />
 
-        <div>
+        <div className={'flex flex-col gap-2'}>
           <MouseTrailSettings />
+          <DebugLog />
         </div>
       </div>
     </div>

@@ -13,13 +13,13 @@ function MouseTrailSettings() {
   };
 
   return (
-    <>
+    <div>
       <h3 className='text-lg'>Mouse Trail</h3>
       <div className='my-1'>See mouse trail to easily spot user activity.</div>
       <div className='mt-2'>
         <Switch onChange={updateSettings} checked={mouseTrail} />
       </div>
-    </>
+    </div>
   );
 }
 

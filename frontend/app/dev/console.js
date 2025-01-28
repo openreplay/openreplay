@@ -1,4 +1,4 @@
-const KEY = "__OPENREPLAY_DEV_TOOLS__"
+export const KEY = "__OPENREPLAY_DEV_TOOLS__"
 
 export const options = {
 	logStuff(verbose=true) {
