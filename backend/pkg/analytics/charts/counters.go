@@ -38,13 +38,28 @@ func getMetadataFields() Fields {
 	}
 }
 
-func getStepSize(startTimestamp, endTimestamp, density uint64, decimal bool, factor uint64) float64 {
-	stepSize := (endTimestamp / factor) - (startTimestamp / factor) // TODO: should I use float64 here?
-	if !decimal {
-		density--
+func getStepSize(startTimestamp, endTimestamp int64, density int, decimal bool, factor int) float64 {
+	factorInt64 := int64(factor)
+	stepSize := (endTimestamp / factorInt64) - (startTimestamp / factorInt64)
+
+	if density <= 1 {
+		return float64(stepSize)
 	}
-	return float64(stepSize) / float64(density)
+
+	if decimal {
+		return float64(stepSize) / float64(density)
+	}
+
+	return float64(stepSize / int64(density-1))
 }
+
+//func getStepSize(startTimestamp, endTimestamp, density uint64, decimal bool, factor uint64) float64 {
+//	stepSize := (endTimestamp / factor) - (startTimestamp / factor) // TODO: should I use float64 here?
+//	if !decimal {
+//		density--
+//	}
+//	return float64(stepSize) / float64(density)
+//}
 
 func getBasicConstraints(tableName string, timeConstraint, roundStart bool, data map[string]interface{}, identifier string) []string { // Если tableName не пустая, добавляем точку
 	if tableName != "" {
@@ -146,8 +161,8 @@ def get_main_sessions_table(timestamp=0):
 	    if config("EXP_7D_MV", cast=bool, default=True) \
 	       and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.sessions"
 */
-func getMainSessionsTable(timestamp uint64) string {
-	return "experimental.sessions"
+func getMainSessionsTable(timestamp int64) string {
+	return "product_analytics.sessions"
 }
 
 // Function to convert named parameters to positional parameters
@@ -186,7 +201,7 @@ func addMissingKeys(original, complete map[string]interface{}) map[string]interf
 
 // CompleteMissingSteps fills in missing steps in the data
 func CompleteMissingSteps(
-	startTime, endTime uint64,
+	startTime, endTime int64,
 	density int,
 	neutral map[string]interface{},
 	rows []map[string]interface{},
@@ -198,7 +213,7 @@ func CompleteMissingSteps(
 	}
 
 	// Calculate the step size
-	step := getStepSize(startTime, endTime, uint64(density), true, 1000)
+	step := getStepSize(startTime, endTime, density, true, 1000)
 	optimal := make([][2]uint64, 0)
 	for _, i := range frange(float64(startTime)/float64(timeCoefficient), float64(endTime)/float64(timeCoefficient), step) {
 		startInterval := uint64(i * float64(timeCoefficient))
@@ -257,7 +272,7 @@ func progress(oldVal, newVal uint64) float64 {
 }
 
 // Trying to find a common part
-func parse(projectID uint64, startTs, endTs uint64, density uint64, args map[string]interface{}) ([]string, []string, map[string]interface{}) {
+func parse(projectID uint64, startTs, endTs int64, density int, args map[string]interface{}) ([]string, []string, map[string]interface{}) {
 	stepSize := getStepSize(startTs, endTs, density, false, 1000)
 	chSubQuery := getBasicConstraints("sessions", true, false, args, "project_id")
 	chSubQueryChart := getBasicConstraints("sessions", true, true, args, "project_id")
@@ -278,7 +293,7 @@ func parse(projectID uint64, startTs, endTs uint64, density uint64, args map[str
 }
 
 // Sessions trend
-func (c *chartsImpl) getProcessedSessions(projectID uint64, startTs, endTs uint64, density uint64, args map[string]interface{}) {
+func (s *chartsImpl) getProcessedSessions(projectID uint64, startTs, endTs int64, density int, args map[string]interface{}) {
 	chQuery := `
 		SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL :step_size second)) * 1000 AS timestamp,
 		COUNT(DISTINCT sessions.session_id) AS value
@@ -293,7 +308,7 @@ func (c *chartsImpl) getProcessedSessions(projectID uint64, startTs, endTs uint6
 	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQueryChart, " AND "), -1)
 
 	preparedQuery, preparedArgs := replaceNamedParams(chQuery, params)
-	rows, err := c.chConn.Query(context.Background(), preparedQuery, preparedArgs)
+	rows, err := s.chConn.Query(context.Background(), preparedQuery, preparedArgs)
 	if err != nil {
 		log.Fatalf("Error executing query: %v", err)
 	}
@@ -331,7 +346,7 @@ func (c *chartsImpl) getProcessedSessions(projectID uint64, startTs, endTs uint6
 	var count uint64
 
 	preparedQuery, preparedArgs = replaceNamedParams(chQuery, params)
-	if err := c.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
+	if err := s.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
 		log.Fatalf("Error executing query: %v", err)
 	}
 
