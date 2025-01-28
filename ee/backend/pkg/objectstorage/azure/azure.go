@@ -50,7 +50,7 @@ func NewStorage(cfg *config.ObjectsConfig) (objectstorage.ObjectStorage, error) 
 	}, nil
 }
 
-func (s *storageImpl) Upload(reader io.Reader, key string, contentType string, compression objectstorage.CompressionType) error {
+func (s *storageImpl) Upload(reader io.Reader, key string, contentType, contentEncoding string, compression objectstorage.CompressionType) error {
 	cacheControl := "max-age=2628000, immutable, private"
 	var encoding *string
 	switch compression {
