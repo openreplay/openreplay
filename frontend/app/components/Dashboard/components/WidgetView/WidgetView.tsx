@@ -33,7 +33,7 @@ interface Props {
   siteId: any;
 }
 
-const LAYOUT_KEY = '$__layout__$'
+const LAYOUT_KEY = '$__metric_form__layout__$'
 
 function getDefaultState() {
   const layout = localStorage.getItem(LAYOUT_KEY)
