@@ -4,7 +4,7 @@ from chalicelib.core import events, metadata, events_mobile, \
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
 from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
-from chalicelib.core.modules import MOB_KEY
+from chalicelib.core.modules import MOB_KEY, get_file_key
 
 
 def __is_mobile_session(platform):
@@ -21,23 +21,8 @@ def __group_metadata(session, project_metadata):
 
 
 def get_pre_replay(project_id, session_id):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""\
-            SELECT encode(file_key,'hex') AS file_key
-            FROM public.sessions
-            WHERE project_id = %(project_id)s
-                AND session_id = %(session_id)s;""",
-            {"project_id": project_id, "session_id": session_id}
-        )
-        cur.execute(query=query)
-
-        data = cur.fetchone()
-        file_key = None
-        if data is not None:
-            file_key = data['file_key']
     return {
-        'fileKey': file_key,
+        **get_file_key(project_id=project_id, session_id=session_id),
         'domURL': [sessions_mobs.get_first_url(project_id=project_id, session_id=session_id, check_existence=False)]}
 
 
