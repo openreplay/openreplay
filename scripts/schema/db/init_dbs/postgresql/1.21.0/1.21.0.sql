@@ -88,6 +88,15 @@ DROP TYPE IF EXISTS events.resource_method;
 
 ALTER TYPE integration_provider ADD VALUE IF NOT EXISTS 'dynatrace';
 
+UPDATE users SET settings=COALESCE(settings, '{}'::jsonb) || '{
+  "modules": [
+    "usability-tests",
+    "feature-flags"
+  ]
+}'::jsonb
+WHERE settings IS NULL
+   OR settings -> 'modules' IS NULL;
+
 COMMIT;
 
 \elif :is_next

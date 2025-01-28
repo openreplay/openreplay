@@ -30,7 +30,7 @@ function LiveSessionList() {
   let timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-  const sortOptions = [{ label: 'Start Time', value: 'timestamp' }].concat(
+  const sortOptions = [{ label: 'Start Time', value: 'timestamp' }, { label: 'Duration', value: 'duration' }].concat(
     metaList
       .map(({ key }: any) => ({
         label: capitalize(key),
