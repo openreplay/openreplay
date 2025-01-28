@@ -49,7 +49,7 @@ class SearchStoreLive {
   latestRequestTime: number | null = null;
   latestList = List();
   alertMetricId: number | null = null;
-  instance = new Search();
+  instance = new Search({ sort: 'timestamp', order: 'desc' });
   instanceLive = new Search();
   savedSearch = new Search();
   filterSearchList: any = {};
