@@ -25,7 +25,7 @@ func NewBatches(cfg *connector.Config, objStorage objectstorage.ObjectStorage) (
 func (ds *Batches) Insert(batch []map[string]string, fileName string, columns []string) error {
 	buf := dataToCSV(batch, columns)
 	reader := bytes.NewReader(buf.Bytes())
-	if err := ds.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoCompression); err != nil {
+	if err := ds.objStorage.Upload(reader, fileName, "text/csv", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
 		return fmt.Errorf("can't upload file to s3: %s", err)
 	}
 	return nil
@@ -34,7 +34,7 @@ func (ds *Batches) Insert(batch []map[string]string, fileName string, columns []
 func (ds *Batches) InsertTSV(batch []map[string]string, fileName string, columns []string) error {
 	buf := dataToTSV(batch, columns)
 	reader := bytes.NewReader(buf.Bytes())
-	if err := ds.objStorage.Upload(reader, fileName, "text/tsv", objectstorage.NoCompression); err != nil {
+	if err := ds.objStorage.Upload(reader, fileName, "text/tsv", objectstorage.NoContentEncoding, objectstorage.NoCompression); err != nil {
 		return fmt.Errorf("can't upload file to s3: %s", err)
 	}
 	return nil
