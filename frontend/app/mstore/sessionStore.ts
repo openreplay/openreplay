@@ -201,11 +201,15 @@ export default class SessionStore {
     });
   }
 
-  fetchLiveSessions = async (params = {}) => {
+  fetchLiveSessions = async (params: any = {}) => {
     runInAction(() => {
       this.loadingLiveSessions = true;
     })
     try {
+      if (params.sort === 'duration') { // TODO ui hack to sort by duration, should be removed once the api addressed this issue
+        params.sort = 'timestamp';
+        params.order = params.order === 'asc' ? 'desc' : 'asc';
+      }
       const data: any = await sessionService.getLiveSessions(params);
       this.liveSessions = data.sessions.map((session: any) => new Session({ ...session, live: true }));
       this.totalLiveSessions = data.total;
