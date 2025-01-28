@@ -178,6 +178,9 @@ export const scopeSetup = (): string => '/scope-setup';
 export const highlights = (): string => '/highlights';
 
 export const kai = (): string => '/kai';
+export const dataManagement = {
+  activity: () => '/data-management/activity',
+}
 
 const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,

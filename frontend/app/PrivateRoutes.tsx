@@ -35,6 +35,7 @@ const components: any = {
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   KaiPure: lazy(() => import('Components/Kai/KaiChat')),
+  ActivityPure: lazy(() => import('Components/DataManagement/Activity/Page')),
 };
 
 const enhancedComponents: any = {
@@ -55,6 +56,8 @@ const enhancedComponents: any = {
   Spot: components.SpotPure,
   Highlights: withSiteIdUpdater(components.HighlightsPure),
   Kai: withSiteIdUpdater(components.KaiPure),
+  ScopeSetup: components.ScopeSetup,
+  Activity: components.ActivityPure,
 };
 
 const { withSiteId } = routes;
@@ -99,6 +102,10 @@ const SPOT_PATH = routes.spot();
 
 const HIGHLIGHTS_PATH = routes.highlights();
 const KAI_PATH = routes.kai();
+
+const DATA_MANAGEMENT = {
+  ACTIVITY: routes.dataManagement.activity()
+}
 
 function PrivateRoutes() {
   const {
@@ -284,6 +291,12 @@ function PrivateRoutes() {
             component={enhancedComponents.Kai}
           />
         ) : null}
+        <Route
+          exact
+          strict
+          path={withSiteId(DATA_MANAGEMENT.ACTIVITY, siteIdList)}
+          component={enhancedComponents.Activity}
+        />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}

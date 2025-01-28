@@ -57,6 +57,7 @@ export const enum MENU {
   EXIT = 'exit',
   SPOTS = 'spots',
   KAI = 'kai',
+  ACTIVITY = 'activity',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -140,6 +141,11 @@ export const categories: (t: TFunction) => Category[] = (t) => [
       // },
       { label: t('Alerts'), key: MENU.ALERTS, icon: 'bell' },
     ],
+  },
+  {
+    title: 'Data Management',
+    key: 'data-management',
+    items: [{ label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' }],
   },
   {
     title: t('Product Optimization'),
