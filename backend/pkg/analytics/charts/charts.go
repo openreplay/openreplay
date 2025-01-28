@@ -27,7 +27,7 @@ func New(log logger.Logger, conn pool.Pool) (Charts, error) {
 	}, nil
 }
 
-// def get_chart()
+// GetData def get_chart()
 func (s *chartsImpl) GetData(projectId int, userID uint64, req *GetCardChartDataRequest) ([]DataPoint, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request is empty")
@@ -109,14 +109,47 @@ func (s *chartsImpl) getMetric(projectID int, userID uint64, req *GetCardChartDa
 }
 
 func (s *chartsImpl) getTimeseriesCharts(projectID int, userID uint64, req *GetCardChartDataRequest) ([]DataPoint, error) {
-	charts := []interface{}{}
+	var dataPoints []DataPoint
+	var stepSize = getStepSize(req.StartTimestamp, req.EndTimestamp, req.Density, true, 1000)
+	var query string
+
+	switch req.MetricOf {
+	case "sessionCount":
+		query = fmt.Sprintf(`
+			SELECT 
+				toUnixTimestamp(toStartOfInterval(processed_sessions.datetime, INTERVAL %d second)) * 1000 AS timestamp,
+				COUNT(processed_sessions.session_id) AS count
+			FROM (
+				SELECT 
+					s.session_id AS session_id,
+					s.datetime AS datetime
+				%s
+			) AS processed_sessions
+			GROUP BY timestamp
+			ORDER BY timestamp;
+		`, stepSize, "query_part") // Replace "query_part" with the actual query part
+	default:
+		return nil, fmt.Errorf("unsupported metric: %s", req.MetricOf)
+	}
+
+	fmt.Printf("stepSize: %v\n", stepSize)
+
 	for _, series := range req.Series {
 		res, err := s.searchSeries(projectID, series)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to search series: %w", err)
 		}
-		charts = append(charts, res)
+		if seriesData, ok := res.([]DataPoint); ok {
+			dataPoints = append(dataPoints, seriesData...)
+		} else {
+			return nil, fmt.Errorf("unexpected data format from searchSeries")
+		}
 	}
-	results := []interface{}{}
-	return results, nil
+	return dataPoints, nil
+}
+
+func (s *chartsImpl) searchSeries(projectID int, series cards.CardSeries) (interface{}, error) {
+
+	// Placeholder implementation
+	return []DataPoint{}, nil
 }
