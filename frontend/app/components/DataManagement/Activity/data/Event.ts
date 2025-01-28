@@ -4,6 +4,14 @@ interface DefaultFields {
   userEnvironment: string;
 }
 
+export interface EventData {
+  name: string;
+  time: string;
+  $_isAutoCapture: boolean;
+  $_defaultFields: DefaultFields;
+  $_customFields?: Record<string, any>;
+}
+
 export default class Event {
   name: string;
   time: string;
@@ -29,11 +37,13 @@ export default class Event {
     return JSON.stringify(obj, 4);
   }
 
-  toData() {
+  toData(): EventData {
     const obj: any = {
       name: this.name,
       time: this.time,
       $_isAutoCapture: this.$_isAutoCapture,
+      $_defaultFields: this.defaultFields,
+      $_customFields: this.customFields,
     }
     Object.entries(this.defaultFields).forEach(([key, value]) => {
       obj[key] = value;
