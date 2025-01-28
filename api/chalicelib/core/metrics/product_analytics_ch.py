@@ -36,7 +36,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     start_points_conditions = []
     step_0_conditions = []
     step_1_post_conditions = ["event_number_in_session <= %(density)s"]
-
+    q2_extra_col = ""
+    q2_extra_condition = ""
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.LOCATION)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["column"],
@@ -52,6 +53,15 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                         f"(`$event_name`='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session = 1 \
                             OR `$event_name`!='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session > 1)")
                     extra_metric_values.append(s.type)
+                    if q2_extra_col == "":
+                        # This is used in case start event has different type of the visible event,
+                        # because it causes intermediary events to be removed, so you find a jump from step-0 to step-3
+                        # because step-2 is not of a visible event
+                        q2_extra_col = """,leadInFrame(toNullable(event_number_in_session))
+                                              OVER (PARTITION BY session_id ORDER BY created_at %s
+                                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_event_number_in_session"""
+                        q2_extra_condition = """WHERE event_number_in_session + 1 = next_event_number_in_session
+                                                    OR isNull(next_event_number_in_session);"""
             data.metric_value += extra_metric_values
 
         for v in data.metric_value:
@@ -439,9 +449,11 @@ WITH pre_ranked_events AS (SELECT *
                               leadInFrame(toNullable(`$event_name`))
                                           OVER (PARTITION BY session_id ORDER BY created_at {path_direction}
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
+                              {q2_extra_col%path_direction}
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
-FROM ranked_events;"""
+FROM ranked_events
+{q2_extra_condition}"""
         logger.debug("---------Q2-----------")
         ch.execute(query=ch_query2, parameters=params)
         if time() - _now > 2:
