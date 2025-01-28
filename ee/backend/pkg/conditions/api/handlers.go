@@ -15,13 +15,15 @@ import (
 
 type handlersImpl struct {
 	log        logger.Logger
+	responser  *api.Responser
 	tokenizer  *token.Tokenizer
 	conditions conditions.Conditions
 }
 
-func NewHandlers(log logger.Logger, tokenizer *token.Tokenizer, conditions conditions.Conditions) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, responser *api.Responser, tokenizer *token.Tokenizer, conditions conditions.Conditions) (api.Handlers, error) {
 	return &handlersImpl{
 		log:        log,
+		responser:  responser,
 		tokenizer:  tokenizer,
 		conditions: conditions,
 	}, nil
@@ -41,7 +43,7 @@ func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
 	// Check authorization
 	_, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
@@ -50,15 +52,15 @@ func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
 	projID := vars["project"]
 	projectID, err := strconv.Atoi(projID)
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Get task info
 	info, err := e.conditions.Get(uint32(projectID))
 	if err != nil {
-		api.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 		return
 	}
-	api.ResponseWithJSON(e.log, r.Context(), w, info, startTime, r.URL.Path, bodySize)
+	e.responser.ResponseWithJSON(e.log, r.Context(), w, info, startTime, r.URL.Path, bodySize)
 }
