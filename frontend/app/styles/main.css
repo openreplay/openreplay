@@ -404,3 +404,7 @@ svg {
     border-radius: 4px;
     cursor: grab;
 }
+
+.ant-table-column-title {
+  font-weight: 500;
+}

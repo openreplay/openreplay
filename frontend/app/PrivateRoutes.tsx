@@ -37,6 +37,7 @@ const components: any = {
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
+  ActivityPure: lazy(() => import('Components/DataManagement/Activity/Page')),
 };
 
 const enhancedComponents: any = {
@@ -60,6 +61,7 @@ const enhancedComponents: any = {
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
   Highlights: components.HighlightsPure,
+  Activity: components.ActivityPure,
 };
 
 const withSiteId = routes.withSiteId;
@@ -108,6 +110,10 @@ const SPOT_PATH = routes.spot();
 const SCOPE_SETUP = routes.scopeSetup();
 
 const HIGHLIGHTS_PATH = routes.highlights();
+
+const DATA_MANAGEMENT = {
+  ACTIVITY: routes.dataManagement.activity()
+}
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore } = useStore();
@@ -289,6 +295,12 @@ function PrivateRoutes() {
           strict
           path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
           component={enhancedComponents.LiveSession}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(DATA_MANAGEMENT.ACTIVITY, siteIdList)}
+          component={enhancedComponents.Activity}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />

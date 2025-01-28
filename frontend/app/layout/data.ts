@@ -53,6 +53,7 @@ export const enum MENU {
   SUPPORT = 'support',
   EXIT = 'exit',
   SPOTS = 'spots',
+  ACTIVITY = 'activity',
 }
 
 export const categories: Category[] = [
@@ -61,26 +62,27 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
+      {
+        label: 'Recommendations',
+        key: MENU.RECOMMENDATIONS,
+        icon: 'magic',
+        hidden: true,
+      },
       { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
       //{ label: 'Notes', key: MENU.NOTES, icon: 'stickies' },
-      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' }
-    ]
+      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' },
+    ],
   },
   {
     title: '',
     key: 'spot',
-    items: [
-      { label: 'Spots', key: MENU.SPOTS, icon: 'orspotOutline' },
-    ]
+    items: [{ label: 'Spots', key: MENU.SPOTS, icon: 'orspotOutline' }],
   },
   {
     title: '',
     key: 'assist',
-    items: [
-      { label: 'Co-Browse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
-    ]
+    items: [{ label: 'Co-Browse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' }],
   },
   {
     title: 'Analytics',
@@ -96,25 +98,39 @@ export const categories: Category[] = [
       //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
       //   ]
       // },
-      { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' }
-    ]
+      { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' },
+    ],
+  },
+  {
+    title: 'Data Management',
+    key: 'data-management',
+    items: [{ label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' }],
   },
   {
     title: 'Product Optimization',
     key: 'product-optimization',
     items: [
       { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
-      { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'clipboard-check' },
-    ]
+      {
+        label: 'Usability Tests',
+        key: MENU.USABILITY_TESTS,
+        icon: 'clipboard-check',
+      },
+    ],
   },
   {
     title: '',
     key: 'other',
     items: [
-      { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right' },
-      { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' }
-    ]
-  }
+      {
+        label: 'Preferences',
+        key: MENU.PREFERENCES,
+        icon: 'sliders',
+        leading: 'chevron-right',
+      },
+      { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' },
+    ],
+  },
 ];
 
 export const preferences: Category[] = [

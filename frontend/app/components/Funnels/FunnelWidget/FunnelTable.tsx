@@ -53,7 +53,7 @@ function FunnelTable(props: Props) {
     if (props.compData) {
       tableData.push({
         conversion: props.compData.funnel.totalConversionsPercentage,
-      })
+      });
       const compFunnel = props.compData.funnel;
       compFunnel.stages.forEach((st, ind) => {
         tableData[1]['st_' + ind] = st.count;
@@ -71,9 +71,7 @@ function FunnelTable(props: Props) {
           pagination={false}
           size={'middle'}
           scroll={{ x: 'max-content' }}
-          rowClassName={(_, index) => (
-            index > 0 ? 'opacity-70' : ''
-          )}
+          rowClassName={(_, index) => (index > 0 ? 'opacity-70' : '')}
         />
         <TableExporter
           tableColumns={tableProps}
@@ -101,7 +99,6 @@ export function TableExporter({
 }) {
   const onClick = () => exportAntCsv(tableColumns, tableData, filename);
   return (
-    <Tooltip title='Export Data to CSV'>
     <div
       className={`absolute ${top ? top : 'top-0'} ${
         right ? right : '-right-1'
@@ -111,17 +108,16 @@ export function TableExporter({
         items={[{ icon: 'download', text: 'Export to CSV', onClick }]}
         bold
         customTrigger={
-              <div
-                className={
-                  'flex items-center justify-center bg-gradient-to-r from-[#fafafa] to-neutral-200 cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data'
-                }
-              >
+          <div
+            className={
+              'flex items-center justify-center bg-gradient-to-r from-[#fafafa] to-neutral-200 cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data'
+            }
+          >
             <EllipsisVertical size={16} />
           </div>
         }
       />
     </div>
-    </Tooltip>
   );
 }
 

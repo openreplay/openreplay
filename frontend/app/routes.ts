@@ -148,6 +148,10 @@ export const scopeSetup = (): string => '/scope-setup';
 
 export const highlights = (): string => '/highlights';
 
+export const dataManagement = {
+  activity: () => '/data-management/activity',
+}
+
 const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),

@@ -1,4 +1,4 @@
-import { GripVertical, Plus, Filter } from 'lucide-react';
+import { GripVertical, Plus, Filter, SquareDashedMousePointer } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
@@ -27,6 +27,8 @@ interface Props {
   mergeUp?: boolean;
   borderless?: boolean;
   cannotAdd?: boolean;
+  heading?: React.ReactNode;
+  isLive?: boolean;
 }
 
 export const FilterList = observer((props: Props) => {
@@ -39,6 +41,7 @@ export const FilterList = observer((props: Props) => {
     readonly,
     borderless,
     excludeCategory,
+    isLive
   } = props;
 
   const filters = filter.filters;
@@ -69,6 +72,7 @@ export const FilterList = observer((props: Props) => {
           disabled={readonly}
           excludeFilterKeys={excludeFilterKeys}
           excludeCategory={excludeCategory}
+          isLive={isLive}
         >
           <Button
             icon={<Filter size={16} strokeWidth={1} />}
@@ -96,6 +100,7 @@ export const FilterList = observer((props: Props) => {
               isFilter={true}
               filterIndex={filterIndex}
               filter={filter}
+              isLive={isLive}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
               onRemoveFilter={() => onRemoveFilter(filterIndex)}
               excludeFilterKeys={excludeFilterKeys}
@@ -208,9 +213,10 @@ export const EventsList = observer((props: Props) => {
         marginBottom: props.mergeDown ? '-1px' : undefined,
       }}
     >
+      {props.heading ? props.heading : null}
       <div className="flex items-center mb-2 gap-2">
         <div className="font-medium">Events</div>
-        {cannotAdd ? null : (
+        {filters.length === 0 || cannotAdd ? null : (
           <FilterSelection
             mode={'events'}
             filter={undefined}
@@ -218,12 +224,12 @@ export const EventsList = observer((props: Props) => {
             excludeCategory={excludeCategory}
           >
             <Button
-              icon={<Plus size={16} strokeWidth={1} />}
+              icon={<SquareDashedMousePointer size={16} strokeWidth={1} />}
               type="default"
               size={'small'}
               className='btn-add-event'
             >
-              Add
+              Select Event
             </Button>
           </FilterSelection>
         )}
@@ -237,6 +243,28 @@ export const EventsList = observer((props: Props) => {
         </div>
       </div>
       <div className={'flex flex-col '}>
+        {filters.length === 0 ? (
+          <div className={'flex items-center gap-2 mb-2'}>
+            <div className={'bg-gray-lighter rounded-full leading-none flex items-center justify-center w-5 h-5'}>
+              <div>1</div>
+            </div>
+            <FilterSelection
+              mode={'events'}
+              filter={undefined}
+              onFilterClick={onAddFilter}
+              excludeCategory={excludeCategory}
+            >
+              <Button
+                icon={<SquareDashedMousePointer size={16} strokeWidth={1} />}
+                type="default"
+                size={'small'}
+                className='btn-add-event'
+              >
+                Select Event
+              </Button>
+            </FilterSelection>
+          </div>
+        ) : null}
         {filters.map((filter: any, filterIndex: number) =>
           filter.isEvent ? (
             <div
