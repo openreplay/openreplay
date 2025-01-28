@@ -21,9 +21,8 @@ postgresql: &postgres
 connector: &connector
   enabled: false
 
-# For enterpriseEdition
 clickhouse: &clickhouse
-  enabled: false
+  enabled: true
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   username: default
   password: ""
