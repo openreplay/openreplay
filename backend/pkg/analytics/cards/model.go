@@ -6,6 +6,24 @@ import (
 	"time"
 )
 
+type MetricType string
+type MetricOfTimeseries string
+type MetricOfTable string
+
+const (
+	MetricTypeTimeseries MetricType = "TIMESERIES"
+	MetricTypeTable      MetricType = "TABLE"
+
+	MetricOfTimeseriesSessionCount MetricOfTimeseries = "SESSION_COUNT"
+	MetricOfTimeseriesUserCount    MetricOfTimeseries = "USER_COUNT"
+
+	MetricOfTableVisitedURL  MetricOfTable = "VISITED_URL"
+	MetricOfTableIssues      MetricOfTable = "ISSUES"
+	MetricOfTableUserCountry MetricOfTable = "USER_COUNTRY"
+	MetricOfTableUserDevice  MetricOfTable = "USER_DEVICE"
+	MetricOfTableUserBrowser MetricOfTable = "USER_BROWSER"
+)
+
 // CardBase Common fields for the Card entity
 type CardBase struct {
 	Name          string           `json:"name" validate:"required"`
