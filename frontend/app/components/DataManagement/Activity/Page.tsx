@@ -5,6 +5,8 @@ import { MoreOutlined } from '@ant-design/icons';
 import { numberWithCommas } from 'App/utils';
 import { Pagination } from 'UI';
 import Event from './data/Event';
+import { useModal } from 'App/components/Modal';
+import EventDetailsModal from "./EventDetailsModal";
 
 function ActivityPage() {
   const [hiddenCols, setHiddenCols] = React.useState([]);
@@ -16,6 +18,7 @@ function ActivityPage() {
   const saveRequestPayloads = () => {};
   const onFilterMove = () => {};
   const [editCols, setEditCols] = React.useState(false);
+  const { showModal, hideModal } = useModal();
 
   const dropdownItems = [
     {
@@ -108,6 +111,10 @@ function ActivityPage() {
   );
   const list = [testEv.toData(), testAutoEv.toData()];
   const onPageChange = () => {};
+
+  const onItemClick = (ev: Event) => {
+    showModal(<EventDetailsModal ev={ev} onClose={hideModal} />, { width: 400, right: true });
+  }
   return (
     <div
       className={'flex flex-col gap-2'}
@@ -153,7 +160,14 @@ function ActivityPage() {
         <div className={'px-4 py-2 font-semibold text-lg'}>
           All users activity
         </div>
-        <Table dataSource={list} pagination={false} columns={shownCols} />
+        <Table
+          onRow={(record, index) => ({
+            onClick: (event) => onItemClick(record)
+          })}
+          dataSource={list}
+          pagination={false}
+          columns={shownCols}
+        />
         <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
           <div>
             {'Showing '}
