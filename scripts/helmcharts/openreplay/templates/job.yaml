@@ -431,6 +431,48 @@ spec:
         - name: shared
           mountPath: /opt/openreplay
       {{- end }}
+      - name: kafka
+        image: bitnami/kafka:2.6.0-debian-10-r30
+        env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          - name: RETENTION_TIME
+            value: "{{ .Values.global.kafka.retentionTime }}"
+          - name: KAFKA_HOST
+            value: "{{ .Values.global.kafka.kafkaHost }}"
+          - name: KAFKA_PORT
+            value: "{{ .Values.global.kafka.kafkaPort }}"
+          - name: KAFKA_SSL
+            value: "{{ .Values.global.kafka.kafkaUseSsl }}"
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+        command: 
+        - /bin/bash
+        - /opt/migrations/dbops.sh
+        - "{{ .Release.IsUpgrade }}"
+        - kafka
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+        {{- end}}
       - name: clickhouse
         image: clickhouse/clickhouse-server:22.12-alpine
         env:
@@ -474,48 +516,6 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      - name: kafka
-        image: bitnami/kafka:2.6.0-debian-10-r30
-        env:
-          - name: OPENREPLAY_VERSION
-            valueFrom:
-              configMapKeyRef:
-                name: openreplay-version
-                key: version
-                optional: true
-          {{- range $key, $val := .Values.global.env }}
-          - name: {{ $key }}
-            value: '{{ $val }}'
-          {{- end }}
-          {{- range $key, $val := .Values.migration.env }}
-          - name: {{ $key }}
-            value: '{{ $val }}'
-          {{- end }}
-          - name: RETENTION_TIME
-            value: "{{ .Values.global.kafka.retentionTime }}"
-          - name: KAFKA_HOST
-            value: "{{ .Values.global.kafka.kafkaHost }}"
-          - name: KAFKA_PORT
-            value: "{{ .Values.global.kafka.kafkaPort }}"
-          - name: KAFKA_SSL
-            value: "{{ .Values.global.kafka.kafkaUseSsl }}"
-          - name: FORCE_MIGRATION
-            value: "{{ .Values.forceMigration }}"
-          - name: PREVIOUS_APP_VERSION
-            value: "{{ .Values.fromVersion }}"
-          - name: CHART_APP_VERSION
-            value: "{{ .Chart.AppVersion }}"
-        command: 
-        - /bin/bash
-        - /opt/migrations/dbops.sh
-        - "{{ .Release.IsUpgrade }}"
-        - kafka
-        volumeMounts:
-        - name: shared
-          mountPath: /opt/openreplay
-        - name: dbmigrationscript
-          mountPath: /opt/migrations/
-        {{- end}}
       volumes:
       - name: dbmigrationscript
         configMap:
