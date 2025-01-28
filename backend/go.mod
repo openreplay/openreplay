@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.5.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.1
 	github.com/DataDog/datadog-api-client-go/v2 v2.34.0
 	github.com/Masterminds/semver v1.5.0
@@ -34,7 +34,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
-	github.com/ua-parser/uap-go v0.0.0-20241012191800-bbb40edc15aa
+	github.com/ua-parser/uap-go v0.0.0-20250126222208-a52596c19dff
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.34.0
 )
@@ -53,7 +53,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/goccy/go-json v0.10.4 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -81,8 +81,8 @@ require (
 	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
-	google.golang.org/protobuf v1.36.3 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287 // indirect
+	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
