@@ -7,9 +7,44 @@ import { Pagination } from 'UI';
 import Event from './data/Event';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from "./EventDetailsModal";
+import { useQuery } from '@tanstack/react-query';
+
+const limit = 100;
+
+const fetcher = async (page: number): Promise<{ list: any[], total: number }> => {
+  const total = 3000;
+  return new Promise((resolve) => {
+    const testEv = new Event({
+      name: 'test ev',
+      time: Date.now(),
+      defaultFields: { userId: '123', userCity: 'NY', userEnvironment: 'Mac OS' },
+      customFields: {},
+      isAutoCapture: false,
+      sessionId: '123123'
+    });
+    const testAutoEv = new Event({
+      name: 'auto test ev',
+      time: Date.now(),
+      defaultFields: { userId: '123', userCity: 'NY', userEnvironment: 'Mac OS' },
+      customFields: {},
+      isAutoCapture: true,
+      sessionId: '123123'
+    });
+    const list = [testEv.toData(), testAutoEv.toData()];
+
+    resolve({ list, total });
+  })
+}
 
 function ActivityPage() {
+  const [page, setPage] = React.useState(1);
   const [hiddenCols, setHiddenCols] = React.useState([]);
+  const { data, isPending } = useQuery({
+    queryKey: ['data', 'events', page],
+    queryFn: () => fetcher(page),
+    initialData: { list: [], total: 0 },
+  });
+  const { list, total } = data;
   const appliedFilter = { filters: [] };
   const onAddFilter = () => {};
   const onUpdateFilter = () => {};
@@ -92,28 +127,12 @@ function ActivityPage() {
     hidden: hiddenCols.includes(col.key),
   }));
 
-  const page = 1;
-  const limit = 100;
-  const total = 3000;
-  const testEv = new Event(
-    'test ev',
-    Date.now(),
-    { userId: '123', userCity: 'NY', userEnvironment: 'Mac OS' },
-    {},
-    false
-  );
-  const testAutoEv = new Event(
-    'test auto ev',
-    Date.now(),
-    { userId: '123', userCity: 'NY', userEnvironment: 'Mac OS' },
-    {},
-    true
-  );
-  const list = [testEv.toData(), testAutoEv.toData()];
-  const onPageChange = () => {};
+  const onPageChange = (page: number) => {
+    setPage(page);
+  };
 
   const onItemClick = (ev: Event) => {
-    showModal(<EventDetailsModal ev={ev} onClose={hideModal} />, { width: 400, right: true });
+    showModal(<EventDetailsModal ev={ev} onClose={hideModal} />, { width: 420, right: true });
   }
   return (
     <div
@@ -161,6 +180,7 @@ function ActivityPage() {
           All users activity
         </div>
         <Table
+          loading={isPending}
           onRow={(record, index) => ({
             onClick: (event) => onItemClick(record)
           })}

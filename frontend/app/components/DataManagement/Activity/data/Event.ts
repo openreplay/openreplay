@@ -22,14 +22,31 @@ export default class Event {
   }
   customFields?: Record<string,any> = undefined;
 
-  readonly $_isAutoCapture;
+  readonly $_isAutoCapture: boolean;
+  readonly $_sessionId: string;
 
-  constructor(name: string, time: string, defaultFields: DefaultFields, customFields?: Record<string, any>, isAutoCapture = false) {
+  constructor(
+    {
+      name,
+      time,
+      defaultFields,
+      customFields,
+      sessionId,
+      isAutoCapture,
+}: {
+      name: string;
+      time: string;
+      defaultFields: DefaultFields;
+      customFields?: Record<string, any>;
+      sessionId: string;
+      isAutoCapture: boolean;
+    }) {
     this.name = name;
     this.time = time;
     this.defaultFields = defaultFields;
     this.customFields = customFields;
     this.$_isAutoCapture = isAutoCapture;
+    this.$_sessionId = sessionId;
   }
 
   toJSON() {
