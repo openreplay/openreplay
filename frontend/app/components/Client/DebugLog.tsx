@@ -17,8 +17,7 @@ function DebugLog() {
 
   const onChange = (checked: boolean) => {
     setShowLogs(checked)
-    options.verbose = checked
-    localStorage.setItem(KEY, JSON.stringify(options))
+    options.logStuff(checked)
   }
   return (
     <div>
