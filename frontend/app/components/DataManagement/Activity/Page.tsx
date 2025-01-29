@@ -10,6 +10,7 @@ import Event from './data/Event';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
 import { useQuery } from '@tanstack/react-query';
+import Select from 'Shared/Select';
 
 const limit = 100;
 
@@ -226,8 +227,32 @@ function ActivityPage() {
             'bg-white rounded-xl shadow border flex flex-col overflow-hidden'
           }
         >
-          <div className={'px-4 py-2 font-semibold text-lg'}>
-            All users activity
+          <div className={'px-4 py-2 flex items-center gap-2'}>
+            <div className={'font-semibold text-lg'}>All users activity</div>
+            <div className={'ml-auto'} />
+            <Select
+              options={[
+                { label: 'Past 24 Hours', value: 'DESC' },
+                { label: 'Weekly', value: 'ASC' },
+                { label: 'Other', value: 'Stuff' }
+              ]}
+              defaultValue={'DESC'}
+              plain
+              onChange={({ value }) => {
+                console.log(value)
+              }}
+            />
+            <Select
+              options={[
+                { label: 'Newest', value: 'DESC' },
+                { label: 'Oldest', value: 'ASC' }
+              ]}
+              defaultValue={'DESC'}
+              plain
+              onChange={({ value }) => {
+                console.log(value)
+              }}
+            />
           </div>
           <Table
             loading={isPending}
