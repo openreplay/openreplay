@@ -198,6 +198,7 @@ const REQUIRED_SITE_ID_ROUTES = [
   highlights(),
 
   kai(),
+  dataManagement.activity(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));
