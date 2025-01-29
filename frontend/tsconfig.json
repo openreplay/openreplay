@@ -2,7 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "alwaysStrict": true,
     "strictNullChecks": true,
     "skipLibCheck": true,

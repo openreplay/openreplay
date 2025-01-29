@@ -53,7 +53,6 @@ export const setQueryParams = (location: Location, params: Record<string, any>):
 };
 
 export const login = (): string => '/login';
-export const spotLogin = (): string => '/spot-login';
 export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
@@ -196,6 +195,8 @@ const REQUIRED_SITE_ID_ROUTES = [
   usabilityTestingView(''),
 
   highlights(),
+
+  dataManagement.activity(),
 ];
 const routeNeedsSiteId = (path: string): boolean => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId'): string => {
