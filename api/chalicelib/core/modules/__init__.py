@@ -3,4 +3,4 @@ MOB_KEY = ""
 
 
 def get_file_key(project_id, session_id):
-    pass
+    return {}
