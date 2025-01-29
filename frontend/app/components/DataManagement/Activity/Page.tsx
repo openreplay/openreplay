@@ -121,7 +121,7 @@ function ActivityPage() {
       dataIndex: 'userCity',
       key: 'userCity',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userCiry.localeCompare(b.userCity),
+      sorter: (a, b) => a.userCity.localeCompare(b.userCity),
     },
     {
       title: 'Environment',
