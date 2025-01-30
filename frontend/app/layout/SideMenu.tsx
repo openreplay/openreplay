@@ -153,6 +153,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
+    [MENU.USERS_EVENTS]: () => withSiteId(routes.dataManagement.usersEvents(), siteId),
   };
 
   const handleClick = (item: any) => {

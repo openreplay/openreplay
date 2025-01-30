@@ -12,6 +12,11 @@ export function getDateFromString(
   return DateTime.fromISO(date).toFormat(format);
 }
 
+export const formatTs = (ts: number, format: string): string => {
+  return DateTime.fromMillis(ts).toFormat(format);
+}
+
+
 /**
  * Formats a given duration.
  *
@@ -188,6 +193,9 @@ export const checkForRecent = (date: DateTime, format: string): string => {
   // Formatted
   return date.toFormat(format);
 };
+export const tsToCheckRecent = (ts: number, format: string): string => {
+  return checkForRecent(DateTime.fromMillis(ts), format);
+}
 export const resentOrDate = (ts, short?: boolean) => {
   const date = DateTime.fromMillis(ts);
   const d = new Date();

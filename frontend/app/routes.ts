@@ -161,6 +161,8 @@ export const highlights = (): string => '/highlights';
 export const kai = (): string => '/kai';
 export const dataManagement = {
   activity: () => '/data-management/activity',
+  userPage: (id = ':userId', hash?: string | number) => hashed(`/data-management/user/${id}`, hash),
+  usersEvents: () => '/data-management/users-and-events',
 }
 
 const REQUIRED_SITE_ID_ROUTES = [
@@ -199,6 +201,8 @@ const REQUIRED_SITE_ID_ROUTES = [
 
   kai(),
   dataManagement.activity(),
+  dataManagement.userPage(''),
+  dataManagement.usersEvents(),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));
