@@ -14,6 +14,10 @@ export interface EventData {
 
 export default class Event {
   name: string;
+  displayName: string;
+  description: string;
+  monthVolume: number;
+  monthQuery: number;
   time: number;
   defaultFields: DefaultFields = {
     userId: '',
@@ -33,6 +37,10 @@ export default class Event {
       customFields,
       sessionId,
       isAutoCapture,
+      displayName,
+      description,
+      monthVolume,
+      monthQuery,
 }: {
       name: string;
       time: number;
@@ -40,6 +48,10 @@ export default class Event {
       customFields?: Record<string, any>;
       sessionId: string;
       isAutoCapture: boolean;
+      displayName: string;
+      description: string;
+      monthVolume: number;
+      monthQuery: number;
     }) {
     this.name = name;
     this.time = time;
@@ -47,6 +59,10 @@ export default class Event {
     this.customFields = customFields;
     this.$_isAutoCapture = isAutoCapture;
     this.$_sessionId = sessionId;
+    this.displayName = displayName;
+    this.description = description;
+    this.monthVolume = monthVolume;
+    this.monthQuery = monthQuery;
   }
 
   toJSON() {
@@ -61,6 +77,10 @@ export default class Event {
       $_isAutoCapture: this.$_isAutoCapture,
       $_defaultFields: this.defaultFields,
       $_customFields: this.customFields,
+      displayName: this.displayName,
+      description: this.description,
+      monthVolume: this.monthVolume,
+      monthQuery: this.monthQuery,
     }
     Object.entries(this.defaultFields).forEach(([key, value]) => {
       obj[key] = value;
