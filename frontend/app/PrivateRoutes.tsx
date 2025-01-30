@@ -38,6 +38,8 @@ const components: any = {
   ScopeSetup: lazy(() => import('Components/ScopeForm')),
   HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   ActivityPure: lazy(() => import('Components/DataManagement/Activity/Page')),
+  UserPage: lazy(() => import('Components/DataManagement/UsersEvents/UserPage')),
+  UsersEventsPage: lazy(() => import('Components/DataManagement/UsersEvents/ListPage')),
 };
 
 const enhancedComponents: any = {
@@ -62,6 +64,8 @@ const enhancedComponents: any = {
   ScopeSetup: components.ScopeSetup,
   Highlights: components.HighlightsPure,
   Activity: components.ActivityPure,
+  UserPage: components.UserPage,
+  UsersEventsPage: components.UsersEventsPage,
 };
 
 const withSiteId = routes.withSiteId;
@@ -112,7 +116,9 @@ const SCOPE_SETUP = routes.scopeSetup();
 const HIGHLIGHTS_PATH = routes.highlights();
 
 const DATA_MANAGEMENT = {
-  ACTIVITY: routes.dataManagement.activity()
+  ACTIVITY: routes.dataManagement.activity(),
+  USER_PAGE: routes.dataManagement.userPage(),
+  USERS_EVENTS: routes.dataManagement.usersEvents(),
 }
 
 function PrivateRoutes() {
@@ -301,6 +307,18 @@ function PrivateRoutes() {
           strict
           path={withSiteId(DATA_MANAGEMENT.ACTIVITY, siteIdList)}
           component={enhancedComponents.Activity}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(DATA_MANAGEMENT.USER_PAGE, siteIdList)}
+          component={enhancedComponents.UserPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(DATA_MANAGEMENT.USERS_EVENTS, siteIdList)}
+          component={enhancedComponents.UsersEventsPage}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />

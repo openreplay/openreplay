@@ -54,6 +54,8 @@ export const enum MENU {
   EXIT = 'exit',
   SPOTS = 'spots',
   ACTIVITY = 'activity',
+  USER_PAGE = 'user-page',
+  USERS_EVENTS = 'users-events',
 }
 
 export const categories: Category[] = [
@@ -104,7 +106,7 @@ export const categories: Category[] = [
   {
     title: 'Data Management',
     key: 'data-management',
-    items: [{ label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' }],
+    items: [{ label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' }, { label: 'Users and Events', key: MENU.USERS_EVENTS, icon: 'square-mouse-pointer' }],
   },
   {
     title: 'Product Optimization',

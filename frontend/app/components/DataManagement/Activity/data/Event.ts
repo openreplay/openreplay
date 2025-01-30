@@ -6,7 +6,7 @@ interface DefaultFields {
 
 export interface EventData {
   name: string;
-  time: string;
+  time: number;
   $_isAutoCapture: boolean;
   $_defaultFields: DefaultFields;
   $_customFields?: Record<string, any>;
@@ -14,10 +14,10 @@ export interface EventData {
 
 export default class Event {
   name: string;
-  time: string;
+  time: number;
   defaultFields: DefaultFields = {
     userId: '',
-    userCity: '',
+    userLocation: '',
     userEnvironment: '',
   }
   customFields?: Record<string,any> = undefined;
@@ -35,7 +35,7 @@ export default class Event {
       isAutoCapture,
 }: {
       name: string;
-      time: string;
+      time: number;
       defaultFields: DefaultFields;
       customFields?: Record<string, any>;
       sessionId: string;
