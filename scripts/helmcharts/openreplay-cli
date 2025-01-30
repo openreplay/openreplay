@@ -374,7 +374,7 @@ function version_specific_checks() {
     if [ "$version" -le 1220 ]; then
         log info "Version less than 1.22.0"
         log info "Checking clickhouse"
-        if ! kubectl get pods -n ${DB_NS} -l app.kubernetes.io/name=clickhouse; then
+        if [ -z "$(kubectl get pods -n db -l app.kubernetes.io/name=clickhouse --no-headers 2>/dev/null)" ]; then
             log info "Installing clickhouse"
             kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/master/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
         fi
