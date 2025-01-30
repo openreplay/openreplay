@@ -1,0 +1,173 @@
+---
+# Source: databases/charts/clickhouse/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: db-clickhouse
+  labels:
+    helm.sh/chart: clickhouse-0.1.0
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: databases/charts/clickhouse/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-openreplay-clickhouse
+  labels:
+    helm.sh/chart: clickhouse-0.1.0
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: web
+      protocol: TCP
+      name: web
+    - port: 8123
+      targetPort: data
+      protocol: TCP
+      name: data
+    - port: 7171
+      targetPort: backup-web
+      protocol: TCP
+      name: backup-web
+  selector:
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/instance: db
+---
+# Source: databases/charts/clickhouse/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db-clickhouse
+  labels:
+    helm.sh/chart: clickhouse-0.1.0
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  serviceName: db-clickhouse
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clickhouse
+      app.kubernetes.io/instance: db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: clickhouse
+        app.kubernetes.io/instance: db
+    spec:
+      serviceAccountName: db-clickhouse
+      securityContext:
+        {}
+      containers:
+        - name: clickhouse-backup
+          env:
+          - name: CLICKHOUSE_USER
+            value: "default"
+          - name: CLICKHOUSE_PASSWORD
+            value: ""
+          - name: "API_LISTEN"
+            value: "0.0.0.0:7171"
+          - name: "BACKUPS_TO_KEEP_LOCAL"
+            value: "1"
+          - name: "CLICKHOUSE_HOST"
+            value: "localhost"
+          - name: "CLICKHOUSE_PORT"
+            value: "9000"
+          securityContext:
+            {}
+          image: "alexakulov/clickhouse-backup:latest"
+          imagePullPolicy: IfNotPresent
+          args:
+            - server
+          ports:
+          - containerPort: 7171
+            name: backup-web
+          volumeMounts:
+          - name: default-chi-openreplay-clickhouse-replicated-0-0-0 
+            mountPath: /var/lib/clickhouse
+        - name: clickhouse
+          env:
+          - name: CLICKHOUSE_USER
+            value: "default"
+          - name: CLICKHOUSE_PASSWORD
+            value: ""
+          - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+            value: "1"
+          securityContext:
+            {}
+          image: "clickhouse/clickhouse-server:24.9-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 9000
+            name: web
+          - containerPort: 8123
+            name: data
+          volumeMounts:
+          - name: default-chi-openreplay-clickhouse-replicated-0-0-0 
+            mountPath: /var/lib/clickhouse
+          resources:
+            limits: {}
+            requests:
+              cpu: 1
+              memory: 4Gi
+  volumeClaimTemplates:
+  - metadata:
+      name: default-chi-openreplay-clickhouse-replicated-0-0-0
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 100Gi
+---
+# Source: databases/charts/clickhouse/templates/cron.yaml
+# https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clickhouse-backup
+  namespace: db
+  labels:
+    helm.sh/chart: clickhouse-0.1.0
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/instance: db
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  schedule: "5 11 * * */4"
+  jobTemplate:
+    spec:
+      backoffLimit: 0 # Don't restart the failed jobs
+      template:
+        spec:
+          containers:
+          - name: clickhouse-backup
+            image: alpine/curl
+            command:
+              - /bin/sh
+              - -c
+            args:
+              - |
+                set -x
+                BACKUP_NAME=openreplay_clickhouse_backup$(date -u +%Y-%m-%dT%H-%M-%S)
+                curl -XPOST http://clickhouse-openreplay-clickhouse:7171/backup/create?name=$BACKUP_NAME
+                sleep 10
+                # Upload backup
+                # curl -XPOST http://clickhouse-openreplay-clickhouse:7171/backup/upload/$BACKUP_NAME
+
+                # Get the backup status
+                echo "Backup Status:"
+                curl http://clickhouse-openreplay-clickhouse:7171/backup/status?name=$BACKUP_NAME
+                # List active backups
+                echo "Active backup in machine"
+                curl http://clickhouse-openreplay-clickhouse:7171/backup/list
+          restartPolicy: Never
