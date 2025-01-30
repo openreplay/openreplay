@@ -372,9 +372,10 @@ function version_specific_checks() {
     version=$(sem_to_int "$1")
     # check version specific instructions
     if [ "$version" -le 1220 ]; then
-        echo "${GREEN}[info] Version less than 1.22.0${NC}"
-        echo "${GREEN}[info] Checking clickhouse${NC}"
+        log info "Version less than 1.22.0"
+        log info "Checking clickhouse"
         if ! kubectl get pods -n ${DB_NS} -l app.kubernetes.io/name=clickhouse; then
+            log info "Installing clickhouse"
             kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/master/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
         fi
     fi
