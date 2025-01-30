@@ -218,6 +218,7 @@ function WidgetChart(props: Props) {
     drillDownPeriod,
     period,
     depsString,
+    metric.hideExcess,
     dashboardStore.selectedDensity,
     _metric.metricType,
     _metric.metricOf,
@@ -512,11 +513,11 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      const usedData = _metric.hideExcess ? filterMinorPaths(data) : data;
+      // const usedData = _metric.hideExcess ? filterMinorPaths(data) : data;
       return (
         <SankeyChart
           height={props.isPreview ? 500 : 240}
-          data={usedData}
+          data={data}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}
