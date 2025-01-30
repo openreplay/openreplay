@@ -29,6 +29,10 @@ const testEv = new Event({
   customFields: {},
   isAutoCapture: false,
   sessionId: '123123',
+  displayName: 'Test Event',
+  description: 'This is A test Event',
+  monthQuery: 100,
+  monthVolume: 1000,
 });
 const testAutoEv = new Event({
   name: 'auto test ev',
@@ -41,6 +45,10 @@ const testAutoEv = new Event({
   customFields: {},
   isAutoCapture: true,
   sessionId: '123123',
+  displayName: 'Test Auto Event',
+  description: 'This is A test Auto Event',
+  monthQuery: 100,
+  monthVolume: 1000,
 });
 export const list = [testEv.toData(), testAutoEv.toData()];
 
