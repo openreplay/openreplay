@@ -369,9 +369,9 @@ function sem_to_int() {
 
 function version_specific_checks() {
     # TODO: Add support for check till a specific version
-    version=sem_to_int "$1"
+    version=$(sem_to_int "$1")
     # check version specific instructions
-    if version -le 1220; then
+    if [ "$version" -le 1220 ]; then
         echo "${GREEN}[info] Version less than 1.22.0${NC}"
         echo "${GREEN}[info] Checking clickhouse${NC}"
         if ! kubectl get pods -n ${DB_NS} -l app.kubernetes.io/name=clickhouse; then
@@ -396,7 +396,7 @@ function upgrade() {
         "
     command -v git >/dev/null 2>&1 || log err "Git not found. Please install"
 
-    or_version=yq eval '.fromVersion' /var/lib/openreplay/vars.yaml
+    or_version="$(yq eval '.fromVersion' /var/lib/openreplay/vars.yaml)"
 
     # If release upgrade, then check for version specific instructions
     [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
