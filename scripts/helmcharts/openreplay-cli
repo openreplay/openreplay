@@ -362,6 +362,24 @@ function cleanup() {
     return
 }
 
+# Convert semantic version to integer
+function sem_to_int() {
+    echo "$1" | awk -F'[v.]' '{print $2 $3 $4 + 0}'
+}
+
+function version_specific_checks() {
+    version=sem_to_int "$1"
+    # check version specific instructions
+    if version -le 1220; then
+        echo "${GREEN}[info] Version less than 1.22.0${NC}"
+        echo "${GREEN}[info] Checking clickhouse${NC}"
+        if ! kubectl get pods -n ${DB_NS} -l app.kubernetes.io/name=clickhouse; then
+            kubectl apply -f https://github.com/openreplay/openreplay/raw/refs/heads/master/scripts/helmcharts/manifests/clickhouse-db.yaml -n db
+        fi
+    fi
+    return
+}
+
 function upgrade() {
     # TODO:
     # 1. store vars.yaml in central place.
@@ -369,18 +387,18 @@ function upgrade() {
     # 3. How to update package. Because openreplay -u will be done from old update script
     # 4. Update from Version
 
-    command -v git >/dev/null 2>&1 || log err "Git not found. Please install"
     [[ -f ${OR_DIR}/vars.yaml ]] || log err "No configuration file ${BWHITE}${OR_DIR}/vars.yaml${RED}.
         If you're updating from version older than ${BWHITE}v1.10.0${RED}, for example ${BWHITE}v1.9.0${RED}:
           ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade ~/openreplay_v1.9.0/scripts/helmcharts/vars.yaml${RED}.
         If you're having a custom installation,
           ${BWHITE}RELEASE_UPGRADE=1 openreplay --deprecated-upgrade /path/to/vars.yaml${RED}.
         "
-    or_version=$(busybox awk '/fromVersion/{print $2}' <"${OR_DIR}/vars.yaml") || {
-        log err "${BWHITE}${OR_DIR}/vars.yaml${RED} not found. 
-        Please do ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}"
-    }
+    command -v git >/dev/null 2>&1 || log err "Git not found. Please install"
 
+    or_version=yq eval '.fromVersion' /var/lib/openreplay/vars.yaml
+
+    # If release upgrade, then check for version specific instructions
+    [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
     # Unless it's upgrade release, always checkout same tag.
     [[ $RELEASE_UPGRADE -eq 1 ]] || OR_VERSION=${OR_VERSION:-$or_version}
 
