@@ -345,7 +345,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     top_query = []
     top_with_next_query = []
     other_query = []
-    for i in range(1, data.density + (0 if data.hide_excess else 1)):
+    for i in range(1, data.density + (1 if data.hide_excess else 0)):
         steps_query.append(f"""n{i} AS (SELECT event_number_in_session,
                                                `$event_name`,
                                                e_value,
@@ -356,7 +356,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                         WHERE event_number_in_session = {i}
                                         GROUP BY event_number_in_session, `$event_name`, e_value, next_type, next_value
                                         ORDER BY sessions_count DESC)""")
-        if data.hide_excess:
+        if not data.hide_excess:
             projection_query.append(f"""\
                                     SELECT event_number_in_session,
                                            `$event_name`,
@@ -386,7 +386,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                                  sessions_count
                                           FROM n{i}
                                           WHERE isNull(n{i}.next_type)""")
-            if not data.hide_excess:
+            if data.hide_excess:
                 top_with_next_query.append(f"""\
                                     SELECT n{i}.*
                                            FROM n{i} 
@@ -395,7 +395,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                                                       AND n{i}.`$event_name` = top_n.`$event_name`
                                                       AND n{i}.e_value = top_n.e_value)""")
 
-        if i > 1 and not data.hide_excess:
+        if i > 1 and data.hide_excess:
             other_query.append(f"""SELECT n{i}.*
                                    FROM n{i}
                                    WHERE (event_number_in_session, `$event_name`, e_value) NOT IN
@@ -463,7 +463,7 @@ FROM ranked_events
         _now = time()
 
         sub_cte = ""
-        if not data.hide_excess:
+        if data.hide_excess:
             sub_cte = f""",
     top_n AS ({"\nUNION ALL\n".join(top_query)}),
     top_n_with_next AS ({"\nUNION ALL\n".join(top_with_next_query)}),
