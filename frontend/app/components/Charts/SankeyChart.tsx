@@ -163,15 +163,44 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     chart.on('click', function (params) {
       if (!onChartClick) return;
-
       if (params.dataType === 'node') {
-        const nodeIndex = params.dataIndex;
-        const node = data.nodes[nodeIndex];
-        onChartClick([{ node }]);
+        const node: any = params.data;
+        const filters = []
+        if (node.type) {
+          filters.push({
+            operator: 'is',
+            type: 'location',
+            value: [node.name],
+            isEvent: true,
+          });
+        }
+        onChartClick?.(filters);
       } else if (params.dataType === 'edge') {
         const linkIndex = params.dataIndex;
         const link = data.links[linkIndex];
-        onChartClick([{ link }]);
+        const firstNode = data.nodes.find(n => n.id === link.source)
+        const lastNode = data.nodes.find(n => n.id === link.target)
+
+        const filters = [];
+        if (firstNode) {
+          filters.push({
+            operator: 'is',
+            type: firstNode.eventType?.toLowerCase() ?? 'location',
+            value: [firstNode.name],
+            isEvent: true
+          });
+        }
+
+        if (lastNode) {
+          filters.push({
+            operator: 'is',
+            type: lastNode.eventType?.toLowerCase() ?? 'location',
+            value: [lastNode.name],
+            isEvent: true
+          });
+        }
+
+        onChartClick?.(filters);
       }
     });
 
