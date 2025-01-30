@@ -36,8 +36,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
     start_points_conditions = []
     step_0_conditions = []
     step_1_post_conditions = ["event_number_in_session <= %(density)s"]
-    q2_extra_col = ""
-    q2_extra_condition = ""
+    q2_extra_col = None
+    q2_extra_condition = None
     if len(data.metric_value) == 0:
         data.metric_value.append(schemas.ProductAnalyticsSelectedEventType.LOCATION)
         sub_events.append({"column": JOURNEY_TYPES[schemas.ProductAnalyticsSelectedEventType.LOCATION]["column"],
@@ -53,7 +53,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                         f"(`$event_name`='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session = 1 \
                             OR `$event_name`!='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session > 1)")
                     extra_metric_values.append(s.type)
-                    if q2_extra_col == "":
+                    if not q2_extra_col:
                         # This is used in case start event has different type of the visible event,
                         # because it causes intermediary events to be removed, so you find a jump from step-0 to step-3
                         # because step-2 is not of a visible event
@@ -449,11 +449,11 @@ WITH pre_ranked_events AS (SELECT *
                               leadInFrame(toNullable(`$event_name`))
                                           OVER (PARTITION BY session_id ORDER BY created_at {path_direction}
                                             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS next_type
-                              {q2_extra_col%path_direction}
+                              {q2_extra_col % path_direction if q2_extra_col else ""}
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
 FROM ranked_events
-{q2_extra_condition}"""
+{q2_extra_condition if q2_extra_condition else ""}"""
         logger.debug("---------Q2-----------")
         ch.execute(query=ch_query2, parameters=params)
         if time() - _now > 2:
@@ -557,7 +557,12 @@ FROM ranked_events
                     {",\n".join(steps_query)},
                     drop_n AS ({"\nUNION ALL\n".join(drop_query)})
                     {sub_cte}
-                SELECT *
+                SELECT event_number_in_session,
+                       `$event_name` AS event_type,
+                       e_value,
+                       next_type,
+                       next_value,
+                       sessions_count
                 FROM (
                 {projection_query}
                 ) AS chart_steps

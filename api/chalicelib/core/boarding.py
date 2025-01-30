@@ -21,7 +21,7 @@ def get_state(tenant_id):
             recorded = cur.fetchone()["exists"]
             meta = False
             if recorded:
-                query = cur.mogrify("""SELECT EXISTS((SELECT 1
+                query = cur.mogrify(f"""SELECT EXISTS((SELECT 1
                                FROM public.projects AS p
                                         LEFT JOIN LATERAL ( SELECT 1
                                                             FROM public.sessions
