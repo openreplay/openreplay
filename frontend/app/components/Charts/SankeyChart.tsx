@@ -163,13 +163,18 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     chart.on('click', function (params) {
       if (!onChartClick) return;
+      const unsupported = ['other', 'drop']
       if (params.dataType === 'node') {
         const node: any = params.data;
         const filters = []
         if (node.type) {
+          const type = node.type.toLowerCase();
+          if (unsupported.includes(type)) {
+            return
+          }
           filters.push({
             operator: 'is',
-            type: 'location',
+            type: type,
             value: [node.name],
             isEvent: true,
           });
@@ -181,11 +186,16 @@ const EChartsSankey: React.FC<Props> = (props) => {
         const firstNode = data.nodes.find(n => n.id === link.source)
         const lastNode = data.nodes.find(n => n.id === link.target)
 
+        const firstNodeType = firstNode?.eventType?.toLowerCase() ?? 'location';
+        const lastNodeType = lastNode?.eventType?.toLowerCase() ?? 'location';
+        if (unsupported.includes(firstNodeType) || unsupported.includes(lastNodeType)) {
+          return
+        }
         const filters = [];
         if (firstNode) {
           filters.push({
             operator: 'is',
-            type: firstNode.eventType?.toLowerCase() ?? 'location',
+            type: firstNodeType,
             value: [firstNode.name],
             isEvent: true
           });
@@ -194,7 +204,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
         if (lastNode) {
           filters.push({
             operator: 'is',
-            type: lastNode.eventType?.toLowerCase() ?? 'location',
+            type: lastNodeType,
             value: [lastNode.name],
             isEvent: true
           });
