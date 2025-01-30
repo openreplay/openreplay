@@ -537,6 +537,13 @@ class RequestGraphqlFilterSchema(BaseModel):
     value: List[Union[int, str]] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _transform_data(cls, values):
+        if values.get("type") in [FetchFilterType.FETCH_DURATION, FetchFilterType.FETCH_STATUS_CODE]:
+            values["value"] = [int(v) for v in values["value"] if v is not None and v.isnumeric()]
+        return values
+
 
 class SessionSearchEventSchema2(BaseModel):
     is_event: Literal[True] = True
