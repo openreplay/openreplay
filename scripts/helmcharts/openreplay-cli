@@ -396,7 +396,7 @@ function upgrade() {
         "
     command -v git >/dev/null 2>&1 || log err "Git not found. Please install"
 
-    or_version=yq eval '.fromVersion' /var/lib/openreplay/vars.yaml
+    or_version=$(yq eval '.fromVersion' /var/lib/openreplay/vars.yaml)
 
     # If release upgrade, then check for version specific instructions
     [[ $RELEASE_UPGRADE -eq 1 ]] && version_specific_checks "$or_version"
