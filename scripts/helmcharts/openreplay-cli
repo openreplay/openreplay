@@ -368,6 +368,7 @@ function sem_to_int() {
 }
 
 function version_specific_checks() {
+    # TODO: Add support for check till a specific version
     version=sem_to_int "$1"
     # check version specific instructions
     if version -le 1220; then
