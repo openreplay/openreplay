@@ -3,14 +3,14 @@ import { numberWithCommas } from 'App/utils';
 import FilterSelection from "Shared/Filters/FilterSelection/FilterSelection";
 import User from './data/User';
 import { Pagination } from 'UI';
-import { Segmented, Input, Table, Button, Dropdown, Tabs } from 'antd';
+import { Segmented, Input, Table, Button, Dropdown, Tabs, TabsProps } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
-import { TabsProps } from ".store/antd-virtual-7db13b4af6/package";
 import { useHistory } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from "App/routes";
-import { Filter } from "lucide-react";
+import { Filter, Album } from "lucide-react";
+import { list } from '../Activity/Page'
 
 const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
   <DefaultTabBar {...props} className="!mb-0" />
@@ -48,13 +48,54 @@ function ListPage() {
           renderTabBar={customTabBar}
         />
         <div className="flex items-center gap-2">
-          <Button type={'text'}>Docs</Button>
-          <Input.Search placeholder={'Name, email, ID'} />
+          <Button type={'text'} icon={<Album size={14} />}>Docs</Button>
+          <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
-      {view === 'users' ? <UsersList toUser={toUser} /> : null}
+      {view === 'users' ? <UsersList toUser={toUser} /> : <EventsList />}
     </div>
   );
+}
+
+function EventsList() {
+  const columns = [
+    {
+      title: 'Event Name',
+      dataIndex: 'name',
+      key: 'name',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => a.name.localeCompare(b.name),
+    },
+    {
+      title: 'Display Name',
+      dataIndex: 'displayName',
+      key: 'displayName',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => a.displayName.localeCompare(b.displayName),
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => a.description.localeCompare(b.description),
+    },
+    {
+      title: '30 Day Volume',
+      dataIndex: 'monthVolume',
+      key: 'monthVolume',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
+    },
+    {
+      title: '30 Day Query',
+      dataIndex: 'monthQuery',
+      key: 'monthQuery',
+      showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => a.monthQuery.localeCompare(b.monthQuery),
+    },
+  ]
+  return <Table columns={columns} dataSource={list} pagination={false} />;
 }
 
 function UsersList({ toUser }: { toUser: (id: string) => void }) {
