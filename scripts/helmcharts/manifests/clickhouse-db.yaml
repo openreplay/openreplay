@@ -118,8 +118,8 @@ spec:
           resources:
             limits: {}
             requests:
-              cpu: 1
-              memory: 4Gi
+              cpu: 100m
+              memory: 250Mi
   volumeClaimTemplates:
   - metadata:
       name: default-chi-openreplay-clickhouse-replicated-0-0-0
