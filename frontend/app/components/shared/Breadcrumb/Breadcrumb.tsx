@@ -1,6 +1,9 @@
 import React from 'react';
 import { Icon } from 'UI';
 import { Link } from 'react-router-dom';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
+import { withSiteId } from "App/routes";
 
 interface Props {
   items: any;
@@ -8,6 +11,9 @@ interface Props {
 
 function Breadcrumb(props: Props) {
   const { items } = props;
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
+
   return (
     <div className="mb-3 flex items-center flex-wrap text-lg">
       {items.map((item: any, index: any) => {
@@ -32,11 +38,8 @@ function Breadcrumb(props: Props) {
           );
         }
         return (
-          <div
-            key={index}
-            className="color-gray-darkest hover:text-teal group flex items-center"
-          >
-            <Link to={item.to} className="flex items-center default-hover">
+          <div key={index} className="color-gray-darkest hover:text-teal group flex items-center">
+            <Link to={item.withSiteId ? withSiteId(item.to, siteId) : item.to} className="flex items-center default-hover">
               {index === 0 && (
                 <Icon
                   name="chevron-left"
@@ -54,4 +57,4 @@ function Breadcrumb(props: Props) {
   );
 }
 
-export default Breadcrumb;
+export default observer(Breadcrumb);

@@ -60,7 +60,7 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
   return (
     <div className={'h-screen w-full flex flex-col gap-4 p-4'}>
       <div className={'flex justify-between items-center'}>
-        <div className={'font-semibold text-lg'}>Event</div>
+        <div className={'font-semibold text-xl'}>Event</div>
         <div className={'p-2 cursor-pointer'} onClick={onClose}>
           <X size={16} />
         </div>
@@ -112,7 +112,7 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
   );
 }
 
-function Triangle({ size = 16, color = 'currentColor' }) {
+export function Triangle({ size = 16, color = 'currentColor' }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

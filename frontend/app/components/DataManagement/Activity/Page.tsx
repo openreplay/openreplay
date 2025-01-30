@@ -11,45 +11,52 @@ import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import Select from 'Shared/Select';
+import { Link } from 'react-router-dom';
+import { dataManagement, withSiteId } from 'App/routes'
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const limit = 100;
+
+const testEv = new Event({
+  name: 'test ev #',
+  time: Date.now(),
+  defaultFields: {
+    userId: '123',
+    userLocation: 'NY',
+    userEnvironment: 'Mac OS',
+  },
+  customFields: {},
+  isAutoCapture: false,
+  sessionId: '123123',
+});
+const testAutoEv = new Event({
+  name: 'auto test ev',
+  time: Date.now(),
+  defaultFields: {
+    userId: '123',
+    userLocation: 'NY',
+    userEnvironment: 'Mac OS',
+  },
+  customFields: {},
+  isAutoCapture: true,
+  sessionId: '123123',
+});
+export const list = [testEv.toData(), testAutoEv.toData()];
 
 const fetcher = async (
   page: number
 ): Promise<{ list: any[]; total: number }> => {
   const total = 3000;
   return new Promise((resolve) => {
-    const testEv = new Event({
-      name: 'test ev #' + page,
-      time: Date.now(),
-      defaultFields: {
-        userId: '123',
-        userCity: 'NY',
-        userEnvironment: 'Mac OS',
-      },
-      customFields: {},
-      isAutoCapture: false,
-      sessionId: '123123',
-    });
-    const testAutoEv = new Event({
-      name: 'auto test ev',
-      time: Date.now(),
-      defaultFields: {
-        userId: '123',
-        userCity: 'NY',
-        userEnvironment: 'Mac OS',
-      },
-      customFields: {},
-      isAutoCapture: true,
-      sessionId: '123123',
-    });
-    const list = [testEv.toData(), testAutoEv.toData()];
-
     resolve({ list, total });
   });
 };
 
 function ActivityPage() {
+  const { projectsStore } = useStore()
+  const siteId = projectsStore.activeSiteId;
+
   const [page, setPage] = React.useState(1);
   const [hiddenCols, setHiddenCols] = React.useState([]);
   const { data, isPending } = useQuery({
@@ -106,22 +113,23 @@ function ActivityPage() {
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.userId.localeCompare(b.userId),
       render: (text) => (
-        <div
+        <Link
+          to={withSiteId(dataManagement.userPage(text), siteId)}
           className={'link'}
           onClick={(e) => {
             e.stopPropagation();
           }}
         >
           {text}
-        </div>
+        </Link>
       ),
     },
     {
       title: 'City',
-      dataIndex: 'userCity',
-      key: 'userCity',
+      dataIndex: 'userLocation',
+      key: 'userLocation',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userCity.localeCompare(b.userCity),
+      sorter: (a, b) => a.userLocation.localeCompare(b.userLocation),
     },
     {
       title: 'Environment',
@@ -234,23 +242,23 @@ function ActivityPage() {
               options={[
                 { label: 'Past 24 Hours', value: 'DESC' },
                 { label: 'Weekly', value: 'ASC' },
-                { label: 'Other', value: 'Stuff' }
+                { label: 'Other', value: 'Stuff' },
               ]}
               defaultValue={'DESC'}
               plain
               onChange={({ value }) => {
-                console.log(value)
+                console.log(value);
               }}
             />
             <Select
               options={[
                 { label: 'Newest', value: 'DESC' },
-                { label: 'Oldest', value: 'ASC' }
+                { label: 'Oldest', value: 'ASC' },
               ]}
               defaultValue={'DESC'}
               plain
               onChange={({ value }) => {
-                console.log(value)
+                console.log(value);
               }}
             />
           </div>
@@ -289,4 +297,4 @@ function ActivityPage() {
   );
 }
 
-export default ActivityPage;
+export default observer(ActivityPage);
