@@ -3,7 +3,6 @@ import { EventsList, FilterList } from 'Shared/Filters/FilterList';
 import { Table, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { numberWithCommas } from 'App/utils';
-import { Pagination } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import Event from './data/Event';
@@ -15,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { dataManagement, withSiteId } from 'App/routes'
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import FullPagination from "Shared/FullPagination";
 
 const limit = 100;
 
@@ -280,26 +280,14 @@ function ActivityPage() {
             pagination={false}
             columns={shownCols}
           />
-          <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
-            <div>
-              {'Showing '}
-              <span className="font-medium">{(page - 1) * limit + 1}</span>
-              {' to '}
-              <span className="font-medium">
-                {(page - 1) * limit + list.length}
-              </span>
-              {' of '}
-              <span className="font-medium">{numberWithCommas(total)}</span>
-              {' events.'}
-            </div>
-            <Pagination
-              page={page}
-              total={total}
-              onPageChange={onPageChange}
-              limit={limit}
-              debounceRequest={500}
-            />
-          </div>
+          <FullPagination
+            page={page}
+            limit={limit}
+            total={total}
+            listLen={list.length}
+            onPageChange={onPageChange}
+            entity={'events'}
+          />
         </div>
       </div>
     </div>

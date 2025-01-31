@@ -1,56 +1,52 @@
 import React from 'react';
-import { numberWithCommas } from 'App/utils';
-import FilterSelection from "Shared/Filters/FilterSelection/FilterSelection";
+import FilterSelection from 'Shared/Filters/FilterSelection/FilterSelection';
 import User from './data/User';
-import { Pagination } from 'UI';
-import { Segmented, Input, Table, Button, Dropdown, Tabs, TabsProps } from 'antd';
+import { Input, Table, Button, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { withSiteId, dataManagement } from "App/routes";
-import { Filter, Album } from "lucide-react";
-import { list } from '../Activity/Page'
+import { withSiteId, dataManagement } from 'App/routes';
+import { Filter, Album } from 'lucide-react';
+import { list } from '../Activity/Page';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
-
-const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
-  <DefaultTabBar {...props} className="!mb-0" />
-);
+import FullPagination from 'Shared/FullPagination';
+import Tabs from 'Shared/Tabs'
 
 function ListPage() {
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
-  const toUser = (id: string) => history.push(withSiteId(dataManagement.userPage(id), siteId));
+  const toUser = (id: string) =>
+    history.push(withSiteId(dataManagement.userPage(id), siteId));
   const [view, setView] = React.useState('users');
 
   const views = [
     {
       key: 'users',
       label: <div className={'text-lg font-medium'}>Users</div>,
-      content: <div>placeholder</div>,
     },
     {
       key: 'events',
       label: <div className={'text-lg font-medium'}>Events</div>,
-      content: <div>placeholder</div>,
     },
   ];
   return (
-    <div className="flex flex-col gap-4 rounded-lg border bg-white mx-auto" style={{ maxWidth: 1360 }}>
-      <div className={'flex items-center justify-between border-b p-4 pt-2 '}>
+    <div
+      className="flex flex-col gap-4 rounded-lg border bg-white mx-auto"
+      style={{ maxWidth: 1360 }}
+    >
+      <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
         <Tabs
-          type={'line'}
-          defaultActiveKey={'users'}
           activeKey={view}
-          style={{ borderBottom: 'none' }}
           onChange={(key) => setView(key)}
           items={views}
-          renderTabBar={customTabBar}
         />
         <div className="flex items-center gap-2">
-          <Button type={'text'} icon={<Album size={14} />}>Docs</Button>
+          <Button type={'text'} icon={<Album size={14} />}>
+            Docs
+          </Button>
           <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
@@ -90,14 +86,30 @@ function EventsList() {
       sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
     },
     {
-      title: '30 Day Query',
+      title: '30 Day Queries',
       dataIndex: 'monthQuery',
       key: 'monthQuery',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.monthQuery.localeCompare(b.monthQuery),
     },
-  ]
-  return <Table columns={columns} dataSource={list} pagination={false} />;
+  ];
+  const page = 1;
+  const total = 100;
+  const onPageChange = (page: number) => {};
+  const limit = 10;
+  return (
+    <div>
+      <Table columns={columns} dataSource={list} pagination={false} />
+      <FullPagination
+        page={page}
+        limit={limit}
+        total={total}
+        listLen={list.length}
+        onPageChange={onPageChange}
+        entity={'events'}
+      />
+    </div>
+  );
 }
 
 function UsersList({ toUser }: { toUser: (id: string) => void }) {
@@ -147,8 +159,8 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
         email: 'sad;jsadk',
       },
       updatedAt: Date.now(),
-    })
-  ]
+    }),
+  ];
 
   const dropdownItems = [
     {
@@ -211,8 +223,8 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
   const list = [];
 
   const onAddFilter = () => console.log('add filter');
-  const excludeFilterKeys = []
-  const excludeCategory = []
+  const excludeFilterKeys = [];
+  const excludeCategory = [];
 
   const shownCols = columns.map((col) => ({
     ...col,
@@ -229,8 +241,8 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
     setEditCols(false);
   };
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 px-4">
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2 px-4 pb-2">
         {/* 1.23 -- <span>Show by</span>*/}
         {/*<Segmented*/}
         {/*  size={'small'}*/}
@@ -252,7 +264,7 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
             icon={<Filter size={16} strokeWidth={1} />}
             type="default"
             size={'small'}
-            className='btn-add-filter'
+            className="btn-add-filter"
           >
             Filters
           </Button>
@@ -269,36 +281,24 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
             />
           </OutsideClickDetectingDiv>
         ) : null}
-      <Table
-        onRow={(record) => ({
-          onClick: () => toUser(record.userId),
-        })}
-        pagination={false}
-        rowClassName={'cursor-pointer'}
-        dataSource={testUsers}
-        columns={shownCols}
-      />
-      </div>
-      <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
-        <div>
-          {'Showing '}
-          <span className="font-medium">{(page - 1) * limit + 1}</span>
-          {' to '}
-          <span className="font-medium">
-            {(page - 1) * limit + list.length}
-          </span>
-          {' of '}
-          <span className="font-medium">{numberWithCommas(total)}</span>
-          {' users.'}
-        </div>
-        <Pagination
-          page={page}
-          total={total}
-          onPageChange={onPageChange}
-          limit={limit}
-          debounceRequest={500}
+        <Table
+          onRow={(record) => ({
+            onClick: () => toUser(record.userId),
+          })}
+          pagination={false}
+          rowClassName={'cursor-pointer'}
+          dataSource={testUsers}
+          columns={shownCols}
         />
       </div>
+      <FullPagination
+        page={page}
+        limit={limit}
+        total={total}
+        listLen={list.length}
+        onPageChange={onPageChange}
+        entity={'users'}
+      />
     </div>
   );
 }
