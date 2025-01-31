@@ -4,8 +4,8 @@ import { Table, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { numberWithCommas } from 'App/utils';
 import { Pagination } from 'UI';
-import OutsideClickDetectingDiv from '../../shared/OutsideClickDetectingDiv';
-import ColumnsModal from './ColumnsModal';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import Event from './data/Event';
 import { useModal } from 'App/components/Modal';
 import EventDetailsModal from './EventDetailsModal';
@@ -164,10 +164,7 @@ function ActivityPage() {
     },
   ];
 
-  const shownCols = columns.map((col) => ({
-    ...col,
-    hidden: hiddenCols.includes(col.key),
-  }));
+
 
   const onPageChange = (page: number) => {
     setPage(page);
@@ -180,6 +177,10 @@ function ActivityPage() {
     });
   };
 
+  const shownCols = columns.map((col) => ({
+    ...col,
+    hidden: hiddenCols.includes(col.key),
+  }));
   const onUpdateVisibleCols = (cols: string[]) => {
     setHiddenCols((_) => {
       return columns
