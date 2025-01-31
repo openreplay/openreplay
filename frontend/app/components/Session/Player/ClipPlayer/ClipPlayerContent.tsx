@@ -12,6 +12,7 @@ import styles from 'Components/Session_/playerBlock.module.css';
 import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
 import { observer } from 'mobx-react-lite';
 import { Icon } from 'UI';
+import { backgroundClip } from 'html2canvas/dist/types/css/property-descriptors/background-clip';
 
 
 interface Props {
@@ -74,7 +75,7 @@ function ClipPlayerContent(props: Props) {
           </div>
         </div>
         {props.isHighlight && props.message ? (
-          <div className={'shadow-inner p-3 bg-yellow flex gap-2 w-full items-center'}>
+          <div className={'shadow-inner p-3 flex gap-2 w-full items-center'}  style={{ background: 'rgba(252, 193, 0, 0.2)' }}>
             <Icon name="chat-square-quote" color="inherit" size={18} />
             <div className={'leading-none font-medium'}>
               {props.message}

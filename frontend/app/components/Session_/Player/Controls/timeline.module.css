@@ -215,7 +215,6 @@
   }
 }
 
-
 .stripes {
   background-size: 30px 30px;
   width: 100%;
@@ -223,6 +222,14 @@
   background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.15) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0.15) 75%, transparent 75%, transparent);
   animation: animate-stripes 1.5s linear infinite;
   animation-direction: reverse;
+}
+
+.saved-highlight {
+  position: absolute;
+  height: 10px;
+  background: rgba(252, 193, 0, 0.4); 
+  z-index: 2;
+  pointer-events: none;
 }
 
 @keyframes animate-stripes {
