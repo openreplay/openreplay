@@ -1119,7 +1119,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_STATUS_CODE:
                         event_where.append(json_condition(
-                            "main", "$properties", 'status', op, f.value, e_k_f
+                            "main", "$properties", 'status', op, f.value, e_k_f, True, True
                         ))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
