@@ -6,16 +6,16 @@ name = "pypi"
 [packages]
 urllib3 = "==2.3.0"
 requests = "==2.32.3"
-boto3 = "==1.36.9"
+boto3 = "==1.36.10"
 pyjwt = "==2.10.1"
 psycopg2-binary = "==2.9.10"
-psycopg = {extras = ["binary", "pool"], version = "==3.2.4"}
+psycopg = {extras = ["pool", "binary"], version = "==3.2.4"}
 clickhouse-driver = {extras = ["lz4"], version = "==0.2.9"}
 clickhouse-connect = "==0.8.15"
 elasticsearch = "==8.17.1"
 jira = "==3.8.0"
 cachetools = "==5.5.0"
-fastapi = "==0.115.7"
+fastapi = "==0.115.8"
 uvicorn = {extras = ["standard"], version = "==0.34.0"}
 gunicorn = "==23.0.0"
 python-decouple = "==3.8"
