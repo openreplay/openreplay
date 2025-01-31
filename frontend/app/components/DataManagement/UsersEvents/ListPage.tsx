@@ -11,6 +11,8 @@ import { observer } from 'mobx-react-lite';
 import { withSiteId, dataManagement } from "App/routes";
 import { Filter, Album } from "lucide-react";
 import { list } from '../Activity/Page'
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 
 const customTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
   <DefaultTabBar {...props} className="!mb-0" />
@@ -36,8 +38,8 @@ function ListPage() {
     },
   ];
   return (
-    <div className="flex flex-col gap-4 p-4 pt-2 rounded-lg border bg-white">
-      <div className={'flex items-center justify-between border-b'}>
+    <div className="flex flex-col gap-4 rounded-lg border bg-white mx-auto" style={{ maxWidth: 1360 }}>
+      <div className={'flex items-center justify-between border-b p-4 pt-2 '}>
         <Tabs
           type={'line'}
           defaultActiveKey={'users'}
@@ -100,6 +102,7 @@ function EventsList() {
 
 function UsersList({ toUser }: { toUser: (id: string) => void }) {
   const [editCols, setEditCols] = React.useState(false);
+  const [hiddenCols, setHiddenCols] = React.useState([]);
   const testUsers = [
     new User({
       name: 'test123',
@@ -211,9 +214,23 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
   const excludeFilterKeys = []
   const excludeCategory = []
 
+  const shownCols = columns.map((col) => ({
+    ...col,
+    hidden: hiddenCols.includes(col.key),
+  }));
+  const onUpdateVisibleCols = (cols: string[]) => {
+    setHiddenCols((_) => {
+      return columns
+        .map((col) =>
+          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key
+        )
+        .filter(Boolean);
+    });
+    setEditCols(false);
+  };
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 px-4">
         {/* 1.23 -- <span>Show by</span>*/}
         {/*<Segmented*/}
         {/*  size={'small'}*/}
@@ -241,6 +258,17 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
           </Button>
         </FilterSelection>
       </div>
+      <div className={'relative'}>
+        {editCols ? (
+          <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
+            <ColumnsModal
+              columns={shownCols.filter((col) => col.key !== '$__opts__$')}
+              onSelect={onUpdateVisibleCols}
+              hiddenCols={hiddenCols}
+              topOffset={'top-24 -mt-4'}
+            />
+          </OutsideClickDetectingDiv>
+        ) : null}
       <Table
         onRow={(record) => ({
           onClick: () => toUser(record.userId),
@@ -248,8 +276,9 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
         pagination={false}
         rowClassName={'cursor-pointer'}
         dataSource={testUsers}
-        columns={columns}
+        columns={shownCols}
       />
+      </div>
       <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
         <div>
           {'Showing '}
