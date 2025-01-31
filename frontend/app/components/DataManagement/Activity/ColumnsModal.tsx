@@ -1,14 +1,17 @@
 import React from 'react';
 import { Input, Checkbox, Button } from 'antd';
+import cn from 'classnames'
 
 function ColumnsModal({
   columns,
   onSelect,
   hiddenCols,
+  topOffset = 'top-28'
 }: {
   columns: { title: string; key: string }[];
   onSelect: (col: string[]) => void;
   hiddenCols: string[];
+  topOffset?: string;
 }) {
   const [query, setQuery] = React.useState('');
   const [selected, setSelected] = React.useState(
@@ -28,7 +31,11 @@ function ColumnsModal({
   const searchRe = new RegExp(query, 'ig');
   const filteredList = columns.filter((col) => searchRe.test(col.title));
   return (
-    <div className="flex flex-col gap-2 shadow border rounded-lg p-4 absolute top-28 right-0 z-50 bg-white">
+    <div
+      className={
+        cn('flex flex-col gap-2 shadow border rounded-lg p-4 absolute right-0 z-50 bg-white', topOffset)
+      }
+    >
       <div className="font-semibold text-lg">Show/Hide Columns</div>
       <div className="text-sm">
         Select columns to display. Rearrange them in the table view.
