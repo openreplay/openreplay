@@ -61,7 +61,7 @@ function NoteEvent(props: Props) {
     { icon: <Icon name={'trash'} />, label: 'Delete', key: '3', onClick: onDelete },
   ];
   return (
-    <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: '#FFFEF5' }}>
+    <div className="flex items-start flex-col p-2 border rounded ps-4" style={{ background: 'rgba(252, 193, 0, 0.1)' }}>
       <div className="flex items-center w-full relative">
         <MessageSquareDot size={16} strokeWidth={1} />
         <div className="ml-2">
