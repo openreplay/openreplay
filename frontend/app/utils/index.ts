@@ -368,7 +368,7 @@ export const compareJsonObjects = (obj1: any, obj2: any) => {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
 
-export const getInitials = (name: any) => {
+export const getInitials = (name = '') => {
   const names = name.split(' ');
   return (
     names

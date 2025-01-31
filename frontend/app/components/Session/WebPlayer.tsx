@@ -151,10 +151,11 @@ function WebPlayer(props: any) {
         const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
         if (jumpToTime || shouldAdjustOffset) {
-          if (jumpToTime > visualOffset) {
+          if (jumpToTime && jumpToTime > visualOffset) {
             const diff =
               startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
             contextValue.player.jump(Math.max(diff, 0));
+            setAdjusted(true);
           } else {
             contextValue.player.jump(visualOffset);
             setAdjusted(true);
