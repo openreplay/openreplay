@@ -50,7 +50,7 @@ function WidgetOptions() {
         >
           <Space>
             <Switch checked={metric.hideExcess} size="small" />
-            <span className="mr-4 color-gray-medium">Hide Minor Paths</span>
+            <span className="mr-4 color-gray-medium">Group Minor Paths</span>
           </Space>
         </a>
       )}

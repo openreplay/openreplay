@@ -1,45 +1,44 @@
-export function sankeyTooltip(echartNodes, nodeValues) {
-  return (params) => {
+// sankeyUtils.ts
+export function sankeyTooltip(echartNodes: any[], nodeValues: number[]) {
+  return (params: any) => {
     if ('source' in params.data && 'target' in params.data) {
       const sourceName = echartNodes[params.data.source].name;
       const targetName = echartNodes[params.data.target].name;
       const sourceValue = nodeValues[params.data.source];
       return `
-      <div class="flex gap-2 w-fit px-2 bg-white items-center">
-       <div class="flex flex-col">
-          <div class="border-t border-l rounded-tl border-dotted border-gray-500" style="width: 8px; height: 30px"></div>
-          <div class="border-b border-l rounded-bl border-dotted border-gray-500 relative" style="width: 8px; height: 30px">
-            <div class="w-0 h-0 border-l-4 border-l-gray-500 border-y-4 border-y-transparent border-r-0 absolute -right-1 -bottom-1.5"></div>
+      <div class="flex gap-2 w-fit px-2 bg-white items-center rounded-xl">
+        <div class="flex flex-col">
+          <div class="flex flex-col text-sm">
+            <div class="font-semibold">
+              <span class="text-base" style="color:#394eff">&#8592;</span> ${sourceName}
+            </div>
+            <div class="text-black">
+              ${sourceValue} <span class="text-disabled-text">Sessions</span>
+            </div>
+            <div class="font-semibold mt-2">
+              <span class="text-base" style="color:#394eff">&#8594;</span> ${targetName}
+            </div>
+            <div class="flex items-baseline gap-2 text-black">
+              <span>${params.data.value} ( ${params.data.percentage.toFixed(2)}% )</span>
+              <span class="text-disabled-text">Sessions</span>
+            </div>
           </div>
         </div>
-       <div class="flex flex-col">
-         <div class="font-semibold">${sourceName}</div>
-         <div>${sourceValue}</div>
-         <div class="font-semibold mt-2">${targetName}</div>
-         <div>
-          <span>${params.data.value}</span>
-          <span class="text-disabled-text">${params.data.percentage.toFixed(
-            2
-          )}%</span>
-         </div>
-       </div>
       </div>
-    `;
-      //${sourceName} -> ${targetName}: ${params.data.value} sessions (${params.data.percentage.toFixed(2)}%)
+      `;
     }
     if ('name' in params.data) {
       return `
-      <div class="flex flex-col bg-white">
-        <div class="font-semibold">${params.data.name}</div>
-        <div>${params.value} sessions</div>
+      <div class="flex flex-col">
+        <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:#394eff; font-family: sans-serif;">&#9632;&#xFE0E;</span> ${params.data.name}</div>
+        <div class="text-black text-sm">${params.value} <span class="text-disabled-text">Sessions</span></div>
       </div>
-    `;
+      `;
     }
   };
 }
 
-
-export const getEventPriority = (type: string) => {
+export const getEventPriority = (type: string): number => {
   switch (type) {
     case 'DROP':
       return 3;
@@ -50,11 +49,9 @@ export const getEventPriority = (type: string) => {
   }
 };
 
-export const getNodeName = (eventType: string, nodeName: string | null) => {
+export const getNodeName = (eventType: string, nodeName: string | null): string => {
   if (!nodeName) {
-    // only capitalize first
     return eventType.charAt(0) + eventType.slice(1).toLowerCase();
   }
   return nodeName;
-}
-
+};
