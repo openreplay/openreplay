@@ -118,7 +118,7 @@ class ReactNativeModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  func sendMessage(type: String, message: String) {
-    OpenReplay.sendMessage(type: type, message: message)
+  fun sendMessage(type: String, message: String) {
+    OpenReplay.sendMessage(type, message)
   }
 }
