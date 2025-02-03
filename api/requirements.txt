@@ -8,7 +8,7 @@ clickhouse-driver[lz4]==0.2.9
 clickhouse-connect==0.8.15
 elasticsearch==8.17.1
 jira==3.8.0
-cachetools==5.5.0
+cachetools==5.5.1
 
 fastapi==0.115.8
 uvicorn[standard]==0.34.0
