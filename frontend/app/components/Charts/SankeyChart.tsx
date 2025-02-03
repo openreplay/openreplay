@@ -1,21 +1,23 @@
-// START GEN
 import React from 'react';
 import { echarts, defaultOptions } from './init';
 import { SankeyChart } from 'echarts/charts';
-import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils'
+import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
+import { boxShadow } from 'html2canvas/dist/types/css/property-descriptors/box-shadow';
 echarts.use([SankeyChart]);
 
 interface SankeyNode {
-  name: string | null; // e.g. "/en/deployment/", or null
-  eventType?: string; // e.g. "LOCATION" (not strictly needed by ECharts)
+  name: string | null;
+  eventType?: string;
+  depth?: number;
+  id?: string | number;
 }
 
 interface SankeyLink {
-  source: number; // index of source node
-  target: number; // index of target node
-  value: number; // percentage
+  source: number;
+  target: number;
+  value: number; 
   sessionsCount: number;
-  eventType?: string; // optional
+  eventType?: string;
 }
 
 interface Data {
@@ -29,35 +31,6 @@ interface Props {
   onChartClick?: (filters: any[]) => void;
 }
 
-// Not working properly
-function findHighestContributors(nodeIndex: number, links: SankeyLink[]) {
-  const contributors: SankeyLink[] = [];
-  let currentNode = nodeIndex;
-
-  while (true) {
-    let maxContribution = -Infinity;
-    let primaryLink: SankeyLink | null = null;
-
-    for (const link of links) {
-      if (link.target === currentNode) {
-        if (link.value > maxContribution) {
-          maxContribution = link.value;
-          primaryLink = link;
-        }
-      }
-    }
-
-    if (primaryLink) {
-      contributors.push(primaryLink);
-      currentNode = primaryLink.source;
-    } else {
-      break;
-    }
-  }
-
-  return contributors;
-}
-
 const EChartsSankey: React.FC<Props> = (props) => {
   const { data, height = 240, onChartClick } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -67,27 +40,49 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     const chart = echarts.init(chartRef.current);
 
+    
     const nodeValues = new Array(data.nodes.length).fill(0);
-    const echartNodes = data.nodes
-      .map((n, i) => ({
-        name: getNodeName(n.eventType || 'Other', n.name),
+
+    
+    const echartNodes = data.nodes.map((n) => {
+      let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
+      
+      if (computedName === 'Other') {
+        computedName = 'Minor Paths';
+      }
+      const itemColor =
+        computedName === 'Minor Paths'
+          ? '#222F99'
+          : n.eventType === 'DROP'
+            ? '#B5B7C8'
+            : '#394eff';
+      return {
+        name: computedName,
         depth: n.depth,
         type: n.eventType,
         id: n.id,
-      }))
+        draggable: false,
+        itemStyle: { color: itemColor },
+      };
+    })
       .sort((a, b) => {
         if (a.depth === b.depth) {
-          return getEventPriority(a.type || '') - getEventPriority(b.type || '')
+          return getEventPriority(a.type || '') - getEventPriority(b.type || '');
         } else {
-          return a.depth - b.depth;
+          return (a.depth as number) - (b.depth as number);
         }
       });
-    const echartLinks = data.links.map((l, i) => ({
+
+    
+    const echartLinks = data.links.map((l) => ({
       source: echartNodes.findIndex((n) => n.id === l.source),
       target: echartNodes.findIndex((n) => n.id === l.target),
       value: l.sessionsCount,
       percentage: l.value,
+      lineStyle: { opacity: 0.1 },
     }));
+
+    
     nodeValues.forEach((v, i) => {
       const outgoingValues = echartLinks
         .filter((l) => l.source === i)
@@ -96,12 +91,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
         .filter((l) => l.target === i)
         .reduce((p, c) => p + c.value, 0);
       nodeValues[i] = Math.max(outgoingValues, incomingValues);
-    })
+    });
 
     const option = {
       ...defaultOptions,
       tooltip: {
         trigger: 'item',
+      },
+      toolbox: {
+        feature: {
+          saveAsImage: { show: false }
+        }
       },
       series: [
         {
@@ -110,26 +110,28 @@ const EChartsSankey: React.FC<Props> = (props) => {
           data: echartNodes,
           links: echartLinks,
           emphasis: {
-            focus: 'adjacency',
-            blurScope: 'global',
+            focus: 'none',
+            lineStyle: {
+              opacity: 0.5,
+            },
           },
           label: {
-            formatter: '{b} - {c}'
+            formatter: '{b} - {c}',
           },
           tooltip: {
-            formatter: sankeyTooltip(echartNodes, nodeValues)
+            formatter: sankeyTooltip(echartNodes, nodeValues),
           },
           nodeAlign: 'right',
-          nodeWidth: 10,
+          nodeWidth: 40,
           nodeGap: 8,
           lineStyle: {
             color: 'source',
-            curveness: 0.5,
-            opacity: 0.3,
+            curveness: 0.2,
+            opacity: 0.1,
           },
           itemStyle: {
             color: '#394eff',
-            borderRadius: 4,
+            borderRadius: 2,
           },
         },
       ],
@@ -137,147 +139,113 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     chart.setOption(option);
 
-    const seriesIndex = 0;
-    function highlightNode(nodeIdx: number) {
-      chart.dispatchAction({
-        type: 'highlight',
-        seriesIndex,
-        dataType: 'node',
-        dataIndex: nodeIdx,
+    
+    function getUpstreamNodes(nodeIdx: number, visited = new Set<number>()) {
+      if (visited.has(nodeIdx)) return;
+      visited.add(nodeIdx);
+      echartLinks.forEach((link) => {
+        if (link.target === nodeIdx && !visited.has(link.source)) {
+          getUpstreamNodes(link.source, visited);
+        }
       });
-    }
-    function highlightLink(linkIdx: number) {
-      chart.dispatchAction({
-        type: 'highlight',
-        seriesIndex,
-        dataType: 'edge',
-        dataIndex: linkIdx,
-      });
-    }
-    function resetHighlight() {
-      chart.dispatchAction({
-        type: 'downplay',
-        seriesIndex,
-      });
+      return visited;
     }
 
-    chart.on('click', function (params) {
-      if (!onChartClick) return;
-      const unsupported = ['other', 'drop']
+    
+    function getDownstreamNodes(nodeIdx: number, visited = new Set<number>()) {
+      if (visited.has(nodeIdx)) return;
+      visited.add(nodeIdx);
+      echartLinks.forEach((link) => {
+        if (link.source === nodeIdx && !visited.has(link.target)) {
+          getDownstreamNodes(link.target, visited);
+        }
+      });
+      return visited;
+    }
+
+    
+    function getConnectedChain(nodeIdx: number): Set<number> {
+      const upstream = getUpstreamNodes(nodeIdx) || new Set<number>();
+      const downstream = getDownstreamNodes(nodeIdx) || new Set<number>();
+      return new Set<number>([...upstream, ...downstream]);
+    }
+
+    
+    const originalNodes = [...echartNodes];
+    const originalLinks = [...echartLinks];
+
+    
+    chart.on('mouseover', function (params: any) {
       if (params.dataType === 'node') {
-        const node: any = params.data;
-        const filters = []
-        if (node.type) {
-          const type = node.type.toLowerCase();
-          if (unsupported.includes(type)) {
-            return
-          }
-          filters.push({
-            operator: 'is',
-            type: type,
-            value: [node.name],
-            isEvent: true,
-          });
-        }
-        onChartClick?.(filters);
-      } else if (params.dataType === 'edge') {
-        const linkIndex = params.dataIndex;
-        const link = data.links[linkIndex];
-        const firstNode = data.nodes.find(n => n.id === link.source)
-        const lastNode = data.nodes.find(n => n.id === link.target)
+        const hoveredIndex = params.dataIndex;
+        const connectedChain = getConnectedChain(hoveredIndex);
 
-        const firstNodeType = firstNode?.eventType?.toLowerCase() ?? 'location';
-        const lastNodeType = lastNode?.eventType?.toLowerCase() ?? 'location';
-        if (unsupported.includes(firstNodeType) || unsupported.includes(lastNodeType)) {
-          return
-        }
-        const filters = [];
-        if (firstNode) {
-          filters.push({
-            operator: 'is',
-            type: firstNodeType,
-            value: [firstNode.name],
-            isEvent: true
-          });
-        }
+        const updatedNodes = echartNodes.map((node, idx) => {
+          const baseOpacity = connectedChain.has(idx) ? 1 : 0.35;
+          
+          const extraStyle = idx === hoveredIndex
+            ? {borderColor: '#000000', borderWidth:1, borderType: 'dotted' }
+            : {};
+          return {
+            ...node,
+            itemStyle: {
+              ...node.itemStyle,
+              opacity: baseOpacity,
+              ...extraStyle,
+            },
+          };
+        });
 
-        if (lastNode) {
-          filters.push({
-            operator: 'is',
-            type: lastNodeType,
-            value: [lastNode.name],
-            isEvent: true
-          });
-        }
+        
+        const updatedLinks = echartLinks.map((link) => ({
+          ...link,
+          lineStyle: {
+            ...link.lineStyle,
+            opacity: (connectedChain.has(link.source) && connectedChain.has(link.target))
+              ? 0.5
+              : 0.1,
+          },
+        }));
 
-        onChartClick?.(filters);
+        chart.setOption({
+          series: [
+            {
+              data: updatedNodes,
+              links: updatedLinks,
+            },
+          ],
+        });
       }
     });
 
-    // chart.on('mouseover', function (params) {
-    //   if (params.seriesIndex !== seriesIndex) return; // ignore if not sankey
-    //   resetHighlight(); // dim everything first
-    //
-    //   if (params.dataType === 'node') {
-    //     const hoveredNodeIndex = params.dataIndex;
-    //     // find outgoing links
-    //     const outgoingLinks: number[] = [];
-    //     data.links.forEach((link, linkIdx) => {
-    //       if (link.source === hoveredNodeIndex) {
-    //         outgoingLinks.push(linkIdx);
-    //       }
-    //     });
-    //
-    //     // find incoming highest contributors
-    //     const highestContribLinks = findHighestContributors(hoveredNodeIndex, data.links);
-    //
-    //     // highlight outgoing links
-    //     outgoingLinks.forEach((linkIdx) => highlightLink(linkIdx));
-    //     // highlight the "highest path" of incoming links
-    //     highestContribLinks.forEach((lk) => {
-    //       // We need to find which link index in data.links => lk
-    //       const linkIndex = data.links.indexOf(lk);
-    //       if (linkIndex >= 0) {
-    //         highlightLink(linkIndex);
-    //       }
-    //     });
-    //
-    //     // highlight the node itself
-    //     highlightNode(hoveredNodeIndex);
-    //
-    //     // highlight the nodes that are "source/target" of the highlighted links
-    //     const highlightNodeSet = new Set<number>();
-    //     outgoingLinks.forEach((lIdx) => {
-    //       highlightNodeSet.add(data.links[lIdx].target);
-    //       highlightNodeSet.add(data.links[lIdx].source);
-    //     });
-    //     highestContribLinks.forEach((lk) => {
-    //       highlightNodeSet.add(lk.source);
-    //       highlightNodeSet.add(lk.target);
-    //     });
-    //     // also add the hovered node
-    //     highlightNodeSet.add(hoveredNodeIndex);
-    //
-    //     // highlight those nodes
-    //     highlightNodeSet.forEach((nIdx) => highlightNode(nIdx));
-    //
-    //   } else if (params.dataType === 'edge') {
-    //     const hoveredLinkIndex = params.dataIndex;
-    //     // highlight just that edge
-    //     highlightLink(hoveredLinkIndex);
-    //
-    //     // highlight source & target node
-    //     const link = data.links[hoveredLinkIndex];
-    //     highlightNode(link.source);
-    //     highlightNode(link.target);
-    //   }
-    // });
-    //
-    // chart.on('mouseout', function () {
-    //   // revert to normal
-    //   resetHighlight();
-    // });
+    chart.on('mouseout', function (params: any) {
+      if (params.dataType === 'node') {
+        // Restore original styles on mouseout.
+        chart.setOption({
+          series: [
+            {
+              data: originalNodes,
+              links: originalLinks,
+            },
+          ],
+        });
+      }
+    });
 
+    chart.on('click', function (params: any) {
+      if (!onChartClick) return;
+      if (params.dataType === 'node') {
+        const nodeIndex = params.dataIndex;
+        const node = data.nodes[nodeIndex];
+        onChartClick([{ node }]);
+      } else if (params.dataType === 'edge') {
+        const linkIndex = params.dataIndex;
+        const link = data.links[linkIndex];
+        onChartClick([{ link }]);
+      }
+    });
+
+    
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(chartRef.current);
 
