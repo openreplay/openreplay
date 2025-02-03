@@ -59,6 +59,11 @@ function ColumnChart(props: ColumnChartProps) {
           .filter((s: any) => !s._hideInLegend)
           .map((s: any) => s.name),
       },
+      toolbox: {
+        feature: {
+          saveAsImage: { show: false },
+        },
+      },
       grid: {
         ...defaultOptions.grid,
         left: 40,

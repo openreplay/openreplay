@@ -76,6 +76,11 @@ function ORLineChart(props: Props) {
         ...defaultOptions.tooltip,
         formatter: customTooltipFormatter(chartUuid.current),
       },
+      toolbox: {
+        feature: {
+          saveAsImage: { show: false },
+        },
+      },
       dataset: datasets,
       series,
     });

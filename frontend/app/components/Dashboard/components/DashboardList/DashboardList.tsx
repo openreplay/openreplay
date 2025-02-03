@@ -180,7 +180,7 @@ function DashboardList() {
           <Typography.Text className="my-2 text-lg font-medium">
             No matching results
           </Typography.Text>
-          <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
+          <div className="mb-2 text-lg text-gray-500 my-3 leading-normal">
             Try adjusting your search criteria or creating a new dashboard.
           </div>
         </div>
@@ -188,14 +188,13 @@ function DashboardList() {
     ) : (
       <div className="text-center">
         <div>
-          <Typography.Text className="my-2 text-xl font-medium">
-            Create your first dashboard.
+          <Typography.Text className="my-2 text-lg font-medium">
+          Create and organize your insights
           </Typography.Text>
-          <div className="mb-2 text-lg text-gray-500 mt-2 leading-normal">
-            Organize your product and technical insights as cards in dashboards
-            to see the bigger picture.
+          <div className="mb-2 text-lg text-gray-500 leading-normal">
+          Build dashboards to track key metrics and monitor performance in one place.
           </div>
-          <div className="my-4">
+          <div className="my-4 mb-10">
             <CreateDashboardButton />
           </div>
         </div>

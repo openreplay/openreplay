@@ -58,6 +58,11 @@ function PieChart(props: PieChartProps) {
         left: 10,
         right: 10,
       },
+      toolbox: {
+        feature: {
+          saveAsImage: { show: false },
+        },
+      },
       legend: {
         ...defaultOptions.legend,
         type: 'plain',

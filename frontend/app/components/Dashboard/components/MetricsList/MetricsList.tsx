@@ -1,11 +1,14 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NoContent, Loader } from 'UI';
+import { NoContent, Loader, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
 import GridView from './GridView';
 import ListView from './ListView';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import AddCardSection from '../AddCardSection/AddCardSection';
+import { Popover, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 
 function MetricsList({
   siteId,
@@ -33,30 +36,28 @@ function MetricsList({
             (i) => !existingCardIds?.includes(parseInt(i.metricId))
           )
         : metricStore.filteredCards,
-    [metricStore.filteredCards]
+    [metricStore.filteredCards, existingCardIds, onSelectionChange]
   );
   const loading = metricStore.isLoading;
 
   useEffect(() => {
     void metricStore.fetchList();
-  }, []);
+  }, [metricStore]);
 
   useEffect(() => {
-    if (!onSelectionChange) {
-      return;
-    }
+    if (!onSelectionChange) return;
     onSelectionChange(selectedMetrics);
-  }, [selectedMetrics]);
+  }, [selectedMetrics, onSelectionChange]);
 
   const toggleMetricSelection = (id: any) => {
     if (Array.isArray(id)) {
       setSelectedMetrics(id);
-      return
+      return;
     }
     if (selectedMetrics.includes(id)) {
-      setSelectedMetrics((prev) => prev.filter((i: number) => i !== id));
+      setSelectedMetrics((prev: number[]) => prev.filter((i) => i !== id));
     } else {
-      setSelectedMetrics((prev) => [...prev, id]);
+      setSelectedMetrics((prev: number[]) => [...prev, id]);
     }
   };
 
@@ -64,30 +65,55 @@ function MetricsList({
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
-  }, []);
+  }, [metricStore]);
 
   const showOwn = metricStore.filter.showMine;
   const toggleOwn = () => {
     metricStore.updateKey('showMine', !showOwn);
-  }
+  };
+
+  // Define dimensions for the empty state illustration
+  const searchImageDimensions = { width: 60, height: 'auto' };
+  const defaultImageDimensions = { width: 600, height: 'auto' };
+  const emptyImage =
+    metricsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_CARDS;
+  const imageDimensions =
+    metricsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
+
   return (
     <Loader loading={loading}>
       <NoContent
         show={length === 0}
         title={
           <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={ICONS.NO_CARDS} size={60} />
-            <div className="text-center mt-4  text-lg font-medium">
+            <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
+            <div className="text-center mt-3 text-lg font-medium">
               {metricsSearch !== ''
                 ? 'No matching results'
-                : "You haven't created any cards yet"}
+                : 'Unlock insights with data cards'}
             </div>
           </div>
         }
         subtext={
-          metricsSearch !== ''
-            ? ''
-            : 'Utilize cards to visualize key user interactions or product performance metrics.'
+          metricsSearch !== '' ? (
+            ''
+          ) : (
+            <div className="flex flex-col items-center">
+              <div>
+                Create and customize cards to analyze trends and user behavior effectively.
+              </div>
+              <Popover
+                arrow={false}
+                overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+                content={<AddCardSection fit inCards />}
+                trigger="click"
+              >
+              <Button type="primary" icon={<PlusOutlined />} className="btn-create-card mt-3">
+                Create Card
+              </Button>
+            </Popover>
+            </div>
+          )
         }
       >
         {listView ? (
@@ -102,8 +128,12 @@ function MetricsList({
             allSelected={cards.length === selectedMetrics.length}
             showOwn={showOwn}
             toggleOwn={toggleOwn}
-            toggleAll={({ target: { checked, name } }) =>
-              setSelectedMetrics(checked ? cards.map((i: any) => i.metricId).slice(0, 30 - existingCardIds!.length) : [])
+            toggleAll={({ target: { checked } }) =>
+              setSelectedMetrics(
+                checked
+                  ? cards.map((i: any) => i.metricId).slice(0, 30 - (existingCardIds?.length || 0))
+                  : []
+              )
             }
           />
         ) : (
@@ -115,14 +145,16 @@ function MetricsList({
               toggleSelection={toggleMetricSelection}
             />
             <div className="w-full flex items-center justify-between py-4 px-6 border-t">
-              <div className="">
+              <div>
                 Showing{' '}
-                <span className="font-medium">{Math.min(cards.length, metricStore.pageSize)}</span> out
-                of <span className="font-medium">{cards.length}</span> cards
+                <span className="font-medium">
+                  {Math.min(cards.length, metricStore.pageSize)}
+                </span>{' '}
+                out of <span className="font-medium">{cards.length}</span> cards
               </div>
               <Pagination
                 page={metricStore.page}
-                total={lenth}
+                total={length}
                 onPageChange={(page) => metricStore.updateKey('page', page)}
                 limit={metricStore.pageSize}
                 debounceRequest={100}

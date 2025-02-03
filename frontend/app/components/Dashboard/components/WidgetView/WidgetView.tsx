@@ -60,6 +60,7 @@ function WidgetView(props: Props) {
   const [initialInstance, setInitialInstance] = useState();
   const isClickMap = widget.metricType === HEATMAP;
 
+
   React.useEffect(() => {
     if (metricId && metricId !== 'create') {
       metricStore.fetch(metricId, dashboardStore.period).catch((e) => {
@@ -80,6 +81,13 @@ function WidgetView(props: Props) {
       }
     }
   }, []);
+
+  
+  React.useEffect(() => {
+    if (metricNotFound) {
+      history.replace(withSiteId('/metrics', siteId));
+    }
+  }, [metricNotFound, history, siteId]);
 
   const undoChanges = () => {
     const w = new Widget();
@@ -149,17 +157,9 @@ function WidgetView(props: Props) {
             { label: widget.name },
           ]}
         />
-        <NoContent
-          show={metricNotFound}
-          title={
-            <div className="flex flex-col items-center justify-between">
-              <AnimatedSVG name={ICONS.EMPTY_STATE} size={60} />
-              <div className="mt-4">Metric not found!</div>
-            </div>
-          }
-        >
+        
           <Space direction="vertical" className="w-full" size={14}>
-          <WidgetViewHeader 
+            <WidgetViewHeader 
               onSave={onSave} 
               undoChanges={undoChanges}
               layoutControl={
@@ -188,7 +188,9 @@ function WidgetView(props: Props) {
                       value: 'flex-row-reverse',
                       icon: (
                         <Tooltip title="Reversed Horizontal Layout">
-                          <div className={'rotate-180'}><LayoutPanelLeft size={16} /></div>
+                          <div className={'rotate-180'}>
+                            <LayoutPanelLeft size={16} />
+                          </div>
                         </Tooltip>
                       )
                     }
@@ -203,23 +205,21 @@ function WidgetView(props: Props) {
               <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
                 <WidgetPreview name={widget.name} isEditing={expanded} />
 
-                    {widget.metricOf !== FilterKey.SESSIONS &&
-                    widget.metricOf !== FilterKey.ERRORS &&
-                    (widget.metricType === TABLE ||
-                    widget.metricType === TIMESERIES ||
-                    widget.metricType === HEATMAP ||
-                    widget.metricType === INSIGHTS ||
-                    widget.metricType === FUNNEL ||
-                    widget.metricType === USER_PATH ? (
-                      <WidgetSessions />
-                    ) : null)}
-                  {widget.metricType === RETENTION && <CardUserList />}
+                {widget.metricOf !== FilterKey.SESSIONS &&
+                  widget.metricOf !== FilterKey.ERRORS &&
+                  (widget.metricType === TABLE ||
+                  widget.metricType === TIMESERIES ||
+                  widget.metricType === HEATMAP ||
+                  widget.metricType === INSIGHTS ||
+                  widget.metricType === FUNNEL ||
+                  widget.metricType === USER_PATH ? (
+                    <WidgetSessions />
+                  ) : null)}
+                {widget.metricType === RETENTION && <CardUserList />}
               </div>
             </div>
-
-            
           </Space>
-        </NoContent>
+        {/* </NoContent> */}
       </div>
     </Loader>
   );

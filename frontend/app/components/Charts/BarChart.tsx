@@ -67,6 +67,11 @@ function ORBarChart(props: BarChartProps) {
         ...defaultOptions.tooltip,
         formatter: customTooltipFormatter(chartUuid.current),
       },
+      toolbox: {
+        feature: {
+          saveAsImage: { show: false },
+        },
+      },
       xAxis,
       yAxis,
       dataset: datasets,

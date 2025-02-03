@@ -40,31 +40,40 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     const chart = echarts.init(chartRef.current);
 
+    const maxDepth = 4;
+    const filteredNodes = data.nodes.filter((n) => (n.depth ?? 0) <= maxDepth);
+    const filteredLinks = data.links.filter((l) => {
+      const sourceNode = data.nodes.find((n) => n.id === l.source);
+      const targetNode = data.nodes.find((n) => n.id === l.target);
+      return (sourceNode?.depth ?? 0) <= maxDepth && (targetNode?.depth ?? 0) <= maxDepth;
+    });
     
-    const nodeValues = new Array(data.nodes.length).fill(0);
 
     
-    const echartNodes = data.nodes.map((n) => {
-      let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
-      
-      if (computedName === 'Other') {
-        computedName = 'Minor Paths';
-      }
-      const itemColor =
-        computedName === 'Minor Paths'
-          ? '#222F99'
-          : n.eventType === 'DROP'
-            ? '#B5B7C8'
-            : '#394eff';
-      return {
-        name: computedName,
-        depth: n.depth,
-        type: n.eventType,
-        id: n.id,
-        draggable: false,
-        itemStyle: { color: itemColor },
-      };
-    })
+    const nodeValues = new Array(filteredNodes.length).fill(0);
+
+    
+    const echartNodes = filteredNodes
+      .map((n) => {
+        let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
+        if (computedName === 'Other') {
+          computedName = 'Minor Paths';
+        }
+        const itemColor =
+          computedName === 'Minor Paths'
+            ? '#222F99'
+            : n.eventType === 'DROP'
+              ? '#B5B7C8'
+              : '#394eff';
+        return {
+          name: computedName,
+          depth: n.depth,
+          type: n.eventType,
+          id: n.id,
+          draggable: false,
+          itemStyle: { color: itemColor },
+        };
+      })
       .sort((a, b) => {
         if (a.depth === b.depth) {
           return getEventPriority(a.type || '') - getEventPriority(b.type || '');
@@ -72,9 +81,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
           return (a.depth as number) - (b.depth as number);
         }
       });
+      console.log('EChart Nodes:', echartNodes);
+      
 
     
-    const echartLinks = data.links.map((l) => ({
+    const echartLinks = filteredLinks.map((l) => ({
       source: echartNodes.findIndex((n) => n.id === l.source),
       target: echartNodes.findIndex((n) => n.id === l.target),
       value: l.sessionsCount,
@@ -100,8 +111,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
       },
       toolbox: {
         feature: {
-          saveAsImage: { show: false }
-        }
+          saveAsImage: { show: false },
+        },
       },
       series: [
         {
@@ -121,7 +132,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           tooltip: {
             formatter: sankeyTooltip(echartNodes, nodeValues),
           },
-          nodeAlign: 'right',
+          nodeAlign: 'jusitfy',
           nodeWidth: 40,
           nodeGap: 8,
           lineStyle: {
@@ -139,7 +150,6 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     chart.setOption(option);
 
-    
     function getUpstreamNodes(nodeIdx: number, visited = new Set<number>()) {
       if (visited.has(nodeIdx)) return;
       visited.add(nodeIdx);
@@ -151,7 +161,6 @@ const EChartsSankey: React.FC<Props> = (props) => {
       return visited;
     }
 
-    
     function getDownstreamNodes(nodeIdx: number, visited = new Set<number>()) {
       if (visited.has(nodeIdx)) return;
       visited.add(nodeIdx);
@@ -163,18 +172,15 @@ const EChartsSankey: React.FC<Props> = (props) => {
       return visited;
     }
 
-    
     function getConnectedChain(nodeIdx: number): Set<number> {
       const upstream = getUpstreamNodes(nodeIdx) || new Set<number>();
       const downstream = getDownstreamNodes(nodeIdx) || new Set<number>();
       return new Set<number>([...upstream, ...downstream]);
     }
 
-    
     const originalNodes = [...echartNodes];
     const originalLinks = [...echartLinks];
 
-    
     chart.on('mouseover', function (params: any) {
       if (params.dataType === 'node') {
         const hoveredIndex = params.dataIndex;
@@ -182,10 +188,10 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
         const updatedNodes = echartNodes.map((node, idx) => {
           const baseOpacity = connectedChain.has(idx) ? 1 : 0.35;
-          
-          const extraStyle = idx === hoveredIndex
-            ? {borderColor: '#000000', borderWidth:1, borderType: 'dotted' }
-            : {};
+          const extraStyle =
+            idx === hoveredIndex
+              ? { borderColor: '#000000', borderWidth: 1, borderType: 'dotted' }
+              : {};
           return {
             ...node,
             itemStyle: {
@@ -196,14 +202,14 @@ const EChartsSankey: React.FC<Props> = (props) => {
           };
         });
 
-        
         const updatedLinks = echartLinks.map((link) => ({
           ...link,
           lineStyle: {
             ...link.lineStyle,
-            opacity: (connectedChain.has(link.source) && connectedChain.has(link.target))
-              ? 0.5
-              : 0.1,
+            opacity:
+              connectedChain.has(link.source) && connectedChain.has(link.target)
+                ? 0.5
+                : 0.1,
           },
         }));
 
@@ -236,16 +242,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
       if (!onChartClick) return;
       if (params.dataType === 'node') {
         const nodeIndex = params.dataIndex;
-        const node = data.nodes[nodeIndex];
+        // Use filteredNodes here.
+        const node = filteredNodes[nodeIndex];
         onChartClick([{ node }]);
       } else if (params.dataType === 'edge') {
         const linkIndex = params.dataIndex;
-        const link = data.links[linkIndex];
+        // Use filteredLinks here.
+        const link = filteredLinks[linkIndex];
         onChartClick([{ link }]);
       }
     });
 
-    
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(chartRef.current);
 
