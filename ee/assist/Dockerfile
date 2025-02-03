@@ -1,7 +1,7 @@
 #ARCH can be amd64 or arm64
 ARG ARCH=amd64
 
-FROM --platform=linux/$ARCH node:20-alpine
+FROM --platform=linux/$ARCH node:23-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache tini git libc6-compat
 #    && ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2
