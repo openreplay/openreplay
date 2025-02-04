@@ -71,13 +71,7 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
   React.useEffect(() => {
     const defaultSeriesCollapseState: Record<number, boolean> = {};
     metric.series.forEach((s: any) => {
-      defaultSeriesCollapseState[s.seriesId] = defaultSeriesCollapseState[
-        s.seriesId
-      ]
-        ? defaultSeriesCollapseState[s.seriesId]
-        : allOpen
-        ? false
-        : defaultClosed.current;
+       defaultSeriesCollapseState[s.seriesId] = isTable ? false : (allOpen ? false : defaultClosed.current);
     });
     setSeriesCollapseState(defaultSeriesCollapseState);
   }, [metric.series]);

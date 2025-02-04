@@ -25,16 +25,23 @@ const options = [
     key: 'web_analytics',
     label: 'Web Analytics',
   },
-]
+];
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
   const filter = metricStore.filter;
+  const cardsLength = metricStore.filteredCards.length;
+
+  // Determine if a filter is active (search query or metric type other than 'all')
+  const isFilterActive = filter.query !== '' || (filter.type && filter.type !== 'all');
+  // Show header if there are cards or if a filter is active
+  const showHeader = cardsLength > 0 || isFilterActive;
 
   useEffect(() => {
     metricStore.updateKey('sort', { by: 'desc' });
   }, [metricStore]);
-  const handleMenuClick = ({ key }) => {
+
+  const handleMenuClick = ({ key }: { key: string }) => {
     metricStore.updateKey('filter', { ...filter, type: key });
   };
 
@@ -48,41 +55,42 @@ function MetricViewHeader() {
 
   return (
     <div>
-      <div className="flex items-center justify-between  pr-4">
+      <div className="flex items-center justify-between pr-4">
         <div className="flex items-center gap-2 ps-4">
           <PageTitle title="Cards" className="cursor-default" />
-          <Space>
-            <Dropdown overlay={menu} trigger={['click']} className="">
-              <Button type="text" size="small" className="mt-1">
-                {options.find(opt => opt.key === filter.type)?.label || 'Select Type'}
-                <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Space>
+
+          {showHeader && (
+            <Space>
+              <Dropdown overlay={menu} trigger={['click']}>
+                <Button type="text" size="small" className="mt-1">
+                  {options.find((opt) => opt.key === filter.type)?.label || 'Select Type'}
+                  <DownOutlined />
+                </Button>
+              </Dropdown>
+            </Space>
+          )}
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <Popover
-            arrow={false}
-            overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-            content={<AddCardSection fit inCards />}
-            trigger="click"
-          >
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="btn-create-card"
+
+        {showHeader && (
+          <div className="ml-auto flex items-center gap-3">
+            <Popover
+              arrow={false}
+              overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+              content={<AddCardSection fit inCards />}
+              trigger="click"
             >
-              Create Card
-            </Button>
-          </Popover>
-          <Space>
-            <MetricsSearch />
-          </Space>
-        </div>
+              <Button type="primary" icon={<PlusOutlined />} className="btn-create-card">
+                Create Card
+              </Button>
+            </Popover>
+            <Space>
+              <MetricsSearch />
+            </Space>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default observer(MetricViewHeader);
-

@@ -50,7 +50,7 @@ const ICONS_SVGS = {
     [ICONS.NO_ANNOUNCEMENTS]: require('../../../svg/ghost.svg').default,
     [ICONS.NO_ALERTS]: require('../../../svg/ghost.svg').default,
     [ICONS.NO_NOTES]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_CARDS]: require('../../../svg/ghost.svg').default,
+    [ICONS.NO_CARDS]: require('../../../svg/ca-no-cards.svg').default,
     [ICONS.NO_RECORDINGS]: require('../../../svg/ghost.svg').default,
     [ICONS.NO_SEARCH_RESULTS]: require('../../../svg/ghost.svg').default,
     [ICONS.NO_DASHBOARDS]: require('../../../svg/ca-no-dashboards.svg').default,
@@ -63,10 +63,12 @@ const ICONS_SVGS = {
 interface Props {
     name: string;
     size?: number;
+    disableSize?: boolean;
+    className?: string;
 }
 
 function AnimatedSVG(props: Props): JSX.Element | null {
-    const {name, size = 24} = props;
+    const {name, size = 24, disableSize, className} = props;
 
     // @ts-ignore
     const SvgIcon = ICONS_SVGS[name];
@@ -74,8 +76,8 @@ function AnimatedSVG(props: Props): JSX.Element | null {
     if (!SvgIcon) {
         return null;
     }
-
-    return <img src={SvgIcon} style={{width: size + 'px'}} alt={name}/>;
+    const style = disableSize ? {} : { width: size + 'px' };
+    return <img src={SvgIcon} style={style} className={className} alt={name} />;
 }
 
 export default AnimatedSVG;

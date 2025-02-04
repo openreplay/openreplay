@@ -29,6 +29,7 @@ interface Props {
   comparison?: boolean;
   updateInstComparison?: (range: [start: string, end?: string] | null) => void;
   [x: string]: any;
+  className?: string;
 }
 
 function SelectDateRange(props: Props) {
