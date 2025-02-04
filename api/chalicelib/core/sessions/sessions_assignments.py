@@ -39,8 +39,8 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
         issue = integration.issue_handler.create_new_assignment(title=title, assignee=assignee, description=description,
                                                                 issue_type=issue_type,
                                                                 integration_project_id=integration_project_id)
-    except integration_base_issue.RequestException as e:
-        return integration_base_issue.proxy_issues_handler(e)
+    except base_issue.RequestException as e:
+        return base_issue.proxy_issues_handler(e)
     if issue is None or "id" not in issue:
         return {"errors": ["something went wrong while creating the issue"]}
     with pg_client.PostgresClient() as cur:
