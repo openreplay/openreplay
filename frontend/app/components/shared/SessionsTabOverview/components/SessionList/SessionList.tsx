@@ -76,8 +76,8 @@ function SessionList() {
   const fetchStatus = async () => {
     const response = await sessionService.getRecordingStatus();
     setStatusData({
-      status: response.recording_status,
-      count: response.sessions_count
+      status: response.recordingStatus,
+      count: response.sessionsCount
     });
   };
 

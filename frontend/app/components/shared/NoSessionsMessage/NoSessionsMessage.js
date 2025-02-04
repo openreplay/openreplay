@@ -12,10 +12,9 @@ const withSiteId = routes.withSiteId;
 
 const NoSessionsMessage = () => {
   const { projectsStore } = useStore();
-  const sites = projectsStore.list;
   const siteId = projectsStore.siteId;
   const history = useHistory();
-  const activeSite = sites.find((s) => s.id === siteId);
+  const activeSite = projectsStore.active;
   const showNoSessions = !!activeSite && !activeSite.recorded;
   const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
 
