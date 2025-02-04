@@ -2,7 +2,8 @@ import React from 'react';
 import { echarts, defaultOptions } from './init';
 import { SankeyChart } from 'echarts/charts';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
-import { boxShadow } from 'html2canvas/dist/types/css/property-descriptors/box-shadow';
+import { NoContent } from 'App/components/ui';
+import {InfoCircleOutlined} from '@ant-design/icons';
 echarts.use([SankeyChart]);
 
 interface SankeyNode {
@@ -34,6 +35,22 @@ interface Props {
 const EChartsSankey: React.FC<Props> = (props) => {
   const { data, height = 240, onChartClick } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
+
+  if (data.nodes.length === 0 || data.links.length === 0) {
+    return (
+      <NoContent
+        style={{ minHeight: height }}
+        title={
+          <div className="flex items-center relative">
+            <InfoCircleOutlined className='hidden md:inline-block mr-1' />
+            Set a start or end point to visualize the journey. If set, try adjusting filters.
+          </div>
+          
+        }
+        show={true}
+      />
+    );
+  }
 
   React.useEffect(() => {
     if (!chartRef.current) return;

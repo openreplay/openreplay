@@ -73,49 +73,51 @@ function MetricsList({
   };
 
   // Define dimensions for the empty state illustration
+  const isFiltered =
+  metricsSearch !== '' || (metricStore.filter.type && metricStore.filter.type !== 'all');    
+
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
-  const emptyImage =
-    metricsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_CARDS;
-  const imageDimensions =
-    metricsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
+  const emptyImage = isFiltered ? ICONS.NO_RESULTS : ICONS.NO_CARDS;
+  const imageDimensions = isFiltered ? searchImageDimensions : defaultImageDimensions;
+
 
   return (
     <Loader loading={loading}>
       <NoContent
-        show={length === 0}
-        title={
-          <div className="flex flex-col items-center justify-center">
-            <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
-            <div className="text-center mt-3 text-lg font-medium">
-              {metricsSearch !== ''
-                ? 'No matching results'
-                : 'Unlock insights with data cards'}
+  show={length === 0}
+  title={
+    <div className="flex flex-col items-center justify-center">
+      <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
+      <div className="text-center mt-3 text-lg font-medium">
+        {isFiltered
+          ? 'No matching results'
+          : 'Unlock insights with data cards'}
+      </div>
+    </div>
+      }
+      subtext={
+        isFiltered ? (
+          ''
+        ) : (
+          <div className="flex flex-col items-center">
+            <div>
+              Create and customize cards to analyze trends and user behavior effectively.
             </div>
-          </div>
-        }
-        subtext={
-          metricsSearch !== '' ? (
-            ''
-          ) : (
-            <div className="flex flex-col items-center">
-              <div>
-                Create and customize cards to analyze trends and user behavior effectively.
-              </div>
-              <Popover
-                arrow={false}
-                overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-                content={<AddCardSection fit inCards />}
-                trigger="click"
-              >
+            <Popover
+              arrow={false}
+              overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+              content={<AddCardSection fit inCards />}
+              trigger="click"
+            >
               <Button type="primary" icon={<PlusOutlined />} className="btn-create-card mt-3">
                 Create Card
               </Button>
             </Popover>
-            </div>
-          )
-        }
-      >
+          </div>
+        )
+      }
+    >
         {listView ? (
           <ListView
             disableSelection={!onSelectionChange}

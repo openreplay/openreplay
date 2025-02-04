@@ -2,7 +2,8 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
-import { NoContent, Icon } from 'App/components/ui';
+import { NoContent } from 'App/components/ui';
+import {InfoCircleOutlined} from '@ant-design/icons';
 
 function ClickMapCard() {
   const [customSession, setCustomSession] = React.useState<any>(null);
@@ -63,8 +64,8 @@ function ClickMapCard() {
         style={{ minHeight: 220 }}
         title={
           <div className="flex items-center relative">
-            <Icon name="info-circle" className="mr-2" size="14" />
-            No data available for the selected period.
+            <InfoCircleOutlined className='hidden md:inline-block mr-1' />
+            Set a start point to visualize the heatmap. If set, try adjusting filters.
           </div>
         }
         show={true}

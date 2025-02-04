@@ -202,9 +202,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'custom', label: 'Custom' },
   ];
   return (
-    <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
-      <Form.Item>
-        <div className="flex flex-wrap gap-2 items-center justify-start">
+    <div className="flex flex-col gap-0 rounded-lg bg-white border-disabled-text">
+      <Form.Item className='hover:bg-active-blue w-full px-5 py-2 mb-0'>
+        <div className="flex flex-wrap gap-2 items-center justify-start ">
           <span className="font-medium">User journeys with: </span>
 
           <div className="flex sm:flex-wrap lg:flex-nowrap gap-2 items-start">
@@ -237,14 +237,16 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </div>
         </div>
       </Form.Item>
-      <div className="flex items-center">
-        <Form.Item
+      <Form.Item
           label={
-            metric.startType === 'start'
-              ? 'Specify Start Point'
-              : 'Specify End Point'
+            <span className="font-medium">
+              {metric.startType === 'start'
+                ? 'Specify Start Point'
+                : 'Specify End Point'
+              }
+            </span>
           }
-          className="m0-0 font-medium p-0 h-fit"
+          className="hover:bg-active-blue w-full px-5 py-2 mb-0"
         >
           <span className="font-normal">
             <FilterItem
@@ -262,7 +264,6 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </span>
         </Form.Item>
       </div>
-    </Card>
   );
 });
 

@@ -63,14 +63,13 @@ function DashboardHeader(props: Props) {
             title={
               // @ts-ignore
               <Tooltip
-                delay={0}
-                title="Double click to edit"
+                title="Click to edit"
                 placement="bottom"
               >
-                {dashboard?.name}
+               <div className='text-2xl h-8 flex items-center p-2 rounded-lg cursor-pointer select-none ps-2 hover:bg-teal/10'> {dashboard?.name}</div>
               </Tooltip>
             }
-            onDoubleClick={() => onEdit(true)}
+            onClick={() => onEdit(true)}
             className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dashed hover:border-gray-medium cursor-pointer"
           />
         </div>
