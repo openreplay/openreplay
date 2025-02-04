@@ -189,7 +189,7 @@ export default class APIClient {
     if (response.ok) {
       return response;
     }
-    let errorMsg = `Something went wrong. Status: ${response.status}`;
+    let errorMsg = `Something went wrong.`;
     try {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
