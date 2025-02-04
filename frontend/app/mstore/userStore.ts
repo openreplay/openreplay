@@ -492,7 +492,7 @@ class UserStore {
         });
       });
     } catch (error) {
-      // TODO error handling
+      throw error;
     } finally {
       runInAction(() => {
         this.loading = false;

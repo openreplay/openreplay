@@ -143,9 +143,13 @@ export default class APIClient {
     return this.refreshingTokenPromise;
   }
 
-  async fetch(path: string, params?: any, method: string = 'GET', options: {
-    clean?: boolean
-  } = { clean: true }, headers?: Record<string, any>): Promise<Response> {
+  async fetch<T>(
+    path: string,
+    params?: any,
+    method: string = 'GET',
+    options: { clean?: boolean } = { clean: true },
+    headers?: Record<string, any>
+  ): Promise<Response> {
     let _path = path;
     let jwt = this.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
@@ -157,58 +161,40 @@ export default class APIClient {
 
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
-      this.init.body = JSON.stringify(cleanedParams);
+      init.body = JSON.stringify(cleanedParams);
+    }
+    if (init.method === 'GET') {
+      delete init.body;
     }
 
-    if (this.init.method === 'GET') {
-      delete this.init.body;
-    }
-
-    let fetch = window.fetch;
     let edp = window.env.API_EDP || window.location.origin + '/api';
-    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
-    if (noChalice && !edp.includes('api.openreplay.com')) {
-      edp = edp.replace('/api', '')
-    }
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
       !path.includes('/assist/credentials') &&
-      siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
+      siteIdRequiredPaths.some((sidPath) => path.startsWith(sidPath))
     ) {
-      if (!this.siteId) console.trace('no site id', path, this.siteId)
-      edp = `${edp}/${this.siteId}`;
+      edp = `${edp}/${this.siteId ?? ''}`;
     }
-
-    if (
-      (
-        path.includes('login')
-      || path.includes('refresh')
-      || path.includes('logout')
-      || path.includes('reset')
-      ) && window.env.NODE_ENV !== 'development'
-    ) {
-      init.credentials = 'include';
-    } else {
-      delete init.credentials;
-    }
-
     if (path.includes('PROJECT_ID')) {
       _path = _path.replace('PROJECT_ID', this.siteId + '');
     }
 
-    return fetch(edp + _path, init).then((response) => {
-      if (response.status === 403) {
-        console.warn('API returned 403. Clearing JWT token.');
-        this.onUpdateJwt({ jwt: undefined }); // Clear the token
-      }
-
-      if (response.ok) {
-        return response;
-      } else {
-        return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
-      }
-    })
+    const fullUrl = edp + _path;
+    const response = await window.fetch(fullUrl, init);
+    if (response.status === 403) {
+      console.warn('API returned 403. Clearing JWT token.');
+      this.onUpdateJwt({ jwt: undefined });
+    }
+    if (response.ok) {
+      return response;
+    }
+    let errorMsg = `Something went wrong. Status: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.errors?.[0] || errorMsg;
+    } catch {}
+    throw new Error(errorMsg);
   }
 
   async refreshToken(): Promise<string> {

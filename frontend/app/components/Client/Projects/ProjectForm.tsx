@@ -31,20 +31,11 @@ function ProjectForm(props: Props) {
       projectsStore
         .updateProject(project.id, project)
         .then((response: any) => {
-          if (!response || !response.errors || response.errors.size === 0) {
-            if (onClose) {
-              onClose(null);
-            }
-            // if (!pathname.includes('onboarding')) {
-            //   void projectsStore.fetchList();
-            // }
-            toast.success('Project updated successfully');
-            if (onClose) {
-              onClose(null);
-            }
-          } else {
-            toast.error(response.errors[0]);
-          }
+          toast.success('Project updated successfully');
+          onClose?.(null);
+        })
+        .catch((error: Error) => {
+          toast.error(error.message || 'An error occurred while updating the project');
         });
     } else {
       projectsStore
@@ -59,8 +50,8 @@ function ProjectForm(props: Props) {
 
           projectsStore.setConfigProject(parseInt(resp.id!));
         })
-        .catch((error: string) => {
-          toast.error(error || 'An error occurred while creating the project');
+        .catch((error: Error) => {
+          toast.error(error.message || 'An error occurred while creating the project');
         });
     }
   };
@@ -78,6 +69,8 @@ function ProjectForm(props: Props) {
           if (project.id === projectsStore.active?.id) {
             projectsStore.setSiteId(projectStore.list[0].id!);
           }
+        }).catch((error: Error) => {
+          toast.error(error.message || 'An error occurred while deleting the project');
         });
       }
     });
@@ -86,7 +79,7 @@ function ProjectForm(props: Props) {
   const handleCancel = () => {
     form.resetFields();
     if (onClose) {
-      onClose(null); 
+      onClose(null);
     }
   };
 
@@ -104,7 +97,7 @@ function ProjectForm(props: Props) {
         label="Name"
         name="name"
         rules={[{ required: true, message: 'Please enter a name' }]}
-        className='font-medium'
+        className="font-medium"
       >
         <Input
           placeholder="Ex. OpenReplay"
@@ -112,10 +105,10 @@ function ProjectForm(props: Props) {
           maxLength={40}
           value={project.name}
           onChange={handleEdit}
-          className='font-normal rounded-lg'
+          className="font-normal rounded-lg"
         />
       </Form.Item>
-      <Form.Item label="Project Type" className='font-medium'>
+      <Form.Item label="Project Type" className="font-medium">
         <div>
           <Segmented
             options={[
@@ -137,34 +130,34 @@ function ProjectForm(props: Props) {
         </div>
       </Form.Item>
       <div className="mt-6 flex justify-between">
-        <div className='flex gap-0 items-center'>
-        <Button
-          htmlType="submit"
-          type="primary"
-          className="float-left mr-2 btn-add-edit-project"
-          loading={loading}
-          // disabled={!project.validate}
-        >
-          {project.exists() ? 'Save' : 'Add'}
-        </Button>
-        <Button
-          type="text"
-          onClick={handleCancel} 
-          className="btn-cancel-project"
-        >
-        Cancel
-      </Button>
-        </div>
-        {project.exists() && (
-          <Tooltip title='Delete project' placement='top' >
+        <div className="flex gap-0 items-center">
+          <Button
+            htmlType="submit"
+            type="primary"
+            className="float-left mr-2 btn-add-edit-project"
+            loading={loading}
+            // disabled={!project.validate}
+          >
+            {project.exists() ? 'Save' : 'Add'}
+          </Button>
           <Button
             type="text"
-            onClick={handleRemove}
-            disabled={!canDelete}
-            className='btn-delete-project'
+            onClick={handleCancel}
+            className="btn-cancel-project"
           >
-            <Icon name="trash" size="16" />
+            Cancel
           </Button>
+        </div>
+        {project.exists() && (
+          <Tooltip title="Delete project" placement="top">
+            <Button
+              type="text"
+              onClick={handleRemove}
+              disabled={!canDelete}
+              className="btn-delete-project"
+            >
+              <Icon name="trash" size="16" />
+            </Button>
           </Tooltip>
         )}
       </div>

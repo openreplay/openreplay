@@ -22,12 +22,13 @@ export default class SettingsStore {
   webhooks: Webhook[] = [];
   webhookInst = new Webhook();
   hooksLoading = false;
+  saving: boolean = false;
   gettingStarted: GettingStarted = new GettingStarted();
   menuCollapsed: boolean = localStorage.getItem(MENU_COLLAPSED) === 'true';
 
   constructor() {
     makeAutoObservable(this, {
-      sessionSettings: observable,
+      sessionSettings: observable
     });
   }
 
@@ -43,7 +44,7 @@ export default class SettingsStore {
       .then(({ data }) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
+          conditionalCapture: data.conditionalCapture
         });
         toast.success('Settings updated successfully');
       })
@@ -59,7 +60,7 @@ export default class SettingsStore {
       .then((data) => {
         this.sessionSettings.merge({
           captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
+          conditionalCapture: data.conditionalCapture
         });
         this.captureRateFetched = true;
       })
@@ -68,20 +69,19 @@ export default class SettingsStore {
       });
   };
 
-  fetchCaptureConditions = (projectId: number): Promise<any> => {
+  fetchCaptureConditions = async (projectId: number): Promise<any> => {
     this.loadingCaptureRate = true;
-    return sessionService
-      .fetchCaptureConditions(projectId)
-      .then((data) => {
-        this.sessionSettings.merge({
-          captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
-          captureConditions: data.conditions,
-        });
-      })
-      .finally(() => {
-        this.loadingCaptureRate = false;
+    try {
+      const data = await sessionService
+        .fetchCaptureConditions(projectId);
+      this.sessionSettings.merge({
+        captureRate: data.rate,
+        conditionalCapture: data.conditionalCapture,
+        captureConditions: data.conditions
       });
+    } finally {
+      this.loadingCaptureRate = false;
+    }
   };
 
   updateCaptureConditions = (projectId: number, data: CaptureConditions) => {
@@ -101,14 +101,14 @@ export default class SettingsStore {
         this.sessionSettings.merge({
           captureRate: data.rate,
           conditionalCapture: data.conditionalCapture,
-          captureConditions: data.conditions,
+          captureConditions: data.conditions
         });
 
         try {
           projectStore.syncProjectInList({
             id: projectId + '',
-            sampleRate: data.rate,
-          })
+            sampleRate: data.rate
+          });
         } catch (e) {
           console.error('Failed to update project in list:', e);
         }
@@ -122,46 +122,44 @@ export default class SettingsStore {
       });
   };
 
-  fetchWebhooks = () => {
+  fetchWebhooks = async () => {
     this.hooksLoading = true;
-    return webhookService.fetchList().then((data) => {
-      this.webhooks = data.map((hook) => new Webhook(hook));
-      this.hooksLoading = false;
-    });
+    const data = await webhookService.fetchList();
+    this.webhooks = data.map((hook) => new Webhook(hook));
+    this.hooksLoading = false;
   };
 
   initWebhook = (inst?: Partial<IWebhook> | Webhook) => {
     this.webhookInst = inst instanceof Webhook ? inst : new Webhook(inst);
   };
 
-  saveWebhook = (inst: Webhook) => {
-    this.hooksLoading = true;
-    return webhookService
-      .saveWebhook(inst)
-      .then((data) => {
-        this.webhookInst = new Webhook(data);
-        if (inst.webhookId === undefined) this.setWebhooks([...this.webhooks, this.webhookInst]);
-        else
-          this.setWebhooks([
-            ...this.webhooks.filter((hook) => hook.webhookId !== data.webhookId),
-            this.webhookInst,
-          ]);
-      })
-      .finally(() => {
-        this.hooksLoading = false;
-      });
+  saveWebhook = async (inst: Webhook) => {
+    this.saving = true;
+    try {
+      const data = await webhookService.saveWebhook(inst);
+      this.webhookInst = new Webhook(data);
+      if (inst.webhookId === undefined) {
+        this.setWebhooks([...this.webhooks, this.webhookInst]);
+      } else {
+        this.setWebhooks([
+          ...this.webhooks.filter((hook) => hook.webhookId !== data.webhookId),
+          this.webhookInst
+        ]);
+      }
+    } finally {
+      this.saving = false;
+    }
   };
 
   setWebhooks = (webhooks: Webhook[]) => {
     this.webhooks = webhooks;
   };
 
-  removeWebhook = (hookId: string) => {
+  removeWebhook = async (hookId: string) => {
     this.hooksLoading = true;
-    return webhookService.removeWebhook(hookId).then(() => {
-      this.webhooks = this.webhooks.filter((hook) => hook.webhookId !== hookId);
-      this.hooksLoading = false;
-    });
+    await webhookService.removeWebhook(hookId);
+    this.webhooks = this.webhooks.filter((hook) => hook.webhookId !== hookId);
+    this.hooksLoading = false;
   };
 
   editWebhook = (diff: Partial<IWebhook>) => {

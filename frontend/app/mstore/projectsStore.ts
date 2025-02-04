@@ -195,8 +195,8 @@ export default class ProjectsStore {
           this.setSiteId(this.list[0].id!);
         }
       });
-    } catch (e) {
-      console.error('Failed to remove project:', e);
+    } catch (error) {
+      throw error || new Error('An error occurred while deleting the project.');
     } finally {
       this.setLoading(false);
     }
@@ -217,7 +217,7 @@ export default class ProjectsStore {
         }
       });
     } catch (error) {
-      console.error('Failed to update site:', error);
+      throw error || new Error('An error occurred while updating the project.');
     } finally {
       this.setLoading(false);
     }

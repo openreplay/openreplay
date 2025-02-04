@@ -20,17 +20,8 @@ export default class ProjectsService extends BaseService {
   };
 
   saveProject = async (projectData: any): Promise<any> => {
-    try {
-      const response = await this.client.post('/projects', projectData);
-      return response.json();
-    } catch (error: any) {
-      if (error.response) {
-        const errorData = await error.response.json();
-        throw errorData.errors?.[0] || 'An error occurred while saving the project.';
-      }
-
-      throw 'An unexpected error occurred.';
-    }
+    const response = await this.client.post('/projects', projectData);
+    return response.json();
   };
 
   removeProject = async (projectId: string) => {
@@ -41,7 +32,6 @@ export default class ProjectsService extends BaseService {
 
   updateProject = async (projectId: string, projectData: any) => {
     const r = await this.client.put(`/projects/${projectId}`, projectData);
-
     return await r.json();
   };
 }
