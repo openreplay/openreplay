@@ -1,12 +1,11 @@
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
-import { useModal } from "Components/Modal";
-import IssuesModal from "Components/Session_/Issues/IssuesModal";
+import IssuesModal from 'Components/Session_/Issues/IssuesModal';
 import { Link2, Keyboard } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { MoreOutlined } from '@ant-design/icons'
+import { MoreOutlined } from '@ant-design/icons';
 import { Icon } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { IFRAME } from 'App/constants/storageKeys';
@@ -15,12 +14,14 @@ import { checkParam, truncateStringToFit } from 'App/utils';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import WarnBadge from 'Components/Session_/WarnBadge';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 import HighlightButton from './Highlight/HighlightButton';
 
 import SharePopup from '../shared/SharePopup/SharePopup';
 import QueueControls from './QueueControls';
-import { Bookmark as BookmarkIcn, BookmarkCheck, Vault } from "lucide-react";
+import { Bookmark as BookmarkIcn, BookmarkCheck, Vault } from 'lucide-react';
+import { useModal } from 'Components/ModalContext';
+import IssueForm from 'Components/Session_/Issues/IssueForm';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -31,11 +32,11 @@ function SubHeader(props) {
     sessionStore,
     projectsStore,
     userStore,
-    issueReportingStore,
+    issueReportingStore
   } = useStore();
   const favorite = sessionStore.current.favorite;
   const isEnterprise = userStore.isEnterprise;
-  const currentSession = sessionStore.current
+  const currentSession = sessionStore.current;
   const projectId = projectsStore.siteId;
   const integrations = integrationsStore.issues.list;
   const { store } = React.useContext(PlayerContext);
@@ -43,7 +44,7 @@ function SubHeader(props) {
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
   const [hideTools, setHideTools] = React.useState(false);
   const [isFavorite, setIsFavorite] = React.useState(favorite);
-  const { showModal, hideModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   React.useEffect(() => {
     const hideDevtools = checkParam('hideTools');
@@ -62,7 +63,7 @@ function SubHeader(props) {
 
   const issuesIntegrationList = integrationsStore.issues.list;
   const handleOpenIssueModal = () => {
-    issueReportingStore.init();
+    issueReportingStore.init({});
     if (!issueReportingStore.projectsFetched) {
       issueReportingStore.fetchProjects().then((projects) => {
         if (projects && projects[0]) {
@@ -70,13 +71,12 @@ function SubHeader(props) {
         }
       });
     }
-    showModal(
-      <IssuesModal
-        provider={reportingProvider}
-        sessionId={currentSession.sessionId}
-        closeHandler={hideModal}
-      />
-    )
+    openModal(
+      <IssueForm sessionId={currentSession.sessionId} closeHandler={closeModal} errors={[]} />,
+      {
+        title: 'Create Issue'
+      }
+    );
   };
 
   const reportingProvider = issuesIntegrationList[0]?.provider || '';
@@ -90,10 +90,10 @@ function SubHeader(props) {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
     uxtestingStore.setHideDevtools(!enabled);
   };
-  
+
   const showKbHelp = () => {
-    showModal(<ShortcutGrid />, { right: true, width: 320 });
-  }
+    openModal(<ShortcutGrid />, { width: 320, title: 'Keyboard Shortcuts' });
+  };
 
   const vaultIcon = isEnterprise ? (
     <Vault size={16} strokeWidth={1} />
@@ -115,7 +115,7 @@ function SubHeader(props) {
       toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
       setIsFavorite(!isFavorite);
     });
-  }
+  };
 
   return (
     <>
@@ -126,13 +126,13 @@ function SubHeader(props) {
             ? props.live
               ? '#F6FFED'
               : '#EBF4F5'
-            : undefined,
+            : undefined
         }}
       >
         <WarnBadge
-          siteId={projectId}
+          siteId={projectId!}
           currentLocation={currentLocation}
-          version={currentSession?.trackerVersion ?? undefined}
+          version={currentSession?.trackerVersion ?? ""}
         />
 
         <SessionTabs />
@@ -164,7 +164,7 @@ function SubHeader(props) {
             <Dropdown
               menu={{
                 items: [
-                  
+
                   {
                     key: '2',
                     label: <div className={'flex items-center gap-2'}>
@@ -180,7 +180,7 @@ function SubHeader(props) {
                       <span>Issues</span>
                     </div>,
                     disabled: !enabledIntegration,
-                    onClick: handleOpenIssueModal,
+                    onClick: handleOpenIssueModal
                   },
                   {
                     key: '1',
