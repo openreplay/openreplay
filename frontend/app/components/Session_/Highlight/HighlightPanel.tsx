@@ -8,6 +8,7 @@ import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { shortDurationFromMs } from 'App/date';
 import { toast } from 'react-toastify';
+import { toJpeg } from 'html-to-image';
 
 function maskDuration(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -20,6 +21,7 @@ function maskDuration(input: string): string {
 
   return `${limitedDigits.slice(0, 2)}:${limitedDigits.slice(2)}`;
 }
+
 const duration = new RegExp(/(\d{2}):(\d{2})/);
 
 function HighlightPanel({ onClose }: { onClose: () => void }) {
@@ -41,30 +43,30 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const [tag, setTag] = React.useState(editNote?.tag ?? TAGS[0]);
 
   const onStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newState = maskDuration(e.target.value)
+    const newState = maskDuration(e.target.value);
     setStartTs(newState);
     if (duration.test(newState)) {
       const [_, minutes, seconds] = duration.exec(newState) ?? [];
-      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [Math.min(newTime, sessLength), uiPlayerStore.highlightSelection.endTs],
-      })
+        range: [Math.min(newTime, sessLength), uiPlayerStore.highlightSelection.endTs]
+      });
     }
   };
 
   const onEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newState = maskDuration(e.target.value)
+    const newState = maskDuration(e.target.value);
     setEndTs(newState);
     if (duration.test(newState)) {
       const [_, minutes, seconds] = duration.exec(newState) ?? [];
-      const newTime = (parseInt(minutes) * 60 + parseInt(seconds))*1000;
+      const newTime = (parseInt(minutes) * 60 + parseInt(seconds)) * 1000;
       const sessLength = store.get().endTime;
       uiPlayerStore.toggleHighlightSelection({
         enabled: true,
-        range: [uiPlayerStore.highlightSelection.startTs, Math.min(newTime, sessLength)],
-      })
+        range: [uiPlayerStore.highlightSelection.startTs, Math.min(newTime, sessLength)]
+      });
     }
   };
 
@@ -77,15 +79,16 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
     const distance = Math.max(endTime / 40, 2500);
     uiPlayerStore.toggleHighlightSelection({
       enabled: true,
-      range: [Math.max(time - distance, 0), Math.min(time + distance, endTime)],
+      range: [Math.max(time - distance, 0), Math.min(time + distance, endTime)]
     });
     return () => {
       uiPlayerStore.toggleHighlightSelection({
-        enabled: false,
+        enabled: false
       });
-      notesStore.setEditNote(null)
+      notesStore.setEditNote(null);
     };
   }, []);
+
   React.useEffect(() => {
     const startStr = shortDurationFromMs(
       uiPlayerStore.highlightSelection.startTs
@@ -95,8 +98,9 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
     setEndTs(endStr);
   }, [
     uiPlayerStore.highlightSelection.startTs,
-    uiPlayerStore.highlightSelection.endTs,
+    uiPlayerStore.highlightSelection.endTs
   ]);
+
   React.useEffect(() => {
     player.pause();
   }, [playing]);
@@ -104,13 +108,14 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
   const addTag = (newTag: iTag) => {
     setTag(newTag);
   };
+
   const tagActive = (checkedTag: iTag) => {
     return tag === checkedTag;
   };
 
   const onSave = async () => {
     try {
-      notesStore.setSaving(true)
+      notesStore.setSaving(true);
       const playerContainer = document.querySelector('iframe')?.contentWindow?.document;
       let thumbnail;
       if (playerContainer) {
@@ -123,8 +128,8 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
         timestamp: parseInt(currentTime, 10),
         startAt: parseInt(uiPlayerStore.highlightSelection.startTs, 10),
         endAt: parseInt(uiPlayerStore.highlightSelection.endTs, 10),
-        thumbnail,
-      }
+        thumbnail
+      };
       if (editNote) {
         await notesStore.updateNote(editNote.noteId, note);
         toast.success('Highlight updated');
@@ -139,7 +144,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
     } finally {
       notesStore.setSaving(false);
     }
-  }
+  };
 
   return (
     <div
@@ -232,6 +237,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
 window.__debugElementToImage = (el) => elementToImage(el).then(img => {
   const a = document.createElement('a');
   a.href = img;
@@ -241,13 +247,15 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
 
 function elementToImage(doc: Document) {
   const el = doc.body;
-  const srcMap = new WeakMap()
-  return import('html2canvas').then(({ default: html2canvas }) => {
+  const srcMap = new WeakMap();
+
+  // @ts-ignore
+  return import('html2canvas-pro').then(({ default: html2canvas }) => {
     const images = doc.querySelectorAll('img');
     images.forEach((img) => {
       srcMap.set(img, img.src);
-      img.src = ""
-    })
+      img.src = '';
+    });
     return html2canvas(
       el,
       {
@@ -259,18 +267,18 @@ function elementToImage(doc: Document) {
         height: 900,
         width: 1200,
         x: 0,
-        y: 0,
+        y: 0
       }
     ).then((canvas) => {
       images.forEach((img) => {
-        img.src = srcMap.get(img)
-      })
+        img.src = srcMap.get(img);
+      });
       return canvas.toDataURL('img/png');
     }).catch(e => {
       console.log(e);
-      return undefined
+      return undefined;
     });
-  })
+  });
 }
 
 const convertAllImagesToBase64 = (proxyURL, cloned) => {
@@ -282,7 +290,7 @@ const convertAllImagesToBase64 = (proxyURL, cloned) => {
   for (let i = 0; i < images.length; i += 1) {
     const promise = new Promise((resolve, reject) => {
       pendingPromisesData.push({
-        index: i, resolve, reject,
+        index: i, resolve, reject
       });
     });
     pendingImagesPromises.push(promise);
