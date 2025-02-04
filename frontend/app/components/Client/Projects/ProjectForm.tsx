@@ -44,8 +44,8 @@ function ProjectForm(props: Props) {
           toast.success('Project created successfully');
           onClose?.(null);
 
-          mstore.searchStore.clearSearch();
-          mstore.searchStoreLive.clearSearch();
+          // mstore.searchStore.clearSearch();
+          // mstore.searchStoreLive.clearSearch();
           mstore.initClient();
 
           projectsStore.setConfigProject(parseInt(resp.id!));

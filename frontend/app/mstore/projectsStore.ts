@@ -161,8 +161,8 @@ export default class ProjectsStore {
       } else {
         this.list.push(newSite);
       }
-      this.setSiteId(newSite.id!);
-      this.active = newSite;
+      // this.setSiteId(newSite.id!);
+      // this.active = newSite;
       return newSite;
 
     } catch (error: any) {
