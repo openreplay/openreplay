@@ -1,8 +1,8 @@
 {
   "name": "peers-server",
-  "version": "v1.12.0",
-  "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
-  "main": "peerjs-server.js",
+  "version": "v1.22.0",
+  "description": "peers server to handle peerjs connections",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
