@@ -7,6 +7,7 @@ import { useStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
 import usePageTitle from '@/hooks/usePageTitle';
+import withPermissions from 'HOCs/withPermissions';
 
 function NotesList() {
   usePageTitle('Notes - OpenReplay');
@@ -74,4 +75,6 @@ function NotesList() {
   );
 }
 
-export default observer(NotesList);
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
+)(observer(NotesList));

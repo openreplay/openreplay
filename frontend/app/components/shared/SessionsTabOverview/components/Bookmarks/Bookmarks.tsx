@@ -9,6 +9,7 @@ import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
 import SessionItem from 'Shared/SessionItem/SessionItem';
 import usePageTitle from '@/hooks/usePageTitle';
+import withPermissions from 'HOCs/withPermissions';
 
 function Bookmarks() {
   const { projectsStore, sessionStore, customFieldStore, userStore, searchStore } = useStore();
@@ -75,4 +76,6 @@ function Bookmarks() {
   );
 }
 
-export default observer(Bookmarks);
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
+)(observer(Bookmarks));
