@@ -1,6 +1,5 @@
-fastapi
-SQLAlchemy==2.0.21
-uvicorn==0.23.2
+fastapi==0.115.8
+SQLAlchemy==2.0.37
+uvicorn==0.34.0
 python-decouple==3.8
-psycopg2-binary==2.9.7
-
+psycopg2-binary==2.9.10
