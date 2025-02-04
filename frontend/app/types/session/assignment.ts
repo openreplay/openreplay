@@ -1,15 +1,16 @@
+import { makeAutoObservable } from 'mobx';
 import Activity, { IActivity } from './activity';
 import { DateTime } from 'luxon';
-import {  notEmptyString } from 'App/validate';
+import { notEmptyString } from 'App/validate';
 
-interface IReportedIssue {
+export interface IReportedIssue {
   id: string;
   title: string;
-  timestamp: number;
+  timestamp: number | null;
   sessionId: string;
   projectId: string;
   siteId: string;
-  activities: [];
+  activities: any[];
   closed: boolean;
   assignee: string;
   commentsCount: number;
@@ -17,58 +18,61 @@ interface IReportedIssue {
   description: string;
   iconUrl: string;
   createdAt?: string;
-  comments: IActivity[]
-  users: { id: string }[]
+  comments: IActivity[];
+  users: { id: string }[];
 }
 
 export default class ReportedIssue {
-  id: IReportedIssue["id"];
-  title: IReportedIssue["title"] = '';
-  timestamp: IReportedIssue["timestamp"];
-  sessionId: IReportedIssue["sessionId"];
-  projectId: IReportedIssue["projectId"] = '';
-  siteId: IReportedIssue["siteId"];
-  activities: IReportedIssue["activities"];
-  closed: IReportedIssue["closed"];
-  assignee: IReportedIssue["assignee"] = '';
-  issueType: IReportedIssue["issueType"] = '';
-  description: IReportedIssue["description"] = '';
-  iconUrl: IReportedIssue["iconUrl"] = '';
+  id: IReportedIssue['id'] = '';
+  title: IReportedIssue['title'] = '';
+  timestamp: DateTime | null = null;
+  sessionId: IReportedIssue['sessionId'] = '';
+  projectId: IReportedIssue['projectId'] = '';
+  siteId: IReportedIssue['siteId'] = '';
+  activities: any[] = [];
+  closed: IReportedIssue['closed'] = false;
+  assignee: IReportedIssue['assignee'] = '';
+  issueType: IReportedIssue['issueType'] = '';
+  description: IReportedIssue['description'] = '';
+  iconUrl: IReportedIssue['iconUrl'] = '';
 
   constructor(assignment?: IReportedIssue) {
+    makeAutoObservable(this);
     if (assignment) {
-      Object.assign(this, {
-        ...assignment,
-        timestamp: assignment.createdAt ? DateTime.fromISO(assignment.createdAt) : undefined,
-        activities: assignment.comments ? assignment.comments.map(activity => {
+      Object.assign(this, assignment);
+      this.timestamp = assignment.createdAt ? DateTime.fromISO(assignment.createdAt) : null;
+      this.activities = assignment.comments
+        ? assignment.comments.map((activity) => {
           if (assignment.users) {
-            // @ts-ignore ???
-            activity.user = assignment.users.filter(user => user.id === activity.author)[0];
+            // @ts-ignore
+            activity.user = assignment.users.find(user => user.id === activity.author);
           }
-          return new Activity(activity)
-        }) : []
-      })
+          return new Activity(activity);
+        })
+        : [];
     }
   }
 
-  toJS() {
-    return this
-  }
-
   validate() {
-    return !!this.projectId && !!this.issueType && notEmptyString(this.title) && notEmptyString(this.description)
+    return (
+      !!this.projectId &&
+      !!this.issueType &&
+      notEmptyString(this.title) &&
+      notEmptyString(this.description)
+    );
   }
 
   get isValid() {
-    return !!this.projectId && !!this.issueType && notEmptyString(this.title) && notEmptyString(this.description)
+    return this.validate();
   }
 
   toCreate() {
     return {
       title: this.title,
       description: this.description,
-      assignee: this.assignee,
-      issueType: this.issueType
-    }
+      assignee: this.assignee + '',
+      issueType: this.issueType + '',
+      projectId: this.projectId,
+    };
   }
 }

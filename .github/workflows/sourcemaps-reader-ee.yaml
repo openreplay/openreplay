@@ -1,4 +1,4 @@
-# This action will push the sourcemapreader changes to aws
+# This action will push the sourcemapreader changes to ee
 on:
   workflow_dispatch:
     inputs:
@@ -11,11 +11,12 @@ on:
       - dev
       - api-*
     paths:
+      - "ee/sourcemap-reader/**"
       - "sourcemap-reader/**"
       - "!sourcemap-reader/.gitignore"
       - "!sourcemap-reader/*-dev.sh"
 
-name: Build and Deploy sourcemap-reader
+name: Build and Deploy sourcemap-reader EE
 
 jobs:
   deploy:
@@ -64,7 +65,7 @@ jobs:
       - name: Building and Pushing sourcemaps-reader image
         id: build-image
         env:
-          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
           IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
           ENVIRONMENT: staging
         run: |
@@ -132,7 +133,7 @@ jobs:
         if: ${{ failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: foss
+          SLACK_CHANNEL: ee
           SLACK_TITLE: "Failed ${{ github.workflow }}"
           SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}

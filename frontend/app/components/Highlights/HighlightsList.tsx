@@ -5,14 +5,15 @@ import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
 import cn from 'classnames';
-import { withSiteId, highlights } from "App/routes";
+import { withSiteId, highlights } from 'App/routes';
 import HighlightClip from './HighlightClip';
 import { useQuery } from '@tanstack/react-query';
-import HighlightPlayer from "./HighlightPlayer";
+import HighlightPlayer from './HighlightPlayer';
 import { useLocation, useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import EditHlModal from "./EditHlModal";
-import HighlightsListHeader from './HighlightsListHeader'
+import EditHlModal from './EditHlModal';
+import HighlightsListHeader from './HighlightsListHeader';
+import withPermissions from 'HOCs/withPermissions';
 
 function HighlightsList() {
   const { notesStore, projectsStore } = useStore();
@@ -20,7 +21,7 @@ function HighlightsList() {
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editHl, setEditHl] = React.useState<Record<string, any>>({
     message: '',
-    isPublic: false,
+    isPublic: false
   });
   const { search } = useLocation();
   const highlight = new URLSearchParams(search).get('highlight');
@@ -30,15 +31,15 @@ function HighlightsList() {
   const listLength = notesStore.notes.length;
   const activeTags = notesStore.activeTags;
   const page = notesStore.page;
-  const ownOnly = notesStore.ownOnly
+  const ownOnly = notesStore.ownOnly;
   const {
     data = { notes: [], total: 0 },
     isPending,
-    refetch,
+    refetch
   } = useQuery({
     queryKey: ['notes', page, query, activeTags],
     queryFn: () => notesStore.fetchNotes(),
-    retry: 3,
+    retry: 3
   });
   const { total, notes } = data;
 
@@ -51,7 +52,7 @@ function HighlightsList() {
   };
 
   const toggleTag = (tag?: iTag) => {
-    notesStore.toggleTag(tag)
+    notesStore.toggleTag(tag);
   };
 
   const onPageChange = (page: number) => {
@@ -66,11 +67,11 @@ function HighlightsList() {
 
   const onItemClick = (id: string) => {
     hist.replace(`?highlight=${id}`);
-  }
+  };
 
   const onClose = () => {
     hist.replace(withSiteId(highlights(), projectsStore.active?.id));
-  }
+  };
 
   const onEdit = (id: string) => {
     const hl = notesStore.getNoteById(id);
@@ -78,8 +79,8 @@ function HighlightsList() {
       return toast.error('Highlight not found in the list');
     }
     setEditHl(hl);
-    setEditModalOpen(true)
-  }
+    setEditModalOpen(true);
+  };
 
   const onSave = async (noteText: string, visible: boolean) => {
     if (!editHl) {
@@ -88,8 +89,8 @@ function HighlightsList() {
     const newNote = {
       ...editHl,
       message: noteText,
-      isPublic: visible,
-    }
+      isPublic: visible
+    };
     try {
       await notesStore.updateNote(editHl.noteId, newNote);
       toast.success('Highlight updated successfully');
@@ -99,12 +100,12 @@ function HighlightsList() {
     }
 
     setEditModalOpen(false);
-  }
+  };
 
   const toggleShared = (val: boolean) => {
     notesStore.toggleShared(val);
     refetch();
-  }
+  };
 
   const isEmpty = !isPending && total === 0;
   return (
@@ -189,4 +190,6 @@ function HighlightsList() {
   );
 }
 
-export default observer(HighlightsList);
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
+)(observer(HighlightsList));

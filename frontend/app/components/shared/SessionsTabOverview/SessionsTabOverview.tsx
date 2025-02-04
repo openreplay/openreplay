@@ -8,8 +8,9 @@ import SessionList from './components/SessionList';
 import { observer } from 'mobx-react-lite';
 import NoSessionsMessage from 'Shared/NoSessionsMessage/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar/MainSearchBar';
-import SearchActions from "../SearchActions";
+import SearchActions from '../SearchActions';
 import usePageTitle from '@/hooks/usePageTitle';
+import withPermissions from 'HOCs/withPermissions';
 
 function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
@@ -53,4 +54,6 @@ function SessionsTabOverview() {
   );
 }
 
-export default observer(SessionsTabOverview);
+export default withPermissions(
+  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
+)(observer(SessionsTabOverview));

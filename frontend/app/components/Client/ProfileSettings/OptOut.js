@@ -1,29 +1,36 @@
-import React from 'react'
-import { Checkbox } from 'UI'
-import { observer } from 'mobx-react-lite'
-import { useStore } from "App/mstore";
+import React from 'react';
+import { Checkbox } from 'UI';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
+import { toast } from 'react-toastify';
 
 function OptOut() {
   const { userStore } = useStore();
-  const optOut = userStore.account.optOut;
   const updateClient = userStore.updateClient;
+  const [optOut, setOptOut] = React.useState(userStore.account.optOut);
 
   const onChange = () => {
-    void updateClient({ optOut: !optOut });
-  }
+    setOptOut(!optOut);
+    void updateClient({ optOut: !optOut }).then(() => {
+      toast('Account settings updated successfully', { type: 'success' });
+    }).catch((e) => {
+      toast(e.message || 'Failed to update account settings', { type: 'error' });
+      setOptOut(optOut);
+    });
+  };
 
   return (
     <div>
       <Checkbox
         name="isPublic"
         type="checkbox"
-        checked={ optOut }
-        onClick={ onChange }
+        checked={optOut}
+        onClick={onChange}
         className="font-medium mr-8"
         label="Anonymize"
       />
     </div>
-  )
+  );
 }
 
 export default observer(OptOut);

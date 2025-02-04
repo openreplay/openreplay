@@ -3,6 +3,7 @@ import { Button, Input, Form } from 'UI';
 import styles from './profileSettings.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { toast } from 'react-toastify';
 
 function Settings() {
   const { userStore } = useStore();
@@ -26,8 +27,12 @@ function Settings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await updateClient({ name: accountName, tenantName: organizationName });
-    setChanged(false);
+    await updateClient({ name: accountName, tenantName: organizationName }).then(() => {
+      setChanged(false);
+      toast('Profile settings updated successfully', { type: 'success' });
+    }).catch((e) => {
+      toast(e.message || 'Failed to update account settings', { type: 'error' });
+    });
   }
 
   return (
