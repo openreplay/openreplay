@@ -1,8 +1,7 @@
 import logging
 
+from chalicelib.core.log_tools import log_tools
 from elasticsearch import Elasticsearch
-
-from chalicelib.core import log_tools
 from schemas import schemas
 
 logger = logging.getLogger(__name__)
