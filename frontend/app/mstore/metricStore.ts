@@ -336,6 +336,7 @@ export default class MetricStore {
       const _metric = new Widget().fromJson(metricData);
       if (!metric.exists()) {
         toast.success('Card created successfully');
+        this.instance.updateKey('metricId', _metric.metricId);
         this.addToList(_metric);
       } else {
         toast.success('Card updated successfully');
