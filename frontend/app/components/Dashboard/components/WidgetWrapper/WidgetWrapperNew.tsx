@@ -106,8 +106,11 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
       style={{
         userSelect: 'none',
         opacity: isDragging ? 0.5 : 1,
-        borderColor:
-          (canDrop && isOver) || active ? '#394EFF' : isPreview ? 'transparent' : '#EEEEEE'
+        borderColor: (canDrop && isOver)
+                      ? '#454545'
+                      : isPreview ? 'transparent' : '#EEEEEE',
+                      borderStyle: (canDrop && isOver) ? 'dashed' : 'solid',
+        cursor: isDragging ? 'grabbing' : 'grab'
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => null}

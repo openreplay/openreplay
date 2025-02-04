@@ -71,13 +71,7 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
   React.useEffect(() => {
     const defaultSeriesCollapseState: Record<number, boolean> = {};
     metric.series.forEach((s: any) => {
-      defaultSeriesCollapseState[s.seriesId] = defaultSeriesCollapseState[
-        s.seriesId
-      ]
-        ? defaultSeriesCollapseState[s.seriesId]
-        : allOpen
-        ? false
-        : defaultClosed.current;
+       defaultSeriesCollapseState[s.seriesId] = isTable ? false : (allOpen ? false : defaultClosed.current);
     });
     setSeriesCollapseState(defaultSeriesCollapseState);
   }, [metric.series]);
@@ -202,9 +196,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'custom', label: 'Custom' },
   ];
   return (
-    <div className="flex flex-col gap-0 rounded-lg bg-white border-disabled-text">
-      <Form.Item className='hover:bg-active-blue w-full px-5 py-2 mb-0'>
-        <div className="flex flex-wrap gap-2 items-center justify-start ">
+    <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
+      <Form.Item>
+        <div className="flex flex-wrap gap-2 items-center justify-start">
           <span className="font-medium">User journeys with: </span>
 
           <div className="flex sm:flex-wrap lg:flex-nowrap gap-2 items-start">
@@ -237,16 +231,14 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </div>
         </div>
       </Form.Item>
-      <Form.Item
+      <div className="flex items-center">
+        <Form.Item
           label={
-            <span className="font-medium">
-              {metric.startType === 'start'
-                ? 'Specify Start Point'
-                : 'Specify End Point'
-              }
-            </span>
+            metric.startType === 'start'
+              ? 'Specify Start Point'
+              : 'Specify End Point'
           }
-          className="hover:bg-active-blue w-full px-5 py-2 mb-0"
+          className="m0-0 font-medium p-0 h-fit"
         >
           <span className="font-normal">
             <FilterItem
@@ -264,6 +256,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </span>
         </Form.Item>
       </div>
+    </Card>
   );
 });
 

@@ -166,7 +166,10 @@ function WidgetSessions(props: Props) {
             {hasFilters && <Tooltip title='Clear Drilldown' placement='top'><Button type='text' size='small' onClick={clearFilters}><UndoOutlined /></Button></Tooltip>}
           </div>
 
-          {hasFilters && widget.metricType === 'table' &&  <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
+          {hasFilters && widget.metricType === 'table' &&  
+          <div className="py-2">
+            <Tag closable onClose={clearFilters} className='truncate max-w-44 rounded-lg'>{filterText}</Tag>
+          </div>}
           
         </div>
 

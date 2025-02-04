@@ -49,7 +49,7 @@ function DashboardOptions(props: Props) {
 
   return (
     <Dropdown menu={menu}>
-      <Button id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
+      <Button type='text' id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
     </Dropdown>
   );
 }

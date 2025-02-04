@@ -44,11 +44,11 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
               key={row.name}
               onClick={(e) => onClickHandler(e, row)}
               style={{
-                borderBottom: index === data.length - 1 ? 'none' : '1px dotted rgba(0, 0, 0, 0.05)',
+                borderBottom: index === data.length - 1 ? 'none' : 'none',
                 padding: '4px 10px',
                 lineHeight: '1px'
               }}
-              className={cn('rounded', selected === row.name ? 'bg-active-blue' : '')}
+              className={cn('rounded-lg border-b-0 hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-active-blue' : '')}
             >
               <List.Item.Meta
                 className="m-0"
@@ -56,7 +56,7 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                 title={(
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis={true}>{row.displayName}</Typography.Text>
+                      <Typography.Text ellipsis={true} className='w-[95%]'>{row.displayName}</Typography.Text>
                       <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
                     </div>
 

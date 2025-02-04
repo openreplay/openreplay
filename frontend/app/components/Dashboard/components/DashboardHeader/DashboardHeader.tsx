@@ -3,13 +3,15 @@ import BackButton from 'Shared/Breadcrumb/BackButton';
 import { withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { PageTitle, confirm } from 'UI';
-import { Tooltip } from 'antd';
+import { Tooltip, Popover, Button  } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
 import DashboardOptions from '../DashboardOptions';
 import withModal from 'App/components/Modal/withModal';
 import { observer } from 'mobx-react-lite';
 import DashboardEditModal from '../DashboardEditModal';
+import AddCardSection from '../AddCardSection/AddCardSection';
 
 interface IProps {
   siteId: string;
@@ -77,6 +79,17 @@ function DashboardHeader(props: Props) {
           className="flex items-center gap-2"
           style={{ flex: 1, justifyContent: 'end' }}
         >
+
+        <Popover
+            trigger="click"
+            content={<AddCardSection />}
+            overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
+          >
+            <Button type="primary"  icon={<PlusOutlined />} size="middle">
+              Add Card
+            </Button>
+          </Popover>
+
           <SelectDateRange
             style={{ width: '300px' }}
             period={period}
@@ -84,6 +97,7 @@ function DashboardHeader(props: Props) {
             right={true}
             isAnt={true}
             useButtonStyle={true}
+            className='h-full'
           />
 
           <DashboardOptions

@@ -61,7 +61,7 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
   return (
     <div
       key={item.widgetId}
-      className={cn('col-span-' + item.config.col, 'group relative pl-6 pr-4 py-4 hover:bg-active-blue w-full rounded-xl')}
+      className={cn('col-span-' + item.config.col, 'group relative p-2 hover:bg-active-blue w-full rounded-xl')}
     >
       <WidgetWrapperNew
         index={index}
@@ -77,7 +77,7 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
       />
       <div
         className={cn(
-          'invisible group-hover:visible ',
+          'invisible group-hover:visible hidden',
           'absolute -left-2 top-1/2 -translate-y-1/2',
         )}
       >

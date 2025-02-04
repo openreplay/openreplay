@@ -200,7 +200,7 @@ function WidgetView(props: Props) {
             />
             <div className={cn('flex gap-4', layout)}>
               <div className={layout.startsWith('flex-row') ? 'w-1/3 ' : 'w-full'}>
-                <WidgetFormNew layout={layout} />
+                <WidgetFormNew layout={layout}  />
               </div>
               <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
                 <WidgetPreview name={widget.name} isEditing={expanded} />
