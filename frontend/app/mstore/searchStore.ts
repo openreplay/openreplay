@@ -13,7 +13,7 @@ import { searchService } from 'App/services';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
-import { sessionStore } from 'App/mstore';
+import { sessionStore, settingsStore } from 'App/mstore';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import { iTag } from '@/services/NotesService';
 import { issues_types } from 'Types/session/issue';
@@ -337,6 +337,21 @@ class SearchStore {
       delete tagFilter.label;
       delete tagFilter.icon;
       filter.filters = filter.filters.concat(tagFilter);
+    }
+
+    if (!filter.filters.some((f: any) => f.type === FilterKey.DURATION)) {
+      const { durationFilter } = settingsStore.sessionSettings;
+      if (durationFilter?.count > 0) {
+        const multiplier = durationFilter.countType === 'sec' ? 1000 : 60000;
+        const amount = durationFilter.count * multiplier;
+        const value = durationFilter.operator === '<' ? [amount, 0] : [0, amount];
+
+        filter.filters.push({
+          type: FilterKey.DURATION,
+          value,
+          operator: 'is',
+        });
+      }
     }
 
     this.latestRequestTime = Date.now();
