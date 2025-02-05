@@ -198,7 +198,7 @@ export default class MetricStore {
 
     // handle metricValue change
     if (obj.hasOwnProperty('metricValue') && obj.metricValue !== this.instance.metricValue) {
-      if (Array.isArray(obj.metricValue) && obj.metricValue.length > 1) {
+      if (Array.isArray(obj.metricValue) && obj.metricValue.length > 0) {
         obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
       }
     }

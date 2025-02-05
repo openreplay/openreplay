@@ -71,7 +71,7 @@ export default class Widget {
     name: string = 'Untitled Card';
     metricType: string = 'timeseries';
     metricOf: string = 'sessionCount';
-    metricValue: any = '';
+    metricValue: [] = [];
     viewType: string = 'lineChart';
     metricFormat: string = 'sessionCount';
     series: FilterSeries[] = [];
@@ -454,7 +454,7 @@ export default class Widget {
 
     private metricValueToArray(metricValue: any) {
         if (!Array.isArray(metricValue)) return metricValue;
-        return metricValue.map((i: any) => i.value);
+        return metricValue.map((i: any) => i);
     }
 }
 
