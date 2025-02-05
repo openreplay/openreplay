@@ -4,6 +4,7 @@ import { SankeyChart } from 'echarts/charts';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { NoContent } from 'App/components/ui';
 import {InfoCircleOutlined} from '@ant-design/icons';
+import { X } from 'lucide-react';
 echarts.use([SankeyChart]);
 
 interface SankeyNode {
@@ -30,10 +31,11 @@ interface Props {
   data: Data;
   height?: number;
   onChartClick?: (filters: any[]) => void;
+  isUngrouped?: boolean;
 }
 
 const EChartsSankey: React.FC<Props> = (props) => {
-  const { data, height = 240, onChartClick } = props;
+  const { data, height = 240, onChartClick, isUngrouped } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   if (data.nodes.length === 0 || data.links.length === 0) {
@@ -64,7 +66,6 @@ const EChartsSankey: React.FC<Props> = (props) => {
       const targetNode = data.nodes.find((n) => n.id === l.target);
       return (sourceNode?.depth ?? 0) <= maxDepth && (targetNode?.depth ?? 0) <= maxDepth;
     });
-    
 
     
     const nodeValues = new Array(filteredNodes.length).fill(0);
@@ -74,11 +75,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
       .map((n) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
         if (computedName === 'Other') {
-          computedName = 'Minor Paths';
+          computedName = 'Others';
         }
         const itemColor =
-          computedName === 'Minor Paths'
-            ? '#222F99'
+          computedName === 'Others'
+            ? 'rgba(34,44,154,.9)'
             : n.eventType === 'DROP'
               ? '#B5B7C8'
               : '#394eff';
@@ -98,9 +99,9 @@ const EChartsSankey: React.FC<Props> = (props) => {
           return (a.depth as number) - (b.depth as number);
         }
       });
-      console.log('EChart Nodes:', echartNodes);
       
-
+      const distinctSteps = new Set(data.nodes.map(node => node.depth)).size;
+      console.log('Number of steps returned by the backend:', distinctSteps);
     
     const echartLinks = filteredLinks.map((l) => ({
       source: echartNodes.findIndex((n) => n.id === l.source),
@@ -144,22 +145,45 @@ const EChartsSankey: React.FC<Props> = (props) => {
             },
           },
           label: {
-            formatter: '{b} - {c}',
+            show: true,
+            position: 'top',
+            textShadowColor: "transparent",
+            textBorderColor: "transparent",
+            align: 'left',
+            overflow: "truncate",
+            distance: 3,
+            offset: [-20, 0],
+            formatter: function(params: any) {
+              const totalSessions = nodeValues.reduce((sum: number, v: number) => sum + v, 0);
+              const percentage = totalSessions ? ((params.value / totalSessions) * 100).toFixed(1) + '%' : '0%';
+              return `{header|${params.name}}\n{body|${percentage}  ${params.value} Sessions}`;
+            },
+            rich: {
+              header: {
+                fontWeight: 'bold',
+                fontSize: 12,
+                color: '#333'
+              },
+              body: {
+                fontSize: 12,
+                color: '#666'
+              }
+            }
           },
           tooltip: {
             formatter: sankeyTooltip(echartNodes, nodeValues),
           },
-          nodeAlign: 'jusitfy',
+          nodeAlign: 'left',
           nodeWidth: 40,
-          nodeGap: 8,
+          nodeGap: 40,
           lineStyle: {
             color: 'source',
-            curveness: 0.2,
+            curveness: 0.6,
             opacity: 0.1,
           },
           itemStyle: {
             color: '#394eff',
-            borderRadius: 2,
+            borderRadius: 7,
           },
         },
       ],
@@ -279,7 +303,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
     };
   }, [data, height, onChartClick]);
 
-  return <div ref={chartRef} style={{ width: '100%', height }} />;
+  const containerStyle: React.CSSProperties = isUngrouped
+    ? {width: '100%', minHeight: 500, height: '100%', overflowY: 'auto' }
+    : { width: '100%', height };
+
+    return <div ref={chartRef} style={containerStyle} />;
 };
 
 export default EChartsSankey;

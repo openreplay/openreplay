@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Checkbox, Input, Tooltip } from 'antd';
+import { RedoOutlined } from '@ant-design/icons';
 import cn from 'classnames';
 import { Loader } from 'UI';
 import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
@@ -85,6 +86,10 @@ export function AutocompleteModal({
     onApply(vals);
   };
 
+  const clearSelection = () => {
+    setSelectedValues([]);
+  };
+
   const sortedOptions = React.useMemo(() => {
     if (values[0] && values[0].length) {
       const sorted = options.sort((a, b) => {
@@ -128,6 +133,7 @@ export function AutocompleteModal({
         onChange={(e) => handleInputChange(e.target.value)}
         placeholder={placeholder}
         className="rounded-lg"
+        autoFocus
       />
       <Loader loading={isLoading}>
         <>
@@ -163,13 +169,23 @@ export function AutocompleteModal({
           ) : null}
         </>
       </Loader>
-      <div className={'flex gap-2 items-center pt-2'}>
-        <Button type={'primary'} onClick={applyValues} className="btn-apply-event-value">
-          Apply
+      <div className="flex justify-between items-center pt-2">
+        <div className="flex gap-2 items-center">
+          <Button type="primary" onClick={applyValues} className="btn-apply-event-value">
+            Apply
+          </Button>
+
+          <Button onClick={onClose} className="btn-cancel-event-value">
+            Cancel
+          </Button>
+        </div>
+
+        <Tooltip title='Clear all selection'>
+        <Button onClick={clearSelection} type='text' className="btn-clear-selection" disabled={selectedValues.length === 0}>
+          <RedoOutlined />
         </Button>
-        <Button onClick={onClose} className="btn-cancel-event-value">
-          Cancel
-        </Button>
+        </Tooltip>
+
       </div>
     </OutsideClickDetectingDiv>
   );
