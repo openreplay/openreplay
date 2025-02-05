@@ -22,6 +22,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
 from routers.subs import spot
+from chalicelib.utils import contextual_validators
 
 logger = logging.getLogger(__name__)
 public_app, app, app_apikey = get_routers()
@@ -252,17 +253,19 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
+        Depends(contextual_validators.validate_contextual_payload),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id,
                                            platform=context.project.platform)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
+        Depends(contextual_validators.validate_contextual_payload),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id, ids_only=True,
                                            platform=context.project.platform)
     return {'data': data}
 

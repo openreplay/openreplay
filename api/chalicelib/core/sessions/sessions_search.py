@@ -40,16 +40,16 @@ COALESCE((SELECT TRUE
 
 
 # This function executes the query and return result
-def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.ALL, count_only=False, issue=None, ids_only=False,
-                    platform="web"):
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
+                    user_id, errors_only=False, error_status=schemas.ErrorStatus.ALL,
+                    count_only=False, issue=None, ids_only=False, platform="web"):
     if data.bookmarked:
-        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
 
     full_args, query_part = sessions_legacy.search_query_parts(data=data, error_status=error_status,
                                                                errors_only=errors_only,
                                                                favorite_only=data.bookmarked, issue=issue,
-                                                               project_id=project_id,
+                                                               project_id=project.project_id,
                                                                user_id=user_id, platform=platform)
     if data.limit is not None and data.page is not None:
         full_args["sessions_limit"] = data.limit
@@ -86,7 +86,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             else:
                 sort = 'start_ts'
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = metadata.get(project_id=project.project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
@@ -120,7 +120,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = metadata.get(project_id=project.project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions

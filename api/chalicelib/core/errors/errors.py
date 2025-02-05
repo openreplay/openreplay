@@ -80,7 +80,7 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, user_id):
     empty_response = {
         'total': 0,
         'errors': []
@@ -107,7 +107,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         data.endTimestamp = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        statuses = sessions_search.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+        statuses = sessions_search.search_sessions(data=data, project=project, user_id=user_id, errors_only=True,
                                                    error_status=data.status)
         if len(statuses) == 0:
             return empty_response
@@ -125,7 +125,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         params = {
             "startDate": data.startTimestamp,
             "endDate": data.endTimestamp,
-            "project_id": project_id,
+            "project_id": project.project_id,
             "userId": user_id,
             "step_size": step_size}
         if data.status != schemas.ErrorStatus.ALL:
@@ -207,7 +207,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     """SELECT error_id
                         FROM public.errors 
                         WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
-                    {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
+                    {"project_id": project.project_id, "error_ids": tuple([r["error_id"] for r in rows]),
                      "user_id": user_id})
                 cur.execute(query=query)
                 statuses = helper.list_to_camel_case(cur.fetchall())

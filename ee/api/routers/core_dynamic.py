@@ -7,17 +7,18 @@ from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
 
 import schemas
-from chalicelib.core import scope
 from chalicelib.core import assist, signup, feature_flags
+from chalicelib.core import scope
+from chalicelib.core import tenants, users, projects, license
+from chalicelib.core import webhook
+from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors
 from chalicelib.core.metrics import heatmaps
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
     sessions_viewed, unprocessed_sessions, sessions_search
-from chalicelib.core import tenants, users, projects, license
-from chalicelib.core import webhook
-from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.utils import SAML2_helper, smtp
 from chalicelib.utils import captcha
+from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_scope, OR_role
@@ -266,18 +267,20 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"],
           dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
-def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
+        Depends(contextual_validators.validate_contextual_payload),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id,
                                            platform=context.project.platform)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"],
           dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
-def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = \
+        Depends(contextual_validators.validate_contextual_payload),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+    data = sessions_search.search_sessions(data=data, project=context.project, user_id=context.user_id, ids_only=True,
                                            platform=context.project.platform)
     return {'data': data}
 

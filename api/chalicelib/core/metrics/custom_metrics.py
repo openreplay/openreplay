@@ -42,7 +42,7 @@ def __get_errors_list(project: schemas.ProjectContext, user_id, data: schemas.Ca
             "total": 0,
             "errors": []
         }
-    return errors.search(data.series[0].filter, project_id=project.project_id, user_id=user_id)
+    return errors.search(data.series[0].filter, project=project, user_id=user_id)
 
 
 def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.CardSchema):
@@ -52,7 +52,7 @@ def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.
             "total": 0,
             "sessions": []
         }
-    return sessions_search.search_sessions(data=data.series[0].filter, project_id=project.project_id, user_id=user_id)
+    return sessions_search.search_sessions(data=data.series[0].filter, project=project, user_id=user_id)
 
 
 def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
@@ -168,18 +168,18 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
     return supported.get(data.metric_type, not_supported)(project=project, data=data, user_id=user_id)
 
 
-def get_sessions_by_card_id(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    if not card_exists(metric_id=metric_id, project_id=project_id, user_id=user_id):
+def get_sessions_by_card_id(project: schemas.ProjectContext, user_id, metric_id, data: schemas.CardSessionsSchema):
+    if not card_exists(metric_id=metric_id, project_id=project.project_id, user_id=user_id):
         return None
     results = []
     for s in data.series:
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
 
     return results
 
 
-def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
+def get_sessions(project: schemas.ProjectContext, user_id, data: schemas.CardSessionsSchema):
     results = []
     if len(data.series) == 0:
         return results
@@ -189,7 +189,7 @@ def get_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
             s.filter = schemas.SessionsSearchPayloadSchema(**s.filter.model_dump(by_alias=True))
 
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions_search.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions_search.search_sessions(data=s.filter, project=project, user_id=user_id)})
 
     return results
 
