@@ -578,8 +578,6 @@ export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
   });
 
   const csvContent = [headers, ...rows].join('\n');
-  console.log(csvContent)
-  // const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-  // saveAsFile(blob, filename);
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  saveAsFile(blob, filename);
 }
