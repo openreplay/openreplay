@@ -112,3 +112,4 @@ rm -rf ./chalicelib/core/errors/modules
 rm -rf ./chalicelib/core/errors/errors.py
 rm -rf ./chalicelib/core/errors/errors_ch.py
 rm -rf ./chalicelib/core/errors/errors_details.py
+rm -rf ./chalicelib/utils/contextual_validators.py

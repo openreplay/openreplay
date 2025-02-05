@@ -1,281 +1,222 @@
-import logging
-from typing import List, Union
-
+import ast
 import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata
-from chalicelib.core.metrics import metrics
-from chalicelib.core.sessions import performance_event, sessions_legacy
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
+from chalicelib.core import events, metadata, projects
+from chalicelib.core.sessions import performance_event, sessions_favorite, sessions_legacy
+from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
 
 logger = logging.getLogger(__name__)
+SESSION_PROJECTION_COLS_CH = """\
+s.project_id,
+s.session_id AS session_id,
+s.user_uuid AS user_uuid,
+s.user_id AS user_id,
+s.user_os AS user_os,
+s.user_browser AS user_browser,
+s.user_device AS user_device,
+s.user_device_type AS user_device_type,
+s.user_country AS user_country,
+s.user_city AS user_city,
+s.user_state AS user_state,
+toUnixTimestamp(s.datetime)*1000 AS start_ts,
+s.duration AS duration,
+s.events_count AS events_count,
+s.pages_count AS pages_count,
+s.errors_count AS errors_count,
+s.user_anonymous_id AS user_anonymous_id,
+s.platform AS platform,
+s.timezone AS timezone,
+coalesce(issue_score,0) AS issue_score,
+s.issue_types AS issue_types 
+"""
+
+SESSION_PROJECTION_COLS_CH_MAP = """\
+'project_id',        toString(%(project_id)s),
+'session_id',        toString(s.session_id),
+'user_uuid',         toString(s.user_uuid),
+'user_id',           toString(s.user_id),
+'user_os',           toString(s.user_os),
+'user_browser',      toString(s.user_browser),
+'user_device',       toString(s.user_device),
+'user_device_type',  toString(s.user_device_type),
+'user_country',      toString(s.user_country),
+'user_city',         toString(s.user_city),
+'user_state',        toString(s.user_state),
+'start_ts',          toString(toUnixTimestamp(s.datetime)*1000),
+'duration',          toString(s.duration),
+'events_count',      toString(s.events_count),
+'pages_count',       toString(s.pages_count),
+'errors_count',      toString(s.errors_count),
+'user_anonymous_id', toString(s.user_anonymous_id),
+'platform',          toString(s.platform),
+'timezone',          toString(s.timezone),
+'issue_score',       toString(coalesce(issue_score,0)),
+'viewed',            toString(viewed_sessions.session_id > 0)
+"""
 
 
-def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   metric_type: schemas.MetricType, metric_of: schemas.MetricOfTimeseries | schemas.MetricOfTable,
-                   metric_value: List):
-    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                 density=density))
-    extra_event = None
-    if metric_of == schemas.MetricOfTable.VISITED_URL:
-        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
-                          FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                          WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
-                            AND ev.created_at <= toDateTime(%(endDate)s / 1000)
-                            AND ev.project_id = %(project_id)s
-                            AND ev.`$event_name` = 'LOCATION'"""
-    elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
-                                                              operator=schemas.SearchEventOperator.IS))
-    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
-                                                  favorite_only=False, issue=None, project_id=project_id,
-                                                  user_id=None, extra_event=extra_event)
-    full_args["step_size"] = step_size
-    sessions = []
+def _multiple_conditions(condition, values, value_key="value", is_not=False):
+    query = []
+    for i in range(len(values)):
+        k = f"{value_key}_{i}"
+        query.append(condition.replace(value_key, k))
+    return "(" + (" AND " if is_not else " OR ").join(query) + ")"
+
+
+def _multiple_values(values, value_key="value"):
+    query_values = {}
+    if values is not None and isinstance(values, list):
+        for i in range(len(values)):
+            k = f"{value_key}_{i}"
+            query_values[k] = values[i]
+    return query_values
+
+
+def _isAny_opreator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator.ON_ANY, schemas.SearchEventOperator.IS_ANY]
+
+
+def _isUndefined_operator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator.IS_UNDEFINED]
+
+
+# This function executes the query and return result
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+                    error_status=schemas.ErrorStatus.ALL, count_only=False, issue=None, ids_only=False,
+                    platform="web"):
+    if data.bookmarked:
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
+    full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
+                                                  favorite_only=data.bookmarked, issue=issue, project_id=project_id,
+                                                  user_id=user_id, platform=platform)
+    if data.sort == "startTs":
+        data.sort = "datetime"
+    if data.limit is not None and data.page is not None:
+        full_args["sessions_limit"] = data.limit
+        full_args["sessions_limit_s"] = (data.page - 1) * data.limit
+        full_args["sessions_limit_e"] = data.page * data.limit
+    else:
+        full_args["sessions_limit"] = 200
+        full_args["sessions_limit_s"] = 0
+        full_args["sessions_limit_e"] = 200
+
+    meta_keys = []
     with ch_client.ClickHouseClient() as cur:
-        if metric_type == schemas.MetricType.TIMESERIES:
-            if metric_of == schemas.MetricOfTimeseries.SESSION_COUNT:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(processed_sessions.session_id) AS count
-                            FROM (SELECT s.session_id AS session_id,
-                                        s.datetime AS datetime
-                                    {query_part}) AS processed_sessions
-                            GROUP BY timestamp
-                            ORDER BY timestamp;"""
-            elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(DISTINCT processed_sessions.user_id) AS count
-                            FROM (SELECT s.user_id AS user_id,
-                                        s.datetime AS datetime
-                                    {query_part}
-                                  WHERE isNotNull(s.user_id)
-                                    AND s.user_id != '') AS processed_sessions
-                            GROUP BY timestamp
-                            ORDER BY timestamp;"""
+        if errors_only:
+            main_query = cur.format(f"""SELECT DISTINCT er.error_id,
+                                        COALESCE((SELECT TRUE
+                                                 FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
+                                                 WHERE er.error_id = ve.error_id
+                                                   AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
+                                        {query_part};""", full_args)
+
+        elif count_only:
+            main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
+                                                COUNT(DISTINCT s.user_uuid) AS count_users
+                                        {query_part};""", full_args)
+        elif data.group_by_user:
+            g_sort = "count(full_sessions)"
+            if data.order is None:
+                data.order = schemas.SortOrderType.DESC.value
             else:
-                raise Exception(f"Unsupported metricOf:{metric_of}")
-            main_query = cur.format(query=query, parameters=full_args)
-
-            logging.debug("--------------------")
-            logging.debug(main_query)
-            logging.debug("--------------------")
-            sessions = cur.execute(main_query)
-            sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
-                                                        density=density, neutral={"count": 0}, rows=sessions)
-
-        elif metric_type == schemas.MetricType.TABLE:
-            full_args["limit_s"] = 0
-            full_args["limit_e"] = 200
-            if isinstance(metric_of, schemas.MetricOfTable):
-                main_col = "user_id"
-                extra_col = "s.user_id"
-                extra_where = ""
-                pre_query = ""
-                if metric_of == schemas.MetricOfTable.USER_COUNTRY:
-                    main_col = "user_country"
-                    extra_col = "s.user_country"
-                elif metric_of == schemas.MetricOfTable.USER_DEVICE:
-                    main_col = "user_device"
-                    extra_col = "s.user_device"
-                elif metric_of == schemas.MetricOfTable.USER_BROWSER:
-                    main_col = "user_browser"
-                    extra_col = "s.user_browser"
-                elif metric_of == schemas.MetricOfTable.ISSUES:
-                    main_col = "issue"
-                    extra_col = f"arrayJoin(s.issue_types) AS {main_col}"
-                    if len(metric_value) > 0:
-                        extra_where = []
-                        for i in range(len(metric_value)):
-                            arg_name = f"selected_issue_{i}"
-                            extra_where.append(f"{main_col} = %({arg_name})s")
-                            full_args[arg_name] = metric_value[i]
-                        extra_where = f"WHERE ({' OR '.join(extra_where)})"
-                elif metric_of == schemas.MetricOfTable.VISITED_URL:
-                    main_col = "url_path"
-                    extra_col = "s.url_path"
-                main_query = cur.format(query=f"""{pre_query}
-                                            SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
-                                                 {main_col} AS name,
-                                                 count(DISTINCT session_id) AS session_count
-                                            FROM (SELECT s.session_id AS session_id, 
-                                                        {extra_col}
-                                            {query_part}
-                                            ORDER BY s.session_id desc) AS filtred_sessions
-                                            {extra_where}
-                                            GROUP BY {main_col}
-                                            ORDER BY session_count DESC
-                                            LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
-                                        parameters=full_args)
-            logging.debug("--------------------")
-            logging.debug(main_query)
-            logging.debug("--------------------")
-            sessions = cur.execute(main_query)
-            # cur.fetchone()
-            count = 0
-            if len(sessions) > 0:
-                count = sessions[0]["main_count"]
-                for s in sessions:
-                    s.pop("main_count")
-            sessions = {"count": count, "values": helper.list_to_camel_case(sessions)}
-
-        return sessions
-
-
-def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                  metric_of: schemas.MetricOfTable, metric_value: List,
-                  metric_format: Union[schemas.MetricExtendedFormatType, schemas.MetricExtendedFormatType]):
-    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                 density=density))
-    extra_event = None
-    extra_deduplication = []
-    extra_conditions = None
-    if metric_of == schemas.MetricOfTable.VISITED_URL:
-        extra_event = f"""SELECT DISTINCT ev.session_id, 
-                             JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
-                  FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                  WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
-                    AND ev.created_at <= toDateTime(%(endDate)s / 1000)
-                    AND ev.project_id = %(project_id)s
-                    AND ev.`$event_name` = 'LOCATION'"""
-        extra_deduplication.append("url_path")
-        extra_conditions = {}
-        for e in data.events:
-            if e.type == schemas.EventType.LOCATION:
-                if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
-                        "type": e.type,
-                        "isEvent": True,
-                        "value": [],
-                        "operator": e.operator,
-                        "filters": []
-                    })
-                for v in e.value:
-                    if v not in extra_conditions[e.operator].value:
-                        extra_conditions[e.operator].value.append(v)
-        extra_conditions = list(extra_conditions.values())
-    elif metric_of == schemas.MetricOfTable.FETCH:
-        extra_event = f"""SELECT DISTINCT ev.session_id, 
-                                JSONExtractString(toString(ev.`$properties`), 'url_path') AS url_path
-                  FROM {exp_ch_helper.get_main_events_table(data.startTimestamp)} AS ev
-                  WHERE ev.created_at >= toDateTime(%(startDate)s / 1000)
-                    AND ev.created_at <= toDateTime(%(endDate)s / 1000)
-                    AND ev.project_id = %(project_id)s
-                    AND ev.`$event_name` = 'REQUEST'"""
-
-        extra_deduplication.append("url_path")
-        extra_conditions = {}
-        for e in data.events:
-            if e.type == schemas.EventType.REQUEST_DETAILS:
-                if e.operator not in extra_conditions:
-                    extra_conditions[e.operator] = schemas.SessionSearchEventSchema2.model_validate({
-                        "type": e.type,
-                        "isEvent": True,
-                        "value": [],
-                        "operator": e.operator,
-                        "filters": []
-                    })
-                for v in e.value:
-                    if v not in extra_conditions[e.operator].value:
-                        extra_conditions[e.operator].value.append(v)
-        extra_conditions = list(extra_conditions.values())
-
-    elif metric_of == schemas.MetricOfTable.ISSUES and len(metric_value) > 0:
-        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.ISSUE,
-                                                              operator=schemas.SearchEventOperator.IS))
-    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
-                                                  favorite_only=False, issue=None, project_id=project_id,
-                                                  user_id=None, extra_event=extra_event,
-                                                  extra_deduplication=extra_deduplication,
-                                                  extra_conditions=extra_conditions)
-    full_args["step_size"] = step_size
-    sessions = []
-    with ch_client.ClickHouseClient() as cur:
-        if isinstance(metric_of, schemas.MetricOfTable):
-            full_args["limit"] = data.limit
-            full_args["limit_s"] = (data.page - 1) * data.limit
-            full_args["limit_e"] = data.page * data.limit
-
-            main_col = "user_id"
-            extra_col = ", s.user_id"
-            extra_where = ""
-            if metric_of == schemas.MetricOfTable.USER_COUNTRY:
-                main_col = "user_country"
-                extra_col = ", s.user_country"
-            elif metric_of == schemas.MetricOfTable.USER_DEVICE:
-                main_col = "user_device"
-                extra_col = ", s.user_device"
-            elif metric_of == schemas.MetricOfTable.USER_BROWSER:
-                main_col = "user_browser"
-                extra_col = ", s.user_browser"
-            elif metric_of == schemas.MetricOfTable.ISSUES:
-                main_col = "issue"
-                extra_col = f", arrayJoin(s.issue_types) AS {main_col}"
-                if len(metric_value) > 0:
-                    extra_where = []
-                    for i in range(len(metric_value)):
-                        arg_name = f"selected_issue_{i}"
-                        extra_where.append(f"{main_col} = %({arg_name})s")
-                        full_args[arg_name] = metric_value[i]
-                    extra_where = f"WHERE ({' OR '.join(extra_where)})"
-            elif metric_of == schemas.MetricOfTable.VISITED_URL:
-                main_col = "url_path"
-                extra_col = ", s.url_path"
-            elif metric_of == schemas.MetricOfTable.REFERRER:
-                main_col = "referrer"
-                extra_col = ", referrer"
-                extra_where = "WHERE isNotNull(referrer)"
-            elif metric_of == schemas.MetricOfTable.FETCH:
-                main_col = "url_path"
-                extra_col = ", s.url_path"
-
-            if metric_format == schemas.MetricExtendedFormatType.SESSION_COUNT:
-                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
-                                     {main_col} AS name,
-                                     count(DISTINCT session_id) AS total,
-                                     COALESCE(SUM(count(DISTINCT session_id)) OVER (), 0) AS total_count
-                                FROM (SELECT s.session_id AS session_id {extra_col}
-                                {query_part}) AS filtred_sessions
-                                {extra_where}
-                                GROUP BY {main_col}
-                                ORDER BY total DESC
-                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+                data.order = data.order
+            if data.sort is not None and data.sort != 'sessionsCount':
+                sort = helper.key_to_snake_case(data.sort)
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.DESC else 'MAX'}({sort})"
             else:
-                main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
-                                     {main_col} AS name,
-                                     count(DISTINCT user_id) AS total,
-                                     COALESCE(SUM(count(DISTINCT user_id)) OVER (), 0) AS total_count
-                                FROM (SELECT s.user_id AS user_id {extra_col}
-                                {query_part}
-                                WHERE isNotNull(user_id)
-                                    AND user_id != '') AS filtred_sessions
-                                {extra_where}
-                                GROUP BY {main_col}
-                                ORDER BY total DESC
-                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+                sort = 'start_ts'
 
-            main_query = cur.format(query=main_query, parameters=full_args)
-            logging.debug("--------------------")
-            logging.debug(main_query)
-            logging.debug("--------------------")
+            meta_keys = metadata.get(project_id=project_id)
+            meta_map = ",map(%s) AS 'metadata'" \
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
+                                                COALESCE(JSONB_AGG(users_sessions) 
+                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
+                                        FROM (SELECT user_id,
+                                                 count(full_sessions)                                   AS user_sessions_count,
+                                                 jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
+                                                 MIN(full_sessions.start_ts)                            AS first_session_ts,
+                                                 ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order}) AS rn 
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS_CH} {meta_map}
+                                                    {query_part}
+                                                    ) AS filtred_sessions
+                                                ) AS full_sessions
+                                                GROUP BY user_id
+                                            ) AS users_sessions;""",
+                                     full_args)
+        elif ids_only:
+            main_query = cur.format(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                    full_args)
+        else:
+            if data.order is None:
+                data.order = schemas.SortOrderType.DESC.value
+            else:
+                data.order = data.order
+            sort = 'session_id'
+            if data.sort is not None and data.sort != "session_id":
+                # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
+                sort = helper.key_to_snake_case(data.sort)
+
+            meta_keys = metadata.get(project_id=project_id)
+            meta_map = ",'metadata',toString(map(%s))" \
+                       % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
+            main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
+                                        FROM (SELECT total, details
+                                              FROM (SELECT COUNT() OVER () AS total,
+                                                    s.{sort} AS sort_key,
+                                                    map({SESSION_PROJECTION_COLS_CH_MAP}{meta_map}) AS details
+                                                {query_part}
+                                              LEFT JOIN (SELECT DISTINCT session_id
+                                                FROM experimental.user_viewed_sessions
+                                                WHERE user_id = %(userId)s AND project_id=%(project_id)s
+                                                  AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
+                                               ON (viewed_sessions.session_id = s.session_id)
+                                             ) AS raw
+                                        ORDER BY sort_key {data.order}
+                                        LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
+                                    full_args)
+        logging.debug("--------------------")
+        logging.debug(main_query)
+        logging.debug("--------------------")
+        try:
             sessions = cur.execute(main_query)
-            count = 0
-            total = 0
-            if len(sessions) > 0:
-                count = sessions[0]["main_count"]
-                total = sessions[0]["total_count"]
-                for s in sessions:
-                    s.pop("main_count")
-                    s.pop("total_count")
-            sessions = {"total": count, "count": total, "values": helper.list_to_camel_case(sessions)}
+        except Exception as err:
+            logging.warning("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
+            logging.warning(main_query)
+            logging.warning("--------- PAYLOAD -----------")
+            logging.warning(data.model_dump_json())
+            logging.warning("--------------------")
+            raise err
+        if errors_only or ids_only:
+            return helper.list_to_camel_case(sessions)
 
-        return sessions
+        if len(sessions) > 0:
+            sessions = sessions[0]
+
+        total = sessions["count"]
+        sessions = sessions["sessions"]
+
+    if data.group_by_user:
+        for i, s in enumerate(sessions):
+            sessions[i] = {**s.pop("last_session")[0], **s}
+            sessions[i].pop("rn")
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
+    else:
+        for i in range(len(sessions)):
+            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
+            sessions[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
+
+    return {
+        'total': total,
+        'sessions': sessions
+    }
 
 
 def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
@@ -291,53 +232,6 @@ def __is_valid_event(is_any: bool, event: schemas.SessionSearchEventSchema2):
                         event.filters is None or len(event.filters) == 0))
 
 
-def json_condition(table_alias, json_column, json_key, op, values, value_key, check_existence=False,
-                   numeric_check=False, numeric_type="float"):
-    """
-    Constructs a condition to filter a JSON column dynamically in SQL queries.
-
-    Parameters:
-        table_alias (str): Alias of the table (e.g., 'main', 'sub').
-        json_column (str): Name of the JSON column (e.g., '$properties').
-        json_key (str): Key in the JSON object to extract.
-        op (str): SQL operator to apply (e.g., '=', 'ILIKE', etc.).
-        values (str | list | tuple): Single value, list of values, or tuple to compare.
-        value_key (str): The parameterized key for SQL (e.g., 'custom').
-        check_existence (bool): Whether to include a JSONHas condition to check if the key exists.
-        numeric_check (bool): Whether to include a numeric check on the extracted value.
-        numeric_type (str): Type for numeric extraction, "int" or "float".
-
-    Returns:
-        str: The constructed condition.
-    """
-    if isinstance(values, tuple):
-        values = list(values)
-    elif not isinstance(values, list):
-        values = [values]
-
-    conditions = []
-
-    # Add JSONHas condition if required
-    if check_existence:
-        conditions.append(f"JSONHas(toString({table_alias}.`{json_column}`), '{json_key}')")
-
-    # Determine the extraction function for numeric checks
-    if numeric_check:
-        extract_func = "JSONExtractFloat" if numeric_type == "float" else "JSONExtractInt"
-        conditions.append(f"{extract_func}(toString({table_alias}.`{json_column}`), '{json_key}') > 0")
-
-    # Add the main condition for value comparison
-    if numeric_check:
-        extract_func = "JSONExtractFloat" if numeric_type == "float" else "JSONExtractInt"
-        condition = f"{extract_func}(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
-    else:
-        condition = f"JSONExtractString(toString({table_alias}.`{json_column}`), '{json_key}') {op} %({value_key})s"
-
-    conditions.append(sh.multi_conditions(condition, values, value_key=value_key))
-
-    return " AND ".join(conditions)
-
-
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
                           project_id, user_id, platform="web", extra_event=None, extra_deduplication=[],
@@ -346,7 +240,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         data.filters.append(
             schemas.SessionSearchFilterSchema(value=[issue['type']],
                                               type=schemas.FilterType.ISSUE.value,
-                                              operator=schemas.SearchEventOperator.IS.value)
+                                              operator='is')
         )
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startTimestamp, "endDate": data.endTimestamp,
@@ -369,24 +263,26 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     events_query_part = ""
     issues = []
     __events_where_basic = ["project_id = %(projectId)s",
-                            "created_at >= toDateTime(%(startDate)s/1000)",
-                            "created_at <= toDateTime(%(endDate)s/1000)"]
+                            "datetime >= toDateTime(%(startDate)s/1000)",
+                            "datetime <= toDateTime(%(endDate)s/1000)"]
     events_conditions_where = ["main.project_id = %(projectId)s",
-                               "main.created_at >= toDateTime(%(startDate)s/1000)",
-                               "main.created_at <= toDateTime(%(endDate)s/1000)"]
+                               "main.datetime >= toDateTime(%(startDate)s/1000)",
+                               "main.datetime <= toDateTime(%(endDate)s/1000)"]
     if len(data.filters) > 0:
         meta_keys = None
         # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
         include_in_events = False
         for i, f in enumerate(data.filters):
+            if not isinstance(f.value, list):
+                f.value = [f.value]
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, f_k: f.value, **sh.multi_values(f.value, value_key=f_k)}
+            full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
             op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
-            is_any = sh.isAny_opreator(f.operator)
-            is_undefined = sh.isUndefined_operator(f.operator)
+            is_any = _isAny_opreator(f.operator)
+            is_undefined = _isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
@@ -398,10 +294,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_browser)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_OS, schemas.FilterType.USER_OS_MOBILE]:
                 if is_any:
@@ -409,9 +304,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_os)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_DEVICE, schemas.FilterType.USER_DEVICE_MOBILE]:
                 if is_any:
@@ -419,9 +314,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_device)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.USER_COUNTRY, schemas.FilterType.USER_COUNTRY_MOBILE]:
                 if is_any:
@@ -429,10 +324,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_country)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in schemas.FilterType.USER_CITY:
                 if is_any:
@@ -440,9 +334,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_city)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f'ms.user_city {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in schemas.FilterType.USER_STATE:
                 if is_any:
@@ -450,9 +344,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.user_state)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f'ms.user_state {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.UTM_SOURCE]:
                 if is_any:
@@ -463,11 +357,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_source)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f'ms.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.UTM_MEDIUM]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.utm_medium)')
@@ -477,11 +371,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_medium')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f'ms.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.UTM_CAMPAIGN]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.utm_campaign)')
@@ -491,11 +385,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.utm_campaign)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f'ms.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
 
             elif filter_type == schemas.FilterType.DURATION:
                 if len(f.value) > 0 and f.value[0] is not None:
@@ -512,11 +406,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNotNull(ms.base_referrer)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type == events.EventType.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
@@ -531,11 +425,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         ss_constraints.append(f"isNull(ms.{metadata.index_to_colname(meta_keys[f.source])})")
                     else:
                         extra_constraints.append(
-                            sh.multi_conditions(
+                            _multiple_conditions(
                                 f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            sh.multi_conditions(
+                            _multiple_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
                                 f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.USER_ID, schemas.FilterType.USER_ID_MOBILE]:
@@ -547,11 +441,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.user_id)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"ms.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.USER_ANONYMOUS_ID,
                                  schemas.FilterType.USER_ANONYMOUS_ID_MOBILE]:
                 if is_any:
@@ -562,11 +456,11 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.user_anonymous_id)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"ms.user_anonymous_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.REV_ID, schemas.FilterType.REV_ID_MOBILE]:
                 if is_any:
                     extra_constraints.append('isNotNull(s.rev_id)')
@@ -576,19 +470,19 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     ss_constraints.append('isNull(ms.rev_id)')
                 else:
                     extra_constraints.append(
-                        sh.multi_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        sh.multi_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
-                                            value_key=f_k))
+                        _multiple_conditions(f"ms.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type == schemas.FilterType.PLATFORM:
                 # op = sh.get_sql_operator(f.operator)
                 extra_constraints.append(
-                    sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
+                    _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
                 ss_constraints.append(
-                    sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
+                    _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
             elif filter_type == schemas.FilterType.ISSUE:
                 if is_any:
                     extra_constraints.append("notEmpty(s.issue_types)")
@@ -598,21 +492,21 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         issues.append(f)
 
                     extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
-                    # sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                    # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
                     #                      value_key=f_k))
                     ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
-                    #     sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                    #     _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                     #                          value_key=f_k))
                     if is_not:
                         extra_constraints[-1] = f"not({extra_constraints[-1]})"
                         ss_constraints[-1] = f"not({ss_constraints[-1]})"
             elif filter_type == schemas.FilterType.EVENTS_COUNT:
                 extra_constraints.append(
-                    sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
+                    _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
                 ss_constraints.append(
-                    sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                        value_key=f_k))
+                    _multiple_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
             else:
                 continue
             include_in_events = True
@@ -626,7 +520,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
     if len(data.events) > 0:
         valid_events_count = 0
         for event in data.events:
-            is_any = sh.isAny_opreator(event.operator)
+            is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if __is_valid_event(is_any=is_any, event=event):
@@ -638,7 +532,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         or_events = data.events_order == schemas.SearchEventOrder.OR
         for i, event in enumerate(data.events):
             event_type = event.type
-            is_any = sh.isAny_opreator(event.operator)
+            is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if not __is_valid_event(is_any=is_any, event=event):
@@ -652,64 +546,57 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # event_from = f"%s INNER JOIN {MAIN_SESSIONS_TABLE} AS ms USING (session_id)"
             event_from = "%s"
             event_where = ["main.project_id = %(projectId)s",
-                           "main.created_at >= toDateTime(%(startDate)s/1000)",
-                           "main.created_at <= toDateTime(%(endDate)s/1000)"]
+                           "main.datetime >= toDateTime(%(startDate)s/1000)",
+                           "main.datetime <= toDateTime(%(endDate)s/1000)"]
 
             e_k = f"e_value{i}"
             s_k = e_k + "_source"
 
             event.value = helper.values_for_operator(value=event.value, op=event.operator)
             full_args = {**full_args,
-                         **sh.multi_values(event.value, value_key=e_k),
-                         **sh.multi_values(event.source, value_key=s_k)}
+                         **_multiple_values(event.value, value_key=e_k),
+                         **_multiple_values(event.source, value_key=s_k)}
 
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 if platform == "web":
                     _column = events.EventType.CLICK.column
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if schemas.ClickEventExtraOperator.has_value(event.operator):
-                            event_where.append(json_condition(
-                                "main",
-                                "$properties",
-                                "selector", op, event.value, e_k)
-                            )
+                            event_where.append(
+                                _multiple_conditions(f"main.selector {op} %({e_k})s", event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                         else:
                             if is_not:
-                                event_where.append(json_condition(
-                                    "sub", "$properties", _column, op, event.value, e_k
-                                ))
+                                event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                        value_key=e_k))
                                 events_conditions_not.append(
                                     {
-                                        "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                        "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                                 events_conditions_not[-1]["condition"] = event_where[-1]
                             else:
-                                event_where.append(
-                                    json_condition("main", "$properties", _column, op, event.value, e_k)
-                                )
+                                event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                        value_key=e_k))
                                 events_conditions[-1]["condition"] = event_where[-1]
                 else:
                     _column = events.EventType.CLICK_MOBILE.column
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(
-                                json_condition("sub", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions_not.append(
                                 {
-                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                    "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(
-                                json_condition("main", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.INPUT.ui_type:
@@ -717,47 +604,40 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 if platform == "web":
                     _column = events.EventType.INPUT.column
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(
-                                json_condition("sub", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions_not.append(
                                 {
-                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                    "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(
-                                json_condition("main", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                     if event.source is not None and len(event.source) > 0:
-                        event_where.append(
-                            json_condition("main", "$properties", "value", "ILIKE", event.source, f"custom{i}")
-                        )
-
-                        full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
+                        event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                                value_key=f"custom{i}"))
+                        full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
                 else:
                     _column = events.EventType.INPUT_MOBILE.column
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(
-                                json_condition("sub", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions_not.append(
                                 {
-                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                    "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(
-                                json_condition("main", "$properties", _column, op, event.value, e_k)
-                            )
-
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.LOCATION.ui_type:
@@ -765,118 +645,102 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 if platform == "web":
                     _column = 'url_path'
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(
-                                json_condition("sub", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions_not.append(
                                 {
-                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                    "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(
-                                json_condition("main", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                    event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
                 else:
                     _column = events.EventType.VIEW_MOBILE.column
                     event_where.append(
-                        f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                        f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                     events_conditions.append({"type": event_where[-1]})
                     if not is_any:
                         if is_not:
-                            event_where.append(
-                                json_condition("sub", "$properties", _column, op, event.value, e_k)
-                            )
+                            event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                    value_key=e_k))
                             events_conditions_not.append(
                                 {
-                                    "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                                    "type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                             events_conditions_not[-1]["condition"] = event_where[-1]
                         else:
-                            event_where.append(sh.multi_conditions(f"main.{_column} {op} %({e_k})s",
-                                                                   event.value, value_key=e_k))
+                            event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                    event.value, value_key=e_k))
                             events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CUSTOM.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(
-                            json_condition("sub", "$properties", _column, op, event.value, e_k)
-                        )
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.REQUEST.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == events.EventType.STATEACTION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.STATEACTION.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             # TODO: isNot for ERROR
             elif event_type == events.EventType.ERROR.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
                 events_extra_join = f"SELECT * FROM {MAIN_EVENTS_TABLE} AS main1 WHERE main1.project_id=%(project_id)s"
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 event.source = tuple(event.source)
                 events_conditions[-1]["condition"] = []
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        sh.multi_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
-                                            event.value, value_key=e_k))
+                        _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                             event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
                 if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
-                    event_where.append(sh.multi_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                     events_extra_join += f" AND {event_where[-1]}"
 
@@ -885,161 +749,127 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # ----- Mobile
             elif event_type == events.EventType.CLICK_MOBILE.ui_type:
                 _column = events.EventType.CLICK_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.INPUT_MOBILE.ui_type:
                 _column = events.EventType.INPUT_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.VIEW_MOBILE.ui_type:
                 _column = events.EventType.VIEW_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CUSTOM_MOBILE.ui_type:
                 _column = events.EventType.CUSTOM_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
-
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.REQUEST_MOBILE.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.CRASH_MOBILE.ui_type:
                 _column = events.EventType.CRASH_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
-
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.EventType.SWIPE_MOBILE.ui_type and platform != "web":
                 _column = events.EventType.SWIPE_MOBILE.column
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
 
             elif event_type == schemas.PerformanceEventType.FETCH_FAILED:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 if not is_any:
                     if is_not:
-                        event_where.append(json_condition(
-                            "sub", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
+                                                                value_key=e_k))
                         events_conditions_not.append(
-                            {
-                                "type": f"sub.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
+                            {"type": f"sub.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
-                        event_where.append(json_condition(
-                            "main", "$properties", _column, op, event.value, e_k
-                        ))
+                        event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
+                                                                event.value, value_key=e_k))
                         events_conditions[-1]["condition"].append(event_where[-1])
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
@@ -1051,102 +881,94 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                                 schemas.PerformanceEventType.LOCATION_LARGEST_CONTENTFUL_PAINT_TIME,
                                 schemas.PerformanceEventType.LOCATION_TTFB]:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 tname = "main"
                 if not is_any:
-                    event_where.append(json_condition(
-                        "main", "$properties", 'url_path', op, event.value, e_k
-                    ))
+                    event_where.append(
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
+                                             event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
-                event_where.append(json_condition(
-                    tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
-                )
-
+                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                        event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             # TODO: isNot for PerformanceEvent
             elif event_type in [schemas.PerformanceEventType.LOCATION_AVG_CPU_LOAD,
                                 schemas.PerformanceEventType.LOCATION_AVG_MEMORY_USAGE]:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 tname = "main"
                 if not is_any:
-                    event_where.append(json_condition(
-                        "main", "$properties", 'url_path', op, event.value, e_k
-                    ))
+                    event_where.append(
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
+                                             event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
-                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
-                event_where.append(json_condition(
-                    tname, "$properties", colname, event.sourceOperator, event.source, e_k, True, True)
-                )
-
+                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                        event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
             elif event_type == schemas.EventType.REQUEST_DETAILS:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(
-                    f"main.`$event_name`='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
+                event_where.append(f"main.event_type='{exp_ch_helper.get_event_type(event_type, platform=platform)}'")
                 events_conditions.append({"type": event_where[-1]})
                 apply = False
                 events_conditions[-1]["condition"] = []
                 for j, f in enumerate(event.filters):
-                    is_any = sh.isAny_opreator(f.operator)
+                    is_any = _isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_fetch{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType.FETCH_URL:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'url_path', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.url_path {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_STATUS_CODE:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'status', op, f.value, e_k_f, True, True
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_METHOD:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'method', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_DURATION:
                         event_where.append(
-                            sh.multi_conditions(f"main.`$duration_s` {f.operator} %({e_k_f})s/1000", f.value,
-                                                value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_REQUEST_BODY:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'request_body', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType.FETCH_RESPONSE_BODY:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'response_body', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     else:
@@ -1158,36 +980,33 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             # TODO: no isNot for GraphQL
             elif event_type == schemas.EventType.GRAPHQL:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(f"main.`$event_name`='GRAPHQL'")
+                event_where.append(f"main.event_type='GRAPHQL'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 for j, f in enumerate(event.filters):
-                    is_any = sh.isAny_opreator(f.operator)
+                    is_any = _isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
-                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType.GRAPHQL_NAME:
-                        event_where.append(json_condition(
-                            "main", "$properties", events.EventType.GRAPHQL.column, op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_METHOD:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'method', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_REQUEST_BODY:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'request_body', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType.GRAPHQL_RESPONSE_BODY:
-                        event_where.append(json_condition(
-                            "main", "$properties", 'response_body', op, f.value, e_k_f
-                        ))
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     else:
                         logging.warning(f"undefined GRAPHQL filter: {f.type}")
@@ -1226,7 +1045,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                     pass
                 else:
                     events_query_from.append(f"""\
-            (SELECT main.session_id, {"MIN" if event_index < (valid_events_count - 1) else "MAX"}(main.created_at) AS datetime
+            (SELECT main.session_id, {"MIN" if event_index < (valid_events_count - 1) else "MAX"}(main.datetime) AS datetime
               FROM {event_from}
               WHERE {" AND ".join(event_where)}
               GROUP BY session_id
@@ -1294,13 +1113,13 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 del value_conditions_not
 
             if data.events_order == schemas.SearchEventOrder.THEN:
-                having = f"""HAVING sequenceMatch('{''.join(sequence_pattern)}')(toDateTime(main.created_at),{','.join(sequence_conditions)})"""
+                having = f"""HAVING sequenceMatch('{''.join(sequence_pattern)}')(main.datetime,{','.join(sequence_conditions)})"""
             else:
                 having = f"""HAVING {" AND ".join([f"countIf({c})>0" for c in list(set(sequence_conditions))])}"""
 
             events_query_part = f"""SELECT main.session_id,
-                                        MIN(main.created_at) AS first_event_ts,
-                                        MAX(main.created_at) AS last_event_ts
+                                        MIN(main.datetime) AS first_event_ts,
+                                        MAX(main.datetime) AS last_event_ts
                                     FROM {MAIN_EVENTS_TABLE} AS main {events_extra_join}
                                         {sub_join}
                                     WHERE {" AND ".join(events_conditions_where)}
@@ -1342,8 +1161,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                 events_conditions_where.append(f"({' OR '.join(events_conditions)})")
 
             events_query_part = f"""SELECT main.session_id,
-                                        MIN(main.created_at) AS first_event_ts,
-                                        MAX(main.created_at) AS last_event_ts
+                                        MIN(main.datetime) AS first_event_ts,
+                                        MAX(main.datetime) AS last_event_ts
                                     FROM {MAIN_EVENTS_TABLE} AS main {events_extra_join}
                                     WHERE {" AND ".join(events_conditions_where)}
                                     GROUP BY session_id"""
@@ -1366,8 +1185,8 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                              AND issues.project_id = %(projectId)s
                              AND events.project_id = %(projectId)s
                              AND events.issue_type = %(issue_type)s
-                             AND events.created_at >= toDateTime(%(startDate)s/1000)
-                             AND events.created_at <= toDateTime(%(endDate)s/1000)
+                             AND events.datetime >= toDateTime(%(startDate)s/1000)
+                             AND events.datetime <= toDateTime(%(endDate)s/1000)
                              ) AS issues ON (f.session_id = issues.session_id)
                 """
         full_args["issue_contextString"] = issue["contextString"]
@@ -1377,17 +1196,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         for i, f in enumerate(issues):
             f_k_v = f"f_issue_v{i}"
             f_k_s = f_k_v + "_source"
-            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k_v), f_k_s: f.source}
-            issues_conditions.append(sh.multi_conditions(f"issues.type=%({f_k_v})s", f.value,
-                                                         value_key=f_k_v))
+            full_args = {**full_args, **_multiple_values(f.value, value_key=f_k_v), f_k_s: f.source}
+            issues_conditions.append(_multiple_conditions(f"issues.type=%({f_k_v})s", f.value,
+                                                          value_key=f_k_v))
             issues_conditions[-1] = f"({issues_conditions[-1]} AND issues.context_string=%({f_k_s})s)"
         extra_join = f"""INNER JOIN (SELECT DISTINCT events.session_id
                                  FROM experimental.issues
                                           INNER JOIN experimental.events USING (issue_id)
                                  WHERE issues.project_id = %(projectId)s
                                    AND events.project_id = %(projectId)s
-                                   AND events.created_at >= toDateTime(%(startDate)s/1000)
-                                   AND events.created_at <= toDateTime(%(endDate)s/1000)
+                                   AND events.datetime >= toDateTime(%(startDate)s/1000)
+                                   AND events.datetime <= toDateTime(%(endDate)s/1000)
                                    AND {" OR ".join(issues_conditions)}
                             ) AS issues USING (session_id)"""
 
@@ -1396,17 +1215,17 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
         if extra_conditions and len(extra_conditions) > 0:
             _extra_or_condition = []
             for i, c in enumerate(extra_conditions):
-                if sh.isAny_opreator(c.operator):
+                if _isAny_opreator(c.operator):
                     continue
                 e_k = f"ec_value{i}"
                 op = sh.get_sql_operator(c.operator)
                 c.value = helper.values_for_operator(value=c.value, op=c.operator)
                 full_args = {**full_args,
-                             **sh.multi_values(c.value, value_key=e_k)}
+                             **_multiple_values(c.value, value_key=e_k)}
                 if c.type == events.EventType.LOCATION.ui_type:
                     _extra_or_condition.append(
-                        sh.multi_conditions(f"extra_event.url_path {op} %({e_k})s",
-                                            c.value, value_key=e_k))
+                        _multiple_conditions(f"extra_event.url_path {op} %({e_k})s",
+                                             c.value, value_key=e_k))
                 else:
                     logging.warning(f"unsupported extra_event type:${c.type}")
             if len(_extra_or_condition) > 0:
@@ -1433,6 +1252,69 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                             {extra_from}
                             """
     return full_args, query_part
+
+
+def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
+    if project_id is None:
+        all_projects = projects.get_projects(tenant_id=tenant_id)
+    else:
+        all_projects = [
+            projects.get_project(tenant_id=tenant_id, project_id=int(project_id), include_last_session=False,
+                                 include_gdpr=False)]
+
+    all_projects = {int(p["projectId"]): p["name"] for p in all_projects}
+    project_ids = list(all_projects.keys())
+
+    available_keys = metadata.get_keys_by_projects(project_ids)
+    for i in available_keys:
+        available_keys[i]["user_id"] = schemas.FilterType.USER_ID
+        available_keys[i]["user_anonymous_id"] = schemas.FilterType.USER_ANONYMOUS_ID
+    results = {}
+    for i in project_ids:
+        if m_key not in available_keys[i].values():
+            available_keys.pop(i)
+            results[i] = {"total": 0, "sessions": [], "missingMetadata": True}
+    project_ids = list(available_keys.keys())
+    if len(project_ids) > 0:
+        with pg_client.PostgresClient() as cur:
+            sub_queries = []
+            for i in project_ids:
+                col_name = list(available_keys[i].keys())[list(available_keys[i].values()).index(m_key)]
+                sub_queries.append(cur.mogrify(
+                    f"(SELECT COALESCE(COUNT(s.*)) AS count FROM public.sessions AS s WHERE s.project_id = %(id)s AND s.{col_name} = %(value)s) AS \"{i}\"",
+                    {"id": i, "value": m_value}).decode('UTF-8'))
+            query = f"""SELECT {", ".join(sub_queries)};"""
+            cur.execute(query=query)
+
+            rows = cur.fetchone()
+
+            sub_queries = []
+            for i in rows.keys():
+                results[i] = {"total": rows[i], "sessions": [], "missingMetadata": False, "name": all_projects[int(i)]}
+                if rows[i] > 0:
+                    col_name = list(available_keys[int(i)].keys())[list(available_keys[int(i)].values()).index(m_key)]
+                    sub_queries.append(
+                        cur.mogrify(
+                            f"""(
+                                    SELECT *
+                                    FROM (
+                                            SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS_CH}
+                                            FROM public.sessions AS s LEFT JOIN (SELECT session_id
+                                                                                    FROM public.user_favorite_sessions
+                                                                                    WHERE user_favorite_sessions.user_id = %(userId)s
+                                                                                ) AS favorite_sessions USING (session_id)
+                                            WHERE s.project_id = %(id)s AND s.duration IS NOT NULL AND s.{col_name} = %(value)s
+                                        ) AS full_sessions
+                                    ORDER BY favorite DESC, issue_score DESC
+                                    LIMIT 10
+                                )""",
+                            {"id": i, "value": m_value, "userId": user_id}).decode('UTF-8'))
+            if len(sub_queries) > 0:
+                cur.execute("\nUNION\n".join(sub_queries))
+                rows = cur.fetchall()
+                for i in rows:
+                    results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
+    return results
 
 
 def get_user_sessions(project_id, user_id, start_date, end_date):
@@ -1500,16 +1382,66 @@ def get_session_user(project_id, user_id):
 
 def session_exists(project_id, session_id):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(query=f"""SELECT 1 
-                                     FROM {exp_ch_helper.get_main_sessions_table()} 
-                                     WHERE session_id=%(session_id)s 
-                                          AND project_id=%(project_id)s
-                                     LIMIT 1""",
-                           parameters={"project_id": project_id, "session_id": session_id})
+        query = cur.format(f"""SELECT 1 
+                               FROM {exp_ch_helper.get_main_sessions_table()} 
+                               WHERE session_id=%(session_id)s 
+                                    AND project_id=%(project_id)s
+                               LIMIT 1""",
+                           {"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None
 
 
 # TODO: support this for CH
 def check_recording_status(project_id: int) -> dict:
-    return sessions_legacy.check_recording_status(project_id=project_id)
+    query = f"""
+        WITH project_sessions AS (SELECT COUNT(1)                                      AS full_count,
+                                 COUNT(1) FILTER ( WHERE duration IS NOT NULL) AS nn_duration_count
+                          FROM public.sessions
+                          WHERE project_id = %(project_id)s
+                            AND start_ts >= (extract(EPOCH FROM now() - INTERVAL '1 day')) * 1000
+                            AND start_ts <= (extract(EPOCH FROM now() + INTERVAL '1 day')) * 1000)
+        SELECT CASE
+                   WHEN full_count = 0 THEN 0
+                   WHEN nn_duration_count = 0 THEN 1
+                   ELSE 2
+                   END    AS recording_status,
+               full_count AS sessions_count
+        FROM project_sessions;
+    """
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(query, {"project_id": project_id})
+        cur.execute(query)
+        row = cur.fetchone()
+
+    return {
+        "recordingStatus": row["recording_status"],
+        "sessionsCount": row["sessions_count"]
+    }
+
+
+# TODO: rewrite this function to use ClickHouse
+def search_sessions_by_ids(project_id: int, session_ids: list, sort_by: str = 'session_id',
+                           ascending: bool = False) -> dict:
+    if session_ids is None or len(session_ids) == 0:
+        return {"total": 0, "sessions": []}
+    with pg_client.PostgresClient() as cur:
+        meta_keys = metadata.get(project_id=project_id)
+        params = {"project_id": project_id, "session_ids": tuple(session_ids)}
+        order_direction = 'ASC' if ascending else 'DESC'
+        main_query = cur.mogrify(f"""SELECT {sessions_legacy.SESSION_PROJECTION_BASE_COLS}
+                                            {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                     FROM public.sessions AS s
+                                        WHERE project_id=%(project_id)s 
+                                            AND session_id IN %(session_ids)s
+                                     ORDER BY {sort_by} {order_direction};""", params)
+
+        cur.execute(main_query)
+        rows = cur.fetchall()
+        if len(meta_keys) > 0:
+            for s in rows:
+                s["metadata"] = {}
+                for m in meta_keys:
+                    s["metadata"][m["key"]] = s.pop(f'metadata_{m["index"]}')
+    return {"total": len(rows), "sessions": helper.list_to_camel_case(rows)}

@@ -3,7 +3,7 @@ import logging
 
 import schemas
 from chalicelib.core import metadata, projects
-from chalicelib.core.sessions import sessions_favorite, sessions_legacy, sessions
+from chalicelib.core.sessions import sessions_favorite, sessions_legacy, sessions, sessions_legacy_mobil
 from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 
 logger = logging.getLogger(__name__)
@@ -58,16 +58,24 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 
 
 # This function executes the query and return result
-def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project: schemas.ProjectContext,
+                    user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.ALL, count_only=False, issue=None, ids_only=False,
                     platform="web"):
     if data.bookmarked:
-        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project_id, user_id)
-    full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=error_status,
-                                                           errors_only=errors_only,
-                                                           favorite_only=data.bookmarked, issue=issue,
-                                                           project_id=project_id,
-                                                           user_id=user_id, platform=platform)
+        data.startTimestamp, data.endTimestamp = sessions_favorite.get_start_end_timestamp(project.project_id, user_id)
+    if project.platform == "web":
+        full_args, query_part = sessions.search_query_parts_ch(data=data, error_status=error_status,
+                                                               errors_only=errors_only,
+                                                               favorite_only=data.bookmarked, issue=issue,
+                                                               project_id=project.project_id,
+                                                               user_id=user_id, platform=platform)
+    else:
+        full_args, query_part = sessions_legacy_mobil.search_query_parts_ch(data=data, error_status=error_status,
+                                                                            errors_only=errors_only,
+                                                                            favorite_only=data.bookmarked, issue=issue,
+                                                                            project_id=project.project_id,
+                                                                            user_id=user_id, platform=platform)
     if data.sort == "startTs":
         data.sort = "datetime"
     if data.limit is not None and data.page is not None:
@@ -106,7 +114,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             else:
                 sort = 'start_ts'
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = metadata.get(project_id=project.project_id)
             meta_map = ",map(%s) AS 'metadata'" \
                        % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
@@ -141,7 +149,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
 
-            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = metadata.get(project_id=project.project_id)
             meta_map = ",'metadata',toString(map(%s))" \
                        % ','.join([f"'{m['key']}',coalesce(metadata_{m['index']},'None')" for m in meta_keys])
             main_query = cur.format(query=f"""SELECT any(total) AS count, 
