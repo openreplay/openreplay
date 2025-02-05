@@ -90,14 +90,6 @@ def __complete_missing_steps(start_time, end_time, density, neutral, rows, time_
             neutral_clone[time_key] = optimal[o][0]
             result.append(neutral_clone)
             o += 1
-        # elif r < len(rows) and rows[r][time_key] >= optimal[o][1]:
-        #     neutral_clone[time_key] = optimal[o][0]
-        #     result.append(neutral_clone)
-        #     o += 1
-        # else:
-        #     neutral_clone[time_key] = optimal[o][0]
-        #     result.append(neutral_clone)
-        #     o += 1
     return result
 
 
