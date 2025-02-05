@@ -193,17 +193,17 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'location', label: 'Pages' },
     { value: 'click', label: 'Clicks' },
     { value: 'input', label: 'Input' },
-    { value: 'custom', label: 'Custom' },
+    { value: 'custom', label: 'Custom Events' },
   ];
   return (
     <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
-      <Form.Item>
+      <div className='flex flex-col lg:flex-row lg:items-center gap-6 flex-wrap'>
+      <Form.Item className='mb-0 flex-1'>
         <div className="flex flex-wrap gap-2 items-center justify-start">
-          <span className="font-medium">User journeys with: </span>
-
-          <div className="flex sm:flex-wrap lg:flex-nowrap gap-2 items-start">
+          <span className="font-medium">Journeys with: </span>
+          <div className="flex gap-2 items-start">
             <Select
-              className="w-36 rounded-xl"
+              className="w-36 rounded-lg"
               name="startType"
               options={[
                 { value: 'start', label: 'Start Point' },
@@ -219,7 +219,8 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
 
             <Select
               mode="multiple"
-              className="min-w-36 rounded-xl"
+              className="rounded-lg w-max	min-w-44 max-w-58"
+              // style={{ width: 'auto', minWidth: '9rem', maxWidth: '12rem' }}
               allowClear
               name="metricValue"
               options={metricValueOptions}
@@ -227,19 +228,19 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
               onChange={(value) => writeOption({ name: 'metricValue', value })}
               placeholder="Select Metrics"
               size="small"
+              maxTagCount={'responsive'}
+              showSearch={false}
             />
           </div>
         </div>
       </Form.Item>
-      <div className="flex items-center">
-        <Form.Item
-          label={
-            metric.startType === 'start'
-              ? 'Specify Start Point'
-              : 'Specify End Point'
-          }
-          className="m0-0 font-medium p-0 h-fit"
-        >
+      <Form.Item  className='mb-0 flex-1'>
+          <div className="flex flex-wrap items-center justify-start">
+            <span className="font-medium mr-2">{
+              metric.startType === 'start'
+                ? 'Start Point'
+                : 'End Point'
+            }</span>
           <span className="font-normal">
             <FilterItem
               hideDelete
@@ -254,6 +255,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
               onRemoveFilter={() => {}}
             />
           </span>
+          </div>
         </Form.Item>
       </div>
     </Card>

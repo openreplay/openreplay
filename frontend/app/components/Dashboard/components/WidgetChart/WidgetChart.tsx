@@ -513,14 +513,16 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === USER_PATH && data && data.links) {
-      // const usedData = _metric.hideExcess ? filterMinorPaths(data) : data;
+      const isUngrouped = props.isPreview ? (!(_metric.hideExcess ?? true)) : false;
+      const height = props.isPreview ? 550 : 500;
       return (
         <SankeyChart
-          height={props.isPreview ? 500 : 240}
+        height={height}
           data={data}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}
+          isUngrouped={isUngrouped}
         />
       );
     }

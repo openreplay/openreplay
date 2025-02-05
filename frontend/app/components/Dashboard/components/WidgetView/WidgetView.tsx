@@ -171,7 +171,7 @@ function WidgetView(props: Props) {
                     {
                       value: 'flex-row',
                       icon: (
-                        <Tooltip title="Horizontal Layout">
+                        <Tooltip title="Filters on Left">
                           <LayoutPanelLeft size={16} />
                         </Tooltip>
                       )
@@ -179,7 +179,7 @@ function WidgetView(props: Props) {
                     {
                       value: 'flex-col',
                       icon: (
-                        <Tooltip title="Vertical Layout">
+                        <Tooltip title="Filters on Top">
                           <LayoutPanelTop size={16} />
                         </Tooltip>
                       )
@@ -187,7 +187,7 @@ function WidgetView(props: Props) {
                     {
                       value: 'flex-row-reverse',
                       icon: (
-                        <Tooltip title="Reversed Horizontal Layout">
+                        <Tooltip title="Filters on Right">
                           <div className={'rotate-180'}>
                             <LayoutPanelLeft size={16} />
                           </div>

@@ -45,7 +45,7 @@ function WidgetOptions() {
           onClick={(e) => {
             e.preventDefault();
             metric.update({ hideExcess: !metric.hideExcess });
-            metric.updateKey('hasChanged', true);
+            // metric.updateKey('hasChanged', true);
           }}
         >
           <Space>

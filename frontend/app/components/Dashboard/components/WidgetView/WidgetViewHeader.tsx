@@ -3,7 +3,7 @@ import cn from 'classnames';
 import WidgetName from 'Components/Dashboard/components/WidgetName';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-
+import { USER_PATH } from 'App/constants/card';
 import { Button, Space, Tooltip } from 'antd';
 import CardViewMenu from 'Components/Dashboard/components/WidgetView/CardViewMenu';
 import { Link2 } from 'lucide-react'
@@ -14,16 +14,20 @@ interface Props {
   onSave: () => void;
   undoChanges: () => void;
   layoutControl?: React.ReactNode;
+  isPreview?: boolean;
 }
 
 const defaultText = 'Copy link to clipboard'
 
-function WidgetViewHeader({ onClick, onSave, layoutControl }: Props) {
+function WidgetViewHeader({ onClick, onSave, layoutControl, isPreview }: Props) {
   const [tooltipText, setTooltipText] = React.useState(defaultText);
   const { metricStore } = useStore();
   const widget = metricStore.instance;
 
   const handleSave = () => {
+    if (!isPreview && widget.metricType === USER_PATH) {
+      widget.hideExcess = true; // Force grouped view
+    }
     onSave();
   };
 
@@ -36,7 +40,7 @@ function WidgetViewHeader({ onClick, onSave, layoutControl }: Props) {
   return (
     <div
       className={cn(
-        'flex justify-between items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title'
+        'flex justify-between items-center bg-white rounded-lg shadow-sm px-4 ps-2 py-2 border border-gray-lighter input-card-title flex-wrap'
       )}
       onClick={onClick}
     >
