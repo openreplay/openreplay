@@ -20,7 +20,7 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
   const params = { density: 35 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
-  const data = paginated ? metric?.data[0]?.values : list;
+  const data = paginated ? metric?.data?.values : list;
 
   const loadData = async (page: number) => {
     const timestamps = drillDownPeriod.toTimestamps();
@@ -56,7 +56,7 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                 title={(
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis={true} className='w-[95%]'>{row.displayName}</Typography.Text>
+                      <Typography.Text ellipsis={true} className='w-[90%]'>{row.displayName}</Typography.Text>
                       <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
                     </div>
 

@@ -38,6 +38,7 @@ const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
 const searchStore = new SearchStore();
 const searchStoreLive = new SearchStoreLive();
+const settingsStore = new SettingsStore();
 
 function copyToClipboard(text: string) {
   const textArea = document.createElement('textarea');
@@ -114,7 +115,7 @@ export class RootStore {
     this.dashboardStore = new DashboardStore();
     this.metricStore = new MetricStore();
     this.funnelStore = new FunnelStore();
-    this.settingsStore = new SettingsStore();
+    this.settingsStore = settingsStore;
     this.userStore = userStore;
     this.roleStore = new RoleStore();
     this.auditStore = new AuditStore();
@@ -168,4 +169,4 @@ export const withStore = (Component: any) => (props: any) => {
   return <Component {...props} mstore={useStore()} />;
 };
 
-export { userStore, sessionStore, searchStore, searchStoreLive, projectStore, client };
+export { userStore, sessionStore, searchStore, searchStoreLive, projectStore, client, settingsStore };

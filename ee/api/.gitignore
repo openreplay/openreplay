@@ -187,7 +187,7 @@ Pipfile.lock
 /chalicelib/core/announcements.py
 /chalicelib/core/assist.py
 /chalicelib/core/authorizers.py
-/chalicelib/core/autocomplete/*
+/chalicelib/core/autocomplete/autocomplete.py
 /chalicelib/core/boarding.py
 /chalicelib/core/canvas.py
 /chalicelib/core/collaborations/*

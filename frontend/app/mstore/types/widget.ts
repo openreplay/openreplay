@@ -71,7 +71,7 @@ export default class Widget {
     name: string = 'Untitled Card';
     metricType: string = 'timeseries';
     metricOf: string = 'sessionCount';
-    metricValue: any = '';
+    metricValue: [] = [];
     viewType: string = 'lineChart';
     metricFormat: string = 'sessionCount';
     series: FilterSeries[] = [];
@@ -334,9 +334,9 @@ export default class Widget {
         } else if (this.metricType === FUNNEL) {
             _data.funnel = new Funnel().fromJSON(data);
         } else if (this.metricType === TABLE) {
-            // const total = data[0]['total'];
             const count = data[0]['count'];
             _data['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, count, this.metricOf));
+            _data['total'] = data[0]['total'];
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;
@@ -454,7 +454,7 @@ export default class Widget {
 
     private metricValueToArray(metricValue: any) {
         if (!Array.isArray(metricValue)) return metricValue;
-        return metricValue.map((i: any) => i.value);
+        return metricValue.map((i: any) => i);
     }
 }
 

@@ -1,13 +1,10 @@
 import ast
 import logging
-from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects
-from chalicelib.core.metrics import metrics
-from chalicelib.core.sessions import sessions_favorite, performance_event, sessions_legacy, sessions
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-from chalicelib.utils import sql_helper as sh
+from chalicelib.core import metadata, projects
+from chalicelib.core.sessions import sessions_favorite, sessions_legacy, sessions
+from chalicelib.utils import pg_client, helper, ch_client, exp_ch_helper
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +164,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         logging.debug(main_query)
         logging.debug("--------------------")
         try:
-            sessions = cur.execute(main_query)
+            sessions_list = cur.execute(main_query)
         except Exception as err:
             logging.warning("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
             logging.warning(main_query)
@@ -176,27 +173,27 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             logging.warning("--------------------")
             raise err
         if errors_only or ids_only:
-            return helper.list_to_camel_case(sessions)
+            return helper.list_to_camel_case(sessions_list)
 
-        if len(sessions) > 0:
-            sessions = sessions[0]
+        if len(sessions_list) > 0:
+            sessions_list = sessions_list[0]
 
-        total = sessions["count"]
-        sessions = sessions["sessions"]
+        total = sessions_list["count"]
+        sessions_list = sessions_list["sessions"]
 
     if data.group_by_user:
-        for i, s in enumerate(sessions):
-            sessions[i] = {**s.pop("last_session")[0], **s}
-            sessions[i].pop("rn")
-            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
+        for i, s in enumerate(sessions_list):
+            sessions_list[i] = {**s.pop("last_session")[0], **s}
+            sessions_list[i].pop("rn")
+            sessions_list[i]["metadata"] = ast.literal_eval(sessions_list[i]["metadata"])
     else:
-        for i in range(len(sessions)):
-            sessions[i]["metadata"] = ast.literal_eval(sessions[i]["metadata"])
-            sessions[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions[i]))
+        for i in range(len(sessions_list)):
+            sessions_list[i]["metadata"] = ast.literal_eval(sessions_list[i]["metadata"])
+            sessions_list[i] = schemas.SessionModel.parse_obj(helper.dict_to_camel_case(sessions_list[i]))
 
     return {
         'total': total,
-        'sessions': sessions
+        'sessions': sessions_list
     }
 
 

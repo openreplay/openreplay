@@ -109,7 +109,7 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
       return newState;
     });
   }
-  
+
   const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
   return (
     <>

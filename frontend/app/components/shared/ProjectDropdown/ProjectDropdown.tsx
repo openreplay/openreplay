@@ -10,8 +10,9 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
-import { useModal } from 'Components/Modal';
 import { Icon } from 'UI';
+import { useModal } from 'Components/ModalContext';
+import ProjectForm from 'Components/Client/Projects/ProjectForm';
 
 const { Text } = Typography;
 
@@ -28,7 +29,7 @@ function ProjectDropdown(props: { location: any }) {
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
-  const { showModal, hideModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   const handleSiteChange = async (newSiteId: string) => {
     mstore.initClient();
@@ -43,7 +44,7 @@ function ProjectDropdown(props: { location: any }) {
 
   const addProjectClickHandler = () => {
     initProject({});
-    showModal(<NewSiteForm onClose={hideModal} />, { right: true });
+    openModal(<ProjectForm onClose={closeModal} />, { title: 'New Project' });
   };
 
   const menuItems: MenuProps['items'] = sites.map((site) => ({

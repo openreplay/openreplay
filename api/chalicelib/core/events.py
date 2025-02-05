@@ -204,9 +204,6 @@ def search(text, event_type, project_id, source, key):
 
     if event_type in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
-        # for IOS events autocomplete
-        # if event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,source=source)
     elif event_type + "_MOBILE" in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type + "_MOBILE"].get(project_id=project_id, value=text, key=key, source=source)
     elif event_type in sessions_metas.SUPPORTED_TYPES.keys():

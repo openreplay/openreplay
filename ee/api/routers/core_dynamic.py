@@ -12,7 +12,7 @@ from chalicelib.core import assist, signup, feature_flags
 from chalicelib.core.errors import errors
 from chalicelib.core.metrics import heatmaps
 from chalicelib.core.sessions import sessions, sessions_notes, sessions_replay, sessions_favorite, sessions_assignments, \
-    sessions_viewed, unprocessed_sessions
+    sessions_viewed, unprocessed_sessions, sessions_search
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
@@ -266,10 +266,10 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"],
           dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
-def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def search_sessions(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
-                                    platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id,
+                                           platform=context.project.platform)
     return {'data': data}
 
 
@@ -277,8 +277,8 @@ def sessions_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = 
           dependencies=[OR_scope(Permissions.SESSION_REPLAY)])
 def session_ids_search(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
-                                    platform=context.project.platform)
+    data = sessions_search.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True,
+                                           platform=context.project.platform)
     return {'data': data}
 
 

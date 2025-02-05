@@ -1,6 +1,7 @@
-from chalicelib.utils import pg_client, helper
 import json
+
 from chalicelib.core.modules import TENANT_CONDITION
+from chalicelib.utils import pg_client, helper
 
 EXCEPT = ["jira_server", "jira_cloud"]
 

@@ -1,5 +1,5 @@
 import requests
-from chalicelib.core import log_tools
+from chalicelib.core.log_tools import log_tools
 from schemas import schemas
 
 IN_TY = "sentry"

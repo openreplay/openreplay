@@ -4,13 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "*"
-sqlalchemy = "==2.0.21"
-uvicorn = "==0.23.2"
+fastapi = "==0.115.8"
+sqlalchemy = "==2.0.37"
+uvicorn = "==0.34.0"
 python-decouple = "==3.8"
-psycopg2-binary = "==2.9.7"
+psycopg2-binary = "==2.9.10"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.12"
+python_full_version = "3.12.8"
