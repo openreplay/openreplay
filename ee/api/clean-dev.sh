@@ -9,7 +9,7 @@ rm -rf ./build_crons.sh
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
-rm -rf ./chalicelib/core/autocomplete
+rm -rf ./chalicelib/core/autocomplete/autocomplete.py
 rm -rf ./chalicelib/core/collaborations
 rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/metrics/metrics.py
