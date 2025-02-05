@@ -180,22 +180,26 @@ spec:
           - -c
         args:
           - |
-            majorVersion=16
-            minorVersion=4
+            lowVersion=16.4
+            highVersion=17
             pg_version=`psql -V | awk '{print $3}'`
             echo $pg_version |\
-              awk -v pg_version=$pg_version -v major="$majorVersion" -v minor="$minorVersion" -F. '{
-                if ($1 != major) {
-                  # print "Need version " major pg_version;
+              awk -v pg_version=$pg_version -v low="$lowVersion" -v high="$highVersion" -F. '{
+                split(low, lowArr, ".");
+                split(high, highArr, ".");
+                if ($1 < lowArr[1] ) {
+                  print "Need version " low " or higher. Current version: " pg_version;
                   exit 100
-                } else if ($2 < minor) {
-                  # print "Need at least " major "." minor pg_version;
+                } else if ($1 > highArr[1]) {
+                  print "Version " pg_version " is higher than the allowed maximum version " high ".";
                   exit 100
-                } 
+                } else if ($1 == lowArr[1] && $2 < lowArr[2]) {
+                  exit 100
+                }
               }' || {
-              echo "[error] postgresql version is $pg_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo "[error] postgresql version is $pg_version which is not within the allowed range ${lowVersion} - ${highVersion}. Exiting."
               echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
-              # exit 101
+              exit 101
             }
       - name: clickhouse-check
         image: clickhouse/clickhouse-server:22.12-alpine
@@ -223,8 +227,8 @@ spec:
           - -c
         args:
           - |
-            majorVersion=24
-            minorVersion=9
+            lowVersion=24.9
+            highVersion=24
             [[ "${CH_PASSWORD}" == "" ]] || {
               CH_PASSWORD="--password $CH_PASSWORD"
             }
@@ -232,18 +236,22 @@ spec:
             echo $ch_client
             ch_version=`$ch_client -q "SELECT version()"`
             echo $ch_version |\
-            awk -v major="$majorVersion" -v minor="$minorVersion" '{split($4, ver, ".");
-              if ($1 != major) {
-                # print "Need version " major pg_version;
+            awk -v low="$lowVersion" -v high="$highVersion" '{split($1, ver, ".");
+              split(low, lowArr, ".");
+              split(high, highArr, ".");
+              if (ver[1] < lowArr[1]) {
+                # print "Need version " low " or higher. Current version: " ver[1] "." ver[2];
                 exit 100
-              } else if ($2 < minor) {
-                # print "Need at least " major "." minor pg_version;
+              } else if (ver[1] > highArr[1]) {
+                # print "Version " ver[1] "." ver[2] " is higher than the allowed maximum version " high ".";
                 exit 100
-              } 
+              } else if (ver[1] == lowArr[1] && ver[2] < lowArr[2]) {
+                exit 100
+              }
             }' || {
-              echo "[error] Clickhouse server version $ch_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo "[error] Clickhouse server version $ch_version which is not within the allowed range >${lowVersion} - ${highVersion}.x Exiting."
               echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-clickhouse
-              # exit 101
+              exit 101
             }
         volumeMounts:
           - name: shared
