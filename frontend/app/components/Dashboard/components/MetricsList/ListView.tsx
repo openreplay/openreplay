@@ -140,12 +140,11 @@ const ListView: React.FC<Props> = ({
   );
 
   const onItemClick = (metric: Widget) => {
-    if (disableSelection) return;
-    if (toggleSelection) {
-      toggleSelection(metric.metricId);
-    } else {
+    if (disableSelection) {
       const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
       history.push(path);
+    } else {
+      toggleSelection?.(metric.metricId);
     }
   };
 

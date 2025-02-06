@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button, Checkbox, Input, Tooltip } from 'antd';
-import { RedoOutlined } from '@ant-design/icons';
+import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { Loader } from 'UI';
 import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
@@ -83,7 +83,9 @@ export function AutocompleteModal({
 
   const applyQuery = () => {
     const vals = commaQuery ? query.split(',').map((i) => i.trim()) : [query];
-    onApply(vals);
+    // onApply(vals);
+    const merged = Array.from(new Set([...selectedValues, ...vals]));
+    onApply(merged);
   };
 
   const clearSelection = () => {
@@ -134,6 +136,7 @@ export function AutocompleteModal({
         placeholder={placeholder}
         className="rounded-lg"
         autoFocus
+        allowClear
       />
       <Loader loading={isLoading}>
         <>
@@ -159,7 +162,7 @@ export function AutocompleteModal({
             <div className={'border-y border-y-gray-light py-2'}>
               <div
                 className={
-                  'whitespace-normal rounded cursor-pointer text-blue hover:bg-active-blue px-2 py-1'
+                  'whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1'
                 }
                 onClick={applyQuery}
               >
@@ -174,10 +177,6 @@ export function AutocompleteModal({
           <Button type="primary" onClick={applyValues} className="btn-apply-event-value">
             Apply
           </Button>
-
-          <Button onClick={onClose} className="btn-cancel-event-value">
-            Cancel
-          </Button>
         </div>
 
         <Tooltip title='Clear all selection'>
@@ -191,7 +190,7 @@ export function AutocompleteModal({
   );
 }
 
-// Props interface
+
 interface Props {
   value: string[];
   params?: any;
@@ -202,15 +201,34 @@ interface Props {
   mapValues?: (value: string) => string;
 }
 
-// AutoCompleteContainer component
+
 export function AutoCompleteContainer(props: Props) {
   const filterValueContainer = useRef<HTMLDivElement>(null);
   const [showValueModal, setShowValueModal] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const isEmpty = props.value.length === 0 || !props.value[0];
   const onClose = () => setShowValueModal(false);
   const onApply = (values: string[]) => {
-    props.onApplyValues(values);
+    setTimeout(() => {
+      props.onApplyValues(values);
+      setShowValueModal(false);
+    }, 100);
+    console.log("closed on apply");
+  };
+
+  
+  const onClearClick = (event: React.MouseEvent) => {
+    event.stopPropagation(); 
+    props.onApplyValues([]); 
     setShowValueModal(false);
+    console.log("closed clear click");
+  };
+
+  const handleContainerClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget || 
+        event.currentTarget.contains(event.target as Node)) {
+      setShowValueModal(true);
+    }
   };
 
   return (
@@ -220,10 +238,13 @@ export function AutoCompleteContainer(props: Props) {
       }
       style={{ height: 26 }}
       ref={filterValueContainer}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={handleContainerClick}
     >
       <div
         onClick={() => setTimeout(() => setShowValueModal(true), 0)}
-        className={'flex items-center gap-2 cursor-pointer'}
+        className={'flex items-center gap-2 cursor-pointer pr-4'}
       >
         {!isEmpty ? (
           <>
@@ -240,7 +261,7 @@ export function AutoCompleteContainer(props: Props) {
                 />
                 {props.value.length > 2 && (
                   <TruncatedText
-                    text={`+ ${props.value.length - 1} More`}
+                    text={`+ ${props.value.length - 2} More`}
                     maxWidth="8rem"
                   />
                 )}
@@ -252,6 +273,14 @@ export function AutoCompleteContainer(props: Props) {
             {props.placeholder ? props.placeholder : 'Select value(s)'}
           </div>
         )}
+        {!isEmpty && hovered && (
+        <div
+          className="absolute right-2 cursor-pointer flex items-center justify-center"
+          onClick={onClearClick}
+        >
+          <CloseCircleFilled className='text-neutral-200' />
+        </div>
+      )}
       </div>
       {showValueModal ? (
         <props.modalRenderer

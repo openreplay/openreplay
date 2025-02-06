@@ -16,6 +16,7 @@ function LongLoader({ onClick }: { onClick: () => void }) {
             '0%': '#394EFF',
             '100%': '#394EFF'
           }}
+          status="active" 
           showInfo={false}
         />
       </div>

@@ -3,8 +3,9 @@ import { echarts, defaultOptions } from './init';
 import { SankeyChart } from 'echarts/charts';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { NoContent } from 'App/components/ui';
-import {InfoCircleOutlined} from '@ant-design/icons';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { X } from 'lucide-react';
+
 echarts.use([SankeyChart]);
 
 interface SankeyNode {
@@ -15,9 +16,9 @@ interface SankeyNode {
 }
 
 interface SankeyLink {
-  source: number;
-  target: number;
-  value: number; 
+  source: number | string;
+  target: number | string;
+  value: number;
   sessionsCount: number;
   eventType?: string;
 }
@@ -34,6 +35,42 @@ interface Props {
   isUngrouped?: boolean;
 }
 
+function buildSubgraph(
+  startNodeId: string | number,
+  nodes: SankeyNode[],
+  links: SankeyLink[]
+) {
+  const visited = new Set<string | number>();
+  const queue = [startNodeId];
+  visited.add(startNodeId);
+
+  const adjacency: Record<string | number, Array<string | number>> = {};
+  links.forEach((link) => {
+    if (!adjacency[link.source]) {
+      adjacency[link.source] = [];
+    }
+    adjacency[link.source].push(link.target);
+  });
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const neighbors = adjacency[current] || [];
+    neighbors.forEach((nbr) => {
+      if (!visited.has(nbr)) {
+        visited.add(nbr);
+        queue.push(nbr);
+      }
+    });
+  }
+
+  const subNodes = nodes.filter((n) => visited.has(n.id));
+  const subLinks = links.filter(
+    (l) => visited.has(l.source) && visited.has(l.target)
+  );
+
+  return { subNodes, subLinks };
+}
+
 const EChartsSankey: React.FC<Props> = (props) => {
   const { data, height = 240, onChartClick, isUngrouped } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -44,31 +81,53 @@ const EChartsSankey: React.FC<Props> = (props) => {
         style={{ minHeight: height }}
         title={
           <div className="flex items-center relative">
-            <InfoCircleOutlined className='hidden md:inline-block mr-1' />
+            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
             Set a start or end point to visualize the journey. If set, try adjusting filters.
           </div>
-          
         }
         show={true}
       />
     );
   }
 
+  
+  const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
+
   React.useEffect(() => {
     if (!chartRef.current) return;
 
+   
+    const startNodes = data.nodes.filter((n) => n.depth === 0);
+    let finalNodes = data.nodes;
+    let finalLinks = data.links;
+
+    if (startNodes.length > 1) {
+      const chosenStartNode = startNodes[0];
+      const { subNodes, subLinks } = buildSubgraph(
+        chosenStartNode.id!,
+        data.nodes,
+        data.links
+      );
+      finalNodes = subNodes;
+      finalLinks = subLinks;
+    }
+
+    
     const chart = echarts.init(chartRef.current);
 
+    
     const maxDepth = 4;
-    const filteredNodes = data.nodes.filter((n) => (n.depth ?? 0) <= maxDepth);
-    const filteredLinks = data.links.filter((l) => {
-      const sourceNode = data.nodes.find((n) => n.id === l.source);
-      const targetNode = data.nodes.find((n) => n.id === l.target);
-      return (sourceNode?.depth ?? 0) <= maxDepth && (targetNode?.depth ?? 0) <= maxDepth;
+    const filteredNodes = finalNodes.filter((n) => (n.depth ?? 0) <= maxDepth);
+    const filteredLinks = finalLinks.filter((l) => {
+      const sourceNode = finalNodes.find((n) => n.id === l.source);
+      const targetNode = finalNodes.find((n) => n.id === l.target);
+      return (
+        (sourceNode?.depth ?? 0) <= maxDepth && (targetNode?.depth ?? 0) <= maxDepth
+      );
     });
 
     
-    const nodeValues = new Array(filteredNodes.length).fill(0);
+    setFinalNodeCount(filteredNodes.length);
 
     
     const echartNodes = filteredNodes
@@ -81,8 +140,9 @@ const EChartsSankey: React.FC<Props> = (props) => {
           computedName === 'Others'
             ? 'rgba(34,44,154,.9)'
             : n.eventType === 'DROP'
-              ? '#B5B7C8'
-              : '#394eff';
+            ? '#B5B7C8'
+            : '#394eff';
+
         return {
           name: computedName,
           depth: n.depth,
@@ -93,16 +153,14 @@ const EChartsSankey: React.FC<Props> = (props) => {
         };
       })
       .sort((a, b) => {
+        
         if (a.depth === b.depth) {
           return getEventPriority(a.type || '') - getEventPriority(b.type || '');
         } else {
           return (a.depth as number) - (b.depth as number);
         }
       });
-      
-      const distinctSteps = new Set(data.nodes.map(node => node.depth)).size;
-      console.log('Number of steps returned by the backend:', distinctSteps);
-    
+
     const echartLinks = filteredLinks.map((l) => ({
       source: echartNodes.findIndex((n) => n.id === l.source),
       target: echartNodes.findIndex((n) => n.id === l.target),
@@ -111,17 +169,14 @@ const EChartsSankey: React.FC<Props> = (props) => {
       lineStyle: { opacity: 0.1 },
     }));
 
-    
-    nodeValues.forEach((v, i) => {
-      const outgoingValues = echartLinks
-        .filter((l) => l.source === i)
-        .reduce((p, c) => p + c.value, 0);
-      const incomingValues = echartLinks
-        .filter((l) => l.target === i)
-        .reduce((p, c) => p + c.value, 0);
-      nodeValues[i] = Math.max(outgoingValues, incomingValues);
-    });
+    if (echartNodes.length === 0) return;
 
+    
+    const startNodeValue = echartLinks
+      .filter((link) => link.source === 0)
+      .reduce((sum, link) => sum + link.value, 0);
+
+    
     const option = {
       ...defaultOptions,
       tooltip: {
@@ -147,31 +202,49 @@ const EChartsSankey: React.FC<Props> = (props) => {
           label: {
             show: true,
             position: 'top',
-            textShadowColor: "transparent",
-            textBorderColor: "transparent",
+            textShadowColor: 'transparent',
+            textBorderColor: 'transparent',
             align: 'left',
-            overflow: "truncate",
+            overflow: 'truncate',
+            maxWidth: 30,  
             distance: 3,
             offset: [-20, 0],
-            formatter: function(params: any) {
-              const totalSessions = nodeValues.reduce((sum: number, v: number) => sum + v, 0);
-              const percentage = totalSessions ? ((params.value / totalSessions) * 100).toFixed(1) + '%' : '0%';
-              return `{header|${params.name}}\n{body|${percentage}  ${params.value} Sessions}`;
+            formatter: function (params: any) {
+              const nodeVal = params.value;
+              const percentage = startNodeValue
+                ? ((nodeVal / startNodeValue) * 100).toFixed(1) + '%'
+                : '0%';
+
+              return (
+                `{header|${params.name}}\n` +
+                `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
+              );
             },
             rich: {
               header: {
-                fontWeight: 'bold',
+                fontWeight: '600',
                 fontSize: 12,
-                color: '#333'
+                color: '#333',
+                overflow: 'truncate',
+                paddingBottom:'.5rem',
               },
               body: {
                 fontSize: 12,
-                color: '#666'
-              }
-            }
+                color: '#000',
+              },
+              percentage: {
+                fontSize: 12,
+                color: '#454545',
+              },
+              sessions: {
+                fontSize: 12,
+                fontFamily: "mono, 'monospace', sans-serif",
+                color: '#999999',
+              },
+            },
           },
           tooltip: {
-            formatter: sankeyTooltip(echartNodes, nodeValues),
+            formatter: sankeyTooltip(echartNodes, []),
           },
           nodeAlign: 'left',
           nodeWidth: 40,
@@ -189,8 +262,10 @@ const EChartsSankey: React.FC<Props> = (props) => {
       ],
     };
 
+    
     chart.setOption(option);
 
+    
     function getUpstreamNodes(nodeIdx: number, visited = new Set<number>()) {
       if (visited.has(nodeIdx)) return;
       visited.add(nodeIdx);
@@ -231,7 +306,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           const baseOpacity = connectedChain.has(idx) ? 1 : 0.35;
           const extraStyle =
             idx === hoveredIndex
-              ? { borderColor: '#000000', borderWidth: 1, borderType: 'dotted' }
+              ? { borderColor: '#000', borderWidth: 1, borderType: 'dotted' }
               : {};
           return {
             ...node,
@@ -267,7 +342,6 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
     chart.on('mouseout', function (params: any) {
       if (params.dataType === 'node') {
-        // Restore original styles on mouseout.
         chart.setOption({
           series: [
             {
@@ -279,21 +353,21 @@ const EChartsSankey: React.FC<Props> = (props) => {
       }
     });
 
+    
     chart.on('click', function (params: any) {
       if (!onChartClick) return;
       if (params.dataType === 'node') {
         const nodeIndex = params.dataIndex;
-        // Use filteredNodes here.
         const node = filteredNodes[nodeIndex];
         onChartClick([{ node }]);
       } else if (params.dataType === 'edge') {
         const linkIndex = params.dataIndex;
-        // Use filteredLinks here.
         const link = filteredLinks[linkIndex];
         onChartClick([{ link }]);
       }
     });
 
+    
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(chartRef.current);
 
@@ -303,11 +377,29 @@ const EChartsSankey: React.FC<Props> = (props) => {
     };
   }, [data, height, onChartClick]);
 
-  const containerStyle: React.CSSProperties = isUngrouped
-    ? {width: '100%', minHeight: 500, height: '100%', overflowY: 'auto' }
-    : { width: '100%', height };
+  
+  
+  
+  let containerStyle: React.CSSProperties;
+  if (isUngrouped) {
+    
+    
+    const dynamicMinHeight = finalNodeCount * 15; 
+    containerStyle = {
+      width: '100%',
+      minHeight: dynamicMinHeight,
+      height: '100%',
+      overflowY: 'auto',
+    };
+  } else {
+    
+    containerStyle = {
+      width: '100%',
+      height,
+    };
+  }
 
-    return <div ref={chartRef} style={containerStyle} />;
+  return <div ref={chartRef} style={containerStyle} className='min-w-[600px] overflow-scroll' />;
 };
 
 export default EChartsSankey;

@@ -196,14 +196,14 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'custom', label: 'Custom Events' },
   ];
   return (
-    <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
-      <div className='flex flex-col lg:flex-row lg:items-center gap-6 flex-wrap'>
-      <Form.Item className='mb-0 flex-1'>
+    <div className="rounded-lg bg-white border">
+      <div className='flex flex-col justify-start gap-2 flex-wrap'>
+      <Form.Item className='mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2'>
         <div className="flex flex-wrap gap-2 items-center justify-start">
-          <span className="font-medium">Journeys with: </span>
-          <div className="flex gap-2 items-start">
+          <span className="font-medium">Journeys With </span>
+          <div className="flex gap-2 items-center">
             <Select
-              className="w-36 rounded-lg"
+              className="w-36 rounded-lg !h-[26px]"
               name="startType"
               options={[
                 { value: 'start', label: 'Start Point' },
@@ -215,11 +215,11 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
               size="small"
             />
 
-            <span className="text-neutral-400 mt-.5">showing</span>
+            <span className="">showing</span>
 
             <Select
               mode="multiple"
-              className="rounded-lg w-max	min-w-44 max-w-58"
+              className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
               // style={{ width: 'auto', minWidth: '9rem', maxWidth: '12rem' }}
               allowClear
               name="metricValue"
@@ -234,7 +234,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </div>
         </div>
       </Form.Item>
-      <Form.Item  className='mb-0 flex-1'>
+      <Form.Item  className='mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1'>
           <div className="flex flex-wrap items-center justify-start">
             <span className="font-medium mr-2">{
               metric.startType === 'start'
@@ -258,7 +258,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </div>
         </Form.Item>
       </div>
-    </Card>
+    </div>
   );
 });
 
