@@ -72,7 +72,7 @@ function MetricsList({
     metricStore.updateKey('showMine', !showOwn);
   };
 
-  // Define dimensions for the empty state illustration
+  
   const isFiltered =
   metricsSearch !== '' || (metricStore.filter.type && metricStore.filter.type !== 'all');    
 

@@ -65,12 +65,12 @@ export const tabItems: Record<string, TabItem[]> = {
       type: USER_PATH,
       description: 'Understand the paths users take through your product.',
     },
-    // { TODO: 1.23+
-    //   icon: <Icon name={'dashboards/cohort-chart'} color={'inherit'} size={16} />,
-    //   title: 'Retention',
-    //   type: RETENTION,
-    //   description: 'Analyze user retention over specific time periods.',
-    // },
+    
+    
+    
+    
+    
+    
     {
       icon: <Icon name={'dashboards/heatmap-2'} color={'inherit'} size={16} />,
       title: 'Heatmaps',
@@ -143,12 +143,12 @@ export const tabItems: Record<string, TabItem[]> = {
       type: FilterKey.USER_DEVICE,
       description: 'Explore the devices used by your users.',
     },
-    // { TODO: 1.23+ maybe
-    //   icon: <ArrowDown10 width={16} />,
-    //   title: 'Speed Index by Country',
-    //   type: TABLE,
-    //   description: 'Measure performance across different regions.',
-    // },
+    
+    
+    
+    
+    
+    
   ],
 };
 
@@ -223,7 +223,7 @@ function CategoryTab({
       ];
     }
 
-    // TODO This code here makes 0 sense
+    
     if (selectedCard.cardType === FUNNEL) {
       cardData.series = [];
       cardData.series.push(new FilterSeries());
@@ -317,7 +317,7 @@ const AddCardSection = observer(
     return (
       <div
         className={
-          'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2'
+          'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm'
         }
       >
         <div className={'flex justify-between p-2'}>

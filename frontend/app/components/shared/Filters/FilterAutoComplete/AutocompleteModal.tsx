@@ -134,6 +134,7 @@ export function AutocompleteModal({
         placeholder={placeholder}
         className="rounded-lg"
         autoFocus
+        allowClear
       />
       <Loader loading={isLoading}>
         <>

@@ -109,7 +109,7 @@ function FilterValue(props: Props) {
         placeholder={filter.placeholder}
         options={filter.options}
         onApplyValues={onApplyValues}
-        // onChange={(item, index) => onChange(null, { value: item.value }, index)}
+        
         {...props}
       />
     )
@@ -179,7 +179,7 @@ function FilterValue(props: Props) {
       id={`ignore-outside`}
       className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
         'grid-cols-2': filter.hasSource,
-         //'lg:grid-cols-3': !filter.hasSource,
+         
       })}
     >
       {renderValueFiled(filter.value)}

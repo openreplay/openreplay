@@ -198,9 +198,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   return (
     <Card styles={{ body: { padding: '20px 20px' } }} className="rounded-lg">
       <div className='flex flex-col lg:flex-row lg:items-center gap-6 flex-wrap'>
-      <Form.Item className='mb-0 flex-1'>
+      <Form.Item className='mb-0'>
         <div className="flex flex-wrap gap-2 items-center justify-start">
-          <span className="font-medium">Journeys with: </span>
+          <span className="font-medium">Journeys with </span>
           <div className="flex gap-2 items-start">
             <Select
               className="w-36 rounded-lg"
