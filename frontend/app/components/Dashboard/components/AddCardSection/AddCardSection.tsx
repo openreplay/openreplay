@@ -65,12 +65,12 @@ export const tabItems: Record<string, TabItem[]> = {
       type: USER_PATH,
       description: 'Understand the paths users take through your product.',
     },
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
     {
       icon: <Icon name={'dashboards/heatmap-2'} color={'inherit'} size={16} />,
       title: 'Heatmaps',
@@ -143,12 +143,12 @@ export const tabItems: Record<string, TabItem[]> = {
       type: FilterKey.USER_DEVICE,
       description: 'Explore the devices used by your users.',
     },
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
   ],
 };
 
@@ -203,47 +203,16 @@ function CategoryTab({
   const history = useHistory();
 
   const handleCardSelection = (card: string) => {
-    metricStore.init();
-    const selectedCard = CARD_LIST.find((c) => c.key === card) as CardType;
-    const cardData: any = {
-      metricType: selectedCard.cardType,
-      name: selectedCard.title,
-      metricOf: selectedCard.metricOf,
-      category: card,
-    };
-
-    if (selectedCard.filters) {
-      cardData.series = [
-        new FilterSeries().fromJson({
-          name: 'Series 1',
-          filter: {
-            filters: selectedCard.filters,
-          },
-        }),
-      ];
-    }
-
-    
-    if (selectedCard.cardType === FUNNEL) {
-      cardData.series = [];
-      cardData.series.push(new FilterSeries());
-      cardData.series[0].filter.addFunnelDefaultFilters();
-      cardData.series[0].filter.eventsOrder = 'then';
-      cardData.series[0].filter.eventsOrderSupport = ['then'];
-    }
-
-    metricStore.setCardCategory(tab);
-    metricStore.merge(cardData);
-
+    // metricStore.init();
     if (projectsStore.activeSiteId) {
       if (inCards) {
-        history.push(withSiteId(metricCreate(), projectsStore.activeSiteId));
+        history.push(withSiteId(metricCreate(), projectsStore.activeSiteId) + `?mk=${card}`);
       } else if (dashboardStore.selectedDashboard) {
         history.push(
           withSiteId(
             dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId),
             projectsStore.activeSiteId
-          )
+          ) + `?mk=${card}`
         );
       }
     }

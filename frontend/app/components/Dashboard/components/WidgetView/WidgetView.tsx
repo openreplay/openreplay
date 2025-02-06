@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from 'App/mstore';
-import { Loader, NoContent } from 'UI';
+import { Loader } from 'UI';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { observer } from 'mobx-react-lite';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
-import { Prompt, useHistory } from 'react-router';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { Prompt, useHistory, useLocation } from 'react-router';
 import {
   TIMESERIES,
   TABLE,
@@ -16,7 +15,7 @@ import {
   FUNNEL,
   INSIGHTS,
   USER_PATH,
-  RETENTION,
+  RETENTION
 } from 'App/constants/card';
 import CardUserList from '../CardUserList/CardUserList';
 import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
@@ -25,7 +24,9 @@ import { Space, Segmented, Tooltip } from 'antd';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import Widget from 'App/mstore/types/widget';
 import { LayoutPanelTop, LayoutPanelLeft } from 'lucide-react';
-import cn from 'classnames'
+import cn from 'classnames';
+import { CARD_LIST, CardType } from 'Components/Dashboard/components/DashboardList/NewDashModal/ExampleCards';
+import FilterSeries from '@/mstore/types/filterSeries';
 
 interface Props {
   history: any;
@@ -33,57 +34,79 @@ interface Props {
   siteId: any;
 }
 
-const LAYOUT_KEY = '$__metric_form__layout__$'
+const LAYOUT_KEY = '$__metric_form__layout__$';
 
 function getDefaultState() {
-  const layout = localStorage.getItem(LAYOUT_KEY)
-  return layout || 'flex-row'
+  return localStorage.getItem(LAYOUT_KEY) || 'flex-row';
 }
 
-function WidgetView(props: Props) {
+function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Props) {
   const [layout, setLayout] = useState(getDefaultState);
-  const {
-    match: {
-      params: { siteId, dashboardId, metricId },
-    },
-  } = props;
   const { metricStore, dashboardStore, settingsStore } = useStore();
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
-  const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
+  const [expanded] = useState(!metricId || metricId === 'create');
   const hasChanged = widget.hasChanged;
-  const dashboards = dashboardStore.dashboards;
-  const dashboard = dashboards.find((d: any) => d.dashboardId == dashboardId);
+  const dashboard = dashboardStore.dashboards.find((d: any) => d.dashboardId == dashboardId);
   const dashboardName = dashboard ? dashboard.name : null;
   const [metricNotFound, setMetricNotFound] = useState(false);
   const history = useHistory();
+  const location = useLocation();
   const [initialInstance, setInitialInstance] = useState();
   const isClickMap = widget.metricType === HEATMAP;
 
+  useEffect(() => {
+    if (!metricId || metricId === 'create') {
+      const params = new URLSearchParams(location.search);
+      const mk = params.get('mk');
+      if (mk) {
+        metricStore.init();
+        const selectedCard = CARD_LIST.find(c => c.key === mk) as CardType;
+        if (selectedCard) {
+          const cardData: any = {
+            metricType: selectedCard.cardType,
+            name: selectedCard.title,
+            metricOf: selectedCard.metricOf,
+            category: mk
+          };
+          if (selectedCard.filters) {
+            cardData.series = [
+              new FilterSeries().fromJson({
+                name: 'Series 1',
+                filter: { filters: selectedCard.filters }
+              })
+            ];
+          }
+          if (selectedCard.cardType === FUNNEL) {
+            cardData.series = [new FilterSeries()];
+            cardData.series[0].filter.addFunnelDefaultFilters();
+            cardData.series[0].filter.eventsOrder = 'then';
+            cardData.series[0].filter.eventsOrderSupport = ['then'];
+          }
+          metricStore.merge(cardData);
+        }
+      }
+    }
+  }, [metricId, location.search, metricStore]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (metricId && metricId !== 'create') {
-      metricStore.fetch(metricId, dashboardStore.period).catch((e) => {
+      metricStore.fetch(metricId, dashboardStore.period).catch(e => {
         if (e.response.status === 404 || e.response.status === 422) {
           setMetricNotFound(true);
         }
       });
-    } else {
-      if (!metricStore.instance) {
-        metricStore.init();
-      }
+    } else if (!metricStore.instance) {
+      metricStore.init();
     }
     const wasCollapsed = settingsStore.menuCollapsed;
-    settingsStore.updateMenuCollapsed(true)
+    settingsStore.updateMenuCollapsed(true);
     return () => {
-      if (!wasCollapsed) {
-        settingsStore.updateMenuCollapsed(false)
-      }
-    }
-  }, []);
+      if (!wasCollapsed) settingsStore.updateMenuCollapsed(false);
+    };
+  }, [metricId, metricStore, dashboardStore.period, settingsStore]);
 
-  
-  React.useEffect(() => {
+  useEffect(() => {
     if (metricNotFound) {
       history.replace(withSiteId('/metrics', siteId));
     }
@@ -108,118 +131,100 @@ function WidgetView(props: Props) {
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
         history.replace(
-          withSiteId(
-            dashboardMetricDetails(dashboardId, savedMetric.metricId),
-            siteId
-          )
+          withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
         );
         void dashboardStore.addWidgetToDashboard(
           dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
           [savedMetric.metricId]
         );
       } else {
-        history.replace(
-          withSiteId(metricDetails(savedMetric.metricId), siteId)
-        );
+        history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
       }
     }
   };
 
-  const updateLayout = (layout: string) => {
-    localStorage.setItem(LAYOUT_KEY, layout)
-    setLayout(layout)
-  }
+  const updateLayout = (val: string) => {
+    localStorage.setItem(LAYOUT_KEY, val);
+    setLayout(val);
+  };
 
   return (
     <Loader loading={loading}>
       <Prompt
         when={hasChanged}
-        message={(location: any) => {
-          if (
-            location.pathname.includes('/metrics/') ||
-            location.pathname.includes('/metric/')
-          ) {
-            return true;
-          }
-          return 'You have unsaved changes. Are you sure you want to leave?';
-        }}
+        message={(loc: any) =>
+          loc.pathname.includes('/metrics/') || loc.pathname.includes('/metric/')
+            ? true
+            : 'You have unsaved changes. Are you sure you want to leave?'
+        }
       />
-
       <div style={{ maxWidth: '1360px', margin: 'auto' }}>
         <Breadcrumb
           items={[
             {
-              label: dashboardName ? dashboardName : 'Cards',
+              label: dashboardName || 'Cards',
               to: dashboardId
                 ? withSiteId('/dashboard/' + dashboardId, siteId)
-                : withSiteId('/metrics', siteId),
+                : withSiteId('/metrics', siteId)
             },
-            { label: widget.name },
+            { label: widget.name }
           ]}
         />
-        
-          <Space direction="vertical" className="w-full" size={14}>
-            <WidgetViewHeader 
-              onSave={onSave} 
-              undoChanges={undoChanges}
-              layoutControl={
-                <Segmented
-                  size='small'
-                  value={layout}
-                  onChange={updateLayout}
-                  options={[
-                    {
-                      value: 'flex-row',
-                      icon: (
-                        <Tooltip title="Filters on Left">
+        <Space direction="vertical" className="w-full" size={14}>
+          <WidgetViewHeader
+            onSave={onSave}
+            undoChanges={undoChanges}
+            layoutControl={
+              <Segmented
+                size="small"
+                value={layout}
+                onChange={updateLayout}
+                options={[
+                  {
+                    value: 'flex-row',
+                    icon: (
+                      <Tooltip title="Filters on Left">
+                        <LayoutPanelLeft size={16} />
+                      </Tooltip>
+                    )
+                  },
+                  {
+                    value: 'flex-col',
+                    icon: (
+                      <Tooltip title="Filters on Top">
+                        <LayoutPanelTop size={16} />
+                      </Tooltip>
+                    )
+                  },
+                  {
+                    value: 'flex-row-reverse',
+                    icon: (
+                      <Tooltip title="Filters on Right">
+                        <div className="rotate-180">
                           <LayoutPanelLeft size={16} />
-                        </Tooltip>
-                      )
-                    },
-                    {
-                      value: 'flex-col',
-                      icon: (
-                        <Tooltip title="Filters on Top">
-                          <LayoutPanelTop size={16} />
-                        </Tooltip>
-                      )
-                    },
-                    {
-                      value: 'flex-row-reverse',
-                      icon: (
-                        <Tooltip title="Filters on Right">
-                          <div className={'rotate-180'}>
-                            <LayoutPanelLeft size={16} />
-                          </div>
-                        </Tooltip>
-                      )
-                    }
-                  ]}
-                />
-              }
-            />
-            <div className={cn('flex gap-4', layout)}>
-              <div className={layout.startsWith('flex-row') ? 'w-1/3 ' : 'w-full'}>
-                <WidgetFormNew layout={layout}  />
-              </div>
-              <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
-                <WidgetPreview name={widget.name} isEditing={expanded} />
-
-                {widget.metricOf !== FilterKey.SESSIONS &&
-                  widget.metricOf !== FilterKey.ERRORS &&
-                  (widget.metricType === TABLE ||
-                  widget.metricType === TIMESERIES ||
-                  widget.metricType === HEATMAP ||
-                  widget.metricType === INSIGHTS ||
-                  widget.metricType === FUNNEL ||
-                  widget.metricType === USER_PATH ? (
-                    <WidgetSessions />
-                  ) : null)}
-                {widget.metricType === RETENTION && <CardUserList />}
-              </div>
+                        </div>
+                      </Tooltip>
+                    )
+                  }
+                ]}
+              />
+            }
+          />
+          <div className={cn('flex gap-4', layout)}>
+            <div className={layout.startsWith('flex-row') ? 'w-1/3' : 'w-full'}>
+              <WidgetFormNew layout={layout} />
             </div>
-          </Space>
-        {/* </NoContent> */}
+            <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
+              <WidgetPreview name={widget.name} isEditing={expanded} />
+              {widget.metricOf !== FilterKey.SESSIONS &&
+                widget.metricOf !== FilterKey.ERRORS &&
+                ([TABLE, TIMESERIES, HEATMAP, INSIGHTS, FUNNEL, USER_PATH].includes(widget.metricType) ? (
+                  <WidgetSessions />
+                ) : null)}
+              {widget.metricType === RETENTION && <CardUserList />}
+            </div>
+          </div>
+        </Space>
       </div>
     </Loader>
   );
