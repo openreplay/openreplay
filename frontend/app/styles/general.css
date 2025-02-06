@@ -123,9 +123,24 @@
   box-shadow: 1px 1px 1px 1px rgba(0, 0, 0 0.3);
 }
 
+.rounded-sm .ant-select-selector{
+  border-radius: .25rem !important;
+}
+
+
+.rounded-lg .ant-select-selector{
+  border-radius: .5rem !important;
+}
+
+
+.rounded-xl .ant-select-selector{
+  border-radius: .75rem !important;
+}
+
 .active-bg {
   background-color: $active-blue;
 }
+
 
 .border-b-light {
   border-bottom: solid thin $gray-light;
