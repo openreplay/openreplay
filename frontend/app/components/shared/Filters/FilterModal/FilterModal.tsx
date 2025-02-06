@@ -228,8 +228,6 @@ function FilterModal(props: Props) {
         )
       : matchingFilters[category];
 
-
-  console.log(displayedFilters)
   return (
     <div
       className={stl.wrapper}

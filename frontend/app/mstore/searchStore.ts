@@ -320,6 +320,10 @@ class SearchStore {
     // TODO
   }
 
+  updateSearch = (search: Partial<Search>) => {
+    this.instance = Object.assign(this.instance, search);
+  }
+
   updateFilter = (index: number, search: Partial<FilterItem>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {

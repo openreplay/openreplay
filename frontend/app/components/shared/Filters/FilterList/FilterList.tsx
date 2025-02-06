@@ -31,14 +31,15 @@ interface Props {
 
 export const FilterList = observer((props: Props) => {
   const {
-    observeChanges = () => {},
+    observeChanges = () => {
+    },
     filter,
     excludeFilterKeys = [],
     isConditional,
     onAddFilter,
     readonly,
     borderless,
-    excludeCategory,
+    excludeCategory
   } = props;
 
   const filters = filter.filters;
@@ -57,7 +58,7 @@ export const FilterList = observer((props: Props) => {
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
-        borderTopRightRadius: props.mergeUp ? 0 : undefined,
+        borderTopRightRadius: props.mergeUp ? 0 : undefined
       }}
     >
       <div className={'flex items-center py-2'} style={{ gap: '0.65rem' }}>
@@ -74,7 +75,7 @@ export const FilterList = observer((props: Props) => {
             icon={<Filter size={16} strokeWidth={1} />}
             type="default"
             size={'small'}
-            className='btn-add-filter'
+            className="btn-add-filter"
           >
             Add
           </Button>
@@ -87,7 +88,7 @@ export const FilterList = observer((props: Props) => {
             className={'py-2 hover:bg-active-blue px-5 '}
             style={{
               marginLeft: '-1.25rem',
-              width: 'calc(100% + 2.5rem)',
+              width: 'calc(100% + 2.5rem)'
             }}
           >
             <FilterItem
@@ -110,7 +111,8 @@ export const FilterList = observer((props: Props) => {
 
 export const EventsList = observer((props: Props) => {
   const {
-    observeChanges = () => {},
+    observeChanges = () => {
+    },
     filter,
     hideEventsOrder = false,
     saveRequestPayloads,
@@ -120,7 +122,7 @@ export const EventsList = observer((props: Props) => {
     actions = [],
     onAddFilter,
     cannotAdd,
-    excludeCategory,
+    excludeCategory
   } = props;
 
   const filters = filter.filters;
@@ -137,7 +139,7 @@ export const EventsList = observer((props: Props) => {
 
   const [hoveredItem, setHoveredItem] = React.useState<Record<string, any>>({
     i: null,
-    position: null,
+    position: null
   });
   const [draggedInd, setDraggedItem] = React.useState<number | null>(null);
 
@@ -177,7 +179,7 @@ export const EventsList = observer((props: Props) => {
     (event: Record<string, any>) => {
       event.preventDefault();
       if (draggedInd === null) return;
-      const newItems = filters;
+      const newItems = filters.slice();
       const newPosition = calculateNewPosition(
         draggedInd,
         hoveredItem.i,
@@ -191,7 +193,7 @@ export const EventsList = observer((props: Props) => {
       setHoveredItem({ i: null, position: null });
       setDraggedItem(null);
     },
-    [draggedInd, hoveredItem, filters, props.onFilterMove]
+    [draggedInd, filters, calculateNewPosition, hoveredItem.i, hoveredItem.position, props, setHoveredItem, setDraggedItem]
   );
 
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
@@ -205,7 +207,7 @@ export const EventsList = observer((props: Props) => {
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
-        marginBottom: props.mergeDown ? '-1px' : undefined,
+        marginBottom: props.mergeDown ? '-1px' : undefined
       }}
     >
       <div className="flex items-center mb-2 gap-2">
@@ -221,7 +223,7 @@ export const EventsList = observer((props: Props) => {
               icon={<Plus size={16} strokeWidth={1} />}
               type="default"
               size={'small'}
-              className='btn-add-event'
+              className="btn-add-event"
             >
               Add
             </Button>
@@ -240,12 +242,12 @@ export const EventsList = observer((props: Props) => {
         {filters.map((filter: any, filterIndex: number) =>
           filter.isEvent ? (
             <div
-            className={cn(
-              'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
-              {
-                'bg-[#f6f6f6]': hoveredItem.i === filterIndex, 
-              }
-            )}
+              className={cn(
+                'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
+                {
+                  'bg-[#f6f6f6]': hoveredItem.i === filterIndex
+                }
+              )}
               style={{
                 pointerEvents: 'unset',
                 paddingTop:
@@ -266,9 +268,9 @@ export const EventsList = observer((props: Props) => {
                 borderBottom:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
                     ? '1px dashed #888'
-                    : undefined,
+                    : undefined
               }}
-              
+
               id={`${filter.key}-${filterIndex}`}
               onDragOver={(e) => handleDragOverEv(e, filterIndex)}
               onDrop={(e) => handleDrop(e)}
@@ -288,7 +290,7 @@ export const EventsList = observer((props: Props) => {
                     setDraggedItem(null);
                   }}
                   style={{
-                    cursor: draggedInd !== null ? 'grabbing' : 'grab',
+                    cursor: draggedInd !== null ? 'grabbing' : 'grab'
                   }}
                 >
                   <GripVertical size={16} />

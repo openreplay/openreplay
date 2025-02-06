@@ -86,7 +86,7 @@ const FilterSeriesHeader = observer(
             icon={<Trash size={14} />}
             type='text'
             className={cn(
-              'btn-delete-series', 'disabled:hidden' 
+              'btn-delete-series', 'disabled:hidden'
             )}
             />
           <Button
@@ -153,7 +153,7 @@ function FilterSeries(props: Props) {
   };
 
   const onFilterMove = (newFilters: any) => {
-    series.filter.replaceFilters(newFilters.toArray());
+    series.filter.replaceFilters(newFilters);
     observeChanges();
   };
 

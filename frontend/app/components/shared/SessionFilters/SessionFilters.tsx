@@ -64,11 +64,7 @@ function SessionFilters() {
   };
 
   const onFilterMove = (newFilters: any) => {
-    searchStore.updateFilter(0, {
-      ...appliedFilter,
-      filters: newFilters,
-    });
-
+    searchStore.updateSearch({ ...appliedFilter, filters: newFilters});
     debounceFetch();
   };
 
