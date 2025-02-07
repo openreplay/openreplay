@@ -13,14 +13,14 @@ import {
   Users,
   Sparkles,
   Globe,
-  MonitorSmartphone,
+  MonitorSmartphone
 } from 'lucide-react';
 import { Icon } from 'UI';
 import FilterSeries from 'App/mstore/types/filterSeries';
 import { useModal } from 'App/components/Modal';
 import {
   CARD_LIST,
-  CardType,
+  CardType
 } from '../DashboardList/NewDashModal/ExampleCards';
 import { useStore } from 'App/mstore';
 import {
@@ -29,7 +29,7 @@ import {
   TABLE,
   TIMESERIES,
   USER_PATH,
-  CATEGORIES,
+  CATEGORIES
 } from 'App/constants/card';
 import { useHistory } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
@@ -43,19 +43,20 @@ interface TabItem {
   description: string;
   type: string;
 }
+
 export const tabItems: Record<string, TabItem[]> = {
   [CATEGORIES.product_analytics]: [
     {
       icon: <LineChart width={16} />,
       title: 'Trends',
       type: TIMESERIES,
-      description: 'Track session trends over time.',
+      description: 'Track session and user trends over time.'
     },
     {
       icon: <Filter width={16} />,
       title: 'Funnels',
       type: FUNNEL,
-      description: 'Visualize user progression through critical steps.',
+      description: 'Visualize user progression through critical steps.'
     },
     {
       icon: (
@@ -63,20 +64,14 @@ export const tabItems: Record<string, TabItem[]> = {
       ),
       title: 'Journeys',
       type: USER_PATH,
-      description: 'Understand the paths users take through your product.',
+      description: 'Understand the paths users take through your product.'
     },
-
-
-
-
-
-
     {
       icon: <Icon name={'dashboards/heatmap-2'} color={'inherit'} size={16} />,
       title: 'Heatmaps',
       type: HEATMAP,
-      description: 'Visualize user interaction patterns on your pages.',
-    },
+      description: 'Visualize user interaction patterns on your pages.'
+    }
   ],
   [CATEGORIES.monitors]: [
     {
@@ -85,71 +80,67 @@ export const tabItems: Record<string, TabItem[]> = {
       ),
       title: 'JS Errors',
       type: FilterKey.ERRORS,
-      description: 'Monitor JS errors affecting user experience.',
+      description: 'Monitor JS errors affecting user experience.'
     },
     {
       icon: <ArrowUpDown width={16} />,
       title: 'Top Network Requests',
       type: FilterKey.FETCH,
-      description: 'Identify the most frequent network requests.',
+      description: 'Identify the most frequent network requests.'
     },
     {
       icon: <WifiOff width={16} />,
       title: '4xx/5xx Requests',
       type: TIMESERIES + '_4xx_requests',
-      description: 'Track client and server errors for performance issues.',
+      description: 'Track client and server errors for performance issues.'
     },
     {
       icon: <Turtle width={16} />,
       title: 'Slow Network Requests',
       type: TIMESERIES + '_slow_network_requests',
-      description: 'Pinpoint the slowest network requests causing delays.',
-    },
+      description: 'Pinpoint the slowest network requests causing delays.'
+    }
   ],
   [CATEGORIES.web_analytics]: [
     {
       icon: <FileStack width={16} />,
       title: 'Top Pages',
       type: FilterKey.LOCATION,
-      description: 'Discover the most visited pages on your site.',
+      description: 'Discover the most visited pages on your site.'
     },
     {
       icon: <AppWindow width={16} />,
       title: 'Top Browsers',
       type: FilterKey.USER_BROWSER,
-      description: 'Analyze the browsers your visitors are using the most.',
+      description: 'Analyze the browsers your visitors are using the most.'
     },
     {
       icon: <Combine width={16} />,
       title: 'Top Referrer',
       type: FilterKey.REFERRER,
-      description: 'See where your traffic is coming from.',
+      description: 'See where your traffic is coming from.'
     },
     {
       icon: <Users width={16} />,
       title: 'Top Users',
       type: FilterKey.USERID,
-      description: 'Identify the users with the most interactions.',
+      description: 'Identify the users with the most interactions.'
     },
     {
       icon: <Globe width={16} />,
       title: 'Top Countries',
       type: FilterKey.USER_COUNTRY,
-      description: 'Track the geographical distribution of your audience.',
+      description: 'Track the geographical distribution of your audience.'
     },
     {
       icon: <MonitorSmartphone width={16} />,
       title: 'Top Devices',
       type: FilterKey.USER_DEVICE,
-      description: 'Explore the devices used by your users.',
-    },
+      description: 'Explore the devices used by your users.'
+    }
 
 
-
-
-
-
-  ],
+  ]
 };
 
 export const mobileTabItems: Record<string, TabItem[]> = {
@@ -158,42 +149,42 @@ export const mobileTabItems: Record<string, TabItem[]> = {
       icon: <LineChart width={16} />,
       title: 'Trends',
       type: TIMESERIES,
-      description: 'Track session trends over time.',
+      description: 'Track session and user trends over time.'
     },
     {
       icon: <Filter width={16} />,
       title: 'Funnels',
       type: FUNNEL,
-      description: 'Visualize user progression through critical steps.',
-    },
+      description: 'Visualize user progression through critical steps.'
+    }
   ],
   [CATEGORIES.web_analytics]: [
     {
       icon: <Users width={16} />,
       title: 'Top Users',
       type: FilterKey.USERID,
-      description: 'Identify the users with the most interactions.',
+      description: 'Identify the users with the most interactions.'
     },
     {
       icon: <Globe width={16} />,
       title: 'Top Countries',
       type: FilterKey.USER_COUNTRY,
-      description: 'Track the geographical distribution of your audience.',
+      description: 'Track the geographical distribution of your audience.'
     },
     {
       icon: <MonitorSmartphone width={16} />,
       title: 'Top Devices',
       type: FilterKey.USER_DEVICE,
-      description: 'Explore the devices used by your users.',
-    },
-  ],
+      description: 'Explore the devices used by your users.'
+    }
+  ]
 };
 
 function CategoryTab({
-  tab,
-  inCards,
-  isMobile,
-}: {
+                       tab,
+                       inCards,
+                       isMobile
+                     }: {
   tab: string;
   isMobile?: boolean;
   inCards?: boolean;
@@ -244,9 +235,9 @@ function CategoryTab({
 
 const AddCardSection = observer(
   ({
-    inCards,
-    handleOpenChange,
-  }: {
+     inCards,
+     handleOpenChange
+   }: {
     inCards?: boolean;
     handleOpenChange?: (isOpen: boolean) => void;
   }) => {
@@ -257,14 +248,14 @@ const AddCardSection = observer(
 
     const options = isMobile
       ? [
-          { label: 'Product Analytics', value: 'product_analytics' },
-          { label: 'Mobile Analytics', value: 'web_analytics' },
-        ]
+        { label: 'Product Analytics', value: 'product_analytics' },
+        { label: 'Mobile Analytics', value: 'web_analytics' }
+      ]
       : [
-          { label: 'Product Analytics', value: 'product_analytics' },
-          { label: 'Monitors', value: 'monitors' },
-          { label: 'Web Analytics', value: 'web_analytics' },
-        ];
+        { label: 'Product Analytics', value: 'product_analytics' },
+        { label: 'Monitors', value: 'monitors' },
+        { label: 'Web Analytics', value: 'web_analytics' }
+      ];
 
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /api\.openreplay\.com/.test(originStr);
@@ -278,7 +269,7 @@ const AddCardSection = observer(
           width: 800,
           onClose: () => {
             metricStore.updateKey('metricsSearch', '');
-          },
+          }
         }
       );
       handleOpenChange?.(false);
