@@ -72,9 +72,9 @@ service:
   dataPort: 8123
 
 resources:
-  requests:
-    cpu: 1
-    memory: 4Gi
+  requests: {}
+    # cpu: 1
+    # memory: 4Gi
   limits: {}
 
 nodeSelector: {}
