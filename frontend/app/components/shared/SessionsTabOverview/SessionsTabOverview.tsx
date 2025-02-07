@@ -16,7 +16,6 @@ function SessionsTabOverview() {
   const [query, setQuery] = React.useState('');
   const { aiFiltersStore, searchStore } = useStore();
   const appliedFilter = searchStore.instance;
-  const activeTab = searchStore.activeTab;
   usePageTitle('Sessions - OpenReplay');
 
   const handleKeyDown = (event: any) => {
@@ -45,7 +44,7 @@ function SessionsTabOverview() {
             placeholder={'ask session ai'}
           />
         ) : null}
-        {activeTab.type !== 'bookmarks' && <SessionHeader />}
+        <SessionHeader />
         <div className="border-b" />
         <LatestSessionsMessage />
         <SessionList />
