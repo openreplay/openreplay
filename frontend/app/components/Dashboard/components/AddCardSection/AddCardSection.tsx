@@ -144,20 +144,20 @@ export const tabItems: Record<string, TabItem[]> = {
 };
 
 export const mobileTabItems: Record<string, TabItem[]> = {
-  [CATEGORIES.product_analytics]: [
-    {
-      icon: <LineChart width={16} />,
-      title: 'Trends',
-      type: TIMESERIES,
-      description: 'Track session and user trends over time.'
-    },
-    {
-      icon: <Filter width={16} />,
-      title: 'Funnels',
-      type: FUNNEL,
-      description: 'Visualize user progression through critical steps.'
-    }
-  ],
+  // [CATEGORIES.product_analytics]: [
+  //   {
+  //     icon: <LineChart width={16} />,
+  //     title: 'Trends',
+  //     type: TIMESERIES,
+  //     description: 'Track session and user trends over time.'
+  //   },
+  //   {
+  //     icon: <Filter width={16} />,
+  //     title: 'Funnels',
+  //     type: FUNNEL,
+  //     description: 'Visualize user progression through critical steps.'
+  //   }
+  // ],
   [CATEGORIES.web_analytics]: [
     {
       icon: <Users width={16} />,
@@ -244,11 +244,11 @@ const AddCardSection = observer(
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
     const isMobile = projectsStore.isMobile;
-    const [tab, setTab] = React.useState('product_analytics');
+    const [tab, setTab] = React.useState(isMobile ? 'web_analytics' : 'product_analytics');
 
     const options = isMobile
       ? [
-        { label: 'Product Analytics', value: 'product_analytics' },
+        // { label: 'Product Analytics', value: 'product_analytics' },
         { label: 'Mobile Analytics', value: 'web_analytics' }
       ]
       : [
