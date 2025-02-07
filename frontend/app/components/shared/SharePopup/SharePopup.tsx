@@ -1,50 +1,16 @@
-import { useModal } from 'Components/Modal';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Icon, Loader } from 'UI';
-import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
-import Select from 'Shared/Select';
-import { Button, Segmented } from 'antd';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { Button, Divider, Form, Input, Segmented, Select, Space } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-interface Msg {
-  integrationId: string;
-  entity: 'sessions';
-  entityId: string;
-  data: { comment: string };
+interface Channel {
+  webhookId: string;
+  name: string;
 }
-
-const SharePopup = ({
-  trigger,
-  showCopyLink = false,
-}: {
-  trigger: React.ReactNode;
-  showCopyLink?: boolean;
-}) => {
-  const { store } = React.useContext(PlayerContext);
-  const { showModal, hideModal } = useModal();
-  const openModal = () => {
-    showModal(
-      <ShareModal
-        hideModal={hideModal}
-        showCopyLink={showCopyLink}
-        time={store?.get().time}
-      />,
-      { right: true, width: 300 }
-    );
-  };
-
-  return (
-    <div className={'w-full h-full'} onClick={openModal}>
-      {trigger}
-    </div>
-  );
-};
-
 
 interface Props {
   showCopyLink?: boolean;
@@ -52,174 +18,191 @@ interface Props {
   time: number;
 }
 
-function ShareModalComp({
-  showCopyLink,
-  hideModal,
-  time,
-}: Props) {
-  const { integrationsStore, sessionStore, userStore } = useStore();
-  const sessionId = sessionStore.current.sessionId
-  const channels = integrationsStore.slack.list;
+const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
+  const { integrationsStore, sessionStore } = useStore();
+  const sessionId = sessionStore.current.sessionId;
+  const slackChannels: Channel[] = integrationsStore.slack.list || [];
+  const msTeamsChannels: Channel[] = integrationsStore.msteams.list || [];
   const slackLoaded = integrationsStore.slack.loaded;
-  const msTeamsChannels = integrationsStore.msteams.list;
   const msTeamsLoaded = integrationsStore.msteams.loaded;
   const fetchSlack = integrationsStore.slack.fetchIntegrations;
   const fetchTeams = integrationsStore.msteams.fetchIntegrations;
   const sendSlackMsg = integrationsStore.slack.sendMessage;
   const sendMsTeamsMsg = integrationsStore.msteams.sendMessage;
 
-  const [shareTo, setShareTo] = useState('slack');
+  const [shareTo, setShareTo] = useState<'slack' | 'teams'>('slack');
   const [comment, setComment] = useState('');
-  // @ts-ignore
-  const [channelId, setChannelId] = useState(channels[0]?.webhookId);
-  // @ts-ignore
-  const [teamsChannel, setTeamsChannel] = useState(msTeamsChannels[0]?.webhookId);
+  const [channelId, setChannelId] = useState<string | undefined>(slackChannels[0]?.webhookId);
+  const [teamsChannel, setTeamsChannel] = useState<string | undefined>(msTeamsChannels[0]?.webhookId);
   const [loadingSlack, setLoadingSlack] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(false);
 
-  const isLoading = loadingSlack || loadingTeams;
+  useEffect(() => {
+    if (slackChannels.length === 0 && !slackLoaded) void fetchSlack();
+  }, [slackChannels, slackLoaded, fetchSlack]);
 
   useEffect(() => {
-    // @ts-ignore
-    if (channels.size === 0 && !slackLoaded) {
-      fetchSlack();
+    if (msTeamsChannels.length === 0 && !msTeamsLoaded) void fetchTeams();
+  }, [msTeamsChannels, msTeamsLoaded, fetchTeams]);
+
+  useEffect(() => {
+    if (slackChannels.length && !channelId) {
+      setChannelId(slackChannels[0].webhookId);
     }
-    // @ts-ignore
-    if (msTeamsChannels.size === 0 && !msTeamsLoaded) {
-      fetchTeams();
+  }, [slackChannels, channelId]);
+
+  useEffect(() => {
+    if (msTeamsChannels.length && !teamsChannel) {
+      setTeamsChannel(msTeamsChannels[0].webhookId);
     }
-  }, [channels, slackLoaded, msTeamsChannels, msTeamsLoaded, fetchSlack, fetchTeams]);
+  }, [msTeamsChannels, teamsChannel]);
 
   const editMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value);
-  const shareToSlack = () => {
+
+  const shareToSlack = async () => {
+    if (!channelId) return;
     setLoadingSlack(true);
-    void sendSlackMsg({
-      integrationId: channelId,
-      entity: 'sessions',
-      entityId: sessionId,
-      data: { comment },
-    }).then(() => handleSuccess('Slack'));
-  };
-
-  const shareToMSTeams = () => {
-    setLoadingTeams(true);
-    sendMsTeamsMsg({
-      integrationId: teamsChannel,
-      entity: 'sessions',
-      entityId: sessionId,
-      data: { comment },
-    }).then(() => handleSuccess('MS Teams'));
-  };
-
-  const handleSuccess = (endpoint: string) => {
-    if (endpoint === 'Slack') {
+    try {
+      await sendSlackMsg({
+        integrationId: channelId,
+        entity: 'sessions',
+        entityId: sessionId,
+        data: { comment }
+      });
+      toast.success('Sent to Slack.');
+    } catch {
+      toast.error('Failed to send to Slack.');
+    } finally {
       setLoadingSlack(false);
-    } else {
+    }
+  };
+
+  const shareToMSTeams = async () => {
+    if (!teamsChannel) return;
+    setLoadingTeams(true);
+    try {
+      await sendMsTeamsMsg({
+        integrationId: teamsChannel,
+        entity: 'sessions',
+        entityId: sessionId,
+        data: { comment }
+      });
+      toast.success('Sent to MS Teams.');
+    } catch {
+      toast.error('Failed to send to MS Teams.');
+    } finally {
       setLoadingTeams(false);
     }
-    // @ts-ignore
-    toast.success(`Sent to ${endpoint}.`);
   };
 
-  const changeSlackChannel = (value: any) => setChannelId(value.value);
-  const changeTeamsChannel = (value: any) => setTeamsChannel(value.value);
+  const changeSlackChannel = (value: string) => setChannelId(value);
+  const changeTeamsChannel = (value: string) => setTeamsChannel(value);
 
-  const slackOptions = channels
-    .map(({ webhookId, name }) => ({
-      value: webhookId,
-      label: name,
-    }))
+  const slackOptions = useMemo(
+    () =>
+      slackChannels.map(({ webhookId, name }) => ({
+        value: webhookId,
+        label: name
+      })),
+    [slackChannels]
+  );
 
-  const msTeamsOptions = msTeamsChannels
-    .map(({ webhookId, name }) => ({
-      value: webhookId,
-      label: name,
-    }))
+  const msTeamsOptions = useMemo(
+    () =>
+      msTeamsChannels.map(({ webhookId, name }) => ({
+        value: webhookId,
+        label: name
+      })),
+    [msTeamsChannels]
+  );
 
-  const sendMsg = () => {
-    if (shareTo === 'slack') {
-      shareToSlack();
-    } else {
-      shareToMSTeams();
-    }
+  const sendMsg = async () => {
+    shareTo === 'slack' ? await shareToSlack() : await shareToMSTeams();
     hideModal();
-  }
+  };
+
   const hasBoth = slackOptions.length > 0 && msTeamsOptions.length > 0;
   const hasNothing = slackOptions.length === 0 && msTeamsOptions.length === 0;
+  const isLoading = loadingSlack || loadingTeams;
+
+  const handleSegmentChange = (value: string) => {
+    const newShareTo = value as 'slack' | 'teams';
+    setShareTo(newShareTo);
+    if (newShareTo === 'slack' && slackOptions.length > 0) {
+      setChannelId(slackOptions[0].value);
+    } else if (newShareTo === 'teams' && msTeamsOptions.length > 0) {
+      setTeamsChannel(msTeamsOptions[0].value);
+    }
+  };
+
   return (
-    <div className={styles.wrapper}>
+    <div>
       {isLoading ? (
         <Loader loading />
       ) : (
         <>
-          <div className="text-xl mr-4 font-semibold mb-4 flex items-center gap-2">
-            <Icon name={'share-alt'} size={16} />
-            <div>Share Session</div>
-          </div>
           {!hasNothing ? (
-            <div>
-              <div className={'flex flex-col gap-4'}>
-                <div>
-                  <div className={'font-medium flex items-center'}>
-                    Share via
-                  </div>
+            <>
+              <Form layout="vertical">
+                <Form.Item label="Share via">
                   {hasBoth ? (
                     <Segmented
                       options={[
                         {
-                          label: <div className={'flex items-center gap-2'}>
-                            <Icon name="integrations/slack-bw" size={16} />
-                            <div>Slack</div>
-                          </div>,
-                          value: 'slack',
+                          label: (
+                            <div className="flex items-center gap-2">
+                              <Icon name="integrations/slack-bw" size={16} />
+                              <div>Slack</div>
+                            </div>
+                          ),
+                          value: 'slack'
                         },
                         {
-                          label: <div className={'flex items-center gap-2'}>
-                            <Icon name="integrations/teams-white" size={16}  />
-                            <div>MS Teams</div>
-                          </div>,
-                          value: 'teams',
-                        },
+                          label: (
+                            <div className="flex items-center gap-2">
+                              <Icon name="integrations/teams-white" size={16} />
+                              <div>MS Teams</div>
+                            </div>
+                          ),
+                          value: 'teams'
+                        }
                       ]}
-                      onChange={(value) => setShareTo(value as 'slack' | 'teams')}
+                      onChange={handleSegmentChange}
+                      value={shareTo}
                     />
                   ) : (
-                    <div className={'flex items-center gap-2'}>
+                    <div className="flex items-center gap-2">
                       <Icon
-                        name={
-                          slackOptions.length > 0
-                            ? 'integrations/slack-bw'
-                            : 'integrations/teams-white'
-                        }
+                        name={slackOptions.length > 0 ? 'integrations/slack-bw' : 'integrations/teams-white'}
                         size={16}
                       />
                       <div>{slackOptions.length > 0 ? 'Slack' : 'MS Teams'}</div>
                     </div>
                   )}
-                </div>
+                </Form.Item>
 
-                <div>
-                  <div className={'font-medium'}>Select a channel or individual</div>
+                <Form.Item label="Select a channel or individual">
                   {shareTo === 'slack' ? (
-                    <Select
-                      options={slackOptions}
-                      defaultValue={channelId}
-                      onChange={changeSlackChannel}
-                      className="col-span-4"
-                    />
+                    <Select value={channelId} onChange={changeSlackChannel} className="col-span-4">
+                      {slackOptions.map(({ value, label }) => (
+                        <Select.Option key={value} value={value}>
+                          {label}
+                        </Select.Option>
+                      ))}
+                    </Select>
                   ) : (
-                    <Select
-                      options={msTeamsOptions}
-                      defaultValue={teamsChannel}
-                      onChange={changeTeamsChannel}
-                      className="col-span-4"
-                    />
+                    <Select value={teamsChannel} onChange={changeTeamsChannel} className="col-span-4">
+                      {msTeamsOptions.map(({ value, label }) => (
+                        <Select.Option key={value} value={value}>
+                          {label}
+                        </Select.Option>
+                      ))}
+                    </Select>
                   )}
-                </div>
+                </Form.Item>
 
-                <div>
-                  <div className={'font-medium'}>Message</div>
-                  <textarea
+                <Form.Item label="Message">
+                  <Input.TextArea
                     name="message"
                     id="message"
                     cols={30}
@@ -229,29 +212,31 @@ function ShareModalComp({
                     placeholder="Add Message (Optional)"
                     className="p-4 text-figmaColors-text-primary text-base bg-white border rounded border-gray-light"
                   />
-                </div>
-              </div>
-              <div className={'mt-4'}>
-                <SessionCopyLink time={time} />
-                <div className={'flex items-center gap-2 pt-8 mt-4 border-t'}>
-                  <Button type={'primary'} onClick={sendMsg}>Send</Button>
-                  <Button type={'primary'} ghost onClick={hideModal}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
+                </Form.Item>
+
+                <Form.Item>
+                  <Space>
+                    <Button type="primary" onClick={sendMsg}>
+                      Send
+                    </Button>
+                    <Button type="primary" ghost onClick={hideModal}>
+                      Cancel
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+
+              <Divider />
+
+              <SessionCopyLink time={time} />
+            </>
           ) : (
             <>
-              <div className={styles.body}>
-                <IntegrateSlackButton />
-              </div>
+              <IntegrateSlackButton />
               {showCopyLink && (
                 <>
                   <div className="border-t -mx-2" />
-                  <div>
-                    <SessionCopyLink time={time} />
-                  </div>
+                  <SessionCopyLink time={time} />
                 </>
               )}
             </>
@@ -260,8 +245,6 @@ function ShareModalComp({
       )}
     </div>
   );
-}
+};
 
-const ShareModal = observer(ShareModalComp);
-
-export default observer(SharePopup);
+export default observer(ShareModalComp);

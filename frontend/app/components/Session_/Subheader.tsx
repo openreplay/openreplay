@@ -1,7 +1,6 @@
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
-import IssuesModal from 'Components/Session_/Issues/IssuesModal';
 import { Link2, Keyboard } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
@@ -17,11 +16,11 @@ import WarnBadge from 'Components/Session_/WarnBadge';
 import { toast } from 'react-toastify';
 import HighlightButton from './Highlight/HighlightButton';
 
-import SharePopup from '../shared/SharePopup/SharePopup';
 import QueueControls from './QueueControls';
 import { Bookmark as BookmarkIcn, BookmarkCheck, Vault } from 'lucide-react';
 import { useModal } from 'Components/ModalContext';
 import IssueForm from 'Components/Session_/Issues/IssueForm';
+import ShareModal from '../shared/SharePopup/SharePopup';
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -132,7 +131,7 @@ function SubHeader(props) {
         <WarnBadge
           siteId={projectId!}
           currentLocation={currentLocation}
-          version={currentSession?.trackerVersion ?? ""}
+          version={currentSession?.trackerVersion ?? ''}
         />
 
         <SessionTabs />
@@ -145,21 +144,20 @@ function SubHeader(props) {
             )}
             style={{ width: 'max-content' }}
           >
-            <SharePopup
-              showCopyLink={true}
-              trigger={
-                <div className="relative">
-                  <Tooltip title="Share Session" placement="bottom">
-                    <AntButton
-                      size={'small'}
-                      className="flex items-center justify-center"
-                    >
-                      <ShareAltOutlined />
-                    </AntButton>
-                  </Tooltip>
-                </div>
-              }
-            />
+            <Tooltip title="Share Session" placement="bottom">
+              <AntButton
+                size={'small'}
+                className="flex items-center justify-center"
+                onClick={() => openModal(
+                  <ShareModal showCopyLink={true}
+                              hideModal={closeModal}
+                              time={store?.get().time} />,
+                  { title: 'Share Session' }
+                )}
+              >
+                <ShareAltOutlined />
+              </AntButton>
+            </Tooltip>
             <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
             <Dropdown
               menu={{
