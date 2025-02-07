@@ -182,7 +182,7 @@ spec:
           - |
             lowVersion=16.4
             highVersion=17
-            pg_version=`psql -V | awk '{print $3}'`
+            pg_version=`psql -c "SHOW server_version;" -t | tr -d ' '`
             echo $pg_version |\
               awk -v pg_version=$pg_version -v low="$lowVersion" -v high="$highVersion" -F. '{
                 split(low, lowArr, ".");
