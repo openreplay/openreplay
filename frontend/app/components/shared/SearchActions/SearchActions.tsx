@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo } from 'react';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -18,7 +18,7 @@ function SearchActions() {
     appliedFilter.filters.filter((i: any) => !i.isEvent).length > 0;
   const savedSearch = searchStore.savedSearch;
   const hasSavedSearch = savedSearch && savedSearch.exists();
-  const hasSearch = hasFilters || hasSavedSearch;
+  const hasSearch = hasEvents || hasFilters || hasSavedSearch;
 
   const title = useMemo(() => {
     if (activeTab && activeTab.type === 'bookmarks') {
