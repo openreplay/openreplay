@@ -164,7 +164,7 @@ def process():
             if alert_helpers.can_check(alert):
                 query, params = Build(alert)
                 try:
-                    query = ch_cur.format(query, params)
+                    query = ch_cur.format(query=query, parameters=params)
                 except Exception as e:
                     logger.error(
                         f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
