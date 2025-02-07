@@ -12,7 +12,7 @@ from chalicelib.utils import pg_client
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logging.info(">>>>> starting up <<<<<")
+    ap_logger.info(">>>>> starting up <<<<<")
     await pg_client.init()
     app.schedule.start()
     app.schedule.add_job(id="alerts_processor", **{"func": alerts_processor.process, "trigger": "interval",
@@ -27,14 +27,22 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    logging.info(">>>>> shutting down <<<<<")
+    ap_logger.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
     await pg_client.terminate()
 
 
+loglevel = config("LOGLEVEL", default=logging.INFO)
+print(f">Loglevel set to: {loglevel}")
+logging.basicConfig(level=loglevel)
+ap_logger = logging.getLogger('apscheduler')
+ap_logger.setLevel(loglevel)
+
 app = FastAPI(root_path=config("root_path", default="/alerts"), docs_url=config("docs_url", default=""),
               redoc_url=config("redoc_url", default=""), lifespan=lifespan)
-logging.info("============= ALERTS =============")
+
+app.schedule = AsyncIOScheduler()
+ap_logger.info("============= ALERTS =============")
 
 
 @app.get("/")
@@ -50,17 +58,8 @@ async def get_health_status():
     }}
 
 
-app.schedule = AsyncIOScheduler()
-
-loglevel = config("LOGLEVEL", default=logging.INFO)
-print(f">Loglevel set to: {loglevel}")
-logging.basicConfig(level=loglevel)
-ap_logger = logging.getLogger('apscheduler')
-ap_logger.setLevel(loglevel)
-app.schedule = AsyncIOScheduler()
-
 if config("LOCAL_DEV", default=False, cast=bool):
     @app.get('/trigger', tags=["private"])
     async def trigger_main_cron():
-        logging.info("Triggering main cron")
+        ap_logger.info("Triggering main cron")
         alerts_processor.process()
