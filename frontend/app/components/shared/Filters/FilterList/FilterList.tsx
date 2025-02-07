@@ -52,7 +52,7 @@ export const FilterList = observer((props: Props) => {
     <div
       className={cn(
         'bg-white',
-        borderless ? '' : 'pt-2 px-4 rounded-xl border border-gray-lighter'
+        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
       )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
@@ -85,7 +85,7 @@ export const FilterList = observer((props: Props) => {
         !filter.isEvent ? (
           <div
             key={`${filter.key}-${filterIndex}`}
-            className={'py-2 hover:bg-active-blue px-5 '}
+            className={'hover:bg-active-blue px-5 '}
             style={{
               marginLeft: '-1.25rem',
               width: 'calc(100% + 2.5rem)'
