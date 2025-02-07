@@ -79,7 +79,7 @@ function HighlightsListHeader({
       </div>
       <div className="w-56">
         <Input.Search
-          value={query}
+          defaultValue={query}
           allowClear
           name="spot-search"
           placeholder="Filter by title"

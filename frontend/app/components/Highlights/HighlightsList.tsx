@@ -42,13 +42,18 @@ function HighlightsList() {
     retry: 3
   });
   const { total, notes } = data;
+  const debounceTimeout = React.useRef(0);
 
   const onSearch = (value: string) => {
     notesStore.setQuery(value);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    notesStore.setQuery(e.target.value);
+    const value = e.target.value;
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = window.setTimeout(() => {
+      notesStore.setQuery(value);
+    }, 500);
   };
 
   const toggleTag = (tag?: iTag) => {
