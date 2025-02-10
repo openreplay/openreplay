@@ -8662,7 +8662,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html2canvas@npm:^1.0.0-rc.5":
+"html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
   version: 1.4.1
   resolution: "html2canvas@npm:1.4.1"
   dependencies:
@@ -11637,6 +11637,7 @@ __metadata:
     hls.js: "npm:^1.5.13"
     html-to-image: "npm:^1.9.0"
     html-webpack-plugin: "npm:^5.5.0"
+    html2canvas: "npm:^1.4.1"
     html2canvas-pro: "npm:^1.5.8"
     immutable: "npm:^4.3.7"
     jest: "npm:^29.5.0"

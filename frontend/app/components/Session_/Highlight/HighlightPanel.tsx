@@ -242,7 +242,7 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
 function elementToImage(doc: Document) {
   const el = doc.body
   const srcMap = new WeakMap<HTMLImageElement, string>()
-  return import('html2canvas-pro').then(({ default: html2canvas }) => {
+  return import('html2canvas').then(({ default: html2canvas }) => {
     const images = doc.querySelectorAll('img')
     images.forEach((img) => {
       const sameOrigin = new URL(img.src, location.href).origin === location.origin
