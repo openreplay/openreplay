@@ -123,8 +123,9 @@ jobs:
               tag: ${IMAGE_TAG}
           EOF
 
+          export IMAGE_TAG=${IMAGE_TAG}
           # Update changed image tag
-          sed -i "/assist-stats/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          yq '.utilities.apiCrons.assiststats.image.tag = strenv(IMAGE_TAG)' -i /tmp/image_override.yaml
 
           cat /tmp/image_override.yaml
           # Deploy command
