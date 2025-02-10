@@ -73,12 +73,12 @@ export function getDateRangeFromValue(value) {
       return Interval.fromDateTimes(now.minus({ hours: 24 }), now);
     case DATE_RANGE_VALUES.LAST_7_DAYS:
       return Interval.fromDateTimes(
-        now.minus({ days: 7 }).startOf('day'),
+        now.minus({ days: 6 }).startOf('day'),
         now.endOf('day')
       );
     case DATE_RANGE_VALUES.LAST_30_DAYS:
       return Interval.fromDateTimes(
-        now.minus({ days: 30 }).startOf('day'),
+        now.minus({ days: 29 }).startOf('day'),
         now.endOf('day')
       );
       case COMPARISON_DATE_RANGE_LABELS.PREV_24_HOURS:
