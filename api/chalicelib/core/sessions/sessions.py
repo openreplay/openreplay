@@ -2,8 +2,8 @@ import logging
 from typing import List, Union
 
 import schemas
-from chalicelib.core import events, metadata, projects
-from chalicelib.core.sessions import sessions_favorite, performance_event
+from chalicelib.core import events, metadata
+from chalicelib.core.sessions import performance_event
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
 
@@ -1002,7 +1002,6 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
     return full_args, query_part
 
 
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
@@ -1112,4 +1111,3 @@ def check_recording_status(project_id: int) -> dict:
         "recordingStatus": row["recording_status"],
         "sessionsCount": row["sessions_count"]
     }
-

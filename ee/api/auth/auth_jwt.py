@@ -26,7 +26,6 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
                                                           role=user["role"],
                                                           permissions=user["permissions"],
                                                           serviceAccount=user["serviceAccount"])
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>VC")
     return request.state.currentContext
 
 
