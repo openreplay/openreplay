@@ -57,9 +57,13 @@ export interface Options {
   axiosInstances?: Array<AxiosInstance>
   useProxy?: boolean
   tokenUrlMatcher?: (url: string) => boolean
+  disabled?: boolean
 }
 
 export default function (app: App, opts: Partial<Options> = {}) {
+  if (opts.disabled) {
+    return
+  }
   const options: Options = Object.assign(
     {
       failuresOnly: false,

@@ -201,7 +201,9 @@ export default class API {
     Timing(app, options)
     Focus(app)
     Fonts(app)
-    Network(app, options.network)
+    if (!options.network.disabled) {
+      Network(app, options.network)
+    }
     Selection(app)
     ;(window as any).__OPENREPLAY__ = this
 

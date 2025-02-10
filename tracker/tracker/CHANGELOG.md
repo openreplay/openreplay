@@ -2,6 +2,7 @@
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
 - fixes for single tab recording 
+- add option to disable network completely `{ network: { disabled: true } }`
 
 ## 15.0.4
 
