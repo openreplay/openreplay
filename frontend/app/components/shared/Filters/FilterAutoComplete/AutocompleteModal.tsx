@@ -3,10 +3,15 @@ import { Button, Checkbox, Input, Tooltip } from 'antd';
 import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { Loader } from 'UI';
-import OutsideClickDetectingDiv from '../../OutsideClickDetectingDiv';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
-
-function TruncatedText({ text, maxWidth }: { text?: string; maxWidth?: string;}) {
+function TruncatedText({
+  text,
+  maxWidth,
+}: {
+  text?: string;
+  maxWidth?: string;
+}) {
   const textRef = useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
@@ -34,7 +39,6 @@ function TruncatedText({ text, maxWidth }: { text?: string; maxWidth?: string;})
   );
 }
 
-
 export function AutocompleteModal({
   onClose,
   onApply,
@@ -45,6 +49,7 @@ export function AutocompleteModal({
   isLoading,
   placeholder,
   commaQuery,
+  isOpen,
 }: {
   values: string[];
   onClose: () => void;
@@ -55,7 +60,9 @@ export function AutocompleteModal({
   placeholder?: string;
   isLoading?: boolean;
   commaQuery?: boolean;
+  isOpen?: boolean;
 }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = React.useState('');
   const [selectedValues, setSelectedValues] = React.useState<string[]>(
     values.filter((i) => i && i.length > 0)
@@ -118,78 +125,100 @@ export function AutocompleteModal({
     return str;
   }, [query]);
 
+  React.useEffect(() => {
+    if (modalRef.current) {
+      const modalRect = modalRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      if (modalRect.right > viewportWidth) {
+        modalRef.current.style.left = `unset`;
+        modalRef.current.style.right = `0`;
+      }
+    }
+  }, [isOpen]);
+
   return (
     <OutsideClickDetectingDiv
-      className={cn(
-        'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10'
-      )}
-      style={{ width: 360, minHeight: 100, top: '100%' }}
       onClickOutside={() => {
         onClose();
       }}
     >
-      <Input.Search
-        value={query}
-        onFocus={handleFocus}
-        loading={isLoading}
-        onChange={(e) => handleInputChange(e.target.value)}
-        placeholder={placeholder}
-        className="rounded-lg"
-        autoFocus
-        allowClear
-      />
-      <Loader loading={isLoading}>
-        <>
-          <div
-            className={
-              'flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis'
-            }
-            style={{ maxHeight: 200 }}
-          >
-            {sortedOptions.map((item) => (
-              <div
-                key={item.value}
-                onClick={() => onSelectOption(item)}
-                className={
-                  'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'
-                }
-              >
-                <Checkbox checked={isSelected(item)} /> {item.label}
-              </div>
-            ))}
-          </div>
-          {query.length ? (
-            <div className={'border-y border-y-gray-light py-2'}>
-              <div
-                className={
-                  'whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1'
-                }
-                onClick={applyQuery}
-              >
-                Apply {queryStr}
-              </div>
+      <div
+        className={cn(
+          'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10'
+        )}
+        ref={modalRef}
+        style={{ width: 360, minHeight: 100, top: '100%' }}
+      >
+        <Input.Search
+          value={query}
+          onFocus={handleFocus}
+          loading={isLoading}
+          onChange={(e) => handleInputChange(e.target.value)}
+          placeholder={placeholder}
+          className="rounded-lg"
+          autoFocus
+          allowClear
+        />
+        <Loader loading={isLoading}>
+          <>
+            <div
+              className={
+                'flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis'
+              }
+              style={{ maxHeight: 200 }}
+            >
+              {sortedOptions.map((item) => (
+                <div
+                  key={item.value}
+                  onClick={() => onSelectOption(item)}
+                  className={
+                    'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'
+                  }
+                >
+                  <Checkbox checked={isSelected(item)} /> {item.label}
+                </div>
+              ))}
             </div>
-          ) : null}
-        </>
-      </Loader>
-      <div className="flex justify-between items-center pt-2">
-        <div className="flex gap-2 items-center">
-          <Button type="primary" onClick={applyValues} className="btn-apply-event-value">
-            Apply
-          </Button>
+            {query.length ? (
+              <div className={'border-y border-y-gray-light py-2'}>
+                <div
+                  className={
+                    'whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1'
+                  }
+                  onClick={applyQuery}
+                >
+                  Apply {queryStr}
+                </div>
+              </div>
+            ) : null}
+          </>
+        </Loader>
+        <div className="flex justify-between items-center pt-2">
+          <div className="flex gap-2 items-center">
+            <Button
+              type="primary"
+              onClick={applyValues}
+              className="btn-apply-event-value"
+            >
+              Apply
+            </Button>
+          </div>
+
+          <Tooltip title="Clear all selection">
+            <Button
+              onClick={clearSelection}
+              type="text"
+              className="btn-clear-selection"
+              disabled={selectedValues.length === 0}
+            >
+              <RedoOutlined />
+            </Button>
+          </Tooltip>
         </div>
-
-        <Tooltip title='Clear all selection'>
-        <Button onClick={clearSelection} type='text' className="btn-clear-selection" disabled={selectedValues.length === 0}>
-          <RedoOutlined />
-        </Button>
-        </Tooltip>
-
       </div>
     </OutsideClickDetectingDiv>
   );
 }
-
 
 interface Props {
   value: string[];
@@ -200,7 +229,6 @@ interface Props {
   modalProps?: any;
   mapValues?: (value: string) => string;
 }
-
 
 export function AutoCompleteContainer(props: Props) {
   const filterValueContainer = useRef<HTMLDivElement>(null);
@@ -213,20 +241,19 @@ export function AutoCompleteContainer(props: Props) {
       props.onApplyValues(values);
       setShowValueModal(false);
     }, 100);
-    console.log("closed on apply");
   };
 
-  
   const onClearClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); 
-    props.onApplyValues([]); 
+    event.stopPropagation();
+    props.onApplyValues([]);
     setShowValueModal(false);
-    console.log("closed clear click");
   };
 
   const handleContainerClick = (event: React.MouseEvent) => {
-    if (event.target === event.currentTarget || 
-        event.currentTarget.contains(event.target as Node)) {
+    if (
+      event.target === event.currentTarget ||
+      event.currentTarget.contains(event.target as Node)
+    ) {
       setShowValueModal(true);
     }
   };
@@ -249,14 +276,22 @@ export function AutoCompleteContainer(props: Props) {
         {!isEmpty ? (
           <>
             <TruncatedText
-              text={props.mapValues ? props.mapValues(props.value[0]) : props.value[0]}
+              text={
+                props.mapValues
+                  ? props.mapValues(props.value[0])
+                  : props.value[0]
+              }
               maxWidth="8rem"
             />
             {props.value.length > 1 && (
               <>
                 <span className="text-neutral-500/90">or</span>
                 <TruncatedText
-                  text={props.mapValues ? props.mapValues(props.value[1]) : props.value[1]}
+                  text={
+                    props.mapValues
+                      ? props.mapValues(props.value[1])
+                      : props.value[1]
+                  }
                   maxWidth="8rem"
                 />
                 {props.value.length > 2 && (
@@ -274,13 +309,13 @@ export function AutoCompleteContainer(props: Props) {
           </div>
         )}
         {!isEmpty && hovered && (
-        <div
-          className="absolute right-2 cursor-pointer flex items-center justify-center"
-          onClick={onClearClick}
-        >
-          <CloseCircleFilled className='text-neutral-200' />
-        </div>
-      )}
+          <div
+            className="absolute right-2 cursor-pointer flex items-center justify-center"
+            onClick={onClearClick}
+          >
+            <CloseCircleFilled className="text-neutral-200" />
+          </div>
+        )}
       </div>
       {showValueModal ? (
         <props.modalRenderer
@@ -289,6 +324,7 @@ export function AutoCompleteContainer(props: Props) {
           onClose={onClose}
           onApply={onApply}
           values={props.value}
+          isOpen={showValueModal}
         />
       ) : null}
     </div>

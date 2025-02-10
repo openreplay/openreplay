@@ -37,11 +37,24 @@ function FilterSelection(props: Props) {
     isLive,
   } = props;
   const [showModal, setShowModal] = useState(false);
+  const modalRef = React.useRef<HTMLDivElement>(null);
 
   const onAddFilter = (filter: any) => {
     onFilterClick(filter);
     setShowModal(false);
   }
+
+  React.useEffect(() => {
+    if (showModal && modalRef.current) {
+      const modalRect = modalRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      if (modalRect.right > viewportWidth) {
+        modalRef.current.style.left = `unset`;
+        modalRef.current.style.right = `-280px`;
+      }
+    }
+  }, [showModal]);
+
 
   const label = filter?.category === 'Issue' ? 'Issue' : filter?.label;
   return (
@@ -84,7 +97,10 @@ function FilterSelection(props: Props) {
           </div>
         )}
         {showModal && (
-          <div className="absolute mt-2 left-0 rounded-2xl shadow-lg bg-white z-50">
+          <div
+            ref={modalRef}
+            className="absolute mt-2 left-0 rounded-2xl shadow-lg bg-white z-50"
+          >
             <FilterModal
               isLive={isRoute(ASSIST_ROUTE, window.location.pathname) || isLive}
               onFilterClick={onAddFilter}
