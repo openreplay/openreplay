@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - dev
-      - api-*
     paths:
       - "peers/**"
       - "!peers/.gitignore"
