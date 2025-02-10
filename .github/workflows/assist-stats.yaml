@@ -117,12 +117,10 @@ jobs:
         run: |
           cd scripts/helmcharts/
           cat <<EOF>/tmp/image_override.yaml
-          utilities:
-            apiCrons:
-              assiststats:
-                image:
-                  # We've to strip off the -ee, as helm will append it.
-                  tag: ${IMAGE_TAG}
+          assist-stats:
+            image:
+              # We've to strip off the -ee, as helm will append it.
+              tag: ${IMAGE_TAG}
           EOF
 
           export IMAGE_TAG=${IMAGE_TAG}

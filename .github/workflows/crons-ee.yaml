@@ -100,32 +100,31 @@ jobs:
             docker push $DOCKER_REPO/$image:$IMAGE_TAG 
           done
       - name: Creating old image input
+        env:
+          # We're not passing -ee flag, because helm will add that.
+          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         run: |
-          #
-          # Create yaml with existing image tags
-          #
-          kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
-          tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-
-          echo > /tmp/image_override.yaml
-
-          for line in `cat /tmp/image_tag.txt`;
-          do
-              image_array=($(echo "$line" | tr ':' '\n'))
-              cat <<EOF >> /tmp/image_override.yaml
-          ${image_array[0]}:
-            image:
-              # We've to strip off the -ee, as helm will append it.
-              tag: `echo ${image_array[1]} | cut -d '-' -f 1`
+          cd scripts/helmcharts/
+          cat <<EOF>/tmp/image_override.yaml
+          image: &image
+            tag: "${IMAGE_TAG}"
+          utilities:
+            apiCrons:
+              assiststats:
+                image: *image
+              report:
+                image: *image
+              sessionsCleaner:
+                image: *image
+              projectsStats:
+                image: *image
+              fixProjectsStats:
+                image: *image
           EOF
-          done
 
       - name: Deploy to kubernetes
         run: |
           cd scripts/helmcharts/
-
-          # Update changed image tag
-          sed -i "/crons/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
           cat /tmp/image_override.yaml
           # Deploy command
@@ -136,8 +135,6 @@ jobs:
           helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
         env:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-          # We're not passing -ee flag, because helm will add that.
-          IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
           ENVIRONMENT: staging
 
       - name: Alert slack
