@@ -31,7 +31,7 @@ function PlayerBlock(props: IProps) {
       className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
     >
       {shouldShowSubHeader ? (
-        <MobilePlayerSubheader sessionId={sessionId} jiraConfig={jiraConfig} />
+        <MobilePlayerSubheader sessionId={sessionId} jiraConfig={jiraConfig} setActiveTab={setActiveTab}/>
       ) : null}
       <Player
         setActiveTab={setActiveTab}

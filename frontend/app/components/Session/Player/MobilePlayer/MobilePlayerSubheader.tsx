@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import QueueControls from 'Components/Session_/QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import Issues from 'Components/Session_/Issues/Issues';
-import NotePopup from 'Components/Session_/components/NotePopup';
 import { Tag } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton } from 'antd';
@@ -12,13 +11,21 @@ import ShareModal from 'Shared/SharePopup/SharePopup';
 import { Tooltip } from '.store/antd-virtual-7db13b4af6/package';
 import { useModal } from 'Components/ModalContext';
 import { PlayerContext } from 'Components/Session/playerContext';
+import HighlightButton from 'Components/Session_/Highlight/HighlightButton';
+import IssueForm from 'Components/Session_/Issues/IssueForm';
 
-function SubHeader(props: any) {
-  const { sessionStore, integrationsStore } = useStore();
+interface Props {
+  setActiveTab: (tab: string) => void;
+  sessionId: string;
+}
+
+function SubHeader(props: Props) {
+  const { sessionStore, integrationsStore, issueReportingStore } = useStore();
   const integrations = integrationsStore.issues.list;
   const isIOS = sessionStore.current.platform === 'ios';
   const { openModal, closeModal } = useModal();
   const { store } = React.useContext(PlayerContext);
+  const currentSession = sessionStore.current;
 
   const enabledIntegration = useMemo(() => {
     if (!integrations || !integrations.length) {
@@ -26,7 +33,24 @@ function SubHeader(props: any) {
     }
 
     return integrations.some((i: Record<string, any>) => i.token);
-  }, [props.integrations]);
+  }, [integrations]);
+
+  const handleOpenIssueModal = () => {
+    issueReportingStore.init({});
+    if (!issueReportingStore.projectsFetched) {
+      issueReportingStore.fetchProjects().then((projects) => {
+        if (projects && projects[0]) {
+          void issueReportingStore.fetchMeta(projects[0].id);
+        }
+      });
+    }
+    openModal(
+      <IssueForm sessionId={currentSession.sessionId} closeHandler={closeModal} errors={[]} />,
+      {
+        title: 'Create Issue'
+      }
+    );
+  };
 
   return (
     <>
@@ -36,7 +60,7 @@ function SubHeader(props: any) {
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
-          <NotePopup />
+          <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
           {enabledIntegration && <Issues sessionId={props.sessionId} />}
           <Bookmark sessionId={props.sessionId} />
           <Tooltip title="Share Session" placement="bottom">

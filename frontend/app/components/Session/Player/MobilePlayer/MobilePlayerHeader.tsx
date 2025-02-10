@@ -1,5 +1,5 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { BackLink } from 'UI';
 import cn from 'classnames';
@@ -14,8 +14,14 @@ import { useStore } from 'App/mstore';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
-// TODO props
-function PlayerBlockHeader(props: any) {
+interface Props {
+  fullscreen: boolean;
+  setActiveTab: (tab: string) => void;
+  activeTab: string;
+  tabs: Record<string, string>;
+}
+
+function PlayerBlockHeader(props: Props) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
 
@@ -24,13 +30,13 @@ function PlayerBlockHeader(props: any) {
   const { customFieldStore, projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const siteId = projectsStore.siteId!;
+  const history = useHistory();
   const {
     fullscreen,
     setActiveTab,
-    activeTab,
-    history,
+    activeTab
   } = props;
-  const metaList = customFieldStore.list.map((i: any) => i.key)
+  const metaList = customFieldStore.list.map((i: any) => i.key);
 
   React.useEffect(() => {
     const iframe = localStorage.getItem(IFRAME) || false;
@@ -53,7 +59,7 @@ function PlayerBlockHeader(props: any) {
 
   const TABS = Object.keys(props.tabs).map((tab) => ({
     text: props.tabs[tab],
-    key: tab,
+    key: tab
   }));
 
   return (
@@ -98,4 +104,4 @@ function PlayerBlockHeader(props: any) {
 
 const PlayerHeaderCont = observer(PlayerBlockHeader);
 
-export default withRouter(PlayerHeaderCont);
+export default PlayerHeaderCont;

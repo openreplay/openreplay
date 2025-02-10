@@ -112,7 +112,6 @@ function MobilePlayer(props: any) {
   return (
     <MobilePlayerContext.Provider value={contextValue}>
       <MobilePlayerHeader
-        // @ts-ignore TODO?
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         tabs={TABS}
