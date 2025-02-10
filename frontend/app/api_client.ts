@@ -167,7 +167,11 @@ export default class APIClient {
       delete init.body;
     }
 
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
     let edp = window.env.API_EDP || window.location.origin + '/api';
+    if (noChalice && !edp.includes('api.openreplay.com')) {
+      edp = edp.replace('/api', '')
+    }
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
@@ -181,6 +185,7 @@ export default class APIClient {
     }
 
     const fullUrl = edp + _path;
+    console.log(path, edp, _path, fullUrl)
     const response = await window.fetch(fullUrl, init);
     if (response.status === 403) {
       console.warn('API returned 403. Clearing JWT token.');

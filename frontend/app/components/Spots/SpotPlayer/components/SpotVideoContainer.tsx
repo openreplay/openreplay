@@ -77,10 +77,10 @@ function SpotVideoContainer({
         setProcessingState(ProcessingState.Ready);
       }
       import('hls.js').then(({ default: Hls }) => {
+        const isSafari = /^((?!chrome|android).)*safari/i.test(
+          navigator.userAgent
+        );
         if (Hls.isSupported() && videoRef.current) {
-          const isSafari = /^((?!chrome|android).)*safari/i.test(
-            navigator.userAgent
-          );
           if (isSafari) {
             setLoaded(true);
           } else {
