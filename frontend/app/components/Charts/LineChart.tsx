@@ -70,7 +70,7 @@ function ORLineChart(props: Props) {
       yAxis: {
         name: props.label ?? 'Number of Sessions',
         nameLocation: 'middle',
-        nameGap: 35,
+        nameGap: 45,
       },
       tooltip: {
         ...defaultOptions.tooltip,

@@ -315,7 +315,6 @@ function WidgetChart(props: Props) {
 
       if (viewType === 'lineChart') {
         return (
-          <div className='pt-3'>
           <LineChart
             chartName={_metric.name}
             inGrid={!props.isPreview}
@@ -328,12 +327,10 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
-          </div>
         );
       }
       if (viewType === 'areaChart') {
         return (
-          <div className='pt-3'>
           <LineChart
             isArea
             chartName={_metric.name}
@@ -346,12 +343,10 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
-          </div>
         );
       }
       if (viewType === 'barChart') {
         return (
-          <div className='pt-3'>
           <BarChart
             inGrid={!props.isPreview}
             data={chartData}
@@ -365,7 +360,6 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
-          </div>
         );
       }
      
@@ -389,7 +383,6 @@ function WidgetChart(props: Props) {
       }
       if (viewType === 'pieChart') {
         return (
-          <div className='pt-3'>
           <PieChart
             inGrid={!props.isPreview}
             data={chartData}
@@ -400,7 +393,6 @@ function WidgetChart(props: Props) {
                 : 'Number of Users'
             }
           />
-          </div>
         );
       }
       if (viewType === 'progress') {

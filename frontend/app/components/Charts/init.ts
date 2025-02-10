@@ -44,7 +44,7 @@ const defaultOptions = {
   grid: {
     bottom: 20,
     top: 40,
-    left: 55,
+    left: 35,
     right: 15,
     containLabel: true,
   },
