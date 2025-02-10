@@ -71,7 +71,8 @@ export default class DashboardStore {
 
   resetDrillDownFilter() {
     this.drillDownFilter = new Filter();
-    this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
+
+    // back to previous
     const timeStamps = this.drillDownPeriod.toTimestamps();
     this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
     this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
