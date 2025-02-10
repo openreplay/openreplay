@@ -1396,7 +1396,7 @@ class SearchNoteSchema(_PaginatedSchema):
 
 
 class SessionNoteSchema(BaseModel):
-    message: str = Field(..., min_length=2)
+    message: Optional[str] = Field(..., min_length=2)
     tag: Optional[str] = Field(default=None)
     timestamp: int = Field(default=-1)
     is_public: bool = Field(default=False)

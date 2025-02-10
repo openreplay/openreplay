@@ -30,7 +30,8 @@ ALTER TABLE IF EXISTS public.sessions_notes
     ADD COLUMN start_at   integer,
     ADD COLUMN end_at     integer,
     ADD COLUMN thumbnail  text,
-    ADD COLUMN updated_at timestamp DEFAULT NULL;
+    ADD COLUMN updated_at timestamp DEFAULT NULL,
+    ALTER COLUMN message DROP NOT NULL;
 
 COMMIT;
 
