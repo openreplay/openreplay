@@ -15,7 +15,7 @@ on:
       - "!assist-stats/*-dev.sh"
       - "!assist-stats/requirements-*.txt"
 
-name: Build and Deploy Assist Stats
+name: Build and Deploy Assist Stats ee
 
 jobs:
   deploy:
