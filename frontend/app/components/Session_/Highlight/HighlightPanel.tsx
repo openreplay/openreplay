@@ -114,7 +114,7 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       const playerContainer = document.querySelector('iframe')?.contentWindow?.document;
       let thumbnail;
       if (playerContainer) {
-        thumbnail = await elementToImage(playerContainer);
+        thumbnail = await elementToCanvas(playerContainer);
       }
       const note = {
         message,
@@ -239,7 +239,7 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
   a.click();
 });
 
-async function elementToImage() {
+async function elementToImage(el: Document) {
   const constraints = {
     video: {
       displaySurface: 'browser',
@@ -249,19 +249,23 @@ async function elementToImage() {
     monitorTypeSurfaces: "exclude",
     audio: false,
   };
-  const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
-  const track = stream.getVideoTracks()[0];
-  const imageCapture = new ImageCapture(track);
-  const bitmap = await imageCapture.grabFrame();
-  track.stop();
-  const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  canvas.getContext('2d').drawImage(bitmap, 0, 0);
-  return canvas.toDataURL('image/png');
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
+    const track = stream.getVideoTracks()[0];
+    const imageCapture = new ImageCapture(track);
+    const bitmap = await imageCapture.grabFrame();
+    track.stop();
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0);
+    return canvas.toDataURL('image/png');
+  } catch (e) {
+    return elementToCanvas(el);
+  }
 }
 
-function elementToImage1(doc: Document) {
+function elementToCanvas(doc: Document) {
   const el = doc.body
   const srcMap = new WeakMap<HTMLImageElement, string>()
   return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
@@ -276,9 +280,9 @@ function elementToImage1(doc: Document) {
     return html2canvas(el, {
       scale: 1,
       allowTaint: false,
-      foreignObjectRendering: false,
+      foreignObjectRendering: true,
       useCORS: true,
-      logging: false,
+      logging: true,
     }).then((canvas) => {
       images.forEach((img) => {
         if (srcMap.has(img)) img.src = srcMap.get(img)!
