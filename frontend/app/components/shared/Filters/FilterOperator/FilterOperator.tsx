@@ -1,4 +1,3 @@
-import { backgroundClip } from 'html2canvas/dist/types/css/property-descriptors/background-clip';
 import React from 'react';
 import Select from 'Shared/Select';
 

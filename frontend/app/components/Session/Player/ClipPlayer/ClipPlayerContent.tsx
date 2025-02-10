@@ -12,8 +12,6 @@ import styles from 'Components/Session_/playerBlock.module.css';
 import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
 import { observer } from 'mobx-react-lite';
 import { Icon } from 'UI';
-import { backgroundClip } from 'html2canvas/dist/types/css/property-descriptors/background-clip';
-
 
 interface Props {
   session: Session;

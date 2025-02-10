@@ -240,36 +240,32 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
 });
 
 function elementToImage(doc: Document) {
-  const el = doc.body;
-  const srcMap = new WeakMap()
-  return import('html2canvas').then(({ default: html2canvas }) => {
-    const images = doc.querySelectorAll('img');
+  const el = doc.body
+  const srcMap = new WeakMap<HTMLImageElement, string>()
+  return import('html2canvas-pro').then(({ default: html2canvas }) => {
+    const images = doc.querySelectorAll('img')
     images.forEach((img) => {
-      srcMap.set(img, img.src);
-      img.src = ""
-    })
-    return html2canvas(
-      el,
-      {
-        scale: 1,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        useCORS: false,
-        logging: true,
-        height: 900,
-        width: 1200,
-        x: 0,
-        y: 0,
+      const sameOrigin = new URL(img.src, location.href).origin === location.origin
+      if (!sameOrigin) {
+        srcMap.set(img, img.src)
+        img.src = ''
       }
-    ).then((canvas) => {
+    })
+    return html2canvas(el, {
+      scale: 1,
+      allowTaint: false,
+      foreignObjectRendering: false,
+      useCORS: true,
+      logging: false,
+    }).then((canvas) => {
       images.forEach((img) => {
-        img.src = srcMap.get(img)
+        if (srcMap.has(img)) img.src = srcMap.get(img)!
       })
-      return canvas.toDataURL('img/png');
+      return canvas.toDataURL('image/png')
     }).catch(e => {
-      console.log(e);
+      console.log(e)
       return undefined
-    });
+    })
   })
 }
 
