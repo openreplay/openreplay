@@ -239,10 +239,32 @@ window.__debugElementToImage = (el) => elementToImage(el).then(img => {
   a.click();
 });
 
-function elementToImage(doc: Document) {
+async function elementToImage() {
+  const constraints = {
+    video: {
+      displaySurface: 'browser',
+      preferCurrentTab: true,
+    },
+    preferCurrentTab: true,
+    monitorTypeSurfaces: "exclude",
+    audio: false,
+  };
+  const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
+  const track = stream.getVideoTracks()[0];
+  const imageCapture = new ImageCapture(track);
+  const bitmap = await imageCapture.grabFrame();
+  track.stop();
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0);
+  return canvas.toDataURL('image/png');
+}
+
+function elementToImage1(doc: Document) {
   const el = doc.body
   const srcMap = new WeakMap<HTMLImageElement, string>()
-  return import('html2canvas').then(({ default: html2canvas }) => {
+  return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
     const images = doc.querySelectorAll('img')
     images.forEach((img) => {
       const sameOrigin = new URL(img.src, location.href).origin === location.origin

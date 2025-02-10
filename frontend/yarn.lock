@@ -1683,6 +1683,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codewonders/html2canvas@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@codewonders/html2canvas@npm:1.0.2"
+  dependencies:
+    css-line-break: "npm:1.1.1"
+  checksum: 10c1/04d703efb85773e3ce2f6c804a1434a9b50b603872f0b9e855c4d569b86d86a6a3176f736691e29515eb7d96d2e9414e390a5f5f359e663008b50eace2ed09c3
+  languageName: node
+  linkType: hard
+
 "@colors/colors@npm:1.5.0":
   version: 1.5.0
   resolution: "@colors/colors@npm:1.5.0"
@@ -4881,6 +4890,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"base64-arraybuffer@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "base64-arraybuffer@npm:0.2.0"
+  checksum: 10c1/2ea35fa6360eb84a97dc530d6098c6c8b2ec7a6edbba91c7dc11775d9b3d5bc757ad15bdc12db295536b8b55c894b13b1689eebf67ba70fd43f89ce3ba37ee97
+  languageName: node
+  linkType: hard
+
 "base64-arraybuffer@npm:^1.0.2":
   version: 1.0.2
   resolution: "base64-arraybuffer@npm:1.0.2"
@@ -5930,6 +5946,15 @@ __metadata:
   peerDependencies:
     postcss: ^8.0.9
   checksum: 10c1/468dd6775a76a4fdba018c340698a66b6d3f64683e0d9a11d905ae968377e4712acc96cd1c7368ef784af957dcaf409b2b1f7a8e182085ce3d26705b32c45a0e
+  languageName: node
+  linkType: hard
+
+"css-line-break@npm:1.1.1":
+  version: 1.1.1
+  resolution: "css-line-break@npm:1.1.1"
+  dependencies:
+    base64-arraybuffer: "npm:^0.2.0"
+  checksum: 10c1/62939681b4182df1c0ad1dae9e6acb6ef27e38cee714b52b8fb6e2478b8e0d3f7386bb619eab651c76ccfc78ee50db136a5fed9b333c8795fadf5b511baf22ab
   languageName: node
   linkType: hard
 
@@ -8624,7 +8649,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-to-image@npm:^1.9.0":
+"html-to-image@npm:^1.11.11":
   version: 1.11.11
   resolution: "html-to-image@npm:1.11.11"
   checksum: 10c1/d46f5586f2a8b2f0bd5964ced849a07edc75efb6fdbf74afcfce4bf0d41c2b3b13f0e45b5cbe16f2ff41f1bb5c527ecf002598f9c47098ef56e8f968c87c4d9c
@@ -8652,17 +8677,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html2canvas-pro@npm:^1.5.8":
-  version: 1.5.8
-  resolution: "html2canvas-pro@npm:1.5.8"
-  dependencies:
-    css-line-break: "npm:^2.1.0"
-    text-segmentation: "npm:^1.0.3"
-  checksum: 10c1/1ee4751bc65e307a483e994c7d1ec446c8f2bab27fb1a623551a866c0043f1e5dbfc879d128885f4f6e82d760f620ee8b87f02e8969442d337f8cb5a01cd594b
-  languageName: node
-  linkType: hard
-
-"html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
+"html2canvas@npm:^1.0.0-rc.5":
   version: 1.4.1
   resolution: "html2canvas@npm:1.4.1"
   dependencies:
@@ -11590,6 +11605,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.22.15"
     "@babel/preset-typescript": "npm:^7.23.2"
     "@babel/runtime": "npm:^7.23.2"
+    "@codewonders/html2canvas": "npm:^1.0.2"
     "@floating-ui/react-dom-interactions": "npm:^0.10.3"
     "@jest/globals": "npm:^29.7.0"
     "@medv/finder": "npm:^4.0.2"
@@ -11635,10 +11651,8 @@ __metadata:
     file-loader: "npm:^6.2.0"
     fzstd: "npm:^0.1.1"
     hls.js: "npm:^1.5.13"
-    html-to-image: "npm:^1.9.0"
+    html-to-image: "npm:^1.11.11"
     html-webpack-plugin: "npm:^5.5.0"
-    html2canvas: "npm:^1.4.1"
-    html2canvas-pro: "npm:^1.5.8"
     immutable: "npm:^4.3.7"
     jest: "npm:^29.5.0"
     jest-environment-jsdom: "npm:^29.5.0"

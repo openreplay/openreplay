@@ -24,6 +24,7 @@
   "dependencies": {
     "@ant-design/icons": "^5.2.5",
     "@babel/plugin-transform-private-methods": "^7.23.3",
+    "@codewonders/html2canvas": "^1.0.2",
     "@floating-ui/react-dom-interactions": "^0.10.3",
     "@medv/finder": "^4.0.2",
     "@sentry/browser": "^5.21.1",
@@ -39,9 +40,7 @@
     "fflate": "^0.8.2",
     "fzstd": "^0.1.1",
     "hls.js": "^1.5.13",
-    "html-to-image": "^1.9.0",
-    "html2canvas": "^1.4.1",
-    "html2canvas-pro": "^1.5.8",
+    "html-to-image": "^1.11.11",
     "immutable": "^4.3.7",
     "jest-environment-jsdom": "^29.5.0",
     "js-untar": "^2.0.0",

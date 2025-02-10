@@ -2,7 +2,7 @@ import { fileNameFormat } from 'App/utils';
 
 export const getPdf2 = async () => {
   // @ts-ignore
-  import('html2canvas').then(({ default: html2canvas }) => {
+  import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
     // @ts-ignore
     window.html2canvas = html2canvas;
 

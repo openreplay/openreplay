@@ -1,6 +1,6 @@
 export const renderClickmapThumbnail = () => {
     // @ts-ignore
-    return import('html2canvas').then(({ default: html2canvas }) => {
+    return import('@codewonders/html2canvas').then(({ default: html2canvas }) => {
         // @ts-ignore
         window.html2canvas = html2canvas;
         const element = document.querySelector<HTMLIFrameElement>('#clickmap-render  * iframe').contentDocument.body
