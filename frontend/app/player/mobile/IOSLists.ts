@@ -8,7 +8,8 @@ const SIMPLE_LIST_NAMES = [
   "exceptions",
   "profiles",
   "frustrations",
-  "performance"
+  "performance",
+  "graphql",
 ] as const
 const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack", "websocket" ] as const
 
