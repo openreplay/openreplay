@@ -67,7 +67,8 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
             metricType: selectedCard.cardType,
             name: selectedCard.title,
             metricOf: selectedCard.metricOf,
-            category: mk
+            category: mk,
+            viewType: selectedCard.cardType === FUNNEL ? 'chart' : 'lineChart',
           };
           if (selectedCard.filters) {
             cardData.series = [
