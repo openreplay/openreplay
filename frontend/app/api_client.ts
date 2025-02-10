@@ -185,7 +185,6 @@ export default class APIClient {
     }
 
     const fullUrl = edp + _path;
-    console.log(path, edp, _path, fullUrl)
     const response = await window.fetch(fullUrl, init);
     if (response.status === 403) {
       console.warn('API returned 403. Clearing JWT token.');
