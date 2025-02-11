@@ -11,6 +11,7 @@ import { TeamBadge } from 'Shared/SessionsTabOverview/components/Notes';
 import { Tag, Dropdown, Button } from 'antd'
 import { MoreOutlined } from "@ant-design/icons";
 import { MessageSquareDot } from 'lucide-react'
+import { noNoteMsg } from 'App/mstore/notesStore'
 
 interface Props {
   note: Note;
@@ -92,7 +93,7 @@ function NoteEvent(props: Props) {
         className="text-base capitalize-first my-3 overflow-y-scroll overflow-x-hidden"
         style={{ maxHeight: 200, maxWidth: 220 }}
       >
-        {props.note.message}
+        {props.note.message || noNoteMsg}
       </div>
       <div>
         <div className="flex items-center flex-wrap w-full">

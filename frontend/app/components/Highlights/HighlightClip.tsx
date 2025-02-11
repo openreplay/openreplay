@@ -8,6 +8,7 @@ import copy from "copy-to-clipboard";
 import { Eye, Link } from "lucide-react";
 import { toast } from "react-toastify";
 import { resentOrDate } from 'App/date'
+import { noNoteMsg } from 'App/mstore/notesStore'
 
 function HighlightClip({
   note = 'Highlight note',
@@ -20,7 +21,7 @@ function HighlightClip({
   onItemClick = () => undefined,
   onDelete = () => undefined,
 }: {
-  note: string;
+  note: string | null;
   tag: string;
   user: string;
   createdAt: string;
@@ -30,6 +31,7 @@ function HighlightClip({
   onItemClick: (id: any) => any;
   onDelete: (id: any) => any;
 }) {
+  const noteMsg = note || noNoteMsg
   const copyToClipboard = () => {
     const currUrl = window.location.href;
     const hUrl = `${currUrl}?highlight=${hId}`;
@@ -86,7 +88,7 @@ function HighlightClip({
   };
   return (
     <GridItem
-      title={note}
+      title={noteMsg}
       onItemClick={onItemClick}
       thumbnail={thumbnail}
       setLoading={() => null}

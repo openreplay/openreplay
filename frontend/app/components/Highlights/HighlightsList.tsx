@@ -39,7 +39,6 @@ function HighlightsList() {
   });
   const { total, notes } = data;
   const debounceTimeout = React.useRef(0);
-
   const onSearch = (value: string) => {
     notesStore.setQuery(value);
   };
