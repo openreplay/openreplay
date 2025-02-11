@@ -13,6 +13,7 @@ import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { Icon } from 'UI';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
+import Project from '@/mstore/types/project';
 
 const { Text } = Typography;
 
@@ -42,9 +43,17 @@ function ProjectDropdown(props: { location: any }) {
     // await searchStore.fetchSavedSearchList()
   };
 
+  const onClose = (pro: Project) => {
+    console.log('onClose', pro);
+    closeModal();
+    if (pro.projectId) {
+      void handleSiteChange(pro.projectId.toString());
+    }
+  };
+
   const addProjectClickHandler = () => {
     initProject({});
-    openModal(<ProjectForm onClose={closeModal} />, { title: 'New Project' });
+    openModal(<ProjectForm onClose={onClose} />, { title: 'New Project' });
   };
 
   const menuItems: MenuProps['items'] = sites.map((site) => ({

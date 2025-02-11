@@ -2,7 +2,7 @@ import React, { ChangeEvent, FormEvent, useEffect } from 'react';
 import { Icon } from 'UI';
 import Project from '@/mstore/types/project';
 import { projectStore, useStore } from '@/mstore';
-import { Modal, Segmented, Form, Input, Button, Tooltip } from 'antd';
+import { App, Segmented, Form, Input, Button, Tooltip } from 'antd';
 import { toast } from 'react-toastify';
 import { observer } from 'mobx-react-lite';
 
@@ -20,6 +20,7 @@ function ProjectForm(props: Props) {
   const canDelete = projectsStore.list.length > 1;
   // const pathname = window.location.pathname;
   const mstore = useStore();
+  const { modal } = App.useApp();
 
   const handleEdit = ({ target: { name, value } }: ChangeEvent<HTMLInputElement>) => {
     setProject((prev: Project) => (new Project({ ...prev, [name]: value })));
@@ -42,7 +43,7 @@ function ProjectForm(props: Props) {
         .save(project!)
         .then((resp: Project) => {
           toast.success('Project created successfully');
-          onClose?.(null);
+          onClose?.(resp);
 
           // mstore.searchStore.clearSearch();
           // mstore.searchStoreLive.clearSearch();
@@ -57,17 +58,13 @@ function ProjectForm(props: Props) {
   };
 
   const handleRemove = async () => {
-    Modal.confirm({
+    modal.confirm({
       title: 'Project Deletion Alert',
       content: 'Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.',
       onOk: () => {
         projectsStore.removeProject(project.id!).then(() => {
           if (onClose) {
             onClose(null);
-          }
-          projectsStore.setConfigProject(parseInt(projectStore.list[0].id!));
-          if (project.id === projectsStore.active?.id) {
-            projectsStore.setSiteId(projectStore.list[0].id!);
           }
         }).catch((error: Error) => {
           toast.error(error.message || 'An error occurred while deleting the project');
@@ -82,8 +79,6 @@ function ProjectForm(props: Props) {
       onClose(null);
     }
   };
-
-  console.log('ProjectForm', project);
 
   return (
     <Form

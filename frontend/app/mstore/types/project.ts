@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import GDPR from './gdpr';
 
 export default class Project {
@@ -20,7 +20,7 @@ export default class Project {
   constructor(data: Partial<Project> = {}) {
     Object.assign(this, data);
     this.gdpr = data.gdpr ? new GDPR(data.gdpr) : new GDPR();
-    this.id = data.projectId?.toString();
+    this.id = data.projectId?.toString() || data.id;
     this.host = data.name || '';
     makeAutoObservable(this);
   }

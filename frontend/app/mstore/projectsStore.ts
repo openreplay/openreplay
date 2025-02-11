@@ -191,7 +191,8 @@ export default class ProjectsStore {
       await projectsService.removeProject(projectId);
       runInAction(() => {
         this.list = this.list.filter(site => site.id !== projectId);
-        if (this.siteId === projectId) {
+        this.setConfigProject();
+        if (this.active?.id === projectId) {
           this.setSiteId(this.list[0].id!);
         }
       });
@@ -232,8 +233,13 @@ export default class ProjectsStore {
     }
 
     const project = this.list.find(site => site.projectId === pid);
-    this.config.pid = project?.projectId ?? undefined;
-    this.config.project = project ?? null;
+    if(!project) {
+      // set the first project as active
+      this.setConfigProject();
+    } else {
+      this.config.pid = project?.projectId ?? undefined;
+      this.config.project = project ?? null;
+    }
   };
 
   setConfigTab = (tab: string | null) => {

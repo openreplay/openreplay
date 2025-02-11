@@ -3,19 +3,16 @@ import BaseService from './BaseService';
 export default class ProjectsService extends BaseService {
   fetchGDPR = async (siteId: string) => {
     const r = await this.client.get(`/${siteId}/gdpr`);
-
     return await r.json();
   };
 
   saveGDPR = async (siteId: string, gdprData: any) => {
     const r = await this.client.post(`/${siteId}/gdpr`, gdprData);
-
     return await r.json();
   };
 
   fetchList = async () => {
     const r = await this.client.get('/projects');
-
     return await r.json();
   };
 
@@ -26,7 +23,6 @@ export default class ProjectsService extends BaseService {
 
   removeProject = async (projectId: string) => {
     const r = await this.client.delete(`/projects/${projectId}`);
-
     return await r.json();
   };
 
