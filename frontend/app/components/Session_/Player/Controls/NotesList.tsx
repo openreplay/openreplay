@@ -37,20 +37,6 @@ function NotesList({ scale }: { scale: number }) {
                 pointerEvents: 'none',
               }}
             />
-            
-            <div
-              style={{
-                position: 'absolute',
-                zIndex: 3,
-                pointerEvents: 'none',
-                height: 10,
-                width: 16,
-                left: `${iconPos}%`, 
-                transform: 'translateX(-50%)',
-              }}
-            >
-              <Icon name="quotes" style={{ width: 16, height: 10 }} color="main" />
-            </div>
           </React.Fragment>
         );
       })}
