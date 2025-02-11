@@ -881,8 +881,6 @@ class MetricType(str, Enum):
 
 
 class MetricOfErrors(str, Enum):
-    DOMAINS_ERRORS_4XX = "domainsErrors4xx"
-    DOMAINS_ERRORS_5XX = "domainsErrors5xx"
     ERRORS_PER_DOMAINS = "errorsPerDomains"
     ERRORS_PER_TYPE = "errorsPerType"
     IMPACTED_SESSIONS_BY_JS_ERRORS = "impactedSessionsByJsErrors"
@@ -893,8 +891,6 @@ class MetricOfWebVitals(str, Enum):
     AVG_SESSION_DURATION = "avgSessionDuration"
     AVG_USED_JS_HEAP_SIZE = "avgUsedJsHeapSize"
     AVG_VISITED_PAGES = "avgVisitedPages"
-    COUNT_REQUESTS = "countRequests"
-    COUNT_SESSIONS = "countSessions"
     COUNT_USERS = "userCount"
     SPEED_LOCATION = "speedLocation"
 

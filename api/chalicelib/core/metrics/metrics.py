@@ -86,51 +86,6 @@ def __get_meta_constraint(project_id, data):
     return constraints
 
 
-def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(),
-                           density=7, **args):
-    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
-                               COALESCE(COUNT(sessions), 0) AS value
-                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                             LEFT JOIN LATERAL ( SELECT 1
-                                                 FROM public.sessions
-                                                 WHERE {" AND ".join(pg_sub_query_chart)}
-                             ) AS sessions ON (TRUE)
-                        GROUP BY generated_timestamp
-                        ORDER BY generated_timestamp;"""
-        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
-        results = {
-            "value": sum([r["value"] for r in rows]),
-            "chart": rows
-        }
-
-        diff = endTimestamp - startTimestamp
-        endTimestamp = startTimestamp
-        startTimestamp = endTimestamp - diff
-
-        pg_query = f"""SELECT COUNT(sessions.session_id) AS count
-                        FROM public.sessions
-                        WHERE {" AND ".join(pg_sub_query)};"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
-                  **__get_constraint_values(args)}
-
-        cur.execute(cur.mogrify(pg_query, params))
-
-        count = cur.fetchone()["count"]
-
-        results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
-    return results
-
-
 def __get_neutral(rows, add_All_if_empty=True):
     neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
     if add_All_if_empty and len(neutral.keys()) <= 1:
@@ -142,58 +97,6 @@ def __merge_rows_with_neutral(rows, neutral):
     for i in range(len(rows)):
         rows[i] = {**neutral, **rows[i]}
     return rows
-
-
-def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                     endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="requests", time_column="timestamp", project=False,
-                                           duration=False)
-    pg_sub_query_subset.append("requests.status_code/100 = %(status_code)s")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH requests AS (SELECT host, timestamp 
-                                         FROM events_common.requests INNER JOIN public.sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_sub_query_subset)}
-                     )
-                        SELECT generated_timestamp AS timestamp,
-                                      COALESCE(JSONB_AGG(requests) FILTER ( WHERE requests IS NOT NULL ), '[]'::JSONB) AS keys
-                                FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                LEFT JOIN LATERAL ( SELECT requests.host, COUNT(*) AS count
-                                                     FROM requests
-                                                     WHERE {" AND ".join(pg_sub_query_chart)}
-                                                     GROUP BY host
-                                                     ORDER BY count DESC
-                                                     LIMIT 5
-                                     ) AS requests ON (TRUE)
-                                GROUP BY generated_timestamp
-                                ORDER BY generated_timestamp;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp,
-                  "step_size": step_size,
-                  "status_code": status, **__get_constraint_values(args)}
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows, key="host")
-        neutral = __get_neutral(rows)
-        rows = __merge_rows_with_neutral(rows, neutral)
-
-        return rows
-
-
-def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
-    return __get_domains_errors_4xx_and_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
-                                            endTimestamp=endTimestamp, density=density, **args)
-
-
-def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
-    return __get_domains_errors_4xx_and_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
-                                            endTimestamp=endTimestamp, density=density, **args)
 
 
 def __nested_array_to_dict_array(rows, key="url_host", value="count"):
@@ -502,49 +405,6 @@ def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
     cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
     rows = cur.fetchall()
     return rows
-
-
-def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                   endTimestamp=TimeUTC.now(), value=None, density=20, **args):
-    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
-    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
-              "endTimestamp": endTimestamp}
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
-                                           chart=True, data=args, main_table="pages", time_column="timestamp",
-                                           duration=False)
-
-    if value is not None:
-        pg_sub_query.append("pages.path = %(value)s")
-        pg_sub_query_chart.append("pages.path = %(value)s")
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT COUNT(pages.session_id) AS value
-                        FROM events.pages INNER JOIN public.sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)};"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp,
-                                           "value": value, **__get_constraint_values(args)}))
-        row = cur.fetchone()
-        pg_query = f"""WITH pages AS(SELECT pages.timestamp
-                                                FROM events.pages INNER JOIN public.sessions USING (session_id)
-                                                WHERE {" AND ".join(pg_sub_query)}
-                                )
-                    SELECT generated_timestamp AS timestamp,
-                         COUNT(pages.*) AS value
-                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                        LEFT JOIN LATERAL (
-                                SELECT 1
-                                FROM pages
-                                WHERE {" AND ".join(pg_sub_query_chart)}
-                        ) AS pages ON (TRUE)
-                      GROUP BY generated_timestamp
-                      ORDER BY generated_timestamp;"""
-        cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
-        rows = cur.fetchall()
-        row["chart"] = rows
-    row["unit"] = schemas.TemplatePredefinedUnits.COUNT
-    return helper.dict_to_camel_case(row)
 
 
 def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),

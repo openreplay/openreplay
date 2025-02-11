@@ -27,7 +27,8 @@ def __get_basic_constraints(table_name=None, time_constraint=True, round_start=F
     return ch_sub_query + __get_generic_constraint(data=data, table_name=table_name)
 
 
-def __get_basic_constraints_events(table_name=None, time_constraint=True, round_start=False, data={}, identifier="project_id"):
+def __get_basic_constraints_events(table_name=None, time_constraint=True, round_start=False, data={},
+                                   identifier="project_id"):
     if table_name:
         table_name += "."
     else:
@@ -153,123 +154,6 @@ SESSIONS_META_FIELDS = {"revId": "rev_id",
 
 def __get_generic_constraint(data, table_name):
     return __get_constraint(data=data, fields=SESSIONS_META_FIELDS, table_name=table_name)
-
-
-def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(),
-                           density=7, **args):
-    step_size = get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
-    ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-    ch_sub_query_chart += meta_condition
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""\
-                SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                       COUNT(DISTINCT sessions.session_id) AS value
-                FROM {exp_ch_helper.get_main_sessions_table(startTimestamp)} AS sessions
-                WHERE {" AND ".join(ch_sub_query_chart)}
-                GROUP BY timestamp
-                ORDER BY timestamp;\
-        """
-        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-
-        rows = ch.execute(query=ch_query, parameters=params)
-
-        results = {
-            "value": sum([r["value"] for r in rows]),
-            "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp, end_time=endTimestamp,
-                                              density=density,
-                                              neutral={"value": 0})
-        }
-
-        diff = endTimestamp - startTimestamp
-        endTimestamp = startTimestamp
-        startTimestamp = endTimestamp - diff
-
-        ch_query = f""" SELECT COUNT(1) AS count
-                        FROM {exp_ch_helper.get_main_sessions_table(startTimestamp)} AS sessions
-                        WHERE {" AND ".join(ch_sub_query)};"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
-                  **__get_constraint_values(args)}
-
-        count = ch.execute(query=ch_query, parameters=params)
-
-        count = count[0]["count"]
-
-        results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.COUNT
-    return results
-
-
-def __get_domains_errors_neutral(rows):
-    neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
-    if len(neutral.keys()) == 0:
-        neutral = {"All": 0}
-    return neutral
-
-
-def __merge_rows_with_neutral(rows, neutral):
-    for i in range(len(rows)):
-        rows[i] = {**neutral, **rows[i]}
-    return rows
-
-
-def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                     endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
-    ch_sub_query.append("requests.event_type='REQUEST'")
-    ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT timestamp,
-                               groupArray([domain, toString(count)]) AS keys
-                        FROM (SELECT toUnixTimestamp(toStartOfInterval(requests.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                                        requests.url_host AS domain, COUNT(1) AS count
-                                FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS requests
-                                WHERE {" AND ".join(ch_sub_query)} 
-                                GROUP BY timestamp,requests.url_host
-                                ORDER BY timestamp, count DESC 
-                                LIMIT 5 BY timestamp) AS domain_stats
-                        GROUP BY timestamp;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp,
-                  "step_size": step_size,
-                  "status_code": status, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, parameters=params)
-        rows = __nested_array_to_dict_array(rows)
-        neutral = __get_domains_errors_neutral(rows)
-        rows = __merge_rows_with_neutral(rows, neutral)
-
-        return __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                        end_time=endTimestamp,
-                                        density=density, neutral=neutral)
-
-
-def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
-    return __get_domains_errors_4xx_and_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
-                                            endTimestamp=endTimestamp, density=density, **args)
-
-
-def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
-    return __get_domains_errors_4xx_and_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
-                                            endTimestamp=endTimestamp, density=density, **args)
-
-
-def __nested_array_to_dict_array(rows):
-    for r in rows:
-        for i in range(len(r["keys"])):
-            r[r["keys"][i][0]] = int(r["keys"][i][1])
-        r.pop("keys")
-    return rows
 
 
 def get_errors_per_domains(project_id, limit, page, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -503,49 +387,8 @@ def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, 
     return rows
 
 
-def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                   endTimestamp=TimeUTC.now(), value=None, density=20, **args):
-    step_size = get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
-    ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.event_type='LOCATION'")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query_chart += meta_condition
-    ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.event_type='LOCATION'")
-    ch_sub_query += meta_condition
-
-    if value is not None:
-        ch_sub_query.append("pages.url_path = %(value)s")
-        ch_sub_query_chart.append("pages.url_path = %(value)s")
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COUNT(1) AS value
-                       FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages 
-                       WHERE {" AND ".join(ch_sub_query)};"""
-        params = {"step_size": step_size, "project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp,
-                  "value": value, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, parameters=params)
-        result = rows[0]
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COUNT(1) AS value 
-                      FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS pages
-                      WHERE {" AND ".join(ch_sub_query_chart)}
-                      GROUP BY timestamp
-                      ORDER BY timestamp;"""
-        params = {**params, **__get_constraint_values(args)}
-        rows = ch.execute(query=ch_query, parameters=params)
-        rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                        end_time=endTimestamp,
-                                        density=density, neutral={"value": 0})
-        result["chart"] = rows
-    result["unit"] = schemas.TemplatePredefinedUnits.COUNT
-    return helper.dict_to_camel_case(result)
-
-
 def get_unique_users(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                     endTimestamp=TimeUTC.now(),
-                     density=7, **args):
+                     endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
