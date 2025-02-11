@@ -29,10 +29,14 @@ ingress-nginx: &ingress-nginx
 
 {{/* Get the S3 endpoint value */}}
 {{- define "openreplay.s3Endpoint" -}}
-{{- if contains "minio" .Values.global.s3.endpoint -}}
-{{- include "openreplay.domainURL" . -}}
+{{- if .Values.global.s3.endpoint -}}
+  {{- if contains "minio" .Values.global.s3.endpoint -}}
+    {{- include "openreplay.domainURL" . -}}
+  {{- else -}}
+    {{- .Values.global.s3.endpoint -}}
+  {{- end -}}
 {{- else -}}
-{{- .Values.global.s3.endpoint -}}
+  {{- printf "https://s3.%s.amazonaws.com" .Values.global.s3.region -}}
 {{- end -}}
 {{- end -}}
 
