@@ -87,8 +87,8 @@ export const FilterList = observer((props: Props) => {
             key={`${filter.key}-${filterIndex}`}
             className={'hover:bg-active-blue px-5 '}
             style={{
-              marginLeft: '-1.25rem',
-              width: 'calc(100% + 2.5rem)'
+              marginLeft: '-1rem',
+              width: 'calc(100% + 2rem)'
             }}
           >
             <FilterItem

@@ -98,7 +98,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
         <div className="mr-auto flex items-center">
           <Button variant="primary" onClick={onSave} loading={loading} disabled={!savedSearch.validate()}
                   className="mr-2">
-            {savedSearch.exists() ? 'Update' : 'Create'}
+            {savedSearch.exists() ? 'Update' : 'Save'}
           </Button>
           <Button onClick={closeHandler}>{'Cancel'}</Button>
         </div>
