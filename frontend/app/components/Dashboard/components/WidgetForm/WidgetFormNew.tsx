@@ -195,6 +195,10 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'input', label: 'Input' },
     { value: 'custom', label: 'Custom Events' },
   ];
+
+  const onPointChange = (value: any) => {
+    writeOption({ name: 'startType', value: { value } })
+  }
   return (
     <div className="rounded-lg bg-white border">
       <div className='flex flex-col justify-start gap-2 flex-wrap'>
@@ -210,7 +214,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                 { value: 'end', label: 'End Point' },
               ]}
               defaultValue={metric.startType || 'start'}
-              onChange={(value) => writeOption({ name: 'startType', value })}
+              onChange={onPointChange}
               placeholder="Select Start Type"
               size="small"
             />
@@ -220,7 +224,6 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
             <Select
               mode="multiple"
               className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
-              // style={{ width: 'auto', minWidth: '9rem', maxWidth: '12rem' }}
               allowClear
               name="metricValue"
               options={metricValueOptions}

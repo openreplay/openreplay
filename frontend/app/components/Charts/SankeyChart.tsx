@@ -4,7 +4,6 @@ import { SankeyChart } from 'echarts/charts';
 import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { NoContent } from 'App/components/ui';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { X } from 'lucide-react';
 
 echarts.use([SankeyChart]);
 
@@ -210,8 +209,15 @@ const EChartsSankey: React.FC<Props> = (props) => {
                 ? ((nodeVal / startNodeValue) * 100).toFixed(1) + '%'
                 : '0%';
 
+              const maxLen = 20;
+              const safeName =
+                params.name.length > maxLen
+                  ? params.name.slice(0, maxLen / 2 - 2) +
+                    '...' +
+                    params.name.slice(-(maxLen / 2 - 2))
+                  : params.name;
               return (
-                `{header|${params.name}}\n` +
+                `{header|${safeName}}\n` +
                 `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
               );
             },
@@ -352,11 +358,11 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
       if (params.dataType === 'node') {
         const node = params.data;
-        const filters = []
+        const filters = [];
         if (node && node.type) {
           const type = node.type.toLowerCase();
           if (unsupported.includes(type)) {
-            return
+            return;
           }
           filters.push({
             operator: 'is',
@@ -370,12 +376,15 @@ const EChartsSankey: React.FC<Props> = (props) => {
         const linkIndex = params.dataIndex;
         const link = filteredLinks[linkIndex];
 
-        const firstNode = data.nodes.find(n => n.id === link.source)
-        const lastNode = data.nodes.find(n => n.id === link.target)
+        const firstNode = data.nodes.find((n) => n.id === link.source);
+        const lastNode = data.nodes.find((n) => n.id === link.target);
         const firstNodeType = firstNode?.eventType?.toLowerCase() ?? 'location';
         const lastNodeType = lastNode?.eventType?.toLowerCase() ?? 'location';
-        if (unsupported.includes(firstNodeType) || unsupported.includes(lastNodeType)) {
-          return
+        if (
+          unsupported.includes(firstNodeType) ||
+          unsupported.includes(lastNodeType)
+        ) {
+          return;
         }
         const filters = [];
         if (firstNode) {
@@ -383,7 +392,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
             operator: 'is',
             type: firstNodeType,
             value: [firstNode.name],
-            isEvent: true
+            isEvent: true,
           });
         }
 
@@ -392,7 +401,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
             operator: 'is',
             type: lastNodeType,
             value: [lastNode.name],
-            isEvent: true
+            isEvent: true,
           });
         }
 
@@ -426,11 +435,13 @@ const EChartsSankey: React.FC<Props> = (props) => {
   }
 
   return (
-    <div
-      ref={chartRef}
-      style={containerStyle}
-      className="min-w-[600px] overflow-scroll"
-    />
+    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 840, }}>
+      <div
+        ref={chartRef}
+        style={containerStyle}
+        className="min-w-[600px] overflow-scroll"
+      />
+    </div>
   );
 };
 

@@ -145,8 +145,6 @@ function WidgetChart(props: Props) {
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
         if (isComparison) setCompData(res);
-        // /65/metrics/1014
-        if (metric.metricId === 1014) return;
         clearTimeout(tm)
         setStale(false)
       })

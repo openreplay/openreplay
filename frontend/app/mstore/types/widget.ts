@@ -182,6 +182,7 @@ export default class Widget {
             if (this.metricType === USER_PATH) {
                 this.hideExcess = json.hideExcess;
                 this.startType = json.startType;
+                this.metricValue = json.metricValue && json.metricValue.length > 0 ? json.metricValue : ['location'];
                 if (json.startPoint) {
                     if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
                         this.startPoint = new FilterItem().fromJson(json.startPoint[0]);
