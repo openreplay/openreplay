@@ -10,7 +10,8 @@ import { toast } from 'react-toastify';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { Button, Form, Icon, Input, Link, Loader, Tooltip } from 'UI';
+import { Icon, Link, Loader, Tooltip } from 'UI';
+import { Button, Form, Input } from 'antd';
 
 import Copyright from 'Shared/Copyright';
 
@@ -24,12 +25,12 @@ interface LoginProps {
 }
 
 const Login = ({
-  location,
-}: LoginProps) => {
+                 location
+               }: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const CAPTCHA_ENABLED = React.useMemo(() => {
-    return window.env.CAPTCHA_ENABLED === 'true'
+    return window.env.CAPTCHA_ENABLED === 'true';
   }, []);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
@@ -41,9 +42,9 @@ const Login = ({
   const params = new URLSearchParams(location.search);
 
   useEffect(() => {
-      if (authDetails && !authDetails.tenants) {
-        history.push(SIGNUP_ROUTE);
-      }
+    if (authDetails && !authDetails.tenants) {
+      history.push(SIGNUP_ROUTE);
+    }
   }, [authDetails]);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ const Login = ({
       window.postMessage(
         {
           type: 'orspot:token',
-          token: jwt,
+          token: jwt
         },
         '*'
       );
@@ -104,7 +105,7 @@ const Login = ({
       .generateJWT()
       .then((resp) => {
         if (resp) {
-          userStore.syntheticLogin(resp)
+          userStore.syntheticLogin(resp);
           setJwt({ jwt: resp.jwt, spotJwt: resp.spotJwt ?? null });
           handleSpotLogin(resp.spotJwt);
         }
@@ -114,8 +115,7 @@ const Login = ({
       });
   };
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = () => {
     if (CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute();
     } else if (!CAPTCHA_ENABLED) {
@@ -140,7 +140,7 @@ const Login = ({
           </h2>
           <div className={cn(authDetails?.enforceSSO ? '!hidden' : '')}>
             <Form
-              onSubmit={onSubmit}
+              onFinish={onSubmit}
               className={cn('flex items-center justify-center flex-col')}
               style={{ width: '350px' }}
             >
@@ -154,7 +154,7 @@ const Login = ({
                   />
                 )}
                 <div style={{ width: '350px' }} className="px-8">
-                  <Form.Field>
+                  <Form.Item>
                     <label>Email Address</label>
                     <Input
                       data-test-id={'login'}
@@ -165,10 +165,10 @@ const Login = ({
                       name="email"
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      icon="envelope"
+                      prefix={<Icon name="envelope" size={16} />}
                     />
-                  </Form.Field>
-                  <Form.Field>
+                  </Form.Item>
+                  <Form.Item>
                     <label className="mb-2">Password</label>
                     <Input
                       data-test-id={'password'}
@@ -178,9 +178,9 @@ const Login = ({
                       name="password"
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      icon="key"
+                      prefix={<Icon name="key" size={16} />}
                     />
-                  </Form.Field>
+                  </Form.Item>
                 </div>
               </Loader>
               {errors && errors.length ? (
@@ -201,8 +201,8 @@ const Login = ({
                 <Button
                   data-test-id={'log-button'}
                   className="mt-2 w-full text-center rounded-lg"
-                  type="submit"
-                  variant="primary"
+                  type="primary"
+                  htmlType="submit"
                 >
                   {'Login'}
                 </Button>
@@ -221,7 +221,7 @@ const Login = ({
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
               {authDetails.sso ? (
                 <a href={ssoLink} rel="noopener noreferrer">
-                  <Button variant="text-primary" type="submit">
+                  <Button type="text" htmlType="submit">
                     {`Login with SSO ${
                       authDetails.ssoProvider
                         ? `(${authDetails.ssoProvider})`
@@ -247,8 +247,8 @@ const Login = ({
                   placement="top"
                 >
                   <Button
-                    variant="text-primary"
-                    type="submit"
+                    type="text"
+                    htmlType="submit"
                     className="pointer-events-none opacity-30"
                   >
                     {`Login with SSO ${
@@ -263,11 +263,11 @@ const Login = ({
           </div>
           <div
             className={cn('flex items-center w-96 justify-center my-8', {
-              '!hidden': !authDetails?.enforceSSO,
+              '!hidden': !authDetails?.enforceSSO
             })}
           >
             <a href={ssoLink} rel="noopener noreferrer">
-              <Button variant="primary">{`Login with SSO ${
+              <Button type="primary">{`Login with SSO ${
                 authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
               }`}</Button>
             </a>

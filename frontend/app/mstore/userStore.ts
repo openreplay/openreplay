@@ -399,21 +399,18 @@ class UserStore {
   };
 
   requestResetPassword = async (params: any) => {
-    runInAction(() => {
-      this.loading = true;
-    });
+    this.loading = true;
     try {
-      const response = await userService.requestResetPassword(params);
-      if (response.errors) {
-        toast.error(response.errors[0] || 'Error resetting your password, please try again');
-        return response;
-      }
+      await userService.requestResetPassword(params);
+      // if (response.errors) {
+      //   toast.error(response.errors[0] || 'Error resetting your password, please try again');
+      //   return response;
+      // }
     } catch (error) {
-      toast.error('Unexpected error resetting your password; please try again');
+      toast.error(error.message || 'Unexpected error resetting your password; please try again');
+      throw error;
     } finally {
-      runInAction(() => {
         this.loading = false;
-      });
     }
   };
 
