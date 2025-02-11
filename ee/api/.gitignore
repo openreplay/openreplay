@@ -192,14 +192,11 @@ Pipfile.lock
 /chalicelib/core/canvas.py
 /chalicelib/core/collaborations/*
 /chalicelib/core/countries.py
-/chalicelib/core/metrics/metrics.py
 /chalicelib/core/metrics/custom_metrics.py
-/chalicelib/core/metrics/custom_metrics_predefined.py
 /chalicelib/core/metrics/dashboards.py
 /chalicelib/core/metrics/funnels.py
 /chalicelib/core/metrics/heatmaps.py
 /chalicelib/core/metrics/heatmaps_ch.py
-/chalicelib/core/metrics/metrics_ch.py
 /chalicelib/core/metrics/product_analytics.py
 /chalicelib/core/metrics/product_analytics_ch.py
 /chalicelib/core/metrics/product_anaytics2.py

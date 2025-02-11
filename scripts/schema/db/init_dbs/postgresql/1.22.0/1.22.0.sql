@@ -38,7 +38,8 @@ FROM public.metrics
 WHERE metric_of IN ('domainsErrors4xx', 'domainsErrors5xx', 'countSessions',
                     'countRequests', 'errorsPerDomains', 'errorsPerType',
                     'impactedSessionsByJsErrors', 'resourcesByParty', 'userOs',
-                    'speedLocation');
+                    'speedLocation', 'avgVisitedPages')
+   OR metric_type IN ('webVitals', 'errors', 'performance', 'resources');
 
 COMMIT;
 

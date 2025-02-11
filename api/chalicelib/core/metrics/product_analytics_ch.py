@@ -1,18 +1,14 @@
-from typing import List
-
-import schemas
-from chalicelib.core.metrics.metrics_ch import __get_basic_constraints, __get_meta_constraint, \
-    __get_basic_constraints_events
-from chalicelib.core.metrics.metrics_ch import __get_constraint_values, __complete_missing_steps
-from chalicelib.utils import ch_client, exp_ch_helper
-from chalicelib.utils import helper, dev
-from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils import sql_helper as sh
-from chalicelib.core import metadata
+import logging
 from time import time
 
-import logging
+import schemas
+from chalicelib.core import metadata
 from chalicelib.core.metrics.product_analytics import __transform_journey
+from chalicelib.utils import ch_client, exp_ch_helper
+from chalicelib.utils import helper
+from chalicelib.utils import sql_helper as sh
+from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.metrics_helper import get_step_size
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +18,67 @@ JOURNEY_TYPES = {
     schemas.ProductAnalyticsSelectedEventType.INPUT: {"eventType": "INPUT", "column": "`$properties`.label"},
     schemas.ProductAnalyticsSelectedEventType.CUSTOM_EVENT: {"eventType": "CUSTOM", "column": "`$properties`.name"}
 }
+
+
+def __get_basic_constraints_events(table_name=None, identifier="project_id"):
+    if table_name:
+        table_name += "."
+    else:
+        table_name = ""
+    ch_sub_query = [f"{table_name}{identifier} =toUInt16(%({identifier})s)"]
+    ch_sub_query.append(f"{table_name}created_at >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append(f"{table_name}created_at < toDateTime(%(endTimestamp)s/1000)")
+    return ch_sub_query
+
+
+def __frange(start, stop, step):
+    result = []
+    i = start
+    while i < stop:
+        result.append(i)
+        i += step
+    return result
+
+
+def __add_missing_keys(original, complete):
+    for missing in [key for key in complete.keys() if key not in original.keys()]:
+        original[missing] = complete[missing]
+    return original
+
+
+def __complete_missing_steps(start_time, end_time, density, neutral, rows, time_key="timestamp", time_coefficient=1000):
+    if len(rows) == density:
+        return rows
+    step = get_step_size(start_time, end_time, density, decimal=True)
+    optimal = [(int(i * time_coefficient), int((i + step) * time_coefficient)) for i in
+               __frange(start_time // time_coefficient, end_time // time_coefficient, step)]
+    result = []
+    r = 0
+    o = 0
+    for i in range(density):
+        neutral_clone = dict(neutral)
+        for k in neutral_clone.keys():
+            if callable(neutral_clone[k]):
+                neutral_clone[k] = neutral_clone[k]()
+        if r < len(rows) and len(result) + len(rows) - r == density:
+            result += rows[r:]
+            break
+        if r < len(rows) and o < len(optimal) and rows[r][time_key] < optimal[o][0]:
+            # complete missing keys in original object
+            rows[r] = __add_missing_keys(original=rows[r], complete=neutral_clone)
+            result.append(rows[r])
+            r += 1
+        elif r < len(rows) and o < len(optimal) and optimal[o][0] <= rows[r][time_key] < optimal[o][1]:
+            # complete missing keys in original object
+            rows[r] = __add_missing_keys(original=rows[r], complete=neutral_clone)
+            result.append(rows[r])
+            r += 1
+            o += 1
+        else:
+            neutral_clone[time_key] = optimal[o][0]
+            result.append(neutral_clone)
+            o += 1
+    return result
 
 
 # startPoints are computed before ranked_events to reduce the number of window functions over rows
@@ -50,8 +107,8 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                     sub_events.append({"column": JOURNEY_TYPES[s.type]["column"],
                                        "eventType": JOURNEY_TYPES[s.type]["eventType"]})
                     step_1_post_conditions.append(
-                        f"(`$event_name`='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session = 1 \
-                            OR `$event_name`!='{JOURNEY_TYPES[s.type]["eventType"]}' AND event_number_in_session > 1)")
+                        f"(`$event_name`='{JOURNEY_TYPES[s.type]['eventType']}' AND event_number_in_session = 1 \
+                            OR `$event_name`!='{JOURNEY_TYPES[s.type]['eventType']}' AND event_number_in_session > 1)")
                     extra_metric_values.append(s.type)
                     if not q2_extra_col:
                         # This is used in case start event has different type of the visible event,
@@ -453,7 +510,7 @@ WITH pre_ranked_events AS (SELECT *
                        FROM start_points INNER JOIN pre_ranked_events USING (session_id))
 SELECT *
 FROM ranked_events
-{q2_extra_condition if q2_extra_condition else ""}"""
+{q2_extra_condition if q2_extra_condition else ""};"""
         logger.debug("---------Q2-----------")
         ch.execute(query=ch_query2, parameters=params)
         if time() - _now > 2:
@@ -465,9 +522,9 @@ FROM ranked_events
         sub_cte = ""
         if data.hide_excess:
             sub_cte = f""",
-    top_n AS ({"\nUNION ALL\n".join(top_query)}),
-    top_n_with_next AS ({"\nUNION ALL\n".join(top_with_next_query)}),
-    others_n AS ({"\nUNION ALL\n".join(other_query)})"""
+    top_n AS ({" UNION ALL ".join(top_query)}),
+    top_n_with_next AS ({" UNION ALL ".join(top_with_next_query)}),
+    others_n AS ({" UNION ALL ".join(other_query)})"""
             projection_query = """\
                              -- Top to Top: valid
                              SELECT top_n_with_next.*
@@ -549,13 +606,13 @@ FROM ranked_events
                                    next_value,
                                    sessions_count
                             FROM drop_n""")
-            projection_query = "\nUNION ALL\n".join(projection_query)
+            projection_query = " UNION ALL ".join(projection_query)
 
         ch_query3 = f"""\
                 WITH ranked_events AS (SELECT *
                                        FROM ranked_events_{time_key}),
-                    {",\n".join(steps_query)},
-                    drop_n AS ({"\nUNION ALL\n".join(drop_query)})
+                    {", ".join(steps_query)},
+                    drop_n AS ({" UNION ALL ".join(drop_query)})
                     {sub_cte}
                 SELECT event_number_in_session,
                        `$event_name` AS event_type,
