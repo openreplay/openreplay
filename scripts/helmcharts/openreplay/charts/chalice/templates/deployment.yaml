@@ -90,7 +90,7 @@ spec:
             - name: SITE_URL
               value: '{{- include "openreplay.domainURL" . }}'
             - name: S3_HOST
-              value: {{- if .Values.global.s3.endpoint -}}{{- include "openreplay.s3Endpoint" . -}}{{- end }}
+              value: {{ if .Values.global.s3.endpoint }}{{ include "openreplay.s3Endpoint" . }}{{ end }}
             - name: S3_KEY
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:
