@@ -4,4 +4,4 @@ def get_step_size(startTimestamp, endTimestamp, density, decimal=False, factor=1
         return step_size
     if decimal:
         return step_size / density
-    return step_size // (density - 1)
+    return step_size // density

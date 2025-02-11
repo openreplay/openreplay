@@ -1,7 +1,6 @@
 import schemas
 from chalicelib.core import metadata
 from chalicelib.core.errors.modules import sessions
-from chalicelib.core.metrics import metrics
 from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils import helper, metrics_helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -385,10 +384,13 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
                     FROM (SELECT JSONExtractString(toString(`$properties`), 'error_id') AS error_id, 
-                                 toUnixTimestamp(toStartOfInterval(created_at, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                                 gs.generate_series AS timestamp,
                                  COUNT(DISTINCT session_id) AS count
-                            FROM {MAIN_EVENTS_TABLE}
+                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
+                                    LEFT JOIN {MAIN_EVENTS_TABLE} ON(TRUE)
                             WHERE {" AND ".join(ch_sub_query)}
+                                AND created_at >= toDateTime(timestamp / 1000)
+                                AND created_at < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY error_id, timestamp
                             ORDER BY timestamp) AS sub_table
                             GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
@@ -405,9 +407,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         r["chart"] = list(r["chart"])
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
-        r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startTimestamp,
-                                                      end_time=data.endTimestamp,
-                                                      density=data.density, neutral={"count": 0})
+
     return {
         'total': total,
         'errors': helper.list_to_camel_case(rows)
