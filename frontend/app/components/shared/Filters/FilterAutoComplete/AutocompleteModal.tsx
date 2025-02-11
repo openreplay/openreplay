@@ -254,7 +254,9 @@ export function AutoCompleteContainer(props: Props) {
       event.target === event.currentTarget ||
       event.currentTarget.contains(event.target as Node)
     ) {
-      setShowValueModal(true);
+      setTimeout(() => {
+        setShowValueModal(true);
+      }, 0)
     }
   };
 

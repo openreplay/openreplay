@@ -80,7 +80,9 @@ const FilterAutoComplete = observer(
       }
     }, [topValues, initialFocus]);
 
-    useEffect(() => { void loadTopValues() }, [_params.type]);
+    useEffect(() => {
+      void loadTopValues()
+    }, [_params.type]);
 
     const loadOptions = async (
       inputValue: string,
