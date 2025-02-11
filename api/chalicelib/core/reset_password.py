@@ -14,7 +14,7 @@ def reset(data: schemas.ForgetPasswordPayloadSchema, background_tasks: Backgroun
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         return {"errors": ["Invalid captcha."]}
     if not smtp.has_smtp():
-        return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
+        return {"errors": ["Email delivery failed due to invalid SMTP configuration. Please contact your admin."]}
     a_user = users.get_by_email_only(data.email)
     if a_user:
         invitation_link = users.generate_new_invitation(user_id=a_user["userId"])
