@@ -183,6 +183,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
       },
       series: [
         {
+          animation: false,
           layoutIterations: 0,
           type: 'sankey',
           data: echartNodes,
@@ -193,6 +194,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
               opacity: 0.5,
             },
           },
+          top: 40,
           label: {
             show: true,
             position: 'top',
@@ -216,18 +218,27 @@ const EChartsSankey: React.FC<Props> = (props) => {
                     '...' +
                     params.name.slice(-(maxLen / 2 - 2))
                   : params.name;
+              const nodeType = params.data.type;
+              
+              const icon = getIcon(nodeType)
               return (
-                `{header|${safeName}}\n` +
+                `${icon}{header|${safeName}}\n` +
                 `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
               );
             },
             rich: {
+              container: {
+                height: 20,
+                width: 14,
+              },
               header: {
                 fontWeight: '600',
                 fontSize: 12,
                 color: '#333',
                 overflow: 'truncate',
                 paddingBottom: '.5rem',
+                paddingLeft: '14px',
+                position: 'relative',
               },
               body: {
                 fontSize: 12,
@@ -242,6 +253,34 @@ const EChartsSankey: React.FC<Props> = (props) => {
                 fontFamily: "mono, 'monospace', sans-serif",
                 color: '#999999',
               },
+              clickIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22lucide%20lucide-pointer%22%3E%3Cpath%20d%3D%22M22%2014a8%208%200%200%201-8%208%22%2F%3E%3Cpath%20d%3D%22M18%2011v-1a2%202%200%200%200-2-2a2%202%200%200%200-2%202%22%2F%3E%3Cpath%20d%3D%22M14%2010V9a2%202%200%200%200-2-2a2%202%200%200%200-2%202v1%22%2F%3E%3Cpath%20d%3D%22M10%209.5V4a2%202%200%200%200-2-2a2%202%200%200%200-2%202v10%22%2F%3E%3Cpath%20d%3D%22M18%2011a2%202%200%201%201%204%200v3a8%208%200%200%201-8%208h-2c-2.8%200-4.5-.86-5.99-2.34l-3.6-3.6a2%202%200%200%201%202.83-2.82L7%2015%22%2F%3E%3C%2Fsvg%3E',
+                },
+                height: 20,
+                width: 14,
+              },
+              locationIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22lucide%20lucide-navigation%22%3E%3Cpolygon%20points%3D%223%2011%2022%202%2013%2021%2011%2013%203%2011%22%2F%3E%3C%2Fsvg%3E',
+                },
+                height: 20,
+                width: 14,
+              },
+              inputIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22lucide%20lucide-rectangle-ellipsis%22%3E%3Crect%20width%3D%2220%22%20height%3D%2212%22%20x%3D%222%22%20y%3D%226%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M12%2012h.01%22%2F%3E%3Cpath%20d%3D%22M17%2012h.01%22%2F%3E%3Cpath%20d%3D%22M7%2012h.01%22%2F%3E%3C%2Fsvg%3E',
+                },
+                height: 20,
+                width: 14,
+              },
+              customEventIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNvZGUiPjxwb2x5bGluZSBwb2ludHM9IjE2IDE4IDIyIDEyIDE2IDYiLz48cG9seWxpbmUgcG9pbnRzPSI4IDYgMiAxMiA4IDE4Ii8+PC9zdmc+'
+                },
+                height: 20,
+                width: 14,
+              }
             },
           },
           tooltip: {
@@ -444,5 +483,27 @@ const EChartsSankey: React.FC<Props> = (props) => {
     </div>
   );
 };
+
+const icons = {
+  LOCATION: 'locationIcon',
+  INPUT: 'inputIcon',
+  CUSTOM_EVENT: 'customEventIcon',
+  CLICK: 'clickIcon',
+}
+function getIcon(type: string) {
+  if (type === 'LOCATION') {
+    return '{locationIcon|}'
+  }
+  if (type === 'INPUT') {
+    return '{inputIcon|}'
+  }
+  if (type === 'CUSTOM_EVENT') {
+    return '{customEventIcon|}'
+  }
+  if (type === 'CLICK') {
+    return '{clickIcon|}';
+  }
+  return ''
+}
 
 export default EChartsSankey;
