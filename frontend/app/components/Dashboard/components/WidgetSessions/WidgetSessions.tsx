@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
-import {Button, Tag, Tooltip, Dropdown, notification} from 'antd';
+import { Button, Tag, Tooltip, Dropdown, message } from 'antd';
 import {UndoOutlined, DownOutlined} from '@ant-design/icons'
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
@@ -65,11 +65,7 @@ function WidgetSessions(props: Props) {
         setData(res);
         if (metricStore.drillDown) {
           setTimeout(() => {
-            notification.open({
-              placement: 'top',
-              role: 'status',
-              message: 'Sessions Refreshed!'
-            })
+            message.info('Sessions Refreshed!')
             listRef.current?.scrollIntoView({ behavior: 'smooth' });
             metricStore.setDrillDown(false);
           }, 0)

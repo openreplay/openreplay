@@ -30,19 +30,21 @@ import {
   Workflow,
   Flag,
   ChevronRight,
+  Info,
+  SquareArrowOutUpRight
 } from 'lucide-react';
 import React from 'react';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { Input } from 'antd';
+import { Input, Button } from 'antd';
 
-import { FilterCategory, FilterKey, FilterType } from "Types/filter/filterType";
+import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
 import stl from './FilterModal.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
 export const IconMap = {
-  [FilterKey.CLICK]: <Pointer size={14}/>,
+  [FilterKey.CLICK]: <Pointer size={14} />,
   [FilterKey.LOCATION]: <Navigation size={14} />,
   [FilterKey.INPUT]: <RectangleEllipsis size={14} />,
   [FilterKey.CUSTOM]: <Code size={14} />,
@@ -87,15 +89,17 @@ function filterJson(
   return Object.fromEntries(
     Object.entries(jsonObj)
       .map(([key, value]) => {
-        const arr = value.filter((i: { key: string, isEvent: boolean, category: string }) => {
-          if (excludeCategory.includes(i.category)) return false;
-          if (excludeKeys.includes(i.key)) return false;
-          if (mode === 'events' && !i.isEvent) return false;
-          if (mode === 'filters' && i.isEvent) return false;
-          return !(
-            allowedFilterKeys.length > 0 && !allowedFilterKeys.includes(i.key)
-          );
-        });
+        const arr = value.filter(
+          (i: { key: string; isEvent: boolean; category: string }) => {
+            if (excludeCategory.includes(i.category)) return false;
+            if (excludeKeys.includes(i.key)) return false;
+            if (mode === 'events' && !i.isEvent) return false;
+            if (mode === 'filters' && i.isEvent) return false;
+            return !(
+              allowedFilterKeys.length > 0 && !allowedFilterKeys.includes(i.key)
+            );
+          }
+        );
         return [key, arr];
       })
       .filter(([_, arr]) => arr.length > 0)
@@ -130,7 +134,10 @@ export const getMatchingEntries = (
     }
   });
 
-  return { matchingCategories: ['All', ...matchingCategories], matchingFilters };
+  return {
+    matchingCategories: ['All', ...matchingCategories],
+    matchingFilters,
+  };
 };
 
 interface Props {
@@ -190,16 +197,22 @@ function FilterModal(props: Props) {
     : searchStore.loadingFilterSearch;
 
   const parseAndAdd = (filter) => {
-    if (filter.category === FilterCategory.EVENTS && filter.key.startsWith('_')) {
+    if (
+      filter.category === FilterCategory.EVENTS &&
+      filter.key.startsWith('_')
+    ) {
       filter.value = [filter.key.substring(1)];
       filter.key = FilterKey.CUSTOM;
-      filter.label = 'Custom Events'
+      filter.label = 'Custom Events';
     }
-    if (filter.type === FilterType.ISSUE && filter.key.startsWith(`${FilterKey.ISSUE}_`)) {
+    if (
+      filter.type === FilterType.ISSUE &&
+      filter.key.startsWith(`${FilterKey.ISSUE}_`)
+    ) {
       filter.key = FilterKey.ISSUE;
     }
-    onFilterClick(filter)
-  }
+    onFilterClick(filter);
+  };
   const onFilterSearchClick = (filter: any) => {
     const _filter = { ...filtersMap[filter.type] };
     _filter.value = [filter.value];
@@ -211,9 +224,17 @@ function FilterModal(props: Props) {
       ? mobileConditionalFilters
       : conditionalFilters
     : filters;
+  const filterObj = filterJson(
+    filterJsonObj,
+    excludeFilterKeys,
+    excludeCategory,
+    allowedFilterKeys,
+    mode
+  );
+  const hasNoMeta = !filterObj['Metadata'];
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
-    filterJson(filterJsonObj, excludeFilterKeys, excludeCategory, allowedFilterKeys, mode)
+    filterObj
   );
 
   const isResultEmpty =
@@ -229,12 +250,11 @@ function FilterModal(props: Props) {
       : matchingFilters[category];
 
   return (
-    <div
-      className={stl.wrapper}
-      style={{ width: '560px', maxHeight: '380px' }}
-    >
+    <div className={stl.wrapper} style={{ width: '560px', maxHeight: '380px' }}>
       <Input
-        className={'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'}
+        className={
+          'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'
+        }
         placeholder={'Search'}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,17 +266,32 @@ function FilterModal(props: Props) {
             <div
               key={key}
               onClick={() => setCategory(key)}
-              className={cn('rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium', key === category ? 'bg-active-blue text-teal' : '')}
+              className={cn(
+                'rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium',
+                key === category ? 'bg-active-blue text-teal' : ''
+              )}
             >
               {key}
             </div>
           ))}
+          {hasNoMeta ? (
+            <div
+              key={'META_CTA'}
+              onClick={() => setCategory('META_CTA')}
+              className={cn(
+                'rounded-xl px-4 py-2 hover:bg-active-blue capitalize cursor-pointer font-medium',
+                'META_CTA' === category ? 'bg-active-blue text-teal' : ''
+              )}
+            >
+              Metadata
+            </div>
+          ) : null}
         </div>
         <div
-          className={'flex flex-col gap-1 overflow-y-auto w-full'}
+          className={'flex flex-col gap-1 overflow-y-auto w-full h-full'}
           style={{ maxHeight: 300, flex: 2 }}
         >
-          {displayedFilters.length
+          {displayedFilters && displayedFilters.length
             ? displayedFilters.map((filter: Record<string, any>) => (
                 <div
                   key={filter.label}
@@ -265,17 +300,61 @@ function FilterModal(props: Props) {
                   )}
                   onClick={() => parseAndAdd({ ...filter })}
                 >
-                  {filter.category ? <div style={{ width: 100 }} className={'text-neutral-500/90		 w-full flex justify-between items-center'}>
-                    <span>{filter.subCategory ? filter.subCategory : filter.category}</span>
-                    <ChevronRight size={14} />
-                  </div> : null}
+                  {filter.category ? (
+                    <div
+                      style={{ width: 100 }}
+                      className={
+                        'text-neutral-500/90		 w-full flex justify-between items-center'
+                      }
+                    >
+                      <span>
+                        {filter.subCategory
+                          ? filter.subCategory
+                          : filter.category}
+                      </span>
+                      <ChevronRight size={14} />
+                    </div>
+                  ) : null}
                   <div className={'flex items-center gap-2'}>
-                    <span className='text-neutral-500/90	 text-xs'>{getNewIcon(filter)}</span>
+                    <span className="text-neutral-500/90	 text-xs">
+                      {getNewIcon(filter)}
+                    </span>
                     <span>{filter.label}</span>
                   </div>
                 </div>
               ))
             : null}
+          {category === 'META_CTA' && hasNoMeta ? (
+            <div
+              style={{
+                height: 300
+              }}
+              className={
+                'mx-auto flex flex-col items-center justify-center gap-4 w-2/3 text-center'
+              }
+            >
+              <div className={'text-lg font-semibold flex gap-2 items-center'}>
+                <Info size={16} />
+                <span>No Metadata Available</span>
+              </div>
+              <div className={'text-disabled-text'}>
+                Identify sessions & data easily by linking user-specific
+                metadata.
+              </div>
+              <Button
+                type={'text'}
+                onClick={() => {
+                  const docs = 'https://docs.openreplay.com/en/installation/metadata/';
+                  window.open(docs, '_blank');
+                }}
+              >
+                <div className={'flex items-center gap-2'}>
+                  <span className={'text-main'}>Learn how</span>
+                  <SquareArrowOutUpRight size={16} />
+                </div>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </div>
       {showSearchList && (

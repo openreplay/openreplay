@@ -45,6 +45,7 @@ export interface CardType {
   height?: number;
   isEnterprise?: boolean;
   filters?: any;
+  viewType?: string;
 }
 
 export const CARD_LIST: CardType[] = [
@@ -159,7 +160,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.USER_COUNTRY,
     category: CARD_CATEGORIES[1].key,
-    example: ByCountry
+    example: ByCountry,
+    viewType: 'table',
   },
 
   {
@@ -168,7 +170,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.USER_DEVICE,
     category: CARD_CATEGORIES[1].key,
-    example: BySystem
+    example: BySystem,
+    viewType: 'table',
   },
   {
     title: 'Untitled Top Pages',
@@ -176,7 +179,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.LOCATION,
     category: CARD_CATEGORIES[1].key,
-    example: ByUrl
+    example: ByUrl,
+    viewType: 'table',
   },
 
   {
@@ -185,7 +189,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.REFERRER,
     category: CARD_CATEGORIES[1].key,
-    example: ByReferrer
+    example: ByReferrer,
+    viewType: 'table',
   },
 
   // Monitors
@@ -202,7 +207,8 @@ export const CARD_LIST: CardType[] = [
     },
     width: 4,
     height: 336,
-    example: TableOfErrors
+    example: TableOfErrors,
+    viewType: 'table',
   },
   {
     title: 'Untitled Top Network Requests',
@@ -210,7 +216,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.FETCH,
     category: CARD_CATEGORIES[2].key,
-    example: ByFetch
+    example: ByFetch,
+    viewType: 'table',
   },
   {
     title: 'Untitled Sessions with 4xx/5xx Requests',
