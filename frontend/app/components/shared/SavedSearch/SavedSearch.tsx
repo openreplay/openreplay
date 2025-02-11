@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Button } from 'antd';
-import { MoreOutlined } from "@ant-design/icons";
+import { Button, Tooltip } from 'antd';
+import { MoreOutlined, SaveOutlined } from "@ant-design/icons";
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import SaveSearchModal from "../SaveSearchModal/SaveSearchModal";
@@ -18,19 +18,27 @@ function SavedSearch() {
     if (searchStore.instance.filters.length === 0) return;
     setShowModal(true);
   }
+  const isDisabled = searchStore.instance.filters.length === 0;
 
   const toggleList = () => {
     showListModal(<SavedSearchModal />, { right: true });
   }
+
   return (
     <>
-      <div style={{ display: 'inline-flex' }}>
-        <Button onClick={toggleModal} disabled={searchStore.instance.filters.length === 0} style={{ borderRadius: '0.5rem 0 0 0.5rem', borderRight: 0 }}>
-          {savedSearch.exists() ? 'Update' : 'Save'} Search
-        </Button>
-        <Button disabled={searchStore.list.length === 0} onClick={toggleList} style={{ borderRadius: '0 0.5rem 0.5rem 0' }}>
-          <MoreOutlined />
-        </Button>
+      <div className="flex gap-2">
+      <Tooltip title={searchStore.list.length === 0 ? "You have not saved any searches" : ""}>
+          <Button disabled={searchStore.list.length === 0} onClick={toggleList} className="px-2"  type="text">
+            Saved Searches
+          </Button>
+        </Tooltip>
+
+        <Tooltip title={isDisabled ? "Add an event or filter to save search" : "Save search filters"}>
+          <Button onClick={toggleModal} disabled={isDisabled} className="px-2" type="text">
+            {/* {savedSearch.exists() ? 'Update' : 'Save'} Search */}
+            <SaveOutlined />
+          </Button>
+        </Tooltip>
       </div>
       {showModal && (
         <SaveSearchModal

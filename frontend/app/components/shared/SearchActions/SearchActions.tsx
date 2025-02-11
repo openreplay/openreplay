@@ -3,7 +3,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import SavedSearch from '../SavedSearch/SavedSearch';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import AiSessionSearchField from 'Shared/SessionFilters/AiSessionSearchField';
 
 function SearchActions() {
@@ -38,15 +38,17 @@ function SearchActions() {
         <h2 className="text-2xl capitalize mr-4">{title}</h2>
         {isSaas && showAiField ? <AiSessionSearchField /> : null}
         <div className={'ml-auto'} />
+        <SavedSearch />
+        <Tooltip title='Clear Search Filters'>
         <Button
-          type="link"
+          type="text"
           disabled={!hasSearch}
           onClick={() => searchStore.clearSearch()}
-          className="font-medium"
+          className="px-2"
         >
           Clear
         </Button>
-        <SavedSearch />
+        </Tooltip>
       </div>
       {showPanel ? (
         <>

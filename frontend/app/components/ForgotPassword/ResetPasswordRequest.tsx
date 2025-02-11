@@ -4,6 +4,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Form, Input, Button, Typography } from 'antd';
+import {SquareArrowOutUpRight} from 'lucide-react';
 
 function ResetPasswordRequest() {
   const { userStore } = useStore();
@@ -100,9 +101,9 @@ function ResetPasswordRequest() {
               <Icon name="envelope-x" size="30" color="red" />
             </div>
             {smtpError ? (
-              <Typography.Text>SMTP configuration is missing. Follow <a
-                href="https://docs.openreplay.com/en/configuration/configure-smtp/" className="link"
-                target="_blank">this</a> guide to enable password reset.</Typography.Text>
+              <Typography.Text>Email delivery failed due to invalid SMTP configuration. Please contact your admin. <a
+                href="https://docs.openreplay.com/en/configuration/configure-smtp/" className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
+                target="_blank">Learn More <SquareArrowOutUpRight size={12} strokeWidth={1.5} className='inline' /></a></Typography.Text>
             ) : <Typography.Text>{error}</Typography.Text>}
           </div>
         )}
