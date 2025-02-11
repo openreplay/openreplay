@@ -36,7 +36,7 @@ function getRange(rangeName, offset) {
             );
         case LAST_7_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 7 }).startOf("day"),
+              now.minus({ days: 7 }).endOf("day"),
               now.endOf("day")
             );
         case LAST_30_DAYS:
