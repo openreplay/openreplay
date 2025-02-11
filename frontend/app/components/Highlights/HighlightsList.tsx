@@ -5,26 +5,22 @@ import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
 import cn from 'classnames';
-import { withSiteId, highlights } from 'App/routes';
 import HighlightClip from './HighlightClip';
 import { useQuery } from '@tanstack/react-query';
 import HighlightPlayer from './HighlightPlayer';
-import { useLocation, useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import EditHlModal from './EditHlModal';
 import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
 
 function HighlightsList() {
-  const { notesStore, projectsStore } = useStore();
-  const hist = useHistory();
+  const { notesStore } = useStore();
+  const [activeId, setActiveId] = React.useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editHl, setEditHl] = React.useState<Record<string, any>>({
     message: '',
     isPublic: false
   });
-  const { search } = useLocation();
-  const highlight = new URLSearchParams(search).get('highlight');
 
   const query = notesStore.query;
   const limit = notesStore.pageSize;
@@ -71,11 +67,11 @@ function HighlightsList() {
   };
 
   const onItemClick = (id: string) => {
-    hist.replace(`?highlight=${id}`);
+    setActiveId(id);
   };
 
   const onClose = () => {
-    hist.replace(withSiteId(highlights(), projectsStore.active?.id));
+    setActiveId(null);
   };
 
   const onEdit = (id: string) => {
@@ -118,7 +114,7 @@ function HighlightsList() {
       className={'relative w-full mx-auto bg-white rounded-lg'}
       style={{ maxWidth: 1360 }}
     >
-      {highlight && <HighlightPlayer onClose={onClose} hlId={highlight} />}
+      {activeId && <HighlightPlayer onClose={onClose} hlId={activeId} />}
       <HighlightsListHeader
         activeTags={activeTags}
         ownOnly={ownOnly}
