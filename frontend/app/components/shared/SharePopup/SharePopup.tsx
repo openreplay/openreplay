@@ -70,6 +70,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         data: { comment }
       });
       toast.success('Sent to Slack.');
+      hideModal();
     } catch {
       toast.error('Failed to send to Slack.');
     } finally {
@@ -88,6 +89,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         data: { comment }
       });
       toast.success('Sent to MS Teams.');
+      hideModal();
     } catch {
       toast.error('Failed to send to MS Teams.');
     } finally {
@@ -118,7 +120,6 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
 
   const sendMsg = async () => {
     shareTo === 'slack' ? await shareToSlack() : await shareToMSTeams();
-    hideModal();
   };
 
   const hasBoth = slackOptions.length > 0 && msTeamsOptions.length > 0;
