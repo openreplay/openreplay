@@ -870,19 +870,12 @@ class MetricType(str, Enum):
     TIMESERIES = "timeseries"
     TABLE = "table"
     FUNNEL = "funnel"
-    ERRORS = "errors"
-    PERFORMANCE = "performance"
-    RESOURCES = "resources"
-    WEB_VITAL = "webVitals"
     PATH_ANALYSIS = "pathAnalysis"
     RETENTION = "retention"
     STICKINESS = "stickiness"
     HEAT_MAP = "heatMap"
 
 
-class MetricOfWebVitals(str, Enum):
-    AVG_VISITED_PAGES = "avgVisitedPages"
-    COUNT_USERS = "userCount"
 
 
 class MetricOfTable(str, Enum):
@@ -1035,12 +1028,6 @@ class __CardSchema(CardSessionsSchema):
     # This is used to specify the number of top values for PathAnalysis
     rows: int = Field(default=3, ge=1, le=10)
 
-    @computed_field
-    @property
-    def is_predefined(self) -> bool:
-        return self.metric_type in [MetricType.ERRORS, MetricType.PERFORMANCE,
-                                    MetricType.RESOURCES, MetricType.WEB_VITAL]
-
 
 class CardTimeSeries(__CardSchema):
     metric_type: Literal[MetricType.TIMESERIES]
@@ -1107,23 +1094,6 @@ class CardFunnel(__CardSchema):
     @model_validator(mode="after")
     def __transform(self):
         self.metric_of = MetricOfFunnels(self.metric_of)
-        return self
-
-
-class CardWebVital(__CardSchema):
-    metric_type: Literal[MetricType.WEB_VITAL]
-    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_VISITED_PAGES)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfWebVitals(self.metric_of)
         return self
 
 
@@ -1216,8 +1186,7 @@ class CardPathAnalysis(__CardSchema):
 
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
-    CardTimeSeries, CardTable, CardFunnel,
-    CardWebVital, CardHeatMap, CardPathAnalysis]
+    CardTimeSeries, CardTable, CardFunnel, CardHeatMap, CardPathAnalysis]
 CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 
 

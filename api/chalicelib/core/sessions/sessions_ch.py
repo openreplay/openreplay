@@ -1,12 +1,8 @@
 import logging
 from typing import List, Union
 
-import logging
-from typing import List, Union
-
 import schemas
 from chalicelib.core import events, metadata
-from chalicelib.core.metrics import metrics
 from chalicelib.core.sessions import performance_event, sessions_legacy
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils import sql_helper as sh
@@ -17,8 +13,8 @@ logger = logging.getLogger(__name__)
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    metric_type: schemas.MetricType, metric_of: schemas.MetricOfTimeseries | schemas.MetricOfTable,
                    metric_value: List):
-    step_size = int(metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
-                                                 density=density))
+    step_size = metrics_helper.get_step_size(endTimestamp=data.endTimestamp, startTimestamp=data.startTimestamp,
+                                             density=density, factor=1)
     extra_event = None
     if metric_of == schemas.MetricOfTable.VISITED_URL:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
@@ -38,25 +34,27 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.TIMESERIES:
             if metric_of == schemas.MetricOfTimeseries.SESSION_COUNT:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(processed_sessions.session_id) AS count
-                            FROM (SELECT s.session_id AS session_id,
-                                        s.datetime AS datetime
-                                    {query_part}) AS processed_sessions
+                query = f"""SELECT gs.generate_series AS timestamp,
+                                   COALESCE(COUNT(DISTINCT processed_sessions.session_id),0) AS count
+                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
+                                LEFT JOIN (SELECT s.session_id AS session_id,
+                                                s.datetime AS datetime
+                                            {query_part}) AS processed_sessions ON(TRUE)
+                            WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
+                                AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
             elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
-                query = f"""SELECT toUnixTimestamp(
-                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
-                                    ) * 1000 AS timestamp,
-                                COUNT(DISTINCT processed_sessions.user_id) AS count
-                            FROM (SELECT s.user_id AS user_id,
-                                        s.datetime AS datetime
-                                    {query_part}
-                                  WHERE isNotNull(s.user_id)
-                                    AND s.user_id != '') AS processed_sessions
+                query = f"""SELECT gs.generate_series AS timestamp,
+                                COALESCE(COUNT(DISTINCT processed_sessions.user_id),0) AS count
+                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
+                                LEFT JOIN (SELECT s.user_id AS user_id,
+                                                s.datetime AS datetime
+                                            {query_part}
+                                          WHERE isNotNull(s.user_id)
+                                            AND s.user_id != '') AS processed_sessions ON(TRUE)
+                            WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
+                                AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
             else:
@@ -67,8 +65,6 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             logging.debug(main_query)
             logging.debug("--------------------")
             sessions = cur.execute(main_query)
-            sessions = metrics.__complete_missing_steps(start_time=data.startTimestamp, end_time=data.endTimestamp,
-                                                        density=density, neutral={"count": 0}, rows=sessions)
 
         elif metric_type == schemas.MetricType.TABLE:
             full_args["limit_s"] = 0

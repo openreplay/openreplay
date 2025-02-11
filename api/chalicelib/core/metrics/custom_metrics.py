@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import issues
 from chalicelib.core.errors import errors
-from chalicelib.core.metrics import heatmaps, product_analytics, funnels, custom_metrics_predefined
+from chalicelib.core.metrics import heatmaps, product_analytics, funnels
 from chalicelib.core.sessions import sessions, sessions_search
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -153,11 +153,6 @@ def __get_table_chart(project: schemas.ProjectContext, data: schemas.CardTable, 
 
 
 def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id: int):
-    if data.is_predefined:
-        return custom_metrics_predefined.get_metric(key=data.metric_of,
-                                                    project_id=project.project_id,
-                                                    data=data.model_dump())
-
     supported = {
         schemas.MetricType.TIMESERIES: __get_timeseries_chart,
         schemas.MetricType.TABLE: __get_table_chart,
@@ -195,8 +190,6 @@ def get_sessions(project: schemas.ProjectContext, user_id, data: schemas.CardSes
 
 
 def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.CardSchema):
-    if data.is_predefined:
-        return not_supported()
     if data.metric_of == schemas.MetricOfTable.ISSUES:
         return __get_table_of_issues(project=project, user_id=user_id, data=data)
     supported = {
@@ -598,11 +591,7 @@ def make_chart_from_card(project: schemas.ProjectContext, user_id, metric_id, da
     raw_metric["density"] = data.density
     metric: schemas.CardSchema = schemas.CardSchema(**raw_metric)
 
-    if metric.is_predefined:
-        return custom_metrics_predefined.get_metric(key=metric.metric_of,
-                                                    project_id=project.project_id,
-                                                    data=data.model_dump())
-    elif metric.metric_type == schemas.MetricType.HEAT_MAP:
+    if metric.metric_type == schemas.MetricType.HEAT_MAP:
         if raw_metric["data"] and raw_metric["data"].get("sessionId"):
             return heatmaps.get_selected_session(project_id=project.project_id,
                                                  session_id=raw_metric["data"]["sessionId"])
