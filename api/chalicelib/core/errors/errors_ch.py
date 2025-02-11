@@ -109,7 +109,7 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, user_id):
     MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startTimestamp)
     MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startTimestamp)
 
@@ -251,7 +251,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             elif filter_type == schemas.FilterType.METADATA:
                 # get metadata list only if you need it
                 if meta_keys is None:
-                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = metadata.get(project_id=project.project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 if f.source in meta_keys.keys():
                     if is_any:
@@ -328,7 +328,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
             **params,
             "startDate": data.startTimestamp,
             "endDate": data.endTimestamp,
-            "project_id": project_id,
+            "project_id": project.project_id,
             "userId": user_id,
             "step_size": step_size}
         if data.limit is not None and data.page is not None:

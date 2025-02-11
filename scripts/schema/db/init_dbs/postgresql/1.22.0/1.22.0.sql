@@ -33,6 +33,13 @@ ALTER TABLE IF EXISTS public.sessions_notes
     ADD COLUMN updated_at timestamp DEFAULT NULL,
     ALTER COLUMN message DROP NOT NULL;
 
+DELETE
+FROM public.metrics
+WHERE metric_of IN ('domainsErrors4xx', 'domainsErrors5xx', 'countSessions',
+                    'countRequests', 'errorsPerDomains', 'errorsPerType',
+                    'impactedSessionsByJsErrors', 'resourcesByParty', 'userOs',
+                    'speedLocation');
+
 COMMIT;
 
 \elif :is_next
