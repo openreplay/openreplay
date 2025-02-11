@@ -231,7 +231,14 @@ function FilterModal(props: Props) {
     allowedFilterKeys,
     mode
   );
-  const hasNoMeta = !filterObj['Metadata'];
+  const showMetaCTA = !filterObj['Metadata']
+      && (allowedFilterKeys?.length
+          ? allowedFilterKeys.includes(FilterKey.METADATA) : true)
+      && (excludeCategory?.length
+          ? !excludeCategory.includes(FilterCategory.METADATA) : true)
+      && (excludeFilterKeys?.length
+          ? !excludeFilterKeys.includes(FilterKey.METADATA) : true);
+
   const { matchingCategories, matchingFilters } = getMatchingEntries(
     searchQuery,
     filterObj
@@ -274,7 +281,7 @@ function FilterModal(props: Props) {
               {key}
             </div>
           ))}
-          {hasNoMeta ? (
+          {showMetaCTA ? (
             <div
               key={'META_CTA'}
               onClick={() => setCategory('META_CTA')}
@@ -324,7 +331,7 @@ function FilterModal(props: Props) {
                 </div>
               ))
             : null}
-          {category === 'META_CTA' && hasNoMeta ? (
+          {category === 'META_CTA' && showMetaCTA ? (
             <div
               style={{
                 height: 300

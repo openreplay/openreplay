@@ -36,6 +36,12 @@ function ExcludeFilters(props: Props) {
             <FilterItem
               hideIndex={true}
               filterIndex={index}
+              allowedFilterKeys={[
+                FilterKey.LOCATION,
+                FilterKey.CLICK,
+                FilterKey.INPUT,
+                FilterKey.CUSTOM,
+              ]}
               filter={f}
               onUpdate={(f) => onUpdateFilter(index, f)}
               onRemoveFilter={() => onRemoveFilter(index)}
