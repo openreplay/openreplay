@@ -11,8 +11,6 @@ def get_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors], pr
     supported = {
         schemas.MetricOfWebVitals.AVG_VISITED_PAGES: metrics.get_user_activity_avg_visited_pages,
         schemas.MetricOfErrors.IMPACTED_SESSIONS_BY_JS_ERRORS: metrics.get_impacted_sessions_by_js_errors,
-        schemas.MetricOfErrors.ERRORS_PER_DOMAINS: metrics.get_errors_per_domains,
-        schemas.MetricOfErrors.ERRORS_PER_TYPE: metrics.get_errors_per_type,
         schemas.MetricOfErrors.RESOURCES_BY_PARTY: metrics.get_resources_by_party,
         schemas.MetricOfWebVitals.COUNT_USERS: metrics.get_unique_users,
         schemas.MetricOfWebVitals.SPEED_LOCATION: metrics.get_speed_index_location,

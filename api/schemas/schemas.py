@@ -881,8 +881,6 @@ class MetricType(str, Enum):
 
 
 class MetricOfErrors(str, Enum):
-    ERRORS_PER_DOMAINS = "errorsPerDomains"
-    ERRORS_PER_TYPE = "errorsPerType"
     IMPACTED_SESSIONS_BY_JS_ERRORS = "impactedSessionsByJsErrors"
     RESOURCES_BY_PARTY = "resourcesByParty"
 
