@@ -880,21 +880,12 @@ class MetricType(str, Enum):
     HEAT_MAP = "heatMap"
 
 
-class MetricOfErrors(str, Enum):
-    IMPACTED_SESSIONS_BY_JS_ERRORS = "impactedSessionsByJsErrors"
-    RESOURCES_BY_PARTY = "resourcesByParty"
-
-
 class MetricOfWebVitals(str, Enum):
-    AVG_SESSION_DURATION = "avgSessionDuration"
-    AVG_USED_JS_HEAP_SIZE = "avgUsedJsHeapSize"
     AVG_VISITED_PAGES = "avgVisitedPages"
     COUNT_USERS = "userCount"
-    SPEED_LOCATION = "speedLocation"
 
 
 class MetricOfTable(str, Enum):
-    USER_OS = FilterType.USER_OS.value
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
@@ -1119,23 +1110,6 @@ class CardFunnel(__CardSchema):
         return self
 
 
-class CardErrors(__CardSchema):
-    metric_type: Literal[MetricType.ERRORS]
-    metric_of: MetricOfErrors = Field(default=MetricOfErrors.IMPACTED_SESSIONS_BY_JS_ERRORS)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfErrors(self.metric_of)
-        return self
-
-
 class CardWebVital(__CardSchema):
     metric_type: Literal[MetricType.WEB_VITAL]
     metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_VISITED_PAGES)
@@ -1243,8 +1217,7 @@ class CardPathAnalysis(__CardSchema):
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
-    CardErrors, CardWebVital, CardHeatMap,
-    CardPathAnalysis]
+    CardWebVital, CardHeatMap, CardPathAnalysis]
 CardSchema = ORUnion(__cards_union_base, discriminator='metric_type')
 
 

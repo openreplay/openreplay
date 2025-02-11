@@ -36,7 +36,9 @@ ALTER TABLE IF EXISTS public.sessions_notes
 DELETE
 FROM public.metrics
 WHERE metric_of IN ('domainsErrors4xx', 'domainsErrors5xx', 'countSessions',
-                    'countRequests', 'errorsPerDomains', 'errorsPerType');
+                    'countRequests', 'errorsPerDomains', 'errorsPerType',
+                    'impactedSessionsByJsErrors', 'resourcesByParty', 'userOs',
+                    'speedLocation');
 
 COMMIT;
 
