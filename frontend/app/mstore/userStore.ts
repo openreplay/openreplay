@@ -402,12 +402,7 @@ class UserStore {
     this.loading = true;
     try {
       await userService.requestResetPassword(params);
-      // if (response.errors) {
-      //   toast.error(response.errors[0] || 'Error resetting your password, please try again');
-      //   return response;
-      // }
     } catch (error) {
-      toast.error(error.message || 'Unexpected error resetting your password; please try again');
       throw error;
     } finally {
         this.loading = false;

@@ -3,7 +3,7 @@ import { Loader, Icon } from 'UI';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import {Form, Input, Button } from 'antd'
+import { Form, Input, Button, Typography } from 'antd';
 
 function ResetPasswordRequest() {
   const { userStore } = useStore();
@@ -15,6 +15,7 @@ function ResetPasswordRequest() {
   const [error, setError] = React.useState(null);
   const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
   const CAPTCHA_SITE_KEY = window.env.CAPTCHA_SITE_KEY;
+  const [smtpError, setSmtpError] = React.useState<boolean>(false);
 
   const write = (e: any) => {
     const { name, value } = e.target;
@@ -35,13 +36,14 @@ function ResetPasswordRequest() {
 
     setError(null);
     requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
-      .then((response: any) => {
-        setRequested(true);
-        // if (response && response.errors && response.errors.length > 0) {
-        //   setError(response.errors[0]);
-        // }
-      }).catch((err: any) => {
-      setRequested(false);
+      .catch((err: any) => {
+        if (err.message?.toLowerCase().includes('smtp')) {
+          setSmtpError(true);
+        }
+
+        setError(err.message);
+      }).finally(() => {
+      setRequested(true);
     });
   };
   return (
@@ -92,14 +94,18 @@ function ResetPasswordRequest() {
           </div>
         )}
 
-        {/*{error && (*/}
-        {/*  <div className="flex items-center flex-col text-center">*/}
-        {/*    <div className="w-16 h-16 rounded-full bg-red-lightest flex items-center justify-center mb-2">*/}
-        {/*      <Icon name="envelope-x" size="30" color="red" />*/}
-        {/*    </div>*/}
-        {/*    {error}*/}
-        {/*  </div>*/}
-        {/*)}*/}
+        {error && (
+          <div className="flex items-center flex-col text-center">
+            <div className="w-16 h-16 rounded-full bg-red-lightest flex items-center justify-center mb-2">
+              <Icon name="envelope-x" size="30" color="red" />
+            </div>
+            {smtpError ? (
+              <Typography.Text>SMTP configuration is missing. Follow <a
+                href="https://docs.openreplay.com/en/configuration/configure-smtp/" className="link"
+                target="_blank">this</a> guide to enable password reset.</Typography.Text>
+            ) : <Typography.Text>{error}</Typography.Text>}
+          </div>
+        )}
       </Loader>
     </Form>
   );
