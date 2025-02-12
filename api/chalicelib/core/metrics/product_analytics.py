@@ -89,8 +89,11 @@ def __transform_journey(rows, reverse_path=False):
                 link["target"] = sr_idx
             links.append(link)
 
+    if reverse_path:
+        for n in nodes_values:
+            n["depth"] = max_depth - n["depth"]
     return {"nodes": nodes_values,
-            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=reverse_path)}
+            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
 
 
 JOURNEY_TYPES = {
