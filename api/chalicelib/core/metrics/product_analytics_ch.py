@@ -391,7 +391,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                        FROM {main_events_table} {"INNER JOIN sub_sessions USING (session_id)" if len(sessions_conditions) > 0 else ""}
                        WHERE {" AND ".join(start_points_conditions)}
                        GROUP BY 1),"""
-        ch_sub_query.append("events.created_at>=initial_event.start_event_timestamp")
+        ch_sub_query.append(f"events.created_at{'<=' if reverse else '>='}initial_event.start_event_timestamp")
         main_events_table += " INNER JOIN initial_event ON (events.session_id = initial_event.session_id)"
         sessions_conditions = []
 
