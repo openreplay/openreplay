@@ -1,0 +1,115 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g. vpre-1.22.0)'
+        required: true
+        type: string
+      services:
+        description: 'Name of the service you want to build and deploy'
+        required: true
+        type: string
+
+env:
+  DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
+  DEPOT_PROJECT_ID: ${{ secrets.DEPOT_PROJECT_ID }}
+  IMAGE_TAG: ${{ replace(github.event.inputs.tag, 'pre-', '') }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.tag }}
+
+    - name: Downloading yq
+      run: |
+        VERSION="v4.42.1"
+        sudo wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+
+    # Configure AWS credentials for the first registry
+    - name: Configure AWS credentials for RELEASE_ARM_REGISTRY
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPOT_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPOT_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_DEPOT_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR for RELEASE_ARM_REGISTRY
+      id: login-ecr-arm
+      run: |
+        aws ecr get-login-password --region ${{ secrets.AWS_DEPOT_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.RELEASE_ARM_REGISTRY }}
+        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.RELEASE_OSS_REGISTRY }}
+
+    - uses: depot/setup-action@v1
+    - name: Build
+      id: build-image
+      env:
+        DOCKER_REPO_OSS: ${{ secrets.RELEASE_OSS_REGISTRY }}
+      run: |
+        set -exo pipefail
+        working_dir=$(pwd)
+        
+        # Checking for backend images
+        ls backend/cmd >> /tmp/backend.txt
+        echo Services: "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        BUILD_SCRIPT_NAME="build.sh"
+        version=$IMAGE_TAG
+        # Build FOSS
+        for SERVICE in "${SERVICES[@]}"; do
+          # Check if service is backend
+          if grep -q $SERVICE /tmp/backend.txt; then 
+            cd backend 
+            foss_build_args="nil $SERVICE"
+            ee_build_args="ee $SERVICE"
+          else 
+            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
+            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
+            foss_build_args=""
+            ee_build_args="ee"
+          fi
+          echo IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          IMAGE_TAG=$version DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $foss_build_args
+          echo IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          IMAGE_TAG=$version-ee DOCKER_RUNTIME="depot" DOCKER_BUILD_ARGS="--push" ARCH=amd64 DOCKER_REPO=$DOCKER_REPO_OSS PUSH_IMAGE=0 bash ${BUILD_SCRIPT_NAME} $ee_build_args
+          cd $working_dir
+        done
+
+    - uses: azure/k8s-set-context@v1
+      name: Using foss release cluster
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.FOSS_RELEASE_KUBECONFIG }}
+      id: setcontext
+
+    - name: Deploy to foss release Kubernetes
+      run: |
+        echo Services: "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        for SERVICE in "${SERVICES[@]}"; do
+          kubectl patch deployment "$SERVICE-openreplay" -n app --patch '{"spec": {"template": {"spec": {"containers": [{"name": "'$SERVICE'", "imagePullPolicy": "Always"}]}}}}'
+          kubectl rollout restart deployment "$SERVICE-openreplay" -n app
+        done
+
+    - uses: azure/k8s-set-context@v1
+      name: Using ee release cluster
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.EE_RELEASE_KUBECONFIG }}
+      id: setcontext
+
+    - name: Deploy to ee release Kubernetes
+      run: |
+        echo Services: "${{ github.event.inputs.services }}"
+        IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}" 
+        for SERVICE in "${SERVICES[@]}"; do
+          kubectl patch deployment "$SERVICE-openreplay" -n app --patch '{"spec": {"template": {"spec": {"containers": [{"name": "'$SERVICE'", "imagePullPolicy": "Always"}]}}}}'
+          kubectl rollout restart deployment "$SERVICE-openreplay" -n app
+        done
