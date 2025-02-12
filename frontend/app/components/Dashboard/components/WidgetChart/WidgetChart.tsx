@@ -33,7 +33,6 @@ import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMe
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
-import { filterMinorPaths } from 'Shared/Insights/SankeyChart/utils'
 import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import { useInView } from 'react-intersection-observer';
@@ -504,11 +503,12 @@ function WidgetChart(props: Props) {
 
     if (metricType === USER_PATH && data && data.links) {
       const isUngrouped = props.isPreview ? (!(_metric.hideExcess ?? true)) : false;
-      const height = props.isPreview ? 550 : 500;
+      const height = props.isPreview ? 550 : 240;
       return (
         <SankeyChart
-        height={height}
+          height={height}
           data={data}
+          inGrid={!props.isPreview}
           onChartClick={(filters: any) => {
             dashboardStore.drillDownFilter.merge({ filters, page: 1 });
           }}

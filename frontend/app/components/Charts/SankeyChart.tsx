@@ -32,6 +32,7 @@ interface Props {
   height?: number;
   onChartClick?: (filters: any[]) => void;
   isUngrouped?: boolean;
+  inGrid?: boolean;
 }
 
 function buildSubgraph(
@@ -474,22 +475,16 @@ const EChartsSankey: React.FC<Props> = (props) => {
   }
 
   return (
-    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 840, }}>
+    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, }}>
       <div
         ref={chartRef}
         style={containerStyle}
-        className="min-w-[600px] overflow-scroll"
+        className="min-w-[600px]"
       />
     </div>
   );
 };
 
-const icons = {
-  LOCATION: 'locationIcon',
-  INPUT: 'inputIcon',
-  CUSTOM_EVENT: 'customEventIcon',
-  CLICK: 'clickIcon',
-}
 function getIcon(type: string) {
   if (type === 'LOCATION') {
     return '{locationIcon|}'
