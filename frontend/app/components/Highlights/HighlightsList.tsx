@@ -14,7 +14,7 @@ import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
 
 function HighlightsList() {
-  const { notesStore } = useStore();
+  const { notesStore, projectsStore } = useStore();
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editHl, setEditHl] = React.useState<Record<string, any>>({
@@ -22,6 +22,7 @@ function HighlightsList() {
     isPublic: false
   });
 
+  const activeProject = projectsStore.activeSiteId;
   const query = notesStore.query;
   const limit = notesStore.pageSize;
   const listLength = notesStore.notes.length;
@@ -33,7 +34,7 @@ function HighlightsList() {
     isPending,
     refetch
   } = useQuery({
-    queryKey: ['notes', page, query, activeTags],
+    queryKey: ['notes', page, query, activeTags, activeProject],
     queryFn: () => notesStore.fetchNotes(),
     retry: 3
   });
