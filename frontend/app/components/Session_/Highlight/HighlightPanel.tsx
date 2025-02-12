@@ -115,6 +115,9 @@ function HighlightPanel({ onClose }: { onClose: () => void }) {
       let thumbnail;
       if (playerContainer) {
         thumbnail = await elementToCanvas(playerContainer);
+        if (!thumbnail) {
+          thumbnail = await elementToImage(playerContainer);
+        }
       }
       const note = {
         message,
@@ -261,7 +264,7 @@ async function elementToImage(el: Document) {
     canvas.getContext('2d').drawImage(bitmap, 0, 0);
     return canvas.toDataURL('image/png');
   } catch (e) {
-    return elementToCanvas(el);
+    toast.error('Failed to capture screen image');
   }
 }
 
