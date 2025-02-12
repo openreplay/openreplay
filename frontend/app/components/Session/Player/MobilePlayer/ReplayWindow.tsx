@@ -10,6 +10,7 @@ interface Props {
   isAndroid: boolean;
   screenWidth: number;
   screenHeight: number;
+  isClips?: boolean;
 }
 
 const appleIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="102" height="102" fill="white" viewBox="0 0 16 16">
@@ -25,7 +26,7 @@ const androidIcon = `<svg fill="#78C257" xmlns="http://www.w3.org/2000/svg" widt
 </svg>
 `
 
-function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndroid }: Props) {
+function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndroid, isClips }: Props) {
   const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>();
   const imageRef = React.useRef<HTMLImageElement>();
@@ -111,7 +112,7 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
       icon.id = '___or_mobile-loader-icon';
       host.id = '___or_mobile-player';
 
-      playerContext.player.injectPlayer(host);
+      playerContext.player.injectPlayer(host, isClips);
       playerContext.player.customScale(styles.shell.width, styles.shell.height);
       playerContext.player.updateDimensions({
         width: styles.screen.width,

@@ -85,9 +85,12 @@ export default class Screen {
     this.cursor = new Cursor(this.overlay, isMobile); // TODO: move outside
   }
 
-  addMobileStyles() {
+  addMobileStyles(stableTop?: boolean) {
     this.iframe.className = styles.mobileIframe;
     this.screen.className = styles.mobileScreen;
+    if (stableTop) {
+      this.screen.style.marginTop = '0px';
+    }
     if (this.document) {
       Object.assign(this.document?.body.style, { margin: 0, overflow: 'hidden' })
     }

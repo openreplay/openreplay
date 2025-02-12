@@ -49,6 +49,7 @@ function Player(props: IProps) {
   const userDevice = sessionStore.current.userDevice;
   const videoURL = sessionStore.current.videoURL;
   const platform = sessionStore.current.platform;
+  const isAndroid = platform === 'android';
   const screenWidth = sessionStore.current.screenWidth!;
   const screenHeight = sessionStore.current.screenHeight!;
   const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
@@ -63,7 +64,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
-    const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
+    const parentElement = screenWrapper.current; //TODO: good architecture
     if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
       setAttached(true)
@@ -105,7 +106,6 @@ function Player(props: IProps) {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const isAndroid = platform === 'android';
   return (
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative', fullscreen && 'pb-2')}

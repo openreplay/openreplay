@@ -105,9 +105,9 @@ export default class IOSPlayer extends Player {
     this.screen.updateOverlayStyle(style);
   }
 
-  injectPlayer = (player: HTMLElement) => {
+  injectPlayer = (player: HTMLElement, stableTop?: boolean) => {
     this.screen.addToBody(player);
-    this.screen.addMobileStyles();
+    this.screen.addMobileStyles(stableTop);
 
     window.addEventListener('resize', () =>
       this.customScale(this.customConstrains.width, this.customConstrains.height)

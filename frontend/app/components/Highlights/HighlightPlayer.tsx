@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import ClipsPlayer from '../Session/ClipsPlayer';
+import MobileClipsPlayer from '../Session/MobileClipsPlayer';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 import { observer } from 'mobx-react-lite';
@@ -18,12 +19,13 @@ function HighlightPlayer({
   hlId: string;
   onClose: () => void;
 }) {
-  const { notesStore } = useStore();
+  const { notesStore, projectsStore } = useStore();
   const [clip, setClip] = React.useState<Clip>({
     sessionId: undefined,
     range: [],
     message: '',
   });
+  const isMobile = projectsStore.isMobile;
 
   React.useEffect(() => {
     if (hlId) {
@@ -45,7 +47,7 @@ function HighlightPlayer({
     if (e.target === e.currentTarget) {
       onClose();
     }
-  }
+  };
   return (
     <div
       className={
@@ -62,14 +64,25 @@ function HighlightPlayer({
         style={{ width: 960 }}
       >
         <Loader loading={notesStore.loading}>
-          <ClipsPlayer
-            isHighlight
-            onClose={onClose}
-            clip={clip}
-            currentIndex={0}
-            isCurrent={true}
-            autoplay={false}
-          />
+          {isMobile ? (
+            <MobileClipsPlayer
+              isHighlight
+              onClose={onClose}
+              clip={clip}
+              currentIndex={0}
+              isCurrent={true}
+              autoplay={false}
+            />
+          ) : (
+            <ClipsPlayer
+              isHighlight
+              onClose={onClose}
+              clip={clip}
+              currentIndex={0}
+              isCurrent={true}
+              autoplay={false}
+            />
+          )}
         </Loader>
       </div>
     </div>

@@ -7,17 +7,17 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 import {
-  IPlayerContext,
-  PlayerContext,
+  IOSPlayerContext,
+  MobilePlayerContext,
   defaultContextValue,
 } from './playerContext';
 
 import ClipPlayerHeader from 'Components/Session/Player/ClipPlayer/ClipPlayerHeader';
-import ClipPlayerContent from 'Components/Session/Player/ClipPlayer/ClipPlayerContent';
+import MobileClipPlayerContent from 'Components/Session/Player/ClipPlayer/MobileClipPlayerContent';
 import Session from 'Types/session';
 import { sessionService } from '@/services';
 
-let playerInst: IPlayerContext['player'] | undefined;
+let playerInst: IOSPlayerContext['player'] | undefined;
 
 interface Props {
   clip: any;
@@ -28,14 +28,13 @@ interface Props {
   isHighlight?: boolean;
 }
 
-function ClipsPlayer(props: Props) {
+function MobileClipsPlayer(props: Props) {
   const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
   const { sessionStore } = useStore();
-  const prefetched = sessionStore.prefetched;
   const [windowActive, setWindowActive] = useState(!document.hidden);
   const [contextValue, setContextValue] =
     // @ts-ignore
-    useState<IPlayerContext>(defaultContextValue);
+    useState<IOSPlayerContext>(defaultContextValue);
   const openedAt = React.useRef<number>();
   const [session, setSession] = useState<Session | undefined>(undefined);
 
@@ -45,7 +44,6 @@ function ClipsPlayer(props: Props) {
     const fetchSession = async () => {
       if (clip.sessionId != null && clip?.sessionId !== '') {
         try {
-          // const data = await sessionStore.fetchSessionData(props.sessionId);
           const data = await sessionService.getSessionInfo(clip.sessionId);
           setSession(new Session(data));
         } catch (error) {
@@ -79,36 +77,22 @@ function ClipsPlayer(props: Props) {
 
     // @ts-ignore
     sessionStore.setUserTimezone(session?.timezone);
-    const [WebPlayerInst, PlayerStore] = createClipPlayer(
+    const [PlayerInst, PlayerStore] = createClipPlayer(
       session,
       (state) => makeAutoObservable(state),
       toast,
-      clip.range
+      clip.range,
+      true,
     );
 
-    setContextValue({ player: WebPlayerInst, store: PlayerStore });
-    playerInst = WebPlayerInst;
+    setContextValue({ player: PlayerInst, store: PlayerStore });
+    playerInst = PlayerInst;
     // playerInst.pause();
   }, [session]);
 
-  const domFiles = session?.domURL?.length ?? 0;
-
-  useEffect(() => {
-    if (!prefetched && domFiles > 0) {
-      playerInst?.reinit(session!);
-      playerInst?.pause();
-    }
-  }, [session, domFiles, prefetched]);
-
   const {
-    tabStates,
     ready,
   } = contextValue.store?.get() || {};
-
-  const cssLoading =
-    ready && tabStates
-      ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
-      : true;
 
   useEffect(() => {
     if (ready) {
@@ -140,17 +124,17 @@ function ClipsPlayer(props: Props) {
     );
 
   return (
-    <PlayerContext.Provider value={contextValue}>
+    <MobilePlayerContext.Provider value={contextValue}>
       {contextValue.player ? (
         <>
           <ClipPlayerHeader isHighlight={isHighlight} onClose={onClose} range={clip.range} session={session!} />
-          <ClipPlayerContent message={clip.message} isHighlight={isHighlight} autoplay={props.autoplay} range={clip.range} session={session!} />
+          <MobileClipPlayerContent message={clip.message} isHighlight={isHighlight} autoplay={props.autoplay} range={clip.range} session={session!} />
         </>
       ) : (
-        <Loader />
-      )}
-    </PlayerContext.Provider>
+         <Loader />
+       )}
+    </MobilePlayerContext.Provider>
   );
 }
 
-export default observer(ClipsPlayer);
+export default observer(MobileClipsPlayer);

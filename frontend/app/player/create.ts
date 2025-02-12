@@ -91,20 +91,38 @@ export function createLiveWebPlayer(
 
 export function createClipPlayer(
   session: SessionFilesInfo,
-  wrapStore?: (s: IWebPlayerStore) => IWebPlayerStore,
+  wrapStore?: (s: IOSPlayerStore | IWebPlayerStore) => IOSPlayerStore | IWebPlayerStore,
   uiErrorHandler?: { error: (msg: string) => void },
-  range?: [number, number]
-): [IWebPlayer, IWebPlayerStore] {
-  let store: WebPlayerStore = new SimpleStore<WebState>({
-    ...WebPlayer.INITIAL_STATE,
-  });
-  if (wrapStore) {
-    store = wrapStore(store);
-  }
+  range?: [number, number],
+  isMobile?: boolean,
+): [IIosPlayer, IOSPlayerStore] | [IWebPlayer, IWebPlayerStore] {
+  if (isMobile) {
+    let store: IOSPlayerStore = new SimpleStore<IosState>({
+      ...IOSPlayer.INITIAL_STATE,
+    });
+    if (wrapStore) {
+      // @ts-ignore
+      store = wrapStore(store);
+    }
 
-  const player = new WebPlayer(store, session, false, false, uiErrorHandler);
-  if (range && range[0] !== range[1]) {
-    player.toggleRange(range[0], range[1]);
+    const player = new IOSPlayer(store, session, uiErrorHandler);
+    if (range && range[0] !== range[1]) {
+      player.toggleRange(range[0], range[1]);
+    }
+    return [player, store] as [IIosPlayer, IOSPlayerStore];
+  } else {
+    let store: WebPlayerStore = new SimpleStore<WebState>({
+      ...WebPlayer.INITIAL_STATE,
+    });
+    if (wrapStore) {
+      // @ts-ignore
+      store = wrapStore(store);
+    }
+
+    const player = new WebPlayer(store, session, false, false, uiErrorHandler);
+    if (range && range[0] !== range[1]) {
+      player.toggleRange(range[0], range[1]);
+    }
+    return [player, store] as [IWebPlayer, IWebPlayerStore];
   }
-  return [player, store];
 }

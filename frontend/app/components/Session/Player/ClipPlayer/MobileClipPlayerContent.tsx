@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import cn from 'classnames';
 import stl from 'Components/Session_/Player/player.module.css';
 import {
-  IPlayerContext,
+  IOSPlayerContext,
   PlayerContext,
 } from 'Components/Session/playerContext';
 import ClipPlayerControls from 'Components/Session/Player/ClipPlayer/ClipPlayerControls';
@@ -11,6 +11,9 @@ import styles from 'Components/Session_/playerBlock.module.css';
 import ClipPlayerOverlay from 'Components/Session/Player/ClipPlayer/ClipPlayerOverlay';
 import { observer } from 'mobx-react-lite';
 import { Icon } from 'UI';
+import ReplayWindow from 'Components/Session/Player/MobilePlayer/ReplayWindow'
+import PerfWarnings from "Components/Session/Player/MobilePlayer/PerfWarnings";
+import { useStore } from 'App/mstore'
 
 interface Props {
   session: Session;
@@ -22,10 +25,17 @@ interface Props {
 }
 
 function ClipPlayerContent(props: Props) {
-  const playerContext = React.useContext<IPlayerContext>(PlayerContext);
+  const { sessionStore } = useStore();
+  const playerContext = React.useContext<IOSPlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const { time } = playerContext.store.get();
   const { range } = props;
+  const userDevice = sessionStore.current.userDevice;
+  const videoURL = sessionStore.current.videoURL;
+  const screenWidth = sessionStore.current.screenWidth!;
+  const screenHeight = sessionStore.current.screenHeight!;
+  const platform = sessionStore.current.platform;
+  const isAndroid = platform === 'android';
 
   React.useEffect(() => {
     if (!playerContext.player) return;
@@ -33,7 +43,7 @@ function ClipPlayerContent(props: Props) {
     const parentElement = screenWrapper.current
 
     if (parentElement && playerContext.player) {
-      playerContext.player?.attach(parentElement);
+      playerContext.player.attach(parentElement);
       playerContext.player?.play();
     }
   }, [playerContext.player]);
@@ -67,7 +77,17 @@ function ClipPlayerContent(props: Props) {
               ref={screenWrapper}
               data-openreplay-obscured
               style={{ height: '500px' }}
-            />
+            >
+              <ReplayWindow
+                videoURL={videoURL}
+                userDevice={userDevice}
+                isAndroid={isAndroid}
+                screenWidth={screenWidth}
+                screenHeight={screenHeight}
+                isClips={true}
+              />
+              <PerfWarnings userDevice={userDevice} />
+            </div>
           </div>
         </div>
         {props.isHighlight && props.message ? (
