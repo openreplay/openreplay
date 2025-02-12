@@ -1,7 +1,7 @@
 from fastapi import Body
 
 import schemas
-from chalicelib.core import product_analytics
+from chalicelib.core.metrics import product_analytics
 from or_dependencies import OR_scope
 from routers.base import get_routers
 
