@@ -231,7 +231,7 @@ function FilterModal(props: Props) {
     allowedFilterKeys,
     mode
   );
-  const showMetaCTA = !filterObj['Metadata']
+  const showMetaCTA = mode === 'filters' && !filterObj['Metadata']
       && (allowedFilterKeys?.length
           ? allowedFilterKeys.includes(FilterKey.METADATA) : true)
       && (excludeCategory?.length
