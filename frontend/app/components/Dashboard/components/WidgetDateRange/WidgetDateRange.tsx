@@ -53,12 +53,8 @@ function WidgetDateRange({
           onChangeComparison(newPeriod);
         }, 1)
       } else {
-        const day = 86400000;
-        const originalPeriodLength = Math.ceil(
-          (period.end - period.start) / day
-        );
-        const start = presetComparison[0];
-        const end = presetComparison[1] + originalPeriodLength * day;
+        const start = parseInt(presetComparison[0], 10);
+        const end = parseInt(presetComparison[1], 10);
 
         // @ts-ignore
         const compRange = new Period({
@@ -102,7 +98,7 @@ function WidgetDateRange({
               compPeriod={compPeriod}
               onChange={onChangePeriod}
               onChangeComparison={onChangeComparison}
-              right={true}
+              right={false}
               isAnt={true}
               useButtonStyle={true}
               comparison={true}

@@ -290,7 +290,7 @@ function AndDateRange({
           }}
         >
           <div
-            className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
+            className={cn('absolute top-0 mt-10 z-40', right ? 'right-0' : 'left-0')}
             style={{
               width: isUSLocale ? '542px' : '500px',
               fontSize: '14px',

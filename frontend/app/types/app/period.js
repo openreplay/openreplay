@@ -90,9 +90,9 @@ export default Record(
           if (!period.rangeName || period.rangeName === CUSTOM_RANGE) {
               const isLuxon = DateTime.isDateTime(period.start);
               let start = isLuxon
-                ? period.start : DateTime.fromMillis(period.start || 0, { zone: Settings.defaultZone });
+                ? period.start : DateTime.fromMillis(parseInt(period.start || 0, 10), { zone: Settings.defaultZone });
               let end = isLuxon
-                ? period.end : DateTime.fromMillis(period.end || 0, { zone: Settings.defaultZone });
+                ? period.end : DateTime.fromMillis(parseInt(period.end || 0, 10), { zone: Settings.defaultZone });
               if (period.substract) {
                   const delta = substractValues[period.substract]
                   start = start.minus(delta);
