@@ -33,7 +33,7 @@ import {
   Info,
   SquareArrowOutUpRight
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Icon, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { Input, Button } from 'antd';
@@ -249,6 +249,13 @@ function FilterModal(props: Props) {
     matchingCategories.length === 0 &&
     Object.keys(matchingFilters).length === 0;
 
+    const inputRef = useRef<any>(null);
+    useEffect(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [category]);
+
   const displayedFilters =
     category === 'All'
       ? Object.entries(matchingFilters).flatMap(([category, filters]) =>
@@ -257,11 +264,10 @@ function FilterModal(props: Props) {
       : matchingFilters[category];
 
   return (
-    <div className={stl.wrapper} style={{ width: '560px', maxHeight: '380px' }}>
+    <div className={stl.wrapper} style={{ width: '460px', maxHeight: '380px' }}>
       <Input
-        className={
-          'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'
-        }
+        ref={inputRef} 
+        className={'mb-4 rounded-xl text-lg font-medium placeholder:text-lg placeholder:font-medium placeholder:text-neutral-300'}
         placeholder={'Search'}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
@@ -337,27 +343,28 @@ function FilterModal(props: Props) {
                 height: 300
               }}
               className={
-                'mx-auto flex flex-col items-center justify-center gap-4 w-2/3 text-center'
+                'mx-auto flex flex-col items-center justify-center gap-3 w-2/3 text-center'
               }
             >
-              <div className={'text-lg font-semibold flex gap-2 items-center'}>
+              <div className={'font-semibold flex gap-2 items-center'}>
                 <Info size={16} />
                 <span>No Metadata Available</span>
               </div>
-              <div className={'text-disabled-text'}>
+              <div className={'text-secondary'}>
                 Identify sessions & data easily by linking user-specific
                 metadata.
               </div>
               <Button
                 type={'text'}
+                className='text-teal'
                 onClick={() => {
                   const docs = 'https://docs.openreplay.com/en/installation/metadata/';
                   window.open(docs, '_blank');
                 }}
               >
                 <div className={'flex items-center gap-2'}>
-                  <span className={'text-main'}>Learn how</span>
-                  <SquareArrowOutUpRight size={16} />
+                  <span className={''}>Learn how</span>
+                  <SquareArrowOutUpRight size={14} />
                 </div>
               </Button>
             </div>
