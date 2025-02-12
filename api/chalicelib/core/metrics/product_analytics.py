@@ -90,7 +90,7 @@ def __transform_journey(rows, reverse_path=False):
             links.append(link)
 
     return {"nodes": nodes_values,
-            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=False)}
+            "links": sorted(links, key=lambda x: (x["source"], x["target"]), reverse=reverse_path)}
 
 
 JOURNEY_TYPES = {
