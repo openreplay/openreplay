@@ -100,13 +100,19 @@ export function AutocompleteModal({
   };
 
   const sortedOptions = React.useMemo(() => {
+    const withSelected = [...options];
+    selectedValues.forEach(val => {
+      if (!options.find(i => i.value === val)) {
+        withSelected.unshift({ value: val, label: val });
+      }
+    })
     if (values[0] && values[0].length) {
-      const sorted = options.sort((a, b) => {
+      const sorted = withSelected.sort((a, b) => {
         return values.includes(a.value) ? -1 : 1;
       });
       return sorted;
     }
-    return options;
+    return withSelected;
   }, [options, values]);
 
   const queryBlocks = commaQuery ? query.split(',') : [query];
