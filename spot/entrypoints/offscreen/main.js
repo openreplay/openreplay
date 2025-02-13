@@ -121,34 +121,27 @@ class ScreenRecorder {
 
       this.stream = combinedStream;
 
-      // Try different configurations until one works
       const configurations = [
-        // Try VP8 first as it's widely supported
         {
           mimeType: 'video/webm;codecs=vp8,opus',
           videoBitsPerSecond: 2500000,
           audioBitsPerSecond: combinedStream.getAudioTracks().length > 0 ? 96000 : undefined
         },
-        // Then VP9
         {
           mimeType: 'video/webm;codecs=vp9,opus',
           videoBitsPerSecond: 2500000,
         },
-        // Try H264 with reduced bitrate
         {
           mimeType: 'video/webm;codecs=h264',
           videoBitsPerSecond: 1000000,
         },
-        // Try without specifying codecs
         {
           mimeType: 'video/webm',
           videoBitsPerSecond: 2500000,
         },
-        // Try with minimal configuration
         {
           mimeType: 'video/webm'
         },
-        // Last resort: no configuration
         {}
       ];
 
