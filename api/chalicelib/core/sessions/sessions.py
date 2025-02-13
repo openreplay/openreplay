@@ -36,24 +36,24 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                             SELECT generated_timestamp AS timestamp,
                                                    COUNT(s)            AS count
                                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                         FROM full_sessions
-                                                                         WHERE start_ts >= generated_timestamp
-                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                     LEFT JOIN LATERAL (SELECT 1 AS s
+                                                                        FROM full_sessions
+                                                                        WHERE start_ts >= generated_timestamp
+                                                                          AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
                                             GROUP BY generated_timestamp
                                             ORDER BY generated_timestamp;""", full_args)
             elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
                 main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT s.user_id, s.start_ts
-                                                                {query_part}
-                                                                AND s.user_id IS NOT NULL
-                                                                AND s.user_id != '')
+                                                                    {query_part}
+                                                                    AND s.user_id IS NOT NULL
+                                                                    AND s.user_id != '')
                                             SELECT generated_timestamp AS timestamp,
                                                    COUNT(s)            AS count
                                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                     LEFT JOIN LATERAL ( SELECT DISTINCT user_id AS s
-                                                                         FROM full_sessions
-                                                                         WHERE start_ts >= generated_timestamp
-                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                     LEFT JOIN LATERAL (SELECT DISTINCT user_id AS s
+                                                                        FROM full_sessions
+                                                                        WHERE start_ts >= generated_timestamp
+                                                                          AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
                                             GROUP BY generated_timestamp
                                             ORDER BY generated_timestamp;""", full_args)
             else:

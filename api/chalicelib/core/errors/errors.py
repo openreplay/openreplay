@@ -149,7 +149,11 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
             params["error_query"] = helper.values_for_operator(value=data.query,
                                                                op=schemas.SearchEventOperator.CONTAINS)
 
-        main_pg_query = f"""SELECT full_count,
+        main_pg_query = f"""WITH raw_data AS (SELECT DISTINCT session_id
+                                              FROM events.errors 
+                                                   {"INNER JOIN public.sessions USING(session_id)" if platform else ""}
+                                              WHERE {" AND ".join(pg_sub_query_chart)})
+                            SELECT full_count,
                                    error_id,
                                    name,
                                    message,
@@ -183,11 +187,11 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
                                                          FROM (SELECT generated_timestamp AS timestamp,
                                                                       COUNT(session_id)   AS count
                                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                                        LEFT JOIN LATERAL (SELECT DISTINCT session_id
-                                                                                           FROM events.errors 
-                                                                                                {"INNER JOIN public.sessions USING(session_id)" if platform else ""}
-                                                                                           WHERE {" AND ".join(pg_sub_query_chart)}
-                                                                            ) AS sessions ON (TRUE)
+                                                                        LEFT JOIN LATERAL (SELECT * 
+                                                                                           FROM raw_data
+                                                                                           UNION ALL
+                                                                                           SELECT NULL AS session_id
+                                                                                           WHERE NOT EXISTS(SELECT 1 FROM raw_data)) AS sessions ON (TRUE)
                                                                GROUP BY timestamp
                                                                ORDER BY timestamp) AS chart_details) AS chart_details ON (TRUE);"""
 
