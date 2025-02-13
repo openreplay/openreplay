@@ -197,10 +197,10 @@ function WidgetChart(props: Props) {
     if (!inView || !props.isPreview) return;
     loadComparisonData();
   }, [
-    dashboardStore.comparisonPeriods[_metric.metricId],
-    _metric.metricId,
     inView,
     props.isPreview,
+    dashboardStore.comparisonPeriods[_metric.metricId],
+    _metric.metricId,
     drillDownPeriod,
     period,
     depsString,
