@@ -148,7 +148,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         if len(data.events) > errors_condition_count:
             subquery_part_args, subquery_part = sessions.search_query_parts_ch(data=data, error_status=data.status,
                                                                                errors_only=True,
-                                                                               project_id=project_id, user_id=user_id,
+                                                                               project_id=project.project_id, user_id=user_id,
                                                                                issue=None,
                                                                                favorite_only=False)
             subquery_part = f"INNER JOIN {subquery_part} USING(session_id)"
