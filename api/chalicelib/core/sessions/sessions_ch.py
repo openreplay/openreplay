@@ -34,40 +34,27 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.TIMESERIES:
             if metric_of == schemas.MetricOfTimeseries.SESSION_COUNT:
-                query = f"""WITH raw_data AS (SELECT s.session_id AS session_id,
-                                                     s.datetime AS datetime
-                                              {query_part})
-                            SELECT gs.generate_series AS timestamp,
+                query = f"""SELECT gs.generate_series AS timestamp,
                                    COALESCE(COUNT(DISTINCT processed_sessions.session_id),0) AS count
                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
-                                LEFT JOIN (SELECT * 
-                                           FROM raw_data
-                                           UNION ALL
-                                           SELECT NULL AS session_id,
-                                                  NULL AS datetime
-                                           WHERE NOT EXISTS(SELECT 1 FROM raw_data)) AS processed_sessions ON(TRUE)
+                                LEFT JOIN (SELECT s.session_id AS session_id,
+                                                s.datetime AS datetime
+                                            {query_part}) AS processed_sessions ON(TRUE)
                             WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
                                 AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
             elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
-                query = f"""WITH raw_data AS (SELECT s.user_id AS user_id,
-                                                     s.datetime AS datetime
-                                              {query_part}
-                                              WHERE isNotNull(s.user_id)
-                                                AND s.user_id != '')
-                            SELECT gs.generate_series AS timestamp,
+                query = f"""SELECT gs.generate_series AS timestamp,
                                 COALESCE(COUNT(DISTINCT processed_sessions.user_id),0) AS count
                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
-                                LEFT JOIN (SELECT * 
-                                           FROM raw_data
-                                           UNION ALL
-                                           SELECT NULL AS user_id,
-                                                  NULL AS datatime
-                                           WHERE NOT EXISTS(SELECT 1 FROM raw_data)) AS processed_sessions ON(TRUE)
-                            WHERE processed_sessions.user_id IS NULL 
-                                OR processed_sessions.datetime >= toDateTime(timestamp / 1000)
-                                    AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
+                                LEFT JOIN (SELECT multiIf(s.user_id IS NOT NULL AND s.user_id != '', s.user_id,
+                                                         s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != '', 
+                                                         s.user_anonymous_id, toString(s.user_uuid)) AS user_id,
+                                                s.datetime AS datetime
+                                            {query_part}) AS processed_sessions ON(TRUE)
+                            WHERE processed_sessions.datetime >= toDateTime(timestamp / 1000)
+                                AND processed_sessions.datetime < toDateTime((timestamp + %(step_size)s) / 1000)
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
             else:
@@ -134,7 +121,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                     s.pop("main_count")
             sessions = {"count": count, "values": helper.list_to_camel_case(sessions)}
 
-        return sessions
+        return helper.complete_missing_steps(rows=sessions, start_timestamp=data.startTimestamp,
+                                             end_timestamp=data.endTimestamp, step=step_size, neutral={"count": 0})
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
