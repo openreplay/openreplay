@@ -35,42 +35,6 @@ interface Props {
   inGrid?: boolean;
 }
 
-function buildSubgraph(
-  startNodeId: string | number,
-  nodes: SankeyNode[],
-  links: SankeyLink[]
-) {
-  const visited = new Set<string | number>();
-  const queue = [startNodeId];
-  visited.add(startNodeId);
-
-  const adjacency: Record<string | number, Array<string | number>> = {};
-  links.forEach((link) => {
-    if (!adjacency[link.source]) {
-      adjacency[link.source] = [];
-    }
-    adjacency[link.source].push(link.target);
-  });
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const neighbors = adjacency[current] || [];
-    neighbors.forEach((nbr) => {
-      if (!visited.has(nbr)) {
-        visited.add(nbr);
-        queue.push(nbr);
-      }
-    });
-  }
-
-  const subNodes = nodes.filter((n) => visited.has(n.id));
-  const subLinks = links.filter(
-    (l) => visited.has(l.source) && visited.has(l.target)
-  );
-
-  return { subNodes, subLinks };
-}
-
 const EChartsSankey: React.FC<Props> = (props) => {
   const { data, height = 240, onChartClick, isUngrouped } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
@@ -96,20 +60,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
   React.useEffect(() => {
     if (!chartRef.current) return;
 
-    const startNodes = data.nodes.filter((n) => n.depth === 0);
     let finalNodes = data.nodes;
     let finalLinks = data.links;
-
-    if (startNodes.length > 1) {
-      const chosenStartNode = startNodes[0];
-      const { subNodes, subLinks } = buildSubgraph(
-        chosenStartNode.id!,
-        data.nodes,
-        data.links
-      );
-      finalNodes = subNodes;
-      finalLinks = subLinks;
-    }
 
     const chart = echarts.init(chartRef.current);
 
