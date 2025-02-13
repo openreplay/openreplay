@@ -51,11 +51,11 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             GROUP BY timestamp
                             ORDER BY timestamp;"""
             elif metric_of == schemas.MetricOfTimeseries.USER_COUNT:
-                query = f"""WITH raw_data AS (SELECT s.user_id AS user_id,
+                query = f"""WITH raw_data AS (SELECT multiIf(s.user_id IS NOT NULL AND s.user_id != '', s.user_id,
+                                                         s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != '', 
+                                                         s.user_anonymous_id, toString(s.user_uuid)) AS user_id,
                                                      s.datetime AS datetime
-                                              {query_part}
-                                              WHERE isNotNull(s.user_id)
-                                                AND s.user_id != '')
+                                              {query_part})
                             SELECT gs.generate_series AS timestamp,
                                 COALESCE(COUNT(DISTINCT processed_sessions.user_id),0) AS count
                             FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS gs
