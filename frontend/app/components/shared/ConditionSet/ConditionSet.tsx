@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Input } from 'UI';
 import cn from 'classnames';
-import { FilterList } from 'Shared/Filters/FilterList';
+import { FilterList, EventsList } from 'Shared/Filters/FilterList';
 import { observer } from 'mobx-react-lite';
 import { Typography } from 'antd';
 import { BranchesOutlined } from '@ant-design/icons';
@@ -77,6 +77,18 @@ function ConditionSetComponent({
       </div>
       <div className={'p-2'}>
         <div className={conditions.filter.filters.length > 0 ? 'p-2 mb-2' : ''}>
+          <EventsList
+            filter={conditions.filter}
+            onUpdateFilter={onUpdateFilter}
+            onRemoveFilter={onRemoveFilter}
+            onChangeEventsOrder={onChangeEventsOrder}
+            hideEventsOrder
+            onAddFilter={onAddFilter}
+            excludeFilterKeys={excludeFilterKeys}
+            readonly={readonly}
+            isConditional={isConditional}
+            borderless
+          />
           <FilterList
             filter={conditions.filter}
             onUpdateFilter={onUpdateFilter}

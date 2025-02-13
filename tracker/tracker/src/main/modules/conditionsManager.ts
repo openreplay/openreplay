@@ -87,13 +87,10 @@ export default class ConditionsManager {
   }
 
   createConditionFromFilter = (filter: Filter) => {
-    if (filter.value.length) {
-      const resultCondition = mapCondition(filter)
-      if (resultCondition.type) {
-        return resultCondition
-      }
+    const resultCondition = mapCondition(filter)
+    if (resultCondition.type) {
+      return resultCondition
     }
-    return undefined
   }
 
   trigger(conditionName: string) {
@@ -390,8 +387,9 @@ const mapCondition = (condition: Filter): Condition => {
       con = {
         type: 'session_duration',
         // @ts-ignore
-        value: condition.value[0],
+        value: condition.value,
         key: '',
+        operator: 'is',
       }
       break
     case 'fetchUrl':

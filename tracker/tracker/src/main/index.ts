@@ -201,7 +201,8 @@ export default class API {
     Timing(app, options)
     Focus(app)
     Fonts(app)
-    if (!options.network.disabled) {
+    const skipNetwork = options.network?.disabled
+    if (!skipNetwork) {
       Network(app, options.network)
     }
     Selection(app)

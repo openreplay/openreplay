@@ -122,7 +122,8 @@ export const EventsList = observer((props: Props) => {
     actions = [],
     onAddFilter,
     cannotAdd,
-    excludeCategory
+    excludeCategory,
+    borderless
   } = props;
 
   const filters = filter.filters;
@@ -199,8 +200,10 @@ export const EventsList = observer((props: Props) => {
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
-      className={
-        'border-b border-b-gray-lighter pt-2 px-4 rounded-xl bg-white border border-gray-lighter'
+      className={cn(
+      'bg-white',
+        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
+      )
       }
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
@@ -217,6 +220,7 @@ export const EventsList = observer((props: Props) => {
             mode={'events'}
             filter={undefined}
             onFilterClick={onAddFilter}
+            excludeFilterKeys={excludeFilterKeys}
             excludeCategory={excludeCategory}
           >
             <Button
