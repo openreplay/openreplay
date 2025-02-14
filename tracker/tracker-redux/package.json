@@ -28,14 +28,15 @@
     "redux": "^4.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.8",
     "@openreplay/tracker": "file:../tracker",
-    "prettier": "^1.18.2",
-    "replace-in-files-cli": "^1.0.0",
-    "typescript": "^4.6.0-dev.20211126",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "prettier": "^1.18.2",
     "replace-in-files": "^3.0.0",
+    "replace-in-files-cli": "^1.0.0",
     "rollup": "^4.14.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^4.6.0-dev.20211126"
   }
 }

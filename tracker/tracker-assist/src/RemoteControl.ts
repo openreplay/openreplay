@@ -63,10 +63,10 @@ export default class RemoteControl {
         this.releaseControl(true)
       }
     })
-    .then(() => {
-      this.confirm?.remove()
-    })
-    .catch(e => {
+      .then(() => {
+        this.confirm?.remove()
+      })
+      .catch(e => {
         this.confirm?.remove()
         console.error(e)
       })
@@ -113,7 +113,7 @@ export default class RemoteControl {
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
   move = (id, xy) => {
-   return id === this.agentID && this.mouse?.move(xy)
+    return id === this.agentID && this.mouse?.move(xy)
   }
   private focused: HTMLElement | null = null
   click = (id, xy) => {

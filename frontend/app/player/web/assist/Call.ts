@@ -1,6 +1,3 @@
-import type Peer from 'peerjs';
-import type { MediaConnection } from 'peerjs';
-
 import type { LocalStream } from './LocalStream';
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
@@ -25,9 +22,8 @@ export default class Call {
     calling: CallingState.NoCall,
   };
 
-  private _peer: Peer | null = null;
-  private connectionAttempts: number = 0;
-  private callConnection: MediaConnection[] = [];
+  private connections: Record<string, RTCPeerConnection> = {};
+  private connectAttempts = 0;
   private videoStreams: Record<string, MediaStreamTrack> = {};
 
   constructor(
@@ -37,6 +33,7 @@ export default class Call {
     private peerID: string,
     private getAssistVersion: () => number
   ) {
+    // Обработка событий сокета
     socket.on('call_end', () => {
       this.onRemoteCallEnd()
     });
@@ -56,14 +53,13 @@ export default class Call {
     });
     socket.on('messages_gz', () => {
       if (reconnecting) {
-        // 'messages' come frequently, so it is better to have Reconnecting
+        // При восстановлении соединения инициируем повторное создание соединения
         this._callSessionPeer();
         reconnecting = false;
       }
     })
     socket.on('messages', () => {
       if (reconnecting) {
-        // 'messages' come frequently, so it is better to have Reconnecting
         this._callSessionPeer();
         reconnecting = false;
       }
@@ -71,94 +67,176 @@ export default class Call {
     socket.on('disconnect', () => {
       this.store.update({ calling: CallingState.NoCall });
     });
+
+    socket.on('webrtc_offer', (data: { from: string, offer: RTCSessionDescriptionInit }) => {
+      this.handleOffer(data);
+    });
+    socket.on('webrtc_answer', (data: { from: string, answer: RTCSessionDescriptionInit }) => {
+      this.handleAnswer(data);
+    });
+    socket.on('webrtc_ice_candidate', (data: { from: string, candidate: RTCIceCandidateInit }) => {
+      this.handleIceCandidate(data);
+    });
+
     this.assistVersion = this.getAssistVersion();
   }
 
-  private getPeer(): Promise<Peer> {
-    if (this._peer && !this._peer.disconnected) {
-      return Promise.resolve(this._peer);
+  private async createPeerConnection(remotePeerId: string): Promise<RTCPeerConnection> {
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+    console.log("PC1", pc)
+
+    // Если есть локальный поток, добавляем его треки в соединение.
+    if (this.callArgs && this.callArgs.localStream && this.callArgs.localStream.stream) {
+      this.callArgs.localStream.stream.getTracks().forEach((track) => {
+        pc.addTrack(track, this.callArgs!.localStream.stream);
+      });
     }
 
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
-
-    // @ts-ignore TODO: set module in ts settings
-    return import('peerjs').then(({ default: Peer }) => {
-      if (this.cleaned) {
-        return Promise.reject('Already cleaned');
+    pc.onicecandidate = (event) => {
+      console.log("ICE GENERATED");
+      if (event.candidate) {
+        this.socket.emit('webrtc_ice_candidate', { to: remotePeerId, candidate: event.candidate });
+      } else {
+        console.log("Сбор ICE-кандидатов завершён.");
       }
-      const peerOpts: Peer.PeerJSOption = {
-        host: urlObject.hostname,
-        path: '/assist',
-        port:
-          urlObject.port === ''
-            ? location.protocol === 'https:'
-              ? 443
-              : 80
-            : parseInt(urlObject.port),
-      };
-      if (this.config) {
-        peerOpts['config'] = {
-          iceServers: this.config,
-          //@ts-ignore
-          sdpSemantics: 'unified-plan',
-          iceTransportPolicy: 'all',
-        };
-      }
-      const peer = (this._peer = new Peer(peerOpts));
-      peer.on('call', (call) => {
-        console.log('getting call from', call.peer);
-        call.answer(this.callArgs?.localStream.stream);
-        this.callConnection.push(call);
+    };
 
-        this.callArgs?.localStream.onVideoTrack((vTrack) => {
-          const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
-          if (!sender) {
-            console.warn('No video sender found');
-            return;
-          }
-          sender.replaceTrack(vTrack);
-        });
-
-        call.on('stream', (stream) => {
-          this.videoStreams[call.peer] = stream.getVideoTracks()[0];
-          this.callArgs && this.callArgs.onStream(stream);
-        });
-
-        call.on('close', this.onRemoteCallEnd);
-        call.on('error', (e) => {
-          console.error('PeerJS error (on call):', e);
-          this.initiateCallEnd();
-          this.callArgs && this.callArgs.onError && this.callArgs.onError();
-        });
-      });
-      peer.on('error', (e) => {
-        if (e.type === 'disconnected') {
-          return peer.reconnect();
-        } else if (e.type !== 'peer-unavailable') {
-          console.error(`PeerJS error (on peer). Type ${e.type}`, e);
+    pc.ontrack = (event) => {
+      const stream = event.streams[0];
+      if (stream) {
+        this.videoStreams[remotePeerId] = stream.getVideoTracks()[0];
+        if (this.store.get().calling !== CallingState.OnCall) {
+          this.store.update({ calling: CallingState.OnCall });
         }
-      });
+        if (this.callArgs) {
+          this.callArgs.onStream(stream);
+        }
+      }
+    };
 
-      return new Promise((resolve) => {
-        peer.on('open', () => resolve(peer));
+    // Следим за состоянием соединения
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+        this.onRemoteCallEnd();
+      }
+    };
+
+    // Обработка замены трека при изменении локального видео
+    if (this.callArgs && this.callArgs.localStream) {
+      this.callArgs.localStream.onVideoTrack((vTrack: MediaStreamTrack) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+        if (!sender) {
+          console.warn('No video sender found');
+          return;
+        }
+        sender.replaceTrack(vTrack);
       });
-    });
+    }
+
+    return pc;
+  }
+
+  private async _peerConnection(remotePeerId: string) {
+    try {
+      // Создаём RTCPeerConnection
+      const pc = await this.createPeerConnection(remotePeerId);
+      this.connections[remotePeerId] = pc;
+
+      // Создаём SDP offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // Отправляем offer 
+      console.log('sending webrtc_offer to', remotePeerId);
+      this.socket.emit('webrtc_call_offer', { to: remotePeerId, offer: offer });
+      this.connectAttempts = 0;
+    } catch (e: any) {
+      console.error(e);
+      // Пробуем переподключиться
+      const tryReconnect = async (error: any) => {
+        console.log(error.type, this.connectAttempts);
+        if (error.type === 'peer-unavailable' && this.connectAttempts < 5) {
+          this.connectAttempts++;
+          console.log('reconnecting', this.connectAttempts);
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          await this._peerConnection(remotePeerId);
+        } else {
+          console.log('error', this.connectAttempts);
+          this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
+        }
+      };
+      await tryReconnect(e);
+    }
+  }
+
+  private async handleOffer(data: { from: string, offer: RTCSessionDescriptionInit }) {
+    const remotePeerId = data.from;
+    try {
+      const pc = await this.createPeerConnection(remotePeerId);
+      this.connections[remotePeerId] = pc;
+
+      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+      // Генерируем answer и устанавливаем локальное описание
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      // Отправляем answer
+      this.socket.emit('webrtc_call_answer', { to: remotePeerId, answer: answer });
+    } catch (e) {
+      console.error("Error handling offer:", e);
+      this.callArgs?.onError?.(e);
+    }
+  }
+
+  private async handleAnswer(data: { from: string, answer: RTCSessionDescriptionInit }) {
+    const remotePeerId = data.from;
+    const pc = this.connections[remotePeerId];
+    if (!pc) {
+      console.error("No connection found for remote peer", remotePeerId);
+      return;
+    }
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+    } catch (e) {
+      console.error("Error setting remote description from answer", e);
+      this.callArgs?.onError?.(e);
+    }
+  }
+
+  private async handleIceCandidate(data: { from: string, candidate: RTCIceCandidateInit }) {
+    const remotePeerId = data.from;
+    const pc = this.connections[remotePeerId];
+    if (!pc) return;
+    if (data.candidate && (data.candidate.sdpMid || data.candidate.sdpMLineIndex !== null)) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (e) {
+        console.error("Error adding ICE candidate", e);
+      }
+    } else {
+      console.warn("Пропущен некорректный ICE-кандидат:", data.candidate);
+    }
   }
 
   private handleCallEnd() {
-    if (this.store.get().calling !== CallingState.NoCall) this.callArgs && this.callArgs.onCallEnd();
+    if (this.store.get().calling !== CallingState.NoCall) {
+      this.callArgs && this.callArgs.onCallEnd();
+    }
     this.store.update({ calling: CallingState.NoCall });
-    this.callConnection[0] && this.callConnection[0].close();
+    // Закрываем все созданные RTCPeerConnection
+    Object.values(this.connections).forEach((pc) => pc.close());
+    this.connections = {};
     this.callArgs = null;
-    // TODO:  We have it separated, right? (check)
-    //this.toggleAnnotation(false)
   }
 
+  // Обработчик события завершения вызова по сигналу
   private onRemoteCallEnd = () => {
     if ([CallingState.Requesting, CallingState.Connecting].includes(this.store.get().calling)) {
       this.callArgs && this.callArgs.onReject();
-      this.callConnection[0] && this.callConnection[0].close();
+      Object.values(this.connections).forEach((pc) => pc.close());
       this.store.update({ calling: CallingState.NoCall });
       this.callArgs = null;
     } else {
@@ -166,16 +244,11 @@ export default class Call {
     }
   };
 
+  // Завершает вызов и отправляет сигнал call_end
   initiateCallEnd = async () => {
     const userName = userStore.account.name;
     this.emitData('call_end', userName);
     this.handleCallEnd();
-    // TODO:  We have it separated, right? (check)
-    // const remoteControl = this.store.get().remoteControl
-    // if (remoteControl === RemoteControlStatus.Enabled) {
-    //   this.socket.emit("release_control")
-    //   this.toggleRemoteControl(false)
-    // }
   };
 
   private emitData = (event: string, data?: any) => {
@@ -210,6 +283,9 @@ export default class Call {
     };
   }
 
+  /**
+   * Инициирует вызов
+   */
   call(thirdPartyPeers?: string[]): { end: () => void } {
     if (thirdPartyPeers && thirdPartyPeers.length > 0) {
       this.addPeerCall(thirdPartyPeers);
@@ -221,106 +297,46 @@ export default class Call {
     };
   }
 
+  // Уведомление пиров об изменении состояния локального видео
   toggleVideoLocalStream(enabled: boolean) {
-    this.getPeer().then((peer) => {
-      this.emitData('videofeed', { streamId: peer.id, enabled });
-    });
+    // Передаём сигнал через socket
+    this.socket.emit('videofeed', { streamId: this.peerID, enabled });
   }
 
-  /** Connecting to the other agents that are already
-   *  in the call with the user
+  /**
+   * Соединение с другими агентами
    */
   addPeerCall(thirdPartyPeers: string[]) {
-    thirdPartyPeers.forEach((peer) => this._peerConnection(peer));
+    thirdPartyPeers.forEach((peerId) => this._peerConnection(peerId));
   }
 
-  /** Connecting to the app user */
+  /**
+   * Соединение с основным пользователем приложения.
+   */
   private _callSessionPeer() {
     if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) {
       return;
     }
     this.store.update({ calling: CallingState.Connecting });
     const tab = this.store.get().currentTab;
-    if (!this.store.get().currentTab) {
+    if (!tab) {
       console.warn('No tab data to connect to peer');
     }
+    // Формируем идентификатор пира в зависимости от версии ассиста
     const peerId =
       this.getAssistVersion() === 1
         ? this.peerID
-        : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
+        : `${this.peerID}-${tab || Array.from(this.store.get().tabs)[0]}`;
 
     const userName = userStore.account.name;
     this.emitData('_agent_name', userName);
     void this._peerConnection(peerId);
   }
 
-  connectAttempts = 0;
-  private async _peerConnection(remotePeerId: string) {
-    try {
-      const peer = await this.getPeer();
-      // let canCall = false
-
-      const tryReconnect = async (e: any) => {
-        peer.off('error', tryReconnect)
-        console.log(e.type, this.connectAttempts);
-        if (e.type === 'peer-unavailable' && this.connectAttempts < 5) {
-          this.connectAttempts++;
-          console.log('reconnecting', this.connectAttempts);
-          await new Promise((resolve) => setTimeout(resolve, 250));
-          await this._peerConnection(remotePeerId);
-        } else {
-          console.log('error', this.connectAttempts);
-          this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
-        }
-      }
-      const call = peer.call(remotePeerId, this.callArgs!.localStream.stream);
-      peer.on('error', tryReconnect);
-
-      peer.on('connection', () => {
-        this.callConnection.push(call);
-        this.connectAttempts = 0;
-
-        this.callArgs?.localStream.onVideoTrack((vTrack) => {
-          const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
-          if (!sender) {
-            console.warn('No video sender found');
-            return;
-          }
-          sender.replaceTrack(vTrack);
-        });
-      })
-
-      call.on('stream', (stream) => {
-        this.store.get().calling !== CallingState.OnCall &&
-          this.store.update({ calling: CallingState.OnCall });
-
-        this.videoStreams[call.peer] = stream.getVideoTracks()[0];
-
-        this.callArgs && this.callArgs.onStream(stream);
-      });
-
-      call.on('close', this.onRemoteCallEnd);
-      call.on('error', (e) => {
-        console.error('PeerJS error (on call):', e);
-        this.initiateCallEnd();
-        this.callArgs && this.callArgs.onError && this.callArgs.onError();
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  private cleaned: boolean = false;
-
+  // Метод для очистки ресурсов
   clean() {
-    this.cleaned = true; // sometimes cleaned before modules loaded
     void this.initiateCallEnd();
-    if (this._peer) {
-      console.log('destroying peer...');
-      const peer = this._peer; // otherwise it calls reconnection on data chan close
-      this._peer = null;
-      peer.disconnect();
-      peer.destroy();
-    }
+    Object.values(this.connections).forEach((pc) => pc.close());
+    this.connections = {};
   }
 }

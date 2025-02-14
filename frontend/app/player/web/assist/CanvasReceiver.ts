@@ -1,4 +1,3 @@
-import Peer from 'peerjs';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
 
@@ -18,49 +17,45 @@ function draw(
 
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
-  private peer: Peer | null = null;
+  // Храним RTCPeerConnection для каждого удалённого пира
+  private connections: Map<string, RTCPeerConnection> = new Map();
+  private id: string;
 
+  //sendSignal – для отправки сигналов (offer/answer/ICE)
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
     private readonly getNode: MessageManager['getNode'],
-    private readonly agentInfo: Record<string, any>
+    private readonly agentInfo: Record<string, any>,
+    private readonly sendSignal: (data: any) => void
   ) {
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
-    const peerOpts: Peer.PeerJSOption = {
-      host: urlObject.hostname,
-      path: '/assist',
-      port:
-        urlObject.port === ''
-        ? location.protocol === 'https:'
-          ? 443
-          : 80
-        : parseInt(urlObject.port),
+    // Формируем идентификатор как в PeerJS
+    this.id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
+  }
+
+  async handleOffer(from: string, offer: RTCSessionDescriptionInit): Promise<void> {
+    const pc = new RTCPeerConnection({
+      iceServers: this.config ? this.config : [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    // Сохраняем соединение
+    this.connections.set(from, pc);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.sendSignal({ to: from, type: 'canvas_ice_candidate', candidate: event.candidate });
+      }
     };
-    if (this.config) {
-      peerOpts['config'] = {
-        iceServers: this.config,
-        //@ts-ignore
-        sdpSemantics: 'unified-plan',
-        iceTransportPolicy: 'all',
-      };
-    }
-    const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
-    const canvasPeer = new Peer(id, peerOpts);
-    this.peer = canvasPeer;
-    canvasPeer.on('error', (err) => console.error('canvas peer error', err));
-    canvasPeer.on('call', (call) => {
-      call.answer();
-      const canvasId = call.peer.split('-')[2];
-      call.on('stream', (stream) => {
+
+    pc.ontrack = (event) => {
+      const stream = event.streams[0];
+      if (stream) {
+        // Определяем canvasId из удалённого peer id
+        const canvasId = from.split('-')[2];
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
-          const videoEl = spawnVideo(
-            this.streams.get(canvasId)?.clone() as MediaStream,
-            node as VElement
-          );
+          const videoEl = spawnVideo(stream.clone() as MediaStream, node as VElement);
           if (node) {
             draw(
               videoEl,
@@ -69,19 +64,34 @@ export default class CanvasReceiver {
             );
           }
         }, 250);
-      });
-      call.on('error', (err) => console.error('canvas call error', err));
-    });
+      }
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    this.sendSignal({ to: from, type: 'canvas_answer', answer: answer });
+  }
+
+  async handleCandidate(from: string, candidate: RTCIceCandidateInit): Promise<void> {
+    const pc = this.connections.get(from);
+    if (pc) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error('Error adding ICE candidate', e);
+      }
+    }
   }
 
   clear() {
-    if (this.peer) {
-      // otherwise it calls reconnection on data chan close
-      const peer = this.peer;
-      this.peer = null;
-      peer.disconnect();
-      peer.destroy();
-    }
+    this.connections.forEach((pc) => {
+      pc.close();
+    });
+    this.connections.clear();
+    this.streams.clear();
   }
 }
 
