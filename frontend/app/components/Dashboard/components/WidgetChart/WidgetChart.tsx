@@ -205,6 +205,7 @@ function WidgetChart(props: Props) {
     period,
     depsString,
     dashboardStore.selectedDensity,
+    _metric.metricOf
   ]);
   useEffect(() => {
     setCompData(null);
