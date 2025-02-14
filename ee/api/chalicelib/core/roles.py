@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -78,6 +79,21 @@ def update(tenant_id, user_id, role_id, data: schemas.RolePayloadSchema):
 
     return helper.dict_to_camel_case(row)
 
+def update_group_name(tenant_id, group_id, name):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""UPDATE public.roles 
+                                SET name= %(name)s
+                                WHERE roles.data->>'group_id' = %(group_id)s
+                                    AND tenant_id = %(tenant_id)s
+                                    AND deleted_at ISNULL
+                                    AND protected = FALSE
+                                RETURNING *;""",
+                            {"tenant_id": tenant_id, "group_id": group_id, "name": name })
+        cur.execute(query=query)
+        row = cur.fetchone()
+
+    return helper.dict_to_camel_case(row)
+
 
 def create(tenant_id, user_id, data: schemas.RolePayloadSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
@@ -98,6 +114,35 @@ def create(tenant_id, user_id, data: schemas.RolePayloadSchema):
                                RETURNING *;""",
                             {"tenant_id": tenant_id, "name": data.name, "description": data.description,
                              "permissions": data.permissions, "all_projects": data.all_projects})
+        cur.execute(query=query)
+        row = cur.fetchone()
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        row["projects"] = []
+        if not data.all_projects:
+            role_id = row["role_id"]
+            query = cur.mogrify(f"""INSERT INTO roles_projects(role_id, project_id)
+                                    VALUES {",".join(f"(%(role_id)s,%(project_id_{i})s)" for i in range(len(data.projects)))}
+                                    RETURNING project_id;""",
+                                {"role_id": role_id, **{f"project_id_{i}": p for i, p in enumerate(data.projects)}})
+            cur.execute(query=query)
+            row["projects"] = [r["project_id"] for r in cur.fetchall()]
+    return helper.dict_to_camel_case(row)
+
+def create_as_admin(tenant_id, group_id, data: schemas.RolePayloadSchema):
+    
+    if __exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
+
+    if not data.all_projects and (data.projects is None or len(data.projects) == 0):
+        return {"errors": ["must specify a project or all projects"]}
+    if data.projects is not None and len(data.projects) > 0 and not data.all_projects:
+        data.projects = projects.is_authorized_batch(project_ids=data.projects, tenant_id=tenant_id)
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""INSERT INTO roles(tenant_id, name, description, permissions, all_projects, data)
+                               VALUES (%(tenant_id)s, %(name)s, %(description)s, %(permissions)s::text[], %(all_projects)s, %(data)s)
+                               RETURNING *;""",
+                            {"tenant_id": tenant_id, "name": data.name, "description": data.description,
+                             "permissions": data.permissions, "all_projects": data.all_projects, "data": json.dumps({ "group_id": group_id })})
         cur.execute(query=query)
         row = cur.fetchone()
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
@@ -133,6 +178,27 @@ def get_roles(tenant_id):
             r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
     return helper.list_to_camel_case(rows)
 
+def get_roles_with_uuid(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT roles.*, COALESCE(projects, '{}') AS projects
+                               FROM public.roles
+                                    LEFT JOIN LATERAL (SELECT array_agg(project_id) AS projects
+                                                       FROM roles_projects
+                                                         INNER JOIN projects USING (project_id)
+                                                       WHERE roles_projects.role_id = roles.role_id
+                                                          AND projects.deleted_at ISNULL ) AS role_projects ON (TRUE)
+                               WHERE tenant_id =%(tenant_id)s
+                                    AND data ? 'group_id'
+                                    AND deleted_at IS NULL
+                                    AND not service_role
+                               ORDER BY role_id;""",
+                            {"tenant_id": tenant_id})
+        cur.execute(query=query)
+        rows = cur.fetchall()
+        for r in rows:
+            r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+    return helper.list_to_camel_case(rows)
+
 
 def get_role_by_name(tenant_id, name):
     with pg_client.PostgresClient() as cur:
@@ -155,7 +221,7 @@ def delete(tenant_id, user_id, role_id):
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""SELECT 1 
+        query = cur.mogrify("""SELECT 1
                                FROM public.roles 
                                WHERE role_id = %(role_id)s
                                     AND tenant_id = %(tenant_id)s
@@ -165,7 +231,7 @@ def delete(tenant_id, user_id, role_id):
         cur.execute(query=query)
         if cur.fetchone() is not None:
             return {"errors": ["this role is protected"]}
-        query = cur.mogrify("""SELECT 1 
+        query = cur.mogrify("""SELECT 1
                                FROM public.users 
                                WHERE role_id = %(role_id)s
                                     AND tenant_id = %(tenant_id)s
@@ -183,6 +249,29 @@ def delete(tenant_id, user_id, role_id):
         cur.execute(query=query)
     return get_roles(tenant_id=tenant_id)
 
+def delete_scim_group(tenant_id, group_uuid):
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 1
+                               FROM public.roles 
+                               WHERE data->>'group_id' = %(group_uuid)s
+                                    AND tenant_id = %(tenant_id)s
+                                    AND protected = TRUE
+                               LIMIT 1;""",
+                            {"tenant_id": tenant_id, "group_uuid": group_uuid})
+        cur.execute(query)
+        if cur.fetchone() is not None:
+            return {"errors": ["this role is protected"]}
+
+        query = cur.mogrify(
+            f"""DELETE FROM public.roles
+                WHERE roles.data->>'group_id' = %(group_uuid)s;""",  # removed this: AND users.deleted_at IS NOT NULL 
+            {"group_uuid": group_uuid})
+        cur.execute(query)
+
+    return get_roles(tenant_id=tenant_id)
+
+
 
 def get_role(tenant_id, role_id):
     with pg_client.PostgresClient() as cur:
@@ -194,6 +283,22 @@ def get_role(tenant_id, role_id):
                                     AND role_id = %(role_id)s
                                LIMIT 1;""",
                             {"tenant_id": tenant_id, "role_id": role_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+        if row is not None:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
+
+def get_role_by_group_id(tenant_id, group_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT roles.*
+                               FROM public.roles
+                               WHERE tenant_id =%(tenant_id)s
+                                    AND deleted_at IS NULL
+                                    AND not service_role
+                                    AND data->>'group_id' = %(group_id)s
+                               LIMIT 1;""",
+                            {"tenant_id": tenant_id, "group_id": group_id})
         cur.execute(query=query)
         row = cur.fetchone()
         if row is not None:
