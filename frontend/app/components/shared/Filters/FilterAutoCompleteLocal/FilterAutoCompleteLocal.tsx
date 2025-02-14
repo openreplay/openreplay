@@ -18,6 +18,7 @@ interface Props {
   allowDecimals?: boolean;
   modalProps?: Record<string, any>;
   onApplyValues: (values: string[]) => void;
+  isAutoOpen?: boolean;
 }
 
 function FilterAutoCompleteLocal(props: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) {

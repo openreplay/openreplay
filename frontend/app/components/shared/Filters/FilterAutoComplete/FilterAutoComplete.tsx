@@ -44,6 +44,7 @@ interface Props {
   hideOrText?: boolean;
   onApplyValues: (values: string[]) => void;
   modalProps?: Record<string, any>
+  isAutoOpen?: boolean;
 }
 
 const FilterAutoComplete = observer(

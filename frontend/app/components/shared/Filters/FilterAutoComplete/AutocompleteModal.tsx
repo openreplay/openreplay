@@ -234,6 +234,7 @@ interface Props {
   placeholder?: string;
   modalProps?: any;
   mapValues?: (value: string) => string;
+  isAutoOpen?: boolean;
 }
 
 export function AutoCompleteContainer(props: Props) {
@@ -241,6 +242,15 @@ export function AutoCompleteContainer(props: Props) {
   const [showValueModal, setShowValueModal] = useState(false);
   const [hovered, setHovered] = useState(false);
   const isEmpty = props.value.length === 0 || !props.value[0];
+
+  React.useEffect(() => {
+    if (props.isAutoOpen) {
+      setTimeout(() => {
+        setShowValueModal(true);
+      }, 1)
+    }
+  }, [props.isAutoOpen])
+
   const onClose = () => setShowValueModal(false);
   const onApply = (values: string[]) => {
     setTimeout(() => {

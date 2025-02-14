@@ -19,6 +19,7 @@ export interface IFilter {
   eventsHeader: string;
   page: number;
   limit: number;
+  autoOpen: boolean;
 
   merge(filter: any): void;
 
@@ -62,6 +63,7 @@ export default class Filter implements IFilter {
 
   filterId: string = '';
   name: string = '';
+  autoOpen = false;
   filters: FilterItem[] = [];
   excludes: FilterItem[] = [];
   eventsOrder: string = 'then';

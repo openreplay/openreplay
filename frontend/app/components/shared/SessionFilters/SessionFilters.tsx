@@ -57,6 +57,7 @@ function SessionFilters() {
   }, [appliedFilter.filters]);
 
   const onAddFilter = (filter: any) => {
+    filter.autoOpen = true;
     searchStore.addFilter(filter);
   };
 
