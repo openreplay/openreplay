@@ -38,6 +38,7 @@ const components: any = {
   ActivityPure: lazy(() => import('Components/DataManagement/Activity/Page')),
   UserPage: lazy(() => import('Components/DataManagement/UsersEvents/UserPage')),
   UsersEventsPage: lazy(() => import('Components/DataManagement/UsersEvents/ListPage')),
+  EventPage: lazy(() => import('Components/DataManagement/UsersEvents/EventPage')),
 };
 
 const enhancedComponents: any = {
@@ -62,6 +63,7 @@ const enhancedComponents: any = {
   Activity: components.ActivityPure,
   UserPage: components.UserPage,
   UsersEventsPage: components.UsersEventsPage,
+  EventPage: components.EventPage,
 };
 
 const { withSiteId } = routes;
@@ -111,6 +113,7 @@ const DATA_MANAGEMENT = {
   ACTIVITY: routes.dataManagement.activity(),
   USER_PAGE: routes.dataManagement.userPage(),
   USERS_EVENTS: routes.dataManagement.usersEvents(),
+  EVENT_PAGE: routes.dataManagement.eventPage(),
 }
 
 function PrivateRoutes() {
@@ -314,6 +317,12 @@ function PrivateRoutes() {
           strict
           path={withSiteId(DATA_MANAGEMENT.USERS_EVENTS, siteIdList)}
           component={enhancedComponents.UsersEventsPage}
+        />
+        <Route
+          exact
+          strict
+          path={withSiteId(DATA_MANAGEMENT.EVENT_PAGE, siteIdList)}
+          component={enhancedComponents.EventPage}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />

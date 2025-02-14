@@ -182,6 +182,7 @@ export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) => hashed(`/data-management/user/${id}`, hash),
   usersEvents: () => '/data-management/users-and-events',
+  eventPage: (id = ':eventId', hash?: string | number) => hashed(`/data-management/event/${id}`, hash),
 }
 
 const REQUIRED_SITE_ID_ROUTES = [
@@ -230,6 +231,7 @@ const REQUIRED_SITE_ID_ROUTES = [
   dataManagement.activity(),
   dataManagement.userPage(''),
   dataManagement.usersEvents(),
+  dataManagement.eventPage(''),
 ];
 const routeNeedsSiteId = (path: string): boolean =>
   REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));
