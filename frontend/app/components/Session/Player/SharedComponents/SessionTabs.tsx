@@ -12,6 +12,8 @@ interface Props {
   hideModal: () => void;
 }
 
+const DISPLAY_LIMIT = 5
+
 function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
   return (
     <div className={'h-screen overflow-y-scroll'}>
@@ -45,8 +47,8 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     idx,
     isClosed: closedTabs.includes(tab)
   }));
-  const shouldTruncate = tabsArr.length > 10;
-  const actualTabs = shouldTruncate ? tabsArr.slice(0, 10) : tabsArr;
+  const shouldTruncate = tabsArr.length > DISPLAY_LIMIT;
+  const actualTabs = shouldTruncate ? tabsArr.slice(0, DISPLAY_LIMIT) : tabsArr;
 
   const shownTabs =
     actualTabs.findIndex((el) => el.tab === currentTab) !== -1
@@ -86,18 +88,16 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
       ))}
       {shouldTruncate ? (
         <>
-          {tabsArr.length > 11 ? (
-            <div
-              onClick={openModal}
-              className={cn(
-                'self-end py-1 px-4 text-sm',
-                'cursor-pointer bg-active-blue text-blue',
-                '!border-t-transparent !border-l-transparent !border-r-transparent'
-              )}
-            >
-              +{tabsArr.length - 11} More
-            </div>
-          ) : null}
+          <div
+            onClick={openModal}
+            className={cn(
+              'self-end py-1 px-4 text-sm',
+              'cursor-pointer bg-active-blue text-blue',
+              '!border-t-transparent !border-l-transparent !border-r-transparent'
+            )}
+          >
+            +{tabsArr.length - DISPLAY_LIMIT} More
+          </div>
         </>
       ) : null}
     </>
