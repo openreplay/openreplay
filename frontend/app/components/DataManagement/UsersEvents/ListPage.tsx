@@ -20,6 +20,8 @@ function ListPage() {
   const history = useHistory();
   const toUser = (id: string) =>
     history.push(withSiteId(dataManagement.userPage(id), siteId));
+  const toEvent = (id: string) =>
+    history.push(withSiteId(dataManagement.eventPage(id), siteId));
   const [view, setView] = React.useState('users');
 
   const views = [
@@ -50,12 +52,12 @@ function ListPage() {
           <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
-      {view === 'users' ? <UsersList toUser={toUser} /> : <EventsList />}
+      {view === 'users' ? <UsersList toUser={toUser} /> : <EventsList toEvent={toEvent} />}
     </div>
   );
 }
 
-function EventsList() {
+function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
   const columns = [
     {
       title: 'Event Name',
@@ -99,7 +101,14 @@ function EventsList() {
   const limit = 10;
   return (
     <div>
-      <Table columns={columns} dataSource={list} pagination={false} />
+      <Table
+        columns={columns}
+        dataSource={list}
+        pagination={false}
+        onRow={(record) => ({
+          onClick: () => toEvent(record.eventId),
+        })}
+      />
       <FullPagination
         page={page}
         limit={limit}

@@ -14,6 +14,7 @@ export interface EventData {
 
 export default class Event {
   name: string;
+  eventId: string;
   displayName: string;
   description: string;
   monthVolume: number;
@@ -54,6 +55,7 @@ export default class Event {
       monthQuery: number;
     }) {
     this.name = name;
+    this.eventId = 'asdasd';
     this.time = time;
     this.defaultFields = defaultFields;
     this.customFields = customFields;
