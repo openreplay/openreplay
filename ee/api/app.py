@@ -26,6 +26,7 @@ from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
+    from routers import scim
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
 print(f">Loglevel set to: {loglevel}")
@@ -158,3 +159,6 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)
     app.include_router(saml.app)
     app.include_router(saml.app_apikey)
+    app.include_router(scim.public_app)
+    app.include_router(scim.app)
+    app.include_router(scim.app_apikey)
