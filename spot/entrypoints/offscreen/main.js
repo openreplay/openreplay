@@ -8,7 +8,7 @@ function getRecordingSettings(qualityValue) {
     "4k": { audioBitsPerSecond: 192000, videoBitsPerSecond: 40000000, width: 4096, height: 2160 },
     "1080p": { audioBitsPerSecond: 192000, videoBitsPerSecond: 8000000, width: 1920, height: 1080 },
     // @default
-    "720p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 1280, height: 720 },
+    "720p": { audioBitsPerSecond: 128000, videoBitsPerSecond: 2500000, width: 1280, height: 720 },
     "480p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 2500000, width: 854, height: 480 },
     "360p": { audioBitsPerSecond: 96000, videoBitsPerSecond: 1000000, width: 640, height: 360 },
     "240p": { audioBitsPerSecond: 64000, videoBitsPerSecond: 500000, width: 426, height: 240 },
