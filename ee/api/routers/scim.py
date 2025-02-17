@@ -25,7 +25,7 @@ name:
     givenName   -> from Okta
     middleName  -> from Okta
     familyName  -> from Okta
-emails:                  
+emails:
     primary     -> from Okta
     value       -> from Okta
     type        -> from Okta
@@ -68,7 +68,6 @@ class UserRequest(BaseModel):
     groups: list[dict]
     password: str = Field(default=None)
     active: bool
-
 
 class UserResponse(BaseModel):
     schemas: list[str]
@@ -176,8 +175,8 @@ def get_user(user_id: str):
 async def create_user(r: UserRequest):
     ## This needs to manage addition of previously deactivated users
     """Create SCIM User"""
-    logger.info(r)
     existing_user = users.get_by_email_only(r.userName)
+    deleted_user = users.get_deleted_user_by_email(r.userName)
     
     if existing_user:
         return JSONResponse(
@@ -188,28 +187,35 @@ async def create_user(r: UserRequest):
                 "status": 409,
             }
         )
+    elif deleted_user:
+        user_id = users.get_deleted_by_uuid(deleted_user["data"]["userId"], 1)
+        user = users.restore_scim_user(user_id=user_id["userId"], tenant_id=1, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
+                                   display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
+                                   origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId)
     else:
         try:
             # Need to handle groups later, for now ignore them
-            user = users.create_scim_user(tenant_id=1, user_uuid=uuid.uuid4().hex, username=r.emails[0].value, admin=False,
+            user = users.create_scim_user(tenant_id=1, user_uuid=uuid.uuid4().hex, email=r.emails[0].value, admin=False,
                                    display_name=r.displayName, full_name=r.name.model_dump(mode='json'), emails=r.emails[0].model_dump(mode='json'),
                                    origin="okta", locale=r.locale, role_id=None, internal_id=r.externalId) # role_id is set to 2 by default...
-            res = UserResponse(
-                schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                id = user["data"]["userId"], # Transformed to camel case
-                userName = r.userName,
-                name = r.name,
-                emails = r.emails,
-                displayName = r.displayName,
-                locale = r.locale,
-                externalId = r.externalId,
-                active = r.active, # ignore for now, since, can't insert actual timestamp
-                groups = [], # ignore
-            )
-            return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
+
+    res = UserResponse(
+        schemas = ["urn:ietf:params:scim:schemas:core:2.0:User"],
+        id = user["data"]["userId"], # Transformed to camel case
+        userName = r.userName,
+        name = r.name,
+        emails = r.emails,
+        displayName = r.displayName,
+        locale = r.locale,
+        externalId = r.externalId,
+        active = r.active, # ignore for now, since, can't insert actual timestamp
+        groups = [], # ignore
+    )
+    return JSONResponse(status_code=201, content=res.model_dump(mode='json'))
+
+            
 
 @public_app.put("/Users/{user_id}", dependencies=[Depends(auth_required)]) # insert your header later
 def update_user(user_id: str, r: UserRequest):
