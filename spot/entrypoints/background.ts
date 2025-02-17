@@ -888,7 +888,7 @@ export default defineBackground(() => {
                   const vPromise = fetch(videoURL, {
                     method: "PUT",
                     headers: {
-                      "Content-Type": "video/webm",
+                      "Content-Type": "video/mp4",
                     },
                     body: blob,
                   });
@@ -1030,7 +1030,7 @@ export default defineBackground(() => {
     }
   }
 
-  function base64ToBlob(base64: string, mimeType = "video/webm") {
+  function base64ToBlob(base64: string, mimeType = "video/mp4") {
     const binaryString = atob(base64.split(",")[1]);
     const byteNumbers = new Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
