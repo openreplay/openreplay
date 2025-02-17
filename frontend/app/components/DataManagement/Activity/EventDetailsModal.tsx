@@ -11,13 +11,13 @@ function EventDetailsModal({ ev, onClose }: { ev: EventData, onClose: () => void
       value: 'all',
     },
     {
+      label: 'Openreplay Properties',
+      value: 'default',
+    },
+    {
       label: 'Custom Properties',
       value: 'custom',
     },
-    {
-      label: 'Default Properties',
-      value: 'default',
-    }
   ]
 
   const views = [

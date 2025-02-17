@@ -108,7 +108,8 @@ function SideMenu(props: Props) {
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
-              item.isEnterprise && !isEnterprise
+              item.isEnterprise && !isEnterprise,
+              (item.key === MENU.ACTIVITY || item.key === MENU.USERS_EVENTS) && isMobile
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
