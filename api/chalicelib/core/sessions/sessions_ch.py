@@ -121,8 +121,10 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                     s.pop("main_count")
             sessions = {"count": count, "values": helper.list_to_camel_case(sessions)}
 
-        return helper.complete_missing_steps(rows=sessions, start_timestamp=data.startTimestamp,
-                                             end_timestamp=data.endTimestamp, step=step_size, neutral={"count": 0})
+        return metrics_helper.complete_missing_steps(rows=sessions,
+                                                     start_timestamp=data.startTimestamp,
+                                                     end_timestamp=data.endTimestamp, step=step_size,
+                                                     neutral={"count": 0})
 
 
 def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
