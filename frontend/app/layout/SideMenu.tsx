@@ -1,4 +1,4 @@
-import { Divider, Menu, Tag, Typography } from 'antd';
+import { Divider, Menu, Tag, Typography, Popover, Button } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -26,6 +26,7 @@ import {
   spotOnlyCats
 } from './data';
 import { useStore } from 'App/mstore';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const { Text } = Typography;
 
@@ -36,29 +37,20 @@ interface Props extends RouteComponentProps {
 
 function SideMenu(props: Props) {
   const {
-    location
+    location,
+    isCollapsed
   } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
   const [supportOpen, setSupportOpen] = React.useState(false);
   const { searchStore, projectsStore, userStore } = useStore();
-  const spotOnly = userStore.scopeState === 1;
+  const spotOnly = true; //userStore.scopeState === 1;
   const account = userStore.account;
   const modules = account.settings?.modules ?? [];
   const isAdmin = account.admin || account.superAdmin;
   const isEnterprise = userStore.isEnterprise;
   const siteId = projectsStore.siteId;
   const isMobile = projectsStore.isMobile;
-
-  const [isModalVisible, setIsModalVisible] = React.useState(false);
-
-  const handleModalOpen = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleModalClose = () => {
-    setIsModalVisible(false);
-  };
 
   let menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
@@ -151,7 +143,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
-    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
+    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId)
   };
 
   const handleClick = (item: any) => {
@@ -326,13 +318,7 @@ function SideMenu(props: Props) {
         ))}
       </Menu>
       {spotOnly && !isPreferencesActive ? (
-        <>
-          <InitORCard onOpenModal={handleModalOpen} />
-          <SpotToOpenReplayPrompt
-            isVisible={isModalVisible}
-            onCancel={handleModalClose}
-          />
-        </>
+        <SpotMenuItem isCollapsed={isCollapsed} />
       ) : null}
       <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </>
@@ -340,3 +326,32 @@ function SideMenu(props: Props) {
 }
 
 export default withRouter(observer(SideMenu));
+
+
+const SpotMenuItem = ({ isCollapsed }: any) => {
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  return (
+    <>
+      <SpotToOpenReplayPrompt
+        isVisible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+      />
+      {isCollapsed ? (
+        <Popover
+          content={<InitORCard onOpenModal={() => setIsModalVisible(true)} />}
+          trigger="hover"
+          placement="right"
+        >
+          <Button type="text" className="ml-2 mt-2 py-2">
+            <AnimatedSVG name={ICONS.LOGO_SMALL} size={20} />
+          </Button>
+        </Popover>
+      ) : (
+        <>
+          <InitORCard onOpenModal={() => setIsModalVisible(true)} />
+        </>
+      )}
+    </>
+  );
+};
