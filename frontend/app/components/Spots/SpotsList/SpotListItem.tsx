@@ -81,7 +81,7 @@ function SpotListItem({
         return setIsEdit(true);
       case 'download':
         const { url } = await onVideo(spot.spotId);
-        await downloadFile(url, `${spot.title}.webm`);
+        await downloadFile(url, `${spot.title}.mp4`);
         return;
       case 'copy':
         copy(
