@@ -23,6 +23,10 @@ export default class FilterStore {
     this.topValues[key] = vals?.filter((value) => value !== null && value.value !== '');
   };
 
+  resetValues = () => {
+    this.topValues = {};
+  }
+
   fetchTopValues = async (key: string, source?: string) => {
     if (this.topValues.hasOwnProperty(key)) {
       return Promise.resolve(this.topValues[key]);

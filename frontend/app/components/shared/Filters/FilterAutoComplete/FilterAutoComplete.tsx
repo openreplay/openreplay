@@ -60,10 +60,15 @@ const FilterAutoComplete = observer(
     );
     const [initialFocus, setInitialFocus] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { filterStore } = useStore();
+    const { filterStore, projectsStore } = useStore();
     const _params = processKey(params);
     const filterKey = `${_params.type}${_params.key || ''}`;
     const topValues = filterStore.topValues[filterKey] || [];
+
+    React.useEffect(() => {
+      filterStore.resetValues()
+      setOptions([])
+    }, [projectsStore.siteId])
 
     const loadTopValues = async () => {
       setLoading(true)
