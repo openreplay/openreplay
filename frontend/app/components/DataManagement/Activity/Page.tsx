@@ -1,8 +1,7 @@
 import React from 'react';
 import { EventsList, FilterList } from 'Shared/Filters/FilterList';
-import { Table, Dropdown } from 'antd';
+import { Dropdown, Button } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
-import { numberWithCommas } from 'App/utils';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import Event from './data/Event';
@@ -11,10 +10,12 @@ import EventDetailsModal from './EventDetailsModal';
 import { useQuery } from '@tanstack/react-query';
 import Select from 'Shared/Select';
 import { Link } from 'react-router-dom';
-import { dataManagement, withSiteId } from 'App/routes'
+import { dataManagement, withSiteId } from 'App/routes';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import FullPagination from "Shared/FullPagination";
+import FullPagination from 'Shared/FullPagination';
+import AnimatedSVG from 'Shared/AnimatedSVG';
+import DndTable from 'Shared/DNDTable';
 
 const limit = 100;
 
@@ -61,27 +62,11 @@ const fetcher = async (
   });
 };
 
-function ActivityPage() {
-  const { projectsStore } = useStore()
-  const siteId = projectsStore.activeSiteId;
+const columnOrderKey = '$__activity_columns_order__$';
 
-  const [page, setPage] = React.useState(1);
-  const [hiddenCols, setHiddenCols] = React.useState([]);
-  const { data, isPending } = useQuery({
-    queryKey: ['data', 'events', page],
-    queryFn: () => fetcher(page),
-    initialData: { list: [], total: 0 },
-  });
-  const { list, total } = data;
-  const appliedFilter = { filters: [] };
-  const onAddFilter = () => {};
-  const onUpdateFilter = () => {};
-  const onRemoveFilter = () => {};
-  const onChangeEventsOrder = () => {};
-  const saveRequestPayloads = () => {};
-  const onFilterMove = () => {};
-  const [editCols, setEditCols] = React.useState(false);
-  const { showModal, hideModal } = useModal();
+function ActivityPage() {
+  const { projectsStore } = useStore();
+  const siteId = projectsStore.activeSiteId;
 
   const dropdownItems = [
     {
@@ -90,7 +75,6 @@ function ActivityPage() {
       onClick: () => setTimeout(() => setEditCols(true), 1),
     },
   ];
-
   const columns = [
     {
       title: 'Event Name',
@@ -100,9 +84,7 @@ function ActivityPage() {
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (text, row) => (
         <div className={'flex items-center gap-2'}>
-          {row.$_isAutoCapture && (
-            <span className={'text-gray-500'}>[auto]</span>
-          )}
+          {row.$_isAutoCapture && <span className={'text-gray-500'}>[a]</span>}
           <span>{row.name}</span>
         </div>
       ),
@@ -164,7 +146,53 @@ function ActivityPage() {
     },
   ];
 
+  const [page, setPage] = React.useState(1);
+  const [cols, setCols] = React.useState(columns);
+  const [hiddenCols, setHiddenCols] = React.useState([]);
+  const { data, isPending } = useQuery({
+    queryKey: ['data', 'events', page],
+    queryFn: () => fetcher(page),
+    initialData: { list: [], total: 0 },
+  });
+  const { list, total } = data;
+  const appliedFilter = { filters: [] };
+  const onAddFilter = () => {};
+  const onUpdateFilter = () => {};
+  const onRemoveFilter = () => {};
+  const onChangeEventsOrder = () => {};
+  const saveRequestPayloads = () => {};
+  const onFilterMove = () => {};
+  const [editCols, setEditCols] = React.useState(false);
+  const { showModal, hideModal } = useModal();
 
+  React.useEffect(() => {
+    if (hiddenCols.length) {
+      setCols((cols) =>
+        cols.map((col) => ({
+          ...col,
+          hidden: hiddenCols.includes(col.key),
+        }))
+      );
+    }
+  }, [hiddenCols]);
+  React.useEffect(() => {
+    const savedColumnOrder = localStorage.getItem(columnOrderKey);
+    if (savedColumnOrder) {
+      const keys = savedColumnOrder.split(',');
+      setCols((cols) => {
+        return cols.sort((a, b) => {
+          return keys.indexOf(a.key) - keys.indexOf(b.key);
+        });
+      });
+    }
+  }, []);
+
+  const onOrderChange = (newCols) => {
+    const order = newCols.map((col) => col.key).join(',');
+    localStorage.setItem(columnOrderKey, order);
+
+    setCols(newCols);
+  };
 
   const onPageChange = (page: number) => {
     setPage(page);
@@ -177,10 +205,6 @@ function ActivityPage() {
     });
   };
 
-  const shownCols = columns.map((col) => ({
-    ...col,
-    hidden: hiddenCols.includes(col.key),
-  }));
   const onUpdateVisibleCols = (cols: string[]) => {
     setHiddenCols((_) => {
       return columns
@@ -271,23 +295,50 @@ function ActivityPage() {
               }}
             />
           </div>
-          <Table
-            loading={isPending}
-            onRow={(record) => ({
-              onClick: () => onItemClick(record),
-            })}
-            dataSource={list}
-            pagination={false}
-            columns={shownCols}
-          />
-          <FullPagination
-            page={page}
-            limit={limit}
-            total={total}
-            listLen={list.length}
-            onPageChange={onPageChange}
-            entity={'events'}
-          />
+          {total === 0 ? (
+            <div className={'flex items-center justify-center flex-col gap-4'}>
+              <AnimatedSVG name={'no-results'} size={56} />
+              <div className={'flex items-center gap-2'}>
+                <div className={'text-lg font-semibold'}>
+                  No results in the{' '}
+                </div>
+                <Select
+                  options={[
+                    { label: 'Past 24 Hours', value: 'DESC' },
+                    { label: 'Weekly', value: 'ASC' },
+                    { label: 'Other', value: 'Stuff' },
+                  ]}
+                  defaultValue={'DESC'}
+                  plain
+                  onChange={({ value }) => {
+                    console.log(value);
+                  }}
+                />
+              </div>
+              <Button type={'text'}>Refresh</Button>
+            </div>
+          ) : (
+            <>
+              <DndTable
+                loading={isPending}
+                onRow={(record) => ({
+                  onClick: () => onItemClick(record),
+                })}
+                dataSource={list}
+                pagination={false}
+                columns={cols}
+                onOrderChange={onOrderChange}
+              />
+              <FullPagination
+                page={page}
+                limit={limit}
+                total={total}
+                listLen={list.length}
+                onPageChange={onPageChange}
+                entity={'events'}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
