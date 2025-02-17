@@ -336,19 +336,3 @@ def cast_session_id_to_string(data):
     return data
 
 
-from typing import List
-
-
-def complete_missing_steps(rows: List[dict], start_timestamp: int, end_timestamp: int, step: int, neutral: dict,
-                           time_key: str = "timestamp") -> List[dict]:
-    result = []
-    i = 0
-    for t in range(start_timestamp, end_timestamp, step):
-        if i >= len(rows) or rows[i][time_key] > t:
-            neutral[time_key] = t
-            result.append(neutral.copy())
-        elif i < len(rows) and rows[i][time_key] == t:
-            result.append(rows[i])
-            i += 1
-
-    return result
