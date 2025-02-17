@@ -36,12 +36,12 @@ function getRange(rangeName, offset) {
             );
         case LAST_7_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 7 }).endOf("day"),
+              now.minus({ days: 6 }).startOf("day"),
               now.endOf("day")
             );
         case LAST_30_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 30 }).startOf("day"),
+              now.minus({ days: 29 }).startOf("day"),
               now.endOf("day")
             );
         case THIS_MONTH:
@@ -55,12 +55,12 @@ function getRange(rangeName, offset) {
             return Interval.fromDateTimes(now.minus({ hours: 48 }), now.minus({ hours: 24 }));
         case PREV_7_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 14 }).startOf("day"),
+              now.minus({ days: 13 }).startOf("day"),
               now.minus({ days: 7 }).endOf("day")
             );
         case PREV_30_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 60 }).startOf("day"),
+              now.minus({ days: 59 }).startOf("day"),
               now.minus({ days: 30 }).endOf("day")
             );
         default:
