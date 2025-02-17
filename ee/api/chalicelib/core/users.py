@@ -318,6 +318,41 @@ def get_by_uuid(user_uuid, tenant_id):
         )
         r = cur.fetchone()
         return helper.dict_to_camel_case(r)
+    
+def get_deleted_by_uuid(user_uuid, tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        users.user_id,
+                        users.tenant_id,
+                        email, 
+                        role, 
+                        users.name,
+                        users.data,
+                        users.internal_id,
+                        (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                        (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                        (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        origin,
+                        role_id,
+                        roles.name AS role_name,
+                        roles.permissions,
+                        roles.all_projects,
+                        basic_authentication.password IS NOT NULL AS has_password,
+                        users.service_account
+                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
+                        LEFT JOIN public.roles USING (role_id)
+                    WHERE
+                     users.data->>'user_id' = %(user_uuid)s
+                     AND users.tenant_id = %(tenant_id)s
+                     AND users.deleted_at IS NOT NULL
+                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s)
+                    LIMIT 1;""",
+                {"user_uuid": user_uuid, "tenant_id": tenant_id})
+        )
+        r = cur.fetchone()
+        return helper.dict_to_camel_case(r)
 
 
 
@@ -631,7 +666,7 @@ def delete_member_as_admin(tenant_id, id_to_delete):
                         users.user_id AS user_id,
                         users.tenant_id,
                         email, 
-                        role, 
+                        role,
                         users.name,
                         origin,
                         role_id,
@@ -1030,7 +1065,7 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
 def create_scim_user(
     tenant_id,
     user_uuid,
-    username,
+    email,
     admin,
     display_name,
     full_name: dict,
@@ -1065,7 +1100,7 @@ def create_scim_user(
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                            origin
                     FROM u;""",
-                            {"tenant_id": tenant_id, "email": username, "internal_id": internal_id,
+                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
                              "role": "admin" if admin else "member", "name": display_name, "origin": origin,
                              "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails})})
         cur.execute(
@@ -1213,6 +1248,116 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
+
+def restore_scim_user(
+    user_id,
+    tenant_id,
+    user_uuid,
+    email,
+    admin,
+    display_name,
+    full_name: dict,
+    emails,
+    origin,
+    locale,
+    role_id,
+    internal_id=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    WITH u AS (
+                        UPDATE public.users 
+                        SET tenant_id= %(tenant_id)s,
+                         role= %(role)s, 
+                         name= %(name)s,
+                         data= %(data)s, 
+                         origin= %(origin)s, 
+                         internal_id= %(internal_id)s, 
+                         role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))),
+                         deleted_at= NULL,
+                         created_at= default,
+                         api_key= default,
+                         jwt_iat= NULL,
+                         weekly_report= default
+                        WHERE user_id = %(user_id)s
+                        RETURNING *
+                    ),
+                    au AS (
+                        UPDATE public.basic_authentication
+                        SET password= default,
+                            invitation_token= default,
+                            invited_at= default,
+                            change_pwd_token= default,
+                            change_pwd_expire_at= default,
+                            changed_at= NULL  
+                        WHERE user_id = %(user_id)s
+                        RETURNING user_id
+                    )
+                    SELECT u.user_id                                              AS id,
+                           u.email,
+                           u.role,
+                           u.name,
+                           u.data,
+                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           origin
+                    FROM u;""",
+                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
+                             "role": "admin" if admin else "member", "name": display_name, "origin": origin,
+                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails}),
+                             "user_id": user_id})
+        cur.execute(
+            query
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+def create_scim_user2(
+    tenant_id,
+    user_uuid,
+    username,
+    admin,
+    display_name,
+    full_name: dict,
+    emails,
+    origin,
+    locale,
+    role_id,
+    internal_id=None,
+):
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    WITH u AS (
+                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
+                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s,
+                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
+                            RETURNING *
+                    ),
+                    au AS (
+                        INSERT INTO public.basic_authentication(user_id)
+                        VALUES ((SELECT user_id FROM u))
+                    )
+                    SELECT u.user_id                                              AS id,
+                           u.email,
+                           u.role,
+                           u.name,
+                           u.data,
+                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           origin
+                    FROM u;""",
+                            {"tenant_id": tenant_id, "email": username, "internal_id": internal_id,
+                             "role": "admin" if admin else "member", "name": display_name, "origin": origin,
+                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails})})
+        cur.execute(
+            query
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
 
 def get_user_settings(user_id):
     #     read user settings from users.settings:jsonb column
