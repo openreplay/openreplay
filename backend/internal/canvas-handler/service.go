@@ -80,7 +80,7 @@ func (v *ImageStorage) SaveCanvasToDisk(ctx context.Context, sessID uint64, data
 
 func (v *ImageStorage) writeToDisk(payload interface{}) {
 	task := payload.(*saveTask)
-	path := fmt.Sprintf("%s/%d/", v.basePath, task.sessionID)
+	path := fmt.Sprintf("%s%d/", v.basePath, task.sessionID)
 
 	// Ensure the directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
@@ -102,7 +102,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 }
 
 func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) error {
-	path := fmt.Sprintf("%s/%d/", v.basePath, sessID)
+	path := fmt.Sprintf("%s%d/", v.basePath, sessID)
 
 	// Check that the directory exists
 	files, err := os.ReadDir(path)
