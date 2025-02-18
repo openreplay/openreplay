@@ -36,6 +36,7 @@ const components: any = {
   UserPage: lazy(() => import('Components/DataManagement/UsersEvents/UserPage')),
   UsersEventsPage: lazy(() => import('Components/DataManagement/UsersEvents/ListPage')),
   EventPage: lazy(() => import('Components/DataManagement/UsersEvents/EventPage')),
+  PropertiesList: lazy(() => import('Components/DataManagement/Properties/ListPage')),
 };
 
 const enhancedComponents: any = {
@@ -56,6 +57,7 @@ const enhancedComponents: any = {
   UserPage: components.UserPage,
   UsersEventsPage: components.UsersEventsPage,
   EventPage: components.EventPage,
+  PropertiesList: components.PropertiesList,
 };
 
 const { withSiteId } = routes;
@@ -92,13 +94,6 @@ const SPOT_PATH = routes.spot();
 
 const HIGHLIGHTS_PATH = routes.highlights();
 const KAI_PATH = routes.kai();
-
-const DATA_MANAGEMENT = {
-  ACTIVITY: routes.dataManagement.activity(),
-  USER_PAGE: routes.dataManagement.userPage(),
-  USERS_EVENTS: routes.dataManagement.usersEvents(),
-  EVENT_PAGE: routes.dataManagement.eventPage(),
-}
 
 function PrivateRoutes() {
   const {
@@ -313,26 +308,40 @@ function PrivateRoutes() {
         <Route
           exact
           strict
-          path={withSiteId(DATA_MANAGEMENT.ACTIVITY, siteIdList)}
+          path={withSiteId(routes.dataManagement.activity(), siteIdList)}
           component={enhancedComponents.Activity}
         />
         <Route
           exact
           strict
-          path={withSiteId(DATA_MANAGEMENT.USER_PAGE, siteIdList)}
+          path={withSiteId(routes.dataManagement.userPage(), siteIdList)}
           component={enhancedComponents.UserPage}
         />
         <Route
           exact
           strict
-          path={withSiteId(DATA_MANAGEMENT.USERS_EVENTS, siteIdList)}
-          component={enhancedComponents.UsersEventsPage}
+          path={withSiteId(routes.dataManagement.users(), siteIdList)}
+        >
+          <enhancedComponents.UsersEventsPage view={'users'} />
+        </Route>
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.events(), siteIdList)}
+        >
+          <enhancedComponents.UsersEventsPage view={'events'} />
+        </Route>
+        <Route
+          exact
+          strict
+          path={withSiteId(routes.dataManagement.eventPage(), siteIdList)}
+          component={enhancedComponents.EventPage}
         />
         <Route
           exact
           strict
-          path={withSiteId(DATA_MANAGEMENT.EVENT_PAGE, siteIdList)}
-          component={enhancedComponents.EventPage}
+          path={withSiteId(routes.dataManagement.properties(), siteIdList)}
+          component={enhancedComponents.PropertiesList}
         />
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
