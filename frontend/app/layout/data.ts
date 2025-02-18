@@ -60,6 +60,7 @@ export const enum MENU {
   USERS = 'data-users',
   EVENTS = 'data-events',
   PROPS = 'data-properties',
+  DATA_MANAGEMENT = 'data-management',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -143,9 +144,11 @@ export const categories: (t: TFunction) => Category[] = (t) => [
     key: 'data-management',
     items: [
       { label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' },
-      { label: 'Users', key: MENU.USERS, icon: 'square-mouse-pointer' },
-      { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
-      { label: 'Properties', key: MENU.PROPS, icon: 'square-mouse-pointer' },
+      { label: 'Data Management', key: MENU.DATA_MANAGEMENT, icon: 'memory', children: [
+          { label: 'Users', key: MENU.USERS, icon: 'square-mouse-pointer' },
+          { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
+          { label: 'Properties', key: MENU.PROPS, icon: 'square-mouse-pointer' },
+        ]}
     ],
   },
   {
