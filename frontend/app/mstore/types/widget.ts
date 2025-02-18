@@ -314,6 +314,7 @@ export default class Widget {
         }
 
         if (this.metricType === HEATMAP) {
+            Object.assign(this.data, data);
             return;
         }
 
