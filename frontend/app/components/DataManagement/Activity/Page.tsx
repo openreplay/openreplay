@@ -16,6 +16,7 @@ import { useStore } from 'App/mstore';
 import FullPagination from 'Shared/FullPagination';
 import AnimatedSVG from 'Shared/AnimatedSVG';
 import DndTable from 'Shared/DNDTable';
+import { Code } from 'lucide-react';
 
 const limit = 100;
 
@@ -83,7 +84,8 @@ function ActivityPage() {
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (text, row) => (
-        <div className={'flex items-center gap-2'}>
+        <div className={'flex items-center gap-2 code-font'}>
+          <Code size={16} />
           {row.$_isAutoCapture && <span className={'text-gray-500'}>[a]</span>}
           <span>{row.name}</span>
         </div>
