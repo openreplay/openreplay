@@ -136,7 +136,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.USERID,
     category: CARD_CATEGORIES[1].key,
-    example: ByUser
+    example: ByUser,
+    viewType: 'table',
   },
 
   {
@@ -145,7 +146,8 @@ export const CARD_LIST: CardType[] = [
     cardType: TABLE,
     metricOf: FilterKey.USER_BROWSER,
     category: CARD_CATEGORIES[1].key,
-    example: ByBrowser
+    example: ByBrowser,
+    viewType: 'table',
   },
   // {
   //     title: 'Sessions by System',
