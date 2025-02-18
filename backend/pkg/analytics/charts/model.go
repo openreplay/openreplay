@@ -68,12 +68,14 @@ type MetricPayload struct {
 	Series         []Series   `json:"series"`
 }
 
+type FilterGroup struct {
+	Filters     []Filter   `json:"filters"`
+	EventsOrder EventOrder `json:"eventsOrder"`
+}
+
 type Series struct {
-	Name   string `json:"name"`
-	Filter struct {
-		Filters     []Filter   `json:"filters"`
-		EventsOrder EventOrder `json:"eventsOrder"`
-	} `json:"filter"`
+	Name   string      `json:"name"`
+	Filter FilterGroup `json:"filter"`
 }
 
 type Filter struct {
@@ -81,6 +83,7 @@ type Filter struct {
 	IsEvent  bool       `json:"isEvent"`
 	Value    []string   `json:"value"`
 	Operator string     `json:"operator"`
+	Source   string     `json:"source,omitempty"`
 	Filters  []Filter   `json:"filters"`
 }
 
@@ -109,11 +112,10 @@ const (
 	FilterClick           FilterType = "click"
 	FilterInput           FilterType = "input"
 	FilterLocation        FilterType = "location"
+	FilterTag             FilterType = "tag"
 	FilterCustom          FilterType = "customEvent"
 	FilterFetch           FilterType = "fetch"
-	FilterFetchStatusCode FilterType = "status"
-	FilterTag             FilterType = "tag"
-	FilterNetworkRequest  FilterType = "fetch"
+	FilterFetchStatusCode FilterType = "fetchStatusCode" // Subfilter
 	FilterGraphQLRequest  FilterType = "graphql"
 	FilterStateAction     FilterType = "stateAction"
 	FilterError           FilterType = "error"
@@ -139,7 +141,7 @@ const (
 	OperatorStringIsNot       = "isNot"
 	OperatorStringIsUndefined = "isUndefined"
 	OperatorStringNotOn       = "notOn"
-	OperatorStringContains    = "contains"
+	OperatorContains          = "contains"
 	OperatorStringNotContains = "notContains"
 	OperatorStringStartsWith  = "startsWith"
 	OperatorStringEndsWith    = "endsWith"
