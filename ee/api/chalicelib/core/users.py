@@ -277,7 +277,7 @@ def get(user_id, tenant_id):
                      users.user_id = %(userId)s
                      AND users.tenant_id = %(tenant_id)s
                      AND users.deleted_at IS NULL
-                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s) 
+                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s)
                     LIMIT 1;""",
                 {"userId": user_id, "tenant_id": tenant_id})
         )
@@ -318,7 +318,7 @@ def get_by_uuid(user_uuid, tenant_id):
         )
         r = cur.fetchone()
         return helper.dict_to_camel_case(r)
-    
+
 def get_deleted_by_uuid(user_uuid, tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -481,37 +481,7 @@ def get_by_email_only(email):
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
 
-def get_by_email_with_uuid(email):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT 
-                        users.user_id,
-                        users.tenant_id,
-                        users.email, 
-                        users.role, 
-                        users.name,
-                        users.data,
-                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        origin,
-                        basic_authentication.password IS NOT NULL AS has_password,
-                        role_id,
-                        internal_id,
-                        roles.name AS role_name
-                    FROM public.users LEFT JOIN public.basic_authentication USING(user_id)
-                                      INNER JOIN public.roles USING(role_id)
-                    WHERE users.email = %(email)s                     
-                     AND users.deleted_at IS NULL
-                    LIMIT 1;""",
-                {"email": email})
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
-
-
-def get_users_paginated(start_index, count):
+def get_users_paginated(start_index, count=None, email=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -532,10 +502,12 @@ def get_users_paginated(start_index, count):
                         roles.name AS role_name
                     FROM public.users LEFT JOIN public.basic_authentication USING(user_id)
                                       INNER JOIN public.roles USING(role_id)
-                    WHERE users.deleted_at IS NULL AND users.data ? 'user_id'
+                    WHERE users.deleted_at IS NULL 
+                        AND users.data ? 'user_id'
+                        AND email = COALESCE(%(email)s, email)
                     LIMIT %(count)s
-                    OFFSET %(startIndex)s;""",
-                {"startIndex": start_index - 1, "count": count})
+                    OFFSET %(startIndex)s;;""",
+                {"startIndex": start_index - 1, "count": count, "email": email})
         )
         r = cur.fetchall()
         if len(r):
@@ -1308,52 +1280,6 @@ def restore_scim_user(
                              "role": "admin" if admin else "member", "name": display_name, "origin": origin,
                              "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails}),
                              "user_id": user_id})
-        cur.execute(
-            query
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
-
-def create_scim_user2(
-    tenant_id,
-    user_uuid,
-    username,
-    admin,
-    display_name,
-    full_name: dict,
-    emails,
-    origin,
-    locale,
-    role_id,
-    internal_id=None,
-):
-
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
-                    WITH u AS (
-                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
-                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s,
-                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
-                            RETURNING *
-                    ),
-                    au AS (
-                        INSERT INTO public.basic_authentication(user_id)
-                        VALUES ((SELECT user_id FROM u))
-                    )
-                    SELECT u.user_id                                              AS id,
-                           u.email,
-                           u.role,
-                           u.name,
-                           u.data,
-                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           origin
-                    FROM u;""",
-                            {"tenant_id": tenant_id, "email": username, "internal_id": internal_id,
-                             "role": "admin" if admin else "member", "name": display_name, "origin": origin,
-                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now(), "user_id": user_uuid, "locale": locale, "name": full_name, "emails": emails})})
         cur.execute(
             query
         )
