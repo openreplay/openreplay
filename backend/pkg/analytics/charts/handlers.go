@@ -74,7 +74,7 @@ func (e *handlersImpl) getCardChartData(w http.ResponseWriter, r *http.Request) 
 	}
 	bodySize = len(bodyBytes)
 
-	req := &GetCardChartDataRequest{}
+	req := &MetricPayload{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return

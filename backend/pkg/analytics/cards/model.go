@@ -67,8 +67,8 @@ type CardSeries struct {
 }
 
 type SeriesFilter struct {
-	EventOrder string       `json:"eventOrder" validate:"required,oneof=then or and"`
-	Filters    []FilterItem `json:"filters"`
+	EventsOrder string       `json:"eventsOrder" validate:"required,oneof=then or and"`
+	Filters     []FilterItem `json:"filters"`
 }
 
 type FilterItem struct {

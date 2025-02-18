@@ -1,7 +1,6 @@
 package charts
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strconv"
@@ -162,7 +161,7 @@ def get_main_sessions_table(timestamp=0):
 	       and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.sessions"
 */
 func getMainSessionsTable(timestamp int64) string {
-	return "product_analytics.sessions"
+	return "experimental.sessions"
 }
 
 // Function to convert named parameters to positional parameters
@@ -272,7 +271,7 @@ func progress(oldVal, newVal uint64) float64 {
 }
 
 // Trying to find a common part
-func parse(projectID uint64, startTs, endTs int64, density int, args map[string]interface{}) ([]string, []string, map[string]interface{}) {
+func parse(projectID int, startTs, endTs int64, density int, args map[string]interface{}) ([]string, []string, map[string]interface{}) {
 	stepSize := getStepSize(startTs, endTs, density, false, 1000)
 	chSubQuery := getBasicConstraints("sessions", true, false, args, "project_id")
 	chSubQueryChart := getBasicConstraints("sessions", true, true, args, "project_id")
@@ -293,134 +292,136 @@ func parse(projectID uint64, startTs, endTs int64, density int, args map[string]
 }
 
 // Sessions trend
-func (s *chartsImpl) getProcessedSessions(projectID uint64, startTs, endTs int64, density int, args map[string]interface{}) {
-	chQuery := `
-		SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL :step_size second)) * 1000 AS timestamp,
-		COUNT(DISTINCT sessions.session_id) AS value
-    	FROM :main_sessions_table AS sessions
-    	WHERE :sub_query_chart
-    	GROUP BY timestamp
-    	ORDER BY timestamp;
-	`
-	chSubQuery, chSubQueryChart, params := parse(projectID, startTs, endTs, density, args)
-
-	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
-	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQueryChart, " AND "), -1)
-
-	preparedQuery, preparedArgs := replaceNamedParams(chQuery, params)
-	rows, err := s.chConn.Query(context.Background(), preparedQuery, preparedArgs)
-	if err != nil {
-		log.Fatalf("Error executing query: %v", err)
-	}
-	preparedRows := make([]map[string]interface{}, 0)
-	var sum uint64
-	for rows.Next() {
-		var timestamp, value uint64
-		if err := rows.Scan(&timestamp, &value); err != nil {
-			log.Fatalf("Error scanning row: %v", err)
-		}
-		fmt.Printf("Timestamp: %d, Value: %d\n", timestamp, value)
-		sum += value
-		preparedRows = append(preparedRows, map[string]interface{}{"timestamp": timestamp, "value": value})
-	}
-
-	results := map[string]interface{}{
-		"value": sum,
-		"chart": CompleteMissingSteps(startTs, endTs, int(density), map[string]interface{}{"value": 0}, preparedRows, "timestamp", 1000),
-	}
-
-	diff := endTs - startTs
-	endTs = startTs
-	startTs = endTs - diff
-
-	log.Println(results)
-
-	chQuery = fmt.Sprintf(`
-		SELECT COUNT(1) AS count
-		FROM :main_sessions_table AS sessions
-		WHERE :sub_query_chart;
-	`)
-	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
-	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQuery, " AND "), -1)
-
-	var count uint64
-
-	preparedQuery, preparedArgs = replaceNamedParams(chQuery, params)
-	if err := s.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
-		log.Fatalf("Error executing query: %v", err)
-	}
-
-	results["progress"] = progress(count, results["value"].(uint64))
-
-	// TODO: this should be returned in any case
-	results["unit"] = "COUNT"
-	fmt.Println(results)
-}
-
-// Users trend
-func (c *chartsImpl) getUniqueUsers(projectID uint64, startTs, endTs uint64, density uint64, args map[string]interface{}) {
-	chQuery := `
-		SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL :step_size second)) * 1000 AS timestamp,
-		COUNT(DISTINCT sessions.user_id) AS value
-  	FROM :main_sessions_table AS sessions
-  	WHERE :sub_query_chart
-  	GROUP BY timestamp
-  	ORDER BY timestamp;
-	`
-	chSubQuery, chSubQueryChart, params := parse(projectID, startTs, endTs, density, args)
-	chSubQueryChart = append(chSubQueryChart, []string{"isNotNull(sessions.user_id)", "sessions.user_id!=''"}...)
-
-	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
-	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQueryChart, " AND "), -1)
-
-	preparedQuery, preparedArgs := replaceNamedParams(chQuery, params)
-	rows, err := c.chConn.Query(context.Background(), preparedQuery, preparedArgs)
-	if err != nil {
-		log.Fatalf("Error executing query: %v", err)
-	}
-	preparedRows := make([]map[string]interface{}, 0)
-	var sum uint64
-	for rows.Next() {
-		var timestamp, value uint64
-		if err := rows.Scan(&timestamp, &value); err != nil {
-			log.Fatalf("Error scanning row: %v", err)
-		}
-		fmt.Printf("Timestamp: %d, Value: %d\n", timestamp, value)
-		sum += value
-		preparedRows = append(preparedRows, map[string]interface{}{"timestamp": timestamp, "value": value})
-	}
-
-	results := map[string]interface{}{
-		"value": sum,
-		"chart": CompleteMissingSteps(startTs, endTs, int(density), map[string]interface{}{"value": 0}, preparedRows, "timestamp", 1000),
-	}
-
-	diff := endTs - startTs
-	endTs = startTs
-	startTs = endTs - diff
-
-	log.Println(results)
-
-	chQuery = fmt.Sprintf(`
-		SELECT COUNT(DISTINCT user_id) AS count
-		FROM :main_sessions_table AS sessions
-		WHERE :sub_query_chart;
-	`)
-	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
-	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQuery, " AND "), -1)
-
-	var count uint64
-
-	preparedQuery, preparedArgs = replaceNamedParams(chQuery, params)
-	if err := c.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
-		log.Fatalf("Error executing query: %v", err)
-	}
-
-	results["progress"] = progress(count, results["value"].(uint64))
-
-	// TODO: this should be returned in any case
-	results["unit"] = "COUNT"
-	fmt.Println(results)
-
-	return
-}
+//func (s *chartsImpl) getProcessedSessions(projectID int, startTs, endTs int64, density int, args map[string]interface{}) (interface{}, error) {
+//	chQuery := `
+//		SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL :step_size second)) * 1000 AS timestamp,
+//		COUNT(DISTINCT sessions.session_id) AS value
+//    	FROM :main_sessions_table AS sessions
+//    	WHERE :sub_query_chart
+//    	GROUP BY timestamp
+//    	ORDER BY timestamp;
+//	`
+//	chSubQuery, chSubQueryChart, params := parse(projectID, startTs, endTs, density, args)
+//
+//	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
+//	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQueryChart, " AND "), -1)
+//
+//	preparedQuery, preparedArgs := replaceNamedParams(chQuery, params)
+//	rows, err := s.chConn.Query(context.Background(), preparedQuery, preparedArgs)
+//	if err != nil {
+//		log.Fatalf("Error executing query: %v", err)
+//	}
+//	preparedRows := make([]map[string]interface{}, 0)
+//	var sum uint64
+//	for rows.Next() {
+//		var timestamp, value uint64
+//		if err := rows.Scan(&timestamp, &value); err != nil {
+//			log.Fatalf("Error scanning row: %v", err)
+//		}
+//		fmt.Printf("Timestamp: %d, Value: %d\n", timestamp, value)
+//		sum += value
+//		preparedRows = append(preparedRows, map[string]interface{}{"timestamp": timestamp, "value": value})
+//	}
+//
+//	results := map[string]interface{}{
+//		"value": sum,
+//		"chart": CompleteMissingSteps(startTs, endTs, int(density), map[string]interface{}{"value": 0}, preparedRows, "timestamp", 1000),
+//	}
+//
+//	diff := endTs - startTs
+//	endTs = startTs
+//	startTs = endTs - diff
+//
+//	log.Println(results)
+//
+//	chQuery = fmt.Sprintf(`
+//		SELECT COUNT(1) AS count
+//		FROM :main_sessions_table AS sessions
+//		WHERE :sub_query_chart;
+//	`)
+//	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
+//	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQuery, " AND "), -1)
+//
+//	var count uint64
+//
+//	preparedQuery, preparedArgs = replaceNamedParams(chQuery, params)
+//	if err := s.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
+//		log.Fatalf("Error executing query: %v", err)
+//	}
+//
+//	results["progress"] = progress(count, results["value"].(uint64))
+//
+//	// TODO: this should be returned in any case
+//	results["unit"] = "COUNT"
+//	fmt.Println(results)
+//
+//	return results, nil
+//}
+//
+//// Users trend
+//func (s *chartsImpl) getUniqueUsers(projectID int, startTs, endTs int64, density int, args map[string]interface{}) (interface{}, error) {
+//	chQuery := `
+//		SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL :step_size second)) * 1000 AS timestamp,
+//		COUNT(DISTINCT sessions.user_id) AS value
+//  	FROM :main_sessions_table AS sessions
+//  	WHERE :sub_query_chart
+//  	GROUP BY timestamp
+//  	ORDER BY timestamp;
+//	`
+//	chSubQuery, chSubQueryChart, params := parse(projectID, startTs, endTs, density, args)
+//	chSubQueryChart = append(chSubQueryChart, []string{"isNotNull(sessions.user_id)", "sessions.user_id!=''"}...)
+//
+//	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
+//	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQueryChart, " AND "), -1)
+//
+//	preparedQuery, preparedArgs := replaceNamedParams(chQuery, params)
+//	rows, err := s.chConn.Query(context.Background(), preparedQuery, preparedArgs)
+//	if err != nil {
+//		log.Fatalf("Error executing query: %v", err)
+//	}
+//	preparedRows := make([]map[string]interface{}, 0)
+//	var sum uint64
+//	for rows.Next() {
+//		var timestamp, value uint64
+//		if err := rows.Scan(&timestamp, &value); err != nil {
+//			log.Fatalf("Error scanning row: %v", err)
+//		}
+//		fmt.Printf("Timestamp: %d, Value: %d\n", timestamp, value)
+//		sum += value
+//		preparedRows = append(preparedRows, map[string]interface{}{"timestamp": timestamp, "value": value})
+//	}
+//
+//	results := map[string]interface{}{
+//		"value": sum,
+//		"chart": CompleteMissingSteps(startTs, endTs, int(density), map[string]interface{}{"value": 0}, preparedRows, "timestamp", 1000),
+//	}
+//
+//	diff := endTs - startTs
+//	endTs = startTs
+//	startTs = endTs - diff
+//
+//	log.Println(results)
+//
+//	chQuery = fmt.Sprintf(`
+//		SELECT COUNT(DISTINCT user_id) AS count
+//		FROM :main_sessions_table AS sessions
+//		WHERE :sub_query_chart;
+//	`)
+//	chQuery = strings.Replace(chQuery, ":main_sessions_table", getMainSessionsTable(startTs), -1)
+//	chQuery = strings.Replace(chQuery, ":sub_query_chart", strings.Join(chSubQuery, " AND "), -1)
+//
+//	var count uint64
+//
+//	preparedQuery, preparedArgs = replaceNamedParams(chQuery, params)
+//	if err := s.chConn.QueryRow(context.Background(), preparedQuery, preparedArgs).Scan(&count); err != nil {
+//		log.Fatalf("Error executing query: %v", err)
+//	}
+//
+//	results["progress"] = progress(count, results["value"].(uint64))
+//
+//	// TODO: this should be returned in any case
+//	results["unit"] = "COUNT"
+//	fmt.Println(results)
+//
+//	return results, nil
+//}
