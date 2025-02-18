@@ -1,6 +1,4 @@
 import React from 'react';
-import FilterSelection from 'Shared/Filters/FilterSelection/FilterSelection';
-import User from './data/User';
 import { Input, Table, Button, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
@@ -12,8 +10,20 @@ import { list } from '../Activity/Page';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
 import FullPagination from 'Shared/FullPagination';
+import Tabs from 'Shared/Tabs'
 
-function ListPage({ view }: { view: 'users' | 'events' }) {
+function ListPage() {
+  const [view, setView] = React.useState('users');
+  const views = [
+    {
+      key: 'users',
+      label: <div className={'text-lg font-medium'}>Users</div>,
+    },
+    {
+      key: 'events',
+      label: <div className={'text-lg font-medium'}>Events</div>,
+    },
+  ];
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
@@ -28,7 +38,11 @@ function ListPage({ view }: { view: 'users' | 'events' }) {
       style={{ maxWidth: 1360 }}
     >
       <div className={'flex items-center justify-between border-b px-4 pt-2 '}>
-        <div className={'font-semibold text-lg capitalize'}>{view}</div>
+        <Tabs
+          activeKey={view}
+          onChange={(key) => setView(key)}
+          items={views}
+        />
         <div className="flex items-center gap-2">
           <Button type={'text'} icon={<Album size={14} />}>
             Docs
@@ -36,15 +50,15 @@ function ListPage({ view }: { view: 'users' | 'events' }) {
           <Input.Search size={'small'} placeholder={'Name, email, ID'} />
         </div>
       </div>
-      {view === 'users' ? <UsersList toUser={toUser} /> : <EventsList toEvent={toEvent} />}
+      {view === 'users' ? <UserPropsList toUser={toUser} /> : <EventPropsList toEvent={toEvent} />}
     </div>
   );
 }
 
-function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
+function EventPropsList({ toEvent }: { toEvent: (id: string) => void }) {
   const columns = [
     {
-      title: 'Event Name',
+      title: 'Property',
       dataIndex: 'name',
       key: 'name',
       showSorterTooltip: { target: 'full-header' },
@@ -70,13 +84,6 @@ function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
       key: 'monthVolume',
       showSorterTooltip: { target: 'full-header' },
       sorter: (a, b) => a.monthVolume.localeCompare(b.monthVolume),
-    },
-    {
-      title: '30 Day Queries',
-      dataIndex: 'monthQuery',
-      key: 'monthQuery',
-      showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.monthQuery.localeCompare(b.monthQuery),
     },
   ];
   const page = 1;
@@ -105,55 +112,9 @@ function EventsList({ toEvent }: { toEvent: (id: string) => void }) {
   );
 }
 
-function UsersList({ toUser }: { toUser: (id: string) => void }) {
+function UserPropsList({ toUser }: { toUser: (id: string) => void }) {
   const [editCols, setEditCols] = React.useState(false);
   const [hiddenCols, setHiddenCols] = React.useState([]);
-  const testUsers = [
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['123123123123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-    new User({
-      name: 'test123',
-      userId: 'email@id.com',
-      distinctId: ['1231214143123'],
-      userLocation: 'NY',
-      cohorts: ['test'],
-      properties: {
-        email: 'sad;jsadk',
-      },
-      updatedAt: Date.now(),
-    }),
-  ];
 
   const dropdownItems = [
     {
@@ -171,25 +132,25 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Email',
-      dataIndex: 'userId',
-      key: 'userId',
+      title: 'Display Name',
+      dataIndex: 'displayName',
+      key: 'displayName',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.userId.localeCompare(b.userId),
+      sorter: (a, b) => a.displayName.localeCompare(b.displayName),
     },
     {
-      title: 'Distinct ID',
-      dataIndex: 'distinctId',
-      key: 'distinctId',
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.distinctId[0].localeCompare(b.distinctId[0]),
+      sorter: (a, b) => a.description.localeCompare(b.description),
     },
     {
-      title: 'Updated',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
+      title: '# Users',
+      dataIndex: 'users',
+      key: 'users',
       showSorterTooltip: { target: 'full-header' },
-      sorter: (a, b) => a.updatedAt.localeCompare(b.updatedAt),
+      sorter: (a, b) => a.users.localeCompare(b.users),
     },
     {
       title: (
@@ -235,34 +196,6 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
   };
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-2 px-4 pb-2">
-        {/* 1.23 -- <span>Show by</span>*/}
-        {/*<Segmented*/}
-        {/*  size={'small'}*/}
-        {/*  options={[*/}
-        {/*    { label: 'Profiles', value: 'profiles' },*/}
-        {/*    { label: 'Company', value: 'company' },*/}
-        {/*  ]}*/}
-        {/*/>*/}
-        <FilterSelection
-          mode={'filters'}
-          filter={undefined}
-          onFilterClick={onAddFilter}
-          disabled={false}
-          excludeFilterKeys={excludeFilterKeys}
-          excludeCategory={excludeCategory}
-          isLive={false}
-        >
-          <Button
-            icon={<Filter size={16} strokeWidth={1} />}
-            type="default"
-            size={'small'}
-            className="btn-add-filter"
-          >
-            Filters
-          </Button>
-        </FilterSelection>
-      </div>
       <div className={'relative'}>
         {editCols ? (
           <OutsideClickDetectingDiv onClickOutside={() => setEditCols(false)}>
@@ -280,7 +213,7 @@ function UsersList({ toUser }: { toUser: (id: string) => void }) {
           })}
           pagination={false}
           rowClassName={'cursor-pointer'}
-          dataSource={testUsers}
+          dataSource={[]}
           columns={shownCols}
         />
       </div>

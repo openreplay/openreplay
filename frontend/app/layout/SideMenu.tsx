@@ -98,6 +98,7 @@ function SideMenu(props: Props) {
             }
             if (item.hidden) return item;
 
+            const dataAnalytics = [MENU.ACTIVITY, MENU.USERS, MENU.EVENTS]
             const isHidden = [
               item.key === MENU.RECOMMENDATIONS &&
               modules.includes(MODULES.RECOMMENDATIONS),
@@ -109,7 +110,7 @@ function SideMenu(props: Props) {
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
               item.isAdmin && !isAdmin,
               item.isEnterprise && !isEnterprise,
-              (item.key === MENU.ACTIVITY || item.key === MENU.USERS_EVENTS) && isMobile
+              dataAnalytics.includes(item.key) && isMobile
             ].some((cond) => cond);
 
             return { ...item, hidden: isHidden };
@@ -154,7 +155,9 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
     [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
     [MENU.ACTIVITY]: () => withSiteId(routes.dataManagement.activity(), siteId),
-    [MENU.USERS_EVENTS]: () => withSiteId(routes.dataManagement.usersEvents(), siteId),
+    [MENU.USERS]: () => withSiteId(routes.dataManagement.users(), siteId),
+    [MENU.EVENTS]: () => withSiteId(routes.dataManagement.events(), siteId),
+    [MENU.PROPS]: () => withSiteId(routes.dataManagement.properties(), siteId),
   };
 
   const handleClick = (item: any) => {
