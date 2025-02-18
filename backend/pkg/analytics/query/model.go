@@ -1,10 +1,9 @@
-package charts
+package query
 
 type Table string
 type Column string
 type MetricType string
 type FilterType string
-type EventType string
 type EventOrder string
 
 const (
@@ -66,6 +65,7 @@ type MetricPayload struct {
 	ViewType       string     `json:"viewType"`
 	Name           string     `json:"name"`
 	Series         []Series   `json:"series"`
+	CompareTo      *string    `json:"compareTo"`
 }
 
 type Series struct {
@@ -85,50 +85,41 @@ type Filter struct {
 }
 
 const (
-	FilterUserId          FilterType = "userId"
-	FilterUserAnonymousId FilterType = "userAnonymousId"
-	FilterReferrer        FilterType = "referrer"
-	FilterDuration        FilterType = "duration"
-	FilterUtmSource       FilterType = "utmSource"
-	FilterUtmMedium       FilterType = "utmMedium"
-	FilterUtmCampaign     FilterType = "utmCampaign"
-	FilterUserCountry     FilterType = "userCountry"
-	FilterUserCity        FilterType = "userCity"
-	FilterUserState       FilterType = "userState"
-	FilterUserOs          FilterType = "userOs"
-	FilterUserBrowser     FilterType = "userBrowser"
-	FilterUserDevice      FilterType = "userDevice"
-	FilterPlatform        FilterType = "platform"
-	FilterRevId           FilterType = "revId"
-	FilterIssue           FilterType = "issue"
-	FilterMetadata        FilterType = "metadata"
-)
-
-// Event filters
-const (
-	FilterClick           FilterType = "click"
-	FilterInput           FilterType = "input"
-	FilterLocation        FilterType = "location"
-	FilterCustom          FilterType = "customEvent"
-	FilterFetch           FilterType = "fetch"
-	FilterFetchStatusCode FilterType = "status"
-	FilterTag             FilterType = "tag"
-	FilterNetworkRequest  FilterType = "fetch"
-	FilterGraphQLRequest  FilterType = "graphql"
-	FilterStateAction     FilterType = "stateAction"
-	FilterError           FilterType = "error"
-	FilterAvgCpuLoad      FilterType = "avgCpuLoad"
-	FilterAvgMemoryUsage  FilterType = "avgMemoryUsage"
-)
-
-// MOBILE FILTERS
-const (
+	FilterUserOs             FilterType = "userOs"
+	FilterUserBrowser        FilterType = "userBrowser"
+	FilterUserDevice         FilterType = "userDevice"
+	FilterUserCountry        FilterType = "userCountry"
+	FilterUserCity           FilterType = "userCity"
+	FilterUserState          FilterType = "userState"
+	FilterUserId             FilterType = "userId"
+	FilterUserAnonymousId    FilterType = "userAnonymousId"
+	FilterReferrer           FilterType = "referrer"
+	FilterRevId              FilterType = "revId"
 	FilterUserOsIos          FilterType = "userOsIos"
 	FilterUserDeviceIos      FilterType = "userDeviceIos"
 	FilterUserCountryIos     FilterType = "userCountryIos"
 	FilterUserIdIos          FilterType = "userIdIos"
 	FilterUserAnonymousIdIos FilterType = "userAnonymousIdIos"
 	FilterRevIdIos           FilterType = "revIdIos"
+	FilterDuration           FilterType = "duration"
+	FilterPlatform           FilterType = "platform"
+	FilterMetadata           FilterType = "metadata"
+	FilterIssue              FilterType = "issue"
+	FilterEventsCount        FilterType = "eventsCount"
+	FilterUtmSource          FilterType = "utmSource"
+	FilterUtmMedium          FilterType = "utmMedium"
+	FilterUtmCampaign        FilterType = "utmCampaign"
+	FilterThermalState       FilterType = "thermalState"
+	FilterMainThreadCPU      FilterType = "mainThreadCPU"
+	FilterViewComponent      FilterType = "viewComponent"
+	FilterLogEvent           FilterType = "logEvent"
+	FilterMemoryUsage        FilterType = "memoryUsage"
+	FilterClick              FilterType = "click"
+	FilterInput              FilterType = "input"
+	FilterLocation           FilterType = "location"
+	FilterCustom             FilterType = "customEvent"
+	FilterFetch              FilterType = "fetch"
+	FilterFetchStatusCode    FilterType = "status"
 )
 
 const (
@@ -144,12 +135,3 @@ const (
 	OperatorStringStartsWith  = "startsWith"
 	OperatorStringEndsWith    = "endsWith"
 )
-
-type DataPoint struct {
-	Timestamp uint64 `json:"timestamp"`
-	Count     uint64 `json:"count"`
-}
-
-//type TimeseriesResponse struct {
-//	Data []DataPoint `json:"data"`
-//}
