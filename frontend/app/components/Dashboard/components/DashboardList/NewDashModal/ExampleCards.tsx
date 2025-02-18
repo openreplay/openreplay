@@ -87,7 +87,8 @@ export const CARD_LIST: CardType[] = [
     cardType: HEATMAP,
     metricOf: 'heatMapUrl',
     category: CARD_CATEGORIES[0].key,
-    example: HeatmapsExample
+    example: HeatmapsExample,
+    viewType: 'chart',
   },
   {
     title: 'Untitled Journey',
