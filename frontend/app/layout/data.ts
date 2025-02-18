@@ -56,8 +56,10 @@ export const enum MENU {
   SPOTS = 'spots',
   KAI = 'kai',
   ACTIVITY = 'activity',
-  USER_PAGE = 'user-page',
-  USERS_EVENTS = 'users-events',
+  USER = 'user-page',
+  USERS = 'data-users',
+  EVENTS = 'data-events',
+  PROPS = 'data-properties',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -139,7 +141,12 @@ export const categories: (t: TFunction) => Category[] = (t) => [
   {
     title: 'Data Management',
     key: 'data-management',
-    items: [{ label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' }, { label: 'Users and Events', key: MENU.USERS_EVENTS, icon: 'square-mouse-pointer' }],
+    items: [
+      { label: 'Activity', key: MENU.ACTIVITY, icon: 'square-mouse-pointer' },
+      { label: 'Users', key: MENU.USERS, icon: 'square-mouse-pointer' },
+      { label: 'Events', key: MENU.EVENTS, icon: 'square-mouse-pointer' },
+      { label: 'Properties', key: MENU.PROPS, icon: 'square-mouse-pointer' },
+    ],
   },
   {
     title: t('Product Optimization'),

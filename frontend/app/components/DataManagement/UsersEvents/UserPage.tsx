@@ -118,7 +118,7 @@ function UserInfo() {
   return (
     <>
       <Breadcrumb items={[
-        { label: 'Users', to: dataManagement.usersEvents(), withSiteId: true },
+        { label: 'Users', to: dataManagement.users(), withSiteId: true },
         { label: testUser.name },
       ]} />
 
