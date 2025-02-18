@@ -199,8 +199,31 @@ def get_roles_with_uuid(tenant_id):
             r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
     return helper.list_to_camel_case(rows)
 
+def get_roles_with_uuid_paginated(tenant_id, start_index, count=None, name=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT roles.*, COALESCE(projects, '{}') AS projects
+                               FROM public.roles
+                                    LEFT JOIN LATERAL (SELECT array_agg(project_id) AS projects
+                                                       FROM roles_projects
+                                                         INNER JOIN projects USING (project_id)
+                                                       WHERE roles_projects.role_id = roles.role_id
+                                                          AND projects.deleted_at ISNULL ) AS role_projects ON (TRUE)
+                               WHERE tenant_id =%(tenant_id)s
+                                    AND data ? 'group_id'
+                                    AND deleted_at IS NULL
+                                    AND not service_role
+                                    AND name = COALESCE(%(name)s, name)
+                               ORDER BY role_id
+                               LIMIT %(count)s
+                               OFFSET %(startIndex)s;""",
+                            {"tenant_id": tenant_id, "name": name, "startIndex": start_index - 1, "count": count})
+        cur.execute(query=query)
+        rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)
+
 
 def get_role_by_name(tenant_id, name):
+    ### "name" isn't unique in database
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT *
                                FROM public.roles
@@ -303,4 +326,57 @@ def get_role_by_group_id(tenant_id, group_id):
         row = cur.fetchone()
         if row is not None:
             row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
+
+def get_users_by_group_uuid(tenant_id, group_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 
+                                    u.user_id,
+                                    u.name,
+                                    u.data
+                               FROM public.roles r
+                               LEFT JOIN public.users u USING (role_id, tenant_id)
+                               WHERE u.tenant_id = %(tenant_id)s
+                                    AND u.deleted_at IS NULL
+                                    AND r.data->>'group_id' = %(group_id)s
+                            """,
+                            {"tenant_id": tenant_id, "group_id": group_id})
+        cur.execute(query=query)
+        rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)
+
+def get_member_permissions(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 
+                                    r.permissions
+                                FROM public.roles r
+                                WHERE r.tenant_id = %(tenant_id)s
+                                    AND r.name = 'Member'
+                                    AND r.deleted_at IS NULL
+                            """,
+                            {"tenant_id": tenant_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+def remove_group_membership(tenant_id, group_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""WITH r AS (
+                                SELECT role_id 
+                                FROM public.roles
+                                WHERE data->>'group_id' = %(group_id)s
+                                LIMIT 1
+                            )
+                            UPDATE public.users u
+                                SET role_id= NULL
+                                FROM r
+                                WHERE u.data->>'user_id' = %(user_id)s
+                                    AND u.role_id = r.role_id
+                                    AND u.tenant_id = %(tenant_id)s
+                                    AND u.deleted_at IS NULL
+                                RETURNING *;""",
+                            {"tenant_id": tenant_id, "group_id": group_id, "user_id": user_id})
+        cur.execute(query=query)
+        row = cur.fetchone()
+
     return helper.dict_to_camel_case(row)
