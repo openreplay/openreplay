@@ -428,7 +428,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                              SELECT event_number_in_session,
                                     `$event_name`,
                                     e_value,
-                                    SUM(sessions_count) AS sessions_count
+                                    SUM(n{i}.sessions_count) AS sessions_count
                              FROM n{i}
                              GROUP BY event_number_in_session, `$event_name`, e_value
                              ORDER BY sessions_count DESC
@@ -594,7 +594,7 @@ FROM ranked_events
                                     NULL                AS e_value,
                                     'OTHER'             AS next_type,
                                     NULL                AS next_value,
-                                    SUM(sessions_count) AS sessions_count
+                                    SUM(others_n.sessions_count) AS sessions_count
                              FROM others_n
                              WHERE isNotNull(others_n.next_type)
                                AND others_n.event_number_in_session < %(density)s
