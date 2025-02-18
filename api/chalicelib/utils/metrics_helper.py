@@ -2,8 +2,6 @@ from typing import List
 
 
 def get_step_size(startTimestamp, endTimestamp, density, decimal=False, factor=1000):
-    print("-------density:")
-    print(density)
     step_size = (endTimestamp // factor - startTimestamp // factor)
     if density <= 1:
         return step_size
@@ -17,7 +15,6 @@ def complete_missing_steps(rows: List[dict], start_timestamp: int, end_timestamp
     result = []
     i = 0
     for t in range(start_timestamp, end_timestamp, step):
-        print(t)
         if i >= len(rows) or rows[i][time_key] > t:
             neutral[time_key] = t
             result.append(neutral.copy())
