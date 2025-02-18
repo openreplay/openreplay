@@ -29,81 +29,6 @@ func NewQueryBuilder(p Payload) (QueryBuilder, error) {
 	}
 }
 
-//func pickIDField(p Payload) string {
-//	if p.MetricOf == "userCount" {
-//		return "user_id"
-//	}
-//	return "session_id"
-//}
-
-//func buildBaseEventsWhere(p Payload) string {
-//	ts := fmt.Sprintf(
-//		`(main.created_at >= toDateTime(%d / 1000) AND main.created_at <= toDateTime(%d / 1000))`,
-//		p.StartTimestamp,
-//		p.EndTimestamp,
-//	)
-//	return fmt.Sprintf(`main.project_id = %d AND %s`, p.ProjectId, ts)
-//}
-
-//func buildSessionsWhere(p Payload) string {
-//	ts := fmt.Sprintf(
-//		`(s.datetime >= toDateTime(%d / 1000) AND s.datetime <= toDateTime(%d / 1000))`,
-//		p.StartTimestamp,
-//		p.EndTimestamp,
-//	)
-//	return fmt.Sprintf(`s.project_id = %d AND isNotNull(s.duration) AND %s`, p.ProjectId, ts)
-//}
-
-//type sequenceParts struct {
-//	seqPattern string
-//	seqEvents  string
-//}
-
-//func buildSequenceCondition(series []Series) sequenceParts {
-//	var events []string
-//	for _, s := range series {
-//		if len(s.Filter.Filters) > 0 {
-//			events = append(events, buildOneSeriesSequence(s.Filter.Filters))
-//		}
-//	}
-//	if len(events) < 2 {
-//		return sequenceParts{"", ""}
-//	}
-//	pattern := ""
-//	for i := 1; i <= len(events); i++ {
-//		pattern += fmt.Sprintf("(?%d)", i)
-//	}
-//	return sequenceParts{
-//		seqPattern: pattern,
-//		seqEvents:  strings.Join(events, ", "),
-//	}
-//}
-
-//func buildOneSeriesSequence(filters []Filter) string {
-//	return strings.Join(buildFilterConditions(filters), " AND ")
-//}
-//
-//func buildFilterConditions(filters []Filter) []string {
-//	var out []string
-//	for _, f := range filters {
-//		switch f.Type {
-//		case FilterClick:
-//			out = append(out,
-//				fmt.Sprintf(`(main."$event_name" = 'CLICK' AND JSONExtractString(toString(main."$properties"), 'label') IN ('%s'))`,
-//					strings.Join(f.Value, "','")))
-//		case FilterInput:
-//			out = append(out,
-//				fmt.Sprintf(`(main."$event_name" = 'INPUT' AND JSONExtractString(toString(main."$properties"), 'label') IN ('%s'))`,
-//					strings.Join(f.Value, "','")))
-//
-//		default:
-//			out = append(out,
-//				fmt.Sprintf(`(main."$event_name" = '%s')`, strings.ToUpper(string(f.Type))))
-//		}
-//	}
-//	return out
-//}
-
 func partitionFilters(filters []Filter) (sessionFilters []Filter, eventFilters []Filter) {
 	for _, f := range filters {
 		if f.IsEvent {
@@ -357,17 +282,17 @@ func buildSessionConditions(filters []Filter) []string {
 				conds = append(conds, buildCond("s.rev_id", f.Value, f.Operator))
 			case FilterReferrer:
 				conds = append(conds, buildCond("s.base_referrer", f.Value, f.Operator))
-			case FilterDuration:
-				if len(f.Value) == 2 {
-					conds = append(conds, fmt.Sprintf("s.duration >= '%s'", f.Value[0]))
-					conds = append(conds, fmt.Sprintf("s.duration <= '%s'", f.Value[1]))
-				}
 			case FilterUtmSource:
 				conds = append(conds, buildCond("s.utm_source", f.Value, f.Operator))
 			case FilterUtmMedium:
 				conds = append(conds, buildCond("s.utm_medium", f.Value, f.Operator))
 			case FilterUtmCampaign:
 				conds = append(conds, buildCond("s.utm_campaign", f.Value, f.Operator))
+			case FilterDuration:
+				if len(f.Value) == 2 {
+					conds = append(conds, fmt.Sprintf("s.duration >= '%s'", f.Value[0]))
+					conds = append(conds, fmt.Sprintf("s.duration <= '%s'", f.Value[1]))
+				}
 			case FilterMetadata:
 				if f.Source != "" {
 					conds = append(conds, buildCond(fmt.Sprintf("s.%s", f.Source), f.Value, f.Operator))
@@ -419,13 +344,65 @@ func buildCond(expr string, values []string, operator string) string {
 			return "(" + strings.Join(conds, " OR ") + ")"
 		}
 		return conds[0]
+	case "notEquals":
+		if len(values) > 1 {
+			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
+		}
+		return fmt.Sprintf("%s <> '%s'", expr, values[0])
+	case "greaterThan":
+		var conds []string
+		for _, v := range values {
+			conds = append(conds, fmt.Sprintf("%s > '%s'", expr, v))
+		}
+		if len(conds) > 1 {
+			return "(" + strings.Join(conds, " OR ") + ")"
+		}
+		return conds[0]
+	case "greaterThanOrEqual":
+		var conds []string
+		for _, v := range values {
+			conds = append(conds, fmt.Sprintf("%s >= '%s'", expr, v))
+		}
+		if len(conds) > 1 {
+			return "(" + strings.Join(conds, " OR ") + ")"
+		}
+		return conds[0]
+	case "lessThan":
+		var conds []string
+		for _, v := range values {
+			conds = append(conds, fmt.Sprintf("%s < '%s'", expr, v))
+		}
+		if len(conds) > 1 {
+			return "(" + strings.Join(conds, " OR ") + ")"
+		}
+		return conds[0]
+	case "lessThanOrEqual":
+		var conds []string
+		for _, v := range values {
+			conds = append(conds, fmt.Sprintf("%s <= '%s'", expr, v))
+		}
+		if len(conds) > 1 {
+			return "(" + strings.Join(conds, " OR ") + ")"
+		}
+		return conds[0]
+	case "in":
+		if len(values) > 1 {
+			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
+		}
+		return fmt.Sprintf("%s = '%s'", expr, values[0])
+	case "notIn":
+		if len(values) > 1 {
+			return fmt.Sprintf("%s NOT IN (%s)", expr, buildInClause(values))
+		}
+		return fmt.Sprintf("%s <> '%s'", expr, values[0])
+	case "equals", "is":
+		if len(values) > 1 {
+			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
+		}
+		return fmt.Sprintf("%s = '%s'", expr, values[0])
 	default:
 		if len(values) > 1 {
-			var quoted []string
-			for _, v := range values {
-				quoted = append(quoted, fmt.Sprintf("'%s'", v))
-			}
-			return fmt.Sprintf("%s IN (%s)", expr, strings.Join(quoted, ","))
+			return fmt.Sprintf("%s IN (%s)", expr, buildInClause(values))
 		}
 		return fmt.Sprintf("%s = '%s'", expr, values[0])
 	}
