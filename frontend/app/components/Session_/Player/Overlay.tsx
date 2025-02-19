@@ -17,7 +17,6 @@ import {
 import { Icon } from 'UI';
 
 import { useModal } from '../../Modal';
-import CreateNote from './Controls/components/CreateNote';
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import ElementsMarker from './Overlay/ElementsMarker';
 import Loader from './Overlay/Loader';
@@ -68,11 +67,11 @@ const menuItems: MenuProps['items'] = [
     icon: <Icon name={'redux'} size={14} />,
   },
   { type: 'divider' },
-  {
-    key: ItemKey.AddNote,
-    label: 'Add Note',
-    icon: <Icon name={'quotes'} size={14} />,
-  },
+  // {
+  //   key: ItemKey.AddNote,
+  //   label: 'Add Note',
+  //   icon: <Icon name={'quotes'} size={14} />,
+  // },
   {
     key: ItemKey.CopySessionUrl,
     label: 'Copy Session URL',
@@ -131,16 +130,16 @@ function Overlay({ nextId, isClickmap }: Props) {
       case ItemKey.State:
         toggleBottomBlock(STORAGE);
         break;
-      case ItemKey.AddNote:
-        showModal(
-          <CreateNote
-            hideModal={hideModal}
-            isEdit={false}
-            time={Math.round(store.get().time)}
-          />,
-          { right: true, width: 380 }
-        );
-        break;
+      // case ItemKey.AddNote:
+      //   showModal(
+      //     <CreateNote
+      //       hideModal={hideModal}
+      //       isEdit={false}
+      //       time={Math.round(store.get().time)}
+      //     />,
+      //     { right: true, width: 380 }
+      //   );
+      //   break;
       case ItemKey.CopySessionUrl:
         copy(window.location.origin + window.location.pathname);
         toast.success('Session URL copied to clipboard');

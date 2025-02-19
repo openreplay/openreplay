@@ -1,7 +1,7 @@
 import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
-import { Tooltip } from 'antd'
-import { Button } from 'UI';
+import { Tooltip, Button } from 'antd'
+import { Icon } from 'UI';
 import { SessionRecordingStatus } from 'Player';
 let stopRecorderCb: () => void;
 import { recordingsService } from 'App/services';
@@ -116,7 +116,7 @@ function ScreenRecorder() {
         <Tooltip
           title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED}
         >
-          <Button icon="record-circle" disabled variant="text-primary">
+          <Button icon={<Icon name={"record-circle"} size={16} />} disabled type="text">
             Record Activity
           </Button>
         </Tooltip>
@@ -127,8 +127,9 @@ function ScreenRecorder() {
   return (
     <div onClick={!isRecording ? recordingRequest : stopRecordingHandler} className="p-2">
       <Button
-        icon={!isRecording ? 'stop-record-circle' : 'record-circle'}
-        variant={isRecording ? 'text-red' : 'text-primary'}
+        icon={<Icon name={!isRecording ? 'stop-record-circle' : 'record-circle'} size={16} />}
+        type={'text'}
+        className={isRecording ? 'text-red' : 'text-main'}
       >
         {isRecording ? 'Stop Recording' : 'Record Activity'}
       </Button>

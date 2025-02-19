@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Icon, CircularLoader, Button } from 'UI';
+import { Icon, CircularLoader } from 'UI';
+import { Button } from 'antd'
 import cn from 'classnames';
 import stl from './widgetAutoComplete.module.css';
 import { debounce } from 'App/utils';
@@ -42,7 +43,7 @@ const WidgetAutoComplete = props => {
         { !focused && selected && (
           <div className={cn(stl.selected, 'flex items-center justify-between')}>
             <span>{selected.value}</span>
-            <Button varient="text" onClick={onClearHandle}><Icon name="close" size="14"/></Button>
+            <Button type="text" onClick={onClearHandle}><Icon name="close" size="14"/></Button>
           </div>
         )}
         { (focused || !selected) && (

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Tooltip, Button } from 'UI';
+import { Tooltip } from 'UI';
+import { Button } from 'antd'
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -17,7 +18,7 @@ function AddUserButton({ isAdmin = false, onClick, btnVariant = 'primary' }: any
       title={`${!isAdmin ? PERMISSION_WARNING : !cannAddUser ? LIMIT_WARNING : 'Add team member'}`}
       disabled={isAdmin || cannAddUser}
     >
-      <Button disabled={!cannAddUser || !isAdmin} variant={btnVariant} onClick={onClick}>
+      <Button disabled={!cannAddUser || !isAdmin} type={btnVariant} onClick={onClick}>
         Add Team Member
       </Button>
     </Tooltip>

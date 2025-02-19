@@ -28,7 +28,6 @@ export { default as JSONTree } from './JSONTree';
 export { default as Tooltip } from './Tooltip';
 export { default as CountryFlag } from './CountryFlag';
 export { default as RandomElement } from './RandomElement';
-export { default as SplitButton } from './SplitButton';
 export { default as confirm, MountPoint } from './Confirmation';
 export { default as SideMenuitem } from './SideMenuItem';
 export { default as Avatar } from './Avatar';

@@ -1,6 +1,7 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { Button, Modal, Form, Icon, Input } from 'UI';
+import { Modal, Form, Icon, Input } from 'UI';
+import { Button } from 'antd'
 
 interface Props {
     show: boolean;
@@ -57,7 +58,7 @@ function EditRecordingModal(props: Props) {
             <Modal.Footer>
                 <div className="-mx-2 px-2">
                     <Button
-                        variant="primary"
+                        type="primary"
                         onClick={ save }
                         className="float-left mr-2"
                     >

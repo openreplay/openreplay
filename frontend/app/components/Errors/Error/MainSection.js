@@ -11,7 +11,8 @@ import { sessions as sessionsRoute } from 'App/routes';
 import Divider from 'Components/Errors/ui/Divider';
 import ErrorName from 'Components/Errors/ui/ErrorName';
 import Label from 'Components/Errors/ui/Label';
-import { Button, ErrorDetails, Icon, Loader } from 'UI';
+import { ErrorDetails, Icon, Loader } from 'UI';
+import { Button } from 'antd'
 
 import SessionBar from './SessionBar';
 
@@ -81,11 +82,12 @@ function MainSection(props) {
           </span>
           <Button
             className="ml-auto"
-            variant="text-primary"
+            variant="text"
             onClick={findSessions}
+            icon={<Icon className="ml-1" name="next1" color="teal" />}
+            iconPosition={'end'}
           >
             Find all sessions with this error
-            <Icon className="ml-1" name="next1" color="teal" />
           </Button>
         </div>
         <SessionBar className="my-4" session={error.lastHydratedSession} />

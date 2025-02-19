@@ -1,8 +1,9 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Toggler, Loader, Button, NoContent } from 'UI';
+import { Input, SegmentSelection, Toggler, Loader, NoContent } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
+import { Button } from 'antd'
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
 import {Prompt, useHistory} from 'react-router';
@@ -209,7 +210,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                 <div className={'text-sm mb-1'}>
                   Set up condition sets to restrict the rollout.
                 </div>
-                <Button onClick={() => current!.addCondition()} variant={'text-primary'}>
+                <Button onClick={() => current!.addCondition()} type={'text'}>
                   + Create Condition Set
                 </Button>
               </div>
@@ -237,7 +238,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                     'flex items-center justify-center w-full bg-white rounded border mt-2 p-2'
                   }
                 >
-                  <Button variant={'text-primary'}>+ Create Condition Set</Button>
+                  <Button type={'text'}>+ Create Condition Set</Button>
                 </div>
               ) : null}
             </>

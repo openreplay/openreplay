@@ -1,5 +1,6 @@
 import React from 'react'
-import { Button, Icon } from 'UI'
+import { Icon } from 'UI'
+import { Button } from 'antd'
 
 interface IBottomButtons {
   loading: boolean
@@ -14,8 +15,7 @@ function BottomButtons({ loading, instance, deleting, onDelete }: IBottomButtons
     <div className="flex items-center">
       <Button
         loading={loading}
-        variant="primary"
-        type="submit"
+        type="primary"
         disabled={loading || !instance.validate()}
         id="submit-button"
       >
@@ -25,10 +25,8 @@ function BottomButtons({ loading, instance, deleting, onDelete }: IBottomButtons
     <div>
       {instance.exists() && (
         <Button
-          hover
-          variant="text"
+          type="text"
           loading={deleting}
-          type="button"
           onClick={() => onDelete(instance)}
           id="trash-button"
           className="!text-teal !fill-teal"

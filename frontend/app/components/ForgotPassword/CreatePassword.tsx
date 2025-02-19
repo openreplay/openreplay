@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { Form, Input, Loader, Button, Icon, Message } from 'UI';
+import { Form, Input, Loader, Icon, Message } from 'UI';
+import { Button } from 'antd'
 import stl from './forgotPassword.module.css';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
@@ -112,7 +113,10 @@ function CreatePassword(props: Props) {
             </div>
           </Loader>
           <div className="mt-4">
-            <div data-hidden={!updated} className="flex items-center flex-col text-center">
+            <div
+              data-hidden={!updated}
+              className="flex items-center flex-col text-center"
+            >
               <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
                 <Icon name="check" size="30" color="tealx" />
               </div>
@@ -122,9 +126,16 @@ function CreatePassword(props: Props) {
 
           {validationError && <Message error>{validationError}</Message>}
 
-          <Button type="submit" data-hidden={updated} variant="primary" loading={loading} className="w-full mt-4">
-            Create
-          </Button>
+          {updated ? null :
+            <Button
+              htmlType="submit"
+              type="primary"
+              loading={loading}
+              className="w-full mt-4"
+            >
+              Create
+            </Button>
+          }
         </>
       )}
 

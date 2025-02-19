@@ -1,5 +1,6 @@
 import React from 'react';
-import { Tooltip, Button } from 'UI';
+import { Tooltip } from 'UI';
+import { Button } from 'antd'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
@@ -24,7 +25,7 @@ function AddProjectButton({ isAdmin = false }: any) {
       title={`${!isAdmin ? PERMISSION_WARNING : !canAddProject ? LIMIT_WARNING : 'Add a Project'}`}
       disabled={isAdmin || canAddProject}
     >
-      <Button variant="primary" onClick={onClick} disabled={!canAddProject || !isAdmin}>
+      <Button type="primary" onClick={onClick} disabled={!canAddProject || !isAdmin}>
         Add Project
       </Button>
     </Tooltip>

@@ -1,11 +1,11 @@
 import UsersView from 'App/components/Client/Users/UsersView';
 import DocCard from 'Shared/DocCard/DocCard';
 import React from 'react';
-import { Button, Icon } from 'UI';
+import { Icon } from 'UI';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Button as AntButton } from 'antd'
+import { Button } from 'antd'
 
 interface Props extends WithOnboardingProps {}
 
@@ -22,10 +22,10 @@ function ManageUsersTab(props: Props) {
           href="https://docs.openreplay.com/en/tutorials/adding-users/"
           target="_blank"
         >
-          <AntButton size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
+          <Button size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
             <Icon name={'question-circle'} />
             <div className={'text-main'}>See Documentation</div>
-          </AntButton>
+          </Button>
         </a>
       </h1>
       <div className="grid grid-cols-6 gap-4 p-4">
@@ -48,16 +48,16 @@ function ManageUsersTab(props: Props) {
         </div>
       </div>
       <div className="border-t px-4 py-3 flex justify-end">
-        <Button variant="text-primary" onClick={() => (props.skip ? props.skip() : null)}>
+        <Button type="text" onClick={() => (props.skip ? props.skip() : null)}>
           Skip
         </Button>
         <Button
-          variant="primary"
-          className=""
+          type="primary"
           onClick={() => (props.navTo ? props.navTo(OB_TABS.INTEGRATIONS) : null)}
+          icon={<Icon name="arrow-right-short" color="white" size={20} />}
+          iconPosition={'end'}
         >
           Configure Integrations
-          <Icon name="arrow-right-short" color="white" size={20} />
         </Button>
       </div>
     </>

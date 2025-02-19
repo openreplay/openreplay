@@ -5,8 +5,8 @@ import React from 'react';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { Button, CopyButton, Form, Icon, Input } from 'UI';
-import { confirm } from 'UI';
+import { confirm, CopyButton, Form, Icon, Input } from 'UI';
+import { Button } from 'antd'
 
 import Select from 'Shared/Select';
 
@@ -139,22 +139,20 @@ function UserForm() {
             onClick={onSave}
             disabled={!user.valid(isEnterprise) || isSaving}
             loading={isSaving}
-            variant="primary"
+            type="primary"
             className="float-left mr-2"
           >
             {user.exists() ? 'Update' : 'Invite'}
           </Button>
           {user.exists() && <Button onClick={hideModal}>{'Cancel'}</Button>}
         </div>
-        <div>
-          <Button
-            disabled={user.isSuperAdmin}
-            data-hidden={!user.exists()}
-            onClick={deleteHandler}
-          >
-            <Icon name="trash" size="16" />
-          </Button>
-        </div>
+        {!user.exists() ? null :
+          <div>
+            <Button disabled={user.isSuperAdmin} onClick={deleteHandler}>
+              <Icon name="trash" size="16" />
+            </Button>
+          </div>
+        }
       </div>
 
       {!user.isJoined && user.invitationLink && (

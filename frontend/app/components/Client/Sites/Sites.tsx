@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Tag } from 'antd';
 import cn from 'classnames';
-import { Loader, Button, TextLink, NoContent, Pagination, PageTitle, Divider, Icon } from 'UI';
+import { Loader, TextLink, NoContent, Pagination, PageTitle, Divider, Icon } from 'UI';
+import { Button } from 'antd';
 import withPageTitle from 'HOCs/withPageTitle';
 import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
@@ -52,7 +53,7 @@ const Sites = () => {
       showModal(<NewSiteForm onClose={hideModal} />, { right: true });
     };
 
-    return <Button icon="edit" variant="text-primary" disabled={!isAdmin} onClick={_onClick} />;
+    return <Button icon={<Icon name={"edit"} />} type="text" disabled={!isAdmin} onClick={_onClick} />;
   };
 
   const captureRateClickHandler = (project: Project) => {
@@ -88,12 +89,12 @@ const Sites = () => {
         <ProjectKey value={project.projectKey} tooltip="Project key copied to clipboard" />
       </div>
       <div className="col-span-3 flex items-center">
-        <Button variant="text-primary" onClick={() => captureRateClickHandler(project)}>
+        <Button type="text" onClick={() => captureRateClickHandler(project)}>
           {project.sampleRate}%
         </Button>
         {project.conditionsCount > 0 ? (
           <Button
-            variant="text-primary"
+            variant="text"
             onClick={() => captureRateClickHandler(project)}
             className="ml-2"
           >

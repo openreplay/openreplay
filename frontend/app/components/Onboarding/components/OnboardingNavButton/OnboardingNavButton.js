@@ -1,6 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router'
-import { Button } from 'UI'
+import { Button } from 'antd'
 import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes'
 import { sessions } from 'App/routes';
 import { useStore } from 'App/mstore'
@@ -36,7 +36,7 @@ const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history
     <div className="flex items-center">
       <Button
         size="small"
-        variant="outline"
+        type="outline"
         onClick={onDone}
         className="float-left mr-2"
       >
@@ -44,7 +44,7 @@ const OnboardingNavButton = ({ match: { params: { activeTab, siteId } }, history
       </Button>
       
       <Button
-        variant="primary"
+        type="primary"
         onClick={setTab}
       >
         {BTN_MSGS[activeIndex]}

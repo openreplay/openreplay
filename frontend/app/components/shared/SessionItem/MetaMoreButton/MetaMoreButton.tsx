@@ -1,5 +1,6 @@
 import React from 'react';
-import { Popover, Button } from 'UI';
+import { Popover } from 'UI';
+import { Button } from 'antd'
 import MetaItem from '../MetaItem';
 
 interface Props {
@@ -23,7 +24,7 @@ export default function MetaMoreButton(props: Props) {
       placement="bottom"
     >
       <div className="flex items-center">
-        <Button variant="text-primary">+{list.length - maxLength} More</Button>
+        <Button variant="text">+{list.length - maxLength} More</Button>
       </div>
     </Popover>
   );

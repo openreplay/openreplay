@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { PageTitle, Icon, Button } from 'UI';
+import { PageTitle, Icon } from 'UI';
+import { Button } from 'antd'
 import AuditList from '../AuditList';
 import AuditSearchField from '../AuditSearchField';
 import { useStore } from 'App/mstore';
@@ -61,8 +62,7 @@ function AuditView() {
                         auditStore.updateKey('page', 1)
                     } }/>
                     <div>
-                        <Button variant="text-primary" className="ml-3" onClick={exportToCsv}>
-                            <Icon name="grid-3x3" color="teal" />
+                        <Button type="text" icon={<Icon name="grid-3x3" color="teal" />} className="ml-3" onClick={exportToCsv}>
                             <span className="ml-2">Export to CSV</span>
                         </Button>
                     </div>

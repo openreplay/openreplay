@@ -2,10 +2,10 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
 
 import { useStore } from 'App/mstore';
-import { Button, Checkbox, Form, Icon, Input } from 'UI';
+import { Checkbox, Form, Icon, Input } from 'UI';
 
 import stl from './roleForm.module.css';
-import { Select } from 'antd';
+import { Select, Button } from 'antd';
 import { SelectProps } from 'antd/es/select';
 
 interface Props {
@@ -220,7 +220,7 @@ const RoleForm = (props: Props) => {
               onClick={_save}
               disabled={!role.validate}
               loading={saving}
-              variant="primary"
+              type="primary"
               className="float-left mr-2"
             >
               {role.exists() ? 'Update' : 'Add'}
@@ -228,7 +228,7 @@ const RoleForm = (props: Props) => {
             {role.exists() && <Button onClick={closeModal}>{'Cancel'}</Button>}
           </div>
           {role.exists() && (
-            <Button variant="text" onClick={() => props.deleteHandler(role)}>
+            <Button type="text" onClick={() => props.deleteHandler(role)}>
               <Icon name="trash" size="18" />
             </Button>
           )}

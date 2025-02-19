@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Button, Message, Form, Input } from 'UI';
+import { Message, Form, Input } from 'UI';
+import { Button } from 'antd'
 import styles from './profileSettings.module.css';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
@@ -121,7 +122,7 @@ const ChangePassword = () => {
         {PASSWORD_POLICY}
       </Message>
       <div className="flex items-center pt-3">
-        <Button type="submit" variant="outline" disabled={isSubmitDisabled()} loading={loading}>
+        <Button htmlType="submit" type="default" disabled={isSubmitDisabled()} loading={loading}>
           Change Password
         </Button>
         <Button
@@ -139,7 +140,7 @@ const ChangePassword = () => {
     </Form>
   ) : (
     <div onClick={() => setShow(true)}>
-      <Button variant="text-primary">Change Password</Button>
+      <Button type="text">Change Password</Button>
     </div>
   );
 };

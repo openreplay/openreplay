@@ -1,5 +1,6 @@
-import React, { ErrorInfo } from 'react'
-import { Button } from 'UI'
+import React, { ErrorInfo } from 'react';
+import { Button } from 'antd';
+import { Icon } from 'UI';
 
 class PlayerErrorBoundary extends React.Component<any> {
   state = { hasError: false, error: '' };
@@ -10,21 +11,20 @@ class PlayerErrorBoundary extends React.Component<any> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     this.setState({
       hasError: true,
-      error: error + info.componentStack
-    })
+      error: error + info.componentStack,
+    });
   }
 
   render() {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
       return (
-        <div className={"flex flex-col p-4 gap-4"}>
+        <div className={'flex flex-col p-4 gap-4'}>
           <h4>Something went wrong during player rendering.</h4>
           <p>{this.state.error}</p>
           <Button
             onClick={() => window.location.reload()}
-            icon={"spinner"}
-            variant={"primary"}
+            icon={<Icon name={'spinner'} size={16} />}
+            type={'primary'}
             style={{ width: 'fit-content' }}
           >
             Reload
@@ -37,4 +37,4 @@ class PlayerErrorBoundary extends React.Component<any> {
   }
 }
 
-export default PlayerErrorBoundary
+export default PlayerErrorBoundary;

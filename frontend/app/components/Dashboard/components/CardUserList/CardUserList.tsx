@@ -2,7 +2,8 @@ import { useModal } from 'App/components/Modal';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Loader, Pagination, Button } from 'UI';
+import { Loader, Pagination } from 'UI';
+import { Button } from 'antd'
 import SessionsModal from './SessionsModal';
 import CardUserItem from './CardUserItem';
 import { useStore } from 'App/mstore';
@@ -45,7 +46,7 @@ function CardUserList(props: RouteComponentProps<Props>) {
             <div className="flex justify-between">
                 <h1 className="font-medium text-2xl">Returning users between</h1>
                 <div>
-                    <Button variant="text-primary">All Sessions</Button>
+                    <Button type="text">All Sessions</Button>
                 </div>
             </div>
 

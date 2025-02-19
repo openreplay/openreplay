@@ -1,7 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Toggler, Loader, Button, NoContent, ItemMenu } from 'UI';
+import { Toggler, Loader, NoContent, ItemMenu } from 'UI';
+import { Button } from 'antd'
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useHistory } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
@@ -59,8 +60,8 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
         <div className={'flex items-center gap-2'}>
           <div className={'text-2xl'}>{current.flagKey}</div>
           <Button
-            className={'ml-auto'}
-            variant={'text-primary'}
+            className={'ml-auto text-main'}
+            type={'text'}
             onClick={() =>
               history.push(
                 withSiteId(fflag(featureFlagsStore.currentFflag?.featureFlagId.toString()), siteId)

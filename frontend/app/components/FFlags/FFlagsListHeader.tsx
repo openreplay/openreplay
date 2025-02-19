@@ -1,5 +1,6 @@
 import React from 'react'
-import { Button, PageTitle } from 'UI'
+import { PageTitle } from 'UI'
+import { Button } from 'antd'
 import FFlagsSearch from "Components/FFlags/FFlagsSearch";
 import { useHistory } from "react-router";
 import { newFFlag, withSiteId } from 'App/routes';
@@ -13,7 +14,7 @@ function FFlagsListHeader({ siteId }: { siteId: string }) {
         <PageTitle title="Feature Flags" />
       </div>
       <div className="ml-auto flex items-center">
-        <Button variant="primary" onClick={() => history.push(withSiteId(newFFlag(), siteId))}>
+        <Button type="primary" onClick={() => history.push(withSiteId(newFFlag(), siteId))}>
           Create Feature Flag
         </Button>
         <div className="mx-2"></div>

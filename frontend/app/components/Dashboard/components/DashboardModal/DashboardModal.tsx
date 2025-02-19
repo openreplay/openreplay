@@ -2,7 +2,7 @@ import React from 'react';
 import { useObserver } from 'mobx-react-lite';
 import DashboardMetricSelection from '../DashboardMetricSelection';
 import DashboardForm from '../DashboardForm';
-import { Button } from 'UI';
+import { Button } from 'antd';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
@@ -67,7 +67,7 @@ function DashboardModal(props: Props) {
 
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button
-                        variant="primary"
+                        type="primary"
                         disabled={!dashboard.isValid || loading}
                         onClick={onSave}
                         className="flaot-left mr-2"

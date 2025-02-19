@@ -18,11 +18,6 @@ const components: any = {
   AssistPure: lazy(() => import('Components/Assist/AssistRouter')),
   SessionsOverviewPure: lazy(() => import('Components/Overview')),
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
-  FunnelDetailsPure: lazy(() => import('Components/Funnels/FunnelDetails')),
-  FunnelIssueDetails: lazy(
-    () => import('Components/Funnels/FunnelIssueDetails')
-  ),
-  FunnelPagePure: lazy(() => import('Components/Funnels/FunnelPage')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   UsabilityTestingPure: lazy(
     () => import('Components/UsabilityTesting/UsabilityTesting')
@@ -47,9 +42,6 @@ const enhancedComponents: any = {
   Assist: withSiteIdUpdater(components.AssistPure),
   Client: withSiteIdUpdater(components.ClientPure),
   Onboarding: withSiteIdUpdater(components.OnboardingPure),
-  FunnelPage: withSiteIdUpdater(components.FunnelPagePure),
-  FunnelsDetails: withSiteIdUpdater(components.FunnelDetailsPure),
-  FunnelIssue: withSiteIdUpdater(components.FunnelIssueDetails),
   Multiview: withSiteIdUpdater(components.MultiviewPure),
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
@@ -85,9 +77,6 @@ const FFLAG_READ_PATH = routes.fflagRead();
 const NOTES_PATH = routes.notes();
 const BOOKMARKS_PATH = routes.bookmarks();
 const RECORDINGS_PATH = routes.recordings();
-const FUNNEL_PATH = routes.funnels();
-const FUNNEL_CREATE_PATH = routes.funnelsCreate();
-const FUNNEL_ISSUE_PATH = routes.funnelIssue();
 const SESSION_PATH = routes.session();
 const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
@@ -245,24 +234,6 @@ function PrivateRoutes() {
           strict
           path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
           component={enhancedComponents.Highlights}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_PATH, siteIdList)}
-          component={enhancedComponents.FunnelPage}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelsDetails}
-        />
-        <Route
-          exact
-          strict
-          path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)}
-          component={enhancedComponents.FunnelIssue}
         />
         <Route
           exact

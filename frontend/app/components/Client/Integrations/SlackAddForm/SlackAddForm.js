@@ -1,6 +1,6 @@
 import React from 'react';
-import { Form, Input, Button, Message } from 'UI';
-import { confirm } from 'UI';
+import { Form, Input, Message, confirm } from 'UI';
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useStore } from 'App/mstore'
 
@@ -73,7 +73,7 @@ function SlackAddForm(props) {
               onClick={save}
               disabled={!instance.validate()}
               loading={saving}
-              variant="primary"
+              type="primary"
               className="float-left mr-2"
             >
               {instance.exists() ? 'Update' : 'Add'}

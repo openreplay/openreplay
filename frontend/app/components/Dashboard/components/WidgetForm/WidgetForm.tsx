@@ -1,15 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {metricOf, issueOptions, issueCategories} from 'App/constants/filterOptions';
+import { metricOf } from 'App/constants/filterOptions';
 import {FilterKey} from 'Types/filter/filterType';
 import {useStore} from 'App/mstore';
 import {observer} from 'mobx-react-lite';
-import {Button, Icon, confirm, Tooltip} from 'UI';
-import {Input, Alert} from 'antd'
+import { Icon, confirm, Tooltip } from 'UI';
+import { Input, Alert, Button } from 'antd'
 import FilterSeries from '../FilterSeries';
-import Select from 'Shared/Select';
-import {withSiteId, dashboardMetricDetails, metricDetails} from 'App/routes';
-import MetricTypeDropdown from './components/MetricTypeDropdown';
-import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
+import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
+
 import {
     TIMESERIES,
     TABLE,
@@ -285,8 +283,8 @@ function WidgetForm(props: Props) {
                         {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
                         {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (
                             <Button
-                                className='ml-2'
-                                variant='text-primary'
+                                className='ml-2 text-main'
+                                type='text'
                                 onClick={() => metric.addSeries()}
                                 disabled={!canAddSeries}
                             >
@@ -327,7 +325,7 @@ function WidgetForm(props: Props) {
                     disabled={!cannotSaveFunnel}
                 >
                     <div className='flex items-center'>
-                        <Button variant='primary' onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
+                        <Button type='primary' onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
                             {metric.exists()
                                 ? 'Update'
                                 : parseInt(dashboardId) > 0
@@ -335,7 +333,7 @@ function WidgetForm(props: Props) {
                                     : 'Create'}
                         </Button>
                         {metric.exists() && metric.hasChanged && (
-                            <Button onClick={undoChanges} variant='text' icon='arrow-counterclockwise' className='ml-2'>
+                            <Button onClick={undoChanges} type='text' icon={<Icon name={'arrow-counterclockwise'} />} className='ml-2'>
                                 Undo
                             </Button>
                         )}
@@ -343,8 +341,7 @@ function WidgetForm(props: Props) {
                 </Tooltip>
                 <div className='flex items-center'>
                     {metric.exists() && (
-                        <Button variant='text-primary' onClick={onDelete}>
-                            <Icon name='trash' size='14' className='mr-2' color='teal'/>
+                        <Button type='text' className={'text-main'} icon={<Icon name='trash' size='14' className='mr-2' color='teal'/>} onClick={onDelete}>
                             Delete
                         </Button>
                     )}

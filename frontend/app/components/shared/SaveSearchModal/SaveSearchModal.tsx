@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
-import { confirm } from 'UI';
+import { confirm, Modal, Form, Icon, Checkbox, Input } from 'UI';
+import { Button } from 'antd'
 import stl from './SaveSearchModal.module.css';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
@@ -96,14 +96,14 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
       </Modal.Content>
       <Modal.Footer className="flex items-center px-6">
         <div className="mr-auto flex items-center">
-          <Button variant="primary" onClick={onSave} loading={loading} disabled={!savedSearch.validate()}
+          <Button type="primary" onClick={onSave} loading={loading} disabled={!savedSearch.validate()}
                   className="mr-2">
             {savedSearch.exists() ? 'Update' : 'Save'}
           </Button>
           <Button onClick={closeHandler}>{'Cancel'}</Button>
         </div>
         {savedSearch.exists() && (
-          <Button variant="text" onClick={onDelete}>
+          <Button type="text" onClick={onDelete}>
             <Icon name="trash" size="18" />
           </Button>
         )}
