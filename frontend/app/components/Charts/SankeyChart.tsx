@@ -172,7 +172,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
                     params.name.slice(-(maxLen / 2 - 2))
                   : params.name;
               const nodeType = params.data.type;
-              
+
               const icon = getIcon(nodeType)
               return (
                 `${icon}{header|${safeName}}\n` +

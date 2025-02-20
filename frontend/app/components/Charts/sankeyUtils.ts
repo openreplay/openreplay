@@ -4,19 +4,12 @@ export function sankeyTooltip(echartNodes: any[], nodeValues: number[]) {
     if ('source' in params.data && 'target' in params.data) {
       const sourceName = echartNodes[params.data.source].name;
       const targetName = echartNodes[params.data.target].name;
-      const sourceValue = nodeValues[params.data.source];
       return `
       <div class="flex gap-2 w-fit px-2 bg-white items-center rounded-xl">
         <div class="flex flex-col">
           <div class="flex flex-col text-sm">
             <div class="font-semibold">
-              <span class="text-base" style="color:#394eff">&#8592;</span> ${sourceName}
-            </div>
-            <div class="text-black">
-              ${sourceValue} <span class="text-disabled-text">Sessions</span>
-            </div>
-            <div class="font-semibold mt-2">
-              <span class="text-base" style="color:#394eff">&#8594;</span> ${targetName}
+              ${sourceName} <span class="text-base" style="color:#394eff">&#8594;</span> ${targetName}
             </div>
             <div class="flex items-baseline gap-2 text-black">
               <span>${params.data.value} ( ${params.data.percentage.toFixed(2)}% )</span>
