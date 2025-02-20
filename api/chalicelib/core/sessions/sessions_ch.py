@@ -64,7 +64,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
-            sessions = cur.execute(main_query)
+            sessions = cur.execute(query=main_query)
 
         elif metric_type == schemas.MetricType.TABLE:
             full_args["limit_s"] = 0
@@ -112,7 +112,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
-            sessions = cur.execute(main_query)
+            sessions = cur.execute(query=main_query)
             # cur.fetchone()
             count = 0
             if len(sessions) > 0:
@@ -1505,7 +1505,7 @@ def session_exists(project_id, session_id):
                                           AND project_id=%(project_id)s
                                      LIMIT 1""",
                            parameters={"project_id": project_id, "session_id": session_id})
-        row = cur.execute(query)
+        row = cur.execute(query=query)
     return row is not None
 
 

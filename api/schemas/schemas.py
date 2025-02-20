@@ -541,7 +541,7 @@ class RequestGraphqlFilterSchema(BaseModel):
     @classmethod
     def _transform_data(cls, values):
         if values.get("type") in [FetchFilterType.FETCH_DURATION, FetchFilterType.FETCH_STATUS_CODE]:
-            values["value"] = [int(v) for v in values["value"] if v is not None and v.isnumeric()]
+            values["value"] = [int(v) for v in values["value"] if v is not None and str(v).isnumeric()]
         return values
 
 
