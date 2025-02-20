@@ -77,12 +77,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
     });
 
     setFinalNodeCount(filteredNodes.length);
-
+    const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
-      .map((n) => {
+      .map((n, i) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
         if (computedName === 'Other') {
           computedName = 'Others';
+        }
+        if (n.id) {
+          nodeValues[n.id] = 0;
+        } else {
+          nodeValues[i] = 0;
         }
         const itemColor =
           computedName === 'Others'
@@ -123,6 +128,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
     const startNodeValue = echartLinks
       .filter((link) => link.source === 0)
       .reduce((sum, link) => sum + link.value, 0);
+
+    Object.keys(nodeValues).forEach((nodeId) => {
+      const intId = parseInt(nodeId as string);
+      const outgoingValues = echartLinks
+        .filter((l) => l.source === intId)
+        .reduce((p, c) => p + c.value, 0);
+      const incomingValues = echartLinks
+        .filter((l) => l.target === intId)
+        .reduce((p, c) => p + c.value, 0);
+      nodeValues[nodeId] = Math.max(outgoingValues, incomingValues);
+    });
 
     const option = {
       ...defaultOptions,
@@ -237,7 +253,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
             },
           },
           tooltip: {
-            formatter: sankeyTooltip(echartNodes, []),
+            formatter: sankeyTooltip(echartNodes, nodeValues),
           },
           nodeAlign: 'left',
           nodeWidth: 40,
