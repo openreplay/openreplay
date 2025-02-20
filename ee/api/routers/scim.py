@@ -6,25 +6,50 @@ from typing import Optional
 from decouple import config
 from fastapi import Depends, HTTPException, Header, Query, Response
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 
 import schemas
-from chalicelib.core import users, roles
+from chalicelib.core import users, roles, tenants
+from chalicelib.utils.scim_auth import auth_required, create_tokens, verify_refresh_token
 from routers.base import get_routers
+
 
 logger = logging.getLogger(__name__)
 
-
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
-# Authentication Dependency
-def auth_required(authorization: str = Header(..., alias="Authorization")):
-    """Dependency to check Authorization header."""
-    token = authorization.replace("Bearer ", "")
-    if token != config("OCTA_TOKEN"):
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    return token
 
+"""Authentication endpoints"""
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Login endpoint to generate tokens
+@public_app.post("/token")
+async def login(host: str = Header(..., alias="Host"), form_data: OAuth2PasswordRequestForm = Depends()):
+    subdomain = host.split(".")[0]
+    
+    # Missing authentication part, to add
+    if form_data.username != config("SCIM_USER") or form_data.password != config("SCIM_PASSWORD"):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    subdomain = "Openreplay EE"
+    tenant = tenants.get_by_name(subdomain)
+    access_token, refresh_token = create_tokens(tenant_id=tenant["tenantId"])
+
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
+# Refresh token endpoint
+@public_app.post("/refresh")
+async def refresh_token(r: RefreshRequest):
+
+    payload = verify_refresh_token(r.refresh_token)
+    new_access_token, _ = create_tokens(tenant_id=payload["tenant_id"])
+
+    return {"access_token": new_access_token, "token_type": "Bearer"}
 
 """
 User endpoints
@@ -431,6 +456,7 @@ def update_patch_group(group_id: str, r: GroupPatchRequest):
 @public_app.delete("/Groups/{group_id}", dependencies=[Depends(auth_required)])
 def delete_group(group_id: str):
     """Delete a group, hard-delete"""
+    # possibly need to set the user's roles to default member role, instead of null
     tenant_id = 1
     group = roles.get_role_by_group_id(tenant_id, group_id)
     if not group:
