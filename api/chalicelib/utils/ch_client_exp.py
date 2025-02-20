@@ -34,7 +34,7 @@ if config("CH_COMPRESSION", cast=bool, default=True):
 def transform_result(self, original_function):
     @wraps(original_function)
     def wrapper(*args, **kwargs):
-        logger.debug(str.encode(self.format(query=kwargs.get("query"), parameters=kwargs.get("parameters"))))
+        logger.debug(str.encode(self.format(query=kwargs.get("query", ""), parameters=kwargs.get("parameters"))))
         result = original_function(*args, **kwargs)
         if isinstance(result, clickhouse_connect.driver.query.QueryResult):
             column_names = result.column_names
