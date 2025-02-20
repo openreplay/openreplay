@@ -918,7 +918,6 @@ export default class App {
   private postToWorker(messages: Array<Message>) {
     this.worker?.postMessage(messages)
     this.commitCallbacks.forEach((cb) => cb(messages))
-    //messages.length = 0
   }
 
   private delay = 0
@@ -1639,20 +1638,19 @@ export default class App {
   flushBuffer = async (buffer: Message[]) => {
     return new Promise((res) => {
       if (buffer.length === 0) {
-        res(null);
-        return;
+        res(null)
+        return
       }
 
       // Since the first element is always a Timestamp, include it by default.
-      let endIndex = 1;
-      // Continue until you hit another Timestamp or run out of messages.
+      let endIndex = 1
       while (endIndex < buffer.length && buffer[endIndex][0] !== MType.Timestamp) {
-        endIndex++;
+        endIndex++
       }
 
-      const messagesBatch = buffer.splice(0, endIndex);
-      this.postToWorker(messagesBatch);
-      res(null);
+      const messagesBatch = buffer.splice(0, endIndex)
+      this.postToWorker(messagesBatch)
+      res(null)
     })
   }
 

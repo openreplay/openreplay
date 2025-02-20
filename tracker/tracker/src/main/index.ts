@@ -1,4 +1,4 @@
-import App, { DEFAULT_INGEST_POINT } from './app/index.js'
+import App from './app/index.js'
 
 export { default as App } from './app/index.js'
 
