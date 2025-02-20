@@ -244,7 +244,7 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                 {extra_where}
                                 GROUP BY {main_col}
                                 ORDER BY total DESC
-                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+                                LIMIT %(limit)s OFFSET %(limit_s)s;"""
             else:
                 main_query = f"""SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                      {main_col} AS name,
@@ -257,13 +257,13 @@ def search2_table(data: schemas.SessionsSearchPayloadSchema, project_id: int, de
                                 {extra_where}
                                 GROUP BY {main_col}
                                 ORDER BY total DESC
-                                LIMIT %(limit_e)s OFFSET %(limit_s)s;"""
+                                LIMIT %(limit)s OFFSET %(limit_s)s;"""
 
             main_query = cur.format(query=main_query, parameters=full_args)
             logging.debug("--------------------")
             logging.debug(main_query)
             logging.debug("--------------------")
-            sessions = cur.execute(main_query)
+            sessions = cur.execute(query=main_query)
             count = 0
             total = 0
             if len(sessions) > 0:
