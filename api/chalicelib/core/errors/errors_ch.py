@@ -400,7 +400,7 @@ def search(data: schemas.SearchErrorsSchema, project: schemas.ProjectContext, us
         # print("------------")
         query = ch.format(query=main_ch_query, parameters=params)
 
-        rows = ch.execute(query)
+        rows = ch.execute(query=query)
         total = rows[0]["total"] if len(rows) > 0 else 0
 
     for r in rows:
