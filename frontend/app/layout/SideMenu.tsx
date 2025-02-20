@@ -95,7 +95,7 @@ function SideMenu(props: Props) {
               modules.includes(MODULES.RECOMMENDATIONS),
               item.key === MENU.FEATURE_FLAGS &&
               modules.includes(MODULES.FEATURE_FLAGS),
-              item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
+              item.key === MENU.HIGHLIGHTS && modules.includes(MODULES.HIGHLIGHTS),
               item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
@@ -122,7 +122,6 @@ function SideMenu(props: Props) {
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
-    [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
     [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
     [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
