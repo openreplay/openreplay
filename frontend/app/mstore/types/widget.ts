@@ -314,6 +314,19 @@ export default class Widget {
         }
 
         if (this.metricType === HEATMAP) {
+            const defaults = {
+                domURL: undefined,
+                duration: 0,
+                events: [],
+                mobsUrl: [],
+                path: '',
+                projectId: 0,
+                sessionId: null,
+                startTs: 0
+            };
+            if (!data || !data.domURL) {
+                this.data = defaults;
+            }
             Object.assign(this.data, data);
             return;
         }
