@@ -289,11 +289,13 @@ const AddCardSection = observer(
           ) : null}
         </div>
         <div>
-          <Segmented
-            options={options}
-            value={tab}
-            onChange={(value) => setTab(value)}
-          />
+          {options.length > 1 ? (
+            <Segmented
+              options={options}
+              value={tab}
+              onChange={(value) => setTab(value)}
+            />
+          ) : null}
         </div>
 
         <div className="py-2">
