@@ -415,7 +415,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
     const dynamicMinHeight = finalNodeCount * 15;
     containerStyle = {
       width: '100%',
-      minHeight: dynamicMinHeight,
+      minHeight: Math.max(550, dynamicMinHeight),
       height: '100%',
       overflowY: 'auto',
     };
@@ -427,7 +427,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
   }
 
   return (
-    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, }}>
+    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, minHeight: 240 }}>
       <div
         ref={chartRef}
         style={containerStyle}

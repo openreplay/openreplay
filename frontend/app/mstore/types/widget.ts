@@ -260,6 +260,7 @@ export default class Widget {
     updateStartPoint(startPoint: any) {
         runInAction(() => {
             this.startPoint = new FilterItem(startPoint);
+            this.hasChanged = true;
         });
     }
 
