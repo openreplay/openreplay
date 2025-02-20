@@ -5,9 +5,10 @@ interface Props {
   muted?: boolean;
   height?: number | string;
   setRemoteEnabled?: (isEnabled: boolean) => void;
+  local?: boolean;
 }
 
-function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled }: Props) {
+function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled, local }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
   const [isEnabled, setEnabled] = React.useState(false);
 
@@ -47,6 +48,7 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
         width: isEnabled ? undefined : '0px!important',
         height: isEnabled ? undefined : '0px!important',
         border: '1px solid grey',
+        transform: local ? 'scaleX(-1)' : undefined,
       }}
     >
       <video autoPlay ref={ref} muted={muted} style={{ height: height }} />

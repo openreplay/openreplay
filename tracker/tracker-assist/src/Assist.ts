@@ -78,7 +78,7 @@ export default class Assist {
 
   private socket: Socket | null = null
   private calls: Record<string, RTCPeerConnection> = {};
-  private canvasPeers: Record<number, RTCPeerConnection | null> = {}
+  private canvasPeers: { [id: number]: RTCPeerConnection | null } = {}
   private canvasNodeCheckers: Map<number, any> = new Map()
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
@@ -87,10 +87,6 @@ export default class Assist {
   private agents: Record<string, Agent> = {}
   private readonly options: Options
   private readonly canvasMap: Map<number, Canvas> = new Map()
-
-  // Для локального аудио/видео потока
-  private localStream: MediaStream | null = null;
-  private isCalling: boolean = false;
 
   constructor(
     private readonly app: App,
@@ -340,11 +336,12 @@ export default class Assist {
 
 
     // TODO: restrict by id
-    socket.on('moveAnnotation', (id, event) => processEvent(id, event, (_,  d) => annot && annot.move(d)))
-    socket.on('startAnnotation', (id, event) => processEvent(id, event, (_,  d) => annot?.start(d)))
+    socket.on('moveAnnotation', (id, event) => processEvent(id, event, (_, d) => annot && annot.move(d)))
+    socket.on('startAnnotation', (id, event) => processEvent(id, event, (_, d) => annot?.start(d)))
     socket.on('stopAnnotation', (id, event) => processEvent(id, event, annot?.stop))
 
     socket.on('NEW_AGENT', (id: string, info: AgentInfo) => {
+      this.cleanCanvasConnections();
       this.agents[id] = {
         onDisconnect: this.options.onAgentConnect?.(info),
         agentInfo: info, // TODO ?
@@ -367,8 +364,10 @@ export default class Assist {
           })
       }
     })
+
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
-      ids.forEach(id =>{
+      this.cleanCanvasConnections();
+      ids.forEach(id => {
         const agentInfo = this.agents[id]?.agentInfo
         this.agents[id] = {
           agentInfo,
@@ -398,19 +397,26 @@ export default class Assist {
       this.agents[id]?.onDisconnect?.()
       delete this.agents[id]
 
+      Object.values(this.calls).forEach(pc => pc.close())
+      this.calls = {}
+
       recordingState.stopAgentRecording(id)
       endAgentCall(id)
     })
+
     socket.on('NO_AGENT', () => {
       Object.values(this.agents).forEach(a => a.onDisconnect?.())
+      this.cleanCanvasConnections();
       this.agents = {}
       if (recordingState.isActive) recordingState.stopRecording()
     })
+
     socket.on('call_end', (id) => {
       if (!callingAgents.has(id)) {
         app.debug.warn('Received call_end from unknown agent', id)
         return
       }
+
       endAgentCall(id)
     })
 
@@ -418,17 +424,38 @@ export default class Assist {
       if (app.getTabId() !== info.meta.tabId) return
       const name = info.data
       callingAgents.set(id, name)
-
-      if (!this.isCalling) {
-        setupCallSignaling();
-      }
       updateCallerNames()
     })
+
+    socket.on('webrtc_canvas_answer', async (_, data: { answer, id }) => {
+      const pc = this.canvasPeers[data.id];
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        } catch (e) {
+          app.debug.error('Error adding ICE candidate', e);
+        }
+      }
+    })
+
+    socket.on('webrtc_canvas_ice_candidate', async (_, data: { candidate, id }) => {
+      const pc = this.canvasPeers[data.id];
+      if (pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+          app.debug.error('Error adding ICE candidate', e);
+        }
+      }
+    })
+
+    // Если приходит videofeed то в ui показываем видео
     socket.on('videofeed', (_, info) => {
       if (app.getTabId() !== info.meta.tabId) return
       const feedState = info.data
       callUI?.toggleVideoStream(feedState)
     })
+
     socket.on('request_recording', (id, info) => {
       if (app.getTabId() !== info.meta.tabId) return
       const agentData = info.data
@@ -446,6 +473,21 @@ export default class Assist {
       }
     })
 
+    socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
+      await handleIncomingCallOffer(data.from, data.offer);
+    });
+
+    socket.on('webrtc_call_ice_candidate', async (data: { from: string, candidate: RTCIceCandidateInit }) => {
+      const pc = this.calls[data.from];
+      if (pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+          app.debug.error('Error adding ICE candidate', e);
+        }
+      }
+    });
+
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
     const lStreams: Record<string, LocalStream> = {}
@@ -455,21 +497,16 @@ export default class Assist {
     }
     function endAgentCall(id: string) {
       callingAgents.delete(id)
+
       if (callingAgents.size === 0) {
         handleCallEnd()
       } else {
         updateCallerNames()
-        //TODO: close() specific call and corresponding lStreams (after connecting peerId & socket.io id)
       }
     }
-    const handleCallEnd = () => { // Complete stop and clear all calls
-      // Streams
-      Object.values(this.calls).forEach(pc => pc.close())
-      Object.keys(this.calls).forEach(peerId => {
-        delete this.calls[peerId]
-      })
-      Object.values(lStreams).forEach((stream) => { stream.stop() })
-      Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
+
+    // обработка окончания вызова
+    const handleCallEnd = () => {
       // UI
       closeCallConfirmWindow()
       if (this.remoteControl?.status === RCStatus.Disabled) {
@@ -495,46 +532,23 @@ export default class Assist {
       }
     }
 
-    const setupCallSignaling = () => {
-      console.log("SETUP CALL 2");
-      socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
-        console.log('Incoming call offer from', data, data.from, data.offer);
-        await handleIncomingCallOffer(data.from, data.offer);
-      });
-      socket.on('webrtc_call_answer', async (data: { from: string, answer: RTCSessionDescriptionInit }) => {
-        const pc = this.calls[data.from];
-        if (pc) {
-          try {
-            await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-          } catch (e) {
-            app.debug.error('Error setting remote description from answer', e);
-          }
-        }
-      });
-      socket.on('webrtc_ice_candidate', async (data: { from: string, candidate: RTCIceCandidateInit }) => {
-        const pc = this.calls[data.from];
-        if (pc) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          } catch (e) {
-            app.debug.error('Error adding ICE candidate', e);
-          }
-        }
-      });
-    };
-
+    // обрабатываем входящий вызов
     const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit) => {
       app.debug.log('handleIncomingCallOffer', from)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
+      // если звонящий уже в списке, то сразу принимаем вызов без ui
       if (callingPeerIds.includes(from) || this.callingState === CallingState.True) {
         confirmAnswer = Promise.resolve(true)
       } else {
+        // ставим стейт в ожидание подтверждения
         this.setCallingState(CallingState.Requesting)
+        // вызываем окно подтверждения вызова
         confirmAnswer = requestCallConfirm()
-        this.playNotificationSound() // For every new agent during confirmation here
+        // звуковое уведомление звонка
+        this.playNotificationSound()
 
-        // TODO: only one (latest) timeout
+        // через 30 сек сбрасываем вызов
         setTimeout(() => {
           if (this.callingState !== CallingState.Requesting) { return }
           initiateCallEnd()
@@ -542,34 +556,66 @@ export default class Assist {
       }
 
       try {
+        // ждем рещения по принятию вызова
         const agreed = await confirmAnswer
+        // если отказали, то завершаем вызов
         if (!agreed) {
           initiateCallEnd()
           this.options.onCallDeny?.()
           return
         }
-        // Request local stream for the new connection
-        if (!lStreams[from]) {
-          app.debug.log('starting new stream for', from)
-          lStreams[from] = await RequestLocalStream()
+        // если приняли то чекаем ui, если окна вызова нет то создаем, привязываем toggle локального видео в тоглу через сокет
+        if (!callUI) {
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+          callUI.setVideoToggleCallback((args: { enabled: boolean }) =>
+            this.emit('videofeed', { streamId: from, enabled: args.enabled })
+          );
         }
-        const pc = new RTCPeerConnection(this.options.config);
+        // показыаем кнопочки в окне вызова
+        callUI.showControls(initiateCallEnd)
+        if (!annot) {
+          annot = new AnnotationCanvas()
+          annot.mount()
+        }
+
+        // callUI.setLocalStreams(Object.values(lStreams))
+        try {
+          // если нет локальных стримов в lStrems то устанавливаем
+          if (!lStreams[from]) {
+            app.debug.log('starting new stream for', from)
+            // запрашиваем локальный стрим, и устанавливаем в lStreams
+            lStreams[from] = await RequestLocalStream()
+          }
+          // полученные дорожки передаем в Call ui
+          callUI.setLocalStreams(Object.values(lStreams))
+        } catch (e) {
+          app.debug.error('Error requesting local stream', e);
+          // если что-то не получилось то обрываем вызов
+          initiateCallEnd();
+          return;
+        }
+        // создаем новый RTCPeerConnection с конфигом ice серверов
+        const pc = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+
+        // получаем все локальные треки и добавляем их в RTCPeerConnection
         lStreams[from].stream.getTracks().forEach(track => {
           pc.addTrack(track, lStreams[from].stream);
         });
-        // Обработка ICE-кандидатов
-        console.log("should generate ice");
 
+        // Когда получаем локальные ice кандидаты эмитим их через сокет
         pc.onicecandidate = (event) => {
-          console.log("GENERATING ICE CANDIDATE", event);
           if (event.candidate) {
-            socket.emit('webrtc_ice_candidate', { to: from, candidate: event.candidate });
+            socket.emit('webrtc_call_ice_candidate', { from, candidate: event.candidate });
           }
         };
-        // Обработка входящего медиапотока
+
+        // когда получаем удаленный поток, добавляем его в call ui
         pc.ontrack = (event) => {
           const rStream = event.streams[0];
           if (rStream && callUI) {
+
             callUI.addRemoteStream(rStream, from);
             const onInteraction = () => {
               callUI?.playRemote();
@@ -578,33 +624,26 @@ export default class Assist {
             document.addEventListener('click', onInteraction);
           }
         };
-        // Сохраняем соединение
+
+        // Сохраняем соединение с звонящим
         this.calls[from] = pc;
-        // устанавливаем remote description, создаём answer
-        console.log('1111111', offer);
+
+        // устанавливаем remote description на входящий запрос
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        console.log('2222222');
+        // создаем ответ на входящий запрос
         const answer = await pc.createAnswer();
+        // устанавливаем ответ как локальный
         await pc.setLocalDescription(answer);
-        socket.emit('webrtc_call_answer', { to: from, answer });
-        if (!callUI) {
-          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-          callUI.setVideoToggleCallback((args: { enabled: boolean }) =>
-            this.emit('videofeed', { streamId: from, enabled: args.enabled })
-          );
-        }
-        callUI.showControls(initiateCallEnd)
-        if (!annot) {
-          annot = new AnnotationCanvas()
-          annot.mount()
-        }
-        callUI.setLocalStreams(Object.values(lStreams))
-        // Обработка ошибок соединения
+        // передаем ответ
+        socket.emit('webrtc_call_answer', { from, answer });
+
+        // Если меняется стейт на ощибку обрываем звонок
         pc.onconnectionstatechange = () => {
           if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
             initiateCallEnd();
           }
         };
+
         // Обновление трека при изменении локального видео
         lStreams[from].onVideoTrack(vTrack => {
           const sender = pc.getSenders().find(s => s.track?.kind === 'video');
@@ -614,12 +653,17 @@ export default class Assist {
           }
           sender.replaceTrack(vTrack)
         })
+
+        // если пользователеь закрыл вкладку или переключился, то завершаем вызов
         document.addEventListener('visibilitychange', () => {
           initiateCallEnd()
         })
+
+        // когда все установилось то стейт переводим в true
         this.setCallingState(CallingState.True)
         if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
         const callingPeerIdsNow = Object.keys(this.calls)
+        // в session storage записываем всех с кем установлен вызов
         sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIdsNow))
         this.emit('UPDATE_SESSION', { agentIds: callingPeerIdsNow, isCallActive: true })
       } catch (reason) {
@@ -642,39 +686,45 @@ export default class Assist {
       });
     };
 
+    // функция завершения вызова
     const initiateCallEnd = () => {
       this.emit('call_end');
       handleCallEnd();
     };
 
-    const startCanvasStream = (stream: MediaStream, id: number) => {
-      const canvasPID = `${app.getProjectKey()}-${sessionId}-${id}`;
-      if (!this.canvasPeers[id]) {
-        this.canvasPeers[id] = new RTCPeerConnection(this.options.config);
-      }
-      const pc = this.canvasPeers[id];
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          // Добавить отправку ICE-кандидата через socket
-        }
-      };
-      Object.values(this.agents).forEach(agent => {
-        if (agent.agentInfo) {
-          // реализовать сигналинг для canvas чтобы агент создал свой RTCPeerConnection для canvas
-          stream.getTracks().forEach(track => {
-            pc.addTrack(track, stream);
+    const startCanvasStream = async (stream: MediaStream, id: number) => {
+      // const canvasPID = `${app.getProjectKey()}-${sessionId}-${id}`;
+      // const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`;
+      for (const agent of Object.values(this.agents)) {
+        if (!agent.agentInfo) return;
+
+        const uniqueId = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas-${id}`;
+
+        if (!this.canvasPeers[uniqueId]) {
+          this.canvasPeers[uniqueId] = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
           });
-          
-        } else {
-          app.debug.error('Assist: cant establish canvas peer to agent, no agent info')
+          this.setupPeerListeners(uniqueId);
+
+          stream.getTracks().forEach((track) => {
+            this.canvasPeers[uniqueId]?.addTrack(track, stream);
+          });
+
+          // Создаем SDP offer
+          const offer = await this.canvasPeers[uniqueId].createOffer();
+          await this.canvasPeers[uniqueId].setLocalDescription(offer);
+
+          // Отправляем offer через сервер сигналинга
+          socket.emit('webrtc_canvas_offer', { offer, id: uniqueId });
+
         }
-      })
+      }
     }
 
     app.nodes.attachNodeCallback((node) => {
       const id = app.nodes.getID(node)
       if (id && hasTag(node, 'canvas')) {
-        app.debug.log(`Creating stream for canvas ${id}`)
+        // app.debug.log(`Creating stream for canvas ${id}`)
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
           id,
@@ -705,6 +755,20 @@ export default class Assist {
     });
   }
 
+  private setupPeerListeners(id: string) {
+    const peer = this.canvasPeers[id];
+    if (!peer) return;
+    // ICE-кандидаты
+    peer.onicecandidate = (event) => {
+      if (event.candidate && this.socket) {
+        this.socket.emit('webrtc_canvas_ice_candidate', {
+          candidate: event.candidate,
+          id,
+        });
+      }
+    };
+  }
+
   private playNotificationSound() {
     if ('Audio' in window) {
       new Audio('https://static.openreplay.com/tracker-assist/notification.mp3')
@@ -715,6 +779,7 @@ export default class Assist {
     }
   }
 
+  // очищаем все данные
   private clean() {
     // sometimes means new agent connected, so we keep id for control
     this.remoteControl?.releaseControl(false, true);
@@ -722,6 +787,7 @@ export default class Assist {
       clearTimeout(this.peerReconnectTimeout)
       this.peerReconnectTimeout = null
     }
+    this.cleanCanvasConnections();
     Object.values(this.calls).forEach(pc => pc.close())
     this.calls = {}
     if (this.socket) {
@@ -732,6 +798,12 @@ export default class Assist {
     this.canvasPeers = {}
     this.canvasNodeCheckers.forEach((int) => clearInterval(int))
     this.canvasNodeCheckers.clear()
+  }
+
+  private cleanCanvasConnections() {
+    Object.values(this.canvasPeers).forEach(pc => pc?.close())
+    this.canvasPeers = {}
+    this.socket?.emit('webrtc_canvas_restart')
   }
 }
 

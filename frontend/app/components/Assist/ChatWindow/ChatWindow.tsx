@@ -62,6 +62,7 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
               stream={localStream ? localStream.stream : null}
               muted
               height={anyRemoteEnabled ? 50 : 'unset'}
+              local
             />
           </div>
         </div>

@@ -142,6 +142,10 @@ function AssistActions({
     });
   };
 
+  const removeIncomeStream = () => {
+    setIncomeStream([]);
+  };
+
   function call(additionalAgentIds?: string[]) {
     RequestLocalStream()
       .then((lStream) => {
@@ -153,6 +157,7 @@ function AssistActions({
           () => {
             player.assistManager.ping(AssistActionsPing.call.end, agentId)
             lStream.stop.bind(lStream);
+            removeIncomeStream(lStream.stream);
           },
           onReject,
           onError

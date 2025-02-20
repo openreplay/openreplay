@@ -309,7 +309,7 @@ export default class AssistManager {
       this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
         ...this.session.agentInfo,
         id: agentId,
-      });
+      }, socket);
 
       document.addEventListener('visibilitychange', this.onVisChange);
     });

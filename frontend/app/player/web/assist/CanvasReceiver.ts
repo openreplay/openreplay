@@ -1,5 +1,6 @@
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
+import { Socket } from 'socket.io-client';
 
 let frameCounter = 0;
 
@@ -19,7 +20,7 @@ export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
   // Храним RTCPeerConnection для каждого удалённого пира
   private connections: Map<string, RTCPeerConnection> = new Map();
-  private id: string;
+  private cId: string;
 
   //sendSignal – для отправки сигналов (offer/answer/ICE)
   constructor(
@@ -27,31 +28,50 @@ export default class CanvasReceiver {
     private readonly config: RTCIceServer[] | null,
     private readonly getNode: MessageManager['getNode'],
     private readonly agentInfo: Record<string, any>,
-    private readonly sendSignal: (data: any) => void
+    private readonly socket: Socket,
   ) {
     // Формируем идентификатор как в PeerJS
-    this.id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
+    this.cId = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
+
+    this.socket.on('webrtc_canvas_offer', (data: { data: { offer: RTCSessionDescriptionInit, id: string }}) => {
+      const { offer, id } = data.data;
+      if (checkId(id, this.cId)) {
+        this.handleOffer(offer, id);
+      }
+    });
+    
+    this.socket.on('webrtc_canvas_ice_candidate', (data: { data: { candidate: RTCIceCandidateInit, id: string }}) => {
+      const {candidate, id } = data.data;
+      if (checkId(id, this.cId)) {
+        this.handleCandidate(candidate, id);
+      }
+    });
+
+    this.socket.on('webrtc_canvas_restart', () => {
+      this.clear();
+    });
   }
 
-  async handleOffer(from: string, offer: RTCSessionDescriptionInit): Promise<void> {
+  async handleOffer(offer: RTCSessionDescriptionInit, id: string): Promise<void> {
     const pc = new RTCPeerConnection({
       iceServers: this.config ? this.config : [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
     // Сохраняем соединение
-    this.connections.set(from, pc);
+    this.connections.set(id, pc);
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        this.sendSignal({ to: from, type: 'canvas_ice_candidate', candidate: event.candidate });
+        this.socket.emit('webrtc_canvas_ice_candidate', ({ candidate: event.candidate, id }));
       }
     };
 
     pc.ontrack = (event) => {
+
       const stream = event.streams[0];
       if (stream) {
         // Определяем canvasId из удалённого peer id
-        const canvasId = from.split('-')[2];
+        const canvasId = id.split('-')[4];
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
@@ -62,6 +82,8 @@ export default class CanvasReceiver {
               node.node as HTMLCanvasElement,
               (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
             );
+          } else {
+            console.log('NODE', canvasId, 'IS NOT FOUND');
           }
         }, 250);
       }
@@ -72,11 +94,11 @@ export default class CanvasReceiver {
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    this.sendSignal({ to: from, type: 'canvas_answer', answer: answer });
+    this.socket.emit('webrtc_canvas_answer', { answer: answer, id });
   }
 
-  async handleCandidate(from: string, candidate: RTCIceCandidateInit): Promise<void> {
-    const pc = this.connections.get(from);
+  async handleCandidate(candidate: RTCIceCandidateInit, id: string): Promise<void> {
+    const pc = this.connections.get(id);
     if (pc) {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -165,6 +187,10 @@ function spawnDebugVideo(stream: MediaStream, node: VElement) {
       };
       document.addEventListener('click', waiter);
     });
+}
+
+function checkId(id: string, cId: string): boolean {
+  return id.includes(cId);
 }
 
 /** simple peer example

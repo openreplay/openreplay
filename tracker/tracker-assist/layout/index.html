@@ -152,8 +152,9 @@
         </div>
       </div>
       <div id="video-container" class="card-body bg-dark p-0 d-flex align-items-center position-relative">
-        <div id="local-stream" class="ratio ratio-4x3 rounded m-0 p-0 shadow">
-          <video id="video-local" autoplay muted></video>
+        <div id="local-stream" class="ratio ratio-4x3 rounded m-0 p-0 shadow scale-x-[-1]">
+          <!-- пофиксить отображение по горизонтали -->
+          <video id="video-local" autoplay muted class="scale-x-[-1]"></video>
         </div>
 
         <div id="remote-stream" class="ratio ratio-4x3 m-0 p-0">
