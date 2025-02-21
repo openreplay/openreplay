@@ -149,7 +149,7 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
     query_from = f"{exp_ch_helper.get_main_events_table(0)} AS main_events"
 
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format(query=f"""SELECT main_events.selector AS selector, 
+        query = cur.format(query=f"""SELECT CAST(`$properties`.selector AS String) AS selector, 
                                       COUNT(1) AS count
                                FROM {query_from}
                                WHERE {" AND ".join(constraints)}
