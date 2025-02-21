@@ -20,6 +20,7 @@ function HighlightClip({
   openEdit = () => undefined,
   onItemClick = () => undefined,
   onDelete = () => undefined,
+  canEdit = false,
 }: {
   note: string | null;
   tag: string;
@@ -30,6 +31,7 @@ function HighlightClip({
   openEdit: (id: any) => any;
   onItemClick: (id: any) => any;
   onDelete: (id: any) => any;
+  canEdit: boolean;
 }) {
   const noteMsg = note || noNoteMsg
   const copyToClipboard = () => {
@@ -48,16 +50,19 @@ function HighlightClip({
       key: 'edit',
       icon: <EditOutlined />,
       label: 'Edit',
+      disabled: !canEdit,
     },
     {
       key: 'visibility',
       icon: <Eye strokeWidth={1} size={14} />,
       label: 'Visibility',
+      disabled: !canEdit,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
       label: 'Delete',
+      disabled: !canEdit,
     },
   ];
 

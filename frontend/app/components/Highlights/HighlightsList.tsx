@@ -14,13 +14,14 @@ import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
 
 function HighlightsList() {
-  const { notesStore, projectsStore } = useStore();
+  const { notesStore, projectsStore, userStore } = useStore();
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editHl, setEditHl] = React.useState<Record<string, any>>({
     message: '',
     isPublic: false
   });
+  const currentUserId = userStore.account.id;
 
   const activeProject = projectsStore.activeSiteId;
   const query = notesStore.query;
@@ -150,6 +151,7 @@ function HighlightsList() {
                 createdAt={note.createdAt}
                 hId={note.noteId}
                 thumbnail={note.thumbnail}
+                canEdit={note.userId === currentUserId}
                 openEdit={() => onEdit(note.noteId)}
                 onDelete={() => onDelete(note.noteId)}
                 onItemClick={() => onItemClick(note.noteId)}
