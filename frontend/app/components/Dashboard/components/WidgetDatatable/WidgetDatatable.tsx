@@ -43,6 +43,7 @@ function WidgetDatatable(props: Props) {
       dataObj.chart = dataObj.chart.map((item, i) => {
         const compItem = props.compData!.chart[i];
         const newItem = { ...item };
+        if (!compItem) return newItem;
         Object.keys(compItem).forEach((key) => {
           if (key !== 'timestamp' && key !== 'time') {
             newItem[key] = compItem[key];
