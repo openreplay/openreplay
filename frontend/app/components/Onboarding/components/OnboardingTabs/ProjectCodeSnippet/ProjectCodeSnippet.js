@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Checkbox, Loader, Toggler } from 'UI';
+import { Checkbox, Loader } from 'UI';
+import { Switch } from 'antd'
 import cn from 'classnames';
 import stl from './projectCodeSnippet.module.css';
 import CircleNumber from '../../CircleNumber';
@@ -118,13 +119,14 @@ const ProjectCodeSnippet = () => {
           instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen
           sharing software.
         </p>
-        <Toggler
-          label="Yes"
-          checked={isAssistEnabled}
-          name="test"
-          className="font-medium mr-2"
-          onChange={() => setAssistEnabled(!isAssistEnabled)}
-        />
+        <div className={'flex items-center gap-2'}>
+            <Switch
+            checked={isAssistEnabled}
+            className="font-medium mr-2"
+            onChange={() => setAssistEnabled(!isAssistEnabled)}
+          />
+          <span>Yes</span>
+        </div>
       </div>
 
       <div className={cn(stl.instructions, 'mt-8')}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Toggler } from 'UI'
+import { Switch } from 'antd'
 
 function ToggleContent({ label = '', first, second }) {
   const [switched, setSwitched] = useState(true)
@@ -7,11 +7,9 @@ function ToggleContent({ label = '', first, second }) {
     <div>
       <div className="flex items-center cursor-pointer mb-4">
         <div className="mr-2" onClick={() => setSwitched(!switched)}>{ label }</div>
-        <Toggler
-          name="sessionsLive"
+        <Switch
           onChange={ () => setSwitched(!switched) }
           checked={ !switched }
-          style={{ lineHeight: '23px' }}
         />
       </div>
       <div>

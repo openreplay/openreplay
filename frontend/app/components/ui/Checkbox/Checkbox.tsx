@@ -1,5 +1,4 @@
 import React from 'react';
-import cn from 'classnames';
 import { Checkbox as AntCheckbox } from 'antd'
 
 interface Props {

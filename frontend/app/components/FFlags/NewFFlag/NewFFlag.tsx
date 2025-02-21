@@ -1,9 +1,9 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Toggler, Loader, NoContent } from 'UI';
+import { Input, SegmentSelection, Loader, NoContent } from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { Button } from 'antd'
+import { Button, Switch } from 'antd'
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
 import {Prompt, useHistory} from 'react-router';
@@ -93,7 +93,13 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
       />
       <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
         <div className="flex justify-between items-center">
-          <Header siteId={siteId} current={current} onCancel={onCancel} onSave={onSave} isNew={!fflagId} />
+          <Header
+            siteId={siteId}
+            current={current}
+            onCancel={onCancel}
+            onSave={onSave}
+            isNew={!fflagId}
+          />
         </div>
         <div className={'w-full border-b border-light-gray my-2'} />
 
@@ -107,7 +113,9 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
             current.setFlagKey(e.target.value.replace(/\s/g, '-'));
           }}
         />
-        <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
+        <div
+          className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}
+        >
           Feature flag keys must be unique.
           <div className={'link'} onClick={onImplementClick}>
             Learn how to implement feature flags
@@ -143,10 +151,16 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           </div>
           {current.isSingleOption ? (
             <>
-              <div className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}>
+              <div
+                className={
+                  'text-sm text-disabled-text mt-1 flex items-center gap-1'
+                }
+              >
                 Users will be served
-                <code className={'p-1 text-red rounded bg-gray-lightest'}>true</code> if they match
-                one or more rollout conditions.
+                <code className={'p-1 text-red rounded bg-gray-lightest'}>
+                  true
+                </code>{' '}
+                if they match one or more rollout conditions.
               </div>
               <div className={'mt-6'}>
                 <Payload />
@@ -157,7 +171,6 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                   }}
                   placeholder={"E.g. red button, {'buttonColor': 'red'}"}
                   className={'mt-2'}
-
                 />
               </div>
             </>
@@ -167,46 +180,61 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
         </div>
 
         <div className={'mt-6'}>
-          <label className={'font-semibold'}>Persist flag across authentication</label>
-          <Toggler
-            checked={current.isPersist}
-            name={'persist-flag'}
-            onChange={() => {
-              current.setIsPersist(!current.isPersist);
-            }}
-            label={current.isPersist ? 'Yes' : 'No'}
-          />
+          <label className={'font-semibold'}>
+            Persist flag across authentication
+          </label>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={current.isPersist}
+              onChange={() => {
+                current.setIsPersist(!current.isPersist);
+              }}
+            />
+            <div>{current.isPersist ? 'Yes' : 'No'}</div>
+          </div>
           <div className={'text-sm text-disabled-text flex items-center gap-1'}>
-            Persist flag to not reset this feature flag status after a user is identified.
+            Persist flag to not reset this feature flag status after a user is
+            identified.
           </div>
         </div>
 
         <div className={'mt-6'}>
-          <label className={'font-semibold'}>Enable this feature flag (Status)?</label>
-          <Toggler
-            checked={current.isActive}
-            name={'persist-flag'}
-            onChange={() => {
-              !fflagId && !current.isActive ? toast.success("Feature flag will be enabled upon saving it.") : ""
-              current.setIsEnabled(!current.isActive);
-            }}
-            label={current.isActive ? 'Enabled' : 'Disabled'}
-          />
+          <label className={'font-semibold'}>
+            Enable this feature flag (Status)?
+          </label>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={current.isActive}
+              onChange={() => {
+                !fflagId && !current.isActive
+                  ? toast.success(
+                      'Feature flag will be enabled upon saving it.'
+                    )
+                  : '';
+                current.setIsEnabled(!current.isActive);
+              }}
+            />
+            <div>{current.isActive ? 'Enabled' : 'Disabled'}</div>
+          </div>
         </div>
 
         <div className={'mt-6 p-4 rounded bg-gray-lightest'}>
           <label className={'font-semibold'}>Rollout Conditions</label>
           {current.conditions.length === 0 ? null : (
             <div className={'text-sm text-disabled-text mb-2'}>
-              Indicate the users for whom you intend to make this flag available. Keep in mind that
-              each set of conditions will be deployed separately from one another.
+              Indicate the users for whom you intend to make this flag
+              available. Keep in mind that each set of conditions will be
+              deployed separately from one another.
             </div>
           )}
           <NoContent
             show={current.conditions.length === 0}
             title={'The flag will be available for 100% of the user sessions.'}
             subtext={
-              <div className={'flex flex-col items-center'} style={{ fontSize: 14 }}>
+              <div
+                className={'flex flex-col items-center'}
+                style={{ fontSize: 14 }}
+              >
                 <div className={'text-sm mb-1'}>
                   Set up condition sets to restrict the rollout.
                 </div>

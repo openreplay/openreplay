@@ -1,6 +1,5 @@
 export { default as Loader } from './Loader';
 export { default as Link } from './Link';
-export { default as Button } from './Button';
 export { default as Label } from './Label';
 export { default as SlideModal } from './SlideModal';
 export { default as NoContent } from './NoContent';
@@ -41,7 +40,6 @@ export { default as SideMenuHeader } from './SideMenuHeader';
 export { default as PageTitle } from './PageTitle';
 export { default as Pagination } from './Pagination';
 export { default as Tooltip } from './Tooltip'
-export { default as Toggler } from './Toggler';
 export { default as Input } from './Input';
 export { default as Form } from './Form';
 export { default as Modal } from './Modal';

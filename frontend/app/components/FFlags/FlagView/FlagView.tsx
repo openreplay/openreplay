@@ -1,8 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Toggler, Loader, NoContent, ItemMenu } from 'UI';
-import { Button } from 'antd'
+import { Loader, NoContent, ItemMenu } from 'UI';
+import { Button, Switch } from 'antd'
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useHistory } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
@@ -64,7 +64,12 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
             type={'text'}
             onClick={() =>
               history.push(
-                withSiteId(fflag(featureFlagsStore.currentFflag?.featureFlagId.toString()), siteId)
+                withSiteId(
+                  fflag(
+                    featureFlagsStore.currentFflag?.featureFlagId.toString()
+                  ),
+                  siteId
+                )
               )
             }
           >
@@ -73,17 +78,16 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
           <ItemMenu bold items={menuItems} />
         </div>
         <div className={'border-b'} style={{ color: 'rgba(0,0,0, 0.6)' }}>
-          {current.description || 'There is no description for this feature flag.'}
+          {current.description ||
+            'There is no description for this feature flag.'}
         </div>
 
         <div className={'mt-4'}>
           <label className={'font-semibold'}>Status</label>
-          <Toggler
-            checked={current.isActive}
-            name={'persist-flag'}
-            onChange={toggleActivity}
-            label={current.isActive ? 'Enabled' : 'Disabled'}
-          />
+          <div className={'flex items-center gap-2'}>
+            <Switch checked={current.isActive} onChange={toggleActivity} />
+            <div>{current.isActive ? 'Enabled' : 'Disabled'}</div>
+          </div>
         </div>
         <div className={'mt-4'}>
           <label className={'font-semibold'}>Persistence</label>
@@ -93,28 +97,25 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
               : 'This flag is not persistent across authentication events.'}
           </div>
         </div>
-        {!current.isSingleOption ? (
-          <Multivariant readonly />
+        {!current.isSingleOption ? <Multivariant readonly /> : null}
+        {current.conditions.length > 0 ? (
+          <div className="mt-6 p-4 rounded bg-gray-lightest">
+            <label className={'font-semibold'}>Rollout Conditions</label>
+            {current.conditions.map((condition, index) => (
+              <React.Fragment key={index}>
+                <RolloutCondition
+                  set={index + 1}
+                  readonly
+                  index={index}
+                  conditions={condition}
+                  removeCondition={current.removeCondition}
+                />
+                <div className={'mt-2'} />
+              </React.Fragment>
+            ))}
+          </div>
         ) : null}
-      {current.conditions.length > 0 ? (
-        <div className="mt-6 p-4 rounded bg-gray-lightest">
-          <label className={'font-semibold'}>Rollout Conditions</label>
-          {current.conditions.map((condition, index) => (
-            <React.Fragment key={index}>
-              <RolloutCondition
-                set={index + 1}
-                readonly
-                index={index}
-                conditions={condition}
-                removeCondition={current.removeCondition}
-              />
-              <div className={'mt-2'} />
-            </React.Fragment>
-          ))}
-        </div>
-      ) : null}
       </div>
-
     </div>
   );
 }
