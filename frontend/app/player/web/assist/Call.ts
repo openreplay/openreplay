@@ -2,6 +2,7 @@ import type { LocalStream } from './LocalStream';
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
 import { userStore } from "App/mstore";
+import logger from '@/logger';
 
 export enum CallingState {
   NoCall,
@@ -98,7 +99,7 @@ export default class Call {
       if (event.candidate) {
         this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
       } else {
-        console.log("ICE candidate gathering complete");
+        logger.log("ICE candidate gathering complete");
       }
     };
 
@@ -128,7 +129,7 @@ export default class Call {
       this.callArgs.localStream.onVideoTrack((vTrack: MediaStreamTrack) => {
         const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
         if (!sender) {
-          console.warn('No video sender found');
+          logger.warn('No video sender found');
           return;
         }
         sender.replaceTrack(vTrack);
@@ -153,16 +154,16 @@ export default class Call {
       this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
       this.connectAttempts = 0;
     } catch (e: any) {
-      console.error(e);
+      logger.error(e);
       // Trying to reconnect
       const tryReconnect = async (error: any) => {
         if (error.type === 'peer-unavailable' && this.connectAttempts < 5) {
           this.connectAttempts++;
-          console.log('reconnecting', this.connectAttempts);
+          logger.log('reconnecting', this.connectAttempts);
           await new Promise((resolve) => setTimeout(resolve, 250));
           await this._peerConnection(remotePeerId);
         } else {
-          console.log('error', this.connectAttempts);
+          logger.log('error', this.connectAttempts);
           this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
         }
       };
@@ -176,7 +177,7 @@ export default class Call {
     const remotePeerId = data.from;
     const pc = this.connections[remotePeerId];
     if (!pc) {
-      console.error("No connection found for remote peer", remotePeerId);
+      logger.error("No connection found for remote peer", remotePeerId);
       return;
     }
     try {
@@ -184,10 +185,10 @@ export default class Call {
       if (pc.signalingState !== "stable") {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       } else {
-        console.warn("Skipping setRemoteDescription: Already in stable state");
+        logger.warn("Skipping setRemoteDescription: Already in stable state");
       }
     } catch (e) {
-      console.error("Error setting remote description from answer", e);
+      logger.error("Error setting remote description from answer", e);
       this.callArgs?.onError?.(e);
     }
   }
@@ -202,10 +203,10 @@ export default class Call {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (e) {
-        console.error("Error adding ICE candidate", e);
+        logger.error("Error adding ICE candidate", e);
       }
     } else {
-      console.warn("Пропущен некорректный ICE-кандидат:", data.candidate);
+      logger.warn("Invalid ICE candidate skipped:", data.candidate);
     }
   }
 
@@ -311,7 +312,7 @@ export default class Call {
     this.store.update({ calling: CallingState.Connecting });
     const tab = this.store.get().currentTab;
     if (!tab) {
-      console.warn('No tab data to connect to peer');
+      logger.warn('No tab data to connect to peer');
     }
 
    // Generate a peer identifier depending on the assist version

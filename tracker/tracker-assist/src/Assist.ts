@@ -252,7 +252,7 @@ export default class Assist {
       }
       app.debug.log('Socket:', ...args)
       socket.on('close', (e) => {
-        console.warn('Socket closed:', e);
+        app.debug.warn('Socket closed:', e);
       })
     })
 
