@@ -213,7 +213,7 @@ function WidgetSessions(props: Props) {
           >
             {filteredSessions.sessions.map((session: any) => (
               <React.Fragment key={session.sessionId}>
-                <SessionItem session={session} metaList={metaList} />
+                <SessionItem disableUser session={session} metaList={metaList} />
                 <div className="border-b" />
               </React.Fragment>
             ))}
