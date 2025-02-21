@@ -1,9 +1,7 @@
-import json
-import logging
-
 from decouple import config
-from chalicelib.utils.storage import extra
+
 from chalicelib.core.sessions import sessions_mobs, sessions_favorite
+from chalicelib.utils.storage import extra
 from .custom_metrics import *
 
 
@@ -14,8 +12,8 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
-                session_data = __get_heat_map_chart(project=project, user_id=user_id,
-                                                    data=data, include_mobs=False)
+                session_data = get_heat_map_chart(project=project, user_id=user_id,
+                                                  data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = {"sessionId": session_data["sessionId"]}
 
@@ -42,8 +40,10 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
                   "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
+        params["card_info"] = get_global_card_info(data=data)
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-            params["card_info"] = json.dumps(__get_path_analysis_card_info(data=data))
+            params["card_info"] = {**params["card_info"], **get_path_analysis_card_info(data=data)}
+        params["card_info"] = json.dumps(params["card_info"])
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
