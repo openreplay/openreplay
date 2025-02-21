@@ -2,7 +2,7 @@ import React from 'react';
 import Timeline from 'Components/Session/Player/ClipPlayer/Timeline';
 import { PlayButton, PlayingState } from '@/player-ui';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { observer } from '.store/mobx-react-lite-virtual-356dc1206a/package';
+import { observer } from 'mobx-react-lite';
 import { Button } from 'antd';
 import { useHistory } from 'react-router-dom';
 import { CirclePlay } from 'lucide-react';
