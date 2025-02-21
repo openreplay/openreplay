@@ -541,7 +541,7 @@ class RequestGraphqlFilterSchema(BaseModel):
     @classmethod
     def _transform_data(cls, values):
         if values.get("type") in [FetchFilterType.FETCH_DURATION, FetchFilterType.FETCH_STATUS_CODE]:
-            values["value"] = [int(v) for v in values["value"] if v is not None and v.isnumeric()]
+            values["value"] = [int(v) for v in values["value"] if v is not None and str(v).isnumeric()]
         return values
 
 
@@ -851,18 +851,21 @@ class MetricTimeseriesViewType(str, Enum):
     LINE_CHART = "lineChart"
     AREA_CHART = "areaChart"
     BAR_CHART = "barChart"
-    PIE_CHART = "pieChart"
     PROGRESS_CHART = "progressChart"
-    TABLE_CHART = "table"
+    PIE_CHART = "pieChart"
     METRIC_CHART = "metric"
+    TABLE_CHART = "table"
 
 
 class MetricTableViewType(str, Enum):
-    TABLE = "table"
+    TABLE_CHART = "table"
 
 
 class MetricOtherViewType(str, Enum):
     OTHER_CHART = "chart"
+    COLUMN_CHART = "columnChart"
+    METRIC_CHART = "metric"
+    TABLE_CHART = "table"
     LIST_CHART = "list"
 
 
@@ -874,8 +877,6 @@ class MetricType(str, Enum):
     RETENTION = "retention"
     STICKINESS = "stickiness"
     HEAT_MAP = "heatMap"
-
-
 
 
 class MetricOfTable(str, Enum):
@@ -1086,7 +1087,7 @@ class CardFunnel(__CardSchema):
     def __enforce_default(cls, values):
         if values.get("metricOf") and not MetricOfFunnels.has_value(values["metricOf"]):
             values["metricOf"] = MetricOfFunnels.SESSION_COUNT
-        values["viewType"] = MetricOtherViewType.OTHER_CHART
+        # values["viewType"] = MetricOtherViewType.OTHER_CHART
         if values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         return values

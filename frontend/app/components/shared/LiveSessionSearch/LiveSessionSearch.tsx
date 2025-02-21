@@ -13,6 +13,7 @@ function LiveSessionSearch() {
   }, []);
 
   const onAddFilter = (filter: any) => {
+    filter.autoOpen = true;
     searchStoreLive.addFilter(filter);
   };
 

@@ -22,6 +22,10 @@ type Props = IProps & RouteComponentProps;
 
 function DashboardHeader(props: Props) {
   const { siteId } = props;
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
+  const handleOpenChange = (open: boolean) => {
+    setPopoverOpen(open);
+  };
   const { dashboardStore } = useStore();
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -82,7 +86,9 @@ function DashboardHeader(props: Props) {
 
         <Popover
             trigger="click"
-            content={<AddCardSection />}
+            open={popoverOpen}
+            onOpenChange={handleOpenChange}
+            content={<AddCardSection handleOpenChange={handleOpenChange} />}
             overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
           >
             <Button type="primary"  icon={<PlusOutlined />} size="middle">

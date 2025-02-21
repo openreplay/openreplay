@@ -143,7 +143,7 @@ function FilterSeries(props: Props) {
     onToggleCollapse,
     excludeCategory
   } = props;
-  const expanded = !collapseState
+  const expanded = isHeatmap || !collapseState
   const setExpanded = onToggleCollapse
   const { series, seriesIndex } = props;
 
@@ -168,6 +168,7 @@ function FilterSeries(props: Props) {
   };
 
   const onAddFilter = (filter: any) => {
+    filter.autoOpen = true;
     series.filter.addFilter(filter);
     observeChanges();
   }

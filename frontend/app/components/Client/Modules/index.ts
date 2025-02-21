@@ -2,7 +2,7 @@ export { default } from './Modules';
 
 export const enum MODULES {
   ASSIST = 'assist',
-  NOTES = 'notes',
+  HIGHLIGHTS = 'notes',
   BUG_REPORTS = 'bug-reports',
 OFFLINE_RECORDINGS = 'offline-recordings',
   ALERTS = 'alerts',
@@ -43,10 +43,10 @@ export const modules = [
     enterprise: true
   },
   {
-    label: 'Notes',
-    description: 'Add notes to sessions and share with your team.',
-    key: MODULES.NOTES,
-    icon: 'stickies',
+    label: 'Highlights',
+    description: 'Add highlights to sessions and share with your team.',
+    key: MODULES.HIGHLIGHTS,
+    icon: 'chat-square-quote',
     isEnabled: true
   },
   {

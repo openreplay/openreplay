@@ -55,7 +55,7 @@ function Layout(props: Props) {
             collapsed={settingsStore.menuCollapsed || collapsed}
             width={250}
           >
-            <SideMenu siteId={siteId!} />
+            <SideMenu siteId={siteId!} isCollapsed={settingsStore.menuCollapsed || collapsed} />
           </Sider>
         ) : null}
         <Content style={{ padding: isPlayer ? '0' : '20px', minHeight: 'calc(100vh - 60px)' }}>

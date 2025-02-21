@@ -11,7 +11,7 @@ import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
-import { HEATMAP } from 'App/constants/card';
+import { HEATMAP, USER_PATH } from "App/constants/card";
 
 interface Props {
   className?: string;
@@ -107,10 +107,15 @@ function WidgetSessions(props: Props) {
       };
       debounceClickMapSearch(customFilter);
     } else {
-      const usedSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series;
+      const hasStartPoint = !!widget.startPoint && widget.metricType === USER_PATH
+      const activeSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series
+      const seriesJson = activeSeries.map((s) => s.toJson());
+      if (hasStartPoint) {
+        seriesJson[0].filter.filters.push(widget.startPoint.toJson());
+      }
       debounceRequest(widget.metricId, {
         ...filter,
-        series: usedSeries.map((s) => s.toJson()),
+        series: seriesJson,
         page: metricStore.sessionsPage,
         limit: metricStore.sessionsPageSize
       });
@@ -125,7 +130,8 @@ function WidgetSessions(props: Props) {
     filter.filters,
     depsString,
     metricStore.clickMapSearch,
-    focusedSeries
+    focusedSeries,
+    widget.startPoint,
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
   useEffect(() => {
@@ -207,7 +213,7 @@ function WidgetSessions(props: Props) {
           >
             {filteredSessions.sessions.map((session: any) => (
               <React.Fragment key={session.sessionId}>
-                <SessionItem session={session} metaList={metaList} />
+                <SessionItem disableUser session={session} metaList={metaList} />
                 <div className="border-b" />
               </React.Fragment>
             ))}

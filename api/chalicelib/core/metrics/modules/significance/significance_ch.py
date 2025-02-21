@@ -243,7 +243,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
         logger.debug(query)
         logger.debug("---------------------------------------------------")
         try:
-            row = cur.execute(query)
+            row = cur.execute(query=query)
         except Exception as err:
             logger.warning("--------- SIMPLE FUNNEL SEARCH QUERY EXCEPTION CH-----------")
             logger.warning(query)

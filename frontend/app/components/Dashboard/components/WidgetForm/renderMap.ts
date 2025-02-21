@@ -9,6 +9,8 @@ export const renderClickmapThumbnail = () => {
             return html2canvas(
                 element,
                 {
+                    allowTaint: false,
+                    logging: true,
                     scale: 1,
                     // allowTaint: true,
                     useCORS: true,

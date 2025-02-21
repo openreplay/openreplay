@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -58,7 +59,9 @@ func main() {
 
 			if isSessionEnd(data) {
 				if err := srv.PackSessionCanvases(sessCtx, sessID); err != nil {
-					log.Error(sessCtx, "can't pack session's canvases: %s", err)
+					if !strings.Contains(err.Error(), "no such file or directory") {
+						log.Error(sessCtx, "can't pack session's canvases: %s", err)
+					}
 				}
 			} else {
 				if err := srv.SaveCanvasToDisk(sessCtx, sessID, data); err != nil {

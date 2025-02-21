@@ -20,12 +20,11 @@ function getRange(rangeName, offset) {
     const now = DateTime.now().setZone(offset);
     switch (rangeName) {
         case TODAY:
-            return Interval.fromDateTimes(now.startOf("day"), now.endOf("day"));
+            return Interval.fromDateTimes(now.startOf("day"), now.plus({ days:1 }).startOf("day"));
         case YESTERDAY:
-            const yesterday = now.minus({ days: 1 });
             return Interval.fromDateTimes(
-              yesterday.startOf("day"),
-              yesterday.endOf("day")
+              now.minus({ days: 1 }).startOf("day"),
+              now.startOf("day")
             );
         case LAST_24_HOURS:
             return Interval.fromDateTimes(now.minus({ hours: 24 }), now);
@@ -36,13 +35,13 @@ function getRange(rangeName, offset) {
             );
         case LAST_7_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 7 }).endOf("day"),
-              now.endOf("day")
+              now.minus({ days: 6 }).startOf("day"),
+              now.plus({ days: 1 }).startOf("day")
             );
         case LAST_30_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 30 }).startOf("day"),
-              now.endOf("day")
+              now.minus({ days: 29 }).startOf("day"),
+              now.plus({ days: 1 }).startOf("day")
             );
         case THIS_MONTH:
             return Interval.fromDateTimes(now.startOf("month"), now.endOf("month"));
@@ -55,13 +54,13 @@ function getRange(rangeName, offset) {
             return Interval.fromDateTimes(now.minus({ hours: 48 }), now.minus({ hours: 24 }));
         case PREV_7_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 14 }).startOf("day"),
-              now.minus({ days: 7 }).endOf("day")
+              now.minus({ days: 13 }).startOf("day"),
+              now.minus({ days: 6 }).startOf("day")
             );
         case PREV_30_DAYS:
             return Interval.fromDateTimes(
-              now.minus({ days: 60 }).startOf("day"),
-              now.minus({ days: 30 }).endOf("day")
+              now.minus({ days: 59 }).startOf("day"),
+              now.minus({ days: 29 }).startOf("day")
             );
         default:
             return Interval.fromDateTimes(now, now);

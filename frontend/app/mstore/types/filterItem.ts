@@ -11,6 +11,7 @@ import { pageUrlOperators } from '../../constants/filterOptions';
 export default class FilterItem {
   type: string = '';
   category: FilterCategory = FilterCategory.METADATA;
+  subCategory: string = '';
   key: string = '';
   label: string = '';
   value: any = [''];
@@ -63,6 +64,7 @@ export default class FilterItem {
     this.operatorOptions = data.operatorOptions;
     this.hasSource = data.hasSource;
     this.category = data.category;
+    this.subCategory = data.subCategory;
     this.sourceOperatorOptions = data.sourceOperatorOptions;
     this.value = data.value;
     this.isEvent = Boolean(data.isEvent);
@@ -109,6 +111,7 @@ export default class FilterItem {
     this.operatorOptions = _filter.operatorOptions;
     this.hasSource = _filter.hasSource;
     this.category = _filter.category;
+    this.subCategory = _filter.subCategory;
     this.sourceOperatorOptions = _filter.sourceOperatorOptions;
     if (isHeatmap && this.key === FilterKey.LOCATION) {
       this.operatorOptions = pageUrlOperators;

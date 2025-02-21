@@ -44,7 +44,8 @@ function DateRangePopup(props: any) {
     if (!range.end || value > range.end) {
       return;
     }
-    setRange(Interval.fromDateTimes(value, range.end));
+    const newRange = range.start.set({ hour: value.hour, minute: value.minute });
+    setRange(Interval.fromDateTimes(newRange, range.end));
     setValue(CUSTOM_RANGE);
   };
 
@@ -52,7 +53,8 @@ function DateRangePopup(props: any) {
     if (!range.start || (value && value < range.start)) {
       return;
     }
-    setRange(Interval.fromDateTimes(range.start, value));
+    const newRange = range.end.set({ hour: value.hour, minute: value.minute });
+    setRange(Interval.fromDateTimes(range.start, newRange));
     setValue(CUSTOM_RANGE);
   };
 
@@ -92,11 +94,6 @@ function DateRangePopup(props: any) {
         <div className="flex justify-center h-fit w-full items-center dateRangeContainer">
           <DateRangePicker
             name="dateRangePicker"
-            // onSelect={this.selectCustomRange} -> onChange
-            // numberOfCalendars={2}
-            // selectionType="range"
-            // maximumDate={new Date()}
-            // singleDateRange={true}
             onChange={selectCustomRange}
             shouldCloseCalendar={() => false}
             isOpen

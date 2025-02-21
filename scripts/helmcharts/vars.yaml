@@ -130,6 +130,8 @@ global:
   pvcRWXName: "hostPath"
   s3:
     region: "us-east-1"
+    # if you're using iam roles for authentication, keep the value empty.
+    # endpoint: ""
     endpoint: "http://minio.db.svc.cluster.local:9000"
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"

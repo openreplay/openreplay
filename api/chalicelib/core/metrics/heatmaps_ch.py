@@ -84,7 +84,7 @@ def get_by_url(project_id, data: schemas.GetHeatMapPayloadSchema):
         logger.debug(query)
         logger.debug("---------")
         try:
-            rows = cur.execute(query)
+            rows = cur.execute(query=query)
         except Exception as err:
             logger.warning("--------- HEATMAP 2 SEARCH QUERY EXCEPTION CH -----------")
             logger.warning(query)
@@ -122,7 +122,7 @@ def get_x_y_by_url_and_session_id(project_id, session_id, data: schemas.GetHeatM
         logger.debug(query)
         logger.debug("---------")
         try:
-            rows = cur.execute(query)
+            rows = cur.execute(query=query)
         except Exception as err:
             logger.warning("--------- HEATMAP-session_id SEARCH QUERY EXCEPTION CH -----------")
             logger.warning(query)
@@ -160,7 +160,7 @@ def get_selectors_by_url_and_session_id(project_id, session_id, data: schemas.Ge
         logger.debug(query)
         logger.debug("---------")
         try:
-            rows = cur.execute(query)
+            rows = cur.execute(query=query)
         except Exception as err:
             logger.warning("--------- HEATMAP-session_id SEARCH QUERY EXCEPTION CH -----------")
             logger.warning(query)
@@ -221,7 +221,7 @@ def __get_1_url(location_condition: schemas.SessionSearchEventSchema2 | None, se
         logger.debug(main_query)
         logger.debug("--------------------")
         try:
-            url = cur.execute(main_query)
+            url = cur.execute(query=main_query)
         except Exception as err:
             logger.warning("--------- CLICK MAP BEST URL SEARCH QUERY EXCEPTION CH-----------")
             logger.warning(main_query.decode('UTF-8'))
@@ -295,7 +295,7 @@ def search_short_session(data: schemas.HeatMapSessionsSearch, project_id, user_i
         logger.debug(main_query)
         logger.debug("--------------------")
         try:
-            session = cur.execute(main_query)
+            session = cur.execute(query=main_query)
         except Exception as err:
             logger.warning("--------- CLICK MAP SHORT SESSION SEARCH QUERY EXCEPTION CH -----------")
             logger.warning(main_query)
@@ -342,7 +342,7 @@ def get_selected_session(project_id, session_id):
         logger.debug(main_query)
         logger.debug("--------------------")
         try:
-            session = cur.execute(main_query)
+            session = cur.execute(query=main_query)
         except Exception as err:
             logger.warning("--------- CLICK MAP GET SELECTED SESSION QUERY EXCEPTION -----------")
             logger.warning(main_query.decode('UTF-8'))

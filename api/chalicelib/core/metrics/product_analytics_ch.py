@@ -428,7 +428,7 @@ def path_analysis(project_id: int, data: schemas.CardPathAnalysis):
                              SELECT event_number_in_session,
                                     `$event_name`,
                                     e_value,
-                                    SUM(sessions_count) AS sessions_count
+                                    SUM(n{i}.sessions_count) AS sessions_count
                              FROM n{i}
                              GROUP BY event_number_in_session, `$event_name`, e_value
                              ORDER BY sessions_count DESC
@@ -487,10 +487,11 @@ WITH {initial_sessions_cte}
 SELECT *
 FROM pre_ranked_events;"""
         logger.debug("---------Q1-----------")
-        ch.execute(query=ch_query1, parameters=params)
+        ch_query1 = ch.format(query=ch_query1, parameters=params)
+        ch.execute(query=ch_query1)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(query=ch_query1, parameters=params))
+            logger.warning(str.encode(ch_query1))
             logger.warning("----------------------")
         _now = time()
 
@@ -512,10 +513,11 @@ SELECT *
 FROM ranked_events
 {q2_extra_condition if q2_extra_condition else ""};"""
         logger.debug("---------Q2-----------")
-        ch.execute(query=ch_query2, parameters=params)
+        ch_query2 = ch.format(query=ch_query2, parameters=params)
+        ch.execute(query=ch_query2)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(query=ch_query2, parameters=params))
+            logger.warning(str.encode(ch_query2))
             logger.warning("----------------------")
         _now = time()
 
@@ -590,7 +592,7 @@ FROM ranked_events
                                     NULL                AS e_value,
                                     'OTHER'             AS next_type,
                                     NULL                AS next_value,
-                                    SUM(sessions_count) AS sessions_count
+                                    SUM(others_n.sessions_count) AS sessions_count
                              FROM others_n
                              WHERE isNotNull(others_n.next_type)
                                AND others_n.event_number_in_session < %(density)s
@@ -625,10 +627,11 @@ FROM ranked_events
                 ) AS chart_steps
                 ORDER BY event_number_in_session, sessions_count DESC;"""
         logger.debug("---------Q3-----------")
-        rows = ch.execute(query=ch_query3, parameters=params)
+        ch_query3 = ch.format(query=ch_query3, parameters=params)
+        rows = ch.execute(query=ch_query3)
         if time() - _now > 2:
             logger.warning(f">>>>>>>>>PathAnalysis long query EE ({int(time() - _now)}s)<<<<<<<<<")
-            logger.warning(ch.format(query=ch_query3, parameters=params))
+            logger.warning(str.encode(ch_query3))
             logger.warning("----------------------")
 
     return __transform_journey(rows=rows, reverse_path=reverse)

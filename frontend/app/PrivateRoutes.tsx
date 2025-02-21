@@ -59,7 +59,7 @@ const enhancedComponents: any = {
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
   ScopeSetup: components.ScopeSetup,
-  Highlights: components.HighlightsPure,
+  Highlights: withSiteIdUpdater(components.HighlightsPure),
 };
 
 const withSiteId = routes.withSiteId;

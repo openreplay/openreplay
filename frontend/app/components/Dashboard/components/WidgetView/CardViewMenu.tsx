@@ -36,7 +36,7 @@ const CardViewMenu = () => {
       key: 'alert',
       label: 'Set Alerts',
       icon: <BellIcon size={16} />,
-      disabled: !widget.exists() || widget.metricType === 'predefined',
+      disabled: !widget.exists() || widget.metricType !== 'timeseries',
       onClick: showAlertModal,
     },
     {

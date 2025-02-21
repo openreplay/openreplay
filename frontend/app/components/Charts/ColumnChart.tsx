@@ -74,8 +74,8 @@ function ColumnChart(props: ColumnChartProps) {
       xAxis: {
         type: 'value',
         name: label ?? 'Total',
-        nameLocation: 'middle',
-        nameGap: 45,
+        nameLocation: 'center',
+        nameGap: 35,
       },
       yAxis: {
         type: 'category',

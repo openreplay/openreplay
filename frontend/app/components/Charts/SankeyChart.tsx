@@ -77,12 +77,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
     });
 
     setFinalNodeCount(filteredNodes.length);
-
+    const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
-      .map((n) => {
+      .map((n, i) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
         if (computedName === 'Other') {
           computedName = 'Others';
+        }
+        if (n.id) {
+          nodeValues[n.id] = 0;
+        } else {
+          nodeValues[i] = 0;
         }
         const itemColor =
           computedName === 'Others'
@@ -123,6 +128,17 @@ const EChartsSankey: React.FC<Props> = (props) => {
     const startNodeValue = echartLinks
       .filter((link) => link.source === 0)
       .reduce((sum, link) => sum + link.value, 0);
+
+    Object.keys(nodeValues).forEach((nodeId) => {
+      const intId = parseInt(nodeId as string);
+      const outgoingValues = echartLinks
+        .filter((l) => l.source === intId)
+        .reduce((p, c) => p + c.value, 0);
+      const incomingValues = echartLinks
+        .filter((l) => l.target === intId)
+        .reduce((p, c) => p + c.value, 0);
+      nodeValues[nodeId] = Math.max(outgoingValues, incomingValues);
+    });
 
     const option = {
       ...defaultOptions,
@@ -172,10 +188,10 @@ const EChartsSankey: React.FC<Props> = (props) => {
                     params.name.slice(-(maxLen / 2 - 2))
                   : params.name;
               const nodeType = params.data.type;
-              
+
               const icon = getIcon(nodeType)
               return (
-                `${icon}{header|${safeName}}\n` +
+                `${icon}{header| ${safeName}}\n` +
                 `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
               );
             },
@@ -233,11 +249,25 @@ const EChartsSankey: React.FC<Props> = (props) => {
                 },
                 height: 20,
                 width: 14,
+              },
+              dropEventIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNpcmNsZS1hcnJvdy1kb3duIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwYXRoIGQ9Ik0xMiA4djgiLz48cGF0aCBkPSJtOCAxMiA0IDQgNC00Ii8+PC9zdmc+',
+                },
+                height: 20,
+                width: 14,
+              },
+              groupIcon: {
+                backgroundColor: {
+                  image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNvbXBvbmVudCI+PHBhdGggZD0iTTE1LjUzNiAxMS4yOTNhMSAxIDAgMCAwIDAgMS40MTRsMi4zNzYgMi4zNzdhMSAxIDAgMCAwIDEuNDE0IDBsMi4zNzctMi4zNzdhMSAxIDAgMCAwIDAtMS40MTRsLTIuMzc3LTIuMzc3YTEgMSAwIDAgMC0xLjQxNCAweiIvPjxwYXRoIGQ9Ik0yLjI5NyAxMS4yOTNhMSAxIDAgMCAwIDAgMS40MTRsMi4zNzcgMi4zNzdhMSAxIDAgMCAwIDEuNDE0IDBsMi4zNzctMi4zNzdhMSAxIDAgMCAwIDAtMS40MTRMNi4wODggOC45MTZhMSAxIDAgMCAwLTEuNDE0IDB6Ii8+PHBhdGggZD0iTTguOTE2IDE3LjkxMmExIDEgMCAwIDAgMCAxLjQxNWwyLjM3NyAyLjM3NmExIDEgMCAwIDAgMS40MTQgMGwyLjM3Ny0yLjM3NmExIDEgMCAwIDAgMC0xLjQxNWwtMi4zNzctMi4zNzZhMSAxIDAgMCAwLTEuNDE0IDB6Ii8+PHBhdGggZD0iTTguOTE2IDQuNjc0YTEgMSAwIDAgMCAwIDEuNDE0bDIuMzc3IDIuMzc2YTEgMSAwIDAgMCAxLjQxNCAwbDIuMzc3LTIuMzc2YTEgMSAwIDAgMCAwLTEuNDE0bC0yLjM3Ny0yLjM3N2ExIDEgMCAwIDAtMS40MTQgMHoiLz48L3N2Zz4=',
+                },
+                height: 20,
+                width: 14,
               }
             },
           },
           tooltip: {
-            formatter: sankeyTooltip(echartNodes, []),
+            formatter: sankeyTooltip(echartNodes, nodeValues),
           },
           nodeAlign: 'left',
           nodeWidth: 40,
@@ -415,7 +445,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
     const dynamicMinHeight = finalNodeCount * 15;
     containerStyle = {
       width: '100%',
-      minHeight: dynamicMinHeight,
+      minHeight: Math.max(550, dynamicMinHeight),
       height: '100%',
       overflowY: 'auto',
     };
@@ -427,7 +457,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
   }
 
   return (
-    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, }}>
+    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, minHeight: 240 }}>
       <div
         ref={chartRef}
         style={containerStyle}
@@ -449,6 +479,12 @@ function getIcon(type: string) {
   }
   if (type === 'CLICK') {
     return '{clickIcon|}';
+  }
+  if (type === 'DROP') {
+    return '{dropEventIcon|}';
+  }
+  if (type === 'OTHER') {
+    return '{groupIcon|}';
   }
   return ''
 }

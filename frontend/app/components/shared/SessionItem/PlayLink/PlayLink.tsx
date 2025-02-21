@@ -12,10 +12,9 @@ import { useStore } from 'App/mstore';
 const PLAY_ICON_NAMES = {
   notPlayed: 'play-fill',
   played: 'play-circle-light',
-  hovered: 'play-hover',
 } as const
 
-const getDefaultIconName = (isViewed: any) =>
+const getIconName = (isViewed: any) =>
   !isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played;
 
 interface Props {
@@ -33,15 +32,13 @@ function PlayLink(props: Props) {
   const { projectsStore } = useStore();
   const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
   const history = useHistory();
-  const defaultIconName = getDefaultIconName(viewed);
+  const defaultIconName = getIconName(viewed);
 
-  const [isHovered, toggleHover] = useState(false);
   const [iconName, setIconName] = useState<typeof PLAY_ICON_NAMES[keyof typeof PLAY_ICON_NAMES]>(defaultIconName);
 
   useEffect(() => {
-    if (isHovered) setIconName(PLAY_ICON_NAMES.hovered);
-    else setIconName(getDefaultIconName(viewed));
-  }, [isHovered, viewed]);
+    setIconName(getIconName(viewed));
+  }, [viewed]);
 
   const link = isAssist
     ? liveSessionRoute(sessionId, queryParams)
@@ -68,22 +65,20 @@ function PlayLink(props: Props) {
 
   const onLinkClick = props.beforeOpen ? handleBeforeOpen : onClick;
 
-  const onLeave = () => {
-    toggleHover(false);
-  };
-  const onOver = () => {
-    toggleHover(true);
-  };
   return (
     <Link
+      className={'group'}
       onClick={onLinkClick}
       to={link + (props.query ? props.query : '')}
-      onMouseOver={onOver}
-      onMouseOut={onLeave}
       target={props.newTab ? '_blank' : undefined}
       rel={props.newTab ? 'noopener noreferrer' : undefined}
     >
-      <Icon name={iconName} size={38} color={isAssist ? 'tealx' : 'teal'} />
+      <div className={'group-hover:block hidden'}>
+        <Icon name={'play-hover'} size={38} color={isAssist ? 'tealx' : 'teal'} />
+      </div>
+      <div className={'group-hover:hidden block'}>
+        <Icon name={iconName} size={38} color={isAssist ? 'tealx' : 'teal'} />
+      </div>
     </Link>
   );
 }

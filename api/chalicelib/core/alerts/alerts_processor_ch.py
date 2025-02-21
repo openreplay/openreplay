@@ -173,7 +173,7 @@ def process():
                 logger.debug(alert)
                 logger.debug(query)
                 try:
-                    result = ch_cur.execute(query)
+                    result = ch_cur.execute(query=query)
                     if len(result) > 0:
                         result = result[0]
 

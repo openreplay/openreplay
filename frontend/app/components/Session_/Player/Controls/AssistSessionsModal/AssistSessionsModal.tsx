@@ -7,7 +7,7 @@ import { KEYS } from 'Types/filter/customFilter';
 import { capitalize } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import AssistSearchField from 'App/components/Assist/AssistSearchActions';
+import AssistSearchActions from 'App/components/Assist/AssistSearchActions';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';

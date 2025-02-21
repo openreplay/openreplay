@@ -18,6 +18,8 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
+  const isAutoOpen = filter.autoOpen;
+
   const [durationValues, setDurationValues] = useState({
     minDuration: filter.value?.[0],
     maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
@@ -99,6 +101,7 @@ function FilterValue(props: Props) {
         onSelect={(e, item, index) => debounceOnSelect(e, item, index)}
         icon={filter.icon}
         placeholder={filter.placeholder}
+        isAutoOpen={isAutoOpen}
         modalProps={{ placeholder: '' }}
         {...props}
       />
@@ -106,6 +109,7 @@ function FilterValue(props: Props) {
     const BaseDropDown = (props) => (
       <FilterValueDropdown
         value={value}
+        isAutoOpen={isAutoOpen}
         placeholder={filter.placeholder}
         options={filter.options}
         onApplyValues={onApplyValues}
@@ -157,6 +161,7 @@ function FilterValue(props: Props) {
         return (
           <FilterAutoComplete
             value={value}
+            isAutoOpen={isAutoOpen}
             showCloseButton={showCloseButton}
             showOrButton={showOrButton}
             onApplyValues={onApplyValues}

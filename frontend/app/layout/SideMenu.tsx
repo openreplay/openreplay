@@ -1,4 +1,4 @@
-import { Divider, Menu, Tag, Typography } from 'antd';
+import { Divider, Menu, Tag, Typography, Popover, Button } from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -26,6 +26,7 @@ import {
   spotOnlyCats
 } from './data';
 import { useStore } from 'App/mstore';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const { Text } = Typography;
 
@@ -36,7 +37,8 @@ interface Props extends RouteComponentProps {
 
 function SideMenu(props: Props) {
   const {
-    location
+    location,
+    isCollapsed
   } = props;
 
   const isPreferencesActive = location.pathname.includes('/client/');
@@ -49,16 +51,6 @@ function SideMenu(props: Props) {
   const isEnterprise = userStore.isEnterprise;
   const siteId = projectsStore.siteId;
   const isMobile = projectsStore.isMobile;
-
-  const [isModalVisible, setIsModalVisible] = React.useState(false);
-
-  const handleModalOpen = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleModalClose = () => {
-    setIsModalVisible(false);
-  };
 
   let menu: any[] = React.useMemo(() => {
     const sourceMenu = isPreferencesActive ? preferences : main_menu;
@@ -103,7 +95,7 @@ function SideMenu(props: Props) {
               modules.includes(MODULES.RECOMMENDATIONS),
               item.key === MENU.FEATURE_FLAGS &&
               modules.includes(MODULES.FEATURE_FLAGS),
-              item.key === MENU.NOTES && modules.includes(MODULES.NOTES),
+              item.key === MENU.HIGHLIGHTS && modules.includes(MODULES.HIGHLIGHTS),
               item.key === MENU.LIVE_SESSIONS && (modules.includes(MODULES.ASSIST) || isMobile),
               item.key === MENU.ALERTS && modules.includes(MODULES.ALERTS),
               item.key === MENU.USABILITY_TESTS && modules.includes(MODULES.USABILITY_TESTS),
@@ -130,7 +122,6 @@ function SideMenu(props: Props) {
     [MENU.SESSIONS]: () => withSiteId(routes.sessions(), siteId),
     [MENU.BOOKMARKS]: () => withSiteId(routes.bookmarks(), siteId),
     [MENU.VAULT]: () => withSiteId(routes.bookmarks(), siteId),
-    [MENU.NOTES]: () => withSiteId(routes.notes(), siteId),
     [MENU.LIVE_SESSIONS]: () => withSiteId(routes.assist(), siteId),
     [MENU.DASHBOARDS]: () => withSiteId(routes.dashboard(), siteId),
     [MENU.CARDS]: () => withSiteId(routes.metrics(), siteId),
@@ -151,7 +142,7 @@ function SideMenu(props: Props) {
     [PREFERENCES_MENU.NOTIFICATIONS]: () => client(CLIENT_TABS.NOTIFICATIONS),
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.MODULES]: () => client(CLIENT_TABS.MODULES),
-    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId),
+    [MENU.HIGHLIGHTS]: () => withSiteId(routes.highlights(''), siteId)
   };
 
   const handleClick = (item: any) => {
@@ -326,13 +317,7 @@ function SideMenu(props: Props) {
         ))}
       </Menu>
       {spotOnly && !isPreferencesActive ? (
-        <>
-          <InitORCard onOpenModal={handleModalOpen} />
-          <SpotToOpenReplayPrompt
-            isVisible={isModalVisible}
-            onCancel={handleModalClose}
-          />
-        </>
+        <SpotMenuItem isCollapsed={isCollapsed} />
       ) : null}
       <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </>
@@ -340,3 +325,32 @@ function SideMenu(props: Props) {
 }
 
 export default withRouter(observer(SideMenu));
+
+
+const SpotMenuItem = ({ isCollapsed }: any) => {
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  return (
+    <>
+      <SpotToOpenReplayPrompt
+        isVisible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+      />
+      {isCollapsed ? (
+        <Popover
+          content={<InitORCard onOpenModal={() => setIsModalVisible(true)} />}
+          trigger="hover"
+          placement="right"
+        >
+          <Button type="text" className="ml-2 mt-2 py-2">
+            <AnimatedSVG name={ICONS.LOGO_SMALL} size={20} />
+          </Button>
+        </Popover>
+      ) : (
+        <>
+          <InitORCard onOpenModal={() => setIsModalVisible(true)} />
+        </>
+      )}
+    </>
+  );
+};
