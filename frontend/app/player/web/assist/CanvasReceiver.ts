@@ -18,11 +18,11 @@ function draw(
 
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
-  // Храним RTCPeerConnection для каждого удалённого пира
+  // Store RTCPeerConnection for each remote peer
   private connections: Map<string, RTCPeerConnection> = new Map();
   private cId: string;
 
-  //sendSignal – для отправки сигналов (offer/answer/ICE)
+  // sendSignal – for sending signals (offer/answer/ICE)
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
@@ -30,7 +30,7 @@ export default class CanvasReceiver {
     private readonly agentInfo: Record<string, any>,
     private readonly socket: Socket,
   ) {
-    // Формируем идентификатор как в PeerJS
+    // Form an id like in PeerJS
     this.cId = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
 
     this.socket.on('webrtc_canvas_offer', (data: { data: { offer: RTCSessionDescriptionInit, id: string }}) => {
@@ -57,7 +57,7 @@ export default class CanvasReceiver {
       iceServers: this.config ? this.config : [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    // Сохраняем соединение
+    // Save the connection
     this.connections.set(id, pc);
 
     pc.onicecandidate = (event) => {
@@ -70,7 +70,7 @@ export default class CanvasReceiver {
 
       const stream = event.streams[0];
       if (stream) {
-        // Определяем canvasId из удалённого peer id
+        // Detect canvasId from remote peer id
         const canvasId = id.split('-')[4];
         this.streams.set(canvasId, stream);
         setTimeout(() => {

@@ -33,7 +33,6 @@ export default class Call {
     private peerID: string,
     private getAssistVersion: () => number
   ) {
-    // Обработка событий сокета
     socket.on('call_end', () => {
       this.onRemoteCallEnd()
     });
@@ -55,7 +54,7 @@ export default class Call {
     });
     socket.on('messages_gz', () => {
       if (reconnecting) {
-        // При восстановлении соединения инициируем повторное создание соединения
+        // When the connection is restored, we initiate a re-creation of the connection
         this._callSessionPeer();
         reconnecting = false;
       }
@@ -80,21 +79,21 @@ export default class Call {
     this.assistVersion = this.getAssistVersion();
   }
 
-  // СОЗДАНИЕ ЛОКАЛЬНОГО ПИРА
+  // CREATE A LOCAL PEER
   private async createPeerConnection(remotePeerId: string): Promise<RTCPeerConnection> {
-    // создаем pc с конфигом ice
+    // create pc with ice config
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    // Если есть локальный поток добавляем его треки в соединение
+    // If there is a local stream, add its tracks to the connection
     if (this.callArgs && this.callArgs.localStream && this.callArgs.localStream.stream) {
       this.callArgs.localStream.stream.getTracks().forEach((track) => {
         pc.addTrack(track, this.callArgs!.localStream.stream);
       });
     }
 
-    // когда готов ice отсылваем его
+    // when ice is ready we send it
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
@@ -103,7 +102,7 @@ export default class Call {
       }
     };
 
-    // когда получаем удаленный трек записываем его в videoStreams[peerId]
+    // when we receive a remote track, we write it to videoStreams[peerId]
     pc.ontrack = (event) => {
       const stream = event.streams[0];
       if (stream) {
@@ -114,30 +113,17 @@ export default class Call {
         if (this.callArgs) {
           this.callArgs.onStream(stream);
         }
-          try {
-        
-            // Создаем элемент <video>
-            const video = document.createElement('video');
-            video.autoplay = true;
-            video.playsInline = true;
-            video.srcObject = stream;
-        
-            // Добавляем <video> в <body>
-            document.body.appendChild(video);
-          } catch (error) {
-            console.error('Error accessing media devices:', error);
-          }
       }
     };
 
-    // Если связь отвалилась заканчиваем звонок
+    // If the connection is lost, we end the call
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         this.onRemoteCallEnd();
       }
     };
 
-    // Обработка замены трека при изменении локального видео
+    // Handle track replacement when local video changes
     if (this.callArgs && this.callArgs.localStream) {
       this.callArgs.localStream.onVideoTrack((vTrack: MediaStreamTrack) => {
         const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
@@ -152,23 +138,23 @@ export default class Call {
     return pc;
   }
 
-  // УСТАНОВКА СОЕДИНЕНИЯ
+  // ESTABLISHING A CONNECTION
   private async _peerConnection(remotePeerId: string) {
     try {
-      // Создаём RTCPeerConnection
+      // Create RTCPeerConnection
       const pc = await this.createPeerConnection(remotePeerId);
       this.connections[remotePeerId] = pc;
 
-      // Создаём SDP offer
+      // Create an SDP offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // Отправляем offer 
+      // Sending offer
       this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
       this.connectAttempts = 0;
     } catch (e: any) {
       console.error(e);
-      // Пробуем переподключиться
+      // Trying to reconnect
       const tryReconnect = async (error: any) => {
         if (error.type === 'peer-unavailable' && this.connectAttempts < 5) {
           this.connectAttempts++;
@@ -184,18 +170,17 @@ export default class Call {
     }
   }
 
-  // Обрабатываем полученный answer на offer
+  // Process the received answer to offer
   private async handleAnswer(data: { from: string, answer: RTCSessionDescriptionInit }) {
-    // устанавливаем в remotePeerId data.from
+    // set to remotePeerId data.from
     const remotePeerId = data.from;
-    // получаем peer
     const pc = this.connections[remotePeerId];
     if (!pc) {
       console.error("No connection found for remote peer", remotePeerId);
       return;
     }
     try {
-      // если связь еще не установлена то устанвливаем remoteDescription в peer
+      // if the connection is not established yet, then set remoteDescription to peer
       if (pc.signalingState !== "stable") {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       } else {
@@ -207,16 +192,14 @@ export default class Call {
     }
   }
 
-  // обрабатываем полученный iceCandidate 
+  // process the received iceCandidate
   private async handleIceCandidate(data: { from: string, candidate: RTCIceCandidateInit }) {
     const remotePeerId = data.from;
-    // получаем peer
     const pc = this.connections[remotePeerId];
     if (!pc) return;
-    // если есть ice кандидаты
+    // if there are ice candidates then add candidate to peer
     if (data.candidate && (data.candidate.sdpMid || data.candidate.sdpMLineIndex !== null)) {
       try {
-        // добавляем кандидат в peer
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (e) {
         console.error("Error adding ICE candidate", e);
@@ -226,40 +209,40 @@ export default class Call {
     }
   }
 
-  // обрабатываем окончания звонка
+  // handle call ends
   private handleCallEnd() {
-    // Если звонок не завершен, то вызываем onCallEnd
+    // If the call is not completed, then call onCallEnd
     if (this.store.get().calling !== CallingState.NoCall) {
       this.callArgs && this.callArgs.onCallEnd();
     }
-    // меняем state на NoCall
+    // change state to NoCall
     this.store.update({ calling: CallingState.NoCall });
-    // Закрываем все созданные RTCPeerConnection
+    // Close all created RTCPeerConnection
     Object.values(this.connections).forEach((pc) => pc.close());
     this.callArgs?.onCallEnd();
-    // Очищаем connections
+    // Clear connections
     this.connections = {};
     this.callArgs = null;
   }
 
-  // Обработчик события завершения вызова по сигналу
+  // Call completion event handler by signal
   private onRemoteCallEnd = () => {
     if ([CallingState.Requesting, CallingState.Connecting].includes(this.store.get().calling)) {
-      // Если вызов еще не начался, то вызываем onReject
+      // If the call has not started yet, then call onReject
       this.callArgs && this.callArgs.onReject();
-      // Закрываем все соединения и обнуляем callArgs
+     // Close all connections and reset callArgs
       Object.values(this.connections).forEach((pc) => pc.close());
       this.connections = {};
       this.callArgs?.onCallEnd();
       this.store.update({ calling: CallingState.NoCall });
       this.callArgs = null;
     } else {
-      // Вызываем полный обработчик завершения вызова
+      // Call the full call completion handler
       this.handleCallEnd();
     }
   };
 
-  // Завершает вызов и отправляет сигнал call_end
+  // Ends the call and sends the call_end signal
   initiateCallEnd = async () => {
     const userName = userStore.account.name;
     this.emitData('call_end', userName);
@@ -300,9 +283,7 @@ export default class Call {
     };
   }
 
-  /**
-   * Инициирует вызов
-   */
+  // Initiates a call
   call(thirdPartyPeers?: string[]): { end: () => void } {
     if (thirdPartyPeers && thirdPartyPeers.length > 0) {
       this.addPeerCall(thirdPartyPeers);
@@ -314,18 +295,17 @@ export default class Call {
     };
   }
 
-  // Уведомление пиров об изменении состояния локального видео
+  // Notify peers of local video state change
   toggleVideoLocalStream(enabled: boolean) {
-    // Передаём сигнал через socket
     this.emitData('videofeed', { streamId: this.peerID, enabled });
   }
 
-  // Соединяемся с другими агентами
+  // Connect with other agents
   addPeerCall(thirdPartyPeers: string[]) {
     thirdPartyPeers.forEach((peerId) => this._peerConnection(peerId));
   }
 
-  // Вызывает метод создания соединения с пиром
+  // Calls the method to create a connection with a peer
   private _callSessionPeer() {
     if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) {
       return;
@@ -336,7 +316,7 @@ export default class Call {
       console.warn('No tab data to connect to peer');
     }
 
-    // Формируем идентификатор пира в зависимости от версии ассиста
+   // Generate a peer identifier depending on the assist version
     const peerId =
       this.getAssistVersion() === 1
         ? this.peerID
@@ -347,7 +327,7 @@ export default class Call {
     void this._peerConnection(peerId);
   }
 
-  // Метод для очистки ресурсов
+  // Method for clearing resources
   clean() {
     void this.initiateCallEnd();
     Object.values(this.connections).forEach((pc) => pc.close());

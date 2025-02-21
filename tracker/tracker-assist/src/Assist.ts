@@ -449,7 +449,7 @@ export default class Assist {
       }
     })
 
-    // Если приходит videofeed то в ui показываем видео
+    // If a videofeed arrives, then we show the video in the ui
     socket.on('videofeed', (_, info) => {
       if (app.getTabId() !== info.meta.tabId) return
       const feedState = info.data
@@ -505,8 +505,12 @@ export default class Assist {
       }
     }
 
-    // обработка окончания вызова
+    // call end handling
     const handleCallEnd = () => {
+      Object.values(this.calls).forEach(pc => pc.close())
+      this.calls = {}
+      Object.values(lStreams).forEach((stream) => { stream.stop() })
+      Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
       // UI
       closeCallConfirmWindow()
       if (this.remoteControl?.status === RCStatus.Disabled) {
@@ -532,23 +536,22 @@ export default class Assist {
       }
     }
 
-    // обрабатываем входящий вызов
     const handleIncomingCallOffer = async (from: string, offer: RTCSessionDescriptionInit) => {
       app.debug.log('handleIncomingCallOffer', from)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
-      // если звонящий уже в списке, то сразу принимаем вызов без ui
+      // if the caller is already in the list, then we immediately accept the call without ui
       if (callingPeerIds.includes(from) || this.callingState === CallingState.True) {
         confirmAnswer = Promise.resolve(true)
       } else {
-        // ставим стейт в ожидание подтверждения
+        // set the state to wait for confirmation
         this.setCallingState(CallingState.Requesting)
-        // вызываем окно подтверждения вызова
+       // call the call confirmation window
         confirmAnswer = requestCallConfirm()
-        // звуковое уведомление звонка
+        // sound notification of a call
         this.playNotificationSound()
 
-        // через 30 сек сбрасываем вызов
+        // after 30 seconds we drop the call
         setTimeout(() => {
           if (this.callingState !== CallingState.Requesting) { return }
           initiateCallEnd()
@@ -556,7 +559,7 @@ export default class Assist {
       }
 
       try {
-        // ждем рещения по принятию вызова
+        // waiting for a decision on accepting the challenge
         const agreed = await confirmAnswer
         // если отказали, то завершаем вызов
         if (!agreed) {
@@ -564,14 +567,14 @@ export default class Assist {
           this.options.onCallDeny?.()
           return
         }
-        // если приняли то чекаем ui, если окна вызова нет то создаем, привязываем toggle локального видео в тоглу через сокет
+        // if rejected, then terminate the call
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
           callUI.setVideoToggleCallback((args: { enabled: boolean }) =>
             this.emit('videofeed', { streamId: from, enabled: args.enabled })
           );
         }
-        // показыаем кнопочки в окне вызова
+        // show buttons in the call window
         callUI.showControls(initiateCallEnd)
         if (!annot) {
           annot = new AnnotationCanvas()
@@ -580,38 +583,38 @@ export default class Assist {
 
         // callUI.setLocalStreams(Object.values(lStreams))
         try {
-          // если нет локальных стримов в lStrems то устанавливаем
+         // if there are no local streams in lStrems then we set
           if (!lStreams[from]) {
             app.debug.log('starting new stream for', from)
-            // запрашиваем локальный стрим, и устанавливаем в lStreams
+            // request a local stream, and set it to lStreams
             lStreams[from] = await RequestLocalStream()
           }
-          // полученные дорожки передаем в Call ui
+         // we pass the received tracks to Call ui
           callUI.setLocalStreams(Object.values(lStreams))
         } catch (e) {
           app.debug.error('Error requesting local stream', e);
-          // если что-то не получилось то обрываем вызов
+          // if something didn't work out, we terminate the call
           initiateCallEnd();
           return;
         }
-        // создаем новый RTCPeerConnection с конфигом ice серверов
+        // create a new RTCPeerConnection with ice server config
         const pc = new RTCPeerConnection({
           iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         });
 
-        // получаем все локальные треки и добавляем их в RTCPeerConnection
+        // get all local tracks and add them to RTCPeerConnection
         lStreams[from].stream.getTracks().forEach(track => {
           pc.addTrack(track, lStreams[from].stream);
         });
 
-        // Когда получаем локальные ice кандидаты эмитим их через сокет
+        // When we receive local ice candidates, we emit them via socket
         pc.onicecandidate = (event) => {
           if (event.candidate) {
             socket.emit('webrtc_call_ice_candidate', { from, candidate: event.candidate });
           }
         };
 
-        // когда получаем удаленный поток, добавляем его в call ui
+        // when we get a remote stream, add it to call ui
         pc.ontrack = (event) => {
           const rStream = event.streams[0];
           if (rStream && callUI) {
@@ -625,26 +628,26 @@ export default class Assist {
           }
         };
 
-        // Сохраняем соединение с звонящим
+        // Keep connection with the caller
         this.calls[from] = pc;
 
-        // устанавливаем remote description на входящий запрос
+        // set remote description on incoming request
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        // создаем ответ на входящий запрос
+        // create a response to the incoming request
         const answer = await pc.createAnswer();
         // устанавливаем ответ как локальный
         await pc.setLocalDescription(answer);
-        // передаем ответ
+        // set the response as local
         socket.emit('webrtc_call_answer', { from, answer });
 
-        // Если меняется стейт на ощибку обрываем звонок
+        // If the state changes to an error, we terminate the call
         pc.onconnectionstatechange = () => {
           if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
             initiateCallEnd();
           }
         };
 
-        // Обновление трека при изменении локального видео
+        // Update track when local video changes
         lStreams[from].onVideoTrack(vTrack => {
           const sender = pc.getSenders().find(s => s.track?.kind === 'video');
           if (!sender) {
@@ -654,16 +657,16 @@ export default class Assist {
           sender.replaceTrack(vTrack)
         })
 
-        // если пользователеь закрыл вкладку или переключился, то завершаем вызов
+        // if the user closed the tab or switched, then we end the call
         document.addEventListener('visibilitychange', () => {
           initiateCallEnd()
         })
 
-        // когда все установилось то стейт переводим в true
+        // when everything is set, we change the state to true
         this.setCallingState(CallingState.True)
         if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
         const callingPeerIdsNow = Object.keys(this.calls)
-        // в session storage записываем всех с кем установлен вызов
+        // in session storage we write down everyone with whom the call is established
         sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIdsNow))
         this.emit('UPDATE_SESSION', { agentIds: callingPeerIdsNow, isCallActive: true })
       } catch (reason) {
@@ -671,9 +674,9 @@ export default class Assist {
       }
     };
 
-    // Функции запроса подтверждения, завершения вызова, уведомления и т.д.
+    // Functions for requesting confirmation, ending a call, notifying, etc.
     const requestCallConfirm = () => {
-      if (callConfirmAnswer) { // Если уже запрошено подтверждение
+      if (callConfirmAnswer) { // If confirmation has already been requested
         return callConfirmAnswer;
       }
       callConfirmWindow = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || {
@@ -686,15 +689,12 @@ export default class Assist {
       });
     };
 
-    // функция завершения вызова
     const initiateCallEnd = () => {
       this.emit('call_end');
       handleCallEnd();
     };
 
     const startCanvasStream = async (stream: MediaStream, id: number) => {
-      // const canvasPID = `${app.getProjectKey()}-${sessionId}-${id}`;
-      // const target = `${agent.agentInfo.peerId}-${agent.agentInfo.id}-canvas`;
       for (const agent of Object.values(this.agents)) {
         if (!agent.agentInfo) return;
 
@@ -710,11 +710,11 @@ export default class Assist {
             this.canvasPeers[uniqueId]?.addTrack(track, stream);
           });
 
-          // Создаем SDP offer
+          // Create SDP offer
           const offer = await this.canvasPeers[uniqueId].createOffer();
           await this.canvasPeers[uniqueId].setLocalDescription(offer);
 
-          // Отправляем offer через сервер сигналинга
+          // Send offer via signaling server
           socket.emit('webrtc_canvas_offer', { offer, id: uniqueId });
 
         }
@@ -758,7 +758,7 @@ export default class Assist {
   private setupPeerListeners(id: string) {
     const peer = this.canvasPeers[id];
     if (!peer) return;
-    // ICE-кандидаты
+    // ICE candidates
     peer.onicecandidate = (event) => {
       if (event.candidate && this.socket) {
         this.socket.emit('webrtc_canvas_ice_candidate', {
@@ -779,7 +779,7 @@ export default class Assist {
     }
   }
 
-  // очищаем все данные
+  // clear all data
   private clean() {
     // sometimes means new agent connected, so we keep id for control
     this.remoteControl?.releaseControl(false, true);
