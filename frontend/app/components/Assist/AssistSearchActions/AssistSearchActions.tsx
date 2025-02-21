@@ -29,7 +29,7 @@ function AssistSearchActions() {
       {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
         ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null
       }
-      {isEnterprise && (
+      {isEnterprise && userStore.account?.admin && (
         <Button type="text" onClick={showStats}
                 disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
           Co-Browsing Reports</Button>
