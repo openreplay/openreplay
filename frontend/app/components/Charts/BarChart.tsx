@@ -53,7 +53,7 @@ function ORBarChart(props: BarChartProps) {
       type: 'value',
       data: undefined,
       name: props.label ?? 'Number of Sessions',
-      nameLocation: 'middle',
+      nameLocation: 'center',
       nameGap: 45,
     };
 
