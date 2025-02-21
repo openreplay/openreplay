@@ -98,7 +98,7 @@ export default class Call {
       if (event.candidate) {
         this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
       } else {
-        console.log("Сбор ICE-кандидатов завершён");
+        console.log("ICE candidate gathering complete");
       }
     };
 
@@ -251,10 +251,8 @@ export default class Call {
 
   private emitData = (event: string, data?: any) => {
     if (this.getAssistVersion() === 1) {
-      console.log('SEND EVENT', event)
       this.socket?.emit(event, data);
     } else {
-      console.log('SEND EVENT', event)
       this.socket?.emit(event, { meta: { tabId: this.store.get().currentTab }, data });
     }
   };
