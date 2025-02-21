@@ -40,14 +40,14 @@ function SearchActions() {
         <div className={'ml-auto'} />
         <SavedSearch />
         <Tooltip title='Clear Search Filters'>
-        <Button
-          type="text"
-          disabled={!hasSearch}
-          onClick={() => searchStore.clearSearch()}
-          className="px-2"
-        >
-          Clear
-        </Button>
+          <Button
+            type="text"
+            disabled={!hasSearch}
+            onClick={() => searchStore.clearSearch()}
+            className="px-2"
+          >
+            Clear
+          </Button>
         </Tooltip>
       </div>
       {showPanel ? (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { useModal } from 'App/components/Modal';
 import { MODULES } from 'Components/Client/Modules';
 
@@ -27,21 +27,23 @@ function AssistSearchActions() {
   return (
     <div className="flex items-center w-full gap-2">
       {isEnterprise && modules.includes(MODULES.OFFLINE_RECORDINGS)
-        ? <Button type="primary" ghost onClick={showRecords}>Training Videos</Button> : null
+        ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null
       }
       {isEnterprise && (
-        <Button type="primary" ghost onClick={showStats}
+        <Button type="text" onClick={showStats}
                 disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
           Co-Browsing Reports</Button>
       )}
-      <Button
-        type="link"
-        className="ml-auto font-medium"
-        disabled={!hasFilters && !hasEvents}
-        onClick={() => searchStoreLive.clearSearch()}
-      >
-        Clear Search
-      </Button>
+      <Tooltip title='Clear Search Filters'>
+        <Button
+          type="text"
+          disabled={!hasFilters && !hasEvents}
+          onClick={() => searchStoreLive.clearSearch()}
+          className="px-2 ml-auto"
+        >
+          Clear
+        </Button>
+      </Tooltip>
     </div>
   );
 }
