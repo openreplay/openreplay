@@ -538,6 +538,7 @@ function WidgetChart(props: Props) {
 
 
   const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE)
+  const tableMode = _metric.viewType === 'table' && _metric.metricType === TIMESERIES
   return (
     <div ref={ref}>
       {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: `240px` }} /> : (
@@ -549,6 +550,7 @@ function WidgetChart(props: Props) {
               inBuilder={props.isPreview}
               defaultOpen={true}
               data={data}
+              tableMode={tableMode}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}
               metric={_metric}

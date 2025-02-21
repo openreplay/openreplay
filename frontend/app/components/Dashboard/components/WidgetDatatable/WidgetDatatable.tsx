@@ -31,6 +31,7 @@ interface Props {
   defaultOpen?: boolean;
   metric: { name: string; viewType: string };
   inBuilder?: boolean;
+  tableMode?: boolean;
 }
 
 function WidgetDatatable(props: Props) {
@@ -161,7 +162,7 @@ function WidgetDatatable(props: Props) {
             columns={tableProps}
             dataSource={tableData}
             pagination={false}
-            rowSelection={rowSelection}
+            rowSelection={props.tableMode ? undefined : rowSelection}
             size={'small'}
             scroll={{ x: 'max-content' }}
           />
