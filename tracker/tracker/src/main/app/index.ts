@@ -1648,9 +1648,15 @@ export default class App {
         endIndex++;
       }
 
-      const messagesBatch = buffer.splice(0, endIndex);
-      this.postToWorker(messagesBatch);
-      res(null);
+      requestIdleCb(() => {
+        const messagesBatch = buffer.splice(0, endIndex);
+
+        const clonedBatch = JSON.parse(JSON.stringify(messagesBatch));
+
+        this.postToWorker(clonedBatch);
+
+        res(null);
+      })
     })
   }
 
