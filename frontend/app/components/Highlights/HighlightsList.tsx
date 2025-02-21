@@ -12,8 +12,13 @@ import { toast } from 'react-toastify';
 import EditHlModal from './EditHlModal';
 import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
+import { useHistory } from 'react-router';
+import { highlights, withSiteId } from 'App/routes'
 
 function HighlightsList() {
+  const history = useHistory();
+  const params = new URLSearchParams(window.location.search);
+  const hlId = params.get('highlight');
   const { notesStore, projectsStore, userStore } = useStore();
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
@@ -22,6 +27,13 @@ function HighlightsList() {
     isPublic: false
   });
   const currentUserId = userStore.account.id;
+
+  React.useEffect(() => {
+    if (hlId) {
+      setActiveId(hlId);
+      history.replace(withSiteId(highlights(), projectsStore.siteId));
+    }
+  }, [hlId])
 
   const activeProject = projectsStore.activeSiteId;
   const query = notesStore.query;
