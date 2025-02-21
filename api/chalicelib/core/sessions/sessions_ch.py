@@ -381,7 +381,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, f_k: f.value, **sh.multi_values(f.value, value_key=f_k)}
+            full_args = {**full_args, f_k: sh.single_value(f.value), **sh.multi_values(f.value, value_key=f_k)}
             op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.EVENTS_COUNT] else f.operator.value
             is_any = sh.isAny_opreator(f.operator)

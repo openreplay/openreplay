@@ -64,3 +64,12 @@ def isAny_opreator(op: schemas.SearchEventOperator):
 
 def isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator.IS_UNDEFINED]
+
+
+def single_value(values):
+    if values is not None and isinstance(values, list):
+        for i, v in enumerate(values):
+            if isinstance(v, Enum):
+                values[i] = v.value
+    return values
+
