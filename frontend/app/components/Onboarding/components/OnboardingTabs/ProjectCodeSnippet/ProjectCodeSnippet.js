@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Checkbox, Loader, Toggler } from 'UI';
-import GDPR from 'App/mstore/types/gdpr';
 import cn from 'classnames';
 import stl from './projectCodeSnippet.module.css';
 import CircleNumber from '../../CircleNumber';

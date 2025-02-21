@@ -1,7 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
 import { avatarIconName } from 'App/iconNames';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
+import { Tooltip } from 'antd'
 
 const Avatar = ({
                   isActive = false,
@@ -13,7 +14,7 @@ const Avatar = ({
                 }) => {
   var iconName = avatarIconName(seed);
   return (
-    <Tooltip title={isActive ? 'Active user' : 'User might be inactive'} disabled={!isAssist}>
+    <Tooltip title={!isAssist ? '' : isActive ? 'Active user' : 'User might be inactive'}>
       <div
         className={cn(
           // stl.wrapper,

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import cn from 'classnames';
 import stl from './sideMenuItem.module.css';
 import { IconNames } from 'UI/SVG';
+import { Tooltip } from 'antd'
 
 type Props = {
   title: string;
