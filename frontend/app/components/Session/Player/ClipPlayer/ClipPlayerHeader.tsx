@@ -1,9 +1,8 @@
 import React from 'react';
-import { Button, Tooltip } from '.store/antd-virtual-7db13b4af6/package';
 import Session from 'Types/session';
 import UserCard from 'Components/Session/Player/ClipPlayer/UserCard';
 import QueueControls from 'Components/Session/Player/ClipPlayer/QueueControls';
-import { App, Space } from 'antd';
+import { App, Space, Button, Tooltip } from 'antd';
 import copy from 'copy-to-clipboard';
 import { withSiteId } from '@/routes';
 import * as routes from '@/routes';
