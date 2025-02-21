@@ -26,7 +26,7 @@ function AssistSearchActions() {
   };
   return (
     <div className="flex items-center w-full gap-2">
-      {isEnterprise && modules.includes(MODULES.OFFLINE_RECORDINGS)
+      {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
         ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null
       }
       {isEnterprise && (
