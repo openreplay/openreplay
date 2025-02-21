@@ -4,11 +4,11 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { List, Space, Typography, Button, Tooltip } from 'antd';
-import { PencilIcon, PlusIcon, Tags } from 'lucide-react';
+import { List, Space, Typography, Button, Tooltip, Empty } from 'antd';
+import { PlusIcon, Tags } from 'lucide-react';
 import {EditOutlined } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
-import { Empty } from '.store/antd-virtual-7db13b4af6/package';
+
 
 const CustomFields = () => {
   usePageTitle('Metadata - OpenReplay Preferences');
