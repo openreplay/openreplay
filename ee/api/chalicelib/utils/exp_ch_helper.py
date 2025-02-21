@@ -13,9 +13,10 @@ if config("EXP_7D_MV", cast=bool, default=True):
 
 def get_main_events_table(timestamp=0, platform="web"):
     if platform == "web":
-        return "experimental.events_l7d_mv" \
-            if config("EXP_7D_MV", cast=bool, default=True) \
-               and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.events"
+        return "product_analytics.events"
+        # return "experimental.events_l7d_mv" \
+        #     if config("EXP_7D_MV", cast=bool, default=True) \
+        #        and timestamp and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.events"
     else:
         return "experimental.ios_events"
 
