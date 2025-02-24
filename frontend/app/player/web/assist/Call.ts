@@ -51,7 +51,7 @@ export default class Call {
         if (store.get().calling !== CallingState.OnCall) {
           newIds.forEach((id: string) => {
             console.log("CALL3 for", id);
-            this._peerConnection(id)
+            this._peerConnection(id, true);
           });
         }
 
@@ -170,7 +170,7 @@ export default class Call {
   }
 
   // ESTABLISHING A CONNECTION
-  private async _peerConnection(remotePeerId: string) {
+  private async _peerConnection(remotePeerId: string, isAgent?: boolean) {
     console.log("_ PEER CONNECTION", remotePeerId);
     try {
       // Create RTCPeerConnection
@@ -182,7 +182,11 @@ export default class Call {
       await pc.setLocalDescription(offer);
 
       // Sending offer
-      this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
+      if (isAgent) {
+        this.socket.emit('WEBRTC_AGENT_CALL', { from: remotePeerId, offer, agentIdToCall:  });
+      } else {
+        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
+      }
       this.connectAttempts = 0;
     } catch (e: any) {
       logger.error(e);
