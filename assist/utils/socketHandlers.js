@@ -190,6 +190,7 @@ async function onUpdateEvent(socket, ...args) {
 }
 
 async function onWebrtcAgentHandler(socket, ...args) {
+    logger.debug(JSON.stringify(args));
     if (socket.handshake.query.identity === IDENTITIES.agent) {
         const agentIdToConnect = args[0]?.data?.toAgentId;
         logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
