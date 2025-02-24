@@ -4,7 +4,7 @@ import type { TableProps } from 'antd';
 import Widget from 'App/mstore/types/widget';
 import Funnel from 'App/mstore/types/funnel';
 import { ItemMenu } from 'UI';
-import { EllipsisVertical, FileDown } from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
 import { exportAntCsv } from '../../../utils';
 
 interface Props {
@@ -14,12 +14,7 @@ interface Props {
 }
 
 function FunnelTable(props: Props) {
-  const tableData = [
-    {
-      conversion: props.data.funnel.totalConversionsPercentage,
-    },
-  ];
-  const tableProps: TableProps['columns'] = [
+  const defaultTableProps: TableProps['columns'] = [
     {
       title: 'Conversion %',
       dataIndex: 'conversion',
@@ -34,31 +29,43 @@ function FunnelTable(props: Props) {
       ),
     },
   ];
+  const defaultData = [
+    {
+      conversion: props.data.funnel.totalConversionsPercentage,
+    },
+  ]
+  const [tableProps, setTableProps] = React.useState(defaultTableProps);
+  const [tableData, setTableData] = React.useState(defaultData);
+
 
   React.useEffect(() => {
-    const funnel = props.data.funnel;
+    const funnel = props.data.funnel
+    const tablePropsCopy = defaultTableProps;
+    const tableDataCopy = defaultData;
     funnel.stages.forEach((st, ind) => {
       const title = `${st.label} ${st.operator} ${st.value.join(' or ')}`;
       const wrappedTitle =
         title.length > 40 ? title.slice(0, 40) + '...' : title;
-      tableProps.push({
+      tablePropsCopy.push({
         title: wrappedTitle,
         dataIndex: 'st_' + ind,
         key: 'st_' + ind,
         ellipsis: true,
         width: 120,
       });
-      tableData[0]['st_' + ind] = st.count;
+      tableDataCopy[0]['st_' + ind] = st.count;
     });
     if (props.compData) {
-      tableData.push({
+      tableDataCopy.push({
         conversion: props.compData.funnel.totalConversionsPercentage,
       })
       const compFunnel = props.compData.funnel;
       compFunnel.stages.forEach((st, ind) => {
-        tableData[1]['st_' + ind] = st.count;
+        tableDataCopy[1]['st_' + ind] = st.count;
       });
     }
+    setTableProps(tablePropsCopy);
+    setTableData(tableDataCopy);
   }, [props.data]);
 
   return (
