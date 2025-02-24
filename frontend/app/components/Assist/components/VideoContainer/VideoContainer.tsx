@@ -6,9 +6,17 @@ interface Props {
   height?: number | string;
   setRemoteEnabled?: (isEnabled: boolean) => void;
   local?: boolean;
+  isAgent?: boolean;
 }
 
-function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled, local }: Props) {
+function VideoContainer({
+  stream,
+  muted = false,
+  height = 280,
+  setRemoteEnabled,
+  local,
+  isAgent,
+}: Props) {
   const ref = useRef<HTMLVideoElement>(null);
   const [isEnabled, setEnabled] = React.useState(false);
 
@@ -16,14 +24,14 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled,
     if (ref.current) {
       ref.current.srcObject = stream;
     }
-  }, [ref.current, stream, stream.getVideoTracks()[0]?.getSettings().width]);
+  }, [ref.current, stream, stream?.getVideoTracks()[0]?.getSettings().width]);
 
   useEffect(() => {
     if (!stream) {
       return;
     }
     const iid = setInterval(() => {
-      const track = stream.getVideoTracks()[0]
+      const track = stream.getVideoTracks()[0];
       const settings = track?.getSettings();
       const isDummyVideoTrack = settings
         ? settings.width === 2 ||
@@ -52,6 +60,15 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled,
       }}
     >
       <video autoPlay ref={ref} muted={muted} style={{ height: height }} />
+      {isAgent ? (
+        <div
+          style={{
+            position: 'absolute',
+          }}
+        >
+          Agent
+        </div>
+      ) : null}
     </div>
   );
 }

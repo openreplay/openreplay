@@ -9,7 +9,7 @@ import type { LocalStream } from 'Player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 export interface Props {
-  incomeStream: MediaStream[] | null;
+  incomeStream: { stream: MediaStream, isAgent: boolean }[] | null;
   localStream: LocalStream | null;
   userId: string;
   isPrestart?: boolean;
@@ -50,8 +50,8 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
         >
           {incomeStream ? (
             incomeStream.map((stream) => (
-              <React.Fragment key={stream.id}>
-                <VideoContainer stream={stream} setRemoteEnabled={setRemoteEnabled} />
+              <React.Fragment key={stream.stream.id}>
+                <VideoContainer stream={stream.stream} setRemoteEnabled={setRemoteEnabled} isAgent={stream.isAgent} />
               </React.Fragment>
             ))
           ) : (

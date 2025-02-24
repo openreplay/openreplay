@@ -77,7 +77,7 @@ export default class Assist {
   readonly version = pkgVersion
 
   private socket: Socket | null = null
-  private calls: Record<string, RTCPeerConnection> = {};
+  private calls: Map<string, RTCPeerConnection> = new Map();
   private canvasPeers: { [id: number]: RTCPeerConnection | null } = {}
   private canvasNodeCheckers: Map<number, any> = new Map()
   private assistDemandedRestart = false
@@ -250,7 +250,9 @@ export default class Assist {
       if (args[0] === 'messages' || args[0] === 'UPDATE_SESSION') {
         return
       }
-      app.debug.log('Socket:', ...args)
+      if (args[0] !== 'webrtc_call_ice_candidate') {
+        app.debug.log('Socket:', ...args)
+      };
       socket.on('close', (e) => {
         app.debug.warn('Socket closed:', e);
       })
@@ -398,10 +400,10 @@ export default class Assist {
       delete this.agents[id]
 
       Object.values(this.calls).forEach(pc => pc.close())
-      this.calls = {}
-
+      this.calls.clear();
+     
       recordingState.stopAgentRecording(id)
-      endAgentCall(id)
+      endAgentCall({ socketId: id })
     })
 
     socket.on('NO_AGENT', () => {
@@ -411,19 +413,20 @@ export default class Assist {
       if (recordingState.isActive) recordingState.stopRecording()
     })
 
-    socket.on('call_end', (id) => {
-      if (!callingAgents.has(id)) {
-        app.debug.warn('Received call_end from unknown agent', id)
+    socket.on('call_end', (socketId, { data: callId }) => {
+      if (!callingAgents.has(socketId)) {
+        app.debug.warn('Received call_end from unknown agent', socketId)
         return
       }
 
-      endAgentCall(id)
+      endAgentCall({ socketId, callId })
     })
 
     socket.on('_agent_name', (id, info) => {
       if (app.getTabId() !== info.meta.tabId) return
       const name = info.data
       callingAgents.set(id, name)
+      console.log('CALLING AGENTS', callingAgents)
       updateCallerNames()
     })
 
@@ -474,7 +477,10 @@ export default class Assist {
     })
 
     socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
-      await handleIncomingCallOffer(data.from, data.offer);
+      console.log("OFFER FROM", data.from)
+      if (!this.calls.has(data.from)) {
+        await handleIncomingCallOffer(data.from, data.offer);
+      }
     });
 
     socket.on('webrtc_call_ice_candidate', async (data: { from: string, candidate: RTCIceCandidateInit }) => {
@@ -495,20 +501,31 @@ export default class Assist {
     function updateCallerNames() {
       callUI?.setAssistentName(callingAgents)
     }
-    function endAgentCall(id: string) {
-      callingAgents.delete(id)
+    function endAgentCall({ socketId, callId }: { socketId: string, callId?: string }) {
+      callingAgents.delete(socketId)
+
+      console.log("CALLING AGENTS", callingAgents)
 
       if (callingAgents.size === 0) {
         handleCallEnd()
       } else {
         updateCallerNames()
+        if (callId) {
+          handleCallEndWithAgent(callId)
+        }
       }
+    }
+
+    const handleCallEndWithAgent = (id: string) => {
+      console.log("!!!!", this.calls.get(id))
+      this.calls.get(id)?.close()
+      this.calls.delete(id)
     }
 
     // call end handling
     const handleCallEnd = () => {
       Object.values(this.calls).forEach(pc => pc.close())
-      this.calls = {}
+      this.calls.clear();
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
       // UI
@@ -629,7 +646,7 @@ export default class Assist {
         };
 
         // Keep connection with the caller
-        this.calls[from] = pc;
+        this.calls.set(from, pc);
 
         // set remote description on incoming request
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -641,11 +658,11 @@ export default class Assist {
         socket.emit('webrtc_call_answer', { from, answer });
 
         // If the state changes to an error, we terminate the call
-        pc.onconnectionstatechange = () => {
-          if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-            initiateCallEnd();
-          }
-        };
+        // pc.onconnectionstatechange = () => {
+        //   if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        //     initiateCallEnd();
+        //   }
+        // };
 
         // Update track when local video changes
         lStreams[from].onVideoTrack(vTrack => {
@@ -665,7 +682,7 @@ export default class Assist {
         // when everything is set, we change the state to true
         this.setCallingState(CallingState.True)
         if (!callEndCallback) { callEndCallback = this.options.onCallStart?.() }
-        const callingPeerIdsNow = Object.keys(this.calls)
+        const callingPeerIdsNow = Array.from(this.calls.keys())
         // in session storage we write down everyone with whom the call is established
         sessionStorage.setItem(this.options.session_calling_peer_key, JSON.stringify(callingPeerIdsNow))
         this.emit('UPDATE_SESSION', { agentIds: callingPeerIdsNow, isCallActive: true })
@@ -723,7 +740,7 @@ export default class Assist {
 
     app.nodes.attachNodeCallback((node) => {
       const id = app.nodes.getID(node)
-      if (id && hasTag(node, 'canvas')) {
+      if (id && hasTag(node, 'canvas') && !app.sanitizer.isHidden(id)) {
         // app.debug.log(`Creating stream for canvas ${id}`)
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
@@ -789,7 +806,7 @@ export default class Assist {
     }
     this.cleanCanvasConnections();
     Object.values(this.calls).forEach(pc => pc.close())
-    this.calls = {}
+    this.calls.clear();
     if (this.socket) {
       this.socket.disconnect()
       this.app.debug.log('Socket disconnected')

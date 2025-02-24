@@ -10,6 +10,7 @@ import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
 import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
 import { gunzipSync } from 'fflate';
+import logger from '@/logger';
 
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 
@@ -192,6 +193,12 @@ export default class AssistManager {
           }),
         },
       }));
+
+      socket.onAny((event, ...args) => {
+        logger.log(`📩 Socket: ${event}`, args);
+      });
+      
+
       socket.on('connect', () => {
         waitingForMessages = true;
         // TODO: reconnect happens frequently on bad network
@@ -288,7 +295,11 @@ export default class AssistManager {
         socket,
         this.config,
         this.peerID,
-        this.getAssistVersion
+        this.getAssistVersion,
+        {
+          ...this.session.agentInfo,
+          id: agentId,
+        }
       );
       this.remoteControl = new RemoteControl(
         this.store,

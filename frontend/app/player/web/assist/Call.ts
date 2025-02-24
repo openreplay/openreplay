@@ -32,8 +32,33 @@ export default class Call {
     private socket: Socket,
     private config: RTCIceServer[] | null,
     private peerID: string,
-    private getAssistVersion: () => number
+    private getAssistVersion: () => number,
+    private agent: Record<string, any>,
+    private agentInCallIds: string[] = [],
+    private callId: string,
   ) {
+
+    socket.on('UPDATE_SESSION', (data: { data: { agentIds: string[] }}) => {
+      const { agentIds } = data.data;
+      if (agentIds) {
+        const filteredAgentIds = agentIds.filter((id: string) => id.split('-')[3] !== this.agent.id.toString());
+        console.log("!!! FILTERED IDS", filteredAgentIds);
+        const newIds = filteredAgentIds.filter((id: string) => !this.agentInCallIds.includes(id));
+        console.log("!!! NEW IDS", newIds);
+        const removedIds = this.agentInCallIds.filter((id: string) => !filteredAgentIds.includes(id));
+        console.log("!!! REMOVED IDS", removedIds);
+        removedIds.forEach((id: string) => this.agentDisconnected(id));
+        if (store.get().calling !== CallingState.OnCall) {
+          newIds.forEach((id: string) => {
+            console.log("CALL3 for", id);
+            this._peerConnection(id)
+          });
+        }
+
+        this.agentInCallIds = filteredAgentIds;
+      }
+    });
+
     socket.on('call_end', () => {
       this.onRemoteCallEnd()
     });
@@ -70,6 +95,11 @@ export default class Call {
       this.store.update({ calling: CallingState.NoCall });
     });
 
+    socket.on('webrtc_call_offer', (data: { data: { from: string, offer: RTCSessionDescriptionInit } }) => {
+      console.log("RECEIVED OFFER", data);
+      this.handleOffer(data.data);
+    });
+
     socket.on('webrtc_call_answer', (data: { data: { from: string, answer: RTCSessionDescriptionInit } }) => {
       this.handleAnswer(data.data);
     });
@@ -81,7 +111,7 @@ export default class Call {
   }
 
   // CREATE A LOCAL PEER
-  private async createPeerConnection(remotePeerId: string): Promise<RTCPeerConnection> {
+  private async createPeerConnection(callId: string): Promise<RTCPeerConnection> {
     // create pc with ice config
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -97,7 +127,7 @@ export default class Call {
     // when ice is ready we send it
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
+        this.socket.emit('webrtc_call_ice_candidate', { from: callId, candidate: event.candidate });
       } else {
         logger.log("ICE candidate gathering complete");
       }
@@ -107,12 +137,12 @@ export default class Call {
     pc.ontrack = (event) => {
       const stream = event.streams[0];
       if (stream) {
-        this.videoStreams[remotePeerId] = stream.getVideoTracks()[0];
+        this.videoStreams[callId] = stream.getVideoTracks()[0];
         if (this.store.get().calling !== CallingState.OnCall) {
           this.store.update({ calling: CallingState.OnCall });
         }
         if (this.callArgs) {
-          this.callArgs.onStream(stream);
+          this.callArgs.onStream(stream, isAgentId(callId));
         }
       }
     };
@@ -141,6 +171,7 @@ export default class Call {
 
   // ESTABLISHING A CONNECTION
   private async _peerConnection(remotePeerId: string) {
+    console.log("_ PEER CONNECTION", remotePeerId);
     try {
       // Create RTCPeerConnection
       const pc = await this.createPeerConnection(remotePeerId);
@@ -161,6 +192,7 @@ export default class Call {
           this.connectAttempts++;
           logger.log('reconnecting', this.connectAttempts);
           await new Promise((resolve) => setTimeout(resolve, 250));
+          console.log("CALL2")
           await this._peerConnection(remotePeerId);
         } else {
           logger.log('error', this.connectAttempts);
@@ -171,13 +203,41 @@ export default class Call {
     }
   }
 
+  // Process the received offer to answer
+  private async handleOffer(data: { from: string, offer: RTCSessionDescriptionInit }) {
+    // set to remotePeerId data.from
+    const callId = data.from;
+    const pc = this.connections[callId];
+    if (!pc) {
+      logger.error("No connection found for remote peer", callId);
+      return;
+    }
+    try {
+      // if the connection is not established yet, then set remoteDescription to peer
+      if (pc.signalingState !== "stable") {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.socket.emit('webrtc_call_answer', { from: callId, answer: pc.localDescription });
+      } else {
+        logger.warn("Skipping setRemoteDescription: Already in stable state");
+      }
+    } catch (e) {
+      logger.error("Error setting remote description from answer", e);
+      this.callArgs?.onError?.(e);
+    }
+  }
+
   // Process the received answer to offer
   private async handleAnswer(data: { from: string, answer: RTCSessionDescriptionInit }) {
     // set to remotePeerId data.from
-    const remotePeerId = data.from;
-    const pc = this.connections[remotePeerId];
+    if (this.agentInCallIds.includes(data.from)) {
+      return;
+    }
+    const callId = data.from;
+    const pc = this.connections[callId];
     if (!pc) {
-      logger.error("No connection found for remote peer", remotePeerId);
+      logger.error("No connection found for remote peer", callId);
       return;
     }
     try {
@@ -195,8 +255,8 @@ export default class Call {
 
   // process the received iceCandidate
   private async handleIceCandidate(data: { from: string, candidate: RTCIceCandidateInit }) {
-    const remotePeerId = data.from;
-    const pc = this.connections[remotePeerId];
+    const callId = data.from;
+    const pc = this.connections[callId];
     if (!pc) return;
     // if there are ice candidates then add candidate to peer
     if (data.candidate && (data.candidate.sdpMid || data.candidate.sdpMLineIndex !== null)) {
@@ -245,8 +305,7 @@ export default class Call {
 
   // Ends the call and sends the call_end signal
   initiateCallEnd = async () => {
-    const userName = userStore.account.name;
-    this.emitData('call_end', userName);
+    this.emitData('call_end', this.callId);
     this.handleCallEnd();
   };
 
@@ -260,7 +319,7 @@ export default class Call {
 
   private callArgs: {
     localStream: LocalStream;
-    onStream: (s: MediaStream) => void;
+    onStream: (s: MediaStream, isAgent: boolean) => void;
     onCallEnd: () => void;
     onReject: () => void;
     onError?: (arg?: any) => void;
@@ -300,12 +359,14 @@ export default class Call {
   }
 
   // Connect with other agents
-  addPeerCall(thirdPartyPeers: string[]) {
-    thirdPartyPeers.forEach((peerId) => this._peerConnection(peerId));
-  }
+  // addPeerCall(thirdPartyPeers: string[]) {
+  //   console.log("ADD THRID PARTY CALL", thirdPartyPeers);
+  //   thirdPartyPeers.forEach((peerId) => this._peerConnection(peerId));
+  // }
 
   // Calls the method to create a connection with a peer
   private _callSessionPeer() {
+    console.log("CALL1")
     if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) {
       return;
     }
@@ -319,11 +380,17 @@ export default class Call {
     const peerId =
       this.getAssistVersion() === 1
         ? this.peerID
-        : `${this.peerID}-${tab || Array.from(this.store.get().tabs)[0]}`;
+        : `${this.peerID}-${tab || Array.from(this.store.get().tabs)[0]}-${this.agent.id}-agent`;
+    this.callId = peerId;
 
     const userName = userStore.account.name;
     this.emitData('_agent_name', userName);
     void this._peerConnection(peerId);
+  }
+
+  agentDisconnected(agentId: string) {
+    this.connections[agentId]?.close();
+    delete this.connections[agentId];
   }
 
   // Method for clearing resources
@@ -333,4 +400,8 @@ export default class Call {
     this.connections = {};
     this.callArgs?.onCallEnd();
   }
+}
+
+function isAgentId(id: string): boolean {
+  return id.endsWith('-agent');
 }
