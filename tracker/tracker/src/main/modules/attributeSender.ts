@@ -1,21 +1,30 @@
-import { SetNodeAttributeDict, SetNodeAttribute, Type } from '../../common/messages.gen.js'
+import {
+  SetNodeAttributeDictGlobal,
+  SetNodeAttribute,
+  Type,
+} from '../../common/messages.gen.js'
 import App from '../app/index.js'
 
 export class StringDictionary {
-  private idx = 1
+  private lastId = 0
   /** backwards dictionary of
    * [repeated str:key]
    * */
-  private backDict: Record<string, string> = {}
+  private backDict: Record<string, number> = {}
 
-  constructor(private readonly getPageNo: () => number | undefined) {}
-
-  getKey = (str: string): [string, boolean] => {
+  getKey = (str: string): [number, boolean] => {
     let isNew = false
     if (!this.backDict[str]) {
       isNew = true
-      this.backDict[str] = `${this.getPageNo() ?? 0}_${this.idx}`
-      this.idx += 1
+      let id: number = Date.now()
+      if (id === this.lastId) {
+        id = id * 1000
+      }
+      while (id === this.lastId) {
+        id += 1
+      }
+      this.backDict[str] = id
+      this.lastId = id
     }
     return [this.backDict[str], isNew]
   }
@@ -28,7 +37,7 @@ export default class AttributeSender {
   constructor(options: { app: App; isDictDisabled: boolean }) {
     this.app = options.app
     this.isDictDisabled = options.isDictDisabled
-    this.dict = new StringDictionary(this.app.session.getPageNumber)
+    this.dict = new StringDictionary()
   }
 
   public sendSetAttribute = (id: number, name: string, value: string) => {
@@ -36,8 +45,8 @@ export default class AttributeSender {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
       return this.app.send(msg)
     } else {
-      const message: SetNodeAttributeDict = [
-        Type.SetNodeAttributeDict,
+      const message: SetNodeAttributeDictGlobal = [
+        Type.SetNodeAttributeDictGlobal,
         id,
         this.applyDict(name),
         this.applyDict(value),
@@ -46,15 +55,15 @@ export default class AttributeSender {
     }
   }
 
-  private applyDict(str: string): string {
+  private applyDict(str: string): number {
     const [key, isNew] = this.dict.getKey(str)
     if (isNew) {
-      this.app.send([Type.StringDict, key, str])
+      this.app.send([Type.StringDictGlobal, key, str])
     }
     return key
   }
 
   clear() {
-    this.dict = new StringDictionary(this.app.session.getPageNumber)
+    this.dict = new StringDictionary()
   }
 }

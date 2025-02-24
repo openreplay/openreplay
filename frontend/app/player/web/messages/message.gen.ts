@@ -23,6 +23,8 @@ import type {
   RawMouseMove,
   RawNetworkRequestDeprecated,
   RawConsoleLog,
+  RawStringDictGlobal,
+  RawSetNodeAttributeDictGlobal,
   RawCssInsertRule,
   RawCssDeleteRule,
   RawFetch,
@@ -122,6 +124,10 @@ export type MouseMove = RawMouseMove & Timed
 export type NetworkRequestDeprecated = RawNetworkRequestDeprecated & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
+
+export type StringDictGlobal = RawStringDictGlobal & Timed
+
+export type SetNodeAttributeDictGlobal = RawSetNodeAttributeDictGlobal & Timed
 
 export type CssInsertRule = RawCssInsertRule & Timed
 
