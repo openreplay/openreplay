@@ -38,10 +38,15 @@ export default class Call {
     private callId: string,
   ) {
 
+    socket.on('WEBRTC_AGENT_CALL', (data) => {
+      console.log("!WEBRTC AGENT CALL RECEIVED", data);
+    })
+
     socket.on('UPDATE_SESSION', (data: { data: { agentIds: string[] }}) => {
       const { agentIds } = data.data;
+      console.log("AGENT IDS", agentIds);
       if (agentIds) {
-        const filteredAgentIds = agentIds.filter((id: string) => id.split('-')[3] !== this.agent.id.toString());
+        const filteredAgentIds = agentIds.filter((id: string) => id.split('_')[3] !== this.agent.id.toString());
         console.log("!!! FILTERED IDS", filteredAgentIds);
         const newIds = filteredAgentIds.filter((id: string) => !this.agentInCallIds.includes(id));
         console.log("!!! NEW IDS", newIds);
@@ -51,7 +56,9 @@ export default class Call {
         if (store.get().calling !== CallingState.OnCall) {
           newIds.forEach((id: string) => {
             console.log("CALL3 for", id);
-            this._peerConnection(id, true);
+            const socketId = getSocketIdByCallId(id);
+            console.log("FOUND SOCKET ID", socketId);
+            this._peerConnection(id, true, socketId);
           });
         }
 
@@ -170,7 +177,7 @@ export default class Call {
   }
 
   // ESTABLISHING A CONNECTION
-  private async _peerConnection(remotePeerId: string, isAgent?: boolean) {
+  private async _peerConnection(remotePeerId: string, isAgent?: boolean, socketId?: string) {
     console.log("_ PEER CONNECTION", remotePeerId);
     try {
       // Create RTCPeerConnection
@@ -183,7 +190,8 @@ export default class Call {
 
       // Sending offer
       if (isAgent) {
-        this.socket.emit('WEBRTC_AGENT_CALL', { from: remotePeerId, offer, agentIdToCall:  });
+        console.log("CALL6", remotePeerId, socketId);
+        this.socket.emit('WEBRTC_AGENT_CALL', { from: remotePeerId, offer, toAgentId: socketId });
       } else {
         this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
       }
@@ -384,7 +392,9 @@ export default class Call {
     const peerId =
       this.getAssistVersion() === 1
         ? this.peerID
-        : `${this.peerID}-${tab || Array.from(this.store.get().tabs)[0]}-${this.agent.id}-agent`;
+        : `${this.peerID}_${tab || Array.from(this.store.get().tabs)[0]}_${this.agent.id}_${this.socket.id}_agent`;
+      
+    console.log("PEER IDDDD", peerId);
     this.callId = peerId;
 
     const userName = userStore.account.name;
@@ -407,5 +417,9 @@ export default class Call {
 }
 
 function isAgentId(id: string): boolean {
-  return id.endsWith('-agent');
+  return id.endsWith('_agent');
+}
+
+function getSocketIdByCallId(callId: string): string | undefined {
+  return callId.split('_')[3];
 }
