@@ -190,11 +190,12 @@ async function onUpdateEvent(socket, ...args) {
 }
 
 async function onWebrtcAgentHandler(socket, ...args) {
-    logger.debug(JSON.stringify(args));
     if (socket.handshake.query.identity === IDENTITIES.agent) {
         const agentIdToConnect = args[0]?.toAgentId;
         logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
-        if (agentIdToConnect && socket.handshake.sessionData.AGENTS_CONNECTED.includes(agentIdToConnect)) {
+        const io = getServer();
+        const { agentIDs } = await getRoomData(io, socket.handshake.query.roomId);
+        if (agentIdToConnect && agentIDs.includes(agentIdToConnect)) {
             socket.to(agentIdToConnect).emit(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, args[0]);
         }
     }
