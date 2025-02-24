@@ -353,11 +353,22 @@ svg {
 
 .dateRangeContainer  .react-calendar__tile--active{
     background-color: rgba(57, 77, 254,.7);
+    color: #FFF!important;
+}
+
+.dateRangeContainer .react-calendar__tile--rangeStart {
+    background-color: #394dfe;
+    color: #FFF!important;
 }
 
 .dateRangeContainer .react-calendar__tile--hasActive, .dateRangeContainer .react-calendar__tile--active:hover, .dateRangeContainer .react-calendar__tile--active:enabled:hover, .dateRangeContainer .react-calendar__tile--active:enabled:focus, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:hover, .dateRangeContainer  .react-calendar__tile--hasActive:enabled:focus{
     background-color: #394dfe;
-    color: #FFF;
+    color: #FFF!important;
+}
+
+.react-calendar__tile--now:enabled:hover, .react-calendar__tile--now:enabled:focus {
+    background-color: #2331A8!important;
+    color: #FFF!important;
 }
 
 .dateRangeContainer .react-calendar__tile--hasActive:hover{
