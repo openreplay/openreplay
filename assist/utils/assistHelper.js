@@ -10,7 +10,8 @@ const EVENTS_DEFINITION = {
         UPDATE_EVENT: "UPDATE_SESSION", // tab become active/inactive, page title change, changed session object (rare case), call start/end
         CONNECT_ERROR: "connect_error",
         CONNECT_FAILED: "connect_failed",
-        ERROR: "error"
+        ERROR: "error",
+        WEBRTC_AGENT_CALL: "WEBRTC_AGENT_CALL",
     },
     //The following list of events will be only emitted by the server
     server: {
