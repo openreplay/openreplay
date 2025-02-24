@@ -10,6 +10,7 @@ import {
   PERFORMANCE,
   EXCEPTIONS,
   OVERVIEW,
+  GRAPHQL,
 } from 'App/mstore/uiPlayerStore';
 import { MobileNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import { MobilePerformance } from 'Components/Session_/Performance';
@@ -18,6 +19,7 @@ import MobileControls from './MobileControls';
 import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
 import { MobileOverviewPanel } from 'Components/Session_/OverviewPanel';
+import GraphQL from 'Components/Session_/GraphQL';
 import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
@@ -32,7 +34,6 @@ interface IProps {
   isMultiview?: boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  bottomBlock: any;
   fullscreen?: boolean;
 }
 
@@ -146,6 +147,7 @@ function Player(props: IProps) {
           {bottomBlock === NETWORK && <MobileNetworkPanel panelHeight={panelHeight} />}
           {bottomBlock === PERFORMANCE && <MobilePerformance />}
           {bottomBlock === EXCEPTIONS && <MobileExceptions />}
+          {bottomBlock === GRAPHQL && <GraphQL isMobile panelHeight={panelHeight} />}
         </div>
       )}
       {!fullView ? (

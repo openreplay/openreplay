@@ -7,10 +7,8 @@ import { observer } from 'mobx-react-lite';
 import styles from 'Components/Session_/playerBlock.module.css';
 
 interface IProps {
-  fullscreen: boolean;
-  sessionId: string;
+  fullscreen?: boolean;
   activeTab: string;
-  jiraConfig: Record<string, any>
   fullView?: boolean
   setActiveTab: (tab: string) => void
 }
