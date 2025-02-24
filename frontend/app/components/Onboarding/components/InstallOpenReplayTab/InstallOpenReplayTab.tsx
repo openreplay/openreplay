@@ -2,13 +2,13 @@ import React from 'react';
 import OnboardingTabs from '../OnboardingTabs';
 import MobileOnboardingTabs from '../OnboardingTabs/OnboardingMobileTabs';
 import ProjectFormButton from '../ProjectFormButton';
-import { Button, Icon } from 'UI';
+import { Icon } from 'UI';
 import withOnboarding from '../withOnboarding';
 import { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
 import { Segmented } from 'antd';
-import { Button as AntButton } from 'antd'
+import { Button } from 'antd'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -41,10 +41,10 @@ function InstallOpenReplayTab(props: Props) {
           </div>
         </div>
         <a href={"https://docs.openreplay.com/en/using-or/"} target="_blank">
-          <AntButton size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
+          <Button size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
             <Icon name={"question-circle"} />
             <div className={"text-main"}>See Documentation</div>
-          </AntButton>
+          </Button>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
@@ -62,7 +62,7 @@ function InstallOpenReplayTab(props: Props) {
       </div>
       <div className="border-t px-4 py-3 flex justify-end">
         <Button
-          variant="primary"
+          type="primary"
           className=""
           onClick={() => (props.navTo ? props.navTo(OB_TABS.IDENTIFY_USERS) : null)}
         >

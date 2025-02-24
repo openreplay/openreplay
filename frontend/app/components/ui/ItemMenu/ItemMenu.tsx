@@ -1,6 +1,6 @@
 import React from 'react';
-import { Icon, Popover, Tooltip } from 'UI';
-import { Dropdown, Menu, Button } from 'antd';
+import { Icon, Popover } from 'UI';
+import { Button, Tooltip } from 'antd';
 import { EllipsisVertical } from 'lucide-react';
 import styles from './itemMenu.module.css';
 import cn from 'classnames';

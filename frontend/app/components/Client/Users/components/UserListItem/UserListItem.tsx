@@ -1,6 +1,7 @@
 //@ts-nocheck
 import React from 'react';
-import { Button, Tooltip } from 'UI';
+import { Tooltip, Icon } from 'UI';
+import { Button } from 'antd'
 import { checkForRecent } from 'App/date';
 import cn from 'classnames';
 
@@ -79,9 +80,8 @@ function UserListItem(props: Props) {
             {!user.isJoined && user.invitationLink && !user.isExpiredInvite && (
               <Tooltip title="Copy Invite Code" hideOnClick={true}>
                 <Button
-                  variant="text-primary"
-                  icon="link-45deg"
-                  className=""
+                  type="text"
+                  icon={<Icon name={"link-45deg"} />}
                   onClick={copyInviteCode}
                 />
               </Tooltip>
@@ -90,15 +90,14 @@ function UserListItem(props: Props) {
             {!user.isJoined && user.isExpiredInvite && (
               <Tooltip title="Generate Invite" hideOnClick={true}>
                 <Button
-                  icon="link-45deg"
-                  variant="text-primary"
-                  className=""
+                  icon={<Icon name={"link-45deg"} />}
+                  variant="text"
                   onClick={generateInvite}
                 />
               </Tooltip>
             )}
           </div>
-          <Button variant="text-primary" icon="pencil" />
+          <Button variant="text"  icon={<Icon name={"pencil"} />} />
         </div>
       </div>
     </div>

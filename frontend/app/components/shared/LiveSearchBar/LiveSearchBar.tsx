@@ -1,6 +1,7 @@
 import React from 'react';
 import LiveSessionSearchField from 'Shared/LiveSessionSearchField';
-import { Button, Tooltip } from 'UI';
+import { Tooltip } from 'UI';
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -20,9 +21,9 @@ const LiveSearchBar = (props: Props) => {
       <div className="flex items-center" style={{ width: '40%' }}>
         <Tooltip title={'Clear Steps'}>
           <Button
-            variant="text-primary"
+            type="text"
             disabled={!hasFilters}
-            className="ml-auto font-medium"
+            className="text-main ml-auto font-medium"
             onClick={() => searchStoreLive.clearSearch()}
           >
             Clear

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Input, Form } from 'UI';
+import { Input, Form } from 'UI';
+import { Button } from 'antd'
 import styles from './profileSettings.module.css';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
@@ -61,7 +62,7 @@ function Settings() {
         />
       </Form.Field>
 
-      <Button variant="outline" loading={loading} disabled={!changed} type="submit">
+      <Button type="default" loading={loading} disabled={!changed} htmlType="submit">
         {'Update'}
       </Button>
     </Form>

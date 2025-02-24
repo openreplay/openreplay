@@ -1,6 +1,7 @@
 import React from 'react';
 import Select from 'Shared/Select';
-import { Button, Input } from 'UI';
+import { Input } from 'UI';
+import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
@@ -66,7 +67,7 @@ function ListingVisibility() {
                     />
                 </div>
                 <div className="col-span-3">
-                    <Button variant="outline" size="medium" disabled={!changed} onClick={saveSettings}>Update</Button>
+                    <Button type="default" disabled={!changed} onClick={saveSettings}>Update</Button>
                 </div>
             </div>
         </>

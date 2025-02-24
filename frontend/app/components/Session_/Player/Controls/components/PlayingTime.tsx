@@ -31,6 +31,7 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
       distance={20}
       render={({ close }) => (
         <div
+          style={{ margin: -12 }}
           className={
             'flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left'
           }

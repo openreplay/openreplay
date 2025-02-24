@@ -1,7 +1,7 @@
 import { useModal } from 'App/components/Modal';
 import React from 'react';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';
-import { Button } from 'UI';
+import { Button } from 'antd';
 
 interface Props {
     site: any;
@@ -16,7 +16,7 @@ function InstallButton(props: Props) {
         );
     };
     return (
-        <Button size="small" variant="text-primary" onClick={onClick}>
+        <Button size="small" type="text" onClick={onClick}>
             {'Installation Steps'}
         </Button>
     );

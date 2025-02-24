@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import cn from 'classnames';
 import stl from './notifications.module.css';
-import { Toggler } from 'UI';
+import { Switch } from 'antd'
 import { useStore } from "App/mstore";
 import { observer } from 'mobx-react-lite'
 import withPageTitle from 'HOCs/withPageTitle';
@@ -25,12 +25,13 @@ function Notifications() {
       <div className="">
         <div className="text-lg font-medium">Weekly project summary</div>
         <div className="mb-4">Receive weekly report for each project on email.</div>
-        <Toggler
+        <div className={'flex items-center gap-2'}>
+          <Switch
           checked={weeklyReportStore.weeklyReport}
-          name="test"
           onChange={onChange}
-          label={weeklyReportStore.weeklyReport ? 'Yes' : 'No'}
         />
+          <span>{weeklyReportStore.weeklyReport ? 'Yes' : 'No'}</span>
+        </div>
       </div>
     </div>
   );

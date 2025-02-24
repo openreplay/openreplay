@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Button, TagBadge } from 'UI';
+import { TagBadge, confirm } from 'UI';
 import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
-import { confirm } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Button } from 'antd'
 
 const MetadataList = () => {
   const { customFieldStore, projectsStore } = useStore();
@@ -47,7 +47,7 @@ const MetadataList = () => {
 
   return (
     <div className="py-2 flex">
-      <Button variant="outline" onClick={() => openModal()}>
+      <Button type="default" onClick={() => openModal()}>
         Add Metadata
       </Button>
       <div className="flex ml-2">

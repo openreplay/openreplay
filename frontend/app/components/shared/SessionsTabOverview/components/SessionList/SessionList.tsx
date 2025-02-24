@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
-import { NoContent, Loader, Pagination, Button } from 'UI';
+import { NoContent, Loader, Pagination, Icon } from 'UI';
+import { Button } from 'antd'
 import { useLocation, withRouter } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
@@ -188,10 +189,9 @@ function SessionList() {
                   </div>
                 )}
                 <Button
-                  variant="text-primary"
+                  variant="text"
                   className="mt-4"
-                  icon="arrow-repeat"
-                  iconSize={20}
+                  icon={<Icon name={"arrow-repeat"} size={20} />}
                   onClick={() => {
                     void searchStore.fetchSessions(true, isBookmark);
                   }}

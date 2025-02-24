@@ -1,7 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from "App/mstore";
-import { Form, Button, Input, Icon } from 'UI';
+import { Form, Input, Icon } from 'UI';
+import { Button } from 'antd'
 import { validateNumber } from 'App/validate';
 import styles from './siteForm.module.css';
 import Select from 'Shared/Select';
@@ -115,12 +116,13 @@ function GDPRForm(props) {
 
       <div className={ styles.footer }>
         <Button
-          variant="outline"
+          type="primary"
           className="float-left mr-2"
           loading={ saving }
-          content="Update"
-        />
-        <Button onClick={ onClose } content="Cancel" />
+        >
+          Update
+        </Button>
+        <Button onClick={ onClose }>Close</Button>
       </div>
     </Form>
   )

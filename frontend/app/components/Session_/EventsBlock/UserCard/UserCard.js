@@ -1,12 +1,10 @@
 import React from 'react';
-import { List } from 'immutable';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
 import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
-import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';

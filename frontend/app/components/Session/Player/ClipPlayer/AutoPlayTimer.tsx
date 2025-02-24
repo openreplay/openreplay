@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import cn from 'classnames';
 import {observer} from 'mobx-react-lite';
-import {Button} from 'UI';
+import { Button } from 'antd'
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
 import AutoplayToggle from 'Shared/AutoplayToggle';
@@ -11,7 +11,7 @@ function AutoplayTimer({history}: any) {
     let timer: NodeJS.Timer;
     const [cancelled, setCancelled] = useState(false);
     const [counter, setCounter] = useState(5);
-    const {clipStore} = useStore();
+    const { clipStore } = useStore();
 
     useEffect(() => {
         if (counter > 0) {
@@ -46,11 +46,11 @@ function AutoplayTimer({history}: any) {
                         <AutoplayToggle/>
                     </div>
                     <div className="flex items-center">
-                        <Button variant="text-primary" onClick={cancel}>
+                        <Button type="text" onClick={cancel}>
                             Cancel
                         </Button>
                         <div className="px-2"/>
-                        <Button variant="outline" onClick={() => clipStore.next()}>Play Now</Button>
+                        <Button type="default" onClick={() => clipStore.next()}>Play Now</Button>
                     </div>
                 </div>
             </div>

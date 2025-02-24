@@ -2,7 +2,7 @@ import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { Button } from 'UI';
+import { Button } from 'antd';
 
 function FooterContent({ dashboardId, selected }: any) {
     const { hideModal } = useModal();
@@ -27,10 +27,10 @@ function FooterContent({ dashboardId, selected }: any) {
           <span className="font-medium">{total}</span>
         </div>
         <div className="flex items-center">
-          <Button variant="text-primary" className="mr-2" onClick={hideModal}>
+          <Button type="text" className="mr-2" onClick={hideModal}>
             Cancel
           </Button>
-          <Button disabled={selected.length === 0} variant="primary" onClick={addSelectedToDashboard}>
+          <Button disabled={selected.length === 0} type="primary" onClick={addSelectedToDashboard}>
             Add Selected to Dashboard
           </Button>
         </div>

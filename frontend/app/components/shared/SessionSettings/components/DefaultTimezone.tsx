@@ -5,8 +5,8 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
-import { Button, Icon } from 'UI';
-
+import { Icon } from 'UI';
+import { Button } from 'antd'
 import Select from 'Shared/Select';
 
 type TimezonesDropdown = Timezone[];
@@ -104,8 +104,7 @@ function DefaultTimezone() {
             <div className="col-span-3 ml-3">
               <Button
                 disabled={!changed}
-                variant="outline"
-                size="medium"
+                type="default"
                 onClick={onTimezoneSave}
               >
                 Update

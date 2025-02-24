@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Button, NoContent, Loader } from 'UI';
+import { NoContent, Loader } from 'UI';
+import { Button } from 'antd'
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import ListItem from './ListItem'
@@ -37,7 +38,6 @@ function AlertTriggersModal(props: Props) {
                 { count > 0 && (
                     <div className="">
                         <Button
-                            // loading={loading} // TODO should use the different loading state for this
                             variant="text"
                             onClick={onClearAll}
                             disabled={count === 0}

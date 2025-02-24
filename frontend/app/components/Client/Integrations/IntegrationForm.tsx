@@ -3,7 +3,8 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
-import { Button, Checkbox, Form, Input, Loader } from 'UI';
+import { Checkbox, Form, Input, Loader } from 'UI';
+import { Button } from 'antd'
 import { toast } from 'react-toastify';
 
 function IntegrationForm(props: any) {
@@ -97,7 +98,7 @@ function IntegrationForm(props: any) {
             onClick={save}
             disabled={!config?.validate()}
             loading={loading}
-            variant="primary"
+            type="primary"
             className="float-left mr-2"
           >
             {config?.exists() ? 'Update' : 'Add'}

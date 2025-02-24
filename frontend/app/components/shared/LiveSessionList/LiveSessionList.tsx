@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NoContent, Loader, Pagination, Button } from 'UI';
+import { NoContent, Loader, Pagination, Icon } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
 import { KEYS } from 'Types/filter/customFilter';
@@ -13,6 +13,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Button } from 'antd'
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
@@ -144,10 +145,9 @@ function LiveSessionList() {
                 </span>
 
                 <Button
-                  variant="text-primary"
+                  variant="text"
                   className="mt-4"
-                  icon="arrow-repeat"
-                  iconSize={20}
+                  icon={<Icon name="arrow-repeat" size={20} />}
                   onClick={refetch}
                 >
                   Refresh

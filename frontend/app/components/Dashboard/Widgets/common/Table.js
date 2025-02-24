@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Button } from 'UI';
+import { Button } from 'antd';
 import stl from './table.module.css';
 
 export default class Table extends React.PureComponent {
@@ -56,7 +56,7 @@ export default class Table extends React.PureComponent {
             <div className="w-full flex justify-center mt-2">
               <Button
                 onClick={ this.onLoadMoreClick }
-                variant="text-primary"
+                type="text"
               >
                 { rows.size + ' More' }
               </Button>

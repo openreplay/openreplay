@@ -15,7 +15,8 @@ import { SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
 import { login } from 'App/routes';
 import { validatePassword } from 'App/validate';
-import { Button, Form, Input, Link } from 'UI';
+import { Form, Input, Link } from 'UI';
+import { Button } from 'antd'
 
 import Select from 'Shared/Select';
 
@@ -221,8 +222,8 @@ const SignupForm = () => {
             ) : null}
 
             <Button
-              type="submit"
-              variant="primary"
+              htmlType="submit"
+              type="primary"
               loading={loading}
               className="w-full rounded-lg"
             >

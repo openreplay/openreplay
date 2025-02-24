@@ -3,7 +3,7 @@ import stl from './installDocs.module.css';
 import cn from 'classnames';
 import CircleNumber from '../../CircleNumber';
 import { CopyButton, CodeBlock } from 'UI';
-import { Toggler } from 'UI';
+import { Switch } from 'antd'
 
 const installationCommand = 'npm i @openreplay/tracker';
 const usageCode = `import Tracker from '@openreplay/tracker';
@@ -57,11 +57,10 @@ function InstallDocs({ site }) {
           <div className="mr-2" onClick={() => setIsSpa(!isSpa)}>
             Server-Side-Rendered (SSR)?
           </div>
-          <Toggler
+          <Switch
             checked={!isSpa}
             name="sessionsLive"
             onChange={() => setIsSpa(!isSpa)}
-            // style={{ lineHeight: '23px' }}
           />
         </div>
         

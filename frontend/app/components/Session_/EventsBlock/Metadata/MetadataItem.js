@@ -2,7 +2,8 @@ import React from 'react';
 import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';
-import { Button, Icon, SlideModal, TextEllipsis } from 'UI';
+import { Icon, SlideModal, TextEllipsis } from 'UI';
+import { Button } from 'antd'
 import stl from './metadataItem.module.css';
 import SessionList from './SessionList';
 
@@ -62,7 +63,7 @@ export default class extends React.PureComponent {
 					</div>
 	        <Button
             	onClick={ this.switchOpen }
-				variant="text"
+				type="text"
 				className={ stl.searchButton }
 				id="metadata-item"
 			>

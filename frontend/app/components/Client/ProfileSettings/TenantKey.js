@@ -1,6 +1,7 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
-import { Form, Input, Button } from "UI";
+import { Form, Input } from "UI";
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -29,8 +30,7 @@ function TenantKey() {
             value={ tenantKey }
             leadingButton={
               <Button
-                variant="text-primary"
-                role="button"
+                type="text"
                 onClick={ copyHandler }
               >
                 { copied ? 'Copied' : 'Copy' }
