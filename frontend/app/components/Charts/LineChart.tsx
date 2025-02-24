@@ -12,6 +12,7 @@ interface Props extends DataProps {
   isArea?: boolean;
   chartName?: string;
   onClick?: (event: any) => void;
+  onSeriesFocus?: (event: any) => void;
 }
 
 function ORLineChart(props: Props) {
@@ -73,7 +74,8 @@ function ORLineChart(props: Props) {
         // nameGap: 40,
         nameTextStyle: {
           padding: [0, 0, 0, 15],
-        }
+        },
+        minInterval: 1
       },
       tooltip: {
         ...defaultOptions.tooltip,
@@ -91,6 +93,9 @@ function ORLineChart(props: Props) {
       const index = event.dataIndex;
       const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
       props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
+      setTimeout(() => {
+        props.onSeriesFocus?.(event.seriesName)
+      }, 0)
     })
 
     return () => {

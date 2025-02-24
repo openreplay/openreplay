@@ -108,7 +108,12 @@ function WidgetSessions(props: Props) {
       debounceClickMapSearch(customFilter);
     } else {
       const hasStartPoint = !!widget.startPoint && widget.metricType === USER_PATH
-      const activeSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series
+      const onlyFocused = focusedSeries
+                          ? widget.series.filter((s) => s.name === focusedSeries)
+                          : widget.series
+      const activeSeries = metricStore.disabledSeries.length
+                           ? onlyFocused.filter((s) => !metricStore.disabledSeries.includes(s.name))
+                           : onlyFocused
       const seriesJson = activeSeries.map((s) => s.toJson());
       if (hasStartPoint) {
         seriesJson[0].filter.filters.push(widget.startPoint.toJson());
@@ -132,6 +137,7 @@ function WidgetSessions(props: Props) {
     metricStore.clickMapSearch,
     focusedSeries,
     widget.startPoint,
+    metricStore.disabledSeries.length
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
   useEffect(() => {

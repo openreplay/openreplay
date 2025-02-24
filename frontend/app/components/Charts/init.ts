@@ -36,6 +36,7 @@ const defaultOptions = {
     extraCssText: 'box-shadow: none; pointer-events: auto;',
     axisPointer: {
       type: 'cross',
+      snap: true,
       label: {
         backgroundColor: '#6a7985'
       },
