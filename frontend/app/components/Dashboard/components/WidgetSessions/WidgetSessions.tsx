@@ -125,6 +125,14 @@ function WidgetSessions(props: Props) {
       if (hasStartPoint) {
         seriesJson[0].filter.filters.push(widget.startPoint.toJson());
       }
+      if (widget.metricType === USER_PATH) {
+        if (seriesJson[0].filter.filters[0].value[0] === '' && widget.data.nodes) {
+          seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name
+        } else if (seriesJson[0].filter.filters[0].value[0] === '' && !widget.data.nodes) {
+          // no point requesting if we don't have starting point picked by api
+          return;
+        }
+      }
       debounceRequest(widget.metricId, {
         ...filter,
         series: seriesJson,
@@ -144,6 +152,7 @@ function WidgetSessions(props: Props) {
     metricStore.clickMapSearch,
     focusedSeries,
     widget.startPoint,
+    widget.data.nodes,
     metricStore.disabledSeries.length
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
