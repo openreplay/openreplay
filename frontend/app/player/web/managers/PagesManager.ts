@@ -29,7 +29,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	*/
   falseOrder = false;
   appendMessage(m: Message): void {
-    if (m.tp === MType.StringDict) {
+    if ([MType.StringDict, MType.StringDictGlobal].includes(m.tp)) {
       this.globalDictionary.set(m.key, m.value);
       return;
     }
@@ -61,6 +61,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
           },
         })
       );
+      console.log(this.globalDictionary)
       this.falseOrder = false;
     }
     if (this.last === null) {

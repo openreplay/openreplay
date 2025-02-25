@@ -606,6 +606,33 @@ func DecodePageEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeStringDictGlobal(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &StringDictGlobal{}
+	if msg.Key, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetNodeAttributeDictGlobal(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetNodeAttributeDictGlobal{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Name, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &CSSInsertRule{}
@@ -2123,6 +2150,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeInputEvent(reader)
 	case 33:
 		return DecodePageEvent(reader)
+	case 34:
+		return DecodeStringDictGlobal(reader)
+	case 35:
+		return DecodeSetNodeAttributeDictGlobal(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:
