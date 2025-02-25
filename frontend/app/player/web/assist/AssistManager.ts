@@ -10,7 +10,6 @@ import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
 import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
 import { gunzipSync } from 'fflate';
-import logger from '@/logger';
 
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 
@@ -68,6 +67,7 @@ export default class AssistManager {
     ...RemoteControl.INITIAL_STATE,
     ...ScreenRecording.INITIAL_STATE,
   };
+  private agentIds: string[] = [];
 
   // TODO: Session type
   constructor(
@@ -78,9 +78,10 @@ export default class AssistManager {
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
     private getNode: MessageManager['getNode'],
+    public readonly agentId: number,
     public readonly uiErrorHandler?: {
       error: (msg: string) => void;
-    }
+    },
   ) {}
 
   public getAssistVersion = () => this.assistVersion;
@@ -194,9 +195,9 @@ export default class AssistManager {
         },
       }));
 
-      socket.onAny((event, ...args) => {
-        logger.log(`📩 Socket: ${event}`, args);
-      });
+      // socket.onAny((event, ...args) => {
+      //   logger.log(`📩 Socket: ${event}`, args);
+      // });
       
 
       socket.on('connect', () => {
@@ -275,6 +276,10 @@ export default class AssistManager {
             }
           }
         }
+        if (data.agentIds) {
+          const filteredAgentIds = this.agentIds.filter((id: string) => id.split('-')[3] !== agentId.toString());
+          this.agentIds = filteredAgentIds;
+        }
       });
       socket.on('SESSION_DISCONNECTED', (e) => {
         waitingForMessages = true;
@@ -299,7 +304,8 @@ export default class AssistManager {
         {
           ...this.session.agentInfo,
           id: agentId,
-        }
+        },
+        this.agentIds,
       );
       this.remoteControl = new RemoteControl(
         this.store,

@@ -426,7 +426,6 @@ export default class Assist {
       if (app.getTabId() !== info.meta.tabId) return
       const name = info.data
       callingAgents.set(id, name)
-      console.log('CALLING AGENTS', callingAgents)
       updateCallerNames()
     })
 
@@ -477,7 +476,6 @@ export default class Assist {
     })
 
     socket.on('webrtc_call_offer', async (_, data: { from: string, offer: RTCSessionDescriptionInit }) => {
-      console.log("OFFER FROM", data.from)
       if (!this.calls.has(data.from)) {
         await handleIncomingCallOffer(data.from, data.offer);
       }
@@ -517,7 +515,6 @@ export default class Assist {
     }
 
     const handleCallEndWithAgent = (id: string) => {
-      console.log("!!!!", this.calls.get(id))
       this.calls.get(id)?.close()
       this.calls.delete(id)
     }
@@ -621,6 +618,7 @@ export default class Assist {
 
         // get all local tracks and add them to RTCPeerConnection
         lStreams[from].stream.getTracks().forEach(track => {
+          console.log('GETTING TRACKS FROM', from);
           pc.addTrack(track, lStreams[from].stream);
         });
 
@@ -635,10 +633,10 @@ export default class Assist {
         pc.ontrack = (event) => {
           const rStream = event.streams[0];
           if (rStream && callUI) {
-
+            console.log('2 GETTING TRACKS FROM', from);
             callUI.addRemoteStream(rStream, from);
             const onInteraction = () => {
-              callUI?.playRemote();
+              callUI?.playRemote(from);
               document.removeEventListener('click', onInteraction);
             };
             document.addEventListener('click', onInteraction);

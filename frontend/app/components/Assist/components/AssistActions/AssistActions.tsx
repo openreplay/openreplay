@@ -146,7 +146,7 @@ function AssistActions({
     setIncomeStream([]);
   };
 
-  function call(additionalAgentIds?: string[]) {
+  function call() {
     RequestLocalStream()
       .then((lStream) => {
         setLocalStream(lStream);

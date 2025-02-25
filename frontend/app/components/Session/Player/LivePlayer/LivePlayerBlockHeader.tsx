@@ -87,7 +87,7 @@ function LivePlayerBlockHeader({
             </div>
           )}
 
-            <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds} />
+            <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds ?? []} />
         </div>
       </div>
     </div>
