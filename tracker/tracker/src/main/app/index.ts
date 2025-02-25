@@ -1635,7 +1635,7 @@ export default class App {
   }
 
   flushBuffer = async (buffer: Message[]) => {
-    return new Promise((res) => {
+    return new Promise((res, reject) => {
       if (buffer.length === 0) {
         res(null);
         return;
@@ -1649,13 +1649,17 @@ export default class App {
       }
 
       requestIdleCb(() => {
-        const messagesBatch = buffer.splice(0, endIndex);
+        try {
+          const messagesBatch = buffer.splice(0, endIndex);
 
-        const clonedBatch = JSON.parse(JSON.stringify(messagesBatch));
+          // Cast out the proxy object to a regular array.
+          this.postToWorker(messagesBatch.map(x => [...x]));
 
-        this.postToWorker(clonedBatch);
-
-        res(null);
+          res(null);
+      } catch (e) {
+          this._debug('flushBuffer', e);
+          reject(e);
+      }
       })
     })
   }
