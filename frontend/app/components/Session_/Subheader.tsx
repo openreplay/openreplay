@@ -1,7 +1,7 @@
 import { ShareAltOutlined } from '@ant-design/icons';
 import { Button as AntButton, Switch, Tooltip, Dropdown } from 'antd';
 import cn from 'classnames';
-import { Link2, Keyboard } from 'lucide-react';
+import { Link2, Keyboard, Bot } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { MoreOutlined } from '@ant-design/icons';
@@ -198,7 +198,10 @@ function SubHeader(props) {
                   },
                   {
                     key: '5',
-                    label: <div className={'flex items-center gap-2'}>Export Events</div>,
+                    label: <div className={'flex items-center gap-2'}>
+                      <Bot size={16} strokeWidth={1} />
+                      <span>Export Events</span>
+                    </div>,
                     onClick: exportEvents,
                   }
                 ]
