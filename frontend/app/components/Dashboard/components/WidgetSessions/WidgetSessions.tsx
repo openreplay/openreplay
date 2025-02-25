@@ -11,7 +11,7 @@ import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
-import { HEATMAP, USER_PATH } from "App/constants/card";
+import { HEATMAP, USER_PATH, FUNNEL } from "App/constants/card";
 
 interface Props {
   className?: string;
@@ -59,6 +59,13 @@ function WidgetSessions(props: Props) {
     if (!isMounted()) return;
     setLoading(true);
     delete filter.eventsOrderSupport;
+    if (widget.metricType === FUNNEL) {
+      if (filter.series[0].filter.filters.length === 0) {
+        setLoading(false);
+        return setData([]);
+      }
+    }
+
     widget
       .fetchSessions(metricId, filter)
       .then((res: any) => {
