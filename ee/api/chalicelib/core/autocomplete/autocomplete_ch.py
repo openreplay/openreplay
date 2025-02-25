@@ -266,16 +266,16 @@ def __search_metadata(project_id, value, key=None, source=None):
 
 
 TYPE_TO_COLUMN = {
-    schemas.EventType.CLICK: "label",
-    schemas.EventType.INPUT: "label",
-    schemas.EventType.LOCATION: "url_path",
-    schemas.EventType.CUSTOM: "name",
-    schemas.FetchFilterType.FETCH_URL: "url_path",
-    schemas.GraphqlFilterType.GRAPHQL_NAME: "name",
-    schemas.EventType.STATE_ACTION: "name",
+    schemas.EventType.CLICK: "`$properties`.label",
+    schemas.EventType.INPUT: "`$properties`.label",
+    schemas.EventType.LOCATION: "`$properties`.url_path",
+    schemas.EventType.CUSTOM: "`$properties`.name",
+    schemas.FetchFilterType.FETCH_URL: "`$properties`.url_path",
+    schemas.GraphqlFilterType.GRAPHQL_NAME: "`$properties`.name",
+    schemas.EventType.STATE_ACTION: "`$properties`.name",
     # For ERROR, sessions search is happening over name OR message,
     # for simplicity top 10 is using name only
-    schemas.EventType.ERROR: "name",
+    schemas.EventType.ERROR: "`$properties`.name",
     schemas.FilterType.USER_COUNTRY: "user_country",
     schemas.FilterType.USER_CITY: "user_city",
     schemas.FilterType.USER_STATE: "user_state",
@@ -325,9 +325,9 @@ def get_top_values(project_id, event_type, event_key=None):
             query = f"""WITH raw AS (SELECT DISTINCT {colname} AS c_value,
                                                      COUNT(1) OVER (PARTITION BY c_value) AS row_count,
                                                      COUNT(1) OVER ()                   AS total_count
-                                     FROM experimental.events
+                                     FROM product_analytics.events
                                      WHERE project_id = %(project_id)s
-                                       AND event_type = '{event_type}'
+                                       AND `$event_name` = '{event_type}'
                                        AND isNotNull(c_value)
                                        AND notEmpty(c_value)
                                      ORDER BY row_count DESC
