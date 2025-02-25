@@ -17,8 +17,9 @@ export class StringDictionary {
     let isNew = false
     if (!this.backDict[str]) {
       isNew = true
-      const currTs = Date.now() - 1700000000000
-      let id: number = currTs
+      const digits = Math.floor(Math.log10(Date.now())) + 1
+      const shavedTs = Date.now() % (10 ** (digits - 2))
+      let id: number = shavedTs
       if (id === this.lastTs) {
         id = id * 10000 + this.lastSuffix
         this.lastSuffix += 1
@@ -26,7 +27,7 @@ export class StringDictionary {
         this.lastSuffix = 1
       }
       this.backDict[str] = id
-      this.lastTs = currTs
+      this.lastTs = shavedTs
     }
     return [this.backDict[str], isNew]
   }
