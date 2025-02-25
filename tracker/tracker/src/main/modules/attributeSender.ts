@@ -6,7 +6,7 @@ import {
 import App from '../app/index.js'
 
 export class StringDictionary {
-  private lastId = 0
+  private lastTs = 0
   private lastSuffix = 1
   /** backwards dictionary of
    * [repeated str:key]
@@ -17,18 +17,16 @@ export class StringDictionary {
     let isNew = false
     if (!this.backDict[str]) {
       isNew = true
-      let id: number = Date.now()
-      if (id === this.lastId) {
-        id = id * 1000 + this.lastSuffix
+      const currTs = Date.now() - 1700000000000
+      let id: number = currTs
+      if (id === this.lastTs) {
+        id = id * 10000 + this.lastSuffix
+        this.lastSuffix += 1
       } else {
         this.lastSuffix = 1
       }
-      while (id === this.lastId) {
-        id += 1
-        this.lastSuffix += 1
-      }
       this.backDict[str] = id
-      this.lastId = id
+      this.lastTs = currTs
     }
     return [this.backDict[str], isNew]
   }
