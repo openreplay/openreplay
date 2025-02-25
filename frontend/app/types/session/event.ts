@@ -170,7 +170,7 @@ export class Touch extends Event {
   }
 }
 
-class Input extends Event {
+export class Input extends Event {
   readonly type = INPUT;
   readonly name = 'Input';
   readonly hesitation: number = 0;
