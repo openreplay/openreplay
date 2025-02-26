@@ -24,8 +24,8 @@ function PlayerBlock(props: IProps) {
   } = props;
   const { uiPlayerStore, sessionStore, integrationsStore } = useStore();
   const jiraConfig = integrationsStore.issues.list[0];
-  const sessionId = sessionStore.current.sessionId;
-  const fullscreen = uiPlayerStore.fullscreen;
+  const { sessionId } = sessionStore.current;
+  const { fullscreen } = uiPlayerStore;
   const shouldShowSubHeader = !fullscreen && !fullView;
   return (
     <div

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { EventsList, FilterList } from 'Shared/Filters/FilterList';
-import SeriesName from './SeriesName';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import ExcludeFilters from './ExcludeFilters';
 import { Button, Space } from 'antd';
 import { ChevronDown, ChevronUp, Trash } from 'lucide-react';
+import ExcludeFilters from './ExcludeFilters';
+import SeriesName from './SeriesName';
 
 const FilterCountLabels = observer(
   (props: { filters: any; toggleExpand: any }) => {
@@ -19,7 +19,7 @@ const FilterCountLabels = observer(
               type="text"
               size="small"
               onClick={props.toggleExpand}
-              className='btn-series-event-count'
+              className="btn-series-event-count"
             >
               {`${events} Event${events > 1 ? 's' : ''}`}
             </Button>
@@ -30,7 +30,7 @@ const FilterCountLabels = observer(
               type="text"
               size="small"
               onClick={props.toggleExpand}
-              className='btn-series-filter-count'
+              className="btn-series-filter-count"
             >
               {`${filters} Filter${filters > 1 ? 's' : ''}`}
             </Button>
@@ -38,7 +38,7 @@ const FilterCountLabels = observer(
         </Space>
       </div>
     );
-  }
+  },
 );
 
 const FilterSeriesHeader = observer(
@@ -73,22 +73,20 @@ const FilterSeriesHeader = observer(
         </Space>
 
         <Space>
-           {!props.expanded && (
-            <FilterCountLabels
-              filters={props.series.filter.filters}
-              toggleExpand={props.toggleExpand}
-            />
+          {!props.expanded && (
+          <FilterCountLabels
+            filters={props.series.filter.filters}
+            toggleExpand={props.toggleExpand}
+          />
           )}
           <Button
             onClick={props.onRemove}
             size="small"
             disabled={!props.canDelete}
             icon={<Trash size={14} />}
-            type='text'
-            className={cn(
-              'btn-delete-series', 'disabled:hidden'
-            )}
-            />
+            type="text"
+            className={cn('btn-delete-series', 'disabled:hidden')}
+          />
           <Button
             onClick={props.toggleExpand}
             size="small"
@@ -99,13 +97,13 @@ const FilterSeriesHeader = observer(
                 <ChevronDown size={16} />
               )
             }
-            type='text'
-            className='btn-toggle-series'
+            type="text"
+            className="btn-toggle-series"
           />
         </Space>
       </div>
     );
-  }
+  },
 );
 
 interface Props {
@@ -141,10 +139,10 @@ function FilterSeries(props: Props) {
     removeEvents,
     collapseState,
     onToggleCollapse,
-    excludeCategory
+    excludeCategory,
   } = props;
-  const expanded = isHeatmap || !collapseState
-  const setExpanded = onToggleCollapse
+  const expanded = isHeatmap || !collapseState;
+  const setExpanded = onToggleCollapse;
   const { series, seriesIndex } = props;
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
@@ -171,7 +169,7 @@ function FilterSeries(props: Props) {
     filter.autoOpen = true;
     series.filter.addFilter(filter);
     observeChanges();
-  }
+  };
 
   return (
     <div>
@@ -214,22 +212,23 @@ function FilterSeries(props: Props) {
 
       {expanded ? (
         <>
-          {removeEvents ? null :
-            <EventsList
-              filter={series.filter}
-              onUpdateFilter={onUpdateFilter}
-              onRemoveFilter={onRemoveFilter}
-              onChangeEventsOrder={onChangeEventsOrder}
-              supportsEmpty={supportsEmpty}
-              onFilterMove={onFilterMove}
-              excludeFilterKeys={excludeFilterKeys}
-              onAddFilter={onAddFilter}
-              mergeUp={!hideHeader}
-              mergeDown
-              cannotAdd={isHeatmap}
-              excludeCategory={excludeCategory}
-            />
-          }
+          {removeEvents ? null
+            : (
+              <EventsList
+                filter={series.filter}
+                onUpdateFilter={onUpdateFilter}
+                onRemoveFilter={onRemoveFilter}
+                onChangeEventsOrder={onChangeEventsOrder}
+                supportsEmpty={supportsEmpty}
+                onFilterMove={onFilterMove}
+                excludeFilterKeys={excludeFilterKeys}
+                onAddFilter={onAddFilter}
+                mergeUp={!hideHeader}
+                mergeDown
+                cannotAdd={isHeatmap}
+                excludeCategory={excludeCategory}
+              />
+            )}
           <FilterList
             filter={series.filter}
             onUpdateFilter={onUpdateFilter}

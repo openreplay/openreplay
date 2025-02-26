@@ -5,7 +5,7 @@ import styles from 'Components/Session_/session.module.css';
 import { countDaysFrom } from 'App/date';
 import RightBlock from 'Components/Session/RightBlock';
 import { PlayerContext } from 'Components/Session/playerContext';
-import Session from 'Types/session'
+import Session from 'Types/session';
 import PlayerBlock from './PlayerBlock';
 
 const TABS = {
@@ -19,14 +19,16 @@ interface IProps {
   session: Session
 }
 
-function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps) {
-  const { store } = React.useContext(PlayerContext)
+function PlayerContent({
+  session, fullscreen, activeTab, setActiveTab,
+}: IProps) {
+  const { store } = React.useContext(PlayerContext);
 
   const {
     error,
-  } = store.get()
+  } = store.get();
 
-  const hasError = !!error
+  const hasError = !!error;
 
   const sessionDays = countDaysFrom(session.startedAt);
   return (
@@ -74,7 +76,9 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps)
   );
 }
 
-function RightMenu({ tabs, activeTab, setActiveTab, fullscreen }: any) {
+function RightMenu({
+  tabs, activeTab, setActiveTab, fullscreen,
+}: any) {
   return (
     !fullscreen ? <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} /> : null
   );

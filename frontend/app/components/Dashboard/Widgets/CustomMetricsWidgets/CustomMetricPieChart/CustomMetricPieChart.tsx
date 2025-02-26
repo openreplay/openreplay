@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ResponsiveContainer, Tooltip } from 'recharts';
-import { PieChart, Pie, Cell, Legend } from 'recharts';
-import { Styles } from '../../common';
+import {
+  ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend,
+} from 'recharts';
 import { NoContent } from 'UI';
 import { filtersMap } from 'Types/filter/newFilter';
 import { numberWithCommas } from 'App/utils';
-import CustomTooltip from '../CustomChartTooltip'; 
+import { Styles } from '../../common';
+import CustomTooltip from '../CustomChartTooltip';
 
 interface Props {
   metric: {
@@ -22,14 +23,16 @@ interface Props {
 }
 
 function CustomMetricPieChart(props: Props) {
-  const { metric, data, onClick = () => null, inGrid } = props;
+  const {
+    metric, data, onClick = () => null, inGrid,
+  } = props;
 
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
 
   const onClickHandler = (event) => {
     if (event && !event.payload.group) {
       const filters = Array<any>();
-      let filter = { ...filtersMap[metric.metricOf] };
+      const filter = { ...filtersMap[metric.metricOf] };
       filter.value = [event.payload.name];
       filter.type = filter.key;
       delete filter.key;
@@ -47,8 +50,7 @@ function CustomMetricPieChart(props: Props) {
   const handleMouseOver = (name: string) => setHoveredSeries(name);
   const handleMouseLeave = () => setHoveredSeries(null);
 
-  const getTotalForSeries = (series: string) =>
-    data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0;
+  const getTotalForSeries = (series: string) => (data.chart ? data.chart.reduce((acc, curr) => acc + curr[series], 0) : 0);
 
   const values = data.namesMap.map((k) => ({
     name: k,
@@ -57,7 +59,7 @@ function CustomMetricPieChart(props: Props) {
 
   const highest = values.reduce(
     (acc, curr) => (acc.value > curr.value ? acc : curr),
-    { name: '', value: 0 }
+    { name: '', value: 0 },
   );
 
   return (
@@ -69,7 +71,7 @@ function CustomMetricPieChart(props: Props) {
     >
       <ResponsiveContainer height={240} width="100%">
         <PieChart>
-          <Legend iconType={'triangle'} wrapperStyle={{ top: inGrid ? undefined : -18 }} />
+          <Legend iconType="triangle" wrapperStyle={{ top: inGrid ? undefined : -18 }} />
           <Tooltip
             content={<CustomTooltip hoveredSeries={hoveredSeries} />}
           />
@@ -93,12 +95,12 @@ function CustomMetricPieChart(props: Props) {
               value,
             }) => {
               const RADIAN = Math.PI / 180;
-              let radius1 = 15 + innerRadius + (outerRadius - innerRadius);
-              let radius2 = innerRadius + (outerRadius - innerRadius);
-              let x2 = cx + radius1 * Math.cos(-midAngle * RADIAN);
-              let y2 = cy + radius1 * Math.sin(-midAngle * RADIAN);
-              let x1 = cx + radius2 * Math.cos(-midAngle * RADIAN);
-              let y1 = cy + radius2 * Math.sin(-midAngle * RADIAN);
+              const radius1 = 15 + innerRadius + (outerRadius - innerRadius);
+              const radius2 = innerRadius + (outerRadius - innerRadius);
+              const x2 = cx + radius1 * Math.cos(-midAngle * RADIAN);
+              const y2 = cy + radius1 * Math.sin(-midAngle * RADIAN);
+              const x1 = cx + radius2 * Math.cos(-midAngle * RADIAN);
+              const y1 = cy + radius2 * Math.sin(-midAngle * RADIAN);
 
               const percentage = (value * 100) / highest.value;
 
@@ -127,12 +129,12 @@ function CustomMetricPieChart(props: Props) {
               index,
             }) => {
               const RADIAN = Math.PI / 180;
-              let radius = 20 + innerRadius + (outerRadius - innerRadius);
-              let x = cx + radius * Math.cos(-midAngle * RADIAN);
-              let y = cy + radius * Math.sin(-midAngle * RADIAN);
+              const radius = 20 + innerRadius + (outerRadius - innerRadius);
+              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+              const y = cy + radius * Math.sin(-midAngle * RADIAN);
               const percentage = (value / highest.value) * 100;
               let name = values[index].name || 'Unidentified';
-              name = name.length > 20 ? name.substring(0, 20) + '...' : name;
+              name = name.length > 20 ? `${name.substring(0, 20)}...` : name;
               if (percentage < 3) {
                 return null;
               }

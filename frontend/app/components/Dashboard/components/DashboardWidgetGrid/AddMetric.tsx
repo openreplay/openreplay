@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
@@ -14,7 +14,9 @@ interface IProps extends RouteComponentProps {
   description: string;
 }
 
-function AddMetric({ history, siteId, title, description }: IProps) {
+function AddMetric({
+  history, siteId, title, description,
+}: IProps) {
   const [metrics, setMetrics] = React.useState<Record<string, any>[]>([]);
 
   const { dashboardStore } = useStore();
@@ -83,7 +85,7 @@ function AddMetric({ history, siteId, title, description }: IProps) {
                   key={metric.metricId}
                   widget={metric}
                   active={selectedWidgetIds.includes(metric.metricId)}
-                  isTemplate={true}
+                  isTemplate
                   isSaved={metric.metricType === 'predefined'}
                   onClick={() => dashboardStore.toggleWidgetSelection(metric)}
                 />

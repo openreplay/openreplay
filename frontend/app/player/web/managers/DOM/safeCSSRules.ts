@@ -4,11 +4,11 @@ function isChromium(item) {
   return ['Chromium', 'Google Chrome', 'NewBrowser'].includes(item.brand);
 }
 // @ts-ignore
-const isChromeLike = navigator.userAgentData?.brands?.some(isChromium)
+const isChromeLike = navigator.userAgentData?.brands?.some(isChromium);
 
 export function insertRule(
   sheet: { insertRule: (rule: string, index?: number) => void },
-  msg: { rule: string, index: number }
+  msg: { rule: string, index: number },
 ) {
   /**
    * inserting -moz- styles in chrome-like browsers causes issues and warnings
@@ -16,26 +16,26 @@ export function insertRule(
    * and not inserting them will break sheet indexing
    * */
   if (msg.rule.includes('-moz-') && isChromeLike) {
-    msg.rule = msg.rule.replace(/-moz-/g, '-webkit-')
+    msg.rule = msg.rule.replace(/-moz-/g, '-webkit-');
   }
   try {
-    sheet.insertRule(msg.rule, msg.index)
+    sheet.insertRule(msg.rule, msg.index);
   } catch (e) {
     try {
-      sheet.insertRule(msg.rule)
+      sheet.insertRule(msg.rule);
     } catch (e) {
-      logger.warn("Cannot insert rule.", e, '\nmessage: ', msg)
+      logger.warn('Cannot insert rule.', e, '\nmessage: ', msg);
     }
   }
 }
 
 export function deleteRule(
   sheet: { deleteRule: (index: number) => void },
-  msg: { index: number }
+  msg: { index: number },
 ) {
   try {
-    sheet.deleteRule(msg.index)
+    sheet.deleteRule(msg.index);
   } catch (e) {
-    logger.warn(e, msg)
+    logger.warn(e, msg);
   }
 }

@@ -3,8 +3,8 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
 import cn from 'classnames';
-import FilterItem from '../FilterItem';
 import EventsOrder from 'Shared/Filters/FilterList/EventsOrder';
+import FilterItem from '../FilterItem';
 import FilterSelection from '../FilterSelection/FilterSelection';
 
 interface Props {
@@ -39,10 +39,10 @@ export const FilterList = observer((props: Props) => {
     onAddFilter,
     readonly,
     borderless,
-    excludeCategory
+    excludeCategory,
   } = props;
 
-  const filters = filter.filters;
+  const { filters } = filter;
   useEffect(observeChanges, [filters]);
 
   const onRemoveFilter = (filterIndex: any) => {
@@ -52,19 +52,19 @@ export const FilterList = observer((props: Props) => {
     <div
       className={cn(
         'bg-white',
-        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
+        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter',
       )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
-        borderTopRightRadius: props.mergeUp ? 0 : undefined
+        borderTopRightRadius: props.mergeUp ? 0 : undefined,
       }}
     >
-      <div className={'flex items-center py-2'} style={{ gap: '0.65rem' }}>
+      <div className="flex items-center py-2" style={{ gap: '0.65rem' }}>
         <div className="font-medium">Filters</div>
         <FilterSelection
-          mode={'filters'}
+          mode="filters"
           filter={undefined}
           onFilterClick={onAddFilter}
           disabled={readonly}
@@ -74,37 +74,35 @@ export const FilterList = observer((props: Props) => {
           <Button
             icon={<Filter size={16} strokeWidth={1} />}
             type="default"
-            size={'small'}
+            size="small"
             className="btn-add-filter"
           >
             Add
           </Button>
         </FilterSelection>
       </div>
-      {filters.map((filter: any, filterIndex: any) =>
-        !filter.isEvent ? (
-          <div
-            key={`${filter.key}-${filterIndex}`}
-            className={'hover:bg-active-blue px-5 '}
-            style={{
-              marginLeft: '-1rem',
-              width: 'calc(100% + 2rem)'
-            }}
-          >
-            <FilterItem
-              key={filterIndex}
-              readonly={props.readonly}
-              isFilter={true}
-              filterIndex={filterIndex}
-              filter={filter}
-              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-              onRemoveFilter={() => onRemoveFilter(filterIndex)}
-              excludeFilterKeys={excludeFilterKeys}
-              isConditional={isConditional}
-            />
-          </div>
-        ) : null
-      )}
+      {filters.map((filter: any, filterIndex: any) => (!filter.isEvent ? (
+        <div
+          key={`${filter.key}-${filterIndex}`}
+          className="hover:bg-active-blue px-5 "
+          style={{
+            marginLeft: '-1rem',
+            width: 'calc(100% + 2rem)',
+          }}
+        >
+          <FilterItem
+            key={filterIndex}
+            readonly={props.readonly}
+            isFilter
+            filterIndex={filterIndex}
+            filter={filter}
+            onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+            onRemoveFilter={() => onRemoveFilter(filterIndex)}
+            excludeFilterKeys={excludeFilterKeys}
+            isConditional={isConditional}
+          />
+        </div>
+      ) : null))}
     </div>
   );
 });
@@ -123,10 +121,10 @@ export const EventsList = observer((props: Props) => {
     onAddFilter,
     cannotAdd,
     excludeCategory,
-    borderless
+    borderless,
   } = props;
 
-  const filters = filter.filters;
+  const { filters } = filter;
   const hasEvents = filters.filter((i: any) => i.isEvent).length > 0;
 
   let rowIndex = 0;
@@ -140,7 +138,7 @@ export const EventsList = observer((props: Props) => {
 
   const [hoveredItem, setHoveredItem] = React.useState<Record<string, any>>({
     i: null,
-    position: null
+    position: null,
   });
   const [draggedInd, setDraggedItem] = React.useState<number | null>(null);
 
@@ -161,7 +159,7 @@ export const EventsList = observer((props: Props) => {
       }
       return draggedInd < hoveredIndex ? hoveredIndex - 1 : hoveredIndex;
     },
-    []
+    [],
   );
 
   const handleDragStart = React.useCallback(
@@ -173,7 +171,7 @@ export const EventsList = observer((props: Props) => {
         ev.dataTransfer.setDragImage(el, 0, 0);
       }
     },
-    []
+    [],
   );
 
   const handleDrop = React.useCallback(
@@ -184,7 +182,7 @@ export const EventsList = observer((props: Props) => {
       const newPosition = calculateNewPosition(
         draggedInd,
         hoveredItem.i,
-        hoveredItem.position
+        hoveredItem.position,
       );
 
       const reorderedItem = newItems.splice(draggedInd, 1)[0];
@@ -194,30 +192,29 @@ export const EventsList = observer((props: Props) => {
       setHoveredItem({ i: null, position: null });
       setDraggedItem(null);
     },
-    [draggedInd, filters, calculateNewPosition, hoveredItem.i, hoveredItem.position, props, setHoveredItem, setDraggedItem]
+    [draggedInd, filters, calculateNewPosition, hoveredItem.i, hoveredItem.position, props, setHoveredItem, setDraggedItem],
   );
 
   const eventsNum = filters.filter((i: any) => i.isEvent).length;
   return (
     <div
       className={cn(
-      'bg-white',
-        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
-      )
-      }
+        'bg-white',
+        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter',
+      )}
       style={{
         borderBottomLeftRadius: props.mergeDown ? 0 : undefined,
         borderBottomRightRadius: props.mergeDown ? 0 : undefined,
         borderTopLeftRadius: props.mergeUp ? 0 : undefined,
         borderTopRightRadius: props.mergeUp ? 0 : undefined,
-        marginBottom: props.mergeDown ? '-1px' : undefined
+        marginBottom: props.mergeDown ? '-1px' : undefined,
       }}
     >
       <div className="flex items-center mb-2 gap-2">
         <div className="font-medium">Events</div>
         {cannotAdd ? null : (
           <FilterSelection
-            mode={'events'}
+            mode="events"
             filter={undefined}
             onFilterClick={onAddFilter}
             excludeFilterKeys={excludeFilterKeys}
@@ -226,7 +223,7 @@ export const EventsList = observer((props: Props) => {
             <Button
               icon={<Plus size={16} strokeWidth={1} />}
               type="default"
-              size={'small'}
+              size="small"
               className="btn-add-event"
             >
               Add
@@ -234,87 +231,81 @@ export const EventsList = observer((props: Props) => {
           </FilterSelection>
         )}
 
-        <div className={'ml-auto'}>
+        <div className="ml-auto">
           {!hideEventsOrder && (
             <EventsOrder filter={filter} onChange={props.onChangeEventsOrder} />
           )}
-          {actions &&
-            actions.map((action, index) => <div key={index}>{action}</div>)}
+          {actions
+            && actions.map((action, index) => <div key={index}>{action}</div>)}
         </div>
       </div>
-      <div className={'flex flex-col '}>
-        {filters.map((filter: any, filterIndex: number) =>
-          filter.isEvent ? (
-            <div
-              className={cn(
-                'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
-                {
-                  'bg-[#f6f6f6]': hoveredItem.i === filterIndex
-                }
-              )}
-              style={{
-                pointerEvents: 'unset',
-                paddingTop:
+      <div className="flex flex-col ">
+        {filters.map((filter: any, filterIndex: number) => (filter.isEvent ? (
+          <div
+            className={cn(
+              'hover:bg-active-blue px-5 pe-3 gap-2 items-center flex',
+              {
+                'bg-[#f6f6f6]': hoveredItem.i === filterIndex,
+              },
+            )}
+            style={{
+              pointerEvents: 'unset',
+              paddingTop:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'top'
                     ? ''
                     : '',
-                paddingBottom:
+              paddingBottom:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
                     ? ''
                     : '',
-                marginLeft: '-1rem',
-                width: 'calc(100% + 2rem)',
-                alignItems: 'start',
-                borderTop:
+              marginLeft: '-1rem',
+              width: 'calc(100% + 2rem)',
+              alignItems: 'start',
+              borderTop:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'top'
                     ? '1px dashed #888'
                     : undefined,
-                borderBottom:
+              borderBottom:
                   hoveredItem.i === filterIndex && hoveredItem.position === 'bottom'
                     ? '1px dashed #888'
-                    : undefined
-              }}
+                    : undefined,
+            }}
 
-              id={`${filter.key}-${filterIndex}`}
-              onDragOver={(e) => handleDragOverEv(e, filterIndex)}
-              onDrop={(e) => handleDrop(e)}
-              key={`${filter.key}-${filterIndex}`}
-            >
-              {!!props.onFilterMove && eventsNum > 1 ? (
-                <div
-                  className={
-                    'cursor-grab text-neutral-500/90 hover:bg-white px-1 mt-2.5 rounded-lg'
-                  }
-                  draggable={!!props.onFilterMove}
-                  onDragStart={(e) =>
-                    handleDragStart(e, filterIndex, `${filter.key}-${filterIndex}`)
-                  }
-                  onDragEnd={() => {
-                    setHoveredItem({ i: null, position: null });
-                    setDraggedItem(null);
-                  }}
-                  style={{
-                    cursor: draggedInd !== null ? 'grabbing' : 'grab'
-                  }}
-                >
-                  <GripVertical size={16} />
-                </div>
-              ) : null}
-              <FilterItem
-                filterIndex={rowIndex++}
-                filter={filter}
-                onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-                onRemoveFilter={() => onRemoveFilter(filterIndex)}
-                saveRequestPayloads={saveRequestPayloads}
-                disableDelete={cannotDeleteFilter}
-                excludeFilterKeys={excludeFilterKeys}
-                readonly={props.readonly}
-                isConditional={isConditional}
-                excludeCategory={excludeCategory}
-              />
-            </div>
-          ) : null
-        )}
+            id={`${filter.key}-${filterIndex}`}
+            onDragOver={(e) => handleDragOverEv(e, filterIndex)}
+            onDrop={(e) => handleDrop(e)}
+            key={`${filter.key}-${filterIndex}`}
+          >
+            {!!props.onFilterMove && eventsNum > 1 ? (
+              <div
+                className="cursor-grab text-neutral-500/90 hover:bg-white px-1 mt-2.5 rounded-lg"
+                draggable={!!props.onFilterMove}
+                onDragStart={(e) => handleDragStart(e, filterIndex, `${filter.key}-${filterIndex}`)}
+                onDragEnd={() => {
+                  setHoveredItem({ i: null, position: null });
+                  setDraggedItem(null);
+                }}
+                style={{
+                  cursor: draggedInd !== null ? 'grabbing' : 'grab',
+                }}
+              >
+                <GripVertical size={16} />
+              </div>
+            ) : null}
+            <FilterItem
+              filterIndex={rowIndex++}
+              filter={filter}
+              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+              onRemoveFilter={() => onRemoveFilter(filterIndex)}
+              saveRequestPayloads={saveRequestPayloads}
+              disableDelete={cannotDeleteFilter}
+              excludeFilterKeys={excludeFilterKeys}
+              readonly={props.readonly}
+              isConditional={isConditional}
+              excludeCategory={excludeCategory}
+            />
+          </div>
+        ) : null))}
       </div>
     </div>
   );

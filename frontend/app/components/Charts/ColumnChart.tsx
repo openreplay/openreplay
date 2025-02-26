@@ -1,8 +1,8 @@
 import React from 'react';
-import { defaultOptions, echarts } from './init';
 import { BarChart } from 'echarts/charts';
+import { defaultOptions, echarts } from './init';
 import { customTooltipFormatter } from './utils';
-import { buildColumnChart } from './barUtils'
+import { buildColumnChart } from './barUtils';
 
 echarts.use([BarChart]);
 
@@ -32,7 +32,7 @@ function ColumnChart(props: ColumnChartProps) {
   const { data, compData, label } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
   const chartUuid = React.useRef<string>(
-    Math.random().toString(36).substring(7)
+    Math.random().toString(36).substring(7),
   );
 
   React.useEffect(() => {
@@ -42,10 +42,10 @@ function ColumnChart(props: ColumnChartProps) {
     (window as any).__seriesValueMap[chartUuid.current] = {};
     (window as any).__seriesColorMap = (window as any).__seriesColorMap ?? {};
     (window as any).__seriesColorMap[chartUuid.current] = {};
-    (window as any).__yAxisData = (window as any).__yAxisData ?? {}
+    (window as any).__yAxisData = (window as any).__yAxisData ?? {};
 
     const { yAxisData, series } = buildColumnChart(chartUuid.current, data, compData);
-    (window as any).__yAxisData[chartUuid.current] = yAxisData
+    (window as any).__yAxisData[chartUuid.current] = yAxisData;
 
     chart.setOption({
       ...defaultOptions,
@@ -89,7 +89,7 @@ function ColumnChart(props: ColumnChartProps) {
     chart.on('click', (event) => {
       const focusedSeriesName = event.name;
       props.onSeriesFocus?.(focusedSeriesName);
-    })
+    });
 
     return () => {
       chart.dispose();

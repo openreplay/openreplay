@@ -11,7 +11,7 @@ import SideSection from './SideSection';
 
 function ErrorInfo(props) {
   const { errorStore } = useStore();
-  const instance = errorStore.instance;
+  const { instance } = errorStore;
   const ensureInstance = () => {
     if (errorStore.isLoading) return;
     errorStore.fetchError(props.errorId);
@@ -26,12 +26,12 @@ function ErrorInfo(props) {
   const loading = errorStore.isLoading;
   return (
     <NoContent
-      title={
+      title={(
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
           <div className="mt-4">No Error Found!</div>
         </div>
-      }
+      )}
       subtext="Please try to find existing one."
       show={!loading && errorIdInStore == null}
     >

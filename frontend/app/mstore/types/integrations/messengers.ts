@@ -1,16 +1,18 @@
-import { validateURL } from "App/validate";
-import { makeAutoObservable } from "mobx";
+import { validateURL } from 'App/validate';
+import { makeAutoObservable } from 'mobx';
 
 export class MessengerConfig {
-  endpoint: string = "";
-  name: string = "";
-  webhookId: string = "";
+  endpoint: string = '';
+
+  name: string = '';
+
+  webhookId: string = '';
 
   constructor(config: any) {
     Object.assign(this, {
       endpoint: config.endpoint,
       name: config.name,
-      webhookId: config.webhookId
+      webhookId: config.webhookId,
     });
     makeAutoObservable(this);
   }
@@ -19,8 +21,8 @@ export class MessengerConfig {
     Object.keys(data).forEach((key) => {
       // @ts-ignore
       this[key] = data[key];
-    })
-  }
+    });
+  };
 
   validate(): boolean {
     return this.endpoint !== '' && this.name != '' && validateURL(this.endpoint);
@@ -35,7 +37,7 @@ export class MessengerConfig {
       endpoint: this.endpoint,
       url: this.endpoint,
       name: this.name,
-      webhookId: this.webhookId
+      webhookId: this.webhookId,
     };
   }
 }

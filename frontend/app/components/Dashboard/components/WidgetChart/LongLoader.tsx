@@ -1,11 +1,11 @@
-import React from 'react'
+import React from 'react';
 import { Progress, Button } from 'antd';
 import { Icon } from 'UI';
 
 function LongLoader({ onClick }: { onClick: () => void }) {
   return (
-    <div className={'flex flex-col gap-2 items-center justify-center'} style={{ height: 240 }}>
-      <div className={'font-semibold flex gap-2 items-center'}>
+    <div className="flex flex-col gap-2 items-center justify-center" style={{ height: 240 }}>
+      <div className="font-semibold flex gap-2 items-center">
         <Icon name="info-circle" size={16} />
         <div>Processing data...</div>
       </div>
@@ -14,9 +14,9 @@ function LongLoader({ onClick }: { onClick: () => void }) {
           percent={40}
           strokeColor={{
             '0%': '#394EFF',
-            '100%': '#394EFF'
+            '100%': '#394EFF',
           }}
-          status="active" 
+          status="active"
           showInfo={false}
         />
       </div>
@@ -30,7 +30,7 @@ function LongLoader({ onClick }: { onClick: () => void }) {
         Use Sample Data
       </Button>
     </div>
-  )
+  );
 }
 
 export default LongLoader;

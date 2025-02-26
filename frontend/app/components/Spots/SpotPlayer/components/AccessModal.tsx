@@ -1,10 +1,14 @@
 import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Segmented, Modal } from 'antd';
+import {
+  Button, Dropdown, Menu, Segmented, Modal,
+} from 'antd';
 import copy from 'copy-to-clipboard';
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { formatExpirationTime, HOUR_SECS, DAY_SECS, WEEK_SECS } from 'App/utils/index'; 
+import {
+  formatExpirationTime, HOUR_SECS, DAY_SECS, WEEK_SECS,
+} from 'App/utils/index';
 
 enum Intervals {
   hour,
@@ -76,7 +80,7 @@ function AccessModal() {
     setLoadingKey(true);
     const k = await spotStore.generateKey(
       spotId,
-      expirationValues[Intervals.hour]
+      expirationValues[Intervals.hour],
     );
     setGenerated(!!k);
     setLoadingKey(false);
@@ -89,7 +93,7 @@ function AccessModal() {
   };
 
   return (
-    <div className={'flex flex-col gap-4 align-start w-96 p-1'} >
+    <div className="flex flex-col gap-4 align-start w-96 p-1">
       <div>
         <Segmented
           options={[
@@ -109,18 +113,18 @@ function AccessModal() {
       {!isPublic ? (
         <>
           <div>
-            <div className={'text-black/50'}>
+            <div className="text-black/50">
               Link for internal team members
             </div>
-            <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
+            <div className="px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden">
               {spotLink}
             </div>
           </div>
-          <div className={'w-fit'}>
+          <div className="w-fit">
             <Button
-              size={'small'}
+              size="small"
               onClick={onCopy}
-              type={'default'}
+              type="default"
               icon={<CopyOutlined />}
             >
               {isCopied ? 'Copied!' : 'Copy Link'}
@@ -128,54 +132,52 @@ function AccessModal() {
           </div>
         </>
       ) : !generated ? (
-        <div className={'w-fit p-1'}>
+        <div className="w-fit p-1">
           <Button
             loading={spotStore.isLoading}
             onClick={generateInitial}
-            type={'primary'}
+            type="primary"
             ghost
-            size='small'
-            className='mt-1'
+            size="small"
+            className="mt-1"
           >
             Enable Public Sharing
           </Button>
         </div>
       ) : (
-        <>
-          <div className='flex flex-col gap-4 px-1'>
-            <div>
-              <div className={'text-black/50'}>Anyone with the following link can access this Spot</div>
-              <div className={'px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden'}>
-                {spotLink}
-              </div>
-            </div>
-
-            <div className={'flex items-center gap-2'}>
-              <div>Link expires in</div>
-              <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
-                <div className='flex items-center cursor-pointer'>
-                  {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
-                  <DownOutlined />
-                </div>
-              </Dropdown>
-            </div>
-            <div className={'flex items-center gap-2'}>
-              <div className={'w-fit'}>
-                <Button
-                  type={'default'}
-                  size={'small'}
-                  onClick={onCopy}
-                  icon={<CopyOutlined />}
-                >
-                  {isCopied ? 'Copied!' : 'Copy Link'}
-                </Button>
-              </div>
-              <Button type={'text'} size='small' icon={<StopOutlined />} onClick={revokeKey}>
-                Disable Public Sharing
-              </Button>
+        <div className="flex flex-col gap-4 px-1">
+          <div>
+            <div className="text-black/50">Anyone with the following link can access this Spot</div>
+            <div className="px-2 py-1 rounded-lg bg-indigo-50 whitespace-nowrap overflow-ellipsis overflow-hidden">
+              {spotLink}
             </div>
           </div>
-        </>
+
+          <div className="flex items-center gap-2">
+            <div>Link expires in</div>
+            <Dropdown overlay={<Menu items={menuItems} onClick={onMenuClick} />}>
+              <div className="flex items-center cursor-pointer">
+                {loadingKey ? 'Loading' : formatExpirationTime(expirationValues[selectedInterval])}
+                <DownOutlined />
+              </div>
+            </Dropdown>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-fit">
+              <Button
+                type="default"
+                size="small"
+                onClick={onCopy}
+                icon={<CopyOutlined />}
+              >
+                {isCopied ? 'Copied!' : 'Copy Link'}
+              </Button>
+            </div>
+            <Button type="text" size="small" icon={<StopOutlined />} onClick={revokeKey}>
+              Disable Public Sharing
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Redirect, Route, RouteComponentProps, Switch } from 'react-router';
+import {
+  Redirect, Route, RouteComponentProps, Switch,
+} from 'react-router';
 import { withRouter } from 'react-router-dom';
 
-import { OB_TABS, onboarding as onboardingRoute } from 'App/routes';
-import { withSiteId } from 'App/routes';
+import { OB_TABS, onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { Icon } from 'UI';
 
 import IdentifyUsersTab from './components/IdentifyUsersTab';
@@ -27,20 +28,24 @@ const platformMap = {
   web: 'web',
 };
 
-const Onboarding = (props: Props) => {
+function Onboarding(props: Props) {
   const platforms = [
     {
       label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="browser/browser" size={16} /> Web
+        <div className="font-semibold flex gap-2 items-center">
+          <Icon name="browser/browser" size={16} />
+          {' '}
+          Web
         </div>
       ),
       value: 'web',
     } as const,
     {
       label: (
-        <div className={'font-semibold flex gap-2 items-center'}>
-          <Icon name="mobile" size={16} /> Mobile
+        <div className="font-semibold flex gap-2 items-center">
+          <Icon name="mobile" size={16} />
+          {' '}
+          Mobile
         </div>
       ),
       value: 'mobile',
@@ -53,9 +58,7 @@ const Onboarding = (props: Props) => {
     },
   } = props;
 
-  const route = (path: string) => {
-    return withSiteId(onboardingRoute(path));
-  };
+  const route = (path: string) => withSiteId(onboardingRoute(path));
 
   const onMenuItemClick = (tab: string) => {
     props.history.push(withSiteId(onboardingRoute(tab), siteId));
@@ -109,6 +112,6 @@ const Onboarding = (props: Props) => {
       </div> */}
     </div>
   );
-};
+}
 
 export default withRouter(Onboarding);

@@ -1,13 +1,8 @@
 import { audioContextManager } from 'App/utils/screenRecorder';
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import withPermissions from 'HOCs/withPermissions';
-import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 import { makeAutoObservable } from 'mobx';
 import { createLiveWebPlayer } from 'Player';
-import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
-import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
-import styles from '../Session_/session.module.css';
 import Session from 'App/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import APIClient from 'App/api_client';
@@ -16,6 +11,10 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { sessionService } from 'App/services';
+import styles from '../Session_/session.module.css';
+import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
+import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
+import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 
 interface Props {
   customSession?: Session;
@@ -31,7 +30,7 @@ function LivePlayer({
   query,
 }: Props) {
   const { projectsStore, sessionStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const userEmail = userStore.account.email;
   const userName = userStore.account.name;
   const userId = userStore.account.id;
@@ -63,7 +62,7 @@ function LivePlayer({
         userId,
         projectId,
         (state) => makeAutoObservable(state),
-        toast
+        toast,
       );
       setContextValue({ player, store });
       playerInst = player;
@@ -77,8 +76,8 @@ function LivePlayer({
 
     return () => {
       if (
-        !location.pathname.includes('multiview') ||
-        !location.pathname.includes(usedSession.sessionId)
+        !location.pathname.includes('multiview')
+        || !location.pathname.includes(usedSession.sessionId)
       ) {
         console.debug('cleaning live player for', usedSession.sessionId);
         audioContextManager.clear();
@@ -93,8 +92,8 @@ function LivePlayer({
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     if (
-      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') || (queryParams.has('fullView') && queryParams.get('fullView') === 'true') ||
-      location.pathname.includes('multiview')
+      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') || (queryParams.has('fullView') && queryParams.get('fullView') === 'true')
+      || location.pathname.includes('multiview')
     ) {
       setFullView(true);
     }
@@ -124,5 +123,5 @@ function LivePlayer({
 }
 
 export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-  withLocationHandlers()(observer(LivePlayer))
+  withLocationHandlers()(observer(LivePlayer)),
 );

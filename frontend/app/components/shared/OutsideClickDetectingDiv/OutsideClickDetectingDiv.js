@@ -1,8 +1,8 @@
 import { findDOMNode } from 'react-dom';
-import React, { useRef, useLayoutEffect } from "react";
+import React, { useRef, useLayoutEffect } from 'react';
 
-let refs = [];
-let callbacks = [];
+const refs = [];
+const callbacks = [];
 
 function addOutsideClickListener(ref, callback) {
   refs.push(ref);
@@ -24,12 +24,12 @@ function handleClickOutside(e) {
         callbacks[i](e);
       }
     }
-  }) 
+  });
 }
 
 document.addEventListener('click', handleClickOutside);
 
-function OutsideClickDetectingDiv({ onClickOutside, children, ...props}) {
+function OutsideClickDetectingDiv({ onClickOutside, children, ...props }) {
   const ref = useRef(null);
   useLayoutEffect(() => {
     function handleClickOutside(event) {
@@ -40,7 +40,7 @@ function OutsideClickDetectingDiv({ onClickOutside, children, ...props}) {
 
     addOutsideClickListener(ref, handleClickOutside);
     return () => removeOutsideClickListener(ref);
-  }, [ ref ]);
+  }, [ref]);
 
   return <div ref={ref} {...props}>{children}</div>;
 }

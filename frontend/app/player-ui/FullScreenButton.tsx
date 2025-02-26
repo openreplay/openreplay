@@ -13,19 +13,19 @@ interface IProps {
 export function FullScreenButton({ size = 18, onClick, noShortcut }: IProps) {
   return (
     <Popover
-      content={
-        <div className={'flex gap-2 items-center'}>
+      content={(
+        <div className="flex gap-2 items-center">
           {!noShortcut ? <PlaySessionInFullscreenShortcut /> : null}
           <div>Play In Fullscreen</div>
         </div>
-      }
-      placement={"topRight"}
+      )}
+      placement="topRight"
     >
       <Button
         onClick={onClick}
         shape="circle"
-        size={'small'}
-        className={'flex items-center justify-center'}
+        size="small"
+        className="flex items-center justify-center"
         icon={<FullscreenOutlined />}
       />
     </Popover>

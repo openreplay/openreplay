@@ -1,40 +1,38 @@
 import React, { useState, useCallback } from 'react';
 import { Message, Form, Input } from 'UI';
-import { Button } from 'antd'
-import styles from './profileSettings.module.css';
+import { Button } from 'antd';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import styles from './profileSettings.module.css';
 
 const ERROR_DOESNT_MATCH = 'Passwords don\'t match';
 const MIN_LENGTH = 8;
 
-const ChangePassword = () => {
+function ChangePassword() {
   const { userStore } = useStore();
-  const updatePassword = userStore.updatePassword;
+  const { updatePassword } = userStore;
   const passwordErrors = userStore.updatePasswordRequest.errors;
-  const loading = userStore.updatePasswordRequest.loading;
+  const { loading } = userStore.updatePasswordRequest;
   const [oldPassword, setOldPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<{ value: string; error: boolean }>({
     value: '',
-    error: false
+    error: false,
   });
   const [newPasswordRepeat, setNewPasswordRepeat] = useState<{ value: string; error: boolean }>({
     value: '',
-    error: false
+    error: false,
   });
   const [show, setShow] = useState<boolean>(false);
 
-  const checkDoesntMatch = useCallback((newPassword: string, newPasswordRepeat: string) => {
-    return newPasswordRepeat.length > 0 && newPasswordRepeat !== newPassword;
-  }, []);
+  const checkDoesntMatch = useCallback((newPassword: string, newPasswordRepeat: string) => newPasswordRepeat.length > 0 && newPasswordRepeat !== newPassword, []);
 
   const isSubmitDisabled = useCallback(() => {
     if (
-      newPassword.value !== newPasswordRepeat.value ||
-      newPassword.value.length < MIN_LENGTH ||
-      oldPassword.length === 0
+      newPassword.value !== newPasswordRepeat.value
+      || newPassword.value.length < MIN_LENGTH
+      || oldPassword.length === 0
     ) {
       return true;
     }
@@ -53,7 +51,7 @@ const ChangePassword = () => {
 
       updatePassword({
         oldPassword,
-        newPassword: newPassword.value
+        newPassword: newPassword.value,
       }).then(() => {
         setShow(false);
         setOldPassword('');
@@ -63,7 +61,7 @@ const ChangePassword = () => {
 
       });
     },
-    [isSubmitDisabled, oldPassword, newPassword, updatePassword]
+    [isSubmitDisabled, oldPassword, newPassword, updatePassword],
   );
 
   return show ? (
@@ -143,6 +141,6 @@ const ChangePassword = () => {
       <Button type="text">Change Password</Button>
     </div>
   );
-};
+}
 
 export default observer(ChangePassword);

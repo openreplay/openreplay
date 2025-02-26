@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { Form, Input } from 'UI';
-import styles from './customFieldForm.module.css';
 import { useStore } from 'App/mstore';
 import { useModal } from 'Components/Modal';
 import { toast } from 'react-toastify';
 import { Button, Modal } from 'antd';
 import { Trash } from 'UI/Icons';
 import { observer } from 'mobx-react-lite';
+import styles from './customFieldForm.module.css';
 
 interface CustomFieldFormProps {
   siteId: string;
@@ -25,11 +25,11 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
   const onDelete = async () => {
     Modal.confirm({
       title: 'Metadata',
-      content: `Are you sure you want to remove?`,
+      content: 'Are you sure you want to remove?',
       onOk: async () => {
         await store.remove(siteId, field?.index!);
         hideModal();
-      }
+      },
     });
   };
 
@@ -51,10 +51,14 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
 
   return (
     <div className="bg-white h-screen overflow-y-auto">
-      <h3 className="p-5 text-xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
+      <h3 className="p-5 text-xl">
+        {exists ? 'Update' : 'Add'}
+        {' '}
+        Metadata Field
+      </h3>
       <Form className={styles.wrapper}>
         <Form.Field>
-          <label>{'Field Name'}</label>
+          <label>Field Name</label>
           <Input
             ref={focusElementRef}
             name="key"
@@ -76,12 +80,12 @@ const CustomFieldForm: React.FC<CustomFieldFormProps> = ({ siteId }) => {
             >
               {exists ? 'Update' : 'Add'}
             </Button>
-            <Button type='text' data-hidden={!exists} onClick={hideModal}>
-              {'Cancel'}
+            <Button type="text" data-hidden={!exists} onClick={hideModal}>
+              Cancel
             </Button>
           </div>
 
-          <Button type="text" icon={<Trash />} data-hidden={!exists} onClick={onDelete}></Button>
+          <Button type="text" icon={<Trash />} data-hidden={!exists} onClick={onDelete} />
         </div>
       </Form>
     </div>

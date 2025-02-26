@@ -1,15 +1,14 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
-import { numberWithCommas } from 'App/utils';
+import { numberWithCommas, debounce } from 'App/utils';
 import { Step } from 'Components/UsabilityTesting/TestEdit';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Loader, NoContent, Pagination } from 'UI';
 import { Button, Typography, Input } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { DownOutlined } from '@ant-design/icons';
-import { debounce } from 'App/utils'
 
-let debounceUpdate: any = () => {}
+let debounceUpdate: any = () => {};
 
 const ResponsesOverview = observer(() => {
   const { uxtestingStore } = useStore();
@@ -30,49 +29,48 @@ const ResponsesOverview = observer(() => {
 
   debounceUpdate = debounce((text: string) => {
     void refreshData(text);
-  }, 200)
+  }, 200);
 
   const refreshDataQuery = (text: string) => {
-    setSearch(text)
-    debounceUpdate(text)
-  }
+    setSearch(text);
+    debounceUpdate(text);
+  };
 
-  const refreshData = (searchText?: string) =>
-    taskId
-      ? uxtestingStore.fetchResponses(uxtestingStore.instance!.testId!, taskId, page, searchText || search)
-      : null;
+  const refreshData = (searchText?: string) => (taskId
+    ? uxtestingStore.fetchResponses(uxtestingStore.instance!.testId!, taskId, page, searchText || search)
+    : null);
 
   const selectedIndex = uxtestingStore.instance?.tasks.findIndex((task) => task.taskId === taskId)!;
   const task = uxtestingStore.instance?.tasks.find((task) => task.taskId === taskId);
 
   return (
-    <div style={{ width: 900 }} className={'h-screen p-4 bg-white flex flex-col gap-4'}>
+    <div style={{ width: 900 }} className="h-screen p-4 bg-white flex flex-col gap-4">
       <Typography.Title style={{ marginBottom: 0 }} level={4}>
         Open-ended task responses
       </Typography.Title>
-      <div className={'flex flex-col gap-1 relative'}>
+      <div className="flex flex-col gap-1 relative">
         <Typography.Text strong>Select Task / Question</Typography.Text>
         <OutsideClickDetectingDiv onClickOutside={() => setShowAll(false)}>
-          <div className={'cursor-pointer'} onClick={() => setShowAll(!showAll)}>
+          <div className="cursor-pointer" onClick={() => setShowAll(!showAll)}>
             <Step
               ind={selectedIndex ?? 0}
               title={task?.title ?? 'Title'}
               description={task?.description ?? 'Description'}
-              buttons={
-                <div className={'self-center'}>
+              buttons={(
+                <div className="self-center">
                   <Button
                     onClick={() => setShowAll(!showAll)}
                     icon={<DownOutlined rotate={showAll ? 180 : 0} rev={undefined} />}
-                    size={'small'}
+                    size="small"
                   />
                 </div>
-              }
+              )}
             />
           </div>
         </OutsideClickDetectingDiv>
         {showAll ? (
           <div
-            className={'flex flex-col overflow-auto absolute bottom-0 w-full z-20'}
+            className="flex flex-col overflow-auto absolute bottom-0 w-full z-20"
             style={{ maxHeight: 300, transform: 'translateY(100%)' }}
           >
             {uxtestingStore.instance?.tasks
@@ -96,20 +94,20 @@ const ResponsesOverview = observer(() => {
           </div>
         ) : null}
       </div>
-      <div className={'grid grid-cols-9 border-b py-1'}>
-        <div className={'col-span-1'}>
+      <div className="grid grid-cols-9 border-b py-1">
+        <div className="col-span-1">
           <Typography.Text strong>#</Typography.Text>
         </div>
-        <div className={'col-span-2'}>
+        <div className="col-span-2">
           <Typography.Text strong>Participant</Typography.Text>
         </div>
-        <div className={'col-span-6 flex items-center'}>
+        <div className="col-span-6 flex items-center">
           <div style={{ minWidth: 240 }}>
             <Typography.Text strong>Response</Typography.Text>
           </div>
           <Input.Search
             allowClear
-            placeholder={'Filter by keyword or participant'}
+            placeholder="Filter by keyword or participant"
             onChange={(e) => refreshDataQuery(e.target.value)}
             classNames={{ input: '!border-0 focus:!border-0' }}
             onSearch={() => refreshData()}
@@ -119,27 +117,35 @@ const ResponsesOverview = observer(() => {
       <Loader loading={uxtestingStore.isLoading}>
         <NoContent
           show={!uxtestingStore.responses[taskId!]?.list?.length}
-          title={<div className={'col-span-9'}>No data yet</div>}
+          title={<div className="col-span-9">No data yet</div>}
         >
           <div>
             {uxtestingStore.responses[taskId!]?.list.map((r, i) => (
-              <div className={'grid grid-cols-9 py-2 border-b hover:bg-active-blue'}>
-                <div className={'col-span-1'}>{i + 10 * (page - 1) + 1}</div>
-                <div className={'col-span-2'}>{r.user_id || 'Anonymous User'}</div>
-                <div className={'col-span-6'}>{r.comment}</div>
+              <div className="grid grid-cols-9 py-2 border-b hover:bg-active-blue">
+                <div className="col-span-1">{i + 10 * (page - 1) + 1}</div>
+                <div className="col-span-2">{r.user_id || 'Anonymous User'}</div>
+                <div className="col-span-6">{r.comment}</div>
               </div>
             ))}
           </div>
-          <div className={'p-2 flex items-center justify-between'}>
-            <div className={'text-disabled-text'}>
-              Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to{' '}
+          <div className="p-2 flex items-center justify-between">
+            <div className="text-disabled-text">
+              Showing
+              {' '}
+              <span className="font-medium">{(page - 1) * 10 + 1}</span>
+              {' '}
+              to
+              {' '}
               <span className="font-medium">
                 {(page - 1) * 10 + uxtestingStore.responses[taskId!]?.list.length}
-              </span>{' '}
-              of{' '}
+              </span>
+              {' '}
+              of
+              {' '}
               <span className="font-medium">
                 {numberWithCommas(uxtestingStore.responses[taskId!]?.total)}
-              </span>{' '}
+              </span>
+              {' '}
               replies.
             </div>
             <Pagination

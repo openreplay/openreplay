@@ -47,7 +47,6 @@ export function buildBarDatasetsAndSeries(props: DataProps) {
   return { datasets, series };
 }
 
-
 // START GEN
 function sumSeries(chart: DataItem[], seriesName: string): number {
   return chart.reduce((acc, row) => acc + (Number(row[seriesName]) || 0), 0);
@@ -62,7 +61,7 @@ function sumSeries(chart: DataItem[], seriesName: string): number {
 export function buildColumnChart(
   chartUuid: string,
   data: DataProps['data'],
-  compData: DataProps['compData']
+  compData: DataProps['compData'],
 ) {
   const categories = data.namesMap.filter(Boolean);
 

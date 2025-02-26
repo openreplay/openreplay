@@ -4,5 +4,5 @@ const ModalContext = createContext({
   component: null,
   props: {},
   showModal: () => {},
-  hideModal: () => {}
+  hideModal: () => {},
 });

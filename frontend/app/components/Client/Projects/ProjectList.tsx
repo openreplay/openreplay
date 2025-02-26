@@ -1,10 +1,12 @@
 import React from 'react';
-import { Avatar, Button, Input, Menu, MenuProps, Progress, Typography, Tooltip } from 'antd';
+import {
+  Avatar, Button, Input, Menu, MenuProps, Progress, Typography, Tooltip,
+} from 'antd';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { observer } from 'mobx-react-lite';
-import { Globe, Smartphone,  } from 'lucide-react';
-import {SearchOutlined, EditOutlined} from '@ant-design/icons'
+import { Globe, Smartphone } from 'lucide-react';
+import { SearchOutlined, EditOutlined } from '@ant-design/icons';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import { useModal } from 'Components/ModalContext';
 
@@ -15,9 +17,7 @@ const ProjectList: React.FC = () => {
   const [search, setSearch] = React.useState('');
   const { openModal, closeModal } = useModal();
 
-  const filteredProjects = projectsStore.list.filter((project: Project) =>
-    project.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProjects = projectsStore.list.filter((project: Project) => project.name.toLowerCase().includes(search.toLowerCase()));
 
   const handleSearch = (value: string) => setSearch(value);
 
@@ -32,26 +32,28 @@ const ProjectList: React.FC = () => {
     projectsStore.initProject(project);
 
     openModal(<ProjectForm onClose={closeModal} project={project} />, {
-      title: 'Edit Project'
+      title: 'Edit Project',
     });
-
   };
 
   const menuItems: MenuItem[] = filteredProjects.map((project) => ({
-    key: project.id + '',
-    label: <Typography.Text style={{ color: 'inherit' }} ellipsis={true}>{project.name}</Typography.Text>,
-    extra: <Button onClick={(e) => projectEditHandler(e, project)} className="flex opacity-0 group-hover:!opacity-100"
-                    size="small" type="link" icon={<EditOutlined size={14} />} />,
+    key: `${project.id}`,
+    label: <Typography.Text style={{ color: 'inherit' }} ellipsis>{project.name}</Typography.Text>,
+    extra: <Button
+      onClick={(e) => projectEditHandler(e, project)}
+      className="flex opacity-0 group-hover:!opacity-100"
+      size="small"
+      type="link"
+      icon={<EditOutlined size={14} />}
+    />,
     className: 'group',
     icon: (
       <ProjectIconWithProgress
         platform={project.platform}
         progress={project.sampleRate}
       />
-    )
+    ),
   }));
-
-
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -62,7 +64,7 @@ const ProjectList: React.FC = () => {
           prefix={<SearchOutlined />}
           onChange={(e) => setSearch(e.target.value)}
           allowClear
-          className='rounded-lg'
+          className="rounded-lg"
         />
       </div>
       <div
@@ -89,28 +91,28 @@ const ProjectIconWithProgress: React.FC<{
   progress: number;
 }> = ({ platform, progress }) => (
   <Tooltip title={`${progress}% Capture Rate`}>
-  <div className="relative flex items-center justify-center mr-2 leading-none">
-    <Progress
-      type="circle"
-      percent={progress}
-      size={28}
-      format={() => ''}
-      strokeWidth={4}
-      strokeColor="#23959a"
-    />
-    <div className="absolute">
-      <Avatar
-        className="bg-tealx-light"
-        size={26}
-        icon={
+    <div className="relative flex items-center justify-center mr-2 leading-none">
+      <Progress
+        type="circle"
+        percent={progress}
+        size={28}
+        format={() => ''}
+        strokeWidth={4}
+        strokeColor="#23959a"
+      />
+      <div className="absolute">
+        <Avatar
+          className="bg-tealx-light"
+          size={26}
+          icon={
           platform === 'web' ? (
             <Globe size={16} color="teal" />
           ) : (
             <Smartphone size={16} color="teal" />
           )
         }
-      />
+        />
+      </div>
     </div>
-  </div>
   </Tooltip>
 );

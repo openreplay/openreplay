@@ -25,7 +25,7 @@ import DashboardEditModal from '../DashboardEditModal';
 
 function DashboardList() {
   const { dashboardStore, projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const optionsRef = React.useRef<HTMLDivElement>(null);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -53,7 +53,7 @@ function DashboardList() {
       await confirm({
         header: 'Delete Dashboard',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this Dashboard?`,
+        confirmation: 'Are you sure you want to permanently delete this Dashboard?',
       })
     ) {
       void dashboardStore.deleteDashboard(dashboard);
@@ -88,7 +88,7 @@ function DashboardList() {
 
     {
       title: (
-        <div className={'flex items-center justify-start gap-2'}>
+        <div className="flex items-center justify-start gap-2">
           <div>Visibility</div>
           <Tooltip
             title="Toggle to view your dashboards or all team dashboards."
@@ -96,14 +96,12 @@ function DashboardList() {
           >
             <Switch
               checked={!dashboardStore.filter.showMine}
-              onChange={() =>
-                dashboardStore.updateKey('filter', {
-                  ...dashboardStore.filter,
-                  showMine: !dashboardStore.filter.showMine,
-                })
-              }
-              checkedChildren={'Team'}
-              unCheckedChildren={'Private'}
+              onChange={() => dashboardStore.updateKey('filter', {
+                ...dashboardStore.filter,
+                showMine: !dashboardStore.filter.showMine,
+              })}
+              checkedChildren="Team"
+              unCheckedChildren="Private"
               className="toggle-team-private"
             />
           </Tooltip>
@@ -131,21 +129,21 @@ function DashboardList() {
           <Dropdown
             arrow={false}
             trigger={['click']}
-            className={'ignore-prop-dp'}
+            className="ignore-prop-dp"
             menu={{
               items: [
                 {
-                  icon: <Icon name={'pencil'} />,
+                  icon: <Icon name="pencil" />,
                   key: 'rename',
                   label: 'Rename',
                 },
                 {
-                  icon: <Icon name={'users'} />,
+                  icon: <Icon name="users" />,
                   key: 'access',
                   label: 'Visibility & Access',
                 },
                 {
-                  icon: <Icon name={'trash'} />,
+                  icon: <Icon name="trash" />,
                   key: 'delete',
                   label: 'Delete',
                 },
@@ -162,7 +160,7 @@ function DashboardList() {
             }}
           >
             <Button
-              id={'ignore-prop'}
+              id="ignore-prop"
               icon={<MoreOutlined />}
               type="text"
               className="btn-dashboards-list-item-more-options"
@@ -173,38 +171,35 @@ function DashboardList() {
     },
   ];
 
-  const emptyDescription =
-    dashboardsSearch !== '' ? (
-      <div className="text-center">
-        <div>
-          <Typography.Text className="my-2 text-lg font-medium">
-            No matching results
-          </Typography.Text>
-          <div className="mb-2 text-lg text-gray-500 my-3 leading-normal">
-            Try adjusting your search criteria or creating a new dashboard.
-          </div>
+  const emptyDescription = dashboardsSearch !== '' ? (
+    <div className="text-center">
+      <div>
+        <Typography.Text className="my-2 text-lg font-medium">
+          No matching results
+        </Typography.Text>
+        <div className="mb-2 text-lg text-gray-500 my-3 leading-normal">
+          Try adjusting your search criteria or creating a new dashboard.
         </div>
       </div>
-    ) : (
-      <div className="text-center">
-        <div>
-          <Typography.Text className="my-2 text-lg font-medium">
+    </div>
+  ) : (
+    <div className="text-center">
+      <div>
+        <Typography.Text className="my-2 text-lg font-medium">
           Create and organize your insights
-          </Typography.Text>
-          <div className="mb-2 text-lg text-gray-500 leading-normal">
+        </Typography.Text>
+        <div className="mb-2 text-lg text-gray-500 leading-normal">
           Build dashboards to track key metrics and monitor performance in one place.
-          </div>
-          <div className="my-4 mb-10">
-            <CreateDashboardButton />
-          </div>
+        </div>
+        <div className="my-4 mb-10">
+          <CreateDashboardButton />
         </div>
       </div>
-    );
+    </div>
+  );
 
-  const emptyImage =
-    dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS;
-  const imageDimensions =
-    dashboardsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
+  const emptyImage = dashboardsSearch !== '' ? ICONS.NO_RESULTS : ICONS.NO_DASHBOARDS;
+  const imageDimensions = dashboardsSearch !== '' ? searchImageDimensions : defaultImageDimensions;
 
   return list.length === 0 && !dashboardStore.filter.showMine ? (
     <div className="flex justify-center text-center">
@@ -225,29 +220,27 @@ function DashboardList() {
         dataSource={list}
         columns={tableConfig}
         pagination={{
-          showTotal: (total, range) =>
-            `Showing ${range[0]}-${range[1]} of ${total} items`,
+          showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
           size: 'small',
           simple: 'true',
           className: 'px-4 pr-8 mb-0',
         }}
         onRow={(record) => ({
           onClick: (e) => {
-            const possibleDropdown =
-              document.querySelector('.ant-dropdown-menu');
+            const possibleDropdown = document.querySelector('.ant-dropdown-menu');
             const btn = document.querySelector('#ignore-prop');
             if (
-              e.target.classList.contains('lucide') ||
-              e.target.id === 'ignore-prop' ||
-              possibleDropdown?.contains(e.target) ||
-              btn?.contains(e.target)
+              e.target.classList.contains('lucide')
+              || e.target.id === 'ignore-prop'
+              || possibleDropdown?.contains(e.target)
+              || btn?.contains(e.target)
             ) {
               return;
             }
             dashboardStore.selectDashboardById(record.dashboardId);
             const path = withSiteId(
               dashboardSelected(record.dashboardId),
-              siteId
+              siteId,
             );
             history.push(path);
           },

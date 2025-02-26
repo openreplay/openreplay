@@ -1,5 +1,5 @@
 import React from 'react';
-import cn from "classnames";
+import cn from 'classnames';
 
 interface Props {
 	className?: string;
@@ -9,15 +9,17 @@ interface Props {
 	topMuted?: boolean;
 	bottomMuted?: boolean;
 }
-function ErrorLabel({ className, topValue, topValueSize = 'text-base', bottomValue, topMuted = false, bottomMuted = false }: Props) {
+function ErrorLabel({
+  className, topValue, topValueSize = 'text-base', bottomValue, topMuted = false, bottomMuted = false,
+}: Props) {
   return (
-  	<div className={ cn(className, "flex flex-col items-center px-4") } >
-	    <div className={ cn(topValueSize, { "color-gray-medium": topMuted }) } >{ topValue }</div>
-	    <div className={ cn("font-light text-sm", { "color-gray-medium": bottomMuted }) }>{ bottomValue }</div>
-	  </div>
-	)
+    <div className={cn(className, 'flex flex-col items-center px-4')}>
+      <div className={cn(topValueSize, { 'color-gray-medium': topMuted })}>{ topValue }</div>
+      <div className={cn('font-light text-sm', { 'color-gray-medium': bottomMuted })}>{ bottomValue }</div>
+    </div>
+  );
 }
 
-ErrorLabel.displayName = "ErrorLabel";
+ErrorLabel.displayName = 'ErrorLabel';
 
 export default ErrorLabel;

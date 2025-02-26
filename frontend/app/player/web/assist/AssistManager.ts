@@ -1,15 +1,15 @@
 import MessageManager from 'Player/web/MessageManager';
 import type { Socket } from 'socket.io-client';
-import { Message } from "../messages";
-import type Screen from '../Screen/Screen';
 import type { PlayerMsg, Store } from 'App/player';
+import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
+import { gunzipSync } from 'fflate';
+import { Message } from '../messages';
+import type Screen from '../Screen/Screen';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader';
 import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl';
 import ScreenRecording, { SessionRecordingStatus } from './ScreenRecording';
-import CanvasReceiver from 'Player/web/assist/CanvasReceiver';
-import { gunzipSync } from 'fflate';
 
 export { RemoteControlStatus, SessionRecordingStatus, CallingState };
 
@@ -59,7 +59,9 @@ const MAX_RECONNECTION_COUNT = 4;
 
 export default class AssistManager {
   assistVersion = 1;
+
   private canvasReceiver: CanvasReceiver;
+
   static readonly INITIAL_STATE = {
     peerConnectionStatus: ConnectionStatus.Connecting,
     assistStart: 0,
@@ -79,7 +81,7 @@ export default class AssistManager {
     private getNode: MessageManager['getNode'],
     public readonly uiErrorHandler?: {
       error: (msg: string) => void;
-    }
+    },
   ) {}
 
   public getAssistVersion = () => this.assistVersion;
@@ -97,8 +99,8 @@ export default class AssistManager {
 
   private setStatus(status: ConnectionStatus) {
     if (
-      this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected &&
-      status !== ConnectionStatus.Connected
+      this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected
+      && status !== ConnectionStatus.Connected
     ) {
       return;
     }
@@ -121,16 +123,17 @@ export default class AssistManager {
   }
 
   private socketCloseTimeout: ReturnType<typeof setTimeout> | undefined;
+
   private onVisChange = () => {
     this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout);
     if (document.hidden) {
       this.socketCloseTimeout = setTimeout(() => {
         const state = this.store.get();
         if (
-          document.hidden &&
+          document.hidden
           // TODO: should it be RemoteControlStatus.Disabled? (check)
-          state.calling === CallingState.NoCall &&
-          state.remoteControl === RemoteControlStatus.Enabled
+          && state.calling === CallingState.NoCall
+          && state.remoteControl === RemoteControlStatus.Enabled
         ) {
           this.socket?.close();
         }
@@ -141,8 +144,11 @@ export default class AssistManager {
   };
 
   private socket: Socket | null = null;
+
   private disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+
   private inactiveTimeout: ReturnType<typeof setTimeout> | undefined;
+
   private inactiveTabs: string[] = [];
 
   private clearDisconnectTimeout() {
@@ -219,17 +225,17 @@ export default class AssistManager {
         for (let msg = reader.readNext(); msg !== null; msg = reader.readNext()) {
           this.handleMessage(msg, msg._index);
         }
-      }
+      };
 
       socket.on('messages', (messages) => {
-        processMessages(messages)
+        processMessages(messages);
       });
       socket.on('messages_gz', (gzBuf) => {
         const unpackData = gunzipSync(new Uint8Array(gzBuf.data));
         const str = new TextDecoder().decode(unpackData);
         const messages = JSON.parse(str);
-        processMessages({ ...gzBuf, data: messages })
-      })
+        processMessages({ ...gzBuf, data: messages });
+      });
 
       socket.on('SESSION_RECONNECTED', () => {
         this.clearDisconnectTimeout();
@@ -243,7 +249,7 @@ export default class AssistManager {
         const usedData = this.assistVersion === 1 ? evData : data;
         const { active } = usedData;
 
-        const currentTab = this.store.get().currentTab;
+        const { currentTab } = this.store.get();
 
         this.clearDisconnectTimeout();
         !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected);
@@ -260,7 +266,7 @@ export default class AssistManager {
             if (tabId === undefined || tabId === currentTab) {
               this.inactiveTimeout = setTimeout(() => {
                 // @ts-ignore
-                const tabs = this.store.get().tabs;
+                const { tabs } = this.store.get();
                 if (this.inactiveTabs.length === tabs.size) {
                   this.setStatus(ConnectionStatus.Inactive);
                 }
@@ -288,7 +294,7 @@ export default class AssistManager {
         socket,
         this.config,
         this.peerID,
-        this.getAssistVersion
+        this.getAssistVersion,
       );
       this.remoteControl = new RemoteControl(
         this.store,
@@ -296,7 +302,7 @@ export default class AssistManager {
         this.screen,
         this.session.agentInfo,
         () => this.screen.setBorderStyle(this.borderStyle),
-        this.getAssistVersion
+        this.getAssistVersion,
       );
       this.screenRecording = new ScreenRecording(
         this.store,
@@ -304,7 +310,7 @@ export default class AssistManager {
         this.session.agentInfo,
         () => this.screen.setBorderStyle(this.borderStyle),
         this.uiErrorHandler,
-        this.getAssistVersion
+        this.getAssistVersion,
       );
       this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
         ...this.session.agentInfo,
@@ -324,47 +330,36 @@ export default class AssistManager {
 
   /* ==== ScreenRecording ==== */
   private screenRecording: ScreenRecording | null = null;
-  requestRecording = (...args: Parameters<ScreenRecording['requestRecording']>) => {
-    return this.screenRecording?.requestRecording(...args);
-  };
-  stopRecording = (...args: Parameters<ScreenRecording['stopRecording']>) => {
-    return this.screenRecording?.stopRecording(...args);
-  };
+
+  requestRecording = (...args: Parameters<ScreenRecording['requestRecording']>) => this.screenRecording?.requestRecording(...args);
+
+  stopRecording = (...args: Parameters<ScreenRecording['stopRecording']>) => this.screenRecording?.stopRecording(...args);
 
   /* ==== RemoteControl ==== */
   private remoteControl: RemoteControl | null = null;
+
   requestReleaseRemoteControl = (
     ...args: Parameters<RemoteControl['requestReleaseRemoteControl']>
-  ) => {
-    return this.remoteControl?.requestReleaseRemoteControl(...args);
-  };
-  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => {
-    return this.remoteControl?.setCallbacks(...args);
-  };
-  releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => {
-    return this.remoteControl?.releaseRemoteControl(...args);
-  };
-  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) => {
-    return this.remoteControl?.toggleAnnotation(...args);
-  };
+  ) => this.remoteControl?.requestReleaseRemoteControl(...args);
+
+  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => this.remoteControl?.setCallbacks(...args);
+
+  releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => this.remoteControl?.releaseRemoteControl(...args);
+
+  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) => this.remoteControl?.toggleAnnotation(...args);
 
   /* ==== Call  ==== */
   private callManager: Call | null = null;
-  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) => {
-    return this.callManager?.initiateCallEnd(...args);
-  };
-  setCallArgs = (...args: Parameters<Call['setCallArgs']>) => {
-    return this.callManager?.setCallArgs(...args);
-  };
-  call = (...args: Parameters<Call['call']>) => {
-    return this.callManager?.call(...args);
-  };
-  toggleVideoLocalStream = (...args: Parameters<Call['toggleVideoLocalStream']>) => {
-    return this.callManager?.toggleVideoLocalStream(...args);
-  };
-  addPeerCall = (...args: Parameters<Call['addPeerCall']>) => {
-    return this.callManager?.addPeerCall(...args);
-  };
+
+  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) => this.callManager?.initiateCallEnd(...args);
+
+  setCallArgs = (...args: Parameters<Call['setCallArgs']>) => this.callManager?.setCallArgs(...args);
+
+  call = (...args: Parameters<Call['call']>) => this.callManager?.call(...args);
+
+  toggleVideoLocalStream = (...args: Parameters<Call['toggleVideoLocalStream']>) => this.callManager?.toggleVideoLocalStream(...args);
+
+  addPeerCall = (...args: Parameters<Call['addPeerCall']>) => this.callManager?.addPeerCall(...args);
 
   /* ==== Cleaning ==== */
   private cleaned = false;

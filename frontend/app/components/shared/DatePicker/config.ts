@@ -22,14 +22,13 @@ const weekDayLengthMap = {
  * @param part string
  * @returns string
  */
-const normalizeFormatPart = (part: string): string =>
-  part
-    .replace(/Y/g, 'y')
-    .replace(/D/g, 'd')
-    .replace(/gg/g, 'kk')
-    .replace(/Q/g, 'q')
-    .replace(/([Ww])o/g, 'WW')
-    .replace(/A/g, 'a');
+const normalizeFormatPart = (part: string): string => part
+  .replace(/Y/g, 'y')
+  .replace(/D/g, 'd')
+  .replace(/gg/g, 'kk')
+  .replace(/Q/g, 'q')
+  .replace(/([Ww])o/g, 'WW')
+  .replace(/A/g, 'a');
 
 /**
  * Normalizes a moment compatible format string to a luxon compatible format string
@@ -37,17 +36,16 @@ const normalizeFormatPart = (part: string): string =>
  * @param format string
  * @returns string
  */
-const normalizeFormat = (format: string): string =>
-  format
-    // moment escapes strings contained in brackets
-    .split(/[[\]]/)
-    .map((part, index) => {
-      const shouldEscape = index % 2 > 0;
+const normalizeFormat = (format: string): string => format
+// moment escapes strings contained in brackets
+  .split(/[[\]]/)
+  .map((part, index) => {
+    const shouldEscape = index % 2 > 0;
 
-      return shouldEscape ? part : normalizeFormatPart(part);
-    })
-    // luxon escapes strings contained in single quotes
-    .join("'");
+    return shouldEscape ? part : normalizeFormatPart(part);
+  })
+// luxon escapes strings contained in single quotes
+  .join("'");
 
 /**
  * Normalizes language tags used to luxon compatible
@@ -90,8 +88,7 @@ const generateConfig: GenerateConfig<DateTime> = {
 
   locale: {
     getWeekFirstDate: (locale, date) => date.setLocale(normalizeLocale(locale)).startOf('week'),
-    getWeekFirstDay: (locale) =>
-      DateTime.local().setLocale(normalizeLocale(locale)).startOf('week').weekday,
+    getWeekFirstDay: (locale) => DateTime.local().setLocale(normalizeLocale(locale)).startOf('week').weekday,
     getWeek: (locale, date) => date.setLocale(normalizeLocale(locale)).weekNumber,
     getShortWeekDays: (locale) => {
       const weekdays = Info.weekdays(weekDayFormatMap[locale] || 'short', {
@@ -180,4 +177,3 @@ export type GenerateConfig<DateType> = {
     getShortMonths?: (locale: string) => string[];
   };
 };
-

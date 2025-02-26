@@ -7,10 +7,10 @@ import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 
-const PiniaDoc = () => {
+function PiniaDoc() {
   const { integrationsStore, projectsStore } = useStore();
   const sites = projectsStore.list;
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const projectKey = siteId
     ? sites.find((site) => site.id === siteId)?.projectKey
     : sites[0]?.projectKey;
@@ -77,7 +77,7 @@ piniaStorePlugin(examplePiniaStore)
 
         <div className="font-bold my-2 text-lg">Installation</div>
         <CodeBlock
-          code={`npm i @openreplay/tracker-vuex --save`}
+          code="npm i @openreplay/tracker-vuex --save"
           language="bash"
         />
 
@@ -103,7 +103,7 @@ piniaStorePlugin(examplePiniaStore)
       </div>
     </div>
   );
-};
+}
 
 PiniaDoc.displayName = 'PiniaDoc';
 

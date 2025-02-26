@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
-import Activity, { IActivity } from './activity';
 import { DateTime } from 'luxon';
 import { notEmptyString } from 'App/validate';
+import Activity, { IActivity } from './activity';
 
 export interface IReportedIssue {
   id: string;
@@ -24,16 +24,27 @@ export interface IReportedIssue {
 
 export default class ReportedIssue {
   id: IReportedIssue['id'] = '';
+
   title: IReportedIssue['title'] = '';
+
   timestamp: DateTime | null = null;
+
   sessionId: IReportedIssue['sessionId'] = '';
+
   projectId: IReportedIssue['projectId'] = '';
+
   siteId: IReportedIssue['siteId'] = '';
+
   activities: any[] = [];
+
   closed: IReportedIssue['closed'] = false;
+
   assignee: IReportedIssue['assignee'] = '';
+
   issueType: IReportedIssue['issueType'] = '';
+
   description: IReportedIssue['description'] = '';
+
   iconUrl: IReportedIssue['iconUrl'] = '';
 
   constructor(assignment?: IReportedIssue) {
@@ -45,7 +56,7 @@ export default class ReportedIssue {
         ? assignment.comments.map((activity) => {
           if (assignment.users) {
             // @ts-ignore
-            activity.user = assignment.users.find(user => user.id === activity.author);
+            activity.user = assignment.users.find((user) => user.id === activity.author);
           }
           return new Activity(activity);
         })
@@ -55,10 +66,10 @@ export default class ReportedIssue {
 
   validate() {
     return (
-      !!this.projectId &&
-      !!this.issueType &&
-      notEmptyString(this.title) &&
-      notEmptyString(this.description)
+      !!this.projectId
+      && !!this.issueType
+      && notEmptyString(this.title)
+      && notEmptyString(this.description)
     );
   }
 
@@ -70,8 +81,8 @@ export default class ReportedIssue {
     return {
       title: this.title,
       description: this.description,
-      assignee: this.assignee + '',
-      issueType: this.issueType + '',
+      assignee: `${this.assignee}`,
+      issueType: `${this.issueType}`,
       projectId: this.projectId,
     };
   }

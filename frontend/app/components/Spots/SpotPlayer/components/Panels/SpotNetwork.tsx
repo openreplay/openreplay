@@ -9,27 +9,27 @@ function SpotNetwork({ panelHeight, onClose }: { panelHeight: number, onClose: (
   const list = spotPlayerStore.network;
   const { index } = spotPlayerStore.getHighlightedEvent(
     spotPlayerStore.time,
-    list
+    list,
   );
   const listNow = list.slice(0, index);
 
   return (
-      <NetworkPanelComp
-        panelHeight={panelHeight}
-        fetchList={list}
-        fetchListNow={listNow}
-        startedAt={spotPlayerStore.startTs}
-        zoomEnabled={false}
-        resourceList={[]}
-        resourceListNow={[]}
-        websocketList={[]}
-        websocketListNow={[]}
-        isSpot
+    <NetworkPanelComp
+      panelHeight={panelHeight}
+      fetchList={list}
+      fetchListNow={listNow}
+      startedAt={spotPlayerStore.startTs}
+      zoomEnabled={false}
+      resourceList={[]}
+      resourceListNow={[]}
+      websocketList={[]}
+      websocketListNow={[]}
+      isSpot
         /* @ts-ignore */
-        player={{ jump: (t) => spotPlayerStore.setTime(t) }}
-        activeOutsideIndex={index}
-        onClose={onClose}
-      />
+      player={{ jump: (t) => spotPlayerStore.setTime(t) }}
+      activeOutsideIndex={index}
+      onClose={onClose}
+    />
   );
 }
 

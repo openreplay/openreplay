@@ -17,13 +17,18 @@ export interface State {
 
 export default class RemoteControl {
   private assistVersion = 1;
+
   static readonly INITIAL_STATE: Readonly<State> = {
     remoteControl: RemoteControlStatus.Disabled,
     annotating: false,
   };
+
   onReject: () => void = () => {};
+
   onStart: () => void = () => {};
+
   onEnd: () => void = () => {};
+
   onBusy: () => void = () => {};
 
   constructor(
@@ -32,7 +37,7 @@ export default class RemoteControl {
     private screen: Screen,
     private agentInfo: Object,
     private onToggle: (active: boolean) => void,
-    private getAssistVersion: () => number
+    private getAssistVersion: () => number,
   ) {
     socket.on('control_granted', ({ meta, data }) => {
       if (data === socket.id) {
@@ -55,7 +60,7 @@ export default class RemoteControl {
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         return this.store.update({ remoteControl: RemoteControlStatus.Disabled });
       }
-    })
+    });
     socket.on('SESSION_DISCONNECTED', () => {
       if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
         this.toggleRemoteControl(false); // else its remaining
@@ -85,8 +90,8 @@ export default class RemoteControl {
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault();
-    //throttling makes movements less smooth, so it is omitted
-    //this.onMouseMove(e)
+    // throttling makes movements less smooth, so it is omitted
+    // this.onMouseMove(e)
     this.emitData('scroll', [e.deltaX, e.deltaY]);
   };
 
@@ -155,7 +160,7 @@ export default class RemoteControl {
   }
 
   requestReleaseRemoteControl = () => {
-    const remoteControl = this.store.get().remoteControl;
+    const { remoteControl } = this.store.get();
     if (remoteControl === RemoteControlStatus.Requesting) {
       return;
     }
@@ -166,7 +171,7 @@ export default class RemoteControl {
         JSON.stringify({
           ...this.agentInfo,
           query: document.location.search,
-        })
+        }),
       );
     } else {
       this.onEnd();

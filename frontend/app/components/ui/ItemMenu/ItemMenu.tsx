@@ -2,8 +2,8 @@ import React from 'react';
 import { Icon, Popover } from 'UI';
 import { Button, Tooltip } from 'antd';
 import { EllipsisVertical } from 'lucide-react';
-import styles from './itemMenu.module.css';
 import cn from 'classnames';
+import styles from './itemMenu.module.css';
 
 interface Item {
   icon?: string;
@@ -36,6 +36,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
   componentDidMount() {
     document.addEventListener('keydown', this.handleEsc, false);
   }
+
   componentWillUnmount() {
     document.removeEventListener('keydown', this.handleEsc, false);
   }
@@ -57,7 +58,9 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   render() {
-    const { items, label, bold, sm } = this.props;
+    const {
+      items, label, bold, sm,
+    } = this.props;
     const { displayed } = this.state;
     const parentStyles = label ? 'hover:bg-gray-light' : '';
 
@@ -92,7 +95,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
                       role="menuitem"
                     >
                       <div
-                        className={cn(styles.menuItem, { disabled: disabled })}
+                        className={cn(styles.menuItem, { disabled })}
                       >
                         {icon && (
                           <div className={styles.iconWrapper}>
@@ -103,7 +106,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
                       </div>
                     </div>
                   </Tooltip>
-                )
+                ),
               )}
           </div>
         )}
@@ -111,33 +114,31 @@ export default class ItemMenu extends React.PureComponent<Props> {
         {this.props.customTrigger ? (
           this.props.customTrigger
         ) : (
-          <>
-            <Button
-              type="text"
+          <Button
+            type="text"
+            className={cn(
+              'select-none',
+              !this.props.flat ? parentStyles : '',
+              {
+                '': !this.props.flat && displayed && label,
+              },
+            )}
+          >
+            {label && <span className={cn('font-medium')}>{label}</span>}
+            {!this.props.flat && (
+            <div
+              ref={(ref) => {
+                this.menuBtnRef = ref;
+              }}
               className={cn(
-                'select-none',
-                !this.props.flat ? parentStyles : '',
-                {
-                  '': !this.props.flat && displayed && label,
-                }
+                'rounded-full flex items-center justify-center',
               )}
+              role="button"
             >
-              {label && <span className={cn('font-medium')}>{label}</span>}
-              {!this.props.flat && (
-                <div
-                  ref={(ref) => {
-                    this.menuBtnRef = ref;
-                  }}
-                  className={cn(
-                    'rounded-full flex items-center justify-center'
-                  )}
-                  role="button"
-                >
-                  <EllipsisVertical size={16} />
-                </div>
-              )}
-            </Button>
-          </>
+              <EllipsisVertical size={16} />
+            </div>
+            )}
+          </Button>
         )}
       </Popover>
     );

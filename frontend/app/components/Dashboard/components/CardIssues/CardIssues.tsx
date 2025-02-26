@@ -6,11 +6,11 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
-import CardIssueItem from './CardIssueItem';
-import SessionsModal from '../SessionsModal';
 import { useModal } from 'App/components/Modal';
 import Issue from 'App/mstore/types/issue';
 import { List, Button } from 'antd';
+import SessionsModal from '../SessionsModal';
+import CardIssueItem from './CardIssueItem';
 
 function CardIssues() {
   const { metricStore, dashboardStore } = useStore();
@@ -28,7 +28,6 @@ function CardIssues() {
   const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
   const depsString = JSON.stringify(widget.series);
 
-
   function getFilters(filter: any) {
     const mapSeries = (item: any) => {
       const filters = item.filter.filters
@@ -38,8 +37,8 @@ function CardIssues() {
         ...item,
         filter: {
           ...item.filter,
-          filters
-        }
+          filters,
+        },
       };
     };
 
@@ -47,7 +46,7 @@ function CardIssues() {
       ...filter,
       limit: pageSize,
       page: filter.page,
-      series: filter.series.map(mapSeries)
+      series: filter.series.map(mapSeries),
     };
   }
 
@@ -80,7 +79,7 @@ function CardIssues() {
       ...widget,
       page: filter.page,
       limit: filter.limit,
-      filters: filter.filters
+      filters: filter.filters,
     };
     debounceRequest(newPayload);
   }, [drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage, filter.page]);
@@ -97,7 +96,9 @@ function CardIssues() {
           <h2 className="font-normal text-xl">Issues</h2>
           {!!filter.filters[1] && (
             <div className="ml-3 pt-1">
-              Showing issues of <span className="font-medium">{filter.filters[0].value}</span>
+              Showing issues of
+              {' '}
+              <span className="font-medium">{filter.filters[0].value}</span>
               <span className="mx-1">to</span>
               <span className="font-medium">{filter.filters[1].value}</span>
             </div>
@@ -110,20 +111,25 @@ function CardIssues() {
       </div>
 
       <Loader loading={loading}>
-        <NoContent show={data.issues.length == 0} 
-         title={
-          <div className="flex flex-col items-center justify-center">
-          <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
-          <div className="text-center my-4 text-base"><InfoCircleOutlined />  No data available.</div>
-          </div>
-      }
-        
+        <NoContent
+          show={data.issues.length == 0}
+          title={(
+            <div className="flex flex-col items-center justify-center">
+              <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
+              <div className="text-center my-4 text-base">
+                <InfoCircleOutlined />
+                {' '}
+                No data available.
+              </div>
+            </div>
+        )}
+
         >
-          {/*{data.issues.map((item: any, index: any) => (*/}
-          {/*  <div onClick={() => handleClick(item)} key={index}>*/}
-          {/*    <CardIssueItem issue={item} />*/}
-          {/*  </div>*/}
-          {/*))}*/}
+          {/* {data.issues.map((item: any, index: any) => ( */}
+          {/*  <div onClick={() => handleClick(item)} key={index}> */}
+          {/*    <CardIssueItem issue={item} /> */}
+          {/*  </div> */}
+          {/* ))} */}
           <List
             itemLayout="horizontal"
             dataSource={data.issues}
@@ -131,7 +137,8 @@ function CardIssues() {
               <List.Item onClick={() => handleClick(item)}>
                 <CardIssueItem issue={item} />
               </List.Item>
-            )}/>
+            )}
+          />
         </NoContent>
       </Loader>
 
@@ -139,9 +146,19 @@ function CardIssues() {
         <div className="text-disabled-text">
           {data.total && (
             <>
-              Showing < span className="font-medium">{(filter.page - 1) * pageSize + 1}</span> to{' '}
-              <span className="font-medium">{(filter.page - 1) * pageSize + pageSize}</span> of{' '}
-              <span className="font-medium">{data.total}</span> issues.
+              Showing
+              {' '}
+              <span className="font-medium">{(filter.page - 1) * pageSize + 1}</span>
+              {' '}
+              to
+              {' '}
+              <span className="font-medium">{(filter.page - 1) * pageSize + pageSize}</span>
+              {' '}
+              of
+              {' '}
+              <span className="font-medium">{data.total}</span>
+              {' '}
+              issues.
             </>
           )}
         </div>

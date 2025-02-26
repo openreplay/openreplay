@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import React from 'react';
-import { Input as AntInput } from 'antd'
+import { Input as AntInput } from 'antd';
 import { Icon } from 'UI';
 
 interface Props {
@@ -44,7 +44,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           className={cn(
             'p-2 border border-gray-light bg-white w-full rounded-lg',
             className,
-            { 'pl-10': icon }
+            { 'pl-10': icon },
           )}
           {...rest}
         />
@@ -56,7 +56,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           className={cn(
             'p-2 border border-gray-light bg-white w-full rounded-lg',
             className,
-            { 'pl-10': icon }
+            { 'pl-10': icon },
           )}
           {...rest}
         />

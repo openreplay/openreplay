@@ -4,6 +4,7 @@ import { Icon } from 'UI';
 
 class PlayerErrorBoundary extends React.Component<any> {
   state = { hasError: false, error: '' };
+
   constructor(props: any) {
     super(props);
   }
@@ -18,13 +19,13 @@ class PlayerErrorBoundary extends React.Component<any> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className={'flex flex-col p-4 gap-4'}>
+        <div className="flex flex-col p-4 gap-4">
           <h4>Something went wrong during player rendering.</h4>
           <p>{this.state.error}</p>
           <Button
             onClick={() => window.location.reload()}
-            icon={<Icon name={'spinner'} size={16} />}
-            type={'primary'}
+            icon={<Icon name="spinner" size={16} />}
+            type="primary"
             style={{ width: 'fit-content' }}
           >
             Reload

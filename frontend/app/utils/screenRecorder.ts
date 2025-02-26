@@ -2,6 +2,7 @@ import { toast } from 'react-toastify';
 
 class AudioContextManager {
   context = new AudioContext();
+
   destination = this.context.createMediaStreamDestination();
 
   getAllTracks() {
@@ -33,7 +34,7 @@ function createFileRecorder(
   recName: string,
   sessionId: string,
   saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
-  onStop: () => void
+  onStop: () => void,
 ) {
   let ended = false;
   const start = new Date().getTime();
@@ -76,7 +77,7 @@ function saveFile(
   startDate: number,
   recName: string,
   sessionId: string,
-  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void
+  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
 ) {
   const saveObject = { name: recName, duration: new Date().getTime() - startDate, sessionId };
 
@@ -85,7 +86,7 @@ function saveFile(
   });
   saveCb(saveObject, blob);
 
-  const filename = recName + '.' + mimeType.split('/')[1];
+  const filename = `${recName}.${mimeType.split('/')[1]}`;
   const downloadLink = document.createElement('a');
   downloadLink.href = URL.createObjectURL(blob);
   downloadLink.download = filename;
@@ -139,7 +140,7 @@ export async function screenRecorder(
     },
     blob: Blob
   ) => void,
-  onStop: () => void
+  onStop: () => void,
 ) {
   try {
     const stream = await recordScreen();
@@ -153,9 +154,9 @@ export async function screenRecorder(
     };
   } catch (e) {
     toast.error(
-      'Screen recording is not permitted by your system and/or browser. Make sure to enable it in your browser as well as in your system settings.'
+      'Screen recording is not permitted by your system and/or browser. Make sure to enable it in your browser as well as in your system settings.',
     );
-    throw new Error('OpenReplay recording: ' + e);
+    throw new Error(`OpenReplay recording: ${e}`);
   }
 }
 

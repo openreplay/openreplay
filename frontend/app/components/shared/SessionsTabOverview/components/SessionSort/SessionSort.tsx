@@ -8,15 +8,17 @@ const sortOptionsMap = {
   'startTs-desc': 'Newest',
   'startTs-asc': 'Oldest',
   'eventsCount-asc': 'Events Ascending',
-  'eventsCount-desc': 'Events Descending'
+  'eventsCount-desc': 'Events Descending',
 };
 
 const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({
   label,
-  key: value
+  key: value,
 }));
 
-export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }: {
+export function SortDropdown<T>({
+  defaultOption, onSort, sortOptions, current,
+}: {
   defaultOption?: string,
   onSort: ({ key, item }: { key: string, item: T }) => void,
   sortOptions: any,
@@ -27,10 +29,10 @@ export function SortDropdown<T>({ defaultOption, onSort, sortOptions, current }:
       menu={{
         items: sortOptions,
         selectedKeys: [defaultOption],
-        onClick: onSort
+        onClick: onSort,
       }}
     >
-      <div className={'cursor-pointer flex items-center justify-end gap-2'}>
+      <div className="cursor-pointer flex items-center justify-end gap-2">
         <div>{current}</div>
         <DownOutlined />
       </div>

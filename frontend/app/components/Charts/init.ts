@@ -18,7 +18,7 @@ echarts.use([
   LegendComponent,
   // TransformComponent,
   SVGRenderer,
-  ToolboxComponent
+  ToolboxComponent,
 ]);
 
 const defaultOptions = {
@@ -38,9 +38,9 @@ const defaultOptions = {
       type: 'cross',
       snap: true,
       label: {
-        backgroundColor: '#6a7985'
+        backgroundColor: '#6a7985',
       },
-    }
+    },
   },
   grid: {
     bottom: 20,
@@ -56,16 +56,16 @@ const defaultOptions = {
     feature: {
       saveAsImage: {
         pixelRatio: 1.5,
-      }
-    }
+      },
+    },
   },
   legend: {
     type: 'plain',
     show: true,
     top: 10,
-    icon: 'pin'
+    icon: 'pin',
   },
-}
+};
 
 export function initWindowStorages(chartUuid: string, categories: string[] = [], chartArr: any[] = [], compChartArr: any[] = []) {
   (window as any).__seriesValueMap = (window as any).__seriesValueMap ?? {};

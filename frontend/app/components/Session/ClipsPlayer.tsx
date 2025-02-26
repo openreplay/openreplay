@@ -6,16 +6,16 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
-import {
-  IPlayerContext,
-  PlayerContext,
-  defaultContextValue,
-} from './playerContext';
 
 import ClipPlayerHeader from 'Components/Session/Player/ClipPlayer/ClipPlayerHeader';
 import ClipPlayerContent from 'Components/Session/Player/ClipPlayer/ClipPlayerContent';
 import Session from 'Types/session';
 import { sessionService } from '@/services';
+import {
+  IPlayerContext,
+  PlayerContext,
+  defaultContextValue,
+} from './playerContext';
 
 let playerInst: IPlayerContext['player'] | undefined;
 
@@ -29,9 +29,11 @@ interface Props {
 }
 
 function ClipsPlayer(props: Props) {
-  const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
+  const {
+    clip, currentIndex, isCurrent, onClose, isHighlight,
+  } = props;
   const { sessionStore } = useStore();
-  const prefetched = sessionStore.prefetched;
+  const { prefetched } = sessionStore;
   const [windowActive, setWindowActive] = useState(!document.hidden);
   const [contextValue, setContextValue] =
     // @ts-ignore
@@ -74,8 +76,7 @@ function ClipsPlayer(props: Props) {
 
   useEffect(() => {
     playerInst = undefined;
-    if (!clip.sessionId || contextValue.player !== undefined || !session)
-      return;
+    if (!clip.sessionId || contextValue.player !== undefined || !session) return;
 
     // @ts-ignore
     sessionStore.setUserTimezone(session?.timezone);
@@ -83,7 +84,7 @@ function ClipsPlayer(props: Props) {
       session,
       (state) => makeAutoObservable(state),
       toast,
-      clip.range
+      clip.range,
     );
 
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
@@ -105,10 +106,9 @@ function ClipsPlayer(props: Props) {
     ready,
   } = contextValue.store?.get() || {};
 
-  const cssLoading =
-    ready && tabStates
-      ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
-      : true;
+  const cssLoading = ready && tabStates
+    ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
+    : true;
 
   useEffect(() => {
     if (ready) {
@@ -125,7 +125,7 @@ function ClipsPlayer(props: Props) {
     }, 500);
   }, [currentIndex]);
 
-  if (!session || !session?.sessionId)
+  if (!session || !session?.sessionId) {
     return (
       <Loader
         size={75}
@@ -138,6 +138,7 @@ function ClipsPlayer(props: Props) {
         }}
       />
     );
+  }
 
   return (
     <PlayerContext.Provider value={contextValue}>

@@ -10,7 +10,9 @@ interface Props {
   debounceRequest?: number;
 }
 export default function Pagination(props: Props) {
-  const { page, total, onPageChange, limit = 5, debounceRequest = 0 } = props;
+  const {
+    page, total, onPageChange, limit = 5, debounceRequest = 0,
+  } = props;
   const [currentPage, setCurrentPage] = React.useState(page);
   React.useMemo(() => setCurrentPage(page), [page]);
 
@@ -24,15 +26,13 @@ export default function Pagination(props: Props) {
   };
 
   return (
-    <>
-      <AntPagination
-        simple
-        current={currentPage}
-        total={total}
-        pageSize={limit}
-        onChange={changePage}
-        showSizeChanger={false}
-      />
-    </>
-  )
+    <AntPagination
+      simple
+      current={currentPage}
+      total={total}
+      pageSize={limit}
+      onChange={changePage}
+      showSizeChanger={false}
+    />
+  );
 }

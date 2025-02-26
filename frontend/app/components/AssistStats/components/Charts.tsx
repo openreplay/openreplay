@@ -21,7 +21,7 @@ function Chart(props: Props) {
   return (
     <NoContent
       size="small"
-      title={<div className={'text-base font-normal'}>No data available</div>}
+      title={<div className="text-base font-normal">No data available</div>}
       show={data && data.length === 0}
       style={{ height: '100px' }}
     >
@@ -51,7 +51,7 @@ function Chart(props: Props) {
             fillOpacity={1}
             strokeWidth={2}
             strokeOpacity={0.8}
-            fill={'url(#colorCount)'}
+            fill="url(#colorCount)"
           />
         </AreaChart>
       </ResponsiveContainer>

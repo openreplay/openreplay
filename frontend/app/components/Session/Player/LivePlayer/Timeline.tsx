@@ -1,4 +1,6 @@
-import React, { useMemo, useContext, useState, useRef } from 'react';
+import React, {
+  useMemo, useContext, useState, useRef,
+} from 'react';
 import { useStore } from 'App/mstore';
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
 import stl from 'Components/Session_/Player/Controls/timeline.module.css';
@@ -16,23 +18,23 @@ function Timeline() {
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   // @ts-ignore
-  const { player, store } = useContext<ILivePlayerContext>(PlayerContext)
-  const [wasPlaying, setWasPlaying] = useState(false)
+  const { player, store } = useContext<ILivePlayerContext>(PlayerContext);
+  const [wasPlaying, setWasPlaying] = useState(false);
   const {
     playing,
     time,
     ready,
     endTime,
     liveTimeTravel,
-  } = store.get()
+  } = store.get();
 
-  const timelineRef = useRef<HTMLDivElement>(null)
-  const progressRef = useRef<HTMLDivElement>(null)
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   const scale = 100 / endTime;
 
-  const debouncedJump = useMemo(() => debounce(player.jump, 500), [])
-  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), [])
+  const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
+  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), []);
 
   const onDragEnd = () => {
     if (!liveTimeTravel) return;
@@ -50,7 +52,7 @@ function Timeline() {
     debouncedJump(time);
     hideTimeTooltip();
     if (playing) {
-      setWasPlaying(true)
+      setWasPlaying(true);
       player.pause();
     }
   };
@@ -71,13 +73,13 @@ function Timeline() {
 
     const [time, duration] = getLiveTime(e);
     const timeLineTooltip = {
-      time: Duration.fromMillis(duration - time).toFormat(`-mm:ss`),
+      time: Duration.fromMillis(duration - time).toFormat('-mm:ss'),
       offset: e.nativeEvent.offsetX,
       isVisible: true,
     };
 
     debouncedTooltipChange(timeLineTooltip);
-  }
+  };
 
   const hideTimeTooltip = () => {
     const timeLineTooltip = { isVisible: false };
@@ -126,7 +128,7 @@ function Timeline() {
     >
       <div
         className={stl.progress}
-        onClick={ready ? jumpToTime : undefined }
+        onClick={ready ? jumpToTime : undefined}
         ref={progressRef}
         role="button"
         onMouseMoveCapture={showTimeTooltip}
@@ -146,11 +148,10 @@ function Timeline() {
         />
         <TimeTracker scale={scale} live left={time * scale} />
 
-
         <div className={stl.timeline} ref={timelineRef} />
       </div>
     </div>
-  )
+  );
 }
 
-export default observer(Timeline)
+export default observer(Timeline);

@@ -33,14 +33,16 @@ function SentryForm({
   integrated: boolean;
 }) {
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const {
     data = initialValues,
     isPending,
     saveMutation,
     removeMutation,
   } = useIntegration<SentryConfig>('sentry', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors, } = useForm(data, {
+  const {
+    values, errors, handleChange, hasErrors, checkErrors,
+  } = useForm(data, {
     url: {
       required: false,
     },
@@ -63,7 +65,7 @@ function SentryForm({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -72,7 +74,7 @@ function SentryForm({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -130,7 +132,7 @@ function SentryForm({
             errors={errors.token}
           />
 
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
@@ -142,7 +144,7 @@ function SentryForm({
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                Delete
               </Button>
             )}
           </div>

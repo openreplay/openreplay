@@ -5,12 +5,12 @@ const MESSAGE = 'message';
 const OPEN = 'open';
 const CLOSE = 'close';
 
-export const TYPES = { ASSIGN, MESSAGE, OPEN, CLOSE } as const;
-
+export const TYPES = {
+  ASSIGN, MESSAGE, OPEN, CLOSE,
+} as const;
 
 type TypeKeys = keyof typeof TYPES
 type TypeValues = typeof TYPES[TypeKeys]
-
 
 export interface IActivity {
   id: string;
@@ -22,19 +22,24 @@ export interface IActivity {
 }
 
 export default class Activity {
-  id: IActivity["id"];
-  type: IActivity["type"];
-  author: IActivity["author"];
+  id: IActivity['id'];
+
+  type: IActivity['type'];
+
+  author: IActivity['author'];
+
   createdAt?: DateTime;
-  message: IActivity["message"];
-  user: IActivity["user"];
+
+  message: IActivity['message'];
+
+  user: IActivity['user'];
 
   constructor(activity?: IActivity) {
     if (activity) {
       Object.assign(this, {
         ...activity,
         createdAt: activity.createdAt ? DateTime.fromMillis(activity.createdAt, {}).toUTC() : undefined,
-      })
+      });
     } else {
       Object.assign(this, {
         id: undefined,
@@ -42,8 +47,8 @@ export default class Activity {
         author: '',
         createdAt: undefined,
         message: '',
-        user: ''
-      })
+        user: '',
+      });
     }
   }
 }

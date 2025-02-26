@@ -25,7 +25,9 @@ function ScatterChartComponent(props: Props) {
           <ScatterChart
             width={730}
             height={250}
-            margin={{ top: 20, right: 20, bottom: 10, left: 10 }}
+            margin={{
+              top: 20, right: 20, bottom: 10, left: 10,
+            }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" name="stature" unit="cm" />

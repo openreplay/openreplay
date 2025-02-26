@@ -1,7 +1,7 @@
 import { percentOf } from 'App/utils';
+import React from 'react';
 import styles from './barRow.module.css';
 import tableStyles from './timeTable.module.css';
-import React from 'react';
 
 const formatTime = (time) => (time < 1000 ? `${time.toFixed(2)}ms` : `${time / 1000}s`);
 
@@ -18,12 +18,14 @@ interface Props {
 }
 
 // TODO: If request has no duration, set duration to 0.2s. Enforce existence of duration in the future.
-const BarRow = ({
-  resource: { time, ttfb = 0, duration = 200, key },
+function BarRow({
+  resource: {
+    time, ttfb = 0, duration = 200, key,
+  },
   popup = false,
   timestart = 0,
   timewidth,
-}: Props) => {
+}: Props) {
   const timeOffset = time - timestart;
   ttfb = ttfb || 0;
 
@@ -51,20 +53,22 @@ const BarRow = ({
       />
     </div>
   );
-  if (!popup)
+  if (!popup) {
     return (
       <div key={key} className={tableStyles.row}>
         {' '}
-        {trigger}{' '}
+        {trigger}
+        {' '}
       </div>
     );
+  }
 
   return (
     <div key={key} className={tableStyles.row} style={{ height: '15px' }}>
       {trigger}
     </div>
   );
-};
+}
 
 BarRow.displayName = 'BarRow';
 

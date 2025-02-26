@@ -9,7 +9,9 @@ interface Props {
   content: string;
 }
 function CopyText(props: Props) {
-  const { children, label = 'Click to copy', afterLabel = 'Copied', content = '' } = props;
+  const {
+    children, label = 'Click to copy', afterLabel = 'Copied', content = '',
+  } = props;
   const [isCopied, setIsCopied] = useState(false);
   const onClick = () => {
     copy(content);
@@ -17,7 +19,7 @@ function CopyText(props: Props) {
     setTimeout(() => setIsCopied(false), 5000);
   };
   return (
-    <Tooltip title={isCopied ? afterLabel : label} placement='top'>
+    <Tooltip title={isCopied ? afterLabel : label} placement="top">
       <span onClick={onClick}>{children}</span>
     </Tooltip>
   );

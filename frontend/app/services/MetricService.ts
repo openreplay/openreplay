@@ -6,7 +6,7 @@ export default class MetricService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
@@ -29,10 +29,10 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   getMetric(metricId: string): Promise<any> {
-    return this.client.get('/cards/' + metricId)
-      .then(r => r.json())
+    return this.client.get(`/cards/${metricId}`)
+      .then((r) => r.json())
       .then((response: { data: any; }) => response.data || {})
-      .catch(e => Promise.reject(e));
+      .catch((e) => Promise.reject(e));
   }
 
   /**
@@ -43,11 +43,11 @@ export default class MetricService {
   saveMetric(metric: Widget): Promise<any> {
     const data = metric.toJson();
     const isCreating = !data[Widget.ID_KEY];
-    const url = isCreating ? '/cards' : '/cards/' + data[Widget.ID_KEY];
+    const url = isCreating ? '/cards' : `/cards/${data[Widget.ID_KEY]}`;
     return this.client.post(url, data)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((response: { data: any; }) => response.data || {})
-      .catch(e => Promise.reject(e));
+      .catch((e) => Promise.reject(e));
   }
 
   /**
@@ -56,11 +56,10 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   deleteMetric(metricId: string): Promise<any> {
-    return this.client.delete('/cards/' + metricId)
+    return this.client.delete(`/cards/${metricId}`)
       .then((response: { json: () => any; }) => response.json())
       .then((response: { data: any; }) => response.data);
   }
-
 
   /**
    * Get all templates.
@@ -80,7 +79,7 @@ export default class MetricService {
     ) {
       return Promise.resolve({});
     }
-    const path = isSaved ? `/cards/${metric.metricId}/chart` : `/cards/try`;
+    const path = isSaved ? `/cards/${metric.metricId}/chart` : '/cards/try';
     if (metric.metricType === USER_PATH) {
       data.density = 5;
       data.metricOf = 'sessionCount';
@@ -114,7 +113,7 @@ export default class MetricService {
       filter.filters = drillDownFilter;
     }
 
-    let resp: Response = await this.client.post(`/cards/try/issues`, filter);
+    const resp: Response = await this.client.post('/cards/try/issues', filter);
     const json: any = await resp.json();
     return await json.data || {};
   }

@@ -26,8 +26,7 @@ export const CATEGORIES = {
   product_analytics: 'product_analytics',
   monitors: 'monitors',
   web_analytics: 'web_analytics',
-}
-
+};
 
 export interface Option {
   label: string;
@@ -46,7 +45,7 @@ export const TYPE_ICONS = {
   [ERRORS]: 'exclamation-circle',
   [USER_PATH]: 'user-journey',
   [TABLE]: 'list-alt',
-} as const
+} as const;
 export const TYPE_NAMES = {
   [LIBRARY]: 'Library',
   [TIMESERIES]: 'Trend',
@@ -58,7 +57,7 @@ export const TYPE_NAMES = {
   [RETENTION]: 'Retention',
   [INSIGHTS]: 'Insights',
   [PERFORMANCE]: 'Performance',
-} as const
+} as const;
 
 export const TYPES: CardType[] = [
   {
@@ -136,5 +135,5 @@ export const DROPDOWN_OPTIONS = TYPES.filter((i: MetricType) => i.slug !== LIBRA
     icon: i.icon,
     value: i.slug,
     description: i.description,
-  })
+  }),
 );

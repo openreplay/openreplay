@@ -13,7 +13,7 @@ interface Props {
 
 function PlayIconLayer({ playing, togglePlay }: Props) {
   const { sessionStore } = useStore();
-  const notesEdit = sessionStore.createNoteTooltip.isVisible
+  const notesEdit = sessionStore.createNoteTooltip.isVisible;
   const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ function PlayIconLayer({ playing, togglePlay }: Props) {
     };
   }, [notesEdit]);
 
-  const getIsEdit = React.useCallback(() => notesEdit, [notesEdit])
+  const getIsEdit = React.useCallback(() => notesEdit, [notesEdit]);
 
   const onKeyDown = (e: any) => {
     if (getIsEdit() || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

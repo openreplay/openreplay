@@ -16,9 +16,9 @@ function processKey(input: FilterParam): FilterParam {
   const result: FilterParam = {};
   for (const key in input) {
     if (
-      input.type === 'metadata' &&
-      typeof input[key] === 'string' &&
-      input[key].startsWith('_')
+      input.type === 'metadata'
+      && typeof input[key] === 'string'
+      && input[key].startsWith('_')
     ) {
       result[key] = input[key].substring(1);
     } else {
@@ -56,7 +56,7 @@ const FilterAutoComplete = observer(
     placeholder,
   }: { params: any, values: string[], onClose: () => void, onApply: (values: string[]) => void, placeholder?: string }) => {
     const [options, setOptions] = useState<{ value: string; label: string }[]>(
-      []
+      [],
     );
     const [initialFocus, setInitialFocus] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -66,14 +66,14 @@ const FilterAutoComplete = observer(
     const topValues = filterStore.topValues[filterKey] || [];
 
     React.useEffect(() => {
-      filterStore.resetValues()
-      setOptions([])
-    }, [projectsStore.siteId])
+      filterStore.resetValues();
+      setOptions([]);
+    }, [projectsStore.siteId]);
 
     const loadTopValues = async () => {
-      setLoading(true)
+      setLoading(true);
       await filterStore.fetchTopValues(_params.type, _params.key);
-      setLoading(false)
+      setLoading(false);
     };
 
     useEffect(() => {
@@ -87,7 +87,7 @@ const FilterAutoComplete = observer(
     }, [topValues, initialFocus]);
 
     useEffect(() => {
-      void loadTopValues()
+      void loadTopValues();
     }, [_params.type]);
 
     const loadOptions = async (
@@ -107,8 +107,7 @@ const FilterAutoComplete = observer(
           ..._params,
           q: inputValue,
         });
-        const _options =
-          data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+        const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
         setOptions(_options);
       } catch (e) {
         throw new Error(e);
@@ -132,21 +131,23 @@ const FilterAutoComplete = observer(
       setOptions(topValues.map((i) => ({ value: i.value, label: i.value })));
     };
 
-    return <AutocompleteModal 
-      values={values} 
-      onClose={onClose} 
-      onApply={onApply} 
-      handleFocus={handleFocus} 
-      loadOptions={handleInputChange}
-      options={options}
-      isLoading={loading}
-      placeholder={placeholder}
-    />
-  }
+    return (
+      <AutocompleteModal
+        values={values}
+        onClose={onClose}
+        onApply={onApply}
+        handleFocus={handleFocus}
+        loadOptions={handleInputChange}
+        options={options}
+        isLoading={loading}
+        placeholder={placeholder}
+      />
+    );
+  },
 );
 
 function AutoCompleteController(props: Props) {
-  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />
+  return <AutoCompleteContainer {...props} modalRenderer={FilterAutoComplete} />;
 }
 
 export default AutoCompleteController;

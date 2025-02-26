@@ -1,13 +1,12 @@
 import React from 'react';
 import { Icon } from 'UI';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
-import { lastAskedKey, healthResponseKey } from './const';
 import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
-import { getHealthRequest } from './getHealth';
 import UserMenu from 'Components/Header/UserMenu/UserMenu';
-import { Popover } from 'antd';
-import { Button } from 'antd';
+import { Popover, Button } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { getHealthRequest } from './getHealth';
+import { lastAskedKey, healthResponseKey } from './const';
 
 export interface IServiceStats {
   name: 'backendServices' | 'databases' | 'ingestionPipeline' | 'SSL';
@@ -21,7 +20,6 @@ export interface IServiceStats {
     }
   }[];
 }
-
 
 function HealthStatus() {
   const healthResponseSaved = localStorage.getItem(healthResponseKey) || '{}';
@@ -61,7 +59,7 @@ function HealthStatus() {
   return (
     <>
       <Popover
-        content={
+        content={(
           <HealthWidget
             healthResponse={healthResponse}
             getHealth={getHealth}
@@ -70,10 +68,10 @@ function HealthStatus() {
             setShowModal={setShowModal}
             isError={isError}
           />
-        }
+        )}
         placement="topRight"
       >
-        <Button icon={<ExclamationCircleOutlined />}></Button>
+        <Button icon={<ExclamationCircleOutlined />} />
       </Popover>
       {showModal ? (
         <HealthModal
@@ -86,6 +84,5 @@ function HealthStatus() {
     </>
   );
 }
-
 
 export default HealthStatus;

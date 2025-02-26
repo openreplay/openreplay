@@ -19,7 +19,9 @@ function Description({
   return (
     <>
       <label>
-        <span className={'font-semibold'}>Description </span> <span className={"text-disabled-text text-sm"}>(Optional)</span>
+        <span className="font-semibold">Description </span>
+        {' '}
+        <span className="text-disabled-text text-sm">(Optional)</span>
       </label>
       {isDescrEditing ? (
         <textarea
@@ -40,15 +42,15 @@ function Description({
           onClick={() => setEditing({ isDescrEditing: true })}
           className={cn(
             'cursor-pointer border-b w-fit',
-            'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
+            'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium',
           )}
         >
           {current.description}
         </div>
       ) : (
         <Button
-          type={'text'}
-          icon={<Icon name={'edit'} size={16} />}
+          type="text"
+          icon={<Icon name="edit" size={16} />}
           onClick={() => setEditing({ isDescrEditing: true })}
         >
           Add

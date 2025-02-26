@@ -34,7 +34,7 @@ function RecordsListItem(props: Props) {
   const onDelete = () => {
     recordingsStore.deleteRecording(record.recordId).then(() => {
       recordingsStore.setRecordings(
-        recordingsStore.recordings.filter((rec) => rec.recordId !== record.recordId)
+        recordingsStore.recordings.filter((rec) => rec.recordId !== record.recordId),
       );
       toast.success('Recording deleted');
     });

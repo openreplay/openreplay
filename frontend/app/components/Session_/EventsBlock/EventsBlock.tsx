@@ -18,15 +18,17 @@ interface IProps {
 }
 
 function EventsBlock(props: IProps) {
-  const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } = useStore();
+  const {
+    notesStore, uxtestingStore, uiPlayerStore, sessionStore,
+  } = useStore();
   const session = sessionStore.current;
-  const notesWithEvents = session.notesWithEvents;
-  const uxtVideo = session.uxtVideo;
-  const filteredEvents = sessionStore.filteredEvents;
+  const { notesWithEvents } = session;
+  const { uxtVideo } = session;
+  const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
-  const eventsIndex = sessionStore.eventsIndex;
+  const { eventsIndex } = sessionStore;
   const setEventFilter = sessionStore.setEventQuery;
-  const filterOutNote = sessionStore.filterOutNote;
+  const { filterOutNote } = sessionStore;
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
@@ -76,14 +78,12 @@ function EventsBlock(props: IProps) {
     const eventsWithMobxNotes = [...notesWithEvents, ...notes].sort(sortEvents);
     return mergeEventLists(
       filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
-      tabChangeEvents
-    ).filter((e) =>
-      zoomEnabled
-        ? 'time' in e
-          ? e.time >= zoomStartTs && e.time <= zoomEndTs
-          : false
-        : true
-    );
+      tabChangeEvents,
+    ).filter((e) => (zoomEnabled
+      ? 'time' in e
+        ? e.time >= zoomStartTs && e.time <= zoomEndTs
+        : false
+      : true));
   }, [
     filteredLength,
     notesWithEvtsLength,
@@ -103,17 +103,16 @@ function EventsBlock(props: IProps) {
           i--;
         }
         return i;
-      } else {
-        let l = 0;
-        while (l < i) {
-          const event = usedEvents[l];
-          if ('time' in event && event.time >= time) break;
-          l++;
-        }
-        return l;
       }
+      let l = 0;
+      while (l < i) {
+        const event = usedEvents[l];
+        if ('time' in event && event.time >= time) break;
+        l++;
+      }
+      return l;
     },
-    [usedEvents, time, endTime]
+    [usedEvents, time, endTime],
   );
   const currentTimeEventIndex = findLastFitting(time);
 
@@ -139,10 +138,8 @@ function EventsBlock(props: IProps) {
     }, 100);
   };
 
-  React.useEffect(() => {
-    return () => {
-      clearSearch();
-    };
+  React.useEffect(() => () => {
+    clearSearch();
   }, []);
   React.useEffect(() => {
     if (scroller.current) {
@@ -165,8 +162,7 @@ function EventsBlock(props: IProps) {
     index: number;
   }) => {
     const isLastEvent = index === usedEvents.length - 1;
-    const isLastInGroup =
-      isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
+    const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
     const event = usedEvents[index];
     const isNote = 'noteId' in event;
     const isTabChange = 'type' in event && event.type === 'TABCHANGE';
@@ -197,11 +193,11 @@ function EventsBlock(props: IProps) {
 
   return (
     <>
-      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]'  )}>
+      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]')}>
         {uxtestingStore.isUxt() ? (
-          <div style={{ width: 240, height: 130 }} className={'relative'}>
+          <div style={{ width: 240, height: 130 }} className="relative">
             <video
-              className={'z-20 fixed'}
+              className="z-20 fixed"
               muted
               autoPlay
               controls
@@ -214,7 +210,7 @@ function EventsBlock(props: IProps) {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
               }}
-              className={'absolute z-10'}
+              className="absolute z-10"
             >
               No video
             </div>
@@ -247,10 +243,7 @@ function EventsBlock(props: IProps) {
           className={styles.eventsList}
           ref={scroller}
         >
-          {usedEvents.map((_, i) => {
-              return renderGroup({ index: i })
-            }
-          )}
+          {usedEvents.map((_, i) => renderGroup({ index: i }))}
         </VList>
       </div>
     </>

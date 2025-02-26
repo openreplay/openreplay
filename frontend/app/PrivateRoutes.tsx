@@ -1,11 +1,11 @@
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import React, { Suspense, lazy } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import { observer } from 'mobx-react-lite'
-import { useStore } from "./mstore";
+import { observer } from 'mobx-react-lite';
 import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import { Loader } from 'UI';
+import { useStore } from './mstore';
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -20,13 +20,13 @@ const components: any = {
   DashboardPure: lazy(() => import('Components/Dashboard/NewDashboard')),
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   UsabilityTestingPure: lazy(
-    () => import('Components/UsabilityTesting/UsabilityTesting')
+    () => import('Components/UsabilityTesting/UsabilityTesting'),
   ),
   UsabilityTestEditPure: lazy(
-    () => import('Components/UsabilityTesting/TestEdit')
+    () => import('Components/UsabilityTesting/TestEdit'),
   ),
   UsabilityTestOverviewPure: lazy(
-    () => import('Components/UsabilityTesting/TestOverview')
+    () => import('Components/UsabilityTesting/TestOverview'),
   ),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
@@ -46,7 +46,7 @@ const enhancedComponents: any = {
   UsabilityTesting: withSiteIdUpdater(components.UsabilityTestingPure),
   UsabilityTestEdit: withSiteIdUpdater(components.UsabilityTestEditPure),
   UsabilityTestOverview: withSiteIdUpdater(
-    components.UsabilityTestOverviewPure
+    components.UsabilityTestOverviewPure,
   ),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
@@ -54,7 +54,7 @@ const enhancedComponents: any = {
   Highlights: withSiteIdUpdater(components.HighlightsPure),
 };
 
-const withSiteId = routes.withSiteId;
+const { withSiteId } = routes;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
@@ -100,25 +100,24 @@ const HIGHLIGHTS_PATH = routes.highlights();
 
 function PrivateRoutes() {
   const { projectsStore, userStore, integrationsStore } = useStore();
-  const onboarding = userStore.onboarding;
+  const { onboarding } = userStore;
   const scope = userStore.scopeState;
-  const tenantId = userStore.account.tenantId;
+  const { tenantId } = userStore.account;
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const hasRecordings = sites.some(s => s.recorded);
+  const { siteId } = projectsStore;
+  const hasRecordings = sites.some((s) => s.recorded);
   const redirectToSetup = scope === 0;
-  const redirectToOnboarding =
-    !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
+  const redirectToOnboarding = !onboarding && (localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true' || (sites.length > 0 && !hasRecordings)) && scope > 0;
   const siteIdList: any = sites.map(({ id }) => id);
 
   React.useEffect(() => {
     if (siteId && integrationsStore.integrations.siteId !== siteId) {
-      integrationsStore.integrations.setSiteId(siteId)
+      integrationsStore.integrations.setSiteId(siteId);
       void integrationsStore.integrations.fetchIntegrations(siteId);
     }
-  }, [siteId])
+  }, [siteId]);
   return (
-    <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+    <Suspense fallback={<Loader loading className="flex-1" />}>
       <Switch key="content">
         <Route
           exact
@@ -264,7 +263,7 @@ function PrivateRoutes() {
         {Object.entries(routes.redirects).map(([fr, to]) => (
           <Redirect key={fr} exact strict from={fr} to={to} />
         ))}
-        <Route path={"*"}>
+        <Route path="*">
           <Redirect to={withSiteId(routes.sessions(), siteId)} />
         </Route>
       </Switch>

@@ -1,13 +1,12 @@
-import { Segmented } from 'antd';
+import { Segmented, Button } from 'antd';
 import React from 'react';
-import CircleNumber from '../CircleNumber';
-import MetadataList from '../MetadataList/MetadataList';
 import { HighlightCode, Icon } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
-import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Button } from 'antd'
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
+import MetadataList from '../MetadataList/MetadataList';
+import CircleNumber from '../CircleNumber';
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -23,11 +22,12 @@ interface Props extends WithOnboardingProps {
 }
 
 function IdentifyUsersTab(props: Props) {
-  const { site, platforms, platform, setPlatform, platformMap } = props;
+  const {
+    site, platforms, platform, setPlatform, platformMap,
+  } = props;
 
   React.useEffect(() => {
-    if (site.platform)
-      setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) ?? platform ?? platforms[0]);
+    if (site.platform) setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) ?? platform ?? platforms[0]);
   }, [site]);
 
   return (
@@ -39,12 +39,13 @@ function IdentifyUsersTab(props: Props) {
         </div>
 
         <a
-          href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
+          href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === 'web' ? '/#with-npm' : '/#with-ios-app'}`}
           target="_blank"
+          rel="noreferrer"
         >
-          <Button size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
-            <Icon name={'question-circle'} />
-            <div className={'text-main'}>See Documentation</div>
+          <Button size="small" type="text" className="ml-2 flex items-center gap-2">
+            <Icon name="question-circle" />
+            <div className="text-main">See Documentation</div>
           </Button>
         </a>
       </h1>
@@ -53,9 +54,7 @@ function IdentifyUsersTab(props: Props) {
         <Segmented
           options={platforms}
           value={platform.value}
-          onChange={(value) =>
-            setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])
-          }
+          onChange={(value) => setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])}
         />
       </div>
       <div className="grid grid-cols-6 gap-4 w-full p-4">
@@ -63,19 +62,23 @@ function IdentifyUsersTab(props: Props) {
           <div>
             <div className="font-medium mb-2 text-lg">Identify users by user ID</div>
             <div className="mb-2">
-              Call <span className="highlight-blue">setUserID</span> to identify your users when
+              Call
+              {' '}
+              <span className="highlight-blue">setUserID</span>
+              {' '}
+              to identify your users when
               recording a session.
             </div>
           </div>
 
           {platform.value === 'web' ? (
-            <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
+            <HighlightCode className="js" text={'tracker.setUserID(\'john@doe.com\');'} />
           ) : (
-             <HighlightCode
-               className="swift"
-               text={`OpenReplay.shared.setUserID('john@doe.com');`}
-             />
-           )}
+            <HighlightCode
+              className="swift"
+              text={'OpenReplay.shared.setUserID(\'john@doe.com\');'}
+            />
+          )}
           {platform.value === 'web' ? (
             <div className="flex items-center my-2">
               <Icon name="info-circle" color="gray-darkest" />
@@ -117,17 +120,21 @@ function IdentifyUsersTab(props: Props) {
               <div className="pt-1 w-full">
                 <span className="font-bold">Inject metadata when recording sessions</span>
                 <div className="my-2">
-                  Use the <span className="highlight-blue">setMetadata</span> method in your code to
+                  Use the
+                  {' '}
+                  <span className="highlight-blue">setMetadata</span>
+                  {' '}
+                  method in your code to
                   inject custom user data in the form of a key/value pair (string).
                 </div>
                 {platform.value === 'web' ? (
-                  <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
+                  <HighlightCode className="js" text={'tracker.setMetadata(\'plan\', \'premium\');'} />
                 ) : (
-                   <HighlightCode
-                     className="swift"
-                     text={`OpenReplay.shared.setMetadata('plan', 'premium');`}
-                   />
-                 )}
+                  <HighlightCode
+                    className="swift"
+                    text={'OpenReplay.shared.setMetadata(\'plan\', \'premium\');'}
+                  />
+                )}
               </div>
             </div>
           </div>

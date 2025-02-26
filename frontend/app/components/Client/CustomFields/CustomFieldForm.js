@@ -4,7 +4,9 @@ import { edit, save } from 'Duck/customField';
 import { Form, Input, Button } from 'UI';
 import styles from './customFieldForm.module.css';
 
-const CustomFieldForm = ({ field, saving, errors, edit, save, onSave, onClose, onDelete }) => {
+function CustomFieldForm({
+  field, saving, errors, edit, save, onSave, onClose, onDelete,
+}) {
   const focusElementRef = useRef(null);
 
   const setFocus = () => focusElementRef.current.focus();
@@ -15,10 +17,14 @@ const CustomFieldForm = ({ field, saving, errors, edit, save, onSave, onClose, o
 
   return (
     <div className="bg-white h-screen overflow-y-auto">
-      <h3 className="p-5 text-xl">{exists ? 'Update' : 'Add'} Metadata Field</h3>
+      <h3 className="p-5 text-xl">
+        {exists ? 'Update' : 'Add'}
+        {' '}
+        Metadata Field
+      </h3>
       <Form className={styles.wrapper}>
         <Form.Field>
-          <label>{'Field Name'}</label>
+          <label>Field Name</label>
           <Input
             ref={focusElementRef}
             name="key"
@@ -41,21 +47,21 @@ const CustomFieldForm = ({ field, saving, errors, edit, save, onSave, onClose, o
               {exists ? 'Update' : 'Add'}
             </Button>
             <Button data-hidden={!exists} onClick={onClose}>
-              {'Cancel'}
+              Cancel
             </Button>
           </div>
 
-          <Button variant="text" icon="trash" data-hidden={!exists} onClick={onDelete}></Button>
+          <Button variant="text" icon="trash" data-hidden={!exists} onClick={onDelete} />
         </div>
       </Form>
     </div>
   );
-};
+}
 
 const mapStateToProps = (state) => ({
   field: state.getIn(['customFields', 'instance']),
   saving: state.getIn(['customFields', 'saveRequest', 'loading']),
-  errors: state.getIn(['customFields', 'saveRequest', 'errors'])
+  errors: state.getIn(['customFields', 'saveRequest', 'errors']),
 });
 
 export default connect(mapStateToProps, { edit, save })(CustomFieldForm);

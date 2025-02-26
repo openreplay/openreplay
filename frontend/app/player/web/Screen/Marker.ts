@@ -1,6 +1,6 @@
+import { finder } from '@medv/finder';
 import type Screen from './Screen';
 import styles from './marker.module.css';
-import { finder } from '@medv/finder';
 
 const metaCharsMap = {
   '&': '&amp;',
@@ -14,10 +14,9 @@ const metaCharsMap = {
 };
 
 function escapeHtml(str: string) {
-  return String(str).replace(/[&<>"'`=\/]/g, function (s) {
+  return String(str).replace(/[&<>"'`=\/]/g, (s) =>
     // @ts-ignore
-    return metaCharsMap[s];
-  });
+    metaCharsMap[s]);
 }
 
 function escapeRegExp(string: string) {
@@ -30,10 +29,15 @@ function safeString(string: string) {
 
 export default class Marker {
   private _target: Element | null = null;
+
   private selector: string | null = null;
+
   private readonly tooltip: HTMLDivElement;
+
   private readonly tooltipSelector: HTMLDivElement;
+
   private readonly tooltipHint: HTMLDivElement;
+
   private marker: HTMLDivElement;
 
   constructor(private readonly overlay: HTMLElement, private readonly screen: Screen) {
@@ -41,7 +45,7 @@ export default class Marker {
     this.tooltip.className = styles.tooltip;
     this.tooltipSelector = document.createElement('div');
     this.tooltipHint = document.createElement('div');
-    this.tooltipHint.innerText = '(click to tag element)'
+    this.tooltipHint.innerText = '(click to tag element)';
     this.tooltipHint.className = styles.tooltipHint;
     this.tooltip.append(this.tooltipSelector, this.tooltipHint);
 
@@ -114,6 +118,7 @@ export default class Marker {
   }
 
   lastSelector = '';
+
   private getTagString(el: Element) {
     if (!this.screen.document) return '';
     const selector = finder(el, {
@@ -124,7 +129,7 @@ export default class Marker {
       maxNumberOfTries: 10_000,
     });
     this.lastSelector = selector;
-    return selector
+    return selector;
   }
 
   redraw() {
@@ -137,20 +142,19 @@ export default class Marker {
     }
     const rect = this._target.getBoundingClientRect();
     this.marker.style.display = 'block';
-    this.marker.style.left = rect.left + 'px';
-    this.marker.style.top = rect.top + 'px';
-    this.marker.style.width = rect.width + 'px';
-    this.marker.style.height = rect.height + 'px';
+    this.marker.style.left = `${rect.left}px`;
+    this.marker.style.top = `${rect.top}px`;
+    this.marker.style.width = `${rect.width}px`;
+    this.marker.style.height = `${rect.height}px`;
 
-    const replayScale = this.screen.getScale()
+    const replayScale = this.screen.getScale();
     if (replayScale < 1) {
       const upscale = (1 / replayScale).toFixed(3);
-      const yShift = ((1 - replayScale)/2) * 100;
-      this.tooltip.style.transform = `scale(${upscale}) translateY(-${yShift + 0.5}%)`
+      const yShift = ((1 - replayScale) / 2) * 100;
+      this.tooltip.style.transform = `scale(${upscale}) translateY(-${yShift + 0.5}%)`;
     }
     this.tooltipSelector.textContent = this.getTagString(this._target);
   }
-
 
   clean() {
     this.marker.remove();

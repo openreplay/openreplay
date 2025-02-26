@@ -12,110 +12,116 @@ export type PerformanceChartPoint = {
 }
 
 export default class PerformanceTrackManager extends ListWalker<PerformanceTrack> {
-	private chart: Array<PerformanceChartPoint> = [];
-	private isHidden: boolean = false;
-	private timeCorrection: number = 0;
-	private heapAvailable: boolean = false;
-	private fpsAvailable: boolean = false;
-	private cpuAvailable: boolean = false;
-	private prevTime: number | null = null;
-	private prevNodesCount: number = 0;
+  private chart: Array<PerformanceChartPoint> = [];
 
+  private isHidden: boolean = false;
 
-	append(msg: PerformanceTrack):void {
-		let fps: number | null = null;
-		let cpu: number | null = null;
-		if (!this.isHidden && this.prevTime != null) {
-			let timePassed = msg.time - this.prevTime + this.timeCorrection;
+  private timeCorrection: number = 0;
 
-			if (timePassed > 0 && msg.frames >= 0) {
-				if (msg.frames > 0) { this.fpsAvailable = true; }
-				fps = msg.frames*1e3/timePassed; // Multiply by 1e3 as time in ms;
-				fps = Math.min(fps,60); // What if 120?  TODO: alert if more than 60
-				if (this.chart.length === 1) {
-					this.chart[0].fps = fps;
-				}
-			}
+  private heapAvailable: boolean = false;
 
-			if (timePassed > 0 && msg.ticks >= 0) {
-				this.cpuAvailable = true;
-				let tickRate = msg.ticks * 30 / timePassed;
-				if (tickRate > 1) {
-					tickRate = 1;
-				}
-				cpu = Math.round(100 - tickRate*100);
-				if (this.chart.length === 1) {
-					this.chart[0].cpu = cpu;
-				}
-			}
-		}
+  private fpsAvailable: boolean = false;
 
-		this.prevTime = msg.time;
-		this.timeCorrection = 0
+  private cpuAvailable: boolean = false;
 
-		this.heapAvailable = this.heapAvailable || msg.usedJSHeapSize > 0;
-		this.chart.push({
-			usedHeap: msg.usedJSHeapSize,
-			totalHeap: msg.totalJSHeapSize,
-			fps,
-			cpu,
-			time: msg.time,
-			nodesCount: this.prevNodesCount,
-		});
-		super.append(msg);
-	}
+  private prevTime: number | null = null;
 
+  private prevNodesCount: number = 0;
 
-	// TODO: refactor me
-	private prevNCTime = 0
-	addNodeCountPointIfNeed(time: number) {
-		if ((this.prevTime && time - this.prevTime < 200) || (time - this.prevNCTime < 200)) {
-			return
-		}
-		const lastPoint = this.chart[this.chart.length - 1]
-		if (lastPoint && lastPoint.nodesCount === this.prevNodesCount) {
-			return
-		}
-		const newPoint = Object.assign({
-			usedHeap:0,
-			totalHeap: 0,
-			fps: null,
-			cpu: null,
-		}, lastPoint)
-		newPoint.time = time
-		newPoint.nodesCount = this.prevNodesCount
-		this.chart.push(newPoint)
-		this.prevNCTime = time
-	}
+  append(msg: PerformanceTrack):void {
+    let fps: number | null = null;
+    let cpu: number | null = null;
+    if (!this.isHidden && this.prevTime != null) {
+      const timePassed = msg.time - this.prevTime + this.timeCorrection;
 
-	setCurrentNodesCount(count: number) {
-		this.prevNodesCount = count;
-		// if (this.chart.length > 0) {
-		// 	this.chart[ this.chart.length - 1 ].nodesCount = count;
-		// }
-	} 
+      if (timePassed > 0 && msg.frames >= 0) {
+        if (msg.frames > 0) { this.fpsAvailable = true; }
+        fps = msg.frames * 1e3 / timePassed; // Multiply by 1e3 as time in ms;
+        fps = Math.min(fps, 60); // What if 120?  TODO: alert if more than 60
+        if (this.chart.length === 1) {
+          this.chart[0].fps = fps;
+        }
+      }
 
-	handleVisibility(msg: SetPageVisibility):void {
-		if (!this.isHidden && msg.hidden && this.prevTime != null) {
-			this.timeCorrection = msg.time - this.prevTime;
-		}
-		if (this.isHidden && !msg.hidden) {
-			this.prevTime = msg.time;
-		}
-		this.isHidden = msg.hidden;
-	}
+      if (timePassed > 0 && msg.ticks >= 0) {
+        this.cpuAvailable = true;
+        let tickRate = msg.ticks * 30 / timePassed;
+        if (tickRate > 1) {
+          tickRate = 1;
+        }
+        cpu = Math.round(100 - tickRate * 100);
+        if (this.chart.length === 1) {
+          this.chart[0].cpu = cpu;
+        }
+      }
+    }
 
-	get chartData(): Array<PerformanceChartPoint> {
-		return this.chart;
-	}
+    this.prevTime = msg.time;
+    this.timeCorrection = 0;
 
-	get availability(): { cpu: boolean, fps: boolean, heap: boolean, nodes: boolean } {
-		return {
-			cpu: this.cpuAvailable,
-			fps: this.fpsAvailable,
-			heap: this.heapAvailable,
-			nodes: true,
-		}
-	}
+    this.heapAvailable = this.heapAvailable || msg.usedJSHeapSize > 0;
+    this.chart.push({
+      usedHeap: msg.usedJSHeapSize,
+      totalHeap: msg.totalJSHeapSize,
+      fps,
+      cpu,
+      time: msg.time,
+      nodesCount: this.prevNodesCount,
+    });
+    super.append(msg);
+  }
 
+  // TODO: refactor me
+  private prevNCTime = 0;
+
+  addNodeCountPointIfNeed(time: number) {
+    if ((this.prevTime && time - this.prevTime < 200) || (time - this.prevNCTime < 200)) {
+      return;
+    }
+    const lastPoint = this.chart[this.chart.length - 1];
+    if (lastPoint && lastPoint.nodesCount === this.prevNodesCount) {
+      return;
+    }
+    const newPoint = {
+      usedHeap: 0,
+      totalHeap: 0,
+      fps: null,
+      cpu: null,
+      ...lastPoint,
+    };
+    newPoint.time = time;
+    newPoint.nodesCount = this.prevNodesCount;
+    this.chart.push(newPoint);
+    this.prevNCTime = time;
+  }
+
+  setCurrentNodesCount(count: number) {
+    this.prevNodesCount = count;
+    // if (this.chart.length > 0) {
+    // 	this.chart[ this.chart.length - 1 ].nodesCount = count;
+    // }
+  }
+
+  handleVisibility(msg: SetPageVisibility):void {
+    if (!this.isHidden && msg.hidden && this.prevTime != null) {
+      this.timeCorrection = msg.time - this.prevTime;
+    }
+    if (this.isHidden && !msg.hidden) {
+      this.prevTime = msg.time;
+    }
+    this.isHidden = msg.hidden;
+  }
+
+  get chartData(): Array<PerformanceChartPoint> {
+    return this.chart;
+  }
+
+  get availability(): { cpu: boolean, fps: boolean, heap: boolean, nodes: boolean } {
+    return {
+      cpu: this.cpuAvailable,
+      fps: this.fpsAvailable,
+      heap: this.heapAvailable,
+      nodes: true,
+    };
+  }
 }

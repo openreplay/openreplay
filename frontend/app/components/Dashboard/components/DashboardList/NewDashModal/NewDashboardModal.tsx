@@ -20,57 +20,52 @@ const NewDashboardModal: React.FC<NewDashboardModalProps> = ({
   isAddingFromLibrary = false,
 }) => {
   const { projectsStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
-  const isMobile = projectsStore.isMobile;
+  const { isEnterprise } = userStore;
+  const { isMobile } = projectsStore;
   const [step, setStep] = React.useState<number>(0);
-  const [selectedCategory, setSelectedCategory] =
-    React.useState<string>('product-analytics');
+  const [selectedCategory, setSelectedCategory] = React.useState<string>('product-analytics');
 
-  useEffect(() => {
-    return () => {
-      setStep(0);
-    };
+  useEffect(() => () => {
+    setStep(0);
   }, [open]);
 
   return (
-    <>
-      <Modal
-        open={open}
-        onCancel={onClose}
-        width={900}
-        destroyOnClose={true}
-        footer={null}
-        closeIcon={false}
-        styles={{
-          content: {
-            backgroundColor: colors.gray[100],
-          },
+    <Modal
+      open={open}
+      onCancel={onClose}
+      width={900}
+      destroyOnClose
+      footer={null}
+      closeIcon={false}
+      styles={{
+        content: {
+          backgroundColor: colors.gray[100],
+        },
+      }}
+      centered
+    >
+      <div
+        className="flex flex-col gap-4"
+        style={{
+          height: 'calc(100vh - 100px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
         }}
-        centered={true}
       >
-        <div
-          className="flex flex-col gap-4"
-          style={{
-            height: 'calc(100vh - 100px)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}
-        >
-          {step === 0 && (
-            <SelectCard
-              onClose={onClose}
-              selected={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              onCard={() => setStep(step + 1)}
-              isLibrary={isAddingFromLibrary}
-              isMobile={isMobile}
-              isEnterprise={isEnterprise}
-            />
-          )}
-          {step === 1 && <CreateCard onBack={() => setStep(0)} />}
-        </div>
-      </Modal>
-    </>
+        {step === 0 && (
+        <SelectCard
+          onClose={onClose}
+          selected={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          onCard={() => setStep(step + 1)}
+          isLibrary={isAddingFromLibrary}
+          isMobile={isMobile}
+          isEnterprise={isEnterprise}
+        />
+        )}
+        {step === 1 && <CreateCard onBack={() => setStep(0)} />}
+      </div>
+    </Modal>
   );
 };
 

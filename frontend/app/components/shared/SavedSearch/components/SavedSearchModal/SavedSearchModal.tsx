@@ -1,14 +1,15 @@
 import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
-import { Icon, Input } from 'UI';
-import { confirm, Tooltip } from 'UI';
+import {
+  Icon, Input, confirm, Tooltip,
+} from 'UI';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search';
 import SaveSearchModal from 'Shared/SaveSearchModal';
-import stl from './savedSearchModal.module.css';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { ISavedSearch } from 'App/mstore/types/savedSearch';
+import stl from './savedSearchModal.module.css';
 
 interface ITooltipIcon {
   title: string;
@@ -43,10 +44,10 @@ function SavedSearchModal() {
     const confirmation = await confirm({
       header: 'Confirm',
       confirmButton: 'Yes, delete',
-      confirmation: 'Are you sure you want to permanently delete this search?'
+      confirmation: 'Are you sure you want to permanently delete this search?',
     });
     if (confirmation) {
-      searchStore.removeSavedSearch(item.searchId + '');
+      searchStore.removeSavedSearch(`${item.searchId}`);
     }
   };
   const onEdit = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
@@ -61,7 +62,9 @@ function SavedSearchModal() {
     <div className="bg-white box-shadow h-screen">
       <div className="p-6">
         <h1 className="text-2xl">
-          Saved Search <span className="color-gray-medium">{searchStore.list.length}</span>
+          Saved Search
+          {' '}
+          <span className="color-gray-medium">{searchStore.list.length}</span>
         </h1>
       </div>
       {searchStore.list.length > 1 && (
@@ -82,7 +85,10 @@ function SavedSearchModal() {
           >
             <Icon name="search" color="gray-medium" size="16" />
             <div className="ml-4">
-              <div className="text-lg">{item.name} </div>
+              <div className="text-lg">
+                {item.name}
+                {' '}
+              </div>
               {item.isPublic && (
                 <div className={cn(stl.iconContainer, 'color-gray-medium flex items-center px-2 mt-2')}>
                   <Icon name="user-friends" size="11" />

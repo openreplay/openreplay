@@ -1,15 +1,14 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
-import { Form, Input } from "UI";
+import { Form, Input } from 'UI';
 import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-
 function TenantKey() {
-  const [ copied, setCopied ] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
   const { userStore } = useStore();
-  const tenantKey = userStore.account.tenantKey;
+  const { tenantKey } = userStore.account;
 
   const copyHandler = () => {
     setCopied(true);
@@ -17,27 +16,27 @@ function TenantKey() {
     setTimeout(() => {
       setCopied(false);
     }, 1000);
-  }
+  };
   return (
-      <Form.Field>
-        <label htmlFor="tenantKey">{ 'Tenant Key' }</label>
-          <Input
-            name="tenantKey"
-            id="tenantKey"
+    <Form.Field>
+      <label htmlFor="tenantKey">Tenant Key</label>
+      <Input
+        name="tenantKey"
+        id="tenantKey"
+        type="text"
+        className="!w-72"
+        readOnly
+        value={tenantKey}
+        leadingButton={(
+          <Button
             type="text"
-            className={'!w-72'}
-            readOnly={ true }
-            value={ tenantKey }
-            leadingButton={
-              <Button
-                type="text"
-                onClick={ copyHandler }
-              >
-                { copied ? 'Copied' : 'Copy' }
-              </Button>
-            }
-          />
-      </Form.Field>
+            onClick={copyHandler}
+          >
+            { copied ? 'Copied' : 'Copy' }
+          </Button>
+            )}
+      />
+    </Form.Field>
   );
 }
 

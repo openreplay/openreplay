@@ -51,20 +51,17 @@ function DiffRow({ diff, path }: Props) {
       newValue = 'error';
   }
 
-  const length = path.length;
+  const { length } = path;
   const diffLengths = [oldValue?.length || 0, newValue?.length || 0];
 
-  const pathStr =
-    length > 20 && shorten ? path.slice(0, 5) + '...' + path.slice(length - 10, length) : path;
+  const pathStr = length > 20 && shorten ? `${path.slice(0, 5)}...${path.slice(length - 10, length)}` : path;
 
-  const oldValueSafe =
-    diffLengths[0] > 50 && shortenOldVal
-      ? `${oldValue.slice(0, 10)} ... ${oldValue.slice(diffLengths[0] - 25, diffLengths[0])}`
-      : oldValue;
-  const newValueSafe =
-    diffLengths[1] > 50 && shortenNewVal
-      ? `${newValue.slice(0, 10)} ... ${newValue.slice(diffLengths[1] - 25, diffLengths[1])}`
-      : newValue;
+  const oldValueSafe = diffLengths[0] > 50 && shortenOldVal
+    ? `${oldValue.slice(0, 10)} ... ${oldValue.slice(diffLengths[0] - 25, diffLengths[0])}`
+    : oldValue;
+  const newValueSafe = diffLengths[1] > 50 && shortenNewVal
+    ? `${newValue.slice(0, 10)} ... ${newValue.slice(diffLengths[1] - 25, diffLengths[1])}`
+    : newValue;
 
   return (
     <div className="p-1 rounded flex flex-wrap gap-2">
@@ -76,7 +73,7 @@ function DiffRow({ diff, path }: Props) {
         onClick={() => setShortenOldVal(!shortenOldVal)}
         className={cn(
           'text-disabled-text',
-          diffLengths[0] > 50 ? 'cursor-pointer' : ''
+          diffLengths[0] > 50 ? 'cursor-pointer' : '',
         )}
       >
         <span className="line-through">{oldValueSafe || 'undefined'}</span>

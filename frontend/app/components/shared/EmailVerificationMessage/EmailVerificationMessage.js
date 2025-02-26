@@ -27,7 +27,8 @@ function EmailVerificationMessage(props) {
           border: 'solid thin rgba(221, 181, 181, 1)',
         }}
       >
-        <span>Please, verify your email.</span>{' '}
+        <span>Please, verify your email.</span>
+        {' '}
         <a href="#" className="link" onClick={send}>
           Resend
         </a>

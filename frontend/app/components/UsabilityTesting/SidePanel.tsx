@@ -1,7 +1,9 @@
 import { useStore } from 'App/mstore';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Typography, Switch, Button, Space, Tooltip, Alert } from 'antd';
+import {
+  Typography, Switch, Button, Space, Tooltip, Alert,
+} from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
 
 interface SidePanelProps {
@@ -11,21 +13,23 @@ interface SidePanelProps {
   isStartingPointValid: boolean;
 }
 
-const SidePanel: React.FC<SidePanelProps> = ({ onSave, onPreview, taskLen, isStartingPointValid }) => {
+const SidePanel: React.FC<SidePanelProps> = ({
+  onSave, onPreview, taskLen, isStartingPointValid,
+}) => {
   const { uxtestingStore } = useStore();
 
   const canPublishOrPreview = taskLen > 0 && isStartingPointValid;
 
   return (
-    <div className={'flex flex-col gap-2 col-span-1'}>
-      <div className={'p-4 bg-white rounded-lg shadow-sm flex flex-col gap-2'}>
+    <div className="flex flex-col gap-2 col-span-1">
+      <div className="p-4 bg-white rounded-lg shadow-sm flex flex-col gap-2">
         <Typography.Text strong>Participant Requirements</Typography.Text>
-        <div className={'text-sm py-2'}>
+        <div className="text-sm py-2">
           Enable the camera and mic to observe participants' reactions and hear their comments for better insights.
         </div>
         {uxtestingStore.instance && (
           <>
-            <div className={'flex justify-between'}>
+            <div className="flex justify-between">
               <Typography.Text>Mic</Typography.Text>
               <Switch
                 checked={uxtestingStore.instance.requireMic}
@@ -34,7 +38,7 @@ const SidePanel: React.FC<SidePanelProps> = ({ onSave, onPreview, taskLen, isSta
                 unCheckedChildren="Not Required"
               />
             </div>
-            <div className={'flex justify-between'}>
+            <div className="flex justify-between">
               <Typography.Text>Camera</Typography.Text>
               <Switch
                 checked={uxtestingStore.instance.requireCamera}
@@ -58,19 +62,20 @@ const SidePanel: React.FC<SidePanelProps> = ({ onSave, onPreview, taskLen, isSta
       )}
 
       <Tooltip title={!canPublishOrPreview ? 'Define the starting point and the tasks to preview.' : ''}>
-        <Button type={'primary'} ghost onClick={onPreview} disabled={!canPublishOrPreview}>
-          <Space align={'center'}>
-            Save Draft & Preview <ExportOutlined />
+        <Button type="primary" ghost onClick={onPreview} disabled={!canPublishOrPreview}>
+          <Space align="center">
+            Save Draft & Preview
+            {' '}
+            <ExportOutlined />
           </Space>
         </Button>
       </Tooltip>
       <Tooltip title={!canPublishOrPreview ? 'Define the starting point and the tasks to publish.' : ''}>
-        <Button type={'primary'} onClick={onSave} disabled={!canPublishOrPreview}>
+        <Button type="primary" onClick={onSave} disabled={!canPublishOrPreview}>
           Publish Test
         </Button>
       </Tooltip>
 
-      
     </div>
   );
 };

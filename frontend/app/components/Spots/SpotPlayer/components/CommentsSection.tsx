@@ -1,5 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons';
-import { SendOutlined } from '@ant-design/icons';
+import { CloseOutlined, SendOutlined } from '@ant-design/icons';
 import { Button, Input, Tooltip } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
@@ -16,35 +15,33 @@ function CommentsSection({ onClose }: { onClose?: () => void }) {
   const comments = spotStore.currentSpot?.comments ?? [];
   return (
     <div
-      className={'h-full p-4 bg-white border-l'}
+      className="h-full p-4 bg-white border-l"
       style={{ minWidth: 320, width: 320 }}
     >
-      <div className={'flex items-center justify-between mb-2'}>
-        <div className={'font-medium text-lg'}>Comments</div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="font-medium text-lg">Comments</div>
         <Button onClick={onClose} type="text" size="small">
           <CloseOutlined />
         </Button>
       </div>
       <div
-        className={'overflow-y-auto flex flex-col gap-4 mt-2'}
+        className="overflow-y-auto flex flex-col gap-4 mt-2"
         style={{ height: 'calc(100vh - 132px)' }}
       >
         {comments.map((comment) => (
           <div
             key={comment.createdAt}
-            className={'flex flex-col gap-2 border-b border-dotted pb-2'}
+            className="flex flex-col gap-2 border-b border-dotted pb-2"
           >
-            <div className={'flex items-center gap-2'}>
+            <div className="flex items-center gap-2">
               <div
-                className={
-                  'w-9 h-9 text-xs bg-tealx rounded-full flex items-center justify-center color-white uppercase'
-                }
+                className="w-9 h-9 text-xs bg-tealx rounded-full flex items-center justify-center color-white uppercase"
               >
                 {comment.user[0]}
               </div>
-              <div className={'font-medium flex flex-col '}>
+              <div className="font-medium flex flex-col ">
                 {comment.user}
-                <div className={'text-xs text-disabled-text font-normal'}>
+                <div className="text-xs text-disabled-text font-normal">
                   {resentOrDate(new Date(comment.createdAt).getTime())}
                 </div>
               </div>
@@ -84,7 +81,7 @@ function BottomSection({
       await spotStore.addComment(
         spotStore.currentSpot!.spotId,
         commentText,
-        userName
+        userName,
       );
       setCommentText('');
     } catch (e) {
@@ -92,30 +89,29 @@ function BottomSection({
     }
   };
 
-  const unlogged = userName.trim().length === 0 && unloggedLimit
-  const disableSubmit =
-    commentText.trim().length === 0 ||
-    unlogged || loggedLimit;
+  const unlogged = userName.trim().length === 0 && unloggedLimit;
+  const disableSubmit = commentText.trim().length === 0
+    || unlogged || loggedLimit;
   return (
     <div
       className={cn(
         'mt-auto border-t	p-2',
-        loggedIn ? 'bg-white' : 'bg-active-dark-blue'
+        loggedIn ? 'bg-white' : 'bg-active-dark-blue',
       )}
     >
-      <div className={'flex items-center gap-2'}>
-        <div className={'flex flex-col w-full gap-2'}>
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col w-full gap-2">
           <Input
             readOnly={loggedIn}
             disabled={loggedIn}
-            placeholder={'Add a name'}
+            placeholder="Add a name"
             required
-            className={'w-full disabled:hidden'}
+            className="w-full disabled:hidden"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
           />
           <Input.TextArea
-            className={'w-full'}
+            className="w-full"
             rows={3}
             autoSize={{ minRows: 3, maxRows: 3 }}
             maxLength={120}
@@ -136,11 +132,11 @@ function BottomSection({
           }
         >
           <Button
-            type={'primary'}
+            type="primary"
             onClick={addComment}
             disabled={disableSubmit}
             icon={<SendOutlined className="ps-0.5" />}
-            shape={'circle'}
+            shape="circle"
           />
         </Tooltip>
       </div>

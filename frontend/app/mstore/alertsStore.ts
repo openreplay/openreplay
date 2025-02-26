@@ -4,11 +4,16 @@ import { alertsService } from 'App/services';
 
 export default class AlertsStore {
   alerts: Alert[] = [];
+
   triggerOptions: { label: string; value: string | number; unit?: string }[] = [];
+
   alertsSearch = '';
+
   // @ts-ignore
   instance: Alert = new Alert({}, false);
+
   loading = false;
+
   page: number = 1;
 
   constructor() {
@@ -38,36 +43,32 @@ export default class AlertsStore {
     }
   };
 
-  save = (inst: Alert): Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {
-      this.loading = true;
-      try {
-        await alertsService.save(inst ? inst : this.instance);
-        this.instance.isExists = true;
-        resolve();
-      } catch (e) {
-        console.error(e);
-        reject(e);
-      } finally {
-        this.loading = false;
-      }
-    });
-  };
+  save = (inst: Alert): Promise<void> => new Promise<void>(async (resolve, reject) => {
+    this.loading = true;
+    try {
+      await alertsService.save(inst || this.instance);
+      this.instance.isExists = true;
+      resolve();
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    } finally {
+      this.loading = false;
+    }
+  });
 
-  remove = (id: string): Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {
-      this.loading = true;
-      try {
-        await alertsService.remove(id);
-        resolve();
-      } catch (e) {
-        console.error(e);
-        reject(e);
-      } finally {
-        this.loading = false;
-      }
-    });
-  };
+  remove = (id: string): Promise<void> => new Promise<void>(async (resolve, reject) => {
+    this.loading = true;
+    try {
+      await alertsService.remove(id);
+      resolve();
+    } catch (e) {
+      console.error(e);
+      reject(e);
+    } finally {
+      this.loading = false;
+    }
+  });
 
   fetchTriggerOptions = async () => {
     this.loading = true;

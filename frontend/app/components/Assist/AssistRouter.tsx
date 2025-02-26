@@ -1,5 +1,5 @@
 import React from 'react';
-import AssistView from './AssistView'
+import AssistView from './AssistView';
 
 function AssistRouter() {
   return (

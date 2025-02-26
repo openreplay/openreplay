@@ -1,9 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
+import styles from 'Components/Session_/playerBlock.module.css';
 import Player from './LivePlayerInst';
 import SubHeader from './LivePlayerSubHeader';
-
-import styles from 'Components/Session_/playerBlock.module.css';
 
 interface IProps {
   fullView?: boolean;
@@ -13,7 +12,7 @@ interface IProps {
 function LivePlayerBlock(props: IProps) {
   const { fullView = false, isMultiview } = props;
 
-  const shouldShowSubHeader = !fullView && !isMultiview
+  const shouldShowSubHeader = !fullView && !isMultiview;
 
   return (
     <div className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')} style={{ zIndex: undefined, minWidth: isMultiview ? '100%' : undefined }}>
@@ -28,4 +27,4 @@ function LivePlayerBlock(props: IProps) {
   );
 }
 
-export default LivePlayerBlock
+export default LivePlayerBlock;

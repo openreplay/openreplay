@@ -1,13 +1,13 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
-import { observer } from 'mobx-react-lite'
-import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-export default BaseComponent => withRouter(observer((props) => {
-  const { history, ...other } = props
+export default (BaseComponent) => withRouter(observer((props) => {
+  const { history, ...other } = props;
   const { projectsStore } = useStore();
-  const siteId = projectsStore.siteId
+  const { siteId } = projectsStore;
 
   const push = (location) => {
     if (typeof location === 'string') {
@@ -15,7 +15,7 @@ export default BaseComponent => withRouter(observer((props) => {
     } else if (typeof location === 'object') {
       history.push({ ...location, pathname: withSiteId(location.pathname, siteId) });
     }
-  }
+  };
 
-  return <BaseComponent {...other} history={{ ...history, push: push }} />
-}))
+  return <BaseComponent {...other} history={{ ...history, push }} />;
+}));

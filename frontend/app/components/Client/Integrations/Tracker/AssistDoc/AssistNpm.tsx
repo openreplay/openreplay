@@ -56,7 +56,7 @@ type ButtonOptions = HTMLButtonElement | string | {
   innerHTML?: string, // to pass an svg string or text
   style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
 }
-`
+`;
   return (
     <div>
       <p>

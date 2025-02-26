@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
-import { Button, Tag, Tooltip, Dropdown, message } from 'antd';
-import {UndoOutlined, DownOutlined} from '@ant-design/icons'
+import {
+  Button, Tag, Tooltip, Dropdown, message,
+} from 'antd';
+import { UndoOutlined, DownOutlined } from '@ant-design/icons';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
 import { observer } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
-import { debounce } from 'App/utils';
+import { debounce, numberWithCommas } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { numberWithCommas } from 'App/utils';
-import { HEATMAP, USER_PATH, FUNNEL } from "App/constants/card";
+import { HEATMAP, USER_PATH, FUNNEL } from 'App/constants/card';
 
 interface Props {
   className?: string;
@@ -26,7 +27,9 @@ function WidgetSessions(props: Props) {
   const [loading, setLoading] = useState(false);
   // all filtering done through series now
   const filteredSessions = getListSessionsBySeries(data, 'all');
-  const { dashboardStore, metricStore, sessionStore, customFieldStore } = useStore();
+  const {
+    dashboardStore, metricStore, sessionStore, customFieldStore,
+  } = useStore();
   const focusedSeries = metricStore.focusedSeriesName;
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
@@ -43,14 +46,14 @@ function WidgetSessions(props: Props) {
       <div onClick={() => setActiveSeries(option.value)}>
         {option.label}
       </div>
-    )
+    ),
   }));
 
   useEffect(() => {
     if (!widget.series) return;
     const seriesOptions = widget.series.map((item: any) => ({
       label: item.name,
-      value: item.seriesId
+      value: item.seriesId,
     }));
     setSeriesOptions([{ label: 'All', value: 'all' }, ...seriesOptions]);
   }, [widget.series]);
@@ -72,10 +75,10 @@ function WidgetSessions(props: Props) {
         setData(res);
         if (metricStore.drillDown) {
           setTimeout(() => {
-            message.info('Sessions Refreshed!')
+            message.info('Sessions Refreshed!');
             listRef.current?.scrollIntoView({ behavior: 'smooth' });
             metricStore.setDrillDown(false);
-          }, 0)
+          }, 0);
         }
       })
       .finally(() => {
@@ -100,34 +103,34 @@ function WidgetSessions(props: Props) {
         operator: 'onSelector',
         isEvent: true,
         // @ts-ignore
-        filters: []
+        filters: [],
       };
       const timeRange = {
         rangeValue: dashboardStore.drillDownPeriod.rangeValue,
         startDate: dashboardStore.drillDownPeriod.start,
-        endDate: dashboardStore.drillDownPeriod.end
+        endDate: dashboardStore.drillDownPeriod.end,
       };
       const customFilter = {
         ...filter,
         ...timeRange,
-        filters: [...sessionStore.userFilter.filters, clickFilter]
+        filters: [...sessionStore.userFilter.filters, clickFilter],
       };
       debounceClickMapSearch(customFilter);
     } else {
-      const hasStartPoint = !!widget.startPoint && widget.metricType === USER_PATH
+      const hasStartPoint = !!widget.startPoint && widget.metricType === USER_PATH;
       const onlyFocused = focusedSeries
-                          ? widget.series.filter((s) => s.name === focusedSeries)
-                          : widget.series
+        ? widget.series.filter((s) => s.name === focusedSeries)
+        : widget.series;
       const activeSeries = metricStore.disabledSeries.length
-                           ? onlyFocused.filter((s) => !metricStore.disabledSeries.includes(s.name))
-                           : onlyFocused
+        ? onlyFocused.filter((s) => !metricStore.disabledSeries.includes(s.name))
+        : onlyFocused;
       const seriesJson = activeSeries.map((s) => s.toJson());
       if (hasStartPoint) {
         seriesJson[0].filter.filters.push(widget.startPoint.toJson());
       }
       if (widget.metricType === USER_PATH) {
         if (seriesJson[0].filter.filters[0].value[0] === '' && widget.data.nodes) {
-          seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name
+          seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name;
         } else if (seriesJson[0].filter.filters[0].value[0] === '' && !widget.data.nodes) {
           // no point requesting if we don't have starting point picked by api
           return;
@@ -137,7 +140,7 @@ function WidgetSessions(props: Props) {
         ...filter,
         series: seriesJson,
         page: metricStore.sessionsPage,
-        limit: metricStore.sessionsPageSize
+        limit: metricStore.sessionsPageSize,
       });
     }
   };
@@ -153,7 +156,7 @@ function WidgetSessions(props: Props) {
     focusedSeries,
     widget.startPoint,
     widget.data.nodes,
-    metricStore.disabledSeries.length
+    metricStore.disabledSeries.length,
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
   useEffect(() => {
@@ -162,14 +165,14 @@ function WidgetSessions(props: Props) {
     } else {
       metricStore.setFocusedSeriesName(seriesOptions.find((option) => option.value === activeSeries)?.label, false);
     }
-  }, [activeSeries])
+  }, [activeSeries]);
   useEffect(() => {
     if (focusedSeries) {
       setActiveSeries(seriesOptions.find((option) => option.label === focusedSeries)?.value || 'all');
     } else {
       setActiveSeries('all');
     }
-  }, [focusedSeries])
+  }, [focusedSeries]);
 
   const clearFilters = () => {
     metricStore.updateKey('sessionsPage', 1);
@@ -184,45 +187,53 @@ function WidgetSessions(props: Props) {
             <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
             <div className="ml-2 color-gray-medium">
               {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
-              between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
-              <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
+              between
+              {' '}
+              <span className="font-medium color-gray-darkest">{startTime}</span>
+              {' '}
+              and
+              {' '}
+              <span className="font-medium color-gray-darkest">{endTime}</span>
+              {' '}
             </div>
-            {hasFilters && <Tooltip title='Clear Drilldown' placement='top'><Button type='text' size='small' onClick={clearFilters}><UndoOutlined /></Button></Tooltip>}
+            {hasFilters && <Tooltip title="Clear Drilldown" placement="top"><Button type="text" size="small" onClick={clearFilters}><UndoOutlined /></Button></Tooltip>}
           </div>
 
-          {hasFilters && widget.metricType === 'table' &&  
+          {hasFilters && widget.metricType === 'table'
+          && (
           <div className="py-2">
-            <Tag closable onClose={clearFilters} className='truncate max-w-44 rounded-lg'>{filterText}</Tag>
-          </div>}
-          
+            <Tag closable onClose={clearFilters} className="truncate max-w-44 rounded-lg">{filterText}</Tag>
+          </div>
+          )}
+
         </div>
 
         <div className="flex items-center gap-4">
-        {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
+          {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
           <div className="flex items-center ml-6">
             <span className="mr-2 color-gray-medium">Filter by Series</span>
-            <Dropdown 
-              menu={{ 
-                items: seriesDropdownItems, 
+            <Dropdown
+              menu={{
+                items: seriesDropdownItems,
                 selectable: true,
-                selectedKeys: [activeSeries]
+                selectedKeys: [activeSeries],
               }}
               trigger={['click']}
             >
-              <Button type="text" size='small'>
-                {seriesOptions.find(option => option.value === activeSeries)?.label || 'Select Series'}
+              <Button type="text" size="small">
+                {seriesOptions.find((option) => option.value === activeSeries)?.label || 'Select Series'}
                 <DownOutlined />
               </Button>
             </Dropdown>
           </div>
-        )}
+          )}
         </div>
       </div>
 
-      <div className="mt-3" >
+      <div className="mt-3">
         <Loader loading={loading}>
           <NoContent
-            title={
+            title={(
               <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
                 <div className="mt-4" />
@@ -230,7 +241,7 @@ function WidgetSessions(props: Props) {
                   No relevant sessions found for the selected time period
                 </div>
               </div>
-            }
+            )}
             show={filteredSessions.sessions.length === 0}
           >
             {filteredSessions.sessions.map((session: any) => (
@@ -242,16 +253,23 @@ function WidgetSessions(props: Props) {
 
             <div className="flex items-center justify-between p-5" ref={listRef}>
               <div>
-                Showing{' '}
+                Showing
+                {' '}
                 <span className="font-medium">
                   {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize + 1}
-                </span>{' '}
-                to{' '}
+                </span>
+                {' '}
+                to
+                {' '}
                 <span className="font-medium">
-                  {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize +
-                    filteredSessions.sessions.length}
-                </span>{' '}
-                of <span className="font-medium">{numberWithCommas(filteredSessions.total)}</span>{' '}
+                  {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize
+                    + filteredSessions.sessions.length}
+                </span>
+                {' '}
+                of
+                {' '}
+                <span className="font-medium">{numberWithCommas(filteredSessions.total)}</span>
+                {' '}
                 sessions.
               </div>
               <Pagination
@@ -285,12 +303,11 @@ const getListSessionsBySeries = (data: any, seriesId: any) => {
       }
       return arr;
     },
-    { sessions: [] }
+    { sessions: [] },
   );
-  arr.total =
-    seriesId === 'all'
-      ? Math.max(...data.map((i: any) => i.total))
-      : data.find((i: any) => i.seriesId === seriesId).total;
+  arr.total = seriesId === 'all'
+    ? Math.max(...data.map((i: any) => i.total))
+    : data.find((i: any) => i.seriesId === seriesId).total;
   return arr;
 };
 

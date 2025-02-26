@@ -1,6 +1,6 @@
-import React from 'react'
-import { Icon } from 'UI'
-import { Button } from 'antd'
+import React from 'react';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 
 interface IBottomButtons {
   loading: boolean
@@ -9,21 +9,23 @@ interface IBottomButtons {
   onDelete: (instance: Alert) => void
 }
 
-function BottomButtons({ loading, instance, deleting, onDelete }: IBottomButtons) {
+function BottomButtons({
+  loading, instance, deleting, onDelete,
+}: IBottomButtons) {
   return (
     <>
-    <div className="flex items-center">
-      <Button
-        loading={loading}
-        type="primary"
-        disabled={loading || !instance.validate()}
-        id="submit-button"
-      >
-        {instance.exists() ? 'Update' : 'Create'}
-      </Button>
-    </div>
-    <div>
-      {instance.exists() && (
+      <div className="flex items-center">
+        <Button
+          loading={loading}
+          type="primary"
+          disabled={loading || !instance.validate()}
+          id="submit-button"
+        >
+          {instance.exists() ? 'Update' : 'Create'}
+        </Button>
+      </div>
+      <div>
+        {instance.exists() && (
         <Button
           type="text"
           loading={deleting}
@@ -31,12 +33,14 @@ function BottomButtons({ loading, instance, deleting, onDelete }: IBottomButtons
           id="trash-button"
           className="!text-teal !fill-teal"
         >
-          <Icon name="trash" color="inherit" className="mr-2" size="18" /> Delete
+          <Icon name="trash" color="inherit" className="mr-2" size="18" />
+          {' '}
+          Delete
         </Button>
-      )}
-    </div>
+        )}
+      </div>
     </>
-  )
+  );
 }
 
-export default BottomButtons
+export default BottomButtons;

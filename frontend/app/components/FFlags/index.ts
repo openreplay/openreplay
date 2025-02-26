@@ -1,1 +1,1 @@
-export { default } from './FFlagsList'
+export { default } from './FFlagsList';

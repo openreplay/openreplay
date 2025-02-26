@@ -37,7 +37,7 @@ interface Props {
 function Integrations(props: Props) {
   const { integrationsStore, projectsStore } = useStore();
   const initialSiteId = projectsStore.siteId;
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { hideHeader = false } = props;
@@ -61,9 +61,9 @@ function Integrations(props: Props) {
 
   const onClick = (integration: any, width: number) => {
     if (
-      integration.slug &&
-      integration.slug !== 'slack' &&
-      integration.slug !== 'msteams'
+      integration.slug
+      && integration.slug !== 'slack'
+      && integration.slug !== 'msteams'
     ) {
       const intName = integration.slug as
         | 'sentry'
@@ -86,7 +86,7 @@ function Integrations(props: Props) {
         siteId,
         onClose: hideModal,
       }),
-      { right: true, width }
+      { right: true, width },
     );
   };
 
@@ -110,7 +110,7 @@ function Integrations(props: Props) {
   }));
 
   const allIntegrations = filteredIntegrations.flatMap(
-    (cat) => cat.integrations
+    (cat) => cat.integrations,
   );
 
   const onChangeSelect = ({ value }: any) => {
@@ -120,7 +120,7 @@ function Integrations(props: Props) {
   return (
     <>
       <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
-        <div className={'flex items-center gap-4 mb-2'}>
+        <div className="flex items-center gap-4 mb-2">
           {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
           <SiteDropdown value={siteId} onChange={onChangeSelect} />
         </div>
@@ -134,7 +134,7 @@ function Integrations(props: Props) {
       <div className="mb-4" />
 
       <div
-        className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
+        className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
       >
         {allIntegrations.map((integration, i) => (
           <React.Fragment key={`${integration.slug}+${i}`}>
@@ -142,21 +142,17 @@ function Integrations(props: Props) {
               integrated={integratedList.includes(integration.slug)}
               integration={integration}
               useIcon={integration.useIcon}
-              onClick={() =>
-                onClick(
-                  integration,
-                  filteredIntegrations.find((cat) =>
-                    cat.integrations.includes(integration)
-                  )?.title === 'Plugins'
-                    ? 500
-                    : 350
-                )
-              }
+              onClick={() => onClick(
+                integration,
+                filteredIntegrations.find((cat) => cat.integrations.includes(integration))?.title === 'Plugins'
+                  ? 500
+                  : 350,
+              )}
               hide={
-                (integration.slug === 'github' &&
-                  integratedList.includes('jira')) ||
-                (integration.slug === 'jira' &&
-                  integratedList.includes('github'))
+                (integration.slug === 'github'
+                  && integratedList.includes('jira'))
+                || (integration.slug === 'jira'
+                  && integratedList.includes('github'))
               }
             />
           </React.Fragment>
@@ -167,7 +163,7 @@ function Integrations(props: Props) {
 }
 
 export default withPageTitle('Integrations - OpenReplay Preferences')(
-  observer(Integrations)
+  observer(Integrations),
 );
 
 const integrations = [

@@ -1,9 +1,9 @@
 import { LaunchXRaShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import React, { useEffect } from 'react';
-import stl from './xrayButton.module.css';
 import cn from 'classnames';
-import { Popover } from 'antd'
+import { Popover } from 'antd';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import stl from './xrayButton.module.css';
 
 interface Props {
   onClick?: () => void;
@@ -40,16 +40,16 @@ function XRayButton(props: Props) {
           }}
           className="bg-gray-darkest fixed inset-0 z-10 w-full h-screen"
           style={{ zIndex: 9999, opacity: '0.7' }}
-        ></div>
+        />
       )}
       <div className="relative">
         <Popover
-          content={
-            <div className={'flex items-center gap-2'}>
+          content={(
+            <div className="flex items-center gap-2">
               <LaunchXRaShortcut />
               <div>Get a quick overview on the issues in this session.</div>
             </div>
-          }
+          )}
         >
           <button
             className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}

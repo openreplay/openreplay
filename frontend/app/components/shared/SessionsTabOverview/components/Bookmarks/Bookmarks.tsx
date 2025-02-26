@@ -12,10 +12,12 @@ import usePageTitle from '@/hooks/usePageTitle';
 import withPermissions from 'HOCs/withPermissions';
 
 function Bookmarks() {
-  const { projectsStore, sessionStore, customFieldStore, userStore, searchStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
-  const isLoggedIn = userStore.isLoggedIn;
-  const bookmarks = sessionStore.bookmarks;
+  const {
+    projectsStore, sessionStore, customFieldStore, userStore, searchStore,
+  } = useStore();
+  const { isEnterprise } = userStore;
+  const { isLoggedIn } = userStore;
+  const { bookmarks } = sessionStore;
 
   usePageTitle('Bookmarks - OpenReplay');
 
@@ -32,13 +34,13 @@ function Bookmarks() {
       <Loader loading={bookmarks.loading}>
         <NoContent
           show={bookmarks.list.length === 0}
-          title={
+          title={(
             <div className="flex flex-col items-center justify-center">
               {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
               <AnimatedSVG name={ICONS.NO_BOOKMARKS} size={60} />
               <div className="text-center mt-4 text-lg font-medium">No sessions bookmarked</div>
             </div>
-          }
+          )}
         >
           <div className="border-b rounded bg-white">
             {bookmarks.list.map((session: any) => (
@@ -49,7 +51,7 @@ function Bookmarks() {
                   // onUserClick={() => {}}
                   // metaList={metaList}
                   // lastPlayedSessionId={lastPlayedSessionId}
-                  bookmarked={true}
+                  bookmarked
                   // toggleFavorite={toggleFavorite}
                 />
               </div>
@@ -58,9 +60,15 @@ function Bookmarks() {
 
           <div className="w-full flex items-center justify-between py-4 px-6">
             <div className="text-disabled-text">
-              Showing{' '}
-              <span className="font-semibold">{Math.min(bookmarks.list.length, bookmarks.pageSize)}</span> out
-              of <span className="font-semibold">{bookmarks.total}</span> sessions.
+              Showing
+              {' '}
+              <span className="font-semibold">{Math.min(bookmarks.list.length, bookmarks.pageSize)}</span>
+              {' '}
+              out
+              of
+              <span className="font-semibold">{bookmarks.total}</span>
+              {' '}
+              sessions.
             </div>
             <Pagination
               page={bookmarks.page}
@@ -76,6 +84,4 @@ function Bookmarks() {
   );
 }
 
-export default withPermissions(
-  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
-)(observer(Bookmarks));
+export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(Bookmarks));

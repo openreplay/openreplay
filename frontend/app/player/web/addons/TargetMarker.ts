@@ -37,6 +37,7 @@ export interface State {
 
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
+
   static INITIAL_STATE: State = {
     markedTargets: null,
     activeTargetIndex: 0,
@@ -44,7 +45,7 @@ export default class TargetMarker {
 
   constructor(
     private readonly screen: Screen,
-    private readonly store: Store<State>
+    private readonly store: Store<State>,
   ) {}
 
   updateMarkedTargets() {
@@ -65,10 +66,16 @@ export default class TargetMarker {
 
   private calculateRelativeBoundingRect(el: Element): BoundingRect {
     const parentEl = this.screen.getParentElement();
-    if (!parentEl) return { top: 0, left: 0, width: 0, height: 0 }; //TODO: can be initialized(?) on mounted screen only
-    const { top, left, width, height } = el.getBoundingClientRect();
+    if (!parentEl) {
+      return {
+        top: 0, left: 0, width: 0, height: 0,
+      };
+    } // TODO: can be initialized(?) on mounted screen only
+    const {
+      top, left, width, height,
+    } = el.getBoundingClientRect();
     const s = this.screen.getScale();
-    const screenRect = this.screen.overlay.getBoundingClientRect(); //this.screen.getBoundingClientRect() (now private)
+    const screenRect = this.screen.overlay.getBoundingClientRect(); // this.screen.getBoundingClientRect() (now private)
     const parentRect = parentEl.getBoundingClientRect();
 
     return {
@@ -80,8 +87,8 @@ export default class TargetMarker {
   }
 
   setActiveTarget(index: number) {
-    const window = this.screen.window;
-    const markedTargets: MarkedTarget[] | null = this.store.get().markedTargets;
+    const { window } = this.screen;
+    const { markedTargets } = this.store.get();
     const target = markedTargets && markedTargets[index];
     if (target && window) {
       const { fixedTop, rect } = getOffset(target.el, window);
@@ -95,14 +102,12 @@ export default class TargetMarker {
             return;
           }
           this.store.update({
-            markedTargets: markedTargets.map((t) =>
-              t === target
-                ? {
-                    ...target,
-                    boundingRect: this.calculateRelativeBoundingRect(target.el),
-                  }
-                : t
-            ),
+            markedTargets: markedTargets.map((t) => (t === target
+              ? {
+                ...target,
+                boundingRect: this.calculateRelativeBoundingRect(target.el),
+              }
+              : t)),
           });
         }, 0);
       }
@@ -111,11 +116,10 @@ export default class TargetMarker {
   }
 
   private actualScroll: Point | null = null;
+
   markTargets(selections: { selector: string; count: number }[] | null) {
     if (selections) {
-      const totalCount = selections.reduce((a, b) => {
-        return a + b.count;
-      }, 0);
+      const totalCount = selections.reduce((a, b) => a + b.count, 0);
       const markedTargets: MarkedTarget[] = [];
       let index = 0;
       selections.forEach((s) => {
@@ -152,9 +156,9 @@ export default class TargetMarker {
       Object.assign(
         overlay.style,
         clickmapStyles.overlayStyle({
-          height: scrollHeight + 'px',
-          width: scrollWidth + 'px',
-        })
+          height: `${scrollHeight}px`,
+          width: `${scrollWidth}px`,
+        }),
       );
 
       this.clickMapOverlay = overlay;

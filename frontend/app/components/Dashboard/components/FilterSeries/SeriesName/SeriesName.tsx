@@ -53,16 +53,16 @@ function SeriesName(props: Props) {
           onKeyDown={onKeyDown}
           className="bg-white text-lg border-transparent rounded-lg font-medium ps-2 input-rename-series"
           maxLength={22}
-          size='small'
+          size="small"
         />
       ) : (
         <Tooltip title="Click to rename">
           <div
             className="text-lg font-medium h-8 flex items-center border-transparent p-2 hover:bg-teal/10 cursor-pointer rounded-lg btn-input-rename-series"
             onClick={() => setEditing(true)}
-            data-event='input-rename-series'
+            data-event="input-rename-series"
           >
-            {name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name}
+            {name && name.trim() === '' ? `Series ${seriesIndex + 1}` : name}
           </div>
         </Tooltip>
       )}

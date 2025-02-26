@@ -5,7 +5,7 @@ import styles from 'Components/Session_/session.module.css';
 import { countDaysFrom } from 'App/date';
 import RightBlock from 'Components/Session/RightBlock';
 import { PlayerContext } from 'Components/Session/playerContext';
-import Session from 'Types/session'
+import Session from 'Types/session';
 import PlayerBlock from './PlayerBlock';
 
 interface IProps {
@@ -15,18 +15,20 @@ interface IProps {
   session: Session
 }
 
-function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps) {
-  const { store } = React.useContext(PlayerContext)
-  const [fullView, setFullView] = React.useState(false)
+function PlayerContent({
+  session, fullscreen, activeTab, setActiveTab,
+}: IProps) {
+  const { store } = React.useContext(PlayerContext);
+  const [fullView, setFullView] = React.useState(false);
 
   const {
     error,
-  } = store.get()
+  } = store.get();
 
-  const hasError = !!error
+  const hasError = !!error;
 
   useEffect(() => {
-    const isFullView = new URLSearchParams(location.search).get('fullview')
+    const isFullView = new URLSearchParams(location.search).get('fullview');
     setFullView(isFullView === 'true');
   }, [session.sessionId]);
 

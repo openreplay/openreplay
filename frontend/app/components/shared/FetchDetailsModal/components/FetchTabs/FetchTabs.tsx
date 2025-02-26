@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import logger from 'App/logger'
-import Headers from '../Headers';
+import logger from 'App/logger';
 import { JSONTree, Tabs, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import Headers from '../Headers';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
 const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab }));
-
 
 type RequestResponse = {
   headers?: Record<string, string>;
@@ -32,7 +31,7 @@ function parseRequestResponse(
     try {
       parsed = JSON.parse(r);
     } catch (e) {
-      logger.error("Error parsing request string as JSON:", e);
+      logger.error('Error parsing request string as JSON:', e);
       setHeaders(null);
       setJSONBody(null);
       return;
@@ -41,7 +40,7 @@ function parseRequestResponse(
     const { headers, body } = parsed;
 
     // Set headers if headers is a non-null object and not an array.
-    if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+    if (headers && typeof headers === 'object' && !Array.isArray(headers)) {
       setHeaders(headers);
     } else {
       setHeaders(null);
@@ -51,7 +50,7 @@ function parseRequestResponse(
     if (body === undefined || body === null) {
       setJSONBody(null);
       setStringBody('');
-    } else if (typeof body === "string") {
+    } else if (typeof body === 'string') {
       // Try to parse the body as JSON, if it fails, set it as a string body.
       try {
         const jBody = JSON.parse(body);
@@ -64,10 +63,9 @@ function parseRequestResponse(
       setJSONBody(body as Record<string, unknown>);
     }
   } catch (e) {
-    logger.error("Error decoding payload json:", e, r);
+    logger.error('Error decoding payload json:', e, r);
   }
 }
-
 
 interface Props {
   resource: { request: string, response: string };
@@ -79,9 +77,9 @@ function FetchTabs({ resource, isSpot }: Props) {
   const [jsonRequest, setJsonRequest] = useState<Object | null>(null);
   const [jsonResponse, setJsonResponse] = useState<Object | null>(null);
   const [stringRequest, setStringRequest] = useState<string>('');
-  const [stringResponse, setStringResponse ] = useState<string>('');
-  const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
-  const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
+  const [stringResponse, setStringResponse] = useState<string>('');
+  const [requestHeaders, setRequestHeaders] = useState<Record<string, string> | null>(null);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     const { request, response } = resource;
@@ -90,13 +88,13 @@ function FetchTabs({ resource, isSpot }: Props) {
       setRequestHeaders,
       setJsonRequest,
       setStringRequest,
-    )
+    );
     parseRequestResponse(
       response,
       setResponseHeaders,
       setJsonResponse,
       setStringResponse,
-    )
+    );
   }, [resource]);
 
   const renderActiveTab = () => {
@@ -104,30 +102,35 @@ function FetchTabs({ resource, isSpot }: Props) {
       case REQUEST:
         return (
           <NoContent
-            title={
+            title={(
               <div className="flex flex-col items-center justify-center">
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   Body is empty or not captured.
                   {' '}
-                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank" rel="noreferrer">
                     Configure
                   </a>
                   {' '}
                   network capturing to get more out of Fetch/XHR requests.
                 </div>
               </div>
-            }
+            )}
             size="small"
             show={!isSpot && !jsonRequest && !stringRequest}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                { jsonRequest 
+                { jsonRequest
                   ? <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
-                  : <div className="ml-3 break-words my-3"> {stringRequest} </div>
-                }
+                  : (
+                    <div className="ml-3 break-words my-3">
+                      {' '}
+                      {stringRequest}
+                      {' '}
+                    </div>
+                  )}
               </div>
               <div className="divider" />
             </div>
@@ -136,30 +139,29 @@ function FetchTabs({ resource, isSpot }: Props) {
       case RESPONSE:
         return (
           <NoContent
-            title={
+            title={(
               <div className="flex flex-col items-center justify-center">
                 <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
                 <div className="mt-6 text-base font-normal">
                   Body is empty or not captured.
                   {' '}
-                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank" rel="noreferrer">
                     Configure
                   </a>
                   {' '}
                   network capturing to get more out of Fetch/XHR requests.
                 </div>
               </div>
-            }
+            )}
             size="small"
             show={!isSpot && !jsonResponse && !stringResponse}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                { jsonResponse 
+                { jsonResponse
                   ? <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
-                  : <div className="ml-3 break-words my-3"></div>
-                }
+                  : <div className="ml-3 break-words my-3" />}
               </div>
               <div className="divider" />
             </div>
@@ -171,7 +173,7 @@ function FetchTabs({ resource, isSpot }: Props) {
   };
   return (
     <div>
-      <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={true} />
+      <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border />
       <div style={{ height: 'calc(100vh - 364px)', overflowY: 'auto' }}>{renderActiveTab()}</div>
     </div>
   );

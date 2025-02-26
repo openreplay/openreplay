@@ -4,6 +4,7 @@ import { getInitials } from 'App/utils';
 import Notifications from 'Components/Alerts/Notifications/Notifications';
 import HealthStatus from 'Components/Header/HealthStatus';
 import UserMenu from 'Components/Header/UserMenu/UserMenu';
+import LanguageSwitcher from 'Components/LanguageSwitcher/LanguageSwitcher';
 
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 import ProjectDropdown from 'Shared/ProjectDropdown';
@@ -18,7 +19,7 @@ interface Props {
 function TopRight(props: Props) {
   const { userStore } = useStore();
   const spotOnly = userStore.scopeState === 1;
-  const account = userStore.account;
+  const { account } = userStore;
   return (
     <Space style={{ lineHeight: '0' }}>
       {props.spotOnly ? null : (
@@ -29,10 +30,11 @@ function TopRight(props: Props) {
           <Notifications />
 
           {account.name ? <HealthStatus /> : null}
+          <LanguageSwitcher />
         </>
       )}
 
-      <Popover content={<UserMenu />} placement={'topRight'}>
+      <Popover content={<UserMenu />} placement="topRight">
         <div className="flex items-center cursor-pointer">
           <div
             className="bg-tealx rounded-full flex items-center justify-center color-white"

@@ -31,33 +31,33 @@ export enum ICONS {
 }
 
 const ICONS_SVGS = {
-    [ICONS.DASHBOARD_ICON]: require('../../../svg/dashboard-icn.svg').default,
-    [ICONS.EMPTY_STATE]: require('../../../svg/empty-state.svg').default,
-    [ICONS.LOGO_SMALL]: require('../../../svg/logo-small.svg').default,
-    [ICONS.LOGO_FULL]: require('../../../svg/logo.svg').default,
-    [ICONS.NO_RESULTS]: require('../../../svg/ghost.svg').default,
-    [ICONS.LOADER]: require('../../../svg/openreplay-preloader.svg').default,
-    [ICONS.SIGNAL_GREEN]: require('../../../svg/signal-green.svg').default,
-    [ICONS.SIGNAL_RED]: require('../../../svg/signal-red.svg').default,
-    [ICONS.NO_BOOKMARKS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_LIVE_SESSIONS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_SESSIONS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_SESSIONS_IN_VAULT]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_WEBHOOKS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_METADATA]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_ISSUES]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_AUDIT_TRAIL]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_ANNOUNCEMENTS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_ALERTS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_NOTES]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_CARDS]: require('../../../svg/ca-no-cards.svg').default,
-    [ICONS.NO_RECORDINGS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_SEARCH_RESULTS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_DASHBOARDS]: require('../../../svg/ca-no-dashboards.svg').default,
-    [ICONS.NO_PROJECTS]: require('../../../svg/ghost.svg').default,
-    [ICONS.NO_FFLAGS]: require('../../../svg/ghost.svg').default,
-    [ICONS.PROCESSING]: require('../../../svg/ca-processing.svg').default,
-    [ICONS.NO_UXT]: require('../../../svg/empty-uxt-list.svg').default,
+  [ICONS.DASHBOARD_ICON]: require('../../../svg/dashboard-icn.svg').default,
+  [ICONS.EMPTY_STATE]: require('../../../svg/empty-state.svg').default,
+  [ICONS.LOGO_SMALL]: require('../../../svg/logo-small.svg').default,
+  [ICONS.LOGO_FULL]: require('../../../svg/logo.svg').default,
+  [ICONS.NO_RESULTS]: require('../../../svg/ghost.svg').default,
+  [ICONS.LOADER]: require('../../../svg/openreplay-preloader.svg').default,
+  [ICONS.SIGNAL_GREEN]: require('../../../svg/signal-green.svg').default,
+  [ICONS.SIGNAL_RED]: require('../../../svg/signal-red.svg').default,
+  [ICONS.NO_BOOKMARKS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_LIVE_SESSIONS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_SESSIONS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_SESSIONS_IN_VAULT]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_WEBHOOKS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_METADATA]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_ISSUES]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_AUDIT_TRAIL]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_ANNOUNCEMENTS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_ALERTS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_NOTES]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_CARDS]: require('../../../svg/ca-no-cards.svg').default,
+  [ICONS.NO_RECORDINGS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_SEARCH_RESULTS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_DASHBOARDS]: require('../../../svg/ca-no-dashboards.svg').default,
+  [ICONS.NO_PROJECTS]: require('../../../svg/ghost.svg').default,
+  [ICONS.NO_FFLAGS]: require('../../../svg/ghost.svg').default,
+  [ICONS.PROCESSING]: require('../../../svg/ca-processing.svg').default,
+  [ICONS.NO_UXT]: require('../../../svg/empty-uxt-list.svg').default,
 };
 
 interface Props {
@@ -68,16 +68,18 @@ interface Props {
 }
 
 function AnimatedSVG(props: Props): JSX.Element | null {
-    const {name, size = 24, disableSize, className} = props;
+  const {
+    name, size = 24, disableSize, className,
+  } = props;
 
-    // @ts-ignore
-    const SvgIcon = ICONS_SVGS[name];
+  // @ts-ignore
+  const SvgIcon = ICONS_SVGS[name];
 
-    if (!SvgIcon) {
-        return null;
-    }
-    const style = disableSize ? {} : { width: size + 'px' };
-    return <img src={SvgIcon} style={style} className={className} alt={name} />;
+  if (!SvgIcon) {
+    return null;
+  }
+  const style = disableSize ? {} : { width: `${size}px` };
+  return <img src={SvgIcon} style={style} className={className} alt={name} />;
 }
 
 export default AnimatedSVG;

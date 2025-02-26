@@ -3,30 +3,28 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
 import { NoContent } from 'App/components/ui';
-import {InfoCircleOutlined} from '@ant-design/icons';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 function ClickMapCard() {
   const [customSession, setCustomSession] = React.useState<any>(null);
   const { metricStore, dashboardStore, sessionStore } = useStore();
-  const fetchInsights = sessionStore.fetchInsights;
-  const insights = sessionStore.insights;
+  const { fetchInsights } = sessionStore;
+  const { insights } = sessionStore;
   const onMarkerClick = (s: string, innerText: string) => {
     metricStore.changeClickMapSearch(s, innerText);
   };
 
-  const sessionId = metricStore.instance.data.sessionId;
+  const { sessionId } = metricStore.instance.data;
   const url = metricStore.instance.data.path;
-  const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator ? metricStore.instance.series[0].filter.filters[0].operator : 'startsWith'
+  const operator = metricStore.instance.series[0]?.filter.filters[0]?.operator ? metricStore.instance.series[0].filter.filters[0].operator : 'startsWith';
 
-  React.useEffect(() => {
-    return () => setCustomSession(null);
-  }, []);
+  React.useEffect(() => () => setCustomSession(null), []);
 
   React.useEffect(() => {
     if (
-      metricStore.instance.data.domURL &&
-      sessionId &&
-      sessionId !== customSession?.sessionId
+      metricStore.instance.data.domURL
+      && sessionId
+      && sessionId !== customSession?.sessionId
     ) {
       setCustomSession(null);
       setTimeout(() => {
@@ -37,7 +35,7 @@ function ClickMapCard() {
 
   React.useEffect(() => {
     if (!url || !sessionId) return;
-    const rangeValue = dashboardStore.drillDownPeriod.rangeValue;
+    const { rangeValue } = dashboardStore.drillDownPeriod;
     const startDate = dashboardStore.drillDownPeriod.start;
     const endDate = dashboardStore.drillDownPeriod.end;
     void fetchInsights({
@@ -61,13 +59,13 @@ function ClickMapCard() {
     return (
       <NoContent
         style={{ minHeight: 220 }}
-        title={
+        title={(
           <div className="flex items-center relative">
-            <InfoCircleOutlined className='hidden md:inline-block mr-1' />
+            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
             Set a start point to visualize the heatmap. If set, try adjusting filters.
           </div>
-        }
-        show={true}
+        )}
+        show
       />
     );
   }
@@ -80,7 +78,7 @@ function ClickMapCard() {
     (evt: Record<string, any>) => {
       if (url) return evt.path.includes(url);
       return evt;
-    }
+    },
   ) || { timestamp: metricStore.instance.data.startTs };
   const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
   const domTime = jumpToEvent.domBuildingTime ?? 0;

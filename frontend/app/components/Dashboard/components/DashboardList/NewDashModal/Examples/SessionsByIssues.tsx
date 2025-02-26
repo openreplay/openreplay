@@ -1,15 +1,15 @@
-import React from 'react'
-import ExCard from "./ExCard";
-import { Frustrations } from "./Count";
+import React from 'react';
+import ExCard from './ExCard';
+import { Frustrations } from './Count';
 
 function SessionsByIssues(props: any) {
   return (
     <ExCard
-        {...props}
+      {...props}
     >
       <Frustrations />
     </ExCard>
   );
 }
 
-export default SessionsByIssues
+export default SessionsByIssues;

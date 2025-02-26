@@ -1,12 +1,11 @@
-import React from 'react'
-import { DownOutlined } from "@ant-design/icons";
+import React from 'react';
+import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
-
 
 function RangeGranularity({
   period,
   density,
-  onDensityChange
+  onDensityChange,
 }: {
   period: {
     getDuration(): number;
@@ -15,15 +14,14 @@ function RangeGranularity({
   onDensityChange: (density: number) => void
 }) {
   const granularityOptions = React.useMemo(() => {
-    if (!period) return []
+    if (!period) return [];
     return calculateGranularities(period.getDuration());
   }, [period]);
 
-
   const menuProps: MenuProps = {
     items: granularityOptions,
-    onClick: (item: any)  => onDensityChange(Number(item.key)),
-  }
+    onClick: (item: any) => onDensityChange(Number(item.key)),
+  };
   const selected = React.useMemo(() => {
     let selected = 'Custom';
     for (const option of granularityOptions) {
@@ -33,7 +31,7 @@ function RangeGranularity({
       }
     }
     return selected;
-  }, [period, density])
+  }, [period, density]);
 
   React.useEffect(() => {
     if (granularityOptions.length === 0) return;
@@ -43,15 +41,15 @@ function RangeGranularity({
 
   return (
     <Dropdown menu={menuProps} trigger={['click']}>
-      <Button type='text' variant='text' size='small' className='btn-granularity'>
+      <Button type="text" variant="text" size="small" className="btn-granularity">
         <span>{selected}</span>
-        <DownOutlined  />
+        <DownOutlined />
       </Button>
-  </Dropdown>
-  )
+    </Dropdown>
+  );
 }
 
-const PAST_24_HR_MS = 24 * 60 * 60 * 1000
+const PAST_24_HR_MS = 24 * 60 * 60 * 1000;
 function calculateGranularities(periodDurationMs: number) {
   const granularities = [
     { label: 'Hourly', durationMs: 60 * 60 * 1000 },
@@ -66,7 +64,7 @@ function calculateGranularities(periodDurationMs: number) {
     // if showing for 1 day, show by minute split as well
     granularities.unshift(
       { label: 'By minute', durationMs: 60 * 1000 },
-    )
+    );
   }
 
   for (const granularity of granularities) {

@@ -4,14 +4,11 @@ import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
 import { useModal } from 'Components/Modal';
 import LiveTestsModal from 'Components/UsabilityTesting/LiveTestsModal';
 import React from 'react';
-import { Button, Typography, Select, Space, Popover, Dropdown, Tooltip } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
-import { useParams, useHistory } from 'react-router-dom';
-import Breadcrumb from 'Shared/Breadcrumb';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import {
+  Button, Typography, Select, Space, Popover, Dropdown, Tooltip,
+} from 'antd';
+import {
+  InfoCircleOutlined,
   EditOutlined,
   ShareAltOutlined,
   ArrowRightOutlined,
@@ -22,51 +19,61 @@ import {
   FastForwardOutlined,
   // FilePdfOutlined,
   DeleteOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
 } from '@ant-design/icons';
+import { withSiteId, usabilityTesting, usabilityTestingEdit } from 'App/routes';
+import { useParams, useHistory } from 'react-router-dom';
+import Breadcrumb from 'Shared/Breadcrumb';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
-import { CopyButton, Icon, Loader, NoContent, Pagination } from 'UI';
+import {
+  CopyButton, Icon, Loader, NoContent, Pagination,
+  confirm,
+} from 'UI';
 import { Stage, EmptyStage } from 'Components/Funnels/FunnelWidget/FunnelWidget';
-import { confirm } from 'UI';
-import ResponsesOverview from './ResponsesOverview';
 import ParticipantOverviewItem from 'Components/UsabilityTesting/ParticipantOverview';
 import { toast } from 'react-toastify';
+import ResponsesOverview from './ResponsesOverview';
 
-
-const StatusItem = ({ iconName, color, text, size = "16" }: {
+function StatusItem({
+  iconName, color, text, size = '16',
+}: {
   iconName: string;
   color: string;
   size: string;
   text: string;
-}) => (
-  <div className='flex items-center'>
-    <Icon name={iconName} color={color} size={size} />
-    <Typography.Text className='ml-2'>
-      {text}
-    </Typography.Text>
-  </div>
-);
+}) {
+  return (
+    <div className="flex items-center">
+      <Icon name={iconName} color={color} size={size} />
+      <Typography.Text className="ml-2">
+        {text}
+      </Typography.Text>
+    </div>
+  );
+}
 
 const statusItems = [
   {
     value: 'in-progress',
-    label: <StatusItem iconName='record-circle-fill' color='green' text='On Going' />
+    label: <StatusItem iconName="record-circle-fill" color="green" text="On Going" />,
   },
   {
     value: 'paused',
-    label: <StatusItem iconName='pause-circle-fill' color='orange-dark' text='Hold' />
+    label: <StatusItem iconName="pause-circle-fill" color="orange-dark" text="Hold" />,
   },
   {
     value: 'closed',
-    label: <StatusItem iconName='check-circle-fill' color='gray-medium' text='Close' />
-  }
+    label: <StatusItem iconName="check-circle-fill" color="gray-medium" text="Close" />,
+  },
 ];
 
 const colors = {
   'in-progress': '#52c41a',
   closed: '#bfbfbf',
   paused: '#fa8c16',
-  preview: '#2f54eb'
+  preview: '#2f54eb',
 };
 
 const menuItems = [
@@ -78,13 +85,13 @@ const menuItems = [
   {
     key: '2',
     label: 'Edit',
-    icon: <EditOutlined rev={undefined} />
+    icon: <EditOutlined rev={undefined} />,
   },
   {
     key: '3',
     label: 'Delete',
-    icon: <DeleteOutlined rev={undefined} />
-  }
+    icon: <DeleteOutlined rev={undefined} />,
+  },
 ];
 
 function TestOverview() {
@@ -108,52 +115,53 @@ function TestOverview() {
 
   if (!uxtestingStore.instance) {
     return <Loader loading={uxtestingStore.isLoading}>Loading Data...</Loader>;
-  } else {
-    document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
   }
+  document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
 
   const onPageChange = (page: number) => {
     uxtestingStore.setSessionsPage(page);
   };
 
   return (
-    <div className='w-full mx-auto' style={{ maxWidth: '1360px' }} id={'pdf-anchor'}>
+    <div className="w-full mx-auto" style={{ maxWidth: '1360px' }} id="pdf-anchor">
       <Breadcrumb
         items={[
           {
             label: 'Usability Testing',
-            to: withSiteId(usabilityTesting(), siteId)
+            to: withSiteId(usabilityTesting(), siteId),
           },
           {
-            label: uxtestingStore.instance.title
-          }
+            label: uxtestingStore.instance.title,
+          },
         ]}
       />
-      <div className={'rounded-lg shadow-sm bg-white'}>
-        
+      <div className="rounded-lg shadow-sm bg-white">
+
         <Title testId={testId} siteId={siteId} />
 
         {uxtestingStore.instance.liveCount ? (
-          <div className={'p-4 flex items-center gap-2'}>
-            <div className={'relative h-4 w-4'}>
-              <div className={'absolute w-4 h-4 animate-ping bg-green rounded-full opacity-75'} />
-              <div className={'absolute w-4 h-4 bg-green rounded-full'} />
+          <div className="p-4 flex items-center gap-2">
+            <div className="relative h-4 w-4">
+              <div className="absolute w-4 h-4 animate-ping bg-green rounded-full opacity-75" />
+              <div className="absolute w-4 h-4 bg-green rounded-full" />
             </div>
             <Typography.Text>
-              {uxtestingStore.instance.liveCount} participants are engaged in this usability test at
+              {uxtestingStore.instance.liveCount}
+              {' '}
+              participants are engaged in this usability test at
               the moment.
             </Typography.Text>
             <Button
-              type={'primary'}
+              type="primary"
               ghost
               onClick={() => {
                 showModal(<LiveTestsModal closeModal={hideModal} testId={testId} />, {
                   right: true,
-                  width: 900
+                  width: 900,
                 });
               }}
             >
-              <Space align={'center'}>
+              <Space align="center">
                 Moderate Real-Time
                 <ArrowRightOutlined rev={undefined} />
               </Space>
@@ -163,64 +171,80 @@ function TestOverview() {
       </div>
 
       <ParticipantOverview />
-      
+
       <TaskSummary />
 
-      <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white flex flex-col gap-2'}>
+      <div className="mt-2 rounded-lg shadow-sm p-4 bg-white flex flex-col gap-2">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Open-ended task responses
         </Typography.Title>
         {uxtestingStore.instance.responsesCount ? (
           <Button
-            type={'primary'}
+            type="primary"
             ghost
             disabled={uxtestingStore.instance.responsesCount === 0}
             onClick={() => showModal(<ResponsesOverview />, { right: true, width: 900 })}
           >
-            <Space align={'center'}>
-              Review All {uxtestingStore.instance.responsesCount} Responses
+            <Space align="center">
+              Review All
+              {' '}
+              {uxtestingStore.instance.responsesCount}
+              {' '}
+              Responses
               <ArrowRightOutlined rev={undefined} />
             </Space>
           </Button>
         ) : (
-          <div className='text-base flex gap-2 mx-auto py-5'>
-              <InfoCircleOutlined /> No Data
-            </div>  
+          <div className="text-base flex gap-2 mx-auto py-5">
+            <InfoCircleOutlined />
+            {' '}
+            No Data
+          </div>
         )}
       </div>
 
-      <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white flex gap-1 items-start flex-col'}>
+      <div className="mt-2 rounded-lg shadow-sm p-4 bg-white flex gap-1 items-start flex-col">
         <Typography.Title style={{ marginBottom: 0 }} level={5}>
           Sessions
         </Typography.Title>
-        {/*<Typography.Text>in your selection</Typography.Text>*/}
-        {/*<div className={'flex gap-1 link'}>clear selection</div>*/}
-        <div className={'flex flex-col w-full'}>
+        {/* <Typography.Text>in your selection</Typography.Text> */}
+        {/* <div className={'flex gap-1 link'}>clear selection</div> */}
+        <div className="flex flex-col w-full">
           <Loader loading={uxtestingStore.isLoading}>
-            <NoContent show={uxtestingStore.testSessions.list.length == 0} 
-            title={
-            <div className='text-base flex gap-2'>
-              <InfoCircleOutlined /> No Data
-            </div>  
-            }>
+            <NoContent
+              show={uxtestingStore.testSessions.list.length == 0}
+              title={(
+                <div className="text-base flex gap-2">
+                  <InfoCircleOutlined />
+                  {' '}
+                  No Data
+                </div>
+          )}
+            >
               {uxtestingStore.testSessions.list.map((session) => (
                 // @ts-ignore
-                <SessionItem session={session} query={'?uxt=true'} />
+                <SessionItem session={session} query="?uxt=true" />
               ))}
-              <div className={'flex items-center justify-between'}>
+              <div className="flex items-center justify-between">
                 <div>
-                  Showing{' '}
-                  <span className='font-medium'>
+                  Showing
+                  {' '}
+                  <span className="font-medium">
                     {(uxtestingStore.testSessions.page - 1) * 10 + 1}
-                  </span>{' '}
-                  to{' '}
-                  <span className='font-medium'>
+                  </span>
+                  {' '}
+                  to
+                  {' '}
+                  <span className="font-medium">
                     {(uxtestingStore.page - 1) * 10 + uxtestingStore.testSessions.list.length}
-                  </span>{' '}
-                  of{' '}
-                  <span className='font-medium'>
+                  </span>
+                  {' '}
+                  of
+                  {' '}
+                  <span className="font-medium">
                     {numberWithCommas(uxtestingStore.testSessions.total)}
-                  </span>{' '}
+                  </span>
+                  {' '}
                   tests.
                 </div>
                 <Pagination
@@ -243,68 +267,68 @@ const ParticipantOverview = observer(() => {
   const { uxtestingStore } = useStore();
 
   return (
-    <div className={'p-4 rounded-lg shadow-sm bg-white mt-2'}>
+    <div className="p-4 rounded-lg shadow-sm bg-white mt-2">
       <Typography.Title level={5}>Participant Overview</Typography.Title>
       {uxtestingStore.testStats ? (
-        <div className={'flex gap-4'}>
+        <div className="flex gap-4">
           <ParticipantOverviewItem
-            titleRow={
+            titleRow={(
               <>
                 <UserOutlined style={{ fontSize: 18, color: '#394EFF' }} rev={undefined} />
-                <Typography.Text className='font-medium'>Total Participants</Typography.Text>
+                <Typography.Text className="font-medium">Total Participants</Typography.Text>
               </>
-            }
+            )}
             firstNum={uxtestingStore.testStats.tests_attempts?.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={
+            titleRow={(
               <>
                 <CheckCircleOutlined style={{ fontSize: 18, color: '#389E0D' }} rev={undefined} />
-                <Typography.Text className='font-medium'>Completed all tasks</Typography.Text>
+                <Typography.Text className="font-medium">Completed all tasks</Typography.Text>
               </>
-            }
+            )}
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.completed_all_tasks /
-                    uxtestingStore.testStats.tests_attempts) *
-                  100
+                  (uxtestingStore.testStats.completed_all_tasks
+                    / uxtestingStore.testStats.tests_attempts)
+                  * 100,
                 )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.completed_all_tasks.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={
+            titleRow={(
               <>
                 <FastForwardOutlined style={{ fontSize: 18, color: '#874D00' }} rev={undefined} />
-                <Typography.Text className='font-medium'>Skipped tasks</Typography.Text>
+                <Typography.Text className="font-medium">Skipped tasks</Typography.Text>
               </>
-            }
+            )}
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.tasks_skipped /
-                    uxtestingStore.testStats.tests_attempts) *
-                  100
+                  (uxtestingStore.testStats.tasks_skipped
+                    / uxtestingStore.testStats.tests_attempts)
+                  * 100,
                 )}%`
                 : undefined
             }
             addedNum={uxtestingStore.testStats.tasks_skipped.toString()}
           />
           <ParticipantOverviewItem
-            titleRow={
+            titleRow={(
               <>
                 <UserDeleteOutlined style={{ fontSize: 18, color: '#CC0000' }} rev={undefined} />
-                <Typography.Text className='font-medium'>Aborted the test</Typography.Text>
+                <Typography.Text className="font-medium">Aborted the test</Typography.Text>
               </>
-            }
+            )}
             firstNum={
               uxtestingStore.testStats.tests_attempts > 0
                 ? `${Math.round(
-                  (uxtestingStore.testStats.tests_skipped /
-                    uxtestingStore.testStats.tests_attempts) *
-                  100
+                  (uxtestingStore.testStats.tests_skipped
+                    / uxtestingStore.testStats.tests_attempts)
+                  * 100,
                 )}%`
                 : undefined
             }
@@ -328,12 +352,12 @@ const TaskSummary = observer(() => {
     : uxtestingStore.taskStats;
 
   return (
-    <div className={'mt-2 rounded-lg shadow-sm p-4 bg-white'}>
-      <div className={'flex justify-between items-center mb-2'}>
+    <div className="mt-2 rounded-lg shadow-sm p-4 bg-white">
+      <div className="flex justify-between items-center mb-2">
         <Typography.Title level={5}>Task Summary</Typography.Title>
 
         {uxtestingStore.taskStats.length ? (
-          <div className={'p-2 rounded-lg bg-indigo-50  flex items-center gap-1 px-4'}>
+          <div className="p-2 rounded-lg bg-indigo-50  flex items-center gap-1 px-4">
             <ClockCircleOutlined rev={undefined} />
             <Typography.Text>Average completion time of all tasks:</Typography.Text>
             <Typography.Text strong>
@@ -341,21 +365,27 @@ const TaskSummary = observer(() => {
                 ? durationFormatted(
                   uxtestingStore.taskStats.reduce(
                     (stats, task) => stats + task.avgCompletionTime,
-                    0
-                  ) / uxtestingStore.taskStats.length
+                    0,
+                  ) / uxtestingStore.taskStats.length,
                 )
                 : null}
             </Typography.Text>
-            
+
           </div>
         ) : null}
       </div>
-      {!uxtestingStore.taskStats.length ? <NoContent show title=
-      {
-        <div className='text-base flex gap-2'>
-         <InfoCircleOutlined /> No Data
-       </div>  
-      } /> : null}
+      {!uxtestingStore.taskStats.length ? (
+        <NoContent
+          show
+          title={(
+            <div className="text-base flex gap-2">
+              <InfoCircleOutlined />
+              {' '}
+              No Data
+            </div>
+      )}
+        />
+      ) : null}
       {shownTasks.map((tst, index) => (
         <Stage
           stage={{ ...tst, isActive: true, skipped: tst.skipped || totalAttempts - tst.completed }}
@@ -364,7 +394,7 @@ const TaskSummary = observer(() => {
         />
       ))}
       {shouldHide && !showAll ? (
-        <div className={'cursor-pointer'} onClick={() => setShowAll(true)}>
+        <div className="cursor-pointer" onClick={() => setShowAll(true)}>
           <EmptyStage total={uxtestingStore.taskStats.length - 5} />
         </div>
       ) : null}
@@ -385,12 +415,12 @@ const Title = observer(({ testId, siteId }: any) => {
         break;
       case 'paused':
         toast.success(
-          'The test is on \'Hold\'—participant activity paused. Toggle back to “ongoing” to resume activity.'
+          'The test is on \'Hold\'—participant activity paused. Toggle back to “ongoing” to resume activity.',
         );
         break;
       case 'closed':
         toast.success(
-          'The test is complete and closed.'
+          'The test is complete and closed.',
         );
         break;
     }
@@ -407,7 +437,7 @@ const Title = observer(({ testId, siteId }: any) => {
       if (
         await confirm({
           confirmation:
-            'Are you sure you want to delete this usability test? This action cannot be undone.'
+            'Are you sure you want to delete this usability test? This action cannot be undone.',
         })
       ) {
         uxtestingStore.deleteTest(testId).then(() => {
@@ -421,24 +451,22 @@ const Title = observer(({ testId, siteId }: any) => {
     return null;
   }
 
-  const truncatedDescr = uxtestingStore.instance?.description &&
-    uxtestingStore.instance.description.length > 250 && truncate
-      ? uxtestingStore.instance?.description.substring(0, 250) + '...'
-      : uxtestingStore.instance?.description;
+  const truncatedDescr = uxtestingStore.instance?.description
+    && uxtestingStore.instance.description.length > 250 && truncate
+    ? `${uxtestingStore.instance?.description.substring(0, 250)}...`
+    : uxtestingStore.instance?.description;
   const redirectToEdit = async () => {
-    const confirmationTitle =
-      uxtestingStore.instance!.status === 'in-progress'
-        ? 'Editing Active Usability Test'
-        : 'Editing Test on Hold';
-    const confirmationStr =
-      uxtestingStore.instance!.status === 'in-progress'
-        ? 'You\'re editing a test that\'s currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧'
-        : 'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.';
+    const confirmationTitle = uxtestingStore.instance!.status === 'in-progress'
+      ? 'Editing Active Usability Test'
+      : 'Editing Test on Hold';
+    const confirmationStr = uxtestingStore.instance!.status === 'in-progress'
+      ? 'You\'re editing a test that\'s currently active. Please be aware that you can only modify the test title and objective. Editing test steps is not permitted to avoid confusion with existing responses. Proceed with caution! 🚧'
+      : 'This usability test is on hold. You can only update the title and descriptions. Task editing is not allowed to avoid confusion with existing responses.';
     if (
       await confirm({
         header: confirmationTitle,
         confirmation: confirmationStr,
-        confirmButton: 'Edit'
+        confirmButton: 'Edit',
       })
     ) {
       history.push(withSiteId(usabilityTestingEdit(testId), siteId));
@@ -450,18 +478,18 @@ const Title = observer(({ testId, siteId }: any) => {
 
   const isActive = ['in-progress', 'preview'].includes(uxtestingStore.instance!.status);
   return (
-    <div className={'p-4 border-b'}>
-      <div className={'flex items-center gap-2'}>
-        <Typography.Title level={4} className='cap-first'>{uxtestingStore.instance!.title}</Typography.Title>
-        <div className={'ml-auto'} />
+    <div className="p-4 border-b">
+      <div className="flex items-center gap-2">
+        <Typography.Title level={4} className="cap-first">{uxtestingStore.instance!.title}</Typography.Title>
+        <div className="ml-auto" />
         <Select
-          className='utStatusToggler'
+          className="utStatusToggler"
           value={uxtestingStore.instance!.status}
           style={{ width: 150 }}
           onChange={handleChange}
           options={statusItems}
           optionRender={(item) => (
-            <Space align={'center'}>
+            <Space align="center">
               {item.label}
             </Space>
           )}
@@ -476,42 +504,44 @@ const Title = observer(({ testId, siteId }: any) => {
             {uxtestingStore.instance!.tasks.length} Tasks <EditOutlined rev={undefined} />{' '}
           </Space>
         </Button> */}
-        {isActive ?
-          <Popover
-            trigger={'hover'}
-            placement="bottomRight"
-            className='rounded-lg'
-            content={
-              <div style={{ width: '300px' }}>
-                <div className={'text-base font-medium'}>
-                Distribute the following link with test participants via email or other methods.
-                </div>
-                <div
-                  style={{ background: '#E4F6F6' }}
-                  className={'p-2 rounded-lg break-all my-2 text-lg'}
-                >
-                  {`${uxtestingStore.instance!.startingPath}?oruxt=${
+        {isActive
+          ? (
+            <Popover
+              trigger="hover"
+              placement="bottomRight"
+              className="rounded-lg"
+              content={(
+                <div style={{ width: '300px' }}>
+                  <div className="text-base font-medium">
+                    Distribute the following link with test participants via email or other methods.
+                  </div>
+                  <div
+                    style={{ background: '#E4F6F6' }}
+                    className="p-2 rounded-lg break-all my-2 text-lg"
+                  >
+                    {`${uxtestingStore.instance!.startingPath}?oruxt=${
                     uxtestingStore.instance!.testId
-                  }`}
-                </div>
-                <CopyButton
-                  variant={'text-primary'}
-                  content={`${uxtestingStore.instance!.startingPath}?oruxt=${
+                    }`}
+                  </div>
+                  <CopyButton
+                    variant="text-primary"
+                    content={`${uxtestingStore.instance!.startingPath}?oruxt=${
                     uxtestingStore.instance!.testId
-                  }`}
-                />
-              </div>
-            }
-          >
-           
-            <Button type={'primary'} >
-              <Space align={'center'}>
-                Distribute Test
-                <ShareAltOutlined rev={undefined} />
-              </Space>
-            </Button>
+                    }`}
+                  />
+                </div>
+            )}
+            >
 
-          </Popover>
+              <Button type="primary">
+                <Space align="center">
+                  Distribute Test
+                  <ShareAltOutlined rev={undefined} />
+                </Space>
+              </Button>
+
+            </Popover>
+          )
           : null}
         <Dropdown
           menu={{
@@ -519,15 +549,15 @@ const Title = observer(({ testId, siteId }: any) => {
               uxtestingStore.instance!.status === 'closed'
                 ? menuItems.filter((i) => i.label !== 'Edit')
                 : menuItems,
-            onClick: onMenuClick
+            onClick: onMenuClick,
           }}
         >
-          <Button icon={<MoreOutlined rev={undefined} />}></Button>
+          <Button icon={<MoreOutlined rev={undefined} />} />
         </Dropdown>
       </div>
-      <div className={'whitespace-pre-wrap mt-2 cap-first'}>{truncatedDescr}</div>
+      <div className="whitespace-pre-wrap mt-2 cap-first">{truncatedDescr}</div>
       {uxtestingStore.instance?.description && uxtestingStore.instance.description.length > 250 ? (
-        <div className={'link'} onClick={() => setTruncate(!truncate)}>
+        <div className="link" onClick={() => setTruncate(!truncate)}>
           {truncate ? 'Show more' : 'Show less'}
         </div>
       ) : null}

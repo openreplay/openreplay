@@ -12,8 +12,8 @@ function BackButton({ compact }: { compact?: boolean }) {
   };
   if (compact) {
     return (
-      <Button onClick={handleBackClick} type={'text'} icon={<ArrowLeftOutlined />} />
-    )
+      <Button onClick={handleBackClick} type="text" icon={<ArrowLeftOutlined />} />
+    );
   }
   return (
     <Button type="text" onClick={handleBackClick} icon={<LeftOutlined />} className="px-1 pe-2 me-2 gap-1">

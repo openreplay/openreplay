@@ -1,9 +1,7 @@
 import React from 'react';
-import { Button, Space } from 'antd';
+import { Button, Space, Empty } from 'antd';
 import { filtersMap } from 'Types/filter/newFilter';
-import { Empty } from 'antd';
-import { Info } from 'lucide-react';
-import { ArrowRight } from 'lucide-react';
+import { Info, ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
 import Widget from '@/mstore/types/widget';
@@ -16,9 +14,11 @@ interface Props {
 }
 
 function SessionsBy(props: Props) {
-  const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
+  const {
+    metric = {}, data = { values: [] }, onClick = () => null, isTemplate,
+  } = props;
   const [selected, setSelected] = React.useState<any>(null);
-  const total = data.total;
+  const { total } = data;
   const { openModal, closeModal } = useModal();
   const modalMetric = React.useMemo(() => Object.assign(new Widget(), metric), [metric]);
 
@@ -28,12 +28,16 @@ function SessionsBy(props: Props) {
       value: [data.name],
       type: filtersMap[metric.metricOf].key,
       filters: filtersMap[metric.metricOf].filters?.map((f: any) => {
-        const { key, operatorOptions, category, icon, label, options, ...cleaned } = f;
+        const {
+          key, operatorOptions, category, icon, label, options, ...cleaned
+        } = f;
         return { ...cleaned, type: f.key, value: [] };
-      })
+      }),
     };
 
-    const { key, operatorOptions, category, icon, label, options, ...finalFilter } = baseFilter;
+    const {
+      key, operatorOptions, category, icon, label, options, ...finalFilter
+    } = baseFilter;
 
     setSelected(data.name);
     onClick([finalFilter]);
@@ -41,19 +45,20 @@ function SessionsBy(props: Props) {
 
   const showMore = (e: any) => {
     e.stopPropagation();
-    openModal(
-      <CardSessionsByList
-        paginated={true}
-        metric={modalMetric}
-        total={total}
-        list={data.values}
-        onClickHandler={(e, item) => {
-          closeModal();
-          onClickHandler(null, item);
-        }} selected={selected} />, {
-        title: metric.name,
-        width: 600
-      });
+    openModal(<CardSessionsByList
+      paginated
+      metric={modalMetric}
+      total={total}
+      list={data.values}
+      onClickHandler={(e, item) => {
+        closeModal();
+        onClickHandler(null, item);
+      }}
+      selected={selected}
+    />, {
+      title: metric.name,
+      width: 600,
+    });
   };
 
   return (
@@ -64,23 +69,29 @@ function SessionsBy(props: Props) {
           style={{ minHeight: 220 }}
           className="flex flex-col items-center justify-center"
           imageStyle={{ height: 0 }}
-          description={
+          description={(
             <div className="flex items-center gap-2 justify-center text-black">
               <Info size={14} />
               No data available for the selected period.
             </div>
-          }
+          )}
         />
       ) : (
         <div className="flex flex-col justify-between w-full" style={{ height: 220 }}>
-          {metric && <CardSessionsByList list={data.values.slice(0, 3)}
-                                         selected={selected}
-                                         onClickHandler={onClickHandler} />}
+          {metric && (
+          <CardSessionsByList
+            list={data.values.slice(0, 3)}
+            selected={selected}
+            onClickHandler={onClickHandler}
+          />
+          )}
           {total > 3 && (
             <div className="flex">
               <Button type="link" onClick={showMore}>
                 <Space className="flex font-medium gap-1">
-                  {total - 3} More
+                  {total - 3}
+                  {' '}
+                  More
                   <ArrowRight size={16} />
                 </Space>
               </Button>

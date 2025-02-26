@@ -1,4 +1,4 @@
-const zoomStartTime = 100
+const zoomStartTime = 100;
 // Generate fake fetchList data for NETWORK
 const fetchList: any[] = [];
 for (let i = 0; i < 100; i++) {
@@ -9,9 +9,9 @@ for (let i = 0; i < 100; i++) {
   const resource = {
     time: zoomStartTime + i * 1000 + Math.floor(Math.random() * 500), // Incremental time with randomness
     name: `https://api.example.com/resource/${i}`,
-    status: status,
-    isRed: isRed,
-    isYellow: isYellow,
+    status,
+    isRed,
+    isYellow,
     success: status < 400,
     tp: Math.random() > 0.5 ? 'graph_ql' : 'fetch',
     // Additional properties used by your component

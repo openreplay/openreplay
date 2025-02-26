@@ -19,7 +19,6 @@ export const INSPECTOR = 11;
 export const OVERVIEW = 12;
 export const BACKENDLOGS = 13;
 
-
 export const blocks = {
   none: NONE,
   console: CONSOLE,
@@ -54,24 +53,31 @@ export const blockValues = [
 
 export default class UiPlayerStore {
   fullscreen = false;
+
   bottomBlock = 0;
+
   hiddenHints = {
     storage: localStorage.getItem('storageHideHint') || undefined,
     stack: localStorage.getItem('stackHideHint') || undefined,
   };
-  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(localStorage.getItem('CHANGE_SKIP_INTERVAL') || '10', 10) as (2 | 5 | 10 | 15 | 20 | 30 | 60)
+
+  skipInterval: 2 | 5 | 10 | 15 | 20 | 30 | 60 = parseInt(localStorage.getItem('CHANGE_SKIP_INTERVAL') || '10', 10) as (2 | 5 | 10 | 15 | 20 | 30 | 60);
+
   timelineZoom = {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  }
+  };
+
   highlightSelection = {
     enabled: false,
     startTs: 0,
     endTs: 0,
-  }
-  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
-  dataSource: 'all' | 'current' = 'all'
+  };
+
+  zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview';
+
+  dataSource: 'all' | 'current' = 'all';
 
   constructor() {
     makeAutoObservable(this);
@@ -79,52 +85,52 @@ export default class UiPlayerStore {
 
   changeDataSource = (source: 'all' | 'current') => {
     this.dataSource = source;
-  }
+  };
 
   toggleFullscreen = (val?: boolean) => {
     this.fullscreen = val ?? !this.fullscreen;
-  }
+  };
 
   fullscreenOff = () => {
     this.fullscreen = false;
-  }
+  };
 
   fullscreenOn = () => {
     this.fullscreen = true;
-  }
+  };
 
   toggleBottomBlock = (block: number) => {
     this.bottomBlock = this.bottomBlock === block ? 0 : block;
-  }
+  };
 
   closeBottomBlock = () => {
     this.bottomBlock = 0;
-  }
+  };
 
   changeSkipInterval = (interval: 2 | 5 | 10 | 15 | 20 | 30 | 60) => {
     localStorage.setItem('CHANGE_SKIP_INTERVAL', interval.toString());
     this.skipInterval = interval;
-  }
+  };
 
   hideHint = (hint: 'storage' | 'stack') => {
     this.hiddenHints[hint] = 'true';
     localStorage.setItem(`${hint}HideHint`, 'true');
     this.bottomBlock = 0;
-  }
+  };
 
   toggleZoom = (payload: ToggleZoomPayload) => {
     this.timelineZoom.enabled = payload.enabled;
     this.timelineZoom.startTs = payload.range?.[0] ?? 0;
     this.timelineZoom.endTs = payload.range?.[1] ?? 0;
-  }
+  };
 
   toggleHighlightSelection = (payload: ToggleZoomPayload) => {
     this.highlightSelection.enabled = payload.enabled;
     this.highlightSelection.startTs = payload.range?.[0] ?? 0;
     this.highlightSelection.endTs = payload.range?.[1] ?? 0;
-  }
+  };
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {
     this.zoomTab = tab;
-  }
+  };
 }

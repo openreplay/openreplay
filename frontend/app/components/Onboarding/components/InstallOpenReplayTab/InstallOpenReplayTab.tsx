@@ -1,14 +1,12 @@
 import React from 'react';
+import { Icon } from 'UI';
+import { OB_TABS } from 'App/routes';
+import withPageTitle from 'App/components/hocs/withPageTitle';
+import { Segmented, Button } from 'antd';
 import OnboardingTabs from '../OnboardingTabs';
 import MobileOnboardingTabs from '../OnboardingTabs/OnboardingMobileTabs';
 import ProjectFormButton from '../ProjectFormButton';
-import { Icon } from 'UI';
-import withOnboarding from '../withOnboarding';
-import { WithOnboardingProps } from '../withOnboarding';
-import { OB_TABS } from 'App/routes';
-import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Segmented } from 'antd';
-import { Button } from 'antd'
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -24,11 +22,12 @@ interface Props extends WithOnboardingProps {
 }
 
 function InstallOpenReplayTab(props: Props) {
-  const { site, platforms, platform, setPlatform, platformMap } = props;
+  const {
+    site, platforms, platform, setPlatform, platformMap,
+  } = props;
 
   React.useEffect(() => {
-    if (site.platform)
-      setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) || platforms[0]);
+    if (site.platform) setPlatform(platforms.find(({ value }) => value === platformMap[site.platform]) || platforms[0]);
   }, [site]);
   return (
     <>
@@ -40,10 +39,10 @@ function InstallOpenReplayTab(props: Props) {
             <ProjectFormButton />
           </div>
         </div>
-        <a href={"https://docs.openreplay.com/en/using-or/"} target="_blank">
-          <Button size={"small"} type={"text"} className="ml-2 flex items-center gap-2">
-            <Icon name={"question-circle"} />
-            <div className={"text-main"}>See Documentation</div>
+        <a href="https://docs.openreplay.com/en/using-or/" target="_blank" rel="noreferrer">
+          <Button size="small" type="text" className="ml-2 flex items-center gap-2">
+            <Icon name="question-circle" />
+            <div className="text-main">See Documentation</div>
           </Button>
         </a>
       </h1>
@@ -52,9 +51,7 @@ function InstallOpenReplayTab(props: Props) {
         <Segmented
           options={platforms}
           value={platform.value}
-          onChange={(value) =>
-            setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])
-          }
+          onChange={(value) => setPlatform(platforms.find(({ value: v }) => v === value) || platforms[0])}
         />
       </div>
       <div className="p-4">
@@ -78,7 +75,11 @@ function Snippet({ site }: { site: Record<string, any> }) {
   return (
     <>
       <div className="mb-6 text-lg font-medium">
-        Setup OpenReplay through NPM package <span className="text-sm">(recommended)</span> or
+        Setup OpenReplay through NPM package
+        {' '}
+        <span className="text-sm">(recommended)</span>
+        {' '}
+        or
         script.
       </div>
       <OnboardingTabs site={site} />

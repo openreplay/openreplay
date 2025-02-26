@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'classnames';
 import { Tooltip, TextEllipsis } from 'UI';
+import { colorScale } from 'App/utils';
 import { Styles } from '../../Dashboard/Widgets/common';
 import cls from './distributionBar.module.css';
-import { colorScale } from 'App/utils';
 
 function DistributionBar({ className, title, partitions }) {
   if (partitions.length === 0) {
@@ -30,13 +30,13 @@ function DistributionBar({ className, title, partitions }) {
         {partitions.map((p, index) => (
           <Tooltip
             key={p.label}
-            title={
+            title={(
               <div className="text-center">
                 <span className="capitalize">{p.label}</span>
                 <br />
                 {`${Math.round(p.prc)}%`}
               </div>
-            }
+            )}
             style={{
               marginLeft: '1px',
               width: `${p.prc}%`,

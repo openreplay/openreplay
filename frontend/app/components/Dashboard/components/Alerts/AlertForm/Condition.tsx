@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from 'UI';
 import Select from 'Shared/Select';
 import { alertConditions as conditions } from 'App/constants';
-import Alert from 'Types/alert'
+import Alert from 'Types/alert';
 
 const thresholdOptions = [
   { label: '15 minutes', value: 15 },
@@ -43,7 +43,7 @@ function Condition({
     <div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">{'Trigger when'}</label>
+          <label className="w-1/6 flex-shrink-0 font-normal">Trigger when</label>
           <Select
             className="w-2/6"
             placeholder="change"
@@ -63,7 +63,7 @@ function Condition({
         <Select
           className="w-2/6"
           placeholder="Select Metric"
-          isSearchable={true}
+          isSearchable
           options={triggerOptions}
           name="left"
           value={triggerOptions.find((i) => i.value === instance.query.left) || ''}
@@ -72,16 +72,14 @@ function Condition({
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">{'is'}</label>
+        <label className="w-1/6 flex-shrink-0 font-normal">is</label>
         <div className="w-2/6 flex items-center">
           <Select
             placeholder="Select Condition"
             options={conditions}
             name="operator"
-            value={conditions.find(c => c.value === instance.query.operator) || ''}
-            onChange={({ value }) =>
-              writeQueryOption(null, { name: 'operator', value: value.value })
-            }
+            value={conditions.find((c) => c.value === instance.query.operator) || ''}
+            onChange={({ value }) => writeQueryOption(null, { name: 'operator', value: value.value })}
           />
           {unit && (
             <>
@@ -93,7 +91,7 @@ function Condition({
                 onChange={writeQuery}
                 placeholder="E.g. 3"
               />
-              <span className="ml-2">{'test'}</span>
+              <span className="ml-2">test</span>
             </>
           )}
           {!unit && (
@@ -103,14 +101,14 @@ function Condition({
               value={instance.query.right}
               onChange={writeQuery}
               placeholder="Specify Value"
-              type={"number"}
+              type="number"
             />
           )}
         </div>
       </div>
 
       <div className="flex items-center my-3">
-        <label className="w-1/6 flex-shrink-0 font-normal">{'over the past'}</label>
+        <label className="w-1/6 flex-shrink-0 font-normal">over the past</label>
         <Select
           className="w-2/6"
           placeholder="Select timeframe"
@@ -122,7 +120,7 @@ function Condition({
       </div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-1/6 flex-shrink-0 font-normal">{'compared to previous'}</label>
+          <label className="w-1/6 flex-shrink-0 font-normal">compared to previous</label>
           <Select
             className="w-2/6"
             placeholder="Select timeframe"

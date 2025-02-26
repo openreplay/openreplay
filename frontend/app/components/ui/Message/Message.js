@@ -1,10 +1,10 @@
 import React from 'react';
-import styles from './message.module.css';
 import { Icon } from 'UI';
 import cn from 'classnames';
+import styles from './message.module.css';
 
 // TODO this has to be improved
-const Message = ({
+function Message({
   icon = 'check',
   hidden = false,
   visible = false,
@@ -13,8 +13,8 @@ const Message = ({
   success = false,
   info = true,
   text = undefined,
-}) =>
-  visible || !hidden ? (
+}) {
+  return visible || !hidden ? (
     <div className={cn(styles.message, 'flex items-center')} data-inline={inline}>
       <Icon
         name={success ? 'check' : 'close'}
@@ -22,9 +22,10 @@ const Message = ({
         className="mr-2"
         size={success ? 20 : 14}
       />
-      {text ? text : children}
+      {text || children}
     </div>
   ) : null;
+}
 
 Message.displayName = 'Message';
 

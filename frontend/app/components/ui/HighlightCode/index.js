@@ -1,1 +1,1 @@
-export { default } from './HighlightCode'
+export { default } from './HighlightCode';

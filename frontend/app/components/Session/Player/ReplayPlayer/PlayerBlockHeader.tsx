@@ -1,4 +1,4 @@
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import {
@@ -9,25 +9,27 @@ import {
 import { BackLink, Link } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import UserCard from './EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import stl from './playerBlockHeader.module.css';
 import { IFRAME } from 'App/constants/storageKeys';
+import stl from './playerBlockHeader.module.css';
+import UserCard from './EventsBlock/UserCard';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
-  const { uxtestingStore, customFieldStore, projectsStore, sessionStore } = useStore()
+  const {
+    uxtestingStore, customFieldStore, projectsStore, sessionStore,
+  } = useStore();
   const session = sessionStore.current;
-  const sessionPath = sessionStore.sessionPath;
+  const { sessionPath } = sessionStore;
   const siteId = projectsStore.siteId!;
-  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
-  const { width = 0, height = 0, showEvents = false } = playerState
-  const metaList = customFieldStore.list.map((i: any) => i.key)
+  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false };
+  const { width = 0, height = 0, showEvents = false } = playerState;
+  const metaList = customFieldStore.list.map((i: any) => i.key);
 
   const {
     fullscreen,
@@ -46,19 +48,19 @@ function PlayerBlockHeader(props: any) {
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname ||
-      sessionPath.pathname.includes('/session/') || sessionPath.pathname.includes('/assist/')
+      sessionPath.pathname === history.location.pathname
+      || sessionPath.pathname.includes('/session/') || sessionPath.pathname.includes('/assist/')
     ) {
       history.push(withSiteId(SESSIONS_ROUTE, siteId));
     } else {
       history.push(
-        sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId)
+        sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId),
       );
     }
   };
 
   const { sessionId, live, metadata } = session;
-  let _metaList = Object.keys(metadata || {})
+  const _metaList = Object.keys(metadata || {})
     .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
@@ -70,7 +72,6 @@ function PlayerBlockHeader(props: any) {
     key: tab,
   }));
 
-
   return (
     <div className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}>
       <div className="flex w-full items-center">
@@ -79,9 +80,9 @@ function PlayerBlockHeader(props: any) {
             className="flex items-center h-full cursor-pointer group"
             onClick={backHandler}
           >
-                {/* @ts-ignore TODO */}
-                <BackLink label="Back" className="h-full ml-2" />
-                <div className={stl.divider} />
+            {/* @ts-ignore TODO */}
+            <BackLink label="Back" className="h-full ml-2" />
+            <div className={stl.divider} />
           </div>
         )}
         <UserCard width={width} height={height} />
@@ -105,22 +106,22 @@ function PlayerBlockHeader(props: any) {
           )}
         </div>
       </div>
-        <div className="px-2 relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
-          <Tabs
-            tabs={TABS}
-            active={activeTab}
-            onClick={(tab) => {
-              if (activeTab === tab) {
-                setActiveTab('');
-                player.toggleEvents();
-              } else {
-                setActiveTab(tab);
-                !showEvents && player.toggleEvents();
-              }
-            }}
-            border={false}
-          />
-        </div>
+      <div className="px-2 relative border-l border-l-gray-lighter" style={{ minWidth: '270px' }}>
+        <Tabs
+          tabs={TABS}
+          active={activeTab}
+          onClick={(tab) => {
+            if (activeTab === tab) {
+              setActiveTab('');
+              player.toggleEvents();
+            } else {
+              setActiveTab(tab);
+              !showEvents && player.toggleEvents();
+            }
+          }}
+          border={false}
+        />
+      </div>
     </div>
   );
 }

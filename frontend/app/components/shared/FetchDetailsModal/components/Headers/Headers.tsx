@@ -1,22 +1,22 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import stl from './headers.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import stl from './headers.module.css';
 
 interface Props {
-  requestHeaders: Record<string,string>
-  responseHeaders: Record<string,string>
+  requestHeaders: Record<string, string>
+  responseHeaders: Record<string, string>
 }
 function Headers(props: Props) {
   return (
     <div>
       <NoContent
-        title={
+        title={(
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
             <div className="mt-6 text-base">No data available</div>
           </div>
-        }
+        )}
         size="small"
         show={!props.requestHeaders && !props.responseHeaders}
         // animatedIcon="no-results"
@@ -27,7 +27,10 @@ function Headers(props: Props) {
               <div className="my-2 font-medium">Request Headers</div>
               {Object.keys(props.requestHeaders).map((h) => (
                 <div className={stl.row}>
-                  <span className="mr-2 font-medium">{h}:</span>
+                  <span className="mr-2 font-medium">
+                    {h}
+                    :
+                  </span>
                   <span>{props.requestHeaders[h]}</span>
                 </div>
               ))}
@@ -41,7 +44,10 @@ function Headers(props: Props) {
             <div className="my-2 font-medium">Response Headers</div>
             {Object.keys(props.responseHeaders).map((h) => (
               <div className={stl.row}>
-                <span className="mr-2 font-medium">{h}:</span>
+                <span className="mr-2 font-medium">
+                  {h}
+                  :
+                </span>
                 <span>{props.responseHeaders[h]}</span>
               </div>
             ))}

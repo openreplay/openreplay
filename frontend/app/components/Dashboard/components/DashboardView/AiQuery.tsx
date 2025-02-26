@@ -19,7 +19,7 @@ function AiQuery() {
   return (
     <>
       <QueryModal />
-      <div className={'rounded p-4 mb-4'} style={grad}>
+      <div className="rounded p-4 mb-4" style={grad}>
         <InputBox />
       </div>
     </>
@@ -39,13 +39,15 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
   };
   return (
     <>
-      {!inModal ? <div className={"flex items-center mb-2 gap-2"}>
-        <Icon name={"sparkles"} size={16} />
-        <div className={"font-medium"}>What would you like to visualize?</div>
-      </div> : null}
+      {!inModal ? (
+        <div className="flex items-center mb-2 gap-2">
+          <Icon name="sparkles" size={16} />
+          <div className="font-medium">What would you like to visualize?</div>
+        </div>
+      ) : null}
       <div style={gradientBox}>
         <Input
-          wrapperClassName={'w-full pr-2'}
+          wrapperClassName="w-full pr-2"
           value={aiFiltersStore.query}
           style={{
             minWidth: inModal ? '600px' : '840px',
@@ -58,15 +60,15 @@ const InputBox = observer(({ inModal }: { inModal?: boolean }) => {
               fetchResults();
             }
           }}
-          placeholder={'E.g., Track all the errors in checkout flow.'}
+          placeholder="E.g., Track all the errors in checkout flow."
           className="ml-2 px-2 pe-9 text-lg placeholder-lg !border-0 rounded-e-full nofocus"
           leadingButton={
             aiFiltersStore.query !== '' ? (
               <div
-                className={'h-full flex items-center cursor-pointer'}
+                className="h-full flex items-center cursor-pointer"
                 onClick={fetchResults}
               >
-                <div className={'px-2 py-1 hover:bg-active-blue rounded mr-2'}>
+                <div className="px-2 py-1 hover:bg-active-blue rounded mr-2">
                   <SendOutlined />
                 </div>
               </div>
@@ -89,7 +91,7 @@ const QueryModal = observer(() => {
       open={aiFiltersStore.modalOpen}
       onCancel={onClose}
       width={900}
-      destroyOnClose={true}
+      destroyOnClose
       footer={null}
       closeIcon={false}
       styles={{
@@ -97,9 +99,9 @@ const QueryModal = observer(() => {
           backgroundColor: colors.gray[100],
         },
       }}
-      centered={true}
+      centered
     >
-      <div className={'flex flex-col gap-2'}>
+      <div className="flex flex-col gap-2">
         {aiFiltersStore.isLoading ? (
           <Loader />
         ) : (
@@ -113,12 +115,10 @@ const QueryModal = observer(() => {
 function Loader() {
   return (
     <div
-      className={
-        'flex items-center justify-center flex-col font-medium text-xl min-h-80'
-      }
+      className="flex items-center justify-center flex-col font-medium text-xl min-h-80"
     >
       <div style={{ width: 150, height: 150 }}>
-        <Lottie animationData={aiSpinner} loop={true} />
+        <Lottie animationData={aiSpinner} loop />
       </div>
       <div>AI is brewing your card, wait a few seconds...</div>
     </div>

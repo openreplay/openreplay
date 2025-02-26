@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
-import {IconNames} from "UI/SVG";
+import { IconNames } from 'UI/SVG';
 import styles from './segmentSelection.module.css';
 
 type Entry = { value: string, name: string, disabled?: boolean, icon?: IconNames };
@@ -54,7 +54,7 @@ class SegmentSelection<T extends Entry> extends React.Component<Props<T>> {
               [styles.disabled]: disabled,
               [styles.outline]: outline,
             },
-            className
+            className,
           )}
         >
           {list.map((item, i) => (
@@ -67,7 +67,7 @@ class SegmentSelection<T extends Entry> extends React.Component<Props<T>> {
               {item.icon && (
                 <Icon
                   name={item.icon}
-                  size={size === 'extraSmall' || size === 'small'  || icons  ? 14 : 20}
+                  size={size === 'extraSmall' || size === 'small' || icons ? 14 : 20}
                   marginRight={item.name ? 6 : undefined}
                 />
               )}

@@ -1,5 +1,5 @@
-import BaseService from './BaseService';
 import { IErrorStack } from 'Types/session/errorStack';
+import BaseService from './BaseService';
 
 export default class ErrorService extends BaseService {
   fetchError = async (id: string) => {
@@ -16,7 +16,7 @@ export default class ErrorService extends BaseService {
 
   fetchErrorTrace = async (id: string): Promise<{ trace: IErrorStack[], sourcemapUploaded: boolean }> => {
     const r = await this.client.get(`/errors/${id}/sourcemaps`);
-    const { data } = await r.json()
+    const { data } = await r.json();
 
     return data;
   };
@@ -31,5 +31,5 @@ export default class ErrorService extends BaseService {
     const r = await this.client.get(`/errors/${errorId}/stats`);
 
     return await r.json();
-  }
+  };
 }

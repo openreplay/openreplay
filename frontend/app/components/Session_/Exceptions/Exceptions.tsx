@@ -11,11 +11,11 @@ import {
   QuestionMarkHint,
 } from 'UI';
 import { error as errorRoute } from 'App/routes';
-import { useStore } from "App/mstore";
-import Autoscroll from '../Autoscroll';
-import BottomBlock from '../BottomBlock';
+import { useStore } from 'App/mstore';
 import { MobilePlayerContext, PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import Autoscroll from '../Autoscroll';
+import BottomBlock from '../BottomBlock';
 
 interface IProps {
   loading: boolean;
@@ -34,48 +34,46 @@ function MobileExceptionsCont() {
   const filtered = exceptions.filter((e: any) => filterRE.test(e.name) || filterRE.test(e.message));
 
   return (
-    <>
-      <BottomBlock>
-        <BottomBlock.Header>
-          <div className="flex items-center">
-            <span className="font-semibold color-gray-medium mr-4">Exceptions</span>
-          </div>
+    <BottomBlock>
+      <BottomBlock.Header>
+        <div className="flex items-center">
+          <span className="font-semibold color-gray-medium mr-4">Exceptions</span>
+        </div>
 
-          <div className={'flex items-center justify-between'}>
-            <Input
-              className="input-small"
-              placeholder="Filter by name or message"
-              icon="search"
-              name="filter"
-              onChange={onFilterChange}
-              height={28}
-            />
-          </div>
-        </BottomBlock.Header>
-        <BottomBlock.Content>
-          <NoContent size="small" show={filtered.length === 0} title="No recordings found">
-            <Autoscroll>
-              {filtered.map((e: any, index) => (
-                <React.Fragment key={e.key}>
-                  <ErrorItem onJump={() => player.jump(e.time)} error={e} />
-                </React.Fragment>
-              ))}
-            </Autoscroll>
-          </NoContent>
-        </BottomBlock.Content>
-      </BottomBlock>
-    </>
+        <div className="flex items-center justify-between">
+          <Input
+            className="input-small"
+            placeholder="Filter by name or message"
+            icon="search"
+            name="filter"
+            onChange={onFilterChange}
+            height={28}
+          />
+        </div>
+      </BottomBlock.Header>
+      <BottomBlock.Content>
+        <NoContent size="small" show={filtered.length === 0} title="No recordings found">
+          <Autoscroll>
+            {filtered.map((e: any, index) => (
+              <React.Fragment key={e.key}>
+                <ErrorItem onJump={() => player.jump(e.time)} error={e} />
+              </React.Fragment>
+            ))}
+          </Autoscroll>
+        </NoContent>
+      </BottomBlock.Content>
+    </BottomBlock>
   );
 }
 
 function ExceptionsCont() {
   const { sessionStore } = useStore();
-  const errorStack = sessionStore.errorStack;
-  const sourcemapUploaded = sessionStore.sourcemapUploaded;
+  const { errorStack } = sessionStore;
+  const { sourcemapUploaded } = sessionStore;
   const loading = sessionStore.loadingSessionData;
   const { player, store } = React.useContext(PlayerContext);
   const { tabStates, currentTab } = store.get();
-  const { logListNow: logs = [], exceptionsList: exceptions = [] } = tabStates[currentTab]
+  const { logListNow: logs = [], exceptionsList: exceptions = [] } = tabStates[currentTab];
   const [filter, setFilter] = React.useState('');
   const [currentError, setCurrentErrorVal] = React.useState(null);
 
@@ -126,7 +124,7 @@ function ExceptionsCont() {
             <span className="font-semibold color-gray-medium mr-4">Exceptions</span>
           </div>
 
-          <div className={'flex items-center justify-between'}>
+          <div className="flex items-center justify-between">
             <Input
               className="input-small"
               placeholder="Filter by name or message"
@@ -136,19 +134,21 @@ function ExceptionsCont() {
               height={28}
             />
             <QuestionMarkHint
-              className={'mx-4'}
-              content={
+              className="mx-4"
+              content={(
                 <>
                   <a
                     className="color-teal underline"
                     target="_blank"
                     href="https://docs.openreplay.com/installation/upload-sourcemaps"
+                    rel="noreferrer"
                   >
-                    Upload Source Maps{' '}
+                    Upload Source Maps
+                    {' '}
                   </a>
                   and see source code context obtained from stack traces in their original form.
                 </>
-              }
+              )}
             />
           </div>
         </BottomBlock.Header>
@@ -170,4 +170,4 @@ function ExceptionsCont() {
 
 export const Exceptions = observer(ExceptionsCont);
 
-export const MobileExceptions = observer(MobileExceptionsCont)
+export const MobileExceptions = observer(MobileExceptionsCont);

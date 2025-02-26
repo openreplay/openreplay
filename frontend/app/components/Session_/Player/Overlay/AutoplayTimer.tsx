@@ -3,19 +3,19 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { withRouter } from 'react-router-dom';
 import { Link } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { session as sessionRoute, withSiteId } from 'App/routes';
-import stl from './AutoplayTimer.module.css';
-import clsOv from './overlay.module.css';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 import { useStore } from 'App/mstore';
+import stl from './AutoplayTimer.module.css';
+import clsOv from './overlay.module.css';
 
 function AutoplayTimer({ history }: any) {
   let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
   const { projectsStore, sessionStore } = useStore();
-  const nextId = sessionStore.nextId;
+  const { nextId } = sessionStore;
 
   useEffect(() => {
     if (counter > 0) {
@@ -25,7 +25,7 @@ function AutoplayTimer({ history }: any) {
     }
 
     if (counter === 0) {
-      const siteId = projectsStore.getSiteId().siteId;
+      const { siteId } = projectsStore.getSiteId();
       history.push(withSiteId(sessionRoute(nextId), siteId));
     }
 
@@ -43,7 +43,11 @@ function AutoplayTimer({ history }: any) {
     <div className={cn(clsOv.overlay, stl.overlayBg)}>
       <div className="border p-5 shadow-lg bg-white rounded">
         <div className="mb-5">
-          Autoplaying next session in <span className="font-medium">{counter}</span> seconds
+          Autoplaying next session in
+          {' '}
+          <span className="font-medium">{counter}</span>
+          {' '}
+          seconds
         </div>
 
         <div className="flex items-center justify-between">
@@ -69,5 +73,5 @@ function AutoplayTimer({ history }: any) {
 }
 
 export default withRouter(
-  observer(AutoplayTimer)
+  observer(AutoplayTimer),
 );

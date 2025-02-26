@@ -9,7 +9,7 @@ import { DateTime } from 'luxon';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import Alert from 'Types/alert';
-import { observer } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite';
 
 const getThreshold = (threshold: number) => {
   if (threshold === 15) return '15 Minutes';
@@ -25,32 +25,24 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
   if (webhooks.size === 0) {
     return 'OpenReplay';
   }
-  const getSlackChannels = () => {
-    return (
-      ' (' +
+  const getSlackChannels = () => (
+    ` (${
       alert.slackInput
-        .map((channelId: number) => {
-          return (
-            '#' +
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name
-          );
-        })
-        .join(', ') +
-      ')'
-    );
-  };
-  const getMsTeamsChannels = () => {
-    return (
-      ' (' +
+        .map((channelId: number) => (
+          `#${
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name}`
+        ))
+        .join(', ')
+    })`
+  );
+  const getMsTeamsChannels = () => (
+    ` (${
       alert.msteamsInput
-        .map((channelId: number) => {
-          return webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')
-            ?.name;
-        })
-        .join(', ') +
-      ')'
-    );
-  };
+        .map((channelId: number) => webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')
+          ?.name)
+        .join(', ')
+    })`
+  );
   let str = '';
   if (alert.slack) {
     str = 'Slack';
@@ -59,16 +51,16 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
     }
   }
   if (alert.msteams) {
-    str += (str === '' ? '' : ' and ') + 'MS Teams';
+    str += `${str === '' ? '' : ' and '}MS Teams`;
     if (alert.msteamsInput.length > 0) {
       str += getMsTeamsChannels();
     }
   }
   if (alert.email) {
     str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');
-    str += alert.emailInput.length > 0 ? ' (' + alert.emailInput.join(', ') + ')' : '';
+    str += alert.emailInput.length > 0 ? ` (${alert.emailInput.join(', ')})` : '';
   }
-  if (alert.webhook) str += (str === '' ? '' : ' and ') + 'Webhook';
+  if (alert.webhook) str += `${str === '' ? '' : ' and '}Webhook`;
   if (str === '') return 'OpenReplay';
 
   return str;
@@ -84,7 +76,9 @@ interface Props extends RouteComponentProps {
 }
 
 function AlertListItem(props: Props) {
-  const { alert, siteId, history, init, demo, webhooks, triggerOptions } = props;
+  const {
+    alert, siteId, history, init, demo, webhooks, triggerOptions,
+  } = props;
 
   if (!alert) {
     return null;
@@ -97,10 +91,9 @@ function AlertListItem(props: Props) {
     history.push(path);
   };
 
-  const formTriggerName = () =>
-    Number.isInteger(alert.query.left) && triggerOptions
-      ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left)?.label
-      : alert.query.left;
+  const formTriggerName = () => (Number.isInteger(alert.query.left) && triggerOptions
+    ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left)?.label
+    : alert.query.left);
 
   return (
     <div
@@ -118,7 +111,7 @@ function AlertListItem(props: Props) {
         </div>
         <div className="col-span-2">
           <div className="flex items-center">
-            <Tag className='rounded-full bg-indigo-50 cap-first text-base' bordered={false}>
+            <Tag className="rounded-full bg-indigo-50 cap-first text-base" bordered={false}>
               {alert.detectionMethod}
             </Tag>
           </div>
@@ -127,22 +120,22 @@ function AlertListItem(props: Props) {
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
-                DateTime.fromMillis(alert.createdAt || +new Date()),
-                'LLL dd, yyyy, hh:mm a'
-              )}
+              DateTime.fromMillis(alert.createdAt || +new Date()),
+              'LLL dd, yyyy, hh:mm a',
+            )}
         </div>
       </div>
       <div className="text-sm w-2/3 px-2 pb-2 ">
         {'When the '}
-        <span className="font-medium font-mono" >
+        <span className="font-medium font-mono">
           {alert.detectionMethod}
         </span>
         {' of '}
-        <span className="font-medium font-mono" >
+        <span className="font-medium font-mono">
           {triggerOptions ? formTriggerName() : alert.seriesName}
         </span>
         {' is '}
-        <span className="font-medium font-mono" >
+        <span className="font-medium font-mono">
           {alert.query.operator}
           {numberWithCommas(alert.query.right)}
           {alert.change === 'percent' ? '%' : alert.metric?.unit}
@@ -154,13 +147,14 @@ function AlertListItem(props: Props) {
         {alert.detectionMethod === 'change' ? (
           <>
             {' compared to the previous '}
-            <span className="font-medium font-mono" >
+            <span className="font-medium font-mono">
               {getThreshold(alert.previousPeriod)}
             </span>
           </>
         ) : null}
         {', notify via '}
-        <span>{getNotifyChannel(alert, webhooks)}</span>.
+        <span>{getNotifyChannel(alert, webhooks)}</span>
+        .
       </div>
       {alert.description ? (
         <div className="px-2 pb-2">{alert.description}</div>

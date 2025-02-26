@@ -1,1 +1,1 @@
-export { default } from './TimelinePointer'
+export { default } from './TimelinePointer';

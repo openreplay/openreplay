@@ -33,14 +33,16 @@ function ElasticsearchForm({
   integrated: boolean;
 }) {
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const {
     data = initialValues,
     isPending,
     saveMutation,
     removeMutation,
   } = useIntegration<ElasticConfig>('elasticsearch', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
+  const {
+    values, errors, handleChange, hasErrors, checkErrors,
+  } = useForm(data, {
     url: {
       required: true,
     },
@@ -60,7 +62,7 @@ function ElasticsearchForm({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -69,7 +71,7 @@ function ElasticsearchForm({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -126,7 +128,7 @@ function ElasticsearchForm({
             onChange={handleChange}
             errors={errors.indexes}
           />
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
@@ -138,7 +140,7 @@ function ElasticsearchForm({
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                Delete
               </Button>
             )}
           </div>

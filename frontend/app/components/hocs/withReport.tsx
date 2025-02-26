@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
-import { convertElementToImage } from 'App/utils';
+import { convertElementToImage, fileNameFormat } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';
 
 const TEXT_GENERATING = 'Generating report...';
@@ -11,12 +10,12 @@ interface Props {
   site: any;
 }
 export default function withReport<P extends Props>(WrappedComponent: React.ComponentType<P>) {
-  const ComponentWithReport = (props: P) => {
+  function ComponentWithReport(props: P) {
     const [rendering, setRendering] = React.useState(false);
     const { dashboardStore, projectsStore } = useStore();
     const site = projectsStore.instance;
     const dashboard: any = dashboardStore.selectedDashboard;
-    const period = dashboardStore.period;
+    const { period } = dashboardStore;
     // const pendingRequests = dashboardStore.pendingRequests;
 
     // useEffect(() => {
@@ -27,11 +26,11 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
 
     const addFooters = (doc: any) => {
       const pageCount = doc.internal.getNumberOfPages();
-      for (var i = 1; i <= pageCount; i++) {
+      for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(136, 136, 136);
-        doc.text('Page ' + String(i) + ' of ' + String(pageCount), 200, 290, null, null, 'right');
+        doc.text(`Page ${String(i)} of ${String(pageCount)}`, 200, 290, null, null, 'right');
         doc.addImage('/assets/img/logo-open-replay-grey.png', 'png', 10, 288, 20, 0);
       }
     };
@@ -91,7 +90,7 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             'items-start',
             'pb-10',
             'auto-rows-min',
-            'printable-report'
+            'printable-report',
           );
           pageDiv.id = `page-${index}`;
           pageDiv.style.backgroundColor = '#f6f6f6';
@@ -122,7 +121,7 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             doc.addImage(pageImage, 'PNG', 0, 0, 210, 0);
             if (i === pages.length - 1) {
               addFooters(doc);
-              doc.save(fileNameFormat(dashboard.name + '_Report_' + Date.now(), '.pdf'));
+              doc.save(fileNameFormat(`${dashboard.name}_Report_${Date.now()}`, '.pdf'));
               rportLayer!.innerHTML = '';
               setRendering(false);
               toast.dismiss();
@@ -132,7 +131,7 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             }
           }
         }, 100);
-      })
+      });
     };
 
     return (
@@ -147,16 +146,18 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
               <div className="text-lg color-gray-medium ml-2 mt-1">REPORT</div>
             </div>
             <div style={{ whiteSpace: 'nowrap' }}>
-              <span className="font-semibold">Project:</span> {site && site.name}
+              <span className="font-semibold">Project:</span>
+              {' '}
+              {site && site.name}
             </div>
           </div>
           <div className="flex items-end mt-20 justify-between">
             <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
             <div className="font-semibold">
-              {period &&
-                period.range.start.toFormat('MMM D') +
-                  ' - ' +
-                  period.range.end.toFormat('MMM D')}
+              {period
+                && `${period.range.start.toFormat('MMM D')
+                } - ${
+                  period.range.end.toFormat('MMM D')}`}
             </div>
           </div>
           {dashboard && dashboard.description && (
@@ -173,11 +174,11 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
             zIndex: '-1',
             opacity: '0',
           }}
-        ></div>
+        />
         <WrappedComponent {...props} renderReport={renderPromise} rendering={rendering} />
       </>
     );
-  };
+  }
 
   return observer(ComponentWithReport);
 }

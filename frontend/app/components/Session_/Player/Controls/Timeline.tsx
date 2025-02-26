@@ -1,17 +1,19 @@
-import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
-import stl from './timeline.module.css';
-import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
+import React, {
+  useEffect, useMemo, useContext, useState, useRef,
+} from 'react';
 import { debounce } from 'App/utils';
-import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
+import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
+import { ZoomDragLayer, HighlightDragLayer } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
-import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
-import { ZoomDragLayer, HighlightDragLayer } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
+import TooltipContainer from './components/TooltipContainer';
+import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
+import stl from './timeline.module.css';
 
 function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
@@ -21,11 +23,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const startedAt = sessionStore.current.startedAt ?? 0;
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
-  const timezone = sessionStore.current.timezone;
+  const { timezone } = sessionStore.current;
   const issues = sessionStore.current.issues ?? [];
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
-  const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
+  const {
+    playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading,
+  } = store.get();
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -66,10 +70,10 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
     if (
-      e.target !== progressRef.current &&
-      e.target !== timelineRef.current &&
+      e.target !== progressRef.current
+      && e.target !== timelineRef.current
       // @ts-ignore black magic
-      !progressRef.current.contains(e.target)
+      && !progressRef.current.contains(e.target)
     ) {
       return tooltipVisible && hideTimeTooltip();
     }
@@ -79,15 +83,15 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     const tz = settingsStore.sessionSettings.timezone.value;
     const timeStr = DateTime.fromMillis(startedAt + time)
       .setZone(tz)
-      .toFormat(`hh:mm:ss a`);
+      .toFormat('hh:mm:ss a');
     const userTimeStr = timezone
       ? DateTime.fromMillis(startedAt + time)
-          .setZone(timezone)
-          .toFormat(`hh:mm:ss a`)
+        .setZone(timezone)
+        .toFormat('hh:mm:ss a')
       : undefined;
 
     const timeLineTooltip = {
-      time: Duration.fromMillis(time).toFormat(`mm:ss`),
+      time: Duration.fromMillis(time).toFormat('mm:ss'),
       localTime: timeStr,
       userTime: userTimeStr,
       offset: e.nativeEvent.pageX,
@@ -160,13 +164,13 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
         {/* TODO: refactor and make any sense out of this */}
 
-        {/*  {issues.map((i: Issue) => (*/}
-        {/*  <div*/}
-        {/*    key={i.key}*/}
-        {/*    className={stl.redEvent}*/}
-        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
-        {/*  />*/}
-        {/*))}*/}
+        {/*  {issues.map((i: Issue) => ( */}
+        {/*  <div */}
+        {/*    key={i.key} */}
+        {/*    className={stl.redEvent} */}
+        {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }} */}
+        {/*  /> */}
+        {/* ))} */}
       </div>
     </div>
   );

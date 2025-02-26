@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Tooltip } from 'antd'
+import { Tooltip } from 'antd';
 import { CircularLoader, Icon } from 'UI';
 import stl from './iconButton.module.css';
 
@@ -34,7 +34,7 @@ const IconButton = React.forwardRef(
       compact = false,
       ...rest
     },
-    ref
+    ref,
   ) => (
     <Tooltip title={tooltip} position={tooltipPosition}>
       <button
@@ -75,7 +75,7 @@ const IconButton = React.forwardRef(
         {label && <span className={cn(stl.label, icon || loading ? 'ml-2' : '')}>{label}</span>}
       </button>
     </Tooltip>
-  )
+  ),
 );
 
 IconButton.displayName = 'IconButton';

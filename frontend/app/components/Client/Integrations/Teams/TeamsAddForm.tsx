@@ -2,8 +2,10 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
-import { confirm, Form, Input, Message } from 'UI';
-import { Button } from 'antd'
+import {
+  confirm, Form, Input, Message,
+} from 'UI';
+import { Button } from 'antd';
 
 interface Props {
   onClose: () => void;
@@ -11,18 +13,16 @@ interface Props {
 
 function TeamsAddForm({ onClose }: Props) {
   const { integrationsStore } = useStore();
-  const instance = integrationsStore.msteams.instance;
+  const { instance } = integrationsStore.msteams;
   const saving = integrationsStore.msteams.loading;
-  const errors = integrationsStore.msteams.errors;
-  const edit = integrationsStore.msteams.edit;
+  const { errors } = integrationsStore.msteams;
+  const { edit } = integrationsStore.msteams;
   const onSave = integrationsStore.msteams.saveIntegration;
-  const init = integrationsStore.msteams.init;
+  const { init } = integrationsStore.msteams;
   const onRemove = integrationsStore.msteams.removeInt;
-  const update = integrationsStore.msteams.update;
+  const { update } = integrationsStore.msteams;
 
-  React.useEffect(() => {
-    return () => init({});
-  }, []);
+  React.useEffect(() => () => init({}), []);
 
   const save = () => {
     if (instance?.exists()) {
@@ -41,7 +41,7 @@ function TeamsAddForm({ onClose }: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this channel?`
+        confirmation: 'Are you sure you want to permanently delete this channel?',
       })
     ) {
       void onRemove(id).then(onClose);
@@ -49,8 +49,8 @@ function TeamsAddForm({ onClose }: Props) {
   };
 
   const write = ({
-                   target: { name, value }
-                 }: {
+    target: { name, value },
+  }: {
     target: { name: string; value: string };
   }) => edit({ [name]: value });
 
@@ -89,14 +89,14 @@ function TeamsAddForm({ onClose }: Props) {
               {instance?.exists() ? 'Update' : 'Add'}
             </Button>
 
-            <Button onClick={onClose}>{'Cancel'}</Button>
+            <Button onClick={onClose}>Cancel</Button>
           </div>
 
           <Button
             onClick={() => remove(instance?.webhookId)}
             disabled={!instance.exists()}
           >
-            {'Delete'}
+            Delete
           </Button>
         </div>
       </Form>

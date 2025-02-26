@@ -6,8 +6,8 @@ import { useStore } from 'App/mstore';
 
 function TimelineZoomButton() {
   const { uiPlayerStore } = useStore();
-  const toggleZoom = uiPlayerStore.toggleZoom;
-  const enabled = uiPlayerStore.timelineZoom.enabled;
+  const { toggleZoom } = uiPlayerStore;
+  const { enabled } = uiPlayerStore.timelineZoom;
   const { store } = React.useContext(PlayerContext);
 
   const onClickHandler = () => {
@@ -22,16 +22,16 @@ function TimelineZoomButton() {
     });
   };
 
-  React.useEffect(() => {
-    return () => {
-      toggleZoom({ enabled: false, range: [0, 0] });
-    }
-  }, [])
+  React.useEffect(() => () => {
+    toggleZoom({ enabled: false, range: [0, 0] });
+  }, []);
   return (
-    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selection." placement='top'>
-    <Button onClick={onClickHandler} size={'small'} className={'flex items-center font-medium'}>
-      Focus Mode: {enabled ? 'On' : 'Off'}
-    </Button>
+    <Tooltip title="Select a portion of the timeline to view the x-ray and activity for that specific selection." placement="top">
+      <Button onClick={onClickHandler} size="small" className="flex items-center font-medium">
+        Focus Mode:
+        {' '}
+        {enabled ? 'On' : 'Off'}
+      </Button>
     </Tooltip>
   );
 }

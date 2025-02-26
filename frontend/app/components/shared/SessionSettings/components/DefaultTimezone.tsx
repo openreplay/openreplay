@@ -1,4 +1,4 @@
-import { Radio } from 'antd';
+import { Radio, Button } from 'antd';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { toast } from 'react-toastify';
@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { Timezone } from 'App/mstore/types/sessionSettings';
 import { Icon } from 'UI';
-import { Button } from 'antd'
 import Select from 'Shared/Select';
 
 type TimezonesDropdown = Timezone[];
@@ -16,12 +15,11 @@ function DefaultTimezone() {
   const sessionSettings = useObserver(() => settingsStore.sessionSettings);
   const [changed, setChanged] = React.useState(false);
   const [shownTimezone, setShownTimezone] = React.useState<'user' | 'local'>(
-    sessionSettings.shownTimezone
+    sessionSettings.shownTimezone,
   );
-  const timezoneOptions: TimezonesDropdown =
-    settingsStore.sessionSettings.defaultTimezones;
+  const timezoneOptions: TimezonesDropdown = settingsStore.sessionSettings.defaultTimezones;
   const [timezone, setTimezone] = React.useState(
-    settingsStore.sessionSettings.timezone
+    settingsStore.sessionSettings.timezone,
   );
   const [isLocal, setIsLocal] = React.useState(settingsStore.sessionSettings.usingLocal);
 
@@ -39,9 +37,9 @@ function DefaultTimezone() {
     const tzOffsMins = remainingVal ? `:${remainingVal.toString().padStart(2, '0')}` : '';
     const timezoneValue = `UTC${sign}${tzOffsHrs}${tzOffsMins}`;
     const selectedTimezone = timezoneOptions.find(
-      (option) => option.value === timezoneValue
+      (option) => option.value === timezoneValue,
     );
-    return selectedTimezone ? selectedTimezone : null;
+    return selectedTimezone || null;
   };
 
   const setCurrentTimezone = () => {
@@ -85,8 +83,8 @@ function DefaultTimezone() {
           }}
           value={shownTimezone}
         >
-          <Radio.Button value={'local'}>Local Timezone</Radio.Button>
-          <Radio.Button value={'user'}>End User's Timezone</Radio.Button>
+          <Radio.Button value="local">Local Timezone</Radio.Button>
+          <Radio.Button value="user">End User's Timezone</Radio.Button>
         </Radio.Group>
       </div>
       {shownTimezone === 'local' ? (
@@ -97,7 +95,7 @@ function DefaultTimezone() {
               defaultValue={timezone.value}
               className="w-full"
               value={timezoneOptions.find(
-                (option) => option.value === timezone.value
+                (option) => option.value === timezone.value,
               )}
               onChange={onSelectChange}
             />
@@ -111,12 +109,12 @@ function DefaultTimezone() {
               </Button>
             </div>
           </div>
-          <div className={'mt-3 flex gap-1 items-center'}>
-            <div onClick={setCurrentTimezone} className={"link"}>
+          <div className="mt-3 flex gap-1 items-center">
+            <div onClick={setCurrentTimezone} className="link">
               Apply my current timezone
             </div>
             {isLocal ? (
-              <Icon name={'check'} size={18} />
+              <Icon name="check" size={18} />
             ) : null}
           </div>
         </>

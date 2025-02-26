@@ -1,1 +1,1 @@
-export { default } from './EmailVerificationMessage'
+export { default } from './EmailVerificationMessage';

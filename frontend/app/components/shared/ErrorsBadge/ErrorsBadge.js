@@ -29,7 +29,7 @@ function ErrorsBadge() {
   }, [projects]);
 
   return errorsStats.unresolvedAndUnviewed > 0 ? (
-    <div>{<div className={stl.badge} />}</div>
+    <div><div className={stl.badge} /></div>
   ) : null;
 }
 

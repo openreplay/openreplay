@@ -37,7 +37,7 @@ function SpotPlayer() {
 
   React.useEffect(() => {
     if (spotStore.currentSpot) {
-      document.title = spotStore.currentSpot.title + ' - OpenReplay';
+      document.title = `${spotStore.currentSpot.title} - OpenReplay`;
     }
   }, [spotStore.currentSpot]);
   React.useEffect(() => {
@@ -65,8 +65,7 @@ function SpotPlayer() {
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - startY;
       const diff = startHeight - deltaY;
-      const max =
-        diff > window.innerHeight / 1.5 ? window.innerHeight / 1.5 : diff;
+      const max = diff > window.innerHeight / 1.5 ? window.innerHeight / 1.5 : diff;
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
       debounceUpdate(newHeight);
@@ -107,8 +106,8 @@ function SpotPlayer() {
 
     const ev = (e: KeyboardEvent) => {
       if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLInputElement
+        || e.target instanceof HTMLTextAreaElement
       ) {
         return false;
       }
@@ -134,13 +133,13 @@ function SpotPlayer() {
         spotPlayerStore.setTime(
           Math.min(
             spotPlayerStore.duration,
-            spotPlayerStore.time + spotPlayerStore.skipInterval
-          )
+            spotPlayerStore.time + spotPlayerStore.skipInterval,
+          ),
         );
       }
       if (e.key === 'ArrowLeft') {
         spotPlayerStore.setTime(
-          Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval)
+          Math.max(0, spotPlayerStore.time - spotPlayerStore.skipInterval),
         );
       }
     };
@@ -155,9 +154,7 @@ function SpotPlayer() {
   if (!spotStore.currentSpot) {
     return (
       <div
-        className={
-          'w-screen h-screen flex items-center justify-center flex-col gap-2'
-        }
+        className="w-screen h-screen flex items-center justify-center flex-col gap-2"
       >
         {spotStore.accessError ? <AccessError /> : <Loader />}
       </div>
@@ -172,7 +169,7 @@ function SpotPlayer() {
     spotPlayerStore.setActivePanel(null);
   };
 
-  const isFullScreen = spotPlayerStore.isFullScreen;
+  const { isFullScreen } = spotPlayerStore;
   // 2nd player option
   // const base64toblob = (str: string) => {
   //   const byteCharacters = atob(str);
@@ -201,7 +198,7 @@ function SpotPlayer() {
     <div
       className={cn(
         'w-screen h-screen flex flex-col',
-        isFullScreen ? 'relative' : ''
+        isFullScreen ? 'relative' : '',
       )}
     >
       {isFullScreen ? (
@@ -217,13 +214,13 @@ function SpotPlayer() {
         platform={spotPlayerStore.platform}
         browserVersion={spotPlayerStore.browserVersion}
       />
-      <div className={'w-full h-full flex'}>
-        <div className={'w-full h-full flex flex-col justify-between'}>
+      <div className="w-full h-full flex">
+        <div className="w-full h-full flex flex-col justify-between">
           <SpotLocation />
           <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
-            {/*<VideoJS backup player */}
-            {/*  options={videoJsOptions}*/}
-            {/*/>*/}
+            {/* <VideoJS backup player */}
+            {/*  options={videoJsOptions} */}
+            {/* /> */}
             <SpotVideoContainer
               videoURL={spotStore.currentSpot.videoURL!}
               streamFile={spotStore.currentSpot.streamFile}
@@ -243,12 +240,10 @@ function SpotPlayer() {
             >
               <div
                 onMouseDown={handleResize}
-                className={
-                  'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'
-                }
+                className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
               />
               {spotPlayerStore.activePanel ? (
-                <div className={'w-full h-full bg-white'}>
+                <div className="w-full h-full bg-white">
                   {spotPlayerStore.activePanel === PANELS.CONSOLE ? (
                     <SpotConsole onClose={onPanelClose} />
                   ) : null}
@@ -285,7 +280,7 @@ const SpotOverviewConnector = observer(() => {
     .filter((r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400))
     .filter((i: any) => i.type === 'xhr');
   const exceptionsList = spotPlayerStore.logs.filter(
-    (l) => l.level === 'error'
+    (l) => l.level === 'error',
   );
 
   const onClose = () => {
@@ -303,5 +298,5 @@ const SpotOverviewConnector = observer(() => {
 });
 
 export default withPermissions(['SPOT'])(
-  observer(SpotPlayer)
+  observer(SpotPlayer),
 );

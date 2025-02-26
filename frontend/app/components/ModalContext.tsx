@@ -1,5 +1,7 @@
-import React, {createContext, useContext, useState, ReactNode} from 'react';
-import {Drawer} from 'antd';
+import React, {
+  createContext, useContext, useState, ReactNode,
+} from 'react';
+import { Drawer } from 'antd';
 
 interface ModalConfig {
     title?: string;
@@ -13,52 +15,52 @@ interface ModalContextType {
 }
 
 const defaultConfig: ModalConfig = {
-    title: 'Modal Title',
-    placement: 'right',
-    width: 428
+  title: 'Modal Title',
+  placement: 'right',
+  width: 428,
 };
 
 const ModalContext = createContext<ModalContextType>({
-    openModal: () => {
-    },
-    closeModal: () => {
-    }
+  openModal: () => {
+  },
+  closeModal: () => {
+  },
 });
 
 export const useModal = () => useContext(ModalContext);
 
-export const ModalProvider = ({children}: { children: ReactNode }) => {
-    const [showModal, setShowModal] = useState(false);
-    const [modalContent, setModalContent] = useState<ReactNode>(null);
-    const [modalConfig, setModalConfig] = useState<ModalConfig>(defaultConfig);
+export function ModalProvider({ children }: { children: ReactNode }) {
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState<ReactNode>(null);
+  const [modalConfig, setModalConfig] = useState<ModalConfig>(defaultConfig);
 
-    const openModal = (content: ReactNode, config: ModalConfig = defaultConfig) => {
-        setModalContent(content);
-        setModalConfig(config);
-        setShowModal(true);
-    };
+  const openModal = (content: ReactNode, config: ModalConfig = defaultConfig) => {
+    setModalContent(content);
+    setModalConfig(config);
+    setShowModal(true);
+  };
 
-    const closeModal = () => {
-        setShowModal(false);
-        setTimeout(() => {
-            setModalContent(null);
-            setModalConfig(defaultConfig);
-        }, 200)
-    };
+  const closeModal = () => {
+    setShowModal(false);
+    setTimeout(() => {
+      setModalContent(null);
+      setModalConfig(defaultConfig);
+    }, 200);
+  };
 
-    return (
-        <ModalContext.Provider value={{openModal, closeModal}}>
-            {children}
-            <Drawer
-                open={showModal}
-                closeIcon={null}
-                title={modalConfig.title}
-                placement={modalConfig.placement}
-                onClose={closeModal}
-                width={modalConfig.width}
-            >
-                {modalContent}
-            </Drawer>
-        </ModalContext.Provider>
-    );
-};
+  return (
+    <ModalContext.Provider value={{ openModal, closeModal }}>
+      {children}
+      <Drawer
+        open={showModal}
+        closeIcon={null}
+        title={modalConfig.title}
+        placement={modalConfig.placement}
+        onClose={closeModal}
+        width={modalConfig.width}
+      >
+        {modalContent}
+      </Drawer>
+    </ModalContext.Provider>
+  );
+}

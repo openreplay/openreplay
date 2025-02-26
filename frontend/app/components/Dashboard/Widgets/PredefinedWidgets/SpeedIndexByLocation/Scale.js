@@ -1,6 +1,6 @@
 import React from 'react';
-import { Styles } from '../../common';
 import cn from 'classnames';
+import { Styles } from '../../common';
 import stl from './scale.module.css';
 
 function Scale({ colors }) {
@@ -11,7 +11,9 @@ function Scale({ colors }) {
       {Styles.compareColors.map((c, i) => (
         <div
           key={i}
-          style={{ backgroundColor: c, width: '6px', height: '15px', marginBottom: '1px' }}
+          style={{
+            backgroundColor: c, width: '6px', height: '15px', marginBottom: '1px',
+          }}
           className="flex items-center justify-center"
         >
           {i === 0 && <div className="text-xs pl-12">Slow</div>}

@@ -1,24 +1,24 @@
 import React from 'react';
 import { confirmable } from 'react-confirm';
-import { Modal } from 'UI'
-import { Button } from 'antd'
+import { Modal } from 'UI';
+import { Button } from 'antd';
 
-const Confirmation = ({
+function Confirmation({
   show,
   proceed,
   header = 'Confirm',
   confirmation = 'Are you sure?',
-  cancelButton = "Cancel",
-  confirmButton = "Proceed",
-}) => {
+  cancelButton = 'Cancel',
+  confirmButton = 'Proceed',
+}) {
   React.useEffect(() => {
     const handleEsc = (e) => (e.key === 'Escape' || e.key === 'Esc') && proceed(false);
     document.addEventListener('keydown', handleEsc, false);
 
     return () => {
       document.removeEventListener('keydown', handleEsc, false);
-    }
-  }, [])
+    };
+  }, []);
   return (
     <Modal
       open={show}
@@ -31,20 +31,20 @@ const Confirmation = ({
       <Modal.Footer>
         <Button
           onClick={() => proceed(true)}
-          type={'primary'}
+          type="primary"
           className="mr-2"
         >
-            {confirmButton}
+          {confirmButton}
         </Button>
 
         <Button
           onClick={() => proceed(false)}
         >
-            {cancelButton}
+          {cancelButton}
         </Button>
       </Modal.Footer>
     </Modal>
-  )
+  );
 }
- 
+
 export default confirmable(Confirmation);

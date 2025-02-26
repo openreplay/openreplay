@@ -5,14 +5,14 @@ import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import MobilePlayerHeader from 'Components/Session/Player/MobilePlayer/MobilePlayerHeader';
-import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import PlayerContent from './Player/MobilePlayer/PlayerContent';
-import { IOSPlayerContext, defaultContextValue, MobilePlayerContext } from './playerContext';
 import { observer } from 'mobx-react-lite';
 import { Note } from 'App/services/NotesService';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
+import { IOSPlayerContext, defaultContextValue, MobilePlayerContext } from './playerContext';
+import PlayerContent from './Player/MobilePlayer/PlayerContent';
+import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 
 const TABS = {
   EVENTS: 'User Events',
@@ -21,16 +21,18 @@ const TABS = {
 let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
-  const { notesStore, sessionStore, uiPlayerStore, integrationsStore, userStore } = useStore();
+  const {
+    notesStore, sessionStore, uiPlayerStore, integrationsStore, userStore,
+  } = useStore();
   const session = sessionStore.current;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
-  const fullscreen = uiPlayerStore.fullscreen
-  const toggleFullscreen = uiPlayerStore.toggleFullscreen
-  const closeBottomBlock = uiPlayerStore.closeBottomBlock
+  const { fullscreen } = uiPlayerStore;
+  const { toggleFullscreen } = uiPlayerStore;
+  const { closeBottomBlock } = uiPlayerStore;
 
   useEffect(() => {
     playerInst = undefined;
@@ -40,7 +42,7 @@ function MobilePlayer(props: any) {
     const [IOSPlayerInst, PlayerStore] = createIOSPlayer(
       session,
       (state) => makeAutoObservable(state),
-      toast
+      toast,
     );
     setContextValue({ player: IOSPlayerInst, store: PlayerStore });
     playerInst = IOSPlayerInst;
@@ -87,7 +89,7 @@ function MobilePlayer(props: any) {
       // @ts-ignore
       setContextValue(defaultContextValue);
     },
-    [params.sessionId]
+    [params.sessionId],
   );
 
   const onNoteClose = () => {
@@ -95,7 +97,7 @@ function MobilePlayer(props: any) {
     contextValue.player.play();
   };
 
-  if (!session.sessionId)
+  if (!session.sessionId) {
     return (
       <Loader
         size={75}
@@ -108,6 +110,7 @@ function MobilePlayer(props: any) {
         }}
       />
     );
+  }
 
   return (
     <MobilePlayerContext.Provider value={contextValue}>
@@ -127,7 +130,9 @@ function MobilePlayer(props: any) {
           />
         ) : (
           <Loader
-            style={{ position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)' }}
+            style={{
+              position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)',
+            }}
           />
         )}
         <Modal open={noteItem !== undefined} onClose={onNoteClose}>

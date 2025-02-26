@@ -1,22 +1,21 @@
 import React, { useEffect } from 'react';
-import UserList from './components/UserList';
 import { PageTitle } from 'UI';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import UserSearch from './components/UserSearch';
+import { useObserver, observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
-import UserForm from './components/UserForm';
-import { observer } from 'mobx-react-lite';
-import AddUserButton from './components/AddUserButton';
 import withPageTitle from 'HOCs/withPageTitle';
+import UserSearch from './components/UserSearch';
+import UserForm from './components/UserForm';
+import AddUserButton from './components/AddUserButton';
+import UserList from './components/UserList';
 
 interface Props {
   isOnboarding?: boolean;
 }
 function UsersView({ isOnboarding = false }: Props) {
   const { userStore, roleStore } = useStore();
-  const account = userStore.account;
-  const isEnterprise = userStore.isEnterprise;
+  const { account } = userStore;
+  const { isEnterprise } = userStore;
   const userCount = useObserver(() => userStore.list.length);
   const roles = useObserver(() => roleStore.list);
   const { showModal } = useModal();
@@ -38,11 +37,13 @@ function UsersView({ isOnboarding = false }: Props) {
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="flex items-center justify-between px-5 pt-5">
         <PageTitle
-          title={
+          title={(
             <div>
-              Team <span className="color-gray-medium">{userCount}</span>
+              Team
+              {' '}
+              <span className="color-gray-medium">{userCount}</span>
             </div>
-          }
+          )}
         />
         <div className="flex items-center">
           <AddUserButton

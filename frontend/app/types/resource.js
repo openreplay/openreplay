@@ -1,8 +1,8 @@
 import { Record } from 'immutable';
 
-const IMAGE = "IMG";
-const REQUEST = "REQUEST";
-const PAGE = "LOCATION";
+const IMAGE = 'IMG';
+const REQUEST = 'REQUEST';
+const PAGE = 'LOCATION';
 
 export const TYPES = {
   IMAGE,
@@ -11,8 +11,8 @@ export const TYPES = {
 };
 
 const Resource = Record({
-  value: "",
-  type: "",
+  value: '',
+  type: '',
 });
 
 function fromJS(resource = {}) {

@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 
 function OptOut() {
   const { userStore } = useStore();
-  const updateClient = userStore.updateClient;
+  const { updateClient } = userStore;
   const [optOut, setOptOut] = React.useState(userStore.account.optOut);
 
   const onChange = () => {

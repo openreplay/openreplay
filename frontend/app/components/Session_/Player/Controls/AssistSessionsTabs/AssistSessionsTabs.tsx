@@ -13,18 +13,20 @@ interface ITab {
   style?: Record<string, any>;
 }
 
-const Tab = (props: ITab) => (
-  <div
-    onClick={props.onClick}
-    className={cn('p-1 rounded flex items-center justify-center cursor-pointer', props.classNames)}
-    style={props.style}
-  >
-    {props.children}
-  </div>
-);
+function Tab(props: ITab) {
+  return (
+    <div
+      onClick={props.onClick}
+      className={cn('p-1 rounded flex items-center justify-center cursor-pointer', props.classNames)}
+      style={props.style}
+    >
+      {props.children}
+    </div>
+  );
+}
 
 export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames={cn("hover:bg-gray-bg bg-gray-light", props.classNames)}>
+  <Tab onClick={props.onClick} classNames={cn('hover:bg-gray-bg bg-gray-light', props.classNames)}>
     <Icon name="plus" size="22" color="white" />
   </Tab>
 ));
@@ -83,4 +85,4 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   );
 }
 
-export default observer(AssistTabs)
+export default observer(AssistTabs);

@@ -4,11 +4,14 @@ import {
   MutedOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
-import { Button, InputNumber, Popover } from 'antd';
-import { Slider } from 'antd';
+import {
+  Button, InputNumber, Popover, Slider,
+} from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  useContext, useEffect, useRef, useState,
+} from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 
@@ -26,25 +29,26 @@ function DropdownAudioPlayer({
   const lastPlayerTime = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const fileLengths = useRef<Record<string, number>>({});
-  const { time = 0, speed = 1, playing, sessionStart } = store?.get() ?? {};
+  const {
+    time = 0, speed = 1, playing, sessionStart,
+  } = store?.get() ?? {};
 
   const files = React.useMemo(
-    () =>
-      audioEvents.map((pa) => {
-        const data = pa.payload;
-        const nativeTs = data.timestamp;
-        const startTs = nativeTs
-          ? nativeTs > sessionStart
-            ? nativeTs - sessionStart
-            : nativeTs
-          : pa.timestamp - sessionStart;
-        return {
-          url: data.url,
-          timestamp: data.timestamp,
-          start: startTs,
-        };
-      }),
-    [audioEvents.length, sessionStart]
+    () => audioEvents.map((pa) => {
+      const data = pa.payload;
+      const nativeTs = data.timestamp;
+      const startTs = nativeTs
+        ? nativeTs > sessionStart
+          ? nativeTs - sessionStart
+          : nativeTs
+        : pa.timestamp - sessionStart;
+      return {
+        url: data.url,
+        timestamp: data.timestamp,
+        start: startTs,
+      };
+    }),
+    [audioEvents.length, sessionStart],
   );
 
   React.useEffect(() => {
@@ -116,7 +120,6 @@ function DropdownAudioPlayer({
           if (targetTime < 0 || (fileLength && targetTime > fileLength)) {
             audio.pause();
             audio.currentTime = 0;
-            return;
           } else {
             audio.currentTime = targetTime;
           }
@@ -193,28 +196,27 @@ function DropdownAudioPlayer({
     setVolume(isMuted ? 0 : volume);
   }, [playing]);
 
-  const buttonIcon =
-    'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
+  const buttonIcon = 'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
-    <div className={'relative'}>
-      <div className={'flex items-center'} style={{ height: 24 }}>
+    <div className="relative">
+      <div className="flex items-center" style={{ height: 24 }}>
         <Popover
-          trigger={'click'}
-          content={
+          trigger="click"
+          content={(
             <div
-              className={'flex flex-col gap-2 rounded'}
+              className="flex flex-col gap-2 rounded"
               style={{ height: 200 }}
             >
               <Slider vertical value={volume} onChange={onVolumeChange} />
               <Button
-                className={'flex items-center justify-center py-4 px-4'}
+                className="flex items-center justify-center py-4 px-4"
                 onClick={toggleMute}
-                shape={'circle'}
+                shape="circle"
               >
                 {isMuted ? <MutedOutlined /> : <SoundOutlined />}
               </Button>
             </div>
-          }
+          )}
         >
           <div className={cn(buttonIcon, 'rounded-l')}>
             {isMuted ? <MutedOutlined /> : <SoundOutlined />}
@@ -231,41 +233,39 @@ function DropdownAudioPlayer({
 
       {isVisible ? (
         <div
-          className={
-            'absolute left-1/2 top-0 border shadow border-gray-light rounded bg-white p-4 flex flex-col gap-4 mb-4'
-          }
+          className="absolute left-1/2 top-0 border shadow border-gray-light rounded bg-white p-4 flex flex-col gap-4 mb-4"
           style={{
             width: 240,
             transform: 'translate(-75%, -110%)',
             zIndex: 101,
           }}
         >
-          <div className={'font-semibold flex items-center gap-2'}>
+          <div className="font-semibold flex items-center gap-2">
             <ControlOutlined />
             <div>Audio Track Synchronization</div>
           </div>
           <InputNumber
             style={{ width: 180 }}
             value={deltaInputValue}
-            size={'small'}
-            step={'0.250'}
-            name={'audio delta'}
+            size="small"
+            step="0.250"
+            name="audio delta"
             formatter={(value) => `${value}s`}
             parser={(value) => value?.replace('s', '') as unknown as number}
             stringMode
             onChange={handleDelta}
           />
-          <div className={'w-full flex items-center gap-2'}>
-            <Button size={'small'} type={'primary'} onClick={onSync}>
+          <div className="w-full flex items-center gap-2">
+            <Button size="small" type="primary" onClick={onSync}>
               Sync
             </Button>
-            <Button size={'small'} onClick={onCancel}>
+            <Button size="small" onClick={onCancel}>
               Cancel
             </Button>
             <Button
-              size={'small'}
-              type={'text'}
-              className={'ml-auto'}
+              size="small"
+              type="text"
+              className="ml-auto"
               onClick={onReset}
             >
               Reset

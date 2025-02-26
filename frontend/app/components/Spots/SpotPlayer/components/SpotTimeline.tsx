@@ -4,7 +4,7 @@ import React from 'react';
 import CustomDragLayer from 'App/components/Session_/Player/Controls/components/CustomDragLayer';
 import stl from 'App/components/Session_/Player/Controls/timeline.module.css';
 import { debounce } from 'App/utils';
-import cn from 'classnames'
+import cn from 'classnames';
 import spotPlayerStore from '../spotPlayerStore';
 import SpotTimeTracker from './SpotTimeTracker';
 
@@ -15,16 +15,14 @@ function SpotTimeline() {
 
   const debounceSetTime = React.useMemo(
     () => debounce(spotPlayerStore.setTime, 100),
-    []
+    [],
   );
   React.useEffect(() => {
     if (progressRef.current) {
       setMaxWidth(progressRef.current.clientWidth);
     }
   }, []);
-  const getOffset = (offsX: number) => {
-    return offsX / (progressRef.current?.clientWidth || 1);
-  };
+  const getOffset = (offsX: number) => offsX / (progressRef.current?.clientWidth || 1);
 
   const onDrag = (offset: { x: number }) => {
     if (spotPlayerStore.isPlaying) {
@@ -52,7 +50,7 @@ function SpotTimeline() {
   return (
     <div
       ref={progressRef}
-      role={'button'}
+      role="button"
       className={cn(stl.progress, '-mb-1')}
       onClick={jump}
     >

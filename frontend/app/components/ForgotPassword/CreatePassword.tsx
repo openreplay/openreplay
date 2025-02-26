@@ -2,16 +2,18 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { Form, Input, Loader, Icon, Message } from 'UI';
-import { Button } from 'antd'
-import stl from './forgotPassword.module.css';
+import {
+  Form, Input, Loader, Icon, Message,
+} from 'UI';
+import { Button } from 'antd';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
+import stl from './forgotPassword.module.css';
 
 const recaptchaRef = React.createRef();
 const ERROR_DONT_MATCH = "Passwords don't match.";
 const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-const CAPTCHA_SITE_KEY = window.env.CAPTCHA_SITE_KEY;
+const { CAPTCHA_SITE_KEY } = window.env;
 
 interface Props {
   params: any;
@@ -19,8 +21,8 @@ interface Props {
 function CreatePassword(props: Props) {
   const { params } = props;
   const { userStore } = useStore();
-  const loading = userStore.loading;
-  const resetPassword = userStore.resetPassword;
+  const { loading } = userStore;
+  const { resetPassword } = userStore;
   const [error, setError] = React.useState<String | null>(null);
   const [validationError, setValidationError] = React.useState<String | null>(null);
   const [updated, setUpdated] = React.useState(false);
@@ -82,34 +84,32 @@ function CreatePassword(props: Props) {
                 </div>
               )}
 
-              <React.Fragment>
-                <Form.Field>
-                  <label>{'New password'}</label>
-                  <Input
-                    autoComplete="new-password"
-                    type="password"
-                    placeholder="Type here..."
-                    name="password"
-                    onChange={write}
-                    className="w-full"
-                    icon="key"
-                    required
-                  />
-                </Form.Field>
-                <Form.Field>
-                  <label>{'Confirm password'}</label>
-                  <Input
-                    autoComplete="new-password"
-                    type="password"
-                    placeholder="Re-enter your new password"
-                    name="passwordRepeat"
-                    onChange={write}
-                    className="w-full"
-                    icon="key"
-                    required
-                  />
-                </Form.Field>
-              </React.Fragment>
+              <Form.Field>
+                <label>New password</label>
+                <Input
+                  autoComplete="new-password"
+                  type="password"
+                  placeholder="Type here..."
+                  name="password"
+                  onChange={write}
+                  className="w-full"
+                  icon="key"
+                  required
+                />
+              </Form.Field>
+              <Form.Field>
+                <label>Confirm password</label>
+                <Input
+                  autoComplete="new-password"
+                  type="password"
+                  placeholder="Re-enter your new password"
+                  name="passwordRepeat"
+                  onChange={write}
+                  className="w-full"
+                  icon="key"
+                  required
+                />
+              </Form.Field>
             </div>
           </Loader>
           <div className="mt-4">
@@ -120,22 +120,23 @@ function CreatePassword(props: Props) {
               <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
                 <Icon name="check" size="30" color="tealx" />
               </div>
-              <span>{'Your password has been updated successfully.'}</span>
+              <span>Your password has been updated successfully.</span>
             </div>
           </div>
 
           {validationError && <Message error>{validationError}</Message>}
 
-          {updated ? null :
-            <Button
-              htmlType="submit"
-              type="primary"
-              loading={loading}
-              className="w-full mt-4"
-            >
-              Create
-            </Button>
-          }
+          {updated ? null
+            : (
+              <Button
+                htmlType="submit"
+                type="primary"
+                loading={loading}
+                className="w-full mt-4"
+              >
+                Create
+              </Button>
+            )}
         </>
       )}
 

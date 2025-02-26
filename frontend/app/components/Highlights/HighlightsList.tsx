@@ -5,15 +5,15 @@ import { useStore } from 'App/mstore';
 import { numberWithCommas } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
 import cn from 'classnames';
-import HighlightClip from './HighlightClip';
 import { useQuery } from '@tanstack/react-query';
-import HighlightPlayer from './HighlightPlayer';
 import { toast } from 'react-toastify';
-import EditHlModal from './EditHlModal';
-import HighlightsListHeader from './HighlightsListHeader';
 import withPermissions from 'HOCs/withPermissions';
 import { useHistory } from 'react-router';
-import { highlights, withSiteId } from 'App/routes'
+import { highlights, withSiteId } from 'App/routes';
+import HighlightsListHeader from './HighlightsListHeader';
+import EditHlModal from './EditHlModal';
+import HighlightPlayer from './HighlightPlayer';
+import HighlightClip from './HighlightClip';
 
 function HighlightsList() {
   const history = useHistory();
@@ -24,7 +24,7 @@ function HighlightsList() {
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editHl, setEditHl] = React.useState<Record<string, any>>({
     message: '',
-    isPublic: false
+    isPublic: false,
   });
   const currentUserId = userStore.account.id;
 
@@ -33,23 +33,23 @@ function HighlightsList() {
       setActiveId(hlId);
       history.replace(withSiteId(highlights(), projectsStore.siteId));
     }
-  }, [hlId])
+  }, [hlId]);
 
   const activeProject = projectsStore.activeSiteId;
-  const query = notesStore.query;
+  const { query } = notesStore;
   const limit = notesStore.pageSize;
   const listLength = notesStore.notes.length;
-  const activeTags = notesStore.activeTags;
-  const page = notesStore.page;
-  const ownOnly = notesStore.ownOnly;
+  const { activeTags } = notesStore;
+  const { page } = notesStore;
+  const { ownOnly } = notesStore;
   const {
     data = { notes: [], total: 0 },
     isPending,
-    refetch
+    refetch,
   } = useQuery({
     queryKey: ['notes', page, query, activeTags, activeProject],
     queryFn: () => notesStore.fetchNotes(),
-    retry: 3
+    retry: 3,
   });
   const { total, notes } = data;
   const debounceTimeout = React.useRef(0);
@@ -58,7 +58,7 @@ function HighlightsList() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const { value } = e.target;
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     debounceTimeout.current = window.setTimeout(() => {
       notesStore.setQuery(value);
@@ -103,7 +103,7 @@ function HighlightsList() {
     const newNote = {
       ...editHl,
       message: noteText,
-      isPublic: visible
+      isPublic: visible,
     };
     try {
       await notesStore.updateNote(editHl.noteId, newNote);
@@ -124,7 +124,7 @@ function HighlightsList() {
   const isEmpty = !isPending && total === 0;
   return (
     <div
-      className={'relative w-full mx-auto bg-white rounded-lg'}
+      className="relative w-full mx-auto bg-white rounded-lg"
       style={{ maxWidth: 1360 }}
     >
       {activeId && <HighlightPlayer onClose={onClose} hlId={activeId} />}
@@ -142,18 +142,18 @@ function HighlightsList() {
           'py-2 px-4 border-gray-lighter',
           isEmpty
             ? 'h-96 flex items-center justify-center'
-            : ' grid grid-cols-3 gap-6'
+            : ' grid grid-cols-3 gap-6',
         )}
       >
         <Loader loading={isPending}>
           <NoContent
             show={isEmpty}
-            subtext={
-              <div className={'w-full text-center'}>
+            subtext={(
+              <div className="w-full text-center">
                 Highlight and note observations during session replays and share
                 them with your team.
               </div>
-            }
+            )}
           >
             {notes.map((note) => (
               <HighlightClip
@@ -182,16 +182,19 @@ function HighlightsList() {
       <div
         className={cn(
           'flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2',
-          isEmpty ? 'hidden' : 'visible'
+          isEmpty ? 'hidden' : 'visible',
         )}
       >
         <div>
-          Showing <span className="font-medium">{(page - 1) * limit + 1}</span>
+          Showing
+          {' '}
+          <span className="font-medium">{(page - 1) * limit + 1}</span>
           {' to '}
           <span className="font-medium">{(page - 1) * limit + listLength}</span>
           {' of '}
           <span className="font-medium">{numberWithCommas(total)}</span>
-          {' highlights'}.
+          {' highlights'}
+          .
         </div>
         <Pagination
           page={page}
@@ -205,6 +208,4 @@ function HighlightsList() {
   );
 }
 
-export default withPermissions(
-  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false
-)(observer(HighlightsList));
+export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', false, false)(observer(HighlightsList));

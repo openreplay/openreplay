@@ -1,32 +1,32 @@
-import { makeAutoObservable }from "mobx"
-import { configService } from "App/services";
+import { makeAutoObservable } from 'mobx';
+import { configService } from 'App/services';
 
 export default class weeklyReportConfigStore {
-  public weeklyReport = false
+  public weeklyReport = false;
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this);
   }
 
   setReport(value: boolean) {
-    this.weeklyReport = value
+    this.weeklyReport = value;
   }
 
   async fetchReport() {
     try {
-      const { weeklyReport } = await configService.fetchWeeklyReport()
-      return this.setReport(weeklyReport)
+      const { weeklyReport } = await configService.fetchWeeklyReport();
+      return this.setReport(weeklyReport);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
   async fetchEditReport(value: boolean) {
     try {
-      const { weeklyReport } = await configService.editWeeklyReport({ weeklyReport: value })
-      return this.setReport(weeklyReport)
+      const { weeklyReport } = await configService.editWeeklyReport({ weeklyReport: value });
+      return this.setReport(weeklyReport);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 }

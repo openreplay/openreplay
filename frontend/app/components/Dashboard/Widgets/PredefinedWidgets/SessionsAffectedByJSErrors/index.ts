@@ -1,1 +1,1 @@
-export { default } from './SessionsAffectedByJSErrors'
+export { default } from './SessionsAffectedByJSErrors';

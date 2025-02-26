@@ -20,7 +20,9 @@ interface Props {
   sessionTz?: string;
 }
 
-function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
+function PlayingTime({
+  timeMode, setTimeMode, startedAt, sessionTz,
+}: Props) {
   return (
     <Popover
       // @ts-ignore
@@ -32,23 +34,19 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
       render={({ close }) => (
         <div
           style={{ margin: -12 }}
-          className={
-            'flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left'
-          }
+          className="flex flex-col gap-2 bg-white py-2 rounded color-gray-darkest text-left"
         >
-          <div className={'font-semibold px-4 cursor-default'}>
+          <div className="font-semibold px-4 cursor-default">
             Playback Time Mode
           </div>
           <div
-            className={
-              'flex flex-col cursor-pointer hover:bg-active-blue w-full px-4'
-            }
+            className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
           >
-            <div className={'text-sm text-disabled-text text-left'}>
+            <div className="text-sm text-disabled-text text-left">
               Current / Session Duration
             </div>
             <div
-              className={'flex items-center text-left'}
+              className="flex items-center text-left"
               onClick={() => {
                 setTimeMode(TimeMode.Timestamp);
                 close();
@@ -61,18 +59,16 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
           </div>
           {sessionTz ? (
             <div
-              className={
-                'flex flex-col cursor-pointer hover:bg-active-blue w-full px-4'
-              }
+              className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
               onClick={() => {
                 setTimeMode(TimeMode.UserReal);
                 close();
               }}
             >
-              <div className={'text-sm text-disabled-text text-left'}>
+              <div className="text-sm text-disabled-text text-left">
                 User's time
               </div>
-              <div className={'text-left'}>
+              <div className="text-left">
                 <RealUserReplayTimeConnected
                   startedAt={startedAt}
                   sessionTz={sessionTz}
@@ -81,26 +77,24 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
             </div>
           ) : null}
           <div
-            className={
-              'flex flex-col cursor-pointer hover:bg-active-blue w-full px-4'
-            }
+            className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
             onClick={() => {
               setTimeMode(TimeMode.Real);
               close();
             }}
           >
-            <div className={'text-sm text-disabled-text text-left'}>
+            <div className="text-sm text-disabled-text text-left">
               Based on your settings
             </div>
-            <div className={'text-left'}>
+            <div className="text-left">
               <RealReplayTimeConnected startedAt={startedAt} />
             </div>
           </div>
         </div>
       )}
     >
-      <Button type={'text'} style={{ padding: '4px 0.5rem'}}>
-        <div className={'flex items-center gap-2'}>
+      <Button type="text" style={{ padding: '4px 0.5rem' }}>
+        <div className="flex items-center gap-2">
           <div
             className="flex items-center font-semibold text-center"
             style={{ minWidth: 85 }}

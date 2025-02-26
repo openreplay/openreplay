@@ -1,1 +1,1 @@
-export { default } from './NgRxDoc'
+export { default } from './NgRxDoc';

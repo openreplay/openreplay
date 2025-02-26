@@ -5,7 +5,9 @@ import React, { useEffect } from 'react';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { getRE } from 'App/utils';
 import TimeTable from 'Components/shared/DevTools/TimeTable';
-import { CloseButton, Input, NoContent, SlideModal } from 'UI';
+import {
+  CloseButton, Input, NoContent, SlideModal,
+} from 'UI';
 
 import BottomBlock from '../BottomBlock';
 import GQLDetails from './GQLDetails';
@@ -34,9 +36,10 @@ function renderDefaultStatus() {
 
 function GraphQL({ panelHeight }: { panelHeight: number }) {
   const { player, store } = React.useContext(PlayerContext);
-  const { time, livePlay, tabStates, currentTab } = store.get();
-  const { graphqlList: list = [], graphqlListNow: listNow = [] } =
-    tabStates[currentTab];
+  const {
+    time, livePlay, tabStates, currentTab,
+  } = store.get();
+  const { graphqlList: list = [], graphqlListNow: listNow = [] } = tabStates[currentTab];
 
   const defaultState = {
     filter: '',
@@ -66,11 +69,10 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
 
     return value
       ? list.filter(
-          (r: any) =>
-            filterRE.test(r.operationKind) ||
-            filterRE.test(r.operationName) ||
-            filterRE.test(r.variables)
-        )
+        (r: any) => filterRE.test(r.operationKind)
+            || filterRE.test(r.operationName)
+            || filterRE.test(r.variables),
+      )
       : list;
   };
 
@@ -101,12 +103,11 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
     }
   };
 
-  const closeModal = () =>
-    setState((prevState) => ({
-      ...prevState,
-      current: null,
-      showFetchDetails: false,
-    }));
+  const closeModal = () => setState((prevState) => ({
+    ...prevState,
+    current: null,
+    showFetchDetails: false,
+  }));
 
   useEffect(() => {
     const filtered = filterList(listNow, state.filter);
@@ -118,21 +119,23 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
     }
   }, [time]);
 
-  const { current, currentIndex, filteredList, lastActiveItem } = state;
+  const {
+    current, currentIndex, filteredList, lastActiveItem,
+  } = state;
 
   return (
-    <React.Fragment>
+    <>
       <SlideModal
         size="middle"
         right
-        title={
+        title={(
           <div className="flex justify-between">
             <h1>GraphQL</h1>
             <div className="flex items-center">
               <CloseButton onClick={closeModal} size="18" className="ml-2" />
             </div>
           </div>
-        }
+        )}
         isDisplayed={current != null}
         content={
           current && (
@@ -193,7 +196,7 @@ function GraphQL({ panelHeight }: { panelHeight: number }) {
           </NoContent>
         </BottomBlock.Content>
       </BottomBlock>
-    </React.Fragment>
+    </>
   );
 }
 

@@ -59,14 +59,10 @@ export interface Graphs {
   }[];
 }
 
-export const generateListData = (list: any[], key: PeriodKeys) => {
-  return list.map((item) => {
-    return {
-      timestamp: item.timestamp,
-      value: item[key],
-    };
-  });
-};
+export const generateListData = (list: any[], key: PeriodKeys) => list.map((item) => ({
+  timestamp: item.timestamp,
+  value: item[key],
+}));
 
 export const defaultGraphs = {
   currentPeriod: {
@@ -98,7 +94,7 @@ export default class AssistStatsService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
@@ -106,14 +102,14 @@ export default class AssistStatsService {
   }
 
   fetch(path: string, body: Record<string, any>, method: 'get' | 'post') {
-    return this.client[method]('/assist-stats/' + path, body).then((r) => r.json());
+    return this.client[method](`/assist-stats/${path}`, body).then((r) => r.json());
   }
 
   getGraphs(range: { start: number; end: number }, userId?: number): Promise<Graphs> {
     return this.fetch(
       'avg',
       { startTimestamp: range.start, endTimestamp: range.end, userId },
-      'get'
+      'get',
     );
   }
 

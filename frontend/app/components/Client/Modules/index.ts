@@ -27,46 +27,46 @@ export const modules = [
     label: 'Co-Browse',
     description: 'Enable live session replay, remote control, annotations and webRTC call/video.',
     key: MODULES.ASSIST,
-    icon: 'broadcast'
+    icon: 'broadcast',
   },
   {
     label: 'Recordings',
     description: 'Record live sessions while co-browsing with users and share it with your team for training purposes.',
     key: MODULES.OFFLINE_RECORDINGS,
-    icon: 'record2'
+    icon: 'record2',
   },
   {
     label: 'Cobrowsing Reports',
     description: 'Keep an eye on cobrowsing metrics across your team and generate reports.',
     key: MODULES.ASSIST_STATS,
     icon: 'file-bar-graph',
-    enterprise: true
+    enterprise: true,
   },
   {
     label: 'Highlights',
     description: 'Add highlights to sessions and share with your team.',
     key: MODULES.HIGHLIGHTS,
     icon: 'chat-square-quote',
-    isEnabled: true
+    isEnabled: true,
   },
   {
     label: 'Alerts',
     description: 'Create alerts on cards and get notified when a metric hits a certain threshold.',
     key: MODULES.ALERTS,
-    icon: 'bell'
+    icon: 'bell',
   },
   {
     label: 'Feature Flags',
     description: 'Make gradual releases and A/B test all of your new features without redeploying your app.',
     key: MODULES.FEATURE_FLAGS,
-    icon: 'toggles'
+    icon: 'toggles',
   },
   {
     label: 'Recommendations',
     description: 'Get personalized recommendations for sessions to watch, based on your replay history and search preferences.',
     key: MODULES.RECOMMENDATIONS,
     icon: 'magic',
-    hidden: true
+    hidden: true,
   },
   {
     label: 'Usability Tests',

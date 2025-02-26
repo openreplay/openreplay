@@ -1,7 +1,7 @@
 import React from 'react';
 import LiveSessionSearchField from 'Shared/LiveSessionSearchField';
 import { Tooltip } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -9,7 +9,7 @@ interface Props {
   appliedFilter: any;
 }
 
-const LiveSearchBar = (props: Props) => {
+function LiveSearchBar(props: Props) {
   const { searchStoreLive } = useStore();
   const appliedFilter = searchStoreLive.instance;
   const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
@@ -19,7 +19,7 @@ const LiveSearchBar = (props: Props) => {
         <LiveSessionSearchField />
       </div>
       <div className="flex items-center" style={{ width: '40%' }}>
-        <Tooltip title={'Clear Steps'}>
+        <Tooltip title="Clear Steps">
           <Button
             type="text"
             disabled={!hasFilters}
@@ -32,5 +32,5 @@ const LiveSearchBar = (props: Props) => {
       </div>
     </div>
   );
-};
+}
 export default observer(LiveSearchBar);

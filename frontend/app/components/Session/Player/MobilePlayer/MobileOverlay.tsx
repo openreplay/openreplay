@@ -14,7 +14,7 @@ import { observer } from 'mobx-react-lite';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { Icon } from 'UI';
-import { useStore } from 'App/mstore'
+import { useStore } from 'App/mstore';
 
 interface Props {
   nextId?: string;
@@ -35,42 +35,43 @@ const menuItems: MenuProps['items'] = [
   {
     key: ItemKey.Console,
     label: 'Console',
-    icon: <Icon name={'terminal'} size={14} />,
+    icon: <Icon name="terminal" size={14} />,
   },
   {
     key: ItemKey.Network,
     label: 'Network',
-    icon: <Icon name={'arrow-down-up'} size={14} />,
+    icon: <Icon name="arrow-down-up" size={14} />,
   },
   {
     key: ItemKey.Performance,
     label: 'Performance',
-    icon: <Icon name={'speedometer2'} size={14} />,
+    icon: <Icon name="speedometer2" size={14} />,
   },
   {
     key: ItemKey.Events,
     label: 'Events',
-    icon: <Icon name={'filetype-js'} size={14} />,
+    icon: <Icon name="filetype-js" size={14} />,
   },
   { type: 'divider' },
   {
     key: ItemKey.AddNote,
     label: 'Add Note',
-    icon: <Icon name={'quotes'} size={14} />,
+    icon: <Icon name="quotes" size={14} />,
   },
 ];
 
 function Overlay({ nextId, isClickmap }: Props) {
   const { player, store } = React.useContext(PlayerContext);
   const { uiPlayerStore } = useStore();
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const { toggleBottomBlock } = uiPlayerStore;
   const togglePlay = () => player.togglePlay();
-  const { playing, messagesLoading, completed, autoplay } = store.get();
-  const loading = messagesLoading
+  const {
+    playing, messagesLoading, completed, autoplay,
+  } = store.get();
+  const loading = messagesLoading;
 
   const showAutoplayTimer = completed && autoplay && nextId;
-  const showPlayIconLayer =
-    !isClickmap && !loading && !showAutoplayTimer;
+  const showPlayIconLayer = !isClickmap && !loading && !showAutoplayTimer;
 
   const onClick = ({ key }: { key: string }) => {
     switch (key) {
@@ -93,7 +94,6 @@ function Overlay({ nextId, isClickmap }: Props) {
         // TODO setCreateNoteTooltip({ time: store.get().time, isVisible: true });
         break;
       default:
-        return;
     }
   };
   return (

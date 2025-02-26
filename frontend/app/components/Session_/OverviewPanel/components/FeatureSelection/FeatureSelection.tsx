@@ -1,7 +1,7 @@
 import React from 'react';
 import { Popover, Checkbox, Button } from 'antd';
-import {EyeInvisibleOutlined} from '@ant-design/icons';
-import { Icon } from 'UI'
+import { EyeInvisibleOutlined } from '@ant-design/icons';
+import { Icon } from 'UI';
 import Funnel from '@/types/funnel';
 
 const NETWORK = 'NETWORK';
@@ -36,7 +36,7 @@ const featLabels = {
   [ERRORS]: 'Session Errors',
   [NETWORK]: 'Network Events',
   [EVENTS]: 'Custom Events',
-}
+};
 
 function FeatureSelection(props: Props) {
   const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
@@ -55,39 +55,37 @@ function FeatureSelection(props: Props) {
     } else {
       props.updateList(features);
     }
-  }
+  };
   return (
-    <React.Fragment>
-      <Popover
-        trigger="click"
-        content={
-          <div className='flex flex-col gap-3'>
-            <div
-              className={'flex items-center gap-2 cursor-pointer'}
-              onClick={() => toggleAllFeatures()}
-            >
-              <Checkbox checked={props.list.length === features.length}  />
-              <div>All Features</div>
-            </div>
-            {features.map((feat) => (
-              <div
-                key={feat}
-                className={'flex items-center gap-2 cursor-pointer'}
-                onClick={() => toggleFeatureInList(feat)}
-              >
-                <Checkbox checked={props.list.includes(feat)} />
-                {/* @ts-ignore */}
-                <div>{featLabels[feat]}</div>
-              </div>
-            ))}
+    <Popover
+      trigger="click"
+      content={(
+        <div className="flex flex-col gap-3">
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => toggleAllFeatures()}
+          >
+            <Checkbox checked={props.list.length === features.length} />
+            <div>All Features</div>
           </div>
-        }
-      >
-        <Button color='primary' size='small' type='text' className={'font-medium'} icon={<EyeInvisibleOutlined size={12} />} >
-          Hide / Show
-        </Button>
-      </Popover>
-    </React.Fragment>
+          {features.map((feat) => (
+            <div
+              key={feat}
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => toggleFeatureInList(feat)}
+            >
+              <Checkbox checked={props.list.includes(feat)} />
+              {/* @ts-ignore */}
+              <div>{featLabels[feat]}</div>
+            </div>
+          ))}
+        </div>
+        )}
+    >
+      <Button color="primary" size="small" type="text" className="font-medium" icon={<EyeInvisibleOutlined size={12} />}>
+        Hide / Show
+      </Button>
+    </Popover>
   );
 }
 

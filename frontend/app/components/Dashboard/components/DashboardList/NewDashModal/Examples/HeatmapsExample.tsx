@@ -23,7 +23,7 @@ function HeatmapsExample(props: Props) {
         pointMap[key] = {
           times: Math.floor(Math.random() * 100),
           data: [x, y],
-          original: { x, y }
+          original: { x, y },
         };
       }
 
@@ -45,14 +45,17 @@ function HeatmapsExample(props: Props) {
       .draw();
   }, []);
 
-
   // const data = {};
   return (
     <ExCard
       {...props}
     >
-      <canvas ref={canvasRef}
-              style={{ width: '100%', height: '224px', backgroundColor: '#F4F4F4', borderRadius: '10px' }} />
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: '100%', height: '224px', backgroundColor: '#F4F4F4', borderRadius: '10px',
+        }}
+      />
     </ExCard>
   );
 }

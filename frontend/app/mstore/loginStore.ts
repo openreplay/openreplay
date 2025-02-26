@@ -2,13 +2,18 @@ import { makeAutoObservable } from 'mobx';
 import { loginService } from '@/services';
 import { handleSpotJWT, isTokenExpired } from 'App/utils';
 import { toast } from 'react-toastify';
-const spotTokenKey = "___$or_spotToken$___"
+
+const spotTokenKey = '___$or_spotToken$___';
 
 class LoginStore {
   email = '';
+
   password = '';
+
   captchaResponse?: string;
+
   spotJWT?: string;
+
   loading = false;
 
   constructor() {
@@ -21,26 +26,27 @@ class LoginStore {
 
   setEmail = (email: string) => {
     this.email = email;
-  }
+  };
 
   setPassword = (password: string) => {
     this.password = password;
-  }
+  };
 
   setCaptchaResponse = (captchaResponse: string) => {
     this.captchaResponse = captchaResponse;
-  }
+  };
 
   setSpotJWT = (spotJWT: string) => {
     this.spotJWT = spotJWT;
     localStorage.setItem(spotTokenKey, spotJWT);
     handleSpotJWT(spotJWT);
-  }
+  };
 
-  spotJwtPending = false
+  spotJwtPending = false;
+
   setSpotJwtPending = (pending: boolean) => {
-    this.spotJwtPending = pending
-  }
+    this.spotJwtPending = pending;
+  };
 
   generateJWT = async () => {
     if (this.spotJwtPending) {
@@ -67,9 +73,9 @@ class LoginStore {
   };
 
   invalidateSpotJWT = () => {
-    this.spotJWT = undefined
-    localStorage.removeItem(spotTokenKey)
-  }
+    this.spotJWT = undefined;
+    localStorage.removeItem(spotTokenKey);
+  };
 }
 
 export default LoginStore;

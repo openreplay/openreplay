@@ -1,7 +1,9 @@
 import React from 'react';
 import Project from '@/mstore/types/project';
 import { Tabs } from 'UI';
-import {AppleOutlined, AndroidOutlined, CodeOutlined, JavaScriptOutlined} from '@ant-design/icons';
+import {
+  AppleOutlined, AndroidOutlined, CodeOutlined, JavaScriptOutlined,
+} from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
 import InstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs';
 import ProjectCodeSnippet from 'Components/Client/Projects/ProjectCodeSnippet';
@@ -13,7 +15,7 @@ const JAVASCRIPT = 'Using Script';
 const NPM = 'Using NPM';
 const TABS = [
   { key: NPM, text: NPM },
-  { key: JAVASCRIPT, text: JAVASCRIPT }
+  { key: JAVASCRIPT, text: JAVASCRIPT },
 ];
 
 interface Props {
@@ -43,30 +45,30 @@ function WebSnippet({ project }: { project: Project }) {
   return (
     <div className="">
       <Segmented
-  options={[
-    {
-      label: (
-        <div className="flex items-center gap-2">
-          <CodeOutlined />
-          <span>NPM</span>
-        </div>
-      ),
-      value: true,
-    },
-    {
-      label: (
-        <div className="flex items-center gap-2">
-          <JavaScriptOutlined />
-          <span>Script</span>
-        </div>
-      ),
-      value: false,
-    },
-  ]}
-  value={isNpm}
-  onChange={setIsNpm}
-  className="!align-middle text-center rounded-lg"
-/>
+        options={[
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <CodeOutlined />
+                <span>NPM</span>
+              </div>
+            ),
+            value: true,
+          },
+          {
+            label: (
+              <div className="flex items-center gap-2">
+                <JavaScriptOutlined />
+                <span>Script</span>
+              </div>
+            ),
+            value: false,
+          },
+        ]}
+        value={isNpm}
+        onChange={setIsNpm}
+        className="!align-middle text-center rounded-lg"
+      />
 
       {isNpm ? (
         <InstallDocs site={project} />
@@ -106,9 +108,9 @@ function MobileSnippet({ project }: { project: Project }) {
         ]}
         value={isIos}
         onChange={setIsIos}
-        className='rounded-lg'
+        className="rounded-lg"
       />
-      
+
       {isIos ? (
         <MobileInstallDocs site={project} ingestPoint={ingestPoint} />
       ) : (

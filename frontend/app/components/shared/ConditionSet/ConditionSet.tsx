@@ -44,13 +44,13 @@ function ConditionSetComponent({
   changeName,
 }: Props) {
   return (
-    <div className={'border bg-white rounded'}>
-      <div className={'flex items-center border-b px-4 py-2 gap-2'}>
+    <div className="border bg-white rounded">
+      <div className="flex items-center border-b px-4 py-2 gap-2">
         {conditions.name ? (
-          <div className={'flex gap-2'}>
+          <div className="flex gap-2">
             <BranchesOutlined rotate={90} />
             <Typography.Text
-              className={'underline decoration-dashed decoration-black cursor-pointer'}
+              className="underline decoration-dashed decoration-black cursor-pointer"
               editable={{
                 onChange: changeName,
                 triggerType: ['icon', 'text'],
@@ -63,7 +63,10 @@ function ConditionSetComponent({
         ) : (
           <>
             <div>Condition</div>
-            <div className={'p-2 rounded bg-gray-lightest'}>Set {set}</div>
+            <div className="p-2 rounded bg-gray-lightest">
+              Set
+              {set}
+            </div>
           </>
         )}
         {readonly ? null : (
@@ -71,11 +74,11 @@ function ConditionSetComponent({
             className={cn('p-2 px-4 cursor-pointer rounded ml-auto', 'hover:bg-teal-light')}
             onClick={() => removeCondition(index)}
           >
-            <Icon name={'trash'} color={'main'} />
+            <Icon name="trash" color="main" />
           </div>
         )}
       </div>
-      <div className={'p-2'}>
+      <div className="p-2">
         <div className={conditions.filter.filters.length > 0 ? 'p-2 mb-2' : ''}>
           <EventsList
             filter={conditions.filter}
@@ -102,21 +105,24 @@ function ConditionSetComponent({
             borderless
           />
           {readonly && !conditions.filter?.filters?.length ? (
-            <div className={'p-2'}>No conditions</div>
+            <div className="p-2">No conditions</div>
           ) : null}
         </div>
       </div>
-      <div className={'px-4 py-2 flex items-center gap-2 border-t'}>
+      <div className="px-4 py-2 flex items-center gap-2 border-t">
         <span>{bottomLine1}</span>
         {readonly ? (
-          <div className={'font-semibold'}>{conditions.rolloutPercentage}%</div>
+          <div className="font-semibold">
+            {conditions.rolloutPercentage}
+            %
+          </div>
         ) : (
           <Input
             type="text"
             width={60}
             value={conditions.rolloutPercentage}
             onChange={onPercentChange}
-            leadingButton={<div className={'p-2 text-disabled-text'}>%</div>}
+            leadingButton={<div className="p-2 text-disabled-text">%</div>}
           />
         )}
 

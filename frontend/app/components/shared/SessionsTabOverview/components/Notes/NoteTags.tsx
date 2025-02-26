@@ -19,9 +19,7 @@ const notesOwner = [
   { value: '1', label: 'My Notes' },
 ];
 function toTitleCase(str) {
-  return str.replace(/\w\S*/g, function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 function NoteTags() {
   const { notesStore } = useStore();
@@ -36,8 +34,8 @@ function NoteTags() {
             label: (
               <div
                 className={
-                  notesStore.activeTags.includes('ALL') ||
-                  notesStore.activeTags.length === 0
+                  notesStore.activeTags.includes('ALL')
+                  || notesStore.activeTags.length === 0
                     ? 'text-main'
                     : ''
                 }

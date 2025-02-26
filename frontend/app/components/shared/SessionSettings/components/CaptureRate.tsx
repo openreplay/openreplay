@@ -4,7 +4,9 @@ import { Icon, Input, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import { Switch, Drawer, Button, Tooltip } from 'antd';
+import {
+  Switch, Drawer, Button, Tooltip,
+} from 'antd';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
 
 type Props = {
@@ -20,7 +22,7 @@ function CaptureRate(props: Props) {
   const { projectId, isMobile } = props;
   const { settingsStore, userStore } = useStore();
   const isAdmin = userStore.account.admin || userStore.account.superAdmin;
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const [changed, setChanged] = useState(false);
   const {
     sessionSettings: {
@@ -62,31 +64,31 @@ function CaptureRate(props: Props) {
   const onUpdate = () => {
     updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
-      conditionalCapture: conditionalCapture,
+      conditionalCapture,
       conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : [],
-    })
-    setChanged(false)
+    });
+    setChanged(false);
   };
 
   const updateDisabled = !changed || !isAdmin || (isEnterprise && (conditionalCapture && conditions.length === 0));
   return (
     <Drawer
-      size={'large'}
+      size="large"
       open={props.open}
       styles={{ content: { background: '#F6F6F6' } }}
       onClose={() => props.setShowCaptureRate(false)}
-      title={
-        <div className={'flex items-center w-full gap-2'}>
-          <span className={'font-semibold'}>Capture Rate</span>
-          <div className={'ml-auto'}></div>
-          <Button type={'primary'} ghost onClick={() => props.setShowCaptureRate(false)}>
+      title={(
+        <div className="flex items-center w-full gap-2">
+          <span className="font-semibold">Capture Rate</span>
+          <div className="ml-auto" />
+          <Button type="primary" ghost onClick={() => props.setShowCaptureRate(false)}>
             Cancel
           </Button>
-          <Button disabled={updateDisabled} type={'primary'} onClick={onUpdate}>
+          <Button disabled={updateDisabled} type="primary" onClick={onUpdate}>
             Update
           </Button>
         </div>
-      }
+      )}
       closable={false}
       destroyOnClose
     >
@@ -96,11 +98,11 @@ function CaptureRate(props: Props) {
             <div className="font-semibold">The percentage of session you want to capture</div>
             <Tooltip
               title={
-                'Define the percentage of user sessions to be recorded for detailed replay and analysis.' +
-                '\nSessions exceeding this specified limit will not be captured or stored.'
+                'Define the percentage of user sessions to be recorded for detailed replay and analysis.'
+                + '\nSessions exceeding this specified limit will not be captured or stored.'
               }
             >
-              <Icon size={16} color={'black'} name={'info-circle'} />
+              <Icon size={16} color="black" name="info-circle" />
             </Tooltip>
             <Switch
               checked={conditionalCapture}

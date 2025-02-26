@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LogLevel, ILog } from 'Player';
-import BottomBlock from '../BottomBlock';
 import { Tabs, Input, NoContent } from 'UI';
 import cn from 'classnames';
-import ConsoleRow from '../ConsoleRow';
 import {
   IOSPlayerContext,
   MobilePlayerContext,
@@ -13,9 +11,11 @@ import { VList, VListHandle } from 'virtua';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
+import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import ConsoleRow from '../ConsoleRow';
+import BottomBlock from '../BottomBlock';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -73,15 +73,14 @@ function MobileConsolePanel() {
     sessionStore: { devTools },
   } = useStore();
 
-  const filter = devTools[INDEX_KEY].filter;
-  const activeTab = devTools[INDEX_KEY].activeTab;
+  const { filter } = devTools[INDEX_KEY];
+  const { activeTab } = devTools[INDEX_KEY];
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const { showModal } = useModal();
 
-  const { player, store } =
-    React.useContext<IOSPlayerContext>(MobilePlayerContext);
+  const { player, store } = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const jump = (t: number) => player.jump(t);
 
   const { logList, logListNow, exceptionsListNow } = store.get();
@@ -92,20 +91,18 @@ function MobileConsolePanel() {
     filteredList,
     (l) => LEVEL_TAB[l.level],
     ALL,
-    activeTab
+    activeTab,
   );
 
-  const onTabClick = (activeTab: any) =>
-    devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) =>
-    devTools.update(INDEX_KEY, { filter: value });
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
     getLastItemTime(logListNow, exceptionsListNow),
     activeIndex,
-    (index) => devTools.update(INDEX_KEY, { index })
+    (index) => devTools.update(INDEX_KEY, { index }),
   );
   const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
@@ -165,12 +162,12 @@ function MobileConsolePanel() {
       </BottomBlock.Header>
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
-          title={
+          title={(
             <div className="capitalize flex items-center mt-16 gap-2">
               <InfoCircleOutlined size={18} />
               No Data
             </div>
-          }
+          )}
           size="small"
           show={filteredList.length === 0}
         >

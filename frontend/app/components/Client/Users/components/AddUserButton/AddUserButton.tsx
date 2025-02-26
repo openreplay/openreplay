@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -11,7 +11,7 @@ function AddUserButton({ isAdmin = false, onClick, btnVariant = 'primary' }: any
   const { userStore } = useStore();
   const limtis = useObserver(() => userStore.limits);
   const cannAddUser = useObserver(
-    () => isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0)
+    () => isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0),
   );
   return (
     <Tooltip

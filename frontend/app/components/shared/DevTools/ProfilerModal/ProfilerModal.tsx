@@ -11,13 +11,17 @@ function ProfilerModal(props: Props) {
   return (
     <div className="bg-white overflow-y-auto h-screen p-5">
       <h5 className="mb-2 text-2xl">{name}</h5>
-      <h5 className="py-3">{'Arguments'}</h5>
+      <h5 className="py-3">Arguments</h5>
       <ul className="color-gray-medium">
         {args.split(',').map((arg: any) => (
-          <li> {`${arg}`} </li>
+          <li>
+            {' '}
+            {`${arg}`}
+            {' '}
+          </li>
         ))}
       </ul>
-      <h5 className="py-3">{'Result'}</h5>
+      <h5 className="py-3">Result</h5>
       <div className="color-gray-medium">{`${result}`}</div>
     </div>
   );

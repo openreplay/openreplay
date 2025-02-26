@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import CustomFieldForm from './CustomFieldForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { List, Space, Typography, Button, Tooltip, Empty } from 'antd';
+import {
+  List, Space, Typography, Button, Tooltip, Empty,
+} from 'antd';
 import { PlusIcon, Tags } from 'lucide-react';
-import {EditOutlined } from '@ant-design/icons';
+import { EditOutlined } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
+import CustomFieldForm from './CustomFieldForm';
 
-
-const CustomFields = () => {
+function CustomFields() {
   usePageTitle('Metadata - OpenReplay Preferences');
   const { customFieldStore: store, projectsStore } = useStore();
   const currentSite = projectsStore.config.project;
@@ -27,8 +28,8 @@ const CustomFields = () => {
 
   const handleInit = (field?: any) => {
     store.init(field);
-    showModal(<CustomFieldForm siteId={currentSite?.projectId + ''} />, {
-      title: field ? 'Edit Metadata' : 'Add Metadata', right: true
+    showModal(<CustomFieldForm siteId={`${currentSite?.projectId}`} />, {
+      title: field ? 'Edit Metadata' : 'Add Metadata', right: true,
     });
   };
 
@@ -39,7 +40,7 @@ const CustomFields = () => {
       <Typography.Text>
         Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user
         sessions.
-        <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">
+        <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank" rel="noreferrer">
           Learn more
         </a>
       </Typography.Text>
@@ -48,13 +49,17 @@ const CustomFields = () => {
         <Tooltip
           title={remaining > 0 ? '' : 'You\'ve reached the limit of 10 metadata.'}
         >
-          <Button icon={<PlusIcon size={18} />} type="primary" size='small'
-                  disabled={remaining === 0}
-                  onClick={() => handleInit()}>
+          <Button
+            icon={<PlusIcon size={18} />}
+            type="primary"
+            size="small"
+            disabled={remaining === 0}
+            onClick={() => handleInit()}
+          >
             Add Metadata
           </Button>
         </Tooltip>
-        {/*{remaining === 0 && <Icon name="info-circle" size={16} color="black" />}*/}
+        {/* {remaining === 0 && <Icon name="info-circle" size={16} color="black" />} */}
         <Typography.Text type="secondary">
           {remaining === 0 ? 'You have reached the limit of 10 metadata.' : `${remaining}/10 Remaining for this project`}
         </Typography.Text>
@@ -62,7 +67,7 @@ const CustomFields = () => {
 
       <List
         locale={{
-          emptyText: <Empty description="None added yet" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />
+          emptyText: <Empty description="None added yet" image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />} />,
         }}
         loading={loading}
         dataSource={fields}
@@ -71,7 +76,7 @@ const CustomFields = () => {
             onClick={() => handleInit(field)}
             className="cursor-pointer group hover:bg-active-blue !px-4"
             actions={[
-              <Button type='link' className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />
+              <Button type="link" className="opacity-0 group-hover:!opacity-100" icon={<EditOutlined size={14} />} />,
             ]}
           >
             <List.Item.Meta
@@ -79,9 +84,10 @@ const CustomFields = () => {
               avatar={<Tags size={20} />}
             />
           </List.Item>
-        )} />
+        )}
+      />
     </div>
   );
-};
+}
 
 export default observer(CustomFields);

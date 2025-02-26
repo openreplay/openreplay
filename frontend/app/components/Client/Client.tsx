@@ -3,6 +3,8 @@ import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 
+import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
+import Modules from 'Components/Client/Modules';
 import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
 import UserView from './Users/UsersView';
@@ -13,8 +15,6 @@ import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
 import Notifications from './Notifications';
 import Roles from './Roles';
-import SessionsListingSettings from 'Components/Client/SessionsListingSettings';
-import Modules from 'Components/Client/Modules';
 
 @withRouter
 export default class Client extends React.PureComponent {
@@ -46,11 +46,11 @@ export default class Client extends React.PureComponent {
   render() {
     const {
       match: {
-        params: { activeTab }
-      }
+        params: { activeTab },
+      },
     } = this.props;
     return (
-      <div className='w-full mx-auto mb-8' style={{ maxWidth: '1360px' }}>
+      <div className="w-full mx-auto mb-8" style={{ maxWidth: '1360px' }}>
         {activeTab && this.renderActiveTab()}
       </div>
     );

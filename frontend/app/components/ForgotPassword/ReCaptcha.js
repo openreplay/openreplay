@@ -25,13 +25,13 @@ class ReCaptcha extends Component {
     const { id, apiKey, theme } = this.props;
 
     this.recatchaElt = window.grecaptcha.render(id, {
-      sitekey: apiKey,      
+      sitekey: apiKey,
       size: 'invisible',
       callback: this.handleChange,
     }, true);
   }
 
-  handleChange() {    
+  handleChange() {
     const { onChange } = this.props;
 
     onChange(this.getValue());
@@ -41,7 +41,7 @@ class ReCaptcha extends Component {
     const { id } = this.props;
 
     return (
-      <div id={ id } />
+      <div id={id} />
     );
   }
 }

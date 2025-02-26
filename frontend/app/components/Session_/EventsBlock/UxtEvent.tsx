@@ -1,23 +1,26 @@
-import React from 'react'
-import { durationFromMsFormatted } from "App/date";
-import { Tooltip } from 'antd'
+import React from 'react';
+import { durationFromMsFormatted } from 'App/date';
+import { Tooltip } from 'antd';
 
 function UxtEvent({ event }: any) {
   return (
-    <div className={'flex flex-col'}>
-      <div className={'border border-gray-lighter rounded bg-teal-light pt-2 pb-1 px-4 m-4 shadow'}>
-        <div className={'w-full flex items-center gap-2'}>
-          <div className={'bg-white rounded border border-gray-lighter px-2'}>Task {event.indexNum}</div>
+    <div className="flex flex-col">
+      <div className="border border-gray-lighter rounded bg-teal-light pt-2 pb-1 px-4 m-4 shadow">
+        <div className="w-full flex items-center gap-2">
+          <div className="bg-white rounded border border-gray-lighter px-2">
+            Task
+            {event.indexNum}
+          </div>
           <Tooltip title={event.description}>
-            <div className={'text-disabled-text underline-dashed cursor-pointer'}>instructions</div>
+            <div className="text-disabled-text underline-dashed cursor-pointer">instructions</div>
           </Tooltip>
-          <div className={'color-gray-medium ml-auto'}>{durationFromMsFormatted(event.duration)}</div>
+          <div className="color-gray-medium ml-auto">{durationFromMsFormatted(event.duration)}</div>
         </div>
         <div className="font-semibold pt-1">{event.title}</div>
       </div>
       {event.comment ? (
-        <div className={'border border-gray-lighter rounded bg-cyan py-2 px-4 mx-4 mb-4 shadow'}>
-          <div className={'bg-white rounded border border-gray-lighter px-2 w-fit'}>
+        <div className="border border-gray-lighter rounded bg-cyan py-2 px-4 mx-4 mb-4 shadow">
+          <div className="bg-white rounded border border-gray-lighter px-2 w-fit">
             Participant Response
           </div>
           <div>{event.comment}</div>
@@ -27,4 +30,4 @@ function UxtEvent({ event }: any) {
   );
 }
 
-export default UxtEvent
+export default UxtEvent;

@@ -26,23 +26,23 @@ function ExampleCount(props: any) {
   };
   return (
     <ExCard
-        {...props}
-      title={
-        <div className={'flex items-center gap-2'}>
+      {...props}
+      title={(
+        <div className="flex items-center gap-2">
           <div>{props.title}</div>
-          <div className={'font-normal'}>
+          <div className="font-normal">
             <Segmented
               options={[
                 { label: 'Frustrations', value: '0' },
                 { label: 'Errors', value: '1' },
                 { label: 'Users', value: '2' },
               ]}
-              size='small'
+              size="small"
               onChange={(v) => setType(v)}
             />
           </div>
         </div>
-      }
+      )}
     >
       {el[type]}
     </ExCard>
@@ -85,12 +85,10 @@ export function Frustrations() {
 
   const lineWidth = 140;
   return (
-    <div className={'flex gap-1 flex-col'}>
+    <div className="flex gap-1 flex-col">
       {rows.map((r) => (
         <div
-          className={
-            'flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0'
-          }
+          className="flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0"
         >
           <Circle badgeType={0}>{r.icon}</Circle>
           <div>{r.label}</div>
@@ -101,7 +99,7 @@ export function Frustrations() {
                 width: lineWidth * (0.01 * r.progress),
                 background: '#394EFF',
               }}
-              className={'rounded-l'}
+              className="rounded-l"
             />
             <div
               style={{
@@ -109,10 +107,10 @@ export function Frustrations() {
                 width: lineWidth - lineWidth * (0.01 * r.progress),
                 background: '#E2E4F6',
               }}
-              className={'rounded-r'}
+              className="rounded-r"
             />
           </div>
-          <div className={'min-w-8'}>{r.value}</div>
+          <div className="min-w-8">{r.value}</div>
         </div>
       ))}
     </div>
@@ -125,45 +123,43 @@ export function Errors() {
       label: 'HTTP response status code (404 Not Found)',
       value: 500,
       progress: 90,
-      icon: <div className={'text-red text-xs'}>4XX</div>,
+      icon: <div className="text-red text-xs">4XX</div>,
     },
     {
       label: 'Cross-origin request blocked',
       value: 300,
       progress: 60,
-      icon: <div className={'text-red text-xs'}>CROS</div>,
+      icon: <div className="text-red text-xs">CROS</div>,
     },
     {
       label: 'Reference error',
       value: 200,
       progress: 40,
-      icon: <div className={'text-red text-xs'}>RE</div>,
+      icon: <div className="text-red text-xs">RE</div>,
     },
     {
       label: 'Unhandled Promise Rejection',
       value: 50,
       progress: 20,
-      icon: <div className={'text-red text-xs'}>NULL</div>,
+      icon: <div className="text-red text-xs">NULL</div>,
     },
     {
       label: 'Failed Network Request',
       value: 10,
       progress: 5,
-      icon: <div className={'text-red text-xs'}>XHR</div>,
+      icon: <div className="text-red text-xs">XHR</div>,
     },
   ];
 
   const lineWidth = 270;
   return (
-    <div className={'flex gap-1 flex-col'}>
+    <div className="flex gap-1 flex-col">
       {rows.map((r) => (
         <div
-          className={
-            'flex items-center gap-2 border-b border-dotted last:border-0 py-2 first:pt-0 last:pb-0'
-          }
+          className="flex items-center gap-2 border-b border-dotted last:border-0 py-2 first:pt-0 last:pb-0"
         >
           <Circle badgeType={1}>{r.icon}</Circle>
-          <div className={'ml-2 flex flex-col gap-0'}>
+          <div className="ml-2 flex flex-col gap-0">
             <div>{r.label}</div>
             <div style={{ display: 'flex' }}>
               <div
@@ -172,7 +168,7 @@ export function Errors() {
                   width: lineWidth * (0.01 * r.progress),
                   background: '#394EFF',
                 }}
-                className={'rounded-l'}
+                className="rounded-l"
               />
               <div
                 style={{
@@ -180,11 +176,11 @@ export function Errors() {
                   width: lineWidth - lineWidth * (0.01 * r.progress),
                   background: '#E2E4F6',
                 }}
-                className={'rounded-r'}
+                className="rounded-r"
               />
             </div>
           </div>
-          <div className={'min-w-8 ml-auto'}>{r.value}</div>
+          <div className="min-w-8 ml-auto">{r.value}</div>
         </div>
       ))}
     </div>
@@ -216,18 +212,16 @@ export function Users() {
   ];
 
   return (
-    <div className={'flex gap-1 flex-col'}>
+    <div className="flex gap-1 flex-col">
       {rows.map((r) => (
         <div
-          className={
-            'flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0'
-          }
+          className="flex items-center gap-2 border-b border-dotted py-2 last:border-0 first:pt-0 last:pb-0"
         >
           <Circle badgeType={2}>{r.label[0].toUpperCase()}</Circle>
-          <div className={'ml-2'}>
+          <div className="ml-2">
             <div>{r.label}</div>
           </div>
-          <div className={'min-w-8 ml-auto'}>{r.value}</div>
+          <div className="min-w-8 ml-auto">{r.value}</div>
         </div>
       ))}
     </div>
@@ -254,7 +248,7 @@ export function Circle({
 
   return (
     <div
-      className={'w-8 h-8 flex items-center justify-center rounded-full'}
+      className="w-8 h-8 flex items-center justify-center rounded-full"
       style={{ background: colors[badgeType] }}
     >
       {children}

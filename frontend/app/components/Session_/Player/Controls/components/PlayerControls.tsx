@@ -2,7 +2,9 @@ import React from 'react';
 import { Icon } from 'UI';
 import { Button } from 'antd';
 import PlayingTime from './PlayingTime';
-import { JumpBack, IntervalSelector, JumpForward, SpeedOptions } from './ControlsComponents';
+import {
+  JumpBack, IntervalSelector, JumpForward, SpeedOptions,
+} from './ControlsComponents';
 
 interface Props {
   skip: boolean;
@@ -44,7 +46,7 @@ function PlayerControls(props: Props) {
     sessionTz,
   } = props;
   const [timeMode, setTimeMode] = React.useState<ITimeMode>(
-    localStorage.getItem('__or_player_time_mode') as ITimeMode
+    localStorage.getItem('__or_player_time_mode') as ITimeMode,
   );
 
   const saveTimeMode = (mode: ITimeMode) => {
@@ -84,8 +86,8 @@ function PlayerControls(props: Props) {
           <Button
             onClick={toggleSkip}
             disabled={disabled}
-            size={'small'}
-            className={'flex items-center font-semibold'}
+            size="small"
+            className="flex items-center font-semibold"
           >
             {skip && <Icon name="check" size="24" />}
             <span>Skip Inactivity</span>

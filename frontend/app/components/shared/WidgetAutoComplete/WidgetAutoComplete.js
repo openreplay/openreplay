@@ -1,30 +1,32 @@
 import React, { useState } from 'react';
 import { Icon, CircularLoader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import cn from 'classnames';
-import stl from './widgetAutoComplete.module.css';
 import { debounce } from 'App/utils';
+import stl from './widgetAutoComplete.module.css';
 
-const WidgetAutoComplete = props => {
-  const { className, placeholder = "Search for Resource", itemStyle = {}, filterParams = {} } = props;
-  const [selected, setSelected] = useState(null)
-  const [focused, setFocused] = useState(props.autoFocus)
+function WidgetAutoComplete(props) {
+  const {
+    className, placeholder = 'Search for Resource', itemStyle = {}, filterParams = {},
+  } = props;
+  const [selected, setSelected] = useState(null);
+  const [focused, setFocused] = useState(props.autoFocus);
 
-  const fetchOptions = debounce(props.fetchOptions, 300)
+  const fetchOptions = debounce(props.fetchOptions, 300);
 
   const handleChange = ({ target: { name, value } }) => {
     fetchOptions({ ...filterParams, q: value });
-  }
+  };
 
-  const onSelected = opt => {
+  const onSelected = (opt) => {
     setSelected(opt);
     props.onSelect(opt);
-  }
+  };
 
   const onItemClick = (e, { name, value }) => {
     props.onSelect({ url: value });
     setSelected(value);
-  }
+  };
 
   const onClearHandle = (e) => {
     e.preventDefault();
@@ -32,18 +34,18 @@ const WidgetAutoComplete = props => {
 
     setSelected(null);
     props.onSelect({});
-  }
- 
+  };
+
   return (
-    <div className={ cn("flex items-center relative", className)}>
+    <div className={cn('flex items-center relative', className)}>
       <div
-        className={cn(stl.searchWrapper, 'flex items-center relative', { 'bg-gray-light' : focused })}
+        className={cn(stl.searchWrapper, 'flex items-center relative', { 'bg-gray-light': focused })}
         onClick={() => !focused && setFocused(true)}
       >
         { !focused && selected && (
           <div className={cn(stl.selected, 'flex items-center justify-between')}>
             <span>{selected.value}</span>
-            <Button type="text" onClick={onClearHandle}><Icon name="close" size="14"/></Button>
+            <Button type="text" onClick={onClearHandle}><Icon name="close" size="14" /></Button>
           </div>
         )}
         { (focused || !selected) && (
@@ -51,9 +53,9 @@ const WidgetAutoComplete = props => {
             autoFocus={focused}
             type="text"
             className={cn(
-              stl.search, 
+              stl.search,
               'absolute inset-0 w-full py-2 active:outline-none focus:outline-none mr-2',
-              { 'focused': focused }
+              { focused },
             )}
             placeholder={placeholder}
             onChange={handleChange}
@@ -62,13 +64,13 @@ const WidgetAutoComplete = props => {
           />
         )}
         <div className="absolute right-0 mr-2">
-          { props.loading && <CircularLoader loading={ true } /> }
+          { props.loading && <CircularLoader loading /> }
         </div>
       </div>
       { focused && props.options.length > 0 && (
         <div className={cn(stl.menuWrapper, 'absolute top-10 left-0 rounded bg-white')}>
-        {
-          props.options.map(opt => (
+          {
+          props.options.map((opt) => (
             <div
               className={cn(stl.optionItem)}
               onMouseDown={() => onSelected(opt)}
@@ -78,10 +80,10 @@ const WidgetAutoComplete = props => {
             </div>
           ))
         }
-      </div>
+        </div>
       )}
     </div>
-  )
+  );
 }
 
-export default WidgetAutoComplete
+export default WidgetAutoComplete;

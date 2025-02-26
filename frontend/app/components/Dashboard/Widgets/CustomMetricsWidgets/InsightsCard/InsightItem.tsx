@@ -10,8 +10,7 @@ interface Props {
 }
 function InsightItem(props: Props) {
   const { item, onClick = () => {} } = props;
-  const className =
-    'flex items-start py-3 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer';
+  const className = 'flex items-start py-3 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer';
 
   switch (item.category) {
     case IssueCategory.RAGE:
@@ -68,7 +67,10 @@ function ErrorItem({ item, className, onClick }: any) {
           <div>from</div>
           <div>{item.oldValue}</div>
           <div>to</div>
-          <div>{item.value},</div>
+          <div>
+            {item.value}
+            ,
+          </div>
           <div>representing a</div>
           <Change change={item.change} isIncreased={item.isIncreased} />
           <div>across all sessions.</div>
@@ -85,7 +87,10 @@ function NetworkItem({ item, className, onClick }: any) {
       <div className="flex items-center gap-1 flex-wrap">
         <div>Network request to path</div>
         <div className="bg-gray-100 px-2 rounded">{item.name}</div>
-        <div>has {item.change > 0 ? 'increased' : 'decreased'}</div>
+        <div>
+          has
+          {item.change > 0 ? 'increased' : 'decreased'}
+        </div>
         <Change change={item.change} isIncreased={item.isIncreased} unit="sec" />
       </div>
     </div>
@@ -122,7 +127,11 @@ function RageItem({ item, className, onClick }: any) {
       ) : (
         <div className="flex items-center gap-1 flex-wrap">
           <div>Click rage has</div>
-          <div>{item.isIncreased ? 'increased' : 'decreased'} on</div>
+          <div>
+            {item.isIncreased ? 'increased' : 'decreased'}
+            {' '}
+            on
+          </div>
           <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
           <div>passing from</div>
           <div>{item.oldValue}</div>

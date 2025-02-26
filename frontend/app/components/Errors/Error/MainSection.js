@@ -12,7 +12,7 @@ import Divider from 'Components/Errors/ui/Divider';
 import ErrorName from 'Components/Errors/ui/ErrorName';
 import Label from 'Components/Errors/ui/Label';
 import { ErrorDetails, Icon, Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 
 import SessionBar from './SessionBar';
 
@@ -20,9 +20,9 @@ function MainSection(props) {
   const { errorStore, searchStore } = useStore();
   const error = errorStore.instance;
   const trace = errorStore.instanceTrace;
-  const sourcemapUploaded = errorStore.sourcemapUploaded;
+  const { sourcemapUploaded } = errorStore;
   const loading = errorStore.isLoading;
-  const className = props.className;
+  const { className } = props;
 
   const findSessions = () => {
     searchStore.addFilterByKeyAndValue(FilterKey.ERROR, error.message);
@@ -32,7 +32,7 @@ function MainSection(props) {
     <div
       className={cn(
         className,
-        'bg-white border-radius-3 thin-gray-border mb-6'
+        'bg-white border-radius-3 thin-gray-border mb-6',
       )}
     >
       <div className="m-4">
@@ -85,7 +85,7 @@ function MainSection(props) {
             variant="text"
             onClick={findSessions}
             icon={<Icon className="ml-1" name="next1" color="teal" />}
-            iconPosition={'end'}
+            iconPosition="end"
           >
             Find all sessions with this error
           </Button>
@@ -94,7 +94,8 @@ function MainSection(props) {
         {error.customTags.length > 0 ? (
           <div className="flex items-start flex-col">
             <div>
-              <span className="font-semibold">More Info</span>{' '}
+              <span className="font-semibold">More Info</span>
+              {' '}
               <span className="text-disabled-text">(most recent call)</span>
             </div>
             <div className="mt-4 flex items-center gap-3 w-full flex-wrap">
@@ -130,5 +131,5 @@ function MainSection(props) {
 }
 
 export default withRouter(
-  (observer(MainSection))
+  (observer(MainSection)),
 );

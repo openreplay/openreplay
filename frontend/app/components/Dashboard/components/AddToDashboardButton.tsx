@@ -50,7 +50,7 @@ export const showAddToDashboardModal = (metricId: string, dashboardStore: any) =
   });
 };
 
-const AddToDashboardButton = ({ metricId }: Props) => {
+function AddToDashboardButton({ metricId }: Props) {
   const { dashboardStore } = useStore();
 
   return (
@@ -62,6 +62,6 @@ const AddToDashboardButton = ({ metricId }: Props) => {
       Add to Dashboard
     </Button>
   );
-};
+}
 
 export default AddToDashboardButton;

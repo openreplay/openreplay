@@ -15,8 +15,8 @@ function SlowestDomains(props: Props) {
   const list = data.chart.slice(0, 4).map((item: any) => ({
     name: item.domain,
     icon: <Icon name="link-45deg" size={24} />,
-    value: Math.round(item.value) + 'ms',
-    progress: Math.round((item.value * 100) / highest)
+    value: `${Math.round(item.value)}ms`,
+    progress: Math.round((item.value * 100) / highest),
   }));
 
   return (
@@ -24,11 +24,13 @@ function SlowestDomains(props: Props) {
       size="small"
       show={list.length === 0}
       style={{ minHeight: 220 }}
-      title={
-        <div className='flex items-center gap-2 text-base font-normal'>
-        <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
-    </div>
-      }
+      title={(
+        <div className="flex items-center gap-2 text-base font-normal">
+          <InfoCircleOutlined size={12} />
+          {' '}
+          { NO_METRIC_DATA }
+        </div>
+      )}
     >
       <div className="w-full" style={{ height: '240px' }}>
         <ListWithIcons list={list} />

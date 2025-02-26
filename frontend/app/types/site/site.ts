@@ -35,10 +35,11 @@ export default function Site(data: Partial<ISite>): ISite {
     conditionsCount: 0,
   };
 
-  return Object.assign({}, defaults, {
+  return {
+    ...defaults,
     ...data,
     id: data?.projectId?.toString(),
     gdpr: GDPR(data ? data.gdpr : undefined),
     host: data ? data.name : '',
-  });
+  };
 }

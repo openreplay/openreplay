@@ -12,10 +12,10 @@ export const serviceNames: Record<ServiceName, string> = {
 
 export async function getIntegrationData<T>(
   name: ServiceName,
-  projectId: string
+  projectId: string,
 ): Promise<T> {
   const r = await client.get(
-    `/integrations/v1/integrations/${name}/${projectId}`
+    `/integrations/v1/integrations/${name}/${projectId}`,
   );
   return r.json();
 }
@@ -23,7 +23,7 @@ export async function getIntegrationData<T>(
 export function useIntegration<T>(
   name: ServiceName,
   projectId: string,
-  initialValues: T
+  initialValues: T,
 ) {
   const { data, isPending } = useQuery({
     queryKey: ['integrationData', name],
@@ -36,12 +36,12 @@ export function useIntegration<T>(
     },
     initialData: initialValues,
     retry: (failureCount, error) => {
-      const status = error.status || error.response.status
+      const status = error.status || error.response.status;
       if (status === 404) {
         return false;
       }
       return failureCount < 4;
-    }
+    },
   });
 
   const saveMutation = useMutation({
@@ -56,8 +56,7 @@ export function useIntegration<T>(
     }) => saveIntegration(name, values, siteId, exists),
   });
   const removeMutation = useMutation({
-    mutationFn: ({ siteId }: { siteId: string }) =>
-      removeIntegration(name, siteId),
+    mutationFn: ({ siteId }: { siteId: string }) => removeIntegration(name, siteId),
   });
 
   return {
@@ -72,13 +71,13 @@ export async function saveIntegration<T>(
   name: string,
   data: T,
   projectId: string,
-  exists?: boolean
+  exists?: boolean,
 ) {
   const method = exists ? 'patch' : 'post';
   try {
     const r = await client[method](
       `/integrations/v1/integrations/${name}/${projectId}`,
-      { data }
+      { data },
     );
     if (r.ok) {
       toast.success(`${name} integration saved`);
@@ -99,7 +98,7 @@ export async function saveIntegration<T>(
 export async function removeIntegration(name: string, projectId: string) {
   try {
     const r = await client.delete(
-      `/integrations/v1/integrations/${name}/${projectId}`
+      `/integrations/v1/integrations/${name}/${projectId}`,
     );
     if (r.ok) {
       toast.success(`${name} integration removed`);

@@ -1,38 +1,40 @@
-import React from 'react'
-import { BackLink, Icon, TextEllipsis } from 'UI'
-import cn from 'classnames'
-import IssueGraph from './IssueGraph'
+import React from 'react';
+import { BackLink, Icon, TextEllipsis } from 'UI';
+import cn from 'classnames';
+import IssueGraph from './IssueGraph';
 
-const Info = ({ label = '', color = 'red'}) => {
+function Info({ label = '', color = 'red' }) {
   return (
     <div className="flex items-center ml-4">
       <div className="flex text-sm items-center color-gray-medium">
-        <div className={ cn("w-2 h-2 rounded-full mr-2") } style={{ backgroundColor: color }} />
+        <div className={cn('w-2 h-2 rounded-full mr-2')} style={{ backgroundColor: color }} />
         <div>{ label }</div>
       </div>
     </div>
-  )
+  );
 }
 
-function IssueItem({ issue, inDetails = false, onClick = () => null, onBack = () => null }) {
+function IssueItem({
+  issue, inDetails = false, onClick = () => null, onBack = () => null,
+}) {
   return (
-    <div className={cn('flex flex-col bg-white w-full rounded border relative', { 'cursor-pointer bg-hover' : !inDetails })} onClick={!inDetails ? onClick : () => null}>
+    <div className={cn('flex flex-col bg-white w-full rounded border relative', { 'cursor-pointer bg-hover': !inDetails })} onClick={!inDetails ? onClick : () => null}>
       {inDetails && (
         <BackLink onClick={onBack} className="absolute" style={{ left: '-50px', top: '8px' }} />
       )}
-      <div className="flex items-center px-6 py-4 relative">        
+      <div className="flex items-center px-6 py-4 relative">
         <div className="mr-3">
           <div
             className="flex items-center justify-center flex-shrink-0 mr-3 relative"
-          >            
+          >
             <Icon name={issue.icon.icon} style={{ fill: issue.icon.color }} size="24" className="z-10 inset-0" />
           </div>
         </div>
-        
+
         {inDetails && (
           <div className="flex-1 overflow-hidden">
             <div className="text-lg font-medium mb-2 capitalize">{issue.title}</div>
-            <div className="text-xl whitespace-nowrap">              
+            <div className="text-xl whitespace-nowrap">
               <TextEllipsis text={issue.contextString} />
             </div>
           </div>
@@ -46,21 +48,24 @@ function IssueItem({ issue, inDetails = false, onClick = () => null, onBack = ()
             </div>
           </div>
         )}
-        
+
         <div className="text-center text-sm ml-10 flex-shrink-0">
           <div className="text-xl mb-2">{issue.affectedUsers}</div>
           <div className="color-gray-medium leading-none">Affected Users</div>
         </div>
 
         <div className="text-center text-sm ml-10 flex-shrink-0">
-          <div className="text-xl mb-2 color-red">{issue.conversionImpact}<span className="text-sm ml-1">%</span></div>
+          <div className="text-xl mb-2 color-red">
+            {issue.conversionImpact}
+            <span className="text-sm ml-1">%</span>
+          </div>
           <div className="color-gray-medium leading-none">Conversion Impact</div>
         </div>
 
         <div className="text-center text-sm ml-10 flex-shrink-0">
           <div className="text-xl mb-2">{issue.lostConversions}</div>
           <div className="color-gray-medium leading-none">Lost Conversions</div>
-        </div>      
+        </div>
       </div>
       {inDetails && (
         <div className="flex items-center px-6 py-4 justify-between border-t">
@@ -73,7 +78,7 @@ function IssueItem({ issue, inDetails = false, onClick = () => null, onBack = ()
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default IssueItem
+export default IssueItem;

@@ -1,13 +1,13 @@
 import React from 'react';
-import NewSiteForm from '../../../Client/Sites/NewSiteForm';
 import { useModal } from 'App/components/Modal';
-import { observer } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import NewSiteForm from '../../../Client/Sites/NewSiteForm';
 
-const ProjectFormButton = () => {
+function ProjectFormButton() {
   const { projectsStore } = useStore();
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const init = projectsStore.initProject;
   const site = sites.find(({ id }) => id === siteId);
   const { showModal, hideModal } = useModal();
@@ -19,15 +19,13 @@ const ProjectFormButton = () => {
   };
 
   return (
-    <>
-      <span
-        className="text-2xl font-bold ml-2 color-teal underline decoration-dotted cursor-pointer"
-        onClick={(e) => openModal(e)}
-      >
-        {site && site.name}
-      </span>
-    </>
+    <span
+      className="text-2xl font-bold ml-2 color-teal underline decoration-dotted cursor-pointer"
+      onClick={(e) => openModal(e)}
+    >
+      {site && site.name}
+    </span>
   );
-};
+}
 
 export default observer(ProjectFormButton);

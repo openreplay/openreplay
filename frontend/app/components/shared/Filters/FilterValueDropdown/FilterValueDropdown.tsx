@@ -1,5 +1,5 @@
 import React from 'react';
-import { AutoCompleteContainer, AutocompleteModal } from "../FilterAutoComplete/AutocompleteModal";
+import { AutoCompleteContainer, AutocompleteModal } from '../FilterAutoComplete/AutocompleteModal';
 
 interface Props {
   options: any[];
@@ -16,9 +16,7 @@ function FilterValueDropdown(props: Props) {
   } = props;
   const [query, setQuery] = React.useState('');
 
-  const filteredOptions = query.length ? options.filter((option) => {
-    return option.label.toLowerCase().includes(query.toLowerCase());
-  }) : options
+  const filteredOptions = query.length ? options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase())) : options;
   return (
     <AutocompleteModal
       values={values}
@@ -46,17 +44,17 @@ interface MainProps {
 }
 
 function FilterDropdownController(props: MainProps) {
-  const mapValues = (value: string) => {
-    return props.options.find((option) => option.value === value)?.label || value;
-  }
+  const mapValues = (value: string) => props.options.find((option) => option.value === value)?.label || value;
 
-  return <AutoCompleteContainer
-    value={props.value}
-    onApplyValues={props.onApplyValues}
-    modalRenderer={FilterValueDropdown}
-    modalProps={{ options: props.options }}
-    mapValues={mapValues}
-  />
+  return (
+    <AutoCompleteContainer
+      value={props.value}
+      onApplyValues={props.onApplyValues}
+      modalRenderer={FilterValueDropdown}
+      modalProps={{ options: props.options }}
+      mapValues={mapValues}
+    />
+  );
 }
 
 export default FilterDropdownController;

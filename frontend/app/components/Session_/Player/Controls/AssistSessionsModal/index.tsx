@@ -1,1 +1,1 @@
-export { default } from './AssistSessionsModal'
+export { default } from './AssistSessionsModal';

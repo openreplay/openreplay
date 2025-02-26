@@ -2,13 +2,13 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { Loader, NoContent, ItemMenu } from 'UI';
-import { Button, Switch } from 'antd'
+import { Button, Switch } from 'antd';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { useHistory } from 'react-router';
 import { withSiteId, fflag, fflags } from 'App/routes';
-import Multivariant from "Components/FFlags/NewFFlag/Multivariant";
+import Multivariant from 'Components/FFlags/NewFFlag/Multivariant';
 import { toast } from 'react-toastify';
-import RolloutCondition from "Shared/ConditionSet";
+import RolloutCondition from 'Shared/ConditionSet';
 
 function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   const { featureFlagsStore } = useStore();
@@ -21,8 +21,8 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   }, [fflagId]);
 
   const current = featureFlagsStore.currentFflag;
-  if (featureFlagsStore.isLoading) return <Loader loading={true} />;
-  if (!current) return <NoContent title={'No flag found'} />;
+  if (featureFlagsStore.isLoading) return <Loader loading />;
+  if (!current) return <NoContent title="No flag found" />;
 
   const deleteHandler = () => {
     featureFlagsStore.deleteFlag(current.featureFlagId).then(() => {
@@ -48,7 +48,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
   };
 
   return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
       <Breadcrumb
         items={[
           { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
@@ -56,41 +56,39 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
         ]}
       />
 
-      <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
-        <div className={'flex items-center gap-2'}>
-          <div className={'text-2xl'}>{current.flagKey}</div>
+      <div className="w-full bg-white rounded p-4 widget-wrapper">
+        <div className="flex items-center gap-2">
+          <div className="text-2xl">{current.flagKey}</div>
           <Button
-            className={'ml-auto text-main'}
-            type={'text'}
-            onClick={() =>
-              history.push(
-                withSiteId(
-                  fflag(
-                    featureFlagsStore.currentFflag?.featureFlagId.toString()
-                  ),
-                  siteId
-                )
-              )
-            }
+            className="ml-auto text-main"
+            type="text"
+            onClick={() => history.push(
+              withSiteId(
+                fflag(
+                  featureFlagsStore.currentFflag?.featureFlagId.toString(),
+                ),
+                siteId,
+              ),
+            )}
           >
             Edit
           </Button>
           <ItemMenu bold items={menuItems} />
         </div>
-        <div className={'border-b'} style={{ color: 'rgba(0,0,0, 0.6)' }}>
-          {current.description ||
-            'There is no description for this feature flag.'}
+        <div className="border-b" style={{ color: 'rgba(0,0,0, 0.6)' }}>
+          {current.description
+            || 'There is no description for this feature flag.'}
         </div>
 
-        <div className={'mt-4'}>
-          <label className={'font-semibold'}>Status</label>
-          <div className={'flex items-center gap-2'}>
+        <div className="mt-4">
+          <label className="font-semibold">Status</label>
+          <div className="flex items-center gap-2">
             <Switch checked={current.isActive} onChange={toggleActivity} />
             <div>{current.isActive ? 'Enabled' : 'Disabled'}</div>
           </div>
         </div>
-        <div className={'mt-4'}>
-          <label className={'font-semibold'}>Persistence</label>
+        <div className="mt-4">
+          <label className="font-semibold">Persistence</label>
           <div>
             {current.isPersist
               ? 'This flag maintains its state through successive authentication events.'
@@ -100,7 +98,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
         {!current.isSingleOption ? <Multivariant readonly /> : null}
         {current.conditions.length > 0 ? (
           <div className="mt-6 p-4 rounded bg-gray-lightest">
-            <label className={'font-semibold'}>Rollout Conditions</label>
+            <label className="font-semibold">Rollout Conditions</label>
             {current.conditions.map((condition, index) => (
               <React.Fragment key={index}>
                 <RolloutCondition
@@ -110,7 +108,7 @@ function FlagView({ siteId, fflagId }: { siteId: string; fflagId: string }) {
                   conditions={condition}
                   removeCondition={current.removeCondition}
                 />
-                <div className={'mt-2'} />
+                <div className="mt-2" />
               </React.Fragment>
             ))}
           </div>

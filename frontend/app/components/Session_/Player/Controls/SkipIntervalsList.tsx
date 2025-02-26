@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import stl from 'Components/Session_/Player/Controls/timeline.module.css';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { getTimelinePosition } from './getTimelinePosition';
 import { observer } from 'mobx-react-lite';
+import { getTimelinePosition } from './getTimelinePosition';
 
 function SkipIntervalsList({ scale }: { scale: number }) {
   const { store } = useContext(PlayerContext);

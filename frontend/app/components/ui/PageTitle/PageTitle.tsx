@@ -10,18 +10,20 @@ interface Props {
     onDoubleClick?: () => void;
     onClick?: () => void;
 }
-function PageTitle({ title, actionButton = null, subTitle = '', className = '', subTitleClass, onDoubleClick, onClick }: Props) {
-    return (
-        <div>
-            <div className='flex items-center'>
-                <h1 className={cn("text-2xl capitalize-first mt-.5")} onDoubleClick={onDoubleClick} onClick={onClick}>
-                    {title}
-                </h1>
-                { actionButton && <div className="ml-2">{actionButton}</div> }
-            </div>
-            {subTitle && <h2 className={cn("my-4 font-normal color-gray-dark", subTitleClass)}>{subTitle}</h2>}
-        </div>
-    );
+function PageTitle({
+  title, actionButton = null, subTitle = '', className = '', subTitleClass, onDoubleClick, onClick,
+}: Props) {
+  return (
+    <div>
+      <div className="flex items-center">
+        <h1 className={cn('text-2xl capitalize-first mt-.5')} onDoubleClick={onDoubleClick} onClick={onClick}>
+          {title}
+        </h1>
+        { actionButton && <div className="ml-2">{actionButton}</div> }
+      </div>
+      {subTitle && <h2 className={cn('my-4 font-normal color-gray-dark', subTitleClass)}>{subTitle}</h2>}
+    </div>
+  );
 }
 
 export default PageTitle;

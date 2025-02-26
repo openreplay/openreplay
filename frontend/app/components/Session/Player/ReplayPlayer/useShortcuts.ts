@@ -29,7 +29,7 @@ function useShortcuts({
 
   const copySessionUrl = (withTs?: boolean) => {
     if (withTs) {
-      const time = store.get().time;
+      const { time } = store.get();
       const sessUrl = `${window.location.href}?jumpto=${time}`;
       copy(sessUrl);
     } else {
@@ -48,67 +48,66 @@ function useShortcuts({
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
       if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLInputElement
+        || e.target instanceof HTMLTextAreaElement
       ) {
         return false;
-      } else {
-        if (e.shiftKey) {
-          e.preventDefault();
-          player.toggleInspectorMode(false);
-          switch (e.key) {
-            case 'F':
-              return fullScreenOn();
-            case 'X':
-              return disableDevtools
-                ? null
-                : toggleBottomBlock(blocks.overview);
-            case 'P':
-              return disableDevtools
-                ? null
-                : toggleBottomBlock(blocks.performance);
-            case 'N':
-              return disableDevtools ? null : toggleBottomBlock(blocks.network);
-            case 'C':
-              return disableDevtools ? null : toggleBottomBlock(blocks.console);
-            case 'R':
-              return disableDevtools ? null : toggleBottomBlock(blocks.storage);
-            case 'E':
-              return disableDevtools
-                ? null
-                : toggleBottomBlock(blocks.stackEvents);
-            case '>':
-              return openNextSession();
-            case '<':
-              return openPrevSession();
-            case 'U':
-              return copySessionUrl(true);
-            case 'A':
-              player.pause();
-              return setActiveTab('EVENTS');
-            default:
-              break;
-          }
+      }
+      if (e.shiftKey) {
+        e.preventDefault();
+        player.toggleInspectorMode(false);
+        switch (e.key) {
+          case 'F':
+            return fullScreenOn();
+          case 'X':
+            return disableDevtools
+              ? null
+              : toggleBottomBlock(blocks.overview);
+          case 'P':
+            return disableDevtools
+              ? null
+              : toggleBottomBlock(blocks.performance);
+          case 'N':
+            return disableDevtools ? null : toggleBottomBlock(blocks.network);
+          case 'C':
+            return disableDevtools ? null : toggleBottomBlock(blocks.console);
+          case 'R':
+            return disableDevtools ? null : toggleBottomBlock(blocks.storage);
+          case 'E':
+            return disableDevtools
+              ? null
+              : toggleBottomBlock(blocks.stackEvents);
+          case '>':
+            return openNextSession();
+          case '<':
+            return openPrevSession();
+          case 'U':
+            return copySessionUrl(true);
+          case 'A':
+            player.pause();
+            return setActiveTab('EVENTS');
+          default:
+            break;
         }
-        if (e.key === 'Esc' || e.key === 'Escape') {
-          fullScreenOff();
-        }
-        if (e.key === ' ') {
-          (document.activeElement as HTMLInputElement | null)?.blur?.();
-          player.togglePlay();
-        }
-        if (e.key === 'ArrowRight') {
-          forthTenSeconds();
-        }
-        if (e.key === 'ArrowLeft') {
-          backTenSeconds();
-        }
-        if (e.key === 'ArrowDown') {
-          player.speedDown();
-        }
-        if (e.key === 'ArrowUp') {
-          player.speedUp();
-        }
+      }
+      if (e.key === 'Esc' || e.key === 'Escape') {
+        fullScreenOff();
+      }
+      if (e.key === ' ') {
+        (document.activeElement as HTMLInputElement | null)?.blur?.();
+        player.togglePlay();
+      }
+      if (e.key === 'ArrowRight') {
+        forthTenSeconds();
+      }
+      if (e.key === 'ArrowLeft') {
+        backTenSeconds();
+      }
+      if (e.key === 'ArrowDown') {
+        player.speedDown();
+      }
+      if (e.key === 'ArrowUp') {
+        player.speedUp();
       }
     };
 

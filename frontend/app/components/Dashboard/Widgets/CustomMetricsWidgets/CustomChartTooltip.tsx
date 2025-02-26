@@ -20,7 +20,9 @@ interface Props {
 }
 
 function CustomTooltip(props: Props) {
-  const { active, payload, label, hoveredSeries = null } = props;
+  const {
+    active, payload, label, hoveredSeries = null,
+  } = props;
 
   // Return null if tooltip is not active or there is no valid payload
   if (!active || !payload?.length || !hoveredSeries) return null;
@@ -28,9 +30,8 @@ function CustomTooltip(props: Props) {
   // Find the current and comparison payloads
   const currentPayload = payload.find((p) => p.name === hoveredSeries);
   const comparisonPayload = payload.find(
-    (p) =>
-      p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)` ||
-      p.name === `${hoveredSeries} (Comparison)`
+    (p) => p.name === `${hoveredSeries.replace(' (Comparison)', '')} (Comparison)`
+      || p.name === `${hoveredSeries} (Comparison)`,
   );
 
   if (!currentPayload) return null;
@@ -43,11 +44,9 @@ function CustomTooltip(props: Props) {
     },
   ];
 
-  const isHigher = (item: { value: number; prevValue: number }) =>
-    item.prevValue !== null && item.prevValue < item.value;
+  const isHigher = (item: { value: number; prevValue: number }) => item.prevValue !== null && item.prevValue < item.value;
 
-  const getPercentDelta = (val: number, prevVal: number) =>
-    (((val - prevVal) / prevVal) * 100).toFixed(2);
+  const getPercentDelta = (val: number, prevVal: number) => (((val - prevVal) / prevVal) * 100).toFixed(2);
 
   return (
     <div className="flex flex-col gap-1 bg-white shadow border rounded p-2 z-50">
@@ -67,10 +66,12 @@ function CustomTooltip(props: Props) {
             className="flex flex-col px-2 ml-2"
           >
             <div className="text-neutral-600 text-sm">
-              {label},{' '}
+              {label}
+              ,
+              {' '}
               {p.payload?.timestamp
                 ? formatTimeOrDate(p.payload.timestamp)
-                : <div className='hidden'>'Timestamp is not Applicable'</div>}
+                : <div className="hidden">'Timestamp is not Applicable'</div>}
             </div>
             <div className="flex items-center gap-1">
               <div className="font-medium">{p.value}</div>
@@ -104,8 +105,8 @@ export function CompareTag({
         isHigher === null
           ? 'bg-neutral-200 text-neutral-600 text-xs'
           : isHigher
-          ? 'bg-green2/10 text-xs'
-          : 'bg-red2/10 text-xs'
+            ? 'bg-green2/10 text-xs'
+            : 'bg-red2/10 text-xs',
       )}
     >
       {isHigher === null ? (
@@ -114,7 +115,11 @@ export function CompareTag({
         <>
           {!isHigher ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
           <div>{absDelta}</div>
-          <div>({delta}%)</div>
+          <div>
+            (
+            {delta}
+            %)
+          </div>
         </>
       )}
     </div>

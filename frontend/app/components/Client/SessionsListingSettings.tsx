@@ -6,7 +6,7 @@ import DefaultPlaying from 'Shared/SessionSettings/components/DefaultPlaying';
 import DefaultTimezone from 'Shared/SessionSettings/components/DefaultTimezone';
 import ListingVisibility from 'Shared/SessionSettings/components/ListingVisibility';
 import MouseTrailSettings from 'Shared/SessionSettings/components/MouseTrailSettings';
-import DebugLog from "./DebugLog";
+import DebugLog from './DebugLog';
 
 function SessionsListingSettings() {
   return (
@@ -30,7 +30,7 @@ function SessionsListingSettings() {
         </div>
         <Divider />
 
-        <div className={'flex flex-col gap-2'}>
+        <div className="flex flex-col gap-2">
           <MouseTrailSettings />
           <DebugLog />
         </div>
@@ -40,5 +40,5 @@ function SessionsListingSettings() {
 }
 
 export default withPageTitle('Sessions Listings - OpenReplay Preferences')(
-  SessionsListingSettings
+  SessionsListingSettings,
 );

@@ -1,17 +1,17 @@
 import React from 'react';
+import cn from 'classnames';
 import stl from './issuesModal.module.css';
 import IssueForm from './IssueForm';
-import cn from 'classnames';
 
 interface Props {
   sessionId: string;
   closeHandler: () => void;
 }
 
-const IssuesModal = ({
-                       sessionId,
-                       closeHandler
-                     }: Props) => {
+function IssuesModal({
+  sessionId,
+  closeHandler,
+}: Props) {
   return (
     <div className={cn(stl.wrapper, 'h-screen')}>
       <h3 className="text-xl font-semibold">
@@ -20,6 +20,6 @@ const IssuesModal = ({
       <IssueForm sessionId={sessionId} closeHandler={closeHandler} errors={[]} />
     </div>
   );
-};
+}
 
 export default IssuesModal;

@@ -1,11 +1,11 @@
-import ListWalker from "Player/common/ListWalker";
-import type { IosPerformanceEvent } from "Player/web/messages";
+import ListWalker from 'Player/common/ListWalker';
+import type { IosPerformanceEvent } from 'Player/web/messages';
 
 const performanceEvTypes = {
   MemoryUsage: 'memoryUsage',
   MainThreadCPU: 'mainThreadCPU',
   Background: 'background',
-}
+};
 
 export type PerformanceChartPoint = {
   time: number,
@@ -16,12 +16,14 @@ export type PerformanceChartPoint = {
 
 export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanceEvent> {
   private chart: Array<PerformanceChartPoint> = [];
+
   private isInBg = false;
 
   lastData: { cpu: number | null, memory: number | null } = { cpu: null, memory: null };
+
   append(msg: IosPerformanceEvent): void {
     if (!Object.values(performanceEvTypes).includes(msg.name)) {
-      return console.log('Unsupported performance event type', msg.name)
+      return console.log('Unsupported performance event type', msg.name);
     }
 
     let cpu: number | null = null;
@@ -37,7 +39,7 @@ export default class IOSPerformanceTrackManager extends ListWalker<IosPerformanc
         cpu: null,
         memory: null,
         isBackground,
-      })
+      });
       return super.append(msg);
     }
     if (msg.name === performanceEvTypes.MemoryUsage) {

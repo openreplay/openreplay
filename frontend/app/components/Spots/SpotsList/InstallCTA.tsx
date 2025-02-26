@@ -8,11 +8,11 @@ function InstallCTA() {
   const [extExist, setExtExist] = React.useState<boolean>(false);
   const isChromium =
     // @ts-ignore
-    window.chrome ||
+    window.chrome
     // @ts-ignore
-    (!!navigator.userAgentData &&
-     // @ts-ignore
-      navigator.userAgentData.brands.some((data) => data.brand == 'Chromium'));
+    || (!!navigator.userAgentData
+    // @ts-ignore
+      && navigator.userAgentData.brands.some((data) => data.brand == 'Chromium'));
 
   React.useEffect(() => {
     let int: any;
@@ -57,21 +57,21 @@ function InstallCTA() {
         <Alert
           message="It looks like you haven’t installed the Spot extension yet."
           type="warning"
-          action={
+          action={(
             <Button
               type="primary"
               icon={<ChromeOutlined />}
               className="text-lg"
-              onClick={() =>
-                window.open(
-                  'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1',
-                  '_blank'
-                )
-              }
+              onClick={() => window.open(
+                'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1',
+                '_blank',
+              )}
             >
-              Get Chrome Extension <ArrowUpRight />
+              Get Chrome Extension
+              {' '}
+              <ArrowUpRight />
             </Button>
-          }
+          )}
           className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"
         />
       )}

@@ -2,11 +2,11 @@ import React from 'react';
 // @ts-ignore
 import slide from 'App/svg/cheers.svg';
 import { Loader } from 'UI';
-import { Button } from 'antd'
-import Footer from './Footer';
+import { Button } from 'antd';
 import { getHighest } from 'App/constants/zindex';
 import Category from 'Components/Header/HealthStatus/ServiceCategory';
 import SubserviceHealth from 'Components/Header/HealthStatus/SubserviceHealth/SubserviceHealth';
+import Footer from './Footer';
 import { IServiceStats } from '../HealthStatus';
 
 function HealthModal({
@@ -32,8 +32,8 @@ function HealthModal({
       if (healthResponse?.healthMap) {
         setSelectedService(
           Object.keys(healthResponse.healthMap).filter(
-            (s) => !healthResponse.healthMap[s].healthOk
-          )[0]
+            (s) => !healthResponse.healthMap[s].healthOk,
+          )[0],
         );
       }
     }
@@ -68,22 +68,18 @@ function HealthModal({
           transform: 'translate(-50%, -50%)',
         }}
         onClick={(e) => e.stopPropagation()}
-        className={
-          'flex flex-col bg-white rounded border border-figmaColors-divider'
-        }
+        className="flex flex-col bg-white rounded border border-figmaColors-divider"
       >
         <div
-          className={
-            'flex w-full justify-between items-center p-4 border-b border-figmaColors-divider'
-          }
+          className="flex w-full justify-between items-center p-4 border-b border-figmaColors-divider"
         >
-          <div className={'text-xl font-semibold'}>Installation Status</div>
+          <div className="text-xl font-semibold">Installation Status</div>
           <Button
             disabled={isLoading}
             onClick={getHealth}
-            icon={'arrow-repeat'}
-            type={'text'}
-            className={'text-main'}
+            icon="arrow-repeat"
+            type="text"
+            className="text-main"
           >
             Recheck
           </Button>
@@ -92,28 +88,26 @@ function HealthModal({
         <Loader loading={isLoading}>
           {healthResponse ? (
             <>
-              <div className={'flex w-full'}>
-                <div className={'flex flex-col h-full'} style={{ flex: 1 }}>
+              <div className="flex w-full">
+                <div className="flex flex-col h-full" style={{ flex: 1 }}>
                   {isLoading
                     ? null
                     : Object.keys(healthResponse.healthMap).map((service) => (
-                        <React.Fragment key={service}>
-                          <Category
-                            onClick={() => setSelectedService(service)}
-                            healthOk={
+                      <React.Fragment key={service}>
+                        <Category
+                          onClick={() => setSelectedService(service)}
+                          healthOk={
                               healthResponse.healthMap[service].healthOk
                             }
-                            name={healthResponse.healthMap[service].name}
-                            isSelectable
-                            isSelected={selectedService === service}
-                          />
-                        </React.Fragment>
-                      ))}
+                          name={healthResponse.healthMap[service].name}
+                          isSelectable
+                          isSelected={selectedService === service}
+                        />
+                      </React.Fragment>
+                    ))}
                 </div>
                 <div
-                  className={
-                    'bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative'
-                  }
+                  className="bg-gray-lightest border-l w-fit border-figmaColors-divider overflow-y-scroll relative"
                   style={{ flex: 2, height: 420 }}
                 >
                   {isLoading ? null : selectedService ? (
@@ -127,15 +121,13 @@ function HealthModal({
               </div>
               {isSetup ? (
                 <div
-                  className={
-                    'p-4 mt-auto w-full border-t border-figmaColors-divider'
-                  }
+                  className="p-4 mt-auto w-full border-t border-figmaColors-divider"
                 >
                   <Button
                     disabled={!healthResponse?.overallHealth}
                     loading={isLoading}
-                    type={'primary'}
-                    className={'ml-auto'}
+                    type="primary"
+                    className="ml-auto"
                     onClick={() => setPassed?.()}
                   >
                     Create Account
@@ -144,7 +136,7 @@ function HealthModal({
               ) : null}
             </>
           ) : (
-            <div className={'w-full h-full flex items-center justify-center'}>
+            <div className="w-full h-full flex items-center justify-center">
               <div>Error while fetching data...</div>
             </div>
           )}
@@ -158,8 +150,8 @@ function HealthModal({
 function ServiceStatus({ service }: { service: Record<string, any> }) {
   const { subservices } = service;
   return (
-    <div className={'p-4'}>
-      <div className={'border rounded border-light-gray'}>
+    <div className="p-4">
+      <div className="border rounded border-light-gray">
         {Object.keys(subservices).map((subservice: string) => (
           <React.Fragment key={subservice}>
             <SubserviceHealth

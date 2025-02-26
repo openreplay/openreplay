@@ -3,12 +3,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { NoContent, Loader, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
-import GridView from './GridView';
-import ListView from './ListView';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import AddCardSection from '../AddCardSection/AddCardSection';
 import { Popover, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import GridView from './GridView';
+import ListView from './ListView';
+import AddCardSection from '../AddCardSection/AddCardSection';
 
 function MetricsList({
   siteId,
@@ -27,16 +27,15 @@ function MetricsList({
   const dashboard = dashboardStore.selectedDashboard;
   const existingCardIds = useMemo(
     () => dashboard?.widgets?.map((i) => parseInt(i.metricId)),
-    [dashboard]
+    [dashboard],
   );
   const cards = useMemo(
-    () =>
-      !!onSelectionChange
-        ? metricStore.filteredCards.filter(
-            (i) => !existingCardIds?.includes(parseInt(i.metricId))
-          )
-        : metricStore.filteredCards,
-    [metricStore.filteredCards, existingCardIds, onSelectionChange]
+    () => (onSelectionChange
+      ? metricStore.filteredCards.filter(
+        (i) => !existingCardIds?.includes(parseInt(i.metricId)),
+      )
+      : metricStore.filteredCards),
+    [metricStore.filteredCards, existingCardIds, onSelectionChange],
   );
   const loading = metricStore.isLoading;
 
@@ -61,7 +60,7 @@ function MetricsList({
     }
   };
 
-  const length = cards.length;
+  const { length } = cards;
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
@@ -72,31 +71,28 @@ function MetricsList({
     metricStore.updateKey('showMine', !showOwn);
   };
 
-  
-  const isFiltered =
-  metricsSearch !== '' || (metricStore.filter.type && metricStore.filter.type !== 'all');    
+  const isFiltered = metricsSearch !== '' || (metricStore.filter.type && metricStore.filter.type !== 'all');
 
   const searchImageDimensions = { width: 60, height: 'auto' };
   const defaultImageDimensions = { width: 600, height: 'auto' };
   const emptyImage = isFiltered ? ICONS.NO_RESULTS : ICONS.NO_CARDS;
   const imageDimensions = isFiltered ? searchImageDimensions : defaultImageDimensions;
 
-
   return (
     <Loader loading={loading}>
       <NoContent
-  show={length === 0}
-  title={
-    <div className="flex flex-col items-center justify-center">
-      <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
-      <div className="text-center mt-3 text-lg font-medium">
-        {isFiltered
-          ? 'No matching results'
-          : 'Unlock insights with data cards'}
-      </div>
-    </div>
-      }
-      subtext={
+        show={length === 0}
+        title={(
+          <div className="flex flex-col items-center justify-center">
+            <AnimatedSVG name={emptyImage} size={imageDimensions.width} />
+            <div className="text-center mt-3 text-lg font-medium">
+              {isFiltered
+                ? 'No matching results'
+                : 'Unlock insights with data cards'}
+            </div>
+          </div>
+  )}
+        subtext={
         isFiltered ? (
           ''
         ) : (
@@ -117,7 +113,7 @@ function MetricsList({
           </div>
         )
       }
-    >
+      >
         {listView ? (
           <ListView
             disableSelection={!onSelectionChange}
@@ -130,13 +126,11 @@ function MetricsList({
             allSelected={cards.length === selectedMetrics.length}
             showOwn={showOwn}
             toggleOwn={toggleOwn}
-            toggleAll={({ target: { checked } }) =>
-              setSelectedMetrics(
-                checked
-                  ? cards.map((i: any) => i.metricId).slice(0, 30 - (existingCardIds?.length || 0))
-                  : []
-              )
-            }
+            toggleAll={({ target: { checked } }) => setSelectedMetrics(
+              checked
+                ? cards.map((i: any) => i.metricId).slice(0, 30 - (existingCardIds?.length || 0))
+                : [],
+            )}
           />
         ) : (
           <>
@@ -148,11 +142,17 @@ function MetricsList({
             />
             <div className="w-full flex items-center justify-between py-4 px-6 border-t">
               <div>
-                Showing{' '}
+                Showing
+                {' '}
                 <span className="font-medium">
                   {Math.min(cards.length, metricStore.pageSize)}
-                </span>{' '}
-                out of <span className="font-medium">{cards.length}</span> cards
+                </span>
+                {' '}
+                out of
+                {' '}
+                <span className="font-medium">{cards.length}</span>
+                {' '}
+                cards
               </div>
               <Pagination
                 page={metricStore.page}

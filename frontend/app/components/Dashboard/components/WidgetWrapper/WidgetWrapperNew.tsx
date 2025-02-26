@@ -6,12 +6,12 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
-import TemplateOverlay from './TemplateOverlay';
-import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
 import { TIMESERIES } from 'App/constants/card';
 import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
 import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
+import stl from './widgetWrapper.module.css';
+import TemplateOverlay from './TemplateOverlay';
 
 const WidgetChart = lazy(() => import('Components/Dashboard/components/WidgetChart'));
 
@@ -48,9 +48,9 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     grid = '',
     isGridView = false,
     showMenu = false,
-    isSaved = false
+    isSaved = false,
   } = props;
-  const widget: any = props.widget;
+  const { widget } = props;
   const isTimeSeries = widget.metricType === TIMESERIES;
   const isPredefined = widget.metricType === 'predefined';
   const dashboard = dashboardStore.selectedDashboard;
@@ -59,8 +59,8 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     type: 'item',
     item: { index, grid },
     collect: (monitor) => ({
-      isDragging: monitor.isDragging()
-    })
+      isDragging: monitor.isDragging(),
+    }),
   });
 
   const [{ isOver, canDrop }, dropRef] = useDrop({
@@ -74,29 +74,28 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
     },
     collect: (monitor: any) => ({
       isOver: monitor.isOver(),
-      canDrop: monitor.canDrop()
-    })
+      canDrop: monitor.canDrop(),
+    }),
   });
 
   const onChartClick = () => {
     // if (!isWidget || isPredefined) return;
     props.history.push(
-      withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId)
+      withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId), siteId),
     );
   };
 
   const ref: any = useRef(null);
   const dragDropRef: any = dragRef(dropRef(ref));
-  const addOverlay =
-    isTemplate ||
-    (!isPredefined &&
-      isWidget &&
-      widget.metricOf !== FilterKey.ERRORS &&
-      widget.metricOf !== FilterKey.SESSIONS);
+  const addOverlay = isTemplate
+    || (!isPredefined
+      && isWidget
+      && widget.metricOf !== FilterKey.ERRORS
+      && widget.metricOf !== FilterKey.SESSIONS);
 
   const beforeAlertInit = () => {
-    metricStore.init(widget)
-  }
+    metricStore.init(widget);
+  };
   return (
     <Card
       className={cn(
@@ -107,10 +106,10 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
         userSelect: 'none',
         opacity: isDragging ? 0.5 : 1,
         borderColor: (canDrop && isOver)
-                      ? '#454545'
-                      : isPreview ? 'transparent' : '#EEEEEE',
-                      borderStyle: (canDrop && isOver) ? 'dashed' : 'solid',
-        cursor: isDragging ? 'grabbing' : 'grab'
+          ? '#454545'
+          : isPreview ? 'transparent' : '#EEEEEE',
+        borderStyle: (canDrop && isOver) ? 'dashed' : 'solid',
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => null}
@@ -125,7 +124,7 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
           {showMenu && (
             <CardMenu card={widget} key="card-menu" />
           )}
-        </div>
+        </div>,
       ]}
       styles={{
         header: {
@@ -133,33 +132,34 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
           borderBottom: 'none',
           minHeight: 44,
           fontWeight: 500,
-          fontSize: 14
+          fontSize: 14,
         },
         body: {
-          padding: 0
-        }
+          padding: 0,
+        },
       }}
     >
       {!isTemplate && isWidget && isPredefined && (
         <Tooltip title="Cannot drill down system provided metrics">
           <div
-            className={cn(stl.drillDownMessage, 'disabled text-gray text-sm invisible group-hover:visible')}>
-            {'Cannot drill down system provided metrics'}
+            className={cn(stl.drillDownMessage, 'disabled text-gray text-sm invisible group-hover:visible')}
+          >
+            Cannot drill down system provided metrics
           </div>
         </Tooltip>
       )}
 
       {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
 
-        <div className="px-4" onClick={onChartClick}>
-          <WidgetChart
-            isPreview={isPreview}
-            metric={widget}
-            isTemplate={isTemplate}
-            isWidget={isWidget}
-            isSaved={isSaved}
-          />
-        </div>
+      <div className="px-4" onClick={onChartClick}>
+        <WidgetChart
+          isPreview={isPreview}
+          metric={widget}
+          isTemplate={isTemplate}
+          isWidget={isWidget}
+          isSaved={isSaved}
+        />
+      </div>
     </Card>
   );
 }

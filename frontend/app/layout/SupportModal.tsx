@@ -1,5 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Drawer, Space, Typography } from 'antd';
+import {
+  Button, Drawer, Space, Typography,
+} from 'antd';
 import React from 'react';
 
 import { Icon } from 'UI';
@@ -22,7 +24,7 @@ function SupportModal(props: Props) {
       width={400}
       onClose={onClose}
       closable={false}
-      className='!bg-stone-50'
+      className="!bg-stone-50"
     >
       <div className="flex flex-col items-center gap-2">
         <div className="p-3 bg-white flex rounded-lg shadow-sm hover:bg-indigo-50">
@@ -107,7 +109,7 @@ function SupportModal(props: Props) {
               onClick={() => {
                 window.open(
                   'https://github.com/openreplay/openreplay/issues',
-                  '_blank'
+                  '_blank',
                 );
               }}
             >

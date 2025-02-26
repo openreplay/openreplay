@@ -1,19 +1,18 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { useStore } from "App/mstore";
-import { observer } from 'mobx-react-lite'
-import { getTimelinePosition } from './getTimelinePosition'
-import {Tooltip} from 'antd';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
+import { Tooltip } from 'antd';
+import { getTimelinePosition } from './getTimelinePosition';
 
 function NotesList({ scale }: { scale: number }) {
   const { notesStore } = useStore();
   const notes = notesStore.sessionNotes;
 
-  const visibleNotes = React.useMemo(() => {
-    return notes.filter(note => note.startAt >= 0 && note.endAt > note.startAt); // Ensure valid highlights
-  }, [notes.length]);
-
-  
+  const visibleNotes = React.useMemo(
+    () => notes.filter((note) => note.startAt >= 0 && note.endAt > note.startAt), // Ensure valid highlights
+    [notes.length],
+  );
 
   return (
     <>
@@ -26,13 +25,13 @@ function NotesList({ scale }: { scale: number }) {
         return (
           <React.Fragment key={note.noteId}>
             <div
-              className="saved-highlight" 
+              className="saved-highlight"
               style={{
                 position: 'absolute',
                 left: `${startPos}%`,
                 width: `${highlightWidth}%`,
                 height: '10px',
-                background: 'rgba(252, 193, 0, 0.4)', 
+                background: 'rgba(252, 193, 0, 0.4)',
                 zIndex: 2,
                 pointerEvents: 'none',
               }}

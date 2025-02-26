@@ -1,18 +1,18 @@
 import React from 'react';
 import { Alert, Space, Button } from 'antd';
-import { observer } from 'mobx-react-lite'
-import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
-import * as routes from '../../../routes';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useHistory } from 'react-router';
+import * as routes from '../../../routes';
 
-const withSiteId = routes.withSiteId;
+const { withSiteId } = routes;
 
-const NoSessionsMessage = () => {
+function NoSessionsMessage() {
   const { projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const history = useHistory();
   const activeSite = projectsStore.active;
   const showNoSessions = !!activeSite && !activeSite.recorded;
@@ -28,7 +28,7 @@ const NoSessionsMessage = () => {
               message="Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback."
               type="warning"
               showIcon
-              action={
+              action={(
                 <Space>
                   <Button
                     type="link"
@@ -46,13 +46,13 @@ const NoSessionsMessage = () => {
                     Complete Project Setup
                   </Button>
                 </Space>
-              }
+              )}
             />
           </Space>
         </div>
       )}
     </>
   );
-};
+}
 
 export default withRouter(observer(NoSessionsMessage));

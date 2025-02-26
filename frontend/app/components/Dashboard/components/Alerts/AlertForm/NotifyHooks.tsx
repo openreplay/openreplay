@@ -1,7 +1,7 @@
 import React from 'react';
 import { Checkbox } from 'UI';
+import { observer } from 'mobx-react-lite';
 import DropdownChips from '../DropdownChips';
-import { observer } from 'mobx-react-lite'
 
 interface INotifyHooks {
   instance: Alert;

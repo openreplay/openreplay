@@ -2,7 +2,9 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
 import { CircularLoader, Loader } from 'UI';
-import { Form, Input, Button, Select } from 'antd';
+import {
+  Form, Input, Button, Select,
+} from 'antd';
 import { toast } from 'react-toastify';
 
 interface Props {
@@ -25,14 +27,14 @@ const IssueForm: React.FC<Props> = observer(({ closeHandler, sessionId, errors }
       init,
       editInstance: edit,
       fetchMeta,
-      fetchList
-    }
+      fetchList,
+    },
   } = useStore();
 
   useEffect(() => {
     init({
       projectId: projects[0]?.id || '',
-      issueType: issueTypes[0]?.id || ''
+      issueType: issueTypes[0]?.id || '',
     });
   }, []);
 
@@ -59,7 +61,7 @@ const IssueForm: React.FC<Props> = observer(({ closeHandler, sessionId, errors }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     edit({ [name]: value });
@@ -70,27 +72,27 @@ const IssueForm: React.FC<Props> = observer(({ closeHandler, sessionId, errors }
   };
 
   const projectOptions = projects.map(
-    ({ name, id }: { name: string; id: string }) => ({ label: name, value: id })
+    ({ name, id }: { name: string; id: string }) => ({ label: name, value: id }),
   );
   const userOptions = users.map(
-    ({ name, id }: { name: string; id: string }) => ({ label: name, value: id })
+    ({ name, id }: { name: string; id: string }) => ({ label: name, value: id }),
   );
   const issueTypeOptions = issueTypes.map((opt: any) => ({
     label: opt.name,
     value: opt.id,
-    iconUrl: opt.iconUrl
+    iconUrl: opt.iconUrl,
   }));
 
   return (
     <Loader loading={projectsLoading} size={40}>
       <Form onFinish={onFinish} layout="vertical" className="text-left">
         <Form.Item
-          label={
+          label={(
             <>
               <span className="mr-2">Project</span>
               <CircularLoader loading={metaLoading} />
             </>
-          }
+          )}
           className="mb-15-imp"
         >
           <Select
@@ -116,12 +118,12 @@ const IssueForm: React.FC<Props> = observer(({ closeHandler, sessionId, errors }
               <Select.Option
                 key={option.value}
                 value={option.value}
-                label={
+                label={(
                   <div className="flex items-center">
                     {option.iconUrl}
                     <span>{option.label}</span>
                   </div>
-                }
+                )}
               >
                 {option.label}
               </Select.Option>

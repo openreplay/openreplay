@@ -6,12 +6,12 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
-import TemplateOverlay from './TemplateOverlay';
 import { FilterKey } from 'App/types/filter/filterType';
 import { TIMESERIES } from 'App/constants/card';
+import TemplateOverlay from './TemplateOverlay';
 
 const WidgetChart = lazy(
-  () => import('Components/Dashboard/components/WidgetChart')
+  () => import('Components/Dashboard/components/WidgetChart'),
 );
 
 interface Props {
@@ -44,7 +44,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     grid = '',
     isGridView = false,
   } = props;
-  const widget: any = props.widget;
+  const { widget } = props;
   const isTimeSeries = widget.metricType === TIMESERIES;
   const isPredefined = widget.metricType === 'predefined';
   const dashboard = dashboardStore.selectedDashboard;
@@ -76,7 +76,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   const onDelete = async () => {
     dashboardStore.deleteDashboardWidget(
       dashboard?.dashboardId!,
-      widget.widgetId
+      widget.widgetId,
     );
   };
 
@@ -86,28 +86,27 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     props.history.push(
       withSiteId(
         dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),
-        siteId
-      )
+        siteId,
+      ),
     );
   };
 
   const ref: any = useRef(null);
   const dragDropRef: any = isPreview ? null : dragRef(dropRef(ref));
 
-  const addOverlay =
-    isTemplate ||
-    (!isPredefined &&
-      isSaved &&
-      widget.metricOf !== FilterKey.ERRORS &&
-      widget.metricOf !== FilterKey.SESSIONS);
+  const addOverlay = isTemplate
+    || (!isPredefined
+      && isSaved
+      && widget.metricOf !== FilterKey.ERRORS
+      && widget.metricOf !== FilterKey.SESSIONS);
 
   return (
     <div
       className={cn(
         'relative bg-white border group rounded-lg',
-        'col-span-' + widget.config.col,
+        `col-span-${widget.config.col}`,
         { 'hover:shadow-border-gray': !isTemplate && isSaved },
-        { 'hover:shadow-border-main': isTemplate }
+        { 'hover:shadow-border-main': isTemplate },
       )}
       style={{
         userSelect: 'none',
@@ -116,8 +115,8 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
           (canDrop && isOver) || active
             ? '#394EFF'
             : isPreview
-            ? 'transparent'
-            : '#EEEEEE',
+              ? 'transparent'
+              : '#EEEEEE',
       }}
       ref={dragDropRef}
       onClick={props.onClick ? props.onClick : () => {}}

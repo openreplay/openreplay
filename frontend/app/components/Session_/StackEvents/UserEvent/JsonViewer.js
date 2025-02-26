@@ -13,7 +13,10 @@ export default class JsonViewer extends React.PureComponent {
       <div>
         <div className="flex items-center">
           <Icon name={icon} size="24" />
-          <h4 className="my-5 mx-2 font-semibold text-xl"> {title}</h4>
+          <h4 className="my-5 mx-2 font-semibold text-xl">
+            {' '}
+            {title}
+          </h4>
         </div>
         {isObjectData && <JSONTree src={data} collapsed={false} />}
         {!isObjectData && Array.isArray(data) && (

@@ -23,7 +23,7 @@ import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { useHistory } from 'react-router';
 import { EllipsisVertical } from 'lucide-react';
-import cn from 'classnames'
+import cn from 'classnames';
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -38,14 +38,14 @@ function MetricTypeIcon({ type }: any) {
   return (
     <Tooltip title={<div className="capitalize">{TYPE_NAMES[type]}</div>}>
       <Avatar
-        src={
+        src={(
           <Icon
             name={TYPE_ICONS[type]}
             size="16"
             color="tealx"
             strokeColor="tealx"
           />
-        }
+        )}
         size="default"
         className="bg-tealx-lightest text-tealx mr-2 cursor-default avatar-card-list-item"
       />
@@ -140,22 +140,21 @@ const MetricListItem: React.FC<Props> = ({
       let hours = date.getHours();
       const minutes = date.getMinutes().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
+      hours %= 12;
+      hours = hours || 12; // the hour '0' should be '12'
       return `${hours}:${minutes} ${ampm}`;
     };
 
     if (diffDays <= 1) {
       return `Today at ${formatTime(date)}`;
-    } else if (diffDays <= 2) {
+    } if (diffDays <= 2) {
       return `Yesterday at ${formatTime(date)}`;
-    } else if (diffDays <= 3) {
+    } if (diffDays <= 3) {
       return `${diffDays} days ago at ${formatTime(date)}`;
-    } else {
-      return `${date.getDate()}/${
-        date.getMonth() + 1
-      }/${date.getFullYear()} at ${formatTime(date)}`;
     }
+    return `${date.getDate()}/${
+      date.getMonth() + 1
+    }/${date.getFullYear()} at ${formatTime(date)}`;
   };
 
   const menuItems = [
@@ -211,7 +210,7 @@ const MetricListItem: React.FC<Props> = ({
               trigger={['click']}
             >
               <Button
-                id={'ignore-prop'}
+                id="ignore-prop"
                 icon={<EllipsisVertical size={16} />}
                 className="btn-cards-list-item-more-options"
                 type="text"

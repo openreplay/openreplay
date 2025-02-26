@@ -1,13 +1,13 @@
 import { useModal } from 'App/components/Modal';
 import React from 'react';
-import MetricsLibraryModal from '../MetricsLibraryModal';
-import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
 import { TYPES, LIBRARY, INSIGHTS } from 'App/constants/card';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
+import MetricsLibraryModal from '../MetricsLibraryModal';
 
 interface Props extends RouteComponentProps {
   dashboardId?: number;
@@ -16,22 +16,22 @@ interface Props extends RouteComponentProps {
 }
 
 function MetricTypeList(props: Props) {
-  const { dashboardId, siteId, history, isList = false } = props;
+  const {
+    dashboardId, siteId, history, isList = false,
+  } = props;
   const { metricStore, userStore } = useStore();
   const { showModal, hideModal } = useModal();
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
 
-  const list = React.useMemo(() => {
-    return TYPES.map((metric: MetricType) => {
-      const disabled = metric.slug === INSIGHTS && !isEnterprise;
-      return {
-        ...metric,
-        icon: `db-icons/icn-card-${metric.slug}`,
-        disabled: metric.slug === INSIGHTS && !isEnterprise,
-        tooltipTitle: disabled ? ENTERPRISE_REQUEIRED : ''
-      };
-    });
-  }, []);
+  const list = React.useMemo(() => TYPES.map((metric: MetricType) => {
+    const disabled = metric.slug === INSIGHTS && !isEnterprise;
+    return {
+      ...metric,
+      icon: `db-icons/icn-card-${metric.slug}`,
+      disabled: metric.slug === INSIGHTS && !isEnterprise,
+      tooltipTitle: disabled ? ENTERPRISE_REQUEIRED : '',
+    };
+  }), []);
 
   if (!dashboardId) {
     list.shift();
@@ -45,16 +45,16 @@ function MetricTypeList(props: Props) {
         width: 800,
         onClose: () => {
           metricStore.updateKey('metricsSearch', '');
-        }
+        },
       });
     }
 
-    const path = dashboardId ? withSiteId(dashboardMetricCreate(dashboardId + ''), siteId) :
-      withSiteId(metricCreate(), siteId);
+    const path = dashboardId ? withSiteId(dashboardMetricCreate(`${dashboardId}`), siteId)
+      : withSiteId(metricCreate(), siteId);
     const queryString = new URLSearchParams({ type: slug }).toString();
     history.push({
       pathname: path,
-      search: `?${queryString}`
+      search: `?${queryString}`,
     });
   };
 

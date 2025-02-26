@@ -8,19 +8,27 @@ import {
   addElementToLiveFiltersMap,
   clearMetaFilters,
 } from 'Types/filter/newFilter';
-import { FilterCategory, FilterType } from "Types/filter/filterType";
+import { FilterCategory, FilterType } from 'Types/filter/filterType';
 import CustomField from 'App/mstore/types/customField';
 import filterOptions from 'App/constants';
 
 class CustomFieldStore {
   isLoading: boolean = false;
+
   isAllLoading: boolean = false;
+
   isSaving: boolean = false;
+
   list: CustomField[] = [];
+
   allList: CustomField[] = [];
+
   instance: CustomField = new CustomField();
+
   sources: CustomField[] = [];
+
   fetchedMetadata: boolean = false;
+
   search: string = '';
 
   constructor() {
@@ -55,7 +63,7 @@ class CustomFieldStore {
           addElementToMobileConditionalFiltersMap,
         ];
         calls.forEach((call) => {
-          call(FilterCategory.METADATA, '_' + item.key);
+          call(FilterCategory.METADATA, `_${item.key}`);
         });
       });
       this.list = response.map((item_1: any) => new CustomField(item_1));
@@ -92,12 +100,11 @@ class CustomFieldStore {
     try {
       const response = await customFieldService.get('/integration/sources');
       this.sources = response.map(
-        ({ value, ...item }: any) =>
-          new CustomField({
-            label: value,
-            key: value,
-            ...item,
-          })
+        ({ value, ...item }: any) => new CustomField({
+          label: value,
+          key: value,
+          ...item,
+        }),
       );
     } finally {
       this.isLoading = false;
@@ -117,7 +124,7 @@ class CustomFieldStore {
         this.list.push(updatedInstance);
       } else {
         const index = this.list.findIndex(
-          (item) => item.index === instance.index
+          (item) => item.index === instance.index,
         );
         if (index >= 0) this.list[index] = updatedInstance;
       }

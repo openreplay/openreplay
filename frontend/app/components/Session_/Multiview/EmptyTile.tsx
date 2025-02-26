@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { InactiveTab } from 'App/components/Session_/Player/Controls/AssistSessionsTabs';
 
 function EmptyTile({ onClick }: { onClick: () => void }) {

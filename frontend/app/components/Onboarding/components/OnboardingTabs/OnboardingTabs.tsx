@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Tabs, Icon, CopyButton } from 'UI';
-import ProjectCodeSnippet from './ProjectCodeSnippet';
-import InstallDocs from './InstallDocs';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
+import InstallDocs from './InstallDocs';
+import ProjectCodeSnippet from './ProjectCodeSnippet';
 
 const PROJECT = 'SCRIPT';
 const DOCUMENTATION = 'NPM';
@@ -16,7 +16,7 @@ const TABS = [
 interface Props {
   site: any;
 }
-const TrackingCodeModal = (props: Props) => {
+function TrackingCodeModal(props: Props) {
   const { site } = props;
   const [activeTab, setActiveTab] = useState(DOCUMENTATION);
   const { showModal } = useModal();
@@ -51,6 +51,7 @@ const TrackingCodeModal = (props: Props) => {
                   className="link flex items-center"
                   href="https://docs.openreplay.com/integrations/google-tag-manager"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   Google Tag Manager (GTM)
                   <Icon name="external-link-alt" className="ml-1" color="blue" />
@@ -74,7 +75,7 @@ const TrackingCodeModal = (props: Props) => {
               </DocCard>
 
               <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
+                <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />
                 </div>
@@ -93,6 +94,6 @@ const TrackingCodeModal = (props: Props) => {
       <div className="p-5 py-8">{renderActiveTab()}</div>
     </>
   );
-};
+}
 
 export default TrackingCodeModal;

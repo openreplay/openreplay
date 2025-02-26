@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { PageTitle } from 'UI';
-import { Button, Popover, Space, Dropdown, Menu } from 'antd';
+import {
+  Button, Popover, Space, Dropdown, Menu,
+} from 'antd';
 import { PlusOutlined, DownOutlined } from '@ant-design/icons';
-import AddCardSection from '../AddCardSection/AddCardSection';
-import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { DROPDOWN_OPTIONS } from 'App/constants/card';
+import MetricsSearch from '../MetricsSearch';
+import AddCardSection from '../AddCardSection/AddCardSection';
 
 const options = [
   {
@@ -29,7 +31,7 @@ const options = [
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
-  const filter = metricStore.filter;
+  const { filter } = metricStore;
   const cardsLength = metricStore.filteredCards.length;
 
   // Determine if a filter is active (search query or metric type other than 'all')

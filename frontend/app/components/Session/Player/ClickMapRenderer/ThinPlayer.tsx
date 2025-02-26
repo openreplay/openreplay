@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { createClickMapPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
-import PlayerContent from './ThinPlayerContent';
-import { IPlayerContext, PlayerContext, defaultContextValue } from '../../playerContext';
 import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify'
+import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
+import { IPlayerContext, PlayerContext, defaultContextValue } from '../../playerContext';
+import PlayerContent from './ThinPlayerContent';
 
 function WebPlayer(props: any) {
   const { sessionStore } = useStore();
-  const insights = sessionStore.insights;
+  const { insights } = sessionStore;
   const {
     session,
     jumpTimestamp,
@@ -29,47 +29,45 @@ function WebPlayer(props: any) {
       );
       playerRef.current = WebPlayerInst;
       setContextValue({ player: WebPlayerInst, store: PlayerStore });
-    }
+    };
 
     if (!playerRef.current) {
-      init()
+      init();
     } else {
-      playerRef.current.clean()
+      playerRef.current.clean();
       playerRef.current = null;
       setContextValue(defaultContextValue);
       init();
     }
   }, [session.sessionId]);
 
-  React.useEffect(() => {
-    return () => {
-      playerRef.current && playerRef.current.clean();
-      playerRef.current = null;
-      // @ts-ignore
-      setContextValue(defaultContextValue);
-    }
-  }, [])
+  React.useEffect(() => () => {
+    playerRef.current && playerRef.current.clean();
+    playerRef.current = null;
+    // @ts-ignore
+    setContextValue(defaultContextValue);
+  }, []);
 
-  const isPlayerReady = contextValue.store?.get().ready
+  const isPlayerReady = contextValue.store?.get().ready;
 
   React.useEffect(() => {
-      contextValue.player && contextValue.player.play()
+    contextValue.player && contextValue.player.play();
     if (isPlayerReady && insights.length > 0 && jumpTimestamp && insightsSize.current !== insights.length) {
-      insightsSize.current = insights.length
+      insightsSize.current = insights.length;
       setTimeout(() => {
-        contextValue.player.pause()
-        contextValue.player.jump(jumpTimestamp)
-        contextValue.player.scale()
-        setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
-      }, 250)
+        contextValue.player.pause();
+        contextValue.player.jump(jumpTimestamp);
+        contextValue.player.scale();
+        setTimeout(() => { contextValue.player.showClickmap(insights); }, 250);
+      }, 250);
     }
-  }, [insights, isPlayerReady, jumpTimestamp])
+  }, [insights, isPlayerReady, jumpTimestamp]);
 
   if (!contextValue.player || !session) return null;
 
   return (
     <PlayerContext.Provider value={contextValue}>
-        <PlayerContent />
+      <PlayerContent />
     </PlayerContext.Provider>
   );
 }

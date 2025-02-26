@@ -11,7 +11,7 @@ interface Props {
 function CreateDashboardButton({ disabled }: Props) {
   const [dashboardCreating, setDashboardCreating] = React.useState(false);
   const { projectsStore, dashboardStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const history = useHistory();
 
   const createNewDashboard = async () => {
@@ -28,17 +28,15 @@ function CreateDashboardButton({ disabled }: Props) {
       });
   };
   return (
-    <>
-      <Button
-        loading={dashboardCreating}
-        icon={<PlusOutlined />}
-        disabled={disabled}
-        type="primary"
-        onClick={createNewDashboard}
-      >
-        Create Dashboard
-      </Button>
-    </>
+    <Button
+      loading={dashboardCreating}
+      icon={<PlusOutlined />}
+      disabled={disabled}
+      type="primary"
+      onClick={createNewDashboard}
+    >
+      Create Dashboard
+    </Button>
   );
 }
 

@@ -34,7 +34,7 @@ import { Icon } from 'UI';
 import LogsButton from 'App/components/Session/Player/SharedComponents/BackendLogs/LogsButton';
 
 import ControlButton from './ControlButton';
-import { WebEventsList } from "./EventsList";
+import { WebEventsList } from './EventsList';
 import Timeline from './Timeline';
 import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
@@ -78,22 +78,21 @@ function Controls({ setActiveTab }: any) {
     userStore,
   } = useStore();
   const permissions = userStore.account.permissions || [];
-  const disableDevtools =
-    userStore.isEnterprise &&
-    !(
-      permissions.includes('DEV_TOOLS') ||
-      permissions.includes('SERVICE_DEV_TOOLS')
+  const disableDevtools = userStore.isEnterprise
+    && !(
+      permissions.includes('DEV_TOOLS')
+      || permissions.includes('SERVICE_DEV_TOOLS')
     );
-  const fullscreen = uiPlayerStore.fullscreen;
-  const bottomBlock = uiPlayerStore.bottomBlock;
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
-  const fullscreenOn = uiPlayerStore.fullscreenOn;
-  const fullscreenOff = uiPlayerStore.fullscreenOff;
-  const changeSkipInterval = uiPlayerStore.changeSkipInterval;
-  const skipInterval = uiPlayerStore.skipInterval;
+  const { fullscreen } = uiPlayerStore;
+  const { bottomBlock } = uiPlayerStore;
+  const { toggleBottomBlock } = uiPlayerStore;
+  const { fullscreenOn } = uiPlayerStore;
+  const { fullscreenOff } = uiPlayerStore;
+  const { changeSkipInterval } = uiPlayerStore;
+  const { skipInterval } = uiPlayerStore;
   const showStorageRedux = !uiPlayerStore.hiddenHints.storage;
   const history = useHistory();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const {
     playing,
     completed,
@@ -108,8 +107,7 @@ function Controls({ setActiveTab }: any) {
   const previousSessionId = sessionStore.previousId;
   const nextSessionId = sessionStore.nextId;
 
-  const disabled =
-    disableDevtools || messagesLoading || inspectorMode || markedTargets;
+  const disabled = disableDevtools || messagesLoading || inspectorMode || markedTargets;
   const sessionTz = session?.timezone;
 
   const nextHandler = () => {
@@ -149,8 +147,8 @@ function Controls({ setActiveTab }: any) {
   const state = completed
     ? PlayingState.Completed
     : playing
-    ? PlayingState.Playing
-    : PlayingState.Paused;
+      ? PlayingState.Playing
+      : PlayingState.Paused;
 
   const events = session.stackEvents ?? [];
   return (
@@ -168,13 +166,13 @@ function Controls({ setActiveTab }: any) {
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={(speedIndex) => player.toggleSpeed(speedIndex)}
               toggleSkip={() => player.toggleSkip()}
-              playButton={
+              playButton={(
                 <PlayButton
                   state={state}
                   togglePlay={player.togglePlay}
                   iconSize={36}
                 />
-              }
+              )}
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
@@ -197,9 +195,7 @@ function Controls({ setActiveTab }: any) {
             <FullScreenButton
               size={16}
               onClick={fullscreenOn}
-              customClasses={
-                'rounded hover:bg-gray-light-shade color-gray-medium'
-              }
+              customClasses="rounded hover:bg-gray-light-shade color-gray-medium"
             />
           </div>
         </div>
@@ -261,30 +257,29 @@ const DevtoolsButtons = observer(
     };
 
     const possibleAudio = events.filter((e) => e.name.includes('media/audio'));
-    const integratedServices =
-      integrationsStore.integrations.backendLogIntegrations;
+    const integratedServices = integrationsStore.integrations.backendLogIntegrations;
     return (
       <>
         {isSaas ? <SummaryButton onClick={showSummary} /> : null}
         <ControlButton
-          popover={
-            <div className={'flex items-center gap-2'}>
+          popover={(
+            <div className="flex items-center gap-2">
               <LaunchXRaShortcut />
               <div>Get a quick overview on the issues in this session.</div>
             </div>
-          }
-          label={'X-Ray'}
+          )}
+          label="X-Ray"
           onClick={() => toggleBottomTools(OVERVIEW)}
           active={bottomBlock === OVERVIEW && !inspectorMode}
         />
 
         <ControlButton
-          popover={
-            <div className={'flex gap-2 items-center'}>
+          popover={(
+            <div className="flex gap-2 items-center">
               <LaunchConsoleShortcut />
               <div>Launch Console</div>
             </div>
-          }
+          )}
           disabled={disableButtons}
           onClick={() => toggleBottomTools(CONSOLE)}
           active={bottomBlock === CONSOLE && !inspectorMode}
@@ -293,12 +288,12 @@ const DevtoolsButtons = observer(
         />
 
         <ControlButton
-          popover={
-            <div className={'flex gap-2 items-center'}>
+          popover={(
+            <div className="flex gap-2 items-center">
               <LaunchNetworkShortcut />
               <div>Launch Network</div>
             </div>
-          }
+          )}
           disabled={disableButtons}
           onClick={() => toggleBottomTools(NETWORK)}
           active={bottomBlock === NETWORK && !inspectorMode}
@@ -307,12 +302,12 @@ const DevtoolsButtons = observer(
         />
 
         <ControlButton
-          popover={
-            <div className={'flex gap-2 items-center'}>
+          popover={(
+            <div className="flex gap-2 items-center">
               <LaunchPerformanceShortcut />
               <div>Launch Performance</div>
             </div>
-          }
+          )}
           disabled={disableButtons}
           onClick={() => toggleBottomTools(PERFORMANCE)}
           active={bottomBlock === PERFORMANCE && !inspectorMode}
@@ -330,12 +325,12 @@ const DevtoolsButtons = observer(
 
         {showStorage && (
           <ControlButton
-            popover={
-              <div className={'flex gap-2 items-center'}>
+            popover={(
+              <div className="flex gap-2 items-center">
                 <LaunchStateShortcut />
                 <div>Launch State</div>
               </div>
-            }
+            )}
             disabled={disableButtons}
             onClick={() => toggleBottomTools(STORAGE)}
             active={bottomBlock === STORAGE && !inspectorMode}
@@ -343,12 +338,12 @@ const DevtoolsButtons = observer(
           />
         )}
         <ControlButton
-          popover={
-            <div className={'flex gap-2 items-center'}>
+          popover={(
+            <div className="flex gap-2 items-center">
               <LaunchEventsShortcut />
               <div>Launch Events</div>
             </div>
-          }
+          )}
           disabled={disableButtons}
           onClick={() => toggleBottomTools(STACKEVENTS)}
           active={bottomBlock === STACKEVENTS && !inspectorMode}
@@ -374,7 +369,7 @@ const DevtoolsButtons = observer(
         ) : null}
       </>
     );
-  }
+  },
 );
 
 export function SummaryButton({
@@ -398,10 +393,10 @@ export function SummaryButton({
         onMouseLeave={() => setHovered(false)}
       >
         {withToggle ? (
-          <Switch size={'small'} checked={toggleValue} onChange={onToggle} />
+          <Switch size="small" checked={toggleValue} onChange={onToggle} />
         ) : null}
-        <Icon name={'sparkles'} size={16} />
-        <div className={'font-semibold text-main'}>Summary AI</div>
+        <Icon name="sparkles" size={16} />
+        <div className="font-semibold text-main">Summary AI</div>
       </div>
     </div>
   );

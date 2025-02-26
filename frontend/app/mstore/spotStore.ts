@@ -1,28 +1,35 @@
 import { makeAutoObservable } from 'mobx';
 
-
-
 import { spotService } from 'App/services';
 import { UpdateSpotRequest } from 'App/services/spotService';
 
-
-
 import { Spot } from './types/spot';
-
 
 export default class SpotStore {
   isLoading: boolean = false;
+
   spots: Spot[] = [];
+
   currentSpot: Spot | null = null;
+
   page: number = 1;
+
   filter: 'all' | 'own' = 'all';
+
   query: string = '';
+
   total: number = 0;
+
   limit: number = 9;
+
   accessKey: string | undefined = undefined;
+
   pubKey: { value: string; expiration: number } | null = null;
+
   readonly order = 'desc';
+
   accessError = false;
+
   tenantHasSpots = false;
 
   constructor() {
@@ -87,9 +94,7 @@ export default class SpotStore {
       limit: this.limit,
     } as const;
 
-    const { spots, tenantHasSpots, total } = await this.withLoader(() =>
-      spotService.fetchSpots(filters)
-    );
+    const { spots, tenantHasSpots, total } = await this.withLoader(() => spotService.fetchSpots(filters));
     this.setSpots(spots.map((spot: any) => new Spot(spot)));
     this.setTotal(total);
     this.setTenantHasSpots(tenantHasSpots);
@@ -101,9 +106,7 @@ export default class SpotStore {
 
   async fetchSpotById(id: string) {
     try {
-      const response = await this.withLoader(() =>
-        spotService.fetchSpot(id, this.accessKey)
-      );
+      const response = await this.withLoader(() => spotService.fetchSpot(id, this.accessKey));
 
       const spotInst = new Spot({ ...response.spot, id });
       this.setCurrentSpot(spotInst);
@@ -122,7 +125,7 @@ export default class SpotStore {
       await spotService.addComment(
         spotId,
         { comment, userName },
-        this.accessKey
+        this.accessKey,
       );
       const spot = this.currentSpot;
       if (spot) {
@@ -139,9 +142,9 @@ export default class SpotStore {
   async deleteSpot(spotIds: string[]) {
     await this.withLoader(() => spotService.deleteSpot(spotIds));
     this.spots = this.spots.filter(
-      (spot) => spotIds.findIndex((s) => s === spot.spotId) === -1
+      (spot) => spotIds.findIndex((s) => s === spot.spotId) === -1,
     );
-    this.total = this.total - spotIds.length;
+    this.total -= spotIds.length;
     await this.fetchSpots();
   }
 
@@ -172,9 +175,7 @@ export default class SpotStore {
    * */
   generateKey = async (id: string, expiration: number) => {
     try {
-      const { key } = await this.withLoader(() => {
-        return spotService.generateKey(id, expiration);
-      });
+      const { key } = await this.withLoader(() => spotService.generateKey(id, expiration));
       this.setPubKey(key);
       return key;
     } catch (e) {
@@ -184,9 +185,7 @@ export default class SpotStore {
 
   getPubKey = async (id: string) => {
     try {
-      const { key } = await this.withLoader(() => {
-        return spotService.getKey(id);
-      });
+      const { key } = await this.withLoader(() => spotService.getKey(id));
       this.setPubKey(key);
     } catch (e) {
       console.error('no pubkey', e);
@@ -195,15 +194,12 @@ export default class SpotStore {
 
   checkIsProcessed = async (id: string) => {
     try {
-      const { status } = await this.withLoader(() => {
-        return spotService.checkProcessingStatus(id, this.accessKey);
-      })
+      const { status } = await this.withLoader(() => spotService.checkProcessingStatus(id, this.accessKey));
 
       return status === 'processed';
-
     } catch (e) {
       console.error('couldnt check status', e);
-      return false
+      return false;
     }
-  }
+  };
 }

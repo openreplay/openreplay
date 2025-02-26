@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Avatar, List, Progress, Typography, Pagination } from 'antd';
+import {
+  Avatar, List, Progress, Typography, Pagination,
+} from 'antd';
 import cn from 'classnames';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
@@ -14,9 +16,11 @@ interface Props {
   paginated?: boolean;
 }
 
-function CardSessionsByList({ list, selected, paginated, onClickHandler = () => null, metric, total }: Props) {
+function CardSessionsByList({
+  list, selected, paginated, onClickHandler = () => null, metric, total,
+}: Props) {
   const { dashboardStore, metricStore, sessionStore } = useStore();
-  const drillDownPeriod = dashboardStore.drillDownPeriod;
+  const { drillDownPeriod } = dashboardStore;
   const params = { density: 35 };
   const metricParams = { ...params };
   const [loading, setLoading] = React.useState(false);
@@ -46,7 +50,7 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
               style={{
                 borderBottom: index === data.length - 1 ? 'none' : 'none',
                 padding: '4px 10px',
-                lineHeight: '1px'
+                lineHeight: '1px',
               }}
               className={cn('rounded-lg border-b-0 hover:bg-active-blue cursor-pointer', selected === row.name ? 'bg-active-blue' : '')}
             >
@@ -56,8 +60,11 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                 title={(
                   <div className="m-0">
                     <div className="flex justify-between m-0 p-0">
-                      <Typography.Text ellipsis={true} className='w-[90%]'>{row.displayName}</Typography.Text>
-                      <Typography.Text type="secondary"> {row.sessionCount}</Typography.Text>
+                      <Typography.Text ellipsis className="w-[90%]">{row.displayName}</Typography.Text>
+                      <Typography.Text type="secondary">
+                        {' '}
+                        {row.sessionCount}
+                      </Typography.Text>
                     </div>
 
                     <Progress
@@ -65,13 +72,13 @@ function CardSessionsByList({ list, selected, paginated, onClickHandler = () => 
                       showInfo={false}
                       strokeColor={{
                         '0%': '#394EFF',
-                        '100%': '#394EFF'
+                        '100%': '#394EFF',
                       }}
                       size={['small', 2]}
                       style={{
                         padding: '0 0px',
                         margin: '0 0px',
-                        height: 4
+                        height: 4,
                       }}
                     />
                   </div>

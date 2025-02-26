@@ -1,8 +1,8 @@
-import React from 'react'
-import { PageTitle } from 'UI'
-import { Button } from 'antd'
-import FFlagsSearch from "Components/FFlags/FFlagsSearch";
-import { useHistory } from "react-router";
+import React from 'react';
+import { PageTitle } from 'UI';
+import { Button } from 'antd';
+import FFlagsSearch from 'Components/FFlags/FFlagsSearch';
+import { useHistory } from 'react-router';
 import { newFFlag, withSiteId } from 'App/routes';
 
 function FFlagsListHeader({ siteId }: { siteId: string }) {
@@ -17,13 +17,13 @@ function FFlagsListHeader({ siteId }: { siteId: string }) {
         <Button type="primary" onClick={() => history.push(withSiteId(newFFlag(), siteId))}>
           Create Feature Flag
         </Button>
-        <div className="mx-2"></div>
+        <div className="mx-2" />
         <div className="w-1/4" style={{ minWidth: 300 }}>
           <FFlagsSearch />
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default FFlagsListHeader;

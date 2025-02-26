@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
-import { Form, SegmentSelection } from 'UI';
+import { Form, SegmentSelection, confirm } from 'UI';
 import { validateEmail } from 'App/validate';
-import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId, alerts } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { useStore } from 'App/mstore'
-import { observer } from 'mobx-react-lite'
-import Alert from 'Types/alert'
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
+import Alert from 'Types/alert';
 import cn from 'classnames';
 import WidgetName from '../WidgetName';
 import BottomButtons from './AlertForm/BottomButtons';
@@ -17,14 +16,16 @@ import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
 
-const Circle = ({ text }: { text: string }) => (
-  <div
-    style={{ left: -14, height: 26, width: 26 }}
-    className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0"
-  >
-    {text}
-  </div>
-);
+function Circle({ text }: { text: string }) {
+  return (
+    <div
+      style={{ left: -14, height: 26, width: 26 }}
+      className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0"
+    >
+      {text}
+    </div>
+  );
+}
 
 interface ISection {
   index: string;
@@ -33,19 +34,23 @@ interface ISection {
   content: React.ReactNode;
 }
 
-const Section = ({ index, title, description, content }: ISection) => (
-  <div className="w-full border-l-2 last:border-l-borderColor-transparent">
-    <div className="flex items-start relative">
-      <Circle text={index} />
-      <div className="ml-6">
-        <span className="font-medium">{title}</span>
-        {description && <div className="text-sm color-gray-medium">{description}</div>}
+function Section({
+  index, title, description, content,
+}: ISection) {
+  return (
+    <div className="w-full border-l-2 last:border-l-borderColor-transparent">
+      <div className="flex items-start relative">
+        <Circle text={index} />
+        <div className="ml-6">
+          <span className="font-medium">{title}</span>
+          {description && <div className="text-sm color-gray-medium">{description}</div>}
+        </div>
       </div>
-    </div>
 
-    <div className="ml-6">{content}</div>
-  </div>
-);
+      <div className="ml-6">{content}</div>
+    </div>
+  );
+}
 
 interface Select {
   label: string;
@@ -62,7 +67,7 @@ interface IProps extends RouteComponentProps {
   onSubmit: (instance: Alert) => void;
 }
 
-const NewAlert = (props: IProps) => {
+function NewAlert(props: IProps) {
   const { alertsStore, settingsStore } = useStore();
   const {
     fetchTriggerOptions,
@@ -75,11 +80,11 @@ const NewAlert = (props: IProps) => {
     alerts: list,
     triggerOptions,
     loading,
-  } = alertsStore
+  } = alertsStore;
 
-  const deleting = loading
-  const webhooks = settingsStore.webhooks
-  const fetchWebhooks = settingsStore.fetchWebhooks
+  const deleting = loading;
+  const { webhooks } = settingsStore;
+  const { fetchWebhooks } = settingsStore;
   const {
     siteId,
   } = props;
@@ -96,17 +101,16 @@ const NewAlert = (props: IProps) => {
       const alertId = location.pathname.split('/').pop();
       const currentAlert = list.find((alert: Alert) => alert.alertId === String(alertId));
       if (currentAlert) {
-        init(currentAlert)
+        init(currentAlert);
       }
     }
   }, [list]);
 
-  const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) =>
-    edit({ [name]: value });
+  const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: value });
 
   const writeOption = (
     _: React.ChangeEvent,
-    { name, value }: { name: string; value: Record<string, any> }
+    { name, value }: { name: string; value: Record<string, any> },
   ) => edit({ [name]: value.value });
 
   const onChangeCheck = ({ target: { checked, name } }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: checked });
@@ -116,7 +120,7 @@ const NewAlert = (props: IProps) => {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this alert?`,
+        confirmation: 'Are you sure you want to permanently delete this alert?',
       })
     ) {
       remove(instance.alertId).then(() => {
@@ -142,49 +146,48 @@ const NewAlert = (props: IProps) => {
     });
   };
 
-  const slackChannels: Select[] = []
-  const hooks: Select[] = []
-  const msTeamsChannels: Select[] = []
+  const slackChannels: Select[] = [];
+  const hooks: Select[] = [];
+  const msTeamsChannels: Select[] = [];
 
   webhooks.forEach((hook) => {
-    const option = { value: hook.webhookId, label: hook.name }
+    const option = { value: hook.webhookId, label: hook.name };
     if (hook.type === SLACK) {
-      slackChannels.push(option)
+      slackChannels.push(option);
     }
     if (hook.type === WEBHOOK) {
-      hooks.push(option)
+      hooks.push(option);
     }
     if (hook.type === TEAMS) {
-      msTeamsChannels.push(option)
+      msTeamsChannels.push(option);
     }
-  })
+  });
 
   const writeQueryOption = (
     e: React.ChangeEvent,
-    { name, value }: { name: string; value: string }
+    { name, value }: { name: string; value: string },
   ) => {
     const { query } = instance;
     edit({ query: { ...query, [name]: value } });
   };
 
   const changeUnit = (value: string) => {
-    alertsStore.changeUnit(value)
-  }
+    alertsStore.changeUnit(value);
+  };
 
   const writeQuery = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => {
     const { query } = instance;
     edit({ query: { ...query, [name]: value } });
   };
 
-  const metric =
-    instance && instance.query.left
-      ? triggerOptions.find((i) => i.value === instance.query.left)
-      : null;
+  const metric = instance && instance.query.left
+    ? triggerOptions.find((i) => i.value === instance.query.left)
+    : null;
   const unit = metric ? metric.unit : '';
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <div style={{ maxWidth: '1360px', margin: 'auto'}}>
+    <div style={{ maxWidth: '1360px', margin: 'auto' }}>
       <Breadcrumb
         items={[
           {
@@ -207,14 +210,14 @@ const NewAlert = (props: IProps) => {
               canEdit
             />
           </h1>
-          <div className="text-gray-600 w-full cursor-pointer"></div>
+          <div className="text-gray-600 w-full cursor-pointer" />
         </div>
 
         <div className="px-6 pb-3 flex flex-col">
           <Section
             index="1"
-            title={'Alert based on'}
-            content={
+            title="Alert based on"
+            content={(
               <div className="">
                 <SegmentSelection
                   outline
@@ -228,19 +231,19 @@ const NewAlert = (props: IProps) => {
                   ]}
                 />
                 <div className="text-sm color-gray-medium">
-                  {isThreshold &&
-                    'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
-                  {!isThreshold &&
-                    'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
+                  {isThreshold
+                    && 'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
+                  {!isThreshold
+                    && 'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
                 </div>
                 <div className="my-4" />
               </div>
-            }
+            )}
           />
           <Section
             index="2"
             title="Condition"
-            content={
+            content={(
               <Condition
                 isThreshold={isThreshold}
                 writeOption={writeOption}
@@ -251,13 +254,13 @@ const NewAlert = (props: IProps) => {
                 writeQuery={writeQuery}
                 unit={unit}
               />
-            }
+            )}
           />
           <Section
             index="3"
             title="Notify Through"
             description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
-            content={
+            content={(
               <NotifyHooks
                 instance={instance}
                 onChangeCheck={onChangeCheck}
@@ -267,7 +270,7 @@ const NewAlert = (props: IProps) => {
                 hooks={hooks}
                 edit={edit}
               />
-            }
+            )}
           />
         </div>
 
@@ -289,11 +292,12 @@ const NewAlert = (props: IProps) => {
             demo
             siteId=""
             init={() => null}
-            webhooks={webhooks} />
+            webhooks={webhooks}
+          />
         )}
       </div>
     </div>
   );
-};
+}
 
-export default withRouter(observer(NewAlert))
+export default withRouter(observer(NewAlert));

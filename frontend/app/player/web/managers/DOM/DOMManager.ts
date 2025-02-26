@@ -7,8 +7,8 @@ import ListWalker from '../../../common/ListWalker';
 import StylesManager from './StylesManager';
 import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
-import { StyleElement, VSpriteMap } from "./VirtualDOM";
 import {
+  StyleElement, VSpriteMap,
   OnloadStyleSheet,
   VDocument,
   VElement,
@@ -20,18 +20,18 @@ import {
 import { deleteRule, insertRule } from './safeCSSRules';
 
 function isStyleVElement(
-  vElem: VElement
+  vElem: VElement,
 ): vElem is VElement & { node: StyleElement } {
   return vElem.tagName.toLowerCase() === 'style';
 }
 
 function setupWindowLogging(vTexts: Map<number, VText>, vElements: Map<number, VElement>, olVRoots: Map<number, OnloadVRoot>) {
   // @ts-ignore
-  window.checkVElements = () => vElements
+  window.checkVElements = () => vElements;
   // @ts-ignore
-  window.checkVTexts = () => vTexts
+  window.checkVTexts = () => vTexts;
   // @ts-ignore
-  window.checkVRoots = () => olVRoots
+  window.checkVRoots = () => olVRoots;
 }
 
 const IGNORED_ATTRS = ['autocomplete'];
@@ -39,27 +39,40 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/;
 
 export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map(); // map vs object here?
+
   private readonly vElements: Map<number, VElement> = new Map();
+
   private readonly olVRoots: Map<number, OnloadVRoot> = new Map();
+
   /** required to keep track of iframes, frameId : vnodeId */
   private readonly iframeRoots: Record<number, number> = {};
+
   /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
    * as well as <style> tag owned StyleSheets
    */
   private olStyleSheets: Map<number, OnloadStyleSheet> = new Map();
+
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
   private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map();
 
   private upperBodyId: number = -1;
-  private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> =
-    new Map();
+
+  private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map();
+
   private stylesManager: StylesManager;
+
   private focusManager: FocusManager = new FocusManager(this.vElements);
+
   private selectionManager: SelectionManager;
+
   private readonly screen: Screen;
+
   private readonly isMobile: boolean;
+
   private readonly stringDict: Record<number, string>;
+
   private readonly globalDict: { get: (key: string) => string | undefined, all: () => Record<string, string> };
+
   public readonly time: number;
 
   constructor(params: {
@@ -82,7 +95,7 @@ export default class DOMManager extends ListWalker<Message> {
       this.vTexts,
       this.vElements,
       this.olVRoots,
-    )
+    );
   }
 
   public clearSelectionManager() {
@@ -112,8 +125,8 @@ export default class DOMManager extends ListWalker<Message> {
         this.upperBodyId = m.id;
       }
     } else if (
-      m.tp === MType.SetNodeAttribute &&
-      (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))
+      m.tp === MType.SetNodeAttribute
+      && (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))
     ) {
       logger.log('Ignorring message: ', m);
       return; // Ignoring
@@ -168,7 +181,7 @@ export default class DOMManager extends ListWalker<Message> {
         `${id} Insert error. Parent vNode ${parentID} not found`,
         msg,
         this.vElements,
-        this.olVRoots
+        this.olVRoots,
       );
       return;
     }
@@ -177,16 +190,16 @@ export default class DOMManager extends ListWalker<Message> {
       // TODO: if this ever happens? ; Maybe do not send empty TextNodes in tracker
       const styleNode = parent.node;
       if (
-        styleNode.sheet &&
-        styleNode.sheet.cssRules &&
-        styleNode.sheet.cssRules.length > 0 &&
-        styleNode.textContent &&
-        styleNode.textContent.trim().length === 0
+        styleNode.sheet
+        && styleNode.sheet.cssRules
+        && styleNode.sheet.cssRules.length > 0
+        && styleNode.textContent
+        && styleNode.textContent.trim().length === 0
       ) {
         logger.log(
           'Trying to insert child to a style tag with virtual rules: ',
           parent,
-          child
+          child,
         );
         return;
       }
@@ -224,7 +237,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
     if (vn.isSVG && value.startsWith('url(')) {
       /* SVG shape ID-s for masks etc. Sometimes referred with the full-page url, which we don't have in replay */
-      value = 'url(#' + (value.split('#')[1] || ')');
+      value = `url(#${value.split('#')[1] || ')'}`;
     }
     vn.setAttribute(name, value);
     this.removeBodyScroll(msg.id, vn);
@@ -308,7 +321,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error(
             "No dictionary key for msg 'name': ",
             msg,
-            this.globalDict.all()
+            this.globalDict.all(),
           );
           return;
         }
@@ -316,7 +329,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error(
             "No dictionary key for msg 'value': ",
             msg,
-            this.globalDict.all()
+            this.globalDict.all(),
           );
           return;
         }
@@ -327,21 +340,21 @@ export default class DOMManager extends ListWalker<Message> {
         });
         return;
       case MType.SetNodeAttributeDictDeprecated:
-        this.stringDict[msg.nameKey] === undefined &&
-          logger.error(
+        this.stringDict[msg.nameKey] === undefined
+          && logger.error(
             "No local dictionary key for msg 'name': ",
             msg,
-            this.stringDict
+            this.stringDict,
           );
-        this.stringDict[msg.valueKey] === undefined &&
-          logger.error(
+        this.stringDict[msg.valueKey] === undefined
+          && logger.error(
             "No local dictionary key for msg 'value': ",
             msg,
-            this.stringDict
+            this.stringDict,
           );
         if (
-          this.stringDict[msg.nameKey] === undefined ||
-          this.stringDict[msg.valueKey] === undefined
+          this.stringDict[msg.nameKey] === undefined
+          || this.stringDict[msg.valueKey] === undefined
         ) {
           return;
         }
@@ -369,9 +382,9 @@ export default class DOMManager extends ListWalker<Message> {
         const nodeWithValue = vElem.node;
         if (
           !(
-            nodeWithValue instanceof HTMLInputElement ||
-            nodeWithValue instanceof HTMLTextAreaElement ||
-            nodeWithValue instanceof HTMLSelectElement
+            nodeWithValue instanceof HTMLInputElement
+            || nodeWithValue instanceof HTMLTextAreaElement
+            || nodeWithValue instanceof HTMLSelectElement
           )
         ) {
           logger.error('Trying to set value of non-Input element', msg);
@@ -498,7 +511,7 @@ export default class DOMManager extends ListWalker<Message> {
           }
           this.olStyleSheets.set(
             msg.sheetID,
-            OnloadStyleSheet.fromStyleElement(vElem.node)
+            OnloadStyleSheet.fromStyleElement(vElem.node),
           );
           return;
         }
@@ -521,7 +534,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!olStyleSheet) {
           logger.warn(
             'AdoptedSsRemoveOwner: No stylesheet was created for ',
-            msg
+            msg,
           );
           return;
         }
@@ -534,7 +547,7 @@ export default class DOMManager extends ListWalker<Message> {
           vRoot.onNode((node) => {
             // @ts-ignore
             node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets].filter(
-              (s) => s !== styleSheet
+              (s) => s !== styleSheet,
             );
           });
         });
@@ -564,7 +577,6 @@ export default class DOMManager extends ListWalker<Message> {
           vNode.node.fonts.add(ff);
           void ff.load();
         });
-        return;
       }
     }
   };

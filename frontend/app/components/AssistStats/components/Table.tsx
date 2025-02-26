@@ -1,9 +1,10 @@
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
 import { AssistStatsSession, SessionsResponse } from 'App/services/AssistStatsService';
 import { numberWithCommas } from 'App/utils';
 import React from 'react';
-import { Button, Dropdown, Space, Typography, Tooltip } from 'antd';
-import { CloudDownloadOutlined, TableOutlined } from '@ant-design/icons';
+import {
+  Button, Dropdown, Space, Typography, Tooltip,
+} from 'antd';
 import { Loader, Pagination, NoContent } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { recordingsService } from 'App/services';
@@ -43,7 +44,9 @@ const sortItems = [
   // },
 ];
 
-function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV }: Props) {
+function StatsTable({
+  onSort, isLoading, onPageChange, page, sessions, exportCSV,
+}: Props) {
   const [sortValue, setSort] = React.useState(sortItems[0].label);
   const updateRange = ({ key }: { key: string }) => {
     const item = sortItems.find((item) => item.key === key);
@@ -52,14 +55,14 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
   };
 
   return (
-    <div className={'rounded bg-white border'}>
-      <div className={'flex items-center p-4 gap-2'}>
+    <div className="rounded bg-white border">
+      <div className="flex items-center p-4 gap-2">
         <Typography.Title level={5} style={{ marginBottom: 0 }}>
           Assisted Sessions
         </Typography.Title>
-        <div className={'ml-auto'} />
+        <div className="ml-auto" />
         <Dropdown menu={{ items: sortItems, onClick: updateRange }}>
-          <Button size={'small'}>
+          <Button size="small">
             <Space>
               <Typography.Text>{sortValue}</Typography.Text>
               <DownOutlined rev={undefined} />
@@ -67,7 +70,7 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
           </Button>
         </Dropdown>
         <Button
-          size={'small'}
+          size="small"
           icon={<TableOutlined rev={undefined} />}
           onClick={exportCSV}
           disabled={sessions?.list.length === 0}
@@ -75,7 +78,7 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
           Export CSV
         </Button>
       </div>
-      <div className={'bg-gray-lightest grid grid-cols-9 items-center font-semibold p-4'}>
+      <div className="bg-gray-lightest grid grid-cols-9 items-center font-semibold p-4">
         <Cell size={2}>Date</Cell>
         <Cell size={2}>Team Members</Cell>
         <Cell size={1}>Live Duration</Cell>
@@ -83,31 +86,52 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
         <Cell size={2}>Remote Duration</Cell>
         <Cell size={1}>{/* BUTTONS */}</Cell>
       </div>
-      <div className={'bg-white'}>
-            <Loader loading={isLoading} style={{ height: 300 }}>
+      <div className="bg-white">
+        <Loader loading={isLoading} style={{ height: 300 }}>
           <NoContent
-            size={'small'}
-            title={<div className={'text-base font-normal'}>No data available</div>}
+            size="small"
+            title={<div className="text-base font-normal">No data available</div>}
             show={sessions.list && sessions.list.length === 0}
             style={{ height: '100px' }}
           >
-              {sessions.list.map((session) => (
-                <Row session={session} />
-              ))}
+            {sessions.list.map((session) => (
+              <Row session={session} />
+            ))}
           </NoContent>
-            </Loader>
+        </Loader>
       </div>
-      <div className={'flex items-center justify-between p-4'}>
+      <div className="flex items-center justify-between p-4">
         {sessions.total > 0 ? (
           <div>
-            Showing <span className="font-medium">{(page - 1) * PER_PAGE + 1}</span> to{' '}
-            <span className="font-medium">{(page - 1) * PER_PAGE + sessions.list.length}</span> of{' '}
-            <span className="font-medium">{numberWithCommas(sessions.total)}</span> sessions.
+            Showing
+            {' '}
+            <span className="font-medium">{(page - 1) * PER_PAGE + 1}</span>
+            {' '}
+            to
+            {' '}
+            <span className="font-medium">{(page - 1) * PER_PAGE + sessions.list.length}</span>
+            {' '}
+            of
+            {' '}
+            <span className="font-medium">{numberWithCommas(sessions.total)}</span>
+            {' '}
+            sessions.
           </div>
         ) : (
           <div>
-            Showing <span className="font-medium">0</span> to <span className="font-medium">0</span>{' '}
-            of <span className="font-medium">0</span> sessions.
+            Showing
+            {' '}
+            <span className="font-medium">0</span>
+            {' '}
+            to
+            {' '}
+            <span className="font-medium">0</span>
+            {' '}
+            of
+            {' '}
+            <span className="font-medium">0</span>
+            {' '}
+            sessions.
           </div>
         )}
         <Pagination
@@ -124,14 +148,14 @@ function StatsTable({ onSort, isLoading, onPageChange, page, sessions, exportCSV
 
 function Row({ session }: { session: AssistStatsSession }) {
   const { hideModal } = useModal();
-  
+
   return (
-    <div className={'grid grid-cols-9 p-4 border-b hover:bg-active-blue'}>
+    <div className="grid grid-cols-9 p-4 border-b hover:bg-active-blue">
       <Cell size={2}>{checkForRecent(getDateFromMill(session.timestamp)!, 'LLL dd, hh:mm a')}</Cell>
       <Cell size={2}>
-        <div className={'flex gap-2 flex-wrap'}>
+        <div className="flex gap-2 flex-wrap">
           {session.teamMembers.map((member) => (
-            <div className={'p-1 rounded border bg-gray-lightest w-fit'}>{member.name}</div>
+            <div className="p-1 rounded border bg-gray-lightest w-fit">{member.name}</div>
           ))}
         </div>
       </Cell>
@@ -139,7 +163,7 @@ function Row({ session }: { session: AssistStatsSession }) {
       <Cell size={1}>{durationFromMsFormatted(session.callDuration)}</Cell>
       <Cell size={2}>{durationFromMsFormatted(session.controlDuration)}</Cell>
       <Cell size={1}>
-        <div className={'w-full flex justify-end gap-4'}>
+        <div className="w-full flex justify-end gap-4">
           {session.recordings?.length > 0 ? (
             session.recordings?.length > 1 ? (
               <Dropdown
@@ -148,15 +172,14 @@ function Row({ session }: { session: AssistStatsSession }) {
                     key: recording.recordId,
                     label: recording.name.slice(0, 20),
                   })),
-                  onClick: (item) =>
-                    recordingsService.fetchRecording(item.key as unknown as number),
+                  onClick: (item) => recordingsService.fetchRecording(item.key as unknown as number),
                 }}
               >
                 <CloudDownloadOutlined rev={undefined} style={{ fontSize: 22, color: '#8C8C8C' }} />
               </Dropdown>
             ) : (
               <div
-                className={'cursor-pointer'}
+                className="cursor-pointer"
                 onClick={() => recordingsService.fetchRecording(session.recordings[0].recordId)}
               >
                 <CloudDownloadOutlined rev={undefined} style={{ fontSize: 22, color: '#8C8C8C' }} />

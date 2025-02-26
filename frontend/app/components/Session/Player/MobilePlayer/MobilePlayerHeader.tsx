@@ -4,13 +4,13 @@ import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { BackLink } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import stl from '../ReplayPlayer/playerBlockHeader.module.css';
 import { IFRAME } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
+import stl from '../ReplayPlayer/playerBlockHeader.module.css';
+import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -34,7 +34,7 @@ function PlayerBlockHeader(props: Props) {
   const {
     fullscreen,
     setActiveTab,
-    activeTab
+    activeTab,
   } = props;
   const metaList = customFieldStore.list.map((i: any) => i.key);
 
@@ -50,7 +50,7 @@ function PlayerBlockHeader(props: Props) {
   };
 
   const { metadata } = session;
-  let _metaList = Object.keys(metadata || {})
+  const _metaList = Object.keys(metadata || {})
     .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
@@ -59,7 +59,7 @@ function PlayerBlockHeader(props: Props) {
 
   const TABS = Object.keys(props.tabs).map((tab) => ({
     text: props.tabs[tab],
-    key: tab
+    key: tab,
   }));
 
   return (

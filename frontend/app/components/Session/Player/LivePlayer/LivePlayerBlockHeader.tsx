@@ -7,27 +7,29 @@ import {
 import { BackLink, Icon } from 'UI';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore'
-import stl from '../ReplayPlayer/playerBlockHeader.module.css';
+import { useStore } from 'App/mstore';
 import AssistActions from 'Components/Assist/components/AssistActions';
+import stl from '../ReplayPlayer/playerBlockHeader.module.css';
+import UserCard from '../ReplayPlayer/EventsBlock/UserCard';
 
 function LivePlayerBlockHeader({
   isMultiview,
 }: { isMultiview?: boolean }) {
   const [hideBack, setHideBack] = React.useState(false);
   const { store } = React.useContext(PlayerContext);
-  const { assistMultiviewStore, projectsStore, customFieldStore, sessionStore } = useStore();
+  const {
+    assistMultiviewStore, projectsStore, customFieldStore, sessionStore,
+  } = useStore();
   const isAssist = window.location.pathname.includes('/assist/');
   const session = sessionStore.current;
   const closedLive = sessionStore.fetchFailed || (isAssist && !session.live);
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const history = useHistory();
   const { width, height } = store.get();
 
-  const metaList = customFieldStore.list.map((i: any) => i.key)
+  const metaList = customFieldStore.list.map((i: any) => i.key);
 
   React.useEffect(() => {
     const queryParams = new URLSearchParams(document.location.search);
@@ -38,8 +40,10 @@ function LivePlayerBlockHeader({
     history.goBack();
   };
 
-  const { userId, metadata, isCallActive, agentIds } = session;
-  let _metaList = Object.keys(metadata)
+  const {
+    userId, metadata, isCallActive, agentIds,
+  } = session;
+  const _metaList = Object.keys(metadata)
     .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
@@ -87,7 +91,7 @@ function LivePlayerBlockHeader({
             </div>
           )}
 
-            <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds} />
+          <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds} />
         </div>
       </div>
     </div>

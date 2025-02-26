@@ -1,9 +1,8 @@
 import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
-import { Tooltip, Button } from 'antd'
+import { Tooltip, Button } from 'antd';
 import { Icon } from 'UI';
 import { SessionRecordingStatus } from 'Player';
-let stopRecorderCb: () => void;
 import { recordingsService } from 'App/services';
 import { toast } from 'react-toastify';
 import { formatTimeOrDate } from 'App/date';
@@ -11,6 +10,8 @@ import { PlayerContext, ILivePlayerContext } from 'App/components/Session/player
 import { observer } from 'mobx-react-lite';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
+
+let stopRecorderCb: () => void;
 
 /**
  * "edge" || "edg/"   chromium based edge (dev or canary)
@@ -33,18 +34,16 @@ const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 
 function ScreenRecorder() {
   const { projectsStore, sessionStore, userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const agentId = userStore.account.id;
-  const sessionId = sessionStore.current.sessionId;
-  const siteId = projectsStore.siteId;
+  const { sessionId } = sessionStore.current;
+  const { siteId } = projectsStore;
   const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
-  const recordingState = store.get().recordingState;
+  const { recordingState } = store.get();
 
   const [isRecording, setRecording] = React.useState(false);
 
-  React.useEffect(() => {
-    return () => stopRecorderCb?.();
-  }, []);
+  React.useEffect(() => () => stopRecorderCb?.(), []);
 
   const onSave = async (saveObj: { name: string; duration: number }, blob: Blob) => {
     try {
@@ -83,31 +82,31 @@ function ScreenRecorder() {
         `${formatTimeOrDate(new Date().getTime(), undefined, true)}_${sessionId}`,
         sessionId,
         onSave,
-        onStop
+        onStop,
       );
       setRecording(true);
     } catch (e) {
-      stopRecordingHandler()
+      stopRecordingHandler();
       console.error(e);
     }
   };
 
   const stopRecordingHandler = () => {
-    player.assistManager.ping('s_recording_ended', agentId)
+    player.assistManager.ping('s_recording_ended', agentId);
     stopRecorderCb?.();
     onStop();
   };
 
   const recordingRequest = () => {
-    const onDeny = () => toast.info('Recording request was rejected by user')
+    const onDeny = () => toast.info('Recording request was rejected by user');
     player.assistManager.requestRecording({ onDeny });
   };
 
   React.useEffect(() => {
     if (isRecording) {
-      player.assistManager.ping('s_recording_started', agentId)
+      player.assistManager.ping('s_recording_started', agentId);
     }
-  }, [isRecording])
+  }, [isRecording]);
 
   if (!isSupported() || !isEnterprise) {
     return (
@@ -116,7 +115,7 @@ function ScreenRecorder() {
         <Tooltip
           title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED}
         >
-          <Button icon={<Icon name={"record-circle"} size={16} />} disabled type="text">
+          <Button icon={<Icon name="record-circle" size={16} />} disabled type="text">
             Record Activity
           </Button>
         </Tooltip>
@@ -128,7 +127,7 @@ function ScreenRecorder() {
     <div onClick={!isRecording ? recordingRequest : stopRecordingHandler} className="p-2">
       <Button
         icon={<Icon name={!isRecording ? 'stop-record-circle' : 'record-circle'} size={16} />}
-        type={'text'}
+        type="text"
         className={isRecording ? 'text-red' : 'text-main'}
       >
         {isRecording ? 'Stop Recording' : 'Record Activity'}

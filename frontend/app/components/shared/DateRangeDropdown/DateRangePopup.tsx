@@ -18,8 +18,8 @@ import styles from './dateRangePopup.module.css';
 
 function DateRangePopup(props: any) {
   const [range, setRange] = React.useState(
-    props.selectedDateRange ||
-      Interval.fromDateTimes(DateTime.now(), DateTime.now())
+    props.selectedDateRange
+      || Interval.fromDateTimes(DateTime.now(), DateTime.now()),
   );
   const [value, setValue] = React.useState<string | null>(null);
 
@@ -28,12 +28,12 @@ function DateRangePopup(props: any) {
     if (props.singleDay) {
       newRange = Interval.fromDateTimes(
         DateTime.fromJSDate(range),
-        DateTime.fromJSDate(range)
+        DateTime.fromJSDate(range),
       );
     } else {
       newRange = Interval.fromDateTimes(
         DateTime.fromJSDate(range[0]),
-        DateTime.fromJSDate(range[1])
+        DateTime.fromJSDate(range[1]),
       );
     }
     setRange(newRange);
@@ -69,8 +69,7 @@ function DateRangePopup(props: any) {
   };
 
   const { onCancel } = props;
-  const isUSLocale =
-    navigator.language === 'en-US' || navigator.language.startsWith('en-US');
+  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
 
   const rangeForDisplay = props.singleDay
     ? range.start.ts
@@ -81,9 +80,8 @@ function DateRangePopup(props: any) {
         <div className={styles.preSelections}>
           {dateRangeValues
             .filter(
-              (value) =>
-                value !== CUSTOM_RANGE &&
-                value !== DATE_RANGE_VALUES.LAST_30_MINUTES
+              (value) => value !== CUSTOM_RANGE
+                && value !== DATE_RANGE_VALUES.LAST_30_MINUTES,
             )
             .map((value) => (
               <div key={value} onClick={() => selectValue(value)}>
@@ -101,7 +99,7 @@ function DateRangePopup(props: any) {
             value={rangeForDisplay}
             calendarProps={{
               tileDisabled: props.isTileDisabled,
-              selectRange: props.singleDay ? false : true,
+              selectRange: !props.singleDay,
             }}
           />
         </div>
@@ -109,12 +107,17 @@ function DateRangePopup(props: any) {
       <div className="flex items-center justify-between py-2 px-3">
         {props.singleDay ? (
           <div>
-            Compare from {range.start.toFormat('MMM dd, yyyy')}
+            Compare from
+            {' '}
+            {range.start.toFormat('MMM dd, yyyy')}
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <label>From: </label>
-            <span>{range.start.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')} </span>
+            <span>
+              {range.start.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')}
+              {' '}
+            </span>
             <TimePicker
               format={isUSLocale ? 'hh:mm a' : 'HH:mm'}
               value={range.start}
@@ -124,7 +127,10 @@ function DateRangePopup(props: any) {
               style={{ width: isUSLocale ? 102 : 76 }}
             />
             <label>To: </label>
-            <span>{range.end.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')} </span>
+            <span>
+              {range.end.toFormat(isUSLocale ? 'MM/dd' : 'dd/MM')}
+              {' '}
+            </span>
             <TimePicker
               format={isUSLocale ? 'hh:mm a' : 'HH:mm'}
               value={range.end}
@@ -136,14 +142,14 @@ function DateRangePopup(props: any) {
           </div>
         )}
         <div className="flex items-center">
-          <Button onClick={onCancel}>{'Cancel'}</Button>
+          <Button onClick={onCancel}>Cancel</Button>
           <Button
             type="primary"
             className="ml-2"
             onClick={onApply}
             disabled={!range}
           >
-            {'Apply'}
+            Apply
           </Button>
         </div>
       </div>

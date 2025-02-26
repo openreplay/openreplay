@@ -15,7 +15,7 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-  BACKENDLOGS
+  BACKENDLOGS,
 } from 'App/mstore/uiPlayerStore';
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
@@ -32,7 +32,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import BackendLogsPanel from "../SharedComponents/BackendLogs/BackendLogsPanel";
+import BackendLogsPanel from '../SharedComponents/BackendLogs/BackendLogsPanel';
 
 interface IProps {
   fullView: boolean;
@@ -41,29 +41,28 @@ interface IProps {
   setActiveTab: (tab: string) => void;
 }
 
-export const heightKey = 'playerPanelHeight'
+export const heightKey = 'playerPanelHeight';
 export const debounceUpdate = debounce((height: number) => {
   localStorage.setItem(heightKey, height.toString());
-}, 500)
+}, 500);
 export const getDefaultPanelHeight = () => {
-  const storageHeight = localStorage.getItem(heightKey)
+  const storageHeight = localStorage.getItem(heightKey);
   if (storageHeight) {
-    const height = parseInt(storageHeight, 10)
-    return height > window.innerHeight / 2 ? window.innerHeight / 2 : height
-  } else {
-    return 300
+    const height = parseInt(storageHeight, 10);
+    return height > window.innerHeight / 2 ? window.innerHeight / 2 : height;
   }
-}
+  return 300;
+};
 
 function Player(props: IProps) {
   const { uiPlayerStore, sessionStore } = useStore();
-  const nextId = sessionStore.nextId;
-  const sessionId = sessionStore.current.sessionId;
-  const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
-  const fullscreenOff = uiPlayerStore.fullscreenOff;
-  const bottomBlock = uiPlayerStore.bottomBlock;
-  const fullscreen = uiPlayerStore.fullscreen;
-  const defaultHeight = getDefaultPanelHeight()
+  const { nextId } = sessionStore;
+  const { sessionId } = sessionStore.current;
+  const { updateLastPlayedSession } = sessionStore;
+  const { fullscreenOff } = uiPlayerStore;
+  const { bottomBlock } = uiPlayerStore;
+  const { fullscreen } = uiPlayerStore;
+  const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const { activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
@@ -75,7 +74,7 @@ function Player(props: IProps) {
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
     if (isReady && !isAttached.current) {
-      const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
+      const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; // TODO: good architecture
       if (parentElement) {
         playerContext.player.attach(parentElement);
         isAttached.current = true;
@@ -108,7 +107,7 @@ function Player(props: IProps) {
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
       playerContext.player.scale();
-      debounceUpdate(newHeight)
+      debounceUpdate(newHeight);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -121,21 +120,21 @@ function Player(props: IProps) {
       className={cn(
         stl.playerBody,
         'flex-1 flex flex-col relative',
-        fullscreen && 'pb-2'
+        fullscreen && 'pb-2',
       )}
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div
         className={cn('relative flex-1', 'overflow-hidden')}
-        id={'player-container'}
+        id="player-container"
       >
-        {activeTab === 'HIGHLIGHT' ? <div style={{ background: 'rgba(0,0,0, 0.3)' }} className={'w-full h-full z-50 absolute top-0 left-0'} /> : undefined}
+        {activeTab === 'HIGHLIGHT' ? <div style={{ background: 'rgba(0,0,0, 0.3)' }} className="w-full h-full z-50 absolute top-0 left-0" /> : undefined}
         <Overlay nextId={nextId} />
         <div
           className={cn(
             stl.screenWrapper,
-            isInspMode ? stl.solidBg : stl.checkers
+            isInspMode ? stl.solidBg : stl.checkers,
           )}
           ref={screenWrapper}
         />
@@ -152,7 +151,7 @@ function Player(props: IProps) {
         >
           <div
             onMouseDown={handleResize}
-            className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
+            className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
           />
           {bottomBlock === OVERVIEW && <OverviewPanel />}
           {bottomBlock === CONSOLE && <ConsolePanel />}
@@ -172,9 +171,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <Controls
-          setActiveTab={(tab: string) =>
-            activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)
-          }
+          setActiveTab={(tab: string) => (activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab))}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

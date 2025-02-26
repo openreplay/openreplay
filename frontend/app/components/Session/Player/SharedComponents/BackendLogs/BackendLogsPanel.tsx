@@ -2,9 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { processLog, UnifiedLog } from './utils';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import { useStore, client } from 'App/mstore';
 import {
   ServiceName,
   serviceNames,
@@ -14,17 +13,17 @@ import { capitalize } from 'App/utils';
 import { Icon } from 'UI';
 import { Segmented, Input, Tooltip } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { client } from 'App/mstore';
+import { processLog, UnifiedLog } from './utils';
 import { FailedFetch, LoadingFetch } from './StatusMessages';
 import { TableHeader, LogRow } from './Table';
 
 async function fetchLogs(
   tab: string,
   projectId: string,
-  sessionId: string
+  sessionId: string,
 ): Promise<UnifiedLog[]> {
   const data = await client.get(
-    `/integrations/v1/integrations/${tab}/${projectId}/data/${sessionId}`
+    `/integrations/v1/integrations/${tab}/${projectId}/data/${sessionId}`,
   );
   const json = await data.json();
   try {
@@ -33,9 +32,8 @@ async function fetchLogs(
       const logJson = await logsResp.json();
       if (logJson.length === 0) return [];
       return processLog(logJson);
-    } else {
-      throw new Error('Failed to fetch logs');
     }
+    throw new Error('Failed to fetch logs');
   } catch (e) {
     console.log(e);
     throw e;
@@ -44,13 +42,14 @@ async function fetchLogs(
 
 function BackendLogsPanel() {
   const { projectsStore, sessionStore, integrationsStore } = useStore();
-  const integratedServices =
-    integrationsStore.integrations.backendLogIntegrations;
+  const integratedServices = integrationsStore.integrations.backendLogIntegrations;
   const defaultTab = integratedServices[0]!.name;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
   const [tab, setTab] = React.useState<ServiceName>(defaultTab as ServiceName);
-  const { data, isError, isPending, isSuccess, refetch } = useQuery<
+  const {
+    data, isError, isPending, isSuccess, refetch,
+  } = useQuery<
     UnifiedLog[]
   >({
     queryKey: ['integrationLogs', tab, sessionId],
@@ -67,12 +66,14 @@ function BackendLogsPanel() {
 
   const tabs = Object.entries(serviceNames)
     .filter(
-      ([slug]) => integratedServices.findIndex((i) => i.name === slug) !== -1
+      ([slug]) => integratedServices.findIndex((i) => i.name === slug) !== -1,
     )
     .map(([slug, name]) => ({
       label: (
-        <div className={'flex items-center gap-2'}>
-          <Icon size={14} name={`integrations/${slug}`} /> <div>{name}</div>
+        <div className="flex items-center gap-2">
+          <Icon size={14} name={`integrations/${slug}`} />
+          {' '}
+          <div>{name}</div>
         </div>
       ),
       value: slug,
@@ -82,8 +83,8 @@ function BackendLogsPanel() {
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
         <div className="flex items-center justify-between w-full">
-          <div className={'flex gap-2 items-center'}>
-            <div className={'font-semibold'}>Traces</div>
+          <div className="flex gap-2 items-center">
+            <div className="font-semibold">Traces</div>
             {tabs.length && tab ? (
               <div>
                 <Segmented
@@ -141,16 +142,14 @@ function BackendLogsPanel() {
 
 const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
   const { store, player } = React.useContext(PlayerContext);
-  const time = store.get().time;
-  const sessionStart = store.get().sessionStart;
+  const { time } = store.get();
+  const { sessionStart } = store.get();
   const _list = React.useRef<VListHandle>(null);
   const activeIndex = React.useMemo(() => {
     const currTs = time + sessionStart;
-    const index = data.findIndex((log) =>
-      log.timestamp !== 'N/A'
-        ? new Date(log.timestamp).getTime() >= currTs
-        : false
-    );
+    const index = data.findIndex((log) => (log.timestamp !== 'N/A'
+      ? new Date(log.timestamp).getTime() >= currTs
+      : false));
     return index === -1 ? data.length - 1 : index;
   }, [time, data.length]);
   React.useEffect(() => {

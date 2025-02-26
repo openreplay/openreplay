@@ -1,20 +1,22 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Input, SegmentSelection, Loader, NoContent } from 'UI';
+import {
+  Input, SegmentSelection, Loader, NoContent,
+} from 'UI';
 import Breadcrumb from 'Shared/Breadcrumb';
-import { Button, Switch } from 'antd'
+import { Button, Switch } from 'antd';
 import { useModal } from 'App/components/Modal';
 import HowTo from 'Components/FFlags/NewFFlag/HowTo';
-import {Prompt, useHistory} from 'react-router';
-import {withSiteId, fflags, fflagRead} from 'App/routes';
-import Description from './Description';
-import Header from './Header';
+import { Prompt, useHistory } from 'react-router';
+import { withSiteId, fflags, fflagRead } from 'App/routes';
 import RolloutCondition from 'Shared/ConditionSet';
-import Multivariant from './Multivariant';
-import { Payload } from './Helpers'
 import { toast } from 'react-toastify';
 import { nonFlagFilters } from 'Types/filter/newFilter';
+import Description from './Description';
+import Header from './Header';
+import Multivariant from './Multivariant';
+import { Payload } from './Helpers';
 
 function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
   const { featureFlagsStore } = useStore();
@@ -27,32 +29,34 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
     }
     return () => {
       featureFlagsStore.setCurrentFlag(null);
-    }
+    };
   }, [fflagId]);
 
   const current = featureFlagsStore.currentFflag;
   const { showModal } = useModal();
   const history = useHistory();
 
-  if (featureFlagsStore.isLoading) return <Loader loading={true} />;
-  if (!current) return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
-      <Breadcrumb
-        items={[
-          { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
-          { label: fflagId },
-        ]}
-      />
-      <NoContent show title={'Feature flag not found'} />
-    </div>
-  )
+  if (featureFlagsStore.isLoading) return <Loader loading />;
+  if (!current) {
+    return (
+      <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
+        <Breadcrumb
+          items={[
+            { label: 'Feature Flags', to: withSiteId(fflags(), siteId) },
+            { label: fflagId },
+          ]}
+        />
+        <NoContent show title="Feature flag not found" />
+      </div>
+    );
+  }
 
   const onImplementClick = () => {
     showModal(<HowTo />, { right: true, width: 450 });
   };
 
   const onCancel = () => {
-    history.goBack()
+    history.goBack();
   };
 
   const onSave = () => {
@@ -64,26 +68,24 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
         history.push(withSiteId(fflagRead(fflagId), siteId));
       })
         .catch(() => {
-          toast.error(`Failed to update flag, check your data and try again.`)
-        })
+          toast.error('Failed to update flag, check your data and try again.');
+        });
     } else {
       featureFlagsStore.createFlag().then(() => {
         toast.success('Feature flag created.');
         history.push(withSiteId(fflags(), siteId));
       }).catch(() => {
         toast.error('Failed to create flag.');
-      })
+      });
     }
   };
 
   const showDescription = Boolean(current.description?.length);
   return (
-    <div className={'w-full mx-auto mb-4'} style={{ maxWidth: '1360px' }}>
+    <div className="w-full mx-auto mb-4" style={{ maxWidth: '1360px' }}>
       <Prompt
         when={current.hasChanged}
-        message={() => {
-          return 'You have unsaved changes. Are you sure you want to leave?';
-        }}
+        message={() => 'You have unsaved changes. Are you sure you want to leave?'}
       />
       <Breadcrumb
         items={[
@@ -91,7 +93,7 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           { label: fflagId ? current.flagKey : 'New Feature Flag' },
         ]}
       />
-      <div className={'w-full bg-white rounded p-4 widget-wrapper'}>
+      <div className="w-full bg-white rounded p-4 widget-wrapper">
         <div className="flex justify-between items-center">
           <Header
             siteId={siteId}
@@ -101,12 +103,12 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
             isNew={!fflagId}
           />
         </div>
-        <div className={'w-full border-b border-light-gray my-2'} />
+        <div className="w-full border-b border-light-gray my-2" />
 
-        <label className={'font-semibold'}>Key</label>
+        <label className="font-semibold">Key</label>
         <Input
           type="text"
-          placeholder={'new-unique-key'}
+          placeholder="new-unique-key"
           value={current.flagKey}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             if (e.target.value?.length > 60) return;
@@ -114,16 +116,16 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           }}
         />
         <div
-          className={'text-sm text-disabled-text mt-1 flex items-center gap-1'}
+          className="text-sm text-disabled-text mt-1 flex items-center gap-1"
         >
           Feature flag keys must be unique.
-          <div className={'link'} onClick={onImplementClick}>
+          <div className="link" onClick={onImplementClick}>
             Learn how to implement feature flags
           </div>
           in your code.
         </div>
 
-        <div className={'mt-6'}>
+        <div className="mt-6">
           <Description
             current={current}
             isDescrEditing={featureFlagsStore.isDescrEditing}
@@ -132,13 +134,13 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           />
         </div>
 
-        <div className={'mt-6'}>
-          <label className={'font-semibold'}>Feature Type</label>
+        <div className="mt-6">
+          <label className="font-semibold">Feature Type</label>
           <div style={{ width: 340 }}>
             <SegmentSelection
               outline
-              name={'feature-type'}
-              size={'small'}
+              name="feature-type"
+              size="small"
               onSelect={(_: any, { value }: any) => {
                 current.setIsSingleOption(value === 'single');
               }}
@@ -152,25 +154,24 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           {current.isSingleOption ? (
             <>
               <div
-                className={
-                  'text-sm text-disabled-text mt-1 flex items-center gap-1'
-                }
+                className="text-sm text-disabled-text mt-1 flex items-center gap-1"
               >
                 Users will be served
-                <code className={'p-1 text-red rounded bg-gray-lightest'}>
+                <code className="p-1 text-red rounded bg-gray-lightest">
                   true
-                </code>{' '}
+                </code>
+                {' '}
                 if they match one or more rollout conditions.
               </div>
-              <div className={'mt-6'}>
+              <div className="mt-6">
                 <Payload />
                 <Input
                   value={current.payload ?? ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     current.setPayload(e.target.value);
                   }}
-                  placeholder={"E.g. red button, {'buttonColor': 'red'}"}
-                  className={'mt-2'}
+                  placeholder="E.g. red button, {'buttonColor': 'red'}"
+                  className="mt-2"
                 />
               </div>
             </>
@@ -179,8 +180,8 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           )}
         </div>
 
-        <div className={'mt-6'}>
-          <label className={'font-semibold'}>
+        <div className="mt-6">
+          <label className="font-semibold">
             Persist flag across authentication
           </label>
           <div className="flex items-center gap-2">
@@ -192,14 +193,14 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
             />
             <div>{current.isPersist ? 'Yes' : 'No'}</div>
           </div>
-          <div className={'text-sm text-disabled-text flex items-center gap-1'}>
+          <div className="text-sm text-disabled-text flex items-center gap-1">
             Persist flag to not reset this feature flag status after a user is
             identified.
           </div>
         </div>
 
-        <div className={'mt-6'}>
-          <label className={'font-semibold'}>
+        <div className="mt-6">
+          <label className="font-semibold">
             Enable this feature flag (Status)?
           </label>
           <div className="flex items-center gap-2">
@@ -208,8 +209,8 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
               onChange={() => {
                 !fflagId && !current.isActive
                   ? toast.success(
-                      'Feature flag will be enabled upon saving it.'
-                    )
+                    'Feature flag will be enabled upon saving it.',
+                  )
                   : '';
                 current.setIsEnabled(!current.isActive);
               }}
@@ -218,10 +219,10 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           </div>
         </div>
 
-        <div className={'mt-6 p-4 rounded bg-gray-lightest'}>
-          <label className={'font-semibold'}>Rollout Conditions</label>
+        <div className="mt-6 p-4 rounded bg-gray-lightest">
+          <label className="font-semibold">Rollout Conditions</label>
           {current.conditions.length === 0 ? null : (
-            <div className={'text-sm text-disabled-text mb-2'}>
+            <div className="text-sm text-disabled-text mb-2">
               Indicate the users for whom you intend to make this flag
               available. Keep in mind that each set of conditions will be
               deployed separately from one another.
@@ -229,20 +230,20 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
           )}
           <NoContent
             show={current.conditions.length === 0}
-            title={'The flag will be available for 100% of the user sessions.'}
-            subtext={
+            title="The flag will be available for 100% of the user sessions."
+            subtext={(
               <div
-                className={'flex flex-col items-center'}
+                className="flex flex-col items-center"
                 style={{ fontSize: 14 }}
               >
-                <div className={'text-sm mb-1'}>
+                <div className="text-sm mb-1">
                   Set up condition sets to restrict the rollout.
                 </div>
-                <Button onClick={() => current!.addCondition()} type={'text'}>
+                <Button onClick={() => current!.addCondition()} type="text">
                   + Create Condition Set
                 </Button>
               </div>
-            }
+            )}
           >
             <>
               {current.conditions.map((condition, index) => (
@@ -251,22 +252,20 @@ function NewFFlag({ siteId, fflagId }: { siteId: string; fflagId?: string }) {
                     set={index + 1}
                     index={index}
                     conditions={condition}
-                    bottomLine1={'Rollout to'}
-                    bottomLine2={'of sessions'}
+                    bottomLine1="Rollout to"
+                    bottomLine2="of sessions"
                     removeCondition={current.removeCondition}
                     excludeFilterKeys={nonFlagFilters}
                   />
-                  <div className={'my-2 w-full text-center'}>OR</div>
+                  <div className="my-2 w-full text-center">OR</div>
                 </React.Fragment>
               ))}
               {current.conditions.length <= 10 ? (
                 <div
                   onClick={() => current!.addCondition()}
-                  className={
-                    'flex items-center justify-center w-full bg-white rounded border mt-2 p-2'
-                  }
+                  className="flex items-center justify-center w-full bg-white rounded border mt-2 p-2"
                 >
-                  <Button type={'text'}>+ Create Condition Set</Button>
+                  <Button type="text">+ Create Condition Set</Button>
                 </div>
               ) : null}
             </>

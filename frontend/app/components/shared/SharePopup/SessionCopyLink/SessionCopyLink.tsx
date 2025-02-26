@@ -10,10 +10,10 @@ function SessionCopyLink({ time }: { time: number }) {
   const copyHandler = () => {
     setCopied(true);
     copy(
-      window.location.origin
+      `${window.location.origin
       + window.location.pathname
-      + '?jumpto='
-      + Math.round(time)
+      }?jumpto=${
+        Math.round(time)}`,
     );
     setTimeout(() => {
       setCopied(false);

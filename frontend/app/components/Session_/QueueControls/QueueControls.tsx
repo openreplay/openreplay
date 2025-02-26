@@ -19,11 +19,11 @@ interface Props extends RouteComponentProps {
 
 function QueueControls(props: Props) {
   const { projectsStore, sessionStore, searchStore } = useStore();
-  const previousId = sessionStore.previousId;
-  const nextId = sessionStore.nextId;
-  const total = sessionStore.total;
+  const { previousId } = sessionStore;
+  const { nextId } = sessionStore;
+  const { total } = sessionStore;
   const sessionIds = sessionStore.sessionIds ?? [];
-  const setAutoplayValues = sessionStore.setAutoplayValues;
+  const { setAutoplayValues } = sessionStore;
   const {
     match: {
       // @ts-ignore
@@ -31,7 +31,7 @@ function QueueControls(props: Props) {
     },
   } = props;
 
-  const currentPage = searchStore.currentPage;
+  const { currentPage } = searchStore;
 
   useEffect(() => {
     setAutoplayValues();
@@ -72,10 +72,10 @@ function QueueControls(props: Props) {
           open={previousId ? undefined : false}
         >
           <Button
-            size={'small'}
-            shape={'circle'}
+            size="small"
+            shape="circle"
             disabled={!previousId}
-            className={'flex items-center justify-center'}
+            className="flex items-center justify-center"
           >
             <LeftOutlined />
           </Button>
@@ -95,10 +95,10 @@ function QueueControls(props: Props) {
           open={nextId ? undefined : false}
         >
           <Button
-            size={'small'}
-            shape={'circle'}
+            size="small"
+            shape="circle"
             disabled={!nextId}
-            className={'flex items-center justify-center'}
+            className="flex items-center justify-center"
           >
             <RightOutlined />
           </Button>

@@ -12,10 +12,9 @@ import { useStore } from 'App/mstore';
 const PLAY_ICON_NAMES = {
   notPlayed: 'play-fill',
   played: 'play-circle-light',
-} as const
+} as const;
 
-const getIconName = (isViewed: any) =>
-  !isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played;
+const getIconName = (isViewed: any) => (!isViewed ? PLAY_ICON_NAMES.notPlayed : PLAY_ICON_NAMES.played);
 
 interface Props {
   isAssist?: boolean;
@@ -30,7 +29,9 @@ interface Props {
 }
 function PlayLink(props: Props) {
   const { projectsStore } = useStore();
-  const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
+  const {
+    isAssist, viewed, sessionId, onClick = null, queryParams,
+  } = props;
   const history = useHistory();
   const defaultIconName = getIconName(viewed);
 
@@ -48,18 +49,17 @@ function PlayLink(props: Props) {
     const projectId = props.siteId ?? projectsStore.getSiteId().siteId!;
     const replayLink = withSiteId(
       link + (props.query ? props.query : ''),
-      projectId
+      projectId,
     );
     if (props.beforeOpen) {
       // check for ctrl or shift
       if (e.ctrlKey || e.shiftKey || e.metaKey) {
         e.preventDefault();
         return window.open(replayLink, '_blank');
-      } else {
-        e.preventDefault();
-        props.beforeOpen();
-        history.push(replayLink);
       }
+      e.preventDefault();
+      props.beforeOpen();
+      history.push(replayLink);
     }
   };
 
@@ -67,20 +67,20 @@ function PlayLink(props: Props) {
 
   return (
     <Link
-      className={'group'}
+      className="group"
       onClick={onLinkClick}
       to={link + (props.query ? props.query : '')}
       target={props.newTab ? '_blank' : undefined}
       rel={props.newTab ? 'noopener noreferrer' : undefined}
     >
-      <div className={'group-hover:block hidden'}>
-        <Icon name={'play-hover'} size={38} color={isAssist ? 'tealx' : 'teal'} />
+      <div className="group-hover:block hidden">
+        <Icon name="play-hover" size={38} color={isAssist ? 'tealx' : 'teal'} />
       </div>
-      <div className={'group-hover:hidden block'}>
+      <div className="group-hover:hidden block">
         <Icon name={iconName} size={38} color={isAssist ? 'tealx' : 'teal'} />
       </div>
     </Link>
   );
 }
 
-export default PlayLink
+export default PlayLink;

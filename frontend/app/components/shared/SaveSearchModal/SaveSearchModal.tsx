@@ -1,11 +1,13 @@
 import React from 'react';
-import { confirm, Modal, Form, Icon, Checkbox, Input } from 'UI';
-import { Button } from 'antd'
-import stl from './SaveSearchModal.module.css';
+import {
+  confirm, Modal, Form, Icon, Checkbox, Input,
+} from 'UI';
+import { Button } from 'antd';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import stl from './SaveSearchModal.module.css';
 
 interface Props {
   show: boolean;
@@ -16,7 +18,7 @@ interface Props {
 function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
   const { searchStore, userStore } = useStore();
   const userId = userStore.account.id;
-  const savedSearch = searchStore.savedSearch;
+  const { savedSearch } = searchStore;
   const loading = searchStore.isSaving;
 
   const onNameChange = ({ target: { value } }: any) => {
@@ -30,7 +32,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
         closeHandler();
       })
       .catch((e) => {
-        console.error(e)
+        console.error(e);
         toast.error('Something went wrong, please try again');
       });
   };
@@ -40,7 +42,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this Saved search?`
+        confirmation: 'Are you sure you want to permanently delete this Saved search?',
       })
     ) {
       searchStore.removeSavedSearch(savedSearch.searchId!).then(() => {
@@ -54,16 +56,16 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
   return (
     <Modal size="small" open={show} onClose={closeHandler}>
       <Modal.Header className={stl.modalHeader}>
-        <div>{'Save Search'}</div>
+        <div>Save Search</div>
         <Icon role="button" tabIndex="-1" color="gray-dark" size="18" name="close" onClick={closeHandler} />
       </Modal.Header>
 
       <Modal.Content>
         <Form onSubmit={onSave}>
           <Form.Field>
-            <label>{'Title:'}</label>
+            <label>Title:</label>
             <Input
-              autoFocus={true}
+              autoFocus
               // className={ stl.name }
               name="name"
               value={savedSearch.name}
@@ -74,7 +76,8 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
 
           <Form.Field>
             <div
-              className={cn('flex items-center', { disabled: savedSearch.exists() && savedSearch.userId !== userId })}>
+              className={cn('flex items-center', { disabled: savedSearch.exists() && savedSearch.userId !== userId })}
+            >
               <Checkbox
                 name="isPublic"
                 className="font-medium mr-3"
@@ -96,11 +99,16 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
       </Modal.Content>
       <Modal.Footer className="flex items-center px-6">
         <div className="mr-auto flex items-center">
-          <Button type="primary" onClick={onSave} loading={loading} disabled={!savedSearch.validate()}
-                  className="mr-2">
+          <Button
+            type="primary"
+            onClick={onSave}
+            loading={loading}
+            disabled={!savedSearch.validate()}
+            className="mr-2"
+          >
             {savedSearch.exists() ? 'Update' : 'Save'}
           </Button>
-          <Button onClick={closeHandler}>{'Cancel'}</Button>
+          <Button onClick={closeHandler}>Cancel</Button>
         </div>
         {savedSearch.exists() && (
           <Button type="text" onClick={onDelete}>

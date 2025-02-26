@@ -11,12 +11,12 @@ const unpack = (b: Uint8Array): Uint8Array => {
     const uData = gunzipSync(b);
     console.debug(
       'Gunzip time',
-      Math.floor(performance.now() - now) + 'ms',
+      `${Math.floor(performance.now() - now)}ms`,
       'size',
       Math.floor(b.byteLength / 1024),
       '->',
       Math.floor(uData.byteLength / 1024),
-      'kb'
+      'kb',
     );
     data = uData;
   }
@@ -25,12 +25,12 @@ const unpack = (b: Uint8Array): Uint8Array => {
     const uData = fzstd.decompress(b);
     console.debug(
       'Zstd unpack time',
-      Math.floor(performance.now() - now) + 'ms',
+      `${Math.floor(performance.now() - now)}ms`,
       'size',
       Math.floor(b.byteLength / 1024),
       '->',
       Math.floor(uData.byteLength / 1024),
-      'kb'
+      'kb',
     );
     data = uData;
   }

@@ -9,13 +9,11 @@ function InitORCard({
 }) {
   return (
     <div
-      className={
-        'shadow-sm flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded'
-      }
+      className="shadow-sm flex flex-col gap-4 bg-white items-center p-4 mx-auto rounded"
       style={{ width: 236 }}
     >
-      <img src={'/assets/img/init-or.png'} width={200} height={120} />
-      <div className={'font-semibold'}>
+      <img src="/assets/img/init-or.png" width={200} height={120} />
+      <div className="font-semibold">
         Discover the full potential of OpenReplay!
       </div>
       <div>
@@ -26,7 +24,7 @@ function InitORCard({
         type="primary"
         ghost
         icon={<ArrowRightOutlined />}
-        iconPosition={'end'}
+        iconPosition="end"
         onClick={onOpenModal}
       >
         Setup OpenReplay Tracker

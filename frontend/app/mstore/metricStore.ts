@@ -1,8 +1,6 @@
-import { makeAutoObservable, runInAction } from "mobx";
-import Widget from './types/widget';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
-import { ErrorInfo } from './types/error';
 import {
   TIMESERIES,
   TABLE,
@@ -17,22 +15,24 @@ import {
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
 import { FilterKey } from 'Types/filter/filterType';
+import { ErrorInfo } from './types/error';
+import Widget from './types/widget';
 
 const handleFilter = (card: Widget, filterType?: string) => {
-  const metricType = card.metricType;
+  const { metricType } = card;
   if (filterType === 'all' || !filterType || !metricType) {
     return true;
   }
   if ([CATEGORIES.monitors, CATEGORIES.web_analytics].includes(filterType)) {
     if (metricType !== 'table') return false;
-    const metricOf = card.metricOf;
+    const { metricOf } = card;
     if (filterType === CATEGORIES.monitors) {
       return [
         FilterKey.ERRORS,
         FilterKey.FETCH,
-        TIMESERIES + '_4xx_requests',
-        TIMESERIES + '_slow_network_requests'
-      ].includes(metricOf)
+        `${TIMESERIES}_4xx_requests`,
+        `${TIMESERIES}_slow_network_requests`,
+      ].includes(metricOf);
     }
     if (filterType === CATEGORIES.web_analytics) {
       return [
@@ -42,12 +42,12 @@ const handleFilter = (card: Widget, filterType?: string) => {
         FilterKey.USERID,
         FilterKey.LOCATION,
         FilterKey.USER_DEVICE,
-      ].includes(metricOf)
+      ].includes(metricOf);
     }
   } else {
     return filterType === metricType;
   }
-}
+};
 
 const cardToCategory = (cardType: string) => {
   switch (cardType) {
@@ -58,8 +58,8 @@ const cardToCategory = (cardType: string) => {
       return CATEGORIES.product_analytics;
     case FilterKey.ERRORS:
     case FilterKey.FETCH:
-    case TIMESERIES + '_4xx_requests':
-    case TIMESERIES + '_slow_network_requests':
+    case `${TIMESERIES}_4xx_requests`:
+    case `${TIMESERIES}_slow_network_requests`:
       return CATEGORIES.monitors;
     case FilterKey.LOCATION:
     case FilterKey.USER_BROWSER:
@@ -69,7 +69,7 @@ const cardToCategory = (cardType: string) => {
     default:
       return CATEGORIES.product_analytics;
   }
-}
+};
 
 interface MetricFilter {
   query?: string;
@@ -79,30 +79,41 @@ interface MetricFilter {
 }
 export default class MetricStore {
   isLoading: boolean = false;
+
   isSaving: boolean = false;
 
   metrics: Widget[] = [];
+
   instance = new Widget();
 
   page: number = 1;
+
   pageSize: number = 10;
+
   metricsSearch: string = '';
+
   sort: any = { by: 'desc' };
 
   filter: MetricFilter = { type: 'all', dashboard: [], query: '' };
 
   sessionsPage: number = 1;
+
   sessionsPageSize: number = 10;
+
   listView?: boolean = true;
+
   clickMapFilter: boolean = false;
 
   clickMapSearch = '';
+
   clickMapLabel = '';
 
   cardCategory: string | null = CATEGORIES.product_analytics;
 
   focusedSeriesName: string | null = null;
+
   disabledSeries: string[] = [];
+
   drillDown = false;
 
   constructor() {
@@ -110,9 +121,7 @@ export default class MetricStore {
   }
 
   get sortedWidgets() {
-    return [...this.metrics].sort((a, b) =>
-      this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
-    );
+    return [...this.metrics].sort((a, b) => (this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified));
   }
 
   get filteredCards() {
@@ -120,19 +129,16 @@ export default class MetricStore {
     const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i: any) => i.value) : [];
     return this.metrics
       .filter(
-        (card) =>
-          (this.filter.showMine
-            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
-            : true) &&
-          handleFilter(card, this.filter.type) &&
-          (!dbIds.length ||
-            card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
+        (card) => (this.filter.showMine
+          ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
+          : true)
+          && handleFilter(card, this.filter.type)
+          && (!dbIds.length
+            || card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id)))
           // @ts-ignore
-          (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key])))
+          && (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key]))),
       )
-      .sort((a, b) =>
-        this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
-      );
+      .sort((a, b) => (this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified));
   }
 
   // State Actions
@@ -183,17 +189,17 @@ export default class MetricStore {
 
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
-        this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and']
-      })
+        this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and'];
+      });
       if (type === HEATMAP && 'series' in obj) {
-       delete obj['series']
+        delete obj.series;
       }
       this.changeType(type);
     }
 
     if (obj.hasOwnProperty('metricOf') && obj.metricOf !== this.instance.metricOf) {
       if (obj.metricOf === 'sessions' || obj.metricOf === 'jsErrors') {
-        obj.viewType = 'table'
+        obj.viewType = 'table';
       }
 
       if (this.instance.metricType === USER_PATH) {
@@ -230,43 +236,43 @@ export default class MetricStore {
     obj.series = obj.series.slice(0, 1);
     obj.series[0].filter.filters = [];
 
-    obj['metricValue'] = [];
+    obj.metricValue = [];
 
     if (value === TABLE) {
-      obj['metricOf'] = 'userId';
+      obj.metricOf = 'userId';
     }
 
     if (value === TABLE || value === TIMESERIES) {
-      obj['viewType'] = 'table';
+      obj.viewType = 'table';
     }
     if (value === TIMESERIES) {
-      obj['viewType'] = 'lineChart';
+      obj.viewType = 'lineChart';
     }
     if (value === RETENTION) {
-      obj['viewType'] = 'cohort';
+      obj.viewType = 'cohort';
     }
     if (
-      value === ERRORS ||
-      value === HEATMAP
+      value === ERRORS
+      || value === HEATMAP
     ) {
-      obj['viewType'] = 'chart';
+      obj.viewType = 'chart';
     }
 
     if (value === FUNNEL) {
-      obj['metricOf'] = 'sessionCount';
-      obj.series[0].filter.eventsOrder = 'then'
-      obj.series[0].filter.eventsOrderSupport = ['then']
+      obj.metricOf = 'sessionCount';
+      obj.series[0].filter.eventsOrder = 'then';
+      obj.series[0].filter.eventsOrderSupport = ['then'];
     }
 
     if (value === USER_PATH) {
       obj.series[0].filter.eventsHeader = 'START POINT';
     } else {
-      obj.series[0].filter.eventsHeader = 'EVENTS'
+      obj.series[0].filter.eventsHeader = 'EVENTS';
     }
 
     if (value === INSIGHTS) {
-      obj['metricOf'] = 'issueCategories';
-      obj['viewType'] = 'list';
+      obj.metricOf = 'issueCategories';
+      obj.viewType = 'list';
     }
 
     if (value === USER_PATH) {
@@ -288,7 +294,7 @@ export default class MetricStore {
     }
 
     if (metricOf) {
-      obj['metricOf'] = metricOf;
+      obj.metricOf = metricOf;
     }
 
     this.instance.update(obj);
@@ -366,28 +372,28 @@ export default class MetricStore {
   }
 
   fetchList() {
-    this.setLoading(true)
+    this.setLoading(true);
     return metricService
       .getMetrics()
       .then((metrics: any[]) => {
         this.setMetrics(metrics.map((m) => new Widget().fromJson(m)));
       })
       .finally(() => {
-        this.setLoading(false)
+        this.setLoading(false);
       });
   }
 
   fetch(id: string, period?: any) {
-    this.setLoading(true)
+    this.setLoading(true);
     return metricService
       .getMetric(id)
       .then((metric: any) => {
-        const inst = new Widget().fromJson(metric, period)
+        const inst = new Widget().fromJson(metric, period);
         runInAction(() => {
           this.instance = inst;
-          const type = inst.metricType === 'table' ? inst.metricOf : inst.metricType
+          const type = inst.metricType === 'table' ? inst.metricOf : inst.metricType;
           this.cardCategory = cardToCategory(type);
-        })
+        });
         return inst;
       })
       .finally(() => {

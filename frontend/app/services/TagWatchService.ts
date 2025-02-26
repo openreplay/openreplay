@@ -1,4 +1,4 @@
-import BaseService from "App/services/BaseService";
+import BaseService from 'App/services/BaseService';
 
 export interface CreateTag {
   name: string;

@@ -1,7 +1,9 @@
 import React from 'react';
-import ExCard from './ExCard';
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from 'recharts';
 import { Styles } from 'Components/Dashboard/Widgets/common';
+import ExCard from './ExCard';
 
 interface Props {
   title: string;
@@ -13,7 +15,7 @@ interface Props {
 }
 
 function BarChartCard(props: Props) {
-  const keys = props.data ? Object.keys(props.data.chart[0]).filter(key => key !== 'time') : [];
+  const keys = props.data ? Object.keys(props.data.chart[0]).filter((key) => key !== 'time') : [];
 
   return (
     <ExCard {...props}>
@@ -23,7 +25,7 @@ function BarChartCard(props: Props) {
           <XAxis {...Styles.xaxis} dataKey="time" />
           <YAxis
             {...Styles.yaxis}
-            tickFormatter={val => Styles.tickFormatter(val)}
+            tickFormatter={(val) => Styles.tickFormatter(val)}
             label={{ ...Styles.axisLabelLeft, value: props.data?.label || 'Number of Errors' }}
             allowDecimals={false}
           />

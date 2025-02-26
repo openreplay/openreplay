@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import FilterAutoComplete from '../FilterAutoComplete';
-import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
 import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
-import FilterValueDropdown from '../FilterValueDropdown';
-import FilterDuration from '../FilterDuration';
 import { debounce } from 'App/utils';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
+import FilterDuration from '../FilterDuration';
+import FilterValueDropdown from '../FilterValueDropdown';
+import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
+import FilterAutoComplete from '../FilterAutoComplete';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -24,9 +24,9 @@ function FilterValue(props: Props) {
     if (isAutoOpen) {
       setTimeout(() => {
         filter.autoOpen = false;
-      }, 250)
+      }, 250);
     }
-  }, [isAutoOpen])
+  }, [isAutoOpen]);
   const [durationValues, setDurationValues] = useState({
     minDuration: filter.value?.[0],
     maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],
@@ -40,11 +40,11 @@ function FilterValue(props: Props) {
 
   const onApplyValues = (values: string[]) => {
     props.onUpdate({ ...filter, value: values });
-  }
+  };
 
   const onRemoveValue = (valueIndex: any) => {
     const newValue = filter.value.filter(
-      (_: any, index: any) => index !== valueIndex
+      (_: any, index: any) => index !== valueIndex,
     );
     props.onUpdate({ ...filter, value: newValue });
   };
@@ -72,8 +72,8 @@ function FilterValue(props: Props) {
       const { maxDuration, minDuration } = filter;
       if (maxDuration || minDuration) return;
       if (
-        maxDuration !== durationValues.maxDuration ||
-        minDuration !== durationValues.minDuration
+        maxDuration !== durationValues.maxDuration
+        || minDuration !== durationValues.minDuration
       ) {
         props.onUpdate({
           ...filter,
@@ -87,7 +87,7 @@ function FilterValue(props: Props) {
     let params: any = { type: filter.key };
     switch (filter.category) {
       case FilterCategory.METADATA:
-        params = { type: FilterKey.METADATA, key: key };
+        params = { type: FilterKey.METADATA, key };
     }
 
     if (isRoute(ASSIST_ROUTE, window.location.pathname)) {
@@ -99,31 +99,35 @@ function FilterValue(props: Props) {
 
   const renderValueFiled = (value: any[]) => {
     const showOrButton = filter.value.length > 1;
-    const BaseFilterLocalAutoComplete = (props) => (
-      <FilterAutoCompleteLocal
-        value={value}
-        showCloseButton={showCloseButton}
-        onApplyValues={onApplyValues}
-        onRemoveValue={(index) => onRemoveValue(index)}
-        onSelect={(e, item, index) => debounceOnSelect(e, item, index)}
-        icon={filter.icon}
-        placeholder={filter.placeholder}
-        isAutoOpen={isAutoOpen}
-        modalProps={{ placeholder: '' }}
-        {...props}
-      />
-    );
-    const BaseDropDown = (props) => (
-      <FilterValueDropdown
-        value={value}
-        isAutoOpen={isAutoOpen}
-        placeholder={filter.placeholder}
-        options={filter.options}
-        onApplyValues={onApplyValues}
-        
-        {...props}
-      />
-    )
+    function BaseFilterLocalAutoComplete(props) {
+      return (
+        <FilterAutoCompleteLocal
+          value={value}
+          showCloseButton={showCloseButton}
+          onApplyValues={onApplyValues}
+          onRemoveValue={(index) => onRemoveValue(index)}
+          onSelect={(e, item, index) => debounceOnSelect(e, item, index)}
+          icon={filter.icon}
+          placeholder={filter.placeholder}
+          isAutoOpen={isAutoOpen}
+          modalProps={{ placeholder: '' }}
+          {...props}
+        />
+      );
+    }
+    function BaseDropDown(props) {
+      return (
+        <FilterValueDropdown
+          value={value}
+          isAutoOpen={isAutoOpen}
+          placeholder={filter.placeholder}
+          options={filter.options}
+          onApplyValues={onApplyValues}
+
+          {...props}
+        />
+      );
+    }
     switch (filter.type) {
       case FilterType.NUMBER_MULTIPLE:
         return <BaseFilterLocalAutoComplete type="number" placeholder={filter.placeholder} />;
@@ -146,7 +150,7 @@ function FilterValue(props: Props) {
       case FilterType.MULTIPLE_DROPDOWN:
         return (
           <BaseDropDown
-            search={true}
+            search
             onAddValue={onAddValue}
             onRemoveValue={(ind) => onRemoveValue(ind)}
             showCloseButton={showCloseButton}
@@ -173,10 +177,10 @@ function FilterValue(props: Props) {
             showOrButton={showOrButton}
             onApplyValues={onApplyValues}
             onRemoveValue={(index) => onRemoveValue(index)}
-            method={'GET'}
+            method="GET"
             endpoint="/PROJECT_ID/events/search"
             params={getParms(filter.key)}
-            headerText={''}
+            headerText=""
             placeholder={filter.placeholder}
             onSelect={(e, item, index) => onChange(e, item, index)}
             icon={filter.icon}
@@ -188,10 +192,10 @@ function FilterValue(props: Props) {
 
   return (
     <div
-      id={`ignore-outside`}
+      id="ignore-outside"
       className={cn('grid gap-3 w-fit flex-wrap my-1.5', {
         'grid-cols-2': filter.hasSource,
-         
+
       })}
     >
       {renderValueFiled(filter.value)}

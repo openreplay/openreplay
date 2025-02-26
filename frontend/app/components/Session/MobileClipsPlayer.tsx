@@ -6,16 +6,16 @@ import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
-import {
-  IOSPlayerContext,
-  MobilePlayerContext,
-  defaultContextValue,
-} from './playerContext';
 
 import ClipPlayerHeader from 'Components/Session/Player/ClipPlayer/ClipPlayerHeader';
 import MobileClipPlayerContent from 'Components/Session/Player/ClipPlayer/MobileClipPlayerContent';
 import Session from 'Types/session';
 import { sessionService } from '@/services';
+import {
+  IOSPlayerContext,
+  MobilePlayerContext,
+  defaultContextValue,
+} from './playerContext';
 
 let playerInst: IOSPlayerContext['player'] | undefined;
 
@@ -29,7 +29,9 @@ interface Props {
 }
 
 function MobileClipsPlayer(props: Props) {
-  const { clip, currentIndex, isCurrent, onClose, isHighlight } = props;
+  const {
+    clip, currentIndex, isCurrent, onClose, isHighlight,
+  } = props;
   const { sessionStore } = useStore();
   const [windowActive, setWindowActive] = useState(!document.hidden);
   const [contextValue, setContextValue] =
@@ -72,8 +74,7 @@ function MobileClipsPlayer(props: Props) {
 
   useEffect(() => {
     playerInst = undefined;
-    if (!clip.sessionId || contextValue.player !== undefined || !session)
-      return;
+    if (!clip.sessionId || contextValue.player !== undefined || !session) return;
 
     // @ts-ignore
     sessionStore.setUserTimezone(session?.timezone);
@@ -109,7 +110,7 @@ function MobileClipsPlayer(props: Props) {
     }, 500);
   }, [currentIndex]);
 
-  if (!session || !session?.sessionId)
+  if (!session || !session?.sessionId) {
     return (
       <Loader
         size={75}
@@ -122,6 +123,7 @@ function MobileClipsPlayer(props: Props) {
         }}
       />
     );
+  }
 
   return (
     <MobilePlayerContext.Provider value={contextValue}>
@@ -131,8 +133,8 @@ function MobileClipsPlayer(props: Props) {
           <MobileClipPlayerContent message={clip.message} isHighlight={isHighlight} autoplay={props.autoplay} range={clip.range} session={session!} />
         </>
       ) : (
-         <Loader />
-       )}
+        <Loader />
+      )}
     </MobilePlayerContext.Provider>
   );
 }

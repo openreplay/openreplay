@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import VideoContainer from '../components/VideoContainer';
 import cn from 'classnames';
 import Counter from 'App/components/shared/SessionItem/Counter';
-import stl from './chatWindow.module.css';
-import ChatControls from '../ChatControls/ChatControls';
 import Draggable from 'react-draggable';
 import type { LocalStream } from 'Player';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import ChatControls from '../ChatControls/ChatControls';
+import stl from './chatWindow.module.css';
+import VideoContainer from '../components/VideoContainer';
 
 export interface Props {
   incomeStream: MediaStream[] | null;
@@ -16,10 +16,12 @@ export interface Props {
   endCall: () => void;
 }
 
-function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: Props) {
-  const { player } = React.useContext(PlayerContext)
+function ChatWindow({
+  userId, incomeStream, localStream, endCall, isPrestart,
+}: Props) {
+  const { player } = React.useContext(PlayerContext);
 
-  const toggleVideoLocalStream = player.assistManager.toggleVideoLocalStream;
+  const { toggleVideoLocalStream } = player.assistManager;
 
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false);
   const [anyRemoteEnabled, setRemoteEnabled] = useState(false);
@@ -27,8 +29,8 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
   const onlyLocalEnabled = localVideoEnabled && !anyRemoteEnabled;
 
   useEffect(() => {
-    toggleVideoLocalStream(localVideoEnabled)
-  }, [localVideoEnabled])
+    toggleVideoLocalStream(localVideoEnabled);
+  }, [localVideoEnabled]);
 
   return (
     <Draggable handle=".handle" bounds="body" defaultPosition={{ x: 50, y: 200 }}>
@@ -38,7 +40,9 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
       >
         <div className="handle flex items-center p-2 cursor-move select-none border-b">
           <div className={stl.headerTitle}>
-            <b>Call with </b> {userId ? userId : 'Anonymous User'}
+            <b>Call with </b>
+            {' '}
+            {userId || 'Anonymous User'}
             <br />
             {incomeStream && incomeStream.length > 2 ? ' (+ other agents in the call)' : ''}
           </div>

@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'classnames';
-import stl from './errorItem.module.css';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import JumpButton from 'Shared/DevTools/JumpButton';
+import stl from './errorItem.module.css';
 
 interface Props {
   error: any;
@@ -11,7 +11,9 @@ interface Props {
   inactive?: Boolean;
   selected?: Boolean;
 }
-function ErrorItem({ error = {}, onJump, inactive, selected }: Props) {
+function ErrorItem({
+  error = {}, onJump, inactive, selected,
+}: Props) {
   const { showModal } = useModal();
 
   const onErrorClick = () => {

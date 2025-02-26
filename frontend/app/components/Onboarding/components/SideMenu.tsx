@@ -44,67 +44,67 @@ function SideMenu(props: Props) {
         >
           <Menu.Item
             key={OB_TABS.INSTALLING}
-            icon={
+            icon={(
               <Icon
                 name="tools"
                 size={16}
                 color={activeTab === OB_TABS.INSTALLING ? 'teal' : 'gray'}
               />
-            }
-            className={'!rounded-lg hover-fill-teal'}
+            )}
+            className="!rounded-lg hover-fill-teal"
           >
             Setup OpenReplay
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.IDENTIFY_USERS}
-            icon={
+            icon={(
               <Icon
                 name="person-border"
                 size={16}
                 color={activeTab === OB_TABS.IDENTIFY_USERS ? 'teal' : 'gray'}
               />
-            }
-            className={'!rounded-lg hover-fill-teal'}
+            )}
+            className="!rounded-lg hover-fill-teal"
           >
             Identify Users
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.MANAGE_USERS}
-            icon={
+            icon={(
               <Icon
                 name="people"
                 size={16}
                 color={activeTab === OB_TABS.MANAGE_USERS ? 'teal' : 'gray'}
               />
-            }
-            className={'!rounded-lg hover-fill-teal'}
+            )}
+            className="!rounded-lg hover-fill-teal"
           >
             Invite Collaborators
           </Menu.Item>
           <Menu.Item
             key={OB_TABS.INTEGRATIONS}
-            icon={
+            icon={(
               <Icon
                 name="plug"
                 size={16}
                 color={activeTab === OB_TABS.INTEGRATIONS ? 'teal' : 'gray'}
               />
-            }
-            className={'!rounded-lg hover-fill-teal'}
+            )}
+            className="!rounded-lg hover-fill-teal"
           >
             Integrations
           </Menu.Item>
           <Divider style={{ margin: '6px 0' }} />
           <Menu.Item
-            key={'support'}
-            icon={
+            key="support"
+            icon={(
               <Icon
                 name="question-circle"
                 size={16}
                 color={activeTab === 'support' ? 'teal' : 'gray'}
               />
-            }
-            className={'!rounded-lg hover-fill-teal'}
+            )}
+            className="!rounded-lg hover-fill-teal"
           >
             Support
           </Menu.Item>

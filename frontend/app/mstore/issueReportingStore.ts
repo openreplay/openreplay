@@ -1,19 +1,29 @@
 import { makeAutoObservable } from 'mobx';
-import ReportedIssue from '../types/session/assignment';
 import { issueReportsService } from 'App/services';
 import { makePersistable } from '.store/mobx-persist-store-virtual-858ce4d906/package';
+import ReportedIssue from '../types/session/assignment';
 
 export default class IssueReportingStore {
   instance!: ReportedIssue;
+
   issueTypes: any[] = [];
+
   list: any[] = [];
+
   issueTypeIcons: Record<string, string> = {};
+
   users: any[] = [];
+
   projects: any[] = [];
+
   issuesFetched = false;
+
   projectsFetched = false;
+
   projectsLoading = false;
+
   metaLoading = false;
+
   createLoading = false;
 
   constructor() {
@@ -91,7 +101,7 @@ export default class IssueReportingStore {
     if (this.createLoading) return;
     this.createLoading = true;
     try {
-      const payload = { ...instance, assignee: instance.assignee + '', issueType: instance.issueType + '' };
+      const payload = { ...instance, assignee: `${instance.assignee}`, issueType: `${instance.issueType}` };
       const resp = await issueReportsService.saveIssue(sessionId, payload);
       // const resp = await issueReportsService.saveIssue(sessionId, instance.toCreate());
 

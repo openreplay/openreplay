@@ -16,10 +16,10 @@ import TimeToRender from 'App/components/Dashboard/Widgets/PredefinedWidgets/Tim
 import SlowestDomains from 'App/components/Dashboard/Widgets/PredefinedWidgets/SlowestDomains';
 import SessionsImpactedBySlowRequests from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsImpactedBySlowRequests';
 import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
+import { FilterKey } from 'Types/filter/filterType';
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
 import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
-import { FilterKey } from 'Types/filter/filterType';
 
 interface Props {
     data: any;
@@ -28,37 +28,39 @@ interface Props {
     isTemplate?: boolean;
 }
 function WidgetPredefinedChart(props: Props) {
-    const { data, predefinedKey, metric, isTemplate } = props;
+  const {
+    data, predefinedKey, metric, isTemplate,
+  } = props;
 
-    const renderWidget = () => {
-        switch (predefinedKey) {
-            // ERRORS
-            case FilterKey.ERRORS_PER_TYPE:
-                return <ErrorsByType data={data} metric={metric} />
-            case FilterKey.ERRORS_PER_DOMAINS:
-                return <ErrorsPerDomain data={metric.data} />
-            case FilterKey.RESOURCES_BY_PARTY:
-                return <ErrorsByOrigin data={data} metric={metric} />
-            case FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS:
-                return <SessionsAffectedByJSErrors data={data} metric={metric} />
-            case FilterKey.DOMAINS_ERRORS_4XX:
-                return <CallsErrors4xx data={data} metric={metric} />
-            case FilterKey.DOMAINS_ERRORS_5XX:
-                return <CallsErrors5xx data={data} metric={metric} />
-            case FilterKey.CALLS_ERRORS:
-                return <CallWithErrors isTemplate={isTemplate} data={data} />
-            case FilterKey.SPEED_LOCATION:
-                return <SpeedIndexByLocation data={data} />
-            default:
-                return <div className="h-40 color-red">Widget not supported</div>
-        }
+  const renderWidget = () => {
+    switch (predefinedKey) {
+      // ERRORS
+      case FilterKey.ERRORS_PER_TYPE:
+        return <ErrorsByType data={data} metric={metric} />;
+      case FilterKey.ERRORS_PER_DOMAINS:
+        return <ErrorsPerDomain data={metric.data} />;
+      case FilterKey.RESOURCES_BY_PARTY:
+        return <ErrorsByOrigin data={data} metric={metric} />;
+      case FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS:
+        return <SessionsAffectedByJSErrors data={data} metric={metric} />;
+      case FilterKey.DOMAINS_ERRORS_4XX:
+        return <CallsErrors4xx data={data} metric={metric} />;
+      case FilterKey.DOMAINS_ERRORS_5XX:
+        return <CallsErrors5xx data={data} metric={metric} />;
+      case FilterKey.CALLS_ERRORS:
+        return <CallWithErrors isTemplate={isTemplate} data={data} />;
+      case FilterKey.SPEED_LOCATION:
+        return <SpeedIndexByLocation data={data} />;
+      default:
+        return <div className="h-40 color-red">Widget not supported</div>;
     }
+  };
 
-    return useObserver(() => (
-        <>
-            {renderWidget()}
-        </>
-    ));
+  return useObserver(() => (
+    <>
+      {renderWidget()}
+    </>
+  ));
 }
 
 export default WidgetPredefinedChart;

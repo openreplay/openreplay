@@ -1,25 +1,24 @@
 import React from 'react';
-import { Form, Input, Message, confirm } from 'UI';
-import { Button } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useStore } from 'App/mstore'
+import {
+  Form, Input, Message, confirm,
+} from 'UI';
+import { Button } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 function SlackAddForm(props) {
   const { onClose } = props;
   const { integrationsStore } = useStore();
-  const instance = integrationsStore.slack.instance;
+  const { instance } = integrationsStore.slack;
   const saving = integrationsStore.slack.loading;
-  const errors = integrationsStore.slack.errors;
-  const edit = integrationsStore.slack.edit;
+  const { errors } = integrationsStore.slack;
+  const { edit } = integrationsStore.slack;
   const onSave = integrationsStore.slack.saveIntegration;
-  const update = integrationsStore.slack.update;
-  const init = integrationsStore.slack.init;
+  const { update } = integrationsStore.slack;
+  const { init } = integrationsStore.slack;
   const onRemove = integrationsStore.slack.removeInt;
-  
-  React.useEffect(() => {
-    return () => init({})
-  }, [])
 
+  React.useEffect(() => () => init({}), []);
 
   const save = () => {
     if (instance.exists()) {
@@ -34,7 +33,7 @@ function SlackAddForm(props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this channel?`,
+        confirmation: 'Are you sure you want to permanently delete this channel?',
       })
     ) {
       await onRemove(id);
@@ -43,7 +42,7 @@ function SlackAddForm(props) {
   };
 
   const write = ({ target: { name, value } }) => edit({ [name]: value });
-  
+
   return (
     <div className="p-5" style={{ minWidth: '300px' }}>
       <Form>
@@ -79,11 +78,11 @@ function SlackAddForm(props) {
               {instance.exists() ? 'Update' : 'Add'}
             </Button>
 
-            <Button onClick={onClose}>{'Cancel'}</Button>
+            <Button onClick={onClose}>Cancel</Button>
           </div>
 
           <Button onClick={() => remove(instance.webhookId)} disabled={!instance.exists()}>
-            {'Delete'}
+            Delete
           </Button>
         </div>
       </Form>

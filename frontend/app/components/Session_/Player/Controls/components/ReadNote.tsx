@@ -27,7 +27,11 @@ function ReadNote(props: Props) {
         >
           <div className="flex items-start font-semibold w-full text-xl">
             <div style={{ flex: 9 }}>
-              You do not have access to this note. <br /> Or it’s deleted.
+              You do not have access to this note.
+              {' '}
+              <br />
+              {' '}
+              Or it’s deleted.
             </div>
             <div style={{ flex: 1 }} className="cursor-pointer ml-auto" onClick={props.onClose}>
               <Icon name="close" size={18} />
@@ -47,7 +51,9 @@ function ReadNote(props: Props) {
 
   return (
     <div
-      style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }}
+      style={{
+        position: 'absolute', top: 0, left: 0, height: '100%', width: '100%',
+      }}
       className="flex items-center justify-center"
     >
       <div
@@ -73,29 +79,28 @@ function ReadNote(props: Props) {
         </div>
         <div className="w-full">
           <div className="flex items-center justify-between w-full">
-            <div className='flex gap-1 items-center'>
-            {props.note.tag ? (
-              <Tag
-                color={tagProps[props.note.tag]}
-                className='border-0 rounded-lg'
-              >
-                {props.note.tag}
+            <div className="flex gap-1 items-center">
+              {props.note.tag ? (
+                <Tag
+                  color={tagProps[props.note.tag]}
+                  className="border-0 rounded-lg"
+                >
+                  {props.note.tag}
+                </Tag>
+              ) : null}
+
+              <Tag bordered={false}>
+                {!props.note.isPublic ? null : <TeamBadge />}
               </Tag>
-            ) : null}
-            
-            <Tag bordered={false} >
-            {!props.note.isPublic ? null : <TeamBadge />}
-            </Tag>
 
             </div>
 
             <Button
               onClick={props.onClose}
               icon={<PlayCircleOutlined />}
-              type='default'
+              type="default"
             >
-              
-             
+
               Play Session
             </Button>
           </div>

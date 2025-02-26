@@ -11,8 +11,11 @@ export default class WebLivePlayer extends WebPlayer {
   };
 
   assistManager: AssistManager; // public so far
+
   private readonly incomingMessages: PlayerMsg[] = [];
+
   private historyFileIsLoading = false;
+
   private lastMessageInFileTime = 0;
 
   constructor(
@@ -21,7 +24,7 @@ export default class WebLivePlayer extends WebPlayer {
     config: RTCIceServer[] | null,
     agentId: number,
     projectId: number,
-    uiErrorHandler?: { error: (msg: string) => void }
+    uiErrorHandler?: { error: (msg: string) => void },
   ) {
     super(wpState, session, true, false, uiErrorHandler);
 
@@ -39,7 +42,7 @@ export default class WebLivePlayer extends WebPlayer {
       config,
       wpState,
       (id) => this.messageManager.getNode(id),
-      uiErrorHandler
+      uiErrorHandler,
     );
     this.assistManager.connect(session.agentToken!, agentId, projectId);
   }
@@ -67,7 +70,7 @@ export default class WebLivePlayer extends WebPlayer {
             this.messageManager.distributeMessage(msg);
           });
         },
-        'cobrowse dom'
+        'cobrowse dom',
       );
       await reader(bytes);
 

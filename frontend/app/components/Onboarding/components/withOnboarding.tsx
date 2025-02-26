@@ -17,9 +17,8 @@ export interface WithOnboardingProps {
   };
 }
 
-
 const withOnboarding = <P extends RouteComponentProps>(
-  Component: React.ComponentType<P & WithOnboardingProps>
+  Component: React.ComponentType<P & WithOnboardingProps>,
 ) => {
   const WithOnboarding: React.FC<P & WithOnboardingProps> = (props) => {
     const { projectsStore, userStore } = useStore();
@@ -45,8 +44,8 @@ const withOnboarding = <P extends RouteComponentProps>(
 
   return withRouter(
     observer(
-      WithOnboarding
-    )
+      WithOnboarding,
+    ),
   );
 };
 

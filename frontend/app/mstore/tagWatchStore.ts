@@ -5,6 +5,7 @@ import { projectStore } from '@/mstore';
 
 export default class TagWatchStore {
   tags: Tag[] = [];
+
   isLoading = false;
 
   constructor() {
@@ -62,7 +63,7 @@ export default class TagWatchStore {
       await tagWatchService.updateTagName(pid!, id, name);
       const updatedTag = this.tags.find((t) => t.tagId === id);
       if (updatedTag) {
-        this.setTags(this.tags.map((t) => t.tagId === id ? { ...updatedTag, name } : t));
+        this.setTags(this.tags.map((t) => (t.tagId === id ? { ...updatedTag, name } : t)));
       }
     } catch (e) {
       console.error(e);

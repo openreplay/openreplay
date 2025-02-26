@@ -2,7 +2,9 @@ import React, { ChangeEvent, FormEvent, useEffect } from 'react';
 import { Icon } from 'UI';
 import Project from '@/mstore/types/project';
 import { projectStore, useStore } from '@/mstore';
-import { App, Segmented, Form, Input, Button, Tooltip } from 'antd';
+import {
+  App, Segmented, Form, Input, Button, Tooltip,
+} from 'antd';
 import { toast } from 'react-toastify';
 import { observer } from 'mobx-react-lite';
 
@@ -16,7 +18,7 @@ function ProjectForm(props: Props) {
   const { onClose } = props;
   const { projectsStore } = useStore();
   const [project, setProject] = React.useState<Project>(new Project(props.project || {}));
-  const loading = projectsStore.loading;
+  const { loading } = projectsStore;
   const canDelete = projectsStore.list.length > 1;
   // const pathname = window.location.pathname;
   const mstore = useStore();
@@ -69,7 +71,7 @@ function ProjectForm(props: Props) {
         }).catch((error: Error) => {
           toast.error(error.message || 'An error occurred while deleting the project');
         });
-      }
+      },
     });
   };
 
@@ -109,12 +111,12 @@ function ProjectForm(props: Props) {
             options={[
               {
                 value: 'web',
-                label: 'Web'
+                label: 'Web',
               },
               {
                 value: 'ios',
-                label: 'Mobile'
-              }
+                label: 'Mobile',
+              },
             ]}
             value={project.platform}
             onChange={(value) => {

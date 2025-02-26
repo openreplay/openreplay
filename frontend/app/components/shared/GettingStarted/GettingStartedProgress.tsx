@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
-import CircleProgress from './CircleProgress';
 import { useModal } from 'App/components/Modal';
-import GettingStartedModal from './GettingStartedModal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import GettingStartedModal from './GettingStartedModal';
+import CircleProgress from './CircleProgress';
 
-const GettingStartedProgress = () => {
+function GettingStartedProgress() {
   const { showModal } = useModal();
 
   const {
     settingsStore: { gettingStarted },
-    userStore
+    userStore,
   } = useStore();
-  const isLoggedIn = userStore.isLoggedIn;
+  const { isLoggedIn } = userStore;
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -34,12 +34,15 @@ const GettingStartedProgress = () => {
           <div className="text-lg color-teal" style={{ lineHeight: '15px' }}>
             Setup
           </div>
-          <div className="color-gray-meidum text-sm">{gettingStarted.numPending} Pending</div>
+          <div className="color-gray-meidum text-sm">
+            {gettingStarted.numPending}
+            {' '}
+            Pending
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default observer(GettingStartedProgress);
-

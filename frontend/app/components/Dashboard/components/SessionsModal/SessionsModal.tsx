@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
 
 import { dashboardService, metricService } from 'App/services';
-import { Loader, Modal, NoContent, Pagination } from 'UI';
+import {
+  Loader, Modal, NoContent, Pagination,
+} from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import Session from 'App/mstore/types/session';
 import { useModal } from 'Components/Modal';
@@ -20,13 +22,13 @@ function SessionsModal(props: Props) {
   const [list, setList] = React.useState<any>([]);
   const { hideModal } = useModal();
 
-  const length = list.length;
+  const { length } = list;
 
   const fetchSessions = async (filter: any) => {
     setLoading(true);
     const _filter = {
       ...filter,
-      filters: [...filter.filters]
+      filters: [...filter.filters],
     };
 
     if (issue) {
@@ -45,27 +47,39 @@ function SessionsModal(props: Props) {
   };
 
   useEffect(() => {
-    fetchSessions({ ...dashboardStore.drillDownFilter, ...metricStore.instance.toJson(), limit: 10, page: page });
+    fetchSessions({
+      ...dashboardStore.drillDownFilter, ...metricStore.instance.toJson(), limit: 10, page,
+    });
   }, [page]);
 
   return (
-    <div className='bg-white h-screen'>
-      <Modal.Header title='Sessions'>
+    <div className="bg-white h-screen">
+      <Modal.Header title="Sessions">
         {issue ? 'Sessions with selected issue' : 'All sessions'}
       </Modal.Header>
       <Loader loading={loading}>
-        <NoContent show={length == 0} title='No data!'>
+        <NoContent show={length == 0} title="No data!">
           {list.map((item: any) => (
             <SessionItem session={item} onClick={hideModal} />
           ))}
         </NoContent>
       </Loader>
 
-      <div className='w-full flex items-center justify-between p-4 absolute bottom-0 bg-white'>
-        <div className='text-disabled-text'>
-          Showing <span
-          className='font-medium'>{Math.min(length, 10)}</span> out of{' '}
-          <span className='font-medium'>{total}</span> Issues
+      <div className="w-full flex items-center justify-between p-4 absolute bottom-0 bg-white">
+        <div className="text-disabled-text">
+          Showing
+          {' '}
+          <span
+            className="font-medium"
+          >
+            {Math.min(length, 10)}
+          </span>
+          {' '}
+          out of
+          {' '}
+          <span className="font-medium">{total}</span>
+          {' '}
+          Issues
         </div>
         <Pagination
           page={page}

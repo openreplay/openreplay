@@ -24,9 +24,11 @@ const androidIcon = `<svg fill="#78C257" xmlns="http://www.w3.org/2000/svg" widt
 </path>
 </g>
 </svg>
-`
+`;
 
-function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndroid, isClips }: Props) {
+function ReplayWindow({
+  videoURL, userDevice, screenHeight, screenWidth, isAndroid, isClips,
+}: Props) {
   const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>();
   const imageRef = React.useRef<HTMLImageElement>();
@@ -38,12 +40,12 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
   let styles: Record<string, any>;
   if (!isAndroid) {
     const { svg: iphoneShellSvg, styles: iphoneStyles } = mapIphoneModel(userDevice);
-    phoneShell = iphoneShellSvg
-    styles = iphoneStyles
+    phoneShell = iphoneShellSvg;
+    styles = iphoneStyles;
   } else {
-    const { svg: androidShell, styles: androidStyles } = mapAndroidModel(screenWidth, screenHeight)
-    phoneShell = androidShell
-    styles = androidStyles
+    const { svg: androidShell, styles: androidStyles } = mapAndroidModel(screenWidth, screenHeight);
+    phoneShell = androidShell;
+    styles = androidStyles;
   }
 
   React.useEffect(() => {
@@ -64,14 +66,13 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
     }
     return () => {
       if (imageRef.current) {
-        URL.revokeObjectURL(imageRef.current.src)
+        URL.revokeObjectURL(imageRef.current.src);
       }
-    }
+    };
   }, [currentSnapshot, mode]);
 
-
   React.useEffect(() => {
-    playerContext.player.pause()
+    playerContext.player.pause();
     if (!containerRef.current && playerContext.player.screen.document) {
       const host = document.createElement('div');
       const shell = document.createElement('div');
@@ -82,8 +83,8 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
       videoContainer.style.overflow = 'hidden';
       videoContainer.style.margin = styles.margin;
       videoContainer.style.display = 'none';
-      videoContainer.style.width = styles.screen.width + 'px';
-      videoContainer.style.height = styles.screen.height + 'px';
+      videoContainer.style.width = `${styles.screen.width}px`;
+      videoContainer.style.height = `${styles.screen.height}px`;
 
       shell.innerHTML = phoneShell;
       Object.assign(icon.style, mobileIconStyle(styles));
@@ -120,8 +121,8 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
       });
       playerContext.player.updateOverlayStyle({
         margin: styles.margin,
-        width: styles.screen.width + 'px',
-        height: styles.screen.height + 'px',
+        width: `${styles.screen.width}px`,
+        height: `${styles.screen.height}px`,
       });
     }
   }, [playerContext.player.screen.document]);
@@ -129,14 +130,13 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
   React.useEffect(() => {
     if (mode) {
       const host = containerRef.current;
-      const videoContainer =
-        playerContext.player.screen.document?.getElementById('___or_replay-video');
+      const videoContainer = playerContext.player.screen.document?.getElementById('___or_replay-video');
       const icon = playerContext.player.screen.document?.getElementById('___or_mobile-loader-icon');
       if (host && videoContainer && icon) {
         if (mode === PlayerMode.SNAPS) {
           const imagePlayer = document.createElement('img');
-          imagePlayer.style.width = styles.screen.width + 'px';
-          imagePlayer.style.height = styles.screen.height + 'px';
+          imagePlayer.style.width = `${styles.screen.width}px`;
+          imagePlayer.style.height = `${styles.screen.height}px`;
           imagePlayer.style.backgroundColor = '#333';
 
           videoContainer.appendChild(imagePlayer);
@@ -172,7 +172,7 @@ function ReplayWindow({ videoURL, userDevice, screenHeight, screenWidth, isAndro
             });
 
             videoRef.current = videoEl;
-        }
+          }
         }
       }
     }
@@ -186,7 +186,7 @@ const getAndroidShell = ({ width, height }: { width: number; height: number }): 
     </div>`;
 
 const mobileLoadingBarStyle = (styles: any) => ({
-  width: styles.screen.width / 2 + 'px',
+  width: `${styles.screen.width / 2}px`,
   height: '6px',
   borderRadius: '3px',
   backgroundColor: 'white',
@@ -194,8 +194,8 @@ const mobileLoadingBarStyle = (styles: any) => ({
 const mobileIconStyle = (styles: any) => ({
   backgroundColor: '#333',
   borderRadius: '10px',
-  width: styles.screen.width + 'px',
-  height: styles.screen.height + 'px',
+  width: `${styles.screen.width}px`,
+  height: `${styles.screen.height}px`,
   margin: styles.margin,
   display: 'flex',
   flexDirection: 'column',

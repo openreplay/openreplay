@@ -5,10 +5,12 @@ import { ItemMenu } from 'UI';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'react-router';
 import { toast } from 'react-toastify';
-import { fflags, withSiteId } from "App/routes";
+import { fflags, withSiteId } from 'App/routes';
 import { Button } from 'antd';
 
-function Header({ current, onCancel, onSave, isNew, siteId }: any) {
+function Header({
+  current, onCancel, onSave, isNew, siteId,
+}: any) {
   const { featureFlagsStore } = useStore();
   const history = useHistory();
 
@@ -28,7 +30,7 @@ function Header({ current, onCancel, onSave, isNew, siteId }: any) {
         </h1>
       </div>
 
-      <div className={'flex items-center gap-2'}>
+      <div className="flex items-center gap-2">
         <Button type="text" onClick={onCancel}>
           Cancel
         </Button>

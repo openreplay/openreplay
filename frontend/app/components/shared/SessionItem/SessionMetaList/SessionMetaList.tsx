@@ -16,7 +16,7 @@ export default function SessionMetaList(props: Props) {
     <div className={cn('text-sm flex items-center', className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
         <React.Fragment key={index}>
-          <MetaItem label={label} value={'' + value} className="mr-3" />
+          <MetaItem label={label} value={`${value}`} className="mr-3" />
         </React.Fragment>
       ))}
 

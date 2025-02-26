@@ -1,7 +1,7 @@
 import Copyright from 'Shared/Copyright';
 import React from 'react';
 import { Link } from 'UI';
-import {Button} from 'antd';
+import { Button } from 'antd';
 import { login as loginRoute } from 'App/routes';
 import ResetPassword from './ResetPasswordRequest';
 import CreatePassword from './CreatePassword';
@@ -38,7 +38,7 @@ function ForgotPassword(props) {
           <div className="flex flex-col items-center justify-center">
             <div className="my-8">
               <Link to={LOGIN}>
-                <Button type="link" >{'Back to Login'}</Button>
+                <Button type="link">Back to Login</Button>
               </Link>
             </div>
           </div>

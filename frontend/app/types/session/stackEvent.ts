@@ -50,14 +50,21 @@ export interface IStackEvent {
 }
 
 export default class StackEvent {
-  time: IStackEvent["time"]
-  index: IStackEvent["index"];
-  name: IStackEvent["name"];
-  message: IStackEvent["message"];
-  payload: IStackEvent["payload"];
-  source: IStackEvent["source"];
-  level: IStackEvent["level"];
-  messageId: IStackEvent["messageId"];
+  time: IStackEvent['time'];
+
+  index: IStackEvent['index'];
+
+  name: IStackEvent['name'];
+
+  message: IStackEvent['message'];
+
+  payload: IStackEvent['payload'];
+
+  source: IStackEvent['source'];
+
+  level: IStackEvent['level'];
+
+  messageId: IStackEvent['messageId'];
 
   constructor(evt: IStackEvent) {
     const event = { ...evt, source: evt.source || OPENREPLAY, payload: evt.payload || {} };

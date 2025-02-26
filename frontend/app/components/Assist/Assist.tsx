@@ -9,7 +9,6 @@ function Assist() {
   );
 }
 
-
 export default withPageTitle('Assist - OpenReplay')(
-  withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(Assist)
+  withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(Assist),
 );

@@ -3,7 +3,6 @@ import { numberWithCommas } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-
 function LatestSessionsMessage() {
   const { searchStore } = useStore();
   const count = searchStore.latestList.size;
@@ -18,7 +17,13 @@ function LatestSessionsMessage() {
       style={{ backgroundColor: 'rgb(255 251 235)' }}
       onClick={onShowNewSessions}
     >
-      Show {numberWithCommas(count)} New {count > 1 ? 'Sessions' : 'Session'}
+      Show
+      {' '}
+      {numberWithCommas(count)}
+      {' '}
+      New
+      {' '}
+      {count > 1 ? 'Sessions' : 'Session'}
     </div>
   ) : (
     <></>

@@ -33,7 +33,7 @@ function ProjectTabs() {
       renderTabBar={customTabBar}
       items={tabItems.map((tab) => ({
         key: tab.key,
-        label: tab.label
+        label: tab.label,
       }))}
     />
   );

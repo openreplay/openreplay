@@ -1,5 +1,5 @@
-import React from 'react'
-import { Icon } from 'UI'
+import React from 'react';
+import { Icon } from 'UI';
 
 function SessionTileFooter({
   userDisplayName,

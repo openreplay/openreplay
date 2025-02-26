@@ -13,12 +13,11 @@ function DefaultPlaying() {
     toast.success('Default playing option saved successfully');
   };
 
-
   return useObserver(() => (
     <>
-      <h3 className='text-lg'>Default Playing Option</h3>
-      <div className='my-1'>Always start playing the session from the first issue</div>
-      <div className='mt-2'>
+      <h3 className="text-lg">Default Playing Option</h3>
+      <div className="my-1">Always start playing the session from the first issue</div>
+      <div className="mt-2">
         <Switch
           checked={sessionSettings.skipToIssue}
           onChange={toggleSkipToIssue}

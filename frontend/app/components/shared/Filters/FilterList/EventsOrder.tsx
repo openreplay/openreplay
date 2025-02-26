@@ -5,7 +5,7 @@ import { Dropdown, Button, Tooltip } from 'antd';
 const EventsOrder = observer(
   (props: { onChange: (e: any, v: any) => void; filter: any }) => {
     const { filter, onChange } = props;
-    const eventsOrderSupport = filter.eventsOrderSupport;
+    const { eventsOrderSupport } = filter;
 
     const menuItems = [
       {
@@ -29,7 +29,7 @@ const EventsOrder = observer(
     };
 
     const selected = menuItems.find(
-      (item) => item.key === filter.eventsOrder
+      (item) => item.key === filter.eventsOrder,
     )?.label;
     return (
       <div className="flex items-center gap-2">
@@ -47,11 +47,14 @@ const EventsOrder = observer(
           className="text-sm rounded-lg px-1 py-0.5 btn-events-order "
           data-event="btn-events-order"
         >
-          <Button size={'small'} type='text'>{selected || 'Select'} </Button>
+          <Button size="small" type="text">
+            {selected || 'Select'}
+            {' '}
+          </Button>
         </Dropdown>
       </div>
     );
-  }
+  },
 );
 
 export default EventsOrder;

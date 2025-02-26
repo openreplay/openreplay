@@ -1,1 +1,1 @@
-export { default } from './ReduxDoc'
+export { default } from './ReduxDoc';

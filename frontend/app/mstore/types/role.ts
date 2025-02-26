@@ -4,14 +4,23 @@ import { notEmptyString, validateName } from 'App/validate';
 
 export default class Role {
   roleId: string = '';
+
   name: string = '';
+
   description: string = '';
+
   permissions: string[] = [];
+
   createdAt: number = 0;
+
   isProtected: boolean = false;
+
   serviceRole: boolean = false;
+
   allProjects = false;
+
   projects: string[] = [];
+
   protected = false;
 
   constructor() {
@@ -27,11 +36,11 @@ export default class Role {
 
   get validate() {
     return (
-      notEmptyString(this.name) &&
-      validateName(this.name, { diacritics: true }) &&
-      (this.allProjects || this.projects.length > 0)
+      notEmptyString(this.name)
+      && validateName(this.name, { diacritics: true })
+      && (this.allProjects || this.projects.length > 0)
     );
-  };
+  }
 
   exists() {
     return Boolean(this.roleId);

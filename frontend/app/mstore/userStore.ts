@@ -12,44 +12,69 @@ import User from 'App/mstore/types/user';
 
 class UserStore {
   list: User[] = [];
+
   instance: User | null = null;
+
   page: number = 1;
+
   pageSize: number = 10;
+
   searchQuery: string = '';
+
   modifiedCount: number = 0;
+
   loading: boolean = false;
+
   saving: boolean = false;
+
   limits: any = {};
+
   initialDataFetched: boolean = false;
 
   account = new Account();
+
   siteId: string | null = null;
+
   passwordRequestError: boolean = false;
+
   passwordErrors: string[] = [];
+
   tenants: any[] = [];
+
   onboarding: boolean = false;
+
   sites: any[] = [];
+
   jwt: string | null = null;
+
   spotJwt: string | null = null;
+
   errors: any[] = [];
+
   loginRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   fetchInfoRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   signUpRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   updatePasswordRequest = {
     loading: false,
-    errors: [] as string[]
+    errors: [] as string[],
   };
+
   scopeState: number | null = null;
+
   client = new Client();
+
   authStore: AuthStore;
 
   constructor(authStore: AuthStore) {
@@ -69,26 +94,22 @@ class UserStore {
           'onboarding',
           {
             key: 'account',
-            serialize: (acc) => {
-              return acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({});
-            },
-            deserialize: (json) => {
-              return new Account(JSON.parse(json));
-            }
-          }
+            serialize: (acc) => (acc.id ? JSON.stringify(acc.toData()) : JSON.stringify({})),
+            deserialize: (json) => new Account(JSON.parse(json)),
+          },
         ],
-        storage: window.localStorage
+        storage: window.localStorage,
       },
       {
-        delay: 200
-      }
+        delay: 200,
+      },
     );
   }
 
   get isEnterprise() {
     return (
-      this.account?.edition === 'ee' ||
-      this.authStore.authDetails?.edition === 'ee'
+      this.account?.edition === 'ee'
+      || this.authStore.authDetails?.edition === 'ee'
     );
   }
 
@@ -96,36 +117,32 @@ class UserStore {
     return Boolean(this.jwt);
   }
 
-  fetchLimits = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      userService
-        .getLimits()
-        .then((response: any) => {
-          runInAction(() => {
-            this.setLimits(response);
-          });
-          resolve(response);
-        })
-        .catch((error: any) => {
-          reject(error);
+  fetchLimits = (): Promise<any> => new Promise((resolve, reject) => {
+    userService
+      .getLimits()
+      .then((response: any) => {
+        runInAction(() => {
+          this.setLimits(response);
         });
-    });
-  };
+        resolve(response);
+      })
+      .catch((error: any) => {
+        reject(error);
+      });
+  });
 
   setLimits = (limits: any) => {
     this.limits = limits;
   };
 
-  initUser = (user?: User): Promise<void> => {
-    return new Promise((resolve) => {
-      if (user) {
-        this.instance = new User().fromJson(user.toJson());
-      } else {
-        this.instance = new User();
-      }
-      resolve();
-    });
-  };
+  initUser = (user?: User): Promise<void> => new Promise((resolve) => {
+    if (user) {
+      this.instance = new User().fromJson(user.toJson());
+    } else {
+      this.instance = new User();
+    }
+    resolve();
+  });
 
   updateKey = (key: keyof this, value: any) => {
     // @ts-ignore
@@ -220,7 +237,7 @@ class UserStore {
           });
           const errStr = err.errors[0]
             ? err.errors[0].includes('already exists')
-              ? `This email is already linked to an account or team on OpenReplay and can't be used again.`
+              ? 'This email is already linked to an account or team on OpenReplay and can\'t be used again.'
               : err.errors[0]
             : 'Error saving user';
           toast.error(errStr);
@@ -283,7 +300,7 @@ class UserStore {
               this.list[index].updateKey('isExpiredInvite', false);
               this.list[index].updateKey(
                 'invitationLink',
-                response.invitationLink
+                response.invitationLink,
               );
             }
             copy(response.invitationLink);
@@ -305,7 +322,7 @@ class UserStore {
 
     toast.promise(promise, {
       pending: 'Generating an invite code...',
-      success: 'Invite code generated successfully'
+      success: 'Invite code generated successfully',
     });
 
     return promise;
@@ -322,7 +339,7 @@ class UserStore {
     deleteCookie('jwt', '/', 'openreplay.com');
     this.loginRequest = {
       loading: false,
-      errors: errors || []
+      errors: errors || [],
     };
   };
 
@@ -343,7 +360,7 @@ class UserStore {
         deleteCookie('jwt', '/', 'openreplay.com');
         this.loginRequest = {
           loading: false,
-          errors: error.errors || []
+          errors: error.errors || [],
         };
       });
     }
@@ -366,7 +383,7 @@ class UserStore {
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
-          errors: error.response?.errors || []
+          errors: error.response?.errors || [],
         };
       });
       toast.error('Error signing up; please check your data and try again');
@@ -405,7 +422,7 @@ class UserStore {
     } catch (error) {
       throw error;
     } finally {
-        this.loading = false;
+      this.loading = false;
     }
   };
 
@@ -421,7 +438,7 @@ class UserStore {
         this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
-      toast.success(`Successfully changed password`);
+      toast.success('Successfully changed password');
       return data;
     } catch (e: any) {
       toast.error(e.message || 'Failed to updated password.');
@@ -430,7 +447,7 @@ class UserStore {
       runInAction(() => {
         this.updatePasswordRequest = {
           loading: false,
-          errors: []
+          errors: [],
         };
       });
     }
@@ -497,9 +514,7 @@ class UserStore {
     this.spotJwt = spotJwt ?? null;
   };
 
-  getJwt = () => {
-    return this.jwt;
-  };
+  getJwt = () => this.jwt;
 
   updateAccount = async (params: any) => {
     runInAction(() => {
@@ -547,7 +562,7 @@ class UserStore {
     const modules = this.account.settings?.modules || [];
     if (modules.includes(moduleKey)) {
       this.account.settings.modules = modules.filter(
-        (module: string) => module !== moduleKey
+        (module: string) => module !== moduleKey,
       );
     } else {
       this.account.settings.modules = [...modules, moduleKey];
@@ -589,7 +604,7 @@ class UserStore {
     this.errors = [];
     this.loginRequest = {
       loading: false,
-      errors: []
+      errors: [],
     };
     this.scopeState = null;
     this.client = new Client();
@@ -620,7 +635,7 @@ class AuthStore {
     sso: null,
     ssoProvider: null,
     enforceSSO: null,
-    edition: 'foss'
+    edition: 'foss',
   };
 
   constructor() {
@@ -633,19 +648,19 @@ class AuthStore {
         {
           key: 'authDetails',
           serialize: (ad) => {
-            delete ad['edition']
+            delete ad.edition;
             return Object.keys(ad).length > 0 ? JSON.stringify(ad) : JSON.stringify({});
           },
           deserialize: (json) => {
-            const ad = JSON.parse(json)
-            delete ad['edition']
+            const ad = JSON.parse(json);
+            delete ad.edition;
             return ad;
-          }
-        }
+          },
+        },
       ],
       expireIn: 60000 * 60,
       removeOnExpiration: true,
-      storage: window.localStorage
+      storage: window.localStorage,
     });
   }
 
@@ -660,7 +675,6 @@ class AuthStore {
     }
   };
 }
-
 
 export const authStore = new AuthStore();
 const userStore = new UserStore(authStore);

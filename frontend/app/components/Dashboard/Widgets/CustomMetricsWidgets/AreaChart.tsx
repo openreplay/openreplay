@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import CustomTooltip from "./CustomChartTooltip";
-import { Styles } from '../common';
 import {
   ResponsiveContainer,
   XAxis,
@@ -11,6 +9,8 @@ import {
   Area,
   Legend,
 } from 'recharts';
+import CustomTooltip from './CustomChartTooltip';
+import { Styles } from '../common';
 
 interface Props {
   data: { chart: any[]; namesMap: string[] };
@@ -58,8 +58,8 @@ function CustomAreaChart(props: Props) {
       >
         {!hideLegend && (
           <Legend
-            iconType={'wye'}
-            className='font-normal'
+            iconType="wye"
+            className="font-normal"
             wrapperStyle={{ top: inGrid ? undefined : -18 }}
             payload={
               data.namesMap.map((key, index) => ({
@@ -76,7 +76,7 @@ function CustomAreaChart(props: Props) {
           vertical={false}
           stroke="rgba(0,0,0,.15)"
         />
-        <XAxis {...Styles.xaxis} dataKey="time" interval={'equidistantPreserveStart'} />
+        <XAxis {...Styles.xaxis} dataKey="time" interval="equidistantPreserveStart" />
         <YAxis
           {...yaxis}
           allowDecimals={false}
@@ -90,8 +90,8 @@ function CustomAreaChart(props: Props) {
           {...Styles.tooltip}
           content={<CustomTooltip hoveredSeries={hoveredSeries} />} // Pass hoveredSeries to tooltip
         />
-        {Array.isArray(reorderedNamesMap) &&
-          reorderedNamesMap.map((key, index) => (
+        {Array.isArray(reorderedNamesMap)
+          && reorderedNamesMap.map((key, index) => (
             <Area
               key={key}
               name={key}
@@ -110,12 +110,12 @@ function CustomAreaChart(props: Props) {
               activeDot={
                 hoveredSeries === key
                   ? {
-                      r: 8,
-                      stroke: '#fff',
-                      strokeWidth: 2,
-                      fill: colors[data.namesMap.indexOf(key)],
-                      filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))',
-                    }
+                    r: 8,
+                    stroke: '#fff',
+                    strokeWidth: 2,
+                    fill: colors[data.namesMap.indexOf(key)],
+                    filter: 'drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.2))',
+                  }
                   : false
               } // Show active dot only for the hovered line
               onMouseOver={handleMouseOver(key)} // Set hover state on mouse over

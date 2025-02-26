@@ -3,7 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { Icon } from 'UI';
 import { getInitials } from 'App/utils';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
@@ -14,7 +14,7 @@ interface Props {
 function UserMenu(props: Props) {
   const { history }: any = props;
   const { loginStore, userStore } = useStore();
-  const account = userStore.account;
+  const { account } = userStore;
   const onLogoutClick = userStore.logout;
 
   const onAccountClick = () => {
@@ -22,16 +22,14 @@ function UserMenu(props: Props) {
   };
 
   const onLogout = () => {
-    loginStore.invalidateSpotJWT()
+    loginStore.invalidateSpotJWT();
     window.postMessage({
-      type: "orspot:invalidate"
-    }, "*")
+      type: 'orspot:invalidate',
+    }, '*');
     void onLogoutClick();
-  }
+  };
   return (
-    <div
-
-    >
+    <div>
       <div className="flex items-start p-3 border-b border-dashed hover:bg-active-blue cursor-pointer" onClick={onAccountClick}>
         <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0 uppercase">
           {getInitials(account.name)}
@@ -52,11 +50,11 @@ function UserMenu(props: Props) {
           onClick={onLogout}
         >
           <Icon name="door-closed" size="16" />
-          <button className="ml-2">{'Logout'}</button>
+          <button className="ml-2">Logout</button>
         </div>
       </div>
     </div>
   );
 }
 
-export default withRouter(observer(UserMenu))
+export default withRouter(observer(UserMenu));

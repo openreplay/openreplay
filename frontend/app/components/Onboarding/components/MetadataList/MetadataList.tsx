@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { TagBadge, confirm } from 'UI';
-import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Button } from 'antd'
+import { Button } from 'antd';
+import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
 
-const MetadataList = () => {
+function MetadataList() {
   const { customFieldStore, projectsStore } = useStore();
   const site = projectsStore.instance;
   const fields = customFieldStore.list;
@@ -38,10 +38,10 @@ const MetadataList = () => {
     if (
       await confirm({
         header: 'Metadata',
-        confirmation: 'Are you sure you want to remove?'
+        confirmation: 'Are you sure you want to remove?',
       })
     ) {
-      customFieldStore.remove(site.id, field.index + '');
+      customFieldStore.remove(site.id, `${field.index}`);
     }
   };
 
@@ -57,6 +57,6 @@ const MetadataList = () => {
       </div>
     </div>
   );
-};
+}
 
 export default observer(MetadataList);

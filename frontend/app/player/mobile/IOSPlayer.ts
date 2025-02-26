@@ -2,9 +2,9 @@ import { Log, LogLevel, SessionFilesInfo } from 'Player';
 
 import type { Store } from 'Player';
 import MessageLoader from 'Player/web/MessageLoader';
+import IOSMessageManager from 'Player/mobile/IOSMessageManager';
 import Player from '../player/Player';
 import Screen, { ScaleMode } from '../web/Screen/Screen';
-import IOSMessageManager from 'Player/mobile/IOSMessageManager';
 
 export const PlayerMode = {
   VIDEO: 'video',
@@ -20,14 +20,17 @@ export default class IOSPlayer extends Player {
     mode: null,
     autoplay: false,
   };
+
   public screen: Screen;
+
   protected messageManager: IOSMessageManager;
+
   protected readonly messageLoader: MessageLoader;
 
   constructor(
     protected wpState: Store<any>,
     session: SessionFilesInfo,
-    public readonly uiErrorHandler?: { error: (msg: string) => void }
+    public readonly uiErrorHandler?: { error: (msg: string) => void },
   ) {
     const hasTar = session.videoURL.some((url) => url.includes('.tar.'));
     const screen = new Screen(true, ScaleMode.Embed);
@@ -37,10 +40,10 @@ export default class IOSPlayer extends Player {
       wpState,
       messageManager,
       false,
-      uiErrorHandler
+      uiErrorHandler,
     );
     super(wpState, messageManager);
-    this.pause()
+    this.pause();
     this.screen = screen;
     this.messageManager = messageManager;
     this.messageLoader = messageLoader;
@@ -86,16 +89,14 @@ export default class IOSPlayer extends Player {
       frustrations: session.frustrations || [],
       stack: session.stackEvents || [],
       exceptions:
-        exceptions.map(({ name, ...rest }: any) =>
-          Log({
-            level: LogLevel.ERROR,
-            value: name,
-            name,
-            message: rest.reason,
-            errorId: rest.crashId || rest.errorId,
-            ...rest,
-          })
-        ) || [],
+        exceptions.map(({ name, ...rest }: any) => Log({
+          level: LogLevel.ERROR,
+          value: name,
+          name,
+          message: rest.reason,
+          errorId: rest.crashId || rest.errorId,
+          ...rest,
+        })) || [],
     };
 
     return this.messageManager.updateLists(lists);
@@ -109,9 +110,7 @@ export default class IOSPlayer extends Player {
     this.screen.addToBody(player);
     this.screen.addMobileStyles(stableTop);
 
-    window.addEventListener('resize', () =>
-      this.customScale(this.customConstrains.width, this.customConstrains.height)
-    );
+    window.addEventListener('resize', () => this.customScale(this.customConstrains.width, this.customConstrains.height));
   };
 
   scale = () => {
@@ -126,6 +125,7 @@ export default class IOSPlayer extends Player {
     width: 0,
     height: 0,
   };
+
   customScale = (width: number, height: number) => {
     if (!this.screen) return;
     this.screen?.scale?.({ width, height });

@@ -37,7 +37,7 @@ function NoteEvent(props: Props) {
         props.note.timestamp > 0
           ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
           : `?note=${props.note.noteId}`
-      }`
+      }`,
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -47,7 +47,7 @@ function NoteEvent(props: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to delete this note?`,
+        confirmation: 'Are you sure you want to delete this note?',
       })
     ) {
       notesStore.deleteNote(props.note.noteId).then((r) => {
@@ -58,27 +58,27 @@ function NoteEvent(props: Props) {
   };
   const menuItems = [
     {
-      icon: <Icon name={'pencil'} />,
+      icon: <Icon name="pencil" />,
       label: 'Edit',
       key: '1',
       onClick: onEdit,
       disabled: props.noEdit,
     },
     {
-      icon: <Icon name={'link-45deg'} />,
+      icon: <Icon name="link-45deg" />,
       label: 'Copy URL',
       key: '2',
       onClick: onCopy,
     },
     {
-      icon: <Icon name={'trash'} />,
+      icon: <Icon name="trash" />,
       label: 'Delete',
       key: '3',
       onClick: onDelete,
     },
   ];
 
-  console.log(props.note)
+  console.log(props.note);
   return (
     <div
       className="flex items-start flex-col p-2 border rounded ps-4"
@@ -103,13 +103,13 @@ function NoteEvent(props: Props) {
               ? shortDurationFromMs(props.note.startAt)
               : formatTimeOrDate(
                   props.note.createdAt as unknown as number,
-                  timezone
-                )}
+                  timezone,
+              )}
           </div>
         </div>
         <div className="cursor-pointer absolute" style={{ right: -5 }}>
           <Dropdown menu={{ items: menuItems }}>
-            <Button size={'small'}>
+            <Button size="small">
               <MoreOutlined />
             </Button>
           </Dropdown>

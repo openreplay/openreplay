@@ -24,23 +24,23 @@ const defaultOptions = {
 };
 export function validateName(value, options) {
   const {
-    admissibleChars,
-    empty,
-    spaces,
-    diacritics,
-    numbers,
-  } = Object.assign({}, defaultOptions, options);
+    admissibleChars, empty, spaces, diacritics, numbers,
+  } = {
+
+    ...defaultOptions,
+    ...options,
+  };
 
   if (typeof value !== 'string') return false; // throw Error?
   if (!empty && value && value.trim() === '') return false;
 
   const charsRegex = admissibleChars
-    ? `|${ admissibleChars.split('').map(escapeRegexp).join('|') }`
+    ? `|${admissibleChars.split('').map(escapeRegexp).join('|')}`
     : '';
   const spaceRegex = spaces ? '| ' : '';
 
-  const letters = `[A-Za-z${ numbers ? '0-9' : '' }${ diacritics ? 'À-žØ-öø-ÿ' : '' }]`;
-  const regExp = `^(${ letters }${ spaceRegex }${ charsRegex })*$`;
+  const letters = `[A-Za-z${numbers ? '0-9' : ''}${diacritics ? 'À-žØ-öø-ÿ' : ''}]`;
+  const regExp = `^(${letters}${spaceRegex}${charsRegex})*$`;
   return new RegExp(regExp).test(value);
 }
 
@@ -50,7 +50,6 @@ export function notEmptyString(value) {
   return true;
 }
 
-// eslint-disable-next-line complexity
 export function validateKeyCode(keyCode, key, regex) {
   switch (keyCode) {
     case 8: // Backspace
@@ -74,10 +73,7 @@ export function validateEmail(email) {
 }
 
 export function validateNumber(str, options = {}) {
-  const {
-    min,
-    max,
-  } = options;
+  const { min, max } = options;
   const n = Number(str);
   if (Number.isNaN(n)) return false;
   if (min && n < min) return false;
@@ -86,7 +82,6 @@ export function validateNumber(str, options = {}) {
 }
 
 export const validatePassword = (password) => {
-  const regex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]{8,}$/;
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]{8,}$/;
   return regex.test(password);
 };

@@ -11,7 +11,7 @@ import { Loader, NoContent, Pagination } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 import EmptyPage from './EmptyPage';
-import InstallCTA from "./InstallCTA";
+import InstallCTA from './InstallCTA';
 import SpotListItem from './SpotListItem';
 import SpotsListHeader from './SpotsListHeader';
 
@@ -47,17 +47,13 @@ function SpotsList() {
     }
 
     message.success(
-      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`
+      `${deletedCount} Spot${deletedCount > 1 ? 's' : ''} deleted successfully.`,
     );
   };
 
-  const onRename = (id: string, newName: string) => {
-    return spotStore.updateSpot(id, { name: newName });
-  };
+  const onRename = (id: string, newName: string) => spotStore.updateSpot(id, { name: newName });
 
-  const onVideo = (id: string) => {
-    return spotStore.getVideo(id);
-  };
+  const onVideo = (id: string) => spotStore.getVideo(id);
 
   const handleSelectSpot = (spotId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -73,15 +69,13 @@ function SpotsList() {
     setSelectedSpots([]);
   };
 
-  const isLoading = spotStore.isLoading;
+  const { isLoading } = spotStore;
   const isEmpty = spotStore.total === 0 && spotStore.query === '';
   return (
-    <div className={'relative w-full mx-auto'} style={{ maxWidth: 1360 }}>
+    <div className="relative w-full mx-auto" style={{ maxWidth: 1360 }}>
       <InstallCTA />
       <div
-        className={
-          'flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b'
-        }
+        className="flex mx-auto p-2 px-4 bg-white rounded-lg shadow-sm w-full z-50 border-b"
       >
         <SpotsListHeader
           onDelete={batchDelete}
@@ -93,7 +87,7 @@ function SpotsList() {
         />
       </div>
 
-      <div className={'pb-4 w-full'}>
+      <div className="pb-4 w-full">
         {isEmpty ? (
           isLoading ? (
             <Loader />
@@ -105,17 +99,17 @@ function SpotsList() {
             <NoContent
               className="w-full bg-white rounded-lg shadow-sm"
               show={spotStore.spots.length === 0}
-              title={
+              title={(
                 <div>
                   <AnimatedSVG name={ICONS.NO_RECORDINGS} size={60} />
                   <div className="font-medium text-center mt-4">
                     No Matching Results.
                   </div>
                 </div>
-              }
+              )}
             >
               <div
-                className={'py-2 border-gray-lighter grid grid-cols-3 gap-6'}
+                className="py-2 border-gray-lighter grid grid-cols-3 gap-6"
               >
                 {spotStore.spots.map((spot) => (
                   <SpotListItem
@@ -124,9 +118,7 @@ function SpotsList() {
                     onDelete={() => onDelete(spot.spotId)}
                     onRename={onRename}
                     onVideo={onVideo}
-                    onSelect={(checked: boolean) =>
-                      handleSelectSpot(spot.spotId, checked)
-                    }
+                    onSelect={(checked: boolean) => handleSelectSpot(spot.spotId, checked)}
                     isSelected={isSpotSelected(spot.spotId)}
                   />
                 ))}
@@ -134,19 +126,25 @@ function SpotsList() {
             </NoContent>
             <div className="flex items-center justify-between px-4 py-3 shadow-sm w-full bg-white rounded-lg mt-2">
               <div>
-                Showing{' '}
+                Showing
+                {' '}
                 <span className="font-medium">
                   {(spotStore.page - 1) * spotStore.limit + 1}
-                </span>{' '}
-                to{' '}
+                </span>
+                {' '}
+                to
+                {' '}
                 <span className="font-medium">
-                  {(spotStore.page - 1) * spotStore.limit +
-                    spotStore.spots.length}
-                </span>{' '}
-                of{' '}
+                  {(spotStore.page - 1) * spotStore.limit
+                    + spotStore.spots.length}
+                </span>
+                {' '}
+                of
+                {' '}
                 <span className="font-medium">
                   {numberWithCommas(spotStore.total)}
-                </span>{' '}
+                </span>
+                {' '}
                 spots.
               </div>
               <Pagination
@@ -165,5 +163,5 @@ function SpotsList() {
 }
 
 export default withPermissions(['SPOT'])(
-  withPageTitle('Spot List - OpenReplay')(observer(SpotsList))
+  withPageTitle('Spot List - OpenReplay')(observer(SpotsList)),
 );

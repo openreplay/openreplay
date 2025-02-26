@@ -2,9 +2,10 @@ import React from 'react';
 import cn from 'classnames';
 import { getTimelinePosition } from 'App/utils';
 import { Icon } from 'UI';
-import { InfoCircleOutlined} from '@ant-design/icons'
-import {Tooltip} from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import PerformanceGraph from '../PerformanceGraph';
+
 interface Props {
   list?: any[];
   title: string;
@@ -18,11 +19,12 @@ interface Props {
   disabled?: boolean;
 }
 const EventRow = React.memo((props: Props) => {
-  const { title, className, list = [], endTime = 0, isGraph = false, message = '', disabled } = props;
+  const {
+    title, className, list = [], endTime = 0, isGraph = false, message = '', disabled,
+  } = props;
   const scale = 100 / endTime;
-  const _list =
-    isGraph ? [] :
-    React.useMemo(() => {
+  const _list = isGraph ? []
+    : React.useMemo(() => {
       const tolerance = 2; // within what %s to group items
       const groupedItems = [];
       let currentGroup = [];
@@ -37,36 +39,34 @@ const EventRow = React.memo((props: Props) => {
         if (currentGroup.length === 0) {
           currentGroup.push(itemWithLeft);
           currentLeft = left;
+        } else if (Math.abs(left - currentLeft) <= tolerance) {
+          currentGroup.push(itemWithLeft);
         } else {
-          if (Math.abs(left - currentLeft) <= tolerance) {
-            currentGroup.push(itemWithLeft);
-          } else {
-            if (currentGroup.length > 1) {
-              const leftValues = currentGroup.map(item => item.left);
-              const minLeft = Math.min(...leftValues);
-              const maxLeft = Math.max(...leftValues);
-              const middleLeft = (minLeft + maxLeft) / 2;
+          if (currentGroup.length > 1) {
+            const leftValues = currentGroup.map((item) => item.left);
+            const minLeft = Math.min(...leftValues);
+            const maxLeft = Math.max(...leftValues);
+            const middleLeft = (minLeft + maxLeft) / 2;
 
-              groupedItems.push({
-                isGrouped: true,
-                items: currentGroup,
-                left: middleLeft,
-              });
-            } else {
-              groupedItems.push({
-                isGrouped: false,
-                items: [currentGroup[0]],
-                left: currentGroup[0].left,
-              });
-            }
-            currentGroup = [itemWithLeft];
-            currentLeft = left;
+            groupedItems.push({
+              isGrouped: true,
+              items: currentGroup,
+              left: middleLeft,
+            });
+          } else {
+            groupedItems.push({
+              isGrouped: false,
+              items: [currentGroup[0]],
+              left: currentGroup[0].left,
+            });
           }
+          currentGroup = [itemWithLeft];
+          currentLeft = left;
         }
       }
 
       if (currentGroup.length > 1) {
-        const leftValues = currentGroup.map(item => item.left);
+        const leftValues = currentGroup.map((item) => item.left);
         const minLeft = Math.min(...leftValues);
         const maxLeft = Math.max(...leftValues);
         const middleLeft = (minLeft + maxLeft) / 2;
@@ -95,7 +95,7 @@ const EventRow = React.memo((props: Props) => {
       <div
         className={cn(
           'uppercase text-sm flex items-center py-1 gap-1',
-          props.noMargin ? '' : 'ml-2'
+          props.noMargin ? '' : 'ml-2',
         )}
       >
         <div
@@ -104,9 +104,9 @@ const EventRow = React.memo((props: Props) => {
         >
           {title}
         </div>
-        
-        <Tooltip title={message} placement='left'>
-            <InfoCircleOutlined className='text-neutral-400' />
+
+        <Tooltip title={message} placement="left">
+          <InfoCircleOutlined className="text-neutral-400" />
         </Tooltip>
       </div>
       <div className="relative w-full" style={{ zIndex: props.zIndex ? props.zIndex : undefined }}>
@@ -114,7 +114,7 @@ const EventRow = React.memo((props: Props) => {
           <PerformanceGraph disabled={disabled} list={list} />
         ) : _list.length > 0 ? (
           _list.map((item: { items: any[], left: number, isGrouped: boolean }, index: number) => {
-            const left = item.left
+            const { left } = item;
             return (
               <div
                 key={index}

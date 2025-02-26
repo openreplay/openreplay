@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Button, Checkbox, Input, Tooltip } from 'antd';
+import {
+  Button, Checkbox, Input, Tooltip,
+} from 'antd';
 import { RedoOutlined, CloseCircleFilled } from '@ant-design/icons';
 import cn from 'classnames';
 import { Loader } from 'UI';
@@ -65,7 +67,7 @@ export function AutocompleteModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = React.useState('');
   const [selectedValues, setSelectedValues] = React.useState<string[]>(
-    values.filter((i) => i && i.length > 0)
+    values.filter((i) => i && i.length > 0),
   );
 
   const handleInputChange = (value: string) => {
@@ -80,9 +82,7 @@ export function AutocompleteModal({
       setSelectedValues(selectedValues.filter((i) => i !== item.value));
     }
   };
-  const isSelected = (item: { value: string; label: string }) => {
-    return selectedValues.includes(item.value);
-  };
+  const isSelected = (item: { value: string; label: string }) => selectedValues.includes(item.value);
 
   const applyValues = () => {
     onApply(selectedValues);
@@ -101,15 +101,13 @@ export function AutocompleteModal({
 
   const sortedOptions = React.useMemo(() => {
     const withSelected = [...options];
-    selectedValues.forEach(val => {
-      if (!options.find(i => i.value === val)) {
+    selectedValues.forEach((val) => {
+      if (!options.find((i) => i.value === val)) {
         withSelected.unshift({ value: val, label: val });
       }
-    })
+    });
     if (values[0] && values[0].length) {
-      const sorted = withSelected.sort((a, b) => {
-        return values.includes(a.value) ? -1 : 1;
-      });
+      const sorted = withSelected.sort((a, b) => (values.includes(a.value) ? -1 : 1));
       return sorted;
     }
     return withSelected;
@@ -136,8 +134,8 @@ export function AutocompleteModal({
       const modalRect = modalRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       if (modalRect.right > viewportWidth) {
-        modalRef.current.style.left = `unset`;
-        modalRef.current.style.right = `0`;
+        modalRef.current.style.left = 'unset';
+        modalRef.current.style.right = '0';
       }
     }
   }, [isOpen]);
@@ -150,7 +148,7 @@ export function AutocompleteModal({
     >
       <div
         className={cn(
-          'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10'
+          'absolute left-0 mt-2 p-4 bg-white rounded-xl shadow border-gray-light z-10',
         )}
         ref={modalRef}
         style={{ width: 360, minHeight: 100, top: '100%' }}
@@ -168,32 +166,30 @@ export function AutocompleteModal({
         <Loader loading={isLoading}>
           <>
             <div
-              className={
-                'flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis'
-              }
+              className="flex flex-col gap-2 overflow-y-auto py-2 overflow-x-hidden text-ellipsis"
               style={{ maxHeight: 200 }}
             >
               {sortedOptions.map((item) => (
                 <div
                   key={item.value}
                   onClick={() => onSelectOption(item)}
-                  className={
-                    'cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2'
-                  }
+                  className="cursor-pointer w-full py-1 hover:bg-active-blue rounded px-2"
                 >
-                  <Checkbox checked={isSelected(item)} /> {item.label}
+                  <Checkbox checked={isSelected(item)} />
+                  {' '}
+                  {item.label}
                 </div>
               ))}
             </div>
             {query.length ? (
-              <div className={'border-y border-y-gray-light py-2'}>
+              <div className="border-y border-y-gray-light py-2">
                 <div
-                  className={
-                    'whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1'
-                  }
+                  className="whitespace-normal rounded cursor-pointer text-teal hover:bg-active-blue px-2 py-1"
                   onClick={applyQuery}
                 >
-                  Apply {queryStr}
+                  Apply
+                  {' '}
+                  {queryStr}
                 </div>
               </div>
             ) : null}
@@ -247,9 +243,9 @@ export function AutoCompleteContainer(props: Props) {
     if (props.isAutoOpen) {
       setTimeout(() => {
         setShowValueModal(true);
-      }, 1)
+      }, 1);
     }
-  }, [props.isAutoOpen])
+  }, [props.isAutoOpen]);
 
   const onClose = () => setShowValueModal(false);
   const onApply = (values: string[]) => {
@@ -267,20 +263,18 @@ export function AutoCompleteContainer(props: Props) {
 
   const handleContainerClick = (event: React.MouseEvent) => {
     if (
-      event.target === event.currentTarget ||
-      event.currentTarget.contains(event.target as Node)
+      event.target === event.currentTarget
+      || event.currentTarget.contains(event.target as Node)
     ) {
       setTimeout(() => {
         setShowValueModal(true);
-      }, 0)
+      }, 0);
     }
   };
 
   return (
     <div
-      className={
-        'rounded-lg border border-gray-light px-2 relative w-full pr-4 whitespace-nowrap flex items-center bg-white hover:border-neutral-400'
-      }
+      className="rounded-lg border border-gray-light px-2 relative w-full pr-4 whitespace-nowrap flex items-center bg-white hover:border-neutral-400"
       style={{ height: 26 }}
       ref={filterValueContainer}
       onMouseEnter={() => setHovered(true)}
@@ -289,7 +283,7 @@ export function AutoCompleteContainer(props: Props) {
     >
       <div
         onClick={() => setTimeout(() => setShowValueModal(true), 0)}
-        className={'flex items-center gap-2 cursor-pointer pr-4'}
+        className="flex items-center gap-2 cursor-pointer pr-4"
       >
         {!isEmpty ? (
           <>

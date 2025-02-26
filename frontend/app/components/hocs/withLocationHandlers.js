@@ -1,6 +1,8 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
-import { removeQueryParams, addQueryParams, setQueryParams, parseQuery } from 'App/routes';
+import {
+  removeQueryParams, addQueryParams, setQueryParams, parseQuery,
+} from 'App/routes';
 
 /* eslint-disable react/sort-comp */
 
@@ -8,11 +10,14 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
   @withRouter
   class WrapperClass extends React.Component {
     getQuery = (names) => parseQuery(this.props.location, names);
+
     getParam = (name) => parseQuery(this.props.location)[name];
+
     addQuery = (params) => {
       const { location, history } = this.props;
       history.push(addQueryParams(location, params));
     };
+
     removeQuery = (names = [], replace = false) => {
       const { location, history } = this.props;
 
@@ -24,10 +29,12 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
         history[replace ? 'replace' : 'push'](removeQueryParams(location, actualNames));
       }
     };
+
     setQuery = (params, replace = false) => {
       const { location, history } = this.props;
       history[replace ? 'replace' : 'push'](setQueryParams(location, params));
     };
+
     query = {
       all: this.getQuery,
       get: this.getParam,
@@ -37,14 +44,17 @@ const withLocationHandlers = (propNames) => (BaseComponent) => {
     };
 
     getHash = () => this.props.location.hash.substring(1);
+
     setHash = (hash) => {
       const { location, history } = this.props;
       history.push({ ...location, hash: `#${hash}` });
     };
+
     removeHash = () => {
       const { location, history } = this.props;
       history.push({ ...location, hash: '' });
     };
+
     hash = {
       get: this.getHash,
       set: this.setHash,

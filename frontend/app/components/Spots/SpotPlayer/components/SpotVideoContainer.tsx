@@ -35,7 +35,7 @@ function SpotVideoContainer({
 }) {
   const [prevIsProcessing, setPrevIsProcessing] = React.useState(false);
   const [processingState, setProcessingState] = React.useState<ProcessingState>(
-    ProcessingState.Unchecked
+    ProcessingState.Unchecked,
   );
   const [isLoaded, setLoaded] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -78,7 +78,7 @@ function SpotVideoContainer({
       }
       import('hls.js').then(({ default: Hls }) => {
         const isSafari = /^((?!chrome|android).)*safari/i.test(
-          navigator.userAgent
+          navigator.userAgent,
         );
         if (Hls.isSupported() && videoRef.current) {
           if (isSafari) {
@@ -99,11 +99,9 @@ function SpotVideoContainer({
               hls.attachMedia(videoRef.current);
               startPlaying();
               hlsRef.current = hls;
-            } else {
-              if (videoRef.current) {
-                videoRef.current.src = videoURL;
-                startPlaying();
-              }
+            } else if (videoRef.current) {
+              videoRef.current.src = videoURL;
+              startPlaying();
             }
           } else {
             const check = () => {
@@ -118,31 +116,28 @@ function SpotVideoContainer({
                   }
 
                   return true;
-                } else {
-                  setTimeout(() => {
-                    check();
-                  }, 1000);
                 }
+                setTimeout(() => {
+                  check();
+                }, 1000);
               });
             };
             check();
           }
         } else if (
-          streamFile &&
-          videoRef.current &&
-          videoRef.current.canPlayType('application/vnd.apple.mpegurl')
+          streamFile
+          && videoRef.current
+          && videoRef.current.canPlayType('application/vnd.apple.mpegurl')
         ) {
           setLoaded(true);
           videoRef.current.src = URL.createObjectURL(base64toblob(streamFile));
           startPlaying();
-        } else {
-          if (videoRef.current) {
-            videoRef.current.addEventListener('loadeddata', () => {
-              setLoaded(true);
-            });
-            videoRef.current.src = videoURL;
-            startPlaying();
-          }
+        } else if (videoRef.current) {
+          videoRef.current.addEventListener('loadeddata', () => {
+            setLoaded(true);
+          });
+          videoRef.current.src = videoURL;
+          startPlaying();
         }
       });
     });
@@ -216,7 +211,7 @@ function SpotVideoContainer({
             message="Your processed Spot is ready!"
             showIcon
             type="success"
-            action={
+            action={(
               <Button
                 size="small"
                 type="default"
@@ -226,7 +221,7 @@ function SpotVideoContainer({
               >
                 Play Now
               </Button>
-            }
+            )}
           />
         ) : null}
       </div>
@@ -234,12 +229,12 @@ function SpotVideoContainer({
       {!isLoaded && (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">
           <img
-            src={'/assets/img/videoProcessing.svg'}
-            alt={'Processing video..'}
+            src="/assets/img/videoProcessing.svg"
+            alt="Processing video.."
             width={75}
             className="mb-5"
           />
-          <div className={'text-2xl font-bold'}>Loading Spot Recording...</div>
+          <div className="text-2xl font-bold">Loading Spot Recording...</div>
         </div>
       )}
       <video
@@ -247,9 +242,7 @@ function SpotVideoContainer({
         poster={thumbnail}
         autoPlay
         playsInline
-        className={
-          'object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer'
-        }
+        className="object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer"
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
         style={{ display: isLoaded ? 'block' : 'none' }}
       />

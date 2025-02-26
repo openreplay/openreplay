@@ -1,1 +1,1 @@
-export { default } from './MemoryConsumption'
+export { default } from './MemoryConsumption';

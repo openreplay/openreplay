@@ -1,12 +1,12 @@
 import React from 'react';
+import { BarChart } from 'echarts/charts';
 import {
   DataProps,
   buildCategories,
-  customTooltipFormatter
+  customTooltipFormatter,
 } from './utils';
 import { buildBarDatasetsAndSeries } from './barUtils';
-import { defaultOptions, echarts, initWindowStorages } from "./init";
-import { BarChart } from 'echarts/charts';
+import { defaultOptions, echarts, initWindowStorages } from './init';
 
 echarts.use([BarChart]);
 
@@ -23,7 +23,7 @@ function ORBarChart(props: BarChartProps) {
   React.useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
-    const obs = new ResizeObserver(() => chart.resize())
+    const obs = new ResizeObserver(() => chart.resize());
     obs.observe(chartRef.current);
 
     const categories = buildCategories(props.data);
@@ -44,7 +44,6 @@ function ORBarChart(props: BarChartProps) {
         (window as any).__seriesValueMap[chartUuid.current][s.name][rowIdx] = row[yDimIndex];
       });
     });
-
 
     const xAxis: any = {
       type: 'category',
@@ -81,11 +80,11 @@ function ORBarChart(props: BarChartProps) {
     chart.on('click', (event) => {
       const index = event.dataIndex;
       const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
-      props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
+      props.onClick?.({ activePayload: [{ payload: { timestamp } }] });
       setTimeout(() => {
-        props.onSeriesFocus?.(event.seriesName)
-      }, 0)
-    })
+        props.onSeriesFocus?.(event.seriesName);
+      }, 0);
+    });
 
     return () => {
       chart.dispose();

@@ -35,12 +35,12 @@ export function PlayButton({ togglePlay, iconSize, state }: IProps) {
 
   return (
     <Popover
-      content={
-        <div className={'flex gap-2 items-center'}>
+      content={(
+        <div className="flex gap-2 items-center">
           <PlayPauseSessionShortcut />
           <div>{label}</div>
         </div>
-      }
+      )}
     >
       <div
         onClick={togglePlay}

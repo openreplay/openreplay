@@ -1,45 +1,48 @@
 // import Filter from 'Types/filter';
-import Filter from './filter'
-import { makeAutoObservable, observable, action } from "mobx"
+import { makeAutoObservable, observable, action } from 'mobx';
+import Filter from './filter';
 
 export default class FilterSeries {
-    public static get ID_KEY():string { return "seriesId" }
-    seriesId?: any = undefined
-    name: string = "Series 1"
-    filter: Filter =  new Filter()
+  public static get ID_KEY():string { return 'seriesId'; }
 
-    constructor() {
-        makeAutoObservable(this, {
-            name: observable,
-            filter: observable,
+  seriesId?: any = undefined;
 
-            update: action,
-        })
-    }
+  name: string = 'Series 1';
 
-    update(key, value) {
-        this[key] = value
-    }
+  filter: Filter = new Filter();
 
-    fromJson(json, isHeatmap = false) {
-        this.seriesId = json.seriesId
-        this.name = json.name
-        this.filter = new Filter().fromJson(json.filter || { filters: [] }, isHeatmap)
-        return this
-    }
+  constructor() {
+    makeAutoObservable(this, {
+      name: observable,
+      filter: observable,
 
-    fromData(data) {
-        this.seriesId = data.seriesId
-        this.name = data.name
-        this.filter = new Filter().fromData(data.filter)
-        return this
-    }
+      update: action,
+    });
+  }
 
-    toJson() {
-        return {
-            seriesId: this.seriesId,
-            name: this.name,
-            filter: this.filter.toJson(),
-        }
-    }
+  update(key, value) {
+    this[key] = value;
+  }
+
+  fromJson(json, isHeatmap = false) {
+    this.seriesId = json.seriesId;
+    this.name = json.name;
+    this.filter = new Filter().fromJson(json.filter || { filters: [] }, isHeatmap);
+    return this;
+  }
+
+  fromData(data) {
+    this.seriesId = data.seriesId;
+    this.name = data.name;
+    this.filter = new Filter().fromData(data.filter);
+    return this;
+  }
+
+  toJson() {
+    return {
+      seriesId: this.seriesId,
+      name: this.name,
+      filter: this.filter.toJson(),
+    };
+  }
 }

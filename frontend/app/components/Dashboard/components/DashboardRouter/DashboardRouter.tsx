@@ -21,7 +21,7 @@ import WidgetView from '../WidgetView';
 import WidgetSubDetailsView from '../WidgetSubDetailsView';
 import DashboardsView from '../DashboardList';
 import Alerts from '../Alerts';
-import CreateAlert from '../Alerts/NewAlert'
+import CreateAlert from '../Alerts/NewAlert';
 
 function DashboardViewSelected({ siteId, dashboardId }: { siteId: string; dashboardId: string }) {
   return <DashboardView siteId={siteId} dashboardId={dashboardId} />;

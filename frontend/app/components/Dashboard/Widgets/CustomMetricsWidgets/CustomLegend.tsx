@@ -7,7 +7,12 @@ interface CustomLegendProps {
 
 function CustomLegend({ payload }: CustomLegendProps) {
   return (
-    <div className="custom-legend" style={{ display: 'flex', justifyContent:'center', gap: '1rem', flexWrap: 'wrap' }}>
+    <div
+      className="custom-legend"
+      style={{
+        display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap',
+      }}
+    >
       {payload?.map((entry) => (
         <div key={entry.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {entry.value.includes('(Comparison)') ? (
@@ -29,7 +34,7 @@ function CustomLegend({ payload }: CustomLegendProps) {
               }}
             />
           )}
-          <span className='text-sm'>{entry.value}</span>
+          <span className="text-sm">{entry.value}</span>
         </div>
       ))}
     </div>

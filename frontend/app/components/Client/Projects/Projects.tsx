@@ -1,11 +1,13 @@
 import React from 'react';
-import { App, Button, Card, Layout, Space, Tooltip, Typography } from 'antd';
+import {
+  App, Button, Card, Layout, Space, Tooltip, Typography,
+} from 'antd';
 import ProjectList from 'Components/Client/Projects/ProjectList';
 import ProjectTabs from 'Components/Client/Projects/ProjectTabs';
 import { useHistory } from 'react-router-dom';
 import { useStore } from '@/mstore';
 import { observer } from 'mobx-react-lite';
-import {PlusOutlined, KeyOutlined} from '@ant-design/icons'
+import { PlusOutlined, KeyOutlined } from '@ant-design/icons';
 import ProjectTabContent from 'Components/Client/Projects/ProjectTabContent';
 import { useModal } from 'Components/ModalContext';
 import ProjectForm from 'Components/Client/Projects/ProjectForm';
@@ -28,7 +30,7 @@ function Projects() {
   React.useEffect(() => {
     const params = new URLSearchParams(history.location.search);
     if (projectsStore.config.pid) {
-      params.set('pid', projectsStore.config.pid + '');
+      params.set('pid', `${projectsStore.config.pid}`);
     }
 
     if (projectsStore.config.tab) {
@@ -39,7 +41,7 @@ function Projects() {
 
   const createProject = () => {
     openModal(<ProjectForm onClose={closeModal} project={new Project()} />, {
-      title: 'Add Project'
+      title: 'Add Project',
     });
   };
 
@@ -52,20 +54,27 @@ function Projects() {
         body: '!p-0 !border-t',
       }}
       title={<Typography.Title level={4} className="!m-0">Projects</Typography.Title>}
-      extra={<Button onClick={createProject} type='default' size='middle' icon={<PlusOutlined size={16}/>}>Add Project</Button>}
-       >
+      extra={<Button onClick={createProject} type="default" size="middle" icon={<PlusOutlined size={16} />}>Add Project</Button>}
+    >
       <Layout>
-        <Layout.Sider width={260} trigger={null}
-                      className="!bg-white border-r">
+        <Layout.Sider
+          width={260}
+          trigger={null}
+          className="!bg-white border-r"
+        >
           <ProjectList />
         </Layout.Sider>
 
         <Layout>
-          <Layout.Header className="flex justify-between items-center p-4 !bg-white border-b"
-                         style={{ height: 46 }}>
+          <Layout.Header
+            className="flex justify-between items-center p-4 !bg-white border-b"
+            style={{ height: 46 }}
+          >
             <div className="flex items-center gap-4">
-              <Typography.Title level={5}
-                                className="capitalize !m-0 whitespace-nowrap truncate !font-medium">
+              <Typography.Title
+                level={5}
+                className="capitalize !m-0 whitespace-nowrap truncate !font-medium"
+              >
                 {project?.name}
               </Typography.Title>
               <ProjectKeyButton project={project} />
@@ -74,8 +83,8 @@ function Projects() {
           </Layout.Header>
           <Layout.Content
             style={{
-              padding:'1.5rem 1rem',
-              height: 'calc(100vh - 260px)'
+              padding: '1.5rem 1rem',
+              height: 'calc(100vh - 260px)',
             }}
             className="bg-white overflow-y-auto "
           >

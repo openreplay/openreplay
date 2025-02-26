@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Switch, Tooltip, Input, Typography } from 'antd';
+import {
+  Button, Space, Switch, Tooltip, Input, Typography,
+} from 'antd';
 import { Icon, Loader } from 'UI';
 import cn from 'classnames';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
@@ -18,7 +20,7 @@ function ProjectCaptureRate(props: Props) {
   const isMobile = platform !== 'web';
   const { settingsStore, userStore } = useStore();
   const isAdmin = userStore.account.admin || userStore.account.superAdmin;
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const [changed, setChanged] = useState(false);
   const {
     sessionSettings: {
@@ -26,11 +28,11 @@ function ProjectCaptureRate(props: Props) {
       changeCaptureRate,
       conditionalCapture,
       changeConditionalCapture,
-      captureConditions
+      captureConditions,
     },
     loadingCaptureRate,
     updateCaptureConditions,
-    fetchCaptureConditions
+    fetchCaptureConditions,
   } = settingsStore;
 
   useEffect(() => {
@@ -61,8 +63,8 @@ function ProjectCaptureRate(props: Props) {
   const onUpdate = () => {
     updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
-      conditionalCapture: conditionalCapture,
-      conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : []
+      conditionalCapture,
+      conditions: isEnterprise ? conditions.map((c) => c.toCaptureCondition()) : [],
     });
     setChanged(false);
   };
@@ -77,11 +79,11 @@ function ProjectCaptureRate(props: Props) {
             <Typography.Text>Define percentage of sessions you want to capture</Typography.Text>
             <Tooltip
               title={
-                'Define the percentage of user sessions to be recorded for detailed replay and analysis.' +
-                '\nSessions exceeding this specified limit will not be captured or stored.'
+                'Define the percentage of user sessions to be recorded for detailed replay and analysis.'
+                + '\nSessions exceeding this specified limit will not be captured or stored.'
               }
             >
-              <Icon size={16} color={'black'} name={'info-circle'} />
+              <Icon size={16} color="black" name="info-circle" />
             </Tooltip>
           </Space>
 

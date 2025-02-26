@@ -1,7 +1,7 @@
+import Screen from 'Player/web/Screen/Screen';
 import type { SelectionChange } from '../../messages';
 import type { VElement } from './VirtualDOM';
 import ListWalker from '../../../common/ListWalker';
-import Screen from 'Player/web/Screen/Screen';
 
 export default class SelectionManager extends ListWalker<SelectionChange> {
   constructor(private readonly vElements: Map<number, VElement>, private readonly screen: Screen) {
@@ -13,9 +13,9 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
   public clearSelection = () => {
     if (this.selected[0] === null && this.selected[1] === null) return;
 
-    this.screen.clearSelection()
+    this.screen.clearSelection();
     this.selected = [null, null];
-  }
+  };
 
   move(t: number) {
     const msg = this.moveGetLast(t);
@@ -25,7 +25,7 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
 
     // in theory: empty selection or selection removed
     if (msg.selectionStart <= 0) {
-      this.clearSelection()
+      this.clearSelection();
       return;
     }
     // preventing clones
@@ -35,7 +35,7 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
     const endVNode = this.vElements.get(msg.selectionEnd - 1);
 
     // only one selection present on page at the same time
-    if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart) this.clearSelection()
+    if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart) this.clearSelection();
 
     if (startVNode && endVNode) {
       const startCoords = startVNode.node.getBoundingClientRect();
@@ -45,18 +45,18 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
       const endPointer = document.createElement('div');
 
       Object.assign(endPointer.style, {
-        top: endCoords.top + 'px',
-        left: (endCoords.left) + 'px',
-        width: (endCoords.width) + 'px',
-        height: endCoords.height + 'px',
+        top: `${endCoords.top}px`,
+        left: `${endCoords.left}px`,
+        width: `${endCoords.width}px`,
+        height: `${endCoords.height}px`,
         position: 'absolute',
         boxShadow: '1px 4px 1px -2px blue',
       });
       Object.assign(startPointer.style, {
-        top: startCoords.top + 'px',
-        left: (startCoords.left) + 'px',
-        width: (startCoords.width) + 'px',
-        height: startCoords.height + 'px',
+        top: `${startCoords.top}px`,
+        left: `${startCoords.left}px`,
+        width: `${startCoords.width}px`,
+        height: `${startCoords.height}px`,
         position: 'absolute',
         boxShadow: '1px 4px 1px -2px blue',
       });

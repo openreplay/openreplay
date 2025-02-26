@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import FetchBasicDetails from './components/FetchBasicDetails';
 import { Button } from 'antd';
-import { ArrowRightOutlined,  ArrowLeftOutlined} from '@ant-design/icons';
+import { ArrowRightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { ResourceType } from 'Player';
-import FetchTabs from './components/FetchTabs/FetchTabs';
 import { useStore } from 'App/mstore';
 import { DateTime } from 'luxon';
+import FetchTabs from './components/FetchTabs/FetchTabs';
+import FetchBasicDetails from './components/FetchBasicDetails';
 
 interface Props {
   resource: any;
@@ -23,11 +23,11 @@ function FetchDetailsModal(props: Props) {
   const isXHR = resource.type === ResourceType.XHR
       || resource.type === ResourceType.FETCH
       || resource.type === ResourceType.IOS
-      || resource.type === ResourceType.GRAPHQL
+      || resource.type === ResourceType.GRAPHQL;
 
   const {
     sessionStore: { devTools },
-    settingsStore: { sessionSettings: { timezone }},
+    settingsStore: { sessionSettings: { timezone } },
   } = useStore();
 
   useEffect(() => {
@@ -41,7 +41,7 @@ function FetchDetailsModal(props: Props) {
     const index = rows.indexOf(resource);
     if (index > 0) {
       setResource(rows[index - 1]);
-      devTools.update('network', { index: index - 1 })
+      devTools.update('network', { index: index - 1 });
     }
   };
 
@@ -49,15 +49,14 @@ function FetchDetailsModal(props: Props) {
     const index = rows.indexOf(resource);
     if (index < rows.length - 1) {
       setResource(rows[index + 1]);
-      devTools.update('network', { index: index + 1 })
+      devTools.update('network', { index: index + 1 });
     }
   };
-
 
   return (
     <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
       <h5 className="mb-4 text-2xl ">Network Request</h5>
-      <FetchBasicDetails resource={resource} timestamp={resource.timestamp ? DateTime.fromMillis(resource.timestamp).setZone(timezone.value).toFormat(`LLL dd, yyyy, hh:mm:ss a`) : undefined} />
+      <FetchBasicDetails resource={resource} timestamp={resource.timestamp ? DateTime.fromMillis(resource.timestamp).setZone(timezone.value).toFormat('LLL dd, yyyy, hh:mm:ss a') : undefined} />
 
       {isXHR && <FetchTabs isSpot={isSpot} resource={resource} />}
 

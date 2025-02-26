@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Tabs, CopyButton } from 'UI';
-import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
 import DocCard from 'Shared/DocCard/DocCard';
 import { useModal } from 'App/components/Modal';
 import UserForm from 'App/components/Client/Users/components/UserForm/UserForm';
-import AndroidInstallDocs from "Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs";
+import AndroidInstallDocs from 'Components/Onboarding/components/OnboardingTabs/InstallDocs/AndroidInstallDocs';
+import MobileInstallDocs from './InstallDocs/MobileInstallDocs';
 
 const iOS = 'iOS';
 const ANDROID = 'Android';
@@ -17,7 +17,7 @@ interface Props {
   site: Record<string, any>;
 }
 
-const MobileTrackingCodeModal = (props: Props) => {
+function MobileTrackingCodeModal(props: Props) {
   const { site } = props;
   const [activeTab, setActiveTab] = useState(iOS);
   const { showModal } = useModal();
@@ -44,7 +44,7 @@ const MobileTrackingCodeModal = (props: Props) => {
               </DocCard>
 
               <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
+                <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />
                 </div>
@@ -67,7 +67,7 @@ const MobileTrackingCodeModal = (props: Props) => {
               </DocCard>
 
               <DocCard title="Project Key">
-                <div className={'p-2 rounded bg-white flex justify-between items-center'}>
+                <div className="p-2 rounded bg-white flex justify-between items-center">
                   {site.projectKey}
                   <CopyButton content={site.projectKey} />
                 </div>
@@ -86,6 +86,6 @@ const MobileTrackingCodeModal = (props: Props) => {
       <div className="p-5 py-8">{renderActiveTab()}</div>
     </>
   );
-};
+}
 
 export default MobileTrackingCodeModal;

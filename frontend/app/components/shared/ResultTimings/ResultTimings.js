@@ -1,14 +1,16 @@
 import React from 'react';
-import Bar from './Bar';
 import { List } from 'immutable';
 import { percentOf } from 'App/utils';
-import SectionWrapper from './SectionWrapper';
-import Barwrapper from './Barwrapper';
 import { NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import SectionWrapper from './SectionWrapper';
+import Barwrapper from './Barwrapper';
+import Bar from './Bar';
 
 function ResultTimings({ duration, timing }) {
-  const { blocked, connect, dns, queued, receive, send, ssl, wait } = timing;
+  const {
+    blocked, connect, dns, queued, receive, send, ssl, wait,
+  } = timing;
   const _dns = Math.max(dns, 0);
   const _ssl = Math.max(ssl, 0);
   const _connect = Math.max(connect, 0);
@@ -24,14 +26,14 @@ function ResultTimings({ duration, timing }) {
   const receiveStart = waitSrart + wait;
   return (
     <NoContent
-      title={
+      title={(
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_RESULTS} size="60" />
           <div className="mt-6 text-2xl">No Data!</div>
         </div>
-      }
+      )}
       // animatedIcon="no-results"
-      show={ List.isList(timing)}
+      show={List.isList(timing)}
       size="small"
     >
       <div className="bg-white flex flex-col rounded m-3">
@@ -46,7 +48,7 @@ function ResultTimings({ duration, timing }) {
           </Barwrapper>
           {dns >= 0 && (
             <Barwrapper title="DNS Lookup" duration={_dns}>
-              <Bar start={percentOf(dnsStart, total)} end={percentOf((total - (dnsStart + _dns)), total)} color="green"/>
+              <Bar start={percentOf(dnsStart, total)} end={percentOf((total - (dnsStart + _dns)), total)} color="green" />
             </Barwrapper>
           )}
           {connect >= 0 && (
@@ -74,11 +76,15 @@ function ResultTimings({ duration, timing }) {
         </SectionWrapper>
         <div className="flex my-3">
           <div className="font-medium">Total</div>
-          <div className="font-medium ml-auto">{total} ms</div>
+          <div className="font-medium ml-auto">
+            {total}
+            {' '}
+            ms
+          </div>
         </div>
       </div>
     </NoContent>
-  )
+  );
 }
 
-export default ResultTimings
+export default ResultTimings;

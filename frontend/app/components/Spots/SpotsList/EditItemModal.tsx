@@ -13,13 +13,13 @@ function EditItemModal(props: Props) {
   const [name, setName] = React.useState(props.itemName);
   const saveResult = () => {
     props.onSave(name);
-  }
+  };
   return (
     <Modal open onClose={props.onClose}>
       <Modal.Header className="flex items-center justify-between">
-        <div>{'Edit Spot'}</div>
+        <div>Edit Spot</div>
         <Button
-          type='text'
+          type="text"
           name="close"
           onClick={props.onClose}
           icon={<CloseOutlined />}
@@ -31,7 +31,7 @@ function EditItemModal(props: Props) {
           <Input
             className=""
             name="title"
-            value={ name }
+            value={name}
             onChange={({ target: { value } }) => setName(value)}
             placeholder="Title"
             maxLength={100}
@@ -43,16 +43,16 @@ function EditItemModal(props: Props) {
         <div className="-mx-2 px-2">
           <Button
             type="primary"
-            onClick={ saveResult }
+            onClick={saveResult}
             className="float-left mr-2"
           >
             Save
           </Button>
-          <Button type='default' onClick={ props.onClose }>{ 'Cancel' }</Button>
+          <Button type="default" onClick={props.onClose}>Cancel</Button>
         </div>
       </Modal.Footer>
     </Modal>
-  )
+  );
 }
 
 export default EditItemModal;

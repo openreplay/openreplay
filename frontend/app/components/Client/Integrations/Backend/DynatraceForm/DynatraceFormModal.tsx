@@ -24,22 +24,24 @@ const initialValues = {
   client_secret: '',
   resource: '',
 };
-const DynatraceFormModal = ({
+function DynatraceFormModal({
   onClose,
   integrated,
 }: {
   onClose: () => void;
   integrated: boolean;
-}) => {
+}) {
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
   const {
     data = initialValues,
     isPending,
     saveMutation,
     removeMutation,
   } = useIntegration<DynatraceConfig>('dynatrace', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
+  const {
+    values, errors, handleChange, hasErrors, checkErrors,
+  } = useForm(data, {
     environment: {
       required: true,
     },
@@ -62,7 +64,7 @@ const DynatraceFormModal = ({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -71,7 +73,7 @@ const DynatraceFormModal = ({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -136,7 +138,7 @@ const DynatraceFormModal = ({
             errors={errors.resource}
           />
 
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
@@ -148,7 +150,7 @@ const DynatraceFormModal = ({
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                Delete
               </Button>
             )}
           </div>
@@ -156,7 +158,7 @@ const DynatraceFormModal = ({
       </div>
     </div>
   );
-};
+}
 
 DynatraceFormModal.displayName = 'DynatraceFormModal';
 

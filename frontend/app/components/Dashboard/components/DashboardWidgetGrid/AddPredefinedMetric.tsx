@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
@@ -15,7 +15,9 @@ interface IProps extends RouteComponentProps {
   description: string;
 }
 
-function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
+function AddPredefinedMetric({
+  history, siteId, title, description,
+}: IProps) {
   const [categories, setCategories] = React.useState([]);
   const { dashboardStore } = useStore();
   const { hideModal } = useModal();
@@ -98,8 +100,8 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
                   gridAutoRows: 'max-content',
                 }}
               >
-                {activeCategory &&
-                  categories.map((category) => (
+                {activeCategory
+                  && categories.map((category) => (
                     <React.Fragment key={category.name}>
                       <WidgetCategoryItem
                         key={category.name}
@@ -122,14 +124,14 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
                 gridAutoRows: 'max-content',
               }}
             >
-              {activeCategory &&
-                activeCategory.widgets.map((metric: any) => (
+              {activeCategory
+                && activeCategory.widgets.map((metric: any) => (
                   <React.Fragment key={metric.metricId}>
                     <WidgetWrapper
                       key={metric.metricId}
                       widget={metric}
                       active={selectedWidgetIds.includes(metric.metricId)}
-                      isTemplate={true}
+                      isTemplate
                       isSaved={metric.metricType === 'predefined'}
                       onClick={() => dashboardStore.toggleWidgetSelection(metric)}
                     />

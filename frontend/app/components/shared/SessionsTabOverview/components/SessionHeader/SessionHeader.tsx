@@ -1,11 +1,11 @@
 import React from 'react';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
-import SessionTags from '../SessionTags';
-import SessionSort from '../SessionSort';
 import { Space } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import SessionSort from '../SessionSort';
+import SessionTags from '../SessionTags';
 
 function SessionHeader() {
   const { searchStore } = useStore();
@@ -25,7 +25,7 @@ function SessionHeader() {
         <SessionTags />
         <div className="mr-auto" />
         <Space>
-          <SelectDateRange isAnt period={period} onChange={onDateChange} right={true} />
+          <SelectDateRange isAnt period={period} onChange={onDateChange} right />
           <SessionSort />
         </Space>
       </div>

@@ -1,4 +1,4 @@
-import { Message } from "Player/web/messages";
+import { Message } from 'Player/web/messages';
 
 export interface Timed {
   time: number
@@ -30,7 +30,6 @@ export interface Store<G extends Object, S extends Object = G> {
   updateTabStates(id: string, state: Partial<S>): void
 }
 
-
 export interface SessionFilesInfo {
   startedAt: number
   sessionId: string
@@ -46,7 +45,7 @@ export interface SessionFilesInfo {
   devtoolsURL: string[]
   /** deprecated */
   mobsUrl: string[]
-  fileKey: string  | null
+  fileKey: string | null
   events: Record<string, any>[]
   stackEvents: Record<string, any>[]
   frustrations: Record<string, any>[]

@@ -30,7 +30,7 @@ const siteIdRequiredPaths: string[] = [
   '/check-recording-status',
   '/usability-tests',
   '/tags',
-  '/intelligent'
+  '/intelligent',
 ];
 
 export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any => {
@@ -38,7 +38,7 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
     ? new Array(obj.length).fill().map((_, i) => i)
     : Object.keys(obj);
   const retObj = Array.isArray(obj) ? [] : {};
-  keys.map(key => {
+  keys.map((key) => {
     const value = obj[key];
     if (typeof value === 'object' && value !== null) {
       retObj[key] = clean(value);
@@ -52,18 +52,23 @@ export const clean = (obj: any, forbiddenValues: any[] = [undefined, '']): any =
 
 export default class APIClient {
   private init: RequestInit;
+
   private siteId: string | undefined;
+
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
+
   private getJwt: () => string | null = () => null;
+
   private onUpdateJwt: (data: { jwt?: string, spotJwt?: string }) => void;
+
   private refreshingTokenPromise: Promise<string> | null = null;
 
   constructor() {
     this.init = {
       headers: new Headers({
         Accept: 'application/json',
-        'Content-Type': 'application/json'
-      })
+        'Content-Type': 'application/json',
+      }),
     };
   }
 
@@ -82,14 +87,14 @@ export default class APIClient {
   }
 
   setSiteIdCheck(checker: () => { siteId: string | null }): void {
-    this.siteIdCheck = checker
+    this.siteIdCheck = checker;
   }
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = this.getJwt()
+    const jwt = this.getJwt();
     const headers = new Headers({
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Content-Type': 'application/json',
     });
 
@@ -148,7 +153,7 @@ export default class APIClient {
     params?: any,
     method: string = 'GET',
     options: { clean?: boolean } = { clean: true },
-    headers?: Record<string, any>
+    headers?: Record<string, any>,
   ): Promise<Response> {
     let _path = path;
     let jwt = this.getJwt();
@@ -167,21 +172,21 @@ export default class APIClient {
       delete init.body;
     }
 
-    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
-    let edp = window.env.API_EDP || window.location.origin + '/api';
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
+    let edp = window.env.API_EDP || `${window.location.origin}/api`;
     if (noChalice && !edp.includes('api.openreplay.com')) {
-      edp = edp.replace('/api', '')
+      edp = edp.replace('/api', '');
     }
     if (
-      path !== '/targets_temp' &&
-      !path.includes('/metadata/session_search') &&
-      !path.includes('/assist/credentials') &&
-      siteIdRequiredPaths.some((sidPath) => path.startsWith(sidPath))
+      path !== '/targets_temp'
+      && !path.includes('/metadata/session_search')
+      && !path.includes('/assist/credentials')
+      && siteIdRequiredPaths.some((sidPath) => path.startsWith(sidPath))
     ) {
       edp = `${edp}/${this.siteId ?? ''}`;
     }
     if (path.includes('PROJECT_ID')) {
-      _path = _path.replace('PROJECT_ID', this.siteId + '');
+      _path = _path.replace('PROJECT_ID', `${this.siteId}`);
     }
 
     const fullUrl = edp + _path;
@@ -193,7 +198,7 @@ export default class APIClient {
     if (response.ok) {
       return response;
     }
-    let errorMsg = `Something went wrong.`;
+    let errorMsg = 'Something went wrong.';
     try {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
@@ -204,7 +209,7 @@ export default class APIClient {
   async refreshToken(): Promise<string> {
     try {
       const response = await this.fetch('/refresh', {
-        headers: this.init.headers
+        headers: this.init.headers,
       }, 'GET', { clean: false });
 
       if (!response.ok) {
@@ -249,5 +254,5 @@ export default class APIClient {
 
   forceSiteId = (siteId: string) => {
     this.siteId = siteId;
-  }
+  };
 }

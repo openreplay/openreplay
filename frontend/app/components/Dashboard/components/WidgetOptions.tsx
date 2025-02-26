@@ -6,7 +6,9 @@ import {
   TIMESERIES,
   USER_PATH,
 } from 'App/constants/card';
-import { Select, Space, Switch, Dropdown, Button } from 'antd';
+import {
+  Select, Space, Switch, Dropdown, Button,
+} from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useStore } from 'App/mstore';
 import ClickMapRagePicker from 'Components/Dashboard/components/ClickMapRagePicker/ClickMapRagePicker';
@@ -24,7 +26,7 @@ import {
   Library,
   ChartColumnBig,
   ChartBarBig,
-}  from 'lucide-react';
+} from 'lucide-react';
 
 function WidgetOptions() {
   const { metricStore } = useStore();
@@ -38,7 +40,7 @@ function WidgetOptions() {
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL].includes(metric.metricType);
   return (
-    <div className={'flex items-center gap-2'}>
+    <div className="flex items-center gap-2">
       {metric.metricType === USER_PATH && (
         <a
           href="#"
@@ -56,9 +58,9 @@ function WidgetOptions() {
       )}
 
       {metric.metricType === TIMESERIES && <SeriesTypeOptions metric={metric} />}
-      {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
-        metric.metricOf !== FilterKey.USERID &&
-        metric.metricOf !== FilterKey.ERRORS && (
+      {(metric.metricType === FUNNEL || metric.metricType === TABLE)
+        && metric.metricOf !== FilterKey.USERID
+        && metric.metricOf !== FilterKey.ERRORS && (
           <Dropdown
             trigger={['click']}
             menu={{
@@ -78,7 +80,7 @@ function WidgetOptions() {
               <DownOutlined className="text-sm" />
             </Button>
           </Dropdown>
-        )}
+      )}
       {hasViewTypes && <WidgetViewTypeOptions metric={metric} />}
       {metric.metricType === HEATMAP && <ClickMapRagePicker />}
     </div>
@@ -103,11 +105,9 @@ const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
         items: Object.entries(items).map(([key, name]) => ({
           key,
           label: (
-            <div className={'flex items-center gap-2'}>
-              <>
-                {chartIcons[key]}
-                <div>{name}</div>
-              </>
+            <div className="flex items-center gap-2">
+              {chartIcons[key]}
+              <div>{name}</div>
             </div>
           ),
         })),
@@ -149,10 +149,10 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
     columnChart: 'Funnel Column',
     metric: 'Metric',
     table: 'Table',
-  }
+  };
   const usedChartTypes = metric.metricType === FUNNEL ? funnelChartTypes : chartTypes;
   const chartIcons = {
-    lineChart: <ChartLine size={16} strokeWidth={1} /> ,
+    lineChart: <ChartLine size={16} strokeWidth={1} />,
     barChart: <ChartColumn size={16} strokeWidth={1} />,
     areaChart: <ChartArea size={16} strokeWidth={1} />,
     pieChart: <ChartPie size={16} strokeWidth={1} />,
@@ -184,8 +184,8 @@ const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
           key,
           label: (
             <div className="flex gap-2 items-center">
-                {chartIcons[key]}
-                <div>{usedChartTypes[key]}</div>
+              {chartIcons[key]}
+              <div>{usedChartTypes[key]}</div>
             </div>
           ),
         })),

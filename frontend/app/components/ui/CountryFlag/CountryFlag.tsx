@@ -16,21 +16,19 @@ interface CountryFlagProps {
   showLabel?: boolean;
 }
 
-
 const CountryFlag: FC<CountryFlagProps> = ({
-                                             userCity = '',
-                                             userState = '',
-                                             country = '',
-                                             className = '',
-                                             style = {},
-                                             width = 18,
-                                             height = 15,
-                                             showLabel = false
-                                           }) => {
+  userCity = '',
+  userState = '',
+  country = '',
+  className = '',
+  style = {},
+  width = 18,
+  height = 15,
+  showLabel = false,
+}) => {
   const knownCountry = !!country && country !== 'UN';
   const countryFlag = knownCountry ? country.toLowerCase() : '';
   const countryName = knownCountry ? countries[country] : 'Unknown Country';
-
 
   const displayGeoInfo = userCity || userState || countryName;
 
@@ -47,8 +45,10 @@ const CountryFlag: FC<CountryFlagProps> = ({
     <div className="flex items-center" style={style}>
       <Tooltip title={fullGeoInfo}>
         <div>
-          <CountryFlagIcon countryCode={countryFlag.toUpperCase()}
-                           style={{ width: `${width}px`, borderRadius: '2px' }} />
+          <CountryFlagIcon
+            countryCode={countryFlag.toUpperCase()}
+            style={{ width: `${width}px`, borderRadius: '2px' }}
+          />
         </div>
       </Tooltip>
       {showLabel && renderGeoInfo}

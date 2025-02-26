@@ -1,20 +1,22 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, {
+  useEffect, useRef, useState, useMemo,
+} from 'react';
 import { LogLevel, ILog } from 'Player';
-import BottomBlock from '../BottomBlock';
 import { Tabs, Icon, NoContent } from 'UI';
-import {Input} from 'antd';
-import {SearchOutlined, InfoCircleOutlined} from '@ant-design/icons';
+import { Input } from 'antd';
+import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import cn from 'classnames';
-import ConsoleRow from '../ConsoleRow';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
-import TabSelector from "../TabSelector";
+import { VList, VListHandle } from 'virtua';
+import TabSelector from '../TabSelector';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import { VList, VListHandle } from "virtua";
+import ConsoleRow from '../ConsoleRow';
+import BottomBlock from '../BottomBlock';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -43,7 +45,7 @@ export function renderWithNL(s: string | null = '') {
     const formattedLine = parts.map((part, index) => {
       if (urlRegex.test(part)) {
         return (
-          <a key={`link-${index}`} className={'link text-main'} href={part} target="_blank" rel="noopener noreferrer">
+          <a key={`link-${index}`} className="link text-main" href={part} target="_blank" rel="noopener noreferrer">
             {part}
           </a>
         );
@@ -58,7 +60,6 @@ export function renderWithNL(s: string | null = '') {
     );
   });
 }
-
 
 export const getIconProps = (level: LogLevel) => {
   switch (level) {
@@ -102,8 +103,8 @@ function ConsolePanel({
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
 
   const _list = useRef<VListHandle>(null);
-  const filter = devTools[INDEX_KEY].filter;
-  const activeTab = devTools[INDEX_KEY].activeTab;
+  const { filter } = devTools[INDEX_KEY];
+  const { activeTab } = devTools[INDEX_KEY];
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
@@ -115,42 +116,43 @@ function ConsolePanel({
   const { currentTab, tabStates } = store.get();
   const tabsArr = Object.keys(tabStates);
   const tabValues = Object.values(tabStates);
-  const dataSource = uiPlayerStore.dataSource;
+  const { dataSource } = uiPlayerStore;
   const showSingleTab = dataSource === 'current';
-  const { logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [] } = React.useMemo(() => {
+  const {
+    logList = [], exceptionsList = [], logListNow = [], exceptionsListNow = [],
+  } = React.useMemo(() => {
     if (showSingleTab) {
       return tabStates[currentTab] ?? {};
-    } else {
-      const logList = tabValues.flatMap(tab => tab.logList);
-      const exceptionsList = tabValues.flatMap(tab => tab.exceptionsList);
-      const logListNow = isLive ? tabValues.flatMap(tab => tab.logListNow) : [];
-      const exceptionsListNow = isLive ? tabValues.flatMap(tab => tab.exceptionsListNow) : [];
-      return { logList, exceptionsList, logListNow, exceptionsListNow }
     }
-  }, [currentTab, tabStates, dataSource, tabValues, isLive])
+    const logList = tabValues.flatMap((tab) => tab.logList);
+    const exceptionsList = tabValues.flatMap((tab) => tab.exceptionsList);
+    const logListNow = isLive ? tabValues.flatMap((tab) => tab.logListNow) : [];
+    const exceptionsListNow = isLive ? tabValues.flatMap((tab) => tab.exceptionsListNow) : [];
+    return {
+      logList, exceptionsList, logListNow, exceptionsListNow,
+    };
+  }, [currentTab, tabStates, dataSource, tabValues, isLive]);
   const getTabNum = (tab: string) => (tabsArr.findIndex((t) => t === tab) + 1);
 
   const list = useMemo(() => {
     if (isLive) {
-      return logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time)
-    } else {
-      const logs = logList.concat(exceptionsList).sort((a, b) => a.time - b.time)
-      return zoomEnabled ? logs.filter(l => l.time >= zoomStartTs && l.time <= zoomEndTs) : logs
+      return logListNow.concat(exceptionsListNow).sort((a, b) => a.time - b.time);
     }
-  }, [isLive, logList.length, exceptionsList.length, logListNow.length, exceptionsListNow.length, zoomEnabled, zoomStartTs, zoomEndTs])
+    const logs = logList.concat(exceptionsList).sort((a, b) => a.time - b.time);
+    return zoomEnabled ? logs.filter((l) => l.time >= zoomStartTs && l.time <= zoomEndTs) : logs;
+  }, [isLive, logList.length, exceptionsList.length, logListNow.length, exceptionsListNow.length, zoomEnabled, zoomStartTs, zoomEndTs]);
   let filteredList = useRegExListFilterMemo(list, (l) => l.value, filter);
   filteredList = useTabListFilterMemo(filteredList, (l) => LEVEL_TAB[l.level], ALL, activeTab);
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) =>
-    devTools.update(INDEX_KEY, { filter: value });
+  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value });
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
     filteredList,
     getLastItemTime(logListNow, exceptionsListNow),
     activeIndex,
-    (index) => devTools.update(INDEX_KEY, { index })
+    (index) => devTools.update(INDEX_KEY, { index }),
   );
   const onMouseEnter = stopAutoscroll;
   const onMouseLeave = () => {
@@ -189,7 +191,7 @@ function ConsolePanel({
           <span className="font-semibold color-gray-medium mr-4">Console</span>
           <Tabs tabs={TABS} active={activeTab} onClick={onTabClick} border={false} />
         </div>
-        <div className={'flex items-center gap-2'}>
+        <div className="flex items-center gap-2">
           <TabSelector />
           <Input
             className="rounded-lg"
@@ -197,8 +199,8 @@ function ConsolePanel({
             name="filter"
             onChange={onFilterChange}
             value={filter}
-            size='small'
-            prefix={<SearchOutlined className='text-neutral-400' />}
+            size="small"
+            prefix={<SearchOutlined className="text-neutral-400" />}
           />
         </div>
         {/* @ts-ignore */}
@@ -206,12 +208,12 @@ function ConsolePanel({
       {/* @ts-ignore */}
       <BottomBlock.Content className="overflow-y-auto">
         <NoContent
-          title={
+          title={(
             <div className="capitalize flex items-center mt-16 gap-2">
               <InfoCircleOutlined size={18} />
               No Data
             </div>
-          }
+          )}
           size="small"
           show={filteredList.length === 0}
         >

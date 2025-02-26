@@ -1,4 +1,4 @@
-import { Alert } from 'antd';
+import { Alert, Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, {
   ChangeEvent,
@@ -16,18 +16,17 @@ import { useStore } from 'App/mstore';
 import { login } from 'App/routes';
 import { validatePassword } from 'App/validate';
 import { Form, Input, Link } from 'UI';
-import { Button } from 'antd'
 
 import Select from 'Shared/Select';
 
 const LOGIN_ROUTE = login();
 
-const SignupForm = () => {
+function SignupForm() {
   const { userStore } = useStore();
-  const tenants = userStore.tenants;
-  const signup = userStore.signup;
-  const errors = userStore.signUpRequest.errors;
-  const loading = userStore.signUpRequest.loading;
+  const { tenants } = userStore;
+  const { signup } = userStore;
+  const { errors } = userStore.signUpRequest;
+  const { loading } = userStore.signUpRequest;
   const [state, setState] = useState({
     tenantId: '',
     fullname: '',
@@ -64,14 +63,14 @@ const SignupForm = () => {
       'g-recaptcha-response': token,
     }).then((resp: any) => {
       if (
-        resp &&
-        resp.errors &&
-        Array.isArray(resp.errors) &&
-        resp.errors.length > 0
+        resp
+        && resp.errors
+        && Array.isArray(resp.errors)
+        && resp.errors.length > 0
       ) {
         if ((resp.errors[0] as string).includes('in use')) {
           toast.error(
-            "This email is already linked to an account or team on OpenReplay and can't be used again."
+            "This email is already linked to an account or team on OpenReplay and can't be used again.",
           );
         } else {
           resp.errors[0]
@@ -83,8 +82,7 @@ const SignupForm = () => {
     setState({ ...state, reload: true });
   };
 
-  const write = ({ target: { value, name } }: ChangeEvent<HTMLInputElement>) =>
-    setState({ ...state, [name]: value });
+  const write = ({ target: { value, name } }: ChangeEvent<HTMLInputElement>) => setState({ ...state, [name]: value });
 
   const writeOption = ({
     name,
@@ -154,13 +152,13 @@ const SignupForm = () => {
             <Form.Field>
               <label>Email Address</label>
               <Input
-                autoFocus={true}
+                autoFocus
                 autoComplete="username"
                 type="email"
                 placeholder="E.g. email@yourcompany.com"
                 name="email"
                 onChange={write}
-                required={true}
+                required
                 icon="envelope"
                 className="rounded-lg"
               />
@@ -173,7 +171,7 @@ const SignupForm = () => {
                 minLength={8}
                 name="password"
                 onChange={write}
-                required={true}
+                required
                 icon="key"
                 className="rounded-lg"
               />
@@ -185,7 +183,7 @@ const SignupForm = () => {
                 placeholder="E.g John Doe"
                 name="fullname"
                 onChange={write}
-                required={true}
+                required
                 icon="user-alt"
                 className="rounded-lg"
               />
@@ -197,7 +195,7 @@ const SignupForm = () => {
                 placeholder="E.g Uber"
                 name="organizationName"
                 onChange={write}
-                required={true}
+                required
                 icon="buildings"
                 className="rounded-lg"
               />
@@ -231,11 +229,14 @@ const SignupForm = () => {
             </Button>
             <div className="my-6">
               <div className="text-sm">
-                By signing up, you agree to our{' '}
+                By signing up, you agree to our
+                {' '}
                 <a href="https://openreplay.com/terms.html" className="link">
                   terms of service
-                </a>{' '}
-                and{' '}
+                </a>
+                {' '}
+                and
+                {' '}
                 <a href="https://openreplay.com/privacy.html" className="link">
                   privacy policy
                 </a>
@@ -247,13 +248,14 @@ const SignupForm = () => {
       </Form>
 
       <div className="text-center py-6">
-        Already having an account?{' '}
+        Already having an account?
+        {' '}
         <span className="link">
           <Link to={LOGIN_ROUTE}>Login</Link>
         </span>
       </div>
     </div>
   );
-};
+}
 
 export default observer(SignupForm);

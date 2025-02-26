@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
 import cn from 'classnames';
-import ChatWindow from '../../ChatWindow';
-import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
+import {
+  CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream,
+} from 'Player';
 import type { LocalStream } from 'Player';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { confirm, Icon, Tooltip } from 'UI';
-import stl from './AassistActions.module.css';
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 import { audioContextManager } from 'App/utils/screenRecorder';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
+import stl from './AassistActions.module.css';
+import ChatWindow from '../../ChatWindow';
 
 function onReject() {
-  toast.info(`Call was rejected.`);
+  toast.info('Call was rejected.');
 }
 
 function onControlReject() {
@@ -39,13 +41,13 @@ interface Props {
 const AssistActionsPing = {
   control: {
     start: 's_control_started',
-    end: 's_control_ended'
+    end: 's_control_ended',
   },
   call: {
     start: 's_call_started',
-    end: 's_call_ended'
+    end: 's_call_ended',
   },
-} as const
+} as const;
 
 function AssistActions({
   userId,
@@ -57,9 +59,9 @@ function AssistActions({
   const { sessionStore, userStore } = useStore();
   const permissions = userStore.account.permissions || [];
   const hasPermission = permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL');
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const agentId = userStore.account.id;
-  const userDisplayName = sessionStore.current.userDisplayName;
+  const { userDisplayName } = sessionStore.current;
 
   const {
     assistManager: {
@@ -82,12 +84,11 @@ function AssistActions({
   const [isPrestart, setPrestart] = useState(false);
   const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
-  const [callObject, setCallObject] = useState<{ end: () => void } | null>(null);
+  const [callObject, setCallObject] = useState<{ end:() => void } | null>(null);
 
   const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting;
   const callRequesting = calling === CallingState.Connecting;
-  const cannotCall =
-    peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
+  const cannotCall = peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
 
   const remoteRequesting = remoteControlStatus === RemoteControlStatus.Requesting;
   const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
@@ -121,13 +122,11 @@ function AssistActions({
     }
   }, [remoteActive]);
 
-  useEffect(() => {
-    return callObject?.end();
-  }, []);
+  useEffect(() => callObject?.end(), []);
 
   useEffect(() => {
     if (peerConnectionStatus == ConnectionStatus.Disconnected) {
-      toast.info(`Live session was closed.`);
+      toast.info('Live session was closed.');
     }
   }, [peerConnectionStatus]);
 
@@ -151,11 +150,11 @@ function AssistActions({
           lStream,
           addIncomeStream,
           () => {
-            player.assistManager.ping(AssistActionsPing.call.end, agentId)
+            player.assistManager.ping(AssistActionsPing.call.end, agentId);
             lStream.stop.bind(lStream);
           },
           onReject,
-          onError
+          onError,
         );
         setCallObject(callPeer());
         if (additionalAgentIds) {
@@ -172,7 +171,7 @@ function AssistActions({
       await confirm({
         header: 'Start Call',
         confirmButton: 'Call',
-        confirmation: `Are you sure you want to call ${userId ? userId : 'User'}?`,
+        confirmation: `Are you sure you want to call ${userId || 'User'}?`,
       })
     ) {
       call(agentIds);
@@ -181,15 +180,15 @@ function AssistActions({
 
   const requestControl = () => {
     const onStart = () => {
-      player.assistManager.ping(AssistActionsPing.control.start, agentId)
-    }
+      player.assistManager.ping(AssistActionsPing.control.start, agentId);
+    };
     const onEnd = () => {
-      player.assistManager.ping(AssistActionsPing.control.end, agentId)
-    }
+      player.assistManager.ping(AssistActionsPing.control.end, agentId);
+    };
     setRemoteControlCallbacks({
       onReject: onControlReject,
-      onStart: onStart,
-      onEnd: onEnd,
+      onStart,
+      onEnd,
       onBusy: onControlBusy,
     });
     requestReleaseRemoteControl();
@@ -197,9 +196,9 @@ function AssistActions({
 
   React.useEffect(() => {
     if (onCall) {
-      player.assistManager.ping(AssistActionsPing.call.start, agentId)
+      player.assistManager.ping(AssistActionsPing.call.start, agentId);
     }
-  }, [onCall])
+  }, [onCall]);
 
   return (
     <div className="flex items-center">
@@ -214,7 +213,7 @@ function AssistActions({
           >
             <Button
               icon={<Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />}
-              type={'text'}
+              type="text"
               style={{ height: '28px' }}
               className={annotating ? 'text-red' : 'text-main'}
             >
@@ -240,7 +239,7 @@ function AssistActions({
         >
           <Button
             icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} />}
-            type={'text'}
+            type="text"
             className={remoteActive ? 'text-red' : 'text-main'}
             style={{ height: '28px' }}
           >
@@ -253,8 +252,8 @@ function AssistActions({
       <Tooltip
         title={
           cannotCall
-            ? `You don't have the permissions to perform this action.`
-            : `Call ${userId ? userId : 'User'}`
+            ? 'You don\'t have the permissions to perform this action.'
+            : `Call ${userId || 'User'}`
         }
         disabled={onCall}
       >
@@ -266,8 +265,8 @@ function AssistActions({
           role="button"
         >
           <Button
-            icon={<Icon name={'headset'} size={16} />}
-            type={'text'}
+            icon={<Icon name="headset" size={16} />}
+            type="text"
             className={onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'}
             style={{ height: '28px' }}
           >

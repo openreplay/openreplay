@@ -1,4 +1,6 @@
-import { Card, Col, Modal, Row, Typography } from 'antd';
+import {
+  Card, Col, Modal, Row, Typography,
+} from 'antd';
 import { GalleryVertical, Plus } from 'lucide-react';
 import React from 'react';
 
@@ -48,9 +50,7 @@ function AddCardSelectionModal(props: Props) {
               <AiQuery />
             </Row>
             <div
-              className={
-                'flex items-center justify-center w-full text-disabled-text'
-              }
+              className="flex items-center justify-center w-full text-disabled-text"
             >
               or
             </div>

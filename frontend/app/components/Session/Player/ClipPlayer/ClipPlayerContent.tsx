@@ -30,7 +30,7 @@ function ClipPlayerContent(props: Props) {
   React.useEffect(() => {
     if (!playerContext.player) return;
 
-    const parentElement = screenWrapper.current
+    const parentElement = screenWrapper.current;
 
     if (parentElement && playerContext.player) {
       playerContext.player?.attach(parentElement);
@@ -71,9 +71,9 @@ function ClipPlayerContent(props: Props) {
           </div>
         </div>
         {props.isHighlight && props.message ? (
-          <div className={'shadow-inner p-3 flex gap-2 w-full items-center'}  style={{ background: 'rgba(252, 193, 0, 0.2)' }}>
+          <div className="shadow-inner p-3 flex gap-2 w-full items-center" style={{ background: 'rgba(252, 193, 0, 0.2)' }}>
             <Icon name="chat-square-quote" color="inherit" size={18} />
-            <div className={'leading-none font-medium'}>
+            <div className="leading-none font-medium">
               {props.message}
             </div>
           </div>

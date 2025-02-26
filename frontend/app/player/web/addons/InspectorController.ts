@@ -8,9 +8,12 @@ import type { Dimensions } from '../Screen/types';
 export default class InspectorController {
   static INITIAL_STATE = {
     tagSelector: '',
-  }
+  };
+
   private substitutor: Screen | null = null;
+
   private inspector: Inspector | null = null;
+
   marker: Marker | null = null;
 
   constructor(private screen: Screen, private readonly store: Store<{ tagSelector: string }>) {
@@ -38,7 +41,7 @@ export default class InspectorController {
     this.marker = new Marker(this.screen.overlay, this.screen);
     this.inspector = new Inspector(this.screen, this.marker);
     this.inspector.addClickListener(() => {
-      this.store.update({ tagSelector: this.marker?.lastSelector ?? '' })
+      this.store.update({ tagSelector: this.marker?.lastSelector ?? '' });
     });
 
     this.inspector?.enable();

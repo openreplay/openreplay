@@ -34,16 +34,16 @@ function WSPanel({ socketMsgList, onClose }: Props) {
     setList(newList);
   };
   return (
-    <div className={'h-full w-3/4 absolute top-0 right-0 bg-white border z-10'}>
-      <div className={'flex items-center p-2 w-full gap-2'}>
+    <div className="h-full w-3/4 absolute top-0 right-0 bg-white border z-10">
+      <div className="flex items-center p-2 w-full gap-2">
         <Icon
-          name={'close'}
+          name="close"
           size={16}
           onClick={onClose}
-          className={'cursor-pointer'}
+          className="cursor-pointer"
         />
         <div>{socketMsgList[0].channelName}</div>
-        <div className={'ml-auto'}>
+        <div className="ml-auto">
           <Input
             className="input-small"
             placeholder="Filter by name, type, method or value"
@@ -56,10 +56,10 @@ function WSPanel({ socketMsgList, onClose }: Props) {
           />
         </div>
       </div>
-      <div className={'grid grid-cols-12 font-semibold border-b px-4 py-2'}>
-        <div className={'col-span-9 flex items-center gap-2'}>Data</div>
-        <div className={'col-span-1'}>Length</div>
-        <div className={'col-span-2 text-right'}>Time</div>
+      <div className="grid grid-cols-12 font-semibold border-b px-4 py-2">
+        <div className="col-span-9 flex items-center gap-2">Data</div>
+        <div className="col-span-1">Length</div>
+        <div className="col-span-2 text-right">Time</div>
       </div>
       <div
         style={{
@@ -92,28 +92,24 @@ function SelectedRow({
   msg: SocketMsg;
   onClose: () => void;
 }) {
-  const content = React.useMemo(() => {
-    return JSON.stringify(msg, null, 2);
-  }, []);
+  const content = React.useMemo(() => JSON.stringify(msg, null, 2), []);
   return (
     <div
-      className={
-        'absolute bottom-0 left-0 h-3/4 w-full flex flex-col bg-white border-t border-gray-lighter'
-      }
+      className="absolute bottom-0 left-0 h-3/4 w-full flex flex-col bg-white border-t border-gray-lighter"
     >
-      <div className={'flex gap-2 items-center p-2'}>
+      <div className="flex gap-2 items-center p-2">
         <Icon
-          name={'close'}
+          name="close"
           size={16}
           onClick={onClose}
-          className={'cursor-pointer'}
+          className="cursor-pointer"
         />
         <span>{msg.messageType}</span>
-        <div className={'ml-auto'}>
+        <div className="ml-auto">
           <CopyButton content={content} />
         </div>
       </div>
-      <div className={'border-t border-gray-lighter bg-gray-lightest p-4'}>{msg.data}</div>
+      <div className="border-t border-gray-lighter bg-gray-lightest p-4">{msg.data}</div>
     </div>
   );
 }
@@ -130,36 +126,32 @@ function MsgDirection({ dir }: { dir: 'up' | 'down' }) {
 
 function Row({ msg, onSelect, isSelected }: { msg: SocketMsg; isSelected: boolean; onSelect: () => void }) {
   return (
-    <>
-      <div
-        className={'border-b grid grid-cols-12 hover:bg-active-blue cursor-pointer'}
-        onClick={onSelect}
-      >
-        <div className={'col-span-9 flex items-center gap-2 p-2'}>
-          <MsgDirection dir={msg.dir} />
-          <span className={'bg-active-blue px-2 py-1'}>{msg.messageType}</span>
-          <span
-            className={'overflow-hidden text-ellipsis whitespace-nowrap'}
-            style={{ maxHeight: 44 }}
+    <div
+      className="border-b grid grid-cols-12 hover:bg-active-blue cursor-pointer"
+      onClick={onSelect}
+    >
+      <div className="col-span-9 flex items-center gap-2 p-2">
+        <MsgDirection dir={msg.dir} />
+        <span className="bg-active-blue px-2 py-1">{msg.messageType}</span>
+        <span
+          className="overflow-hidden text-ellipsis whitespace-nowrap"
+          style={{ maxHeight: 44 }}
+        >
+          {msg.data}
+        </span>
+        {msg.data.length > lineLength ? (
+          <div
+            className="rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center"
           >
-            {msg.data}
-          </span>
-          {msg.data.length > lineLength ? (
-            <div
-              className={
-                'rounded-full font-bold text-xl p-2 bg-white w-6 h-6 flex items-center justify-center'
-              }
-            >
-              <span>{isSelected ? '-' : '+'}</span>
-            </div>
-          ) : null}
-        </div>
-        <div className={'col-span-1 p-2'}>{msg.data.length}</div>
-        <div className={'col-span-2 p-2 text-right'}>
-          {durationFromMs(msg.time, true)}
-        </div>
+            <span>{isSelected ? '-' : '+'}</span>
+          </div>
+        ) : null}
       </div>
-    </>
+      <div className="col-span-1 p-2">{msg.data.length}</div>
+      <div className="col-span-2 p-2 text-right">
+        {durationFromMs(msg.time, true)}
+      </div>
+    </div>
   );
 }
 

@@ -13,11 +13,11 @@ function FFlagsSearch() {
   useEffect(() => {
     debounceUpdate = debounce(
       (value: string) => {
-        featureFlagsStore.setSort({ order: featureFlagsStore.sort.order, query: value })
-        featureFlagsStore.setPage(1)
-        void featureFlagsStore.fetchFlags()
+        featureFlagsStore.setSort({ order: featureFlagsStore.sort.order, query: value });
+        featureFlagsStore.setPage(1);
+        void featureFlagsStore.fetchFlags();
       },
-      250
+      250,
     );
   }, []);
 

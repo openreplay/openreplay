@@ -1,1 +1,1 @@
-export { default } from './LiveTag'
+export { default } from './LiveTag';

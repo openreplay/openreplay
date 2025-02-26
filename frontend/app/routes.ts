@@ -7,11 +7,11 @@ const hashed = (path: string, hash?: string | number): string => {
 
 export const queried = (path: string, params?: Record<string, any>): string => {
   const keys = typeof params === 'object' && params !== null && Object.keys(params)
-    .filter(key => /string|number|boolean/.test(typeof params[key]));
+    .filter((key) => /string|number|boolean/.test(typeof params[key]));
   if (keys && keys.length > 0) {
-    return path + '?' + keys
-      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
-      .join('&');
+    return `${path}?${keys
+      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+      .join('&')}`;
   }
   return path;
 };
@@ -21,8 +21,8 @@ export const parseQuery = (location: Location, availableQueryParams: string[] | 
   location.search
     .substring(1)
     .split('&')
-    .map(param => param.split('='))
-    .map(kv => kv.map(decodeURIComponent))
+    .map((param) => param.split('='))
+    .map((kv) => kv.map(decodeURIComponent))
     .filter(([paramName]) => !availableQueryParams || availableQueryParams.includes(paramName))
     .map(([paramName, paramValue]) => {
       params[paramName] = paramValue;
@@ -35,9 +35,9 @@ export const removeQueryParams = (location: Location, removingParams: string | s
   const search = location.search
     .substring(1)
     .split('&')
-    .map(param => param.split('='))
+    .map((param) => param.split('='))
     .filter(([paramName]) => !rp.includes(decodeURIComponent(paramName)))
-    .map(pair => pair.join('='))
+    .map((pair) => pair.join('='))
     .join('&');
   return { ...location, search };
 };
@@ -79,7 +79,7 @@ export const OB_TABS = {
   INSTALLING: 'installing',
   IDENTIFY_USERS: 'identify-users',
   MANAGE_USERS: 'team',
-  INTEGRATIONS: 'integrations'
+  INTEGRATIONS: 'integrations',
 };
 export const OB_DEFAULT_TAB = OB_TABS.INSTALLING;
 const routerOBTabString = `:activeTab(${Object.values(OB_TABS).join('|')})`;
@@ -98,12 +98,9 @@ export const assist = (params?: Record<string, any>): string => queried('/assist
 export const assistStats = (params?: Record<string, any>): string => queried('/assist-stats', params);
 export const recordings = (params?: Record<string, any>): string => queried('/recordings', params);
 export const multiviewIndex = (params?: Record<string, any>): string => queried('/multiview', params);
-export const multiview = (sessionsQuery = ':sessionsquery', hash?: string | number): string =>
-  hashed(`/multiview/${sessionsQuery}`, hash);
-export const session = (sessionId = ':sessionId', hash?: string | number): string =>
-  hashed(`/session/${sessionId}`, hash);
-export const liveSession = (sessionId = ':sessionId', params?: Record<string, any>, hash?: string | number): string =>
-  hashed(queried(`/assist/${sessionId}`, params), hash);
+export const multiview = (sessionsQuery = ':sessionsquery', hash?: string | number): string => hashed(`/multiview/${sessionsQuery}`, hash);
+export const session = (sessionId = ':sessionId', hash?: string | number): string => hashed(`/session/${sessionId}`, hash);
+export const liveSession = (sessionId = ':sessionId', params?: Record<string, any>, hash?: string | number): string => hashed(queried(`/assist/${sessionId}`, params), hash);
 
 export const errors = (params?: Record<string, any>): string => queried('/errors', params);
 export const error = (id = ':errorId', hash?: string | number): string => hashed(`/errors/${id}`, hash);
@@ -111,28 +108,25 @@ export const error = (id = ':errorId', hash?: string | number): string => hashed
 export const tests = (): string => '/tests';
 export const dashboard = (): string => '/dashboard';
 export const dashboardMetrics = (): string => '/dashboard/metrics';
-export const dashboardSelected = (id = ':dashboardId', hash?: string | number): string =>
-  hashed(`/dashboard/${id}`, hash);
+export const dashboardSelected = (id = ':dashboardId', hash?: string | number): string => hashed(`/dashboard/${id}`, hash);
 
 export const dashboardMetricDetails = (
   dashboardId = ':dashboardId',
   metricId = ':metricId',
-  hash?: string | number
+  hash?: string | number,
 ): string => hashed(`/dashboard/${dashboardId}/metric/${metricId}`, hash);
-export const dashboardMetricCreate = (dashboardId = ':dashboardId', hash?: string | number): string =>
-  hashed(`/dashboard/${dashboardId}/metric/create`, hash);
-export const metrics = (): string => `/metrics`;
-export const metricCreate = (): string => `/metrics/create`;
+export const dashboardMetricCreate = (dashboardId = ':dashboardId', hash?: string | number): string => hashed(`/dashboard/${dashboardId}/metric/create`, hash);
+export const metrics = (): string => '/metrics';
+export const metricCreate = (): string => '/metrics/create';
 export const metricDetails = (id = ':metricId', hash?: string | number): string => hashed(`/metrics/${id}`, hash);
-export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash?: string | number): string =>
-  hashed(`/metrics/${id}/details/${subId}`, hash);
+export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash?: string | number): string => hashed(`/metrics/${id}/details/${subId}`, hash);
 
 export const alerts = (): string => '/alerts';
 export const alertCreate = (): string => '/alert/create';
 export const alertEdit = (id = ':alertId', hash?: string | number): string => hashed(`/alert/${id}`, hash);
 
 export const usabilityTesting = () => '/usability-testing';
-export const usabilityTestingCreate = () => usabilityTesting() + '/create';
+export const usabilityTestingCreate = () => `${usabilityTesting()}/create`;
 export const usabilityTestingEdit = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/edit/${id}`, hash);
 export const usabilityTestingView = (id = ':testId', hash?: string | number): string => hashed(`/usability-testing/view/${id}`, hash);
 
@@ -183,18 +177,17 @@ const REQUIRED_SITE_ID_ROUTES = [
 
   highlights(),
 ];
-const routeNeedsSiteId = (path: string): boolean => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
+const routeNeedsSiteId = (path: string): boolean => REQUIRED_SITE_ID_ROUTES.some((r) => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId'): string => {
   if (Array.isArray(siteId)) {
     return `:siteId(${siteId.join('|')})`;
   }
   return siteId;
 };
-export const withSiteId = (route: string, siteId = ':siteId'): string =>
-  routeNeedsSiteId(route) ? `/${siteIdToUrl(siteId)}${route}` : route;
+export const withSiteId = (route: string, siteId = ':siteId'): string => (routeNeedsSiteId(route) ? `/${siteIdToUrl(siteId)}${route}` : route);
 export const hasSiteId = (path: string): boolean => {
   const pathParts = path.split('/');
-  if (!isNaN(+pathParts[1]) && routeNeedsSiteId('/' + pathParts.slice(2).join('/'))) return true;
+  if (!isNaN(+pathParts[1]) && routeNeedsSiteId(`/${pathParts.slice(2).join('/')}`)) return true;
   return false;
 };
 
@@ -202,8 +195,8 @@ export function isRoute(route: string, path: string): boolean {
   const pathParts = path.split('/');
   const routeParts = withSiteId(route).split('/');
   return (
-    routeParts.length === pathParts.length &&
-    routeParts.every((p, i) => p.startsWith(':') || p === pathParts[i])
+    routeParts.length === pathParts.length
+    && routeParts.every((p, i) => p.startsWith(':') || p === pathParts[i])
   );
 }
 
@@ -223,9 +216,8 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   usabilityTesting(),
 ];
 
-export const siteChangeAvailable = (path: string): boolean =>
-  SITE_CHANGE_AVAILABLE_ROUTES.some(r => isRoute(r, path));
+export const siteChangeAvailable = (path: string): boolean => SITE_CHANGE_AVAILABLE_ROUTES.some((r) => isRoute(r, path));
 
 export const redirects: Record<string, string> = {
-  [client('custom-fields')]: client(CLIENT_TABS.CUSTOM_FIELDS)
+  [client('custom-fields')]: client(CLIENT_TABS.CUSTOM_FIELDS),
 };

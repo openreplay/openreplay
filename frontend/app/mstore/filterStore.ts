@@ -19,13 +19,13 @@ export default class FilterStore {
   }
 
   setTopValues = (key: string, values: Record<string, any> | TopValue[]) => {
-    const vals = Array.isArray(values) ? values : values.data
+    const vals = Array.isArray(values) ? values : values.data;
     this.topValues[key] = vals?.filter((value) => value !== null && value.value !== '');
   };
 
   resetValues = () => {
     this.topValues = {};
-  }
+  };
 
   fetchTopValues = async (key: string, source?: string) => {
     if (this.topValues.hasOwnProperty(key)) {

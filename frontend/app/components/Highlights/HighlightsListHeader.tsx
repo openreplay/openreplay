@@ -1,7 +1,7 @@
-import React from 'react'
-import { iTag, TAGS } from "App/services/NotesService";
-import { SortDropdown } from "Components/shared/SessionsTabOverview/components/SessionSort/SessionSort";
-import { Input, Segmented } from "antd";
+import React from 'react';
+import { iTag, TAGS } from 'App/services/NotesService';
+import { SortDropdown } from 'Components/shared/SessionsTabOverview/components/SessionSort/SessionSort';
+import { Input, Segmented } from 'antd';
 
 function HighlightsListHeader({
   activeTags,
@@ -10,7 +10,7 @@ function HighlightsListHeader({
   toggleTag,
   query,
   onSearch,
-  handleInputChange
+  handleInputChange,
 }: {
   activeTags: iTag[];
   ownOnly: boolean;
@@ -21,8 +21,8 @@ function HighlightsListHeader({
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className={'flex p-2 px-4 w-full border-b gap-4 items-center'}>
-      <h1 className={'text-2xl capitalize mr-2'}>Highlights</h1>
+    <div className="flex p-2 px-4 w-full border-b gap-4 items-center">
+      <h1 className="text-2xl capitalize mr-2">Highlights</h1>
       <Segmented
         size="small"
         options={[
@@ -32,8 +32,8 @@ function HighlightsListHeader({
               <div
                 className={
                   activeTags.includes('ALL') || activeTags.length === 0
-                  ? 'text-main'
-                  : ''
+                    ? 'text-main'
+                    : ''
                 }
               >
                 All
@@ -46,8 +46,8 @@ function HighlightsListHeader({
               <div
                 className={
                   activeTags.includes(tag)
-                  ? 'text-main capitalize'
-                  : 'capitalize'
+                    ? 'text-main capitalize'
+                    : 'capitalize'
                 }
               >
                 {tag.toLowerCase()}
@@ -55,11 +55,9 @@ function HighlightsListHeader({
             ),
           })),
         ]}
-        onChange={(value: iTag) =>
-          toggleTag(value === 'ALL' ? undefined : value)
-        }
+        onChange={(value: iTag) => toggleTag(value === 'ALL' ? undefined : value)}
       />
-      <div className={'ml-auto'}>
+      <div className="ml-auto">
         <SortDropdown
           sortOptions={[
             {
@@ -90,7 +88,7 @@ function HighlightsListHeader({
         />
       </div>
     </div>
-  )
+  );
 }
 
-export default HighlightsListHeader
+export default HighlightsListHeader;

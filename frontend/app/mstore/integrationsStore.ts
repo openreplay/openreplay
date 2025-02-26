@@ -2,6 +2,8 @@ import { makeAutoObservable } from 'mobx';
 
 import { integrationsService } from 'App/services';
 
+import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
+import { toast } from 'react-toastify';
 import { MessengerConfig } from './types/integrations/messengers';
 import {
   DatadogInt,
@@ -10,14 +12,14 @@ import {
   Integration,
   IssueTracker,
   JiraInt,
-  SentryInt
+  SentryInt,
 } from './types/integrations/services';
-import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
-import { toast } from 'react-toastify';
 
 class GenericIntegrationsStore {
   list: any[] = [];
+
   isLoading: boolean = false;
+
   siteId: string = '';
 
   constructor() {
@@ -29,12 +31,12 @@ class GenericIntegrationsStore {
   }
 
   get integratedServices() {
-    return this.list.filter(int => int.integrated);
+    return this.list.filter((int) => int.integrated);
   }
 
   get backendLogIntegrations(): { name: string, integrated: boolean }[] {
     const backendServices = Object.keys(serviceNames);
-    return this.list.filter(int => int.integrated && backendServices.includes(int.name));
+    return this.list.filter((int) => int.integrated && backendServices.includes(int.name));
   }
 
   setList(list: any[]) {
@@ -60,14 +62,18 @@ class GenericIntegrationsStore {
 
 class NamedIntegrationStore<T extends Integration> {
   instance: T | null = null;
+
   list: T[] = [];
+
   fetched: boolean = false;
+
   issuesFetched: boolean = false;
+
   loading = false;
 
   constructor(
     private readonly name: string,
-    private readonly namedTypeCreator: (config: Record<string, any>) => T
+    private readonly namedTypeCreator: (config: Record<string, any>) => T,
   ) {
     this.instance = namedTypeCreator({});
     makeAutoObservable(this);
@@ -99,7 +105,7 @@ class NamedIntegrationStore<T extends Integration> {
       const { data } = await integrationsService.fetchList(this.name);
       if (Array.isArray(data)) {
         this.setList(
-          data.map((config: Record<string, any>) => this.namedTypeCreator(config))
+          data.map((config: Record<string, any>) => this.namedTypeCreator(config)),
         );
       } else {
         this.setList([this.namedTypeCreator(data)]);
@@ -117,7 +123,7 @@ class NamedIntegrationStore<T extends Integration> {
     try {
       const { data } = await integrationsService.fetchIntegration(
         this.name,
-        siteId
+        siteId,
       );
       this.setInstance(this.namedTypeCreator(data));
     } catch (e) {
@@ -132,9 +138,8 @@ class NamedIntegrationStore<T extends Integration> {
     await integrationsService.saveIntegration(
       this.name ?? name,
       this.instance.toData(),
-      siteId
+      siteId,
     );
-    return;
   };
 
   edit = (data: T): void => {
@@ -156,9 +161,13 @@ class NamedIntegrationStore<T extends Integration> {
 
 class MessengerIntegrationStore {
   list: MessengerConfig[] = [];
+
   instance: MessengerConfig | null = null;
+
   loaded: boolean = false;
+
   loading: boolean = false;
+
   errors: any[] = [];
 
   constructor(private readonly mName: 'slack' | 'msteams') {
@@ -192,7 +201,7 @@ class MessengerIntegrationStore {
       const response = await integrationsService.saveIntegration(
         this.mName,
         this.instance.toData(),
-        undefined
+        undefined,
       );
       if (response.errors) {
         toast.error(response.errors[0] || 'Couldn\'t process the request: check your data.');
@@ -209,33 +218,31 @@ class MessengerIntegrationStore {
 
   fetchIntegrations = async (): Promise<void> => {
     const { data } = await integrationsService.fetchMessengerChannels(
-      this.mName
+      this.mName,
     );
     this.setList(
-      data.map((config: Record<string, any>) => new MessengerConfig(config))
+      data.map((config: Record<string, any>) => new MessengerConfig(config)),
     );
     this.setLoaded(true);
   };
 
   sendMessage = ({
-                   integrationId,
-                   entity,
-                   entityId,
-                   data
-                 }: {
+    integrationId,
+    entity,
+    entityId,
+    data,
+  }: {
     integrationId: string;
     entity: string;
     entityId: string;
     data: any;
-  }) => {
-    return integrationsService.sendMsg(
-      integrationId,
-      entity,
-      entityId,
-      this.mName,
-      data
-    );
-  };
+  }) => integrationsService.sendMsg(
+    integrationId,
+    entity,
+    entityId,
+    this.mName,
+    data,
+  );
 
   init = (config: Record<string, any>): void => {
     this.instance = new MessengerConfig(config);
@@ -259,7 +266,7 @@ class MessengerIntegrationStore {
     try {
       const response = await integrationsService.updateMessengerInt(
         this.mName,
-        this.instance.toData()
+        this.instance.toData(),
       );
 
       if (response.errors) {
@@ -267,9 +274,7 @@ class MessengerIntegrationStore {
         return response;
       }
       this.setList(
-        this.list.map((int) =>
-          int.webhookId === this.instance?.webhookId ? this.instance : int
-        )
+        this.list.map((int) => (int.webhookId === this.instance?.webhookId ? this.instance : int)),
       );
     } catch (e) {
       toast.error('Couldn\'t process the request: check your data.');
@@ -294,13 +299,21 @@ export type namedStore = 'sentry'
 
 export class IntegrationsStore {
   sentry = new NamedIntegrationStore('sentry', (d) => new SentryInt(d));
+
   datadog = new NamedIntegrationStore('datadog', (d) => new DatadogInt(d));
+
   elasticsearch = new NamedIntegrationStore('elasticsearch', (d) => new ElasticSearchInt(d));
+
   jira = new NamedIntegrationStore('jira', (d) => new JiraInt(d));
+
   github = new NamedIntegrationStore('github', (d) => new GithubInt(d));
+
   issues = new NamedIntegrationStore('issues', (d) => new IssueTracker(d));
+
   integrations = new GenericIntegrationsStore();
+
   slack = new MessengerIntegrationStore('slack');
+
   msteams = new MessengerIntegrationStore('msteams');
 
   constructor() {

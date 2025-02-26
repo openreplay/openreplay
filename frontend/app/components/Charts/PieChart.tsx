@@ -22,13 +22,15 @@ interface PieChartProps {
 }
 
 function PieChart(props: PieChartProps) {
-  const { data, label, onClick = () => {}, inGrid = false } = props;
+  const {
+    data, label, onClick = () => {}, inGrid = false,
+  } = props;
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chartRef.current) return;
     if (!data.chart || data.chart.length === 0) {
-      chartRef.current.innerHTML = `<div style="text-align:center;padding:20px;">No data available</div>`;
+      chartRef.current.innerHTML = '<div style="text-align:center;padding:20px;">No data available</div>';
       return;
     }
 
@@ -36,7 +38,7 @@ function PieChart(props: PieChartProps) {
 
     const pieData = buildPieData(data.chart, data.namesMap);
     if (!pieData.length) {
-      chartRef.current.innerHTML = `<div style="text-align:center;padding:20px;">No data available</div>`;
+      chartRef.current.innerHTML = '<div style="text-align:center;padding:20px;">No data available</div>';
       return;
     }
 
@@ -75,28 +77,24 @@ function PieChart(props: PieChartProps) {
           name: label ?? 'Data',
           radius: [50, 100],
           center: ['50%', '55%'],
-          data: pieData.map((d, idx) => {
-            return {
-              name: d.name,
-              value: d.value,
-              label: {
-                show: false, //d.value / largestVal >= 0.03,
-                position: 'outside',
-                formatter: (params: any) => {
-                  return params.value;
-                },
-              },
-              labelLine: {
-                show: false, // d.value / largestVal >= 0.03,
-                length: 10,
-                length2: 20,
-                lineStyle: { color: '#3EAAAF' },
-              },
-              itemStyle: {
-                color: pickColorByIndex(idx),
-              },
-            };
-          }),
+          data: pieData.map((d, idx) => ({
+            name: d.name,
+            value: d.value,
+            label: {
+              show: false, // d.value / largestVal >= 0.03,
+              position: 'outside',
+              formatter: (params: any) => params.value,
+            },
+            labelLine: {
+              show: false, // d.value / largestVal >= 0.03,
+              length: 10,
+              length2: 20,
+              lineStyle: { color: '#3EAAAF' },
+            },
+            itemStyle: {
+              color: pickColorByIndex(idx),
+            },
+          })),
           emphasis: {
             scale: true,
             scaleSize: 4,
@@ -106,11 +104,11 @@ function PieChart(props: PieChartProps) {
     };
 
     chartInstance.setOption(option);
-    const obs = new ResizeObserver(() => chartInstance.resize())
+    const obs = new ResizeObserver(() => chartInstance.resize());
     obs.observe(chartRef.current);
 
-    chartInstance.on('click', function (params) {
-      const focusedSeriesName = params.name
+    chartInstance.on('click', (params) => {
+      const focusedSeriesName = params.name;
       props.onSeriesFocus?.(focusedSeriesName);
     });
 

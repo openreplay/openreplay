@@ -1,5 +1,5 @@
-import React from 'react'
-import { Icon } from 'UI'
+import React from 'react';
+import { Icon } from 'UI';
 
 export default function TeamBadge() {
   return (
@@ -7,5 +7,5 @@ export default function TeamBadge() {
       <Icon name="user-friends" className="mr-1" color="gray-darkest" />
       <span className="text-sm">Team</span>
     </div>
-  )
+  );
 }

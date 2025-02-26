@@ -2,11 +2,11 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
 import { observer } from 'mobx-react-lite';
-import AddCardSection from '../AddCardSection/AddCardSection';
 import cn from 'classnames';
-import { Button, Popover, Tooltip } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Button, Popover, Tooltip } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { Loader } from 'UI';
+import AddCardSection from '../AddCardSection/AddCardSection';
 
 interface Props {
   siteId: string;
@@ -26,7 +26,7 @@ function DashboardWidgetGrid(props: Props) {
     <Loader loading={loading}>
       {list?.length === 0 ? (
         <div
-          className={'flex-1 flex justify-center items-center pt-10'}
+          className="flex-1 flex justify-center items-center pt-10"
           style={{ minHeight: 620 }}
         >
           <AddCardSection />
@@ -52,7 +52,9 @@ function DashboardWidgetGrid(props: Props) {
   );
 }
 
-function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
+function GridItem({
+  item, index, dashboard, dashboardId, siteId,
+}: any) {
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const handleOpenChange = (open: boolean) => {
     setPopoverOpen(open);
@@ -61,19 +63,17 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
   return (
     <div
       key={item.widgetId}
-      className={cn('col-span-' + item.config.col, 'group relative p-2 hover:bg-active-blue w-full rounded-xl')}
+      className={cn(`col-span-${item.config.col}`, 'group relative p-2 hover:bg-active-blue w-full rounded-xl')}
     >
       <WidgetWrapperNew
         index={index}
         widget={item}
-        moveListItem={(dragIndex: any, hoverIndex: any) =>
-          dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
-        }
+        moveListItem={(dragIndex: any, hoverIndex: any) => dashboard?.swapWidgetPosition(dragIndex, hoverIndex)}
         dashboardId={dashboardId}
         siteId={siteId}
         grid="other"
-        showMenu={true}
-        isSaved={true}
+        showMenu
+        isSaved
       />
       <div
         className={cn(
@@ -87,16 +87,15 @@ function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
           arrow={false}
           overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
           content={<AddCardSection handleOpenChange={handleOpenChange} />}
-          trigger={'click'}
+          trigger="click"
         >
           <Tooltip title="Add Card">
-            <Button icon={<PlusOutlined size={14} />} shape={'circle'} size={'small'} />
+            <Button icon={<PlusOutlined size={14} />} shape="circle" size="small" />
           </Tooltip>
         </Popover>
       </div>
     </div>
-  )
+  );
 }
-
 
 export default observer(DashboardWidgetGrid);

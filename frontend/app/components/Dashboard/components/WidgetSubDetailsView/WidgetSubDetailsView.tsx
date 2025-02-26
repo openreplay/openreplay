@@ -12,35 +12,41 @@ interface Props {
     siteId: any
 }
 function WidgetSubDetailsView(props: Props) {
-    const { match: { params: { siteId, dashboardId, metricId, subId } } } = props;
-    const { metricStore, funnelStore } = useStore();
-    const widget = useObserver(() => metricStore.instance);
-    const issueInstance = useObserver(() => funnelStore.issueInstance);
-    const loadingWidget = useObserver(() => metricStore.isLoading);
-    // const isFunnel = widget.metricType === 'funnel'; // TODO uncomment this line
-    const isFunnel = widget.metricType === 'table'; // TODO remove this line
+  const {
+    match: {
+      params: {
+        siteId, dashboardId, metricId, subId,
+      },
+    },
+  } = props;
+  const { metricStore, funnelStore } = useStore();
+  const widget = useObserver(() => metricStore.instance);
+  const issueInstance = useObserver(() => funnelStore.issueInstance);
+  const loadingWidget = useObserver(() => metricStore.isLoading);
+  // const isFunnel = widget.metricType === 'funnel'; // TODO uncomment this line
+  const isFunnel = widget.metricType === 'table'; // TODO remove this line
 
-    useEffect(() => {
-        if (!widget || !widget.exists()) {
-            metricStore.fetch(metricId);
-        }
-    }, []);
+  useEffect(() => {
+    if (!widget || !widget.exists()) {
+      metricStore.fetch(metricId);
+    }
+  }, []);
 
-    return (
-        <div>
-            <Breadcrumb
-                items={[
-                    { label: dashboardId ? 'Dashboard' : 'Cards', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
-                    { label: widget.name, to: withSiteId(`/metrics/${widget.metricId}`, siteId) },
-                    { label: issueInstance ? issueInstance.title : 'Sub Details' }
-                ]}
-            />
+  return (
+    <div>
+      <Breadcrumb
+        items={[
+          { label: dashboardId ? 'Dashboard' : 'Cards', to: dashboardId ? withSiteId(`/dashboard/${dashboardId}`, siteId) : withSiteId('/metrics', siteId) },
+          { label: widget.name, to: withSiteId(`/metrics/${widget.metricId}`, siteId) },
+          { label: issueInstance ? issueInstance.title : 'Sub Details' },
+        ]}
+      />
 
-            <Loader loading={loadingWidget}>
-                {isFunnel && <FunnelIssueDetails funnelId={metricId} issueId={subId} />}
-            </Loader>
-        </div>
-    );
+      <Loader loading={loadingWidget}>
+        {isFunnel && <FunnelIssueDetails funnelId={metricId} issueId={subId} />}
+      </Loader>
+    </div>
+  );
 }
 
 export default WidgetSubDetailsView;

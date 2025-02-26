@@ -1,8 +1,10 @@
-import ExCard from '../ExCard';
 import React from 'react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
+import ExCard from '../ExCard';
 
-function ByComponent({ title, rows, lineWidth, onCard, type }: {
+function ByComponent({
+  title, rows, lineWidth, onCard, type,
+}: {
   title: string
   rows: {
     label: string
@@ -18,7 +20,7 @@ function ByComponent({ title, rows, lineWidth, onCard, type }: {
     ...r,
     name: r.label,
     displayName: r.label,
-    sessionCount: r.value
+    sessionCount: r.value,
   })).slice(0, 4);
 
   return (
@@ -27,8 +29,8 @@ function ByComponent({ title, rows, lineWidth, onCard, type }: {
       onCard={onCard}
       type={type}
     >
-      <div className={'flex gap-1 flex-col'}>
-        <CardSessionsByList list={_rows} selected={''} onClickHandler={() => null} />
+      <div className="flex gap-1 flex-col">
+        <CardSessionsByList list={_rows} selected="" onClickHandler={() => null} />
       </div>
     </ExCard>
   );

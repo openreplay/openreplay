@@ -18,7 +18,7 @@ export default class IntegrationsService extends BaseService {
 
   saveIntegration = async (name: string, data: any, siteId?: string) => {
     try {
-      const url = (siteId ? `/${siteId}` : '') + `/integrations/${name}`;
+      const url = `${siteId ? `/${siteId}` : ''}/integrations/${name}`;
       const r = await this.client.post(url, data);
       return await r.json();
     } catch (e: any) {
@@ -31,7 +31,7 @@ export default class IntegrationsService extends BaseService {
   };
 
   removeIntegration = async (name: string, siteId?: string) => {
-    const url = (siteId ? `/${siteId}` : '') + `/integrations/${name}`;
+    const url = `${siteId ? `/${siteId}` : ''}/integrations/${name}`;
     const r = await this.client.delete(url);
 
     return await r.json();

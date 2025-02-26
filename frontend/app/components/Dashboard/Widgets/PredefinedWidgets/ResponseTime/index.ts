@@ -1,1 +1,1 @@
-export { default } from './ResponseTime'
+export { default } from './ResponseTime';

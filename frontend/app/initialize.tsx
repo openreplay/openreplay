@@ -3,18 +3,21 @@ import './styles/global.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './init';
-import Router from './Router';
-import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
-import { ConfigProvider, App, theme, ThemeConfig } from 'antd';
+import {
+  ConfigProvider, App, theme, ThemeConfig,
+} from 'antd';
 import colors from 'App/theme/colors';
 import { BrowserRouter } from 'react-router-dom';
 import { Notification, MountPoint } from 'UI';
 import {
   QueryClient,
-  QueryClientProvider
+  QueryClientProvider,
 } from '@tanstack/react-query';
+import { StoreProvider, RootStore } from './mstore';
+import Router from './Router';
+import './i18n';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -25,11 +28,11 @@ const customTheme: ThemeConfig = {
   components: {
     Layout: {
       headerBg: colors['gray-lightest'],
-      siderBg: colors['gray-lightest']
+      siderBg: colors['gray-lightest'],
     },
     Segmented: {
       itemSelectedBg: '#FFFFFF',
-      itemSelectedColor: colors['main']
+      itemSelectedColor: colors.main,
     },
     Menu: {
       colorPrimary: colors.teal,
@@ -39,34 +42,34 @@ const customTheme: ThemeConfig = {
       subMenuItemBg: colors['gray-lightest'],
 
       itemHoverBg: colors['active-blue'],
-      itemHoverColor: colors['teal'],
+      itemHoverColor: colors.teal,
 
       itemActiveBg: colors['active-blue'],
       itemSelectedBg: colors['active-blue'],
-      itemSelectedColor: colors['teal'],
+      itemSelectedColor: colors.teal,
 
       itemMarginBlock: 0,
       // itemPaddingInline: 50,
       // iconMarginInlineEnd: 14,
-      collapsedWidth: 180
+      collapsedWidth: 180,
     },
     Button: {
-      colorPrimary: colors.teal
+      colorPrimary: colors.teal,
     },
   },
   token: {
     colorPrimary: colors.teal,
     colorPrimaryActive: '#394EFF',
     colorBgLayout: colors['gray-lightest'],
-    colorBgContainer: colors['white'],
-    colorLink: colors['teal'],
+    colorBgContainer: colors.white,
+    colorLink: colors.teal,
     colorLinkHover: colors['teal-dark'],
 
     borderRadius: 4,
     fontSize: 14,
     fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
     fontWeightStrong: 400,
-  }
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -90,6 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </StoreProvider>
         </App>
       </ConfigProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 });

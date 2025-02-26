@@ -7,7 +7,9 @@ interface Props {
   setRemoteEnabled?: (isEnabled: boolean) => void;
 }
 
-function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled }: Props) {
+function VideoContainer({
+  stream, muted = false, height = 280, setRemoteEnabled,
+}: Props) {
   const ref = useRef<HTMLVideoElement>(null);
   const [isEnabled, setEnabled] = React.useState(false);
 
@@ -22,12 +24,12 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
       return;
     }
     const iid = setInterval(() => {
-      const track = stream.getVideoTracks()[0]
+      const track = stream.getVideoTracks()[0];
       const settings = track?.getSettings();
       const isDummyVideoTrack = settings
-        ? settings.width === 2 ||
-          settings.frameRate === 0 ||
-          (!settings.frameRate && !settings.width)
+        ? settings.width === 2
+          || settings.frameRate === 0
+          || (!settings.frameRate && !settings.width)
         : true;
       const shouldBeEnabled = track.enabled && !isDummyVideoTrack;
 
@@ -41,7 +43,7 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
 
   return (
     <div
-      className={'flex-1'}
+      className="flex-1"
       style={{
         display: isEnabled ? undefined : 'none',
         width: isEnabled ? undefined : '0px!important',
@@ -49,7 +51,7 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
         border: '1px solid grey',
       }}
     >
-      <video autoPlay ref={ref} muted={muted} style={{ height: height }} />
+      <video autoPlay ref={ref} muted={muted} style={{ height }} />
     </div>
   );
 }

@@ -14,18 +14,18 @@ import {
 import { MobileNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import { MobilePerformance } from 'Components/Session_/Performance';
 import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
-import MobileControls from './MobileControls';
-import Overlay from './MobileOverlay'
 import stl from 'Components/Session_/Player/player.module.css';
 import { MobileOverviewPanel } from 'Components/Session_/OverviewPanel';
 import MobileConsolePanel from 'Shared/DevTools/ConsolePanel/MobileConsolePanel';
 import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { MobileStackEventPanel } from 'Shared/DevTools/StackEventPanel';
-import ReplayWindow from "Components/Session/Player/MobilePlayer/ReplayWindow";
-import PerfWarnings from "Components/Session/Player/MobilePlayer/PerfWarnings";
-import { debounceUpdate, getDefaultPanelHeight } from "Components/Session/Player/ReplayPlayer/PlayerInst";
+import ReplayWindow from 'Components/Session/Player/MobilePlayer/ReplayWindow';
+import PerfWarnings from 'Components/Session/Player/MobilePlayer/PerfWarnings';
+import { debounceUpdate, getDefaultPanelHeight } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import Overlay from './MobileOverlay';
+import MobileControls from './MobileControls';
 
 interface IProps {
   fullView: boolean;
@@ -37,37 +37,37 @@ interface IProps {
 }
 
 function Player(props: IProps) {
-  const defaultHeight = getDefaultPanelHeight()
+  const defaultHeight = getDefaultPanelHeight();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
   const {
     activeTab,
     fullView,
   } = props;
   const { uiPlayerStore, sessionStore } = useStore();
-  const nextId = sessionStore.nextId;
-  const sessionId = sessionStore.current.sessionId;
-  const userDevice = sessionStore.current.userDevice;
-  const videoURL = sessionStore.current.videoURL;
-  const platform = sessionStore.current.platform;
+  const { nextId } = sessionStore;
+  const { sessionId } = sessionStore.current;
+  const { userDevice } = sessionStore.current;
+  const { videoURL } = sessionStore.current;
+  const { platform } = sessionStore.current;
   const isAndroid = platform === 'android';
   const screenWidth = sessionStore.current.screenWidth!;
   const screenHeight = sessionStore.current.screenHeight!;
-  const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
-  const fullscreenOff = uiPlayerStore.fullscreenOff;
-  const fullscreen = uiPlayerStore.fullscreen;
-  const bottomBlock = uiPlayerStore.bottomBlock;
+  const { updateLastPlayedSession } = sessionStore;
+  const { fullscreenOff } = uiPlayerStore;
+  const { fullscreen } = uiPlayerStore;
+  const { bottomBlock } = uiPlayerStore;
   const playerContext = React.useContext(MobilePlayerContext);
-  const isReady = playerContext.store.get().ready
+  const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
   const [isAttached, setAttached] = React.useState(false);
 
   React.useEffect(() => {
     updateLastPlayedSession(sessionId);
-    const parentElement = screenWrapper.current; //TODO: good architecture
+    const parentElement = screenWrapper.current; // TODO: good architecture
     if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
-      setAttached(true)
+      setAttached(true);
     }
   }, [isReady]);
 
@@ -77,7 +77,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.addFullscreenBoundary(props.fullscreen || fullView);
-  }, [props.fullscreen, fullView])
+  }, [props.fullscreen, fullView]);
   if (!playerContext.player) return null;
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
@@ -99,7 +99,7 @@ function Player(props: IProps) {
       const newHeight = Math.max(50, max);
       setPanelHeight(newHeight);
       playerContext.player.scale();
-      debounceUpdate(newHeight)
+      debounceUpdate(newHeight);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -112,7 +112,7 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={"relative flex-1"}>
+      <div className="relative flex-1">
         <Overlay nextId={nextId} />
 
         <div className={cn(stl.mobileScreenWrapper)} ref={screenWrapper}>
@@ -138,7 +138,7 @@ function Player(props: IProps) {
         >
           <div
             onMouseDown={handleResize}
-            className={'w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20'}
+            className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
           />
           {bottomBlock === OVERVIEW && <MobileOverviewPanel />}
           {bottomBlock === CONSOLE && <MobileConsolePanel />}
@@ -150,7 +150,7 @@ function Player(props: IProps) {
       )}
       {!fullView ? (
         <MobileControls
-          setActiveTab={(tab: string) => activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab)}
+          setActiveTab={(tab: string) => (activeTab === tab ? props.setActiveTab('') : props.setActiveTab(tab))}
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

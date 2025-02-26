@@ -1,1 +1,1 @@
-export { default } from './WidgetPredefinedChart'
+export { default } from './WidgetPredefinedChart';

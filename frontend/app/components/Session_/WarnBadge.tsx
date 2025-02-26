@@ -1,7 +1,8 @@
 import React from 'react';
 import { Alert } from 'antd';
 import { Icon } from 'UI';
-const localhostWarn = (project: string) => project + '_localhost_warn';
+
+const localhostWarn = (project: string) => `${project}_localhost_warn`;
 
 const VersionComparison = {
   Lower: -1,
@@ -15,7 +16,7 @@ function parseVersion(version: string) {
 
 function compareVersions(
   suppliedVersion: string,
-  currentVersion: string
+  currentVersion: string,
 ): number {
   if (!suppliedVersion || !currentVersion) return VersionComparison.Same;
   const v1 = parseVersion(suppliedVersion);
@@ -38,18 +39,15 @@ const WarnBadge = React.memo(
     siteId: string;
   }) => {
     const localhostWarnSiteKey = localhostWarn(siteId);
-    const defaultLocalhostWarn =
-      localStorage.getItem(localhostWarnSiteKey) !== '1';
-    const localhostWarnActive =
-      currentLocation &&
-      defaultLocalhostWarn &&
-      /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
+    const defaultLocalhostWarn = localStorage.getItem(localhostWarnSiteKey) !== '1';
+    const localhostWarnActive = currentLocation
+      && defaultLocalhostWarn
+      && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation);
     const trackerVersion = window.env.TRACKER_VERSION ?? undefined;
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const trackerWarnActive = trackerVerDiff !== VersionComparison.Same;
 
-    const [showLocalhostWarn, setLocalhostWarn] =
-      React.useState(localhostWarnActive);
+    const [showLocalhostWarn, setLocalhostWarn] = React.useState(localhostWarnActive);
     const [showTrackerWarn, setTrackerWarn] = React.useState(trackerWarnActive);
 
     const closeWarning = (type: 1 | 2) => {
@@ -72,15 +70,13 @@ const WarnBadge = React.memo(
           position: 'absolute',
           left: '50%',
           bottom: '0',
-          transform: `translate(-50%, 80%)`,
+          transform: 'translate(-50%, 80%)',
           fontWeight: 500,
         }}
       >
         {showLocalhostWarn ? (
           <div
-            className={
-              'px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between'
-            }
+            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
           >
             <div>
               <span>Some assets may load incorrectly on localhost.</span>
@@ -101,24 +97,25 @@ const WarnBadge = React.memo(
         ) : null}
         {showTrackerWarn ? (
           <div
-            className={
-              'px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between'
-            }
+            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
           >
             <div>
               <div>
-                Tracker version ({version}) for this recording is{' '}
+                Tracker version (
+                {version}
+                ) for this recording is
+                {' '}
                 {trackerVerDiff === VersionComparison.Lower
                   ? 'lower '
                   : 'ahead of '}
-                the current ({trackerVersion}) version.
+                the current (
+                {trackerVersion}
+                ) version.
               </div>
               <div>
                 <span>Some recording might display incorrectly.</span>
                 <a
-                  href={
-                    'https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility'
-                  }
+                  href="https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility"
                   target="_blank"
                   rel="noreferrer"
                   className="link ml-1"
@@ -135,7 +132,7 @@ const WarnBadge = React.memo(
         ) : null}
       </div>
     );
-  }
+  },
 );
 
 export function PartialSessionBadge() {
@@ -149,10 +146,10 @@ export function PartialSessionBadge() {
         bottom: '1.3rem',
       }}
     >
-      <Alert message="You are viewing a portion of full session" type="info" className='border-0 rounded-lg py-0.5' showIcon/>
-        
+      <Alert message="You are viewing a portion of full session" type="info" className="border-0 rounded-lg py-0.5" showIcon />
+
     </div>
-  )
+  );
 }
 
 export default WarnBadge;

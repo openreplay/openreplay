@@ -16,19 +16,26 @@ interface Props {
 }
 
 export default function NoContent(props: Props) {
-    const { title = '', subtext = '', icon, iconSize, size, show, children, image, style, className } = props;
+  const {
+    title = '', subtext = '', icon, iconSize, size, show, children, image, style, className,
+  } = props;
 
-    return !show ? (
-        children
-    ) : (
-        <div
-            className={`${styles.wrapper} ${size && styles[size]} h-full ${className || ''}`}
-            style={style}
-        >
-            {icon && <Icon name={icon} size={iconSize} />}
-            {title && <div className='flex'>{title}</div>}
-            {subtext && <div className={styles.subtext}>{subtext}</div>}
-            {image && <div className="mt-4 flex justify-center">{image} </div>}
+  return !show ? (
+    children
+  ) : (
+    <div
+      className={`${styles.wrapper} ${size && styles[size]} h-full ${className || ''}`}
+      style={style}
+    >
+      {icon && <Icon name={icon} size={iconSize} />}
+      {title && <div className="flex">{title}</div>}
+      {subtext && <div className={styles.subtext}>{subtext}</div>}
+      {image && (
+        <div className="mt-4 flex justify-center">
+          {image}
+          {' '}
         </div>
-    );
+      )}
+    </div>
+  );
 }

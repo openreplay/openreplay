@@ -1,8 +1,8 @@
-import React from 'react'
-import { SpotComment } from "App/services/spotService";
-import CommentsSection from "./CommentsSection";
-import { Tab, TABS } from "../consts";
-import SpotActivity from "./SpotActivity";
+import React from 'react';
+import { SpotComment } from 'App/services/spotService';
+import CommentsSection from './CommentsSection';
+import { Tab, TABS } from '../consts';
+import SpotActivity from './SpotActivity';
 
 function SpotPlayerSideBar({
   activeTab,
@@ -23,4 +23,4 @@ function SpotPlayerSideBar({
   return null;
 }
 
-export default SpotPlayerSideBar
+export default SpotPlayerSideBar;

@@ -1,20 +1,20 @@
-import React from 'react'
-import { NoContent } from 'UI'
-import stl from './headers.module.css'
+import React from 'react';
+import { NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import stl from './headers.module.css';
 
 function Headers(props) {
   return (
     <div>
       <NoContent
-        title={
+        title={(
           <div className="flex flex-col items-center justify-center">
             <AnimatedSVG name={ICONS.NO_RESULTS} size={30} />
             <div className="mt-4">No data available for the selected period.</div>
           </div>
-        }
+        )}
         size="small"
-        show={ !props.requestHeaders && !props.responseHeaders }
+        show={!props.requestHeaders && !props.responseHeaders}
         // animatedIcon="no-results"
       >
         { props.requestHeaders && (
@@ -22,9 +22,12 @@ function Headers(props) {
             <div className="mb-4 mt-4">
               <div className="my-2 font-medium">Request Headers</div>
               {
-                Object.keys(props.requestHeaders).map(h => (
+                Object.keys(props.requestHeaders).map((h) => (
                   <div className={stl.row}>
-                    <span className="mr-2 font-medium">{h}:</span>
+                    <span className="mr-2 font-medium">
+                      {h}
+                      :
+                    </span>
                     <span>{props.requestHeaders[h]}</span>
                   </div>
                 ))
@@ -33,14 +36,17 @@ function Headers(props) {
             <hr />
           </>
         )}
-        
+
         { props.responseHeaders && (
           <div className="mt-4">
             <div className="my-2 font-medium">Response Headers</div>
             {
-              Object.keys(props.responseHeaders).map(h => (
+              Object.keys(props.responseHeaders).map((h) => (
                 <div className={stl.row}>
-                  <span className="mr-2 font-medium">{h}:</span>
+                  <span className="mr-2 font-medium">
+                    {h}
+                    :
+                  </span>
                   <span>{props.responseHeaders[h]}</span>
                 </div>
               ))

@@ -18,10 +18,15 @@ const ISSUE_MAP: any = {
 
 export default class Issue {
   type: string = '';
+
   name: string = '';
+
   sessionCount: number = 0;
+
   icon: string = '';
+
   source: string = '';
+
   color: string = '';
 
   constructor() {

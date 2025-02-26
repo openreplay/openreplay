@@ -8,9 +8,11 @@ import {
   Button,
   Dropdown,
   Modal as AntdModal,
-  Avatar
+  Avatar,
 } from 'antd';
-import { TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  TeamOutlined, LockOutlined, EditOutlined, DeleteOutlined,
+} from '@ant-design/icons';
 import { EllipsisVertical } from 'lucide-react';
 import { TablePaginationConfig, SorterResult } from 'antd/lib/table/interface';
 import { useStore } from 'App/mstore';
@@ -34,16 +36,16 @@ interface Props {
 }
 
 const ListView: React.FC<Props> = ({
-                                     list,
-                                     siteId,
-                                     selectedList,
-                                     toggleSelection,
-                                     disableSelection = false,
-                                     inLibrary = false
-                                   }) => {
+  list,
+  siteId,
+  selectedList,
+  toggleSelection,
+  disableSelection = false,
+  inLibrary = false,
+}) => {
   const [sorter, setSorter] = useState<{ field: string; order: 'ascend' | 'descend' }>({
     field: 'lastModified',
-    order: 'descend'
+    order: 'descend',
   });
   const [pagination, setPagination] = useState<TablePaginationConfig>({ current: 1, pageSize: 10 });
   const [editingMetricId, setEditingMetricId] = useState<number | null>(null);
@@ -51,24 +53,22 @@ const ListView: React.FC<Props> = ({
   const { metricStore } = useStore();
   const history = useHistory();
 
-  const sortedData = useMemo(() => {
-    return [...list].sort((a, b) => {
-      if (sorter.field === 'lastModified') {
-        return sorter.order === 'ascend'
-          ? new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime()
-          : new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
-      } else if (sorter.field === 'name') {
-        return sorter.order === 'ascend'
-          ? (a.name?.localeCompare(b.name) || 0)
-          : (b.name?.localeCompare(a.name) || 0);
-      } else if (sorter.field === 'owner') {
-        return sorter.order === 'ascend'
-          ? (a.owner?.localeCompare(b.owner) || 0)
-          : (b.owner?.localeCompare(a.owner) || 0);
-      }
-      return 0;
-    });
-  }, [list, sorter]);
+  const sortedData = useMemo(() => [...list].sort((a, b) => {
+    if (sorter.field === 'lastModified') {
+      return sorter.order === 'ascend'
+        ? new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime()
+        : new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+    } if (sorter.field === 'name') {
+      return sorter.order === 'ascend'
+        ? (a.name?.localeCompare(b.name) || 0)
+        : (b.name?.localeCompare(a.name) || 0);
+    } if (sorter.field === 'owner') {
+      return sorter.order === 'ascend'
+        ? (a.owner?.localeCompare(b.owner) || 0)
+        : (b.owner?.localeCompare(a.owner) || 0);
+    }
+    return 0;
+  }), [list, sorter]);
 
   const paginatedData = useMemo(() => {
     const start = ((pagination.current || 1) - 1) * (pagination.pageSize || 10);
@@ -77,27 +77,35 @@ const ListView: React.FC<Props> = ({
 
   const totalMessage = (
     <>
-      Showing{' '}
+      Showing
+      {' '}
       <Text strong>
         {(pagination.pageSize || 10) * ((pagination.current || 1) - 1) + 1}
-      </Text>{' '}
-      to{' '}
+      </Text>
+      {' '}
+      to
+      {' '}
       <Text strong>
         {Math.min((pagination.pageSize || 10) * (pagination.current || 1), list.length)}
-      </Text>{' '}
-      of <Text strong>{list.length}</Text> cards
+      </Text>
+      {' '}
+      of
+      {' '}
+      <Text strong>{list.length}</Text>
+      {' '}
+      cards
     </>
   );
 
   const handleTableChange = (
     pag: TablePaginationConfig,
     _filters: Record<string, (string | number | boolean)[] | null>,
-    sorterParam: SorterResult<Widget> | SorterResult<Widget>[]
+    sorterParam: SorterResult<Widget> | SorterResult<Widget>[],
   ) => {
     const sortRes = sorterParam as SorterResult<Widget>;
     setSorter({
       field: sortRes.field as string,
-      order: sortRes.order as 'ascend' | 'descend'
+      order: sortRes.order as 'ascend' | 'descend',
     });
     setPagination(pag);
   };
@@ -157,7 +165,7 @@ const ListView: React.FC<Props> = ({
         cancelText: 'No',
         onOk: async () => {
           await metricStore.delete(metric);
-        }
+        },
       });
     }
     if (key === 'rename') {
@@ -181,7 +189,7 @@ const ListView: React.FC<Props> = ({
 
   const menuItems = [
     { key: 'rename', icon: <EditOutlined />, label: 'Rename' },
-    { key: 'delete', icon: <DeleteOutlined />, label: 'Delete' }
+    { key: 'delete', icon: <DeleteOutlined />, label: 'Delete' },
   ];
 
   const renderTitle = (_text: string, metric: Widget) => (
@@ -223,7 +231,7 @@ const ListView: React.FC<Props> = ({
       className: 'cap-first pl-4',
       sorter: true,
       width: inLibrary ? '31%' : '25%',
-      render: renderTitle
+      render: renderTitle,
     },
     {
       title: 'Owner',
@@ -232,7 +240,7 @@ const ListView: React.FC<Props> = ({
       className: 'capitalize',
       sorter: true,
       width: inLibrary ? '31%' : '25%',
-      render: renderOwner
+      render: renderOwner,
     },
     {
       title: 'Last Modified',
@@ -240,8 +248,8 @@ const ListView: React.FC<Props> = ({
       key: 'lastModified',
       sorter: true,
       width: inLibrary ? '31%' : '25%',
-      render: renderLastModified
-    }
+      render: renderLastModified,
+    },
   ];
   if (!inLibrary) {
     columns.push({
@@ -249,7 +257,7 @@ const ListView: React.FC<Props> = ({
       key: 'options',
       className: 'text-right',
       width: '5%',
-      render: renderOptions
+      render: renderOptions,
     });
   }
 
@@ -265,7 +273,7 @@ const ListView: React.FC<Props> = ({
             ? (record) => ({
               onClick: () => {
                 if (!disableSelection) toggleSelection?.(record.metricId);
-              }
+              },
             })
             : undefined
         }
@@ -274,7 +282,7 @@ const ListView: React.FC<Props> = ({
             ? {
               selectedRowKeys: selectedList,
               onChange: (keys) => toggleSelection && toggleSelection(keys),
-              columnWidth: 16
+              columnWidth: 16,
             }
             : undefined
         }
@@ -287,7 +295,7 @@ const ListView: React.FC<Props> = ({
           showLessItems: true,
           showTotal: () => totalMessage,
           size: 'small',
-          simple: true
+          simple: true,
         }}
       />
       <AntdModal

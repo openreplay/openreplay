@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { SkipButton } from 'App/player-ui';
 import {
   PlaybackSpeedShortcut,
@@ -6,9 +6,9 @@ import {
   SkipBackwardShortcut,
 } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import { SPEED_OPTIONS } from 'Player/player/Player';
-import { Popover as AntPopover, Button } from 'antd'
-import { Popover } from 'UI'
-import cn from 'classnames'
+import { Popover as AntPopover, Button } from 'antd';
+import { Popover } from 'UI';
+import cn from 'classnames';
 
 export function JumpBack({
   currentInterval,
@@ -19,23 +19,23 @@ export function JumpBack({
 }) {
   return (
     <AntPopover
-      content={
-        <div className={'flex gap-2 items-center'}>
+      content={(
+        <div className="flex gap-2 items-center">
           <SkipBackwardShortcut />
           <div>{`Rewind ${currentInterval}s`}</div>
         </div>
-      }
+      )}
       placement="top"
     >
       <button
         style={{ height: 22, background: 'transparent', border: 0 }}
-        className={'hover:shadow-border-main hover:text-main rounded-l '}
+        className="hover:shadow-border-main hover:text-main rounded-l "
       >
         <SkipButton
           size={16}
           onClick={backTenSeconds}
-          isBackwards={true}
-          customClasses={'h-full flex items-center'}
+          isBackwards
+          customClasses="h-full flex items-center"
         />
       </button>
     </AntPopover>
@@ -70,11 +70,13 @@ export function IntervalSelector({
             style={{ margin: -12 }}
             className={cn(
               'flex flex-col bg-white',
-              'text-figmaColors-text-primary rounded'
+              'text-figmaColors-text-primary rounded',
             )}
           >
             <div className="font-semibold py-2 px-4 w-full text-left">
-              Jump <span className="text-disabled-text">(Secs)</span>
+              Jump
+              {' '}
+              <span className="text-disabled-text">(Secs)</span>
             </div>
             {Object.keys(skipIntervals).map((interval) => (
               <div
@@ -85,7 +87,7 @@ export function IntervalSelector({
                 }}
                 className={cn(
                   'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                  'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                  'hover:bg-active-blue border-t  border-borderColor-gray-light-shade',
                 )}
               >
                 {interval}
@@ -96,7 +98,10 @@ export function IntervalSelector({
         )}
       >
         <div onClick={toggleTooltip} className="cursor-pointer select-none font-semibold">
-          <AntPopover content={<div>Set default skip duration</div>}>{currentInterval}s</AntPopover>
+          <AntPopover content={<div>Set default skip duration</div>}>
+            {currentInterval}
+            s
+          </AntPopover>
         </div>
       </Popover>
     </div>
@@ -112,22 +117,22 @@ export function JumpForward({
 }) {
   return (
     <AntPopover
-      content={
-        <div className={'flex gap-2 items-center'}>
+      content={(
+        <div className="flex gap-2 items-center">
           <SkipForwardShortcut />
           <div>{`Forward ${currentInterval}s`}</div>
         </div>
-      }
+      )}
       placement="top"
     >
       <button
         style={{ height: 22, background: 'transparent', border: 0 }}
-        className={'hover:text-main hover:shadow-border-main rounded-r '}
+        className="hover:text-main hover:shadow-border-main rounded-r "
       >
         <SkipButton
           size={16}
           onClick={forthTenSeconds}
-          customClasses={'h-full flex items-center'}
+          customClasses="h-full flex items-center"
         />
       </button>
     </AntPopover>
@@ -149,7 +154,7 @@ export function SpeedOptions({
       theme="nopadding"
       animation="none"
       duration={0}
-      placement={'top'}
+      placement="top"
       className="cursor-pointer select-none"
       distance={20}
       render={({ close }: any) => (
@@ -164,7 +169,7 @@ export function SpeedOptions({
               }}
               className={cn(
                 'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                'hover:bg-active-blue border-t  border-borderColor-gray-light-shade',
               )}
             >
               {SPEED_OPTIONS[index]}
@@ -176,15 +181,15 @@ export function SpeedOptions({
     >
       <div className="cursor-pointer select-none">
         <AntPopover
-          content={
-            <div className={'flex gap-2 items-center'}>
+          content={(
+            <div className="flex gap-2 items-center">
               <PlaybackSpeedShortcut />
               <div>Change playback speed</div>
             </div>
-          }
+          )}
         >
-          <Button disabled={disabled} size={'small'} className={'font-semibold'}>
-            {speed + 'x'}
+          <Button disabled={disabled} size="small" className="font-semibold">
+            {`${speed}x`}
           </Button>
         </AntPopover>
       </div>

@@ -2,22 +2,37 @@ import Session from './session';
 
 export default class Error {
   sessionId: string = '';
+
   messageId: string = '';
+
   errorId: string = '';
+
   projectId: string = '';
+
   source: string = '';
+
   name: string = '';
+
   message: string = '';
+
   time: string = '';
+
   function: string = '?';
+
   stack0InfoString: string = '';
+
   status: string = '';
 
   chart: any = [];
+
   sessions: number = 0;
+
   users: number = 0;
+
   firstOccurrence: string = '';
+
   lastOccurrence: string = '';
+
   timestamp: string = '';
 
   constructor() {}
@@ -58,24 +73,43 @@ export interface ErrorInfoData {
 
 export class ErrorInfo implements ErrorInfoData {
   errorId?: string;
+
   favorite = false;
+
   viewed = false;
+
   source = '';
+
   name = '';
+
   message = '';
+
   stack0InfoString = '';
+
   status = '';
+
   parentErrorId?: string;
+
   users = 0;
+
   sessions = 0;
+
   lastOccurrence = Date.now();
+
   firstOccurrence = Date.now();
+
   chart: any[] = [];
+
   chart24: any[] = [];
+
   chart30: any[] = [];
+
   tags: string[] = [];
+
   customTags: string[] = [];
+
   lastHydratedSession: Session;
+
   disabled = false;
 
   constructor(data?: Partial<ErrorInfoData>) {
@@ -84,7 +118,7 @@ export class ErrorInfo implements ErrorInfoData {
     }
     if (data?.lastHydratedSession) {
       this.lastHydratedSession = new Session().fromJson(
-        data.lastHydratedSession
+        data.lastHydratedSession,
       );
     } else {
       this.lastHydratedSession = new Session();

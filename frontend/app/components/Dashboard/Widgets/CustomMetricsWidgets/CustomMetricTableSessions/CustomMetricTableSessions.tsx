@@ -16,15 +16,13 @@ interface Props {
 function CustomMetricTableSessions(props: Props) {
   const { isEdit = false, metric, data } = props;
 
-  const sessions = useMemo(() => {
-    return data && data.sessions ? data.sessions.map((session: any) => new Session().fromJson(session)) : [];
-  }, []);
+  const sessions = useMemo(() => (data && data.sessions ? data.sessions.map((session: any) => new Session().fromJson(session)) : []), []);
 
   return useObserver(() => (
     <NoContent
       show={!metric || !data || !sessions || sessions.length === 0}
       size="small"
-      title={
+      title={(
         <div className="flex items-center justify-center flex-col">
           <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
           <div className="mt-4" />
@@ -32,11 +30,11 @@ function CustomMetricTableSessions(props: Props) {
             No relevant sessions found for the selected time period
           </div>
         </div>
-      }
+      )}
     >
       <div className="pb-4">
-        {sessions &&
-          sessions.map((session: any, index: any) => (
+        {sessions
+          && sessions.map((session: any, index: any) => (
             <div className="border-b last:border-none" key={session.sessionId}>
               <SessionItem session={session} />
             </div>
@@ -62,13 +60,18 @@ function CustomMetricTableSessions(props: Props) {
 
 export default observer(CustomMetricTableSessions);
 
-const ViewMore = ({ total, limit }: any) =>
-  total > limit ? (
+function ViewMore({ total, limit }: any) {
+  return total > limit ? (
     <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
       <div className="text-center">
         <div className="color-teal text-lg">
-          All <span className="font-medium">{total}</span> sessions
+          All
+          {' '}
+          <span className="font-medium">{total}</span>
+          {' '}
+          sessions
         </div>
       </div>
     </div>
   ) : null;
+}

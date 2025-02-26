@@ -1,19 +1,20 @@
 import React, { useEffect } from 'react';
-import { NoContent, Loader, Pagination, Icon } from 'UI';
+import {
+  NoContent, Loader, Pagination, Icon,
+} from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
 import { KEYS } from 'Types/filter/customFilter';
 import { FilterKey } from 'App/types/filter/filterType';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { capitalize } from 'App/utils';
+import { capitalize, numberWithCommas } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { numberWithCommas } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Button } from 'antd'
+import { Button } from 'antd';
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
 const PER_PAGE = 10;
@@ -22,7 +23,7 @@ function LiveSessionList() {
   const { searchStoreLive, sessionStore, customFieldStore } = useStore();
   const filter = searchStoreLive.instance;
   const list = sessionStore.liveSessions;
-  const totalLiveSessions = sessionStore.totalLiveSessions;
+  const { totalLiveSessions } = sessionStore;
   const loading = sessionStore.loadingLiveSessions;
   const { currentPage } = searchStoreLive;
   const metaList = customFieldStore.list;
@@ -35,8 +36,8 @@ function LiveSessionList() {
     metaList
       .map(({ key }: any) => ({
         label: capitalize(key),
-        value: key
-      }))
+        value: key,
+      })),
   );
 
   useEffect(() => {
@@ -124,14 +125,14 @@ function LiveSessionList() {
         </div>
         <Loader loading={loading}>
           <NoContent
-            title={
+            title={(
               <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={60} />
                 <div className="mt-4" />
                 <div className="text-center  text-lg font-medium">No live sessions found</div>
               </div>
-            }
-            subtext={
+            )}
+            subtext={(
               <div className="text-center flex justify-center items-center flex-col">
                 <span>
                   Support users with live sessions, cobrowsing, and video calls.
@@ -139,8 +140,9 @@ function LiveSessionList() {
                     target="_blank"
                     className="link ml-1"
                     href="https://docs.openreplay.com/plugins/assist"
+                    rel="noreferrer"
                   >
-                    {'Learn More'}
+                    Learn More
                   </a>
                 </span>
 
@@ -153,7 +155,7 @@ function LiveSessionList() {
                   Refresh
                 </Button>
               </div>
-            }
+            )}
             // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
             show={!loading && list.length === 0}
           >
@@ -173,9 +175,19 @@ function LiveSessionList() {
             </div>
             <div className={cn('flex items-center justify-between p-5', { disabled: loading })}>
               <div>
-                Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
-                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.length}</span> of{' '}
-                <span className="font-medium">{numberWithCommas(totalLiveSessions)}</span> sessions.
+                Showing
+                {' '}
+                <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span>
+                {' '}
+                to
+                {' '}
+                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.length}</span>
+                {' '}
+                of
+                {' '}
+                <span className="font-medium">{numberWithCommas(totalLiveSessions)}</span>
+                {' '}
+                sessions.
               </div>
               <Pagination
                 page={currentPage}
@@ -192,8 +204,6 @@ function LiveSessionList() {
   );
 }
 
-export default withPermissions(
-  ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
-  observer(LiveSessionList)
+export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', false, false)(
+  observer(LiveSessionList),
 );
-

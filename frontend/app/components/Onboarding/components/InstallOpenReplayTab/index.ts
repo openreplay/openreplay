@@ -1,1 +1,1 @@
-export { default } from './InstallOpenReplayTab'
+export { default } from './InstallOpenReplayTab';

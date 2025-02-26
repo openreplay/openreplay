@@ -17,7 +17,7 @@ function Layout(props: Props) {
   const isPlayer = /\/(session|assist|view-spot)\//.test(window.location.pathname);
   const { settingsStore, projectsStore } = useStore();
   const [collapsed, setCollapsed] = React.useState(false);
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
 
   useEffect(() => {
     const handleResize = () => {
@@ -50,7 +50,7 @@ function Layout(props: Props) {
               top: 70, // Height of the Header
               // backgroundColor: '#f6f6f6',
               height: 'calc(100vh - 70px)', // Adjust the height to accommodate the Header
-              overflow: 'auto' // Enable scrolling for the Sider content if needed
+              overflow: 'auto', // Enable scrolling for the Sider content if needed
             }}
             collapsed={settingsStore.menuCollapsed || collapsed}
             width={250}

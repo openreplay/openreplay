@@ -3,7 +3,6 @@ import ExCard from 'Components/Dashboard/components/DashboardList/NewDashModal/E
 import CustomMetricOverviewChart from 'Components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
 import ResponseTimeDistribution from 'Components/Dashboard/Widgets/PredefinedWidgets/ResponseTimeDistribution';
 
-
 interface Props {
   title: string;
   type: string;
@@ -12,8 +11,8 @@ interface Props {
 
 function PageResponseTimeDistributionExample(props: Props) {
   const data = {
-    chart: []
-  }
+    chart: [],
+  };
   return (
     <ExCard
       {...props}

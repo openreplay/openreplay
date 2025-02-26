@@ -10,7 +10,9 @@ import { toast } from 'react-toastify';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { Icon, Link, Loader, Tooltip } from 'UI';
+import {
+  Icon, Link, Loader, Tooltip,
+} from 'UI';
 import { Button, Form, Input } from 'antd';
 
 import Copyright from 'Shared/Copyright';
@@ -24,19 +26,17 @@ interface LoginProps {
   location: Location;
 }
 
-const Login = ({
-                 location
-               }: LoginProps) => {
+function Login({
+  location,
+}: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const CAPTCHA_ENABLED = React.useMemo(() => {
-    return window.env.CAPTCHA_ENABLED === 'true';
-  }, []);
+  const CAPTCHA_ENABLED = React.useMemo(() => window.env.CAPTCHA_ENABLED === 'true', []);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const { loginStore, userStore } = useStore();
-  const errors = userStore.loginRequest.errors;
-  const loading = loginStore.loading;
-  const authDetails = userStore.authStore.authDetails;
+  const { errors } = userStore.loginRequest;
+  const { loading } = loginStore;
+  const { authDetails } = userStore.authStore;
   const setJwt = userStore.updateJwt;
   const history = useHistory();
   const params = new URLSearchParams(location.search);
@@ -84,9 +84,9 @@ const Login = ({
       window.postMessage(
         {
           type: 'orspot:token',
-          token: jwt
+          token: jwt,
         },
-        '*'
+        '*',
       );
       tries += 1;
     }, 250);
@@ -123,10 +123,9 @@ const Login = ({
     }
   };
 
-  const ssoLink =
-    window !== window.top
-      ? `${window.location.origin}/api/sso/saml2?iFrame=true`
-      : `${window.location.origin}/api/sso/saml2`;
+  const ssoLink = window !== window.top
+    ? `${window.location.origin}/api/sso/saml2?iFrame=true`
+    : `${window.location.origin}/api/sso/saml2`;
 
   return (
     <div className="flex items-center justify-center h-screen">
@@ -157,8 +156,8 @@ const Login = ({
                   <Form.Item>
                     <label>Email Address</label>
                     <Input
-                      data-test-id={'login'}
-                      autoFocus={true}
+                      data-test-id="login"
+                      autoFocus
                       autoComplete="username"
                       type="email"
                       placeholder="e.g. john@example.com"
@@ -171,7 +170,7 @@ const Login = ({
                   <Form.Item>
                     <label className="mb-2">Password</label>
                     <Input
-                      data-test-id={'password'}
+                      data-test-id="password"
                       autoComplete="current-password"
                       type="password"
                       placeholder="Password"
@@ -199,20 +198,21 @@ const Login = ({
 
               <div className="px-8 w-full">
                 <Button
-                  data-test-id={'log-button'}
+                  data-test-id="log-button"
                   className="mt-2 w-full text-center rounded-lg"
                   type="primary"
                   htmlType="submit"
                 >
-                  {'Login'}
+                  Login
                 </Button>
 
                 <div className="my-8 text-center">
                   <span className="color-gray-medium">
                     Having trouble logging in?
-                  </span>{' '}
+                  </span>
+                  {' '}
                   <Link to={FORGOT_PASSWORD} className="link ml-1">
-                    {'Reset password'}
+                    Reset password
                   </Link>
                 </div>
               </div>
@@ -232,18 +232,22 @@ const Login = ({
               ) : (
                 <Tooltip
                   delay={0}
-                  title={
+                  title={(
                     <div className="text-center">
                       {authDetails.edition === 'ee' ? (
                         <span>
-                          SSO has not been configured. <br /> Please reach out
+                          SSO has not been configured.
+                          {' '}
+                          <br />
+                          {' '}
+                          Please reach out
                           to your admin.
                         </span>
                       ) : (
                         ENTERPRISE_REQUEIRED
                       )}
                     </div>
-                  }
+                  )}
                   placement="top"
                 >
                   <Button
@@ -263,13 +267,15 @@ const Login = ({
           </div>
           <div
             className={cn('flex items-center w-96 justify-center my-8', {
-              '!hidden': !authDetails?.enforceSSO
+              '!hidden': !authDetails?.enforceSSO,
             })}
           >
             <a href={ssoLink} rel="noopener noreferrer">
-              <Button type="primary">{`Login with SSO ${
-                authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
-              }`}</Button>
+              <Button type="primary">
+                {`Login with SSO ${
+                  authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                }`}
+              </Button>
             </a>
           </div>
         </div>
@@ -278,6 +284,6 @@ const Login = ({
       <Copyright />
     </div>
   );
-};
+}
 
 export default withPageTitle('Login - OpenReplay')(observer(Login));

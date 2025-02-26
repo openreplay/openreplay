@@ -3,6 +3,7 @@ import React from 'react';
 import { countries } from 'App/constants';
 import { numberWithCommas } from 'App/utils';
 
+import { FilterKey } from 'Types/filter/filterType';
 import {
   BrowserIconProvider,
   CountryIconProvider,
@@ -15,7 +16,6 @@ import {
   UserIconProvider,
   FetchIconProvider,
 } from './IconProvider';
-import { FilterKey } from 'Types/filter/filterType';
 
 interface NameFormatter {
   format(name: string): string;
@@ -60,11 +60,11 @@ class IssueFormatter extends BaseFormatter {
 class UserNameFormatter extends BaseFormatter {
   format(name: string): string {
     if (
-      name === null ||
-      name === undefined ||
-      name === '' ||
-      name === 'null' ||
-      name === 'undefined'
+      name === null
+      || name === undefined
+      || name === ''
+      || name === 'null'
+      || name === 'undefined'
     ) {
       return 'Anonymous';
     }
@@ -75,9 +75,13 @@ class UserNameFormatter extends BaseFormatter {
 
 export class SessionsByRow {
   name: string;
+
   displayName: string;
+
   sessionCount: number;
+
   progress: number;
+
   icon: React.ReactNode;
 
   fromJson(json: any, totalSessions: number, metricType: string) {

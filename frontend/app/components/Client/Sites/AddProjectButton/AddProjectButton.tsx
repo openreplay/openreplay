@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
@@ -13,8 +13,8 @@ function AddProjectButton({ isAdmin = false }: any) {
   const { userStore, projectsStore } = useStore();
   const init = projectsStore.initProject;
   const { showModal, hideModal } = useModal();
-  const limits = userStore.limits;
-  const canAddProject = isAdmin && (limits.projects === -1 || limits.projects > 0)
+  const { limits } = userStore;
+  const canAddProject = isAdmin && (limits.projects === -1 || limits.projects > 0);
 
   const onClick = () => {
     init({});

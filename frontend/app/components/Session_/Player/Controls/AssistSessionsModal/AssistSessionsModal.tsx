@@ -1,5 +1,7 @@
 import React from 'react';
-import { Loader, Pagination, Tooltip, Icon } from 'UI';
+import {
+  Loader, Pagination, Tooltip, Icon,
+} from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
@@ -11,7 +13,8 @@ import AssistSearchActions from 'App/components/Assist/AssistSearchActions';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
-import { Button } from 'antd'
+import { Button } from 'antd';
+
 const PER_PAGE = 10;
 
 interface ConnectProps {
@@ -20,11 +23,13 @@ interface ConnectProps {
 }
 
 function AssistSessionsModal(props: ConnectProps) {
-  const { assistMultiviewStore, customFieldStore, searchStoreLive, sessionStore } = useStore();
+  const {
+    assistMultiviewStore, customFieldStore, searchStoreLive, sessionStore,
+  } = useStore();
   const loading = sessionStore.loadingLiveSessions;
   const list = sessionStore.liveSessions;
   const filter = searchStoreLive.instance;
-  const currentPage = searchStoreLive.currentPage;
+  const { currentPage } = searchStoreLive;
   const total = sessionStore.totalLiveSessions;
   const onUserClick = () => false;
   const { filters } = filter;
@@ -34,7 +39,7 @@ function AssistSessionsModal(props: ConnectProps) {
   const sortOptions = metaList
     .map((i: any) => ({
       label: capitalize(i.key),
-      value: i.key
+      value: i.key,
     }));
 
   React.useEffect(() => {
@@ -67,7 +72,7 @@ function AssistSessionsModal(props: ConnectProps) {
               className="mr-2"
               type="text"
               onClick={reloadSessions}
-              icon={<Icon name={"arrow-repeat"} />}
+              icon={<Icon name="arrow-repeat" />}
             />
           </Tooltip>
           <AssistSearchActions />
@@ -94,17 +99,17 @@ function AssistSessionsModal(props: ConnectProps) {
       <LiveSessionSearch />
       <div className="my-4" />
       <Loader loading={loading}>
-        <div className={'overflow-y-scroll'} style={{ maxHeight: '85vh' }}>
+        <div className="overflow-y-scroll" style={{ maxHeight: '85vh' }}>
           {list.map((session) => (
             <React.Fragment key={session.sessionId}>
               <div
                 className={cn(
                   'rounded bg-white mb-2 overflow-hidden border',
                   assistMultiviewStore.sessions.findIndex(
-                    (s: Record<string, any>) => s.sessionId === session.sessionId
+                    (s: Record<string, any>) => s.sessionId === session.sessionId,
                   ) !== -1
                     ? 'cursor-not-allowed opacity-60'
-                    : ''
+                    : '',
                 )}
               >
                 <SessionItem
@@ -116,7 +121,7 @@ function AssistSessionsModal(props: ConnectProps) {
                   metaList={metaList}
                   isDisabled={
                     assistMultiviewStore.sessions.findIndex(
-                      (s: Record<string, any>) => s.sessionId === session.sessionId
+                      (s: Record<string, any>) => s.sessionId === session.sessionId,
                     ) !== -1
                   }
                   isAdd

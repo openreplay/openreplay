@@ -1,1 +1,1 @@
-export { default } from './IntegrateSlackButton'
+export { default } from './IntegrateSlackButton';

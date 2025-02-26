@@ -2,10 +2,10 @@ import UsersView from 'App/components/Client/Users/UsersView';
 import DocCard from 'Shared/DocCard/DocCard';
 import React from 'react';
 import { Icon } from 'UI';
-import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Button } from 'antd'
+import { Button } from 'antd';
+import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 
 interface Props extends WithOnboardingProps {}
 
@@ -21,16 +21,17 @@ function ManageUsersTab(props: Props) {
         <a
           href="https://docs.openreplay.com/en/tutorials/adding-users/"
           target="_blank"
+          rel="noreferrer"
         >
-          <Button size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
-            <Icon name={'question-circle'} />
-            <div className={'text-main'}>See Documentation</div>
+          <Button size="small" type="text" className="ml-2 flex items-center gap-2">
+            <Icon name="question-circle" />
+            <div className="text-main">See Documentation</div>
           </Button>
         </a>
       </h1>
       <div className="grid grid-cols-6 gap-4 p-4">
         <div className="col-span-4">
-          <UsersView isOnboarding={true} />
+          <UsersView isOnboarding />
         </div>
         <div className="col-span-2">
           <DocCard
@@ -55,7 +56,7 @@ function ManageUsersTab(props: Props) {
           type="primary"
           onClick={() => (props.navTo ? props.navTo(OB_TABS.INTEGRATIONS) : null)}
           icon={<Icon name="arrow-right-short" color="white" size={20} />}
-          iconPosition={'end'}
+          iconPosition="end"
         >
           Configure Integrations
         </Button>

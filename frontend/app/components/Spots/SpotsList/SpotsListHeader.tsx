@@ -24,7 +24,7 @@ const SpotsListHeader = observer(
 
     const debouncedFetch = React.useMemo(
       () => debounce(spotStore.fetchSpots, 250),
-      []
+      [],
     );
     const onSearch = (value: string) => {
       spotStore.setQuery(value);
@@ -47,15 +47,15 @@ const SpotsListHeader = observer(
     };
 
     return (
-      <div className={'flex items-center justify-between w-full'}>
+      <div className="flex items-center justify-between w-full">
         <div className="flex gap-1 items-center">
-          <h1 className={'text-2xl capitalize mr-2'}>Spot List</h1>
-          <ReloadButton buttonSize={'small'} onClick={onRefresh} iconSize={14} />
+          <h1 className="text-2xl capitalize mr-2">Spot List</h1>
+          <ReloadButton buttonSize="small" onClick={onRefresh} iconSize={14} />
         </div>
 
         {tenantHasSpots ? (
           <div className="flex gap-2 items-center">
-            <div className={'ml-auto'}>
+            <div className="ml-auto">
               {selectedCount > 0 && (
                 <>
                   <Button
@@ -66,7 +66,9 @@ const SpotsListHeader = observer(
                     Clear
                   </Button>
                   <Button onClick={onDelete} type="primary" ghost>
-                    Delete ({selectedCount})
+                    Delete (
+                    {selectedCount}
+                    )
                   </Button>
                 </>
               )}
@@ -77,7 +79,7 @@ const SpotsListHeader = observer(
               value={spotStore.filter === 'all' ? 'All Spots' : 'My Spots'}
               onChange={handleSegmentChange}
               className="mr-4 lg:hidden xl:flex"
-              size={'small'}
+              size="small"
             />
 
             <div className="w-56">
@@ -96,7 +98,7 @@ const SpotsListHeader = observer(
         ) : null}
       </div>
     );
-  }
+  },
 );
 
 export default SpotsListHeader;

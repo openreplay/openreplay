@@ -11,14 +11,14 @@ import {
   selectStorageListNow,
   selectStorageType,
 } from 'Player';
+import cn from 'classnames';
+import logger from 'App/logger';
+import { Segmented } from 'antd';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
-import cn from 'classnames';
 import stl from './storage.module.css';
-import logger from 'App/logger';
 import ReduxViewer from './ReduxViewer';
-import { Segmented } from 'antd'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -42,7 +42,7 @@ const storageDecodeKeys = {
 function Storage() {
   const { uiPlayerStore } = useStore();
   const hintIsHidden = uiPlayerStore.hiddenHints.storage;
-  const hideHint = uiPlayerStore.hideHint;
+  const { hideHint } = uiPlayerStore;
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
   const [stateObject, setState] = React.useState({});
@@ -85,11 +85,7 @@ function Storage() {
     return { ...pureMSG, ...decoded };
   };
 
-  const decodedList = React.useMemo(() => {
-    return listNow.map((msg) => {
-      return decodeMessage(msg);
-    });
-  }, [listNow.length]);
+  const decodedList = React.useMemo(() => listNow.map((msg) => decodeMessage(msg)), [listNow.length]);
 
   const focusNextButton = () => {
     if (lastBtnRef.current) {
@@ -106,7 +102,7 @@ function Storage() {
 
   const renderDiff = (
     item: Record<string, any>,
-    prevItem?: Record<string, any>
+    prevItem?: Record<string, any>,
   ) => {
     if (!showDiffs) {
       return;
@@ -132,9 +128,7 @@ function Storage() {
 
     return (
       <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
-        {stateDiff.map((d: Record<string, any>, i: number) =>
-          renderDiffs(d, i)
-        )}
+        {stateDiff.map((d: Record<string, any>, i: number) => renderDiffs(d, i))}
       </div>
     );
   };
@@ -161,13 +155,13 @@ function Storage() {
   const renderItem = (
     item: Record<string, any>,
     i: number,
-    prevItem?: Record<string, any>
+    prevItem?: Record<string, any>,
   ) => {
     let src;
     let name;
 
     const itemD = item;
-    const prevItemD = prevItem ? prevItem : undefined;
+    const prevItemD = prevItem || undefined;
 
     switch (type) {
       case STORAGE_TYPES.REDUX:
@@ -196,7 +190,7 @@ function Storage() {
       <div
         className={cn(
           'flex justify-between items-start',
-          src !== null ? 'border-b' : ''
+          src !== null ? 'border-b' : '',
         )}
         key={`store-${i}`}
       >
@@ -235,12 +229,12 @@ function Storage() {
                 className={stl.button}
                 onClick={() => player.jump(item.time)}
               >
-                {'JUMP'}
+                JUMP
               </button>
             )}
             {i + 1 === listNow.length && i + 1 < list.length && (
               <button className={stl.button} ref={lastBtnRef} onClick={goNext}>
-                {'NEXT'}
+                NEXT
               </button>
             )}
           </div>
@@ -254,7 +248,7 @@ function Storage() {
   }
   return (
     <BottomBlock>
-      {/*@ts-ignore*/}
+      {/* @ts-ignore */}
       <>
         <BottomBlock.Header>
           <div className="flex w-full items-center">
@@ -262,7 +256,7 @@ function Storage() {
               style={{ width: '25%', marginRight: 20 }}
               className="font-semibold flex items-center gap-2"
             >
-              <h3>{'STATE'}</h3>
+              <h3>STATE</h3>
             </div>
             {showDiffs ? (
               <h3 style={{ width: '39%' }} className="font-semibold">
@@ -294,6 +288,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/redux"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     Redux
                   </a>
@@ -302,6 +297,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/vuex"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     VueX
                   </a>
@@ -310,6 +306,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/pinia"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     Pinia
                   </a>
@@ -318,6 +315,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/zustand"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     Zustand
                   </a>
@@ -326,6 +324,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/mobx"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     MobX
                   </a>
@@ -334,6 +333,7 @@ function Storage() {
                     className="underline color-teal"
                     href="https://docs.openreplay.com/plugins/ngrx"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     NgRx
                   </a>
@@ -355,7 +355,7 @@ function Storage() {
             <div className="ph-10 scroll-y" style={{ width: '25%' }}>
               {list.length === 0 ? (
                 <div className="color-gray-light font-size-16 mt-20 text-center">
-                  {'Empty state.'}
+                  Empty state.
                 </div>
               ) : (
                 <JSONTree collapsed={2} src={stateObject} />
@@ -363,9 +363,7 @@ function Storage() {
             </div>
             <div className="flex" style={{ width: '75%' }}>
               <Autoscroll className="ph-10">
-                {decodedList.map((item: Record<string, any>, i: number) =>
-                  renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined)
-                )}
+                {decodedList.map((item: Record<string, any>, i: number) => renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined))}
               </Autoscroll>
             </div>
           </NoContent>

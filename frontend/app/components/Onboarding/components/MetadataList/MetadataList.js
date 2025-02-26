@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
-import { Button, TagBadge } from 'UI';
+import { Button, TagBadge, confirm } from 'UI';
 import { connect } from 'react-redux';
 import { fetchList, save, remove } from 'Duck/customField';
-import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
-import { confirm } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { toast } from 'react-toastify';
+import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
 
-const MetadataList = (props) => {
+function MetadataList(props) {
   const { site, fields } = props;
 
   const { showModal, hideModal } = useModal();
@@ -35,7 +34,7 @@ const MetadataList = (props) => {
     if (
       await confirm({
         header: 'Metadata',
-        confirmation: `Are you sure you want to remove?`,
+        confirmation: 'Are you sure you want to remove?',
       })
     ) {
       props.remove(site.id, field.index);
@@ -54,7 +53,7 @@ const MetadataList = (props) => {
       </div>
     </div>
   );
-};
+}
 
 export default connect(
   (state) => ({
@@ -63,5 +62,5 @@ export default connect(
     field: state.getIn(['customFields', 'instance']),
     loading: state.getIn(['customFields', 'fetchRequest', 'loading']),
   }),
-  { fetchList, save, remove }
+  { fetchList, save, remove },
 )(MetadataList);

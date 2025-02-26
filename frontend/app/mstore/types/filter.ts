@@ -1,11 +1,11 @@
-import { makeAutoObservable, runInAction, observable, action } from 'mobx';
-import FilterItem from './filterItem';
+import {
+  makeAutoObservable, runInAction, observable, action,
+} from 'mobx';
 import { filtersMap, conditionalFiltersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'Types/filter/filterType';
+import FilterItem from './filterItem';
 
-export const checkFilterValue = (value: any) => {
-  return Array.isArray(value) ? (value.length === 0 ? [''] : value) : [value];
-};
+export const checkFilterValue = (value: any) => (Array.isArray(value) ? (value.length === 0 ? [''] : value) : [value]);
 
 export interface IFilter {
   filterId: string;
@@ -62,22 +62,34 @@ export default class Filter implements IFilter {
   }
 
   filterId: string = '';
+
   name: string = '';
+
   autoOpen = false;
+
   filters: FilterItem[] = [];
+
   excludes: FilterItem[] = [];
+
   eventsOrder: string = 'then';
+
   eventsOrderSupport: string[] = ['then', 'or', 'and'];
+
   startTimestamp: number = 0;
+
   endTimestamp: number = 0;
+
   eventsHeader: string = 'EVENTS';
+
   page: number = 1;
+
   limit: number = 10;
 
   constructor(
     filters: any[] = [],
     private readonly isConditional = false,
-    private readonly isMobile = false) {
+    private readonly isMobile = false,
+  ) {
     makeAutoObservable(this, {
       filters: observable,
       eventsOrder: observable,
@@ -90,9 +102,9 @@ export default class Filter implements IFilter {
       merge: action,
       addExcludeFilter: action,
       updateFilter: action,
-      replaceFilters: action
+      replaceFilters: action,
     });
-    this.filters = filters.map(i => new FilterItem(i));
+    this.filters = filters.map((i) => new FilterItem(i));
   }
 
   merge(filter: any) {
@@ -131,18 +143,14 @@ export default class Filter implements IFilter {
 
   fromJson(json: any, isHeatmap?: boolean) {
     this.name = json.name;
-    this.filters = json.filters.map((i: Record<string, any>) =>
-      new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i, undefined, isHeatmap)
-    );
+    this.filters = json.filters.map((i: Record<string, any>) => new FilterItem(undefined, this.isConditional, this.isMobile).fromJson(i, undefined, isHeatmap));
     this.eventsOrder = json.eventsOrder;
     return this;
   }
 
   fromData(data: any) {
     this.name = data.name;
-    this.filters = data.filters.map((i: Record<string, any>) =>
-      new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i)
-    );
+    this.filters = data.filters.map((i: Record<string, any>) => new FilterItem(undefined, this.isConditional, this.isMobile).fromData(i));
     this.eventsOrder = data.eventsOrder;
     return this;
   }
@@ -150,10 +158,10 @@ export default class Filter implements IFilter {
   toJsonDrilldown() {
     const json = {
       name: this.name,
-      filters: this.filters.map(i => i.toJson()),
+      filters: this.filters.map((i) => i.toJson()),
       eventsOrder: this.eventsOrder,
       startTimestamp: this.startTimestamp,
-      endTimestamp: this.endTimestamp
+      endTimestamp: this.endTimestamp,
     };
     return json;
   }
@@ -166,8 +174,8 @@ export default class Filter implements IFilter {
   toJson() {
     const json = {
       name: this.name,
-      filters: this.filters.map(i => i.toJson()),
-      eventsOrder: this.eventsOrder
+      filters: this.filters.map((i) => i.toJson()),
+      eventsOrder: this.eventsOrder,
     };
     return json;
   }
@@ -193,13 +201,13 @@ export default class Filter implements IFilter {
   toData() {
     return {
       name: this.name,
-      filters: this.filters.map(i => i.toJson()),
-      eventsOrder: this.eventsOrder
+      filters: this.filters.map((i) => i.toJson()),
+      eventsOrder: this.eventsOrder,
     };
   }
 
   addOrUpdateFilter(filter: any) {
-    const index = this.filters.findIndex(i => i.key === filter.key);
+    const index = this.filters.findIndex((i) => i.key === filter.key);
     filter.value = checkFilterValue;
 
     if (index > -1) {

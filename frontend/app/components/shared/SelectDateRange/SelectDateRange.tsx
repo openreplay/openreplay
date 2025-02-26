@@ -45,12 +45,10 @@ function SelectDateRange(props: Props) {
   const dateRangeOptions = props.comparison
     ? DATE_RANGE_COMPARISON_OPTIONS
     : DATE_RANGE_OPTIONS;
-  let selectedValue = usedPeriod?.rangeName
+  const selectedValue = usedPeriod?.rangeName
     ? dateRangeOptions.find((obj: any) => obj.value === usedPeriod?.rangeName)
     : null;
-  const options = dateRangeOptions.filter((obj: any) =>
-    disableCustom ? obj.value !== CUSTOM_RANGE : true
-  );
+  const options = dateRangeOptions.filter((obj: any) => (disableCustom ? obj.value !== CUSTOM_RANGE : true));
 
   const onChange = (value: any) => {
     if (value === CUSTOM_RANGE) {
@@ -61,7 +59,7 @@ function SelectDateRange(props: Props) {
     }
     if (props.comparison && props.onChangeComparison) {
       if (!value) {
-        props.updateInstComparison?.(null)
+        props.updateInstComparison?.(null);
         return props.onChangeComparison(null);
       }
       const newPeriod = new Period({
@@ -69,9 +67,8 @@ function SelectDateRange(props: Props) {
         end: props.period.end,
         substract: value,
       });
-      props.updateInstComparison?.([value])
+      props.updateInstComparison?.([value]);
       props.onChangeComparison(newPeriod);
-      return;
     } else {
       props.onChange(new Period({ rangeName: value }));
     }
@@ -81,7 +78,7 @@ function SelectDateRange(props: Props) {
     if (props.comparison) {
       const day = 86400000;
       const originalPeriodLength = Math.ceil(
-        (props.period.end - props.period.start) / day
+        (props.period.end - props.period.start) / day,
       );
       const start = value.start.ts;
       const end = value.start.ts + originalPeriodLength * day;
@@ -91,7 +88,7 @@ function SelectDateRange(props: Props) {
         end,
         rangeName: CUSTOM_RANGE,
       });
-      props.updateInstComparison?.([start.toString(), end.toString()])
+      props.updateInstComparison?.([start.toString(), end.toString()]);
       props.onChangeComparison(compRange);
     } else {
       const range = new Period({
@@ -107,12 +104,11 @@ function SelectDateRange(props: Props) {
   const isCustomRange = usedPeriod
     ? usedPeriod.rangeName === CUSTOM_RANGE
     : false;
-  const isUSLocale =
-    navigator.language === 'en-US' || navigator.language.startsWith('en-US');
+  const isUSLocale = navigator.language === 'en-US' || navigator.language.startsWith('en-US');
   const customRange = isCustomRange
     ? usedPeriod.rangeFormatted(
-        isUSLocale ? 'MMM dd yyyy, hh:mm a' : 'MMM dd yyyy, HH:mm'
-      )
+      isUSLocale ? 'MMM dd yyyy, hh:mm a' : 'MMM dd yyyy, HH:mm',
+    )
     : '';
 
   const isTileDisabled = ({ date, view }) => {
@@ -148,16 +144,14 @@ function SelectDateRange(props: Props) {
         options={options}
         onChange={({ value }: any) => onChange(value.value)}
         components={{
-          SingleValue: ({ children, ...props }: any) => {
-            return (
-              <components.SingleValue {...props}>
-                {isCustomRange ? customRange : children}
-              </components.SingleValue>
-            );
-          },
+          SingleValue: ({ children, ...props }: any) => (
+            <components.SingleValue {...props}>
+              {isCustomRange ? customRange : children}
+            </components.SingleValue>
+          ),
         }}
         period={period}
-        right={true}
+        right
         style={{ width: '100%' }}
       />
       {isCustom && (
@@ -165,10 +159,10 @@ function SelectDateRange(props: Props) {
           onClickOutside={(e: any) => {
             if (
               e.target.parentElement.parentElement.classList.contains(
-                'rc-time-picker-panel-select'
-              ) ||
-              e.target.parentElement.parentElement.classList[0]?.includes(
-                '-menu'
+                'rc-time-picker-panel-select',
+              )
+              || e.target.parentElement.parentElement.classList[0]?.includes(
+                '-menu',
               )
             ) {
               return false;
@@ -225,16 +219,15 @@ function AndDateRange({
     },
   };
 
-  const comparisonValue =
-    isCustomRange && selectedValue ? customRange : selectedValue?.label;
+  const comparisonValue = isCustomRange && selectedValue ? customRange : selectedValue?.label;
   return (
-    <div className={'relative'}>
+    <div className="relative">
       {comparison ? (
-        <div className={'flex items-center gap-0'}>
+        <div className="flex items-center gap-0">
           <Dropdown
             menu={menuProps}
             trigger={['click']}
-            className={'px-2 py-1 gap-1'}
+            className="px-2 py-1 gap-1"
           >
             <Button
               type="text"
@@ -275,14 +268,14 @@ function AndDateRange({
         <OutsideClickDetectingDiv
           onClickOutside={(e: any) => {
             if (
-              e.target.className.includes('react-calendar') ||
-              e.target.parentElement.parentElement.classList.contains(
-                'rc-time-picker-panel-select'
-              ) ||
-              e.target.parentElement.parentElement.classList[0]?.includes(
-                '-menu'
-              ) ||
-              e.target.className.includes('ant-picker')
+              e.target.className.includes('react-calendar')
+              || e.target.parentElement.parentElement.classList.contains(
+                'rc-time-picker-panel-select',
+              )
+              || e.target.parentElement.parentElement.classList[0]?.includes(
+                '-menu',
+              )
+              || e.target.className.includes('ant-picker')
             ) {
               return false;
             }

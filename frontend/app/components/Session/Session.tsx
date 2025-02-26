@@ -1,6 +1,5 @@
 import withPermissions from 'HOCs/withPermissions';
-import React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { clearLogs } from 'App/dev/console';
 import usePageTitle from 'App/hooks/usePageTitle';
@@ -20,10 +19,10 @@ function Session({
 }: { match: any }) {
   usePageTitle('OpenReplay Session Player');
   const { sessionStore } = useStore();
-  const hasErrors = sessionStore.fetchFailed
+  const hasErrors = sessionStore.fetchFailed;
   const session = sessionStore.current;
   const fetchV2 = sessionStore.fetchSessionData;
-  const clearCurrentSession = sessionStore.clearCurrentSession;
+  const { clearCurrentSession } = sessionStore;
 
   useEffect(() => {
     if (sessionId != null) {
@@ -46,14 +45,14 @@ function Session({
     <NoContent
       show={hasErrors}
       title="Session not found."
-      subtext={
+      subtext={(
         <span>
           {'Please check your data retention plan, or try '}
           <Link to={SESSIONS_ROUTE} className="link">
-            {'another one'}
+            another one
           </Link>
         </span>
-      }
+      )}
     >
       <Loader className="flex-1" loading={!session.sessionId}>
         {player}
@@ -62,6 +61,4 @@ function Session({
   );
 }
 
-export default withPermissions(
-  ['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', true, false
-)(observer(Session));
+export default withPermissions(['SESSION_REPLAY', 'SERVICE_SESSION_REPLAY'], '', true, false)(observer(Session));

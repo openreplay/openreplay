@@ -16,12 +16,12 @@ import {
 } from 'App/mstore/uiPlayerStore';
 import { Icon } from 'UI';
 
+import { useStore } from 'App/mstore';
 import { useModal } from '../../Modal';
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import ElementsMarker from './Overlay/ElementsMarker';
 import Loader from './Overlay/Loader';
 import PlayIconLayer from './Overlay/PlayIconLayer';
-import { useStore } from 'App/mstore'
 
 interface Props {
   nextId?: string;
@@ -44,27 +44,27 @@ const menuItems: MenuProps['items'] = [
   {
     key: ItemKey.Console,
     label: 'Console',
-    icon: <Icon name={'terminal'} size={14} />,
+    icon: <Icon name="terminal" size={14} />,
   },
   {
     key: ItemKey.Network,
     label: 'Network',
-    icon: <Icon name={'arrow-down-up'} size={14} />,
+    icon: <Icon name="arrow-down-up" size={14} />,
   },
   {
     key: ItemKey.Performance,
     label: 'Performance',
-    icon: <Icon name={'speedometer2'} size={14} />,
+    icon: <Icon name="speedometer2" size={14} />,
   },
   {
     key: ItemKey.Events,
     label: 'Events',
-    icon: <Icon name={'filetype-js'} size={14} />,
+    icon: <Icon name="filetype-js" size={14} />,
   },
   {
     key: ItemKey.State,
     label: 'State',
-    icon: <Icon name={'redux'} size={14} />,
+    icon: <Icon name="redux" size={14} />,
   },
   { type: 'divider' },
   // {
@@ -87,7 +87,7 @@ const menuItems: MenuProps['items'] = [
 function Overlay({ nextId, isClickmap }: Props) {
   const { player, store } = React.useContext(PlayerContext);
   const { uiPlayerStore } = useStore();
-  const toggleBottomBlock = uiPlayerStore.toggleBottomBlock;
+  const { toggleBottomBlock } = uiPlayerStore;
   const togglePlay = () => player.togglePlay();
   const {
     playing,
@@ -101,17 +101,16 @@ function Overlay({ nextId, isClickmap }: Props) {
   } = store.get();
   const { showModal, hideModal } = useModal();
   const cssLoading = Object.values(tabStates).some(
-    ({ cssLoading }) => cssLoading
+    ({ cssLoading }) => cssLoading,
   );
   const loading = messagesLoading || cssLoading;
 
   const showAutoplayTimer = completed && autoplay && nextId;
-  const showPlayIconLayer =
-    !isClickmap &&
-    !markedTargets &&
-    !inspectorMode &&
-    !loading &&
-    !showAutoplayTimer;
+  const showPlayIconLayer = !isClickmap
+    && !markedTargets
+    && !inspectorMode
+    && !loading
+    && !showAutoplayTimer;
 
   const onClick = ({ key }: { key: string }) => {
     switch (key) {
@@ -145,14 +144,13 @@ function Overlay({ nextId, isClickmap }: Props) {
         toast.success('Session URL copied to clipboard');
         break;
       case ItemKey.CopySessionUrlTs:
-        copy(window.location.origin
+        copy(`${window.location.origin
              + window.location.pathname
-             + '?jumpto='
-             + String(Math.round(store.get().time)));
+        }?jumpto=${
+          String(Math.round(store.get().time))}`);
         toast.success('Session URL at current time copied to clipboard');
         break;
       default:
-        return;
     }
   };
   return (

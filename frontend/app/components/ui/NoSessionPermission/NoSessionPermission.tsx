@@ -9,7 +9,7 @@ import {
   withSiteId,
 } from 'App/routes';
 import { Icon } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 
 import stl from './NoSessionPermission.module.css';
 
@@ -23,25 +23,25 @@ interface Props extends RouteComponentProps {
 function NoSessionPermission(props: Props) {
   const { projectsStore, sessionStore } = useStore();
   const session = sessionStore.current;
-  const sessionPath = sessionStore.sessionPath;
+  const { sessionPath } = sessionStore;
   const isAssist = window.location.pathname.includes('/assist/');
   const siteId = projectsStore.siteId!;
   const { history } = props;
 
   const backHandler = () => {
     if (
-      sessionPath.pathname === history.location.pathname ||
-      sessionPath.pathname.includes('/session/') ||
-      isAssist
+      sessionPath.pathname === history.location.pathname
+      || sessionPath.pathname.includes('/session/')
+      || isAssist
     ) {
       history.push(
-        withSiteId(isAssist ? ASSIST_ROUTE : SESSIONS_ROUTE, siteId)
+        withSiteId(isAssist ? ASSIST_ROUTE : SESSIONS_ROUTE, siteId),
       );
     } else {
       history.push(
         sessionPath
           ? sessionPath.pathname + sessionPath.search
-          : withSiteId(SESSIONS_ROUTE, siteId)
+          : withSiteId(SESSIONS_ROUTE, siteId),
       );
     }
   };
@@ -69,5 +69,5 @@ function NoSessionPermission(props: Props) {
 }
 
 export default withRouter(
-  observer(NoSessionPermission)
+  observer(NoSessionPermission),
 );

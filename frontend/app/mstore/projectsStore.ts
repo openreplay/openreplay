@@ -1,9 +1,9 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import Project from './types/project';
-import GDPR from './types/gdpr';
 import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
 import { toast } from '.store/react-toastify-virtual-9dd0f3eae1/package';
+import GDPR from './types/gdpr';
+import Project from './types/project';
 
 interface Config {
   project: Project | null;
@@ -13,15 +13,21 @@ interface Config {
 
 export default class ProjectsStore {
   list: Project[] = [];
+
   instance: Project | null = null;
+
   siteId: string | null = null;
+
   active: Project | null = null;
+
   sitesLoading = true;
+
   loading = false;
+
   config: Config = {
     project: null,
     pid: undefined,
-    tab: 'installation'
+    tab: 'installation',
   };
 
   constructor() {
@@ -39,18 +45,16 @@ export default class ProjectsStore {
   }
 
   syncProjectInList = (project: Partial<Project>) => {
-    const index = this.list.findIndex(site => site.id === project.id);
+    const index = this.list.findIndex((site) => site.id === project.id);
     if (index !== -1) {
       this.list[index] = this.list[index].edit(project);
     }
   };
 
-  getSiteId = () => {
-    return {
-      siteId: this.siteId,
-      active: this.active
-    };
-  };
+  getSiteId = () => ({
+    siteId: this.siteId,
+    active: this.active,
+  });
 
   initProject = (project: Partial<Project>) => {
     this.instance = new Project(project);
@@ -104,7 +108,7 @@ export default class ProjectsStore {
       try {
         this.syncProjectInList({
           id: siteId,
-          gdpr: response.data
+          gdpr: response.data,
         });
       } catch (error) {
         console.error('Failed to sync project in list:', error);
@@ -120,8 +124,8 @@ export default class ProjectsStore {
       const response = await projectsService.fetchList();
       runInAction(() => {
         this.list = response.data.map((data) => new Project(data));
-        const siteIds = this.list.map(site => site.id);
-        let siteId = this.siteId;
+        const siteIds = this.list.map((site) => site.id);
+        let { siteId } = this;
         const siteExists = siteId ? siteIds.includes(siteId) : false;
 
         if (siteIdFromPath && siteIds.includes(siteIdFromPath)) {
@@ -132,7 +136,7 @@ export default class ProjectsStore {
             : response.data[0].projectId;
         }
 
-        const hasRecordings = this.list.some(site => site.recorded);
+        const hasRecordings = this.list.some((site) => site.recorded);
         if (!hasRecordings) {
           localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, 'true');
         } else {
@@ -155,7 +159,7 @@ export default class ProjectsStore {
       const response = await projectsService.saveProject(projectData);
 
       const newSite = new Project(response.data);
-      const index = this.list.findIndex(site => site.id === newSite.id);
+      const index = this.list.findIndex((site) => site.id === newSite.id);
       if (index !== -1) {
         this.list[index] = newSite;
       } else {
@@ -164,7 +168,6 @@ export default class ProjectsStore {
       // this.setSiteId(newSite.id!);
       // this.active = newSite;
       return newSite;
-
     } catch (error: any) {
       throw error || 'An error occurred while saving the project.';
     } finally {
@@ -173,10 +176,10 @@ export default class ProjectsStore {
   };
 
   updateProjectRecordingStatus = (siteId: string, status: boolean) => {
-    const site = this.list.find(site => site.id === siteId);
+    const site = this.list.find((site) => site.id === siteId);
     if (site) {
       site.recorded = status;
-      const hasRecordings = this.list.some(site => site.recorded);
+      const hasRecordings = this.list.some((site) => site.recorded);
       if (!hasRecordings) {
         localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, 'true');
       } else {
@@ -190,7 +193,7 @@ export default class ProjectsStore {
     try {
       await projectsService.removeProject(projectId);
       runInAction(() => {
-        this.list = this.list.filter(site => site.id !== projectId);
+        this.list = this.list.filter((site) => site.id !== projectId);
         this.setConfigProject();
         if (this.active?.id === projectId) {
           this.setSiteId(this.list[0].id!);
@@ -208,11 +211,11 @@ export default class ProjectsStore {
     try {
       const response = await projectsService.updateProject(projectId, {
         name: projectData.name,
-        platform: projectData.platform
+        platform: projectData.platform,
       });
       runInAction(() => {
         const updatedSite = new Project(response.data);
-        const index = this.list.findIndex(site => site.id === updatedSite.id);
+        const index = this.list.findIndex((site) => site.id === updatedSite.id);
         if (index !== -1) {
           this.list[index] = updatedSite;
         }
@@ -232,8 +235,8 @@ export default class ProjectsStore {
       return;
     }
 
-    const project = this.list.find(site => site.projectId === pid);
-    if(!project) {
+    const project = this.list.find((site) => site.projectId === pid);
+    if (!project) {
       // set the first project as active
       this.setConfigProject();
     } else {

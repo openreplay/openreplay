@@ -8,16 +8,18 @@ interface Props {
   additionalHeight?: number;
 }
 
-const BottomBlock = ({
+function BottomBlock({
   children = null,
   className = '',
   additionalHeight = 0,
   ...props
-}: Props) => (
-  <div className={ cn(stl.wrapper, "flex flex-col mb-2") } { ...props } >
-    { children }
-  </div>
-);
+}: Props) {
+  return (
+    <div className={cn(stl.wrapper, 'flex flex-col mb-2')} {...props}>
+      { children }
+    </div>
+  );
+}
 
 BottomBlock.displayName = 'BottomBlock';
 

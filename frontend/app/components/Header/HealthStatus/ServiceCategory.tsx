@@ -24,7 +24,6 @@ function Category({
   isSelected?: boolean;
   noBorder?: boolean;
 }) {
-
   const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
   return (
     <div
@@ -38,15 +37,15 @@ function Category({
     >
       {isLoading ? (
         <AnimatedSVG name={ICONS.LOADER} size={20} />
-      ) : <Icon name={icon} size={20} color={'green'} />}
+      ) : <Icon name={icon} size={20} color="green" />}
       {name}
 
-      {isSelectable ? <Icon name={'chevron-right'} size={16} className={'ml-auto'} /> : null}
+      {isSelectable ? <Icon name="chevron-right" size={16} className="ml-auto" /> : null}
       {isExpandable ? (
-        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} className={'ml-auto'} />
+        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} className="ml-auto" />
       ) : null}
     </div>
   );
 }
 
-export default Category
+export default Category;

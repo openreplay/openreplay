@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import stl from '../console.module.css';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
+import stl from '../console.module.css';
 
 interface Props {
   log: any;
@@ -12,7 +12,9 @@ interface Props {
   style?: any;
 }
 function ConsoleRow(props: Props) {
-  const { log, iconProps, jump, renderWithNL, style } = props;
+  const {
+    log, iconProps, jump, renderWithNL, style,
+  } = props;
   const [expanded, setExpanded] = useState(false);
   const lines = log.value.split('\n').filter((l: any) => !!l);
   const canExpand = lines.length > 1;

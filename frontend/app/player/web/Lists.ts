@@ -1,7 +1,5 @@
 import { InjectedEvent } from 'Types/session/event';
 import Issue from 'Types/session/issue';
-import ListWalker from '../common/ListWalker';
-import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 import type { IResourceRequest, IResourceTiming, Timed } from 'Player';
 import {
   Redux as reduxMsg,
@@ -14,6 +12,8 @@ import {
   WsChannel as websocketMsg,
   Profiler as profilerMsg,
 } from 'Player/web/messages';
+import ListWalker from '../common/ListWalker';
+import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 
 type stackMsg = {
   name: string;
@@ -87,7 +87,7 @@ export const INITIAL_STATE = LIST_NAMES.reduce(
   MARKED_LIST_NAMES.reduce((state, name) => {
     state[`${name}MarkedCountNow`] = 0;
     return state;
-  }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+  }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
 ) as State;
 
 type SimpleListsObject = {
@@ -136,7 +136,7 @@ export default class Lists {
       MARKED_LIST_NAMES.reduce((state, name) => {
         state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow; // Red --> Marked
         return state;
-      }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+      }, {} as Partial<StateMarkedCountNow>) as Partial<State>,
     ) as State;
   }
 }

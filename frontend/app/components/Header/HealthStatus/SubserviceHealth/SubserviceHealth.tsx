@@ -22,7 +22,7 @@ function SubserviceHealth({
         isExpanded={isExpanded}
       />
       {isExpanded ? (
-        <div className={'p-3'}>
+        <div className="p-3">
           {subservice?.details?.version ? (
             <div className="flex items-center justify-between mt-2 px-2 py-2 bg-white rounded border border-light-gray">
               <div className="py-1 px-2 font-medium">Version</div>
@@ -32,7 +32,7 @@ function SubserviceHealth({
             </div>
           ) : null}
           {subservice?.details?.errors?.length ? (
-            <div className={'py-2 px-4 bg-white rounded border border-light-gray flex gap-1 flex-wrap'}>
+            <div className="py-2 px-4 bg-white rounded border border-light-gray flex gap-1 flex-wrap">
               <div>Error log:</div>
               <div>{subservice.details.errors.toString()}</div>
             </div>

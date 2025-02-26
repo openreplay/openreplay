@@ -22,7 +22,7 @@ export const HighlightDragLayer = observer(({ scale }: Props) => {
 
   const [throttledJump] = React.useMemo(
     () => throttle(player.jump, 25),
-    [player]
+    [player],
   );
   React.useEffect(() => {
     if (timelineHighlightStartTs !== lastStartTs.current) {
@@ -35,7 +35,6 @@ export const HighlightDragLayer = observer(({ scale }: Props) => {
       player.pause();
       throttledJump(timelineHighlightEndTs, true);
       lastEndTs.current = timelineHighlightEndTs;
-      return;
     }
   }, [timelineHighlightStartTs, timelineHighlightEndTs]);
 
@@ -59,7 +58,7 @@ export const HighlightDragLayer = observer(({ scale }: Props) => {
 
 export const ZoomDragLayer = observer(({ scale }: Props) => {
   const { uiPlayerStore } = useStore();
-  const toggleZoom = uiPlayerStore.toggleZoom;
+  const { toggleZoom } = uiPlayerStore;
   const timelineZoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const timelineZoomEndTs = uiPlayerStore.timelineZoom.endTs;
 
@@ -94,10 +93,10 @@ function DraggableMarkers({
   sessEnd?: number;
 }) {
   const [startPos, setStartPos] = useState(
-    getTimelinePosition(defaultStartPos, scale)
+    getTimelinePosition(defaultStartPos, scale),
   );
   const [endPos, setEndPos] = useState(
-    getTimelinePosition(defaultEndPos, scale)
+    getTimelinePosition(defaultEndPos, scale),
   );
   const [dragging, setDragging] = useState<string | null>(null);
 
@@ -111,8 +110,8 @@ function DraggableMarkers({
     defaultEndPos,
     defaultStartPos,
     scale,
-    dragging
-  ])
+    dragging,
+  ]);
 
   const convertToPercentage = useCallback(
     (clientX: number, element: HTMLElement) => {
@@ -120,7 +119,7 @@ function DraggableMarkers({
       const x = clientX - rect.left;
       return (x / rect.width) * 100;
     },
-    []
+    [],
   );
 
   const startDrag = useCallback(
@@ -128,7 +127,7 @@ function DraggableMarkers({
       event.stopPropagation();
       setDragging(marker);
     },
-    [convertToPercentage, startPos]
+    [convertToPercentage, startPos],
   );
 
   const minDistance = 1.5;
@@ -164,11 +163,11 @@ function DraggableMarkers({
           setEndPos(newEndPos);
           setTimeout(() => {
             onDragEnd(newStartPos / scale, newEndPos / scale);
-          }, 1)
+          }, 1);
         }
       }
     },
-    [dragging, startPos, endPos, scale, onDragEnd]
+    [dragging, startPos, endPos, scale, onDragEnd],
   );
 
   const endDrag = useCallback(() => {
@@ -182,7 +181,7 @@ function DraggableMarkers({
 
   const startRangeStr = shortDurationFromMs(Math.max(defaultStartPos, 0));
   const endRangeStr = shortDurationFromMs(
-    Math.min(defaultEndPos, sessEnd ?? defaultEndPos)
+    Math.min(defaultEndPos, sessEnd ?? defaultEndPos),
   );
   return (
     <div
@@ -220,15 +219,13 @@ function DraggableMarkers({
       >
         {dragging === 'start' ? (
           <div
-            className={
-              'absolute bg-[#FCC100] text-black rounded-xl px-2 py-1 -top-10 select-none left-1/2 -translate-x-1/2'
-            }
+            className="absolute bg-[#FCC100] text-black rounded-xl px-2 py-1 -top-10 select-none left-1/2 -translate-x-1/2"
           >
             {startRangeStr}
           </div>
         ) : null}
         <div
-          className={'bg-black/20 rounded-xl'}
+          className="bg-black/20 rounded-xl"
           style={{
             zIndex: 101,
             height: 16,
@@ -238,33 +235,35 @@ function DraggableMarkers({
           }}
         />
         <div
-          className={'bg-black/20 rounded-xl'}
-          style={{ zIndex: 101, height: 16, width: 1, overflow: 'hidden' }}
+          className="bg-black/20 rounded-xl"
+          style={{
+            zIndex: 101, height: 16, width: 1, overflow: 'hidden',
+          }}
         />
       </div>
       <div
-          className="slider-body"
-          onMouseDown={startDrag('body')}
-          style={{
-            position: 'absolute',
-            left: `calc(${startPos}% + 10px)`,
-            width: `calc(${endPos - startPos}% - 10px)`,
-            height: uiSize,
-            top: topPadding,
-            background: `repeating-linear-gradient(
+        className="slider-body"
+        onMouseDown={startDrag('body')}
+        style={{
+          position: 'absolute',
+          left: `calc(${startPos}% + 10px)`,
+          width: `calc(${endPos - startPos}% - 10px)`,
+          height: uiSize,
+          top: topPadding,
+          background: `repeating-linear-gradient(
               -45deg,
               rgba(252, 193, 0, 0.3),
               rgba(252, 193, 0, 0.3) 4px,
               transparent 4px,
               transparent 8px
             )`,
-            borderTop: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
-            borderBottom: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
-            cursor: 'grab',
-            zIndex: 100,
-            opacity: dragging ? 0.8 : 1,
-          }}
-        />
+          borderTop: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
+          borderBottom: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
+          cursor: 'grab',
+          zIndex: 100,
+          opacity: dragging ? 0.8 : 1,
+        }}
+      />
       <div
         className="marker end"
         onMouseDown={startDrag('end')}
@@ -288,15 +287,13 @@ function DraggableMarkers({
       >
         {dragging === 'end' ? (
           <div
-            className={
-              'absolute bg-[#FCC100] text-black rounded-xl px-2 p-1 -top-10 select-none left-1/2 -translate-x-1/2'
-            }
+            className="absolute bg-[#FCC100] text-black rounded-xl px-2 p-1 -top-10 select-none left-1/2 -translate-x-1/2"
           >
             {endRangeStr}
           </div>
         ) : null}
         <div
-          className={'bg-black/20 rounded-xl'}
+          className="bg-black/20 rounded-xl"
           style={{
             zIndex: 101,
             height: 16,
@@ -307,8 +304,10 @@ function DraggableMarkers({
           }}
         />
         <div
-          className={'bg-black/20 rounded-xl'}
-          style={{ zIndex: 101, height: 16, width: 1, overflow: 'hidden' }}
+          className="bg-black/20 rounded-xl"
+          style={{
+            zIndex: 101, height: 16, width: 1, overflow: 'hidden',
+          }}
         />
       </div>
     </div>

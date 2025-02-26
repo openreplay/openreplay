@@ -5,7 +5,7 @@ export default class UserService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
@@ -21,7 +21,7 @@ export default class UserService {
 
   one(userId: string) {
     return this.client
-      .get('/users/' + userId)
+      .get(`/users/${userId}`)
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
@@ -30,17 +30,16 @@ export default class UserService {
     const data = user.toSave();
     if (user.userId) {
       return this.client
-        .put('/client/members/' + user.userId, data)
-        .then((r) => r.json())
-        .then((response: { data: any }) => response.data || {})
-        .catch((e) => Promise.reject(e));
-    } else {
-      return this.client
-        .post('/client/members', data)
+        .put(`/client/members/${user.userId}`, data)
         .then((r) => r.json())
         .then((response: { data: any }) => response.data || {})
         .catch((e) => Promise.reject(e));
     }
+    return this.client
+      .post('/client/members', data)
+      .then((r) => r.json())
+      .then((response: { data: any }) => response.data || {})
+      .catch((e) => Promise.reject(e));
   }
 
   generateInviteCode(userId: any): Promise<any> {
@@ -52,7 +51,7 @@ export default class UserService {
 
   delete(userId: string) {
     return this.client
-      .delete('/client/members/' + userId)
+      .delete(`/client/members/${userId}`)
       .then((r) => r.json())
       .then((response: { data: any }) => response.data || {})
       .catch((e) => Promise.reject(e));
@@ -109,7 +108,7 @@ export default class UserService {
 
   ignoreAllNotifications(params: any) {
     return this.client
-      .post(`/notifications/view`, params)
+      .post('/notifications/view', params)
       .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }

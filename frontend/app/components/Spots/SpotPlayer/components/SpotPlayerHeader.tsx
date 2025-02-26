@@ -96,7 +96,7 @@ function SpotPlayerHeader({
 
   return (
     <div
-      className={'flex items-center gap-1 p-2 py-1 w-full bg-white border-b'}
+      className="flex items-center gap-1 p-2 py-1 w-full bg-white border-b"
     >
       <div>
         {isLoggedIn ? (
@@ -109,26 +109,24 @@ function SpotPlayerHeader({
             All Spots
           </Button>
         ) : (
-          <>
-            <a href="https://openreplay.com/spot" target="_blank">
-              <Button
-                type="text"
-                className="orSpotBranding flex gap-1 items-center py-2"
-              >
-                <Icon name={'orSpot'} size={28} />
-                <div className="flex flex-col justify-start text-start">
-                  <div className={'text-lg font-semibold'}>Spot</div>
-                  <div className={'text-disabled-text text-xs -mt-1'}>
-                    by OpenReplay
-                  </div>
+          <a href="https://openreplay.com/spot" target="_blank" rel="noreferrer">
+            <Button
+              type="text"
+              className="orSpotBranding flex gap-1 items-center py-2"
+            >
+              <Icon name="orSpot" size={28} />
+              <div className="flex flex-col justify-start text-start">
+                <div className="text-lg font-semibold">Spot</div>
+                <div className="text-disabled-text text-xs -mt-1">
+                  by OpenReplay
                 </div>
-              </Button>
-            </a>
-          </>
+              </div>
+            </Button>
+          </a>
         )}
       </div>
-      <div className={'h-full rounded-xl border-l mr-2'} style={{ width: 1 }} />
-      <div className={'flex items-center gap-2'}>
+      <div className="h-full rounded-xl border-l mr-2" style={{ width: 1 }} />
+      <div className="flex items-center gap-2">
         <Avatar seed={hashString(user)} />
         <div>
           <Tooltip title={title}>
@@ -136,14 +134,17 @@ function SpotPlayerHeader({
               {title}
             </div>
           </Tooltip>
-          <div className={'flex items-center gap-2 text-black/50 text-sm'}>
+          <div className="flex items-center gap-2 text-black/50 text-sm">
             <div>{user}</div>
             <div>·</div>
             <div className="capitalize">{date}</div>
             {browserVersion && (
               <>
                 <div>·</div>
-                <div>Chromium v{browserVersion}</div>
+                <div>
+                  Chromium v
+                  {browserVersion}
+                </div>
               </>
             )}
             {resolution && (
@@ -161,21 +162,21 @@ function SpotPlayerHeader({
           </div>
         </div>
       </div>
-      <div className={'ml-auto'} />
+      <div className="ml-auto" />
       {isLoggedIn ? (
         <>
           <Button
-            size={'small'}
+            size="small"
             onClick={onCopy}
-            type={'default'}
+            type="default"
             icon={<CopyOutlined />}
           >
             Copy
           </Button>
           {hasShareAccess ? (
-            <Popover trigger={'click'} content={<AccessModal />}>
+            <Popover trigger="click" content={<AccessModal />}>
               <Button
-                size={'small'}
+                size="small"
                 icon={<SettingOutlined />}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
@@ -187,28 +188,29 @@ function SpotPlayerHeader({
             menu={{ items, onClick: onMenuClick }}
             placement="bottomRight"
           >
-            <Button icon={<MoreOutlined />} size={'small'}></Button>
+            <Button icon={<MoreOutlined />} size="small" />
           </Dropdown>
           <div
-            className={'h-full rounded-xl border-l mx-2'}
+            className="h-full rounded-xl border-l mx-2"
             style={{ width: 1 }}
           />
         </>
       ) : null}
       <Tabs
-        className={'!w-fit !border-b-0'}
+        className="!w-fit !border-b-0"
         tabs={[
           {
             key: TABS.ACTIVITY,
             text: 'Activity',
-            iconComp: <div className={'mr-1'}><UserSwitchOutlined /></div>,
-              },
-              {
+            iconComp: <div className="mr-1"><UserSwitchOutlined /></div>,
+          },
+          {
             key: TABS.COMMENTS,
-            iconComp: <div className={'mr-1'}><CommentOutlined /></div>,
+            iconComp: <div className="mr-1"><CommentOutlined /></div>,
             text: (
               <div>
-                Comments{' '}
+                Comments
+                {' '}
                 {comments.length > 0 && (
                   <Badge
                     count={comments.length}
@@ -223,9 +225,7 @@ function SpotPlayerHeader({
           },
         ]}
         active={activeTab}
-        onClick={(k) =>
-          k === activeTab ? setActiveTab(null) : setActiveTab(k)
-        }
+        onClick={(k) => (k === activeTab ? setActiveTab(null) : setActiveTab(k))}
       />
     </div>
   );

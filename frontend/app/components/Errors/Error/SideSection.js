@@ -6,10 +6,10 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 
+import { errorService } from 'App/services';
 import DateAgo from './DateAgo';
 import DistributionBar from './DistributionBar';
 import Trend from './Trend';
-import { errorService } from 'App/services';
 
 const MAX_PERCENTAGE = 3;
 const MIN_COUNT = 4;
@@ -71,26 +71,25 @@ function SideSection(props) {
   const { errorStore } = useStore();
   const error = errorStore.instance;
 
-
   const grabData = async () => {
     setLoading(true);
     errorService.fetchErrorStats(error.errorId)
-      .then(data => {
-        setData(dataWrapper(data))
+      .then((data) => {
+        setData(dataWrapper(data));
       })
-    .finally(() => setLoading(false));
-  }
+      .finally(() => setLoading(false));
+  };
 
   React.useEffect(() => {
-    setData(dataWrapper(error))
-  }, [error.errorId])
+    setData(dataWrapper(error));
+  }, [error.errorId]);
 
   return (
     <div className={cn(className, 'pl-5')}>
       <h3 className="text-xl mb-2">Overview</h3>
       <Trend chart={data.chart24} title="Past 24 hours" />
       <div className="mb-6" />
-      <Trend chart={data.chart30} title="Last 30 days" timeFormat={'l'} />
+      <Trend chart={data.chart30} title="Last 30 days" timeFormat="l" />
       <div className="mb-6" />
       <DateAgo
         className="my-4"

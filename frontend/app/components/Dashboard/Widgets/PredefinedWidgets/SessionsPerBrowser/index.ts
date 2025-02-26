@@ -1,1 +1,1 @@
-export { default } from './SessionsPerBrowser'
+export { default } from './SessionsPerBrowser';

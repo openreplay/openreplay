@@ -14,6 +14,7 @@ const defaultValues = { limit: 0, remaining: 0 };
 
 export default class Limit {
   teamMember = defaultValues;
+
   sites = defaultValues;
 
   constructor(data: Record<string, any>) {

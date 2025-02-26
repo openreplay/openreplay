@@ -1,9 +1,9 @@
 import React from 'react';
-import { echarts, defaultOptions } from './init';
 import { SankeyChart } from 'echarts/charts';
-import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
 import { NoContent } from 'App/components/ui';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { sankeyTooltip, getEventPriority, getNodeName } from './sankeyUtils';
+import { echarts, defaultOptions } from './init';
 
 echarts.use([SankeyChart]);
 
@@ -36,21 +36,23 @@ interface Props {
 }
 
 const EChartsSankey: React.FC<Props> = (props) => {
-  const { data, height = 240, onChartClick, isUngrouped } = props;
+  const {
+    data, height = 240, onChartClick, isUngrouped,
+  } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   if (data.nodes.length === 0 || data.links.length === 0) {
     return (
       <NoContent
         style={{ minHeight: height }}
-        title={
+        title={(
           <div className="flex items-center relative">
             <InfoCircleOutlined className="hidden md:inline-block mr-1" />
             Set a start or end point to visualize the journey. If set, try
             adjusting filters.
           </div>
-        }
-        show={true}
+        )}
+        show
       />
     );
   }
@@ -60,8 +62,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
   React.useEffect(() => {
     if (!chartRef.current) return;
 
-    let finalNodes = data.nodes;
-    let finalLinks = data.links;
+    const finalNodes = data.nodes;
+    const finalLinks = data.links;
 
     const chart = echarts.init(chartRef.current);
 
@@ -71,8 +73,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
       const sourceNode = finalNodes.find((n) => n.id === l.source);
       const targetNode = finalNodes.find((n) => n.id === l.target);
       return (
-        (sourceNode?.depth ?? 0) <= maxDepth &&
-        (targetNode?.depth ?? 0) <= maxDepth
+        (sourceNode?.depth ?? 0) <= maxDepth
+        && (targetNode?.depth ?? 0) <= maxDepth
       );
     });
 
@@ -89,10 +91,9 @@ const EChartsSankey: React.FC<Props> = (props) => {
         } else {
           nodeValues[i] = 0;
         }
-        const itemColor =
-          computedName === 'Others'
-            ? 'rgba(34,44,154,.9)'
-            : n.eventType === 'DROP'
+        const itemColor = computedName === 'Others'
+          ? 'rgba(34,44,154,.9)'
+          : n.eventType === 'DROP'
             ? '#B5B7C8'
             : '#394eff';
 
@@ -110,9 +111,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
           return (
             getEventPriority(a.type || '') - getEventPriority(b.type || '')
           );
-        } else {
-          return (a.depth as number) - (b.depth as number);
         }
+        return (a.depth as number) - (b.depth as number);
       });
 
     const echartLinks = filteredLinks.map((l) => ({
@@ -174,25 +174,24 @@ const EChartsSankey: React.FC<Props> = (props) => {
             maxWidth: 30,
             distance: 3,
             offset: [-20, 0],
-            formatter: function (params: any) {
+            formatter(params: any) {
               const nodeVal = params.value;
               const percentage = startNodeValue
-                ? ((nodeVal / startNodeValue) * 100).toFixed(1) + '%'
+                ? `${((nodeVal / startNodeValue) * 100).toFixed(1)}%`
                 : '0%';
 
               const maxLen = 20;
-              const safeName =
-                params.name.length > maxLen
-                  ? params.name.slice(0, maxLen / 2 - 2) +
-                    '...' +
-                    params.name.slice(-(maxLen / 2 - 2))
-                  : params.name;
+              const safeName = params.name.length > maxLen
+                ? `${params.name.slice(0, maxLen / 2 - 2)
+                }...${
+                  params.name.slice(-(maxLen / 2 - 2))}`
+                : params.name;
               const nodeType = params.data.type;
 
-              const icon = getIcon(nodeType)
+              const icon = getIcon(nodeType);
               return (
-                `${icon}{header| ${safeName}}\n` +
-                `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
+                `${icon}{header| ${safeName}}\n`
+                + `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
               );
             },
             rich: {
@@ -245,7 +244,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
               },
               customEventIcon: {
                 backgroundColor: {
-                  image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNvZGUiPjxwb2x5bGluZSBwb2ludHM9IjE2IDE4IDIyIDEyIDE2IDYiLz48cG9seWxpbmUgcG9pbnRzPSI4IDYgMiAxMiA4IDE4Ii8+PC9zdmc+'
+                  image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNvZGUiPjxwb2x5bGluZSBwb2ludHM9IjE2IDE4IDIyIDEyIDE2IDYiLz48cG9seWxpbmUgcG9pbnRzPSI4IDYgMiAxMiA4IDE4Ii8+PC9zdmc+',
                 },
                 height: 20,
                 width: 14,
@@ -263,7 +262,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
                 },
                 height: 20,
                 width: 14,
-              }
+              },
             },
           },
           tooltip: {
@@ -318,17 +317,16 @@ const EChartsSankey: React.FC<Props> = (props) => {
     const originalNodes = [...echartNodes];
     const originalLinks = [...echartLinks];
 
-    chart.on('mouseover', function (params: any) {
+    chart.on('mouseover', (params: any) => {
       if (params.dataType === 'node') {
         const hoveredIndex = params.dataIndex;
         const connectedChain = getConnectedChain(hoveredIndex);
 
         const updatedNodes = echartNodes.map((node, idx) => {
           const baseOpacity = connectedChain.has(idx) ? 1 : 0.35;
-          const extraStyle =
-            idx === hoveredIndex
-              ? { borderColor: '#000', borderWidth: 1, borderType: 'dotted' }
-              : {};
+          const extraStyle = idx === hoveredIndex
+            ? { borderColor: '#000', borderWidth: 1, borderType: 'dotted' }
+            : {};
           return {
             ...node,
             itemStyle: {
@@ -361,7 +359,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
       }
     });
 
-    chart.on('mouseout', function (params: any) {
+    chart.on('mouseout', (params: any) => {
       if (params.dataType === 'node') {
         chart.setOption({
           series: [
@@ -374,7 +372,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
       }
     });
 
-    chart.on('click', function (params: any) {
+    chart.on('click', (params: any) => {
       if (!onChartClick) return;
       const unsupported = ['other', 'drop'];
 
@@ -388,7 +386,7 @@ const EChartsSankey: React.FC<Props> = (props) => {
           }
           filters.push({
             operator: 'is',
-            type: type,
+            type,
             value: [node.name],
             isEvent: true,
           });
@@ -403,8 +401,8 @@ const EChartsSankey: React.FC<Props> = (props) => {
         const firstNodeType = firstNode?.eventType?.toLowerCase() ?? 'location';
         const lastNodeType = lastNode?.eventType?.toLowerCase() ?? 'location';
         if (
-          unsupported.includes(firstNodeType) ||
-          unsupported.includes(lastNodeType)
+          unsupported.includes(firstNodeType)
+          || unsupported.includes(lastNodeType)
         ) {
           return;
         }
@@ -457,7 +455,10 @@ const EChartsSankey: React.FC<Props> = (props) => {
   }
 
   return (
-    <div style={{ maxHeight: 620, overflow: 'auto', maxWidth: 1240, minHeight: 240 }}>
+    <div style={{
+      maxHeight: 620, overflow: 'auto', maxWidth: 1240, minHeight: 240,
+    }}
+    >
       <div
         ref={chartRef}
         style={containerStyle}
@@ -469,13 +470,13 @@ const EChartsSankey: React.FC<Props> = (props) => {
 
 function getIcon(type: string) {
   if (type === 'LOCATION') {
-    return '{locationIcon|}'
+    return '{locationIcon|}';
   }
   if (type === 'INPUT') {
-    return '{inputIcon|}'
+    return '{inputIcon|}';
   }
   if (type === 'CUSTOM_EVENT') {
-    return '{customEventIcon|}'
+    return '{customEventIcon|}';
   }
   if (type === 'CLICK') {
     return '{clickIcon|}';
@@ -486,7 +487,7 @@ function getIcon(type: string) {
   if (type === 'OTHER') {
     return '{groupIcon|}';
   }
-  return ''
+  return '';
 }
 
 export default EChartsSankey;

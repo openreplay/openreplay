@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import LineChart from 'App/components/Charts/LineChart'
-import BarChart from 'App/components/Charts/BarChart'
-import PieChart from 'App/components/Charts/PieChart'
-import ColumnChart from 'App/components/Charts/ColumnChart'
+import LineChart from 'App/components/Charts/LineChart';
+import BarChart from 'App/components/Charts/BarChart';
+import PieChart from 'App/components/Charts/PieChart';
+import ColumnChart from 'App/components/Charts/ColumnChart';
 import SankeyChart from 'Components/Charts/SankeyChart';
 
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
@@ -10,10 +10,6 @@ import { Styles } from 'App/components/Dashboard/Widgets/common';
 import { observer } from 'mobx-react-lite';
 import { Icon, Loader } from 'UI';
 import { useStore } from 'App/mstore';
-import FunnelTable from "../../../Funnels/FunnelWidget/FunnelTable";
-import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
-import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
-import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
@@ -33,10 +29,14 @@ import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMe
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard';
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
-import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import { useInView } from 'react-intersection-observer';
-import LongLoader from "./LongLoader";
+import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
+import WidgetPredefinedChart from '../WidgetPredefinedChart';
+import WidgetDatatable from '../WidgetDatatable/WidgetDatatable';
+import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
+import FunnelTable from '../../../Funnels/FunnelWidget/FunnelTable';
+import LongLoader from './LongLoader';
 
 interface Props {
   metric: any;
@@ -53,10 +53,10 @@ function WidgetChart(props: Props) {
   const { isSaved = false, metric, isTemplate } = props;
   const { dashboardStore, metricStore } = useStore();
   const _metric: any = props.isPreview ? metricStore.instance : props.metric;
-  const data = _metric.data;
-  const period = dashboardStore.period;
-  const drillDownPeriod = dashboardStore.drillDownPeriod;
-  const drillDownFilter = dashboardStore.drillDownFilter;
+  const { data } = _metric;
+  const { period } = dashboardStore;
+  const { drillDownPeriod } = dashboardStore;
+  const { drillDownFilter } = dashboardStore;
   const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
@@ -65,17 +65,13 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
-  const [enabledRows, setEnabledRows] = useState<string[]>(_metric.series.map(s => s.name));
-  const isTableWidget =
-    _metric.metricType === 'table' && _metric.viewType === 'table';
-  const isPieChart =
-    _metric.metricType === 'table' && _metric.viewType === 'pieChart';
+  const [enabledRows, setEnabledRows] = useState<string[]>(_metric.series.map((s) => s.name));
+  const isTableWidget = _metric.metricType === 'table' && _metric.viewType === 'table';
+  const isPieChart = _metric.metricType === 'table' && _metric.viewType === 'pieChart';
 
-  useEffect(() => {
-    return () => {
-      dashboardStore.setComparisonPeriod(null, _metric.metricId);
-      dashboardStore.resetDrillDownFilter();
-    };
+  useEffect(() => () => {
+    dashboardStore.setComparisonPeriod(null, _metric.metricId);
+    dashboardStore.resetDrillDownFilter();
   }, []);
 
   useEffect(() => {
@@ -87,14 +83,14 @@ function WidgetChart(props: Props) {
     } else {
       metricStore.setDisabledSeries([]);
     }
-  }, [enabledRows])
+  }, [enabledRows]);
 
   useEffect(() => {
     if (!data.chart) return;
     const series = data.chart[0]
       ? Object.keys(data.chart[0]).filter(
-          (key) => key !== 'time' && key !== 'timestamp'
-        )
+        (key) => key !== 'time' && key !== 'timestamp',
+      )
       : [];
     if (series.length) {
       setEnabledRows(series);
@@ -114,13 +110,13 @@ function WidgetChart(props: Props) {
         });
       } else {
         // get the filter of clicked chart point
-        const payload = event.activePayload[0].payload;
-        const timestamp = payload.timestamp;
+        const { payload } = event.activePayload[0];
+        const { timestamp } = payload;
         const periodTimestamps = getStartAndEndTimestampsByDensity(
           timestamp,
           drillDownPeriod.start,
           drillDownPeriod.end,
-          params.density
+          params.density,
         );
 
         drillDownFilter.merge({
@@ -131,7 +127,7 @@ function WidgetChart(props: Props) {
     }
   };
 
-  const loadSample = () => console.log('clicked')
+  const loadSample = () => console.log('clicked');
 
   const depsString = JSON.stringify({
     ..._metric.series,
@@ -144,19 +140,19 @@ function WidgetChart(props: Props) {
     payload: any,
     isSaved: any,
     period: any,
-    isComparison?: boolean
+    isComparison?: boolean,
   ) => {
     if (!isMounted()) return;
     setLoading(true);
     const tm = setTimeout(() => {
-      setStale(true)
-    }, 4000)
+      setStale(true);
+    }, 4000);
     dashboardStore
       .fetchMetricChartData(metric, payload, isSaved, period, isComparison)
       .then((res: any) => {
         if (isComparison) setCompData(res);
-        clearTimeout(tm)
-        setStale(false)
+        clearTimeout(tm);
+        setStale(false);
       })
       .finally(() => {
         if (metric.metricId === 1014) return;
@@ -166,7 +162,7 @@ function WidgetChart(props: Props) {
 
   const debounceRequest: any = React.useCallback(
     debounce(fetchMetricChartData, 500),
-    []
+    [],
   );
   const loadPage = () => {
     if (!inView) return;
@@ -183,7 +179,7 @@ function WidgetChart(props: Props) {
       _metric,
       payload,
       isSaved,
-      !isSaved ? drillDownPeriod : period
+      !isSaved ? drillDownPeriod : period,
     );
   };
 
@@ -201,7 +197,7 @@ function WidgetChart(props: Props) {
       payload,
       isSaved,
       dashboardStore.comparisonPeriods[_metric.metricId],
-      true
+      true,
     );
   };
   useEffect(() => {
@@ -216,12 +212,12 @@ function WidgetChart(props: Props) {
     period,
     depsString,
     dashboardStore.selectedDensity,
-    _metric.metricOf
+    _metric.metricOf,
   ]);
   useEffect(() => {
     setCompData(null);
     _metric.updateKey('page', 1);
-    _metric.updateKey()
+    _metric.updateKey();
     loadPage();
   }, [
     drillDownPeriod,
@@ -240,19 +236,19 @@ function WidgetChart(props: Props) {
 
   const onFocus = (seriesName: string) => {
     metricStore.setFocusedSeriesName(seriesName);
-    metricStore.setDrillDown(true)
-  }
+    metricStore.setDrillDown(true);
+  };
 
   const renderChart = React.useCallback(() => {
     const { metricType, metricOf } = _metric;
-    const viewType = _metric.viewType;
+    const { viewType } = _metric;
     const metricWithData = { ..._metric, data };
 
     if (metricType === FUNNEL) {
       if (viewType === 'table') {
         return (
           <FunnelTable data={data} compData={compData} />
-        )
+        );
       }
       if (viewType === 'metric') {
         const values: {
@@ -267,7 +263,7 @@ function WidgetChart(props: Props) {
               ? compData.funnel.totalConversionsPercentage
               : undefined,
             series: 'Dynamic',
-            valueLabel: '%'
+            valueLabel: '%',
           },
         ];
 
@@ -278,9 +274,7 @@ function WidgetChart(props: Props) {
             colors={colors}
             hideLegend
             onClick={onChartClick}
-            label={
-              'Conversion'
-            }
+            label="Conversion"
           />
         );
       }
@@ -296,10 +290,9 @@ function WidgetChart(props: Props) {
     }
 
     if (metricType === 'predefined' || metricType === ERRORS) {
-      const defaultMetric =
-        _metric.data.chart && _metric.data.chart.length === 0
-          ? metricWithData
-          : metric;
+      const defaultMetric = _metric.data.chart && _metric.data.chart.length === 0
+        ? metricWithData
+        : metric;
       return (
         <WidgetPredefinedChart
           isTemplate={isTemplate}
@@ -317,9 +310,7 @@ function WidgetChart(props: Props) {
         : chartData.namesMap;
       const compDataCopy = { ...compData };
       compDataCopy.namesMap = Array.isArray(compDataCopy.namesMap)
-        ? compDataCopy.namesMap.map((n) =>
-            enabledRows.includes(n) ? n : null
-          )
+        ? compDataCopy.namesMap.map((n) => (enabledRows.includes(n) ? n : null))
         : compDataCopy.namesMap;
 
       if (viewType === 'lineChart') {
@@ -374,7 +365,7 @@ function WidgetChart(props: Props) {
           />
         );
       }
-     
+
       if (viewType === 'progressChart') {
         return (
           <ColumnChart
@@ -542,7 +533,7 @@ function WidgetChart(props: Props) {
             onClick={onChartClick}
           />
         );
-      } else if (viewType === 'cohort') {
+      } if (viewType === 'cohort') {
         return <CohortCard data={data[0]} />;
       }
     }
@@ -550,19 +541,18 @@ function WidgetChart(props: Props) {
     return <div>Unknown metric type</div>;
   }, [data, compData, enabledRows, _metric]);
 
-
-  const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE)
-  const tableMode = _metric.viewType === 'table' && _metric.metricType === TIMESERIES
+  const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE);
+  const tableMode = _metric.viewType === 'table' && _metric.metricType === TIMESERIES;
   return (
     <div ref={ref}>
-      {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: `240px` }} /> : (
+      {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: '240px' }} /> : (
         <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
           {renderChart()}
           {showTable ? (
             <WidgetDatatable
               compData={compData}
               inBuilder={props.isPreview}
-              defaultOpen={true}
+              defaultOpen
               data={data}
               tableMode={tableMode}
               enabledRows={enabledRows}
@@ -575,6 +565,5 @@ function WidgetChart(props: Props) {
     </div>
   );
 }
-
 
 export default observer(WidgetChart);

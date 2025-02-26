@@ -1,10 +1,10 @@
 import type Peer from 'peerjs';
 import type { MediaConnection } from 'peerjs';
 
+import { userStore } from 'App/mstore';
 import type { LocalStream } from './LocalStream';
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
-import { userStore } from "App/mstore";
 
 export enum CallingState {
   NoCall,
@@ -21,13 +21,17 @@ export interface State {
 
 export default class Call {
   private assistVersion = 1;
+
   static readonly INITIAL_STATE: Readonly<State> = {
     calling: CallingState.NoCall,
   };
 
   private _peer: Peer | null = null;
+
   private connectionAttempts: number = 0;
+
   private callConnection: MediaConnection[] = [];
+
   private videoStreams: Record<string, MediaStreamTrack> = {};
 
   constructor(
@@ -35,10 +39,10 @@ export default class Call {
     private socket: Socket,
     private config: RTCIceServer[] | null,
     private peerID: string,
-    private getAssistVersion: () => number
+    private getAssistVersion: () => number,
   ) {
     socket.on('call_end', () => {
-      this.onRemoteCallEnd()
+      this.onRemoteCallEnd();
     });
     socket.on('videofeed', ({ streamId, enabled }) => {
       if (this.videoStreams[streamId]) {
@@ -60,7 +64,7 @@ export default class Call {
         this._callSessionPeer();
         reconnecting = false;
       }
-    })
+    });
     socket.on('messages', () => {
       if (reconnecting) {
         // 'messages' come frequently, so it is better to have Reconnecting
@@ -98,9 +102,9 @@ export default class Call {
             : parseInt(urlObject.port),
       };
       if (this.config) {
-        peerOpts['config'] = {
+        peerOpts.config = {
           iceServers: this.config,
-          //@ts-ignore
+          // @ts-ignore
           sdpSemantics: 'unified-plan',
           iceTransportPolicy: 'all',
         };
@@ -135,7 +139,7 @@ export default class Call {
       peer.on('error', (e) => {
         if (e.type === 'disconnected') {
           return peer.reconnect();
-        } else if (e.type !== 'peer-unavailable') {
+        } if (e.type !== 'peer-unavailable') {
           console.error(`PeerJS error (on peer). Type ${e.type}`, e);
         }
       });
@@ -152,7 +156,7 @@ export default class Call {
     this.callConnection[0] && this.callConnection[0].close();
     this.callArgs = null;
     // TODO:  We have it separated, right? (check)
-    //this.toggleAnnotation(false)
+    // this.toggleAnnotation(false)
   }
 
   private onRemoteCallEnd = () => {
@@ -199,7 +203,7 @@ export default class Call {
     onStream: (s: MediaStream) => void,
     onCallEnd: () => void,
     onReject: () => void,
-    onError?: (e?: any) => void
+    onError?: (e?: any) => void,
   ) {
     this.callArgs = {
       localStream,
@@ -244,10 +248,9 @@ export default class Call {
     if (!this.store.get().currentTab) {
       console.warn('No tab data to connect to peer');
     }
-    const peerId =
-      this.getAssistVersion() === 1
-        ? this.peerID
-        : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
+    const peerId = this.getAssistVersion() === 1
+      ? this.peerID
+      : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
 
     const userName = userStore.account.name;
     this.emitData('_agent_name', userName);
@@ -255,13 +258,14 @@ export default class Call {
   }
 
   connectAttempts = 0;
+
   private async _peerConnection(remotePeerId: string) {
     try {
       const peer = await this.getPeer();
       // let canCall = false
 
       const tryReconnect = async (e: any) => {
-        peer.off('error', tryReconnect)
+        peer.off('error', tryReconnect);
         console.log(e.type, this.connectAttempts);
         if (e.type === 'peer-unavailable' && this.connectAttempts < 5) {
           this.connectAttempts++;
@@ -272,7 +276,7 @@ export default class Call {
           console.log('error', this.connectAttempts);
           this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
         }
-      }
+      };
       const call = peer.call(remotePeerId, this.callArgs!.localStream.stream);
       peer.on('error', tryReconnect);
 
@@ -288,11 +292,11 @@ export default class Call {
           }
           sender.replaceTrack(vTrack);
         });
-      })
+      });
 
       call.on('stream', (stream) => {
-        this.store.get().calling !== CallingState.OnCall &&
-          this.store.update({ calling: CallingState.OnCall });
+        this.store.get().calling !== CallingState.OnCall
+          && this.store.update({ calling: CallingState.OnCall });
 
         this.videoStreams[call.peer] = stream.getVideoTracks()[0];
 

@@ -1,8 +1,8 @@
-import React from 'react'
+import React from 'react';
 
 function Barwrapper({ title, duration, children }) {
   let _duration = Math.floor(parseInt(duration));
-  _duration = _duration < 1 ?  ' < 1' : _duration;
+  _duration = _duration < 1 ? ' < 1' : _duration;
 
   return (
     <div>
@@ -11,10 +11,10 @@ function Barwrapper({ title, duration, children }) {
         <div className="w-6/12 relative h-4">
           {children}
         </div>
-        <div className="w-3/12 text-right">{_duration + ' ms'}</div>
+        <div className="w-3/12 text-right">{`${_duration} ms`}</div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Barwrapper
+export default Barwrapper;

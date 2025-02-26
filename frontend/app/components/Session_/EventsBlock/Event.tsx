@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
-import { prorata } from 'App/utils';
-import { numberWithCommas } from 'App/utils';
+import { prorata, numberWithCommas } from 'App/utils';
 import withOverlay from 'Components/hocs/withOverlay';
 import { Icon, TextEllipsis, Tooltip } from 'UI';
 
@@ -33,9 +32,9 @@ type Props = {
 
 const isFrustrationEvent = (evt: any): boolean => {
   if (
-    evt.type === 'mouse_thrashing' ||
-    evt.type === TYPES.CLICKRAGE ||
-    evt.type === TYPES.TAPRAGE
+    evt.type === 'mouse_thrashing'
+    || evt.type === TYPES.CLICKRAGE
+    || evt.type === TYPES.TAPRAGE
   ) {
     return true;
   }
@@ -108,11 +107,11 @@ const Event: React.FC<Props> = ({
         );
         isFrustration
           ? Object.assign(tooltip, {
-              disabled: false,
-              text: `User hesitated ${Math.round(
-                event.hesitation / 1000
-              )}s to perform this event`,
-            })
+            disabled: false,
+            text: `User hesitated ${Math.round(
+              event.hesitation / 1000,
+            )}s to perform this event`,
+          })
           : null;
         break;
       case TYPES.INPUT:
@@ -125,11 +124,11 @@ const Event: React.FC<Props> = ({
         );
         isFrustration
           ? Object.assign(tooltip, {
-              disabled: false,
-              text: `User hesitated ${Math.round(
-                event.hesitation / 1000
-              )}s to enter a value in this input field.`,
-            })
+            disabled: false,
+            text: `User hesitated ${Math.round(
+              event.hesitation / 1000,
+            )}s to enter a value in this input field.`,
+          })
           : null;
         break;
       case TYPES.CLICKRAGE:
@@ -153,9 +152,9 @@ const Event: React.FC<Props> = ({
       <Tooltip
         title={tooltip.text}
         disabled={tooltip.disabled}
-        placement={'left'}
-        anchorClassName={'w-full'}
-        containerClassName={'w-full'}
+        placement="left"
+        anchorClassName="w-full"
+        containerClassName="w-full"
       >
         <div className={cn(cls.main, 'flex flex-col w-full')}>
           <div
@@ -163,7 +162,7 @@ const Event: React.FC<Props> = ({
           >
             <div style={{ minWidth: '16px' }}>
               {event.type && iconName ? (
-                <Icon name={iconName} size="16" color={'gray-dark'} />
+                <Icon name={iconName} size="16" color="gray-dark" />
               ) : (
                 icon
               )}
@@ -187,7 +186,7 @@ const Event: React.FC<Props> = ({
                 </div>
                 {isLocation && event.speedIndex != null && (
                   <div className="color-gray-medium flex font-medium items-center leading-none justify-end">
-                    <div className="font-size-10 pr-2">{'Speed Index'}</div>
+                    <div className="font-size-10 pr-2">Speed Index</div>
                     <div>{numberWithCommas(event.speedIndex || 0)}</div>
                   </div>
                 )}
@@ -231,8 +230,8 @@ const Event: React.FC<Props> = ({
         [cls.frustration]: isFrustration,
         [cls.highlight]: presentInSearch,
         [cls.lastInGroup]: whiteBg,
-        ['pl-4 pr-6 py-2']: event.type !== TYPES.LOCATION,
-        ['border-0 border-l-0 ml-0']: mobileTypes.includes(event.type),
+        'pl-4 pr-6 py-2': event.type !== TYPES.LOCATION,
+        'border-0 border-l-0 ml-0': mobileTypes.includes(event.type),
       })}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -245,27 +244,27 @@ const Event: React.FC<Props> = ({
       <div className={cn(cls.topBlock, cls.firstLine, 'w-full')}>
         {renderBody()}
       </div>
-      {isLocation &&
-      (event.fcpTime ||
-        event.visuallyComplete ||
-        event.timeToInteractive ||
-        event.webvitals) ? (
-        <LoadInfo
-          onClick={toggleLoadInfo}
-          event={event}
-          webvitals={event.webvitals}
-          prorata={prorata({
-            parts: 100,
-            elements: {
-              a: event.fcpTime,
-              b: event.visuallyComplete,
-              c: event.timeToInteractive,
-            },
-            startDivisorFn: (elements) => elements / 1.2,
-            divisorFn: (elements, parts) => elements / (2 * parts + 1),
-          })}
-        />
-      ) : null}
+      {isLocation
+      && (event.fcpTime
+        || event.visuallyComplete
+        || event.timeToInteractive
+        || event.webvitals) ? (
+          <LoadInfo
+            onClick={toggleLoadInfo}
+            event={event}
+            webvitals={event.webvitals}
+            prorata={prorata({
+              parts: 100,
+              elements: {
+                a: event.fcpTime,
+                b: event.visuallyComplete,
+                c: event.timeToInteractive,
+              },
+              startDivisorFn: (elements) => elements / 1.2,
+              divisorFn: (elements, parts) => elements / (2 * parts + 1),
+            })}
+          />
+        ) : null}
     </div>
   );
 };

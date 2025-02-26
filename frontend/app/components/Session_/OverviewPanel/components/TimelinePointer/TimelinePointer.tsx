@@ -1,13 +1,13 @@
 import React from 'react';
 import { useModal } from 'App/components/Modal';
 import { Icon } from 'UI';
-import { shortDurationFromMs } from "App/date";
-import StackEventModal from '../StackEventModal';
+import { shortDurationFromMs } from 'App/date';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import FetchDetails from 'Shared/FetchDetailsModal';
 import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { Popover } from 'antd';
+import StackEventModal from '../StackEventModal';
 import {
   shortenResourceName,
   NetworkElement,
@@ -16,7 +16,7 @@ import {
   StackEventElement,
   PerformanceElement,
   ExceptionElement,
-} from './Dots'
+} from './Dots';
 
 interface Props {
   pointer: any;
@@ -34,7 +34,7 @@ interface Props {
 const TimelinePointer = React.memo((props: Props) => {
   const { pointer, type, isGrouped } = props;
   const { player } = React.useContext(PlayerContext);
-  const item = isGrouped ? pointer : pointer[0]
+  const item = isGrouped ? pointer : pointer[0];
 
   const { showModal } = useModal();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
@@ -71,7 +71,7 @@ const TimelinePointer = React.memo((props: Props) => {
             resource={pointer}
             fetchPresented={props.fetchPresented}
           />,
-          { right: true, width: 500 }
+          { right: true, width: 500 },
         );
       }
     }
@@ -148,28 +148,29 @@ function GroupedIssue({
 
   return (
     <Popover
-      placement={'right'}
+      placement="right"
       title={title}
-      content={
+      content={(
         <div style={{ maxHeight: 160, overflowY: 'auto' }}>
           {items.map((pointer) => (
             <div
               key={pointer.time}
               onClick={createEventClickHandler(pointer, type)}
-              className={'flex items-center gap-2 mb-1 cursor-pointer border-b border-transparent hover:border-gray-lightest'}
+              className="flex items-center gap-2 mb-1 cursor-pointer border-b border-transparent hover:border-gray-lightest"
             >
-              <div className={'text-secondary'}>@{shortDurationFromMs(pointer.time)}</div>
+              <div className="text-secondary">
+                @
+                {shortDurationFromMs(pointer.time)}
+              </div>
               <RenderLineData type={type} item={pointer} />
             </div>
           ))}
         </div>
-      }
+      )}
     >
       <div
         onClick={onClick}
-        className={
-          'h-5 w-5 cursor-pointer rounded-full bg-red text-white font-bold flex items-center justify-center text-xs'
-        }
+        className="h-5 w-5 cursor-pointer rounded-full bg-red text-white font-bold flex items-center justify-center text-xs"
       >
         {items.length}
       </div>
@@ -180,28 +181,32 @@ function GroupedIssue({
 function RenderLineData({ item, type }: any) {
   if (type === 'FRUSTRATIONS') {
     const elData = getFrustration(item);
-    return <>
-      <div><Icon name={elData.icon} color="black" size="16" /></div>
-      <div>{elData.name}</div>
-    </>
+    return (
+      <>
+        <div><Icon name={elData.icon} color="black" size="16" /></div>
+        <div>{elData.name}</div>
+      </>
+    );
   }
   if (type === 'NETWORK') {
     const name = item.success ? 'Slow resource' : '4xx/5xx Error';
-    return <>
-      <div>{name}</div>
-      <div>{shortenResourceName(item.name)}</div>
-    </>
+    return (
+      <>
+        <div>{name}</div>
+        <div>{shortenResourceName(item.name)}</div>
+      </>
+    );
   }
   if (type === 'EVENTS') {
-    return <div>{item.name || 'Stack Event'}</div>
+    return <div>{item.name || 'Stack Event'}</div>;
   }
   if (type === 'PERFORMANCE') {
-    return <div>{item.type}</div>
+    return <div>{item.type}</div>;
   }
   if (type === 'ERRORS') {
-    return <div>{item.message}</div>
+    return <div>{item.message}</div>;
   }
-  return <div>{JSON.stringify(item)}</div>
+  return <div>{JSON.stringify(item)}</div>;
 }
 
 export default TimelinePointer;

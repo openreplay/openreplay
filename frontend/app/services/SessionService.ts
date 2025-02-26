@@ -1,13 +1,12 @@
-import APIClient from 'App/api_client';
+import APIClient, { clean as cleanParams } from 'App/api_client';
 import { ISession } from 'Types/session/session';
 import { IErrorStack } from 'Types/session/errorStack';
-import { clean as cleanParams } from 'App/api_client';
 
 export default class SettingsService {
   private client: APIClient;
 
   constructor(client?: APIClient) {
-    this.client = client ? client : new APIClient();
+    this.client = client || new APIClient();
   }
 
   initClient(client?: APIClient) {
@@ -26,7 +25,7 @@ export default class SettingsService {
   }
 
   fetchCaptureConditions(
-    projectId: number
+    projectId: number,
   ): Promise<{ rate: number; conditionalCapture: boolean; conditions: any[] }> {
     return this.client
       .get(`/${projectId}/conditions`)
@@ -62,13 +61,11 @@ export default class SettingsService {
       .catch(console.error);
   }
 
-  getSessionEvents = async (sessionId: string) => {
-    return this.client
-      .get(`/sessions/${sessionId}/events`)
-      .then((r) => r.json())
-      .then((j) => j.data || [])
-      .catch(console.error);
-  }
+  getSessionEvents = async (sessionId: string) => this.client
+    .get(`/sessions/${sessionId}/events`)
+    .then((r) => r.json())
+    .then((j) => j.data || [])
+    .catch(console.error);
 
   getLiveSessions(filter: any): Promise<{ sessions: ISession[] }> {
     return this.client

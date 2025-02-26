@@ -1,15 +1,15 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import { Styles, AvgLabel } from '../../common';
-import Scale from './Scale';
 import { observer } from 'mobx-react-lite';
 import { numberWithCommas, positionOfTheNumber } from 'App/utils';
 import WorldMap from '@svg-maps/world';
 import { SVGMap } from 'react-svg-map';
-import stl from './SpeedIndexByLocation.module.css';
 import cn from 'classnames';
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import stl from './SpeedIndexByLocation.module.css';
+import Scale from './Scale';
+import { Styles, AvgLabel } from '../../common';
 
 interface Props {
   data?: any;
@@ -37,7 +37,7 @@ function SpeedIndexByLocation(props: Props) {
 
   const getLocationClassName = (location: any) => {
     const i = dataMap[location.id] ? dataMap[location.id].perNumber : 0;
-    const cls = stl['heat_index' + i];
+    const cls = stl[`heat_index${i}`];
     return cn(stl.location, cls);
   };
 
@@ -63,29 +63,35 @@ function SpeedIndexByLocation(props: Props) {
     const tooltipStyle = {
       display: 'block',
       top: event.clientY + 10,
-      left: event.clientX - 100
+      left: event.clientX - 100,
     };
     setTooltipStyle(tooltipStyle);
   };
 
   return (
-    <NoContent size="small" show={false} style={{ height: '240px' }} 
-    title={
-      <div className='flex items-center gap-2 text-base font-normal'>
-      <InfoCircleOutlined  size={12} /> { NO_METRIC_DATA }
-     </div>
-    }>
+    <NoContent
+      size="small"
+      show={false}
+      style={{ height: '240px' }}
+      title={(
+        <div className="flex items-center gap-2 text-base font-normal">
+          <InfoCircleOutlined size={12} />
+          {' '}
+          { NO_METRIC_DATA }
+        </div>
+    )}
+    >
       <div className="absolute right-0 mr-4 top=0 w-full flex justify-end">
         <AvgLabel text="Avg" count={Math.round(data.value)} unit="ms" />
       </div>
       <Scale colors={Styles.compareColors} />
-      <div className="map-target"></div>
+      <div className="map-target" />
       <div
         style={{
           height: '234px',
           width: '100%',
           margin: '0 auto',
-          display: 'flex'
+          display: 'flex',
         }}
         ref={wrapper}
       >
@@ -103,7 +109,9 @@ function SpeedIndexByLocation(props: Props) {
           <>
             <div>{pointedLocation.name}</div>
             <div>
-              Avg: <strong>{dataMap[pointedLocation.id] ? numberWithCommas(parseInt(dataMap[pointedLocation.id].value)) : 0}</strong>
+              Avg:
+              {' '}
+              <strong>{dataMap[pointedLocation.id] ? numberWithCommas(parseInt(dataMap[pointedLocation.id].value)) : 0}</strong>
             </div>
           </>
         )}

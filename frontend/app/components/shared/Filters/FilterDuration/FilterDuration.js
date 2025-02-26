@@ -1,27 +1,28 @@
 import React from 'react';
+import { Input } from 'antd';
 import styles from './FilterDuration.module.css';
-import { Input } from 'antd'
 
-const fromMs = value => value ? `${ value / 1000 / 60 }` : ''
-const toMs = value => value !== '' ? value * 1000 * 60 : null
+const fromMs = (value) => (value ? `${value / 1000 / 60}` : '');
+const toMs = (value) => (value !== '' ? value * 1000 * 60 : null);
 
 export default class FilterDuration extends React.PureComponent {
-  state = { focused: false }
-  onChange = ({ target: { name, value }}) => {
+  state = { focused: false };
+
+  onChange = ({ target: { name, value } }) => {
     const { onChange } = this.props;
     if (typeof onChange === 'function') {
       onChange({
-        [ name ]: toMs(value),
+        [name]: toMs(value),
       });
     }
-  }
+  };
 
-  onKeyPress = e => {
+  onKeyPress = (e) => {
     const { onEnterPress } = this.props;
     if (e.key === 'Enter' && typeof onEnterPress === 'function') {
       onEnterPress(e);
     }
-  }
+  };
 
   render() {
     const {
@@ -34,7 +35,7 @@ export default class FilterDuration extends React.PureComponent {
       <div className={styles.wrapper}>
         <div className="flex items-center">
           <span basic className={styles.label}>
-            {'Min'}
+            Min
           </span>
           <Input
             min="1"
@@ -52,7 +53,7 @@ export default class FilterDuration extends React.PureComponent {
         {isConditional ? null : (
           <div className="flex items-center">
             <span basic className={styles.label}>
-              {'Max'}
+              Max
             </span>
             <Input
               min="1"
@@ -66,8 +67,8 @@ export default class FilterDuration extends React.PureComponent {
               onBlur={this.props.onBlur}
               style={{ height: '26px', width: '90px' }}
             />
-          </div>)
-        }
+          </div>
+        )}
       </div>
     );
   }

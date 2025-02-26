@@ -11,7 +11,7 @@ interface ValidationRule {
 type FormValue = string | boolean | number;
 function useForm<T extends { [K in keyof T]: FormValue }>(
   initialValues: T,
-  validationRules?: Partial<Record<keyof T, ValidationRule>>
+  validationRules?: Partial<Record<keyof T, ValidationRule>>,
 ) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -24,7 +24,7 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
   useEffect(() => {
     const hasErrors = Object.values(errors).some((error) => !!error);
     setHasErrors(hasErrors);
-  }, [errors])
+  }, [errors]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target as unknown as { name: keyof T; value: FormValue };
@@ -41,7 +41,7 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
 
   const validateField = (
     fieldName: keyof T,
-    value: string | boolean | number
+    value: string | boolean | number,
   ) => {
     const rules = validationRules![fieldName];
     let error = '';
@@ -54,9 +54,9 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
       }
       if (rules.length) {
         const [min, max] = rules.length;
-          if (value.length < min || value.length > max) {
-            error = `Must be between ${min} and ${max} characters`;
-          }
+        if (value.length < min || value.length > max) {
+          error = `Must be between ${min} and ${max} characters`;
+        }
       }
 
       if (!error && rules.format) {
@@ -85,12 +85,12 @@ function useForm<T extends { [K in keyof T]: FormValue }>(
   const checkErrors = () => {
     const errSignals: boolean[] = [];
     Object.keys(values).forEach((key) => {
-        // @ts-ignore
-        errSignals.push(validateField(key, values[key]));
+      // @ts-ignore
+      errSignals.push(validateField(key, values[key]));
     });
 
     return errSignals.some((signal) => signal);
-  }
+  };
 
   const resetForm = () => {
     setValues(initialValues);

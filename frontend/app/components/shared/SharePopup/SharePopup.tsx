@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Icon, Loader } from 'UI';
-import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
-import SessionCopyLink from './SessionCopyLink';
-import { Button, Divider, Form, Input, Segmented, Select, Space } from 'antd';
+import {
+  Button, Divider, Form, Input, Segmented, Select, Space,
+} from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import SessionCopyLink from './SessionCopyLink';
+import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 
 interface Channel {
   webhookId: string;
@@ -20,7 +22,7 @@ interface Props {
 
 const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
   const { integrationsStore, sessionStore } = useStore();
-  const sessionId = sessionStore.current.sessionId;
+  const { sessionId } = sessionStore.current;
   const slackChannels: Channel[] = integrationsStore.slack.list || [];
   const msTeamsChannels: Channel[] = integrationsStore.msteams.list || [];
   const slackLoaded = integrationsStore.slack.loaded;
@@ -67,7 +69,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         integrationId: channelId,
         entity: 'sessions',
         entityId: sessionId,
-        data: { comment }
+        data: { comment },
       });
       toast.success('Sent to Slack.');
       hideModal();
@@ -86,7 +88,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
         integrationId: teamsChannel,
         entity: 'sessions',
         entityId: sessionId,
-        data: { comment }
+        data: { comment },
       });
       toast.success('Sent to MS Teams.');
       hideModal();
@@ -101,21 +103,19 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
   const changeTeamsChannel = (value: string) => setTeamsChannel(value);
 
   const slackOptions = useMemo(
-    () =>
-      slackChannels.map(({ webhookId, name }) => ({
-        value: webhookId,
-        label: name
-      })),
-    [slackChannels]
+    () => slackChannels.map(({ webhookId, name }) => ({
+      value: webhookId,
+      label: name,
+    })),
+    [slackChannels],
   );
 
   const msTeamsOptions = useMemo(
-    () =>
-      msTeamsChannels.map(({ webhookId, name }) => ({
-        value: webhookId,
-        label: name
-      })),
-    [msTeamsChannels]
+    () => msTeamsChannels.map(({ webhookId, name }) => ({
+      value: webhookId,
+      label: name,
+    })),
+    [msTeamsChannels],
   );
 
   const sendMsg = async () => {
@@ -156,7 +156,7 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                               <div>Slack</div>
                             </div>
                           ),
-                          value: 'slack'
+                          value: 'slack',
                         },
                         {
                           label: (
@@ -165,8 +165,8 @@ const ShareModalComp: React.FC<Props> = ({ showCopyLink, hideModal, time }) => {
                               <div>MS Teams</div>
                             </div>
                           ),
-                          value: 'teams'
-                        }
+                          value: 'teams',
+                        },
                       ]}
                       onChange={handleSegmentChange}
                       value={shareTo}

@@ -1,11 +1,11 @@
-//@ts-nocheck
+// @ts-nocheck
 import React from 'react';
 import { Tooltip, Icon } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { checkForRecent } from 'App/date';
 import cn from 'classnames';
 
-const AdminPrivilegeLabel = ({ user }) => {
+function AdminPrivilegeLabel({ user }) {
   return (
     <>
       {user.isAdmin && (
@@ -19,7 +19,7 @@ const AdminPrivilegeLabel = ({ user }) => {
       )}
     </>
   );
-};
+}
 interface Props {
   isOnboarding?: boolean;
   user: any;
@@ -53,8 +53,8 @@ function UserListItem(props: Props) {
             <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
               {user.roleName}
             </span>
-            {user.isSuperAdmin ||
-              (user.isAdmin && (
+            {user.isSuperAdmin
+              || (user.isAdmin && (
                 <>
                   <span className="ml-2" />
                   <AdminPrivilegeLabel user={user} />
@@ -78,26 +78,26 @@ function UserListItem(props: Props) {
         <div className="grid grid-cols-2 gap-3 items-center justify-end">
           <div>
             {!user.isJoined && user.invitationLink && !user.isExpiredInvite && (
-              <Tooltip title="Copy Invite Code" hideOnClick={true}>
+              <Tooltip title="Copy Invite Code" hideOnClick>
                 <Button
                   type="text"
-                  icon={<Icon name={"link-45deg"} />}
+                  icon={<Icon name="link-45deg" />}
                   onClick={copyInviteCode}
                 />
               </Tooltip>
             )}
 
             {!user.isJoined && user.isExpiredInvite && (
-              <Tooltip title="Generate Invite" hideOnClick={true}>
+              <Tooltip title="Generate Invite" hideOnClick>
                 <Button
-                  icon={<Icon name={"link-45deg"} />}
+                  icon={<Icon name="link-45deg" />}
                   variant="text"
                   onClick={generateInvite}
                 />
               </Tooltip>
             )}
           </div>
-          <Button variant="text"  icon={<Icon name={"pencil"} />} />
+          <Button variant="text" icon={<Icon name="pencil" />} />
         </div>
       </div>
     </div>

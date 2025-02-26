@@ -41,18 +41,17 @@ function WebPlayer(props: any) {
     userStore,
   } = useStore();
   const session = sessionStore.current;
-  const prefetched = sessionStore.prefetched;
+  const { prefetched } = sessionStore;
   const startedAt = sessionStore.current.startedAt || 0;
-  const fullscreen = uiPlayerStore.fullscreen;
-  const toggleFullscreen = uiPlayerStore.toggleFullscreen;
-  const closeBottomBlock = uiPlayerStore.closeBottomBlock;
+  const { fullscreen } = uiPlayerStore;
+  const { toggleFullscreen } = uiPlayerStore;
+  const { closeBottomBlock } = uiPlayerStore;
   const [activeTab, setActiveTab] = useState('');
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
   const [windowActive, setWindowActive] = useState(!document.hidden);
   // @ts-ignore
-  const [contextValue, setContextValue] =
-    useState<IPlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
   const [fullView, setFullView] = useState(false);
 
@@ -84,7 +83,7 @@ function WebPlayer(props: any) {
       session,
       (state) => makeAutoObservable(state),
       toast,
-      prefetched
+      prefetched,
     );
     if (usePrefetched) {
       if (mobData?.data) {
@@ -121,18 +120,17 @@ function WebPlayer(props: any) {
     tabStates,
     ready,
   } = contextValue.store?.get() || {};
-  const cssLoading =
-    ready && tabStates
-      ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
-      : true;
+  const cssLoading = ready && tabStates
+    ? Object.values(tabStates).some(({ cssLoading }) => cssLoading)
+    : true;
 
   React.useEffect(() => {
     if (
-      messagesProcessed &&
-      (session.events.length > 0 ||
-        session.errors.length > 0 ||
-        session.stackEvents.length > 0 ||
-        session.addedEvents)
+      messagesProcessed
+      && (session.events.length > 0
+        || session.errors.length > 0
+        || session.stackEvents.length > 0
+        || session.addedEvents)
     ) {
       contextValue.player?.updateLists?.(session);
     }
@@ -152,8 +150,7 @@ function WebPlayer(props: any) {
 
         if (jumpToTime || shouldAdjustOffset) {
           if (jumpToTime && jumpToTime > visualOffset) {
-            const diff =
-              startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
+            const diff = startedAt < jumpToTime ? jumpToTime - startedAt : jumpToTime;
             contextValue.player.jump(Math.max(diff, 0));
             setAdjusted(true);
           } else {
@@ -189,7 +186,7 @@ function WebPlayer(props: any) {
       // @ts-ignore
       setContextValue(defaultContextValue);
     },
-    [params.sessionId]
+    [params.sessionId],
   );
 
   useEffect(() => {
@@ -207,7 +204,7 @@ function WebPlayer(props: any) {
     setFullView(isFullView === 'true');
   }, [session.sessionId]);
 
-  if (!session.sessionId)
+  if (!session.sessionId) {
     return (
       <Loader
         size={75}
@@ -220,6 +217,7 @@ function WebPlayer(props: any) {
         }}
       />
     );
+  }
 
   return (
     <PlayerContext.Provider value={contextValue}>

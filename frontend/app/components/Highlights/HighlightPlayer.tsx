@@ -1,10 +1,10 @@
 import React from 'react';
 import cn from 'classnames';
-import ClipsPlayer from '../Session/ClipsPlayer';
-import MobileClipsPlayer from '../Session/MobileClipsPlayer';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 import { observer } from 'mobx-react-lite';
+import MobileClipsPlayer from '../Session/MobileClipsPlayer';
+import ClipsPlayer from '../Session/ClipsPlayer';
 
 interface Clip {
   sessionId: string | undefined;
@@ -25,7 +25,7 @@ function HighlightPlayer({
     range: [],
     message: '',
   });
-  const isMobile = projectsStore.isMobile;
+  const { isMobile } = projectsStore;
 
   React.useEffect(() => {
     if (hlId) {
@@ -50,16 +50,14 @@ function HighlightPlayer({
   };
   return (
     <div
-      className={
-        'w-screen h-screen fixed top-0 left-0 flex items-center justify-center'
-      }
+      className="w-screen h-screen fixed top-0 left-0 flex items-center justify-center"
       style={{ zIndex: 100, background: 'rgba(0,0,0, 0.15)' }}
       onClick={onBgClick}
     >
       <div
         className={cn(
           'rounded-lg overflow-hidden',
-          'rounded shadow boarder bg-white'
+          'rounded shadow boarder bg-white',
         )}
         style={{ width: 960 }}
       >
@@ -70,7 +68,7 @@ function HighlightPlayer({
               onClose={onClose}
               clip={clip}
               currentIndex={0}
-              isCurrent={true}
+              isCurrent
               autoplay={false}
             />
           ) : (
@@ -79,7 +77,7 @@ function HighlightPlayer({
               onClose={onClose}
               clip={clip}
               currentIndex={0}
-              isCurrent={true}
+              isCurrent
               autoplay={false}
             />
           )}

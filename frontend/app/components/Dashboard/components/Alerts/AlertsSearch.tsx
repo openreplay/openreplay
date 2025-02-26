@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from 'UI';
-import {Input} from 'antd';
+import { Input } from 'antd';
 import { debounce } from 'App/utils';
-import { useStore } from 'App/mstore'
-import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 let debounceUpdate: any = () => {};
 

@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
-import FeatureFlag from './types/FeatureFlag';
 import { fflagsService } from 'App/services';
+import FeatureFlag from './types/FeatureFlag';
 
 type All = '0'
 type Active = '1'
@@ -9,24 +9,33 @@ export type Activity = All | Active | Inactive
 
 export default class FeatureFlagsStore {
   currentFflag: FeatureFlag | null = null;
+
   isDescrEditing: boolean = false;
+
   isTitleEditing: boolean = false;
+
   flags: FeatureFlag[] = [];
+
   isLoading: boolean = false;
+
   flagsSearch: string = '';
+
   activity: Activity = '0';
+
   sort = { order: 'DESC', query: '' };
+
   page: number = 1;
-  total = 0
+
+  total = 0;
+
   readonly pageSize: number = 10;
-  client: typeof fflagsService
+
+  client: typeof fflagsService;
 
   constructor() {
     makeAutoObservable(this);
-    this.client = fflagsService
+    this.client = fflagsService;
   }
-
-
 
   setFlagsSearch = (search: string) => {
     this.flagsSearch = search;
@@ -34,7 +43,7 @@ export default class FeatureFlagsStore {
 
   setPage = (page: number) => {
     this.page = page;
-    void this.fetchFlags()
+    void this.fetchFlags();
   };
 
   setEditing = ({ isDescrEditing = false, isTitleEditing = false }) => {
@@ -54,9 +63,7 @@ export default class FeatureFlagsStore {
     this.flags.push(flag);
   };
 
-  getFlagById = (id: string) => {
-    return this.flags.find((f) => f.featureFlagId === parseInt(id, 10));
-  };
+  getFlagById = (id: string) => this.flags.find((f) => f.featureFlagId === parseInt(id, 10));
 
   setCurrentFlag = (flag: FeatureFlag | null) => {
     this.currentFflag = flag;
@@ -72,11 +79,11 @@ export default class FeatureFlagsStore {
 
   setActivity = (activity: Activity) => {
     this.activity = activity;
-  }
+  };
 
   setSort = (sort: { order: string, query: string }) => {
     this.sort = sort;
-  }
+  };
 
   fetchFlags = async () => {
     this.setLoading(true);
@@ -88,11 +95,11 @@ export default class FeatureFlagsStore {
         query: this.sort.query,
         isActive: this.activity === '0' ? undefined : this.activity === '1',
         // userId: 3,
-      }
+      };
       const { list, total } = await this.client.fetchFlags(filters);
       const flags = list.map((record) => new FeatureFlag(record));
       this.setList(flags);
-      this.setTotal(total)
+      this.setTotal(total);
     } catch (e) {
       console.error(e);
     } finally {
@@ -101,28 +108,28 @@ export default class FeatureFlagsStore {
   };
 
   setTotal(total: number) {
-    this.total = total
+    this.total = total;
   }
 
   checkFlagForm = () => {
-    if (!this.currentFflag) return 'Feature flag not initialized'
+    if (!this.currentFflag) return 'Feature flag not initialized';
     if (this.currentFflag.flagKey === '') {
-      return 'Feature flag must have a key'
+      return 'Feature flag must have a key';
     }
     if (!this.currentFflag.isSingleOption && this.currentFflag?.variants.findIndex((v) => v.value === '') !== -1) {
-      return 'All variants must include unique key'
+      return 'All variants must include unique key';
     }
     if (!this.currentFflag?.isSingleOption && this.currentFflag?.isRedDistribution) {
-      return 'Variants rollout percentage must add up to 100%'
+      return 'Variants rollout percentage must add up to 100%';
     }
     return null;
-  }
+  };
 
   createFlag = async () => {
     if (this.currentFflag) {
       this.setLoading(true);
       try {
-        this.currentFflag.setHasChanged(false)
+        this.currentFflag.setHasChanged(false);
         const result = await this.client.createFlag(this.currentFflag.toJS());
         this.addFlag(new FeatureFlag(result));
       } catch (e) {
@@ -139,9 +146,9 @@ export default class FeatureFlagsStore {
       await this.client.updateStatus(flagId, isActive);
     } catch (e) {
       console.error(e);
-      throw e
+      throw e;
     }
-  }
+  };
 
   updateFlag = async (flag?: FeatureFlag, skipLoader?: boolean) => {
     const usedFlag = flag || this.currentFflag;
@@ -153,7 +160,7 @@ export default class FeatureFlagsStore {
         // @ts-ignore
         const result = await this.client.updateFlag(usedFlag.toJS());
         if (!flag) this.setCurrentFlag(new FeatureFlag(result));
-        if (!flag) this.currentFflag?.setHasChanged(false)
+        if (!flag) this.currentFflag?.setHasChanged(false);
       } catch (e) {
         console.error('getting api error', e);
         throw e.response;

@@ -2,9 +2,8 @@ import React, { useMemo } from 'react';
 import QueueControls from 'Components/Session_/QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import Issues from 'Components/Session_/Issues/Issues';
-import { Tag, Tooltip } from 'antd';
+import { Tag, Tooltip, Button as AntButton } from 'antd';
 import { ShareAltOutlined } from '@ant-design/icons';
-import { Button as AntButton } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import ShareModal from 'Shared/SharePopup/SharePopup';
@@ -46,44 +45,48 @@ function SubHeader(props: Props) {
     openModal(
       <IssueForm sessionId={currentSession.sessionId} closeHandler={closeModal} errors={[]} />,
       {
-        title: 'Create Issue'
-      }
+        title: 'Create Issue',
+      },
     );
   };
 
   return (
-    <>
-      <div className="w-full px-4 flex items-center border-b relative">
-        <Tag color="green" bordered={false} className="rounded-full">{isIOS ? 'iOS' : 'Android'} BETA</Tag>
-        <div
-          className="ml-auto text-sm flex items-center color-gray-medium gap-2"
-          style={{ width: 'max-content' }}
-        >
-          <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
-          {enabledIntegration && <Issues sessionId={props.sessionId} />}
-          <Bookmark sessionId={props.sessionId} />
-          <Tooltip title="Share Session" placement="bottom">
-            <AntButton
-              size={'small'}
-              className="flex items-center justify-center"
-              onClick={() => openModal(
-                <ShareModal showCopyLink={true}
-                            hideModal={closeModal}
-                            time={store?.get().time} />,
-                { title: 'Share Session' }
-              )}
-            >
-              <ShareAltOutlined />
-            </AntButton>
-          </Tooltip>
+    <div className="w-full px-4 flex items-center border-b relative">
+      <Tag color="green" bordered={false} className="rounded-full">
+        {isIOS ? 'iOS' : 'Android'}
+        {' '}
+        BETA
+      </Tag>
+      <div
+        className="ml-auto text-sm flex items-center color-gray-medium gap-2"
+        style={{ width: 'max-content' }}
+      >
+        <HighlightButton onClick={() => props.setActiveTab('HIGHLIGHT')} />
+        {enabledIntegration && <Issues sessionId={props.sessionId} />}
+        <Bookmark sessionId={props.sessionId} />
+        <Tooltip title="Share Session" placement="bottom">
+          <AntButton
+            size="small"
+            className="flex items-center justify-center"
+            onClick={() => openModal(
+              <ShareModal
+                showCopyLink
+                hideModal={closeModal}
+                time={store?.get().time}
+              />,
+              { title: 'Share Session' },
+            )}
+          >
+            <ShareAltOutlined />
+          </AntButton>
+        </Tooltip>
 
-          <div>
-            {/* @ts-ignore */}
-            <QueueControls />
-          </div>
+        <div>
+          {/* @ts-ignore */}
+          <QueueControls />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

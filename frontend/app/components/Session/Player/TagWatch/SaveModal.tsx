@@ -31,33 +31,33 @@ function SaveModal({ onSave, hideModal }: Props) {
       searchStore.addFilterByKeyAndValue(
         'tag',
         tagId.toString(),
-      )
+      );
       history.push(
         withSiteId(
           sessions(),
-          siteId
-        )
+          siteId,
+        ),
       );
     });
   };
   return (
-    <div className={'h-screen bg-white p-4 flex flex-col gap-4'}>
-      <div className={'font-semibold text-xl'}>Tag Element</div>
-      <div className={'w-full border border-b-light-gray'} />
+    <div className="h-screen bg-white p-4 flex flex-col gap-4">
+      <div className="font-semibold text-xl">Tag Element</div>
+      <div className="w-full border border-b-light-gray" />
       <div>
-        <div className={'font-semibold'}>Name</div>
+        <div className="font-semibold">Name</div>
         <Input
-          placeholder={'E.g Buy Now Button'}
-          className={'w-full'}
+          placeholder="E.g Buy Now Button"
+          className="w-full"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </div>
       <div>
-        <div className={'font-semibold'}>
+        <div className="font-semibold">
           Ignore following actions on this element
         </div>
-        <div className={'flex gap-2'}>
+        <div className="flex gap-2">
           <Checkbox
             checked={ignoreClRage}
             onChange={(e) => setIgnoreClRage(e.target.checked)}
@@ -72,15 +72,15 @@ function SaveModal({ onSave, hideModal }: Props) {
           </Checkbox>
         </div>
       </div>
-      <div className={'w-full border border-b-light-gray'} />
-      <div className={'flex gap-2'}>
-        <Button type={'primary'} disabled={name === ''} onClick={save}>
+      <div className="w-full border border-b-light-gray" />
+      <div className="flex gap-2">
+        <Button type="primary" disabled={name === ''} onClick={save}>
           Tag
         </Button>
-        <Button type={'default'} disabled={name === ''} onClick={saveAndOpen}>
+        <Button type="default" disabled={name === ''} onClick={saveAndOpen}>
           Tag & Find Element
         </Button>
-        <Button type={'primary'} ghost onClick={hideModal}>
+        <Button type="primary" ghost onClick={hideModal}>
           Cancel
         </Button>
       </div>

@@ -7,11 +7,15 @@ interface Props {
 
 function NodeDropdown(props: Props) {
   return (
-    <Select style={{ width: 120 }} placeholder='Slect Event' dropdownStyle={{
-      border: 'none'
-    }}>
-      <Select.Option value='jack'>Jack</Select.Option>
-      <Select.Option value='lucy'>Lucy</Select.Option>
+    <Select
+      style={{ width: 120 }}
+      placeholder="Slect Event"
+      dropdownStyle={{
+        border: 'none',
+      }}
+    >
+      <Select.Option value="jack">Jack</Select.Option>
+      <Select.Option value="lucy">Lucy</Select.Option>
     </Select>
   );
 }

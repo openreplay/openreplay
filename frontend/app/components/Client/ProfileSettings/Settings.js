@@ -1,17 +1,17 @@
 import React from 'react';
 import { Input, Form } from 'UI';
-import { Button } from 'antd'
-import styles from './profileSettings.module.css';
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
+import styles from './profileSettings.module.css';
 
 function Settings() {
   const { userStore } = useStore();
-  const updateClient = userStore.updateClient;
+  const { updateClient } = userStore;
   const storeAccountName = userStore.account.name;
   const storeOrganizationName = userStore.account.tenantName;
-  const loading = userStore.loading;
+  const { loading } = userStore;
   const [accountName, setAccountName] = React.useState(storeAccountName);
   const [organizationName, setOrganizationName] = React.useState(storeOrganizationName);
   const [changed, setChanged] = React.useState(false);
@@ -19,12 +19,12 @@ function Settings() {
   const onAccNameChange = (e) => {
     setAccountName(e.target.value);
     setChanged(true);
-  }
+  };
 
   const onOrgNameChange = (e) => {
     setOrganizationName(e.target.value);
     setChanged(true);
-  }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,12 +34,12 @@ function Settings() {
     }).catch((e) => {
       toast(e.message || 'Failed to update account settings', { type: 'error' });
     });
-  }
+  };
 
   return (
     <Form onSubmit={handleSubmit} className={styles.form}>
       <Form.Field>
-        <label htmlFor="accountName">{'Name'}</label>
+        <label htmlFor="accountName">Name</label>
         <Input
           name="accountName"
           id="accountName"
@@ -51,7 +51,7 @@ function Settings() {
       </Form.Field>
 
       <Form.Field>
-        <label htmlFor="organizationName">{'Organization'}</label>
+        <label htmlFor="organizationName">Organization</label>
         <Input
           name="organizationName"
           id="organizationName"
@@ -63,7 +63,7 @@ function Settings() {
       </Form.Field>
 
       <Button type="default" loading={loading} disabled={!changed} htmlType="submit">
-        {'Update'}
+        Update
       </Button>
     </Form>
   );

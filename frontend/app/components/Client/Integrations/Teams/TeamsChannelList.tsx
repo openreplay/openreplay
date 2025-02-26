@@ -8,8 +8,8 @@ import DocLink from 'Shared/DocLink/DocLink';
 
 function TeamsChannelList(props: { onEdit: () => void }) {
   const { integrationsStore } = useStore();
-  const list = integrationsStore.msteams.list;
-  const edit = integrationsStore.msteams.edit;
+  const { list } = integrationsStore.msteams;
+  const { edit } = integrationsStore.msteams;
 
   const onEdit = (instance: Record<string, any>) => {
     edit(instance);
@@ -19,7 +19,7 @@ function TeamsChannelList(props: { onEdit: () => void }) {
   return (
     <div className="mt-6">
       <NoContent
-        title={
+        title={(
           <div className="p-5 mb-4">
             <div className="text-base text-left">
               Integrate MS Teams with OpenReplay and share insights with the
@@ -31,7 +31,7 @@ function TeamsChannelList(props: { onEdit: () => void }) {
               url="https://docs.openreplay.com/integrations/msteams"
             />
           </div>
-        }
+        )}
         size="small"
         show={list.length === 0}
       >

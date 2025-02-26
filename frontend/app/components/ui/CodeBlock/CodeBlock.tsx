@@ -6,11 +6,11 @@ export default function CodeBlock({ code, language = 'javascript' }) {
       if (window.Prism) {
         Prism.highlightAll();
       }
-    }, 0)
+    }, 0);
   }, [code, language]);
 
   return (
-    <pre className='rounded-lg'>
+    <pre className="rounded-lg">
       <code className={`language-${language}`}>
         {code}
       </code>

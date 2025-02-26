@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Checkbox, Loader } from 'UI';
-import { Switch } from 'antd'
+import { Switch } from 'antd';
 import cn from 'classnames';
-import stl from './projectCodeSnippet.module.css';
-import CircleNumber from '../../CircleNumber';
 import Select from 'Shared/Select';
 import CodeSnippet from 'Shared/CodeSnippet';
+import stl from './projectCodeSnippet.module.css';
+import CircleNumber from '../../CircleNumber';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -18,13 +18,13 @@ const inputModeOptions = [
 const inputModeOptionsMap = {};
 inputModeOptions.forEach((o, i) => (inputModeOptionsMap[o.value] = i));
 
-const ProjectCodeSnippet = () => {
+function ProjectCodeSnippet() {
   const { projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const site = projectsStore.instance;
-  const gdpr = site.gdpr;
+  const { gdpr } = site;
   const sites = projectsStore.list;
-  const editGDPR = projectsStore.editGDPR;
+  const { editGDPR } = projectsStore;
   const onSaveGDPR = projectsStore.saveGDPR;
   const init = projectsStore.initProject;
   const [changed, setChanged] = useState(false);
@@ -65,16 +65,16 @@ const ProjectCodeSnippet = () => {
     <div>
       <div className="mb-4">
         <div className="font-semibold mb-2 flex items-center">
-          <CircleNumber text="1" /> Choose data recording options
+          <CircleNumber text="1" />
+          {' '}
+          Choose data recording options
         </div>
 
         <div className="ml-10 mb-4" style={{ maxWidth: '50%' }}>
           <Select
             name="defaultInputMode"
             options={inputModeOptions}
-            onChange={({ value }) =>
-              onChangeSelect({ name: 'defaultInputMode', value: value.value })
-            }
+            onChange={({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value })}
             placeholder="Default Input Mode"
             defaultValue={gdpr.defaultInputMode}
           />
@@ -119,8 +119,8 @@ const ProjectCodeSnippet = () => {
           instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen
           sharing software.
         </p>
-        <div className={'flex items-center gap-2'}>
-            <Switch
+        <div className="flex items-center gap-2">
+          <Switch
             checked={isAssistEnabled}
             className="font-medium mr-2"
             onChange={() => setAssistEnabled(!isAssistEnabled)}
@@ -137,14 +137,20 @@ const ProjectCodeSnippet = () => {
       </div>
 
       <div className="ml-10 mb-2">
-        Paste this snippet <span>{'before the '}</span>
-        <span className={stl.highLight}> {'</head>'} </span>
+        Paste this snippet
+        {' '}
+        <span>{'before the '}</span>
+        <span className={stl.highLight}>
+          {' '}
+          {'</head>'}
+          {' '}
+        </span>
         <span>{' tag of your page.'}</span>
       </div>
       <div className={cn(stl.snippetsWrapper, 'ml-10')}>
         {showLoader ? (
           <div style={{ height: '474px' }}>
-            <Loader loading={true} />
+            <Loader loading />
           </div>
         ) : (
           <CodeSnippet
@@ -160,6 +166,6 @@ const ProjectCodeSnippet = () => {
       </div>
     </div>
   );
-};
+}
 
 export default observer(ProjectCodeSnippet);

@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { Loader, NoContent, Icon } from 'UI';
-import WebhookForm from './WebhookForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { IWebhook } from 'Types/webhook';
-import { App, List, Button, Typography, Space } from 'antd';
+import {
+  App, List, Button, Typography, Space,
+} from 'antd';
 import { PencilIcon } from '.store/lucide-react-virtual-b029c146a4/package';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useModal } from 'Components/ModalContext';
+import WebhookForm from './WebhookForm';
 
 function Webhooks() {
   const { settingsStore } = useStore();
@@ -24,9 +26,11 @@ function Webhooks() {
   }, []);
 
   const init = (w?: Partial<IWebhook>) => {
-    settingsStore.initWebhook({...w});
-    openModal(<WebhookForm onClose={closeModal}
-                           onDelete={removeWebhook} />, { title: w ? 'Edit Webhook' : 'Add Webhook' });
+    settingsStore.initWebhook({ ...w });
+    openModal(<WebhookForm
+      onClose={closeModal}
+      onDelete={removeWebhook}
+    />, { title: w ? 'Edit Webhook' : 'Add Webhook' });
   };
 
   const removeWebhook = async (id: string) => {
@@ -36,7 +40,7 @@ function Webhooks() {
       onOk: () => {
         settingsStore.removeWebhook(id).then(() => toast.success('Webhook removed successfully'));
         closeModal();
-      }
+      },
     });
   };
 
@@ -46,8 +50,10 @@ function Webhooks() {
         <div>
           <Typography.Title level={4} style={{ marginBottom: 0 }}>Webhooks</Typography.Title>
           <Typography.Text type="secondary">
-            <Space><Icon name="info-circle-fill" size={16} />
-              Leverage webhook notifications on alerts to trigger custom callbacks.</Space>
+            <Space>
+              <Icon name="info-circle-fill" size={16} />
+              Leverage webhook notifications on alerts to trigger custom callbacks.
+            </Space>
           </Typography.Text>
         </div>
         <Button type="primary" onClick={() => init()}>Add Webhook</Button>
@@ -55,12 +61,12 @@ function Webhooks() {
 
       <Loader loading={loading}>
         <NoContent
-          title={
+          title={(
             <div className="flex flex-col items-center justify-center">
               <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={60} />
               <div className="text-center my-4">None added yet</div>
             </div>
-          }
+          )}
           size="small"
           show={customWebhooks.length === 0}
         >
@@ -81,7 +87,7 @@ function Webhooks() {
                       width: '90%',
                       display: 'inline-block',
                       overflow: 'hidden',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {w.endpoint}

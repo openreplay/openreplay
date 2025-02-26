@@ -5,7 +5,7 @@ declare global {
 }
 
 function dummyTrack(): MediaStreamTrack {
-  const canvas = document.createElement('canvas'); //, { width: 0, height: 0})
+  const canvas = document.createElement('canvas'); // , { width: 0, height: 0})
   canvas.width = canvas.height = 2; // Doesn't work when 1 (?!)
   const ctx = canvas.getContext('2d');
   ctx?.fillRect(0, 0, canvas.width, canvas.height);
@@ -14,7 +14,7 @@ function dummyTrack(): MediaStreamTrack {
     requestAnimationFrame(draw);
   });
   // Also works. Probably it should be done once connected.
-  //setTimeout(() => { ctx?.fillRect(0,0, canvas.width, canvas.height) }, 4000)
+  // setTimeout(() => { ctx?.fillRect(0,0, canvas.width, canvas.height) }, 4000)
   return canvas.captureStream(60).getTracks()[0];
 }
 
@@ -30,7 +30,9 @@ export function RequestLocalStream(): Promise<LocalStream> {
 
 class _LocalStream {
   private mediaRequested: boolean = false;
+
   readonly stream: MediaStream;
+
   private readonly vdTrack: MediaStreamTrack;
 
   constructor(aTrack: MediaStreamTrack) {

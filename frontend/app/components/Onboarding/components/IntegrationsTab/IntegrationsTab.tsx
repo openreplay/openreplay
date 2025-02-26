@@ -19,18 +19,19 @@ function IntegrationsTab(props: Props) {
         <a
           href="https://docs.openreplay.com/en/integrations/"
           target="_blank"
+          rel="noreferrer"
         >
           <Button
-            size={'small'}
-            type={'text'}
+            size="small"
+            type="text"
             className="ml-2 flex items-center gap-2"
-            icon={<Icon name={'question-circle'} />}
+            icon={<Icon name="question-circle" />}
           >
-            <div className={'text-main'}>See Documentation</div>
+            <div className="text-main">See Documentation</div>
           </Button>
         </a>
       </h1>
-      <Integrations hideHeader={true} />
+      <Integrations hideHeader />
       <div className="border-t px-4 py-3 flex justify-end">
         <Button
           type="primary"
@@ -44,5 +45,5 @@ function IntegrationsTab(props: Props) {
 }
 
 export default withOnboarding(
-  withPageTitle('Integrations - OpenReplay')(IntegrationsTab)
+  withPageTitle('Integrations - OpenReplay')(IntegrationsTab),
 );

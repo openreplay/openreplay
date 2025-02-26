@@ -3,7 +3,7 @@ import copy from 'copy-to-clipboard';
 import { Tooltip } from 'UI';
 
 const withCopy = (WrappedComponent: React.ComponentType) => {
-  const ComponentWithCopy = (props: any) => {
+  function ComponentWithCopy(props: any) {
     const [copied, setCopied] = React.useState(false);
     const { value, tooltip } = props;
     const copyToClipboard = (text: string) => {
@@ -20,7 +20,7 @@ const withCopy = (WrappedComponent: React.ComponentType) => {
         </Tooltip>
       </div>
     );
-  };
+  }
   return ComponentWithCopy;
 };
 

@@ -60,25 +60,29 @@ export const categories: Category[] = [
     key: 'replays',
     items: [
       { label: 'Sessions', key: MENU.SESSIONS, icon: 'collection-play' },
-      { label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true },
-      { label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true },
+      {
+        label: 'Recommendations', key: MENU.RECOMMENDATIONS, icon: 'magic', hidden: true,
+      },
+      {
+        label: 'Vault', key: MENU.VAULT, icon: 'safe', hidden: true,
+      },
       { label: 'Bookmarks', key: MENU.BOOKMARKS, icon: 'bookmark' },
-      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' }
-    ]
+      { label: 'Highlights', key: MENU.HIGHLIGHTS, icon: 'chat-square-quote' },
+    ],
   },
   {
     title: '',
     key: 'spot',
     items: [
       { label: 'Spots', key: MENU.SPOTS, icon: 'orspotOutline' },
-    ]
+    ],
   },
   {
     title: '',
     key: 'assist',
     items: [
       { label: 'Co-Browse', key: MENU.LIVE_SESSIONS, icon: 'broadcast' },
-    ]
+    ],
   },
   {
     title: 'Analytics',
@@ -94,8 +98,8 @@ export const categories: Category[] = [
       //     { label: 'Resource Monitoring', key: MENU.RESOURCE_MONITORING }
       //   ]
       // },
-      { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' }
-    ]
+      { label: 'Alerts', key: MENU.ALERTS, icon: 'bell' },
+    ],
   },
   {
     title: 'Product Optimization',
@@ -103,16 +107,18 @@ export const categories: Category[] = [
     items: [
       { label: 'Feature Flags', key: MENU.FEATURE_FLAGS, icon: 'toggles' },
       { label: 'Usability Tests', key: MENU.USABILITY_TESTS, icon: 'clipboard-check' },
-    ]
+    ],
   },
   {
     title: '',
     key: 'other',
     items: [
-      { label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right' },
-      { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' }
-    ]
-  }
+      {
+        label: 'Preferences', key: MENU.PREFERENCES, icon: 'sliders', leading: 'chevron-right',
+      },
+      { label: 'Support', key: MENU.SUPPORT, icon: 'question-circle' },
+    ],
+  },
 ];
 
 export const preferences: Category[] = [
@@ -120,8 +126,8 @@ export const preferences: Category[] = [
     title: '',
     key: 'exit',
     items: [
-      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' }
-    ]
+      { label: 'Exit', key: MENU.EXIT, icon: 'arrow-bar-left' },
+    ],
   },
   {
     title: 'Preferences',
@@ -138,14 +144,22 @@ export const preferences: Category[] = [
         key: PREFERENCES_MENU.ROLES_ACCESS,
         icon: 'diagram-3',
         isEnterprise: true,
-        isAdmin: true
+        isAdmin: true,
       },
-      { label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true },
-      { label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true },
-      { label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper', hidden: false },
-      { label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true }
-    ]
-  }
+      {
+        label: 'Audit', key: PREFERENCES_MENU.AUDIT, icon: 'list-ul', isAdmin: true, isEnterprise: true,
+      },
+      {
+        label: 'Team', key: PREFERENCES_MENU.TEAM, icon: 'people', isAdmin: true,
+      },
+      {
+        label: 'Weekly Report', key: PREFERENCES_MENU.NOTIFICATIONS, icon: 'envelope-paper', hidden: false,
+      },
+      {
+        label: 'Billing', key: PREFERENCES_MENU.BILLING, icon: 'credit-card-2-back', hidden: true,
+      },
+    ],
+  },
 ];
 
 export const spotOnlyCats = [
@@ -157,4 +171,4 @@ export const spotOnlyCats = [
   MENU.PREFERENCES,
   MENU.SUPPORT,
   MENU.SPOTS,
-]
+];

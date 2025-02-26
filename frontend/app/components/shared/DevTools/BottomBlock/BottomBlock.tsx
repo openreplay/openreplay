@@ -2,7 +2,7 @@ import React, { CSSProperties, useEffect } from 'react';
 import cn from 'classnames';
 import stl from './bottomBlock.module.css';
 
-const BottomBlock = ({
+function BottomBlock({
   children = null,
   className = '',
   additionalHeight = 0,
@@ -16,7 +16,7 @@ const BottomBlock = ({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   style?: Partial<CSSProperties>;
-}) => {
+}) {
   useEffect(() => {}, []);
 
   return (
@@ -29,7 +29,7 @@ const BottomBlock = ({
       {children}
     </div>
   );
-};
+}
 
 BottomBlock.displayName = 'BottomBlock';
 

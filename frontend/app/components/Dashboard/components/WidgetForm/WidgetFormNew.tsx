@@ -1,5 +1,7 @@
 import React from 'react';
-import { Card, Space, Button, Alert, Form, Select, Tooltip } from 'antd';
+import {
+  Card, Space, Button, Alert, Form, Select, Tooltip,
+} from 'antd';
 import { useStore } from 'App/mstore';
 import { eventKeys } from 'Types/filter/newFilter';
 import {
@@ -26,17 +28,17 @@ const getExcludedKeys = (metricType: string) => {
     default:
       return [];
   }
-}
+};
 
 const getExcludedCategories = (metricType: string) => {
   switch (metricType) {
     case USER_PATH:
     case FUNNEL:
-      return [FilterCategory.DEVTOOLS]
+      return [FilterCategory.DEVTOOLS];
     default:
       return [];
   }
-}
+};
 
 function WidgetFormNew({ layout }: { layout: string }) {
   const { metricStore } = useStore();
@@ -63,7 +65,9 @@ function WidgetFormNew({ layout }: { layout: string }) {
 
 export default observer(WidgetFormNew);
 
-const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCategory }: any) => {
+const FilterSection = observer(({
+  layout, metric, excludeFilterKeys, excludeCategory,
+}: any) => {
   const allOpen = layout.startsWith('flex-row');
   const defaultClosed = React.useRef(!allOpen && metric.exists());
   const [seriesCollapseState, setSeriesCollapseState] = React.useState<Record<number, boolean>>({});
@@ -71,7 +75,7 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
   React.useEffect(() => {
     const defaultSeriesCollapseState: Record<number, boolean> = {};
     metric.series.forEach((s: any) => {
-       defaultSeriesCollapseState[s.seriesId] = isTable ? false : (allOpen ? false : defaultClosed.current);
+      defaultSeriesCollapseState[s.seriesId] = isTable ? false : (allOpen ? false : defaultClosed.current);
     });
     setSeriesCollapseState(defaultSeriesCollapseState);
   }, [metric.series]);
@@ -83,13 +87,12 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
   const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
 
-  const isSingleSeries =
-    isTable ||
-    isFunnel ||
-    isHeatMap ||
-    isInsights ||
-    isRetention ||
-    isPathAnalysis;
+  const isSingleSeries = isTable
+    || isFunnel
+    || isHeatMap
+    || isInsights
+    || isRetention
+    || isPathAnalysis;
 
   const collapseAll = () => {
     setSeriesCollapseState((seriesCollapseState) => {
@@ -99,7 +102,7 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
       });
       return newState;
     });
-  }
+  };
   const expandAll = () => {
     setSeriesCollapseState((seriesCollapseState) => {
       const newState = { ...seriesCollapseState };
@@ -108,13 +111,13 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
       });
       return newState;
     });
-  }
+  };
 
   const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
   return (
     <>
-      {metric.series.length > 0 &&
-        metric.series
+      {metric.series.length > 0
+        && metric.series
           .slice(0, isSingleSeries ? 1 : metric.series.length)
           .map((series: any, index: number) => (
             <div className="mb-2 rounded-xl" key={series.name}>
@@ -127,11 +130,11 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
                 excludeCategory={excludeCategory}
                 observeChanges={() => metric.updateKey('hasChanged', true)}
                 hideHeader={
-                  isTable ||
-                  isHeatMap ||
-                  isInsights ||
-                  isPathAnalysis ||
-                  isFunnel
+                  isTable
+                  || isHeatMap
+                  || isInsights
+                  || isPathAnalysis
+                  || isFunnel
                 }
                 seriesIndex={index}
                 series={series}
@@ -153,37 +156,40 @@ const FilterSection = observer(({ layout, metric, excludeFilterKeys, excludeCate
               />
             </div>
           ))}
-      {isSingleSeries ? null :
-        <div className={'mx-auto flex items-center gap-2 w-fit'}>
-          <Tooltip title={canAddSeries ? '' : 'Maximum of 3 series reached.'}>
+      {isSingleSeries ? null
+        : (
+          <div className="mx-auto flex items-center gap-2 w-fit">
+            <Tooltip title={canAddSeries ? '' : 'Maximum of 3 series reached.'}>
+              <Button
+                onClick={() => {
+                  if (!canAddSeries) return;
+                  metric.addSeries();
+                }}
+                disabled={!canAddSeries}
+                size="small"
+                type="primary"
+                icon={<PlusIcon size={16} />}
+              >
+                Add Series
+              </Button>
+            </Tooltip>
             <Button
-              onClick={() => {
-                if (!canAddSeries) return;
-                metric.addSeries();
-              }}
-              disabled={!canAddSeries}
               size="small"
-              type="primary"
-              icon={<PlusIcon size={16} />}
+              type="text"
+              icon={(
+                <ChevronUp
+                  size={16}
+                  className={allCollapsed ? 'rotate-180' : ''}
+                />
+            )}
+              onClick={allCollapsed ? expandAll : collapseAll}
             >
-              Add Series
+              {allCollapsed ? 'Expand' : 'Collapse'}
+              {' '}
+              All
             </Button>
-          </Tooltip>
-          <Button
-            size={'small'}
-            type={'text'}
-            icon={
-              <ChevronUp
-                size={16}
-                className={allCollapsed ? 'rotate-180' : ''}
-              />
-            }
-            onClick={allCollapsed ? expandAll : collapseAll}
-          >
-            {allCollapsed ? 'Expand' : 'Collapse'} All
-          </Button>
-        </div>
-      }
+          </div>
+        )}
     </>
   );
 });
@@ -197,67 +203,69 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   ];
 
   const onPointChange = (value: any) => {
-    writeOption({ name: 'startType', value: { value } })
-  }
+    writeOption({ name: 'startType', value: { value } });
+  };
   return (
     <div className="rounded-lg bg-white border">
-      <div className='flex flex-col justify-start gap-2 flex-wrap'>
-      <Form.Item className='mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2'>
-        <div className="flex flex-wrap gap-2 items-center justify-start">
-          <span className="font-medium">Journeys With </span>
-          <div className="flex gap-2 items-center">
-            <Select
-              className="w-36 rounded-lg !h-[26px]"
-              name="startType"
-              options={[
-                { value: 'start', label: 'Start Point' },
-                { value: 'end', label: 'End Point' },
-              ]}
-              defaultValue={metric.startType || 'start'}
-              onChange={onPointChange}
-              placeholder="Select Start Type"
-              size="small"
-            />
+      <div className="flex flex-col justify-start gap-2 flex-wrap">
+        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4 pb-1 pt-2">
+          <div className="flex flex-wrap gap-2 items-center justify-start">
+            <span className="font-medium">Journeys With </span>
+            <div className="flex gap-2 items-center">
+              <Select
+                className="w-36 rounded-lg !h-[26px]"
+                name="startType"
+                options={[
+                  { value: 'start', label: 'Start Point' },
+                  { value: 'end', label: 'End Point' },
+                ]}
+                defaultValue={metric.startType || 'start'}
+                onChange={onPointChange}
+                placeholder="Select Start Type"
+                size="small"
+              />
 
-            <span className="">showing</span>
+              <span className="">showing</span>
 
-            <Select
-              mode="multiple"
-              className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
-              allowClear
-              name="metricValue"
-              options={metricValueOptions}
-              value={metric.metricValue || []}
-              onChange={(value) => writeOption({ name: 'metricValue', value })}
-              placeholder="Select Metrics"
-              size="small"
-              maxTagCount={'responsive'}
-              showSearch={false}
-            />
+              <Select
+                mode="multiple"
+                className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
+                allowClear
+                name="metricValue"
+                options={metricValueOptions}
+                value={metric.metricValue || []}
+                onChange={(value) => writeOption({ name: 'metricValue', value })}
+                placeholder="Select Metrics"
+                size="small"
+                maxTagCount="responsive"
+                showSearch={false}
+              />
+            </div>
           </div>
-        </div>
-      </Form.Item>
-      <Form.Item  className='mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1'>
+        </Form.Item>
+        <Form.Item className="mb-0 hover:bg-bg-blue/30 px-4  pb-2 pt-1">
           <div className="flex flex-wrap items-center justify-start">
-            <span className="font-medium mr-2">{
+            <span className="font-medium mr-2">
+              {
               metric.startType === 'start'
                 ? 'Start Point'
                 : 'End Point'
-            }</span>
-          <span className="font-normal">
-            <FilterItem
-              hideDelete
-              filter={metric.startPoint}
-              allowedFilterKeys={[
-                FilterKey.LOCATION,
-                FilterKey.CLICK,
-                FilterKey.INPUT,
-                FilterKey.CUSTOM,
-              ]}
-              onUpdate={(val) => metric.updateStartPoint(val)}
-              onRemoveFilter={() => {}}
-            />
-          </span>
+            }
+            </span>
+            <span className="font-normal">
+              <FilterItem
+                hideDelete
+                filter={metric.startPoint}
+                allowedFilterKeys={[
+                  FilterKey.LOCATION,
+                  FilterKey.CLICK,
+                  FilterKey.INPUT,
+                  FilterKey.CUSTOM,
+                ]}
+                onUpdate={(val) => metric.updateStartPoint(val)}
+                onRemoveFilter={() => {}}
+              />
+            </span>
           </div>
         </Form.Item>
       </div>
@@ -265,25 +273,23 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   );
 });
 
-const InsightsFilter = observer(({ metric, writeOption }: any) => {
-  return (
-    <Card styles={{ body: { padding: '20px 20px' } }}>
-      <Form.Item className="mb-0">
-        <Space>
-          <Select
-            name="metricValue"
-            options={issueCategories}
-            value={metric.metricValue}
-            onChange={writeOption}
-            isMulti
-            placeholder="All Categories"
-            allowClear
-          />
-        </Space>
-      </Form.Item>
-    </Card>
-  );
-});
+const InsightsFilter = observer(({ metric, writeOption }: any) => (
+  <Card styles={{ body: { padding: '20px 20px' } }}>
+    <Form.Item className="mb-0">
+      <Space>
+        <Select
+          name="metricValue"
+          options={issueCategories}
+          value={metric.metricValue}
+          onChange={writeOption}
+          isMulti
+          placeholder="All Categories"
+          allowClear
+        />
+      </Space>
+    </Form.Item>
+  </Card>
+));
 
 const AdditionalFilters = observer(() => {
   const { metricStore } = useStore();
@@ -307,12 +313,14 @@ const AdditionalFilters = observer(() => {
   );
 });
 
-const PredefinedMessage = () => (
-  <Alert
-    message="Drilldown or filtering isn't supported on this legacy card."
-    type="warning"
-    showIcon
-    closable
-    className="border-transparent rounded-lg"
-  />
-);
+function PredefinedMessage() {
+  return (
+    <Alert
+      message="Drilldown or filtering isn't supported on this legacy card."
+      type="warning"
+      showIcon
+      closable
+      className="border-transparent rounded-lg"
+    />
+  );
+}

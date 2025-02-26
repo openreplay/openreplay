@@ -1,9 +1,9 @@
 import React from 'react';
-import StepList, { Step } from './StepList';
 import Modal from 'App/components/Modal/Modal';
+import { observer } from 'mobx-react-lite';
+import StepList, { Step } from './StepList';
 import CircleProgress from './CircleProgress';
 import GettingStartedProgress from './GettingStartedProgress';
-import { observer } from 'mobx-react-lite';
 
 export interface Props {
   list: Step[];
@@ -13,7 +13,7 @@ function GettingStartedModal(props: Props) {
   const { list } = props;
   const pendingSteps = list.filter((step) => step.status === 'pending');
   const completedSteps = list.filter(
-    (step) => step.status === 'completed' || step.status === 'ignored'
+    (step) => step.status === 'completed' || step.status === 'ignored',
   );
 
   return (

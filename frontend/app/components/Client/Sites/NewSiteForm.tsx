@@ -1,10 +1,13 @@
-import { Segmented } from 'antd';
-import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { Segmented, Button } from 'antd';
+import React, {
+  ChangeEvent, FormEvent, useEffect, useState,
+} from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
-import { confirm, Form, Icon, Input } from 'UI';
-import { Button } from 'antd'
+import {
+  confirm, Form, Icon, Input,
+} from 'UI';
 import { observer } from 'mobx-react-lite';
 
 import styles from './siteForm.module.css';
@@ -15,17 +18,17 @@ type OwnProps = {
 
 type Props = RouteComponentProps & OwnProps;
 
-const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
+function NewSiteForm({ location: { pathname }, onClose }: Props) {
   const mstore = useStore();
   const { projectsStore } = mstore;
   const activeSiteId = projectsStore.active?.id;
   const site = projectsStore.instance;
   const siteList = projectsStore.list;
-  const loading = projectsStore.loading;
+  const { loading } = projectsStore;
   const canDelete = siteList.length > 1;
-  const setSiteId = projectsStore.setSiteId;
+  const { setSiteId } = projectsStore;
   const saveProject = projectsStore.save;
-  const fetchList = projectsStore.fetchList;
+  const { fetchList } = projectsStore;
   const [existsError, setExistsError] = useState(false);
   const { searchStore } = useStore();
 
@@ -72,11 +75,11 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
     if (
       (await confirm({
         header: 'Project Deletion Alert',
-        confirmation: `Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.`,
+        confirmation: 'Are you sure you want to delete this project? Deleting it will permanently remove the project, along with all associated sessions and data.',
         confirmButton: 'Yes, delete',
         cancelButton: 'Cancel',
-      })) &&
-      site?.id
+      }))
+      && site?.id
     ) {
       projectsStore.removeProject(site.id).then(() => {
         onClose(null);
@@ -108,7 +111,7 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
       <Form className={styles.formWrapper} onSubmit={site.validate && onSubmit}>
         <div className={styles.content}>
           <Form.Field>
-            <label>{'Name'}</label>
+            <label>Name</label>
             <Input
               placeholder="Ex. openreplay"
               name="name"
@@ -161,13 +164,13 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
           </div>
           {existsError && (
             <div className={styles.errorMessage}>
-              {'Project exists already.'}
+              Project exists already.
             </div>
           )}
         </div>
       </Form>
     </div>
   );
-};
+}
 
 export default withRouter(observer(NewSiteForm));

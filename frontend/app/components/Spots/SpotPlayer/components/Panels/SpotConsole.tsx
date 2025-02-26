@@ -21,14 +21,12 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
     const newTab = TABS.find((t) => t.text === tab);
     setActiveTab(newTab);
   };
-  const logs = spotPlayerStore.logs;
-  const filteredList = React.useMemo(() => {
-    return logs.filter((log) => {
-      const tabType = activeTab.text.toLowerCase();
-      if (tabType === 'all') return true;
-      return tabType.includes(log.level);
-    });
-  }, [activeTab]);
+  const { logs } = spotPlayerStore;
+  const filteredList = React.useMemo(() => logs.filter((log) => {
+    const tabType = activeTab.text.toLowerCase();
+    if (tabType === 'all') return true;
+    return tabType.includes(log.level);
+  }), [activeTab]);
 
   const jump = (t: number) => {
     spotPlayerStore.setTime(t / 1000);
@@ -47,14 +45,14 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
           />
         </div>
       </BottomBlock.Header>
-      <BottomBlock.Content className={'overflow-y-auto'}>
+      <BottomBlock.Content className="overflow-y-auto">
         <NoContent
-          title={
+          title={(
             <div className="capitalize flex items-center">
               <Icon name="info-circle" className="mr-2" size="18" />
               No Data
             </div>
-          }
+          )}
           size="small"
           show={filteredList.length === 0}
         >

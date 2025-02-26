@@ -3,19 +3,21 @@ import { Loader, Icon } from 'UI';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Form, Input, Button, Typography } from 'antd';
-import {SquareArrowOutUpRight} from 'lucide-react';
+import {
+  Form, Input, Button, Typography,
+} from 'antd';
+import { SquareArrowOutUpRight } from 'lucide-react';
 
 function ResetPasswordRequest() {
   const { userStore } = useStore();
-  const loading = userStore.loading;
-  const requestResetPassword = userStore.requestResetPassword;
+  const { loading } = userStore;
+  const { requestResetPassword } = userStore;
   const recaptchaRef = React.createRef();
   const [requested, setRequested] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [error, setError] = React.useState(null);
   const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
-  const CAPTCHA_SITE_KEY = window.env.CAPTCHA_SITE_KEY;
+  const { CAPTCHA_SITE_KEY } = window.env;
   const [smtpError, setSmtpError] = React.useState<boolean>(false);
 
   const write = (e: any) => {
@@ -44,8 +46,8 @@ function ResetPasswordRequest() {
 
         setError(err.message);
       }).finally(() => {
-      setRequested(true);
-    });
+        setRequested(true);
+      });
   };
   return (
     <Form onFinish={onSubmit} style={{ minWidth: '50%' }} className="flex flex-col">
@@ -64,9 +66,9 @@ function ResetPasswordRequest() {
         {!requested && (
           <>
             <Form.Item>
-              <label>{'Email Address'}</label>
+              <label>Email Address</label>
               <Input
-                autoFocus={true}
+                autoFocus
                 autoComplete="email"
                 type="email"
                 placeholder="Email"
@@ -89,7 +91,10 @@ function ResetPasswordRequest() {
               <Icon name="envelope-check" size={30} color="tealx" />
             </div>
             <div>
-              Alright! a reset link was emailed to <span className="font-medium">{email}</span>.
+              Alright! a reset link was emailed to
+              {' '}
+              <span className="font-medium">{email}</span>
+              .
               Click on it to reset your account password.
             </div>
           </div>
@@ -101,9 +106,18 @@ function ResetPasswordRequest() {
               <Icon name="envelope-x" size="30" color="red" />
             </div>
             {smtpError ? (
-              <Typography.Text>Email delivery failed due to invalid SMTP configuration. Please contact your admin. <a
-                href="https://docs.openreplay.com/en/configuration/configure-smtp/" className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
-                target="_blank">Learn More <SquareArrowOutUpRight size={12} strokeWidth={1.5} className='inline' /></a></Typography.Text>
+              <Typography.Text>
+                Email delivery failed due to invalid SMTP configuration. Please contact your admin.
+                <a
+                  href="https://docs.openreplay.com/en/configuration/configure-smtp/"
+                  className="!text-neutral-900 hover:!underline flex items-center justify-center gap-1 mt-2"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn More
+                  <SquareArrowOutUpRight size={12} strokeWidth={1.5} className="inline" />
+                </a>
+              </Typography.Text>
             ) : <Typography.Text>{error}</Typography.Text>}
           </div>
         )}

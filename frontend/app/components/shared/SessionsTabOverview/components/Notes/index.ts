@@ -1,2 +1,2 @@
-export { default } from './NoteList'
-export { default as TeamBadge } from './TeamBadge'
+export { default } from './NoteList';
+export { default as TeamBadge } from './TeamBadge';

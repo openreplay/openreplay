@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { Duration } from 'luxon';
 import { durationFormatted, convertTimestampToUtcTimestamp } from 'App/date';
 
@@ -16,17 +16,17 @@ function Counter({ startTime, className }: Props) {
   useEffect(() => {
     if (!intervalId) {
       intervalId = setInterval(() => {
-        setDuration(duration + 1000)
-      }, 1000)
+        setDuration(duration + 1000);
+      }, 1000);
     }
-    return () => clearInterval(intervalId)
-  }, [duration])
+    return () => clearInterval(intervalId);
+  }, [duration]);
 
   return (
     <div className={className}>
       {startTime && formattedDuration}
     </div>
-  )
+  );
 }
 
-export default Counter
+export default Counter;

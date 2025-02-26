@@ -13,31 +13,31 @@ interface Props {
 }
 function DashboardOptions(props: Props) {
   const { userStore } = useStore();
-  const isEnterprise = userStore.isEnterprise;
+  const { isEnterprise } = userStore;
   const { editHandler, deleteHandler, renderReport } = props;
 
   const menu = {
     items: [
       {
-        icon: <Icon name={'pencil'} />,
+        icon: <Icon name="pencil" />,
         key: 'rename',
         label: 'Rename',
         onClick: () => editHandler(true),
       },
       {
-        icon: <Icon name={'users'} />,
+        icon: <Icon name="users" />,
         key: 'visibility',
         label: 'Visibility & Access',
         onClick: editHandler,
       },
       {
-        icon: <Icon name={'trash'} />,
+        icon: <Icon name="trash" />,
         key: 'delete',
         label: 'Delete',
         onClick: deleteHandler,
       },
       {
-        icon: <Icon name={'pdf-download'} />,
+        icon: <Icon name="pdf-download" />,
         key: 'download',
         label: 'Download Report',
         onClick: renderReport,
@@ -49,7 +49,7 @@ function DashboardOptions(props: Props) {
 
   return (
     <Dropdown menu={menu}>
-      <Button type='text' id={'ignore-prop'} icon={<EllipsisVertical size={16} />} />
+      <Button type="text" id="ignore-prop" icon={<EllipsisVertical size={16} />} />
     </Dropdown>
   );
 }

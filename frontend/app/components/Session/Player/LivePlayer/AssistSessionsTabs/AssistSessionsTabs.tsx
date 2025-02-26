@@ -15,18 +15,20 @@ interface ITab {
   isDisabled?: boolean;
 }
 
-const Tab = (props: ITab) => (
-  <div
-    onClick={props.onClick}
-    className={cn('p-1 rounded flex items-center justify-center', !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed', props.classNames)}
-    style={props.style}
-  >
-    {props.children}
-  </div>
-);
+function Tab(props: ITab) {
+  return (
+    <div
+      onClick={props.onClick}
+      className={cn('p-1 rounded flex items-center justify-center', !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed', props.classNames)}
+      style={props.style}
+    >
+      {props.children}
+    </div>
+  );
+}
 
 export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames={cn("hover:bg-gray-bg bg-gray-light", !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed', props.classNames)}>
+  <Tab onClick={props.onClick} classNames={cn('hover:bg-gray-bg bg-gray-light', !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed', props.classNames)}>
     <Icon name="plus" size="22" color="white" />
   </Tab>
 ));
@@ -45,9 +47,9 @@ const CurrentTab = React.memo(() => (
 
 function AssistTabs({ session }: { session: Record<string, any> }) {
   const history = useHistory();
-  const { store } = React.useContext(PlayerContext) as unknown as ILivePlayerContext
-  const { recordingState, calling, remoteControl } = store.get()
-  const isDisabled = recordingState !== 0 || calling !== 0 || remoteControl !== 0
+  const { store } = React.useContext(PlayerContext) as unknown as ILivePlayerContext;
+  const { recordingState, calling, remoteControl } = store.get();
+  const isDisabled = recordingState !== 0 || calling !== 0 || remoteControl !== 0;
 
   const { assistMultiviewStore, projectsStore } = useStore();
   const siteId = projectsStore.siteId!;

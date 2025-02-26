@@ -1,7 +1,6 @@
 import React from 'react';
-import VerticalLine from '../VerticalLine';
 import { PlayerContext } from 'App/components/Session/playerContext';
-
+import VerticalLine from '../VerticalLine';
 
 interface Props {
   children: React.ReactNode;
@@ -9,7 +8,7 @@ interface Props {
 }
 
 const OverviewPanelContainer = React.memo((props: Props) => {
-  const { player } = React.useContext(PlayerContext)
+  const { player } = React.useContext(PlayerContext);
 
   const { endTime } = props;
   const [mouseX, setMouseX] = React.useState(0);

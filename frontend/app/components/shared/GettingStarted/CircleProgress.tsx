@@ -7,13 +7,13 @@ interface Props {
   bgColor?: string;
   label?: string;
 }
-const CircleProgress = ({
+function CircleProgress({
   percentage = 0,
   radius = 18,
   progressColor = '#394eff',
   bgColor = '#9fa8da',
   label = '',
-}: Props) => {
+}: Props) {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const CircleProgress = ({
         stroke={progressColor}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
-        strokeDashoffset={dashOffset + ''}
+        strokeDashoffset={`${dashOffset}`}
         fill="none"
         transform={`rotate(-90 ${radius} ${radius})`}
         style={circleStyle}
@@ -67,6 +67,6 @@ const CircleProgress = ({
       </text>
     </svg>
   );
-};
+}
 
 export default CircleProgress;

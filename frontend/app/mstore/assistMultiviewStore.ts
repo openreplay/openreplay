@@ -16,7 +16,9 @@ export interface LiveSessionListItem extends Record<string, any> {
 
 export default class AssistMultiviewStore {
   sessions: MultiSessions = [];
+
   activeSession: LiveSessionListItem | undefined = undefined;
+
   onChangeCb?: (sessions: MultiSessions) => void;
 
   constructor() {
@@ -42,8 +44,8 @@ export default class AssistMultiviewStore {
 
   addSession(session: Record<string, any>) {
     if (
-      this.sessions.length < 4 &&
-      this.sessions.findIndex((s) => s && s.sessionId === session.sessionId) === -1
+      this.sessions.length < 4
+      && this.sessions.findIndex((s) => s && s.sessionId === session.sessionId) === -1
     ) {
       const plainSession = session.toJS ? session.toJS() : session;
       this.sessions.push({ ...plainSession, key: this.sessions.length });
@@ -62,7 +64,7 @@ export default class AssistMultiviewStore {
 
   removeSession(sessionId: string) {
     this.sessions = this.sessions.filter(
-      (session) => session && session.sessionId !== sessionId
+      (session) => session && session.sessionId !== sessionId,
     ) as MultiSessions;
     return this.onChangeCb?.(this.sessions);
   }
@@ -93,9 +95,9 @@ export default class AssistMultiviewStore {
     const data = await sessionService.getLiveSessions(filter);
 
     const matchingSessions = data.sessions.filter(
-      (s: Record<string, any>) => ids.includes(s.sessionID) || ids.includes(s.sessionId)
+      (s: Record<string, any>) => ids.includes(s.sessionID) || ids.includes(s.sessionId),
     );
-    const immutMatchingSessions = List(matchingSessions).map(s => new Session(s));
+    const immutMatchingSessions = List(matchingSessions).map((s) => new Session(s));
     immutMatchingSessions.forEach((session: Record<string, any>) => {
       this.addSession(session);
       this.fetchAgentTokenInfo(session.sessionId);
@@ -105,7 +107,7 @@ export default class AssistMultiviewStore {
   }
 
   setToken(sessionId: string, token: string) {
-    const sessions = this.sessions;
+    const { sessions } = this;
     const targetIndex = sessions.findIndex((s) => s && s.sessionId === sessionId);
     if (sessions[targetIndex] !== undefined) {
       sessions[targetIndex]!.agentToken = token;
@@ -117,6 +119,6 @@ export default class AssistMultiviewStore {
   reset() {
     this.sessions = [];
     this.activeSession = undefined;
-    this.onChangeCb = undefined
+    this.onChangeCb = undefined;
   }
 }

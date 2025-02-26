@@ -3,13 +3,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './init';
 import { Provider } from 'react-redux';
-import store from './store';
-import Router from './Router';
-import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
 import { ConfigProvider, theme } from 'antd';
 import colors from 'App/theme/colors';
+import { StoreProvider, RootStore } from './mstore';
+import Router from './Router';
+import store from './store';
 
 // @ts-ignore
 window.getCommitHash = () => console.log(window.env.COMMIT_HASH);
@@ -19,7 +19,7 @@ const customTheme = {
   components: {
     Layout: {
       colorBgBody: colors['gray-lightest'],
-      colorBgHeader: colors['gray-lightest']
+      colorBgHeader: colors['gray-lightest'],
     },
     Menu: {
       // algorithm: true,
@@ -44,16 +44,16 @@ const customTheme = {
     colorPrimaryActive: '#394EFF',
     colorSecondary: '#3EAAAF',
     colorBgLayout: colors['gray-lightest'],
-    colorBgContainer: colors['white'],
-    colorLink: colors['teal'],
+    colorBgContainer: colors.white,
+    colorLink: colors.teal,
     colorLinkHover: colors['teal-dark'],
 
     borderRadius: 4,
     fontSize: 14,
     fontFamily: '\'Roboto\', \'ArialMT\', \'Arial\'',
     siderBackgroundColor: colors['gray-lightest'],
-    siderCollapsedWidth: 800
-  }
+    siderCollapsedWidth: 800,
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,6 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </DndProvider>
         </StoreProvider>
       </Provider>
-    </ConfigProvider>
+    </ConfigProvider>,
   );
 });

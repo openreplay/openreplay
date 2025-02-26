@@ -1,5 +1,7 @@
 import { uxtestingService } from 'App/services';
-import { UxTask, UxTSearchFilters, UxTListEntry, UxTest } from 'App/services/UxtestingService';
+import {
+  UxTask, UxTSearchFilters, UxTListEntry, UxTest,
+} from 'App/services/UxtestingService';
 import { makeAutoObservable } from 'mobx';
 import Session from 'Types/session';
 
@@ -28,28 +30,41 @@ interface Response {
 }
 
 const defaultGuidelines = '';
-const defaultConclusion =
-  `Thank you for your feedback. It's very important and will help us improve our product.`;
+const defaultConclusion = 'Thank you for your feedback. It\'s very important and will help us improve our product.';
 
 export default class UxtestingStore {
   client = uxtestingService;
+
   tests: UxTListEntry[] = [];
+
   instance: UxTestInst | null = null;
+
   instanceCreationSiteId = '';
+
   page: number = 1;
+
   total: number = 0;
+
   pageSize: number = 10;
+
   searchQuery: string = '';
+
   testStats: Stats | null = null;
+
   testSessions: { list: Session[]; total: number; page: number } = { list: [], total: 0, page: 1 };
+
   testAssistSessions: { list: Session[]; total: number; page: number } = {
     list: [],
     total: 0,
     page: 1,
   };
+
   taskStats: TaskStats[] = [];
+
   isLoading: boolean = false;
+
   responses: Record<number, { list: Response[]; total: number }> = {};
+
   hideDevtools: boolean = localStorage.getItem('or_devtools_uxt_toggle') === '1';
 
   constructor() {
@@ -130,11 +145,11 @@ export default class UxtestingStore {
   initNewTest(title: string, description: string, siteId: string) {
     this.instanceCreationSiteId = siteId;
     const initialData = {
-      title: title,
+      title,
       startingPath: 'https://',
       requireMic: false,
       requireCamera: false,
-      description: description,
+      description,
       guidelines: defaultGuidelines,
       conclusionMessage: defaultConclusion,
       visibility: true,
@@ -143,9 +158,7 @@ export default class UxtestingStore {
     this.setInstance(new UxTestInst(initialData));
   }
 
-  deleteTest = async (testId: number) => {
-    return this.client.deleteTest(testId);
-  };
+  deleteTest = async (testId: number) => this.client.deleteTest(testId);
 
   setInstance(instance: UxTestInst) {
     this.instance = instance;
@@ -255,7 +268,7 @@ export default class UxtestingStore {
             this.setInstance(new UxTestInst(test));
           }
         } else {
-          throw 'Test not found'
+          throw 'Test not found';
         }
         if (results[1].status === 'fulfilled') {
           const stats = results[1].value;
@@ -280,7 +293,7 @@ export default class UxtestingStore {
             this.setTestSessions(result);
           }
         }
-      }).then(() => true)
+      }).then(() => true);
     } catch (e) {
       console.error(e);
       return false;
@@ -292,17 +305,29 @@ export default class UxtestingStore {
 
 class UxTestInst {
   title: string = '';
+
   requireMic: boolean = false;
+
   requireCamera: boolean = false;
+
   description: string = '';
+
   guidelines: string = '';
+
   visibility: boolean = false;
+
   tasks: UxTask[] = [];
+
   status: string;
+
   startingPath: string;
+
   testId?: number;
+
   responsesCount?: number;
+
   liveCount?: number;
+
   conclusionMessage: string;
 
   constructor(initialData: Partial<UxTestInst> = {}) {

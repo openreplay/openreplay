@@ -13,7 +13,9 @@ import {
   sessions as sessionsRoute,
 } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { Avatar, CountryFlag, Icon, Label, TextEllipsis, Tooltip } from 'UI';
+import {
+  Avatar, CountryFlag, Icon, Label, TextEllipsis, Tooltip,
+} from 'UI';
 
 import Counter from './Counter';
 import ErrorBars from './ErrorBars';
@@ -121,18 +123,17 @@ function SessionItem(props: RouteComponentProps & Props) {
     timezone: userTimezone,
   } = session;
 
-  const location = props.location;
+  const { location } = props;
   const queryParams = Object.fromEntries(new URLSearchParams(location.search));
   const isMobile = platform !== 'web';
   const formattedDuration = durationFormatted(duration);
   const hasUserId = userId || userAnonymousId;
   const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
-  const isAssist =
-    (!ignoreAssist &&
-      (isRoute(ASSIST_ROUTE, location.pathname) ||
-        isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
-        location.pathname.includes('multiview'))) ||
-    props.live;
+  const isAssist = (!ignoreAssist
+      && (isRoute(ASSIST_ROUTE, location.pathname)
+        || isRoute(ASSIST_LIVE_SESSION, location.pathname)
+        || location.pathname.includes('multiview')))
+    || props.live;
 
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
@@ -143,12 +144,11 @@ function SessionItem(props: RouteComponentProps & Props) {
 
   const handleHover = async () => {
     if (
-      prefetchState !== PREFETCH_STATE.none ||
-      props.live ||
-      isAssist ||
-      isMobile
-    )
-      return;
+      prefetchState !== PREFETCH_STATE.none
+      || props.live
+      || isAssist
+      || isMobile
+    ) return;
 
     setPrefetched(PREFETCH_STATE.loading);
     try {
@@ -160,10 +160,10 @@ function SessionItem(props: RouteComponentProps & Props) {
   };
   const populateData = () => {
     if (
-      props.live ||
-      isAssist ||
-      prefetchState === PREFETCH_STATE.none ||
-      isMobile
+      props.live
+      || isAssist
+      || prefetchState === PREFETCH_STATE.none
+      || isMobile
     ) {
       return;
     }
@@ -173,7 +173,7 @@ function SessionItem(props: RouteComponentProps & Props) {
   return (
     <Tooltip
       delay={0}
-      title={`Session already added into the multiview`}
+      title="Session already added into the multiview"
       disabled={!props.isDisabled || !location.pathname.includes('multiview')}
     >
       <div
@@ -186,14 +186,14 @@ function SessionItem(props: RouteComponentProps & Props) {
           <div className={cn('flex items-center w-full')}>
             {!compact && (
               <div
-                className={'flex flex-col shrink-0 pr-2 gap-2'}
+                className="flex flex-col shrink-0 pr-2 gap-2"
                 style={{ width: '40%' }}
               >
                 <div className="flex items-center pr-2 shrink-0">
                   <div>
                     <Avatar
-                      width={'24px'}
-                      height={'24px'}
+                      width="24px"
+                      height="24px"
                       iconSize={12}
                       isActive={active}
                       seed={userNumericHash}
@@ -209,11 +209,9 @@ function SessionItem(props: RouteComponentProps & Props) {
                           !disableUser && hasUserId && !props.isDisabled,
                         'color-gray-medium': disableUser || !hasUserId,
                       })}
-                      onClick={() =>
-                        !disableUser && !hasUserFilter && hasUserId
-                          ? onUserClick(userId, userAnonymousId)
-                          : null
-                      }
+                      onClick={() => (!disableUser && !hasUserFilter && hasUserId
+                        ? onUserClick(userId, userAnonymousId)
+                        : null)}
                     >
                       <TextEllipsis
                         text={userDisplayName}
@@ -236,29 +234,33 @@ function SessionItem(props: RouteComponentProps & Props) {
                 <Tooltip
                   delay={0}
                   disabled={props.isDisabled}
-                  title={
-                    <div className={'flex flex-col gap-1'}>
+                  title={(
+                    <div className="flex flex-col gap-1">
                       <span>
-                        Local Time:{' '}
-                        {formatTimeOrDate(startedAt, timezone, true)}{' '}
+                        Local Time:
+                        {' '}
+                        {formatTimeOrDate(startedAt, timezone, true)}
+                        {' '}
                         {timezone.label}
                       </span>
                       {userTimezone ? (
                         <span>
-                          User's Time:{' '}
+                          User's Time:
+                          {' '}
                           {formatTimeOrDate(
                             startedAt,
                             {
                               label: userTimezone.split('+').join(' +'),
                               value: userTimezone.split(':')[0],
                             },
-                            true
-                          )}{' '}
+                            true,
+                          )}
+                          {' '}
                           {userTimezone}
                         </span>
                       ) : null}
                     </div>
-                  }
+                  )}
                   className="w-fit !block"
                 >
                   <TextEllipsis
@@ -266,10 +268,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                       startedAt,
                       shownTimezone === 'user' && userTimezone
                         ? {
-                            label: userTimezone.split('+').join(' +'),
-                            value: userTimezone.split(':')[0],
-                          }
-                        : timezone
+                          label: userTimezone.split('+').join(' +'),
+                          value: userTimezone.split(':')[0],
+                        }
+                        : timezone,
                     )}
                     popupProps={{ inverted: true, size: 'tiny' }}
                   />
@@ -307,7 +309,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                   userCity={userCity}
                   userState={userState}
                   country={userCountry}
-                  showLabel={true}
+                  showLabel
                 />
               </div>
               <div className="color-gray-medium flex items-center py-1">
@@ -354,7 +356,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             <div
               className={cn(
                 stl.playLink,
-                props.isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                props.isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
               )}
               id="play-button"
               data-viewed={viewed}

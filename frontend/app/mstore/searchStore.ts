@@ -60,21 +60,37 @@ export const TAB_MAP: any = {
 
 class SearchStore {
   list: SavedSearch[] = [];
+
   latestRequestTime: number | null = null;
+
   latestList = List();
+
   alertMetricId: number | null = null;
+
   instance = new Search();
+
   savedSearch: ISavedSearch = new SavedSearch();
+
   filterSearchList: any = {};
+
   currentPage = 1;
+
   pageSize = PER_PAGE;
+
   activeTab = { name: 'All', type: 'all' };
+
   scrollY = 0;
+
   sessions = List();
+
   total: number = 0;
+
   loadingFilterSearch = false;
+
   isSaving: boolean = false;
+
   activeTags: any[] = [];
+
   urlParsed: boolean = false;
 
   constructor() {
@@ -109,9 +125,7 @@ class SearchStore {
     this.savedSearch = savedSearch;
     this.edit({
       filters: savedSearch.filter
-        ? savedSearch.filter.filters.map((i: FilterItem) =>
-            new FilterItem().fromJson(i)
-          )
+        ? savedSearch.filter.filters.map((i: FilterItem) => new FilterItem().fromJson(i))
         : [],
     });
     this.currentPage = 1;
@@ -123,13 +137,13 @@ class SearchStore {
   }
 
   edit(instance: Partial<Search>) {
-    this.instance = new Search(Object.assign({ ...this.instance }, instance));
+    this.instance = new Search({ ...this.instance, ...instance });
     this.currentPage = 1;
   }
 
   editSavedSearch(instance: Partial<SavedSearch>) {
     this.savedSearch = new SavedSearch(
-      Object.assign(this.savedSearch.toData(), instance)
+      Object.assign(this.savedSearch.toData(), instance),
     );
   }
 
@@ -155,14 +169,14 @@ class SearchStore {
         this.filterSearchList = response.reduce(
           (
             acc: Record<string, { projectId: number; value: string }[]>,
-            item: any
+            item: any,
           ) => {
             const { projectId, type, value } = item;
             if (!acc[type]) acc[type] = [];
             acc[type].push({ projectId, value });
             return acc;
           },
-          {}
+          {},
         );
       })
       .catch((error: any) => {
@@ -221,14 +235,14 @@ class SearchStore {
   }
 
   clearSearch() {
-    const instance = this.instance;
+    const { instance } = this;
     this.edit(
       new Search({
         rangeValue: instance.rangeValue,
         startDate: instance.startDate,
         endDate: instance.endDate,
         filters: [],
-      })
+      }),
     );
 
     this.savedSearch = new SavedSearch({});
@@ -262,15 +276,15 @@ class SearchStore {
     const index = filter.isEvent
       ? -1
       : this.instance.filters.findIndex(
-          (i: FilterItem) => i.key === filter.key
-        );
+        (i: FilterItem) => i.key === filter.key,
+      );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-          ...subFilter,
-          value: checkFilterValue(subFilter.value),
-        }))
+        ...subFilter,
+        value: checkFilterValue(subFilter.value),
+      }))
       : null;
 
     if (index > -1) {
@@ -300,9 +314,9 @@ class SearchStore {
     value: any,
     operator?: string,
     sourceOperator?: string,
-    source?: string
+    source?: string,
   ) {
-    let defaultFilter = { ...filtersMap[key] };
+    const defaultFilter = { ...filtersMap[key] };
     defaultFilter.value = value;
 
     if (operator) {
@@ -322,15 +336,14 @@ class SearchStore {
 
   updateSearch = (search: Partial<Search>) => {
     this.instance = Object.assign(this.instance, search);
-  }
+  };
 
   updateFilter = (index: number, search: Partial<FilterItem>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
       if (i === index) {
         return search;
-      } else {
-        return _filter;
       }
+      return _filter;
     });
 
     this.instance = new Search({
@@ -340,9 +353,7 @@ class SearchStore {
   };
 
   removeFilter = (index: number) => {
-    const newFilters = this.instance.filters.filter((_filter: any, i: any) => {
-      return i !== index;
-    });
+    const newFilters = this.instance.filters.filter((_filter: any, i: any) => i !== index);
 
     this.instance = new Search({
       ...this.instance.toData(),
@@ -360,7 +371,7 @@ class SearchStore {
 
   async fetchSessions(
     force: boolean = false,
-    bookmarked: boolean = false
+    bookmarked: boolean = false,
   ): Promise<void> {
     const filter = this.instance.toSearch();
 
@@ -404,7 +415,7 @@ class SearchStore {
         tab: this.activeTab.type,
         bookmarked: bookmarked ? true : undefined,
       },
-      force
+      force,
     );
   }
 }

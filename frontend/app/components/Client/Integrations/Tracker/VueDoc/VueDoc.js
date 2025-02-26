@@ -1,15 +1,15 @@
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import React from 'react';
-import { CodeBlock } from "UI";
+import { CodeBlock } from 'UI';
 import ToggleContent from 'Components/shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 import { observer } from 'mobx-react-lite';
 
-const VueDoc = () => {
+function VueDoc() {
   const { integrationsStore, projectsStore } = useStore();
   const sites = projectsStore.list;
-  const siteId = integrationsStore.integrations.siteId
-  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
+  const { siteId } = integrationsStore.integrations;
+  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey;
 
   const usage = `import Vuex from 'vuex'
 import OpenReplay from '@openreplay/tracker';
@@ -23,7 +23,7 @@ tracker.start()
 const store = new Vuex.Store({
   //...
   plugins: [tracker.use(trackerVuex(<options>))] // check list of available options below
-});`
+});`;
   const usageCjs = `import Vuex from 'vuex'
 import OpenReplay from '@openreplay/tracker/cjs';
 import trackerVuex from '@openreplay/tracker-vuex/cjs';
@@ -41,7 +41,7 @@ const store = new Vuex.Store({
     //...
     plugins: [tracker.use(trackerVuex(<options>))] // check list of available options below
   });
-}`
+}`;
   return (
     <div className="bg-white h-screen overflow-y-auto" style={{ width: '500px' }}>
       <h3 className="p-5 text-2xl">VueX</h3>
@@ -52,7 +52,7 @@ const store = new Vuex.Store({
         </div>
 
         <div className="font-bold my-2 text-lg">Installation</div>
-        <CodeBlock code={`npm i @openreplay/tracker-vuex --save`} language={'bash'} />
+        <CodeBlock code="npm i @openreplay/tracker-vuex --save" language="bash" />
 
         <div className="font-bold my-2 text-lg">Usage</div>
         <p>
@@ -64,10 +64,10 @@ const store = new Vuex.Store({
         <ToggleContent
           label="Server-Side-Rendered (SSR)?"
           first={
-            <CodeBlock language={'js'} code={usage} />
+            <CodeBlock language="js" code={usage} />
           }
           second={
-            <CodeBlock language={'jsx'} code={usageCjs} />
+            <CodeBlock language="jsx" code={usageCjs} />
           }
         />
 
@@ -79,7 +79,7 @@ const store = new Vuex.Store({
       </div>
     </div>
   );
-};
+}
 
 VueDoc.displayName = 'VueDoc';
 

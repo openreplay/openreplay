@@ -27,10 +27,10 @@ function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: ()
   };
 
   return (
-    <div className={'h-screen p-4 bg-white'}>
-      <div className={'border-b flex items-center justify-between mb-4 py-2'}>
+    <div className="h-screen p-4 bg-white">
+      <div className="border-b flex items-center justify-between mb-4 py-2">
         <ReloadButton onClick={() => refreshData(page)} />
-        <div className={'w-3/4 font-semibold text-xl'}>Live Participants</div>
+        <div className="w-3/4 font-semibold text-xl">Live Participants</div>
         <Input.Search
           allowClear
           placeholder="Filter by participant ID or name"
@@ -42,16 +42,24 @@ function LiveTestsModal({ testId, closeModal }: { testId: string; closeModal: ()
         {uxtestingStore.testAssistSessions.list.map((s: any) => (
           <SessionItem onClick={closeModal} key={s.sessionId} session={s} live />
         ))}
-        <div className={'flex items-center justify-between'}>
+        <div className="flex items-center justify-between">
           <div>
-            Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to{' '}
+            Showing
+            {' '}
+            <span className="font-medium">{(page - 1) * 10 + 1}</span>
+            {' '}
+            to
+            {' '}
             <span className="font-medium">
               {(page - 1) * 10 + uxtestingStore.testAssistSessions.list.length}
-            </span>{' '}
-            of{' '}
+            </span>
+            {' '}
+            of
+            {' '}
             <span className="font-medium">
               {numberWithCommas(uxtestingStore.testAssistSessions.total)}
-            </span>{' '}
+            </span>
+            {' '}
             ongoing tests.
           </div>
           <Pagination

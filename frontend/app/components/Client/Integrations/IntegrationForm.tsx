@@ -3,8 +3,10 @@ import React from 'react';
 
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
-import { Checkbox, Form, Input, Loader } from 'UI';
-import { Button } from 'antd'
+import {
+  Checkbox, Form, Input, Loader,
+} from 'UI';
+import { Button } from 'antd';
 import { toast } from 'react-toastify';
 
 function IntegrationForm(props: any) {
@@ -13,17 +15,21 @@ function IntegrationForm(props: any) {
   const initialSiteId = integrationsStore.integrations.siteId;
   const integrationStore = integrationsStore[name as unknown as namedStore];
   const config = integrationStore.instance;
-  const loading = integrationStore.loading;
+  const { loading } = integrationStore;
   const onSave = integrationStore.saveIntegration;
   const onRemove = integrationStore.deleteIntegration;
-  const edit = integrationStore.edit;
+  const { edit } = integrationStore;
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
 
   const fetchList = () => {
     void fetchIntegrationList(initialSiteId);
   };
 
-  const write = ({ target: { value, name: key, type, checked } }) => {
+  const write = ({
+    target: {
+      value, name: key, type, checked,
+    },
+  }) => {
     if (type === 'checkbox') edit({ [key]: checked });
     else edit({ [key]: value });
   };
@@ -65,10 +71,9 @@ function IntegrationForm(props: any) {
               type = 'text',
               checkIfDisplayed,
               autoFocus = false,
-            }) =>
-              (typeof checkIfDisplayed !== 'function' ||
-                checkIfDisplayed(config)) &&
-              (type === 'checkbox' ? (
+            }) => (typeof checkIfDisplayed !== 'function'
+                || checkIfDisplayed(config))
+              && (type === 'checkbox' ? (
                 <Form.Field key={key}>
                   <Checkbox
                     label={label}
@@ -91,7 +96,7 @@ function IntegrationForm(props: any) {
                     autoFocus={autoFocus}
                   />
                 </Form.Field>
-              ))
+              )),
           )}
 
           <Button
@@ -106,7 +111,7 @@ function IntegrationForm(props: any) {
 
           {integrated && (
             <Button loading={loading} onClick={remove}>
-              {'Delete'}
+              Delete
             </Button>
           )}
         </Form>

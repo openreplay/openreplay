@@ -7,7 +7,7 @@ let frameCounter = 0;
 function draw(
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,
-  canvasCtx: CanvasRenderingContext2D
+  canvasCtx: CanvasRenderingContext2D,
 ) {
   if (frameCounter % 4 === 0) {
     canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -18,13 +18,14 @@ function draw(
 
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
+
   private peer: Peer | null = null;
 
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
     private readonly getNode: MessageManager['getNode'],
-    private readonly agentInfo: Record<string, any>
+    private readonly agentInfo: Record<string, any>,
   ) {
     // @ts-ignore
     const urlObject = new URL(window.env.API_EDP || window.location.origin);
@@ -33,15 +34,15 @@ export default class CanvasReceiver {
       path: '/assist',
       port:
         urlObject.port === ''
-        ? location.protocol === 'https:'
-          ? 443
-          : 80
-        : parseInt(urlObject.port),
+          ? location.protocol === 'https:'
+            ? 443
+            : 80
+          : parseInt(urlObject.port),
     };
     if (this.config) {
-      peerOpts['config'] = {
+      peerOpts.config = {
         iceServers: this.config,
-        //@ts-ignore
+        // @ts-ignore
         sdpSemantics: 'unified-plan',
         iceTransportPolicy: 'all',
       };
@@ -59,13 +60,13 @@ export default class CanvasReceiver {
           const node = this.getNode(parseInt(canvasId, 10));
           const videoEl = spawnVideo(
             this.streams.get(canvasId)?.clone() as MediaStream,
-            node as VElement
+            node as VElement,
           );
           if (node) {
             draw(
               videoEl,
               node.node as HTMLCanvasElement,
-              (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
+              (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D,
             );
           }
         }, 250);
@@ -77,7 +78,7 @@ export default class CanvasReceiver {
   clear() {
     if (this.peer) {
       // otherwise it calls reconnection on data chan close
-      const peer = this.peer;
+      const { peer } = this;
       this.peer = null;
       peer.disconnect();
       peer.destroy();
@@ -88,7 +89,7 @@ export default class CanvasReceiver {
 function spawnVideo(stream: MediaStream, node: VElement) {
   const videoEl = document.createElement('video');
 
-  videoEl.srcObject = stream
+  videoEl.srcObject = stream;
   videoEl.setAttribute('autoplay', 'true');
   videoEl.setAttribute('muted', 'true');
   videoEl.setAttribute('playsinline', 'true');
@@ -98,23 +99,23 @@ function spawnVideo(stream: MediaStream, node: VElement) {
     .then(() => true)
     .catch(() => {
       // we allow that if user just reloaded the page
-    })
+    });
 
   const clearListeners = () => {
-    document.removeEventListener('click', startStream)
-    videoEl.removeEventListener('playing', clearListeners)
-  }
-  videoEl.addEventListener('playing', clearListeners)
+    document.removeEventListener('click', startStream);
+    videoEl.removeEventListener('playing', clearListeners);
+  };
+  videoEl.addEventListener('playing', clearListeners);
 
   const startStream = () => {
     videoEl.play()
       .then(() => console.log('unpaused'))
       .catch(() => {
         // we allow that if user just reloaded the page
-      })
-    document.removeEventListener('click', startStream)
-  }
-  document.addEventListener('click', startStream)
+      });
+    document.removeEventListener('click', startStream);
+  };
+  document.addEventListener('click', startStream);
 
   return videoEl;
 }

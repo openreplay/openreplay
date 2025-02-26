@@ -28,8 +28,8 @@ import {
 import { useHistory } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId, metricCreate } from 'App/routes';
 import { FilterKey } from 'Types/filter/filterType';
-import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
 import { observer } from 'mobx-react-lite';
+import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
 
 interface TabItem {
   icon: React.ReactNode;
@@ -54,14 +54,14 @@ export const tabItems: Record<string, TabItem[]> = {
     },
     {
       icon: (
-        <Icon name={'dashboards/user-journey'} color={'inherit'} size={16} />
+        <Icon name="dashboards/user-journey" color="inherit" size={16} />
       ),
       title: 'Journeys',
       type: USER_PATH,
       description: 'Understand the paths users take through your product.',
     },
     {
-      icon: <Icon name={'dashboards/heatmap-2'} color={'inherit'} size={16} />,
+      icon: <Icon name="dashboards/heatmap-2" color="inherit" size={16} />,
       title: 'Heatmaps',
       type: HEATMAP,
       description: 'Visualize user interaction patterns on your pages.',
@@ -70,7 +70,7 @@ export const tabItems: Record<string, TabItem[]> = {
   [CATEGORIES.monitors]: [
     {
       icon: (
-        <Icon name={'dashboards/circle-alert'} color={'inherit'} size={16} />
+        <Icon name="dashboards/circle-alert" color="inherit" size={16} />
       ),
       title: 'JS Errors',
       type: FilterKey.ERRORS,
@@ -85,13 +85,13 @@ export const tabItems: Record<string, TabItem[]> = {
     {
       icon: <WifiOff width={16} />,
       title: '4xx/5xx Requests',
-      type: TIMESERIES + '_4xx_requests',
+      type: `${TIMESERIES}_4xx_requests`,
       description: 'Track client and server errors for performance issues.',
     },
     {
       icon: <Turtle width={16} />,
       title: 'Slow Network Requests',
-      type: TIMESERIES + '_slow_network_requests',
+      type: `${TIMESERIES}_slow_network_requests`,
       description: 'Pinpoint the slowest network requests causing delays.',
     },
   ],
@@ -189,33 +189,31 @@ function CategoryTab({
     if (projectsStore.activeSiteId) {
       if (inCards) {
         history.push(
-          withSiteId(metricCreate(), projectsStore.activeSiteId) + `?mk=${card}`
+          `${withSiteId(metricCreate(), projectsStore.activeSiteId)}?mk=${card}`,
         );
       } else if (dashboardStore.selectedDashboard) {
         history.push(
-          withSiteId(
+          `${withSiteId(
             dashboardMetricCreate(dashboardStore.selectedDashboard.dashboardId),
-            projectsStore.activeSiteId
-          ) + `?mk=${card}`
+            projectsStore.activeSiteId,
+          )}?mk=${card}`,
         );
       }
     }
   };
   return (
-    <div className={'flex flex-col gap-3'}>
+    <div className="flex flex-col gap-3">
       {items.map((item, index) => (
         <div
           onClick={() => handleCardSelection(item.type)}
           key={index}
-          className={
-            'flex items-start gap-2 p-2 hover:bg-active-blue rounded-xl hover:text-teal group cursor-pointer'
-          }
+          className="flex items-start gap-2 p-2 hover:bg-active-blue rounded-xl hover:text-teal group cursor-pointer"
         >
           {item.icon}
-          <div className={'leading-none'}>
+          <div className="leading-none">
             <div>{item.title}</div>
             <div
-              className={'text-disabled-text group-hover:text-teal/60 text-sm'}
+              className="text-disabled-text group-hover:text-teal/60 text-sm"
             >
               {item.description}
             </div>
@@ -236,21 +234,21 @@ const AddCardSection = observer(
   }) => {
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
-    const isMobile = projectsStore.isMobile;
+    const { isMobile } = projectsStore;
     const [tab, setTab] = React.useState(
-      isMobile ? 'web_analytics' : 'product_analytics'
+      isMobile ? 'web_analytics' : 'product_analytics',
     );
 
     const options = isMobile
       ? [
-          // { label: 'Product Analytics', value: 'product_analytics' },
-          { label: 'Mobile Analytics', value: 'web_analytics' },
-        ]
+        // { label: 'Product Analytics', value: 'product_analytics' },
+        { label: 'Mobile Analytics', value: 'web_analytics' },
+      ]
       : [
-          { label: 'Product Analytics', value: 'product_analytics' },
-          { label: 'Monitors', value: 'monitors' },
-          { label: 'Web Analytics', value: 'web_analytics' },
-        ];
+        { label: 'Product Analytics', value: 'product_analytics' },
+        { label: 'Monitors', value: 'monitors' },
+        { label: 'Web Analytics', value: 'web_analytics' },
+      ];
 
     const originStr = window.env.ORIGIN || window.location.origin;
     const isSaas = /api\.openreplay\.com/.test(originStr);
@@ -265,26 +263,24 @@ const AddCardSection = observer(
           onClose: () => {
             metricStore.updateKey('metricsSearch', '');
           },
-        }
+        },
       );
       handleOpenChange?.(false);
     };
     return (
       <div
-        className={
-          'pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm'
-        }
+        className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-sm"
       >
-        <div className={'flex justify-between p-2'}>
-          <div className={'text-xl font-medium mb-1'}>
+        <div className="flex justify-between p-2">
+          <div className="text-xl font-medium mb-1">
             What do you want to visualize?
           </div>
           {isSaas ? (
             <div
-              className={'font-medium flex items-center gap-2 cursor-pointer'}
+              className="font-medium flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles color={'#3C00FFD8'} size={16} />
-              <div className={'ai-gradient'}>Ask AI</div>
+              <Sparkles color="#3C00FFD8" size={16} />
+              <div className="ai-gradient">Ask AI</div>
             </div>
           ) : null}
         </div>
@@ -303,9 +299,7 @@ const AddCardSection = observer(
         </div>
         {inCards ? null : (
           <div
-            className={
-              'w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer'
-            }
+            className="w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer"
           >
             <Button
               className="w-full mt-4 hover:bg-active-blue hover:text-teal"
@@ -313,13 +307,15 @@ const AddCardSection = observer(
               variant="text"
               onClick={onExistingClick}
             >
-              <FolderOutlined /> Add existing card
+              <FolderOutlined />
+              {' '}
+              Add existing card
             </Button>
           </div>
         )}
       </div>
     );
-  }
+  },
 );
 
 export default AddCardSection;

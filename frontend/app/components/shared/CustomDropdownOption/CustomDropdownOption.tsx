@@ -11,14 +11,16 @@ export interface Props extends OptionProps {
   disabled?: boolean;
 }
 function CustomDropdownOption(props: Props) {
-  const { icon = '', label, description, isSelected, isFocused, disabled } = props;
+  const {
+    icon = '', label, description, isSelected, isFocused, disabled,
+  } = props;
   return (
     <components.Option {...props} className="!p-0 mb-2">
       <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED} delay={0}>
         <div
           className={cn(
             'cursor-pointer group p-2 flex item-start border border-transparent rounded hover:!bg-active-blue !leading-0',
-            { 'opacity-30': disabled }
+            { 'opacity-30': disabled },
           )}
         >
           {icon && (

@@ -20,7 +20,7 @@ function EditHlModal({
   React.useEffect(() => {
     setNoteText(text);
     setVisible(visible);
-  }, [text, visible])
+  }, [text, visible]);
 
   const onEdit = (val: string) => {
     if (val.length > 200) {
@@ -32,22 +32,25 @@ function EditHlModal({
 
   return (
     <Modal
-      title={'Edit Highlight'}
+      title="Edit Highlight"
       open={open}
-      okText={'Save'}
+      okText="Save"
       width={350}
       centered
       onOk={() => onSave(noteText, visible)}
       onCancel={() => onCancel()}
     >
-      <div className={'flex flex-col gap-2'}>
+      <div className="flex flex-col gap-2">
         <Input.TextArea
-          placeholder={'Highlight note'}
+          placeholder="Highlight note"
           onChange={(e) => onEdit(e.target.value)}
           maxLength={200}
           value={noteText}
         />
-        <div>{noteText.length}/200 Characters remaining</div>
+        <div>
+          {noteText.length}
+          /200 Characters remaining
+        </div>
         <Checkbox
           checked={checkboxVisible}
           onChange={(e) => setVisible(e.target.checked)}

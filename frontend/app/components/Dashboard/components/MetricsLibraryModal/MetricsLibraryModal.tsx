@@ -1,11 +1,11 @@
 import Modal from 'App/components/Modal/Modal';
 import React, { useEffect, useState } from 'react';
-import MetricsList from '../MetricsList';
 import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Input } from 'antd';
 import FooterContent from './FooterContent';
-import { Input } from 'antd'
+import MetricsList from '../MetricsList';
 
 interface Props {
   dashboardId?: number;
@@ -17,12 +17,12 @@ function MetricsLibraryModal(props: Props) {
   const [selectedList, setSelectedList] = useState([]);
 
   useEffect(() => {
-    metricStore.updateKey('page', 1)
+    metricStore.updateKey('page', 1);
     metricStore.updateKey('listView', true);
 
     return () => {
-      metricStore.updateKey('filter', { ...metricStore.filter, query: '' })
-    }
+      metricStore.updateKey('filter', { ...metricStore.filter, query: '' });
+    };
   }, []);
 
   const onSelectionChange = (list: any) => {
@@ -30,7 +30,7 @@ function MetricsLibraryModal(props: Props) {
   };
 
   const onChange = ({ target: { value } }: any) => {
-    metricStore.updateKey('filter', { ...metricStore.filter, query: value })
+    metricStore.updateKey('filter', { ...metricStore.filter, query: value });
   };
 
   return (
@@ -66,7 +66,7 @@ function MetricSearch({ onChange }: any) {
         name="dashboardsSearch"
         placeholder="Filter by title or owner"
         onChange={onChange}
-        className={'rounded-lg'}
+        className="rounded-lg"
       />
     </div>
   );

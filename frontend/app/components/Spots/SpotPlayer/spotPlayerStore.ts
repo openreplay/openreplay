@@ -1,8 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 
-import { getResourceFromNetworkRequest } from 'App/player';
-import { Log as PLog } from "App/player";
-import { PlayingState } from 'App/player-ui'
+import { getResourceFromNetworkRequest, Log as PLog } from 'App/player';
+import { PlayingState } from 'App/player-ui';
 
 interface Event {
   time: number;
@@ -34,9 +33,8 @@ interface SpotNetworkRequest extends Event {
   method: string;
 }
 
-
 const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
-  const { type, statusCode} = ev;
+  const { type, statusCode } = ev;
   const mapType = (type: string) => {
     switch (type) {
       case 'xmlhttprequest':
@@ -55,18 +53,18 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
   const request = JSON.stringify({
     headers: ev.requestHeaders,
     body: ev.body,
-  })
+  });
   const response = JSON.stringify({
     headers: ev.responseHeaders,
-    body: ev.responseBody ?? { warn: "Chrome Manifest V3 -- No response body available in Chrome 93+" }
-  })
+    body: ev.responseBody ?? { warn: 'Chrome Manifest V3 -- No response body available in Chrome 93+' },
+  });
   return ({
     ...ev,
     request,
     response,
     type: mapType(type),
     status: statusCode,
-  })
+  });
 };
 
 export const PANELS = {
@@ -79,23 +77,41 @@ export type PanelType = keyof typeof PANELS;
 
 class SpotPlayerStore {
   time = 0;
+
   duration = 0;
+
   durationString = '';
+
   isPlaying = true;
+
   state = PlayingState.Playing;
+
   isMuted = false;
+
   volume = 1;
+
   playbackRate = 1;
+
   isFullScreen = false;
+
   logs: ReturnType<typeof PLog>[] = [];
+
   locations: Location[] = [];
+
   clicks: Click[] = [];
+
   network: ReturnType<typeof getResourceFromNetworkRequest>[] = [];
+
   startTs = 0;
+
   activePanel: PanelType | null = null;
+
   skipInterval = 10;
+
   browserVersion: string | null = null;
+
   resolution: string | null = null;
+
   platform: string | null = null;
 
   constructor() {
@@ -122,7 +138,7 @@ class SpotPlayerStore {
     this.browserVersion = null;
     this.resolution = null;
     this.platform = null;
-  }
+  };
 
   setDeviceData(browserVersion: string, resolution: string, platform: string) {
     this.browserVersion = browserVersion;
@@ -132,7 +148,7 @@ class SpotPlayerStore {
 
   setSkipInterval = (interval: number) => {
     this.skipInterval = interval;
-  }
+  };
 
   setActivePanel(panel: PanelType | null): void {
     this.activePanel = panel;
@@ -163,7 +179,7 @@ class SpotPlayerStore {
 
   onComplete = () => {
     this.state = PlayingState.Completed;
-  }
+  };
 
   setIsMuted(isMuted: boolean): void {
     this.isMuted = isMuted;
@@ -181,7 +197,7 @@ class SpotPlayerStore {
     logs: Log[],
     locations: Location[],
     clicks: Click[],
-    network: SpotNetworkRequest[]
+    network: SpotNetworkRequest[],
   ): void {
     this.logs = logs.map((log) => PLog({
       ...log,
@@ -206,11 +222,11 @@ class SpotPlayerStore {
       const ev = { ...request, timestamp: request.time };
       const req = getResourceFromNetworkRequest(
         mapSpotNetworkToEv(ev),
-        this.startTs
+        this.startTs,
       );
       return {
         ...req, timestamp: request.timestamp,
-      }
+      };
     });
   }
 
@@ -220,7 +236,7 @@ class SpotPlayerStore {
 
   getHighlightedEvent<T extends Log | Location | Click | SpotNetworkRequest>(
     time: number,
-    events: T[]
+    events: T[],
   ): { event: T | null; index: number } {
     if (!events.length) {
       return { event: null, index: 0 };
@@ -233,8 +249,8 @@ class SpotPlayerStore {
       const nextEvent = events[i + 1];
 
       if (
-        currentTs >= event.time &&
-        (!nextEvent || currentTs < nextEvent.time)
+        currentTs >= event.time
+        && (!nextEvent || currentTs < nextEvent.time)
       ) {
         highlightedEvent = event;
         index = i;

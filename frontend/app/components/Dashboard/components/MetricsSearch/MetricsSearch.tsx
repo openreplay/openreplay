@@ -2,7 +2,7 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-import {Input} from 'antd';
+import { Input } from 'antd';
 import { debounce } from 'App/utils';
 
 let debounceUpdate: any = () => {};
@@ -12,7 +12,7 @@ function MetricsSearch() {
   useEffect(() => {
     debounceUpdate = debounce(
       (key: any, value: any) => metricStore.updateKey('filter', { ...metricStore.filter, query: value }),
-      500
+      500,
     );
   }, []);
 

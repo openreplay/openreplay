@@ -5,11 +5,11 @@ import { Loader } from 'UI';
 import { Switch, Checkbox, Tag } from 'antd';
 import GDPR from 'App/mstore/types/gdpr';
 import cn from 'classnames';
-import stl from './projectCodeSnippet.module.css';
 import Select from 'Shared/Select';
 import CodeSnippet from 'Shared/CodeSnippet';
 import CircleNumber from 'Components/Onboarding/components/CircleNumber';
 import Project from '@/mstore/types/project';
+import stl from './projectCodeSnippet.module.css';
 
 interface InputModeOption {
   label: string;
@@ -31,11 +31,11 @@ interface Props {
 
 const ProjectCodeSnippet: React.FC<Props> = (props) => {
   const { projectsStore } = useStore();
-  const siteId = projectsStore.siteId;
+  const { siteId } = projectsStore;
   const site = props.project;
   const gdpr = site.gdpr as GDPR;
   const sites = projectsStore.list;
-  const editGDPR = projectsStore.editGDPR;
+  const { editGDPR } = projectsStore;
   const onSaveGDPR = projectsStore.saveGDPR;
   const init = projectsStore.initProject;
   const [changed, setChanged] = useState(false);
@@ -84,9 +84,7 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
           <Select
             name="defaultInputMode"
             options={inputModeOptions}
-            onChange={({ value }) =>
-              onChangeSelect({ name: 'defaultInputMode', value: value.value })
-            }
+            onChange={({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value })}
             placeholder="Default Input Mode"
             defaultValue={gdpr.defaultInputMode}
           />
@@ -142,42 +140,47 @@ const ProjectCodeSnippet: React.FC<Props> = (props) => {
       </div>
 
       <div className={cn(stl.instructions, '')}>
-        <div className='flex flex-col w-full'>
-          <div className='flex flex-col items-start justify-start gap-2'>
+        <div className="flex flex-col w-full">
+          <div className="flex flex-col items-start justify-start gap-2">
             <div className="font-medium flex gap-2 items-center">
               <CircleNumber text="3" />
               <span>Install SDK</span>
             </div>
 
             <div className="ml-8 flex gap-2 items-center">
-              <div>Paste this snippet <span>{'before the '}</span></div>
-              <Tag color="red" bordered={false} className='rounded-lg text-base mr-0'> {'</head>'} </Tag>
+              <div>
+                Paste this snippet
+                <span>{'before the '}</span>
+              </div>
+              <Tag color="red" bordered={false} className="rounded-lg text-base mr-0">
+                {' '}
+                {'</head>'}
+                {' '}
+              </Tag>
               <span>{' tag of your page.'}</span>
             </div>
-          </div> 
-        <div className={cn(stl.snippetsWrapper, 'ml-8')}>
-        {showLoader ? (
-          <div style={{ height: '474px' }}>
-            <Loader loading={true} />
           </div>
-        ) : (
-          <CodeSnippet
-            isAssistEnabled={isAssistEnabled}
-            host={site?.host}
-            projectKey={site?.projectKey!}
-            ingestPoint={`"https://${window.location.hostname}/ingest"`}
-            defaultInputMode={gdpr.defaultInputMode}
-            obscureTextNumbers={gdpr.maskNumbers}
-            obscureTextEmails={gdpr.maskEmails}
-          />
-        )}
-      </div>
-      </div>
+          <div className={cn(stl.snippetsWrapper, 'ml-8')}>
+            {showLoader ? (
+              <div style={{ height: '474px' }}>
+                <Loader loading />
+              </div>
+            ) : (
+              <CodeSnippet
+                isAssistEnabled={isAssistEnabled}
+                host={site?.host}
+                projectKey={site?.projectKey!}
+                ingestPoint={`"https://${window.location.hostname}/ingest"`}
+                defaultInputMode={gdpr.defaultInputMode}
+                obscureTextNumbers={gdpr.maskNumbers}
+                obscureTextEmails={gdpr.maskEmails}
+              />
+            )}
+          </div>
+        </div>
 
       </div>
 
-      
-      
     </div>
   );
 };

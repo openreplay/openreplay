@@ -1,11 +1,11 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from "App/mstore";
+import { useStore } from 'App/mstore';
 import { Form, Input, Icon } from 'UI';
-import { Button } from 'antd'
+import { Button } from 'antd';
 import { validateNumber } from 'App/validate';
-import styles from './siteForm.module.css';
 import Select from 'Shared/Select';
+import styles from './siteForm.module.css';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -16,68 +16,67 @@ const inputModeOptions = [
 function GDPRForm(props) {
   const { projectsStore } = useStore();
   const site = projectsStore.instance;
-  const gdpr = site.gdpr;
-  const saving = false //projectsStore.;
-  const editGDPR = projectsStore.editGDPR;
-  const saveGDPR = projectsStore.saveGDPR;
-  
-  
+  const { gdpr } = site;
+  const saving = false; // projectsStore.;
+  const { editGDPR } = projectsStore;
+  const { saveGDPR } = projectsStore;
+
   const onChange = ({ target: { name, value } }) => {
-    if (name === "sampleRate") {
+    if (name === 'sampleRate') {
       if (!validateNumber(value, { min: 0, max: 100 })) return;
-      if (value.length > 1 && value[0] === "0") {
+      if (value.length > 1 && value[0] === '0') {
         value = value.slice(1);
       }
     }
-    editGDPR({ [ name ]: value });
-  }
+    editGDPR({ [name]: value });
+  };
 
-  const onSampleRateBlur = ({ target: { name, value } }) => { //TODO: editState hoc
-    if (value === ''){
+  const onSampleRateBlur = ({ target: { name, value } }) => { // TODO: editState hoc
+    if (value === '') {
       editGDPR({ sampleRate: 100 });
     }
-  }
+  };
 
   const onChangeSelect = ({ name, value }) => {
-    props.editGDPR({ [ name ]: value });
+    props.editGDPR({ [name]: value });
   };
 
   const onChangeOption = ({ target: { checked, name } }) => {
-    editGDPR({ [ name ]: checked });
-  }
+    editGDPR({ [name]: checked });
+  };
 
   const onSubmit = (e) => {
     e.preventDefault();
     void saveGDPR(site.id);
-  }
-  
+  };
+
   return (
-    <Form className={ styles.formWrapper } onSubmit={ onSubmit }>
-      <div className={ styles.content }>
+    <Form className={styles.formWrapper} onSubmit={onSubmit}>
+      <div className={styles.content}>
         <Form.Field>
-          <label>{ 'Name' }</label>
+          <label>Name</label>
           <div>{ site.host }</div>
         </Form.Field>
         <Form.Field>
-          <label>{ 'Session Capture Rate' }</label>
+          <label>Session Capture Rate</label>
           <Input
             icon="percent"
             name="sampleRate"
-            value={ gdpr.sampleRate }
-            onChange={ onChange }
-            onBlur={ onSampleRateBlur }
-            className={ styles.sampleRate }
+            value={gdpr.sampleRate}
+            onChange={onChange}
+            onBlur={onSampleRateBlur}
+            className={styles.sampleRate}
           />
         </Form.Field>
 
         <Form.Field>
-          <label htmlFor="defaultInputMode">{ 'Data Recording Options' }</label>
+          <label htmlFor="defaultInputMode">Data Recording Options</label>
           <Select
             name="defaultInputMode"
-            options={ inputModeOptions }
-            onChange={ onChangeSelect }
+            options={inputModeOptions}
+            onChange={onChangeSelect}
             placeholder="Default Input Mode"
-            value={ gdpr.defaultInputMode }
+            value={gdpr.defaultInputMode}
           />
         </Form.Field>
 
@@ -86,11 +85,11 @@ function GDPRForm(props) {
             <input
               name="maskNumbers"
               type="checkbox"
-              checked={ gdpr.maskNumbers }
-              onChange={ onChangeOption }
+              checked={gdpr.maskNumbers}
+              onChange={onChangeOption}
             />
-            { 'Do not record any numeric text' }
-            <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any numeric text for all sessions.' }</div>
+            Do not record any numeric text
+            <div className={styles.controlSubtext}>If enabled, OpenReplay will not record or store any numeric text for all sessions.</div>
           </label>
         </Form.Field>
 
@@ -99,33 +98,35 @@ function GDPRForm(props) {
             <input
               name="maskEmails"
               type="checkbox"
-              checked={ gdpr.maskEmails }
-              onChange={ onChangeOption }
+              checked={gdpr.maskEmails}
+              onChange={onChangeOption}
             />
             { 'Do not record email addresses ' }
-            <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any email address for all sessions.' }</div>
+            <div className={styles.controlSubtext}>If enabled, OpenReplay will not record or store any email address for all sessions.</div>
           </label>
         </Form.Field>
 
-        <div className={ styles.blockIpWarapper }>
-          <div className={ styles.button } onClick={ props.toggleBlockedIp }>
-            { 'Block IP' } <Icon name="next1" size="18" />
+        <div className={styles.blockIpWarapper}>
+          <div className={styles.button} onClick={props.toggleBlockedIp}>
+            Block IP
+            {' '}
+            <Icon name="next1" size="18" />
           </div>
         </div>
       </div>
 
-      <div className={ styles.footer }>
+      <div className={styles.footer}>
         <Button
           type="primary"
           className="float-left mr-2"
-          loading={ saving }
+          loading={saving}
         >
           Update
         </Button>
-        <Button onClick={ onClose }>Close</Button>
+        <Button onClick={onClose}>Close</Button>
       </div>
     </Form>
-  )
+  );
 }
 
 export default observer(GDPRForm);

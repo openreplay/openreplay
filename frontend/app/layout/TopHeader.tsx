@@ -11,11 +11,12 @@ import { Icon } from 'UI';
 const { Header } = Layout;
 
 function TopHeader() {
-  const { userStore, notificationStore, projectsStore, settingsStore } =
-    useStore();
-  const account = userStore.account;
-  const siteId = projectsStore.siteId;
-  const initialDataFetched = userStore.initialDataFetched;
+  const {
+    userStore, notificationStore, projectsStore, settingsStore,
+  } = useStore();
+  const { account } = userStore;
+  const { siteId } = projectsStore;
+  const { initialDataFetched } = userStore;
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;

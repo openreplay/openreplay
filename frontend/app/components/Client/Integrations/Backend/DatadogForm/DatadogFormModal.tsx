@@ -23,15 +23,15 @@ const initialValues = {
   app_key: '',
 };
 
-const DatadogFormModal = ({
+function DatadogFormModal({
   onClose,
   integrated,
 }: {
   onClose: () => void;
   integrated: boolean;
-}) => {
+}) {
   const { integrationsStore } = useStore();
-  const siteId = integrationsStore.integrations.siteId;
+  const { siteId } = integrationsStore.integrations;
 
   const {
     data = initialValues,
@@ -39,7 +39,9 @@ const DatadogFormModal = ({
     saveMutation,
     removeMutation,
   } = useIntegration<DatadogConfig>('datadog', siteId, initialValues);
-  const { values, errors, handleChange, hasErrors, checkErrors } = useForm(data, {
+  const {
+    values, errors, handleChange, hasErrors, checkErrors,
+  } = useForm(data, {
     site: {
       required: true,
     },
@@ -59,7 +61,7 @@ const DatadogFormModal = ({
     try {
       await saveMutation.mutateAsync({ values, siteId, exists });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -68,7 +70,7 @@ const DatadogFormModal = ({
     try {
       await removeMutation.mutateAsync({ siteId });
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
     onClose();
   };
@@ -117,7 +119,7 @@ const DatadogFormModal = ({
             onChange={handleChange}
             errors={errors.app_key}
           />
-          <div className={'flex items-center gap-2'}>
+          <div className="flex items-center gap-2">
             <Button
               onClick={save}
               disabled={hasErrors}
@@ -129,7 +131,7 @@ const DatadogFormModal = ({
 
             {integrated && (
               <Button loading={removeMutation.isPending} onClick={remove}>
-                {'Delete'}
+                Delete
               </Button>
             )}
           </div>
@@ -137,7 +139,7 @@ const DatadogFormModal = ({
       </div>
     </div>
   );
-};
+}
 
 DatadogFormModal.displayName = 'DatadogForm';
 

@@ -8,18 +8,20 @@ import DOMManager from './DOM/DOMManager';
 
 export default class PagesManager extends ListWalker<DOMManager> {
   private currentPage: DOMManager | null = null;
+
   /**
    * String Dictionary in tracker may be desync with CreateDocument (why???)
    * e.g. some StringDictionary and other messages before any 'CreateDocument' one
    * TODO: understand why and fix
    */
   private stringDicts: Record<number, string>[] = [{}];
+
   private globalDictionary: Map<string, string> = new Map();
 
   constructor(
     private screen: Screen,
     private isMobile: boolean,
-    private setCssLoading: (flag: boolean) => void
+    private setCssLoading: (flag: boolean) => void,
   ) {
     super();
   }
@@ -28,6 +30,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		Assumed that messages added in a correct time sequence.
 	*/
   falseOrder = false;
+
   appendMessage(m: Message): void {
     if ([MType.StringDict, MType.StringDictGlobal].includes(m.tp)) {
       this.globalDictionary.set(m.key, m.value);
@@ -59,9 +62,9 @@ export default class PagesManager extends ListWalker<DOMManager> {
             get: (key: string) => this.globalDictionary.get(key),
             all: () => Object.fromEntries(this.globalDictionary),
           },
-        })
+        }),
       );
-      console.log(this.globalDictionary)
+      console.log(this.globalDictionary);
       this.falseOrder = false;
     }
     if (this.last === null) {
@@ -81,6 +84,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
   }
 
   spriteMapEl: SVGElement | null = null;
+
   injectSpriteMap = (spriteEl: SVGElement) => {
     this.spriteMapEl = spriteEl;
     this.refreshSprites();
@@ -89,14 +93,14 @@ export default class PagesManager extends ListWalker<DOMManager> {
   refreshSprites = () => {
     const int = setInterval(() => {
       const potential = this.screen.document?.body.querySelector(
-        '#OPENREPLAY_SPRITES_MAP'
+        '#OPENREPLAY_SPRITES_MAP',
       );
       if (potential) {
         potential.innerHTML = this.spriteMapEl!.innerHTML;
         clearInterval(int);
       }
     }, 250);
-  }
+  };
 
   moveReady(t: number): Promise<void> {
     const requiredPage = this.moveGetLast(t);
@@ -112,9 +116,9 @@ export default class PagesManager extends ListWalker<DOMManager> {
         if (changed && this.spriteMapEl) {
           setTimeout(() => {
             this.refreshSprites();
-          }, 0)
+          }, 0);
         }
-      })
+      });
     }
     return Promise.resolve();
   }

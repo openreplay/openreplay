@@ -11,9 +11,8 @@ function DashboardSearch() {
   const [query, setQuery] = useState(dashboardStore.dashboardsSearch);
   useEffect(() => {
     debounceUpdate = debounce(
-      (key: string, value: any) =>
-        dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value }),
-      500
+      (key: string, value: any) => dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value }),
+      500,
     );
   }, []);
 

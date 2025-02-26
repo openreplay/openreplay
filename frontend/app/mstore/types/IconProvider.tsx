@@ -34,10 +34,13 @@ class CountryIconProvider implements IconProvider {
     const s = obj.name.toUpperCase();
     if (Flags[s as keyof typeof Flags]) {
       const FlagComponent = Flags[s as keyof typeof Flags];
-      return <FlagComponent style={{
-        width: 24,
-        height: 24
-      }} />;
+      return (
+        <FlagComponent style={{
+          width: 24,
+          height: 24,
+        }}
+        />
+      );
     }
 
     return <Icon name="flag-na" size={24} />;
@@ -47,8 +50,7 @@ class CountryIconProvider implements IconProvider {
 class IssueIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
     const s = obj.name.toLowerCase();
-    let icon = 'color/issues/' + s;  // TODO use this line
-
+    const icon = `color/issues/${s}`; // TODO use this line
 
     // if (s.includes('dead_click')) {
     //     icon = 'color/issues/dead_click';
@@ -80,8 +82,8 @@ class DeviceIconProvider implements IconProvider {
     if (s.includes('desktop')) {
       icon = 'color/device/desktop';
     } else if (
-      s.includes('mobile') || s.includes('iphone') || s === 'k' || s.includes('android') ||
-      s.includes('smartphone') || s.includes('phone') || s.includes('moto')
+      s.includes('mobile') || s.includes('iphone') || s === 'k' || s.includes('android')
+      || s.includes('smartphone') || s.includes('phone') || s.includes('moto')
     ) {
       icon = 'color/device/mobile';
     } else if (s.includes('tablet')) {
@@ -100,13 +102,12 @@ class OsIconProvider implements IconProvider {
     const s = obj.name.toLowerCase();
     if (s.includes('windows')) {
       return 'os/windows';
-    } else if (s.includes('mac')) {
+    } if (s.includes('mac')) {
       return 'os/mac';
-    } else if (s.includes('linux')) {
+    } if (s.includes('linux')) {
       return 'os/linux';
-    } else {
-      return 'os/unknown';
     }
+    return 'os/unknown';
   }
 }
 
@@ -137,7 +138,6 @@ export {
   OsIconProvider,
   UserIconProvider,
   ReferrerIconProvider,
-  FetchIconProvider
+  FetchIconProvider,
 };
 export type { IconProvider };
-

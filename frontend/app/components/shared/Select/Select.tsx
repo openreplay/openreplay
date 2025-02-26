@@ -25,7 +25,7 @@ interface Props<Value extends ValueObject> {
   [x: string]: any;
 }
 
-export default function <Value extends ValueObject>({
+export default function <Value extends ValueObject> ({
   placeholder = 'Select',
   name = '',
   onChange,
@@ -40,11 +40,9 @@ export default function <Value extends ValueObject>({
   className = '',
   ...rest
 }: Props<Value>) {
-
-  const defaultSelected = Array.isArray(defaultValue) ?
-    defaultValue.map((value) => options.find((option) => option.value === value)) :
-    options.find((option) => option.value === defaultValue
-    ) || null;
+  const defaultSelected = Array.isArray(defaultValue)
+    ? defaultValue.map((value) => options.find((option) => option.value === value))
+    : options.find((option) => option.value === defaultValue) || null;
   const customStyles = {
     option: (provided: any, state: any) => ({
       ...provided,
@@ -55,12 +53,12 @@ export default function <Value extends ValueObject>({
       fontSize: '14px',
       '&:hover': {
         transition: 'all 0.2s',
-        backgroundColor: colors['active-blue']
+        backgroundColor: colors['active-blue'],
       },
       '&:focus': {
         transition: 'all 0.2s',
-        backgroundColor: colors['active-blue']
-      }
+        backgroundColor: colors['active-blue'],
+      },
     }),
     menu: (provided: any, state: any) => ({
       ...provided,
@@ -76,7 +74,7 @@ export default function <Value extends ValueObject>({
       // zIndex: 99,
       overflow: 'hidden',
       zIndex: 100,
-      ...(right && { right: 0 })
+      ...(right && { right: 0 }),
     }),
     menuList: (provided: any, state: any) => ({
       ...provided,
@@ -89,26 +87,26 @@ export default function <Value extends ValueObject>({
         cursor: 'pointer',
         minHeight: '36px',
         transition: 'all 0.5s',
-        ['&:hover']: {
+        '&:hover': {
           backgroundColor: colors['gray-lightest'],
-          transition: 'all 0.2s ease-in-out'
+          transition: 'all 0.2s ease-in-out',
         },
-        ...controlStyle
+        ...controlStyle,
       };
       if (plain) {
-        obj['backgroundColor'] = 'transparent';
-        obj['border'] = '1px solid transparent';
-        obj['backgroundColor'] = 'transparent';
+        obj.backgroundColor = 'transparent';
+        obj.border = '1px solid transparent';
+        obj.backgroundColor = 'transparent';
         obj['&:hover'] = {
           borderColor: 'transparent',
           backgroundColor: colors['gray-light'],
-          transition: 'all 0.2s ease-in-out'
+          transition: 'all 0.2s ease-in-out',
         };
         obj['&:focus'] = {
-          borderColor: 'transparent'
+          borderColor: 'transparent',
         };
         obj['&:active'] = {
-          borderColor: 'transparent'
+          borderColor: 'transparent',
         };
       }
       return obj;
@@ -116,31 +114,32 @@ export default function <Value extends ValueObject>({
     indicatorsContainer: (provided: any) => ({
       ...provided,
       maxHeight: '34px',
-      padding: 0
+      padding: 0,
     }),
     valueContainer: (provided: any) => ({
       ...provided,
-      paddingRight: '0px'
+      paddingRight: '0px',
     }),
     singleValue: (provided: any, state: { isDisabled: any; }) => {
       const opacity = state.isDisabled ? 0.5 : 1;
       const transition = 'opacity 300ms';
 
-      return { ...provided, opacity, transition, fontWeight: '500' };
+      return {
+        ...provided, opacity, transition, fontWeight: '500',
+      };
     },
     input: (provided: any) => ({
       ...provided,
       '& input:focus': {
-        border: 'none !important'
-      }
+        border: 'none !important',
+      },
     }),
     noOptionsMessage: (provided: any) => ({
       ...provided,
-      whiteSpace: 'nowrap !important'
+      whiteSpace: 'nowrap !important',
       // minWidth: 'fit-content',
-    })
+    }),
   };
-
 
   return (
     <Select
@@ -152,35 +151,33 @@ export default function <Value extends ValueObject>({
         IndicatorSeparator: () => null,
         DropdownIndicator,
         ValueContainer: CustomValueContainer,
-        ...components
+        ...components,
       }}
-      onChange={(value) => onChange({ name, value: value })}
+      onChange={(value) => onChange({ name, value })}
       styles={{ ...customStyles, ...styles }}
       theme={(theme) => ({
         ...theme,
         colors: {
           ...theme.colors,
-          primary: '#394EFF'
-        }
+          primary: '#394EFF',
+        },
       })}
-      blurInputOnSelect={true}
+      blurInputOnSelect
       placeholder={placeholder}
       {...rest}
     />
   );
 }
 
-const DropdownIndicator = (
-  props: DropdownIndicatorProps<true>
-) => {
+function DropdownIndicator(props: DropdownIndicatorProps<true>) {
   return (
     <components.DropdownIndicator {...props}>
-      <Icon name='chevron-down' size='16' />
+      <Icon name="chevron-down" size="16" />
     </components.DropdownIndicator>
   );
-};
+}
 
-const CustomValueContainer = ({ children, ...rest }: any) => {
+function CustomValueContainer({ children, ...rest }: any) {
   const selectedCount = rest.getValue().length;
   const conditional = (selectedCount < 3);
 
@@ -196,4 +193,4 @@ const CustomValueContainer = ({ children, ...rest }: any) => {
       {!conditional && ` and ${selectedCount - 1} others`}
     </ValueContainer>
   );
-};
+}

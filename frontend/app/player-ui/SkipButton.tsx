@@ -1,6 +1,6 @@
-import React from 'react'
-import { Icon } from 'UI'
-import cn from 'classnames'
+import React from 'react';
+import { Icon } from 'UI';
+import cn from 'classnames';
 import { ForwardOutlined } from '@ant-design/icons';
 
 interface IProps {
@@ -11,7 +11,6 @@ interface IProps {
 }
 
 export function SkipButton({ onClick, isBackwards, customClasses }: IProps) {
-
   return (
     <div
       onClick={onClick}
@@ -19,5 +18,5 @@ export function SkipButton({ onClick, isBackwards, customClasses }: IProps) {
     >
       <ForwardOutlined rotate={isBackwards ? 180 : 0} />
     </div>
-  )
+  );
 }

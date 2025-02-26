@@ -1,5 +1,5 @@
 import React from 'react';
-import { CodeBlock } from "UI";
+import { CodeBlock } from 'UI';
 
 function AssistScript(props) {
   const scriptCode = `<!-- OpenReplay Tracking Code -->
@@ -18,13 +18,13 @@ function AssistScript(props) {
   r.isActive=function(){return false};
   r.getSessionToken=function(){};
 })(0, "${props.projectKey}", "${window.env.TRACKER_HOST || '//static.openreplay.com'}/${window.env.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
-</script>`
+</script>`;
   return (
     <div>
       <p>If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:</p>
       <div className="py-3" />
 
-      <CodeBlock code={scriptCode} language={'js'} />
+      <CodeBlock code={scriptCode} language="js" />
     </div>
   );
 }

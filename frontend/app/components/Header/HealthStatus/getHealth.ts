@@ -1,7 +1,6 @@
 import { healthService } from 'App/services';
-import { categoryKeyNames, lastAskedKey, healthResponseKey } from "Components/Header/HealthStatus/const";
-import { IServiceStats } from "Components/Header/HealthStatus/HealthStatus";
-
+import { categoryKeyNames, lastAskedKey, healthResponseKey } from 'Components/Header/HealthStatus/const';
+import { IServiceStats } from 'Components/Header/HealthStatus/HealthStatus';
 
 function mapResponse(resp: Record<string, any>) {
   const services = Object.keys(resp);
@@ -14,7 +13,7 @@ function mapResponse(resp: Record<string, any>) {
         healthOk: resp[service].health,
         serviceName: service,
         // @ts-ignore
-        subservices: { ssl: resp[service] }
+        subservices: { ssl: resp[service] },
       };
       return;
     }
@@ -31,17 +30,17 @@ function mapResponse(resp: Record<string, any>) {
   });
 
   const overallHealth = Object.values(healthMap).every(
-    (service: Record<string, any>) => service.healthOk
+    (service: Record<string, any>) => service.healthOk,
   );
 
   return { overallHealth, healthMap, details: resp.details };
 }
 
 export async function getHealthRequest(isPublic?: boolean) {
-    const r = await healthService.fetchStatus(isPublic);
-    const healthMap = mapResponse(r);
-    const asked = new Date().getTime();
-    localStorage.setItem(healthResponseKey, JSON.stringify(healthMap));
-    localStorage.setItem(lastAskedKey, asked.toString());
-    return { healthMap, asked }
+  const r = await healthService.fetchStatus(isPublic);
+  const healthMap = mapResponse(r);
+  const asked = new Date().getTime();
+  localStorage.setItem(healthResponseKey, JSON.stringify(healthMap));
+  localStorage.setItem(lastAskedKey, asked.toString());
+  return { healthMap, asked };
 }

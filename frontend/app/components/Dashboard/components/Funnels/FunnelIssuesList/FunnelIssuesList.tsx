@@ -11,6 +11,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import FunnelIssueModal from '../FunnelIssueModal';
 import FunnelIssuesListItem from '../FunnelIssuesListItem';
+
 const { Text } = Typography;
 
 interface Issue {
@@ -42,12 +43,17 @@ const columns: TableProps<Issue>['columns'] = [
     dataIndex: 'contextString',
     key: 'contextString',
     render: (text: string) => (
-      <Text ellipsis style={{
-        width: 200,  // Adjust width here as needed
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-      }}>{text}</Text>
+      <Text
+        ellipsis
+        style={{
+          width: 200, // Adjust width here as needed
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {text}
+      </Text>
     ),
     width: 200,
   },
@@ -60,7 +66,12 @@ const columns: TableProps<Issue>['columns'] = [
     title: 'Conversion Impact',
     dataIndex: 'conversionImpact',
     key: 'conversionImpact',
-    render: (text: string) => <span>{text}%</span>,
+    render: (text: string) => (
+      <span>
+        {text}
+        %
+      </span>
+    ),
   },
   {
     title: 'Lost Conversions',
@@ -80,9 +91,7 @@ function FunnelIssuesList(props: Props) {
   const { issues, loading } = props;
   const { funnelStore } = useStore();
   const issuesSort = useObserver(() => funnelStore.issuesSort);
-  const issuesFilter = useObserver(() =>
-    funnelStore.issuesFilter.map((issue: any) => issue.value)
-  );
+  const issuesFilter = useObserver(() => funnelStore.issuesFilter.map((issue: any) => issue.value));
   const { showModal } = useModal();
   const issueId = new URLSearchParams(props.location.search).get('issueId');
 
@@ -106,34 +115,31 @@ function FunnelIssuesList(props: Props) {
     });
   }, [issueId]);
 
-  let filteredIssues = useObserver(() =>
-    issuesFilter.length > 0
-      ? issues.filter((issue: any) => issuesFilter.includes(issue.type))
-      : issues
-  );
-  filteredIssues = useObserver(() =>
-    issuesSort.sort
-      ? filteredIssues
-          .slice()
-          .sort(
-            (a: { [x: string]: number }, b: { [x: string]: number }) =>
-              a[issuesSort.sort] - b[issuesSort.sort]
-          )
-      : filteredIssues
-  );
-  filteredIssues = useObserver(() =>
-    issuesSort.order === 'desc' ? filteredIssues.reverse() : filteredIssues
-  );
+  let filteredIssues = useObserver(() => (issuesFilter.length > 0
+    ? issues.filter((issue: any) => issuesFilter.includes(issue.type))
+    : issues));
+  filteredIssues = useObserver(() => (issuesSort.sort
+    ? filteredIssues
+      .slice()
+      .sort(
+        (a: { [x: string]: number }, b: { [x: string]: number }) => a[issuesSort.sort] - b[issuesSort.sort],
+      )
+    : filteredIssues));
+  filteredIssues = useObserver(() => (issuesSort.order === 'desc' ? filteredIssues.reverse() : filteredIssues));
 
   return useObserver(() => (
     <NoContent
       show={!loading && filteredIssues.length === 0}
-      title={
+      title={(
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_ISSUES} size={60} />
-          <div className="mt-4 text-base"><InfoCircleOutlined /> No issues found</div>
+          <div className="mt-4 text-base">
+            <InfoCircleOutlined />
+            {' '}
+            No issues found
+          </div>
         </div>
-      }
+      )}
     >
       <Table
         columns={columns}
@@ -141,7 +147,7 @@ function FunnelIssuesList(props: Props) {
         onRow={(rec, ind) => ({
           onClick: () => onIssueClick(rec),
         })}
-        rowClassName={'cursor-pointer'}
+        rowClassName="cursor-pointer"
       />
     </NoContent>
   ));

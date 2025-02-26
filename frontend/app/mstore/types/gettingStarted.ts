@@ -1,4 +1,6 @@
-import { action, computed, makeObservable, observable } from 'mobx';
+import {
+  action, computed, makeObservable, observable,
+} from 'mobx';
 import { configService } from 'App/services';
 import { GETTING_STARTED } from 'App/constants/storageKeys';
 
@@ -42,6 +44,7 @@ export interface Step {
 
 export class GettingStarted {
   steps: Step[] = [];
+
   status: 'in-progress' | 'completed';
 
   constructor() {
@@ -93,20 +96,19 @@ export class GettingStarted {
           status: item.status,
         })),
         status: this.status,
-      })
+      }),
     );
   }
 
   calculateStatus() {
-    const numCompleted = this.numCompleted;
-    const numPending = this.numPending;
+    const { numCompleted } = this;
+    const { numPending } = this;
     const numIgnored = this.steps.length - numCompleted - numPending;
 
     if (numIgnored > 0) {
       return 'in-progress';
-    } else {
-      return numPending > 0 ? 'in-progress' : 'completed';
     }
+    return numPending > 0 ? 'in-progress' : 'completed';
   }
 
   completeStep(step: Step) {

@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 import React, { Component, createContext } from 'react';
 import Modal from './Modal';
 
@@ -49,7 +49,8 @@ export class ModalProvider extends Component {
 
   state = {
     component: null,
-    get isModalActive() { return this.component !== null },props: {},
+    get isModalActive() { return this.component !== null; },
+    props: {},
     showModal: this.showModal,
     hideModal: this.hideModal,
   };

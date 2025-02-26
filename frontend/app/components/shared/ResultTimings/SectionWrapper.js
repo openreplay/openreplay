@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 function SectionWrapper({ title, children }) {
   return (
@@ -11,7 +11,7 @@ function SectionWrapper({ title, children }) {
         { children }
       </div>
     </div>
-  )
+  );
 }
 
-export default SectionWrapper
+export default SectionWrapper;

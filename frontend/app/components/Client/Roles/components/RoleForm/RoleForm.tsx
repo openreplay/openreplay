@@ -2,11 +2,13 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
 
 import { useStore } from 'App/mstore';
-import { Checkbox, Form, Icon, Input } from 'UI';
+import {
+  Checkbox, Form, Icon, Input,
+} from 'UI';
 
-import stl from './roleForm.module.css';
 import { Select, Button } from 'antd';
 import { SelectProps } from 'antd/es/select';
+import stl from './roleForm.module.css';
 
 interface Props {
   closeModal: (toastMessage?: string) => void;
@@ -14,7 +16,7 @@ interface Props {
   deleteHandler: (id: any) => Promise<void>;
 }
 
-const RoleForm = (props: Props) => {
+function RoleForm(props: Props) {
   const { roleStore, projectsStore } = useStore();
   const projects = projectsStore.list;
   const role = roleStore.instance;
@@ -23,12 +25,12 @@ const RoleForm = (props: Props) => {
 
   const projectOptions: SelectProps['options'] = projects.map((p: any) => ({
     value: p.projectId,
-    label: p.name
+    label: p.name,
   }));
 
   const permissionOptions: SelectProps['options'] = roleStore.permissions.map((p: any) => ({
     value: p.value,
-    label: p.text
+    label: p.text,
   }));
 
   const selectProjects = (pros: { value: number; label: string }[]) => {
@@ -41,8 +43,7 @@ const RoleForm = (props: Props) => {
     roleStore.editRole({ permissions: ids });
   };
 
-
-  let focusElement = useRef<any>(null);
+  const focusElement = useRef<any>(null);
   // const permissions: {}[] = roleStore.permissions
   //   .filter(({ value }) => !role.permissions.includes(value))
   //   .map((p) => ({
@@ -56,8 +57,7 @@ const RoleForm = (props: Props) => {
     });
   };
 
-  const write = ({ target: { value, name } }: any) =>
-    roleStore.editRole({ [name]: value });
+  const write = ({ target: { value, name } }: any) => roleStore.editRole({ [name]: value });
 
   const onChangePermissions = (e: any) => {
     const { permissions } = role;
@@ -113,7 +113,7 @@ const RoleForm = (props: Props) => {
       <div className="px-5">
         <Form onSubmit={_save}>
           <Form.Field>
-            <label>{'Title'}</label>
+            <label>Title</label>
             <Input
               ref={focusElement}
               name="name"
@@ -127,7 +127,7 @@ const RoleForm = (props: Props) => {
           </Form.Field>
 
           <Form.Field>
-            <label>{'Project Access'}</label>
+            <label>Project Access</label>
 
             <div className="flex my-3">
               <Checkbox
@@ -136,7 +136,7 @@ const RoleForm = (props: Props) => {
                 type="checkbox"
                 checked={role.allProjects}
                 onClick={toggleAllProjects}
-                label={''}
+                label=""
               />
               <div
                 className="cursor-pointer leading-none select-none"
@@ -149,41 +149,35 @@ const RoleForm = (props: Props) => {
               </div>
             </div>
             {!role.allProjects && (
-              <>
-                <Select
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                  mode="multiple"
-                  allowClear
-                  placeholder="Select"
-                  options={projectOptions.filter(
-                    (option: any) => !role.projects.includes(option.value) // Exclude selected options
-                  )}
-                  onChange={selectProjects}
-                  labelInValue
-                  value={role.projects.map((projectId: string) => {
-                    const matchingProject = projectOptions.find((opt) => opt.value === projectId);
-                    return matchingProject
-                      ? { value: matchingProject.value, label: matchingProject.label }
-                      : { value: projectId, label: String(projectId) }; // Fallback to projectId as label
-                  })}
-                />
-              </>
+              <Select
+                filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                mode="multiple"
+                allowClear
+                placeholder="Select"
+                options={projectOptions.filter(
+                  (option: any) => !role.projects.includes(option.value), // Exclude selected options
+                )}
+                onChange={selectProjects}
+                labelInValue
+                value={role.projects.map((projectId: string) => {
+                  const matchingProject = projectOptions.find((opt) => opt.value === projectId);
+                  return matchingProject
+                    ? { value: matchingProject.value, label: matchingProject.label }
+                    : { value: projectId, label: String(projectId) }; // Fallback to projectId as label
+                })}
+              />
             )}
           </Form.Field>
 
           <Form.Field>
-            <label>{'Capability Access'}</label>
+            <label>Capability Access</label>
             <Select
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
+              filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
               mode="multiple"
               allowClear
               placeholder="Select"
               options={permissionOptions.filter(
-                (option: any) => !role.permissions.includes(option.value) // Exclude selected options
+                (option: any) => !role.permissions.includes(option.value), // Exclude selected options
               )}
               onChange={selectPermissions}
               labelInValue
@@ -195,22 +189,22 @@ const RoleForm = (props: Props) => {
               })}
             />
 
-            {/*<Select*/}
-            {/*  isSearchable*/}
-            {/*  name="permissions"*/}
-            {/*  options={permissions}*/}
-            {/*  onChange={({ value }: any) =>*/}
-            {/*    writeOption({ name: 'permissions', value: value.value })*/}
-            {/*  }*/}
-            {/*  value={null}*/}
-            {/*/>*/}
-            {/*{role.permissions.length > 0 && (*/}
-            {/*  <div className="flex flex-row items-start flex-wrap mt-4">*/}
-            {/*    {role.permissions.map((p: any) =>*/}
-            {/*      OptionLabel(permissionsMap, p, onChangePermissions)*/}
-            {/*    )}*/}
-            {/*  </div>*/}
-            {/*)}*/}
+            {/* <Select */}
+            {/*  isSearchable */}
+            {/*  name="permissions" */}
+            {/*  options={permissions} */}
+            {/*  onChange={({ value }: any) => */}
+            {/*    writeOption({ name: 'permissions', value: value.value }) */}
+            {/*  } */}
+            {/*  value={null} */}
+            {/* /> */}
+            {/* {role.permissions.length > 0 && ( */}
+            {/*  <div className="flex flex-row items-start flex-wrap mt-4"> */}
+            {/*    {role.permissions.map((p: any) => */}
+            {/*      OptionLabel(permissionsMap, p, onChangePermissions) */}
+            {/*    )} */}
+            {/*  </div> */}
+            {/* )} */}
           </Form.Field>
         </Form>
 
@@ -225,7 +219,7 @@ const RoleForm = (props: Props) => {
             >
               {role.exists() ? 'Update' : 'Add'}
             </Button>
-            {role.exists() && <Button onClick={closeModal}>{'Cancel'}</Button>}
+            {role.exists() && <Button onClick={closeModal}>Cancel</Button>}
           </div>
           {role.exists() && (
             <Button type="text" onClick={() => props.deleteHandler(role)}>
@@ -236,7 +230,7 @@ const RoleForm = (props: Props) => {
       </div>
     </div>
   );
-};
+}
 
 export default observer(RoleForm);
 

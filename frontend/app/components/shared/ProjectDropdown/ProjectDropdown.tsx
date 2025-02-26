@@ -1,8 +1,10 @@
 import {
   CaretDownOutlined,
-  FolderAddOutlined
+  FolderAddOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
+import {
+  Button, Dropdown, MenuProps, Space, Typography,
+} from 'antd';
 import cn from 'classnames';
 import React from 'react';
 import { withRouter } from 'react-router-dom';
@@ -19,17 +21,18 @@ const { Text } = Typography;
 
 function ProjectDropdown(props: { location: any }) {
   const mstore = useStore();
-  const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
-  const account = userStore.account;
+  const {
+    projectsStore, searchStore, searchStoreLive, userStore,
+  } = mstore;
+  const { account } = userStore;
   const sites = projectsStore.list;
-  const siteId = projectsStore.siteId;
-  const setSiteId = projectsStore.setSiteId;
-  const initProject = projectsStore.initProject;
+  const { siteId } = projectsStore;
+  const { setSiteId } = projectsStore;
+  const { initProject } = projectsStore;
   const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
-  const showCurrent =
-    hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
+  const showCurrent = hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { openModal, closeModal } = useModal();
 
   const handleSiteChange = async (newSiteId: string) => {
@@ -61,7 +64,7 @@ function ProjectDropdown(props: { location: any }) {
     label: (
       <div
         key={site.id}
-        className={'!py-1 flex items-center gap-2'}
+        className="!py-1 flex items-center gap-2"
       >
         <Icon
           name={site.platform === 'web' ? 'browser/browser' : 'mobile'}
@@ -70,27 +73,27 @@ function ProjectDropdown(props: { location: any }) {
         <Text
           className={cn(
             'capitalize',
-            activeSite?.host === site.host ? 'text-main' : ''
+            activeSite?.host === site.host ? 'text-main' : '',
           )}
         >
           {site.host}
         </Text>
       </div>
-    )
+    ),
   }));
   if (isAdmin) {
     menuItems?.unshift({
       key: 'add-proj',
       label: (
         <div
-          className={'flex items-center gap-2 whitespace-nowrap'}
+          className="flex items-center gap-2 whitespace-nowrap"
         >
           <FolderAddOutlined rev={undefined} />
           <Text>Add Project</Text>
         </div>
-      )
+      ),
     }, {
-      type: 'divider'
+      type: 'divider',
     });
   }
 
@@ -102,7 +105,7 @@ function ProjectDropdown(props: { location: any }) {
         defaultSelectedKeys: [siteId],
         style: {
           maxHeight: 500,
-          overflowY: 'auto'
+          overflowY: 'auto',
         },
         onClick: (e) => {
           if (e.key === 'add-proj') {
@@ -110,7 +113,7 @@ function ProjectDropdown(props: { location: any }) {
           } else {
             void handleSiteChange(e.key);
           }
-        }
+        },
       }}
       placement="bottomLeft"
     >
@@ -140,5 +143,5 @@ function ProjectDropdown(props: { location: any }) {
 }
 
 export default withRouter(
-  observer(ProjectDropdown)
+  observer(ProjectDropdown),
 );

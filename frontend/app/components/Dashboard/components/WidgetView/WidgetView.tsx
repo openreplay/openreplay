@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
-import WidgetPreview from '../WidgetPreview';
-import WidgetSessions from '../WidgetSessions';
 import { observer } from 'mobx-react-lite';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
 import Breadcrumb from 'Shared/Breadcrumb';
@@ -15,9 +13,8 @@ import {
   FUNNEL,
   INSIGHTS,
   USER_PATH,
-  RETENTION
+  RETENTION,
 } from 'App/constants/card';
-import CardUserList from '../CardUserList/CardUserList';
 import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
 import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
 import { Space, Segmented, Tooltip } from 'antd';
@@ -27,6 +24,9 @@ import { LayoutPanelTop, LayoutPanelLeft } from 'lucide-react';
 import cn from 'classnames';
 import { CARD_LIST, CardType } from 'Components/Dashboard/components/DashboardList/NewDashModal/ExampleCards';
 import FilterSeries from '@/mstore/types/filterSeries';
+import CardUserList from '../CardUserList/CardUserList';
+import WidgetSessions from '../WidgetSessions';
+import WidgetPreview from '../WidgetPreview';
 
 interface Props {
   history: any;
@@ -46,7 +46,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
   const [expanded] = useState(!metricId || metricId === 'create');
-  const hasChanged = widget.hasChanged;
+  const { hasChanged } = widget;
   const dashboard = dashboardStore.dashboards.find((d: any) => d.dashboardId == dashboardId);
   const dashboardName = dashboard ? dashboard.name : null;
   const [metricNotFound, setMetricNotFound] = useState(false);
@@ -61,7 +61,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
       const mk = params.get('mk');
       if (mk) {
         metricStore.init();
-        const selectedCard = CARD_LIST.find(c => c.key === mk) as CardType;
+        const selectedCard = CARD_LIST.find((c) => c.key === mk) as CardType;
         if (selectedCard) {
           const cardData: any = {
             metricType: selectedCard.cardType,
@@ -70,15 +70,15 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
             category: mk,
             viewType:
               selectedCard.viewType
-              ? selectedCard.viewType
-              : selectedCard.cardType === FUNNEL ? 'chart' : 'lineChart',
+                ? selectedCard.viewType
+                : selectedCard.cardType === FUNNEL ? 'chart' : 'lineChart',
           };
           if (selectedCard.filters) {
             cardData.series = [
               new FilterSeries().fromJson({
                 name: 'Series 1',
-                filter: { filters: selectedCard.filters }
-              })
+                filter: { filters: selectedCard.filters },
+              }),
             ];
           }
           if (selectedCard.cardType === FUNNEL) {
@@ -95,7 +95,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
 
   useEffect(() => {
     if (metricId && metricId !== 'create') {
-      metricStore.fetch(metricId, dashboardStore.period).catch(e => {
+      metricStore.fetch(metricId, dashboardStore.period).catch((e) => {
         if (e.response.status === 404 || e.response.status === 422) {
           setMetricNotFound(true);
         }
@@ -135,11 +135,11 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
         history.replace(
-          withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
+          withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId),
         );
         void dashboardStore.addWidgetToDashboard(
           dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
-          [savedMetric.metricId]
+          [savedMetric.metricId],
         );
       } else {
         history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
@@ -156,11 +156,9 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
     <Loader loading={loading}>
       <Prompt
         when={hasChanged}
-        message={(loc: any) =>
-          loc.pathname.includes('/metrics/') || loc.pathname.includes('/metric/')
-            ? true
-            : 'You have unsaved changes. Are you sure you want to leave?'
-        }
+        message={(loc: any) => (loc.pathname.includes('/metrics/') || loc.pathname.includes('/metric/')
+          ? true
+          : 'You have unsaved changes. Are you sure you want to leave?')}
       />
       <div style={{ maxWidth: '1360px', margin: 'auto' }}>
         <Breadcrumb
@@ -168,17 +166,17 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
             {
               label: dashboardName || 'Cards',
               to: dashboardId
-                ? withSiteId('/dashboard/' + dashboardId, siteId)
-                : withSiteId('/metrics', siteId)
+                ? withSiteId(`/dashboard/${dashboardId}`, siteId)
+                : withSiteId('/metrics', siteId),
             },
-            { label: widget.name }
+            { label: widget.name },
           ]}
         />
         <Space direction="vertical" className="w-full" size={14}>
           <WidgetViewHeader
             onSave={onSave}
             undoChanges={undoChanges}
-            layoutControl={
+            layoutControl={(
               <Segmented
                 size="small"
                 value={layout}
@@ -190,7 +188,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
                       <Tooltip title="Filters on Left">
                         <LayoutPanelLeft size={16} />
                       </Tooltip>
-                    )
+                    ),
                   },
                   {
                     value: 'flex-col',
@@ -198,7 +196,7 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
                       <Tooltip title="Filters on Top">
                         <LayoutPanelTop size={16} />
                       </Tooltip>
-                    )
+                    ),
                   },
                   {
                     value: 'flex-row-reverse',
@@ -208,11 +206,11 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
                           <LayoutPanelLeft size={16} />
                         </div>
                       </Tooltip>
-                    )
-                  }
+                    ),
+                  },
                 ]}
               />
-            }
+            )}
           />
           <div className={cn('flex gap-4', layout)}>
             <div className={layout.startsWith('flex-row') ? 'w-1/3' : 'w-full'}>
@@ -220,9 +218,9 @@ function WidgetView({ match: { params: { siteId, dashboardId, metricId } } }: Pr
             </div>
             <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
               <WidgetPreview name={widget.name} isEditing={expanded} />
-              {widget.metricOf !== FilterKey.SESSIONS &&
-                widget.metricOf !== FilterKey.ERRORS &&
-                ([TABLE, TIMESERIES, HEATMAP, INSIGHTS, FUNNEL, USER_PATH].includes(widget.metricType) ? (
+              {widget.metricOf !== FilterKey.SESSIONS
+                && widget.metricOf !== FilterKey.ERRORS
+                && ([TABLE, TIMESERIES, HEATMAP, INSIGHTS, FUNNEL, USER_PATH].includes(widget.metricType) ? (
                   <WidgetSessions />
                 ) : null)}
               {widget.metricType === RETENTION && <CardUserList />}

@@ -1,14 +1,13 @@
-import React from 'react'
-import { Icon } from 'UI'
-import { Button } from 'antd'
+import React from 'react';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
 function IntegrateSlackTeamsButton({ history }) {
-
   const gotoPreferencesIntegrations = () => {
     history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
-  }
+  };
 
   return (
     <div>
@@ -23,7 +22,7 @@ function IntegrateSlackTeamsButton({ history }) {
         <span>Integrate Slack or MS Teams</span>
       </Button>
     </div>
-  )
+  );
 }
 
-export default withRouter(IntegrateSlackTeamsButton)
+export default withRouter(IntegrateSlackTeamsButton);

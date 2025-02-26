@@ -13,7 +13,9 @@ interface Props {
 
 function WebhookForm({ onClose, onDelete }: Props) {
   const { settingsStore } = useStore();
-  const { webhookInst: webhook, saveWebhook, editWebhook, saving } = settingsStore;
+  const {
+    webhookInst: webhook, saveWebhook, editWebhook, saving,
+  } = settingsStore;
   const write = ({ target: { value, name } }) => editWebhook({ [name]: value });
 
   const save = () => {
@@ -29,7 +31,7 @@ function WebhookForm({ onClose, onDelete }: Props) {
   return (
     <Form onFinish={save} layout="vertical">
       <Form.Item>
-        <label>{'Name'}</label>
+        <label>Name</label>
         <Input
           name="name"
           defaultValue={webhook.name}
@@ -40,12 +42,12 @@ function WebhookForm({ onClose, onDelete }: Props) {
       </Form.Item>
 
       <Form.Item>
-        <label>{'Endpoint'}</label>
+        <label>Endpoint</label>
         <Input name="endpoint" defaultValue={webhook.endpoint} onChange={write} placeholder="Endpoint" />
       </Form.Item>
 
       <Form.Item>
-        <label>{'Auth Header (optional)'}</label>
+        <label>Auth Header (optional)</label>
         <Input
           name="authHeader"
           defaultValue={webhook.authHeader}
@@ -66,14 +68,14 @@ function WebhookForm({ onClose, onDelete }: Props) {
           >
             {webhook.exists() ? 'Update' : 'Add'}
           </Button>
-          {webhook.exists() && <Button onClick={onClose}>{'Cancel'}</Button>}
+          {webhook.exists() && <Button onClick={onClose}>Cancel</Button>}
         </div>
         {webhook.exists() && (
           <Button
             icon={<TrashIcon size={16} />}
             type="text"
             onClick={() => onDelete(webhook.webhookId)}
-          ></Button>
+          />
         )}
       </div>
     </Form>

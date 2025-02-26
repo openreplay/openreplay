@@ -2,7 +2,7 @@ import { Modal } from 'antd';
 import React, { useState } from 'react';
 
 function EmptyPage() {
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState < boolean >(false);
 
   const handleWatchClick = () => {
     setIsModalVisible(true);
@@ -15,9 +15,7 @@ function EmptyPage() {
   return (
     <div>
       <div
-        className={
-          'flex flex-col gap-4 items-center w-full p-8 bg-white rounded-lg shadow-sm mt-2'
-        }
+        className="flex flex-col gap-4 items-center w-full p-8 bg-white rounded-lg shadow-sm mt-2"
       >
         <div className="w-3/4 flex flex-col gap-3 justify-center items-center ">
           <a
@@ -40,8 +38,8 @@ function EmptyPage() {
         footer={null}
         centered
         className="aspect-video px-0 m-auto"
-        destroyOnClose={true}
-        width={'820'}
+        destroyOnClose
+        width="820"
       >
         {isModalVisible && (
           <iframe

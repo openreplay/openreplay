@@ -3,7 +3,7 @@ import SessionFilters from 'Shared/SessionFilters';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
-const MainSearchBar = () => {
+function MainSearchBar() {
   const { searchStore, projectsStore } = useStore();
   const projectId = projectsStore.siteId;
   const currSite = React.useRef(projectId);
@@ -16,10 +16,10 @@ const MainSearchBar = () => {
     }
   }, [projectId]);
   return (
-    <div className={'flex flex-col gap-2 w-full'}>
+    <div className="flex flex-col gap-2 w-full">
       <SessionFilters />
     </div>
   );
-};
+}
 
 export default observer(MainSearchBar);

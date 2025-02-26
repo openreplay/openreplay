@@ -25,7 +25,7 @@ function ListWithIcons({ list = [] }: Props) {
           style={{
             borderBottom: '1px dotted rgba(0, 0, 0, 0.05)',
             padding: '4px 10px',
-            lineHeight: '1px'
+            lineHeight: '1px',
           }}
           className={cn('rounded')} // Remove hover:bg-active-blue and cursor-pointer
         >
@@ -35,8 +35,11 @@ function ListWithIcons({ list = [] }: Props) {
             title={(
               <div className="m-0">
                 <div className="flex justify-between m-0 p-0">
-                  <Typography.Text className='w-[95%]'>{row.name}</Typography.Text>
-                  <Typography.Text type="secondary"> {row.value}</Typography.Text>
+                  <Typography.Text className="w-[95%]">{row.name}</Typography.Text>
+                  <Typography.Text type="secondary">
+                    {' '}
+                    {row.value}
+                  </Typography.Text>
                 </div>
 
                 <Progress
@@ -44,13 +47,13 @@ function ListWithIcons({ list = [] }: Props) {
                   showInfo={false}
                   strokeColor={{
                     '0%': '#394EFF',
-                    '100%': '#394EFF'
+                    '100%': '#394EFF',
                   }}
                   size={['small', 2]}
                   style={{
                     padding: '0 0px',
                     margin: '0 0px',
-                    height: 4
+                    height: 4,
                   }}
                 />
               </div>

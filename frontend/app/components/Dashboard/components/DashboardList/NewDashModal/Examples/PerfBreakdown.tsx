@@ -22,31 +22,31 @@ function PerfBreakdown(props: any) {
   const bgs = ['#E2E4F6', '#A7BFFF', '#394EFF'];
   return (
     <ExCard
-        {...props}
+      {...props}
     >
-      <div className={'relative'}>
-        <div className={'flex flex-col gap-4'}>
+      <div className="relative">
+        <div className="flex flex-col gap-4">
           {rows.map((r) => (
-            <div className={'flex items-center gap-2'}>
-              <div className={'text-gray-dark'}>{r[0]}</div>
-              <div className="border-t border-dotted border-gray-lighter w-full"></div>
-              <div className={'text-gray-dark min-w-8'}>{r[1]}</div>
+            <div className="flex items-center gap-2">
+              <div className="text-gray-dark">{r[0]}</div>
+              <div className="border-t border-dotted border-gray-lighter w-full" />
+              <div className="text-gray-dark min-w-8">{r[1]}</div>
             </div>
           ))}
         </div>
-        <div className={'px-4 flex items-center justify-around w-full'}>
+        <div className="px-4 flex items-center justify-around w-full">
           {months.map((m, i) => (
-            <div className={'text-gray-dark relative'}>
+            <div className="text-gray-dark relative">
               <span>{m}</span>
               <div
-                className={'absolute flex flex-col'}
+                className="absolute flex flex-col"
                 style={{ bottom: 30, left: 0, width: 24 }}
               >
                 {values[i].map((v, bg) => (
                   <div
                     style={{
                       width: '100%',
-                      height: v * 9 + 'px',
+                      height: `${v * 9}px`,
                       background: bgs[bg],
                     }}
                   />
@@ -83,18 +83,18 @@ function PerfBreakdown(props: any) {
         </div>
       </div>
 
-      <div className={'flex gap-4 justify-center'}>
-        <div className={'flex gap-2 items-center'}>
-          <div className={'w-4 h-4 rounded-full bg-[#E2E4F6]'} />
-          <div className={'text-disabled-text'}>XHR</div>
+      <div className="flex gap-4 justify-center">
+        <div className="flex gap-2 items-center">
+          <div className="w-4 h-4 rounded-full bg-[#E2E4F6]" />
+          <div className="text-disabled-text">XHR</div>
         </div>
-        <div className={'flex gap-2 items-center'}>
-          <div className={'w-4 h-4 rounded-full bg-[#A7BFFF]'} />
-          <div className={'text-disabled-text'}>Other</div>
+        <div className="flex gap-2 items-center">
+          <div className="w-4 h-4 rounded-full bg-[#A7BFFF]" />
+          <div className="text-disabled-text">Other</div>
         </div>
-        <div className={'flex gap-2 items-center'}>
-          <GitCommitHorizontal size={14} strokeWidth={1} color={'#6A8CFF'} />
-          <div className={'text-disabled-text'}>Response End</div>
+        <div className="flex gap-2 items-center">
+          <GitCommitHorizontal size={14} strokeWidth={1} color="#6A8CFF" />
+          <div className="text-disabled-text">Response End</div>
         </div>
       </div>
     </ExCard>

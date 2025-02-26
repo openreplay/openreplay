@@ -1,8 +1,8 @@
 import React from 'react';
-import { echarts, defaultOptions, initWindowStorages } from './init';
-import { customTooltipFormatter, buildCategories, buildDatasetsAndSeries } from './utils'
-import type { DataProps } from './utils'
 import { LineChart } from 'echarts/charts';
+import { echarts, defaultOptions, initWindowStorages } from './init';
+import { customTooltipFormatter, buildCategories, buildDatasetsAndSeries } from './utils';
+import type { DataProps } from './utils';
 
 echarts.use([LineChart]);
 
@@ -22,7 +22,7 @@ function ORLineChart(props: Props) {
   React.useEffect(() => {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
-    const obs = new ResizeObserver(() => chart.resize())
+    const obs = new ResizeObserver(() => chart.resize());
     obs.observe(chartRef.current);
 
     const categories = buildCategories(props.data);
@@ -55,7 +55,7 @@ function ORLineChart(props: Props) {
     chart.setOption({
       ...defaultOptions,
       title: {
-        text: props.chartName ?? "Line Chart",
+        text: props.chartName ?? 'Line Chart',
         show: false,
       },
       legend: {
@@ -75,7 +75,7 @@ function ORLineChart(props: Props) {
         nameTextStyle: {
           padding: [0, 0, 0, 15],
         },
-        minInterval: 1
+        minInterval: 1,
       },
       tooltip: {
         ...defaultOptions.tooltip,
@@ -92,11 +92,11 @@ function ORLineChart(props: Props) {
     chart.on('click', (event) => {
       const index = event.dataIndex;
       const timestamp = (window as any).__timestampMap?.[chartUuid.current]?.[index];
-      props.onClick?.({ activePayload: [{ payload: { timestamp }}]})
+      props.onClick?.({ activePayload: [{ payload: { timestamp } }] });
       setTimeout(() => {
-        props.onSeriesFocus?.(event.seriesName)
-      }, 0)
-    })
+        props.onSeriesFocus?.(event.seriesName);
+      }, 0);
+    });
 
     return () => {
       chart.dispose();

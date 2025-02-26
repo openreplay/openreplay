@@ -9,12 +9,12 @@ interface ExampleProps {
 }
 
 const ProductAnalytics: React.FC<ExampleProps> = ({ onCard }) => (
-    <>
-        <ExampleFunnel onCard={onCard} />
-        <ExamplePath onCard={onCard} />
-        <ExampleTrend onCard={onCard} />
-        <ExampleCount onCard={onCard} />
-    </>
+  <>
+    <ExampleFunnel onCard={onCard} />
+    <ExamplePath onCard={onCard} />
+    <ExampleTrend onCard={onCard} />
+    <ExampleCount onCard={onCard} />
+  </>
 );
 
 export default ProductAnalytics;

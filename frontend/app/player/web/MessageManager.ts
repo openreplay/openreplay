@@ -3,6 +3,8 @@ import { Decoder } from 'syncod';
 import logger from 'App/logger';
 
 import type { Store, ILog, SessionFilesInfo } from 'Player';
+import TabSessionManager, { TabState } from 'Player/web/TabManager';
+import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 import ListWalker from '../common/ListWalker';
 
 import MouseMoveManager from './managers/MouseMoveManager';
@@ -20,8 +22,6 @@ import Screen, {
 
 import type { InitialLists } from './Lists';
 import type { SkipInterval } from './managers/ActivityManager';
-import TabSessionManager, { TabState } from 'Player/web/TabManager';
-import ActiveTabManager from 'Player/web/managers/ActiveTabManager';
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -102,20 +102,31 @@ export default class MessageManager {
   };
 
   private clickManager: ListWalker<MouseClick> = new ListWalker();
+
   private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
+
   private activityManager: ActivityManager | null = null;
+
   private mouseMoveManager: MouseMoveManager;
+
   private activeTabManager = new ActiveTabManager();
+
   private tabCloseManager = new TabClosingManager();
 
   public readonly decoder = new Decoder();
 
   private sessionStart: number;
+
   private lastMessageTime: number = 0;
+
   private firstVisualEventSet = false;
+
   public readonly tabs: Record<string, TabSessionManager> = {};
+
   private tabsAmount = 0;
+
   private tabChangeEvents: TabChangeEvent[] = [];
+
   private activeTab = '';
 
   constructor(
@@ -123,19 +134,19 @@ export default class MessageManager {
     private readonly state: Store<State & { time: number }>,
     private readonly screen: Screen,
     private readonly initialLists?: Partial<InitialLists>,
-    private readonly uiErrorHandler?: { error: (error: string) => void }
+    private readonly uiErrorHandler?: { error: (error: string) => void },
   ) {
     this.mouseMoveManager = new MouseMoveManager(screen);
     this.sessionStart = this.session.startedAt;
     state.update({ sessionStart: this.sessionStart });
     this.activityManager = new ActivityManager(
-      this.session.duration.milliseconds
+      this.session.duration.milliseconds,
     ); // only if not-live
   }
 
   public getListsFullState = () => {
     const fullState: Record<string, any> = {};
-    for (let tab in Object.keys(this.tabs)) {
+    for (const tab in Object.keys(this.tabs)) {
       fullState[tab] = this.tabs[tab].getListsFullState();
     }
     return Object.values(this.tabs)[0].getListsFullState();
@@ -143,8 +154,8 @@ export default class MessageManager {
 
   public injectSpriteMap = (spriteEl: SVGElement) => {
     Object.values(this.tabs).forEach((tab) => {
-      tab.injectSpriteMap(spriteEl)
-    })
+      tab.injectSpriteMap(spriteEl);
+    });
   };
 
   public setSession = (session: SessionFilesInfo) => {
@@ -182,6 +193,7 @@ export default class MessageManager {
   };
 
   private waitingForFiles: boolean = false;
+
   public onFileReadSuccess = () => {
     if (this.activityManager) {
       this.activityManager.end();
@@ -248,7 +260,7 @@ export default class MessageManager {
     this.activeTabManager.moveReady(t).then(async (tabId) => {
       const closeMessage = await this.tabCloseManager.moveReady(t);
       if (closeMessage) {
-        const closedTabs = this.tabCloseManager.closedTabs;
+        const { closedTabs } = this.tabCloseManager;
         if (closedTabs.size === this.tabsAmount) {
           if (this.session.durationMs - t < 250) {
             this.state.update({ closedTabs: Array.from(closedTabs) });
@@ -269,8 +281,7 @@ export default class MessageManager {
         this.screen.cursor.shake();
       }
       if (!this.activeTab) {
-        this.activeTab =
-          this.state.get().currentTab ?? Object.keys(this.tabs)[0];
+        this.activeTab = this.state.get().currentTab ?? Object.keys(this.tabs)[0];
       }
 
       if (tabId) {
@@ -294,13 +305,13 @@ export default class MessageManager {
           this.tabs,
           this.activeTab,
           tabId,
-          this.activeTabManager.list
+          this.activeTabManager.list,
         );
       }
     });
     if (
-      this.waitingForFiles ||
-      (this.lastMessageTime <= t && t < this.session.durationMs)
+      this.waitingForFiles
+      || (this.lastMessageTime <= t && t < this.session.durationMs)
     ) {
       this.setMessagesLoading(true);
     }
@@ -339,7 +350,7 @@ export default class MessageManager {
         msg.tabId,
         this.setSize,
         this.sessionStart,
-        this.initialLists
+        this.initialLists,
       );
     }
 
@@ -405,7 +416,7 @@ export default class MessageManager {
     }
     this.screen.display(!messagesLoading);
     const cssLoading = Object.values(this.state.get().tabStates).some(
-      (tab) => tab.cssLoading
+      (tab) => tab.cssLoading,
     );
     const isReady = !messagesLoading && !cssLoading;
     this.state.update({ messagesLoading, ready: isReady });

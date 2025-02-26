@@ -1,24 +1,23 @@
 import { Duration } from 'luxon';
+import { Note } from 'App/services/NotesService';
+import { toJS } from 'mobx';
 import SessionEvent, { TYPES, EventData, InjectedEvent } from './event';
 import StackEvent from './stackEvent';
 import SessionError, { IError } from './error';
 import Issue, { IIssue, types as issueTypes } from './issue';
-import { Note } from 'App/services/NotesService';
-import { toJS } from 'mobx';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
 export function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
-  let merged = [];
+  const merged = [];
   let index1 = 0;
   let index2 = 0;
   let current = 0;
 
   while (current < (arr1.length + arr2.length)) {
-
-    let isArr1Depleted = index1 >= arr1.length;
-    let isArr2Depleted = index2 >= arr2.length;
+    const isArr1Depleted = index1 >= arr1.length;
+    const isArr2Depleted = index2 >= arr2.length;
 
     if (!isArr1Depleted && (isArr2Depleted || (arr1[index1].timestamp < arr2[index2].timestamp))) {
       merged[current] = arr1[index1];
@@ -34,7 +33,6 @@ export function mergeEventLists<T extends Record<string, any>, Y extends Record<
   return merged;
 }
 export function sortEvents(a: Record<string, any>, b: Record<string, any>) {
-
   const aTs = a.time || a.timestamp;
   const bTs = b.time || b.timestamp;
 
@@ -123,7 +121,7 @@ export interface ISession {
   notes: Note[];
   notesWithEvents: Array<Note | InjectedEvent>;
   fileKey: string;
-  platform: "web" | "ios" | "android";
+  platform: 'web' | 'ios' | 'android';
   projectId: string;
   startTs: number;
   timestamp: number;
@@ -159,80 +157,145 @@ const emptyValues = {
   metadata: {},
   startedAt: 0,
   platform: 'web',
-} as const
+} as const;
 
 export default class Session {
   sessionId: ISession['sessionId'];
+
   pageTitle: ISession['pageTitle'];
+
   active: ISession['active'];
+
   siteId: ISession['siteId'];
+
   projectKey: ISession['projectKey'];
+
   peerId: ISession['peerId'];
+
   canvasURL: ISession['canvasURL'];
+
   live: ISession['live'];
+
   startedAt: ISession['startedAt'];
+
   duration: Duration;
+
   durationMs: ISession['durationMs'];
+
   events: ISession['events'];
+
   uxtVideo?: any;
+
   stackEvents: ISession['stackEvents'];
+
   metadata: ISession['metadata'];
+
   favorite: ISession['favorite'];
+
   filterId?: ISession['filterId'];
+
   domURL: ISession['domURL'];
+
   devtoolsURL: ISession['devtoolsURL'];
+
   /**
    * @deprecated
    */
   mobsUrl: ISession['mobsUrl'];
+
   userBrowser: ISession['userBrowser'];
+
   userBrowserVersion: ISession['userBrowserVersion'];
+
   userCountry: ISession['userCountry'];
+
   userCity: ISession['userCity'];
+
   userState: ISession['userState'];
+
   userDevice: ISession['userDevice'];
+
   userDeviceType: ISession['userDeviceType'];
+
   isMobile: ISession['isMobile'];
+
   userOs: ISession['userOs'];
+
   userOsVersion: ISession['userOsVersion'];
+
   userId: ISession['userId'];
+
   userAnonymousId: ISession['userAnonymousId'];
+
   userUuid: ISession['userUuid'];
+
   userDisplayName: ISession['userDisplayName'];
+
   userNumericHash: ISession['userNumericHash'];
+
   viewed: ISession['viewed'];
+
   consoleLogCount: ISession['consoleLogCount'];
+
   eventsCount: ISession['eventsCount'];
+
   pagesCount: ISession['pagesCount'];
+
   errorsCount: ISession['errorsCount'];
+
   issueTypes: ISession['issueTypes'];
+
   issues: Issue[];
+
   referrer: ISession['referrer'];
+
   userDeviceHeapSize: ISession['userDeviceHeapSize'];
+
   userDeviceMemorySize: ISession['userDeviceMemorySize'];
+
   errors: ISession['errors'];
+
   crashes?: ISession['crashes'];
+
   socket: ISession['socket'];
+
   isIOS: ISession['isIOS'];
+
   revId: ISession['revId'];
+
   agentIds?: ISession['agentIds'];
+
   isCallActive?: ISession['isCallActive'];
+
   agentToken: ISession['agentToken'];
+
   notes: ISession['notes'];
+
   notesWithEvents: ISession['notesWithEvents'];
-  frustrations: Array<IIssue | InjectedEvent>
+
+  frustrations: Array<IIssue | InjectedEvent>;
+
   timezone?: ISession['timezone'];
+
   platform: ISession['platform'];
+
   isMobileNative?: ISession['isMobileNative'];
+
   audio?: ISession['audio'];
+
   trackerVersion?: string;
 
   fileKey: ISession['fileKey'];
+
   durationSeconds: number;
+
   liveOnly: boolean;
-  videoURL: string[]
-  screenWidth?: number
-  screenHeight?: number
+
+  videoURL: string[];
+
+  screenWidth?: number;
+
+  screenHeight?: number;
 
   addedEvents = false;
 
@@ -291,29 +354,27 @@ export default class Session {
 
     const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
 
-    const issuesList =
-      (issues as IIssue[]).map(
-        (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k })
-      ) || [];
+    const issuesList = (issues as IIssue[]).map(
+      (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }),
+    ) || [];
 
     const rawNotes = notes;
 
-    const frustrationEvents = events.filter(ev => {
-        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
-          // @ts-ignore
-          return ev.hesitation > 1000
-        }
-        return ev.type === TYPES.CLICKRAGE
+    const frustrationEvents = events.filter((ev) => {
+      if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+        // @ts-ignore
+        return ev.hesitation > 1000;
       }
-    )
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+      return ev.type === TYPES.CLICKRAGE;
+    });
+    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING);
 
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       mergeEventLists(events, rawNotes),
-      frustrationIssues
-    ).sort(sortEvents)
+      frustrationIssues,
+    ).sort(sortEvents);
 
     Object.assign(this, {
       ...session,
@@ -330,12 +391,12 @@ export default class Session {
       crashes,
       durationSeconds,
       userNumericHash: hashString(
-        session.userId ||
-          session.userAnonymousId ||
-          session.userUuid ||
-          session.userID ||
-          session.userUUID ||
-          ''
+        session.userId
+          || session.userAnonymousId
+          || session.userUuid
+          || session.userID
+          || session.userUUID
+          || '',
       ),
       userDisplayName:
         session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
@@ -365,13 +426,12 @@ export default class Session {
     resources: any[],
     userEvents: any[] = [],
     stackEvents: any[] = [],
-    userTestingEvents: any[] = []
+    userTestingEvents: any[] = [],
   ) {
     const exceptions = (errors as IError[])?.map((e) => new SessionError(e)) || [];
-    const issuesList =
-      (issues as IIssue[]).map(
-        (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k })
-      ) || [];
+    const issuesList = (issues as IIssue[]).map(
+      (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k }),
+    ) || [];
     const stackEventsList: StackEvent[] = [];
     if (stackEvents?.length || userEvents?.length) {
       const mergedArrays = [...stackEvents, ...userEvents]
@@ -381,13 +441,13 @@ export default class Session {
     }
 
     const events: InjectedEvent[] = [];
-    const uxtDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }))
+    const uxtDoneEvents = userTestingEvents.filter((e) => e.status === 'done' && e.title).map((e) => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }));
 
     let uxtIndexNum = 0;
     if (sessionEvents.length) {
-      const eventsWithUxt = mergeEventLists(sessionEvents, uxtDoneEvents)
+      const eventsWithUxt = mergeEventLists(sessionEvents, uxtDoneEvents);
       eventsWithUxt.forEach((event, k) => {
-        const isRawUxt = 'allow_typing' in event
+        const isRawUxt = 'allow_typing' in event;
         if (isRawUxt) {
           uxtIndexNum += 1;
           event.indexNum = uxtIndexNum;
@@ -402,22 +462,21 @@ export default class Session {
       });
     }
 
-    const frustrationEvents = events.filter(ev => {
-        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
-          // @ts-ignore
-          return ev.hesitation > 1000
-        }
-        return ev.type === TYPES.CLICKRAGE || ev.type === TYPES.TAPRAGE
+    const frustrationEvents = events.filter((ev) => {
+      if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+        // @ts-ignore
+        return ev.hesitation > 1000;
       }
-    )
+      return ev.type === TYPES.CLICKRAGE || ev.type === TYPES.TAPRAGE;
+    });
 
-    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE || i.type === issueTypes.DEAD_CLICK)
+    const frustrationIssues = issuesList.filter((i) => i.type === issueTypes.MOUSE_THRASHING || i.type === issueTypes.TAP_RAGE || i.type === issueTypes.DEAD_CLICK);
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       events,
-      frustrationIssues.filter(i => i.type !== issueTypes.DEAD_CLICK)
-    )
+      frustrationIssues.filter((i) => i.type !== issueTypes.DEAD_CLICK),
+    );
 
     this.events = events;
     // @ts-ignore
@@ -435,11 +494,10 @@ export default class Session {
   addNotes(sessionNotes: Note[]) {
     sessionNotes.forEach((note) => {
       // @ts-ignore veri dirti
-      note.time = note.timestamp
-    })
+      note.time = note.timestamp;
+    });
     // @ts-ignore
-    this.notesWithEvents =
-      [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
+    this.notesWithEvents = [...this.notesWithEvents, ...sessionNotes].sort(sortEvents) || [];
     this.notes = sessionNotes;
 
     return this;

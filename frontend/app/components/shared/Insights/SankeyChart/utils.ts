@@ -1,4 +1,3 @@
-
 interface Link {
   eventType: 'string',
   sessionsCount: number,
@@ -27,7 +26,7 @@ export function filterMinorPaths(data: DataType, startNode: number = 0): DataTyp
     return data;
   }
   const original: DataType = JSON.parse(JSON.stringify(data));
-  const eventType = data.nodes[startNode].eventType;
+  const { eventType } = data.nodes[startNode];
   const sourceLinks: Map<number, Link[]> = new Map();
   for (const link of original.links) {
     if (!sourceLinks.has(link.source)) {
@@ -61,7 +60,7 @@ export function filterMinorPaths(data: DataType, startNode: number = 0): DataTyp
     const newIndex = newNodes.length;
     newNodes.push({
       name: 'Dropoff',
-      eventType: eventType,
+      eventType,
       avgTimeFromPrevious: null,
       idd: `other_${oldIndex}`,
     });
@@ -79,8 +78,8 @@ export function filterMinorPaths(data: DataType, startNode: number = 0): DataTyp
 
     const majorLink = outLinks.reduce((prev, curr) => (curr.value > prev.value ? curr : prev), outLinks[0]);
 
-    const minorSessionsSum = outLinks.reduce((sum, link) => link !== majorLink ? sum + (link.sessionsCount || 0) : sum, 0);
-    const minorValueSum = outLinks.reduce((sum, link) => link !== majorLink ? sum + (link.value || 0) : sum, 0);
+    const minorSessionsSum = outLinks.reduce((sum, link) => (link !== majorLink ? sum + (link.sessionsCount || 0) : sum), 0);
+    const minorValueSum = outLinks.reduce((sum, link) => (link !== majorLink ? sum + (link.value || 0) : sum), 0);
 
     if (majorLink) {
       const newSource = getNewIndexForNode(majorLink.source);
@@ -103,7 +102,7 @@ export function filterMinorPaths(data: DataType, startNode: number = 0): DataTyp
       const newTarget = getOtherIndexForNode(current);
 
       newLinks.push({
-        eventType: eventType,
+        eventType,
         sessionsCount: minorSessionsSum,
         value: minorValueSum,
         avgTimeFromPrevious: null,

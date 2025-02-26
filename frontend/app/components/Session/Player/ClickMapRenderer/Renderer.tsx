@@ -4,7 +4,7 @@ import cn from 'classnames';
 import Overlay from 'Components/Session_/Player/Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite';
 
 function Player() {
   const playerContext = React.useContext(PlayerContext);
@@ -22,7 +22,7 @@ function Player() {
     <div
       className={cn(stl.playerBody, 'flex-1 flex flex-col relative')}
     >
-      <div className={cn("relative flex-1", 'overflow-visible')}>
+      <div className={cn('relative flex-1', 'overflow-visible')}>
         <Overlay isClickmap />
         <div className={cn(stl.screenWrapper, stl.checkers, '!overflow-y-scroll')} style={{ maxHeight: 800 }} ref={screenWrapper} />
       </div>

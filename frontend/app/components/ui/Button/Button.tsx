@@ -1,7 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
 import { CircularLoader, Icon } from 'UI';
-import { Tooltip } from 'antd'
+import { Tooltip } from 'antd';
+
 interface Props {
   className?: string;
   children?: React.ReactNode;
@@ -16,7 +17,7 @@ interface Props {
   tooltip?: any;
   [x: string]: any;
 }
-export default (props: Props) => {
+export default function (props: Props) {
   const {
     icon = '',
     iconSize = 18,
@@ -44,13 +45,13 @@ export default (props: Props) => {
     outline: 'bg-white color-teal border border-teal hover:bg-teal-light',
   };
 
-  let classes = cn(
+  const classes = cn(
     'relative flex items-center h-10 px-3 rounded-lg tracking-wide whitespace-nowrap',
     variantClasses[variant],
     { 'opacity-40 pointer-events-none': disabled },
     { '!rounded-full h-10 w-10 justify-center': rounded },
     className,
-    'btn'
+    'btn',
   );
 
   if (variant === 'primary') {
@@ -82,4 +83,4 @@ export default (props: Props) => {
   ) : (
     render()
   );
-};
+}

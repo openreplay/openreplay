@@ -1,4 +1,3 @@
-
 declare module 'js-untar' {
   export interface TarFile {
     name: string
@@ -7,5 +6,5 @@ declare module 'js-untar' {
     getBlobUrl: () => string
   }
 
-  export default function untar(tarFile: ArrayBuffer): Promise<TarFile[]>
+  export default function untar(tarFile: ArrayBuffer): Promise<TarFile[]>;
 }

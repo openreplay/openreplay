@@ -1,9 +1,9 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import Tab from './Tab';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { useModal } from 'Components/Modal';
+import Tab from './Tab';
 
 interface Props {
   tabs: { tab: string; idx: number }[];
@@ -12,12 +12,18 @@ interface Props {
   hideModal: () => void;
 }
 
-const DISPLAY_LIMIT = 5
+const DISPLAY_LIMIT = 5;
 
-function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
+function Modal({
+  tabs, currentTab, changeTab, hideModal,
+}: Props) {
   return (
-    <div className={'h-screen overflow-y-scroll'}>
-      <div className={'text-2xl font-semibold p-4'}>{tabs.length} Tabs</div>
+    <div className="h-screen overflow-y-scroll">
+      <div className="text-2xl font-semibold p-4">
+        {tabs.length}
+        {' '}
+        Tabs
+      </div>
       {tabs.map((tab, i) => (
         <div
           key={tab.idx}
@@ -27,10 +33,12 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
           }}
           className={cn(
             currentTab === tab.tab ? 'font-semibold ' : 'text-disabled-text',
-            'cursor-pointer border-b p-4 hover:bg-active-blue'
+            'cursor-pointer border-b p-4 hover:bg-active-blue',
           )}
         >
-          Tab {i + 1}
+          Tab
+          {' '}
+          {i + 1}
         </div>
       ))}
     </div>
@@ -40,24 +48,25 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
 function SessionTabs({ isLive }: { isLive?: boolean }) {
   const { showModal, hideModal } = useModal();
   const { player, store } = React.useContext(PlayerContext);
-  const { tabs = new Set('back-compat'), currentTab, closedTabs, tabNames } = store.get();
+  const {
+    tabs = new Set('back-compat'), currentTab, closedTabs, tabNames,
+  } = store.get();
 
   const tabsArr = Array.from(tabs).map((tab, idx) => ({
     tab,
     idx,
-    isClosed: closedTabs.includes(tab)
+    isClosed: closedTabs.includes(tab),
   }));
   const shouldTruncate = tabsArr.length > DISPLAY_LIMIT;
   const actualTabs = shouldTruncate ? tabsArr.slice(0, DISPLAY_LIMIT) : tabsArr;
 
-  const shownTabs =
-    actualTabs.findIndex((el) => el.tab === currentTab) !== -1
-      ? actualTabs
-      : actualTabs.concat({
-          tab: currentTab,
-          isClosed: false,
-          idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
-        });
+  const shownTabs = actualTabs.findIndex((el) => el.tab === currentTab) !== -1
+    ? actualTabs
+    : actualTabs.concat({
+      tab: currentTab,
+      isClosed: false,
+      idx: tabsArr.findIndex((tEl) => tEl.tab === currentTab),
+    });
   const changeTab = (tab: string) => {
     if (isLive) return;
     player.changeTab(tab);
@@ -68,7 +77,7 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
       <Modal hideModal={hideModal} currentTab={currentTab} changeTab={changeTab} tabs={tabsArr} />,
       {
         right: true,
-      }
+      },
     );
   };
   return (
@@ -87,18 +96,19 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
         </React.Fragment>
       ))}
       {shouldTruncate ? (
-        <>
-          <div
-            onClick={openModal}
-            className={cn(
-              'self-end py-1 px-4 text-sm',
-              'cursor-pointer bg-active-blue text-blue',
-              '!border-t-transparent !border-l-transparent !border-r-transparent'
-            )}
-          >
-            +{tabsArr.length - DISPLAY_LIMIT} More
-          </div>
-        </>
+        <div
+          onClick={openModal}
+          className={cn(
+            'self-end py-1 px-4 text-sm',
+            'cursor-pointer bg-active-blue text-blue',
+            '!border-t-transparent !border-l-transparent !border-r-transparent',
+          )}
+        >
+          +
+          {tabsArr.length - DISPLAY_LIMIT}
+          {' '}
+          More
+        </div>
       ) : null}
     </>
   );
