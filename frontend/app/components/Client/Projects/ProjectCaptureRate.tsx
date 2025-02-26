@@ -16,7 +16,7 @@ function ProjectCaptureRate(props: Props) {
   const [conditions, setConditions] = React.useState<Conditions[]>([]);
   const { projectId, platform } = props.project;
   const isMobile = platform !== 'web';
-  const { settingsStore, userStore } = useStore();
+  const { settingsStore, userStore, customFieldStore } = useStore();
   const isAdmin = userStore.account.admin || userStore.account.superAdmin;
   const isEnterprise = userStore.isEnterprise;
   const [changed, setChanged] = useState(false);
@@ -36,7 +36,13 @@ function ProjectCaptureRate(props: Props) {
   useEffect(() => {
     if (projectId) {
       setChanged(false);
-      void fetchCaptureConditions(projectId);
+      const fetchData = async () => {
+        if (isEnterprise) {
+          await customFieldStore.fetchListActive(projectId + '');
+        }
+        void fetchCaptureConditions(projectId);
+      };
+      void fetchData();
     }
   }, [projectId]);
 
