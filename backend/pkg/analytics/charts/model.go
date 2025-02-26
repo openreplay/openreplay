@@ -68,6 +68,21 @@ type MetricPayload struct {
 	Series         []Series   `json:"series"`
 }
 
+type MetricOfTable string
+
+const (
+	MetricOfTableBrowser  MetricOfTable = "browser"
+	MetricOfTableDevice   MetricOfTable = "device"
+	MetricOfTableCountry  MetricOfTable = "country"
+	MetricOfTableUserId   MetricOfTable = "userId"
+	MetricOfTableIssues   MetricOfTable = "issues"
+	MetricOfTableLocation MetricOfTable = "location"
+	MetricOfTableSessions MetricOfTable = "sessions"
+	MetricOfTableErrors   MetricOfTable = "errors"
+	MetricOfTableReferrer MetricOfTable = "referrer"
+	MetricOfTableFetch    MetricOfTable = "fetch"
+)
+
 type FilterGroup struct {
 	Filters     []Filter   `json:"filters"`
 	EventsOrder EventOrder `json:"eventsOrder"`
