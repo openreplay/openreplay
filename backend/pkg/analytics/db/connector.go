@@ -22,6 +22,7 @@ type TableResponse struct {
 type Connector interface {
 	Stop() error
 	Query(query string) (driver.Rows, error)
+	QueryArgs(query string, args map[string]interface{}) (driver.Rows, error)
 }
 
 type connectorImpl struct {
@@ -55,6 +56,16 @@ func (c *connectorImpl) Stop() error {
 
 func (c *connectorImpl) Query(query string) (driver.Rows, error) {
 	rows, err := c.conn.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	//defer rows.Close()
+
+	return rows, nil
+}
+
+func (c *connectorImpl) QueryArgs(query string, args map[string]interface{}) (driver.Rows, error) {
+	rows, err := c.conn.Query(context.Background(), query, args)
 	if err != nil {
 		return nil, err
 	}
