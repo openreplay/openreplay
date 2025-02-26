@@ -573,13 +573,12 @@ export default class Assist {
       try {
         // waiting for a decision on accepting the challenge
         const agreed = await confirmAnswer
-        // если отказали, то завершаем вызов
+        // if rejected, then terminate the call
         if (!agreed) {
           initiateCallEnd()
           this.options.onCallDeny?.()
           return
         }
-        // if rejected, then terminate the call
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
           callUI.setVideoToggleCallback((args: { enabled: boolean }) =>
@@ -646,7 +645,7 @@ export default class Assist {
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         // create a response to the incoming request
         const answer = await pc.createAnswer();
-        // устанавливаем ответ как локальный
+        // set answer as local description
         await pc.setLocalDescription(answer);
         // set the response as local
         socket.emit('webrtc_call_answer', { from, answer });
@@ -735,7 +734,7 @@ export default class Assist {
     app.nodes.attachNodeCallback((node) => {
       const id = app.nodes.getID(node)
       if (id && hasTag(node, 'canvas') && !app.sanitizer.isHidden(id)) {
-        // app.debug.log(`Creating stream for canvas ${id}`)
+        app.debug.log(`Creating stream for canvas ${id}`)
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
           id,
