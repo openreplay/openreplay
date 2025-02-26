@@ -413,7 +413,6 @@ def update_project_conditions(project_id, conditions):
         create_project_conditions(project_id, to_be_created)
 
     if to_be_updated:
-        logger.debug(to_be_updated)
         update_project_condition(project_id, to_be_updated)
 
     return get_conditions(project_id)
@@ -428,3 +427,45 @@ def get_projects_ids(tenant_id):
         cur.execute(query=query)
         rows = cur.fetchall()
     return [r["project_id"] for r in rows]
+
+
+def delete_metadata_condition(project_id, metadata_key):
+    sql = """\
+        UPDATE public.projects_conditions
+        SET filters=(SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+                     FROM jsonb_array_elements(filters) AS elem
+                     WHERE NOT (elem ->> 'type' = 'metadata'
+                         AND elem ->> 'source' = %(metadata_key)s))
+        WHERE project_id = %(project_id)s
+          AND jsonb_typeof(filters) = 'array'
+          AND EXISTS (SELECT 1
+                      FROM jsonb_array_elements(filters) AS elem
+                      WHERE elem ->> 'type' = 'metadata'
+                        AND elem ->> 'source' = %(metadata_key)s);"""
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, {"project_id": project_id, "metadata_key": metadata_key})
+        cur.execute(query)
+
+
+def rename_metadata_condition(project_id, old_metadata_key, new_metadata_key):
+    sql = """\
+        UPDATE public.projects_conditions
+        SET filters = (SELECT jsonb_agg(CASE
+                                            WHEN elem ->> 'type' = 'metadata' AND elem ->> 'source' = %(old_metadata_key)s
+                                                THEN elem || ('{"source": "'||%(new_metadata_key)s||'"}')::jsonb
+                                            ELSE elem END)
+                       FROM jsonb_array_elements(filters) AS elem)
+        WHERE project_id = %(project_id)s
+          AND jsonb_typeof(filters) = 'array'
+          AND EXISTS (SELECT 1
+                      FROM jsonb_array_elements(filters) AS elem
+                      WHERE elem ->> 'type' = 'metadata'
+                        AND elem ->> 'source' = %(old_metadata_key)s);"""
+
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(sql, {"project_id": project_id, "old_metadata_key": old_metadata_key,
+                                  "new_metadata_key": new_metadata_key})
+        cur.execute(query)
+
+# TODO: make project conditions use metadata-column-name instead of metadata-key
