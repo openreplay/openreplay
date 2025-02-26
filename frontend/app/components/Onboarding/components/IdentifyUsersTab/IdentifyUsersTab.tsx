@@ -2,12 +2,12 @@ import { Segmented } from 'antd';
 import React from 'react';
 import CircleNumber from '../CircleNumber';
 import MetadataList from '../MetadataList/MetadataList';
-import { HighlightCode, Icon, Button } from 'UI';
+import { HighlightCode, Icon } from 'UI';
 import DocCard from 'Shared/DocCard/DocCard';
 import withOnboarding, { WithOnboardingProps } from '../withOnboarding';
 import { OB_TABS } from 'App/routes';
 import withPageTitle from 'App/components/hocs/withPageTitle';
-import { Button as AntButton } from 'antd'
+import { Button } from 'antd'
 
 interface Props extends WithOnboardingProps {
   platforms: Array<{
@@ -42,10 +42,10 @@ function IdentifyUsersTab(props: Props) {
           href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
           target="_blank"
         >
-          <AntButton size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
+          <Button size={'small'} type={'text'} className="ml-2 flex items-center gap-2">
             <Icon name={'question-circle'} />
             <div className={'text-main'}>See Documentation</div>
-          </AntButton>
+          </Button>
         </a>
       </h1>
       <div className="p-4 flex gap-2 items-center">
@@ -142,11 +142,11 @@ function IdentifyUsersTab(props: Props) {
       </div>
 
       <div className="border-t px-4 py-3 flex justify-end gap-4">
-        <Button variant="text-primary" onClick={() => (props.skip ? props.skip() : null)}>
+        <Button type="text" onClick={() => (props.skip ? props.skip() : null)}>
           Skip
         </Button>
         <Button
-          variant="primary"
+          type="primary"
           className=""
           onClick={() => (props.navTo ? props.navTo(OB_TABS.MANAGE_USERS) : null)}
         >

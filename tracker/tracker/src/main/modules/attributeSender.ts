@@ -1,21 +1,33 @@
-import { SetNodeAttributeDict, SetNodeAttribute, Type } from '../../common/messages.gen.js'
+import {
+  SetNodeAttributeDictGlobal,
+  SetNodeAttribute,
+  Type,
+} from '../../common/messages.gen.js'
 import App from '../app/index.js'
 
 export class StringDictionary {
-  private idx = 1
+  private lastTs = 0
+  private lastSuffix = 1
   /** backwards dictionary of
    * [repeated str:key]
    * */
-  private backDict: Record<string, string> = {}
+  private backDict: Record<string, number> = {}
 
-  constructor(private readonly getPageNo: () => number | undefined) {}
-
-  getKey = (str: string): [string, boolean] => {
+  getKey = (str: string): [number, boolean] => {
     let isNew = false
     if (!this.backDict[str]) {
       isNew = true
-      this.backDict[str] = `${this.getPageNo() ?? 0}_${this.idx}`
-      this.idx += 1
+      const digits = Math.floor(Math.log10(Date.now())) + 1
+      const shavedTs = Date.now() % (10 ** (digits - 2))
+      let id: number = shavedTs
+      if (id === this.lastTs) {
+        id = id * 10000 + this.lastSuffix
+        this.lastSuffix += 1
+      } else {
+        this.lastSuffix = 1
+      }
+      this.backDict[str] = id
+      this.lastTs = shavedTs
     }
     return [this.backDict[str], isNew]
   }
@@ -28,7 +40,7 @@ export default class AttributeSender {
   constructor(options: { app: App; isDictDisabled: boolean }) {
     this.app = options.app
     this.isDictDisabled = options.isDictDisabled
-    this.dict = new StringDictionary(this.app.session.getPageNumber)
+    this.dict = new StringDictionary()
   }
 
   public sendSetAttribute = (id: number, name: string, value: string) => {
@@ -36,8 +48,8 @@ export default class AttributeSender {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
       return this.app.send(msg)
     } else {
-      const message: SetNodeAttributeDict = [
-        Type.SetNodeAttributeDict,
+      const message: SetNodeAttributeDictGlobal = [
+        Type.SetNodeAttributeDictGlobal,
         id,
         this.applyDict(name),
         this.applyDict(value),
@@ -46,15 +58,15 @@ export default class AttributeSender {
     }
   }
 
-  private applyDict(str: string): string {
+  private applyDict(str: string): number {
     const [key, isNew] = this.dict.getKey(str)
     if (isNew) {
-      this.app.send([Type.StringDict, key, str])
+      this.app.send([Type.StringDictGlobal, key, str])
     }
     return key
   }
 
   clear() {
-    this.dict = new StringDictionary(this.app.session.getPageNumber)
+    this.dict = new StringDictionary()
   }
 }

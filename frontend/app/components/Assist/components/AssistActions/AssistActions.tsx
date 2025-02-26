@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Tooltip } from 'UI';
+import { Button } from 'antd';
 import cn from 'classnames';
 import ChatWindow from '../../ChatWindow';
 import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
@@ -7,7 +7,7 @@ import type { LocalStream } from 'Player';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-import { confirm } from 'UI';
+import { confirm, Icon, Tooltip } from 'UI';
 import stl from './AassistActions.module.css';
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 import { audioContextManager } from 'App/utils/screenRecorder';
@@ -221,9 +221,10 @@ function AssistActions({
             role="button"
           >
             <Button
-              icon={annotating ? 'pencil-stop' : 'pencil'}
-              variant={annotating ? 'text-red' : 'text-primary'}
+              icon={<Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />}
+              type={'text'}
               style={{ height: '28px' }}
+              className={annotating ? 'text-red' : 'text-main'}
             >
               Annotate
             </Button>
@@ -246,8 +247,9 @@ function AssistActions({
           role="button"
         >
           <Button
-            icon={remoteActive ? 'window-x' : 'remote-control'}
-            variant={remoteActive ? 'text-red' : 'text-primary'}
+            icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} />}
+            type={'text'}
+            className={remoteActive ? 'text-red' : 'text-main'}
             style={{ height: '28px' }}
           >
             Remote Control
@@ -272,8 +274,9 @@ function AssistActions({
           role="button"
         >
           <Button
-            icon="headset"
-            variant={onCall ? 'text-red' : isPrestart ? 'green' : 'primary'}
+            icon={<Icon name={'headset'} size={16} />}
+            type={'text'}
+            className={onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'}
             style={{ height: '28px' }}
           >
             {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}

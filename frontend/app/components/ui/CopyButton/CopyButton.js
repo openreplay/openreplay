@@ -3,7 +3,7 @@ import { useState } from 'react';
 import copy from 'copy-to-clipboard';
 import { Button } from 'antd';
 
-function CopyButton({ content, variant="text-primary",  className = '', btnText = 'copy' }) {
+function CopyButton({ content, variant="text",  className = 'capitalize mt-2 font-medium text-neutral-400', btnText = 'copy', size = "small" }) {
   const [copied, setCopied] = useState(false)
 
   const copyHandler = () => {
@@ -16,14 +16,14 @@ function CopyButton({ content, variant="text-primary",  className = '', btnText 
   
   return (
     <Button
-      type='text'
-      onClick={ copyHandler }
-      size='small'
-      className='capitalize mt-2 font-medium text-neutral-400'
+      type={variant}
+      onClick={copyHandler}
+      size={size}
+      className={className}
     >
-      { copied ? 'copied' : btnText }
+      {copied ? 'copied' : btnText}
     </Button>
-  )
+  );
 }
 
 export default CopyButton

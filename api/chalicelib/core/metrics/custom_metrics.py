@@ -55,8 +55,8 @@ def __get_sessions_list(project: schemas.ProjectContext, user_id, data: schemas.
     return sessions_search.search_sessions(data=data.series[0].filter, project=project, user_id=user_id)
 
 
-def __get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
-                         include_mobs: bool = True):
+def get_heat_map_chart(project: schemas.ProjectContext, user_id, data: schemas.CardHeatMap,
+                       include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.filters += data.series[0].filter.events
@@ -156,7 +156,7 @@ def get_chart(project: schemas.ProjectContext, data: schemas.CardSchema, user_id
     supported = {
         schemas.MetricType.TIMESERIES: __get_timeseries_chart,
         schemas.MetricType.TABLE: __get_table_chart,
-        schemas.MetricType.HEAT_MAP: __get_heat_map_chart,
+        schemas.MetricType.HEAT_MAP: get_heat_map_chart,
         schemas.MetricType.FUNNEL: __get_funnel_chart,
         schemas.MetricType.PATH_ANALYSIS: __get_path_analysis_chart
     }
@@ -201,12 +201,12 @@ def get_issues(project: schemas.ProjectContext, user_id: int, data: schemas.Card
     return supported.get(data.metric_type, not_supported)()
 
 
-def __get_global_card_info(data: schemas.CardSchema):
+def get_global_card_info(data: schemas.CardSchema):
     r = {"hideExcess": data.hide_excess, "compareTo": data.compare_to, "rows": data.rows}
     return r
 
 
-def __get_path_analysis_card_info(data: schemas.CardPathAnalysis):
+def get_path_analysis_card_info(data: schemas.CardPathAnalysis):
     r = {"start_point": [s.model_dump() for s in data.start_point],
          "start_type": data.start_type,
          "excludes": [e.model_dump() for e in data.excludes],
@@ -221,8 +221,8 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
             if data.session_id is not None:
                 session_data = {"sessionId": data.session_id}
             else:
-                session_data = __get_heat_map_chart(project=project, user_id=user_id,
-                                                    data=data, include_mobs=False)
+                session_data = get_heat_map_chart(project=project, user_id=user_id,
+                                                  data=data, include_mobs=False)
                 if session_data is not None:
                     session_data = {"sessionId": session_data["sessionId"]}
 
@@ -235,9 +235,9 @@ def create_card(project: schemas.ProjectContext, user_id, data: schemas.CardSche
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project.project_id, **data.model_dump(), **_data,
                   "default_config": json.dumps(data.default_config.model_dump()), "card_info": None}
-        params["card_info"] = __get_global_card_info(data=data)
+        params["card_info"] = get_global_card_info(data=data)
         if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-            params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
+            params["card_info"] = {**params["card_info"], **get_path_analysis_card_info(data=data)}
         params["card_info"] = json.dumps(params["card_info"])
 
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
@@ -299,9 +299,9 @@ def update_card(metric_id, user_id, project_id, data: schemas.CardSchema):
             d_series_ids.append(i)
     params["d_series_ids"] = tuple(d_series_ids)
     params["session_data"] = json.dumps(metric["data"])
-    params["card_info"] = __get_global_card_info(data=data)
+    params["card_info"] = get_global_card_info(data=data)
     if data.metric_type == schemas.MetricType.PATH_ANALYSIS:
-        params["card_info"] = {**params["card_info"], **__get_path_analysis_card_info(data=data)}
+        params["card_info"] = {**params["card_info"], **get_path_analysis_card_info(data=data)}
     elif data.metric_type == schemas.MetricType.HEAT_MAP:
         if data.session_id is not None:
             params["session_data"] = json.dumps({"sessionId": data.session_id})

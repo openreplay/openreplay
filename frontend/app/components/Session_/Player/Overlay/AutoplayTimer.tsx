@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { withRouter } from 'react-router-dom';
-import { Button, Link } from 'UI';
+import { Link } from 'UI';
+import { Button } from 'antd'
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
@@ -50,12 +51,12 @@ function AutoplayTimer({ history }: any) {
             <AutoplayToggle />
           </div>
           <div className="flex items-center">
-            <Button variant="text-primary" onClick={cancel}>
+            <Button variant="text" onClick={cancel}>
               Cancel
             </Button>
             <div className="px-2" />
             <Link to={sessionRoute(nextId)} disabled={!nextId}>
-              <Button variant="outline">Play Now</Button>
+              <Button type="default">Play Now</Button>
             </Link>
           </div>
         </div>

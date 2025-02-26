@@ -65,7 +65,7 @@ function WidgetChart(props: Props) {
   const prevMetricRef = useRef<any>();
   const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
-  const [enabledRows, setEnabledRows] = useState<string[]>([]);
+  const [enabledRows, setEnabledRows] = useState<string[]>(_metric.series.map(s => s.name));
   const isTableWidget =
     _metric.metricType === 'table' && _metric.viewType === 'table';
   const isPieChart =
@@ -77,6 +77,17 @@ function WidgetChart(props: Props) {
       dashboardStore.resetDrillDownFilter();
     };
   }, []);
+
+  useEffect(() => {
+    if (enabledRows.length !== _metric.series.length) {
+      const excluded = _metric.series
+        .filter((s) => !enabledRows.includes(s.name))
+        .map((s) => s.name);
+      metricStore.setDisabledSeries(excluded);
+    } else {
+      metricStore.setDisabledSeries([]);
+    }
+  }, [enabledRows])
 
   useEffect(() => {
     if (!data.chart) return;
@@ -227,7 +238,7 @@ function WidgetChart(props: Props) {
   ]);
   useEffect(loadPage, [_metric.page]);
 
-  const onFocus = (seriesName: string)=> {
+  const onFocus = (seriesName: string) => {
     metricStore.setFocusedSeriesName(seriesName);
     metricStore.setDrillDown(true)
   }
@@ -318,6 +329,7 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={chartData}
             compData={compDataCopy}
+            onSeriesFocus={onFocus}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -335,6 +347,7 @@ function WidgetChart(props: Props) {
             data={chartData}
             inGrid={!props.isPreview}
             onClick={onChartClick}
+            onSeriesFocus={onFocus}
             label={
               _metric.metricOf === 'sessionCount'
                 ? 'Number of Sessions'
@@ -351,6 +364,7 @@ function WidgetChart(props: Props) {
             compData={compDataCopy}
             params={params}
             colors={colors}
+            onSeriesFocus={onFocus}
             onClick={onChartClick}
             label={
               _metric.metricOf === 'sessionCount'
@@ -538,6 +552,7 @@ function WidgetChart(props: Props) {
 
 
   const showTable = _metric.metricType === TIMESERIES && (props.isPreview || _metric.viewType === TABLE)
+  const tableMode = _metric.viewType === 'table' && _metric.metricType === TIMESERIES
   return (
     <div ref={ref}>
       {loading ? stale ? <LongLoader onClick={loadSample} /> : <Loader loading={loading} style={{ height: `240px` }} /> : (
@@ -549,6 +564,7 @@ function WidgetChart(props: Props) {
               inBuilder={props.isPreview}
               defaultOpen={true}
               data={data}
+              tableMode={tableMode}
               enabledRows={enabledRows}
               setEnabledRows={setEnabledRows}
               metric={_metric}

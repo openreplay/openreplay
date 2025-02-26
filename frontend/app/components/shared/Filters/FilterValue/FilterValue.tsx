@@ -20,6 +20,13 @@ function FilterValue(props: Props) {
   const { filter } = props;
   const isAutoOpen = filter.autoOpen;
 
+  React.useEffect(() => {
+    if (isAutoOpen) {
+      setTimeout(() => {
+        filter.autoOpen = false;
+      }, 250)
+    }
+  }, [isAutoOpen])
   const [durationValues, setDurationValues] = useState({
     minDuration: filter.value?.[0],
     maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0],

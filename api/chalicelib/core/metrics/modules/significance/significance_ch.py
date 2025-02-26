@@ -175,7 +175,7 @@ def get_simple_funnel(filter_d: schemas.CardSeriesFilterSchema, project: schemas
                     value_key=e_k
                 ) if not specific_condition else specific_condition)
 
-    full_args = {"eventTypes": tuple(event_types), **full_args, **values}
+    full_args = {"eventTypes": event_types, **full_args, **values}
     n_stages = len(n_stages_query)
     if n_stages == 0:
         return []

@@ -110,6 +110,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2])
     break
 
+    case Messages.Type.StringDictGlobal:
+      return  this.uint(msg[1]) && this.string(msg[2])
+    break
+
+    case Messages.Type.SetNodeAttributeDictGlobal:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
+    break
+
     case Messages.Type.CSSInsertRule:
       return  this.uint(msg[1]) && this.string(msg[2]) && this.uint(msg[3])
     break

@@ -53,7 +53,7 @@ function DashboardEditModal(props: Props) {
                         value={ dashboard.name }
                         onChange={write}
                         placeholder="Title"
-                        maxLength={100}
+                        maxLength={40}
                         autoFocus={focusTitle}
                     />
                 </Form.Field>

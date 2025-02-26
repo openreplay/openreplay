@@ -49,6 +49,7 @@ interface ClickEvent extends IEvent {
   targetContent: string;
   count: number;
   hesitation: number;
+  selector: string;
 }
 
 interface TouchEvent extends IEvent {
@@ -141,12 +142,14 @@ export class Click extends Event {
   targetContent = '';
   count: number;
   hesitation: number = 0;
+  selector: string;
 
   constructor(evt: ClickEvent, isClickRage?: boolean) {
     super(evt);
     this.targetContent = evt.targetContent;
     this.count = evt.count;
     this.hesitation = evt.hesitation;
+    this.selector = evt.selector;
     if (isClickRage) {
       this.type = CLICKRAGE;
     }
@@ -167,7 +170,7 @@ export class Touch extends Event {
   }
 }
 
-class Input extends Event {
+export class Input extends Event {
   readonly type = INPUT;
   readonly name = 'Input';
   readonly hesitation: number = 0;

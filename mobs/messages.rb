@@ -210,6 +210,16 @@ message 33, 'PageEvent', :tracker => false, :replayer => false do
   string 'WebVitals'
 end
 
+message 34, "StringDictGlobal" do
+    uint "Key"
+    string "Value"
+end
+message 35, 'SetNodeAttributeDictGlobal' do
+    uint 'ID'
+    uint 'Name'
+    uint 'Value'
+end
+
 # DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'

@@ -300,6 +300,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.SetNodeAttribute:
         this.setNodeAttribute(msg);
         return;
+      case MType.SetNodeAttributeDictGlobal:
       case MType.SetNodeAttributeDict:
         const name = this.globalDict.get(msg.name);
         const value = this.globalDict.get(msg.value);

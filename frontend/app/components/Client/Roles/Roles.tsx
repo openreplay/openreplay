@@ -5,8 +5,8 @@ import React, { useEffect } from 'react';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { Button, Loader, NoContent, Tooltip } from 'UI';
-import { confirm } from 'UI';
+import { Loader, NoContent, Tooltip, confirm } from 'UI';
+import { Button } from 'antd'
 
 import RoleForm from './components/RoleForm';
 import RoleItem from './components/RoleItem';
@@ -68,7 +68,7 @@ function Roles() {
                 title="You don’t have the permissions to perform this action."
                 disabled={isAdmin}
               >
-                <Button variant="primary" onClick={() => editHandler({})}>
+                <Button type="primary" onClick={() => editHandler({})}>
                   Add
                 </Button>
               </Tooltip>

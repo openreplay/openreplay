@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
-import { Button, Loader, NoContent, Pagination } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { debounce } from 'App/utils';
@@ -10,7 +10,7 @@ import CardIssueItem from './CardIssueItem';
 import SessionsModal from '../SessionsModal';
 import { useModal } from 'App/components/Modal';
 import Issue from 'App/mstore/types/issue';
-import { List } from 'antd';
+import { List, Button } from 'antd';
 
 function CardIssues() {
   const { metricStore, dashboardStore } = useStore();
@@ -104,8 +104,8 @@ function CardIssues() {
           )}
         </div>
         <div className="flex items-center gap-4">
-          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
-          <Button variant="text-primary" onClick={() => handleClick()}>All Sessions</Button>
+          {hasFilters && <Button type="text" onClick={clearFilters}>Clear Filters</Button>}
+          <Button type="text" onClick={() => handleClick()}>All Sessions</Button>
         </div>
       </div>
 

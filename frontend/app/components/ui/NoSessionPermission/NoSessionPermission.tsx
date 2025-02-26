@@ -8,7 +8,8 @@ import {
   sessions as sessionsRoute,
   withSiteId,
 } from 'App/routes';
-import { Button, Icon } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd'
 
 import stl from './NoSessionPermission.module.css';
 
@@ -60,11 +61,9 @@ function NoSessionPermission(props: Props) {
           Please check with your admin.
         </span>
       )}
-      {/* <Link to="/"> */}
-      <Button variant="primary" onClick={backHandler} className="mt-6">
+      <Button type="primary" onClick={backHandler} className="mt-6">
         GO BACK
       </Button>
-      {/* </Link> */}
     </div>
   );
 }

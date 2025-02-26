@@ -3,8 +3,8 @@ import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useStore } from 'App/mstore';
-import { Button, Form, Icon, Input } from 'UI';
-import { confirm } from 'UI';
+import { confirm, Form, Icon, Input } from 'UI';
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 
 import styles from './siteForm.module.css';
@@ -141,8 +141,8 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
           </Form.Field>
           <div className="mt-6 flex justify-between">
             <Button
-              variant="primary"
-              type="submit"
+              type="primary"
+              htmlType="submit"
               className="float-left mr-2"
               loading={loading}
               disabled={!site.validate}
@@ -151,8 +151,7 @@ const NewSiteForm = ({ location: { pathname }, onClose }: Props) => {
             </Button>
             {site.exists() && (
               <Button
-                variant="text"
-                type="button"
+                type="text"
                 onClick={handleRemove}
                 disabled={!canDelete}
               >

@@ -1184,7 +1184,8 @@ const MOBILE_EXCLUDE = [
   FilterKey.CLICK, FilterKey.INPUT, FilterKey.ERROR, FilterKey.CUSTOM,
   FilterKey.LOCATION, FilterKey.FETCH, FilterKey.DOM_COMPLETE,
   FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, FilterKey.TTFB, FilterKey.USER_BROWSER,
-  FilterKey.PLATFORM
+  FilterKey.PLATFORM, FilterKey.TAGGED_ELEMENT, FilterKey.STATEACTION, FilterKey.UTM_CAMPAIGN,
+  FilterKey.UTM_SOURCE, FilterKey.UTM_MEDIUM, FilterKey.SLOW_SESSION
 ];
 
 /**

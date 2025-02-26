@@ -35,6 +35,8 @@ const (
 	MsgPageEventDeprecated            = 31
 	MsgInputEvent                     = 32
 	MsgPageEvent                      = 33
+	MsgStringDictGlobal               = 34
+	MsgSetNodeAttributeDictGlobal     = 35
 	MsgCSSInsertRule                  = 37
 	MsgCSSDeleteRule                  = 38
 	MsgFetch                          = 39
@@ -1013,6 +1015,54 @@ func (msg *PageEvent) Decode() Message {
 
 func (msg *PageEvent) TypeID() int {
 	return 33
+}
+
+type StringDictGlobal struct {
+	message
+	Key   uint64
+	Value string
+}
+
+func (msg *StringDictGlobal) Encode() []byte {
+	buf := make([]byte, 21+len(msg.Value))
+	buf[0] = 34
+	p := 1
+	p = WriteUint(msg.Key, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	return buf[:p]
+}
+
+func (msg *StringDictGlobal) Decode() Message {
+	return msg
+}
+
+func (msg *StringDictGlobal) TypeID() int {
+	return 34
+}
+
+type SetNodeAttributeDictGlobal struct {
+	message
+	ID    uint64
+	Name  uint64
+	Value uint64
+}
+
+func (msg *SetNodeAttributeDictGlobal) Encode() []byte {
+	buf := make([]byte, 31)
+	buf[0] = 35
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteUint(msg.Name, buf, p)
+	p = WriteUint(msg.Value, buf, p)
+	return buf[:p]
+}
+
+func (msg *SetNodeAttributeDictGlobal) Decode() Message {
+	return msg
+}
+
+func (msg *SetNodeAttributeDictGlobal) TypeID() int {
+	return 35
 }
 
 type CSSInsertRule struct {

@@ -11,7 +11,7 @@ import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
-import { HEATMAP, USER_PATH } from "App/constants/card";
+import { HEATMAP, USER_PATH, FUNNEL } from "App/constants/card";
 
 interface Props {
   className?: string;
@@ -59,6 +59,13 @@ function WidgetSessions(props: Props) {
     if (!isMounted()) return;
     setLoading(true);
     delete filter.eventsOrderSupport;
+    if (widget.metricType === FUNNEL) {
+      if (filter.series[0].filter.filters.length === 0) {
+        setLoading(false);
+        return setData([]);
+      }
+    }
+
     widget
       .fetchSessions(metricId, filter)
       .then((res: any) => {
@@ -108,10 +115,23 @@ function WidgetSessions(props: Props) {
       debounceClickMapSearch(customFilter);
     } else {
       const hasStartPoint = !!widget.startPoint && widget.metricType === USER_PATH
-      const activeSeries = focusedSeries ? widget.series.filter((s) => s.name === focusedSeries) : widget.series
+      const onlyFocused = focusedSeries
+                          ? widget.series.filter((s) => s.name === focusedSeries)
+                          : widget.series
+      const activeSeries = metricStore.disabledSeries.length
+                           ? onlyFocused.filter((s) => !metricStore.disabledSeries.includes(s.name))
+                           : onlyFocused
       const seriesJson = activeSeries.map((s) => s.toJson());
       if (hasStartPoint) {
         seriesJson[0].filter.filters.push(widget.startPoint.toJson());
+      }
+      if (widget.metricType === USER_PATH) {
+        if (seriesJson[0].filter.filters[0].value[0] === '' && widget.data.nodes) {
+          seriesJson[0].filter.filters[0].value = widget.data.nodes[0].name
+        } else if (seriesJson[0].filter.filters[0].value[0] === '' && !widget.data.nodes) {
+          // no point requesting if we don't have starting point picked by api
+          return;
+        }
       }
       debounceRequest(widget.metricId, {
         ...filter,
@@ -132,6 +152,8 @@ function WidgetSessions(props: Props) {
     metricStore.clickMapSearch,
     focusedSeries,
     widget.startPoint,
+    widget.data.nodes,
+    metricStore.disabledSeries.length
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
   useEffect(() => {

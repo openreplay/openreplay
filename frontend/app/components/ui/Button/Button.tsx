@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
-import { CircularLoader, Icon, Tooltip } from 'UI';
-
+import { CircularLoader, Icon } from 'UI';
+import { Tooltip } from 'antd'
 interface Props {
   className?: string;
   children?: React.ReactNode;

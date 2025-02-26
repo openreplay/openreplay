@@ -53,7 +53,6 @@ export const setQueryParams = (location: Location, params: Record<string, any>):
 };
 
 export const login = (): string => '/login';
-export const spotLogin = (): string => '/spot-login';
 export const signup = (): string => '/signup';
 
 export const forgotPassword = (): string => '/reset-password';
@@ -109,11 +108,6 @@ export const liveSession = (sessionId = ':sessionId', params?: Record<string, an
 export const errors = (params?: Record<string, any>): string => queried('/errors', params);
 export const error = (id = ':errorId', hash?: string | number): string => hashed(`/errors/${id}`, hash);
 
-export const funnels = (params?: Record<string, any>): string => queried('/funnels', params);
-export const funnelsCreate = (): string => `/funnels/create`;
-export const funnel = (id = ':funnelId', hash?: string | number): string => hashed(`/funnels/${id}`, hash);
-export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash?: string | number): string =>
-  hashed(`/funnels/${id}/${issueId}`, hash);
 export const tests = (): string => '/tests';
 export const dashboard = (): string => '/dashboard';
 export const dashboardMetrics = (): string => '/dashboard/metrics';
@@ -181,10 +175,6 @@ const REQUIRED_SITE_ID_ROUTES = [
   error(''),
   errors(),
   onboarding(''),
-  funnels(),
-  funnelsCreate(),
-  funnel(''),
-  funnelIssue(),
 
   usabilityTesting(),
   usabilityTestingCreate(),
@@ -222,7 +212,6 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   notes(),
   bookmarks(),
   fflags(),
-  funnels(),
   assist(),
   recordings(),
   dashboard(),

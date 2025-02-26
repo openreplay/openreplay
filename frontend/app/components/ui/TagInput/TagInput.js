@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Button } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import { validateKeyCode } from 'App/validate';
 import styles from './tagInput.module.css';
 

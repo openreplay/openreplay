@@ -1,7 +1,8 @@
 import { Conditions } from 'App/mstore/types/FeatureFlag';
 import React from 'react';
 import ConditionSet from 'Shared/ConditionSet';
-import { Button } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import { nonConditionalFlagFilters } from 'Types/filter/newFilter';
 
 function ConditionalRecordingSettings({
@@ -43,7 +44,7 @@ function ConditionalRecordingSettings({
       />
       <div className={'flex gap-1 items-center'}>
         <span className={'font-semibold'}>matching</span>
-        <Button variant={'text-primary'} icon={'plus'} onClick={addConditionSet}>
+        <Button type={'text'} icon={<Icon name={'plus'} size={16} />} onClick={addConditionSet}>
           Condition Set
         </Button>
       </div>

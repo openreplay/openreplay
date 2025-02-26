@@ -1,6 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
-import { Button } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import styles from './listItem.module.css';
 
 const ListItem = ({ field, onEdit, disabled }) => {
@@ -17,7 +18,7 @@ const ListItem = ({ field, onEdit, disabled }) => {
     >
       <span>{field.key}</span>
       <div className="invisible group-hover:visible" data-hidden={field.index === 0}>
-        <Button variant="text-primary" icon="pencil" />
+        <Button type="text" icon={<Icon name={"pencil"} size={16} />} />
       </div>
     </div>
   );

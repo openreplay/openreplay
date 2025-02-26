@@ -1,6 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Button } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import cn from 'classnames';
 import FeatureFlag from 'App/mstore/types/FeatureFlag';
 
@@ -46,8 +47,8 @@ function Description({
         </div>
       ) : (
         <Button
-          variant={'text-primary'}
-          icon={'edit'}
+          type={'text'}
+          icon={<Icon name={'edit'} size={16} />}
           onClick={() => setEditing({ isDescrEditing: true })}
         >
           Add

@@ -2,8 +2,8 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
-import { Button, Form, Input, Message } from 'UI';
-import { confirm } from 'UI';
+import { confirm, Form, Input, Message } from 'UI';
+import { Button } from 'antd'
 
 interface Props {
   onClose: () => void;
@@ -83,7 +83,7 @@ function TeamsAddForm({ onClose }: Props) {
               onClick={save}
               disabled={!instance?.validate()}
               loading={saving}
-              variant="primary"
+              type="primary"
               className="float-left mr-2"
             >
               {instance?.exists() ? 'Update' : 'Add'}

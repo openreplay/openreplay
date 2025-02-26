@@ -222,7 +222,7 @@ Pipfile.lock
 /chalicelib/core/sessions/performance_event.py
 /chalicelib/core/sessions/sessions_viewed.py
 /chalicelib/core/sessions/unprocessed_sessions.py
-/chalicelib/core/significance.py
+/chalicelib/core/metrics/modules
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py

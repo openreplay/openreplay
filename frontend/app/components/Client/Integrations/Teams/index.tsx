@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import TeamsChannelList from './TeamsChannelList';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { Icon } from 'UI';
+import { Button } from 'antd'
 
+import TeamsChannelList from './TeamsChannelList';
 import TeamsAddForm from './TeamsAddForm';
-import { Button } from 'UI';
 
 const MSTeams = () => {
     const { integrationsStore } = useStore();
@@ -35,7 +36,7 @@ const MSTeams = () => {
             <div className="shrink-0" style={{ width: '350px' }}>
                 <div className="flex items-center p-5">
                     <h3 className="text-2xl mr-3">Microsoft Teams</h3>
-                    <Button rounded={true} icon="plus" iconSize={24} variant="outline" onClick={onNew}/>
+                    <Button shape={'circle'} icon={<Icon name={'plus'} size={24} />} type="text" onClick={onNew}/>
                 </div>
                 <TeamsChannelList onEdit={onEdit} />
             </div>

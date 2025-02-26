@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Link, Button } from 'UI';
+import { Icon, Link } from 'UI';
+import { Button } from 'antd'
 import stl from './roleItem.module.css';
 import cn from 'classnames';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
@@ -46,7 +47,7 @@ function RoleItem({ role, editHandler, isAdmin, permissions, projects }: Props) 
 
                 <div className={cn(stl.actions, 'absolute right-0 top-0 bottom-0 mr-8 invisible group-hover:visible')}>
                     {isAdmin && !!editHandler && (
-                        <Button variant="text-primary" icon="pencil" disabled={role.protected} onClick={() => editHandler(role)} />
+                        <Button type="text" icon={<Icon name={"pencil"} />} disabled={role.protected} onClick={() => editHandler(role)} />
                     )}
                 </div>
             </div>

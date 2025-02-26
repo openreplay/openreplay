@@ -1,7 +1,8 @@
 import { useModal } from 'App/components/Modal';
 import React from 'react';
 import SessionSettings from 'Shared/SessionSettings';
-import { Button, Tooltip } from 'UI';
+import { Icon, Tooltip } from 'UI';
+import { Button } from 'antd'
 
 function SessionSettingButton(props: any) {
     const { showModal } = useModal();
@@ -13,7 +14,7 @@ function SessionSettingButton(props: any) {
     return (
         <div className="cursor-pointer ml-4" onClick={handleClick}>
             <Tooltip title="Session Settings">
-                <Button icon="sliders" variant="text" id="btn-session-settings" />
+                <Button icon={<Icon name={'sliders'} />} type="text" id="btn-session-settings" />
             </Tooltip>
         </div>
     );

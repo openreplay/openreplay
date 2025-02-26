@@ -31,6 +31,7 @@ interface Props {
   defaultOpen?: boolean;
   metric: { name: string; viewType: string };
   inBuilder?: boolean;
+  tableMode?: boolean;
 }
 
 function WidgetDatatable(props: Props) {
@@ -42,6 +43,7 @@ function WidgetDatatable(props: Props) {
       dataObj.chart = dataObj.chart.map((item, i) => {
         const compItem = props.compData!.chart[i];
         const newItem = { ...item };
+        if (!compItem) return newItem;
         Object.keys(compItem).forEach((key) => {
           if (key !== 'timestamp' && key !== 'time') {
             newItem[key] = compItem[key];
@@ -161,7 +163,7 @@ function WidgetDatatable(props: Props) {
             columns={tableProps}
             dataSource={tableData}
             pagination={false}
-            rowSelection={rowSelection}
+            rowSelection={props.tableMode ? undefined : rowSelection}
             size={'small'}
             scroll={{ x: 'max-content' }}
           />

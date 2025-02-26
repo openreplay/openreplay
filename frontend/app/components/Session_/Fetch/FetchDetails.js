@@ -1,5 +1,6 @@
 import React from 'react';
-import { JSONTree, NoContent, Button, Tabs } from 'UI'
+import { JSONTree, NoContent, Tabs } from 'UI'
+import { Button } from 'antd'
 import cn from 'classnames';
 import stl from './fetchDetails.module.css';
 import Headers from './components/Headers'
@@ -158,10 +159,10 @@ export default class FetchDetails extends React.PureComponent {
 					</div>
 
 					<div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
-						<Button variant="outline" onClick={prevClick} disabled={first}>
+						<Button type="outline" onClick={prevClick} disabled={first}>
 							Prev
 						</Button>
-						<Button variant="outline" onClick={nextClick} disabled={last}>
+						<Button type="outline" onClick={nextClick} disabled={last}>
 							Next
 						</Button>
 					</div>

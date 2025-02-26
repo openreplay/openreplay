@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import SlackChannelList from './SlackChannelList/SlackChannelList';
 import SlackAddForm from './SlackAddForm';
-import { Button } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd';
 import { observer } from 'mobx-react-lite'
 import { useStore } from 'App/mstore'
 
@@ -34,7 +35,7 @@ const SlackForm = () => {
             <div className="shrink-0" style={{ width: '350px' }}>
                 <div className="flex items-center p-5">
                     <h3 className="text-2xl mr-3">Slack</h3>
-                    <Button rounded={true} icon="plus" iconSize={24} variant="outline" onClick={onNew}/>
+                    <Button shape={'circle'} type={'text'} icon={<Icon name={"plus"} size={24} />} onClick={onNew}/>
                 </div>
                 <SlackChannelList onEdit={onEdit} />
             </div>

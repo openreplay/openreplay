@@ -2,7 +2,8 @@ import React from 'react';
 import { VList, VListHandle } from 'virtua';
 import cn from 'classnames';
 import { Duration } from 'luxon';
-import { NoContent, Button } from 'UI';
+import { NoContent, Icon } from 'UI';
+import { Button } from 'antd'
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -214,21 +215,13 @@ function TimeTable(props: Props) {
       {navigation && (
         <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
           <Button
-            variant="text-primary"
-            icon="chevron-up"
-            tooltip={{
-              title: 'Previous Error',
-              delay: 0,
-            }}
+            type="text"
+            icon={<Icon name={'chevron-up'} />}
             onClick={onPrevClick}
           />
           <Button
-            variant="text-primary"
-            icon="chevron-down"
-            tooltip={{
-              title: 'Next Error',
-              delay: 0,
-            }}
+            type="text"
+            icon={<Icon name={'chevron-down'} />}
             onClick={onNextClick}
           />
         </div>

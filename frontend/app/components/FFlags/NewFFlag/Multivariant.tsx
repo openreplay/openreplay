@@ -1,6 +1,7 @@
 import React from 'react';
 import { Rollout, Payload } from './Helpers';
-import { Input, Button, Icon } from 'UI';
+import { Input, Icon } from 'UI';
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import cn from 'classnames';
@@ -164,7 +165,7 @@ function Multivariant({ readonly }: { readonly?: boolean }) {
       {readonly ? null : (
         <div className={'mt-2 flex justify-between w-full'}>
           {featureFlagsStore.currentFflag!.variants.length < 10 ? (
-            <Button variant={'text-primary'} onClick={featureFlagsStore.currentFflag!.addVariant}>
+            <Button type={'text'} onClick={featureFlagsStore.currentFflag!.addVariant}>
               + Add Variant
             </Button>
           ) : null}

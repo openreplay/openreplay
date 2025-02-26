@@ -334,3 +334,6 @@ CREATE TABLE IF NOT EXISTS product_analytics.all_properties
     _timestamp        DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       ORDER BY (project_id, property_name, is_event_property);
+
+
+DROP TABLE IF EXISTS experimental.events_l7d_mv;

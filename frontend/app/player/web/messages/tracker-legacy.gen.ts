@@ -22,6 +22,8 @@ export const TP_MAP = {
   20: MType.MouseMove,
   21: MType.NetworkRequestDeprecated,
   22: MType.ConsoleLog,
+  34: MType.StringDictGlobal,
+  35: MType.SetNodeAttributeDictGlobal,
   37: MType.CssInsertRule,
   38: MType.CssDeleteRule,
   39: MType.Fetch,

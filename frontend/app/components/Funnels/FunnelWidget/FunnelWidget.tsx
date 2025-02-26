@@ -87,18 +87,26 @@ function FunnelWidget(props: Props) {
 
   const viewType = metric?.viewType;
   const isHorizontal = viewType === 'columnChart';
+  const noEvents = metric.series[0].filter.filters.length === 0;
   return (
     <NoContent
       style={{ minHeight: 220 }}
       title={
         <div className="flex items-center text-lg">
           <Icon name="info-circle" className="mr-2" size="18" />
-          No data available for the selected period.
+          {noEvents ? 'Select an event to start seeing the funnel' : 'No data available for the selected period.'}
         </div>
       }
       show={!stages || stages.length === 0}
     >
-      <div className={cn('w-full border-b -mx-4 px-4', isHorizontal ? 'overflow-x-scroll custom-scrollbar flex gap-2 justify-around' : '')}>
+      <div
+        className={cn(
+          'w-full border-b -mx-4 px-4',
+          isHorizontal
+            ? 'overflow-x-scroll custom-scrollbar flex gap-2 justify-around'
+            : ''
+        )}
+      >
         {!isWidget &&
           shownStages.map((stage: any, index: any) => (
             <Stage

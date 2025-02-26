@@ -1,7 +1,8 @@
 import React from 'react';
 // @ts-ignore
 import slide from 'App/svg/cheers.svg';
-import { Button, Loader } from 'UI';
+import { Loader } from 'UI';
+import { Button } from 'antd'
 import Footer from './Footer';
 import { getHighest } from 'App/constants/zindex';
 import Category from 'Components/Header/HealthStatus/ServiceCategory';
@@ -81,7 +82,8 @@ function HealthModal({
             disabled={isLoading}
             onClick={getHealth}
             icon={'arrow-repeat'}
-            variant={'text-primary'}
+            type={'text'}
+            className={'text-main'}
           >
             Recheck
           </Button>
@@ -132,7 +134,7 @@ function HealthModal({
                   <Button
                     disabled={!healthResponse?.overallHealth}
                     loading={isLoading}
-                    variant={'primary'}
+                    type={'primary'}
                     className={'ml-auto'}
                     onClick={() => setPassed?.()}
                   >

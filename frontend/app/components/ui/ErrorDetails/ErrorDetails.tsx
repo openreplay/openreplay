@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
-import { Button, Icon } from 'UI';
+import { Icon } from 'UI';
+import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
@@ -44,10 +45,10 @@ function ErrorDetails(props: Props) {
             <div className="flex items-center my-3">
                 <h3 className="text-xl mr-auto">Stacktrace</h3>
                 <div className="flex justify-end mr-2">
-                    <Button variant={!showRaw ? 'text-primary' : 'text'} onClick={() => setShowRaw(false)}>
+                    <Button type={'text'} className={!showRaw ? 'text-main' : ''} onClick={() => setShowRaw(false)}>
                         FULL
                     </Button>
-                    <Button variant={showRaw ? 'text-primary' : 'text'} onClick={() => setShowRaw(true)}>
+                    <Button type={'text'} className={showRaw ? 'text-main' : ''} onClick={() => setShowRaw(true)}>
                         RAW
                     </Button>
                 </div>

@@ -38,6 +38,9 @@ def force_is_event(events_enum: list[Type[Enum]]):
     def fn(value: list):
         if value is not None and isinstance(value, list):
             for v in value:
+                if v.get("type") is None:
+                    v["isEvent"] = False
+                    continue
                 r = False
                 for en in events_enum:
                     if en.has_value(v["type"]) or en.has_value(v["type"].lower()):

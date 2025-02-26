@@ -1,6 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Button, Loader } from 'UI';
+import { Loader } from 'UI';
+import { Button } from 'antd'
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
@@ -79,7 +80,7 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
           </div>
 
           <div className="flex flex-col items-end">
-            <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
+            <Button type="text" className="text-main font-medium ml-2" onClick={onCreateNew}>
               + Create Custom Metric
             </Button>
             <div className="text-disabled-text">Past 7 Days</div>
@@ -145,7 +146,7 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
             {' out of '}
             <span className="font-medium">{totalMetricCount}</span>
           </div>
-          <Button variant="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
+          <Button type="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
             Add Selected
           </Button>
         </div>

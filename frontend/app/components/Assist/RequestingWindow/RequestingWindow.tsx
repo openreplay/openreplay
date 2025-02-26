@@ -1,6 +1,7 @@
 import React from 'react';
 import { INDEXES } from 'App/constants/zindex';
-import { Button, Loader, Icon } from 'UI';
+import { Loader, Icon } from 'UI';
+import { Button } from 'antd'
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from "App/mstore";
 import { observer } from 'mobx-react-lite';
@@ -76,7 +77,7 @@ function RequestingWindow({ getWindowType }: Props) {
         </div>
         <span>{WIN_VARIANTS[windowType].text}</span>
         <Loader size={30} style={{ minHeight: 60 }} />
-        <Button variant="text-primary" onClick={actions[WIN_VARIANTS[windowType].action]}>
+        <Button variant="text" onClick={actions[WIN_VARIANTS[windowType].action]}>
           Cancel
         </Button>
       </div>

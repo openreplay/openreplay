@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader, Pagination, Tooltip, Button } from 'UI';
+import { Loader, Pagination, Tooltip, Icon } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
@@ -11,7 +11,7 @@ import AssistSearchActions from 'App/components/Assist/AssistSearchActions';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
-
+import { Button } from 'antd'
 const PER_PAGE = 10;
 
 interface ConnectProps {
@@ -65,9 +65,9 @@ function AssistSessionsModal(props: ConnectProps) {
             <Button
               loading={loading}
               className="mr-2"
-              variant="text"
+              type="text"
               onClick={reloadSessions}
-              icon="arrow-repeat"
+              icon={<Icon name={"arrow-repeat"} />}
             />
           </Tooltip>
           <AssistSearchActions />

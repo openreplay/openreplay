@@ -67,9 +67,10 @@ export function IntervalSelector({
         distance={20}
         render={({ close }: any) => (
           <div
+            style={{ margin: -12 }}
             className={cn(
-              'flex flex-col bg-white border',
-              'border-borderColor-gray-light-shade text-figmaColors-text-primary rounded'
+              'flex flex-col bg-white',
+              'text-figmaColors-text-primary rounded'
             )}
           >
             <div className="font-semibold py-2 px-4 w-full text-left">
@@ -84,8 +85,7 @@ export function IntervalSelector({
                 }}
                 className={cn(
                   'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                  'hover:text-main hover:shadow-border-main border-t',
-                  'border-borderColor-gray-light-shade'
+                  'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
                 )}
               >
                 {interval}
@@ -149,10 +149,11 @@ export function SpeedOptions({
       theme="nopadding"
       animation="none"
       duration={0}
+      placement={'top'}
       className="cursor-pointer select-none"
       distance={20}
       render={({ close }: any) => (
-        <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+        <div style={{ margin: -12 }} className="flex flex-col bg-white text-figmaColors-text-primary rounded">
           <div className="font-semibold py-2 px-4 w-full text-left">Playback speed</div>
           {Object.keys(SPEED_OPTIONS).map((index: any) => (
             <div

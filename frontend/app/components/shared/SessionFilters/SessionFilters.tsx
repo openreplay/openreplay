@@ -23,28 +23,34 @@ function SessionFilters() {
     projectsStore.instance?.saveRequestPayloads ?? false;
   const activeProject = projectsStore.active
 
+  const reloadTags = async () => {
+    const tags = await tagWatchStore.getTags();
+    if (tags) {
+      addOptionsToFilter(
+        FilterKey.TAGGED_ELEMENT,
+        tags.map((tag) => ({
+          label: tag.name,
+          value: tag.tagId.toString(),
+        }))
+      );
+      searchStore.refreshFilterOptions();
+    }
+  }
+
   useEffect(() => {
     // Add default location/screen filter if no filters are present
     if (searchStore.instance.filters.length === 0) {
       searchStore.addFilterByKeyAndValue(activeProject?.platform === 'web' ? FilterKey.LOCATION : FilterKey.VIEW_MOBILE , '', 'isAny')
     }
+    void reloadTags();
   }, [projectsStore.activeSiteId, activeProject])
+
 
   useSessionSearchQueryHandler({
     appliedFilter,
     loading: metaLoading,
     onBeforeLoad: async () => {
-      const tags = await tagWatchStore.getTags();
-      if (tags) {
-        addOptionsToFilter(
-          FilterKey.TAGGED_ELEMENT,
-          tags.map((tag) => ({
-            label: tag.name,
-            value: tag.tagId.toString(),
-          }))
-        );
-        searchStore.refreshFilterOptions();
-      }
+      await reloadTags();
     },
   });
 

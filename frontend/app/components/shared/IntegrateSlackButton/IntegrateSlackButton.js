@@ -1,5 +1,6 @@
 import React from 'react'
-import { Button, Icon } from 'UI'
+import { Icon } from 'UI'
+import { Button } from 'antd'
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
@@ -14,7 +15,7 @@ function IntegrateSlackTeamsButton({ history }) {
       <Button
         className="my-auto mt-2 mb-2 flex items-center gap-2"
         onClick={gotoPreferencesIntegrations}
-        variant="text-primary"
+        type="text"
       >
         <Icon name="integrations/slack" size={16} />
         <Icon name="integrations/teams" size={24} className="mr-2 ml-1" />

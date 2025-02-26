@@ -316,6 +316,30 @@ export function Metadata(
   ]
 }
 
+export function StringDictGlobal(
+  key: number,
+  value: string,
+): Messages.StringDictGlobal {
+  return [
+    Messages.Type.StringDictGlobal,
+    key,
+    value,
+  ]
+}
+
+export function SetNodeAttributeDictGlobal(
+  id: number,
+  name: number,
+  value: number,
+): Messages.SetNodeAttributeDictGlobal {
+  return [
+    Messages.Type.SetNodeAttributeDictGlobal,
+    id,
+    name,
+    value,
+  ]
+}
+
 export function CSSInsertRule(
   id: number,
   rule: string,

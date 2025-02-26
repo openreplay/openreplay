@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import React from 'react';
-
+import { Input as AntInput } from 'antd'
 import { Icon } from 'UI';
 
 interface Props {
@@ -36,7 +36,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
         />
       )}
       {type === 'textarea' ? (
-        <textarea
+        <AntInput.TextArea
           ref={ref}
           rows={rows}
           style={{ resize: 'none' }}
@@ -49,7 +49,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
           {...rest}
         />
       ) : (
-        <input
+        <AntInput
           ref={ref}
           type={type}
           style={{ height: `${height}px`, width: width ? `${width}px` : '' }}

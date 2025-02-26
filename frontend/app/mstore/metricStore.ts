@@ -102,6 +102,7 @@ export default class MetricStore {
   cardCategory: string | null = CATEGORIES.product_analytics;
 
   focusedSeriesName: string | null = null;
+  disabledSeries: string[] = [];
   drillDown = false;
 
   constructor() {
@@ -149,6 +150,10 @@ export default class MetricStore {
     } else {
       this.focusedSeriesName = name;
     }
+  }
+
+  setDisabledSeries(series: string[]) {
+    this.disabledSeries = series;
   }
 
   setCardCategory(category: string) {
