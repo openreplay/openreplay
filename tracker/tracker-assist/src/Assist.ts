@@ -502,8 +502,6 @@ export default class Assist {
     function endAgentCall({ socketId, callId }: { socketId: string, callId?: string }) {
       callingAgents.delete(socketId)
 
-      console.log("CALLING AGENTS", callingAgents)
-
       if (callingAgents.size === 0) {
         handleCallEnd()
       } else {
@@ -618,7 +616,6 @@ export default class Assist {
 
         // get all local tracks and add them to RTCPeerConnection
         lStreams[from].stream.getTracks().forEach(track => {
-          console.log('GETTING TRACKS FROM', from);
           pc.addTrack(track, lStreams[from].stream);
         });
 
@@ -633,10 +630,9 @@ export default class Assist {
         pc.ontrack = (event) => {
           const rStream = event.streams[0];
           if (rStream && callUI) {
-            console.log('2 GETTING TRACKS FROM', from);
             callUI.addRemoteStream(rStream, from);
             const onInteraction = () => {
-              callUI?.playRemote(from);
+              callUI?.playRemote();
               document.removeEventListener('click', onInteraction);
             };
             document.addEventListener('click', onInteraction);

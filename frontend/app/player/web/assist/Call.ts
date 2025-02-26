@@ -46,13 +46,11 @@ export default class Call {
   ) {
 
     socket.on('WEBRTC_AGENT_CALL', (data) => {
-      console.log("!WEBRTC AGENT CALL RECEIVED", data.type, Object.keys(this.connections));
       switch (data.type) {
         case WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER:
           this.handleOffer(data, true);
           break;
         case WEBRTC_CALL_AGENT_EVENT_TYPES.ICE_CANDIDATE:
-          console.log("#### RECEIVED ICE CANDIDATE", data);
           this.handleIceCandidate(data);
           break;
         case WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER:
@@ -63,7 +61,6 @@ export default class Call {
     })
 
     socket.on('UPDATE_SESSION', (data: { data: { agentIds: string[] }}) => {
-      console.log("UPDATE SESSION", data.data.agentIds);
       this.callAgentsInSession({ agentIds: data.data.agentIds });
     });
 
@@ -104,12 +101,10 @@ export default class Call {
     });
 
     socket.on('webrtc_call_offer', (data: { data: { from: string, offer: RTCSessionDescriptionInit } }) => {
-      console.log("RECEIVED OFFER", data);
       this.handleOffer(data.data);
     });
 
     socket.on('webrtc_call_answer', (data: { data: { from: string, answer: RTCSessionDescriptionInit } }) => {
-      console.log("ПРИШЕЛ оБЫЧНЫЙ сОКЕТ ANSWER", data.data);
       this.handleAnswer(data.data);
     });
     socket.on('webrtc_call_ice_candidate', (data: { data: { from: string, candidate: RTCIceCandidateInit } }) => {
@@ -127,10 +122,6 @@ export default class Call {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    if (isAgent) {
-      console.log('!!! CREATED PC FOR AGENT', remotePeerId);
-    }
-
     // If there is a local stream, add its tracks to the connection
     if (this.callArgs && this.callArgs.localStream && this.callArgs.localStream.stream) {
       this.callArgs.localStream.stream.getTracks().forEach((track) => {
@@ -142,7 +133,6 @@ export default class Call {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         if (isAgent) {
-          console.log("!!! SEND ICE CANDIDATE for", getSocketIdByCallId(remotePeerId));
           this.socket.emit('WEBRTC_AGENT_CALL', { from: localPeerId, candidate: event.candidate, toAgentId: getSocketIdByCallId(remotePeerId), type: WEBRTC_CALL_AGENT_EVENT_TYPES.ICE_CANDIDATE });
         } else {
           this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
@@ -157,7 +147,6 @@ export default class Call {
       const stream = event.streams[0];
       if (stream && !this.videoStreams[remotePeerId]) {
         const clonnedStream = stream.clone();
-        console.log('SETTING VIDEOTRACKS TO', remotePeerId);
         this.videoStreams[remotePeerId] = clonnedStream.getVideoTracks()[0];
         if (this.store.get().calling !== CallingState.OnCall) {
           this.store.update({ calling: CallingState.OnCall });
@@ -192,7 +181,6 @@ export default class Call {
 
   // ESTABLISHING A CONNECTION
   private async _peerConnection({ remotePeerId, isAgent, socketId, localPeerId }: { remotePeerId: string, isAgent?: boolean, socketId?: string, localPeerId?: string }) {
-    console.log("_ PEER CONNECTION", remotePeerId);
     try {
       // Create RTCPeerConnection with client
       const pc = await this.createPeerConnection({ remotePeerId, localPeerId, isAgent });
@@ -201,11 +189,9 @@ export default class Call {
       // Create an SDP offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      console.log("1 !!! CREATED PC WITH OFFER FOR AN AGENT", pc, offer);
 
       // Sending offer
       if (isAgent) {
-        console.log("2 !!! SENDING OFFER TO AGENT", socketId);
         this.socket.emit('WEBRTC_AGENT_CALL', { from: localPeerId, offer, toAgentId: socketId, type: WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER });
       } else {
         this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
@@ -232,14 +218,13 @@ export default class Call {
   // Process the received offer to answer
   private async handleOffer(data: { from: string, offer: RTCSessionDescriptionInit }, isAgent?: boolean) {
     // set to remotePeerId data.from
+    logger.log("RECEIVED OFFER", data);
     const fromCallId = data.from;
     let pc = this.connections[fromCallId];
-    console.log("3 !!! HANDLE OFFER", isAgent, pc);
     if (!pc) {
       if (isAgent) {
         this.connections[fromCallId] = await this.createPeerConnection({ remotePeerId: fromCallId, isAgent, localPeerId: this.callID });
         pc = this.connections[fromCallId];
-        console.log("4 CREATED NEW PC FOR INCOMING OFFER", pc);
       } else {
         logger.error("No connection found for remote peer", fromCallId);
         return;
@@ -252,10 +237,8 @@ export default class Call {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         if (isAgent) {
-          console.log("4 !!! SENDING ANSWER TO AGENT", getSocketIdByCallId(fromCallId));
           this.socket.emit('WEBRTC_AGENT_CALL', { from: this.callID, answer, toAgentId: getSocketIdByCallId(fromCallId), type: WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER });
         } else {
-          console.log("4.1 !!! SENDING PLAIN ANSWER SOCKET TO AGENT", getSocketIdByCallId(fromCallId));
           this.socket.emit('webrtc_call_answer', { from: fromCallId, answer });
         }
       } else {
@@ -270,7 +253,7 @@ export default class Call {
   // Process the received answer to offer
   private async handleAnswer(data: { from: string, answer: RTCSessionDescriptionInit }, isAgent?: boolean) {
     // set to remotePeerId data.from
-    console.log("5 !!! HANDLE ANSWER", this.connections, data.from, this.connections[data.from]);
+    logger.log("RECEIVED ANSWER", data);
     if (this.agentInCallIds.includes(data.from) && !isAgent) {
       return;
     }
@@ -295,7 +278,6 @@ export default class Call {
 
   // process the received iceCandidate
   private async handleIceCandidate(data: { from: string, candidate: RTCIceCandidateInit }) {
-    console.log("### GET ICE CANDIDATE", data);
     const callId = data.from;
     const pc = this.connections[callId];
     if (!pc) return;
@@ -324,6 +306,8 @@ export default class Call {
     this.callArgs?.onCallEnd();
     // Clear connections
     this.connections = {};
+    this.callArgs = null;
+    this.videoStreams = {};
     this.callArgs = null;
   }
 
@@ -384,7 +368,6 @@ export default class Call {
 
   // Initiates a call
   call(): { end: () => void } {
-    console.log("INTIATE CALL", this.agentIds);
     this._callSessionPeer();
     // this.callAgentsInSession({ agentIds: this.agentInCallIds });
     return {
@@ -396,12 +379,6 @@ export default class Call {
   toggleVideoLocalStream(enabled: boolean) {
     this.emitData('videofeed', { streamId: this.callID, enabled });
   }
-
-  // Connect with other agents
-  // addPeerCall(thirdPartyPeers: string[]) {
-  //   console.log("ADD THRID PARTY CALL", thirdPartyPeers);
-  //   thirdPartyPeers.forEach((peerId) => this._peerConnection(peerId));
-  // }
 
   // Calls the method to create a connection with a peer
   private _callSessionPeer() {
@@ -425,16 +402,12 @@ export default class Call {
   private callAgentsInSession({ agentIds }: { agentIds: string[] }) {
     if (agentIds) {
       const filteredAgentIds = agentIds.filter((id: string) => id.split('-')[3] !== this.agent.id.toString());
-      console.log("!!! FILTERED AGENT IDS", filteredAgentIds, this.agentInCallIds);
       const newIds = filteredAgentIds.filter((id: string) => !this.agentInCallIds.includes(id));
-      console.log("!!! NEW AGENT IDS", newIds);
       const removedIds = this.agentInCallIds.filter((id: string) => !filteredAgentIds.includes(id));
-      console.log("!!! REMOVED AGENT IDS", removedIds);
       removedIds.forEach((id: string) => this.agentDisconnected(id));
       if (this.store.get().calling === CallingState.OnCall) {
         newIds.forEach((id: string) => {
           const socketId = getSocketIdByCallId(id);
-          console.log("!!! INITIALISING CALL WITH AgENT", id);
           this._peerConnection({ remotePeerId: id, isAgent: true, socketId, localPeerId: this.callID });
         });
       }

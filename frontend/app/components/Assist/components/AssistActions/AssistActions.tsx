@@ -142,8 +142,11 @@ function AssistActions({
     });
   };
 
-  const removeIncomeStream = () => {
-    setIncomeStream([]);
+  const removeIncomeStream = (stream: MediaStream) => {
+    setIncomeStream((prevState) => {
+      if (!prevState) return [];
+      return prevState.filter((existingStream) => existingStream.stream.id !== stream.id);
+    });
   };
 
   function call() {

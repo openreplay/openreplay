@@ -335,7 +335,7 @@ export default class AssistManager {
   /**
    * Sends event ping to stats service
    * */
-  public ping(event: StatsEvent, id: number) {
+  public ping(event: StatsEvent, id: string) {
     this.socket?.emit(event, id);
   }
 
