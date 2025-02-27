@@ -53,10 +53,10 @@ function WidgetSessions(props: Props) {
     if (!widget.series) return;
     const seriesOptions = widget.series.map((item: any) => ({
       label: item.name,
-      value: item.seriesId,
+      value: item.seriesId ?? item.name
     }));
     setSeriesOptions([{ label: 'All', value: 'all' }, ...seriesOptions]);
-  }, [widget.series]);
+  }, [widget.series.length]);
 
   const fetchSessions = (metricId: any, filter: any) => {
     if (!isMounted()) return;

@@ -9,7 +9,7 @@ import stl from './chatWindow.module.css';
 import VideoContainer from '../components/VideoContainer';
 
 export interface Props {
-  incomeStream: MediaStream[] | null;
+  incomeStream: { stream: MediaStream, isAgent: boolean }[] | null;
   localStream: LocalStream | null;
   userId: string;
   isPrestart?: boolean;
@@ -54,8 +54,8 @@ function ChatWindow({
         >
           {incomeStream ? (
             incomeStream.map((stream) => (
-              <React.Fragment key={stream.id}>
-                <VideoContainer stream={stream} setRemoteEnabled={setRemoteEnabled} />
+              <React.Fragment key={stream.stream.id}>
+                <VideoContainer stream={stream.stream} setRemoteEnabled={setRemoteEnabled} isAgent={stream.isAgent} />
               </React.Fragment>
             ))
           ) : (
@@ -66,6 +66,7 @@ function ChatWindow({
               stream={localStream ? localStream.stream : null}
               muted
               height={anyRemoteEnabled ? 50 : 'unset'}
+              local
             />
           </div>
         </div>

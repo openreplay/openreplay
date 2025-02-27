@@ -14,7 +14,7 @@ import ProjectForm from 'Components/Client/Projects/ProjectForm';
 import Project from '@/mstore/types/project';
 
 function Projects() {
-  const { projectsStore } = useStore();
+  const { projectsStore, customFieldStore } = useStore();
   const history = useHistory();
   const { project, pid, tab } = projectsStore.config;
   const { openModal, closeModal } = useModal();
@@ -25,6 +25,10 @@ function Projects() {
     const tab = params.get('tab');
     projectsStore.setConfigProject(pid ? parseInt(pid) : undefined);
     projectsStore.setConfigTab(tab);
+
+    return () => {
+      void customFieldStore.fetchListActive(projectsStore.activeSiteId + '');
+    }
   }, []);
 
   React.useEffect(() => {

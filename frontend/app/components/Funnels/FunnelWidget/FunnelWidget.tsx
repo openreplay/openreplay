@@ -88,13 +88,16 @@ function FunnelWidget(props: Props) {
   const viewType = metric?.viewType;
   const isHorizontal = viewType === 'columnChart';
   const noEvents = metric.series[0].filter.filters.length === 0;
+  const isUsers = metric?.metricFormat === 'userCount';
   return (
     <NoContent
       style={{ minHeight: 220 }}
       title={(
         <div className="flex items-center text-lg">
           <Icon name="info-circle" className="mr-2" size="18" />
-          {noEvents ? 'Select an event to start seeing the funnel' : 'No data available for the selected period.'}
+          {noEvents
+            ? 'Select an event to start seeing the funnel'
+            : 'No data available for the selected period.'}
         </div>
       )}
       show={!stages || stages.length === 0}
@@ -140,7 +143,7 @@ function FunnelWidget(props: Props) {
         <div className="flex items-center">
           <span className="text-base font-medium mr-2">Total conversion</span>
           <Tooltip
-            title={`${funnel.totalConversions} Sessions ${funnel.totalConversionsPercentage}%`}
+            title={`${funnel.totalConversions} ${isUsers ? 'Users' : 'Sessions'} ${funnel.totalConversionsPercentage}%`}
           >
             <Tag
               bordered={false}

@@ -3551,13 +3551,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^10.14.33":
-  version: 10.17.60
-  resolution: "@types/node@npm:10.17.60"
-  checksum: 10c1/63eca0b871718af75e369cd2a57e70939ff347f4b1fbd98dca40d005262ab48021e3829f58ed5e828d0886e98054cfa354648118712d28779eb4a0f855e70a93
-  languageName: node
-  linkType: hard
-
 "@types/parse-json@npm:^4.0.0":
   version: 4.0.2
   resolution: "@types/parse-json@npm:4.0.2"
@@ -6963,9 +6956,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.73":
-  version: 1.5.105
-  resolution: "electron-to-chromium@npm:1.5.105"
-  checksum: 10c1/01ff737ebdeb0554ece250c91b913634f4af811ed8e18ccd3ca791af925483631278878b58a5a8d28ce41616d7f6f15f695083a0e7550bb84f27ff82b009a00e
+  version: 1.5.107
+  resolution: "electron-to-chromium@npm:1.5.107"
+  checksum: 10c1/9846b40660331f1d4dc92e3980d5cd7e03ae68ff919dfd6bf1615c6f8ae3dcf4a54e4c14793c981aa4b53001067f57bf0a4937371bc4651ca56b554b4c608b53
   languageName: node
   linkType: hard
 
@@ -7816,13 +7809,6 @@ __metadata:
   version: 6.4.7
   resolution: "eventemitter2@npm:6.4.7"
   checksum: 10c1/098d635a7e39eb0220cf6e8ce2b109116ab4d4eb362616c0b68140d0043c0020fefb90f478ce39d8b1fa27d6ab47e536af11c8bf46541ff0b9fc1d843fbf6923
-  languageName: node
-  linkType: hard
-
-"eventemitter3@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "eventemitter3@npm:3.1.2"
-  checksum: 10c1/e177ace79a8f6d9884adad7d820f819132c5ec6e9d88e598043943f1951000901ad871f79dbd385fc980c7720b9f5644a2a12e95a767310a00401b304839f999
   languageName: node
   linkType: hard
 
@@ -11391,8 +11377,8 @@ __metadata:
   linkType: hard
 
 "minipass-fetch@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "minipass-fetch@npm:4.0.0"
+  version: 4.0.1
+  resolution: "minipass-fetch@npm:4.0.1"
   dependencies:
     encoding: "npm:^0.1.13"
     minipass: "npm:^7.0.3"
@@ -11401,7 +11387,7 @@ __metadata:
   dependenciesMeta:
     encoding:
       optional: true
-  checksum: 10c1/5831cf620b43a062ae180be3d59b7e7d694c4ae4d71a5ed6edb39a0bfe0c8cbb3aba6b95d9e61cb04bcc2ea112924f9f653a06a6e2de26bb9c92f37c32795b2c
+  checksum: 10c1/33a9c0e55d0bac4c5c5df926ff4bc7622b4cead27f7b42c077555e7ee892801a15ae933b698638f4952775ada91397a2a0617da9e729a8063dcc48184370cfcc
   languageName: node
   linkType: hard
 
@@ -12058,7 +12044,6 @@ __metadata:
     mobx-persist-store: "npm:^1.1.5"
     mobx-react-lite: "npm:^4.0.7"
     node-gyp: "npm:^9.0.0"
-    peerjs: "npm:1.3.2"
     postcss: "npm:^8.4.48"
     postcss-import: "npm:^16.1.0"
     postcss-loader: "npm:^8.1.1"
@@ -12407,25 +12392,6 @@ __metadata:
   version: 6.0.0
   resolution: "path-type@npm:6.0.0"
   checksum: 10c1/ac5162b96ad6742620a41e1a6bc97b8f776db2ae743c93eb0ff569b7b14b759a676b45dfaa6fa8ad66aa70471b64d093529ea5bc3bbae8960f793f73b1109bbb
-  languageName: node
-  linkType: hard
-
-"peerjs-js-binarypack@npm:1.0.1":
-  version: 1.0.1
-  resolution: "peerjs-js-binarypack@npm:1.0.1"
-  checksum: 10c1/5670269e0a61400151f99727c53956c2971a6d5999a6ba4684b565cc3d4429b81fd04cb45b040677192d58537a79df1eadb2a7379cb1ffd0b04f01e6b292ef48
-  languageName: node
-  linkType: hard
-
-"peerjs@npm:1.3.2":
-  version: 1.3.2
-  resolution: "peerjs@npm:1.3.2"
-  dependencies:
-    "@types/node": "npm:^10.14.33"
-    eventemitter3: "npm:^3.1.2"
-    peerjs-js-binarypack: "npm:1.0.1"
-    webrtc-adapter: "npm:^7.7.1"
-  checksum: 10c1/fdbe1794fdab77b2d610ad1dd8fdf705aa4f128fc1c62cab861e8fb99a1255a71199701d6cd4a42d8a82047e4b59710848ff0fe1131aad3652d66665c0a8dffa
   languageName: node
   linkType: hard
 
@@ -13599,8 +13565,8 @@ __metadata:
   linkType: hard
 
 "rc-picker@npm:~4.11.2":
-  version: 4.11.2
-  resolution: "rc-picker@npm:4.11.2"
+  version: 4.11.3
+  resolution: "rc-picker@npm:4.11.3"
   dependencies:
     "@babel/runtime": "npm:^7.24.7"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -13624,7 +13590,7 @@ __metadata:
       optional: true
     moment:
       optional: true
-  checksum: 10c1/b7d175c9b5ce7f4f6f003064362407c8977c73486653f253290427fe59e6e21c6abde291ed00e70856cedde4d34450e2bb2a4ca5423fae732413075578531670
+  checksum: 10c1/508edfdeaecdd4eee26784cd955d4497f0a380269ae2e0c52d4913215e28e59b93a410f630b8a848f248ed387356e65c5e1ebb2636c4764dbb808cd83baab217
   languageName: node
   linkType: hard
 
@@ -14733,15 +14699,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rtcpeerconnection-shim@npm:^1.2.15":
-  version: 1.2.15
-  resolution: "rtcpeerconnection-shim@npm:1.2.15"
-  dependencies:
-    sdp: "npm:^2.6.0"
-  checksum: 10c1/75b9e83fab08bb9eb90db61f05861db2a6a96f7abae9971359965b0cfd195a22227d8782b3b0fd6897e6a7501d63eee5fb3c92f030245cc421d2e745e99aaa7f
-  languageName: node
-  linkType: hard
-
 "run-applescript@npm:^7.0.0":
   version: 7.0.0
   resolution: "run-applescript@npm:7.0.0"
@@ -14917,13 +14874,6 @@ __metadata:
   dependencies:
     compute-scroll-into-view: "npm:^3.0.2"
   checksum: 10c1/782b157631940f1f3c4c2b0948c5142304c522e750e30d075aa30cd660e30c04c367d08375efe58ab29f4807d347129aecbd9aa0b81a13a047594f62afa629ef
-  languageName: node
-  linkType: hard
-
-"sdp@npm:^2.12.0, sdp@npm:^2.6.0":
-  version: 2.12.0
-  resolution: "sdp@npm:2.12.0"
-  checksum: 10c1/68ea1f4b58672b5a6e381bd08e4f0b66bc2a6f70b3dad06f05e0d44d4209e1ae7615159570f4f112179b65dbd855778b2b68ab44471cc0b28666335641332a2c
   languageName: node
   linkType: hard
 
@@ -15725,9 +15675,9 @@ __metadata:
   linkType: hard
 
 "strnum@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "strnum@npm:1.1.1"
-  checksum: 10c1/8559a9fbc2c7733f2b4e6aa6ffa5df2a5974c693c8a841694f6e3d3d2c0aec5cecfb090f106c51d143f1961969cb757e0442553278fea94293fbaa27c2ba9f35
+  version: 1.1.2
+  resolution: "strnum@npm:1.1.2"
+  checksum: 10c1/e63cd5379e06167478f2d8b5729c3c9960a706a91c9e10135dd7349f2254dadf4733f920846144c1c420086815dffd029c01894f8d29dcfd80337b7e38dbee63
   languageName: node
   linkType: hard
 
@@ -16146,21 +16096,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts-core@npm:^6.1.78":
-  version: 6.1.78
-  resolution: "tldts-core@npm:6.1.78"
-  checksum: 10c1/6327860e5fc75119c5256bcba389163b0eab419cdc4cc516b4c237a4f8b78c4711855b18f2fd1e87365adb1760397cdb0b5b18a8d4582a7844a72da0077d4a86
+"tldts-core@npm:^6.1.79":
+  version: 6.1.79
+  resolution: "tldts-core@npm:6.1.79"
+  checksum: 10c1/b7c580c52fbddb054c07b711665f434f77e1831122db2d12dd875862fbdb036db6e003e6c731b2cce6ebd22cf6afb501e8de27d6bdb115c7aba25e73823d7f11
   languageName: node
   linkType: hard
 
 "tldts@npm:^6.1.32":
-  version: 6.1.78
-  resolution: "tldts@npm:6.1.78"
+  version: 6.1.79
+  resolution: "tldts@npm:6.1.79"
   dependencies:
-    tldts-core: "npm:^6.1.78"
+    tldts-core: "npm:^6.1.79"
   bin:
     tldts: bin/cli.js
-  checksum: 10c1/abde0fd838874eeeddea6c23ca6c6ef59d2b26451ba0895f7919d4e8601821413bfe34e2f6e58bad4639cb9ee5e0366a7bac75f67c01dc167d1579ae38f2228e
+  checksum: 10c1/99297d3529d12a6dff29a2ce41c44c6254507c882ce650f54fb7113207a5e94e657836857cb95203584e325069101a887501a7e13773659050a47724ede08909
   languageName: node
   linkType: hard
 
@@ -16652,8 +16602,8 @@ __metadata:
   linkType: hard
 
 "update-browserslist-db@npm:^1.1.1":
-  version: 1.1.2
-  resolution: "update-browserslist-db@npm:1.1.2"
+  version: 1.1.3
+  resolution: "update-browserslist-db@npm:1.1.3"
   dependencies:
     escalade: "npm:^3.2.0"
     picocolors: "npm:^1.1.1"
@@ -16661,7 +16611,7 @@ __metadata:
     browserslist: ">= 4.21.0"
   bin:
     update-browserslist-db: cli.js
-  checksum: 10c1/29136a665ed0a3e35a909ff4d86503e532d3e54de6b58a3dde0184ecdeb396dacc441f37b89c6b847566c04f089e80d818685848a8542821410ac46c10fdbb13
+  checksum: 10c1/55a3bf6271f24602da837f41ef99b5f78f979c2435024783473e0879e08fd4131a93e3a8f1d2d91bae8d3f9d3c9a50274676cfd349d72b5212d8529bfd2af0c2
   languageName: node
   linkType: hard
 
@@ -17091,16 +17041,6 @@ __metadata:
   bin:
     webpack: bin/webpack.js
   checksum: 10c1/ed9f6e9f63bd64e3739574603c7f76a472bda58129bc442023479b147def09fb405519d1a891ccc3630fd9b63e7d64aa2cc1673f97c9c2bf09e83ccdaeebc4b2
-  languageName: node
-  linkType: hard
-
-"webrtc-adapter@npm:^7.7.1":
-  version: 7.7.1
-  resolution: "webrtc-adapter@npm:7.7.1"
-  dependencies:
-    rtcpeerconnection-shim: "npm:^1.2.15"
-    sdp: "npm:^2.12.0"
-  checksum: 10c1/24330cf7be5f46599b333fbfdd54ac16c76c24c4c7744bcda9beed8aa77135924aaaf9f39e7844066b8c218a81dd13a6e0d4e221294d826572ec631b5750ea9a
   languageName: node
   linkType: hard
 

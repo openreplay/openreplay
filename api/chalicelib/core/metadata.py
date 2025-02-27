@@ -98,17 +98,23 @@ def __edit(project_id, col_index, colname, new_name):
     if col_index not in list(old_metas.keys()):
         return {"errors": ["custom field not found"]}
 
-    with pg_client.PostgresClient() as cur:
-        if old_metas[col_index]["key"] != new_name:
+    if old_metas[col_index]["key"] != new_name:
+        with pg_client.PostgresClient() as cur:
             query = cur.mogrify(f"""UPDATE public.projects 
                                     SET {colname} = %(value)s 
                                     WHERE project_id = %(project_id)s 
                                         AND deleted_at ISNULL
-                                    RETURNING {colname};""",
+                                    RETURNING {colname}, 
+                                        (SELECT {colname} FROM projects WHERE project_id = %(project_id)s) AS old_{colname};""",
                                 {"project_id": project_id, "value": new_name})
             cur.execute(query=query)
-            new_name = cur.fetchone()[colname]
+            row = cur.fetchone()
+            new_name = row[colname]
+            old_name = row['old_' + colname]
             old_metas[col_index]["key"] = new_name
+            projects.rename_metadata_condition(project_id=project_id,
+                                               old_metadata_key=old_name,
+                                               new_metadata_key=new_name)
     return {"data": old_metas[col_index]}
 
 
@@ -121,8 +127,8 @@ def edit(tenant_id, project_id, index: int, new_name: str):
 def delete(tenant_id, project_id, index: int):
     index = int(index)
     old_segments = get(project_id)
-    old_segments = [k["index"] for k in old_segments]
-    if index not in old_segments:
+    old_indexes = [k["index"] for k in old_segments]
+    if index not in old_indexes:
         return {"errors": ["custom field not found"]}
 
     with pg_client.PostgresClient() as cur:
@@ -132,7 +138,8 @@ def delete(tenant_id, project_id, index: int):
                                 WHERE project_id = %(project_id)s AND deleted_at ISNULL;""",
                             {"project_id": project_id})
         cur.execute(query=query)
-
+    projects.delete_metadata_condition(project_id=project_id,
+                                       metadata_key=old_segments[old_indexes.index(index)]["key"])
     return {"data": get(project_id)}
 
 
