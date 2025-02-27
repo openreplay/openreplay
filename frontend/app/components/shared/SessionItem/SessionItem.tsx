@@ -177,7 +177,7 @@ function SessionItem(props: RouteComponentProps & Props) {
       disabled={!props.isDisabled || !location.pathname.includes('multiview')}
     >
       <div
-        className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')}
+        className={cn(stl.sessionItem, 'flex flex-col p-4')}
         id="session-item"
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={handleHover}

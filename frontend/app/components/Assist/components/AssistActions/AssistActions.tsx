@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
+import {Headset} from 'lucide-react';
 import cn from 'classnames';
 import ChatWindow from '../../ChatWindow';
 import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
@@ -223,7 +224,7 @@ function AssistActions({
             <Button
               icon={<Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />}
               type={'text'}
-              style={{ height: '28px' }}
+              size='small'
               className={annotating ? 'text-red' : 'text-main'}
             >
               Annotate
@@ -235,10 +236,9 @@ function AssistActions({
 
       {/* @ts-ignore wtf? */}
       <ScreenRecorder />
-      <div className={stl.divider} />
 
       {/* @ts-ignore */}
-      <Tooltip title="Go live to initiate remote control" disabled={livePlay}>
+      <Tooltip title="Call user to initiate remote control" disabled={livePlay}>
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
             [stl.disabled]: cannotCall || !livePlay || callRequesting || remoteRequesting,
@@ -247,16 +247,15 @@ function AssistActions({
           role="button"
         >
           <Button
-            icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} />}
             type={'text'}
-            className={remoteActive ? 'text-red' : 'text-main'}
-            style={{ height: '28px' }}
+            className={remoteActive ? 'text-red' : 'text-teal'}
+            icon={<Icon name={remoteActive ? 'window-x' : 'remote-control'} size={16} color={remoteActive ? 'red' : 'main'} />}
+            size='small'
           >
             Remote Control
           </Button>
         </div>
       </Tooltip>
-      <div className={stl.divider} />
 
       <Tooltip
         title={
@@ -274,10 +273,10 @@ function AssistActions({
           role="button"
         >
           <Button
-            icon={<Icon name={'headset'} size={16} />}
+            icon={<Headset size={16} />}
             type={'text'}
             className={onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'}
-            style={{ height: '28px' }}
+            size='small'
           >
             {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}
           </Button>
