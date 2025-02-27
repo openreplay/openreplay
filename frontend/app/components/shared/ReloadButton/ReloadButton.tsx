@@ -7,6 +7,7 @@ interface Props {
   onClick: () => void;
   iconSize?: number;
   buttonSize: 'small' | 'middle' | 'large' | undefined;
+  label?: string
 }
 export default function ReloadButton(props: Props) {
   const { loading, onClick, iconSize = 18, buttonSize } = props;
@@ -17,7 +18,9 @@ export default function ReloadButton(props: Props) {
         size={buttonSize}
         onClick={onClick}
         icon={<SyncOutlined style={{ fontSize: iconSize }} />}
-      />
+      >
+        {props.label}
+      </Button>
     </Tooltip>
   );
 }

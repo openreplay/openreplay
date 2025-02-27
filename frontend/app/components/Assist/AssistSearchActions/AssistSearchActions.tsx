@@ -29,14 +29,9 @@ function AssistSearchActions() {
   const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <div className="flex items-center w-full gap-2">
-      {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
-        ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null
-      }
-      {isEnterprise && userStore.account?.admin && (
-        <Button type="text" onClick={showStats}
-                disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
-          Co-Browsing Reports</Button>
-      )}
+      <h3 className="text-2xl capitalize mr-2">
+        <span>Co-Browse</span>
+      </h3>
       <Tooltip title='Clear Search Filters'>
         <Button
           type="text"
@@ -47,6 +42,14 @@ function AssistSearchActions() {
           Clear
         </Button>
       </Tooltip>
+      {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
+       ? <Button size={'small'} onClick={showRecords}>Training Videos</Button> : null
+      }
+      {isEnterprise && userStore.account?.admin && (
+        <Button size={'small'} onClick={showStats}
+                disabled={modules.includes(MODULES.ASSIST_STATS) || modules.includes(MODULES.ASSIST)}>
+          Co-Browsing Reports</Button>
+      )}
     </div>
   );
 }

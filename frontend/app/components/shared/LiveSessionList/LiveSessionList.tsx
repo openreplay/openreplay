@@ -92,13 +92,7 @@ function LiveSessionList() {
     <div>
       <div className="bg-white py-3 rounded-lg border shadow-sm">
         <div className="flex mb-4 pb-2 px-3 justify-between items-center border-b border-b-gray-lighter">
-          <div className="flex items-center">
-            <h3 className="text-2xl capitalize mr-2">
-              <span>Co-Browse</span>
-            </h3>
-
-            <LiveSessionReloadButton onClick={refetch} />
-          </div>
+          <LiveSessionReloadButton onClick={refetch} />
           <div className="flex items-center">
             <div className="flex items-center ml-6">
               <span className="mr-2 color-gray-medium">Sort By</span>
