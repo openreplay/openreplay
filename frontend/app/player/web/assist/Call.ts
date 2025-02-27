@@ -1,10 +1,8 @@
-import type Peer from 'peerjs';
-import type { MediaConnection } from 'peerjs';
-
 import type { LocalStream } from './LocalStream';
 import type { Socket } from './types';
 import type { Store } from '../../common/types';
 import { userStore } from "App/mstore";
+import logger from '@/logger';
 
 export enum CallingState {
   NoCall,
@@ -19,28 +17,59 @@ export interface State {
   currentTab?: string;
 }
 
+const WEBRTC_CALL_AGENT_EVENT_TYPES = {
+  OFFER: 'offer',
+  ANSWER: 'answer',
+  ICE_CANDIDATE: 'ice-candidate',
+}
+
 export default class Call {
   private assistVersion = 1;
   static readonly INITIAL_STATE: Readonly<State> = {
     calling: CallingState.NoCall,
   };
 
-  private _peer: Peer | null = null;
-  private connectionAttempts: number = 0;
-  private callConnection: MediaConnection[] = [];
+  private connections: Record<string, RTCPeerConnection> = {};
+  private connectAttempts = 0;
   private videoStreams: Record<string, MediaStreamTrack> = {};
+  private callID: string;
+  private agentInCallIds: string[] = [];
 
   constructor(
     private store: Store<State & { tabs: Set<string> }>,
     private socket: Socket,
     private config: RTCIceServer[] | null,
     private peerID: string,
-    private getAssistVersion: () => number
+    private getAssistVersion: () => number,
+    private agent: Record<string, any>,
+    private agentIds: string[],
   ) {
+
+    socket.on('WEBRTC_AGENT_CALL', (data) => {
+      switch (data.type) {
+        case WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER:
+          this.handleOffer(data, true);
+          break;
+        case WEBRTC_CALL_AGENT_EVENT_TYPES.ICE_CANDIDATE:
+          this.handleIceCandidate(data);
+          break;
+        case WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER:
+          this.handleAnswer(data, true);
+        default:
+          break;
+      }
+    })
+
+    socket.on('UPDATE_SESSION', (data: { data: { agentIds: string[] }}) => {
+      this.callAgentsInSession({ agentIds: data.data.agentIds });
+    });
+
     socket.on('call_end', () => {
       this.onRemoteCallEnd()
     });
-    socket.on('videofeed', ({ streamId, enabled }) => {
+
+    socket.on('videofeed', (data: { data: { streamId: string; enabled: boolean }}) => {
+      const { streamId, enabled } = data.data;
       if (this.videoStreams[streamId]) {
         this.videoStreams[streamId].enabled = enabled;
       }
@@ -56,14 +85,13 @@ export default class Call {
     });
     socket.on('messages_gz', () => {
       if (reconnecting) {
-        // 'messages' come frequently, so it is better to have Reconnecting
+        // When the connection is restored, we initiate a re-creation of the connection
         this._callSessionPeer();
         reconnecting = false;
       }
     })
     socket.on('messages', () => {
       if (reconnecting) {
-        // 'messages' come frequently, so it is better to have Reconnecting
         this._callSessionPeer();
         reconnecting = false;
       }
@@ -71,111 +99,239 @@ export default class Call {
     socket.on('disconnect', () => {
       this.store.update({ calling: CallingState.NoCall });
     });
+
+    socket.on('webrtc_call_offer', (data: { data: { from: string, offer: RTCSessionDescriptionInit } }) => {
+      this.handleOffer(data.data);
+    });
+
+    socket.on('webrtc_call_answer', (data: { data: { from: string, answer: RTCSessionDescriptionInit } }) => {
+      this.handleAnswer(data.data);
+    });
+    socket.on('webrtc_call_ice_candidate', (data: { data: { from: string, candidate: RTCIceCandidateInit } }) => {
+      this.handleIceCandidate({ candidate: data.data.candidate, from: data.data.from });
+    });
+
     this.assistVersion = this.getAssistVersion();
   }
 
-  private getPeer(): Promise<Peer> {
-    if (this._peer && !this._peer.disconnected) {
-      return Promise.resolve(this._peer);
+  // CREATE A LOCAL PEER
+  private async createPeerConnection({ remotePeerId, localPeerId, isAgent }: { remotePeerId: string, isAgent?: boolean, localPeerId?: string }): Promise<RTCPeerConnection> {
+    // create pc with ice config
+    
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    // If there is a local stream, add its tracks to the connection
+    if (this.callArgs && this.callArgs.localStream && this.callArgs.localStream.stream) {
+      this.callArgs.localStream.stream.getTracks().forEach((track) => {
+        pc.addTrack(track, this.callArgs!.localStream.stream);
+      });
     }
 
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
-
-    // @ts-ignore TODO: set module in ts settings
-    return import('peerjs').then(({ default: Peer }) => {
-      if (this.cleaned) {
-        return Promise.reject('Already cleaned');
-      }
-      const peerOpts: Peer.PeerJSOption = {
-        host: urlObject.hostname,
-        path: '/assist',
-        port:
-          urlObject.port === ''
-            ? location.protocol === 'https:'
-              ? 443
-              : 80
-            : parseInt(urlObject.port),
-      };
-      if (this.config) {
-        peerOpts['config'] = {
-          iceServers: this.config,
-          //@ts-ignore
-          sdpSemantics: 'unified-plan',
-          iceTransportPolicy: 'all',
-        };
-      }
-      const peer = (this._peer = new Peer(peerOpts));
-      peer.on('call', (call) => {
-        console.log('getting call from', call.peer);
-        call.answer(this.callArgs?.localStream.stream);
-        this.callConnection.push(call);
-
-        this.callArgs?.localStream.onVideoTrack((vTrack) => {
-          const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
-          if (!sender) {
-            console.warn('No video sender found');
-            return;
-          }
-          sender.replaceTrack(vTrack);
-        });
-
-        call.on('stream', (stream) => {
-          this.videoStreams[call.peer] = stream.getVideoTracks()[0];
-          this.callArgs && this.callArgs.onStream(stream);
-        });
-
-        call.on('close', this.onRemoteCallEnd);
-        call.on('error', (e) => {
-          console.error('PeerJS error (on call):', e);
-          this.initiateCallEnd();
-          this.callArgs && this.callArgs.onError && this.callArgs.onError();
-        });
-      });
-      peer.on('error', (e) => {
-        if (e.type === 'disconnected') {
-          return peer.reconnect();
-        } else if (e.type !== 'peer-unavailable') {
-          console.error(`PeerJS error (on peer). Type ${e.type}`, e);
+    // when ice is ready we send it
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        if (isAgent) {
+          this.socket.emit('WEBRTC_AGENT_CALL', { from: localPeerId, candidate: event.candidate, toAgentId: getSocketIdByCallId(remotePeerId), type: WEBRTC_CALL_AGENT_EVENT_TYPES.ICE_CANDIDATE });
+        } else {
+          this.socket.emit('webrtc_call_ice_candidate', { from: remotePeerId, candidate: event.candidate });
         }
-      });
+      } else {
+        logger.log("ICE candidate gathering complete");
+      }
+    };
 
-      return new Promise((resolve) => {
-        peer.on('open', () => resolve(peer));
+    // when we receive a remote track, we write it to videoStreams[peerId]
+    pc.ontrack = (event) => {
+      const stream = event.streams[0];
+      if (stream && !this.videoStreams[remotePeerId]) {
+        const clonnedStream = stream.clone();
+        this.videoStreams[remotePeerId] = clonnedStream.getVideoTracks()[0];
+        if (this.store.get().calling !== CallingState.OnCall) {
+          this.store.update({ calling: CallingState.OnCall });
+        }
+        if (this.callArgs) {
+          this.callArgs.onStream(stream, remotePeerId !== this.callID && isAgentId(remotePeerId));
+        }
+      }
+    };
+
+    // If the connection is lost, we end the call
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+        this.onRemoteCallEnd();
+      }
+    };
+
+    // Handle track replacement when local video changes
+    if (this.callArgs && this.callArgs.localStream) {
+      this.callArgs.localStream.onVideoTrack((vTrack: MediaStreamTrack) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+        if (!sender) {
+          logger.warn('No video sender found');
+          return;
+        }
+        sender.replaceTrack(vTrack);
       });
-    });
+    }
+
+    return pc;
   }
 
+  // ESTABLISHING A CONNECTION
+  private async _peerConnection({ remotePeerId, isAgent, socketId, localPeerId }: { remotePeerId: string, isAgent?: boolean, socketId?: string, localPeerId?: string }) {
+    try {
+      // Create RTCPeerConnection with client
+      const pc = await this.createPeerConnection({ remotePeerId, localPeerId, isAgent });
+      this.connections[remotePeerId] = pc;
+
+      // Create an SDP offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // Sending offer
+      if (isAgent) {
+        this.socket.emit('WEBRTC_AGENT_CALL', { from: localPeerId, offer, toAgentId: socketId, type: WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER });
+      } else {
+        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
+      }
+      this.connectAttempts = 0;
+    } catch (e: any) {
+      logger.error(e);
+      // Trying to reconnect
+      const tryReconnect = async (error: any) => {
+        if (error.type === 'peer-unavailable' && this.connectAttempts < 5) {
+          this.connectAttempts++;
+          logger.log('reconnecting', this.connectAttempts);
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          await this._peerConnection({ remotePeerId });
+        } else {
+          logger.log('error', this.connectAttempts);
+          this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
+        }
+      };
+      await tryReconnect(e);
+    }
+  }
+
+  // Process the received offer to answer
+  private async handleOffer(data: { from: string, offer: RTCSessionDescriptionInit }, isAgent?: boolean) {
+    // set to remotePeerId data.from
+    logger.log("RECEIVED OFFER", data);
+    const fromCallId = data.from;
+    let pc = this.connections[fromCallId];
+    if (!pc) {
+      if (isAgent) {
+        this.connections[fromCallId] = await this.createPeerConnection({ remotePeerId: fromCallId, isAgent, localPeerId: this.callID });
+        pc = this.connections[fromCallId];
+      } else {
+        logger.error("No connection found for remote peer", fromCallId);
+        return;
+      }
+    }
+    try {
+      // if the connection is not established yet, then set remoteDescription to peer
+      if (!pc.localDescription) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        if (isAgent) {
+          this.socket.emit('WEBRTC_AGENT_CALL', { from: this.callID, answer, toAgentId: getSocketIdByCallId(fromCallId), type: WEBRTC_CALL_AGENT_EVENT_TYPES.ANSWER });
+        } else {
+          this.socket.emit('webrtc_call_answer', { from: fromCallId, answer });
+        }
+      } else {
+        logger.warn("Skipping setRemoteDescription: Already in stable state");
+      }
+    } catch (e) {
+      logger.error("Error setting remote description from answer", e);
+      this.callArgs?.onError?.(e);
+    }
+  }
+
+  // Process the received answer to offer
+  private async handleAnswer(data: { from: string, answer: RTCSessionDescriptionInit }, isAgent?: boolean) {
+    // set to remotePeerId data.from
+    logger.log("RECEIVED ANSWER", data);
+    if (this.agentInCallIds.includes(data.from) && !isAgent) {
+      return;
+    }
+    const callId = data.from;
+    const pc = this.connections[callId];
+    if (!pc) {
+      logger.error("No connection found for remote peer", callId, this.connections);
+      return;
+    }
+    try {
+      // if the connection is not established yet, then set remoteDescription to peer
+      if (pc.signalingState !== "stable") {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      } else {
+        logger.warn("Skipping setRemoteDescription: Already in stable state");
+      }
+    } catch (e) {
+      logger.error("Error setting remote description from answer", e);
+      this.callArgs?.onError?.(e);
+    }
+  }
+
+  // process the received iceCandidate
+  private async handleIceCandidate(data: { from: string, candidate: RTCIceCandidateInit }) {
+    const callId = data.from;
+    const pc = this.connections[callId];
+    if (!pc) return;
+    // if there are ice candidates then add candidate to peer
+    if (data.candidate && (data.candidate.sdpMid || data.candidate.sdpMLineIndex !== null)) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (e) {
+        logger.error("Error adding ICE candidate", e);
+      }
+    } else {
+      logger.warn("Invalid ICE candidate skipped:", data.candidate);
+    }
+  }
+
+  // handle call ends
   private handleCallEnd() {
-    if (this.store.get().calling !== CallingState.NoCall) this.callArgs && this.callArgs.onCallEnd();
+    // If the call is not completed, then call onCallEnd
+    if (this.store.get().calling !== CallingState.NoCall) {
+      this.callArgs && this.callArgs.onCallEnd();
+    }
+    // change state to NoCall
     this.store.update({ calling: CallingState.NoCall });
-    this.callConnection[0] && this.callConnection[0].close();
+    // Close all created RTCPeerConnection
+    Object.values(this.connections).forEach((pc) => pc.close());
+    this.callArgs?.onCallEnd();
+    // Clear connections
+    this.connections = {};
     this.callArgs = null;
-    // TODO:  We have it separated, right? (check)
-    //this.toggleAnnotation(false)
+    this.videoStreams = {};
+    this.callArgs = null;
   }
 
+  // Call completion event handler by signal
   private onRemoteCallEnd = () => {
     if ([CallingState.Requesting, CallingState.Connecting].includes(this.store.get().calling)) {
+      // If the call has not started yet, then call onReject
       this.callArgs && this.callArgs.onReject();
-      this.callConnection[0] && this.callConnection[0].close();
+     // Close all connections and reset callArgs
+      Object.values(this.connections).forEach((pc) => pc.close());
+      this.connections = {};
+      this.callArgs?.onCallEnd();
       this.store.update({ calling: CallingState.NoCall });
       this.callArgs = null;
     } else {
+      // Call the full call completion handler
       this.handleCallEnd();
     }
   };
 
+  // Ends the call and sends the call_end signal
   initiateCallEnd = async () => {
-    const userName = userStore.account.name;
-    this.emitData('call_end', userName);
+    this.emitData('call_end', this.callID);
     this.handleCallEnd();
-    // TODO:  We have it separated, right? (check)
-    // const remoteControl = this.store.get().remoteControl
-    // if (remoteControl === RemoteControlStatus.Enabled) {
-    //   this.socket.emit("release_control")
-    //   this.toggleRemoteControl(false)
-    // }
   };
 
   private emitData = (event: string, data?: any) => {
@@ -188,7 +344,7 @@ export default class Call {
 
   private callArgs: {
     localStream: LocalStream;
-    onStream: (s: MediaStream) => void;
+    onStream: (s: MediaStream, isAgent: boolean) => void;
     onCallEnd: () => void;
     onReject: () => void;
     onError?: (arg?: any) => void;
@@ -196,7 +352,7 @@ export default class Call {
 
   setCallArgs(
     localStream: LocalStream,
-    onStream: (s: MediaStream) => void,
+    onStream: (s: MediaStream, isAgent: boolean) => void,
     onCallEnd: () => void,
     onReject: () => void,
     onError?: (e?: any) => void
@@ -210,117 +366,88 @@ export default class Call {
     };
   }
 
-  call(thirdPartyPeers?: string[]): { end: () => void } {
-    if (thirdPartyPeers && thirdPartyPeers.length > 0) {
-      this.addPeerCall(thirdPartyPeers);
-    } else {
-      this._callSessionPeer();
-    }
+  // Initiates a call
+  call(): { end: () => void } {
+    this._callSessionPeer();
+    // this.callAgentsInSession({ agentIds: this.agentInCallIds });
     return {
       end: this.initiateCallEnd,
     };
   }
 
+  // Notify peers of local video state change
   toggleVideoLocalStream(enabled: boolean) {
-    this.getPeer().then((peer) => {
-      this.emitData('videofeed', { streamId: peer.id, enabled });
-    });
+    this.emitData('videofeed', { streamId: this.callID, enabled });
   }
 
-  /** Connecting to the other agents that are already
-   *  in the call with the user
-   */
-  addPeerCall(thirdPartyPeers: string[]) {
-    thirdPartyPeers.forEach((peer) => this._peerConnection(peer));
-  }
-
-  /** Connecting to the app user */
+  // Calls the method to create a connection with a peer
   private _callSessionPeer() {
     if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) {
       return;
     }
     this.store.update({ calling: CallingState.Connecting });
     const tab = this.store.get().currentTab;
-    if (!this.store.get().currentTab) {
-      console.warn('No tab data to connect to peer');
+    if (!tab) {
+      logger.warn('No tab data to connect to peer');
     }
-    const peerId =
-      this.getAssistVersion() === 1
-        ? this.peerID
-        : `${this.peerID}-${tab || Object.keys(this.store.get().tabs)[0]}`;
 
+   // Generate a peer identifier depending on the assist version
+    this.callID = this.getCallId();
+      
     const userName = userStore.account.name;
     this.emitData('_agent_name', userName);
-    void this._peerConnection(peerId);
+    void this._peerConnection({ remotePeerId: this.callID });
   }
 
-  connectAttempts = 0;
-  private async _peerConnection(remotePeerId: string) {
-    try {
-      const peer = await this.getPeer();
-      // let canCall = false
-
-      const tryReconnect = async (e: any) => {
-        peer.off('error', tryReconnect)
-        console.log(e.type, this.connectAttempts);
-        if (e.type === 'peer-unavailable' && this.connectAttempts < 5) {
-          this.connectAttempts++;
-          console.log('reconnecting', this.connectAttempts);
-          await new Promise((resolve) => setTimeout(resolve, 250));
-          await this._peerConnection(remotePeerId);
-        } else {
-          console.log('error', this.connectAttempts);
-          this.callArgs?.onError?.('Could not establish a connection with the peer after 5 attempts');
-        }
-      }
-      const call = peer.call(remotePeerId, this.callArgs!.localStream.stream);
-      peer.on('error', tryReconnect);
-
-      peer.on('connection', () => {
-        this.callConnection.push(call);
-        this.connectAttempts = 0;
-
-        this.callArgs?.localStream.onVideoTrack((vTrack) => {
-          const sender = call.peerConnection.getSenders().find((s) => s.track?.kind === 'video');
-          if (!sender) {
-            console.warn('No video sender found');
-            return;
-          }
-          sender.replaceTrack(vTrack);
+  private callAgentsInSession({ agentIds }: { agentIds: string[] }) {
+    if (agentIds) {
+      const filteredAgentIds = agentIds.filter((id: string) => id.split('-')[3] !== this.agent.id.toString());
+      const newIds = filteredAgentIds.filter((id: string) => !this.agentInCallIds.includes(id));
+      const removedIds = this.agentInCallIds.filter((id: string) => !filteredAgentIds.includes(id));
+      removedIds.forEach((id: string) => this.agentDisconnected(id));
+      if (this.store.get().calling === CallingState.OnCall) {
+        newIds.forEach((id: string) => {
+          const socketId = getSocketIdByCallId(id);
+          this._peerConnection({ remotePeerId: id, isAgent: true, socketId, localPeerId: this.callID });
         });
-      })
+      }
 
-      call.on('stream', (stream) => {
-        this.store.get().calling !== CallingState.OnCall &&
-          this.store.update({ calling: CallingState.OnCall });
-
-        this.videoStreams[call.peer] = stream.getVideoTracks()[0];
-
-        this.callArgs && this.callArgs.onStream(stream);
-      });
-
-      call.on('close', this.onRemoteCallEnd);
-      call.on('error', (e) => {
-        console.error('PeerJS error (on call):', e);
-        this.initiateCallEnd();
-        this.callArgs && this.callArgs.onError && this.callArgs.onError();
-      });
-    } catch (e) {
-      console.error(e);
+      this.agentInCallIds = filteredAgentIds;
     }
   }
 
-  private cleaned: boolean = false;
-
-  clean() {
-    this.cleaned = true; // sometimes cleaned before modules loaded
-    void this.initiateCallEnd();
-    if (this._peer) {
-      console.log('destroying peer...');
-      const peer = this._peer; // otherwise it calls reconnection on data chan close
-      this._peer = null;
-      peer.disconnect();
-      peer.destroy();
+  private getCallId() {
+    const tab = this.store.get().currentTab;
+    if (!tab) {
+      logger.warn('No tab data to connect to peer');
     }
+
+   // Generate a peer identifier depending on the assist version
+    return `${this.peerID}-${tab || Array.from(this.store.get().tabs)[0]}-${this.agent.id}-${this.socket.id}-agent`;
+  }
+
+  agentDisconnected(agentId: string) {
+    this.connections[agentId]?.close();
+    delete this.connections[agentId];
+  }
+
+  // Method for clearing resources
+  clean() {
+    void this.initiateCallEnd();
+    Object.values(this.connections).forEach((pc) => pc.close());
+    this.connections = {};
+    this.callArgs?.onCallEnd();
+  }
+}
+
+function isAgentId(id: string): boolean {
+  return id.endsWith('_agent');
+}
+
+function getSocketIdByCallId(callId?: string): string | undefined {
+  const socketIdRegex = /-\d{2}-(.*?)\-agent/;
+  const match = callId?.match(socketIdRegex);
+  if (match) {
+      return match[1];
   }
 }

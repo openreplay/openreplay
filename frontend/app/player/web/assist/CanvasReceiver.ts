@@ -1,6 +1,6 @@
-import Peer from 'peerjs';
 import { VElement } from 'Player/web/managers/DOM/VirtualDOM';
 import MessageManager from 'Player/web/MessageManager';
+import { Socket } from 'socket.io-client';
 
 let frameCounter = 0;
 
@@ -18,70 +18,102 @@ function draw(
 
 export default class CanvasReceiver {
   private streams: Map<string, MediaStream> = new Map();
-  private peer: Peer | null = null;
+  // Store RTCPeerConnection for each remote peer
+  private connections: Map<string, RTCPeerConnection> = new Map();
+  private cId: string;
 
+  // sendSignal – for sending signals (offer/answer/ICE)
   constructor(
     private readonly peerIdPrefix: string,
     private readonly config: RTCIceServer[] | null,
     private readonly getNode: MessageManager['getNode'],
-    private readonly agentInfo: Record<string, any>
+    private readonly agentInfo: Record<string, any>,
+    private readonly socket: Socket,
   ) {
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin);
-    const peerOpts: Peer.PeerJSOption = {
-      host: urlObject.hostname,
-      path: '/assist',
-      port:
-        urlObject.port === ''
-        ? location.protocol === 'https:'
-          ? 443
-          : 80
-        : parseInt(urlObject.port),
+    // Form an id like in PeerJS
+    this.cId = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
+
+    this.socket.on('webrtc_canvas_offer', (data: { data: { offer: RTCSessionDescriptionInit, id: string }}) => {
+      const { offer, id } = data.data;
+      if (checkId(id, this.cId)) {
+        this.handleOffer(offer, id);
+      }
+    });
+    
+    this.socket.on('webrtc_canvas_ice_candidate', (data: { data: { candidate: RTCIceCandidateInit, id: string }}) => {
+      const {candidate, id } = data.data;
+      if (checkId(id, this.cId)) {
+        this.handleCandidate(candidate, id);
+      }
+    });
+
+    this.socket.on('webrtc_canvas_restart', () => {
+      this.clear();
+    });
+  }
+
+  async handleOffer(offer: RTCSessionDescriptionInit, id: string): Promise<void> {
+    const pc = new RTCPeerConnection({
+      iceServers: this.config ? this.config : [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    // Save the connection
+    this.connections.set(id, pc);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.socket.emit('webrtc_canvas_ice_candidate', ({ candidate: event.candidate, id }));
+      }
     };
-    if (this.config) {
-      peerOpts['config'] = {
-        iceServers: this.config,
-        //@ts-ignore
-        sdpSemantics: 'unified-plan',
-        iceTransportPolicy: 'all',
-      };
-    }
-    const id = `${this.peerIdPrefix}-${this.agentInfo.id}-canvas`;
-    const canvasPeer = new Peer(id, peerOpts);
-    this.peer = canvasPeer;
-    canvasPeer.on('error', (err) => console.error('canvas peer error', err));
-    canvasPeer.on('call', (call) => {
-      call.answer();
-      const canvasId = call.peer.split('-')[2];
-      call.on('stream', (stream) => {
+
+    pc.ontrack = (event) => {
+
+      const stream = event.streams[0];
+      if (stream) {
+        // Detect canvasId from remote peer id
+        const canvasId = id.split('-')[4];
         this.streams.set(canvasId, stream);
         setTimeout(() => {
           const node = this.getNode(parseInt(canvasId, 10));
-          const videoEl = spawnVideo(
-            this.streams.get(canvasId)?.clone() as MediaStream,
-            node as VElement
-          );
+          const videoEl = spawnVideo(stream.clone() as MediaStream, node as VElement);
           if (node) {
             draw(
               videoEl,
               node.node as HTMLCanvasElement,
               (node.node as HTMLCanvasElement).getContext('2d') as CanvasRenderingContext2D
             );
+          } else {
+            console.log('NODE', canvasId, 'IS NOT FOUND');
           }
         }, 250);
-      });
-      call.on('error', (err) => console.error('canvas call error', err));
-    });
+      }
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    this.socket.emit('webrtc_canvas_answer', { answer: answer, id });
+  }
+
+  async handleCandidate(candidate: RTCIceCandidateInit, id: string): Promise<void> {
+    const pc = this.connections.get(id);
+    if (pc) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error('Error adding ICE candidate', e);
+      }
+    }
   }
 
   clear() {
-    if (this.peer) {
-      // otherwise it calls reconnection on data chan close
-      const peer = this.peer;
-      this.peer = null;
-      peer.disconnect();
-      peer.destroy();
-    }
+    this.connections.forEach((pc) => {
+      pc.close();
+    });
+    this.connections.clear();
+    this.streams.clear();
   }
 }
 
@@ -155,6 +187,10 @@ function spawnDebugVideo(stream: MediaStream, node: VElement) {
       };
       document.addEventListener('click', waiter);
     });
+}
+
+function checkId(id: string, cId: string): boolean {
+  return id.includes(cId);
 }
 
 /** simple peer example

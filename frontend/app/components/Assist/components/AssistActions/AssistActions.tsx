@@ -80,7 +80,7 @@ function AssistActions({
   } = store.get();
 
   const [isPrestart, setPrestart] = useState(false);
-  const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
+  const [incomeStream, setIncomeStream] = useState<{ stream: MediaStream; isAgent: boolean }[] | null>([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
   const [callObject, setCallObject] = useState<{ end: () => void } | null>(null);
 
@@ -131,18 +131,25 @@ function AssistActions({
     }
   }, [peerConnectionStatus]);
 
-  const addIncomeStream = (stream: MediaStream) => {
+  const addIncomeStream = (stream: MediaStream, isAgent: boolean) => {
     setIncomeStream((oldState) => {
-      if (oldState === null) return [stream];
-      if (!oldState.find((existingStream) => existingStream.id === stream.id)) {
+      if (oldState === null) return [{ stream, isAgent }];
+      if (!oldState.find((existingStream) => existingStream.stream.id === stream.id)) {
         audioContextManager.mergeAudioStreams(stream);
-        return [...oldState, stream];
+        return [...oldState, { stream, isAgent }];
       }
       return oldState;
     });
   };
 
-  function call(additionalAgentIds?: string[]) {
+  const removeIncomeStream = (stream: MediaStream) => {
+    setIncomeStream((prevState) => {
+      if (!prevState) return [];
+      return prevState.filter((existingStream) => existingStream.stream.id !== stream.id);
+    });
+  };
+
+  function call() {
     RequestLocalStream()
       .then((lStream) => {
         setLocalStream(lStream);
@@ -152,15 +159,16 @@ function AssistActions({
           addIncomeStream,
           () => {
             player.assistManager.ping(AssistActionsPing.call.end, agentId)
-            lStream.stop.bind(lStream);
+            lStream.stop.apply(lStream);
+            removeIncomeStream(lStream.stream);
           },
           onReject,
           onError
         );
         setCallObject(callPeer());
-        if (additionalAgentIds) {
-          callPeer(additionalAgentIds);
-        }
+        // if (additionalAgentIds) {
+        //   callPeer(additionalAgentIds);
+        // }
       })
       .catch(onError);
   }

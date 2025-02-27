@@ -12,6 +12,7 @@ export default class CallWindow {
 	private videoBtn: HTMLElement | null = null
 	private endCallBtn: HTMLElement | null = null
 	private agentNameElem: HTMLElement | null = null
+	private remoteStreamVideoContainerSample: HTMLElement | null = null
 	private videoContainer: HTMLElement | null = null
 	private vPlaceholder: HTMLElement | null = null
 	private remoteControlContainer: HTMLElement | null = null
@@ -62,7 +63,6 @@ export default class CallWindow {
 					this.adjustIframeSize()
 					iframe.onload = null
 				}
-
 				// ?
 				text = text.replace(/href="css/g, `href="${baseHref}/css`)
 				doc.open()
@@ -71,8 +71,9 @@ export default class CallWindow {
 
 				this.vLocal = doc.getElementById('video-local') as HTMLVideoElement | null
 				this.vRemote = doc.getElementById('video-remote') as HTMLVideoElement | null
+				
 				this.videoContainer = doc.getElementById('video-container')
-
+				
 				this.audioBtn = doc.getElementById('audio-btn')
 				if (this.audioBtn) {
 					this.audioBtn.onclick = () => this.toggleAudio()

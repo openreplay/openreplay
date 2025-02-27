@@ -67,6 +67,7 @@ export default class AssistManager {
     ...RemoteControl.INITIAL_STATE,
     ...ScreenRecording.INITIAL_STATE,
   };
+  private agentIds: string[] = [];
 
   // TODO: Session type
   constructor(
@@ -77,9 +78,10 @@ export default class AssistManager {
     private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
     private getNode: MessageManager['getNode'],
+    public readonly agentId: number,
     public readonly uiErrorHandler?: {
       error: (msg: string) => void;
-    }
+    },
   ) {}
 
   public getAssistVersion = () => this.assistVersion;
@@ -192,6 +194,12 @@ export default class AssistManager {
           }),
         },
       }));
+
+      // socket.onAny((event, ...args) => {
+      //   logger.log(`📩 Socket: ${event}`, args);
+      // });
+      
+
       socket.on('connect', () => {
         waitingForMessages = true;
         // TODO: reconnect happens frequently on bad network
@@ -268,6 +276,10 @@ export default class AssistManager {
             }
           }
         }
+        if (data.agentIds) {
+          const filteredAgentIds = this.agentIds.filter((id: string) => id.split('-')[3] !== agentId.toString());
+          this.agentIds = filteredAgentIds;
+        }
       });
       socket.on('SESSION_DISCONNECTED', (e) => {
         waitingForMessages = true;
@@ -288,7 +300,12 @@ export default class AssistManager {
         socket,
         this.config,
         this.peerID,
-        this.getAssistVersion
+        this.getAssistVersion,
+        {
+          ...this.session.agentInfo,
+          id: agentId,
+        },
+        this.agentIds,
       );
       this.remoteControl = new RemoteControl(
         this.store,
@@ -309,7 +326,7 @@ export default class AssistManager {
       this.canvasReceiver = new CanvasReceiver(this.peerID, this.config, this.getNode, {
         ...this.session.agentInfo,
         id: agentId,
-      });
+      }, socket);
 
       document.addEventListener('visibilitychange', this.onVisChange);
     });
@@ -318,7 +335,7 @@ export default class AssistManager {
   /**
    * Sends event ping to stats service
    * */
-  public ping(event: StatsEvent, id: number) {
+  public ping(event: StatsEvent, id: string) {
     this.socket?.emit(event, id);
   }
 
