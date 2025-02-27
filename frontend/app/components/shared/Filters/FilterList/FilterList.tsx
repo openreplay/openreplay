@@ -61,7 +61,7 @@ export const FilterList = observer((props: Props) => {
         borderTopRightRadius: props.mergeUp ? 0 : undefined
       }}
     >
-      <div className={'flex items-center py-2'} style={{ gap: '0.65rem' }}>
+      <div className={'flex items-center pt-2'} style={{ gap: '0.65rem' }}>
         <div className="font-medium">Filters</div>
         <FilterSelection
           mode={'filters'}
@@ -204,7 +204,7 @@ export const EventsList = observer((props: Props) => {
     <div
       className={cn(
       'bg-white',
-        borderless ? '' : 'pb-2 px-4 rounded-xl border border-gray-lighter'
+        borderless ? '' : 'py-2 px-4 rounded-xl border border-gray-lighter'
       )
       }
       style={{

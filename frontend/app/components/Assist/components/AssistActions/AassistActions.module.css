@@ -1,6 +1,14 @@
 .disabled {
-  opacity: 0.5;
   pointer-events: none;
+}
+
+.disabled > button {
+  opacity: 0.5;
+}
+
+/* Keep the icon color intact */
+.disabled > button svg {
+  opacity: 1; 
 }
 
 .divider {
