@@ -72,12 +72,14 @@ export const FilterList = observer((props: Props) => {
           excludeCategory={excludeCategory}
         >
           <Button
-            icon={<Filter size={16} strokeWidth={1} />}
             type="default"
             size={'small'}
             className="btn-add-filter"
           >
-            Add
+            <div className={'flex items-center gap-1'}>
+              <Filter size={16} strokeWidth={1} />
+              <span>Add</span>
+            </div>
           </Button>
         </FilterSelection>
       </div>
@@ -224,12 +226,14 @@ export const EventsList = observer((props: Props) => {
             excludeCategory={excludeCategory}
           >
             <Button
-              icon={<Plus size={16} strokeWidth={1} />}
               type="default"
               size={'small'}
               className="btn-add-event"
             >
-              Add
+              <div className={'flex items-center gap-1'}>
+                <Plus size={16} strokeWidth={1} />
+                <span>Add</span>
+              </div>
             </Button>
           </FilterSelection>
         )}
