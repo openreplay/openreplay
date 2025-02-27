@@ -24,9 +24,12 @@ function AssistSearchActions() {
   const showRecords = () => {
     showModal(<Recordings />, { right: true, width: 960 });
   };
+
+  const originStr = window.env.ORIGIN || window.location.origin;
+  const isSaas = /app\.openreplay\.com/.test(originStr);
   return (
     <div className="flex items-center w-full gap-2">
-      {isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
+      {!isSaas && isEnterprise && !modules.includes(MODULES.OFFLINE_RECORDINGS)
         ? <Button type="text" onClick={showRecords}>Training Videos</Button> : null
       }
       {isEnterprise && userStore.account?.admin && (
