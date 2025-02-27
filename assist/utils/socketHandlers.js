@@ -127,6 +127,9 @@ async function onConnect(socket) {
     // Handle update event
     socket.on(EVENTS_DEFINITION.listen.UPDATE_EVENT, (...args) => onUpdateEvent(socket, ...args));
 
+    // Handle webrtc events
+    socket.on(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, (...args) => onWebrtcAgentHandler(socket, ...args));
+
     // Handle errors
     socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
     socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
@@ -182,6 +185,16 @@ async function onUpdateEvent(socket, ...args) {
             item.handshake.query.sessionInfo = deepMerge(item.handshake.query.sessionInfo, args[0]?.data, {tabId: args[0]?.meta?.tabId});
         } else if (item.handshake.query.identity === IDENTITIES.agent) {
             socket.to(item.id).emit(EVENTS_DEFINITION.listen.UPDATE_EVENT, args[0]);
+        }
+    }
+}
+
+async function onWebrtcAgentHandler(socket, ...args) {
+    if (socket.handshake.query.identity === IDENTITIES.agent) {
+        const agentIdToConnect = args[0]?.data?.toAgentId;
+        logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
+        if (agentIdToConnect && socket.handshake.sessionData.AGENTS_CONNECTED.includes(agentIdToConnect)) {
+            socket.to(agentIdToConnect).emit(EVENTS_DEFINITION.listen.WEBRTC_AGENT_CALL, args[0]);
         }
     }
 }
