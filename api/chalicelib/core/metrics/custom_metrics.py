@@ -448,7 +448,7 @@ def __get_global_attributes(row):
     if row is None or row.get("cardInfo") is None:
         return row
     card_info = row.get("cardInfo", {})
-    row["compareTo"] = card_info.get("compareTo", [])
+    row["compareTo"] = card_info["compareTo"] if card_info.get("compareTo") is not None else []
     return row
 
 
