@@ -64,7 +64,7 @@ def add_favorite_session_to_ch(project_id, user_id, session_id, sign=1):
             query = f"""INSERT INTO {exp_ch_helper.get_user_favorite_sessions_table()}(project_id,user_id, session_id, sign) 
                         VALUES (%(project_id)s,%(userId)s,%(sessionId)s,%(sign)s);"""
             params = {"userId": user_id, "sessionId": session_id, "project_id": project_id, "sign": sign}
-            cur.execute(query=query, params=params)
+            cur.execute(query=query, parameters=params)
 
     except Exception as err:
         logger.error("------- Exception while adding favorite session to CH")
