@@ -39,7 +39,7 @@ function IdentifyUsersTab(props: Props) {
         </div>
 
         <a
-          href={`https://docs.openreplay.com/en/installation/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
+          href={`https://docs.openreplay.com/en/session-replay/identify-user${platform.value === "web" ? "/#with-npm" : "/#with-ios-app"}`}
           target="_blank"
         >
           <Button size={'small'} type={'text'} className="ml-2 flex items-center gap-2">

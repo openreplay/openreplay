@@ -39,7 +39,7 @@ const CustomFields = () => {
       <Typography.Text>
         Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user
         sessions.
-        <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">
+        <a href="https://docs.openreplay.com/en/session-replay/metadata" className="link ml-1" target="_blank">
           Learn more
         </a>
       </Typography.Text>
