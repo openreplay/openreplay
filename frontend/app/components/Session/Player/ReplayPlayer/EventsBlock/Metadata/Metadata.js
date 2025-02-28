@@ -10,7 +10,7 @@ function Metadata () {
   const metaLength = Object.keys(metadata).length;
   if (metaLength === 0) {
     return (
-      (<span className="text-sm color-gray-medium">Check <a href="https://docs.openreplay.com/installation/metadata" target="_blank" className="link">how to use Metadata</a> if you haven’t yet done so.</span>)
+      (<span className="text-sm color-gray-medium">Check <a href="https://docs.openreplay.com/en/session-replay/metadata" target="_blank" className="link">how to use Metadata</a> if you haven’t yet done so.</span>)
     )
   }
   return (

@@ -5,7 +5,7 @@ import { Button } from 'antd'
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
+const docLink = 'https://docs.openreplay.com/deployment/upload-sourcemaps';
 
 interface Props {
     fetchErrorStackList: any;
