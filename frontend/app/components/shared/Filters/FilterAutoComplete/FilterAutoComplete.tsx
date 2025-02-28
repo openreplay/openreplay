@@ -62,17 +62,18 @@ const FilterAutoComplete = observer(
     const [loading, setLoading] = useState(false);
     const { filterStore, projectsStore } = useStore();
     const _params = processKey(params);
-    const filterKey = `${_params.type}${_params.key || ''}`;
+    const filterKey = `${projectsStore.siteId}_${_params.type}${_params.key || ''}`;
     const topValues = filterStore.topValues[filterKey] || [];
 
     React.useEffect(() => {
-      filterStore.resetValues()
       setOptions([])
     }, [projectsStore.siteId])
 
     const loadTopValues = async () => {
       setLoading(true)
-      await filterStore.fetchTopValues(_params.type, _params.key);
+      if (projectsStore.siteId) {
+        await filterStore.fetchTopValues(_params.type, projectsStore.siteId, _params.key);
+      }
       setLoading(false)
     };
 
