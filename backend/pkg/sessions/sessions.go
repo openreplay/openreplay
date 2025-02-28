@@ -76,7 +76,7 @@ func (s *sessionsImpl) getFromDB(sessionID uint64) (*Session, error) {
 	}
 	proj, err := s.projects.GetProject(session.ProjectID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get active project: %d, err: %s", session.ProjectID, err)
 	}
 	session.SaveRequestPayload = proj.SaveRequestPayloads
 	return session, nil
