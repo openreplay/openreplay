@@ -61,7 +61,6 @@ export default class PagesManager extends ListWalker<DOMManager> {
           },
         })
       );
-      console.log(this.globalDictionary)
       this.falseOrder = false;
     }
     if (this.last === null) {
