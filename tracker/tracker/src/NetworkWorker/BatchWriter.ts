@@ -92,38 +92,36 @@ export default class BatchWriter {
   }
 
   writeMessage(message: Message) {
-    requestIdleCb(() => {
-      // @ts-ignore
-      if (message[0] === 'q_end') {
-        this.finaliseBatch()
-        return this.onOfflineEnd()
-      }
-      if (message[0] === Messages.Type.Timestamp) {
-        this.timestamp = message[1] // .timestamp
-      }
-      if (message[0] === Messages.Type.SetPageLocation) {
-        this.url = message[1] // .url
-      }
-      if (this.writeWithSize(message)) {
-        return
-      }
-      // buffer overflow, send already written data first then try again
+    // @ts-ignore
+    if (message[0] === 'q_end') {
       this.finaliseBatch()
-      if (this.writeWithSize(message)) {
-        return
-      }
-      // buffer is too small. Creating one with maximal capacity for this message only
-      this.encoder = new MessageEncoder(this.beaconSizeLimit)
-      this.prepare()
-      if (!this.writeWithSize(message)) {
-        console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
-      } else {
-        this.finaliseBatch()
-      }
-      // reset encoder to normal size
-      this.encoder = new MessageEncoder(this.beaconSize)
-      this.prepare()
-    })
+      return this.onOfflineEnd()
+    }
+    if (message[0] === Messages.Type.Timestamp) {
+      this.timestamp = message[1] // .timestamp
+    }
+    if (message[0] === Messages.Type.SetPageLocation) {
+      this.url = message[1] // .url
+    }
+    if (this.writeWithSize(message)) {
+      return
+    }
+    // buffer overflow, send already written data first then try again
+    this.finaliseBatch()
+    if (this.writeWithSize(message)) {
+      return
+    }
+    // buffer is too small. Creating one with maximal capacity for this message only
+    this.encoder = new MessageEncoder(this.beaconSizeLimit)
+    this.prepare()
+    if (!this.writeWithSize(message)) {
+      console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
+    } else {
+      this.finaliseBatch()
+    }
+    // reset encoder to normal size
+    this.encoder = new MessageEncoder(this.beaconSize)
+    this.prepare()
   }
 
   finaliseBatch() {
