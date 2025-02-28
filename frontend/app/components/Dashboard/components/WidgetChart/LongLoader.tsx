@@ -23,12 +23,12 @@ function LongLoader({ onClick }: { onClick: () => void }) {
       <div>
         This is taking longer than expected.
       </div>
-      <div>
-        Use sample data to speed up query and get a faster response.
-      </div>
-      <Button onClick={onClick}>
-        Use Sample Data
-      </Button>
+      {/*<div>*/}
+      {/*  Use sample data to speed up query and get a faster response.*/}
+      {/*</div>*/}
+      {/*<Button onClick={onClick}>*/}
+      {/*  Use Sample Data*/}
+      {/*</Button>*/}
     </div>
   )
 }
