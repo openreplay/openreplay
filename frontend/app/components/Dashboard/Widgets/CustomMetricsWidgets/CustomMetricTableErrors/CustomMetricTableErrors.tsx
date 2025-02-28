@@ -4,7 +4,7 @@ import ErrorListItem from "App/components/Dashboard/components/Errors/ErrorListI
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { useModal } from "App/components/Modal";
 import ErrorDetailsModal from "App/components/Dashboard/components/Errors/ErrorDetailsModal";
-import { useStore } from "App/mstore";
+
 interface Props {
     metric: any;
     data: any;
@@ -13,10 +13,9 @@ interface Props {
     location: any;
 }
 function CustomMetricTableErrors(props: RouteComponentProps & Props) {
-    const { metric, isEdit = false, data } = props;
+    const { metric, data } = props;
     const errorId = new URLSearchParams(props.location.search).get("errorId");
     const { showModal, hideModal } = useModal();
-    const { dashboardStore } = useStore();
 
     const onErrorClick = (e: any, error: any) => {
         e.stopPropagation();
