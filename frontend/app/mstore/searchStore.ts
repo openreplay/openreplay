@@ -76,6 +76,7 @@ class SearchStore {
   isSaving: boolean = false;
   activeTags: any[] = [];
   urlParsed: boolean = false;
+  searchInProgress = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -362,6 +363,7 @@ class SearchStore {
     force: boolean = false,
     bookmarked: boolean = false
   ): Promise<void> {
+    if (this.searchInProgress) return;
     const filter = this.instance.toSearch();
 
     if (this.activeTags[0] && this.activeTags[0] !== 'all') {
@@ -395,7 +397,7 @@ class SearchStore {
 
     this.latestRequestTime = Date.now();
     this.latestList = List();
-
+    this.searchInProgress = true;
     await sessionStore.fetchSessions(
       {
         ...filter,
@@ -405,7 +407,9 @@ class SearchStore {
         bookmarked: bookmarked ? true : undefined,
       },
       force
-    );
+    ).finally(() => {
+      this.searchInProgress = false;
+    });
   }
 }
 

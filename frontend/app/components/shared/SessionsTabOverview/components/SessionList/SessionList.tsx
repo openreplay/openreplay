@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+  import React, { useEffect } from 'react';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Icon } from 'UI';
@@ -49,11 +49,10 @@ function SessionList() {
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
 
-  useEffect(() => {
-    if (!searchStore.urlParsed) return;
-    void searchStore.fetchSessions(true, isBookmark);
-  }, [location.pathname]);
-
+  // useEffect(() => {
+  //   if (!searchStore.urlParsed) return;
+  //   void searchStore.fetchSessions(true, isBookmark);
+  // }, [location.pathname]);
 
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {

@@ -9,9 +9,10 @@ interface Props {
   onBeforeLoad?: () => Promise<void>;
   appliedFilter: Record<string, any>;
   loading: boolean;
+  onLoaded?: () => void;
 }
 
-const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading }: Props) => {
+const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading, onLoaded = () => null }: Props) => {
   const { searchStore } = useStore();
   const [beforeHookLoaded, setBeforeHookLoaded] = useState(!onBeforeLoad);
   const history = useHistory();
@@ -29,17 +30,34 @@ const useSessionSearchQueryHandler = ({ onBeforeLoad, appliedFilter, loading }: 
           const converter = JsonUrlConverter.urlParamsToJson(history.location.search);
           const json = getFilterFromJson(converter.toJSON());
           const filter = new Search(json);
+
+          // // Even if there are no filters, mark URL as parsed
+          // if (filter.filters.length === 0) {
+          //   searchStore.setUrlParsed();
+          //   return;
+          // }
+
+          // Apply filter first
+          if (filter.filters.length > 0) {
+            searchStore.applyFilter(filter, true);
+          }
+
+          // Important: Mark URL as parsed BEFORE fetching
+          // This prevents the initial fetch when the URL is parsed
           searchStore.setUrlParsed();
-          if (filter.filters.length === 0) return;
-          searchStore.applyFilter(filter, true);
+
+          // Then fetch sessions - this is the only place that should fetch initially
+          await searchStore.fetchSessions();
+          onLoaded();
         } catch (error) {
           console.error('Error applying filter from query:', error);
+          searchStore.setUrlParsed();
         }
       }
     };
 
     void applyFilterFromQuery();
-  }, [loading, onBeforeLoad, searchStore, history.location.search]);
+  }, [loading, searchStore, history.location.search, onBeforeLoad]);
 
   // Update the URL whenever the appliedFilter changes
   useEffect(() => {

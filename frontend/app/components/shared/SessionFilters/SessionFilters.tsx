@@ -52,11 +52,10 @@ function SessionFilters() {
     onBeforeLoad: async () => {
       await reloadTags();
     },
+    onLoaded: () => {
+      debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
+    }
   });
-
-  useEffect(() => {
-    debounceFetch = debounce(() => searchStore.fetchSessions(), 500);
-  }, []);
 
   useEffect(() => {
     debounceFetch();
