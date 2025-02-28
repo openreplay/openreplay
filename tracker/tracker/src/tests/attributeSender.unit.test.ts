@@ -29,11 +29,12 @@ describe('AttributeSender', () => {
     const name = 'color' // 1_1
     const value = 'red' // attribute is second, so 1_2; (page_key)
     // @ts-ignore
-    const expectedMessage = [Type.SetNodeAttributeDict, id, '1_1', '1_2']
 
     attributeSender.sendSetAttribute(id, name, value)
 
-    expect(sendSpy).toHaveBeenCalledWith(expectedMessage)
+    expect(sendSpy).toHaveBeenCalledWith(
+      expect.arrayContaining([Type.SetNodeAttributeDictGlobal, id, expect.any(Number), expect.any(Number)])
+    )
   })
 
   test('should apply dictionary to the attribute name and value', () => {
@@ -47,7 +48,7 @@ describe('AttributeSender', () => {
     expect(sendSpy).toHaveBeenCalledWith(
       expect.arrayContaining([
         // @ts-ignore
-        Type.SetNodeAttributeDict,
+        Type.SetNodeAttributeDictGlobal,
         id,
         expect.any(Number),
         expect.any(Number),
@@ -64,7 +65,7 @@ describe('AttributeSender', () => {
     attributeSender.sendSetAttribute(id, name, value)
 
     // @ts-ignore
-    expect(sendSpy).toHaveBeenCalledWith([Type.StringDict, '1_1', name])
+    expect(sendSpy).toHaveBeenCalledWith(expect.arrayContaining([Type.StringDictGlobal, expect.any(Number), name]))
   })
 
   test('should not send the string dictionary entry if the attribute already exists', () => {
@@ -98,7 +99,7 @@ describe('AttributeSender', () => {
     expect(sendSpy).toHaveBeenCalledTimes(6)
     expect(sendSpy).toHaveBeenCalledWith(
       // @ts-ignore
-      expect.arrayContaining([Type.StringDict, expect.any(Number), name]),
+      expect.arrayContaining([Type.StringDictGlobal, expect.any(Number), name]),
     )
   })
 })

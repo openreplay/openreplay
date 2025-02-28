@@ -1,3 +1,7 @@
+## 11.0.0
+
+- migrate to native webrtc, remove peerjs
+
 ## 10.0.0
 
 - memory handling improvements to prevent possible leaks on sessions with multiple canvas nodes

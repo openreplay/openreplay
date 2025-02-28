@@ -1,3 +1,7 @@
+## 16.0.0
+
+- **[breaking]** new string dictionary message format
+
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs
