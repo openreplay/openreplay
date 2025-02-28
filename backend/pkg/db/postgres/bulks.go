@@ -7,6 +7,8 @@ import (
 	"openreplay/backend/pkg/logger"
 )
 
+var BULK_SIZE = 200
+
 type bulksTask struct {
 	bulks []Bulk
 }
@@ -102,7 +104,7 @@ func (conn *BulkSet) initBulks() {
 		"autocomplete",
 		"(value, type, project_id)",
 		"($%d, $%d, $%d)",
-		3, 200)
+		3, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create autocomplete bulk: %s", err)
 	}
@@ -110,7 +112,7 @@ func (conn *BulkSet) initBulks() {
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, duration, success)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), $%d, $%d)",
-		6, 200)
+		6, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create requests bulk: %s", err)
 	}
@@ -118,7 +120,7 @@ func (conn *BulkSet) initBulks() {
 		"events_common.customs",
 		"(session_id, timestamp, seq_index, name, payload)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d)",
-		5, 200)
+		5, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create customEvents bulk: %s", err)
 	}
@@ -130,7 +132,7 @@ func (conn *BulkSet) initBulks() {
 		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), "+
 			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
 			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, ''))",
-		19, 200)
+		19, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webPageEvents bulk: %s", err)
 	}
@@ -138,7 +140,7 @@ func (conn *BulkSet) initBulks() {
 		"events.inputs",
 		"(session_id, message_id, timestamp, label, hesitation, duration)",
 		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''), $%d, $%d)",
-		6, 200)
+		6, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webInputDurations bulk: %s", err)
 	}
@@ -146,7 +148,7 @@ func (conn *BulkSet) initBulks() {
 		"events.graphql",
 		"(session_id, timestamp, message_id, name, request_body, response_body)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
-		6, 200)
+		6, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webGraphQL bulk: %s", err)
 	}
@@ -154,7 +156,7 @@ func (conn *BulkSet) initBulks() {
 		"errors",
 		"(error_id, project_id, source, name, message, payload)",
 		"($%d, $%d, $%d, $%d, $%d, $%d::jsonb)",
-		6, 200)
+		6, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webErrors bulk: %s", err)
 	}
@@ -162,7 +164,7 @@ func (conn *BulkSet) initBulks() {
 		"events.errors",
 		"(session_id, message_id, timestamp, error_id)",
 		"($%d, $%d, $%d, $%d)",
-		4, 200)
+		4, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webErrorEvents bulk: %s", err)
 	}
@@ -170,7 +172,7 @@ func (conn *BulkSet) initBulks() {
 		"public.errors_tags",
 		"(session_id, message_id, error_id, key, value)",
 		"($%d, $%d, $%d, $%d, $%d)",
-		5, 200)
+		5, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webErrorTags bulk: %s", err)
 	}
@@ -178,7 +180,7 @@ func (conn *BulkSet) initBulks() {
 		"issues",
 		"(project_id, issue_id, type, context_string)",
 		"($%d, $%d, $%d, $%d)",
-		4, 200)
+		4, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webIssues bulk: %s", err)
 	}
@@ -186,7 +188,7 @@ func (conn *BulkSet) initBulks() {
 		"events_common.issues",
 		"(session_id, issue_id, timestamp, seq_index, payload)",
 		"($%d, $%d, $%d, $%d, CAST($%d AS jsonb))",
-		5, 200)
+		5, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webIssueEvents bulk: %s", err)
 	}
@@ -194,7 +196,7 @@ func (conn *BulkSet) initBulks() {
 		"events_common.customs",
 		"(session_id, seq_index, timestamp, name, payload, level)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
-		6, 200)
+		6, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webCustomEvents bulk: %s", err)
 	}
@@ -202,7 +204,7 @@ func (conn *BulkSet) initBulks() {
 		"events.clicks",
 		"(session_id, message_id, timestamp, label, selector, url, path, hesitation)",
 		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d)",
-		8, 200)
+		8, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webClickEvents bulk: %s", err)
 	}
@@ -210,7 +212,7 @@ func (conn *BulkSet) initBulks() {
 		"events.clicks",
 		"(session_id, message_id, timestamp, label, selector, url, path, hesitation, normalized_x, normalized_y)",
 		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d, $%d, $%d)",
-		10, 200)
+		10, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webClickEvents bulk: %s", err)
 	}
@@ -218,7 +220,7 @@ func (conn *BulkSet) initBulks() {
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, transfer_size)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d, $%d)",
-		14, 200)
+		14, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webNetworkRequest bulk: %s", err)
 	}
@@ -226,7 +228,7 @@ func (conn *BulkSet) initBulks() {
 		"events.canvas_recordings",
 		"(session_id, recording_id, timestamp)",
 		"($%d, $%d, $%d)",
-		3, 200)
+		3, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webCanvasNodes bulk: %s", err)
 	}
@@ -234,7 +236,7 @@ func (conn *BulkSet) initBulks() {
 		"events.tags",
 		"(session_id, timestamp, seq_index, tag_id)",
 		"($%d, $%d, $%d, $%d)",
-		4, 200)
+		4, BULK_SIZE)
 	if err != nil {
 		conn.log.Fatal(conn.ctx, "can't create webTagTriggers bulk: %s", err)
 	}
