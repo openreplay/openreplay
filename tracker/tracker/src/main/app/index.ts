@@ -41,6 +41,7 @@ import type { Options as SessOptions } from './session.js'
 import Session from './session.js'
 import Ticker from './ticker.js'
 import { MaintainerOptions } from './nodes/maintainer.js'
+import NetworkWorker from '../../NetworkWorker/index.js'
 
 interface TypedWorker extends Omit<Worker, 'postMessage'> {
   postMessage(data: ToWorkerData): void
@@ -71,7 +72,7 @@ interface OnStartInfo {
  * this value is injected during build time via rollup
  * */
 // @ts-ignore
-const workerBodyFn = global.WEBWORKER_BODY
+// const workerBodyFn = global.WEBWORKER_BODY
 const CANCELED = 'canceled' as const
 const uxtStorageKey = 'or_uxt_active'
 const bufferStorageKey = 'or_buffer_1'
@@ -251,7 +252,7 @@ export default class App {
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
-  private worker?: TypedWorker
+  private worker?: NetworkWorker
 
   public attributeSender: AttributeSender
   public featureFlags: FeatureFlags
@@ -736,19 +737,11 @@ export default class App {
 
   private initWorker() {
     try {
-      this.worker = new Worker(
-        URL.createObjectURL(new Blob([workerBodyFn], { type: 'text/javascript' })),
-      )
-      this.worker.onerror = (e) => {
-        this._debug('webworker_error', e)
-      }
-      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
-        this.handleWorkerMsg(data)
-      }
+      this.worker = new NetworkWorker(this)
 
       const alertWorker = () => {
         if (this.worker) {
-          this.worker.postMessage(null)
+          this.worker.processEvent(null)
         }
       }
       // keep better tactics, discard others?
@@ -759,6 +752,10 @@ export default class App {
     } catch (e) {
       this._debug('worker_start', e)
     }
+  }
+
+  public processEvent(data: FromWorkerData) {
+    this.handleWorkerMsg(data)
   }
 
   private handleWorkerMsg(data: FromWorkerData) {
@@ -789,13 +786,13 @@ export default class App {
         gzip(data.batch, { mtime: 0 }, (err, result) => {
           if (err) {
             this.debug.error('Openreplay compression error:', err)
-            this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+            this.worker?.processEvent({ type: 'uncompressed', batch: batch })
           } else {
-            this.worker?.postMessage({ type: 'compressed', batch: result })
+            this.worker?.processEvent({ type: 'compressed', batch: result })
           }
         })
       } else {
-        this.worker?.postMessage({ type: 'uncompressed', batch: batch })
+        this.worker?.processEvent({ type: 'uncompressed', batch: batch })
       }
     } else if (data.type === 'queue_empty') {
       this.onSessionSent()
@@ -875,7 +872,7 @@ export default class App {
       requestIdleCb(() => {
         this.messages.unshift(TabData(this.session.getTabId()))
         this.messages.unshift(Timestamp(this.timestamp()))
-        this.worker?.postMessage(this.messages)
+        this.worker?.processEvent(this.messages)
         this.commitCallbacks.forEach((cb) => cb(this.messages))
         this.messages.length = 0
       })
@@ -916,7 +913,7 @@ export default class App {
   }
 
   private postToWorker(messages: Array<Message>) {
-    this.worker?.postMessage(messages)
+    this.worker?.processEvent(messages)
     this.commitCallbacks.forEach((cb) => cb(messages))
   }
 
@@ -1297,7 +1294,7 @@ export default class App {
   public async uploadOfflineRecording() {
     this.stop(false)
     const timestamp = now()
-    this.worker?.postMessage({
+    this.worker?.processEvent({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -1335,7 +1332,7 @@ export default class App {
       beaconSizeLimit,
       projectID,
     } = await r.json()
-    this.worker?.postMessage({
+    this.worker?.processEvent({
       type: 'auth',
       token,
       beaconSizeLimit,
@@ -1401,7 +1398,7 @@ export default class App {
     })
 
     const timestamp = now()
-    this.worker?.postMessage({
+    this.worker?.processEvent({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -1507,9 +1504,9 @@ export default class App {
 
       if (socketOnly) {
         this.socketMode = true
-        this.worker?.postMessage('stop')
+        this.worker?.processEvent('stop')
       } else {
-        this.worker?.postMessage({
+        this.worker?.processEvent({
           type: 'auth',
           token,
           beaconSizeLimit,
@@ -1731,7 +1728,7 @@ export default class App {
   }
 
   forceFlushBatch() {
-    this.worker?.postMessage('forceFlushBatch')
+    this.worker?.processEvent('forceFlushBatch')
   }
 
   getTabId() {
@@ -1777,7 +1774,7 @@ export default class App {
         this.stopCallbacks.forEach((cb) => cb())
         this.tagWatcher.clear()
         if (this.worker && stopWorker) {
-          this.worker.postMessage('stop')
+          this.worker.processEvent('stop')
         }
         this.canvasRecorder?.clear()
         this.messages.length = 0

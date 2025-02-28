@@ -9,7 +9,7 @@ const require = createRequire(import.meta.url)
 const packageConfig = require('./package.json')
 
 export default async () => {
-  const webworkerContent = await buildWebWorker()
+  // const webworkerContent = await buildWebWorker()
 
   const commonPlugins = [
     resolve(),
@@ -17,7 +17,7 @@ export default async () => {
       preventAssignment: true,
       values: {
         TRACKER_VERSION: packageConfig.version,
-        'global.WEBWORKER_BODY': JSON.stringify(webworkerContent),
+        // 'global.WEBWORKER_BODY': JSON.stringify(webworkerContent),
       },
     }),
   ]

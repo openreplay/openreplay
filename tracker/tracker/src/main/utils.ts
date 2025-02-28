@@ -230,71 +230,75 @@ export function deleteEventListener(
   }
 }
 
+type Task = () => void | any
 class FIFOTaskScheduler {
-  taskQueue: any[]
-  isRunning: boolean
+  private taskQueue: Task[]
+  private isRunning: boolean
+
   constructor() {
     this.taskQueue = []
     this.isRunning = false
   }
 
-  // Adds a task to the queue
-  addTask(task: () => any) {
+  addTask(task: Task): void {
     this.taskQueue.push(task)
     this.runTasks()
   }
 
-  // Runs tasks from the queue
-  runTasks() {
+  private runTasks(): void {
     if (this.isRunning || this.taskQueue.length === 0) {
       return
     }
 
     this.isRunning = true
 
-    const executeNextTask = () => {
+    const executeNextTask = (): void => {
       if (this.taskQueue.length === 0) {
         this.isRunning = false
         return
       }
 
-      // Get the next task and execute it
       const nextTask = this.taskQueue.shift()
-      Promise.resolve(nextTask()).then(() => {
+
+      if (!nextTask) {
         requestAnimationFrame(() => executeNextTask())
-      })
+        return
+      }
+
+      try {
+        const result = nextTask()
+
+        // Use Promise.resolve() which works with both regular values and promises
+        Promise.resolve(result)
+          .catch((error) => {
+            console.error('Task execution failed:', error)
+          })
+          .finally(() => {
+            requestAnimationFrame(() => executeNextTask())
+          })
+      } catch (error) {
+        console.error('Task execution failed:', error)
+        // Continue with next task even if this one failed
+        requestAnimationFrame(() => executeNextTask())
+      }
     }
 
     executeNextTask()
   }
+
+  clearTasks(): void {
+    this.taskQueue = []
+  }
+
+  get pendingTasksCount(): number {
+    return this.taskQueue.length
+  }
 }
 
 const scheduler = new FIFOTaskScheduler()
-export function requestIdleCb(callback: () => void) {
-  // performance improvement experiment;
+
+export function requestIdleCb(callback: Task): void {
   scheduler.addTask(callback)
-  /**
-   * This is a brief polyfill that suits our needs
-   * I took inspiration from Microsoft Clarity polyfill on this one
-   * then adapted it a little bit
-   *
-   * I'm very grateful for their bright idea
-   * */
-  // const taskTimeout = 3000
-  // if (window.requestIdleCallback) {
-  //   return window.requestIdleCallback(callback, { timeout: taskTimeout })
-  // } else {
-  //   const channel = new MessageChannel()
-  //   const incoming = channel.port1
-  //   const outgoing = channel.port2
-  //
-  //   incoming.onmessage = (): void => {
-  //     callback()
-  //   }
-  //   requestAnimationFrame((): void => {
-  //     outgoing.postMessage(1)
-  //   })
-  // }
 }
 
 export function simpleMerge<T>(defaultObj: T, givenObj: Partial<T>): T {
