@@ -31,6 +31,7 @@ def get_note(tenant_id, project_id, user_id, note_id, share=None):
         row = helper.dict_to_camel_case(row)
         if row:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+            row["updatedAt"] = TimeUTC.datetime_to_timestamp(row["updatedAt"])
     return row
 
 
@@ -57,42 +58,74 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
 
 def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
     with pg_client.PostgresClient() as cur:
-        conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL"]
-        extra_params = {}
-        if data.tags and len(data.tags) > 0:
-            k = "tag_value"
+        # base conditions
+        conditions = [
+            "sessions_notes.project_id = %(project_id)s",
+            "sessions_notes.deleted_at IS NULL"
+        ]
+        params = {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id}
+
+        # tag conditions
+        if data.tags:
+            tag_key = "tag_value"
             conditions.append(
-                sh.multi_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
-            extra_params = sh.multi_values(data.tags, value_key=k)
+                sh.multi_conditions(f"%({tag_key})s = sessions_notes.tag", data.tags, value_key=tag_key)
+            )
+            params.update(sh.multi_values(data.tags, value_key=tag_key))
+
+        # filter by ownership or shared status
         if data.shared_only:
-            conditions.append("sessions_notes.is_public AND users.tenant_id = %(tenant_id)s")
+            conditions.append("sessions_notes.is_public")
         elif data.mine_only:
             conditions.append("sessions_notes.user_id = %(user_id)s")
         else:
-            conditions.append(
-                "(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public AND users.tenant_id = %(tenant_id)s)")
-        query = cur.mogrify(f"""SELECT COUNT(1) OVER () AS full_count, sessions_notes.*, users.name AS user_name
-                                FROM sessions_notes INNER JOIN users USING (user_id)
-                                WHERE {" AND ".join(conditions)}
-                                ORDER BY created_at {data.order}
-                                LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
-                            {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id, **extra_params})
+            conditions.append("(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public)")
+
+        # search condition
+        if data.search:
+            conditions.append("sessions_notes.message ILIKE %(search)s")
+            params["search"] = f"%{data.search}%"
+
+        query = f"""
+            SELECT 
+                COUNT(1) OVER () AS full_count, 
+                sessions_notes.*, 
+                users.name AS user_name
+            FROM 
+                sessions_notes 
+            INNER JOIN 
+                users USING (user_id)
+            WHERE 
+                {" AND ".join(conditions)}
+            ORDER BY 
+                created_at {data.order}
+            LIMIT 
+                %(limit)s OFFSET %(offset)s;
+        """
+        params.update({
+            "limit": data.limit,
+            "offset": data.limit * (data.page - 1)
+        })
+
+        query = cur.mogrify(query, params)
         logger.debug(query)
-        cur.execute(query=query)
+        cur.execute(query)
         rows = cur.fetchall()
+
         result = {"count": 0, "notes": helper.list_to_camel_case(rows)}
-        if len(rows) > 0:
+        if rows:
             result["count"] = rows[0]["fullCount"]
-        for row in rows:
-            row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
-            row.pop("fullCount")
+            for row in rows:
+                row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+                row.pop("fullCount")
+
     return result
 
 
 def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
-                            VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
+        query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public, thumbnail, start_at, end_at)
+                            VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s, %(thumbnail)s, %(start_at)s, %(end_at)s)
                             RETURNING *,(SELECT name FROM users WHERE users.user_id=%(user_id)s AND users.tenant_id=%(tenant_id)s) AS user_name;""",
                             {"user_id": user_id, "project_id": project_id, "session_id": session_id,
                              **data.model_dump(),
@@ -114,6 +147,9 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         sub_query.append("is_public = %(is_public)s")
     if data.timestamp is not None:
         sub_query.append("timestamp = %(timestamp)s")
+
+    sub_query.append("updated_at = timezone('utc'::text, now())")
+
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""UPDATE public.sessions_notes
