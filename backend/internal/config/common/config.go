@@ -88,6 +88,6 @@ type HTTP struct {
 	HTTPTimeout             time.Duration `env:"HTTP_TIMEOUT,default=60s"`
 	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=131072"` // 128KB, 1000 for HTTP service
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
-	JWTSecret               string        `env:"JWT_SECRET,required"`
+	JWTSecret               string        `env:"JWT_SECRET"`
 	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET"`
 }
