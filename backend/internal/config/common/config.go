@@ -89,5 +89,5 @@ type HTTP struct {
 	JsonSizeLimit           int64         `env:"JSON_SIZE_LIMIT,default=131072"` // 128KB, 1000 for HTTP service
 	UseAccessControlHeaders bool          `env:"USE_CORS,default=false"`
 	JWTSecret               string        `env:"JWT_SECRET,required"`
-	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET,required"`
+	JWTSpotSecret           string        `env:"JWT_SPOT_SECRET"`
 }
