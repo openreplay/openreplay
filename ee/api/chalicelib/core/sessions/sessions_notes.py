@@ -61,7 +61,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         # base conditions
         conditions = [
             "sessions_notes.project_id = %(project_id)s",
-            "sessions_notes.deleted_at IS NULL"
+            "sessions_notes.deleted_at IS NULL",
+            "users.tenant_id = %(tenant_id)s"
         ]
         params = {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id}
 
@@ -75,7 +76,7 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
 
         # filter by ownership or shared status
         if data.shared_only:
-            conditions.append("sessions_notes.is_public")
+            conditions.append("sessions_notes.is_public IS TRUE")
         elif data.mine_only:
             conditions.append("sessions_notes.user_id = %(user_id)s")
         else:
