@@ -97,7 +97,7 @@ func (v *ImageStorage) writeToDisk(payload interface{}) {
 	}
 	outFile.Close()
 
-	v.log.Info(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(task.image.Len())/1024.0/1024.0)
+	v.log.Debug(task.ctx, "canvas image saved, name: %s, size: %3.3f mb", task.name, float64(task.image.Len())/1024.0/1024.0)
 	return
 }
 
