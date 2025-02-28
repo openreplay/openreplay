@@ -88,7 +88,7 @@ function InstallDocs({ site }) {
                 <div className="mb-2 text-sm">
                   Otherwise, if your web app is <strong>Server-Side-Rendered (SSR)</strong> (i.e.
                   NextJS, NuxtJS),{' '}
-                  <a className={'text-main'} href={'https://docs.openreplay.com/en/using-or/next/'}>consider async imports</a>
+                  <a className={'text-main'} href={'https://docs.openreplay.com/en/sdk/using-or/next/'}>consider async imports</a>
                   or cjs version of the library:
                 </div>
                 <div className={cn(stl.snippetWrapper)}>

@@ -110,7 +110,7 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <div className="mt-6 text-base font-normal">
                   Body is empty or not captured.
                   {' '}
-                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
                     Configure
                   </a>
                   {' '}
@@ -142,7 +142,7 @@ function FetchTabs({ resource, isSpot }: Props) {
                 <div className="mt-6 text-base font-normal">
                   Body is empty or not captured.
                   {' '}
-                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                  <a href="https://docs.openreplay.com/en/sdk/network-options" className="link" target="_blank">
                     Configure
                   </a>
                   {' '}

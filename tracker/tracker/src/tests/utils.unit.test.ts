@@ -141,7 +141,7 @@ describe('hasOpenreplayAttribute', () => {
     const result = hasOpenreplayAttribute(element, 'htmlmasked')
     expect(result).toBe(true)
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'OpenReplay: "data-openreplay-htmlmasked" attribute is deprecated. Please, use "hidden" attribute instead. Visit https://docs.openreplay.com/installation/sanitize-data for more information.',
+      'OpenReplay: "data-openreplay-htmlmasked" attribute is deprecated. Please, use "hidden" attribute instead. Visit https://docs.openreplay.com/en/sdk/sanitize-data for more information.',
     )
   })
 

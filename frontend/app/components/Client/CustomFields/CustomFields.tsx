@@ -68,7 +68,7 @@ const CustomFields = () => {
       <div className="text-base text-disabled-text flex px-5 items-center my-3">
         <Icon name="info-circle-fill" className="mr-2" size={16} />
         See additional user information in sessions.
-        <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">
+        <a href="https://docs.openreplay.com/en/session-replay/metadata" className="link ml-1" target="_blank">
           Learn more
         </a>
       </div>

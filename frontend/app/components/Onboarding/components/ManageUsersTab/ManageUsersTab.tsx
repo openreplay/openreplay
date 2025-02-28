@@ -19,7 +19,7 @@ function ManageUsersTab(props: Props) {
         </div>
 
         <a
-          href="https://docs.openreplay.com/en/tutorials/adding-users/"
+          href="https://docs.openreplay.com/en/deployment/invite-team-members/"
           target="_blank"
         >
           <AntButton size={'small'} type={'text'} className="ml-2 flex items-center gap-2">

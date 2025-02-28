@@ -49,7 +49,7 @@ const AssistDoc = () => {
 
                 <div className="py-5">{renderActiveTab()}</div>
 
-                <DocLink className="mt-4" label="Install Assist" url="https://docs.openreplay.com/installation/assist" />
+                <DocLink className="mt-4" label="Install Assist" url="https://docs.openreplay.com/plugins/assist" />
             </div>
         </div>
     );
