@@ -1652,14 +1652,14 @@ export default class App {
         try {
           const messagesBatch = buffer.splice(0, endIndex)
 
-          // Cast out the proxy object to a regular array.
+          // Cast out potential proxy objects (produced from vue.js deep reactivity, for example) to a regular array.
           this.postToWorker(messagesBatch.map((x) => [...x]))
 
           res(null)
-      } catch (e) {
+        } catch (e) {
           this._debug('flushBuffer', e)
-          reject(e)
-      }
+          reject(new Error('flushBuffer failed'))
+        }
       })
     })
   }

@@ -2,6 +2,7 @@
 
 - drop computing ts digits
 - drop logLevel for "! node is already observed" message (not critical)
+- prevent crashes on buffer upload if msg value is wrapped in proxy via other frameworks
 
 ## 16.0.0
 
