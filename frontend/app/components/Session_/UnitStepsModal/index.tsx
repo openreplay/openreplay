@@ -1,10 +1,10 @@
 import React from 'react';
 import { TYPES } from 'App/types/session/event';
 import { CodeBlock, Icon } from 'UI';
-import { Select, Radio } from 'antd';
+import { Select, Radio, Checkbox } from 'antd';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { PlayerContext } from '../../Session/playerContext';
+import { PlayerContext } from 'Components/Session/playerContext';
 import { X } from 'lucide-react';
 import { puppeteerEvents, cypressEvents, playWrightEvents } from './utils';
 
@@ -14,12 +14,32 @@ interface Props {
 
 function UnitStepsModal({ onClose }: Props) {
   const { sessionStore, uiPlayerStore } = useStore();
-  const { store } = React.useContext(PlayerContext);
+  const { store, player } = React.useContext(PlayerContext);
   const [eventStr, setEventStr] = React.useState('');
   const [mode, setMode] = React.useState('events');
   const [activeFramework, setActiveFramework] = React.useState('cypress');
-  const events = sessionStore.current.events;
+  const events = React.useMemo(() => {
+    if (!uiPlayerStore.exportEventsSelection.enabled) {
+      return sessionStore.current.events;
+    } else {
+      return sessionStore.current.events.filter((ev) => {
+        return ev.time >= uiPlayerStore.exportEventsSelection.startTs && ev.time <= uiPlayerStore.exportEventsSelection.endTs;
+      });
+    }
+  }, [
+    sessionStore.current.events,
+    uiPlayerStore.exportEventsSelection.enabled,
+    uiPlayerStore.exportEventsSelection.startTs,
+    uiPlayerStore.exportEventsSelection.endTs
+  ])
   const { tabNames, currentTab } = store.get();
+
+  React.useEffect(() => {
+    player.pause();
+    return () => {
+      uiPlayerStore.toggleExportEventsSelection({ enabled: false });
+    }
+  }, [])
 
   React.useEffect(() => {
     const userEventTypes = [TYPES.LOCATION, TYPES.CLICK, TYPES.INPUT];
@@ -55,6 +75,25 @@ function UnitStepsModal({ onClose }: Props) {
     }
     setEventStr(finalScript);
   }, [events, activeFramework, mode]);
+
+  const enableZoom = () => {
+    const time = store.get().time;
+    const endTime = store.get().endTime;
+    const distance = Math.max(endTime / 40, 2500);
+
+    uiPlayerStore.toggleExportEventsSelection({
+      enabled: true,
+      range: [Math.max(time - distance, 0), Math.min(time + distance, endTime)],
+    })
+  }
+
+  const toggleZoom = (enabled?: boolean) => {
+    if (enabled) {
+      enableZoom();
+    } else {
+      uiPlayerStore.toggleExportEventsSelection({ enabled: false });
+    }
+  }
 
   return (
     <div
@@ -109,9 +148,12 @@ function UnitStepsModal({ onClose }: Props) {
         <Radio value={'events'}>Events Only</Radio>
         <Radio value={'test'}>Complete Test</Radio>
       </Radio.Group>
+      <Checkbox value={uiPlayerStore.exportEventsSelection.enabled} onChange={(e) => toggleZoom(e.target.checked)}>
+        Select events on timeline
+      </Checkbox>
       <div className={'w-full'}>
         <CodeBlock
-          width={241}
+          width={340}
           height={'calc(100vh - 146px)'}
           extra={`${events.length} Events`}
           copy

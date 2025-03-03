@@ -42,7 +42,7 @@ function RightBlock({
       )
     case 'EXPORT':
       return (
-        <div className={cn('bg-white border-l', stl.panel)}>
+        <div className={cn('bg-white border-l', stl.extraPanel)}>
           <UnitStepsModal onClose={() => setActiveTab('EVENTS')} />
         </div>
       )
