@@ -39,26 +39,10 @@ const EChartsSankey: React.FC<Props> = (props) => {
   const { data, height = 240, onChartClick, isUngrouped } = props;
   const chartRef = React.useRef<HTMLDivElement>(null);
 
-  if (data.nodes.length === 0 || data.links.length === 0) {
-    return (
-      <NoContent
-        style={{ minHeight: height }}
-        title={
-          <div className="flex items-center relative">
-            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
-            Set a start or end point to visualize the journey. If set, try
-            adjusting filters.
-          </div>
-        }
-        show={true}
-      />
-    );
-  }
-
   const [finalNodeCount, setFinalNodeCount] = React.useState(data.nodes.length);
 
   React.useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || data.nodes.length === 0 || data.links.length === 0) return;
 
     let finalNodes = data.nodes;
     let finalLinks = data.links;
@@ -440,6 +424,21 @@ const EChartsSankey: React.FC<Props> = (props) => {
     };
   }, [data, height, onChartClick]);
 
+  if (data.nodes.length === 0 || data.links.length === 0) {
+    return (
+      <NoContent
+        style={{ minHeight: height }}
+        title={
+          <div className="flex items-center relative">
+            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
+            Set a start or end point to visualize the journey. If set, try
+            adjusting filters.
+          </div>
+        }
+        show={true}
+      />
+    );
+  }
   let containerStyle: React.CSSProperties;
   if (isUngrouped) {
     const dynamicMinHeight = finalNodeCount * 15;

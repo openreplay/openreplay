@@ -207,7 +207,7 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           <span className="font-medium">Journeys With </span>
           <div className="flex gap-2 items-center">
             <Select
-              className="w-36 rounded-lg !h-[26px]"
+              className="w-36 rounded-lg"
               name="startType"
               options={[
                 { value: 'start', label: 'Start Point' },
@@ -216,21 +216,19 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
               defaultValue={metric.startType || 'start'}
               onChange={onPointChange}
               placeholder="Select Start Type"
-              size="small"
             />
 
             <span className="">showing</span>
 
             <Select
               mode="multiple"
-              className="rounded-lg h-[26px] w-max	min-w-44 max-w-58"
+              className="rounded-lg w-max	min-w-44 max-w-58"
               allowClear
               name="metricValue"
               options={metricValueOptions}
               value={metric.metricValue || []}
               onChange={(value) => writeOption({ name: 'metricValue', value })}
               placeholder="Select Metrics"
-              size="small"
               maxTagCount={'responsive'}
               showSearch={false}
             />
