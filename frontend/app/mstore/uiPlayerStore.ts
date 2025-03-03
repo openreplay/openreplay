@@ -70,6 +70,11 @@ export default class UiPlayerStore {
     startTs: 0,
     endTs: 0,
   }
+  exportEventsSelection = {
+    enabled: false,
+    startTs: 0,
+    endTs: 0,
+  }
   zoomTab: 'overview' | 'journey' | 'issues' | 'errors' = 'overview'
   dataSource: 'all' | 'current' = 'all'
 
@@ -122,6 +127,12 @@ export default class UiPlayerStore {
     this.highlightSelection.enabled = payload.enabled;
     this.highlightSelection.startTs = payload.range?.[0] ?? 0;
     this.highlightSelection.endTs = payload.range?.[1] ?? 0;
+  }
+
+  toggleExportEventsSelection = (payload: ToggleZoomPayload) => {
+    this.exportEventsSelection.enabled = payload.enabled;
+    this.exportEventsSelection.startTs = payload.range?.[0] ?? 0;
+    this.exportEventsSelection.endTs = payload.range?.[1] ?? 0;
   }
 
   setZoomTab = (tab: 'overview' | 'journey' | 'issues' | 'errors') => {
