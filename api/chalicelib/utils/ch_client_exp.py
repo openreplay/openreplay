@@ -108,14 +108,14 @@ def make_pool():
         try:
             CH_pool.close_all()
         except Exception as error:
-            logger.error("Error while closing all connexions to CH", error)
+            logger.error("Error while closing all connexions to CH", exc_info=error)
     try:
         CH_pool = ClickHouseConnectionPool(min_size=config("CH_MINCONN", cast=int, default=4),
                                            max_size=config("CH_MAXCONN", cast=int, default=8))
         if CH_pool is not None:
             logger.info("Connection pool created successfully for CH")
     except ConnectionError as error:
-        logger.error("Error while connecting to CH", error)
+        logger.error("Error while connecting to CH", exc_info=error)
         if RETRY < RETRY_MAX:
             RETRY += 1
             logger.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
@@ -174,4 +174,4 @@ async def terminate():
             CH_pool.close_all()
             logger.info("Closed all connexions to CH")
         except Exception as error:
-            logger.error("Error while closing all connexions to CH", error)
+            logger.error("Error while closing all connexions to CH", exc_info=error)

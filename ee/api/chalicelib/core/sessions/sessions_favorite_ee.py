@@ -2,13 +2,14 @@ import logging
 
 from decouple import config
 
-from chalicelib.utils import ch_client, exp_ch_helper
-
-logger = logging.getLogger(__name__)
+import schemas
 from chalicelib.core.sessions import sessions_mobs, sessions_devtool
-from chalicelib.core.sessions.sessions_favorite import *
+from chalicelib.core.sessions.sessions_favorite import add_favorite_session, remove_favorite_session, \
+    favorite_session_exists
+from chalicelib.utils import ch_client, exp_ch_helper
 from chalicelib.utils.storage import extra
 
+logger = logging.getLogger(__name__)
 _add_favorite_session = add_favorite_session
 _remove_favorite_session = remove_favorite_session
 
