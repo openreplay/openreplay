@@ -21,7 +21,6 @@ import { Bookmark as BookmarkIcn, BookmarkCheck, Vault } from 'lucide-react';
 import { useModal } from 'Components/ModalContext';
 import IssueForm from 'Components/Session_/Issues/IssueForm';
 import ShareModal from '../shared/SharePopup/SharePopup';
-import UnitStepsModal from "./UnitStepsModal";
 
 const disableDevtools = 'or_devtools_uxt_toggle';
 
@@ -117,13 +116,6 @@ function SubHeader(props) {
     });
   };
 
-  const exportEvents = () => {
-    const allEvents = sessionStore.current.events;
-    const width = store.get().width;
-    const height = store.get().height;
-    openModal(<UnitStepsModal width={width} height={height} events={allEvents} />, { title: 'Export Events', width: 640 });
-  }
-
   return (
     <>
       <div
@@ -196,14 +188,6 @@ function SubHeader(props) {
                     </div>,
                     onClick: showKbHelp
                   },
-                  {
-                    key: '5',
-                    label: <div className={'flex items-center gap-2'}>
-                      <Bot size={16} strokeWidth={1} />
-                      <span>Export Events</span>
-                    </div>,
-                    onClick: exportEvents,
-                  }
                 ]
               }}
             >

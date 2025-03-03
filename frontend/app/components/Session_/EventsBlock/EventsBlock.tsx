@@ -4,20 +4,29 @@ import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { VList, VListHandle } from 'virtua';
-
+import { Button } from 'antd'
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
-
+import { Search } from 'lucide-react'
 import EventGroupWrapper from './EventGroupWrapper';
 import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
+import { CloseOutlined } from ".store/@ant-design-icons-virtual-42686020c5/package";
+import { Tooltip } from ".store/antd-virtual-9dbfadb7f6/package";
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
 }
 
+const MODES = {
+  SELECT: 'select',
+  SEARCH: 'search',
+  EXPORT: 'export',
+}
+
 function EventsBlock(props: IProps) {
+  const [mode, setMode] = React.useState(MODES.SELECT);
   const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const notesWithEvents = session.notesWithEvents;
@@ -197,7 +206,12 @@ function EventsBlock(props: IProps) {
 
   return (
     <>
-      <div className={cn(styles.header, 'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]'  )}>
+      <div
+        className={cn(
+          styles.header,
+          'py-4 px-2 bg-gradient-to-t from-transparent to-neutral-50 h-[57px]'
+        )}
+      >
         {uxtestingStore.isUxt() ? (
           <div style={{ width: 240, height: 130 }} className={'relative'}>
             <video
@@ -220,14 +234,47 @@ function EventsBlock(props: IProps) {
             </div>
           </div>
         ) : null}
-        <div className={cn(styles.hAndProgress, 'mt-0')}>
-          <EventSearch
-            onChange={write}
-            setActiveTab={setActiveTab}
-            value={query}
-            eventsText={usedEvents.length ? `${usedEvents.length} Events` : '0 Events'}
-          />
-        </div>
+        {mode === MODES.SELECT ? (
+          <div className={'flex items-center gap-2'}>
+            <Button
+              onClick={() => setActiveTab('EXPORT')}
+              type={'default'}
+              shape={'circle'}
+            >
+              <Icon name={'cypress'} size={18} />
+            </Button>
+            <Button
+              className={'flex items-center gap-2'}
+              onClick={() => setMode(MODES.SEARCH)}
+            >
+              <Search size={14} />
+              <div>Search {usedEvents.length} events</div>
+            </Button>
+            <Tooltip title="Close Panel" placement='bottom' >
+              <Button
+                className="ml-auto"
+                type='text'
+                onClick={() => {
+                  setActiveTab('');
+                }}
+                icon={<CloseOutlined />}
+              />
+            </Tooltip>
+          </div>
+        ) : null}
+        {mode === MODES.SEARCH ?
+          <div className={'flex items-center gap-2'}>
+            <EventSearch
+              onChange={write}
+              setActiveTab={setActiveTab}
+              value={query}
+              eventsText={
+                usedEvents.length ? `${usedEvents.length} Events` : '0 Events'
+              }
+            />
+            <Button type={'text'} onClick={() => setMode(MODES.SELECT)}>Cancel</Button>
+          </div>
+        : null}
       </div>
       <div
         className={cn('flex-1 pb-4', styles.eventsList)}
@@ -248,9 +295,8 @@ function EventsBlock(props: IProps) {
           ref={scroller}
         >
           {usedEvents.map((_, i) => {
-              return renderGroup({ index: i })
-            }
-          )}
+            return renderGroup({ index: i });
+          })}
         </VList>
       </div>
     </>
