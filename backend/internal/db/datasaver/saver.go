@@ -72,14 +72,14 @@ func (s *saverImpl) Handle(msg Message) {
 	if IsMobileType(msg.TypeID()) {
 		if err := s.handleMobileMessage(sessCtx, session, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
-				s.log.Error(sessCtx, "mobile message insertion error, msg: %+v, err: %s", msg, err)
+				s.log.Error(sessCtx, "mobile message insertion error, msg: %+v, err: %.200s", msg, err)
 			}
 			return
 		}
 	} else {
 		if err := s.handleWebMessage(sessCtx, session, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
-				s.log.Error(sessCtx, "web message insertion error, msg: %+v, err: %s", msg, err)
+				s.log.Error(sessCtx, "web message insertion error, msg: %+v, err: %.200s", msg, err)
 			}
 			return
 		}
