@@ -14,6 +14,7 @@ import EventSearch from './EventSearch/EventSearch';
 import styles from './eventsBlock.module.css';
 import { CloseOutlined } from ".store/@ant-design-icons-virtual-42686020c5/package";
 import { Tooltip } from ".store/antd-virtual-9dbfadb7f6/package";
+import { getDefaultFramework, frameworkIcons } from "../UnitStepsModal";
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
@@ -26,6 +27,7 @@ const MODES = {
 }
 
 function EventsBlock(props: IProps) {
+  const defaultFramework = getDefaultFramework();
   const [mode, setMode] = React.useState(MODES.SELECT);
   const { notesStore, uxtestingStore, uiPlayerStore, sessionStore } = useStore();
   const session = sessionStore.current;
@@ -241,7 +243,7 @@ function EventsBlock(props: IProps) {
               type={'default'}
               shape={'circle'}
             >
-              <Icon name={'cypress'} size={18} />
+              <Icon name={frameworkIcons[defaultFramework]} size={18} />
             </Button>
             <Button
               className={'flex items-center gap-2'}
