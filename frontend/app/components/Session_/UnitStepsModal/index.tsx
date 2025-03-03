@@ -195,7 +195,7 @@ function UnitStepsModal({ onClose }: Props) {
         value={uiPlayerStore.exportEventsSelection.enabled}
         onChange={(e) => toggleZoom(e.target.checked)}
       >
-        Select events on timeline
+        Select events on the timeline
       </Checkbox>
       <div className={'w-full'}>
         <CodeBlock
