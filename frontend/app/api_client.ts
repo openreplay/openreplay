@@ -82,15 +82,15 @@ export default class APIClient {
   }
 
   setSiteIdCheck(checker: () => { siteId: string | null }): void {
-    this.siteIdCheck = checker
+    this.siteIdCheck = checker;
   }
 
   private getInit(method: string = 'GET', params?: any, reqHeaders?: Record<string, any>): RequestInit {
     // Always fetch the latest JWT from the store
-    const jwt = this.getJwt()
+    const jwt = this.getJwt();
     const headers = new Headers({
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     });
 
     if (reqHeaders) {
@@ -107,7 +107,7 @@ export default class APIClient {
     const init: RequestInit = {
       method,
       headers,
-      body: params ? JSON.stringify(params) : undefined,
+      body: params ? JSON.stringify(params) : undefined
     };
 
     if (method === 'GET') {
@@ -167,10 +167,22 @@ export default class APIClient {
       delete init.body;
     }
 
-    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login')
+    if ((
+      path.includes('login')
+      || path.includes('refresh')
+      || path.includes('logout')
+      || path.includes('reset')
+    ) && window.env.NODE_ENV !== 'development'
+    ) {
+      init.credentials = 'include';
+    } else {
+      delete init.credentials;
+    }
+
+    const noChalice = path.includes('v1/integrations') || path.includes('/spot') && !path.includes('/login');
     let edp = window.env.API_EDP || window.location.origin + '/api';
     if (noChalice && !edp.includes('api.openreplay.com')) {
-      edp = edp.replace('/api', '')
+      edp = edp.replace('/api', '');
     }
     if (
       path !== '/targets_temp' &&
@@ -197,7 +209,8 @@ export default class APIClient {
     try {
       const errorData = await response.json();
       errorMsg = errorData.errors?.[0] || errorMsg;
-    } catch {}
+    } catch {
+    }
     throw new Error(errorMsg);
   }
 
@@ -249,5 +262,5 @@ export default class APIClient {
 
   forceSiteId = (siteId: string) => {
     this.siteId = siteId;
-  }
+  };
 }
