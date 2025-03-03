@@ -17,8 +17,8 @@ export class StringDictionary {
     let isNew = false
     if (!this.backDict[str]) {
       isNew = true
-      const digits = Math.floor(Math.log10(Date.now())) + 1
-      const shavedTs = Date.now() % (10 ** (digits - 2))
+      // shaving the first 2 digits of the timestamp (since they are irrelevant for next millennia)
+      const shavedTs = Date.now() % 10 ** (13 - 2)
       let id: number = shavedTs
       if (id === this.lastTs) {
         id = id * 10000 + this.lastSuffix

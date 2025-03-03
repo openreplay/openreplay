@@ -1,3 +1,8 @@
+## 16.0.1
+
+- drop computing ts digits
+- drop logLevel for "! node is already observed" message (not critical)
+
 ## 16.0.0
 
 - **[breaking]** new string dictionary message format
