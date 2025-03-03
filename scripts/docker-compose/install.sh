@@ -115,7 +115,7 @@ case $yn in
 		exit 1;;
 esac
 
-sudo -E docker-compose --parallel 1 pull
+sudo -E docker-compose pull
 sudo -E docker-compose --profile migration up --force-recreate --build -d
 cp common.env common.env.bak
 echo "🎉🎉🎉  Done! 🎉🎉🎉"
