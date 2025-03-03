@@ -117,6 +117,10 @@ func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) e
 
 	// Build the list of canvas images sets
 	for _, file := range files {
+		// Skip already created archives
+		if strings.HasSuffix(file.Name(), ".tar.zst") {
+			continue
+		}
 		name := strings.Split(file.Name(), ".")
 		parts := strings.Split(name[0], "_")
 		if len(name) != 2 || len(parts) != 3 {
@@ -131,7 +135,7 @@ func (v *ImageStorage) PackSessionCanvases(ctx context.Context, sessID uint64) e
 	for name := range names {
 		// Save to archives
 		archPath := fmt.Sprintf("%s%s.tar.zst", path, name)
-		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' | tar -cf - --files-from=- | zstd -o %s",
+		fullCmd := fmt.Sprintf("find %s -type f -name '%s*' ! -name '*.tar.zst' | tar -cf - --files-from=- | zstd -f -o %s",
 			path, name, archPath)
 		cmd := exec.Command("sh", "-c", fullCmd)
 		var stdout, stderr bytes.Buffer
