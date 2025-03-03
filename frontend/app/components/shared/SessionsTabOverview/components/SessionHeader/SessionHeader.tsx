@@ -20,7 +20,7 @@ function SessionHeader() {
   };
 
   return (
-    <div className="flex items-center px-4 py-1 justify-between w-full">
+    <div className="flex items-center px-4 py-3 justify-between w-full">
       <div className="flex items-center w-full justify-end">
         <SessionTags />
         <div className="mr-auto" />
