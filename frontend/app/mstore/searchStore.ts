@@ -237,6 +237,29 @@ class SearchStore {
     void this.fetchSessions(true);
   }
 
+  checkForLatestSessionCount() {
+    const filter = this.instance.toSearch();
+    if (this.latestRequestTime) {
+      const period = Period({
+        rangeName: CUSTOM_RANGE,
+        start: this.latestRequestTime,
+        end: Date.now(),
+      });
+      const newTimestamps: any = period.toJSON();
+      filter.startDate = newTimestamps.startDate;
+      filter.endDate = newTimestamps.endDate;
+    }
+    // TODO - dedicated API endpoint to get the count of latest sessions, or show X+ sessions
+    delete filter.limit;
+    delete filter.page;
+    searchService.checkLatestSessions(filter).then((response: any) => {
+      console.log('response', response);
+      // runInAction(() => {
+      //   this.latestList = List(response);
+      // });
+    });
+  }
+
   checkForLatestSessions() {
     const filter = this.instance.toSearch();
     if (this.latestRequestTime) {
@@ -395,7 +418,7 @@ class SearchStore {
       }
     }
 
-    this.latestRequestTime = Date.now();
+    this.latestRequestTime = filter.startDate;
     this.latestList = List();
     this.searchInProgress = true;
     await sessionStore.fetchSessions(
