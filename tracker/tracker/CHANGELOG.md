@@ -8,6 +8,14 @@
 
 - **[breaking]** new string dictionary message format
 
+## 15.0.7
+
+- fix for svg sprite handling
+
+## 15.0.6
+
+- fix for batch sending to prevent proxy wrappers
+
 ## 15.0.5
 
 - update medv/finder to 4.0.2 for better support of css-in-js libs

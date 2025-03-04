@@ -23,6 +23,7 @@ import {
 } from '../guards.js'
 
 const iconCache = {}
+const svgUrlCache = {}
 const domParser = new DOMParser()
 
 async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' | 'svgtext') {
@@ -43,15 +44,42 @@ async function parseUseEl(useElement: SVGUseElement, mode: 'inline' | 'dataurl' 
       return iconCache[symbolId]
     }
 
-    const response = await fetch(url)
-    const svgText = await response.text()
+    let svgDoc: Document
+    if (svgUrlCache[url]) {
+      if (svgUrlCache[url] === 1) {
+        await new Promise((resolve) => {
+          let tries = 0
+          const interval = setInterval(() => {
+            if (tries > 100) {
+              clearInterval(interval)
+              resolve(false)
+            }
+            if (svgUrlCache[url] !== 1) {
+              svgDoc = svgUrlCache[url]
+              clearInterval(interval)
+              resolve(true)
+            } else {
+              tries++
+            }
+          }, 100)
+        })
+      } else {
+        svgDoc = svgUrlCache[url] ?? `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
+      }
+    } else {
+      svgUrlCache[url] = 1
+      const response = await fetch(url)
+      const svgText = await response.text()
+      svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+      svgUrlCache[url] = svgDoc
+    }
 
-    const svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+    // @ts-ignore
     const symbol = svgDoc.getElementById(symbolId)
 
     if (!symbol) {
       console.debug('Openreplay: Symbol not found in SVG.')
-      return
+      return ''
     }
 
     if (mode === 'inline') {
@@ -136,10 +164,13 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
+  private readonly disableSprites: boolean = false
   constructor(
     protected readonly app: App,
     protected readonly isTopContext = false,
+    options: { disableSprites: boolean } = { disableSprites: false },
   ) {
+    this.disableSprites = options.disableSprites
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
@@ -249,7 +280,7 @@ export default abstract class Observer {
         this.app.send(RemoveNodeAttribute(id, name))
       }
 
-      if (isUseElement(node) && name === 'href') {
+      if (isUseElement(node) && name === 'href' && !this.disableSprites) {
         parseUseEl(node, 'svgtext')
           .then((svgData) => {
             if (svgData) {
