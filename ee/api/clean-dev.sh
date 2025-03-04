@@ -10,7 +10,10 @@ rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
 rm -rf ./chalicelib/core/autocomplete/autocomplete.py
-rm -rf ./chalicelib/core/collaborations
+rm -rf ./chalicelib/core/collaborations/__init__.py
+rm -rf ./chalicelib/core/collaborations/collaboration_base.py
+rm -rf ./chalicelib/core/collaborations/collaboration_msteams.py
+rm -rf ./chalicelib/core/collaborations/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/metrics/custom_metrics.py
 rm -rf ./chalicelib/core/metrics/funnels.py
