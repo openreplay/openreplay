@@ -1,11 +1,14 @@
 import React from 'react';
 
-function Copyright() {
-    return (
-        <div className="fixed bottom-0 m-auto text-center mb-6 color-gray-medium">
-          © 2025 OpenReplay. All rights reserved. <a className="underline" href="https://openreplay.com/privacy.html" target="_blank">Privacy</a> and <a className="underline" href="https://openreplay.com/terms.html" target="_blank">Terms</a>.
-        </div>
-    );
-}
+const Copyright = React.memo(() => {
+  const currentYear = new Date().getFullYear();
+  return (
+    <footer className="fixed bottom-0 m-auto text-center mb-6 text-gray-500">
+      © {currentYear} OpenReplay. All rights reserved.{' '}
+      <a className="underline hover:text-gray-700" href="https://openreplay.com/privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a> and{' '}
+      <a className="underline hover:text-gray-700" href="https://openreplay.com/terms.html" target="_blank" rel="noopener noreferrer">Terms</a>.
+    </footer>
+  );
+});
 
 export default Copyright;
