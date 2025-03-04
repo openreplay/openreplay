@@ -5,11 +5,11 @@ import {
   filtersMap,
   generateFilterOptions,
   liveFiltersMap,
-  mobileConditionalFiltersMap,
+  mobileConditionalFiltersMap
 } from 'Types/filter/newFilter';
 import { List } from 'immutable';
 import { makeAutoObservable, runInAction } from 'mobx';
-import { searchService } from 'App/services';
+import { searchService, sessionService } from 'App/services';
 import Search from 'App/mstore/types/search';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem from 'App/mstore/types/filterItem';
@@ -28,18 +28,18 @@ export const checkValues = (key: any, value: any) => {
 };
 
 export const filterMap = ({
-  category,
-  value,
-  key,
-  operator,
-  sourceOperator,
-  source,
-  custom,
-  isEvent,
-  filters,
-  sort,
-  order,
-}: any) => ({
+                            category,
+                            value,
+                            key,
+                            operator,
+                            sourceOperator,
+                            source,
+                            custom,
+                            isEvent,
+                            filters,
+                            sort,
+                            order
+                          }: any) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -47,7 +47,7 @@ export const filterMap = ({
   source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
   sourceOperator,
   isEvent,
-  filters: filters ? filters.map(filterMap) : [],
+  filters: filters ? filters.map(filterMap) : []
 });
 
 export const TAB_MAP: any = {
@@ -55,7 +55,7 @@ export const TAB_MAP: any = {
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
   notes: { name: 'Notes', type: 'notes' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' },
+  recommendations: { name: 'Recommendations', type: 'recommendations' }
 };
 
 class SearchStore {
@@ -72,6 +72,7 @@ class SearchStore {
   scrollY = 0;
   sessions = List();
   total: number = 0;
+  latestSessionCount: number = 0;
   loadingFilterSearch = false;
   isSaving: boolean = false;
   activeTags: any[] = [];
@@ -111,9 +112,9 @@ class SearchStore {
     this.edit({
       filters: savedSearch.filter
         ? savedSearch.filter.filters.map((i: FilterItem) =>
-            new FilterItem().fromJson(i)
-          )
-        : [],
+          new FilterItem().fromJson(i)
+        )
+        : []
     });
     this.currentPage = 1;
   }
@@ -179,6 +180,10 @@ class SearchStore {
     void this.fetchSessions(force);
   }
 
+  updateLatestSessionCount(count: number = 0) {
+    this.latestSessionCount = count;
+  }
+
   setActiveTab(tab: string) {
     runInAction(() => {
       this.activeTab = TAB_MAP[tab];
@@ -228,7 +233,7 @@ class SearchStore {
         rangeValue: instance.rangeValue,
         startDate: instance.startDate,
         endDate: instance.endDate,
-        filters: [],
+        filters: []
       })
     );
 
@@ -237,78 +242,67 @@ class SearchStore {
     void this.fetchSessions(true);
   }
 
-  checkForLatestSessionCount() {
-    const filter = this.instance.toSearch();
-    if (this.latestRequestTime) {
-      const period = Period({
-        rangeName: CUSTOM_RANGE,
-        start: this.latestRequestTime,
-        end: Date.now(),
-      });
-      const newTimestamps: any = period.toJSON();
-      filter.startDate = newTimestamps.startDate;
-      filter.endDate = newTimestamps.endDate;
-    }
-    // TODO - dedicated API endpoint to get the count of latest sessions, or show X+ sessions
-    delete filter.limit;
-    delete filter.page;
-    searchService.checkLatestSessions(filter).then((response: any) => {
-      console.log('response', response);
-      // runInAction(() => {
-      //   this.latestList = List(response);
-      // });
-    });
-  }
+  async checkForLatestSessionCount(): Promise<void> {
+    try {
+      const filter = this.instance.toSearch();
 
-  checkForLatestSessions() {
-    const filter = this.instance.toSearch();
-    if (this.latestRequestTime) {
-      const period = Period({
-        rangeName: CUSTOM_RANGE,
-        start: this.latestRequestTime,
-        end: Date.now(),
-      });
-      const newTimestamps: any = period.toJSON();
-      filter.startDate = newTimestamps.startDate;
-      filter.endDate = newTimestamps.endDate;
-    }
-    // TODO - dedicated API endpoint to get the count of latest sessions, or show X+ sessions
-    delete filter.limit;
-    delete filter.page;
-    searchService.checkLatestSessions(filter).then((response: any) => {
+      // Set time filter if we have the latest request time
+      if (this.latestRequestTime) {
+        const period = Period({
+          rangeName: CUSTOM_RANGE,
+          start: this.latestRequestTime,
+          end: Date.now()
+        });
+        const timeRange: any = period.toJSON();
+        filter.startDate = timeRange.startDate;
+        filter.endDate = timeRange.endDate;
+      }
+
+      // Only need the total count, not actual records
+      filter.limit = 1;
+      filter.page = 1;
+
+      const response = await sessionService.getSessions(filter);
+
       runInAction(() => {
-        this.latestList = List(response);
+        if (response?.total && response.total > sessionStore.total) {
+          this.latestSessionCount = response.total - sessionStore.total;
+        } else {
+          this.latestSessionCount = 0;
+        }
       });
-    });
+    } catch (error) {
+      console.error('Failed to check for latest session count:', error);
+    }
   }
 
   addFilter(filter: any) {
     const index = filter.isEvent
       ? -1
       : this.instance.filters.findIndex(
-          (i: FilterItem) => i.key === filter.key
-        );
+        (i: FilterItem) => i.key === filter.key
+      );
 
     filter.value = checkFilterValue(filter.value);
     filter.filters = filter.filters
       ? filter.filters.map((subFilter: any) => ({
-          ...subFilter,
-          value: checkFilterValue(subFilter.value),
-        }))
+        ...subFilter,
+        value: checkFilterValue(subFilter.value)
+      }))
       : null;
 
     if (index > -1) {
       const oldFilter = new FilterItem(this.instance.filters[index]);
       const updatedFilter = {
         ...oldFilter,
-        value: oldFilter.value.concat(filter.value),
+        value: oldFilter.value.concat(filter.value)
       };
       oldFilter.merge(updatedFilter);
       this.updateFilter(index, updatedFilter);
     } else {
       this.instance.filters.push(filter);
       this.instance = new Search({
-        ...this.instance.toData(),
+        ...this.instance.toData()
       });
     }
 
@@ -346,7 +340,7 @@ class SearchStore {
 
   updateSearch = (search: Partial<Search>) => {
     this.instance = Object.assign(this.instance, search);
-  }
+  };
 
   updateFilter = (index: number, search: Partial<FilterItem>) => {
     const newFilters = this.instance.filters.map((_filter: any, i: any) => {
@@ -359,7 +353,7 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters,
+      filters: newFilters
     });
   };
 
@@ -370,7 +364,7 @@ class SearchStore {
 
     this.instance = new Search({
       ...this.instance.toData(),
-      filters: newFilters,
+      filters: newFilters
     });
   };
 
@@ -393,7 +387,7 @@ class SearchStore {
       const tagFilter = filtersMap[FilterKey.ISSUE];
       tagFilter.type = tagFilter.type.toLowerCase();
       tagFilter.value = [
-        issues_types.find((i: any) => i.type === this.activeTags[0])?.type,
+        issues_types.find((i: any) => i.type === this.activeTags[0])?.type
       ];
       delete tagFilter.operatorOptions;
       delete tagFilter.options;
@@ -413,7 +407,7 @@ class SearchStore {
         filter.filters.push({
           type: FilterKey.DURATION,
           value,
-          operator: 'is',
+          operator: 'is'
         });
       }
     }
@@ -427,7 +421,7 @@ class SearchStore {
         page: this.currentPage,
         perPage: this.pageSize,
         tab: this.activeTab.type,
-        bookmarked: bookmarked ? true : undefined,
+        bookmarked: bookmarked ? true : undefined
       },
       force
     ).finally(() => {

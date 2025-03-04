@@ -57,10 +57,6 @@ function SessionFilters() {
     }
   });
 
-  useEffect(() => {
-    debounceFetch();
-  }, [appliedFilter.filters]);
-
   const onAddFilter = (filter: any) => {
     filter.autoOpen = true;
     searchStore.addFilter(filter);
@@ -72,13 +68,13 @@ function SessionFilters() {
 
   const onFilterMove = (newFilters: any) => {
     searchStore.updateSearch({ ...appliedFilter, filters: newFilters});
-    debounceFetch();
+    // debounceFetch();
   };
 
   const onRemoveFilter = (filterIndex: any) => {
     searchStore.removeFilter(filterIndex);
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
@@ -86,7 +82,7 @@ function SessionFilters() {
       eventsOrder: value,
     });
 
-    debounceFetch();
+    // debounceFetch();
   };
 
   return (

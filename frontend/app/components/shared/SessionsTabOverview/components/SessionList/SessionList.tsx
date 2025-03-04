@@ -47,10 +47,10 @@ function SessionList() {
   const hasNoRecordings = !activeSite || !activeSite.recorded;
   const metaList = customFieldStore.list;
 
-  // useEffect(() => {
-  //   if (!searchStore.urlParsed) return;
-  //   void searchStore.fetchSessions(true, isBookmark);
-  // }, [location.pathname]);
+  useEffect(() => {
+    if (!searchStore.urlParsed) return;
+    void searchStore.checkForLatestSessionCount();
+  }, [location.pathname]);
 
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
@@ -110,7 +110,7 @@ function SessionList() {
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) {
-        searchStore.checkForLatestSessions();
+        void searchStore.checkForLatestSessionCount();
       }
     }, AUTO_REFRESH_INTERVAL);
     return () => clearInterval(id);
@@ -134,7 +134,7 @@ function SessionList() {
 
     sessionTimeOut = setTimeout(function () {
       if (!document.hidden) {
-        searchStore.checkForLatestSessions();
+        void searchStore.checkForLatestSessionCount();
       }
     }, 5000);
   };

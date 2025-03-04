@@ -6,9 +6,10 @@ import { observer } from 'mobx-react-lite';
 
 function LatestSessionsMessage() {
   const { searchStore } = useStore();
-  const count = searchStore.latestList.size;
+  const count = searchStore.latestSessionCount;
 
   const onShowNewSessions = () => {
+    searchStore.updateLatestSessionCount(0);
     void searchStore.updateCurrentPage(1, true);
   };
 
