@@ -317,6 +317,7 @@ function RowRenderer({
   activeIndex,
   onJump,
 }: any) {
+  if (!row) return;
   return (
     <div
       className={cn(
