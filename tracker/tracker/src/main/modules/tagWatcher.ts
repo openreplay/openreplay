@@ -4,14 +4,21 @@ class TagWatcher {
   intervals: Record<string, ReturnType<typeof setInterval>> = {}
   tags: { id: number; selector: string }[] = []
   observer: IntersectionObserver
+  private readonly sessionStorage: Storage
+  private readonly errLog: (args: any[]) => void
+  private readonly onTag: (tag: number) => void
 
-  constructor(
-    private readonly sessionStorage: Storage,
-    private readonly errLog: (args: any[]) => void,
-    private readonly onTag: (tag: number) => void,
-  ) {
+  constructor(params: {
+    sessionStorage: Storage
+    errLog: (args: any[]) => void
+    onTag: (tag: number) => void
+  }) {
+    this.sessionStorage = params.sessionStorage
+    this.errLog = params.errLog
+    this.onTag = params.onTag
+    // @ts-ignore
     const tags: { id: number; selector: string }[] = JSON.parse(
-      sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
+      params.sessionStorage.getItem(WATCHED_TAGS_KEY) ?? '[]',
     )
     this.setTags(tags)
     this.observer = new IntersectionObserver((entries) => {

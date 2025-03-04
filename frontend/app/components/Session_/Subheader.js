@@ -1,36 +1,36 @@
+import { ShareAltOutlined } from '@ant-design/icons';
+import { Button as AntButton, Switch, Tooltip } from 'antd';
+import cn from 'classnames';
+import { Link2 } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { IFRAME } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
+import { checkParam, truncateStringToFit } from 'App/utils';
+import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 import KeyboardHelp from 'Components/Session_/Player/Controls/components/KeyboardHelp';
-import { Icon } from 'UI';
-import {Link2} from 'lucide-react';
-import QueueControls from './QueueControls';
+import WarnBadge from 'Components/Session_/WarnBadge';
+
 import Bookmark from 'Shared/Bookmark';
+
 import SharePopup from '../shared/SharePopup/SharePopup';
 import Issues from './Issues/Issues';
+import QueueControls from './QueueControls';
 import NotePopup from './components/NotePopup';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { connect } from 'react-redux';
-import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
-import { IFRAME } from 'App/constants/storageKeys';
-import cn from 'classnames';
-import { Switch, Button as AntButton, Popover, Tooltip } from 'antd';
-import { ShareAltOutlined } from '@ant-design/icons';
-import { checkParam, truncateStringToFit } from 'App/utils';
 
-const localhostWarn = (project) => project + '_localhost_warn';
 const disableDevtools = 'or_devtools_uxt_toggle';
 
 function SubHeader(props) {
-  const localhostWarnKey = localhostWarn(props.siteId);
-  const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1';
-  const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
+  const { uxtestingStore, integrationsStore, sessionStore, projectsStore } = useStore();
+  const currentSession = sessionStore.current
+  const projectId = projectsStore.siteId;
+  const integrations = integrationsStore.issues.list;
   const { store } = React.useContext(PlayerContext);
   const { location: currentLocation = 'loading...' } = store.get();
   const hasIframe = localStorage.getItem(IFRAME) === 'true';
-  const { uxtestingStore } = useStore();
   const [hideTools, setHideTools] = React.useState(false);
-
   React.useEffect(() => {
     const hideDevtools = checkParam('hideTools');
     if (hideDevtools) {
@@ -39,22 +39,17 @@ function SubHeader(props) {
   }, []);
 
   const enabledIntegration = useMemo(() => {
-    const { integrations } = props;
-    if (!integrations || !integrations.size) {
+    if (!integrations || !integrations.length) {
       return false;
     }
 
     return integrations.some((i) => i.token);
-  }, [props.integrations]);
+  }, [integrations]);
 
-  const locationTruncated = truncateStringToFit(currentLocation, window.innerWidth - 200);
-
-  const showWarning =
-    currentLocation && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(currentLocation) && showWarningModal;
-  const closeWarning = () => {
-    localStorage.setItem(localhostWarnKey, '1');
-    setWarning(false);
-  };
+  const locationTruncated = truncateStringToFit(
+    currentLocation,
+    window.innerWidth - 200
+  );
 
   const toggleDevtools = (enabled) => {
     localStorage.setItem(disableDevtools, enabled ? '0' : '1');
@@ -66,35 +61,18 @@ function SubHeader(props) {
       <div
         className="w-full px-4 flex items-center border-b relative"
         style={{
-          background: uxtestingStore.isUxt() ? (props.live ? '#F6FFED' : '#EBF4F5') : undefined
+          background: uxtestingStore.isUxt()
+            ? props.live
+              ? '#F6FFED'
+              : '#EBF4F5'
+            : undefined,
         }}
       >
-        {showWarning ? (
-          <div
-            className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded bg-active-blue flex items-center justify-between"
-            style={{
-              zIndex: 999,
-              position: 'absolute',
-              left: '50%',
-              bottom: '-24px',
-              transform: 'translate(-50%, 0)',
-              fontWeight: 500
-            }}
-          >
-            Some assets may load incorrectly on localhost.
-            <a
-              href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
-              target="_blank"
-              rel="noreferrer"
-              className="link ml-1"
-            >
-              Learn More
-            </a>
-            <div className="py-1 ml-3 cursor-pointer" onClick={closeWarning}>
-              <Icon name="close" size={16} color="black" />
-            </div>
-          </div>
-        ) : null}
+        <WarnBadge
+          siteId={projectId}
+          currentLocation={currentLocation}
+          version={currentSession?.trackerVersion ?? undefined}
+        />
 
         <SessionTabs />
 
@@ -107,15 +85,18 @@ function SubHeader(props) {
             style={{ width: 'max-content' }}
           >
             <KeyboardHelp />
-            <Bookmark sessionId={props.sessionId} />
+            <Bookmark sessionId={currentSession.sessionId} />
             <NotePopup />
-            {enabledIntegration && <Issues sessionId={props.sessionId} />}
+            {enabledIntegration && <Issues sessionId={currentSession.sessionId} />}
             <SharePopup
               showCopyLink={true}
               trigger={
                 <div className="relative">
                   <Tooltip title="Share Session" placement="bottom">
-                    <AntButton size={'small'} className="flex items-center justify-center">
+                    <AntButton
+                      size={'small'}
+                      className="flex items-center justify-center"
+                    >
                       <ShareAltOutlined />
                     </AntButton>
                   </Tooltip>
@@ -142,8 +123,8 @@ function SubHeader(props) {
       {locationTruncated && (
         <div className={'w-full bg-white border-b border-gray-lighter'}>
           <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
-          <Link2 className="mx-2" size={16} />
-            <Tooltip title="Open in new tab" delay={0} placement='bottom'>
+            <Link2 className="mx-2" size={16} />
+            <Tooltip title="Open in new tab" delay={0} placement="bottom">
               <a href={currentLocation} target="_blank" className="truncate">
                 {locationTruncated}
               </a>
@@ -155,8 +136,4 @@ function SubHeader(props) {
   );
 }
 
-export default connect((state) => ({
-  siteId: state.getIn(['site', 'siteId']),
-  integrations: state.getIn(['issues', 'list']),
-  modules: state.getIn(['user', 'account', 'modules']) || []
-}))(observer(SubHeader));
+export default observer(SubHeader);

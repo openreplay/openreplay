@@ -4,7 +4,7 @@ import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
-import { filterMap } from 'Duck/search';
+import { filterMap } from 'App/mstore/searchStore';
 
 export const FilterSeries = Record({
   seriesId: undefined,
@@ -50,7 +50,7 @@ export default Record({
       const js = this.toJS();
 
       js.metricValue = js.metricValue.map(value => value === 'all' ? '' : value);
-      
+
       js.series = js.series.map(series => {
         series.filter.filters = series.filter.filters.map(filterMap);
         // delete series._key

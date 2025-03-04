@@ -1,30 +1,31 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
-import { fetch as fetchSession, clearCurrentSession } from 'Duck/sessions';
-import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Loader } from 'UI';
 import withPermissions from 'HOCs/withPermissions';
 import LivePlayer from './LivePlayer';
 import { clearLogs } from 'App/dev/console';
 import { toast } from 'react-toastify';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite';
 
 function LiveSession({
-    sessionId,
-    fetchSession,
-    fetchSlackList,
-    hasSessionsPath,
-    session,
-    fetchFailed,
-    clearCurrentSession,
+     match: {
+        params: { sessionId },
+     },
 }) {
+    const { integrationsStore, sessionStore } = useStore();
+    const session = sessionStore.current;
+    const fetchFailed = sessionStore.fetchFailed;
+    const clearCurrentSession = sessionStore.clearCurrentSession;
+    const fetchSlackList = integrationsStore.slack.fetchIntegrations;
+    const fetchSession = sessionStore.fetchSessionData;
     const [initialLoading, setInitialLoading] = React.useState(true);
     usePageTitle('OpenReplay Assist');
 
     useEffect(() => {
         clearLogs();
-        fetchSlackList();
+        void fetchSlackList();
 
         return () => {
             clearCurrentSession()
@@ -33,11 +34,11 @@ function LiveSession({
 
     useEffect(() => {
         if (sessionId != null) {
-            fetchSession(sessionId, true);
+            void fetchSession(sessionId, true);
         } else {
             console.error('No sessionID in route.');
         }
-    }, [sessionId, hasSessionsPath]);
+    }, [sessionId]);
 
     useEffect(() => {
         if (fetchFailed) {
@@ -57,28 +58,5 @@ function LiveSession({
 }
 
 export default withPermissions(['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'], '', true, false)(
-    connect(
-        (state, props) => {
-            const {
-                match: {
-                    params: { sessionId },
-                },
-            } = props;
-            const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
-            const hasSessiosPath = state
-                .getIn(['sessions', 'sessionPath'])
-                .pathname.includes('/sessions');
-            return {
-                sessionId,
-                fetchFailed: state.getIn(['sessions', 'fetchFailed']),
-                session: state.getIn(['sessions', 'current']),
-                hasSessionsPath: hasSessiosPath && !isAssist,
-            };
-        },
-        {
-            fetchSession,
-            fetchSlackList,
-            clearCurrentSession,
-        }
-    )(LiveSession)
+    observer(LiveSession)
 );

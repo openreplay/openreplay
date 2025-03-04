@@ -20,7 +20,7 @@ export default class FilterStore {
   }
 
   setTopValues = (key: string, values: TopValue[]) => {
-    this.topValues[key] = values.filter((value) => value !== null && value.value !== '');
+    this.topValues[key] = values?.filter((value) => value !== null && value.value !== '');
   };
 
   fetchTopValues = async (key: string, source?: string) => {

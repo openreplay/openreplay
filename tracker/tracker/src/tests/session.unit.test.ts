@@ -1,5 +1,5 @@
 import { jest, test, describe, beforeEach, afterEach, expect } from '@jest/globals'
-import Session from '../main/app/Session'
+import Session from '../main/app/session'
 import App from '../main/app/index.js'
 import { generateRandomId } from '../main/utils.js'
 
@@ -34,7 +34,10 @@ describe('Session', () => {
     // @ts-ignore
     generateRandomId.mockReturnValue('random_id')
 
-    session = new Session(mockApp as unknown as App, mockOptions)
+    session = new Session({
+      app: mockApp as App,
+      options: mockOptions,
+    })
   })
 
   afterEach(() => {

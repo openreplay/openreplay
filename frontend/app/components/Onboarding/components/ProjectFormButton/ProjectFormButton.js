@@ -1,10 +1,14 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import NewSiteForm from '../../../Client/Sites/NewSiteForm';
-import { init } from 'Duck/site';
 import { useModal } from 'App/components/Modal';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore';
 
-const ProjectFormButton = ({ sites, siteId, init }) => {
+const ProjectFormButton = () => {
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const init = projectsStore.initProject;
   const site = sites.find(({ id }) => id === siteId);
   const { showModal, hideModal } = useModal();
   const openModal = (e) => {
@@ -26,10 +30,4 @@ const ProjectFormButton = ({ sites, siteId, init }) => {
   );
 };
 
-export default connect(
-  (state) => ({
-    siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list']),
-  }),
-  { init }
-)(ProjectFormButton);
+export default observer(ProjectFormButton);

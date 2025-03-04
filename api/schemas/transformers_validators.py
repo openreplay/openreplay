@@ -1,6 +1,8 @@
-from .overrides import Enum
-
 from typing import Union, Any, Type
+
+from pydantic import ValidationInfo
+
+from .overrides import Enum
 
 NAME_PATTERN = r"^[a-z,A-Z,0-9,\-,é,è,à,ç, ,|,&,\/,\\,_,.,#]*$"
 
@@ -45,3 +47,10 @@ def force_is_event(events_enum: list[Type[Enum]]):
         return value
 
     return fn
+
+
+def check_alphanumeric(v: str, info: ValidationInfo) -> str:
+    if isinstance(v, str):
+        is_alphanumeric = v.replace(' ', '').isalnum()
+        assert is_alphanumeric, f'{info.field_name} must be alphanumeric'
+    return v

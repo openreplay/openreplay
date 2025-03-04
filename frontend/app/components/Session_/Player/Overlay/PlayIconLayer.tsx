@@ -1,17 +1,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import cls from './PlayIconLayer.module.css';
 import clsOv from './overlay.module.css';
 
 interface Props {
   togglePlay: () => void;
   playing: boolean;
-  notesEdit: boolean;
 }
 
-function PlayIconLayer({ playing, togglePlay, notesEdit }: Props) {
+function PlayIconLayer({ playing, togglePlay }: Props) {
+  const { sessionStore } = useStore();
+  const notesEdit = sessionStore.createNoteTooltip.isVisible
   const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,4 @@ function PlayIconLayer({ playing, togglePlay, notesEdit }: Props) {
   );
 }
 
-export default connect((state) => ({
-  // @ts-ignore
-  notesEdit: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']),
-}))(PlayIconLayer);
+export default observer(PlayIconLayer);

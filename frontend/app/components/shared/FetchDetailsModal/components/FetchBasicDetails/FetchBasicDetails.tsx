@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { formatBytes } from 'App/utils';
-import CopyText from 'Shared/CopyText';
 import { Tag } from 'antd';
 import cn from 'classnames';
 
@@ -11,13 +10,6 @@ interface Props {
 
 function FetchBasicDetails({ resource, timestamp }: Props) {
   const _duration = parseInt(resource.duration);
-  const text = useMemo(() => {
-    if (resource.url.length > 50) {
-      const endText = resource.url.split('/').pop();
-      return resource.url.substring(0, 50 - endText.length) + '.../' + endText;
-    }
-    return resource.url;
-  }, [resource]);
 
   return (
     <div>
@@ -91,7 +83,6 @@ function FetchBasicDetails({ resource, timestamp }: Props) {
             {timestamp}
           </Tag>
         </div>
-
       )}
     </div>
   );

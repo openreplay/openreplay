@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
 import { createClickMapPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
@@ -7,16 +6,19 @@ import PlayerContent from './ThinPlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from '../../playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify'
+import { useStore } from 'App/mstore';
 
 function WebPlayer(props: any) {
+  const { sessionStore } = useStore();
+  const insights = sessionStore.insights;
   const {
     session,
-    insights,
     jumpTimestamp,
   } = props;
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
   const playerRef = React.useRef<any>(null);
+  const insightsSize = React.useRef(0);
 
   useEffect(() => {
     const init = () => {
@@ -52,17 +54,14 @@ function WebPlayer(props: any) {
 
   React.useEffect(() => {
       contextValue.player && contextValue.player.play()
-    if (isPlayerReady && insights.size > 0 && jumpTimestamp) {
+    if (isPlayerReady && insights.length > 0 && jumpTimestamp && insightsSize.current !== insights.length) {
+      insightsSize.current = insights.length
       setTimeout(() => {
         contextValue.player.pause()
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.scale()
-
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
-      }, 500)
-    }
-    return () => {
-      isPlayerReady && contextValue.player.showClickmap(null)
+      }, 250)
     }
   }, [insights, isPlayerReady, jumpTimestamp])
 
@@ -75,9 +74,4 @@ function WebPlayer(props: any) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    insights: state.getIn(['sessions', 'insights']),
-    jwt: state.getIn(['user', 'jwt']),
-  })
-)(withLocationHandlers()(observer(WebPlayer)));
+export default withLocationHandlers()(observer(WebPlayer));

@@ -1,14 +1,11 @@
 import {
-  clickSelectorOperators,
-  stringConditional,
-  tagElementOperators,
-  targetConditional
+  clickSelectorOperators
 } from 'App/constants/filterOptions';
-import { KEYS } from 'Types/filter/customFilter';
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
 import filterOptions, { countries, platformOptions } from 'App/constants';
-import { capitalize } from 'App/utils';
+import { observable } from 'mobx';
+import Search from '@/mstore/types/search';
 
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }];
@@ -985,11 +982,11 @@ export const filterLabelMap = filters.reduce((acc, filter) => {
   return acc;
 }, {});
 
-export let filtersMap = mapFilters(filters);
-export let liveFiltersMap = mapLiveFilters(filters);
-export let fflagsConditionsMap = mapFilters(flagConditionFilters);
-export let conditionalFiltersMap = mapFilters(conditionalFilters);
-export let mobileConditionalFiltersMap = mapFilters(mobileConditionalFilters);
+export let filtersMap = observable(mapFilters(filters));
+export let liveFiltersMap = observable(mapLiveFilters(filters));
+export let fflagsConditionsMap = observable(mapFilters(flagConditionFilters));
+export let conditionalFiltersMap = observable(mapFilters(conditionalFilters));
+export let mobileConditionalFiltersMap = observable(mapFilters(mobileConditionalFilters));
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
@@ -1258,4 +1255,35 @@ export const generateLiveFilterOptions = (map) => {
     }
   });
   return filterSection;
+};
+
+
+export const getFilterFromJson = (json) => {
+  const mapFilters = (filters) =>
+    filters.map(f => {
+      let filter = { ...filtersMap[f.key], ...f };
+
+      if (f.filters) {
+        const mainFilterOptions = filtersMap[f.key]?.filters || [];
+        const subFilterMap = Object.fromEntries(mainFilterOptions.map(option => [option.key, option]));
+
+        filter.filters = f.filters.map(subFilter => {
+          const baseFilter = subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
+          return {
+            ...baseFilter,
+            ...subFilter,
+            key: baseFilter.key || subFilter.key,
+            type: baseFilter.type || subFilter.type,
+            value: subFilter.value?.length ? subFilter.value : ['']
+          };
+        });
+      }
+
+      return filter;
+    });
+
+  return new Search({
+    ...json,
+    filters: mapFilters(json.filters)
+  });
 };

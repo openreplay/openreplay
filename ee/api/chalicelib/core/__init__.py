@@ -44,6 +44,3 @@ if config("EXP_FUNNELS", cast=bool, default=False):
     from . import significance_exp as significance
 else:
     from . import significance as significance
-
-if config("EXP_RESOURCES", cast=bool, default=False):
-    logging.info(">>> Using experimental resources for session-replay")

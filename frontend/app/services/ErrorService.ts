@@ -1,17 +1,35 @@
 import BaseService from './BaseService';
+import { IErrorStack } from 'Types/session/errorStack';
 
 export default class ErrorService extends BaseService {
-    all(params: any = {}): Promise<any[]> {
-        return this.client.post('/errors/search', params)
-            .then(r => r.json())
-            .then((response: { data: any; }) => response.data || [])
-            .catch(e => Promise.reject(e))
-    }
+  fetchError = async (id: string) => {
+    const r = await this.client.get(`/errors/${id}`);
 
-    one(id: string): Promise<any> {
-        return this.client.get(`/errors/${id}`)
-            .then(r => r.json())
-            .then((response: { data: any; }) => response.data || {})
-            .catch(e => Promise.reject(e))
-    }
+    return await r.json();
+  };
+
+  fetchErrorList = async (params: Record<string, any>) => {
+    const r = await this.client.post('/errors/search', params);
+
+    return await r.json();
+  };
+
+  fetchErrorTrace = async (id: string): Promise<{ trace: IErrorStack[], sourcemapUploaded: boolean }> => {
+    const r = await this.client.get(`/errors/${id}/sourcemaps`);
+    const { data } = await r.json()
+
+    return data;
+  };
+
+  fetchNewErrorsCount = async (params: any) => {
+    const r = await this.client.get('/errors/stats', params);
+
+    return await r.json();
+  };
+
+  fetchErrorStats = async (errorId: string) => {
+    const r = await this.client.get(`/errors/${errorId}/stats`);
+
+    return await r.json();
+  }
 }

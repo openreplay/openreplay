@@ -48,7 +48,7 @@ export default Record({
       return true;
     },
     toData() {
-      const js = this.toJS();      
+      const js = this.toJS();
       return js;
     }
   },
@@ -58,18 +58,18 @@ export default Record({
       stage.label = `Step ${index + 1}`;
       return stage;
     });
-    
+
     let firstStage = _stages.length > 0 ? _stages[0] : {};
     let lastStage = _stages ? _stages[_stages.length - 1] : {};
-    
+
     if (activeStages && activeStages.length === 2) {
       firstStage = _stages[activeStages[0]];
       lastStage = _stages[activeStages[1]];
     }
-    
+
     const affectedUsers = firstStage.usersCount ? firstStage.usersCount - lastStage.usersCount : 0;
     const lostConversions = rest.totalDropDueToIssues;
-    const conversionImpact = lostConversions ? Math.round((lostConversions / firstStage.sessionsCount) * 100) : 0;
+    const conversionImpact = lostConversions ? Math.round((lostConversions / firstStage.count) * 100) : 0;
 
     return {
       ...rest,
@@ -87,7 +87,7 @@ export default Record({
       firstStage: firstStage && firstStage.label || '',
       lastStage: lastStage && lastStage.label || '',
       filter: Filter(filter),
-      sessionsCount: lastStage && lastStage.sessionsCount,
+      sessionsCount: lastStage && lastStage.count,
       stepsCount: stages ? stages.length : 0,
       conversions: 100 - conversionImpact
     }

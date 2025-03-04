@@ -2,15 +2,12 @@ import { makeAutoObservable } from 'mobx';
 import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
-import Error from './types/error';
+import { ErrorInfo } from './types/error';
 import {
   TIMESERIES,
   TABLE,
   FUNNEL,
   ERRORS,
-  RESOURCE_MONITORING,
-  PERFORMANCE,
-  WEB_VITALS,
   INSIGHTS,
   HEATMAP,
   USER_PATH,
@@ -156,9 +153,6 @@ export default class MetricStore {
     }
     if (
       value === ERRORS ||
-      value === RESOURCE_MONITORING ||
-      value === PERFORMANCE ||
-      value === WEB_VITALS ||
       value === HEATMAP
     ) {
       obj['viewType'] = 'chart';
@@ -254,7 +248,6 @@ export default class MetricStore {
         toast.success('Card updated successfully');
         this.updateInList(_metric);
       }
-      this.instance = _metric;
       this.instance.updateKey('hasChanged', false);
       return _metric;
     } catch (error) {
@@ -318,7 +311,7 @@ export default class MetricStore {
       errorService
         .one(errorId)
         .then((error: any) => {
-          resolve(new Error().fromJSON(error));
+          resolve(new ErrorInfo(error));
         })
         .catch((error: any) => {
           toast.error('Failed to fetch error details.');

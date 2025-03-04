@@ -309,7 +309,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 31:
-            return PageEvent(
+            return PageEventDeprecated(
                 message_id=self.read_uint(reader),
                 timestamp=self.read_uint(reader),
                 url=self.read_string(reader),
@@ -336,6 +336,28 @@ class MessageCodec(Codec):
                 value=self.read_string(reader),
                 value_masked=self.read_boolean(reader),
                 label=self.read_string(reader)
+            )
+
+        if message_id == 33:
+            return PageEvent(
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                url=self.read_string(reader),
+                referrer=self.read_string(reader),
+                loaded=self.read_boolean(reader),
+                request_start=self.read_uint(reader),
+                response_start=self.read_uint(reader),
+                response_end=self.read_uint(reader),
+                dom_content_loaded_event_start=self.read_uint(reader),
+                dom_content_loaded_event_end=self.read_uint(reader),
+                load_event_start=self.read_uint(reader),
+                load_event_end=self.read_uint(reader),
+                first_paint=self.read_uint(reader),
+                first_contentful_paint=self.read_uint(reader),
+                speed_index=self.read_uint(reader),
+                visually_complete=self.read_uint(reader),
+                time_to_interactive=self.read_uint(reader),
+                web_vitals=self.read_string(reader)
             )
 
         if message_id == 37:
@@ -425,16 +447,29 @@ class MessageCodec(Codec):
             )
 
         if message_id == 50:
-            return StringDict(
+            return StringDictDeprecated(
                 key=self.read_uint(reader),
                 value=self.read_string(reader)
             )
 
         if message_id == 51:
-            return SetNodeAttributeDict(
+            return SetNodeAttributeDictDeprecated(
                 id=self.read_uint(reader),
                 name_key=self.read_uint(reader),
                 value_key=self.read_uint(reader)
+            )
+
+        if message_id == 43:
+            return StringDict(
+                key=self.read_string(reader),
+                value=self.read_string(reader)
+            )
+
+        if message_id == 52:
+            return SetNodeAttributeDict(
+                id=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 53:
@@ -766,6 +801,12 @@ class MessageCodec(Codec):
                 variables=self.read_string(reader),
                 response=self.read_string(reader),
                 duration=self.read_uint(reader)
+            )
+
+        if message_id == 124:
+            return WebVitals(
+                name=self.read_string(reader),
+                value=self.read_string(reader)
             )
 
         if message_id == 125:

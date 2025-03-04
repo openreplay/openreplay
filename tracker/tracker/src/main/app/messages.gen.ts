@@ -476,8 +476,32 @@ export function PerformanceTrack(
   ]
 }
 
-export function StringDict(
+export function StringDictDeprecated(
   key: number,
+  value: string,
+): Messages.StringDictDeprecated {
+  return [
+    Messages.Type.StringDictDeprecated,
+    key,
+    value,
+  ]
+}
+
+export function SetNodeAttributeDictDeprecated(
+  id: number,
+  nameKey: number,
+  valueKey: number,
+): Messages.SetNodeAttributeDictDeprecated {
+  return [
+    Messages.Type.SetNodeAttributeDictDeprecated,
+    id,
+    nameKey,
+    valueKey,
+  ]
+}
+
+export function StringDict(
+  key: string,
   value: string,
 ): Messages.StringDict {
   return [
@@ -489,14 +513,14 @@ export function StringDict(
 
 export function SetNodeAttributeDict(
   id: number,
-  nameKey: number,
-  valueKey: number,
+  name: string,
+  value: string,
 ): Messages.SetNodeAttributeDict {
   return [
     Messages.Type.SetNodeAttributeDict,
     id,
-    nameKey,
-    valueKey,
+    name,
+    value,
   ]
 }
 
@@ -1016,6 +1040,17 @@ export function GraphQL(
     variables,
     response,
     duration,
+  ]
+}
+
+export function WebVitals(
+  name: string,
+  value: string,
+): Messages.WebVitals {
+  return [
+    Messages.Type.WebVitals,
+    name,
+    value,
   ]
 }
 

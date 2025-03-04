@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { connect, ConnectedProps } from 'react-redux';
-import { setOnboarding } from 'Duck/user';
 import { sessions, withSiteId, onboarding as onboardingRoute } from 'App/routes';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 export interface WithOnboardingProps {
   history: RouteComponentProps['history'];
@@ -17,22 +17,14 @@ export interface WithOnboardingProps {
   };
 }
 
-const connector = connect(
-  (state: any) => ({
-    siteId: state.getIn(['site', 'siteId']),
-    sites: state.getIn(['site', 'list']),
-  }),
-  { setOnboarding }
-);
-
-type PropsFromRedux = ConnectedProps<typeof connector>;
 
 const withOnboarding = <P extends RouteComponentProps>(
-  Component: React.ComponentType<P & WithOnboardingProps & PropsFromRedux>
+  Component: React.ComponentType<P & WithOnboardingProps>
 ) => {
-  const WithOnboarding: React.FC<P & WithOnboardingProps & PropsFromRedux> = (props) => {
+  const WithOnboarding: React.FC<P & WithOnboardingProps> = (props) => {
+    const { projectsStore, userStore } = useStore();
+    const sites = projectsStore.list;
     const {
-      sites,
       match: {
         params: { siteId },
       },
@@ -40,10 +32,10 @@ const withOnboarding = <P extends RouteComponentProps>(
     const site = useMemo(() => sites.find((s: any) => s.id === siteId), [sites, siteId]);
 
     const skip = () => {
-      props.setOnboarding(true);
+      userStore.setOnboarding(true);
       props.history.push(withSiteId(sessions(), siteId));
     };
-    
+
     const navTo = (tab: string) => {
       props.history.push(withSiteId(onboardingRoute(tab), siteId));
     };
@@ -51,7 +43,11 @@ const withOnboarding = <P extends RouteComponentProps>(
     return <Component skip={skip} navTo={navTo} {...props} site={site} />;
   };
 
-  return withRouter(connector(WithOnboarding as React.ComponentType<any>));
+  return withRouter(
+    observer(
+      WithOnboarding
+    )
+  );
 };
 
 export default withOnboarding;

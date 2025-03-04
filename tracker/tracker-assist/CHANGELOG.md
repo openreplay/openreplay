@@ -1,3 +1,8 @@
+## 10.0.0
+
+- memory handling improvements to prevent possible leaks on sessions with multiple canvas nodes
+- use new tracker.waitStatus api to wait for restarts
+
 ## 9.0.0
 
 - support for message compression inside plugin (requires v1.18 frontend)

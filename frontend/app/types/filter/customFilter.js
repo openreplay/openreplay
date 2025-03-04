@@ -75,7 +75,7 @@ export const KEYS = {
   UTM_SOURCE,
   UTM_MEDIUM,
   UTM_CAMPAIGN,
-  
+
   DOM_COMPLETE,
   LARGEST_CONTENTFUL_PAINT_TIME,
   TIME_BETWEEN_EVENTS,
@@ -89,7 +89,7 @@ const getOperatorDefault = (type) => {
   if (type === KEYS.SLOW_SESSION) return 'true';
   if (type === KEYS.CLICK_RAGE) return 'true';
   if (type === KEYS.CLICK) return 'on';
-  
+
   return 'is';
 }
 
@@ -108,7 +108,6 @@ export default Record({
   key: '',
   operator: 'is',
   label: '',
-  icon: '',
   type: '',
   value: [""],
   custom: '',

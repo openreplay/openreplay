@@ -71,17 +71,6 @@ def __process_trace(trace: TraceSchema):
     return data
 
 
-async def write_trace(trace: TraceSchema):
-    data = __process_trace(trace)
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""INSERT INTO traces(user_id, tenant_id, created_at, auth, action, method, path_format, endpoint, payload, parameters, status)
-                    VALUES (%(user_id)s, %(tenant_id)s, %(created_at)s, %(auth)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
-                data)
-        )
-
-
 async def write_traces_batch(traces: List[TraceSchema]):
     if len(traces) == 0:
         return

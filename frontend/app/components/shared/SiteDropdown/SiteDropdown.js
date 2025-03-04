@@ -1,9 +1,12 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore'
 import Select from 'Shared/Select';
 
-const SiteDropdown = ({ contextName = '', sites, onChange, value }) => {
-  const options = sites.map(site => ({ value: site.id, label: site.host })).toJS();
+const SiteDropdown = ({ contextName = '', onChange, value }) => {
+  const { projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const options = sites.map(site => ({ value: site.id, label: site.host }));
   return (
     <Select
       name={`${contextName}_site`}
@@ -17,6 +20,4 @@ const SiteDropdown = ({ contextName = '', sites, onChange, value }) => {
 
 SiteDropdown.displayName = 'SiteDropdown';
 
-export default connect(state => ({
-  sites: state.getIn(['site', 'list'])
-}))(SiteDropdown);
+export default observer(SiteDropdown);

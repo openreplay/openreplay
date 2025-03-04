@@ -1,4 +1,4 @@
-import Countdown from "@/entrypoints/content/Countdown";
+import Countdown from "~/entrypoints/content/Countdown";
 import "~/assets/main.css";
 import "./style.css";
 import { createSignal } from "solid-js";

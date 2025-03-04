@@ -102,7 +102,7 @@ def _search_tags(project_id, value, key=None, source=None):
     with pg_client.PostgresClient() as cur:
         query = f"""
         SELECT public.tags.name
-               '{events.EventType.TAG.ui_type}' AS type
+               'TAG' AS type
         FROM public.tags
         WHERE public.tags.project_id = %(project_id)s
         ORDER BY SIMILARITY(public.tags.name, %(value)s) DESC

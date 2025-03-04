@@ -1,10 +1,10 @@
 import React from 'react'
-import { connect } from 'react-redux'
 import { Button, Icon } from 'UI'
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
-function IntegrateSlackTeamsButton({ history, tenantId }) {
+function IntegrateSlackTeamsButton({ history }) {
+
   const gotoPreferencesIntegrations = () => {
     history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
   }
@@ -25,6 +25,4 @@ function IntegrateSlackTeamsButton({ history, tenantId }) {
   )
 }
 
-export default withRouter(connect(state => ({
-  tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
-}))(IntegrateSlackTeamsButton))
+export default withRouter(IntegrateSlackTeamsButton)

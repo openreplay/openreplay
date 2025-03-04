@@ -4,14 +4,24 @@ import { PlayerContext, MobilePlayerContext } from 'Components/Session/playerCon
 import { observer } from 'mobx-react-lite';
 import { getTimelinePosition } from './getTimelinePosition'
 
-function EventsList({ scale }: { scale: number }) {
+function EventsList() {
   const { store } = useContext(PlayerContext);
 
-  const { tabStates, eventCount } = store.get();
+  const { eventCount, endTime } = store.get();
+  const tabStates = store.get().tabStates;
+  const scale = 100 / endTime;
   const events = React.useMemo(() => {
     return Object.values(tabStates)[0]?.eventList.filter(e => e.time) || [];
   }, [eventCount]);
 
+  React.useEffect(() => {
+    const hasDuplicates = events.some((e, i) => {
+      return events.findIndex((el) => el.key === e.key && el.time === e.time) !== i;
+    })
+    if (hasDuplicates) {
+      console.error('Duplicate events detected in list', events);
+    }
+  }, [eventCount])
   return (
     <>
       {events.map((e) => (
@@ -26,11 +36,12 @@ function EventsList({ scale }: { scale: number }) {
   );
 }
 
-function MobileEventsList({ scale }: { scale: number }) {
+function MobileEventsList() {
   const { store } = useContext(MobilePlayerContext);
-  const { eventList } = store.get();
+  const { eventList, endTime } = store.get();
   const events = eventList.filter(e => e.type !== 'SWIPE')
 
+  const scale = 100/endTime;
   return (
     <>
       {events.map((e) => (

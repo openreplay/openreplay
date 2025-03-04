@@ -11,7 +11,6 @@ type Connector interface {
 	Commit() error
 	Stop() error
 	InsertWebSession(session *sessions.Session) error
-	InsertWebResourceEvent(session *sessions.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
 	InsertWebInputEvent(session *sessions.Session, msg *messages.InputEvent) error

@@ -3,9 +3,12 @@ import ListingVisibility from './components/ListingVisibility';
 import DefaultPlaying from './components/DefaultPlaying';
 import DefaultTimezone from './components/DefaultTimezone';
 import CaptureRate from './components/CaptureRate';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-function SessionSettings({ projectId }: { projectId: number }) {
+function SessionSettings() {
+  const { projectsStore } = useStore();
+  const projectId = projectsStore.siteId;
   return (
     <div className='bg-white box-shadow h-screen overflow-y-auto'>
       <div className='px-6 pt-6'>
@@ -32,6 +35,4 @@ function SessionSettings({ projectId }: { projectId: number }) {
   );
 }
 
-export default connect((state: any) => ({
-  projectId: state.getIn(['site', 'siteId'])
-}))(SessionSettings);
+export default observer(SessionSettings)

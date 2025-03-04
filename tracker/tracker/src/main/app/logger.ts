@@ -19,6 +19,13 @@ export default class Logger {
     return this.level >= level
   }
 
+  info = (...args: any[]) => {
+    if (this.shouldLog(LogLevel.Verbose)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      console.info(...args)
+    }
+  }
+
   log = (...args: any[]) => {
     if (this.shouldLog(LogLevel.Log)) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument

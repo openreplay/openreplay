@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
-import { fetchErrorStackList } from 'Duck/sessions';
 import { Button, Icon } from 'UI';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
 
@@ -11,24 +11,19 @@ interface Props {
     sourcemapUploaded?: boolean;
     errorStack?: any;
     message?: string;
-    sessionId: string;
     error: any;
 }
 function ErrorDetails(props: Props) {
-    const { error, sessionId, message = '', errorStack = [], sourcemapUploaded = false } = props;
+    const { errorStore, sessionStore } = useStore();
+    const sessionId = sessionStore.current.sessionId;
+    const errorStack = errorStore.instanceTrace;
+    const { error, message = '', sourcemapUploaded = false } = props;
     const [showRaw, setShowRaw] = useState(false);
-    const firstFunc = errorStack.first() && errorStack.first().function;
-    
+    const firstFunc = errorStack[0] && errorStack[0].function;
 
     const openDocs = () => {
         window.open(docLink, '_blank');
     };
-
-    useEffect(() => {
-        if (sessionId) {
-            props.fetchErrorStackList(sessionId, error.errorId);
-        }
-    }, []);
 
     return (
         <div className="bg-white p-5 h-screen">
@@ -76,11 +71,4 @@ function ErrorDetails(props: Props) {
 }
 
 ErrorDetails.displayName = 'ErrorDetails';
-export default connect(
-    (state: any) => ({
-        // errorStack: state.getIn(['sessions', 'errorStack']),
-        errorStack: state.getIn(['errors', 'instanceTrace']),
-        sessionId: state.getIn(['sessions', 'current']).sessionId,
-    }),
-    { fetchErrorStackList }
-)(ErrorDetails);
+export default observer(ErrorDetails);

@@ -8,7 +8,7 @@ from pydantic.functional_validators import BeforeValidator
 from chalicelib.utils.TimeUTC import TimeUTC
 from .overrides import BaseModel, Enum, ORUnion
 from .transformers_validators import transform_email, remove_whitespace, remove_duplicate_values, single_to_list, \
-    force_is_event, NAME_PATTERN, int_to_string
+    force_is_event, NAME_PATTERN, int_to_string, check_alphanumeric
 
 
 def transform_old_filter_type(cls, values):
@@ -76,20 +76,23 @@ class UserLoginSchema(_GRecaptcha):
 
 
 class UserSignupSchema(UserLoginSchema):
-    fullname: str = Field(..., min_length=1, pattern=NAME_PATTERN)
-    organizationName: str = Field(..., min_length=1, pattern=NAME_PATTERN)
+    fullname: str = Field(..., min_length=1)
+    organizationName: str = Field(..., min_length=1)
 
     _transform_fullname = field_validator('fullname', mode='before')(remove_whitespace)
     _transform_organizationName = field_validator('organizationName', mode='before')(remove_whitespace)
 
+    _check_alphanumeric = field_validator('fullname', 'organizationName')(check_alphanumeric)
+
 
 class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
-    tenantName: Optional[str] = Field(default=None, pattern=NAME_PATTERN)
+    name: Optional[str] = Field(default=None)
+    tenantName: Optional[str] = Field(default=None)
     opt_out: Optional[bool] = Field(default=None)
 
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
     _transform_tenantName = field_validator('tenantName', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name', 'tenantName')(check_alphanumeric)
 
 
 class ForgetPasswordPayloadSchema(_GRecaptcha):
@@ -110,7 +113,7 @@ class CreateProjectSchema(BaseModel):
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
 
 
-class CurrentProjectContext(BaseModel):
+class ProjectContext(BaseModel):
     project_id: int = Field(..., gt=0)
     project_key: str = Field(...)
     name: str = Field(...)
@@ -119,7 +122,7 @@ class CurrentProjectContext(BaseModel):
 
 class CurrentAPIContext(BaseModel):
     tenant_id: int = Field(...)
-    project: Optional[CurrentProjectContext] = Field(default=None)
+    project: Optional[ProjectContext] = Field(default=None)
 
 
 class CurrentContext(CurrentAPIContext):
@@ -208,7 +211,8 @@ class IssueTrackingJiraSchema(IssueTrackingIntegration):
 
 class WebhookSchema(BaseModel):
     webhook_id: Optional[int] = Field(default=None)
-    endpoint: AnyHttpUrl = Field(...)
+    processed_endpoint: AnyHttpUrl = Field(..., alias="endpoint")
+    endpoint: Optional[str] = Field(default=None, doc_hidden=True)
     auth_header: Optional[str] = Field(default=None)
     name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
@@ -226,12 +230,13 @@ class CreateMemberSchema(BaseModel):
 
 
 class EditMemberSchema(BaseModel):
-    name: str = Field(..., pattern=NAME_PATTERN)
+    name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(default=False)
 
     _transform_email = field_validator('email', mode='before')(transform_email)
     _transform_name = field_validator('name', mode='before')(remove_whitespace)
+    _check_alphanumeric = field_validator('name')(check_alphanumeric)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -345,25 +350,6 @@ class MetadataSchema(BaseModel):
     _transform_key = field_validator('key', mode='before')(remove_whitespace)
 
 
-class EmailPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    link: str = Field(...)
-    message: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
-class MemberInvitationPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    invitation_link: str = Field(...)
-    client_id: str = Field(...)
-    sender_name: str = Field(...)
-
-    _transform_email = field_validator('email', mode='before')(transform_email)
-
-
 class _AlertMessageSchema(BaseModel):
     type: str = Field(...)
     value: str = Field(...)
@@ -393,14 +379,6 @@ class AlertColumn(str, Enum):
     PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE = "performance.page_response_time.average"
     PERFORMANCE__TTFB__AVERAGE = "performance.ttfb.average"
     PERFORMANCE__TIME_TO_RENDER__AVERAGE = "performance.time_to_render.average"
-    PERFORMANCE__IMAGE_LOAD_TIME__AVERAGE = "performance.image_load_time.average"
-    PERFORMANCE__REQUEST_LOAD_TIME__AVERAGE = "performance.request_load_time.average"
-    RESOURCES__LOAD_TIME__AVERAGE = "resources.load_time.average"
-    RESOURCES__MISSING__COUNT = "resources.missing.count"
-    ERRORS__4XX_5XX__COUNT = "errors.4xx_5xx.count"
-    ERRORS__4XX__COUNT = "errors.4xx.count"
-    ERRORS__5XX__COUNT = "errors.5xx.count"
-    ERRORS__JAVASCRIPT__IMPACTED_SESSIONS__COUNT = "errors.javascript.impacted_sessions.count"
     PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
     ERRORS__JAVASCRIPT__COUNT = "errors.javascript.count"
     ERRORS__BACKEND__COUNT = "errors.backend.count"
@@ -777,6 +755,8 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         for f in values.get("filters", []):
             vals = []
             for v in f.get("value", []):
+                if f.get("type", "") == FilterType.DURATION.value and v is None:
+                    v = 0
                 if v is not None and (f.get("type", "") != FilterType.DURATION.value
                                       or str(v).isnumeric()):
                     vals.append(v)
@@ -945,7 +925,6 @@ class MetricType(str, Enum):
 
 
 class MetricOfErrors(str, Enum):
-    CALLS_ERRORS = "callsErrors"
     DOMAINS_ERRORS_4XX = "domainsErrors4xx"
     DOMAINS_ERRORS_5XX = "domainsErrors5xx"
     ERRORS_PER_DOMAINS = "errorsPerDomains"
@@ -954,52 +933,14 @@ class MetricOfErrors(str, Enum):
     RESOURCES_BY_PARTY = "resourcesByParty"
 
 
-class MetricOfPerformance(str, Enum):
-    CPU = "cpu"
-    CRASHES = "crashes"
-    FPS = "fps"
-    IMPACTED_SESSIONS_BY_SLOW_PAGES = "impactedSessionsBySlowPages"
-    MEMORY_CONSUMPTION = "memoryConsumption"
-    PAGES_DOM_BUILDTIME = "pagesDomBuildtime"
-    PAGES_RESPONSE_TIME = "pagesResponseTime"
-    PAGES_RESPONSE_TIME_DISTRIBUTION = "pagesResponseTimeDistribution"
-    RESOURCES_VS_VISUALLY_COMPLETE = "resourcesVsVisuallyComplete"
-    SESSIONS_PER_BROWSER = "sessionsPerBrowser"
-    SLOWEST_DOMAINS = "slowestDomains"
-    SPEED_LOCATION = "speedLocation"
-    TIME_TO_RENDER = "timeToRender"
-
-
-class MetricOfResources(str, Enum):
-    MISSING_RESOURCES = "missingResources"
-    RESOURCES_COUNT_BY_TYPE = "resourcesCountByType"
-    RESOURCES_LOADING_TIME = "resourcesLoadingTime"
-    RESOURCE_TYPE_VS_RESPONSE_END = "resourceTypeVsResponseEnd"
-    SLOWEST_RESOURCES = "slowestResources"
-
-
 class MetricOfWebVitals(str, Enum):
-    AVG_CPU = "avgCpu"
-    AVG_DOM_CONTENT_LOADED = "avgDomContentLoaded"
-    AVG_DOM_CONTENT_LOAD_START = "avgDomContentLoadStart"
-    AVG_FIRST_CONTENTFUL_PIXEL = "avgFirstContentfulPixel"
-    AVG_FIRST_PAINT = "avgFirstPaint"
-    AVG_FPS = "avgFps"
-    AVG_IMAGE_LOAD_TIME = "avgImageLoadTime"
-    AVG_PAGE_LOAD_TIME = "avgPageLoadTime"
-    AVG_PAGES_DOM_BUILDTIME = "avgPagesDomBuildtime"
-    AVG_PAGES_RESPONSE_TIME = "avgPagesResponseTime"
-    AVG_REQUEST_LOAD_TIME = "avgRequestLoadTime"
-    AVG_RESPONSE_TIME = "avgResponseTime"
     AVG_SESSION_DURATION = "avgSessionDuration"
-    AVG_TILL_FIRST_BYTE = "avgTillFirstByte"
-    AVG_TIME_TO_INTERACTIVE = "avgTimeToInteractive"
-    AVG_TIME_TO_RENDER = "avgTimeToRender"
     AVG_USED_JS_HEAP_SIZE = "avgUsedJsHeapSize"
     AVG_VISITED_PAGES = "avgVisitedPages"
     COUNT_REQUESTS = "countRequests"
     COUNT_SESSIONS = "countSessions"
     COUNT_USERS = "userCount"
+    SPEED_LOCATION = "speedLocation"
 
 
 class MetricOfTable(str, Enum):
@@ -1007,8 +948,6 @@ class MetricOfTable(str, Enum):
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
-    # user_city = FilterType.user_city.value
-    # user_state = FilterType.user_state.value
     USER_ID = FilterType.USER_ID.value
     ISSUES = FilterType.ISSUE.value
     VISITED_URL = "location"
@@ -1084,33 +1023,51 @@ class CardSessionsSchema(_TimedSchema, _PaginatedSchema):
 
         return self
 
+    # We don't need this as the UI is expecting filters to override the full series' filters
+    # @model_validator(mode="after")
+    # def __merge_out_filters_with_series(self):
+    #     for f in self.filters:
+    #         for s in self.series:
+    #             found = False
+    #
+    #             if f.is_event:
+    #                 sub = s.filter.events
+    #             else:
+    #                 sub = s.filter.filters
+    #
+    #             for e in sub:
+    #                 if f.type == e.type and f.operator == e.operator:
+    #                     found = True
+    #                     if f.is_event:
+    #                         # If extra event: append value
+    #                         for v in f.value:
+    #                             if v not in e.value:
+    #                                 e.value.append(v)
+    #                     else:
+    #                         # If extra filter: override value
+    #                         e.value = f.value
+    #             if not found:
+    #                 sub.append(f)
+    #
+    #     self.filters = []
+    #
+    #     return self
+
+    # UI is expecting filters to override the full series' filters
     @model_validator(mode="after")
-    def __merge_out_filters_with_series(self):
-        for f in self.filters:
-            for s in self.series:
-                found = False
-
+    def __override_series_filters_with_outer_filters(self):
+        if len(self.filters) > 0:
+            events = []
+            filters = []
+            for f in self.filters:
                 if f.is_event:
-                    sub = s.filter.events
+                    events.append(f)
                 else:
-                    sub = s.filter.filters
-
-                for e in sub:
-                    if f.type == e.type and f.operator == e.operator:
-                        found = True
-                        if f.is_event:
-                            # If extra event: append value
-                            for v in f.value:
-                                if v not in e.value:
-                                    e.value.append(v)
-                        else:
-                            # If extra filter: override value
-                            e.value = f.value
-                if not found:
-                    sub.append(f)
-
+                    filters.append(f)
+            for s in self.series:
+                s.filter.events = events
+                s.filter.filters = filters
         self.filters = []
-
         return self
 
 
@@ -1225,43 +1182,9 @@ class CardErrors(__CardSchema):
         return self
 
 
-class CardPerformance(__CardSchema):
-    metric_type: Literal[MetricType.PERFORMANCE]
-    metric_of: MetricOfPerformance = Field(default=MetricOfPerformance.CPU)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfPerformance(self.metric_of)
-        return self
-
-
-class CardResources(__CardSchema):
-    metric_type: Literal[MetricType.RESOURCES]
-    metric_of: MetricOfResources = Field(default=MetricOfResources.MISSING_RESOURCES)
-    view_type: MetricOtherViewType = Field(...)
-
-    @model_validator(mode="before")
-    @classmethod
-    def __enforce_default(cls, values):
-        values["series"] = []
-        return values
-
-    @model_validator(mode="after")
-    def __transform(self):
-        self.metric_of = MetricOfResources(self.metric_of)
-        return self
-
-
 class CardWebVital(__CardSchema):
     metric_type: Literal[MetricType.WEB_VITAL]
-    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_CPU)
+    metric_of: MetricOfWebVitals = Field(default=MetricOfWebVitals.AVG_VISITED_PAGES)
     view_type: MetricOtherViewType = Field(...)
 
     @model_validator(mode="before")
@@ -1390,7 +1313,7 @@ class CardPathAnalysis(__CardSchema):
 # Union of cards-schemas that doesn't change between FOSS and EE
 __cards_union_base = Union[
     CardTimeSeries, CardTable, CardFunnel,
-    CardErrors, CardPerformance, CardResources,
+    CardErrors,
     CardWebVital, CardHeatMap,
     CardPathAnalysis]
 CardSchema = ORUnion(Union[__cards_union_base, CardInsights], discriminator='metric_type')
@@ -1455,6 +1378,8 @@ class LiveFilterType(str, Enum):
     USER_BROWSER = FilterType.USER_BROWSER.value
     USER_DEVICE = FilterType.USER_DEVICE.value
     USER_COUNTRY = FilterType.USER_COUNTRY.value
+    USER_CITY = FilterType.USER_CITY.value
+    USER_STATE = FilterType.USER_STATE.value
     USER_ID = FilterType.USER_ID.value
     USER_ANONYMOUS_ID = FilterType.USER_ANONYMOUS_ID.value
     REV_ID = FilterType.REV_ID.value
@@ -1525,6 +1450,7 @@ class IntegrationType(str, Enum):
     STACKDRIVER = "STACKDRIVER"
     CLOUDWATCH = "CLOUDWATCH"
     NEWRELIC = "NEWRELIC"
+    DYNATRACE = "DYNATRACE"
 
 
 class SearchNoteSchema(_PaginatedSchema):
@@ -1595,9 +1521,11 @@ class HeatMapFilterSchema(BaseModel):
 
 
 class GetHeatMapPayloadSchema(_TimedSchema):
-    url: str = Field(...)
+    url: Optional[str] = Field(default=None)
     filters: List[HeatMapFilterSchema] = Field(default=[])
     click_rage: bool = Field(default=False)
+    operator: Literal[SearchEventOperator.IS, SearchEventOperator.STARTS_WITH,
+    SearchEventOperator.CONTAINS, SearchEventOperator.ENDS_WITH] = Field(default=SearchEventOperator.STARTS_WITH)
 
 
 class GetClickMapPayloadSchema(GetHeatMapPayloadSchema):
@@ -1668,7 +1596,7 @@ class ModuleType(str, Enum):
     BUG_REPORTS = "bug-reports"
     OFFLINE_RECORDINGS = "offline-recordings"
     ALERTS = "alerts"
-    ASSIST_STATTS = "assist-statts"
+    ASSIST_STATS = "assist-stats"
     RECOMMENDATIONS = "recommendations"
     FEATURE_FLAGS = "feature-flags"
     USABILITY_TESTS = "usability-tests"

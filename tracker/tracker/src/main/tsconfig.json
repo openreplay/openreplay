@@ -3,7 +3,7 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "lib": ["es2020", "dom"],
-    "declaration": true
+    "declaration": true,
+    "declarationDir": "../../dist/lib",
   },
-  "references": [{ "path": "../common" }]
 }

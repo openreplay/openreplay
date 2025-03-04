@@ -8,8 +8,8 @@ import {FilterKey} from 'Types/filter/filterType';
 import Period, {LAST_24_HOURS} from 'Types/app/period';
 import Funnel from '../types/funnel';
 import {metricService} from 'App/services';
-import { FUNNEL, HEATMAP, INSIGHTS, TABLE, USER_PATH, WEB_VITALS } from "App/constants/card";
-import Error from '../types/error';
+import { FUNNEL, HEATMAP, INSIGHTS, TABLE, USER_PATH } from "App/constants/card";
+import { ErrorInfo } from '../types/error';
 import {getChartFormatter} from 'Types/dashboard/helper';
 import FilterItem from './filterItem';
 import {filtersMap} from 'Types/filter/newFilter';
@@ -289,6 +289,10 @@ export default class Widget {
         }) : [];
     };
 
+    setPage(page: number) {
+        this.page = page;
+    }
+
     setData(data: any, period: any) {
         const _data: any = {...data};
 
@@ -299,7 +303,7 @@ export default class Widget {
         }
 
         if (this.metricOf === FilterKey.ERRORS) {
-            _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
+            _data['errors'] = data.errors.map((s: any) => new ErrorInfo(s));
         } else if (this.metricType === INSIGHTS) {
             _data['issues'] = data
                 .filter((i: any) => i.change > 0 || i.change < 0)
@@ -310,9 +314,9 @@ export default class Widget {
         } else if (this.metricType === FUNNEL) {
             _data.funnel = new Funnel().fromJSON(_data);
         } else if (this.metricType === TABLE) {
-            const total = data[0]['total'];
+            // const total = data[0]['total'];
             const count = data[0]['count'];
-            _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, total, this.metricOf));
+            _data[0]['values'] = data[0]['values'].map((s: any) => new SessionsByRow().fromJson(s, count, this.metricOf));
         } else {
             if (data.hasOwnProperty('chart')) {
                 _data['value'] = data.value;
@@ -330,7 +334,7 @@ export default class Widget {
                     }, []);
             } else {
                 const updatedData: any = this.calculateTotalSeries(data);
-                _data['chart'] = getChartFormatter('period')(updatedData);
+                _data['chart'] = getChartFormatter(period)(updatedData);
                 _data['namesMap'] = Array.isArray(updatedData)
                   ? updatedData
                     .map((i) => Object.keys(i))

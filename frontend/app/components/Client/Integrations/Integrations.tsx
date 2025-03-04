@@ -1,86 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { useModal } from 'App/components/Modal';
-import cn from 'classnames';
-
-import { fetch, init } from 'Duck/integrations/actions';
-import { fetchIntegrationList, setSiteId } from 'Duck/integrations/integrations';
-import SiteDropdown from 'Shared/SiteDropdown';
-import ReduxDoc from './ReduxDoc';
-import VueDoc from './VueDoc';
-import GraphQLDoc from './GraphQLDoc';
-import NgRxDoc from './NgRxDoc';
-import MobxDoc from './MobxDoc';
-import ProfilerDoc from './ProfilerDoc';
-import AssistDoc from './AssistDoc';
-import PiniaDoc from './PiniaDoc';
-import ZustandDoc from './ZustandDoc';
-import MSTeams from './Teams';
-import DocCard from 'Shared/DocCard/DocCard';
-import { PageTitle, Tooltip } from 'UI';
 import withPageTitle from 'HOCs/withPageTitle';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
 
-import BugsnagForm from './BugsnagForm';
-import CloudwatchForm from './CloudwatchForm';
-import DatadogForm from './DatadogForm';
-import ElasticsearchForm from './ElasticsearchForm';
+import { useModal } from 'App/components/Modal';
+import { useStore } from 'App/mstore';
+import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilters';
+import { PageTitle } from 'UI';
+
+import DocCard from 'Shared/DocCard/DocCard';
+import SiteDropdown from 'Shared/SiteDropdown';
+
+import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
+import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
+import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
+import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
 import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
-import NewrelicForm from './NewrelicForm';
-import RollbarForm from './RollbarForm';
-import SentryForm from './SentryForm';
+import ProfilerDoc from './ProfilerDoc';
 import SlackForm from './SlackForm';
-import StackdriverForm from './StackdriverForm';
-import SumoLogicForm from './SumoLogicForm';
-import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilters';
+import MSTeams from './Teams';
+import AssistDoc from './Tracker/AssistDoc';
+import GraphQLDoc from './Tracker/GraphQLDoc';
+import MobxDoc from './Tracker/MobxDoc';
+import NgRxDoc from './Tracker/NgRxDoc';
+import PiniaDoc from './Tracker/PiniaDoc';
+import ReduxDoc from './Tracker/ReduxDoc';
+import VueDoc from './Tracker/VueDoc';
+import ZustandDoc from './Tracker/ZustandDoc';
 
 interface Props {
-  fetch: (name: string, siteId: string) => void;
-  init: () => void;
-  fetchIntegrationList: (siteId: any) => void;
-  integratedList: any;
-  initialSiteId: string;
-  setSiteId: (siteId: string) => void;
   siteId: string;
   hideHeader?: boolean;
-  loading?: boolean;
 }
 
 function Integrations(props: Props) {
-  const { initialSiteId, hideHeader = false, loading = false } = props;
-  const { showModal } = useModal();
+  const { integrationsStore, projectsStore } = useStore();
+  const initialSiteId = projectsStore.siteId;
+  const siteId = integrationsStore.integrations.siteId;
+  const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
+  const storeIntegratedList = integrationsStore.integrations.list;
+  const { hideHeader = false } = props;
+  const { showModal, hideModal } = useModal();
   const [integratedList, setIntegratedList] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    const list = props.integratedList
-      .filter((item: any) => item.integrated)
+    const list = integrationsStore.integrations.integratedServices
       .map((item: any) => item.name);
     setIntegratedList(list);
-  }, [props.integratedList]);
+  }, [storeIntegratedList]);
 
   useEffect(() => {
-    props.fetchIntegrationList(initialSiteId);
-    props.setSiteId(initialSiteId);
-  }, []);
+    if (siteId) {
+      void fetchIntegrationList(siteId);
+    } else if (initialSiteId) {
+      integrationsStore.integrations.setSiteId(initialSiteId);
+    }
+  }, [siteId]);
 
   const onClick = (integration: any, width: number) => {
-    if (integration.slug && integration.slug !== 'slack' && integration.slug !== 'msteams') {
-      props.fetch(integration.slug, props.siteId);
+    if (
+      integration.slug &&
+      integration.slug !== 'slack' &&
+      integration.slug !== 'msteams'
+    ) {
+      const intName = integration.slug as
+        | 'sentry'
+        | 'bugsnag'
+        | 'rollbar'
+        | 'elasticsearch'
+        | 'datadog'
+        | 'sumologic'
+        | 'stackdriver'
+        | 'cloudwatch'
+        | 'newrelic';
+      if (integrationsStore[intName]) {
+        void integrationsStore[intName].fetchIntegration(siteId);
+      }
     }
 
     showModal(
       React.cloneElement(integration.component, {
-        integrated: integratedList.includes(integration.slug)
+        integrated: integratedList.includes(integration.slug),
+        siteId,
+        onClose: hideModal,
       }),
       { right: true, width }
     );
-  };
-
-  const onChangeSelect = ({ value }: any) => {
-    props.setSiteId(value.value);
-    props.fetchIntegrationList(value.value);
   };
 
   const onChange = (key: string) => {
@@ -99,83 +106,98 @@ function Integrations(props: Props) {
     key: cat.key,
     title: cat.title,
     label: cat.title,
-    icon: cat.icon
-  }))
+    icon: cat.icon,
+  }));
 
+  const allIntegrations = filteredIntegrations.flatMap(
+    (cat) => cat.integrations
+  );
 
-  const allIntegrations = filteredIntegrations.flatMap(cat => cat.integrations);
-
+  const onChangeSelect = ({ value }: any) => {
+    integrationsStore.integrations.setSiteId(value.value);
+  };
 
   return (
     <>
-      <div className='bg-white rounded-lg border shadow-sm p-5 mb-4'>
-        {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
-
-        <IntegrationFilters onChange={onChange} activeItem={activeFilter} filters={filters} />
+      <div className="bg-white rounded-lg border shadow-sm p-5 mb-4">
+        <div className={'flex items-center gap-4 mb-2'}>
+          {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
+          <SiteDropdown value={siteId} onChange={onChangeSelect} />
+        </div>
+        <IntegrationFilters
+          onChange={onChange}
+          activeItem={activeFilter}
+          filters={filters}
+        />
       </div>
 
-      <div className='mb-4' />
+      <div className="mb-4" />
 
-      <div className={cn(`
-    mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3
-`)}>
-        {allIntegrations.map((integration: any) => (
-          <IntegrationItem
-            integrated={integratedList.includes(integration.slug)}
-            integration={integration}
-            onClick={() =>
-              onClick(integration, filteredIntegrations.find(cat => cat.integrations.includes(integration)).title === 'Plugins' ? 500 : 350)
-            }
-            hide={
-              (integration.slug === 'github' &&
-                integratedList.includes('jira')) ||
-              (integration.slug === 'jira' &&
-                integratedList.includes('github'))
-            }
-          />
+      <div
+        className={'mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'}
+      >
+        {allIntegrations.map((integration, i) => (
+          <React.Fragment key={`${integration.slug}+${i}`}>
+            <IntegrationItem
+              integrated={integratedList.includes(integration.slug)}
+              integration={integration}
+              useIcon={integration.useIcon}
+              onClick={() =>
+                onClick(
+                  integration,
+                  filteredIntegrations.find((cat) =>
+                    cat.integrations.includes(integration)
+                  )?.title === 'Plugins'
+                    ? 500
+                    : 350
+                )
+              }
+              hide={
+                (integration.slug === 'github' &&
+                  integratedList.includes('jira')) ||
+                (integration.slug === 'jira' &&
+                  integratedList.includes('github'))
+              }
+            />
+          </React.Fragment>
         ))}
       </div>
-
     </>
   );
 }
 
-export default connect(
-  (state: any) => ({
-    initialSiteId: state.getIn(['site', 'siteId']),
-    integratedList: state.getIn(['integrations', 'list']) || [],
-    loading: state.getIn(['integrations', 'fetchRequest', 'loading']),
-    siteId: state.getIn(['integrations', 'siteId'])
-  }),
-  { fetch, init, fetchIntegrationList, setSiteId }
-)(withPageTitle('Integrations - OpenReplay Preferences')(Integrations));
-
+export default withPageTitle('Integrations - OpenReplay Preferences')(
+  observer(Integrations)
+);
 
 const integrations = [
   {
     title: 'Issue Reporting',
     key: 'issue-reporting',
-    description: 'Seamlessly report issues or share issues with your team right from OpenReplay.',
+    description:
+      'Seamlessly report issues or share issues with your team right from OpenReplay.',
     isProject: false,
     icon: 'exclamation-triangle',
     integrations: [
       {
         title: 'Jira',
-        subtitle: 'Integrate Jira with OpenReplay to enable the creation of a new ticket directly from a session.',
+        subtitle:
+          'Integrate Jira with OpenReplay to enable the creation of a new ticket directly from a session.',
         slug: 'jira',
         category: 'Errors',
         icon: 'integrations/jira',
-        component: <JiraForm />
+        component: <JiraForm />,
       },
       {
         title: 'Github',
-        subtitle: 'Integrate GitHub with OpenReplay to enable the direct creation of a new issue from a session.',
+        subtitle:
+          'Integrate GitHub with OpenReplay to enable the direct creation of a new issue from a session.',
         slug: 'github',
         category: 'Errors',
         icon: 'integrations/github',
-        component: <GithubForm />
-      }
-    ]
+        component: <GithubForm />,
+      },
+    ],
   },
   {
     title: 'Backend Logging',
@@ -186,106 +208,80 @@ const integrations = [
       'Sync your backend errors with sessions replays and see what happened front-to-back.',
     docs: () => (
       <DocCard
-        title='Why use integrations?'
-        icon='question-lg'
-        iconBgColor='bg-red-lightest'
-        iconColor='red'
+        title="Why use integrations?"
+        icon="question-lg"
+        iconBgColor="bg-red-lightest"
+        iconColor="red"
       >
-        Sync your backend errors with sessions replays and see what happened front-to-back.
+        Sync your backend errors with sessions replays and see what happened
+        front-to-back.
       </DocCard>
     ),
     integrations: [
       {
         title: 'Sentry',
-        subtitle: 'Integrate Sentry with session replays to seamlessly observe backend errors.',
+        subtitle:
+          'Integrate Sentry with session replays to seamlessly observe backend errors.',
         slug: 'sentry',
         icon: 'integrations/sentry',
-        component: <SentryForm />
-      },
-      {
-        title: 'Bugsnag',
-        subtitle: 'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
-        slug: 'bugsnag',
-        icon: 'integrations/bugsnag',
-        component: <BugsnagForm />
-      },
-      {
-        title: 'Rollbar',
-        subtitle: 'Integrate Rollbar with session replays to seamlessly observe backend errors.',
-        slug: 'rollbar',
-        icon: 'integrations/rollbar',
-        component: <RollbarForm />
+        component: <SentryForm />,
       },
       {
         title: 'Elasticsearch',
-        subtitle: 'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
+        subtitle:
+          'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
         slug: 'elasticsearch',
         icon: 'integrations/elasticsearch',
-        component: <ElasticsearchForm />
+        component: <ElasticsearchForm />,
       },
       {
         title: 'Datadog',
-        subtitle: 'Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting.',
+        subtitle:
+          'Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting.',
         slug: 'datadog',
         icon: 'integrations/datadog',
-        component: <DatadogForm />
+        component: <DatadogForm />,
       },
       {
-        title: 'Sumo Logic',
-        subtitle: 'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
-        slug: 'sumologic',
-        icon: 'integrations/sumologic',
-        component: <SumoLogicForm />
+        title: 'Dynatrace',
+        subtitle:
+          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
+        slug: 'dynatrace',
+        icon: 'integrations/dynatrace',
+        useIcon: true,
+        component: <DynatraceFormModal />,
       },
-      {
-        title: 'Google Cloud',
-        subtitle: 'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
-        slug: 'stackdriver',
-        icon: 'integrations/google-cloud',
-        component: <StackdriverForm />
-      },
-      {
-        title: 'CloudWatch',
-        subtitle: 'Integrate CloudWatch to see backend logs and errors alongside session replay.',
-        slug: 'cloudwatch',
-        icon: 'integrations/aws',
-        component: <CloudwatchForm />
-      },
-      {
-        title: 'Newrelic',
-        subtitle: 'Integrate NewRelic with session replays to seamlessly observe backend errors.',
-        slug: 'newrelic',
-        icon: 'integrations/newrelic',
-        component: <NewrelicForm />
-      }
-    ]
+    ],
   },
   {
     title: 'Collaboration',
     key: 'collaboration',
     isProject: false,
     icon: 'file-code',
-    description: 'Share your sessions with your team and collaborate on issues.',
+    description:
+      'Share your sessions with your team and collaborate on issues.',
     integrations: [
       {
         title: 'Slack',
-        subtitle: 'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
+        subtitle:
+          'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
         slug: 'slack',
         category: 'Errors',
         icon: 'integrations/slack',
         component: <SlackForm />,
-        shared: true
+        shared: true,
       },
       {
         title: 'MS Teams',
-        subtitle: 'Integrate MS Teams to empower every user in your org with the ability to send sessions to any MS Teams channel.',
+        subtitle:
+          'Integrate MS Teams to empower every user in your org with the ability to send sessions to any MS Teams channel.',
         slug: 'msteams',
         category: 'Errors',
         icon: 'integrations/teams',
         component: <MSTeams />,
-        shared: true
-      }
-    ]
+        shared: true,
+      },
+    ],
   },
   // {
   //   title: 'State Management',
@@ -302,72 +298,135 @@ const integrations = [
     icon: 'chat-left-text',
     docs: () => (
       <DocCard
-        title='What are plugins?'
-        icon='question-lg'
-        iconBgColor='bg-red-lightest'
-        iconColor='red'
+        title="What are plugins?"
+        icon="question-lg"
+        iconBgColor="bg-red-lightest"
+        iconColor="red"
       >
-        Plugins capture your application’s store, monitor queries, track performance issues and even
-        assist your end user through live sessions.
+        Plugins capture your application’s store, monitor queries, track
+        performance issues and even assist your end user through live sessions.
       </DocCard>
     ),
     description:
-      'Reproduce issues as if they happened in your own browser. Plugins help capture your application\'s store, HTTP requeets, GraphQL queries, and more.',
+      "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
     integrations: [
       {
         title: 'Redux',
-        subtitle: 'Capture Redux actions/state and inspect them later on while replaying session recordings.',
-        icon: 'integrations/redux', component: <ReduxDoc />
+        subtitle:
+          'Capture Redux actions/state and inspect them later on while replaying session recordings.',
+        icon: 'integrations/redux',
+        component: <ReduxDoc />,
       },
       {
         title: 'VueX',
-        subtitle: 'Capture VueX mutations/state and inspect them later on while replaying session recordings.',
+        subtitle:
+          'Capture VueX mutations/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/vuejs',
-        component: <VueDoc />
+        component: <VueDoc />,
       },
       {
         title: 'Pinia',
-        subtitle: 'Capture Pinia mutations/state and inspect them later on while replaying session recordings.',
+        subtitle:
+          'Capture Pinia mutations/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/pinia',
-        component: <PiniaDoc />
+        component: <PiniaDoc />,
       },
       {
         title: 'GraphQL',
-        subtitle: 'Capture GraphQL requests and inspect them later on while replaying session recordings. This plugin is compatible with Apollo and Relay implementations.',
+        subtitle:
+          'Capture GraphQL requests and inspect them later on while replaying session recordings. This plugin is compatible with Apollo and Relay implementations.',
         icon: 'integrations/graphql',
-        component: <GraphQLDoc />
+        component: <GraphQLDoc />,
       },
       {
         title: 'NgRx',
-        subtitle: 'Capture NgRx actions/state and inspect them later on while replaying session recordings.\n',
+        subtitle:
+          'Capture NgRx actions/state and inspect them later on while replaying session recordings.\n',
         icon: 'integrations/ngrx',
-        component: <NgRxDoc />
+        component: <NgRxDoc />,
       },
       {
         title: 'MobX',
-        subtitle: 'Capture MobX mutations and inspect them later on while replaying session recordings.',
+        subtitle:
+          'Capture MobX mutations and inspect them later on while replaying session recordings.',
         icon: 'integrations/mobx',
-        component: <MobxDoc />
+        component: <MobxDoc />,
       },
       {
         title: 'Profiler',
-        subtitle: 'Plugin allows you to measure your JS functions performance and capture both arguments and result for each call.',
+        subtitle:
+          'Plugin allows you to measure your JS functions performance and capture both arguments and result for each call.',
         icon: 'integrations/openreplay',
-        component: <ProfilerDoc />
+        component: <ProfilerDoc />,
       },
       {
         title: 'Assist',
-        subtitle: 'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.\n',
+        subtitle:
+          'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.\n',
         icon: 'integrations/openreplay',
-        component: <AssistDoc />
+        component: <AssistDoc />,
       },
       {
         title: 'Zustand',
-        subtitle: 'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
+        subtitle:
+          'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
         icon: 'integrations/zustand',
         // header: '🐻',
-        component: <ZustandDoc />
-      }
-    ]
-  }
+        component: <ZustandDoc />,
+      },
+    ],
+  },
 ];
+
+/**
+ *
+ * @deprecated
+ * */
+// {
+//   title: 'Sumo Logic',
+//     subtitle:
+//   'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
+//     slug: 'sumologic',
+//   icon: 'integrations/sumologic',
+//   component: <SumoLogicForm />,
+// },
+// {
+//   title: 'Bugsnag',
+//     subtitle:
+//   'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
+//     slug: 'bugsnag',
+//   icon: 'integrations/bugsnag',
+//   component: <BugsnagForm />,
+// },
+// {
+//   title: 'Rollbar',
+//     subtitle:
+//   'Integrate Rollbar with session replays to seamlessly observe backend errors.',
+//     slug: 'rollbar',
+//   icon: 'integrations/rollbar',
+//   component: <RollbarForm />,
+// },
+// {
+//   title: 'Google Cloud',
+//     subtitle:
+//   'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
+//     slug: 'stackdriver',
+//   icon: 'integrations/google-cloud',
+//   component: <StackdriverForm />,
+// },
+// {
+//   title: 'CloudWatch',
+//     subtitle:
+//   'Integrate CloudWatch to see backend logs and errors alongside session replay.',
+//     slug: 'cloudwatch',
+//   icon: 'integrations/aws',
+//   component: <CloudwatchForm />,
+// },
+// {
+//   title: 'Newrelic',
+//     subtitle:
+//   'Integrate NewRelic with session replays to seamlessly observe backend errors.',
+//     slug: 'newrelic',
+//   icon: 'integrations/newrelic',
+//   component: <NewrelicForm />,
+// },

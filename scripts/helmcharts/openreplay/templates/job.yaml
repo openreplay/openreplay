@@ -173,12 +173,71 @@ spec:
           - -c
         args:
           - |
-            pg_version=$(psql -c "SHOW server_version;" | xargs | grep -oP '\d+(?=\.)')
-            if [[ $pg_version -le 14 ]]; then
-              echo "[error] postgresql version is $pg_version which is < 16. Exiting."
-              For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
-              exit 101
-            fi
+            majorVersion=16
+            minorVersion=4
+            pg_version=`psql -V | awk '{print $3}'`
+            echo $pg_version |\
+              awk -v pg_version=$pg_version -v major="$majorVersion" -v minor="$minorVersion" -F. '{
+                if ($1 != major) {
+                  # print "Need version " major pg_version;
+                  exit 100
+                } else if ($2 < minor) {
+                  # print "Need at least " major "." minor pg_version;
+                  exit 100
+                } 
+              }' || {
+              echo "[error] postgresql version is $pg_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-postgresql
+              # exit 101
+            }
+      {{- if .Values.global.enterpriseEditionLicense }}
+      - name: clickhouse-check
+        image: clickhouse/clickhouse-server:22.12-alpine
+        env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          - name: CH_HOST
+            value: "{{.Values.global.clickhouse.chHost}}"
+          - name: CH_PORT
+            value: "{{.Values.global.clickhouse.service.webPort}}"
+          - name: CH_USERNAME
+            value: "{{.Values.global.clickhouse.username}}"
+          - name: CH_PASSWORD
+            value: "{{.Values.global.clickhouse.password}}"
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            majorVersion=24
+            minorVersion=9
+            [[ "${CH_PASSWORD}" == "" ]] || {
+              CH_PASSWORD="--password $CH_PASSWORD"
+            }
+            ch_client=`echo clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} ${CH_PASSWORD} --port ${CH_PORT}`
+            echo $ch_client
+            ch_version=`$ch_client -q "SELECT version()"`
+            echo $ch_version |\
+            awk -v major="$majorVersion" -v minor="$minorVersion" '{split($4, ver, ".");
+              if ($1 != major) {
+                # print "Need version " major pg_version;
+                exit 100
+              } else if ($2 < minor) {
+                # print "Need at least " major "." minor pg_version;
+                exit 100
+              } 
+            }' || {
+              echo "[error] Clickhouse server version $ch_version which is < ${majorVersion}.${minorVersion}. Exiting."
+              echo For upgrade steps, refer: https://docs.openreplay.com/en/deployment/openreplay-admin/#upgrade-clickhouse
+              # exit 101
+            }
+        {{- end}}
         volumeMounts:
           - name: shared
             mountPath: /opt/openreplay
@@ -187,6 +246,12 @@ spec:
       containers:
       - name: postgres
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
@@ -233,6 +298,12 @@ spec:
       - name: minio
         image: bitnami/minio:2023.11.20
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -391,6 +462,12 @@ spec:
       - name: clickhouse
         image: clickhouse/clickhouse-server:22.12-alpine
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -433,6 +510,12 @@ spec:
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
+          - name: OPENREPLAY_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: openreplay-version
+                key: version
+                optional: true
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'

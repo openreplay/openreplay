@@ -1,13 +1,16 @@
+import { useStore } from "App/mstore";
 import React from 'react';
-import { connect } from 'react-redux';
-
+import { observer } from 'mobx-react-lite';
 import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
 
-const ProfilerDoc = (props) => {
-  const { projectKey } = props;
+const ProfilerDoc = () => {
+  const { integrationsStore, projectsStore } = useStore();
+  const sites = projectsStore.list;
+  const siteId = integrationsStore.integrations.siteId
+  const projectKey = siteId ? sites.find((site) => site.id === siteId)?.projectKey : sites[0]?.projectKey
 
   const usage = `import OpenReplay from '@openreplay/tracker';
 import trackerProfiler from '@openreplay/tracker-profiler';
@@ -15,8 +18,7 @@ import trackerProfiler from '@openreplay/tracker-profiler';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'
 });
-// .start() returns a promise
-tracker.start().then(sessionData => ... ).catch(e => ... )
+tracker.start()
 //...
 export const profiler = tracker.use(trackerProfiler());
 //...
@@ -32,8 +34,7 @@ const tracker = new OpenReplay({
 //...
 function SomeFunctionalComponent() {
   useEffect(() => { // or componentDidMount in case of Class approach
-    // .start() returns a promise
-    tracker.start().then(sessionData => ... ).catch(e => ... )
+    tracker.start()
   }, [])
 //...
 export const profiler = tracker.use(trackerProfiler());
@@ -87,12 +88,4 @@ const fn = profiler('call_name')(() => {
 
 ProfilerDoc.displayName = 'ProfilerDoc';
 
-export default connect((state) => {
-  const siteId = state.getIn(['integrations', 'siteId']);
-  const sites = state.getIn(['site', 'list']);
-  return {
-    projectKey: sites
-      .find((site) => site.get('id') === siteId)
-      .get('projectKey'),
-  };
-})(ProfilerDoc);
+export default observer(ProfilerDoc);

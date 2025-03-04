@@ -1,12 +1,15 @@
 import CreateNote from 'Components/Session_/Player/Controls/components/CreateNote';
 import React from 'react';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { Button, Tooltip } from 'antd';
 import { MessageOutlined } from '@ant-design/icons';
 import { useModal } from 'App/components/Modal';
 
-function NotePopup({ tooltipActive }: { tooltipActive: boolean }) {
+function NotePopup() {
+  const { sessionStore } = useStore();
+  const tooltipActive = sessionStore.createNoteTooltip.isVisible;
   const { player, store } = React.useContext(PlayerContext);
   const { showModal, hideModal } = useModal();
   const toggleNotePopup = () => {
@@ -35,8 +38,4 @@ function NotePopup({ tooltipActive }: { tooltipActive: boolean }) {
   );
 }
 
-const NotePopupComp = connect(
-  (state: any) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
-)(NotePopup);
-
-export default React.memo(NotePopupComp);
+export default observer(NotePopup)

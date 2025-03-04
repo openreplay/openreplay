@@ -63,6 +63,7 @@ export interface IIssue {
   icon: string
   timestamp: number
   startedAt: number
+  messageId: number
 }
 
 export default class Issue {
@@ -78,6 +79,7 @@ export default class Issue {
   context: IIssue["context"]
   icon: IIssue["icon"]
   key: number
+  messageId: IIssue["messageId"];
 
   constructor({ type, ...rest }: IIssue & { key: number }) {
     Object.assign(this, {

@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base tini
@@ -13,7 +13,9 @@ ENV APP_NAME=crons \
 
 WORKDIR /work
 COPY requirements-crons.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade uv
+RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
+RUN uv pip install --no-cache-dir --upgrade -r requirements.txt --system
 
 COPY . .
 RUN mv env.default .env && mv entrypoint_crons.sh entrypoint.sh

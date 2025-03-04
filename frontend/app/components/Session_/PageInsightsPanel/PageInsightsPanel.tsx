@@ -1,48 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { Loader, Icon } from 'UI';
-import { connect } from 'react-redux';
-import { fetchSessionClickmap } from 'Duck/sessions';
+import { Loader } from 'UI';
+import {Button, Tooltip} from 'antd';
+import {CloseOutlined} from '@ant-design/icons';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { compareJsonObjects } from 'App/utils';
 
-import Select from 'Shared/Select';
-import SelectDateRange from 'Shared/SelectDateRange';
-import Period from 'Types/app/period';
+import {Select, Form} from 'antd';
 
 const JUMP_OFFSET = 1000;
 interface Props {
-    filters: any;
-    fetchSessionClickmap: (sessionId: string, filters: Record<string, any>) => void;
-    insights: any;
-    events: Array<any>;
-    urlOptions: Array<any>;
-    loading: boolean;
-    host: string;
     setActiveTab: (tab: string) => void;
-    sessionId: string;
 }
 
-function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insights, urlOptions, host, loading = true, setActiveTab, sessionId }: Props) {
+function PageInsightsPanel({ setActiveTab }: Props) {
+    const { sessionStore } = useStore();
+    const sessionId = sessionStore.current.sessionId;
+    const startTs = sessionStore.current.startedAt;
+    const loading = sessionStore.loadingSessionData;
+    const events = sessionStore.visitedEvents;
+    const filters = sessionStore.insightsFilters;
+    const fetchSessionClickmap = sessionStore.fetchSessionClickmap;
+    const insights = sessionStore.insights;
+    const urlOptions = events.map(({ url, host }: any) => ({ label: url, value: url, host }));
+
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
-    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: host + defaultValue });
+    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: defaultValue });
     const prevInsights = React.useRef<any>();
 
-    const period = Period({
-        start: insightsFilters.startDate,
-        end: insightsFilters.endDate,
-        rangeName: insightsFilters.rangeValue,
-    });
-
-    const onDateChange = (e: any) => {
-        const { startDate, endDate, rangeValue } = e.toJSON();
-        setInsightsFilters({ ...insightsFilters, startDate, endDate, rangeValue });
-    };
-
     useEffect(() => {
-        markTargets(insights.toJS());
+        markTargets(insights);
         return () => {
             markTargets(null);
         };
@@ -53,49 +44,45 @@ function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insight
         if (!changed) { return }
 
         if (urlOptions && urlOptions[0]) {
-            const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
+            const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value;
             Player.pause();
-            fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
-            markTargets([]);
+            markTargets(null);
+            void fetchSessionClickmap(sessionId, { ...insightsFilters, sessionId, url });
         }
         prevInsights.current = insightsFilters;
     }, [insightsFilters]);
 
     const onPageSelect = ({ value }: any) => {
         const event = events.find((item) => item.url === value.value);
-        Player.jump(event.time + JUMP_OFFSET);
-        setInsightsFilters({ ...insightsFilters, url: host + value.value });
+        Player.jump((event.timestamp - startTs) + JUMP_OFFSET);
+        Player.pause();
+        setInsightsFilters({ ...insightsFilters, url: value.value });
     };
 
     return (
-        <div className="p-4 bg-white">
-            <div className="pb-3 flex items-center" style={{ maxWidth: '241px', paddingTop: '5px' }}>
-                <div className="flex items-center">
-                    <span className="mr-1 text-xl">Clicks</span>
-                </div>
-                <div
-                    onClick={() => {
-                        setActiveTab('');
-                    }}
-                    className="ml-auto flex items-center justify-center bg-white cursor-pointer"
-                >
-                    <Icon name="close" size="18" />
-                </div>
-            </div>
-            <div className="mb-4 flex items-center">
-                <div className="mr-2 flex-shrink-0">In Page</div>
-                <Select
-                    isSearchable={true}
-                    right
-                    placeholder="change"
-                    options={urlOptions}
-                    name="url"
-                    defaultValue={defaultValue}
-                    onChange={onPageSelect}
-                    id="change-dropdown"
-                    className="w-full"
-                    style={{ width: '100%' }}
+        <div className="p-2 py-4 bg-white">
+            <div className="flex items-center gap-2 mb-3 overflow-hidden">
+                <div className="flex-shrink-0 font-medium">Page</div>
+                <Form.Item name="url" className='mb-0 w-[176px]'>
+                    <Select
+                        showSearch
+                        placeholder="change"
+                        options={urlOptions}
+                        defaultValue={defaultValue}
+                        onChange={onPageSelect}
+                        id="change-dropdown"
+                        className="w-full rounded-lg max-w-[270px]"
+                        dropdownStyle={{ }}
+                    />
+                </Form.Item>
+                <Tooltip title="Close Panel" placement='bottomRight'>
+                <Button
+                    className="ml-2"
+                    type='text'
+                    onClick={() => { setActiveTab(''); }}
+                    icon={<CloseOutlined />}
                 />
+                </Tooltip>
             </div>
             <Loader loading={loading}>
                 <SelectorsList />
@@ -104,18 +91,4 @@ function PageInsightsPanel({ filters, fetchSessionClickmap, events = [], insight
     );
 }
 
-export default connect(
-    (state: any) => {
-        const events = state.getIn(['sessions', 'visitedEvents']);
-        return {
-            filters: state.getIn(['sessions', 'insightFilters']),
-            host: state.getIn(['sessions', 'host']),
-            insights: state.getIn(['sessions', 'insights']),
-            events: events,
-            urlOptions: events.map(({ url, host }: any) => ({ label: url, value: url, host })),
-            loading: state.getIn(['sessions', 'fetchInsightsRequest', 'loading']),
-            sessionId: state.getIn(['sessions', 'current']).sessionId,
-        };
-    },
-    { fetchSessionClickmap }
-)(PageInsightsPanel);
+export default observer(PageInsightsPanel);

@@ -1,9 +1,11 @@
-import { WebRequest } from "webextension-polyfill";
+import { isTokenExpired } from "~/utils/jwt";
+
+let checkBusy = false;
 
 export default defineBackground(() => {
   const CHECK_INT = 60 * 1000;
   const PING_INT = 30 * 1000;
-  const VER = '1.0.3';
+  const VER = "1.0.10";
 
   const messages = {
     popup: {
@@ -40,6 +42,7 @@ export default defineBackground(() => {
         checkNewTab: "ort:check-new-tab",
         started: "ort:started",
         stopped: "ort:stopped",
+        toStop: "ort:stop",
         restart: "ort:restart",
         getErrorEvents: "ort:get-error-events",
       },
@@ -54,12 +57,14 @@ export default defineBackground(() => {
     injected: {
       from: {
         bumpLogs: "ort:bump-logs",
+        bumpNetwork: "ort:bump-network",
       },
     },
     offscreen: {
       to: {
         checkRecStatus: "offscr:check-status",
         startRecording: "offscr:start-recording",
+        stopRecording: "offscr:stop-recording",
       },
     },
   };
@@ -101,6 +106,12 @@ export default defineBackground(() => {
     stopped: "stopped",
   };
 
+  const defaultSettings = {
+    openInNewTab: true,
+    consoleLogs: true,
+    networkLogs: true,
+    ingestPoint: "https://app.openreplay.com",
+  };
   const defaultSpotObj = {
     name: "",
     comment: "",
@@ -126,12 +137,7 @@ export default defineBackground(() => {
   let finalReady = false;
   let finalSpotObj: SpotObj = defaultSpotObj;
   let onStop: (() => void) | null = null;
-  let settings = {
-    openInNewTab: true,
-    consoleLogs: true,
-    networkLogs: true,
-    ingestPoint: "https://app.openreplay.com",
-  };
+  let settings = defaultSettings;
   let recordingState = {
     activeTabId: null,
     area: null,
@@ -139,6 +145,8 @@ export default defineBackground(() => {
     audioPerm: 0,
   } as Record<string, any>;
   let jwtToken = "";
+  let refreshInt: any;
+  let pingInt: any;
 
   function setJWTToken(token: string) {
     jwtToken = token;
@@ -147,11 +155,28 @@ export default defineBackground(() => {
       void browser.runtime.sendMessage({
         type: messages.popup.loginExist,
       });
+      if (!refreshInt) {
+        refreshInt = setInterval(() => {
+          void refreshToken();
+        }, CHECK_INT);
+      }
+
+      if (!pingInt) {
+        pingInt = setInterval(() => {
+          void pingJWT();
+        }, PING_INT);
+      }
     } else {
       void browser.storage.local.remove("jwtToken");
       void browser.runtime.sendMessage({
         type: messages.popup.to.noLogin,
       });
+      if (refreshInt) {
+        clearInterval(refreshInt);
+      }
+      if (pingInt) {
+        clearInterval(pingInt);
+      }
     }
   }
 
@@ -167,21 +192,34 @@ export default defineBackground(() => {
   }
 
   let slackChannels: { name: string; webhookId: number }[] = [];
-  const refreshToken = async () => {
-    const data = await browser.storage.local.get(["jwtToken", "settings"]);
+
+  void checkTokenValidity();
+  browser.storage.local.get("settings").then(async (data: any) => {
     if (!data.settings) {
+      void browser.storage.local.set({ settings });
       return;
     }
+    settings = Object.assign(settings, data.settings);
+  });
+
+  async function refreshToken() {
+    const data = await browser.storage.local.get(["jwtToken", "settings"]);
+    if (!data.settings) {
+      await browser.storage.local.set({ defaultSettings });
+      data.settings = defaultSettings;
+    }
+    if (!data.jwtToken) {
+      setJWTToken("");
+    }
     const { jwtToken, settings } = data;
-    const ingest = safeApiUrl(settings.ingestPoint);
-    const refreshUrl = safeApiUrl(`${ingest}/api`);
+    const refreshUrl = `${safeApiUrl(settings.ingestPoint)}/api/spot/refresh`;
     if (!isTokenExpired(jwtToken) || !jwtToken) {
       if (refreshInt) {
         clearInterval(refreshInt);
       }
       return true;
     }
-    const resp = await fetch(`${refreshUrl}/spot/refresh`, {
+    const resp = await fetch(refreshUrl, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwtToken}`,
@@ -199,7 +237,7 @@ export default defineBackground(() => {
     const refreshedJwt = dataObj.jwt;
     setJWTToken(refreshedJwt);
     return true;
-  };
+  }
 
   const fetchSlackChannels = async (token: string, ingest: string) => {
     await refreshToken();
@@ -217,51 +255,15 @@ export default defineBackground(() => {
       }));
     }
   };
-  let refreshInt: any;
-  let pingInt: any;
-  browser.storage.local
-    .get(["jwtToken", "settings"])
-    .then(async (data: any) => {
-      if (!data.settings) {
-        void browser.storage.local.set({ settings });
-        return;
-      }
-      settings = Object.assign(settings, data.settings);
-
-      if (!data.jwtToken) {
-        console.error("No JWT token found in storage");
-        void browser.runtime.sendMessage({
-          type: messages.popup.to.noLogin,
-        });
-        return;
-      }
-
-      const url = safeApiUrl(`${data.settings.ingestPoint}/api`);
-      const ok = await refreshToken();
-      if (ok) {
-        fetchSlackChannels(data.jwtToken, url).catch((e) => {
-          console.error(e);
-          void refreshToken();
-        });
-
-        if (!refreshInt) {
-          refreshInt = setInterval(() => {
-            void refreshToken();
-          }, CHECK_INT);
-        }
-
-        if (!pingInt) {
-          pingInt = setInterval(() => {
-            void pingJWT();
-          }, PING_INT);
-        }
-      }
-    });
 
   async function pingJWT(): Promise<void> {
     const data = await browser.storage.local.get(["jwtToken", "settings"]);
     if (!data.settings) {
-      return;
+      await browser.storage.local.set({ defaultSettings });
+      data.settings = defaultSettings;
+    }
+    if (!data.jwtToken) {
+      setJWTToken("");
     }
     const { jwtToken, settings } = data;
     const ingest = safeApiUrl(settings.ingestPoint);
@@ -277,7 +279,7 @@ export default defineBackground(() => {
         method: "GET",
         headers: {
           Authorization: `Bearer ${jwtToken}`,
-          'Ext-Version': VER
+          "Ext-Version": VER,
         },
       });
       if (!r.ok) {
@@ -289,6 +291,33 @@ export default defineBackground(() => {
   }
 
   let lastReq: Record<string, any> | null = null;
+  async function checkTokenValidity() {
+    if (checkBusy) return;
+    checkBusy = true;
+    const data = await browser.storage.local.get("jwtToken");
+    if (!data.jwtToken) {
+      void browser.runtime.sendMessage({
+        type: messages.popup.to.noLogin,
+      });
+      checkBusy = false;
+      return;
+    }
+    const ok = await refreshToken();
+    if (ok) {
+      setJWTToken(data.jwtToken);
+      if (!refreshInt) {
+        refreshInt = setInterval(() => {
+          void refreshToken();
+        }, CHECK_INT);
+      }
+      if (!pingInt) {
+        pingInt = setInterval(() => {
+          void pingJWT();
+        }, PING_INT);
+      }
+    }
+    checkBusy = false;
+  }
   // @ts-ignore
   browser.runtime.onMessage.addListener((request, sender, respond) => {
     if (request.type === messages.content.from.contentReady) {
@@ -325,7 +354,7 @@ export default defineBackground(() => {
               type: "content:mount",
               area: request.area,
               mic: request.mic,
-              audioId: request.selectedAudioDevice,
+              audioId: request.audioId,
               audioPerm: request.permissions ? (request.mic ? 2 : 1) : 0,
             });
           });
@@ -373,6 +402,9 @@ export default defineBackground(() => {
             settings.networkLogs,
             settings.consoleLogs,
             () => recordingState.recording,
+            (hook) => {
+              onStop = hook;
+            },
           );
           // @ts-ignore  this is false positive
           respond(true);
@@ -544,6 +576,10 @@ export default defineBackground(() => {
       finalSpotObj.logs.push(...request.logs);
       return "pong";
     }
+    if (request.type === messages.injected.from.bumpNetwork) {
+      finalSpotObj.network.push(request.event);
+      return "pong";
+    }
     if (request.type === messages.content.from.bumpClicks) {
       finalSpotObj.clicks.push(...request.clicks);
       return "pong";
@@ -627,10 +663,13 @@ export default defineBackground(() => {
         errorData,
       });
     }
-    if (request.type === "ort:stop") {
+    if (request.type === messages.content.from.toStop) {
+      if (recordingState.recording === REC_STATE.stopped) {
+        return console.error('Calling stopped recording?')
+      }
       browser.runtime
         .sendMessage({
-          type: "offscr:stop-recording",
+          type: messages.offscreen.to.stopRecording,
           target: "offscreen",
         })
         .then((r) => {
@@ -704,25 +743,7 @@ export default defineBackground(() => {
       });
     }
     if (request.type === messages.content.from.saveSpotData) {
-      stopTrackingNetwork();
-      const finalNetwork: SpotNetworkRequest[] = [];
-      const tab =
-        recordingState.area === "tab" ? recordingState.activeTabId : undefined;
-      let lastIn = 0;
-      try {
-        rawRequests.forEach((r, i) => {
-          lastIn = i;
-          const spotNetworkRequest = createSpotNetworkRequest(r, tab);
-          if (spotNetworkRequest) {
-            finalNetwork.push(spotNetworkRequest);
-          }
-        });
-      } catch (e) {
-        console.error("cant parse network", e, rawRequests[lastIn]);
-      }
-      Object.assign(finalSpotObj, request.spot, {
-        network: finalNetwork,
-      });
+      Object.assign(finalSpotObj, request.spot);
       return "pong";
     }
     if (request.type === messages.content.from.saveSpotVidChunk) {
@@ -819,7 +840,7 @@ export default defineBackground(() => {
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${jwtToken}`,
-                  'Ext-Version': VER
+                  "Ext-Version": VER,
                 },
               })
                 .then((r) => {
@@ -853,14 +874,16 @@ export default defineBackground(() => {
                   )
                     ? "https://app.openreplay.com"
                     : settings.ingestPoint;
-                  void browser.tabs.create({
-                    url: `${link}/view-spot/${id}`,
-                    active: settings.openInNewTab,
-                  });
                   void sendToActiveTab({
                     type: "content:spot-saved",
                     url: `${link}/view-spot/${id}`,
                   });
+                  setTimeout(() => {
+                    void browser.tabs.create({
+                      url: `${link}/view-spot/${id}`,
+                      active: settings.openInNewTab,
+                    });
+                  }, 250);
                   const blob = base64ToBlob(videoData);
 
                   const mPromise = fetch(mobURL, {
@@ -916,227 +939,54 @@ export default defineBackground(() => {
   void browser.runtime.setUninstallURL("https://forms.gle/sMo8da2AvrPg5o7YA");
   browser.runtime.onInstalled.addListener(async ({ reason }) => {
     // Also fired on update and browser_update
-    if (reason !== "install") return;
-
-    await browser.tabs.create({
-      url: "https://www.openreplay.com/spot/welcome?ref=extension",
-      active: true,
-    });
+    if (reason === "install") {
+      await browser.tabs.create({
+        url: "https://www.openreplay.com/spot/welcome?ref=extension",
+        active: true,
+      });
+    }
+    // in future:
+    // const tabs = await browser.tabs.query({}) as chrome.tabs.Tab[]
+    // for (const tab of tabs) {
+    //   if (tab.id) {
+    // this will require more permissions, do we even want this?
+    //     void chrome.tabs.executeScript(tab.id, {file: "content"});
+    //   }
+    // }
+    await checkTokenValidity();
+    await initializeOffscreenDocument();
   });
   void initializeOffscreenDocument();
 
-  type TrackedRequest = {
-    statusCode: number;
-    requestHeaders: Record<string, string>;
-    responseHeaders: Record<string, string>;
-  } & (
-    | WebRequest.OnBeforeRequestDetailsType
-    | WebRequest.OnBeforeSendHeadersDetailsType
-    | WebRequest.OnCompletedDetailsType
-    | WebRequest.OnErrorOccurredDetailsType
-    | WebRequest.OnResponseStartedDetailsType
-  );
-
-  interface SpotNetworkRequest {
-    encodedBodySize: number;
-    responseBodySize: number;
-    duration: number;
-    method: TrackedRequest["method"];
-    type: string;
-    time: TrackedRequest["timeStamp"];
-    statusCode: number;
-    error?: string;
-    url: TrackedRequest["url"];
-    fromCache: boolean;
-    body: string;
-    requestHeaders: Record<string, string>;
-    responseHeaders: Record<string, string>;
-  }
-  const rawRequests: (TrackedRequest & {
-    startTs: number;
-    duration: number;
-  })[] = [];
-  function filterHeaders(headers: Record<string, string>) {
-    const filteredHeaders: Record<string, string> = {};
-    const privateHs = [
-      "x-api-key",
-      "www-authenticate",
-      "x-csrf-token",
-      "x-requested-with",
-      "x-forwarded-for",
-      "x-real-ip",
-      "cookie",
-      "authorization",
-      "auth",
-      "proxy-authorization",
-      "set-cookie",
-    ];
-    if (Array.isArray(headers)) {
-      headers.forEach(({ name, value }) => {
-        if (privateHs.includes(name.toLowerCase())) {
-          return;
-        } else {
-          filteredHeaders[name] = value;
-        }
-      });
-    } else {
-      for (const [key, value] of Object.entries(headers)) {
-        if (!privateHs.includes(key.toLowerCase())) {
-          filteredHeaders[key] = value;
-        }
-      }
-    }
-    return filteredHeaders;
-  }
-  function createSpotNetworkRequest(
-    trackedRequest: TrackedRequest,
-    trackedTab?: number,
-  ) {
-    if (trackedRequest.tabId === -1) {
-      return;
-    }
-    if (trackedTab && trackedTab !== trackedRequest.tabId) {
-      return;
-    }
-    if (
-      ["ping", "beacon", "image", "script", "font"].includes(
-        trackedRequest.type,
-      )
-    ) {
-      if (!trackedRequest.statusCode || trackedRequest.statusCode < 400) {
-        return;
-      }
-    }
-    const type = ["stylesheet", "script", "image", "media", "font"].includes(
-      trackedRequest.type,
-    )
-      ? "resource"
-      : trackedRequest.type;
-
-    const requestHeaders = trackedRequest.requestHeaders
-      ? filterHeaders(trackedRequest.requestHeaders)
-      : {};
-    const responseHeaders = trackedRequest.responseHeaders
-      ? filterHeaders(trackedRequest.responseHeaders)
-      : {};
-
-    const reqSize = trackedRequest.reqBody
-      ? trackedRequest.requestSize || trackedRequest.reqBody.length
-      : 0;
-
-    const status = getRequestStatus(trackedRequest);
-    const request: SpotNetworkRequest = {
-      method: trackedRequest.method,
-      type,
-      body: trackedRequest.reqBody,
-      requestHeaders,
-      responseHeaders,
-      time: trackedRequest.timeStamp,
-      statusCode: status,
-      error: trackedRequest.error,
-      url: trackedRequest.url,
-      fromCache: trackedRequest.fromCache || false,
-      encodedBodySize: reqSize,
-      responseBodySize: trackedRequest.responseSize,
-      duration: trackedRequest.duration,
-    };
-
-    return request;
-  }
-
-  function modifyOnSpot(request: TrackedRequest) {
-    const id = request.requestId;
-    const index = rawRequests.findIndex((r) => r.requestId === id);
-    const ts = Date.now();
-    const start = rawRequests[index]?.startTs ?? ts;
-    rawRequests[index] = {
-      ...rawRequests[index],
-      ...request,
-      duration: ts - start,
-    };
-  }
-
-  const trackOnBefore = (
-    details: WebRequest.OnBeforeRequestDetailsType & { reqBody: string },
-  ) => {
-    if (details.method === "POST" && details.requestBody) {
-      const requestBody = details.requestBody;
-      if (requestBody.formData) {
-        details.reqBody = JSON.stringify(requestBody.formData);
-      } else if (requestBody.raw) {
-        const raw = requestBody.raw[0]?.bytes;
-        if (raw) {
-          details.reqBody = new TextDecoder("utf-8").decode(raw);
-        }
-      }
-    }
-    rawRequests.push({ ...details, startTs: Date.now(), duration: 0 });
-  };
-  const trackOnCompleted = (details: WebRequest.OnCompletedDetailsType) => {
-    modifyOnSpot(details);
-  };
-  const trackOnHeaders = (
-    details: WebRequest.OnBeforeSendHeadersDetailsType,
-  ) => {
-    modifyOnSpot(details);
-  };
-  const trackOnError = (details: WebRequest.OnErrorOccurredDetailsType) => {
-    modifyOnSpot(details);
-  };
-  function startTrackingNetwork() {
-    rawRequests.length = 0;
-    browser.webRequest.onBeforeRequest.addListener(
-      // @ts-ignore
-      trackOnBefore,
-      { urls: ["<all_urls>"] },
-      ["requestBody"],
-    );
-    browser.webRequest.onBeforeSendHeaders.addListener(
-      trackOnHeaders,
-      { urls: ["<all_urls>"] },
-      ["requestHeaders"],
-    );
-    browser.webRequest.onCompleted.addListener(
-      trackOnCompleted,
-      {
-        urls: ["<all_urls>"],
-      },
-      ["responseHeaders"],
-    );
-    browser.webRequest.onErrorOccurred.addListener(
-      trackOnError,
-      {
-        urls: ["<all_urls>"],
-      },
-      ["extraHeaders"],
-    );
-  }
-
-  function stopTrackingNetwork() {
-    browser.webRequest.onBeforeRequest.removeListener(trackOnBefore);
-    browser.webRequest.onCompleted.removeListener(trackOnCompleted);
-    browser.webRequest.onErrorOccurred.removeListener(trackOnError);
-  }
-
   async function initializeOffscreenDocument() {
-    const existingContexts = await browser.runtime.getContexts({});
-    let recording = false;
+    const existingContexts = await browser.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
+    });
 
     const offscreenDocument = existingContexts.find(
       (c: { contextType: string }) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
-
     if (offscreenDocument) {
-      await browser.offscreen.closeDocument()
+      return;
+      // TODO: check manifestv3 for reloading context
+      // try {
+      //   await browser.offscreen.closeDocument();
+      // } catch (e) {
+      //   console.trace(e)
+      // }
     }
 
-    await browser.offscreen.createDocument({
-      url: "offscreen.html",
-      reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
-      justification: "Recording from chrome.tabCapture API",
-    });
+    try {
+      await browser.offscreen.createDocument({
+        url: "offscreen.html",
+        reasons: ["DISPLAY_MEDIA", "USER_MEDIA", "BLOBS"],
+        justification: "Recording from chrome.tabCapture API",
+      });
+    } catch (e) {
+      console.error("cant create new offscreen document", e);
+    }
 
-    return recording;
+    return;
   }
   async function sendToActiveTab(message: {
     type: string;
@@ -1153,22 +1003,22 @@ export default defineBackground(() => {
     }
     let activeTab = activeTabs[0];
     const sendTo = message.activeTabId || activeTab.id!;
-    if (!contentArmy[sendTo]) {
-      let tries = 0;
-      const exist = await new Promise((res) => {
-        const interval = setInterval(() => {
-          if (contentArmy[sendTo] || tries < 500) {
-            clearInterval(interval);
-            res(tries < 500);
-          }
-        }, 100);
-      });
-      if (!exist) throw new Error("Can't find required tab");
+    let attempts = 0;
+    // 10 seconds;
+    while (!contentArmy[sendTo] && attempts < 100) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      attempts++;
     }
-    try {
-      void browser.tabs.sendMessage(sendTo, message);
-    } catch (e) {
-      console.error("Sending to active tab", e, message);
+    if (contentArmy[sendTo]) {
+      await browser.tabs.sendMessage(sendTo, message);
+    } else {
+      console.trace(
+        "Content script might not be ready in tab",
+        sendTo,
+        contentArmy,
+        message,
+      );
+      await browser.tabs.sendMessage(sendTo, message);
     }
   }
 
@@ -1205,7 +1055,7 @@ export default defineBackground(() => {
     withNetwork: boolean,
     withConsole: boolean,
     getRecState: () => string,
-    setOnStop?: (hook: any) => void,
+    setOnStop: (hook: any) => void,
   ) {
     let activeTabs = await browser.tabs.query({
       active: true,
@@ -1250,17 +1100,16 @@ export default defineBackground(() => {
         slackChannels,
         activeTabId,
         withConsole,
+        withNetwork,
         state: "recording",
         // by default this is already handled by :start event
         // that triggers mount with countdown
         shouldMount: false,
       };
       void sendToActiveTab(mountMsg);
-      if (withNetwork) {
-        startTrackingNetwork();
-      }
-
       let previousTab: number | null = usedTab ?? null;
+
+      /** moves ui to active tab when screen recording */
       function tabActivatedListener({ tabId }: { tabId: number }) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
@@ -1289,25 +1138,26 @@ export default defineBackground(() => {
           previousTab = tabId;
         }
       }
+      /** moves ui to active tab when screen recording */
       function startTabActivationListening() {
         browser.tabs.onActivated.addListener(tabActivatedListener);
       }
+      /** moves ui to active tab when screen recording */
       function stopTabActivationListening() {
         browser.tabs.onActivated.removeListener(tabActivatedListener);
       }
 
       const trackedTab: number | null = usedTab ?? null;
-      function tabUpdateListener(tabId: number, changeInfo: any) {
+
+      /** reloads ui on currently active tab once its reloads itself */
+      function tabNavigatedListener(details: { tabId: number }) {
         const state = getRecState();
         if (state === REC_STATE.stopped) {
-          return stopTabListening();
+          return stopNavListening();
         }
+        contentArmy[details.tabId] = false
 
-        if (changeInfo.status !== "complete") {
-          return (contentArmy[tabId] = false);
-        }
-
-        if (area === "tab" && (!trackedTab || tabId !== trackedTab)) {
+        if (area === "tab" && (!trackedTab || details.tabId !== trackedTab)) {
           return;
         }
 
@@ -1328,6 +1178,14 @@ export default defineBackground(() => {
           });
       }
 
+      function startNavListening() {
+        browser.webNavigation.onCompleted.addListener(tabNavigatedListener)
+      }
+      function stopNavListening() {
+        browser.webNavigation.onCompleted.removeListener(tabNavigatedListener)
+      }
+
+      /** discards recording if was recording single tab and its now closed */
       function tabRemovedListener(tabId: number) {
         if (tabId === trackedTab) {
           void browser.runtime.sendMessage({
@@ -1353,23 +1211,17 @@ export default defineBackground(() => {
         browser.tabs.onRemoved.removeListener(tabRemovedListener);
       }
 
-      function startTabListening() {
-        browser.tabs.onUpdated.addListener(tabUpdateListener);
-      }
-
-      function stopTabListening() {
-        browser.tabs.onUpdated.removeListener(tabUpdateListener);
-      }
-
-      startTabListening();
+      startNavListening();
       if (area === "desktop") {
+        // if desktop, watch for tab change events
         startTabActivationListening();
       }
       if (area === "tab") {
+        // if tab, watch for tab remove changes to discard recording
         startRemovedListening();
       }
-      setOnStop?.(() => {
-        stopTabListening();
+      setOnStop(() => {
+        stopNavListening();
         if (area === "desktop") {
           stopTabActivationListening();
         }
@@ -1380,30 +1232,5 @@ export default defineBackground(() => {
     } catch (e) {
       console.error("Error starting recording", e, activeTab, activeTabId);
     }
-  }
-
-  const decodeJwt = (jwt: string): any => {
-    const base64Url = jwt.split(".")[1];
-    if (!base64Url) {
-      return { exp: 0 };
-    }
-    const base64 = base64Url.replace("-", "+").replace("_", "/");
-    return JSON.parse(atob(base64));
-  };
-
-  const isTokenExpired = (token: string): boolean => {
-    const decoded: any = decodeJwt(token);
-    const currentTime = Date.now() / 1000;
-    return decoded.exp < currentTime;
-  };
-
-  function getRequestStatus(request: any): number {
-    if (request.statusCode) {
-      return request.statusCode;
-    }
-    if (request.error) {
-      return 0;
-    }
-    return 200;
   }
 });

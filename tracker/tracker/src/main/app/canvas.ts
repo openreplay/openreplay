@@ -20,7 +20,7 @@ interface Options {
 
 class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
-  private readonly intervals: NodeJS.Timeout[] = []
+  private readonly intervals: ReturnType<typeof setInterval>[] = []
   private readonly interval: number
   private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
 
@@ -35,10 +35,8 @@ class CanvasRecorder {
   startTracking() {
     setTimeout(() => {
       this.app.nodes.scanTree(this.captureCanvas)
-      this.app.nodes.attachNodeCallback((node: Node): void => {
-        this.captureCanvas(node)
-      })
-    }, 500)
+      this.app.nodes.attachNodeCallback(this.captureCanvas)
+    }, 250)
   }
 
   restartTracking = () => {
@@ -128,7 +126,7 @@ class CanvasRecorder {
         return
       }
       if (!canvas || !hasTag(canvas, 'canvas') || canvas !== node) {
-        this.app.debug.log('Canvas element not in sync')
+        this.app.debug.log('Canvas element not in sync', canvas, node)
         clearInterval(int)
         return
       } else {
@@ -160,6 +158,14 @@ class CanvasRecorder {
       }
     })
 
+    const initRestart = () => {
+      this.app.debug.log('Restarting tracker; token expired')
+      this.app.stop(false)
+      setTimeout(() => {
+        void this.app.start({}, true)
+      }, 250)
+    }
+
     fetch(this.app.options.ingestPoint + '/v1/web/images', {
       method: 'POST',
       headers: {
@@ -167,7 +173,10 @@ class CanvasRecorder {
       },
       body: formData,
     })
-      .then(() => {
+      .then((r) => {
+        if (r.status === 401) {
+          return initRestart()
+        }
         return true
       })
       .catch((e) => {

@@ -76,6 +76,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         tenant_key = user_data.get("tenantKey", [])
     else:
         logger.info("Using tenant key from ACS-URL")
+        tenant_key = [tenant_key]
 
     logger.debug(f"received nameId: {email}  tenant_key: {tenant_key}")
     logger.debug(">user_data:")
@@ -100,7 +101,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             role = {"name": existing["roleName"], "roleId": existing["roleId"]}
     if role is None:
         for r in role_names:
-            if r.lower() == existing["roleName"].lower():
+            if existing and r.lower() == existing["roleName"].lower():
                 role = {"roleId": existing["roleId"], "name": r}
             else:
                 role = roles.get_role_by_name(tenant_id=t['tenantId'], name=r)

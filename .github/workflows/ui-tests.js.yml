@@ -27,9 +27,9 @@ jobs:
     name: Build and test Tracker plus Replayer
     strategy:
       matrix:
-        node-version: [ 18.x ]
+        node-version: [ 20.x ]
     steps:
-      - uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - uses: actions/checkout@v3
@@ -102,11 +102,11 @@ jobs:
       - name: Setup packages
         run: |
           cd frontend
-          npm install --legacy-peer-deps
+          yarn
       - name: Run unit tests
         run: |
           cd frontend
-          npm run test:ci
+          yarn test:ci
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -138,7 +138,7 @@ jobs:
       - name: (Chrome) Run visual tests
         run: |
           cd frontend
-          npm run cy:test
+          yarn cy:test
 #        firefox have different viewport somehow
 #      - name: (Firefox) Run visual tests
 #        run: yarn cy:test-firefox

@@ -1,7 +1,10 @@
 import React from 'react'
-import { connect } from 'react-redux'
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore'
 
-function Licenses({ account }) {
+function Licenses() {
+  const { userStore } = useStore()
+  const account = userStore.account
   return (
     <div>
       <div>{account.license}</div>
@@ -14,6 +17,4 @@ function Licenses({ account }) {
   )
 }
 
-export default connect(state => ({
-  account: state.getIn([ 'user', 'account' ]),
-}))(Licenses)
+export default observer(Licenses)

@@ -54,7 +54,10 @@ def get_global_integrations_status(tenant_id, user_id, project_id):
                                    WHERE type='slack' AND deleted_at ISNULL)) AS {schemas.IntegrationType.SLACK.value},
                            EXISTS((SELECT 1
                                    FROM public.webhooks
-                                   WHERE type='msteams' AND deleted_at ISNULL)) AS {schemas.IntegrationType.MS_TEAMS.value};""",
+                                   WHERE type='msteams' AND deleted_at ISNULL)) AS {schemas.IntegrationType.MS_TEAMS.value},
+                           EXISTS((SELECT 1
+                                   FROM public.integrations
+                                   WHERE project_id=%(project_id)s AND provider='dynatrace')) AS {schemas.IntegrationType.DYNATRACE.value};""",
                         {"user_id": user_id, "tenant_id": tenant_id, "project_id": project_id})
         )
         current_integrations = cur.fetchone()

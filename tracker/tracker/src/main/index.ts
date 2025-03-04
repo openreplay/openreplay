@@ -95,6 +95,14 @@ function processOptions(obj: any): obj is Options {
   return true
 }
 
+const canAccessTop = () => {
+  try {
+    return Boolean(window.top)
+  } catch {
+    return false
+  }
+}
+
 export default class API {
   public featureFlags: FeatureFlags
 
@@ -106,7 +114,10 @@ export default class API {
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
-    if ((window as any).__OPENREPLAY__) {
+    if (
+      (window as any).__OPENREPLAY__ ||
+      (!this.crossdomainMode && inIframe() && canAccessTop() && (window.top as any)?.__OPENREPLAY__)
+    ) {
       console.error('OpenReplay: one tracker instance has been initialised already')
       return
     }

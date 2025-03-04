@@ -21,7 +21,8 @@ usr=$(whoami)
 
 # Installing k3s
 function install_k8s() {
-    curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.25.6+k3s1' INSTALL_K3S_EXEC="--disable=traefik" sh -
+    echo "nameserver 1.1.1.1" | sudo tee /etc/k3s-resolv.conf
+    curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.25.6+k3s1' INSTALL_K3S_EXEC="--disable=traefik server --resolv-conf=/etc/k3s-resolv.conf" sh -
     [[ -d ~/.kube ]] || mkdir ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
     sudo chmod 0644 ~/.kube/config
@@ -43,8 +44,8 @@ function exists() {
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.20.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.20.0"
+# This wrapper will help to check the sed, and use the correct version="v1.21.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.21.0"
 function is_gnu_sed() {
     sed --version >/dev/null 2>&1
 }

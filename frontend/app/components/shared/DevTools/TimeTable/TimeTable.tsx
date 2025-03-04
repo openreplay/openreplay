@@ -199,7 +199,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     return (
       <div
         className={cn(
-          'dev-row border-b border-color-gray-light-shade group items-center',
+          'dev-row border-b border-neutral-950/5 group items-center text-sm',
           stl.row,
           {
             [stl.hoverable]: hoverable,
@@ -215,7 +215,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         {columns
           .filter((i: any) => !i.hidden)
           .map(({ dataKey, render, width, label }) => (
-            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={cn(stl.cell, 'overflow-ellipsis overflow-hidden')} style={{ width: `${width}px` }}>
+            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={cn(stl.cell, 'overflow-ellipsis overflow-hidden !py-0.5')} style={{ width: `${width}px` }}>
               {render
                 ? render(row)
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}

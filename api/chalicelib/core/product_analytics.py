@@ -1,14 +1,11 @@
-from typing import List
+import logging
+from time import time
 
 import schemas
 from chalicelib.core import metadata
-from chalicelib.core.metrics import __get_constraints, __get_constraint_values
-from chalicelib.utils import helper, dev
+from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import sql_helper as sh
-from time import time
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -174,6 +174,7 @@ export default class Session {
   duration: Duration;
   durationMs: ISession['durationMs'];
   events: ISession['events'];
+  uxtVideo?: any;
   stackEvents: ISession['stackEvents'];
   metadata: ISession['metadata'];
   favorite: ISession['favorite'];
@@ -224,10 +225,16 @@ export default class Session {
   platform: ISession['platform'];
   isMobileNative?: ISession['isMobileNative'];
   audio?: ISession['audio'];
+  trackerVersion?: string;
 
   fileKey: ISession['fileKey'];
   durationSeconds: number;
   liveOnly: boolean;
+  videoURL: string[]
+  screenWidth?: number
+  screenHeight?: number
+
+  addedEvents = false;
 
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession);
@@ -261,7 +268,6 @@ export default class Session {
     const isMobile = ['console', 'mobile', 'tablet'].includes(userDeviceType);
 
     const events: InjectedEvent[] = [];
-    const rawEvents: (EventData & { key: number })[] = [];
 
     if (session.events?.length) {
       (session.events as EventData[]).forEach((event: EventData, k) => {
@@ -271,7 +277,6 @@ export default class Session {
           if (EventClass) {
             events.push(EventClass);
           }
-          rawEvents.push({ ...event, time, key: k });
         }
       });
     }
@@ -306,7 +311,7 @@ export default class Session {
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
-      mergeEventLists(rawEvents, rawNotes),
+      mergeEventLists(events, rawNotes),
       frustrationIssues
     ).sort(sortEvents)
 
@@ -377,7 +382,6 @@ export default class Session {
 
     const events: InjectedEvent[] = [];
     const uxtDoneEvents = userTestingEvents.filter(e => e.status === 'done' && e.title).map(e => ({ ...e, type: 'UXT_EVENT', key: e.signal_id }))
-    const rawEvents: (EventData & { key: number })[] = [];
 
     let uxtIndexNum = 0;
     if (sessionEvents.length) {
@@ -394,7 +398,6 @@ export default class Session {
           if (EventClass) {
             events.push(EventClass);
           }
-          rawEvents.push({ ...event, time, key: k,  });
         }
       });
     }
@@ -412,7 +415,7 @@ export default class Session {
     const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
-      rawEvents,
+      events,
       frustrationIssues.filter(i => i.type !== issueTypes.DEAD_CLICK)
     )
 
@@ -421,12 +424,11 @@ export default class Session {
     this.notesWithEvents = [...this.notesWithEvents, ...mixedEventsWithIssues].sort(sortEvents);
     this.errors = exceptions;
     this.issues = issuesList;
-    // @ts-ignore legacy code? no idea
-    this.resources = resources;
     this.stackEvents = stackEventsList;
     // @ts-ignore
     this.frustrations = frustrationList;
     this.crashes = crashes || [];
+    this.addedEvents = true;
     return this;
   }
 

@@ -1,28 +1,28 @@
 import React, { useState, useCallback } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
 import { Button, Message, Form, Input } from 'UI';
 import styles from './profileSettings.module.css';
-import { updatePassword } from 'Duck/user';
-import { toast } from 'react-toastify';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
-const ERROR_DOESNT_MATCH = "Passwords don't match";
+const ERROR_DOESNT_MATCH = 'Passwords don\'t match';
 const MIN_LENGTH = 8;
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, updatePassword }) => {
+const ChangePassword = () => {
+  const { userStore } = useStore();
+  const updatePassword = userStore.updatePassword;
+  const passwordErrors = userStore.updatePasswordRequest.errors;
+  const loading = userStore.updatePasswordRequest.loading;
   const [oldPassword, setOldPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<{ value: string; error: boolean }>({
     value: '',
-    error: false,
+    error: false
   });
   const [newPasswordRepeat, setNewPasswordRepeat] = useState<{ value: string; error: boolean }>({
     value: '',
-    error: false,
+    error: false
   });
-  const [success, setSuccess] = useState<boolean>(false);
   const [show, setShow] = useState<boolean>(false);
 
   const checkDoesntMatch = useCallback((newPassword: string, newPasswordRepeat: string) => {
@@ -52,17 +52,14 @@ const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, upd
 
       updatePassword({
         oldPassword,
-        newPassword: newPassword.value,
-      }).then((e: any) => {
-        const success = !e || !e.errors || e.errors.length === 0;
-        setSuccess(success);
-        setShow(!success);
-        if (success) {
-          toast.success(`Successfully changed password`);
-          setOldPassword('');
-          setNewPassword({ value: '', error: false });
-          setNewPasswordRepeat({ value: '', error: false });
-        }
+        newPassword: newPassword.value
+      }).then(() => {
+        setShow(false);
+        setOldPassword('');
+        setNewPassword({ value: '', error: false });
+        setNewPasswordRepeat({ value: '', error: false });
+      }).catch((e) => {
+
       });
     },
     [isSubmitDisabled, oldPassword, newPassword, updatePassword]
@@ -133,7 +130,6 @@ const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, upd
             setOldPassword('');
             setNewPassword({ value: '', error: false });
             setNewPasswordRepeat({ value: '', error: false });
-            setSuccess(false);
             setShow(false);
           }}
         >
@@ -148,15 +144,4 @@ const ChangePassword: React.FC<PropsFromRedux> = ({ passwordErrors, loading, upd
   );
 };
 
-const mapStateToProps = (state: any) => ({
-  passwordErrors: state.getIn(['user', 'passwordErrors']),
-  loading: state.getIn(['user', 'updatePasswordRequest', 'loading']),
-});
-
-const mapDispatchToProps = {
-  updatePassword,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-export default connector(ChangePassword);
+export default observer(ChangePassword);

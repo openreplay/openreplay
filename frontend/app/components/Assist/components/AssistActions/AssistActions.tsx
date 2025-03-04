@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Tooltip } from 'UI';
-import { connect } from 'react-redux';
 import cn from 'classnames';
 import ChatWindow from '../../ChatWindow';
 import { CallingState, ConnectionStatus, RemoteControlStatus, RequestLocalStream } from 'Player';
@@ -12,6 +11,7 @@ import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 import { audioContextManager } from 'App/utils/screenRecorder';
+import { useStore } from "App/mstore";
 
 function onReject() {
   toast.info(`Call was rejected.`);
@@ -31,12 +31,9 @@ function onError(e: any) {
 
 interface Props {
   userId: string;
-  hasPermission: boolean;
-  isEnterprise: boolean;
   isCallActive: boolean;
   agentIds: string[];
   userDisplayName: string;
-  agentId: number,
 }
 
 const AssistActionsPing = {
@@ -52,15 +49,17 @@ const AssistActionsPing = {
 
 function AssistActions({
   userId,
-  hasPermission,
-  isEnterprise,
   isCallActive,
   agentIds,
-  userDisplayName,
-  agentId,
 }: Props) {
   // @ts-ignore ???
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
+  const { sessionStore, userStore } = useStore();
+  const permissions = userStore.account.permissions || [];
+  const hasPermission = permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL');
+  const isEnterprise = userStore.isEnterprise;
+  const agentId = userStore.account.id;
+  const userDisplayName = sessionStore.current.userDisplayName;
 
   const {
     assistManager: {
@@ -289,14 +288,4 @@ function AssistActions({
   );
 }
 
-const con = connect((state: any) => {
-  const permissions = state.getIn(['user', 'account', 'permissions']) || [];
-  return {
-    hasPermission: permissions.includes('ASSIST_CALL') || permissions.includes('SERVICE_ASSIST_CALL'),
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
-    agentId: state.getIn(['user', 'account', 'id'])
-  };
-});
-
-export default con(observer(AssistActions));
+export default observer(AssistActions);

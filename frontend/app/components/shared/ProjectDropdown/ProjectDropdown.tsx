@@ -1,73 +1,56 @@
 import {
   CaretDownOutlined,
-  FolderAddOutlined,
+  FolderAddOutlined
 } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Space, Typography } from 'antd';
+import { Button, Dropdown, MenuProps, Space, Typography } from 'antd';
 import cn from 'classnames';
 import React from 'react';
-import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-
-import { withStore } from 'App/mstore';
+import { withRouter } from 'react-router-dom';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import NewSiteForm from 'Components/Client/Sites/NewSiteForm';
 import { useModal } from 'Components/Modal';
-import { fetchListActive as fetchMetadata } from 'Duck/customField';
-import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { clearSearch } from 'Duck/search';
-import { setSiteId } from 'Duck/site';
-import { init as initProject } from 'Duck/site';
 import { Icon } from 'UI';
 
 const { Text } = Typography;
 
-interface Site {
-  id: string;
-  host: string;
-  platform: 'web' | 'mobile';
-}
-
-interface Props extends RouteComponentProps {
-  sites: Site[];
-  siteId: string;
-  setSiteId: (siteId: string) => void;
-  fetchMetadata: () => void;
-  clearSearch: (isSession: boolean) => void;
-  clearSearchLive: () => void;
-  initProject: (data: any) => void;
-  mstore: any;
-  account: any;
-}
-
-function ProjectDropdown(props: Props) {
-  const { sites, siteId, location, account } = props;
+function ProjectDropdown(props: { location: any }) {
+  const mstore = useStore();
+  const { projectsStore, searchStore, searchStoreLive, userStore } = mstore;
+  const account = userStore.account;
+  const sites = projectsStore.list;
+  const siteId = projectsStore.siteId;
+  const setSiteId = projectsStore.setSiteId;
+  const initProject = projectsStore.initProject;
+  const { location } = props;
   const isAdmin = account.admin || account.superAdmin;
   const activeSite = sites.find((s) => s.id === siteId);
   const showCurrent =
     hasSiteId(location.pathname) || siteChangeAvailable(location.pathname);
   const { showModal, hideModal } = useModal();
 
-  const handleSiteChange = (newSiteId: string) => {
-    props.setSiteId(newSiteId); // Fixed: should set the new siteId, not the existing one
-    props.fetchMetadata();
-    props.clearSearch(location.pathname.includes('/sessions'));
-    props.clearSearchLive();
+  const handleSiteChange = async (newSiteId: string) => {
+    mstore.initClient();
+    setSiteId(newSiteId);
+    searchStore.clearSearch();
+    searchStore.clearList();
+    searchStoreLive.clearSearch();
 
-    props.mstore.initClient();
+    // await customFieldStore.fetchList(newSiteId);
+    // await searchStore.fetchSavedSearchList()
   };
 
   const addProjectClickHandler = () => {
-    props.initProject({});
+    initProject({});
     showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
 
-  // @ts-ignore immutable
-  const menuItems = sites.toJS().map((site) => ({
+  const menuItems: MenuProps['items'] = sites.map((site) => ({
     key: site.id,
     label: (
       <div
         key={site.id}
-        onClick={() => handleSiteChange(site.id)}
         className={'!py-1 flex items-center gap-2'}
       >
         <Icon
@@ -83,24 +66,21 @@ function ProjectDropdown(props: Props) {
           {site.host}
         </Text>
       </div>
-    ),
+    )
   }));
   if (isAdmin) {
-    menuItems.unshift({
+    menuItems?.unshift({
       key: 'add-proj',
       label: (
-        <>
-          <div
-            key="all-projects"
-            onClick={addProjectClickHandler}
-            className={'flex items-center gap-2'}
-          >
-            <FolderAddOutlined rev={undefined} />
-            <Text>Add Project</Text>
-          </div>
-          <Divider style={{ marginTop: 4, marginBottom: 0 }} />
-        </>
-      ),
+        <div
+          className={'flex items-center gap-2 whitespace-nowrap'}
+        >
+          <FolderAddOutlined rev={undefined} />
+          <Text>Add Project</Text>
+        </div>
+      )
+    }, {
+      type: 'divider'
     });
   }
 
@@ -112,8 +92,15 @@ function ProjectDropdown(props: Props) {
         defaultSelectedKeys: [siteId],
         style: {
           maxHeight: 500,
-          overflowY: 'auto',
+          overflowY: 'auto'
         },
+        onClick: (e) => {
+          if (e.key === 'add-proj') {
+            addProjectClickHandler();
+          } else {
+            void handleSiteChange(e.key);
+          }
+        }
       }}
       placement="bottomLeft"
     >
@@ -142,18 +129,6 @@ function ProjectDropdown(props: Props) {
   );
 }
 
-const mapStateToProps = (state: any) => ({
-  sites: state.getIn(['site', 'list']),
-  siteId: state.getIn(['site', 'siteId']),
-  account: state.getIn(['user', 'account']),
-});
-
 export default withRouter(
-  connect(mapStateToProps, {
-    setSiteId,
-    fetchMetadata,
-    clearSearch,
-    clearSearchLive,
-    initProject,
-  })(withStore(ProjectDropdown))
+  observer(ProjectDropdown)
 );

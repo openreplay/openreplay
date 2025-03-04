@@ -11,22 +11,20 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
 import { HEATMAP } from 'App/constants/card';
-import { connect } from 'react-redux';
-import { Tag } from "antd";
+import { Tag } from 'antd';
 
 interface Props {
   className?: string;
-  metaList: any;
 }
 
 function WidgetSessions(props: Props) {
-  const { className = '', metaList } = props;
+  const { className = '' } = props;
   const [activeSeries, setActiveSeries] = useState('all');
   const [data, setData] = useState<any>([]);
   const isMounted = useIsMounted();
   const [loading, setLoading] = useState(false);
   const filteredSessions = getListSessionsBySeries(data, activeSeries);
-  const { dashboardStore, metricStore, sessionStore } = useStore();
+  const { dashboardStore, metricStore, sessionStore, customFieldStore } = useStore();
   const filter = dashboardStore.drillDownFilter;
   const widget = metricStore.instance;
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
@@ -34,6 +32,7 @@ function WidgetSessions(props: Props) {
   const [seriesOptions, setSeriesOptions] = useState([{ label: 'All', value: 'all' }]);
   const hasFilters = filter.filters.length > 0 || (filter.startTimestamp !== dashboardStore.drillDownPeriod.start || filter.endTimestamp !== dashboardStore.drillDownPeriod.end);
   const filterText = filter.filters.length > 0 ? filter.filters[0].value : '';
+  const metaList = customFieldStore.list.map((i: any) => i.key);
 
   const writeOption = ({ value }: any) => setActiveSeries(value.value);
   useEffect(() => {
@@ -118,38 +117,40 @@ function WidgetSessions(props: Props) {
 
   return (
     <div className={cn(className, 'bg-white p-3 pb-0 rounded-lg shadow-sm border mt-3')}>
-      <div className='flex items-center justify-between'>
+      <div className="flex items-center justify-between">
         <div>
-          <div className='flex items-baseline'>
-            <h2 className='text-xl'>{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
-            <div className='ml-2 color-gray-medium'>
+          <div className="flex items-baseline">
+            <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
+            <div className="ml-2 color-gray-medium">
               {metricStore.clickMapLabel ? `on "${metricStore.clickMapLabel}" ` : null}
-              between <span className='font-medium color-gray-darkest'>{startTime}</span> and{' '}
-              <span className='font-medium color-gray-darkest'>{endTime}</span>{' '}
+              between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
+              <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
             </div>
           </div>
-          {hasFilters && widget.metricType === 'table' && <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
+
+          {hasFilters && widget.metricType === 'table' &&
+            <div className="py-2"><Tag closable onClose={clearFilters}>{filterText}</Tag></div>}
         </div>
 
-        <div className='flex items-center gap-4'>
-          {hasFilters && <Button variant='text-primary' onClick={clearFilters}>Clear Filters</Button>}
+        <div className="flex items-center gap-4">
+          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
           {widget.metricType !== 'table' && widget.metricType !== HEATMAP && (
-            <div className='flex items-center ml-6'>
-              <span className='mr-2 color-gray-medium'>Filter by Series</span>
+            <div className="flex items-center ml-6">
+              <span className="mr-2 color-gray-medium">Filter by Series</span>
               <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
             </div>
           )}
         </div>
       </div>
 
-      <div className='mt-3'>
+      <div className="mt-3">
         <Loader loading={loading}>
           <NoContent
             title={
-              <div className='flex items-center justify-center flex-col'>
+              <div className="flex items-center justify-center flex-col">
                 <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
-                <div className='mt-4' />
-                <div className='text-center'>
+                <div className="mt-4" />
+                <div className="text-center">
                   No relevant sessions found for the selected time period
                 </div>
               </div>
@@ -159,22 +160,22 @@ function WidgetSessions(props: Props) {
             {filteredSessions.sessions.map((session: any) => (
               <React.Fragment key={session.sessionId}>
                 <SessionItem session={session} metaList={metaList} />
-                <div className='border-b' />
+                <div className="border-b" />
               </React.Fragment>
             ))}
 
-            <div className='flex items-center justify-between p-5'>
+            <div className="flex items-center justify-between p-5">
               <div>
                 Showing{' '}
-                <span className='font-medium'>
+                <span className="font-medium">
                   {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize + 1}
                 </span>{' '}
                 to{' '}
-                <span className='font-medium'>
+                <span className="font-medium">
                   {(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize +
                     filteredSessions.sessions.length}
                 </span>{' '}
-                of <span className='font-medium'>{numberWithCommas(filteredSessions.total)}</span>{' '}
+                of <span className="font-medium">{numberWithCommas(filteredSessions.total)}</span>{' '}
                 sessions.
               </div>
               <Pagination
@@ -217,8 +218,4 @@ const getListSessionsBySeries = (data: any, seriesId: any) => {
   return arr;
 };
 
-const mapStateToProps = (state: any) => ({
-  metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-});
-
-export default connect(mapStateToProps)(observer(WidgetSessions));
+export default observer(WidgetSessions);

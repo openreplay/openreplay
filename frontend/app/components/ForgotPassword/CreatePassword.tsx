@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Form, Input, Loader, Button, Icon, Message } from 'UI';
-import { requestResetPassword, resetPassword, resetErrors } from 'Duck/user';
 import stl from './forgotPassword.module.css';
 import { validatePassword } from 'App/validate';
 import { PASSWORD_POLICY } from 'App/constants';
@@ -13,35 +13,26 @@ const CAPTCHA_ENABLED = window.env.CAPTCHA_ENABLED === 'true';
 const CAPTCHA_SITE_KEY = window.env.CAPTCHA_SITE_KEY;
 
 interface Props {
-  errors: any;
-  resetErrors: any;
-  loading: boolean;
   params: any;
-  resetPassword: Function;
 }
 function CreatePassword(props: Props) {
-  const { loading, params } = props;
+  const { params } = props;
+  const { userStore } = useStore();
+  const loading = userStore.loading;
+  const resetPassword = userStore.resetPassword;
   const [error, setError] = React.useState<String | null>(null);
   const [validationError, setValidationError] = React.useState<String | null>(null);
   const [updated, setUpdated] = React.useState(false);
-  const [requested, setRequested] = React.useState(false);
   const [passwordRepeat, setPasswordRepeat] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [doesntMatch, setDoesntMatch] = React.useState(false);
   const pass = params.get('pass');
   const invitation = params.get('invitation');
 
-  const handleSubmit = (token?: any) => {
+  const handleSubmit = () => {
     if (!validatePassword(password)) {
       return;
     }
-    props.resetPassword({ invitation, pass, password }).then((response: any) => {
-      if (response && response.errors && response.errors.length > 0) {
-        setError(response.errors[0]);
-      } else {
-        setUpdated(true);
-      }
-    });
+    void resetPassword({ invitation, pass, password });
   };
 
   const onSubmit = (e: any) => {
@@ -84,7 +75,6 @@ function CreatePassword(props: Props) {
                   <ReCAPTCHA
                     ref={recaptchaRef}
                     size="invisible"
-                    data-hidden={requested}
                     sitekey={CAPTCHA_SITE_KEY}
                     onChange={(token: any) => handleSubmit(token)}
                   />
@@ -106,7 +96,7 @@ function CreatePassword(props: Props) {
                   />
                 </Form.Field>
                 <Form.Field>
-                  <label>{'Cofirm password'}</label>
+                  <label>{'Confirm password'}</label>
                   <Input
                     autoComplete="new-password"
                     type="password"
@@ -132,7 +122,7 @@ function CreatePassword(props: Props) {
 
           {validationError && <Message error>{validationError}</Message>}
 
-          <Button type="submit" variant="primary" loading={loading} className="w-full mt-4">
+          <Button type="submit" data-hidden={updated} variant="primary" loading={loading} className="w-full mt-4">
             Create
           </Button>
         </>
@@ -150,17 +140,4 @@ function CreatePassword(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    errors: state.getIn(['user', 'requestResetPassowrd', 'errors']),
-    resetErrors: state.getIn(['user', 'resetPassword', 'errors']),
-    loading:
-      state.getIn(['user', 'requestResetPassowrd', 'loading']) ||
-      state.getIn(['user', 'resetPassword', 'loading']),
-  }),
-  {
-    requestResetPassword,
-    resetPassword,
-    resetErrors,
-  }
-)(CreatePassword);
+export default observer(CreatePassword);

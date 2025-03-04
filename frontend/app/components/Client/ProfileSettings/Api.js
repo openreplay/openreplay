@@ -1,46 +1,26 @@
 import React from 'react';
-import copy from 'copy-to-clipboard';
-import { connect } from 'react-redux';
-import styles from './profileSettings.module.css';
-import { Form, Input, Button, CopyButton } from 'UI';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore';
+import { CopyButton, Form, Input } from 'UI';
 
-@connect(state => ({
-  apiKey: state.getIn([ 'user', 'account', 'apiKey' ]),
-  loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
-    state.getIn([ 'user', 'putClientRequest', 'loading' ]),
-}))
-export default class Api extends React.PureComponent {
-  state = { copied: false }
+function ApiKeySettings() {
+  const { userStore } = useStore();
 
-  copyHandler = () => {
-    const { apiKey } = this.props;
-    this.setState({ copied: true });
-    copy(apiKey);
-    setTimeout(() => {
-      this.setState({ copied: false });
-    }, 1000);
-  };
-
-  render() {
-    const { apiKey } = this.props;
-    const { copied } = this.state;
-
-    return (
-      <Form onSubmit={ this.handleSubmit } className={ styles.form }>
-        <Form.Field>
-          <label htmlFor="apiKey">{ 'Organization API Key' }</label>
-          <Input
-            name="apiKey"
-            id="apiKey"
-            type="text"
-            readOnly={ true }
-            value={ apiKey }
-            leadingButton={
-              <CopyButton content={ apiKey } />
-            }
-          />
-        </Form.Field>
-      </Form>
-    );
-  }
+  const apiKey = userStore.account.apiKey;
+  return (
+    <Form.Field>
+      <label htmlFor="apiKey">{'Organization API Key'}</label>
+      <Input
+        name="apiKey"
+        id="apiKey"
+        type="text"
+        readOnly={true}
+        value={apiKey}
+        className={'!w-72'}
+        leadingButton={<CopyButton content={apiKey} />}
+      />
+    </Form.Field>
+  );
 }
+
+export default observer(ApiKeySettings);

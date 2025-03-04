@@ -1,7 +1,6 @@
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { useStore } from 'App/mstore';
@@ -26,11 +25,13 @@ import SpotVideoContainer from './components/SpotVideoContainer';
 import { Tab } from './consts';
 import spotPlayerStore, { PANELS } from './spotPlayerStore';
 
-function SpotPlayer({ loggedIn }: { loggedIn: boolean }) {
+function SpotPlayer() {
   const defaultHeight = getDefaultPanelHeight();
   const history = useHistory();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const { spotStore } = useStore();
+  const { spotStore, userStore } = useStore();
+  const userEmail = userStore.account.name;
+  const loggedIn = !!userEmail;
   const { spotId } = useParams<{ spotId: string }>();
   const [activeTab, setActiveTab] = React.useState<Tab | null>(null);
 
@@ -301,15 +302,6 @@ const SpotOverviewConnector = observer(() => {
   );
 });
 
-function mapStateToProps(state: any) {
-  const userEmail = state.getIn(['user', 'account', 'name']);
-  const loggedIn = !!userEmail;
-  return {
-    userEmail,
-    loggedIn,
-  };
-}
-
 export default withPermissions(['SPOT'])(
-  connect(mapStateToProps)(observer(SpotPlayer))
+  observer(SpotPlayer)
 );

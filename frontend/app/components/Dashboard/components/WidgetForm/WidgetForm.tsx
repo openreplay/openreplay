@@ -16,9 +16,6 @@ import {
     HEATMAP,
     FUNNEL,
     ERRORS,
-    RESOURCE_MONITORING,
-    PERFORMANCE,
-    WEB_VITALS,
     INSIGHTS,
     USER_PATH,
     RETENTION
@@ -61,9 +58,7 @@ function WidgetForm(props: Props) {
     const eventsLength = metric.series[0].filter.filters.filter((i: any) => i && i.isEvent).length;
     const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
-    const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(
-        metric.metricType
-    );
+    const isPredefined = metric.metricType === ERRORS
 
     const excludeFilterKeys = isClickmap || isPathAnalysis ? eventKeys : [];
 

@@ -2,20 +2,17 @@ import React, { useEffect } from 'react';
 import ModuleCard from 'Components/Client/Modules/ModuleCard';
 import { modules as list } from './';
 import withPageTitle from 'HOCs/withPageTitle';
-import { connect } from 'react-redux';
 import { userService } from 'App/services';
 import { toast } from 'react-toastify';
-import { updateModule } from 'Duck/user';
+import { useStore } from "App/mstore";
+import { observer } from 'mobx-react-lite';
 
-interface Props {
-  modules: string[];
-  updateModule: (moduleKey: string) => void;
-  isEnterprise: boolean;
-}
-
-function Modules(props: Props) {
-  const { modules } = props;
-  const [modulesState, setModulesState, isEnterprise = false] = React.useState<any[]>([]);
+function Modules() {
+  const { userStore } = useStore();
+  const updateModule = userStore.updateModule;
+  const modules = userStore.account.settings?.modules ?? [];
+  const isEnterprise = userStore.account.edition === 'ee';
+  const [modulesState, setModulesState] = React.useState<any[]>([]);
 
   const onToggle = async (module: any) => {
     try {
@@ -26,7 +23,7 @@ function Modules(props: Props) {
         module: module.key,
         status: isEnabled,
       });
-      props.updateModule(module.key);
+      updateModule(module.key);
       toast.success(`Module ${module.label} ${!isEnabled ? 'enabled' : 'disabled'}`);
     } catch (err) {
       console.error(err);
@@ -66,7 +63,4 @@ function Modules(props: Props) {
 }
 
 
-export default withPageTitle('Modules - OpenReplay Preferences')(connect((state: any) => ({
-  modules: state.getIn(['user', 'account', 'settings', 'modules']) || [],
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee'
-}), { updateModule })(Modules));
+export default withPageTitle('Modules - OpenReplay Preferences')(observer(Modules));

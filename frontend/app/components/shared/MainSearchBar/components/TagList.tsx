@@ -1,7 +1,5 @@
 import { Tag } from 'App/services/TagWatchService';
 import { useModal } from 'Components/Modal';
-import { refreshFilterOptions, addFilterByKeyAndValue } from 'Duck/search';
-import { connect } from 'react-redux';
 import React from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -11,11 +9,8 @@ import { Icon, confirm } from 'UI';
 import { Button, Typography } from 'antd';
 import { toast } from 'react-toastify';
 
-function TagList(props: {
-  refreshFilterOptions: typeof refreshFilterOptions;
-  addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
-}) {
-  const { refreshFilterOptions, addFilterByKeyAndValue } = props;
+function TagList() {
+  const { searchStore } = useStore();
   const { tagWatchStore } = useStore();
   const { showModal, hideModal } = useModal();
 
@@ -27,29 +22,29 @@ function TagList(props: {
             FilterKey.TAGGED_ELEMENT,
             tags.map((tag) => ({ label: tag.name, value: tag.tagId.toString() }))
           );
-          refreshFilterOptions();
+          searchStore.refreshFilterOptions();
         }
       });
     }
   }, []);
 
   const addTag = (tagId: number) => {
-    addFilterByKeyAndValue(FilterKey.TAGGED_ELEMENT, tagId.toString());
+    searchStore.addFilterByKeyAndValue(FilterKey.TAGGED_ELEMENT, tagId.toString());
     hideModal();
   };
   const openModal = () => {
     showModal(<TagListModal onTagClick={addTag} />, {
       right: true,
-      width: 400,
+      width: 400
     });
   };
   return (
-    <Button 
-      // variant={'outline'} 
-      type='primary'
+    <Button
+      // variant={'outline'}
+      type="primary"
       ghost
-      className='gap-1'
-      disabled={!tagWatchStore.tags.length} 
+      className="gap-1"
+      disabled={!tagWatchStore.tags.length}
       onClick={openModal}>
       <span>Tags</span>
       <span className={'font-medium ml-1'}>{tagWatchStore.tags.length}</span>
@@ -71,7 +66,7 @@ const TagListModal = observer(({ onTagClick }: { onTagClick: (tagId: number) => 
       await confirm({
         header: 'Remove Tag',
         confirmButton: 'Remove',
-        confirmation: 'Are you sure you want to remove this tag?',
+        confirmation: 'Are you sure you want to remove this tag?'
       })
     ) {
       void tagWatchStore.deleteTag(id);
@@ -129,7 +124,7 @@ const TagRow = (props: {
             setName(tag.name);
           },
           triggerType: [],
-          maxLength: 90,
+          maxLength: 90
         }}
       >
         {tag.name}
@@ -157,6 +152,4 @@ const TagRow = (props: {
   );
 };
 
-export default connect(() => ({}), { refreshFilterOptions, addFilterByKeyAndValue })(
-  observer(TagList)
-);
+export default observer(TagList);

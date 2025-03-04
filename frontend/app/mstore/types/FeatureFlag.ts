@@ -12,7 +12,7 @@ export class Conditions {
     this.name = data?.name;
     if (data && (data.rolloutPercentage || data.captureRate)) {
       this.rolloutPercentage = data.rolloutPercentage ?? data.captureRate;
-      this.filter = new Filter(isConditional, isMobile).fromJson(data);
+      this.filter = new Filter([], isConditional, isMobile).fromJson(data);
     }
   }
 

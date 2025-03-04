@@ -11,7 +11,7 @@
 }
 
 .preSelections {
-    width: 130px;
+    min-width: 112px;
     background-color: white;
     border-right: solid thin #EEE;
     & > div {

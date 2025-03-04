@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { ChromeOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
@@ -6,6 +6,13 @@ import { ArrowUpRight } from 'lucide-react';
 function InstallCTA() {
   const extKey = '__$spot_ext_exist$__';
   const [extExist, setExtExist] = React.useState<boolean>(false);
+  const isChromium =
+    // @ts-ignore
+    window.chrome ||
+    // @ts-ignore
+    (!!navigator.userAgentData &&
+     // @ts-ignore
+      navigator.userAgentData.brands.some((data) => data.brand == 'Chromium'));
 
   React.useEffect(() => {
     let int: any;
@@ -33,9 +40,20 @@ function InstallCTA() {
       }
     };
   }, []);
+
+  if (!isChromium && !extExist) {
+    return (
+      <Alert
+        message="Spot is designed for Chrome. Please install Chrome and navigate to this page to start using Spot."
+        type="warning"
+        className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"
+      />
+    );
+  }
+
   return (
     <>
-    {extExist ? null : (
+      {extExist ? null : (
         <Alert
           message="It looks like you haven’t installed the Spot extension yet."
           type="warning"
@@ -58,7 +76,7 @@ function InstallCTA() {
         />
       )}
     </>
-  )
+  );
 }
 
-export default InstallCTA
+export default InstallCTA;

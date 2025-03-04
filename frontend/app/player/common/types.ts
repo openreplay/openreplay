@@ -27,6 +27,7 @@ export interface Interval {
 export interface Store<G extends Object, S extends Object = G> {
   get(): G
   update(state: Partial<S>): void
+  updateTabStates(id: string, state: Partial<S>): void
 }
 
 

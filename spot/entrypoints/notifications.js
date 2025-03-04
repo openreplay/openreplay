@@ -13,10 +13,10 @@ export default defineUnlistedScript(() => {
 
   function injectCSS() {
     const cssText = `
-    .flex{display:flex}
-    .items-center {align-items:center}
-    .gap-3 {gap: .25rem}
-    .spinner {
+    .or-flex{display:flex}
+    .or-items-center {align-items:center}
+    .or-gap-3 {gap: .25rem}
+    .or-spinner {
         width: 18px;
         height: 18px;
         border: 2px solid rgba(0, 0, 0, 0.1);
@@ -40,10 +40,10 @@ export default defineUnlistedScript(() => {
     const message = event.data.message || "Recording has started successfully.";
 
     const notificationContent = `
-    <div class="flex gap-3 items-center">
-      <div class="spinner"></div>          
+    <div class="or-flex or-gap-3 or-items-center">
+      <div class="or-spinner"></div>
       <span>${message}</span>
-      </div>
+     </div>
     `;
 
     const notification = document.createElement("div");
@@ -65,15 +65,14 @@ export default defineUnlistedScript(() => {
     notification.innerHTML = notificationContent;
     document.body.appendChild(notification);
 
-    // Force reflow to ensure styles are applied
-    notification.offsetHeight; // Trigger reflow
+    notification.offsetHeight;
 
     setTimeout(() => {
       notification.style.opacity = "0";
       setTimeout(() => {
         document.body.removeChild(notification);
       }, 300);
-    }, 4000);
+    }, 4500);
   }
 
   function initNotificationListener() {
@@ -85,7 +84,7 @@ export default defineUnlistedScript(() => {
         copyToTheClipboard(event.data.url)
           .then(() => {
             createNotification({
-              data: { message: 'Recording opened in a new tab. Link is copied to clipboard.' }
+              data: { message: 'Link copied to clipboard and new tab opened' }
             });
           })
           .catch((e) => {

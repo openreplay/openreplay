@@ -1,4 +1,4 @@
-import FeatureFlags, { FetchPersistFlagsData, IFeatureFlag } from '../main/modules/FeatureFlags'
+import FeatureFlags, { FetchPersistFlagsData, IFeatureFlag } from '../main/modules/featureFlags'
 import { describe, expect, jest, afterEach, beforeEach, test } from '@jest/globals'
 
 jest.mock('../main/app/index.js')

@@ -1,1 +1,1 @@
-export { default, TagItem } from './SessionTags';
+export { default } from './SessionTags';

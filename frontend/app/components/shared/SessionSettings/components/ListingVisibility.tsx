@@ -58,7 +58,7 @@ function ListingVisibility() {
                 </div>
                 <div className="col-span-3">
                     <Select
-                        defaultValue={periodOptions[1].value}
+                        defaultValue={durationSettings.countType || periodOptions[0].value}
                         options={periodOptions}
                         onChange={({ value }) => {
                             changeSettings({ countType: value.value })

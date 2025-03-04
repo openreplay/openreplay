@@ -187,33 +187,6 @@ def search(tenant_id, project_id, key, value):
         return {"data": [k[key] for k in value]}
 
 
-def get_available_keys(project_id):
-    all_metas = get(project_id=project_id)
-    return [k["key"] for k in all_metas]
-
-
-def get_by_session_id(project_id, session_id):
-    all_metas = get(project_id=project_id)
-    if len(all_metas) == 0:
-        return []
-    keys = {index_to_colname(k["index"]): k["key"] for k in all_metas}
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT {",".join(keys.keys())}
-                                FROM public.sessions
-                                WHERE project_id= %(project_id)s 
-                                    AND session_id=%(session_id)s;""",
-                            {"session_id": session_id, "project_id": project_id})
-        cur.execute(query=query)
-        session_metas = cur.fetchall()
-        results = []
-        for m in session_metas:
-            r = {}
-            for k in m.keys():
-                r[keys[k]] = m[k]
-            results.append(r)
-        return results
-
-
 def get_keys_by_projects(project_ids):
     if project_ids is None or len(project_ids) == 0:
         return {}

@@ -32,19 +32,7 @@ export default class FilterItem {
     private readonly isConditional?: boolean,
     private readonly isMobile?: boolean
   ) {
-    makeAutoObservable(this, {
-      type: observable,
-      key: observable,
-      value: observable,
-      operator: observable,
-      source: observable,
-      filters: observable,
-      isActive: observable,
-      sourceOperator: observable,
-      category: observable,
-
-      merge: action,
-    });
+    makeAutoObservable(this);
 
     if (Array.isArray(data.filters)) {
       data.filters = data.filters.map(function (i: Record<string, any>) {
@@ -97,12 +85,12 @@ export default class FilterItem {
     if (this.isConditional) {
       if (this.isMobile) {
         _filter =
-          mobileConditionalFiltersMap[json.type] ||
-          mobileConditionalFiltersMap[json.source];
+          mobileConditionalFiltersMap[_filter.key] ||
+          mobileConditionalFiltersMap[_filter.source];
       } else {
         _filter =
-          conditionalFiltersMap[json.type] ||
-          conditionalFiltersMap[json.source];
+          conditionalFiltersMap[_filter.key] ||
+          conditionalFiltersMap[_filter.source];
       }
     }
     if (mainFilterKey) {
@@ -149,7 +137,7 @@ export default class FilterItem {
     const json = {
       type: isMetadata ? FilterKey.METADATA : this.key,
       isEvent: Boolean(this.isEvent),
-      value: this.value.map((i: any) => i && i.toString()),
+      value: this.value.map((i: any) => i ? i.toString() : ''),
       operator: this.operator,
       source: isMetadata ? this.key.replace(/^_/, '') : this.source,
       sourceOperator: this.sourceOperator,

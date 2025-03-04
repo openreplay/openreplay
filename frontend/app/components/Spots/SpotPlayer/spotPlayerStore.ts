@@ -43,6 +43,8 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
         return 'xhr';
       case 'fetch':
         return 'fetch';
+      case 'graphql':
+        return 'graphql';
       case 'resource':
         return 'resource';
       default:
@@ -56,7 +58,7 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
   })
   const response = JSON.stringify({
     headers: ev.responseHeaders,
-    body: { warn: "Chrome Manifest V3 -- No response body available in Chrome 93+" }
+    body: ev.responseBody ?? { warn: "Chrome Manifest V3 -- No response body available in Chrome 93+" }
   })
   return ({
     ...ev,

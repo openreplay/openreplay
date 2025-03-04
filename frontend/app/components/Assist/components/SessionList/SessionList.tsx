@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { fetchLiveList } from 'Duck/sessions';
+import { observer } from 'mobx-react-lite'
+import { useStore } from 'App/mstore';
 import { Loader, NoContent, Label } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import { useModal } from 'App/components/Modal';
@@ -11,16 +11,20 @@ interface Props {
     list: any;
     session: any;
     userId: any;
-    fetchLiveList: (params: any) => void;
 }
 function SessionList(props: Props) {
     const { hideModal } = useModal();
+    const { sessionStore } = useStore();
+    const fetchLiveList = sessionStore.fetchLiveSessions;
+    const session = sessionStore.current;
+    const list = sessionStore.liveSessions.filter((i: any) => i.userId === session.userId && i.sessionId !== session.sessionId);
+    const loading = sessionStore.loadingLiveSessions;
     useEffect(() => {
         const params: any = {};
         if (props.session.userId) {
             params.userId = props.session.userId;
         }
-        props.fetchLiveList(params);
+        void fetchLiveList(params);
     }, []);
 
     return (
@@ -33,9 +37,9 @@ function SessionList(props: Props) {
                     {props.userId}'s <span className="color-gray-medium">Live Sessions</span>{' '}
                 </div>
             </div>
-            <Loader loading={props.loading}>
+            <Loader loading={loading}>
                 <NoContent
-                    show={!props.loading && props.list.length === 0}
+                    show={!loading && list.length === 0}
                     title={
                         <div className="flex items-center justify-center flex-col">
                             <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={60} />
@@ -45,7 +49,7 @@ function SessionList(props: Props) {
                     }
                 >
                     <div className="p-4">
-                        {props.list.map((session: any) => (
+                        {list.map((session: any) => (
                             <div className="mb-6" key={session.sessionId}>
                                 {session.pageTitle && session.pageTitle !== '' && (
                                     <div className="flex items-center mb-2">
@@ -65,14 +69,4 @@ function SessionList(props: Props) {
     );
 }
 
-export default connect(
-    (state: any) => {
-        const session = state.getIn(['sessions', 'current']);
-        return {
-            session,
-            list: state.getIn(['sessions', 'liveSessions']).filter((i: any) => i.userId === session.userId && i.sessionId !== session.sessionId),
-            loading: state.getIn(['sessions', 'fetchLiveListRequest', 'loading']),
-        };
-    },
-    { fetchLiveList }
-)(SessionList);
+export default observer(SessionList);

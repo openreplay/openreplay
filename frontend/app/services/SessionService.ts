@@ -56,9 +56,17 @@ export default class SettingsService {
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
     return this.client
-      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`)
+      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}/replay`)
       .then((r) => r.json())
       .then((j) => j.data || {})
+      .catch(console.error);
+  }
+
+  getSessionEvents = async (sessionId: string) => {
+    return this.client
+      .get(`/sessions/${sessionId}/events`)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
       .catch(console.error);
   }
 
@@ -98,11 +106,30 @@ export default class SettingsService {
       .catch(Promise.reject);
   }
 
+  getSessionClickMap(sessionId: string, params = {}): Promise<any[]> {
+    return this.client
+      .post(`/sessions/${sessionId}/clickmaps`, params)
+      .then((r) => r.json())
+      .then((j) => j.data || [])
+      .catch(Promise.reject);
+  }
+
   getRecordingStatus(): Promise<any> {
     return this.client
       .get('/check-recording-status')
       .then((r) => r.json())
       .then((j) => j.data || {})
       .catch(Promise.reject);
+  }
+
+  async getAssistCredentials(): Promise<any> {
+    try {
+      const r = await this.client
+        .get('/config/assist/credentials');
+      const j = await r.json();
+      return j.data || null;
+    } catch (reason) {
+      return Promise.reject(reason);
+    }
   }
 }

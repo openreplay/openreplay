@@ -1,25 +1,22 @@
 import React from 'react';
 import { Tooltip, Button } from 'UI';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { init, remove, fetchGDPR } from 'Duck/site';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import NewSiteForm from '../NewSiteForm';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached site limit.';
 
-function AddProjectButton({ isAdmin = false, init = () => {} }: any) {
-  const { userStore } = useStore();
+function AddProjectButton({ isAdmin = false }: any) {
+  const { userStore, projectsStore } = useStore();
+  const init = projectsStore.initProject;
   const { showModal, hideModal } = useModal();
-  const limtis = useObserver(() => userStore.limits);
-  const canAddProject = useObserver(
-    () => isAdmin && (limtis.projects === -1 || limtis.projects > 0)
-  );
+  const limits = userStore.limits;
+  const canAddProject = isAdmin && (limits.projects === -1 || limits.projects > 0)
 
   const onClick = () => {
-    init();
+    init({});
     showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
   return (
@@ -34,4 +31,4 @@ function AddProjectButton({ isAdmin = false, init = () => {} }: any) {
   );
 }
 
-export default connect(null, { init, remove, fetchGDPR })(AddProjectButton);
+export default observer(AddProjectButton);

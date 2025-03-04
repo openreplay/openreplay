@@ -53,8 +53,6 @@ func (s *saverImpl) handleExtraMessage(msg messages.Message) error {
 	// Unique for Web
 	case *messages.PageEvent:
 		return s.ch.InsertWebPageEvent(session, m)
-	case *messages.ResourceTiming:
-		return s.ch.InsertWebResourceEvent(session, m)
 	case *messages.JSException:
 		wrapper, _ := types.WrapJSException(m)
 		return s.ch.InsertWebErrorEvent(session, wrapper)

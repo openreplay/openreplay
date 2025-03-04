@@ -1,4 +1,4 @@
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import pg_client
 from chalicelib.utils.storage import StorageClient
 from decouple import config
 

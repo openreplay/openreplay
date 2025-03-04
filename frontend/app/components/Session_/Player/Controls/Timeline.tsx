@@ -1,8 +1,6 @@
 import DraggableMarkers from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
-import { connect } from 'react-redux';
 import stl from './timeline.module.css';
-import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
 import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import { debounce } from 'App/utils';
 import TooltipContainer from './components/TooltipContainer';
@@ -10,31 +8,23 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
-import Issue from 'Types/session/issue';
 import { WebEventsList, MobEventsList } from './EventsList';
 import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
 
-interface IProps {
-  issues: Issue[];
-  setTimelineHoverTime: (t: number) => void;
-  startedAt: number;
-  tooltipVisible: boolean;
-  timezone?: string;
-  isMobile?: boolean;
-  timelineZoomEnabled: boolean;
-  timelineZoomStartTs: number;
-  timelineZoomEndTs: number;
-}
-
-function Timeline(props: IProps) {
+function Timeline({ isMobile }: { isMobile: boolean }) {
   const { player, store } = useContext(PlayerContext);
   const [wasPlaying, setWasPlaying] = useState(false);
   const [maxWidth, setMaxWidth] = useState(0);
-  const { settingsStore } = useStore();
+  const { settingsStore, uiPlayerStore, sessionStore } = useStore();
+  const startedAt = sessionStore.current.startedAt ?? 0;
+  const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
+  const setTimelineHoverTime = sessionStore.setTimelineTooltip;
+  const timezone = sessionStore.current.timezone;
+  const issues = sessionStore.current.issues ?? [];
+  const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const { playing, skipToIssue, ready, endTime, devtoolsLoading, domLoading } = store.get();
-  const { issues, timezone, timelineZoomEnabled } = props;
 
   const progressRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -53,7 +43,7 @@ function Timeline(props: IProps) {
   }, []);
 
   const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
-  const debouncedTooltipChange = useMemo(() => debounce(props.setTimelineHoverTime, 50), []);
+  const debouncedTooltipChange = useMemo(() => debounce(setTimelineHoverTime, 50), []);
 
   const onDragEnd = () => {
     if (wasPlaying) {
@@ -80,17 +70,17 @@ function Timeline(props: IProps) {
       // @ts-ignore black magic
       !progressRef.current.contains(e.target)
     ) {
-      return props.tooltipVisible && hideTimeTooltip();
+      return tooltipVisible && hideTimeTooltip();
     }
 
     const time = getTime(e);
     if (!time) return;
     const tz = settingsStore.sessionSettings.timezone.value;
-    const timeStr = DateTime.fromMillis(props.startedAt + time)
+    const timeStr = DateTime.fromMillis(startedAt + time)
       .setZone(tz)
       .toFormat(`hh:mm:ss a`);
     const userTimeStr = timezone
-      ? DateTime.fromMillis(props.startedAt + time)
+      ? DateTime.fromMillis(startedAt + time)
           .setZone(timezone)
           .toFormat(`hh:mm:ss a`)
       : undefined;
@@ -118,6 +108,9 @@ function Timeline(props: IProps) {
   };
 
   const jumpToTime = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLDivElement).id === 'click-ignore') {
+      return;
+    }
     seekProgress(e);
   };
 
@@ -161,7 +154,7 @@ function Timeline(props: IProps) {
           {devtoolsLoading || domLoading || !ready ? <div className={stl.stripes} /> : null}
         </div>
 
-        {props.isMobile ? <MobEventsList scale={scale} /> : <WebEventsList scale={scale} />}
+        {isMobile ? <MobEventsList /> : <WebEventsList />}
         <NotesList scale={scale} />
         <SkipIntervalsList scale={scale} />
 
@@ -179,15 +172,4 @@ function Timeline(props: IProps) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    issues: state.getIn(['sessions', 'current']).issues || [],
-    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
-    timezone: state.getIn(['sessions', 'current']).timezone,
-    tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
-    timelineZoomEnabled: state.getIn(['components', 'player']).timelineZoom.enabled,
-    timelineZoomStartTs: state.getIn(['components', 'player']).timelineZoom.startTs,
-    timelineZoomEndTs: state.getIn(['components', 'player']).timelineZoom.endTs,
-  }),
-  { setTimelinePointer, setTimelineHoverTime }
-)(observer(Timeline));
+export default observer(Timeline);

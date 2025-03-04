@@ -1,4 +1,3 @@
-import filters from 'App/duck/filters';
 import Filter from 'App/mstore/types/filter';
 import { FilterKey } from 'App/types/filter/filterType';
 import { observer } from 'mobx-react-lite';
@@ -42,6 +41,7 @@ function ExcludeFilters(props: Props) {
               onRemoveFilter={() => onRemoveFilter(index)}
               // saveRequestPayloads={saveRequestPayloads}
               disableDelete={false}
+              allowedFilterKeys={[FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT, FilterKey.CUSTOM]}
               // excludeFilterKeys={excludeFilterKeys}
             />
           ))}

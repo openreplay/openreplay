@@ -302,9 +302,14 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	if sessionData != nil {
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionData.ID)))
 	}
+	tokenJustExpired := false
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
-		return
+		if errors.Is(err, token.JUST_EXPIRED) {
+			tokenJustExpired = true
+		} else {
+			e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
+			return
+		}
 	}
 
 	// Add sessionID and projectID to context
@@ -314,13 +319,21 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Check request body
 	if r.Body == nil {
-		e.ResponseWithError(r.Context(), w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
+		errCode := http.StatusBadRequest
+		if tokenJustExpired {
+			errCode = http.StatusUnauthorized
+		}
+		e.ResponseWithError(r.Context(), w, errCode, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.getBeaconSize(sessionData.ID))
 	if err != nil {
-		e.ResponseWithError(r.Context(), w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
+		errCode := http.StatusRequestEntityTooLarge
+		if tokenJustExpired {
+			errCode = http.StatusUnauthorized
+		}
+		e.ResponseWithError(r.Context(), w, errCode, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 	bodySize = len(bodyBytes)
@@ -329,10 +342,18 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
 	if err != nil {
 		e.log.Error(r.Context(), "can't send messages batch to queue: %s", err)
-		e.ResponseWithError(r.Context(), w, http.StatusInternalServerError, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
+		errCode := http.StatusInternalServerError
+		if tokenJustExpired {
+			errCode = http.StatusUnauthorized
+		}
+		e.ResponseWithError(r.Context(), w, errCode, errors.New("can't save message, try again"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
+	if tokenJustExpired {
+		e.ResponseWithError(r.Context(), w, http.StatusUnauthorized, errors.New("token expired"), startTime, r.URL.Path, bodySize)
+		return
+	}
 	e.ResponseOK(r.Context(), w, startTime, r.URL.Path, bodySize)
 }
 

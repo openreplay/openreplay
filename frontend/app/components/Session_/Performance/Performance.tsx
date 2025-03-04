@@ -1,7 +1,6 @@
 import {Timed} from "Player";
 import {PerformanceChartPoint} from "Player/mobile/managers/IOSPerformanceTrackManager";
 import React from 'react';
-import { connect } from 'react-redux';
 import {MobilePlayerContext, PlayerContext} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import {
@@ -18,12 +17,14 @@ import {
 } from 'recharts';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
+import {Tooltip as TooltipANT} from 'antd';
 
 import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import { toJS } from "mobx";
+import { useStore } from 'App/mstore'
+import { Segmented } from 'antd'
 
 const CPU_VISUAL_OFFSET = 10;
 
@@ -222,12 +223,11 @@ function generateMobileChart(data: PerformanceChartPoint[], biggestMemSpike: num
   }))
 }
 
-export const MobilePerformance = connect((state: any) => ({
-  userDeviceMemorySize: state.getIn(['sessions', 'current']).userDeviceMemorySize || 0,
-}))(observer(({ userDeviceMemorySize }:  { userDeviceMemorySize: number }) => {
+export const MobilePerformance = observer(() => {
   const { player, store } = React.useContext(MobilePlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([])
   const [_data, setData] = React.useState<any[]>([])
+  const { sessionStore } = useStore();
 
   const {
     performanceChartTime = 0,
@@ -273,7 +273,7 @@ export const MobilePerformance = connect((state: any) => ({
             <InfoLine>
               <InfoLine.Point
                   label="Device Memory Size"
-                  value={formatBytes(userDeviceMemorySize * 1024)}
+                  value={formatBytes(sessionStore.current.userDeviceMemorySize * 1024)}
                   display={true}
               />
             </InfoLine>
@@ -407,14 +407,12 @@ export const MobilePerformance = connect((state: any) => ({
         </BottomBlock.Content>
       </BottomBlock>
   );
-}));
+});
 
 
-function Performance({
-  userDeviceHeapSize,
-}: {
-  userDeviceHeapSize: number;
-}) {
+function Performance() {
+  const { sessionStore } = useStore();
+  const userDeviceHeapSize = sessionStore.current.userDeviceHeapSize || 0;
   const { player, store } = React.useContext(PlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([])
   const [_data, setData] = React.useState<any[]>([])
@@ -461,15 +459,33 @@ function Performance({
   return (
     <BottomBlock>
       <BottomBlock.Header>
-        <div className="flex items-center w-full">
-          <div className="font-semibold color-gray-medium mr-auto">Performance</div>
-          <InfoLine>
-            <InfoLine.Point
-              label="Device Heap Size"
-              value={formatBytes(userDeviceHeapSize)}
-              display={true}
-            />
-          </InfoLine>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-3 items-center">
+            <div className="font-semibold color-gray-medium mr-auto">Performance</div>
+            <InfoLine>
+                <InfoLine.Point
+                  label="Device Heap Size"
+                  value={formatBytes(userDeviceHeapSize)}
+                  display={true}
+                />
+              </InfoLine>
+          </div>
+          
+          <div className={'flex items-center gap-3'}>
+            <Segmented
+              options={[
+                {  label: (
+                  <TooltipANT title="Performance overview isn't supported across tabs.">
+                    <span>All Tabs</span>
+                  </TooltipANT>
+                ), value: 'all',  disabled: true, },
+                { label: 'Current Tab', value: 'current' },
+              ]}
+              defaultValue="current" 
+              size="small"
+              className="rounded-full font-medium"
+          />
+          </div>
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>
@@ -721,6 +737,4 @@ function Performance({
   );
 }
 
-export const ConnectedPerformance = connect((state: any) => ({
-  userDeviceHeapSize: state.getIn(['sessions', 'current']).userDeviceHeapSize || 0,
-}))(observer(Performance));
+export const ConnectedPerformance = observer(Performance);

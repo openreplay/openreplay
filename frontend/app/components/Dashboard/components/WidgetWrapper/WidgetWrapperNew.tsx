@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, lazy } from 'react';
 import cn from 'classnames';
-import { Card, Tooltip, Button } from 'antd';
+import { Card, Tooltip } from 'antd';
 import { useDrag, useDrop } from 'react-dnd';
-import WidgetChart from '../WidgetChart';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
@@ -10,10 +9,11 @@ import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
-import LazyLoad from 'react-lazyload';
 import { TIMESERIES } from 'App/constants/card';
 import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
 import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
+
+const WidgetChart = lazy(() => import('Components/Dashboard/components/WidgetChart'));
 
 interface Props {
   className?: string;
@@ -146,7 +146,6 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
 
       {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
 
-      <LazyLoad offset={!isTemplate ? 100 : 600}>
         <div className="px-4" onClick={onChartClick}>
           <WidgetChart
             isPreview={isPreview}
@@ -156,7 +155,6 @@ function WidgetWrapperNew(props: Props & RouteComponentProps) {
             isSaved={isSaved}
           />
         </div>
-      </LazyLoad>
     </Card>
   );
 }

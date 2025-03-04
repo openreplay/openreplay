@@ -468,9 +468,9 @@ func DecodeMetadata(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodePageEvent(reader BytesReader) (Message, error) {
+func DecodePageEventDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &PageEvent{}
+	msg := &PageEventDeprecated{}
 	if msg.MessageID, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -541,6 +541,66 @@ func DecodeInputEvent(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodePageEvent(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &PageEvent{}
+	if msg.MessageID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Referrer, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Loaded, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	if msg.RequestStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ResponseStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ResponseEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DomContentLoadedEventStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DomContentLoadedEventEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.LoadEventStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.LoadEventEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstPaint, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.FirstContentfulPaint, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.SpeedIndex, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.VisuallyComplete, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TimeToInteractive, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.WebVitals, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -732,10 +792,37 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeStringDictDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &StringDictDeprecated{}
+	if msg.Key, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetNodeAttributeDictDeprecated(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetNodeAttributeDictDeprecated{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.NameKey, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ValueKey, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeStringDict(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &StringDict{}
-	if msg.Key, err = reader.ReadUint(); err != nil {
+	if msg.Key, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	if msg.Value, err = reader.ReadString(); err != nil {
@@ -750,10 +837,10 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	if msg.ID, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.NameKey, err = reader.ReadUint(); err != nil {
+	if msg.Name, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.ValueKey, err = reader.ReadUint(); err != nil {
+	if msg.Value, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1494,6 +1581,18 @@ func DecodeGraphQL(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeWebVitals(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &WebVitals{}
+	if msg.Name, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -2019,9 +2118,11 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 30:
 		return DecodeMetadata(reader)
 	case 31:
-		return DecodePageEvent(reader)
+		return DecodePageEventDeprecated(reader)
 	case 32:
 		return DecodeInputEvent(reader)
+	case 33:
+		return DecodePageEvent(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:
@@ -2047,8 +2148,12 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 49:
 		return DecodePerformanceTrack(reader)
 	case 50:
-		return DecodeStringDict(reader)
+		return DecodeStringDictDeprecated(reader)
 	case 51:
+		return DecodeSetNodeAttributeDictDeprecated(reader)
+	case 43:
+		return DecodeStringDict(reader)
+	case 52:
 		return DecodeSetNodeAttributeDict(reader)
 	case 53:
 		return DecodeResourceTimingDeprecated(reader)
@@ -2136,6 +2241,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSetPageLocation(reader)
 	case 123:
 		return DecodeGraphQL(reader)
+	case 124:
+		return DecodeWebVitals(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

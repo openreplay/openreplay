@@ -18,7 +18,6 @@ const ICONS: Record<string, string | null> = {
     resources: 'resources-icon',
     overview: null,
     custom: null,
-    'web vitals': 'web-vitals',
 }
 
 export function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }: IWiProps) {

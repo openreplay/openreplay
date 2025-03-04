@@ -95,6 +95,29 @@ export function canAccessIframe(iframe: HTMLIFrameElement) {
   }
 }
 
+export function canAccessTarget(target: EventTarget): boolean {
+  try {
+    if (target instanceof HTMLIFrameElement) {
+      void target.contentDocument
+    } else if (target instanceof Window) {
+      void target.document
+    } else if (target instanceof Document) {
+      void target.defaultView
+    } else if ('nodeType' in target) {
+      void (target as Node).nodeType
+    } else if ('addEventListener' in target) {
+      void (target as EventTarget).addEventListener
+    }
+    return true
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'SecurityError') {
+      return false
+    }
+  }
+
+  return true
+}
+
 function dec2hex(dec: number) {
   return dec.toString(16).padStart(2, '0')
 }
@@ -132,8 +155,8 @@ export function ngSafeBrowserMethod(method: string): string {
     : method
 }
 
-export function createMutationObserver(cb: MutationCallback, angularMode?: boolean) {
-  if (angularMode) {
+export function createMutationObserver(cb: MutationCallback, forceNgOff?: boolean) {
+  if (!forceNgOff) {
     const mObserver = ngSafeBrowserMethod('MutationObserver') as 'MutationObserver'
     return new window[mObserver](cb)
   } else {
@@ -146,16 +169,24 @@ export function createEventListener(
   event: string,
   cb: EventListenerOrEventListenerObject,
   capture?: boolean,
-  angularMode?: boolean,
+  forceNgOff?: boolean,
 ) {
-  let safeAddEventListener: 'addEventListener'
-  if (angularMode) {
+  // we need to check if target is crossorigin frame or no and if we can access it
+  if (!canAccessTarget(target)) {
+    return
+  }
+  let safeAddEventListener = 'addEventListener' as unknown as 'addEventListener'
+  if (!forceNgOff) {
     safeAddEventListener = ngSafeBrowserMethod('addEventListener') as 'addEventListener'
-  } else {
-    safeAddEventListener = 'addEventListener'
   }
   try {
-    target[safeAddEventListener](event, cb, capture)
+    // parent has angular, but child frame don't
+    if (target[safeAddEventListener]) {
+      target[safeAddEventListener](event, cb, capture)
+    } else {
+      // @ts-ignore
+      target.addEventListener(event, cb, capture)
+    }
   } catch (e) {
     const msg = e.message
     console.error(
@@ -172,16 +203,22 @@ export function deleteEventListener(
   event: string,
   cb: EventListenerOrEventListenerObject,
   capture?: boolean,
-  angularMode?: boolean,
+  forceNgOff?: boolean,
 ) {
-  let safeRemoveEventListener: 'removeEventListener'
-  if (angularMode) {
+  if (!canAccessTarget(target)) {
+    return
+  }
+  let safeRemoveEventListener = 'removeEventListener' as unknown as 'removeEventListener'
+  if (!forceNgOff) {
     safeRemoveEventListener = ngSafeBrowserMethod('removeEventListener') as 'removeEventListener'
-  } else {
-    safeRemoveEventListener = 'removeEventListener'
   }
   try {
-    target[safeRemoveEventListener](event, cb, capture)
+    if (target[safeRemoveEventListener]) {
+      target[safeRemoveEventListener](event, cb, capture)
+    } else {
+      // @ts-ignore
+      target.removeEventListener(event, cb, capture)
+    }
   } catch (e) {
     const msg = e.message
     console.error(

@@ -4,17 +4,12 @@ import Select from 'Shared/Select';
 import RecordingsSearch from './RecordingsSearch';
 import RecordingsList from './RecordingsList';
 import { useStore } from 'App/mstore';
-import { connect } from 'react-redux';
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import { observer } from 'mobx-react-lite';
 
-interface Props {
-  userId: string;
-}
-
-function Recordings(props: Props) {
-  const { userId } = props;
-  const { recordingsStore } = useStore();
+function Recordings() {
+  const { recordingsStore, userStore } = useStore();
+  const userId = userStore.account.id;
 
   const recordingsOwner = [
     { value: '0', label: 'All Videos' },
@@ -51,6 +46,4 @@ function Recordings(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  userId: state.getIn(['user', 'account', 'id'])
-}))(observer(Recordings));
+export default observer(Recordings);

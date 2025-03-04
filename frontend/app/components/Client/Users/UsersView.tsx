@@ -6,18 +6,17 @@ import { useObserver } from 'mobx-react-lite';
 import UserSearch from './components/UserSearch';
 import { useModal } from 'App/components/Modal';
 import UserForm from './components/UserForm';
-import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import AddUserButton from './components/AddUserButton';
 import withPageTitle from 'HOCs/withPageTitle';
 
 interface Props {
   isOnboarding?: boolean;
-  account: any;
-  isEnterprise: boolean;
 }
-function UsersView(props: Props) {
-  const { account, isEnterprise, isOnboarding = false } = props;
+function UsersView({ isOnboarding = false }: Props) {
   const { userStore, roleStore } = useStore();
+  const account = userStore.account;
+  const isEnterprise = userStore.isEnterprise;
   const userCount = useObserver(() => userStore.list.length);
   const roles = useObserver(() => roleStore.list);
   const { showModal } = useModal();
@@ -31,7 +30,7 @@ function UsersView(props: Props) {
 
   useEffect(() => {
     if (roles.length === 0 && isEnterprise) {
-      roleStore.fetchRoles();
+      void roleStore.fetchRoles();
     }
   }, []);
 
@@ -60,7 +59,4 @@ function UsersView(props: Props) {
   );
 }
 
-export default connect((state: any) => ({
-  account: state.getIn(['user', 'account']),
-  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-}))(withPageTitle('Team - OpenReplay Preferences')(UsersView));
+export default withPageTitle('Team - OpenReplay Preferences')(observer(UsersView));

@@ -1,17 +1,16 @@
 import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
-import NoSessionsMessage from 'Shared/NoSessionsMessage';
-import MainSearchBar from 'Shared/MainSearchBar';
-import SessionSearch from 'Shared/SessionSearch';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
-import cn from 'classnames';
-import OverviewMenu from 'Shared/OverviewMenu';
 import FFlagsList from 'Components/FFlags';
 import NewFFlag from 'Components/FFlags/NewFFlag';
 import { Switch, Route } from 'react-router';
 import { sessions, fflags, withSiteId, newFFlag, fflag, notes, fflagRead, bookmarks } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps, useLocation } from 'react-router-dom';
 import FlagView from 'Components/FFlags/FlagView/FlagView';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '@/mstore';
+import NotesList from 'Shared/SessionsTabOverview/components/Notes/NoteList';
+import Bookmarks from 'Shared/SessionsTabOverview/components/Bookmarks/Bookmarks';
 
 // @ts-ignore
 interface IProps extends RouteComponentProps {
@@ -24,18 +23,32 @@ interface IProps extends RouteComponentProps {
 }
 
 function Overview({ match: { params } }: IProps) {
+  const { searchStore } = useStore();
   const { siteId, fflagId } = params;
+  const location = useLocation();
+  const tab = location.pathname.split('/')[2];
+
+  React.useEffect(() => {
+    searchStore.setActiveTab(tab);
+  }, [tab]);
 
   return (
     <Switch>
       <Route exact strict
-             path={[withSiteId(sessions(), siteId), withSiteId(notes(), siteId), withSiteId(bookmarks(), siteId)]}>
-        <div className='mb-5 w-full mx-auto' style={{ maxWidth: '1360px' }}>
-          <NoSessionsMessage siteId={siteId} />
-          <MainSearchBar />
-          <SessionSearch />
-          <div className='my-4' />
+             path={withSiteId(sessions(), siteId)}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
           <SessionsTabOverview />
+        </div>
+      </Route>
+      <Route exact strict
+             path={withSiteId(bookmarks(), siteId)}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+          <Bookmarks />
+        </div>
+      </Route>
+      <Route exact strict path={withSiteId(notes(), siteId)}>
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1360px' }}>
+          <NotesList />
         </div>
       </Route>
       <Route exact strict path={withSiteId(fflags(), siteId)}>
@@ -54,4 +67,4 @@ function Overview({ match: { params } }: IProps) {
   );
 }
 
-export default withPageTitle('Sessions - OpenReplay')(withRouter(Overview));
+export default withPageTitle('Sessions - OpenReplay')(withRouter(observer(Overview)));

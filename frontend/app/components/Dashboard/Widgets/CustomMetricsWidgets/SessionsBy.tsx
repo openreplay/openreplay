@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button, Space } from 'antd';
 import { filtersMap } from 'Types/filter/newFilter';
-// import { Icon } from 'UI';
 import { Empty } from 'antd';
-import { Info } from 'lucide-react'
+import { Info } from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
 import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
 import { useModal } from 'Components/ModalContext';
+import Widget from '@/mstore/types/widget';
 
 interface Props {
   metric?: any;
@@ -18,34 +18,39 @@ interface Props {
 function SessionsBy(props: Props) {
   const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
   const [selected, setSelected] = React.useState<any>(null);
-  const total = data.values.length;
+  const total = data.total;
   const { openModal, closeModal } = useModal();
+  const modalMetric = React.useMemo(() => Object.assign(new Widget(), metric), [metric]);
 
   const onClickHandler = (event: any, data: any) => {
-    const filters = Array<any>();
-    let filter = { ...filtersMap[metric.metricOf] };
-    filter.value = [data.name];
-    filter.type = filter.key;
-    delete filter.key;
-    delete filter.operatorOptions;
-    delete filter.category;
-    delete filter.icon;
-    delete filter.label;
-    delete filter.options;
+    const baseFilter = {
+      ...filtersMap[metric.metricOf],
+      value: [data.name],
+      type: filtersMap[metric.metricOf].key,
+      filters: filtersMap[metric.metricOf].filters?.map((f: any) => {
+        const { key, operatorOptions, category, icon, label, options, ...cleaned } = f;
+        return { ...cleaned, type: f.key, value: [] };
+      })
+    };
+
+    const { key, operatorOptions, category, icon, label, options, ...finalFilter } = baseFilter;
 
     setSelected(data.name);
-
-    filters.push(filter);
-    onClick(filters);
+    onClick([finalFilter]);
   };
 
   const showMore = (e: any) => {
     e.stopPropagation();
     openModal(
-      <CardSessionsByList list={data.values} onClickHandler={(e, item) => {
-        closeModal();
-        onClickHandler(null, item);
-      }} selected={selected} />, {
+      <CardSessionsByList
+        paginated={true}
+        metric={modalMetric}
+        total={total}
+        list={data.values}
+        onClickHandler={(e, item) => {
+          closeModal();
+          onClickHandler(null, item);
+        }} selected={selected} />, {
         title: metric.name,
         width: 600
       });
@@ -58,7 +63,7 @@ function SessionsBy(props: Props) {
           image={null}
           style={{ minHeight: 220 }}
           className="flex flex-col items-center justify-center"
-          imageStyle={{ height: 0}}
+          imageStyle={{ height: 0 }}
           description={
             <div className="flex items-center gap-2 justify-center text-black">
               <Info size={14} />
@@ -68,10 +73,9 @@ function SessionsBy(props: Props) {
         />
       ) : (
         <div className="flex flex-col justify-between w-full" style={{ height: 220 }}>
-          {/* TODO - remove slice once the api pagination is fixed */}
-          <CardSessionsByList list={data.values.slice(0, 3)}
-                              selected={selected}
-                              onClickHandler={onClickHandler} />
+          {metric && <CardSessionsByList list={data.values.slice(0, 3)}
+                                         selected={selected}
+                                         onClickHandler={onClickHandler} />}
           {total > 3 && (
             <div className="flex">
               <Button type="link" onClick={showMore}>

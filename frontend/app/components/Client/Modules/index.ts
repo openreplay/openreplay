@@ -4,7 +4,7 @@ export const enum MODULES {
   ASSIST = 'assist',
   NOTES = 'notes',
   BUG_REPORTS = 'bug-reports',
-  OFFLINE_RECORDINGS = 'offline-recordings',
+OFFLINE_RECORDINGS = 'offline-recordings',
   ALERTS = 'alerts',
   ASSIST_STATS = 'assist-stats',
   FEATURE_FLAGS = 'feature-flags',

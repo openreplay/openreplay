@@ -1,5 +1,5 @@
-import type Screen from '../../Screen/Screen';
-import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage'
+import type Screen from 'App/player/web/Screen/Screen';
+import { replaceCSSPseudoclasses } from 'App/player/web/messages/rewriter/rewriteMessage'
 import logger from 'App/logger'
 
 // Doesn't work with css files (hasOwnProperty returns false)
@@ -18,44 +18,28 @@ function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleE
 export default class StylesManager {
   private linkLoadingCount: number = 0;
   private linkLoadPromises: Array<Promise<void>> = [];
-  private skipCSSLinks: Array<string> = []; // should be common for all pages
-  private abortController = new AbortController()
+  private skipCSSLinks: Array<string> = [];
 
-  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {
-    // @ts-ignore
-    window.repl_skippedLinks = window.repl_skippedLinks || []
-  }
+  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
 
   reset():void {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
-
-    this.abortController.abort();
-    this.abortController = new AbortController();
   }
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const promise = new Promise<void>((resolve) => {
-      if (
-        this.abortController.signal.aborted
-        || this.skipCSSLinks.includes(value)
-        ||  node.ownerDocument !== this.screen.document
-      ) {
-        // @ts-ignore
-        window.repl_skippedLinks?.push(['skipped', node, value, this.abortController.signal.aborted, this.skipCSSLinks.includes(value), node.ownerDocument !== this.screen.document])
-        resolve();
-      }
-      this.setLoading(true);
+      if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
+      this.setLoading(true);
       const addSkipAndResolve = (e: any) => {
-        this.skipCSSLinks.push(value); // watch out
+        this.skipCSSLinks.push(value);
         logger.error('skip node', e)
         resolve()
       }
-      timeoutId = setTimeout(addSkipAndResolve, 4000);
+      timeoutId = setTimeout(() => addSkipAndResolve('by timeout'), 5000);
 
-      // It would be better to make it more relyable with addEventListener
       node.onload = () => {
         const doc = this.screen.document;
         if (node.ownerDocument === doc && doc) {
@@ -64,22 +48,14 @@ export default class StylesManager {
         resolve();
       }
       node.onerror = addSkipAndResolve;
-      this.abortController.signal.addEventListener('abort', () => {
-        node.onload = null;
-        node.onerror = null;
-        clearTimeout(timeoutId);
-        resolve();
-      });
     }).then(() => {
       node.onload = null;
       node.onerror = null;
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
-        setTimeout(() => {
-          this.setLoading(false)
-          this.linkLoadPromises = [];
-        }, 0)
+        this.setLoading(false)
+        this.linkLoadPromises = [];
       }
     });
     this.linkLoadPromises.push(promise);

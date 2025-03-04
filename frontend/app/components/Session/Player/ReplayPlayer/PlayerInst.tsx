@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { WebStackEventPanel } from 'Shared/DevTools/StackEventPanel/StackEventPanel';
@@ -16,35 +15,29 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
-  fullscreenOff,
-} from 'Duck/components/player';
+  BACKENDLOGS
+} from 'App/mstore/uiPlayerStore';
 import { WebNetworkPanel } from 'Shared/DevTools/NetworkPanel';
 import Storage from 'Components/Session_/Storage';
 import { ConnectedPerformance } from 'Components/Session_/Performance';
 import GraphQL from 'Components/Session_/GraphQL';
 import { Exceptions } from 'Components/Session_/Exceptions/Exceptions';
-import Inspector from 'Components/Session_/Inspector';
 import Controls from 'Components/Session_/Player/Controls';
 import Overlay from 'Components/Session_/Player/Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
-import { updateLastPlayedSession } from 'Duck/sessions';
 import { OverviewPanel } from 'Components/Session_/OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { debounce } from 'App/utils';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
+import BackendLogsPanel from "../SharedComponents/BackendLogs/BackendLogsPanel";
 
 interface IProps {
   fullView: boolean;
   isMultiview?: boolean;
-  bottomBlock: number;
-  fullscreen: boolean;
-  fullscreenOff: () => any;
-  nextId: string;
-  sessionId: string;
   activeTab: string;
-  updateLastPlayedSession: (id: string) => void;
   setActiveTab: (tab: string) => void;
 }
 
@@ -63,27 +56,36 @@ export const getDefaultPanelHeight = () => {
 }
 
 function Player(props: IProps) {
+  const { uiPlayerStore, sessionStore } = useStore();
+  const nextId = sessionStore.nextId;
+  const sessionId = sessionStore.current.sessionId;
+  const updateLastPlayedSession = sessionStore.updateLastPlayedSession;
+  const fullscreenOff = uiPlayerStore.fullscreenOff;
+  const bottomBlock = uiPlayerStore.bottomBlock;
+  const fullscreen = uiPlayerStore.fullscreen;
   const defaultHeight = getDefaultPanelHeight()
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
-  const { fullscreen, fullscreenOff, nextId, bottomBlock, activeTab, fullView } = props;
+  const { activeTab, fullView } = props;
   const playerContext = React.useContext(PlayerContext);
   const isReady = playerContext.store.get().ready;
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
-  const [isAttached, setAttached] = React.useState(false);
+  const isAttached = React.useRef(false);
 
   React.useEffect(() => {
-    props.updateLastPlayedSession(props.sessionId);
-    const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
-    if (parentElement && !isAttached) {
-      playerContext.player.attach(parentElement);
-      setAttached(true);
+    updateLastPlayedSession(sessionId);
+    if (isReady && !isAttached.current) {
+      const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
+      if (parentElement) {
+        playerContext.player.attach(parentElement);
+        isAttached.current = true;
+      }
     }
   }, [isReady]);
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
+  }, [bottomBlock, fullscreen, playerContext.player, activeTab, fullView]);
 
   if (!playerContext.player) return null;
 
@@ -147,6 +149,7 @@ function Player(props: IProps) {
           {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
           {bottomBlock === GRAPHQL && <GraphQL panelHeight={panelHeight} />}
           {bottomBlock === EXCEPTIONS && <Exceptions />}
+          {bottomBlock === BACKENDLOGS && <BackendLogsPanel />}
         </div>
       )}
       {!fullView ? (
@@ -161,15 +164,4 @@ function Player(props: IProps) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-    nextId: state.getIn(['sessions', 'nextId']),
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-    bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
-  }),
-  {
-    fullscreenOff,
-    updateLastPlayedSession,
-  }
-)(observer(Player));
+export default observer(Player);

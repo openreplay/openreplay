@@ -5,7 +5,7 @@ from time import time
 
 from decouple import config
 
-from chalicelib.core import assist
+from chalicelib.core import assist_ice
 from chalicelib.utils import helper_ee
 
 
@@ -29,7 +29,7 @@ def get_temporary_credentials():
 
 
 def get_full_config():
-    servers = assist.get_ice_servers()
+    servers = assist_ice.get_ice_servers()
     if servers is None:
         return None
     servers = servers.split("|")

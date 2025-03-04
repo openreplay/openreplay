@@ -107,7 +107,7 @@ function TestOverview() {
   }, [testId, siteId]);
 
   if (!uxtestingStore.instance) {
-    return <Loader loading={uxtestingStore.isLoading}>No Data</Loader>;
+    return <Loader loading={uxtestingStore.isLoading}>Loading Data...</Loader>;
   } else {
     document.title = `Usability Tests | ${uxtestingStore.instance.title}`;
   }

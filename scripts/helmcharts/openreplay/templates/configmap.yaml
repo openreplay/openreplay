@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openreplay-version
+  namespace: "{{ .Release.Namespace }}"
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+data:
+  version: {{ .Chart.AppVersion }}
+---
+# If some jobs or crons are doing db operations, or using credentias,
+# it should fetch them from this secret.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openreplay-secrets
+  namespace: "{{ .Release.Namespace }}"
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+data:
+  PGHOST: "{{ .Values.global.postgresql.postgresqlHost | b64enc }}"
+  PGPORT: "{{ .Values.global.postgresql.postgresqlPort | b64enc }}"
+  PGDATABASE: "{{ .Values.global.postgresql.postgresqlDatabase | b64enc }}"
+  PGUSER: "{{ .Values.global.postgresql.postgresqlUser | b64enc }}"
+  PGPASSWORD: "{{ .Values.global.postgresql.postgresqlPassword | b64enc }}"
+  CLICKHOUSE_USER: "{{ .Values.global.clickhouse.username | b64enc }}"
+  CLICKHOUSE_PASSWORD: "{{ .Values.global.clickhouse.password | b64enc }}"
+  MINIO_HOST: "{{ .Values.global.s3.endpoint | b64enc }}"
+  MINIO_ACCESS_KEY: "{{ .Values.global.s3.accessKey | b64enc }}"
+  MINIO_SECRET_KEY: "{{ .Values.global.s3.secretKey | b64enc }}"

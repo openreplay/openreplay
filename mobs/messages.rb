@@ -21,8 +21,6 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserCountry'
   string 'UserID'
 end
-## message 2, 'CreateDocument', do
-# end
 
 # DEPRECATED; backend only (TODO: remove in the next release)
 message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
@@ -43,8 +41,7 @@ message 6, 'SetViewportScroll' do
   int 'X'
   int 'Y'
 end
-# (should be) Deprecated sinse tracker ?.?.? in favor of  CreateDocument(id=2)
-# in order to use Document as a default root node instead of the documentElement
+
 message 7, 'CreateDocument' do
 end
 message 8, 'CreateElementNode' do
@@ -106,6 +103,7 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
+# to remove in 2025
 message 21, 'NetworkRequestDeprecated', :replayer => :devtools do
   string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
   string 'Method'
@@ -163,7 +161,7 @@ message 30, 'Metadata', :replayer => false do
   string 'Key'
   string 'Value'
 end
-message 31, 'PageEvent', :tracker => false, :replayer => false do
+message 31, 'PageEventDeprecated', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'URL'
@@ -182,12 +180,34 @@ message 31, 'PageEvent', :tracker => false, :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
+
 message 32, 'InputEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Value'
   boolean 'ValueMasked'
   string 'Label'
+end
+
+message 33, 'PageEvent', :tracker => false, :replayer => false do
+  uint 'MessageID'
+  uint 'Timestamp'
+  string 'URL'
+  string 'Referrer'
+  boolean 'Loaded'
+  uint 'RequestStart'
+  uint 'ResponseStart'
+  uint 'ResponseEnd'
+  uint 'DomContentLoadedEventStart'
+  uint 'DomContentLoadedEventEnd'
+  uint 'LoadEventStart'
+  uint 'LoadEventEnd'
+  uint 'FirstPaint'
+  uint 'FirstContentfulPaint'
+  uint 'SpeedIndex'
+  uint 'VisuallyComplete'
+  uint 'TimeToInteractive'
+  string 'WebVitals'
 end
 
 # DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
@@ -225,7 +245,7 @@ end
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
-## 43
+
 message 44, 'ReduxDeprecated', :replayer => :devtools do
   string 'Action'
   string 'State'
@@ -257,16 +277,27 @@ message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
-# since 4.1.9
-message 50, "StringDict" do
+
+# deprecated @ 10.2024 (v1.21) -> removed @ 2025
+message 50, "StringDictDeprecated" do
   uint "Key"
   string "Value"
 end
-# since 4.1.9
-message 51, "SetNodeAttributeDict" do
+# deprecated @ 10.2024 (v1.21) -> removed @ 2025
+message 51, "SetNodeAttributeDictDeprecated" do
   uint 'ID'
   uint 'NameKey'
   uint 'ValueKey'
+end
+
+message 43, "StringDict" do
+    string "Key"
+    string "Value"
+end
+message 52, 'SetNodeAttributeDict' do
+    uint 'ID'
+    string 'Name'
+    string 'Value'
 end
 message 53, 'ResourceTimingDeprecated', :replayer => :devtools do
   uint 'Timestamp'
@@ -353,7 +384,7 @@ message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
 end
-## 65
+
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
@@ -556,6 +587,11 @@ message 123, 'GraphQL', :replayer => :devtools do
   uint 'Duration'
 end
 
+message 124, 'WebVitals', :replayer => false do
+    string 'Name'
+    string 'Value'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
@@ -574,3 +610,5 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
 end
+
+# FREE 2, 34, 35, 36, 65, 85, 86, 87, 88, 89

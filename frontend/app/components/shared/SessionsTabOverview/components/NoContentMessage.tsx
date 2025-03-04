@@ -1,20 +1,21 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
-function NoContentMessage({ activeTab }: any) {
-    return <div>{getNoContentMessage(activeTab)}</div>;
+function NoContentMessage() {
+  const { searchStore } = useStore();
+  const activeTab = searchStore.activeTab;
+  return <div>{getNoContentMessage(activeTab)}</div>;
 }
 
-export default connect((state: any) => ({
-    activeTab: state.getIn(['search', 'activeTab']),
-}))(NoContentMessage);
+export default observer(NoContentMessage);
 
 function getNoContentMessage(activeTab: any) {
-    let str = 'No recordings found';
-    if (activeTab.type !== 'all') {
-        str += ' with ' + activeTab.name;
-        return str;
-    }
+  let str = 'No recordings found';
+  if (activeTab.type !== 'all') {
+    str += ' with ' + activeTab.name;
+    return str;
+  }
 
-    return str + '!';
+  return str + '!';
 }
