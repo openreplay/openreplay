@@ -296,9 +296,9 @@ function SessionItem(props: RouteComponentProps & Props) {
             >
               <div>
                 <Tooltip
-                  delay={0}
-                  disabled={isDisabled}
-                  title={timeTooltipContent}
+                  // delay={0}
+                  // disabled={isDisabled}
+                  title={isDisabled ? '' : timeTooltipContent}
                   className="w-fit !block"
                 >
                   <TextEllipsis
