@@ -1,4 +1,4 @@
-  import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Icon } from 'UI';
@@ -25,7 +25,6 @@ const STATUS_FREQUENCY = 5000;
 
 function SessionList() {
   const location = useLocation(); // Get the current URL location
-  const isSessionsRoute = location.pathname.includes('/sessions');
   const isBookmark = location.pathname.includes('/bookmarks');
 
   const { projectsStore, sessionStore, customFieldStore, userStore, searchStore } = useStore();
@@ -43,7 +42,6 @@ function SessionList() {
   const _filterKeys = filters.map((i: any) => i.key);
   const hasUserFilter =
     _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
-  // const isBookmark = activeTab.type === 'bookmark';
   const isVault = isBookmark && isEnterprise;
   const activeSite = projectsStore.active;
   const hasNoRecordings = !activeSite || !activeSite.recorded;
@@ -134,7 +132,7 @@ function SessionList() {
       return;
     }
 
-    sessionTimeOut = setTimeout(function() {
+    sessionTimeOut = setTimeout(function () {
       if (!document.hidden) {
         searchStore.checkForLatestSessions();
       }
@@ -170,7 +168,7 @@ function SessionList() {
             title={
               <div className="flex items-center justify-center flex-col">
                 <span className="py-5">
-                <AnimatedSVG name={NO_CONTENT.icon} size={60} />
+                  <AnimatedSVG name={NO_CONTENT.icon} size={60} />
                 </span>
                 <div className="mt-4" />
                 <div className="text-center relative text-lg font-medium">
