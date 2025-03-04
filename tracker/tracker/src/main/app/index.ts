@@ -324,6 +324,7 @@ export default class App {
       fixedCanvasScaling: false,
       disableCanvas: false,
       captureIFrames: true,
+      disableSprites: false,
       obscureTextEmails: true,
       obscureTextNumbers: false,
       crossdomain: {

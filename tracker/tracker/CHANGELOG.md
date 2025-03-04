@@ -1,3 +1,7 @@
+## 15.0.7
+
+- fix for svg sprite handling
+
 ## 15.0.6
 
 - fix for batch sending to prevent proxy wrappers
